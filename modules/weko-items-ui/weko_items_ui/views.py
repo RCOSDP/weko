@@ -41,9 +41,8 @@ from invenio_accounts.models import Role, userrole
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
-from invenio_stats.utils import QueryCommonReportsHelper, \
-    QueryItemRegReportHelper, QueryRecordViewReportHelper, \
-    QuerySearchReportHelper
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -768,6 +767,10 @@ def prepare_edit_item():
             activity = WorkActivity()
             pid_object = PersistentIdentifier.get('recid', pid_value)
 
+            # TEMP:
+            current_app.logger.info('Record trying to edit: ')
+            current_app.logger.info(record)
+
             # check item is being editied
             item_id = pid_object.object_uuid
             workflow_action_stt = \
@@ -862,8 +865,7 @@ def ranking():
     settings = RankingSettings.get()
     # get statistical period
     end_date = date.today()  # - timedelta(days=1)
-    start_date = end_date - \
-        timedelta(days=int(settings.statistical_period) - 1)
+    start_date = end_date - timedelta(days=int(settings.statistical_period))
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering -- Always default
@@ -879,8 +881,8 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'value': 'desc'})
         rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all', title_key='record_name',
+            parse_ranking_results(result, list_name='all',
+                                  title_key='record_name',
                                   count_key='total_all', pid_key='pid_value')
 
     # most_downloaded_items
@@ -893,8 +895,7 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='data', title_key='col2',
+            parse_ranking_results(result, list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
 
     # created_most_items_user
@@ -907,9 +908,9 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['created_most_items_user'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='data',
-                                  title_key='user_id', count_key='count')
+            parse_ranking_results(result, list_name='data',
+                                  title_key='username', count_key='count',
+                                  pid_key='')
 
     # most_searched_keywords
     if settings.rankings['most_searched_keywords']:
@@ -917,32 +918,17 @@ def ranking():
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
             agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'},
-            agg_filter={'search_type': [0, 1]}
+            agg_sort={'value': 'desc'}
         )
         rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all', title_key='search_key',
-                                  count_key='count', search_key='search_key')
+            parse_ranking_results(result, list_name='all',
+                                  title_key='search_key', count_key='count',
+                                  pid_key='')
 
     # new_items
     if settings.rankings['new_items']:
-        new_item_start_date = end_date - \
-            timedelta(days=int(settings.new_item_period) - 1)
-        if new_item_start_date < start_date:
-            new_item_start_date = start_date
         new_items_list = []
-        result = QueryCommonReportsHelper.get(
-            start_date=new_item_start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            event='item_create',
-            agg_size=settings.display_rank,
-            agg_sort={'_term': 'desc'}
-        )
-        rankings['new_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all', title_key='record_name',
-                                  pid_key='pid_value', date_key='create_date')
+        rankings['new_items'] = new_items_list
 
     return render_template(
         current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
