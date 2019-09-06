@@ -35,7 +35,9 @@ from weko_groups.models import Group
 
 from .models import Index
 
+
 def get_index_link_list(lang='en'):
+    """Get index link list."""
     visables = Index.query.filter_by(
         index_link_enabled=True, public_state=True).all()
     if lang == 'jp':
