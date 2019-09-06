@@ -33,6 +33,21 @@ from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
 
+from .models import Index
+
+def get_index_link_list(lang='en'):
+    visables = Index.query.filter_by(
+        index_link_enabled=True, public_state=True).all()
+    if lang == 'jp':
+        res = []
+        for i in visables:
+            if i.index_link_name:
+                res.append((i.id, i.index_link_name))
+            else:
+                res.append((i.id, i.index_link_name_english))
+        return res
+    return [(i.id, i.index_link_name_english) for i in visables]
+
 
 def is_index_tree_updated():
     """Return True if index tree has been updated."""
