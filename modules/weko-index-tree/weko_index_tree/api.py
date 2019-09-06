@@ -510,7 +510,7 @@ class Indexes(object):
             if isinstance(role, list):
                 while role:
                     tmp = role.pop(0)
-                    if not 'Administrator' in tmp["name"] or not browse_flag:
+                    if 'Administrator' not in tmp["name"] or not browse_flag:
                         if str(tmp["id"]) in allow:
                             alw.append(tmp)
                         else:
@@ -663,7 +663,7 @@ class Indexes(object):
             db.or_(recursive_t.c.pid == pid,
                    recursive_t.c.cid == pid))
         if not get_user_roles()[0]:
-           query = query.filter(recursive_t.c.public==True)
+            query = query.filter(recursive_t.c.public)
         q = query.order_by(recursive_t.c.path).all()
         return q
 
