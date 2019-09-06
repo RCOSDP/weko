@@ -37,7 +37,7 @@ from weko_groups.api import Group
 
 from .models import Index
 from .utils import cached_index_tree_json, get_index_id_list, get_tree_json, \
-    reset_tree
+    get_user_roles, reset_tree
 
 
 class Indexes(object):
@@ -504,16 +504,17 @@ class Indexes(object):
     @classmethod
     def get_index_with_role(cls, index_id):
         """Get Index with role."""
-        def _get_allow_deny(allow, role):
+        def _get_allow_deny(allow, role, browse_flag=False):
             alw = []
             deny = []
             if isinstance(role, list):
                 while role:
                     tmp = role.pop(0)
-                    if str(tmp["id"]) in allow:
-                        alw.append(tmp)
-                    else:
-                        deny.append(tmp)
+                    if 'Administrator' not in tmp["name"] or not browse_flag:
+                        if str(tmp["id"]) in allow:
+                            alw.append(tmp)
+                        else:
+                            deny.append(tmp)
             return alw, deny
 
         def _get_group_allow_deny(allow_group_id=[], groups=[]):
@@ -535,7 +536,7 @@ class Indexes(object):
         allow = index["browsing_role"].split(',') \
             if len(index["browsing_role"]) else None
         if allow:
-            allow, deny = _get_allow_deny(allow, deepcopy(role))
+            allow, deny = _get_allow_deny(allow, deepcopy(role), True)
         else:
             allow = role
             deny = []
@@ -614,7 +615,9 @@ class Indexes(object):
         try:
             with db.session.no_autoflush:
                 role = Role.query.all()
-            return list(map(_get_dict, role)) + [{"id": 99, "name": "Guest"}]
+            return list(map(_get_dict, role)) \
+                + [{"id": 98, "name": "Authenticated User"}] \
+                + [{"id": 99, "name": "Guest"}]
         except SQLAlchemyError:
             return
 
@@ -656,10 +659,12 @@ class Indexes(object):
         index = node_path.rfind('/')
         pid = node_path[index + 1:]
         recursive_t = cls.recs_query()
-        q = db.session.query(recursive_t).filter(
+        query = db.session.query(recursive_t).filter(
             db.or_(recursive_t.c.pid == pid,
-                   recursive_t.c.cid == pid)). \
-            order_by(recursive_t.c.path).all()
+                   recursive_t.c.cid == pid))
+        if not get_user_roles()[0]:
+            query = query.filter(recursive_t.c.public)
+        q = query.order_by(recursive_t.c.path).all()
         return q
 
     @classmethod
@@ -730,8 +735,9 @@ class Indexes(object):
             # add by ryuu at 1108 start
             Index.index_name_english.label("name_en"),
             # add by ryuu at 1108 end
-            literal_column("1", db.Integer).label("lev")).filter(
-            Index.parent == pid). \
+            literal_column("1", db.Integer).label("lev"),
+            Index.public_state.label("public")
+        ).filter(Index.parent == pid). \
             cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
@@ -745,8 +751,9 @@ class Indexes(object):
                 # add by ryuu at 1108 start
                 rec_alias.c.name_en + '/' + test_alias.index_name_english,
                 # add by ryuu at 1108 end
-                rec_alias.c.lev + 1).filter(
-                test_alias.parent == rec_alias.c.cid)
+                rec_alias.c.lev + 1,
+                test_alias.public_state
+            ).filter(test_alias.parent == rec_alias.c.cid)
         )
 
         return recursive_t

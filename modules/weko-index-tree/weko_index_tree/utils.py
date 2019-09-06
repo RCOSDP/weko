@@ -33,6 +33,23 @@ from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
 
+from .models import Index
+
+
+def get_index_link_list(lang='en'):
+    """Get index link list."""
+    visables = Index.query.filter_by(
+        index_link_enabled=True, public_state=True).all()
+    if lang == 'jp':
+        res = []
+        for i in visables:
+            if i.index_link_name:
+                res.append((i.id, i.index_link_name))
+            else:
+                res.append((i.id, i.index_link_name_english))
+        return res
+    return [(i.id, i.index_link_name_english) for i in visables]
+
 
 def is_index_tree_updated():
     """Return True if index tree has been updated."""
@@ -65,21 +82,22 @@ def reset_tree(tree, path=None, more_ids=None):
         more_ids = []
     roles = get_user_roles()
     groups = get_user_groups()
-    if path is not None:
-        id_tp = []
-        if isinstance(path, list):
-            for lp in path:
-                index_id = lp.split('/')[-1]
+    if not roles[0]:
+        if path is not None:
+            id_tp = []
+            if isinstance(path, list):
+                for lp in path:
+                    index_id = lp.split('/')[-1]
+                    id_tp.append(index_id)
+            else:
+                index_id = path.split('/')[-1]
                 id_tp.append(index_id)
-        else:
-            index_id = path.split('/')[-1]
-            id_tp.append(index_id)
 
-        reduce_index_by_role(tree, roles, groups, False, id_tp)
-    else:
-        # for browsing role check
-        reduce_index_by_role(tree, roles, groups)
-        reduce_index_by_more(tree=tree, more_ids=more_ids)
+            reduce_index_by_role(tree, roles, groups, False, id_tp)
+        else:
+            # for browsing role check
+            reduce_index_by_role(tree, roles, groups)
+            reduce_index_by_more(tree=tree, more_ids=more_ids)
 
 
 def get_tree_json(obj, pid=0):
@@ -107,8 +125,16 @@ def get_tree_json(obj, pid=0):
                 lst['children'] = []
                 if isinstance(lst, dict):
                     key = lst.get('id')
-                    while ntree and str(ntree[0].pid) == key:
-                        index_obj = ntree.pop(0)
+                    i = 0
+                    while ntree:
+                        if str(ntree[i].pid) == key:
+                            index_obj = ntree.pop(i)
+                            i = 0
+                        elif i < len(ntree) - 1:
+                            i = i + 1
+                            continue
+                        else:
+                            break
                         if isinstance(index_obj, tuple):
                             cid = str(index_obj.cid)
                             pid = str(index_obj.pid)
@@ -165,7 +191,7 @@ def get_user_roles():
         users = current_app.config['WEKO_PERMISSION_ROLE_USER']
         for lst in list(current_user.roles or []):
             # if is administrator
-            if lst.name != users[3]:
+            if 'Administrator' in lst.name:
                 result = True
         return result
 
@@ -192,7 +218,7 @@ def check_roles(user_role, roles):
     if not user_role[0]:
         if current_user.is_authenticated:
             role = [x for x in (user_role[1] or []) if str(x) in (roles or [])]
-            if not role:
+            if not role and "98" not in roles:
                 is_can = False
         elif "99" not in roles:
             is_can = False
@@ -230,8 +256,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
 
                 # browsing role and group check
                 if browsing_role:
-                    if roles[0] or (check_roles(roles, brw_role)
-                                    and check_groups(groups, brw_group)):
+                    if check_roles(roles, brw_role) \
+                            or check_groups(groups, brw_group):
 
                         if public_state or (
                             isinstance(
@@ -248,8 +274,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         tree.pop(i)
                 # contribute role and group check
                 else:
-                    if roles[0] or (check_roles(roles, contribute_role)
-                                    and check_groups(groups, contribute_group)):
+                    if check_roles(roles, contribute_role) or \
+                            check_groups(groups, contribute_group):
                         lst['disabled'] = False
 
                         plst = plst or []

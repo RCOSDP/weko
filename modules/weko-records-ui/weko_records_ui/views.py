@@ -33,6 +33,7 @@ from invenio_db import db
 from invenio_files_rest.proxies import current_permission_factory
 from invenio_files_rest.views import ObjectResource, check_permission, \
     file_downloaded
+from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
 from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
@@ -40,6 +41,7 @@ from lxml import etree
 from simplekv.memory.redisstore import RedisStore
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_index_tree.models import IndexStyle
+from weko_index_tree.utils import get_index_link_list
 from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkActivity
@@ -313,7 +315,9 @@ def _get_google_scholar_meta(record):
             'jpcoar:file/jpcoar:URI',
             namespaces=mtdata.nsmap)
         if pdf_url is not None:
-            res.append({'name': 'citation_pdf_url', 'data': pdf_url.text})
+            res.append({'name': 'citation_pdf_url',
+                        'data': request.url.replace('records', 'record')
+                        + '/files/' + pdf_url.text})
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
     res.append({'name': 'citation_abstract_html_url', 'data': request.url})
@@ -413,6 +417,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     page, render_widgets = get_design_layout(request.args.get('community')
                                              or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
+    if hasattr(current_i18n, 'language'):
+        index_link_list = get_index_link_list(current_i18n.language)
+    else:
+        index_link_list = get_index_link_list()
+
     return render_template(
         template,
         pid=pid,
@@ -428,6 +437,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         width=width,
         detail_condition=detail_condition,
         height=height,
+        index_link_enabled=style.index_link_enabled,
+        index_link_list=index_link_list,
         google_scholar_meta=google_scholar_meta,
         billing_files_permission=billing_files_permission,
         billing_files_prices=billing_files_prices,

@@ -158,7 +158,7 @@ class WorkFlowSettingView(BaseView):
 
         :return:
         """
-        itemtype_list = ItemTypes.get_latest()
+        itemtype_list = ItemTypes.get_latest_custorm_harvesting()
         flow_api = Flow()
         flow_list = flow_api.get_flow_list()
         if '0' == workflow_id:

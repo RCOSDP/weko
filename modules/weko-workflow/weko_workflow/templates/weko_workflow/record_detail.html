@@ -50,6 +50,18 @@
               filename=file.key) %}
               <tr >
                 <td >{{file.filename}}</td>
+                <td rowspan="2">
+                  {%- if not 'simple' in file.displaytype -%}
+                    {%- if 'license_free' == file.licensetype -%}
+                      <span class="break-word">{{ file.licensefree }}</span>
+                    {%- else %}
+                    {% set lst = file.licensetype | get_license_icon %}
+                      <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
+                      <img src="{{lst[0]}}" alt="license.icon" /></a><br>
+                      {{ lst[1] }}
+                    {%- endif %}
+                  {%- endif -%}
+                </td>
               </tr>
               <tr >
                 <td>
