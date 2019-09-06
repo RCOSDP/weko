@@ -427,8 +427,12 @@ let WidgetTheme = function () {
         let borderStyle = (template == this.TEMPLATE_SIMPLE) ? '' : this.buildBorderCss(template.border, borderColor);
         let backgroundColor = (widget_settings.background_color) ? widget_settings.background_color : '';
 
+        let setClass = "grid-stack-item-content panel widget";
+        if(widget_settings.type == HEADER_TYPE || widget_settings.type == FOOTER_TYPE){
+            setClass = "grid-stack-item-content panel header-footer-type";
+        }
         let result = '<div class="grid-stack-item widget-resize">' +
-            '    <div class="grid-stack-item-content panel widget" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
+            '    <div class="' +setClass +'" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
             header +
             '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; ' + overFlowBody + '"' + id + '">' + widget_data.body +
             '        </div>' +

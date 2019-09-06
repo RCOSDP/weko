@@ -2,6 +2,13 @@
   overflow: auto;
 }
 
+.header-footer-type{
+  left: 0 !important;
+  right: 0 !important;
+  overflow: hidden !important;
+  border-radius: 0% !important;
+}
+
 .widget {
   border-radius: 0px !important;
   left: 15px !important;

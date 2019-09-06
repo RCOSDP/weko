@@ -92,6 +92,9 @@ const ComponentSelectField = function(props){
     useEffect(() => {
         if(props.repository == DEFAULT_REPOSITORY){
             setIsRootIndex(true);
+            if(selectedData.value == HEADER_TYPE || selectedData.value == FOOTER_TYPE){
+                props.getValueOfField(props.key_binding, "0");
+            }
         }else{
             setIsRootIndex(false);
         }
