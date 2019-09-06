@@ -348,6 +348,7 @@ class ItemTypeMappingView(BaseView):
             itemtype_prop = item_type.schema.get('properties')
             table_rows = ['pubdate']
             render_table_row = item_type.render.get('table_row')
+            meta_systems = item_type.render.get('meta_system')
             if isinstance(render_table_row, list):
                 table_rows.extend(render_table_row)
             for key in table_rows:
@@ -405,6 +406,7 @@ class ItemTypeMappingView(BaseView):
                 mapping_name=mapping_name,
                 hide_itemtype_prop=itemtype_prop,
                 jpcoar_prop_lists=remove_xsd_prefix(jpcoar_lists),
+                meta_system=meta_system,
                 itemtype_list=itemtype_list,
                 id=ItemTypeID,
                 lang_code=session.get('selected_language', 'en')  # Set default
