@@ -42,16 +42,6 @@ let PageBodyGrid = function () {
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
 
-    this.updateHeaderRootIndex = function(node){
-        let headerRootIndex = $("#header");
-        this.grid.update(headerRootIndex, node.x, node.y, node.width, node.height);
-    }
-
-    this.updateFooterRootIndex = function(node){
-        let footerRootIndex = $("#footer");
-        this.grid.update(footerRootIndex, node.x, node.y, node.width, node.height);
-    }
-
     this.loadGrid = function (widgetListItems) {
         let items = GridStackUI.Utils.sort(widgetListItems);
         let hasMainContent = false;
@@ -61,41 +51,17 @@ let PageBodyGrid = function () {
                 hasMainContent = true;
                 return false;
             }
-            else if (HEADER_TYPE == node.type && DEFAULT_REPOSITORY == node.id){
-                this.updateHeaderRootIndex(node);
-                return false;
-            }
-            else if(FOOTER_TYPE == node.type && DEFAULT_REPOSITORY == node.id){
-                this.updateFooterRootIndex(node);
-                return false;
-            }
         }, this);
 
         ///Pages do not have to have main content, so hide if not in list
         if(!hasMainContent) {
             $("#main_contents").hide();  // remove(); or empty() ?
         }
-        let noHeader = true;
-        let noFooter = true;
         for (var i = 0; i < items.length; i++) {
             let node = items[i];
             if (MAIN_CONTENT_TYPE != node.type) {
-                if (HEADER_TYPE == node.type) {
-                    noHeader = false;
-                }
-                if (FOOTER_TYPE == node.type) {
-                    noFooter = false;
-                }
-                if(!(DEFAULT_REPOSITORY == node.id && HEADER_TYPE == node.type) && !(DEFAULT_REPOSITORY == node.id && FOOTER_TYPE == node.type)){
                     this.addNewWidget(node, i);
-                }
             }
-        }
-        if (noHeader) {
-            $("#community_header").attr("hidden", false);
-        }
-        if (noFooter) {
-            $("#community_footer").attr("hidden", false);
         }
         return false;
     }.bind(this);

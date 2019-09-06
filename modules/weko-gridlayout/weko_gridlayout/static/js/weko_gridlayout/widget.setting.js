@@ -11,7 +11,6 @@ const THEME_SETTING = [{"value" : 'default', "text": "Default"}, {"value": "simp
 const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}];
 const MENU_TYPE = "Menu";
 const DEFAULT_COLOR = "#4169E1";
-const DEFAULT_REPOSITORY = "Root Index";
 
 function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
     if(key_binding == "border_style" && !initialValue){
@@ -35,10 +34,6 @@ function userSelectedInput(initialValue, getValueOfField, key_binding, component
 const ComponentSelectField = function(props){
     const selectedData = userSelectedInput(props.data_load, props.getValueOfField, props.key_binding);
     const [selectOptions, setSelectOptions] = useState([]);
-    const [otherSelectOptions, setOtherSelectOptions] = useState([]);
-    const [isRootIndex, setIsRootIndex] = useState(false);
-
-
 
     useEffect(() => {
         let options = []
@@ -53,11 +48,6 @@ const ComponentSelectField = function(props){
                                 <option key={option.value} value={option.value}>{option.text}</option>
                             )
                         });
-                        let temp = Array.from(options);
-                        setSelectOptions(options);
-                        temp.push(<option key="Header" value="Header">Header</option>);
-                        temp.push(<option key="Footer" value="Footer">Footer</option>);
-                        setOtherSelectOptions(temp);
                     } else {
                         options = result.repositories.map((repository) => {
                             return (
@@ -89,24 +79,13 @@ const ComponentSelectField = function(props){
         }
     },[]);
 
-    useEffect(() => {
-        if(props.repository == DEFAULT_REPOSITORY){
-            setIsRootIndex(true);
-            if(selectedData.value == HEADER_TYPE || selectedData.value == FOOTER_TYPE){
-                props.getValueOfField(props.key_binding, "0");
-            }
-        }else{
-            setIsRootIndex(false);
-        }
-    },[props.repository]);
-
     return (
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}{props.is_required ? <span className="style-red">*</span>:null}</label>
             <div class="controls col-xs-6">
                 <select className="form-control" name={props.name} {...selectedData}>
                     {props.url_request ? <option value="0">Please select the&nbsp;{props.key_binding}</option> : null}
-                    {!isRootIndex && props.key_binding == "type" ? otherSelectOptions : selectOptions}
+                    {selectOptions}
                 </select>
             </div>
         </div>
@@ -1690,7 +1669,7 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository || '0'}  is_required = {true}/>
                 </div>
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} is_required = {true} repository = {this.state.repository}/>
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} is_required = {true}/>
                 </div>
                 <div className="row">
                     <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit} initEditData={this.initEditData}

@@ -83,9 +83,6 @@
     {%- block body_inner %}
     {%- if not community_id %}
     <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
-      {%- block page_header %}
-        {% include config.THEME_HEADER_TEMPLATE %}
-      {%- endblock page_header %}
       <div id="main_contents">
     {%- endif%}
     <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
@@ -93,9 +90,6 @@
     {%- endblock page_body %}
     {%- if not community_id %}
       </div>
-    {%- block page_footer %}
-      {% include config.THEME_FOOTER_TEMPLATE %}
-    {%- endblock page_footer %}
     </div>
     {%- endif%}
     {%- endblock body_inner %}
