@@ -404,3 +404,5 @@ msgstr "アイテムタイプの登録"
 #~ msgid "Back"
 #~ msgstr "戻る"
 
+msgid "Item type added by system"
+msgstr "システムが付与したアイテムタイプ"

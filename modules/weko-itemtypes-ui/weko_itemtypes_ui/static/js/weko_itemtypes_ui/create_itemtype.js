@@ -27,6 +27,95 @@ $(document).ready(function () {
     "lom_mapping": "",
     "spase_mapping": ""
   }
+  meta_system_info = {
+      updated_date : {
+        title : "Updated Date",
+        title_i18n: {ja: "更新日時", en: "Updated Date"},
+        input_type: "cus_70",
+        option: {
+          required : false,
+          multiple : false,
+          hidden : false,
+          showlist : false,
+          crtf : false
+        }
+      },
+      created_date : {
+        title: "Created Date",
+        title_i18n: {ja: "作成日時", en: "Created Date"},
+        input_type: "cus_70",
+        option: {
+          required : false,
+          multiple : false,
+          hidden : false,
+          showlist : false,
+          crtf : false
+        }
+      },
+      persistent_identifier_doi : {
+        input_type: "cus_120",
+        title: "Persistent Identifier(DOI)",
+        title_i18n: {ja: "永続識別子(DOI)", en: "Persistent Identifier(DOI)"},
+        option: {
+          required : false,
+          multiple : false,
+          hidden : false,
+          showlist : false,
+          crtf : false
+        }
+      },
+      persistent_identifier_h : {
+        input_type: "cus_81",
+        title: "Persistent Identifier(Handle)",
+        title_i18n: {ja: "永続識別子（ハンドル）", en: "Persistent Identifier(Handle)"},
+        option: {
+          required : false,
+          multiple : false,
+          hidden : false,
+          showlist : false,
+          crtf : false
+        }
+      },
+      ranking_page_url : {
+        input_type: "cus_81",
+        title: "Ranking Page URL",
+        title_i18n: {ja: "ランディングページのURL", en: "Ranking Page URL"},
+        option: {
+          required : false,
+          multiple : false,
+          hidden : false,
+          showlist : false,
+          crtf : false
+        }
+      },
+      belonging_index_info : {
+        input_type: "text",
+        title: "Belonging Index Info",
+        title_i18n: {ja: "所属インデックスの情報", en: "Belonging Index Info"},
+        option: {
+          required : false,
+          multiple : false,
+          hidden : false,
+          showlist : false,
+          crtf : false
+        }
+      },
+    };
+    meta_fix = {
+      pubdate : {
+        input_type: "Date",
+        title: "Publish Date",
+        title_i18n: {ja: "公開日", en: "Publish Date"},
+        option: {
+          required : true,
+          multiple : false,
+          hidden : false,
+          showlist : false,
+          crtf : false
+        }
+      },
+    }
+    property_default = {}
 
   $('#myModal').modal({
     show: false
@@ -71,6 +160,7 @@ $(document).ready(function () {
           $('div.metadata-content *').not("[id=btn_restore_itemtype_schema]").prop('disabled', true);
       }
   });
+
   function disabled_deleted_type(){
       $('option.deleted_type').hide();
       $('#btn_restore_itemtype_schema').prop('disabled', true);
@@ -86,6 +176,7 @@ $(document).ready(function () {
     $('#itemtype_name_warning').addClass('hide');
     create_itemtype_schema();
     send(url_update_schema, page_global);
+    console.log("page_global",JSON.stringify(page_global))
   });
 
   $('#btn_previews_itemtype_schema').on('click', function(){
@@ -545,6 +636,7 @@ $(document).ready(function () {
     tmp_pubdate.option.showlist = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_2').is(':checked') ? true : false);
     tmp_pubdate.option.crtf = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_3').is(':checked') ? true : false);
     page_global.meta_fix["pubdate"] = tmp_pubdate;
+	  page_global.meta_system = add_meta_system()
   }
 
   // add new meta table row
@@ -793,6 +885,10 @@ $(document).ready(function () {
       properties_obj = data;
 
       defProps = data.defaults;
+      Object.keys(defProps).forEach(function(row_id){
+         property_default[defProps[row_id].value] = defProps[row_id].name
+      })
+      console.log("properties_obj",properties_obj)
       isSelected = true;
       Object.keys(defProps).forEach(function(key) {
         if (isSelected) {
@@ -827,6 +923,74 @@ $(document).ready(function () {
     }
   });
 
+
+
+  Object.keys(meta_system_info).forEach(function(row_id){
+    new_meta_row_default(row_id);
+    $('#txt_title_'+row_id).text(meta_system_info[row_id].title);
+    //add by ryuu. start
+    $('#txt_title_ja_'+row_id).text(meta_system_info[row_id].title_i18n.ja);
+    $('#txt_title_en_'+row_id).text(meta_system_info[row_id].title_i18n.en);
+    //add by ryuu. end
+
+    $('#chk_'+row_id+'_0').attr('checked', meta_system_info[row_id].option.required);
+    $('#chk_'+row_id+'_1').attr('checked', meta_system_info[row_id].option.multiple);
+    $('#chk_'+row_id+'_2').attr('checked', meta_system_info[row_id].option.showlist);
+    $('#chk_'+row_id+'_3').attr('checked', meta_system_info[row_id].option.crtf);
+    $('#chk_'+row_id+'_4').attr('checked', meta_system_info[row_id].option.hidden);
+
+    if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
+      let item = properties_obj[meta_system_info[row_id].input_type.substr(4)] || {}
+
+      console.log('item',item)
+      $('#select_input_type_'+row_id).text(item && item.name ? item.name : "");
+      render_object('schema_'+row_id, properties_obj[meta_system_info[row_id].input_type.substr(4)].schema, true);
+    } else if('checkboxes' == meta_system_info[row_id].input_type || 'radios' == meta_system_info[row_id].input_type
+            || 'select' == meta_system_info[row_id].input_type){
+      $('#select_input_type_'+row_id).text(meta_system_info[row_id].input_type);
+      $('#chk_prev_' + row_id + '_1').addClass('disabled');
+      $('#chk_' + row_id + '_1').attr('disabled', true);
+      render_select('schema_'+row_id, meta_system_info[row_id].input_value, true);
+    } else {
+      $('#select_input_type_'+row_id).text(property_default[meta_system_info[row_id].input_type] || meta_system_info[row_id].input_type);
+      render_empty('schema_'+row_id);
+    }
+    $('#schema_'+row_id).ready(function(){
+        $('#schema_'+row_id+' fieldset').attr("disabled",true)
+    })
+  })
+
+  Object.keys(meta_fix).forEach(function(row_id){
+    new_meta_row_default(row_id);
+    $('#txt_title_'+row_id).text(meta_fix[row_id].title);
+    //add by ryuu. start
+    $('#txt_title_ja_'+row_id).text(meta_fix[row_id].title_i18n.ja);
+    $('#txt_title_en_'+row_id).text(meta_fix[row_id].title_i18n.en);
+    //add by ryuu. end
+     $('#chk_'+row_id+'_0').attr('checked', meta_fix[row_id].option.required);
+      $('#chk_'+row_id+'_1').attr('checked', meta_fix[row_id].option.multiple);
+      $('#chk_'+row_id+'_2').attr('checked', meta_fix[row_id].option.showlist);
+      $('#chk_'+row_id+'_3').attr('checked', meta_fix[row_id].option.crtf);
+      $('#chk_'+row_id+'_4').attr('checked', meta_fix[row_id].option.hidden);
+
+
+    if(meta_fix[row_id].input_type.indexOf('cus_') != -1) {
+    $('#select_input_type_'+row_id).text(properties_obj[meta_fix[row_id].input_type.substr(4)].name);
+      render_object('schema_'+row_id, properties_obj[meta_fix[row_id].input_type.substr(4)].schema, true);
+    } else if('checkboxes' == meta_fix[row_id].input_type || 'radios' == meta_fix[row_id].input_type
+            || 'select' == meta_fix[row_id].input_type){
+      $('#select_input_type_'+row_id).text(meta_fix[row_id].input_type);
+      $('#chk_prev_' + row_id + '_1').addClass('disabled');
+      $('#chk_' + row_id + '_1').attr('disabled', true);
+      render_select('schema_'+row_id, meta_fix[row_id].input_value, true);
+    } else {
+      $('#select_input_type_'+row_id).text(meta_fix[row_id].input_type);
+      render_empty('schema_'+row_id);
+    }
+    $('#schema_'+row_id).ready(function(){
+        $('#schema_'+row_id+' fieldset').attr("disabled",true)
+    })
+  })
   if($('#item-type-lists').val().length > 0) {
     $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
       Object.assign(src_render ,data);
@@ -950,5 +1114,94 @@ $(document).ready(function () {
         handleError(textStatus);
       }
     });
+  }
+
+  function add_meta_system(){
+    var result = {}
+    Object.keys(meta_system_info).forEach(function(key){
+      var option = {
+        required : $('#chk_'+key+'_0').is(':checked') ? true : false,
+        multiple : $('#chk_'+key+'_1').is(':checked') ? true : false,
+        hidden : $('#chk_'+key+'_4').is(':checked') ? true : false,
+        showlist : ($('#chk_'+key+'_4').is(':checked') ? true : false) ? false : $('#chk_'+key+'_2').is(':checked') ? true : false,
+        crtf : ($('#chk_'+key+'_4').is(':checked') ? true : false) ? false : $('#chk_'+key+'_3').is(':checked') ? true : false,
+      }
+      result[key] = {
+        title : meta_system_info[key].title,
+        title_i18n : meta_system_info[key].title_i18n,
+        input_type : meta_system_info[key].input_type,
+        input_value : "",
+        option : option
+      }
+    })
+    return result
+  }
+
+  function new_meta_row_default(row_id) {
+    var row_template = '<tr id="tr_' + row_id + '">'
+        + '<td><lable type="text"  id="txt_title_' + row_id + '" value="" disabled="true"></label>'
+        + '  <div class="hide" id="text_title_JaEn_' + row_id + '">'
+        +'     <p>' + "Japanese" + '：</p>'
+        +'     <lable type="text"  id="txt_title_ja_' + row_id + '" value="" disabled="true"></label>'
+        +'     <p>' + "English" + '：</p>'
+        +'     <lable type="text"  id="txt_title_en_' + row_id + '" value="" disabled="true"></label>'
+        + '  </div>'
+        +'   <button type="button" class="btn btn-link" id="btn_link_' + row_id + '">' + "Localization Settings" + '</button>'
+        +'</td>'
+        + '<td><div class="form-inline"><div class="form-group">'
+        + '  <label id="select_input_type_' + row_id + '" metaid="' + row_id + '" disabled="true" style="font-weight: 400">'
+        + '  </label>'
+        + '  </div></div>'
+        + '  <div id="schema_' + row_id + '"></div>'
+        + '</td>'
+        + '<td>'
+        + '  <div class="checkbox" id="chk_prev_' + row_id + '_0">'
+        + '   <label><input type="checkbox" id="chk_' + row_id + '_0" value="required">' + "Required" + '</label>'
+        + '  </div>'
+        + '  <div class="checkbox" id="chk_prev_' + row_id + '_1">'
+        + '    <label><input type="checkbox" id="chk_' + row_id + '_1" value="multiple">' + "Allow Multiple" + '</label>'
+        + '  </div>'
+        + '  <div class="checkbox" id="chk_prev_' + row_id + '_2">'
+        + '    <label><input type="checkbox" id="chk_' + row_id + '_2" value="showlist">' +  "Show List" + '</label>'
+        + '  </div>'
+        + '  <div class="checkbox" id="chk_prev_' + row_id + '_3">'
+        + '    <label><input type="checkbox" id="chk_' + row_id + '_3" value="crtf">' + "Specify Newline" + '</label>'
+        + '  </div>'
+        + '  <div class="checkbox" id="chk_prev_' + row_id + '_4">'
+        + '    <label><input type="checkbox" id="chk_' + row_id + '_4" value="hidden">' + "Hide" + '</label>'
+        + '  </div>'
+        + '</td>'
+        + '<td>'
+        + '</td>'
+        + '<td>'
+        + '</td>'
+        + '<td>'
+        + '</td>'
+        + '</tr>';
+    $('#tbody_itemtype').append(row_template);
+    initSortedBtn();
+
+     //add by ryuu. start
+     //多言語linkをクリック
+     $('#tbody_itemtype').on('click', 'tr td #btn_link_'+row_id, function(){
+      if($('#text_title_JaEn_' + row_id).hasClass('hide')) {
+        $('#text_title_JaEn_' + row_id).removeClass('hide');
+      } else {
+        $('#text_title_JaEn_' + row_id).addClass('hide');
+      }
+    });
+    //add by ryuu. end
+
+    // Dynamic additional click event
+    // メタ項目の削除関数をダイナミックに登録する
+    // チェックボックス「複数可」が選択状態になると、サイズのセットボックスを表示する
+    $('#tbody_itemtype').on('click', 'tr td #chk_'+row_id+'_1', function(){
+      if($('#chk_'+row_id+'_1').is(':checked')) {
+        $('#arr_size_' + row_id).removeClass('hide');
+      } else {
+        $('#arr_size_' + row_id).addClass('hide');
+      }
+    });
+    // チェックボックス「非表示」が選択状態になると、
   }
 });
