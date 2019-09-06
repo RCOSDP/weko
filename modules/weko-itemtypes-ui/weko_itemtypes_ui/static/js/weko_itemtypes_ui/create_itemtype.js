@@ -715,8 +715,10 @@ $(document).ready(function () {
   // itemtype select input change
   $('#tbody_itemtype').on('change', '.change_input_type', function(){
     var meta_id = $(this).attr('metaid');
+    let isAllowMultiple = false;
     if($(this).val().indexOf('cus_') != -1) {
       product = properties_obj[$(this).val().substr(4)].schema;
+      isAllowMultiple = properties_obj[$(this).val().substr(4)].is_file;
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       $('#chk_' + meta_id + '_1').attr('disabled', false);
       render_object('schema_'+meta_id, product);
@@ -731,6 +733,7 @@ $(document).ready(function () {
       $('#chk_' + meta_id + '_1').attr('disabled', false);
       render_empty('schema_'+meta_id);
     }
+    $('#chk_' + meta_id + '_1').prop("checked", isAllowMultiple);
   });
 
   function render_empty(elementId) {

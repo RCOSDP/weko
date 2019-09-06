@@ -277,9 +277,12 @@ class ItemTypePropertiesView(BaseView):
                 lang in k.form['title_i18n'] and \
                     k.form['title_i18n'][lang]:
                 name = k.form['title_i18n'][lang]
-
+            is_file = False
+            if (k.schema.get('properties')
+                    and k.schema.get('properties').get('filename')):
+                is_file = True
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
-                   'forms': k.forms, 'sort': k.sort}
+                   'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
             lists[k.id] = tmp
 
         lists['defaults'] = current_app.config[
