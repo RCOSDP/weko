@@ -721,19 +721,21 @@ $(document).ready(function () {
       isAllowMultiple = properties_obj[$(this).val().substr(4)].is_file;
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       $('#chk_' + meta_id + '_1').attr('disabled', false);
+      $('#chk_' + meta_id + '_1').prop("checked", isAllowMultiple);
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
       $('#chk_prev_' + meta_id + '_1').addClass('disabled');
       $('#chk_' + meta_id + '_1').attr('disabled', true);
       $('#chk_' + meta_id + '_1').attr('checked', false);
+      $('#chk_' + meta_id + '_1').prop("checked", isAllowMultiple);
       render_select('schema_'+meta_id, '');
     } else {
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       $('#chk_' + meta_id + '_1').attr('disabled', false);
+      $('#chk_' + meta_id + '_1').prop("checked", isAllowMultiple);
       render_empty('schema_'+meta_id);
     }
-    $('#chk_' + meta_id + '_1').prop("checked", isAllowMultiple);
   });
 
   function render_empty(elementId) {
