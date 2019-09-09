@@ -127,10 +127,10 @@
                   <div class="form-inline">
                     <div class="radio">
                       <label>
-                        <input type="radio" name="radio_parent_list" value="{{key}}">
+                        <input id="{{key}}" type="radio" name="radio_parent_list" value="{{key}}" {%- if not is_system_admin -%}disabled{%- endif -%}>
                       </label>
                     </div>
-                    <select class="form-control" name="parent_list">
+                    <select class="form-control" name="parent_list" {%- if not is_system_admin -%}disabled{%- endif -%}>
                       {%- if keys_count == 1 -%}
                       <option value=""></option>
                       {%- endif -%}
@@ -141,17 +141,17 @@
                     <div class="btn-group pull-right" data-key="{{key}}">
                       <button type="button" class="btn btn-success
                             ten-pixel-right-margin ten-pixel-bottom-margin"
-                              data-action="add" style="position:unset;">
+                              data-action="add" style="position:unset;" {% if not is_system_admin %}disabled{% endif %}>
                         <span class="glyphicon glyphicon-plus"></span>&nbsp
                         {{_('Add')}}
                       </button>
-
+                      {% if not is_system_admin %}
                       <button type="button" class="btn btn-danger
                             ten-pixel-bottom-margin"
-                              style="position:unset;" data-action="del" {%- if keys_count== 1 -%}disabled{%- endif -%}>
+                              style="position:unset;" data-action="del">
                         <span class="glyphicon glyphicon-remove"></span>
                       </button>
-
+                      {% endif %}
                       <!--Button-->
                     </div>
                   </div>
@@ -166,10 +166,10 @@
                   <div class="form-inline">
                     <div class="radio">
                       <label>
-                        <input type="radio" name="radio_parent_list" value="{{key}}">
+                        <input type="radio" name="radio_parent_list" value="{{key}}" {%- if not is_system_admin -%}disabled{%- endif -%}>
                       </label>
                     </div>
-                    <select class="form-control" name="parent_list">
+                    <select class="form-control" name="parent_list" {%- if not is_system_admin -%}disabled{%- endif -%}>
                       <option value=""></option>
                       {%- for jp_key in jpcoar_prop_list.keys() -%}
                       <option value="{{jp_key}}">{{jp_key}}</option>
@@ -184,7 +184,7 @@
 
                       <button type="button" class="btn btn-success
                               ten-pixel-right-margin ten-pixel-bottom-margin"
-                              style="position:unset;" data-action="add" value="">
+                              style="position:unset;" data-action="add" value="" {%- if not is_system_admin -%}disabled{%- endif -%}>
                         <span class="glyphicon glyphicon-plus"></span>&nbsp
                         {{_('Add')}}
                       </button>
@@ -212,7 +212,6 @@
   </div>
 </div>
 <br/>
-
 <div class="row">
   <div class="col-sm-12">
     <div class="col-sm-6 item-type-list-header">

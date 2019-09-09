@@ -346,9 +346,16 @@ class ItemTypeMappingView(BaseView):
                                         ItemTypeID=lists[0].item_type[0].id))
             itemtype_list = []
             itemtype_prop = item_type.schema.get('properties')
+            sys_admin = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            is_admin = False
+            with db.session.no_autoflush:
+                for role in list(current_user.roles or []):
+                    if role.name == sys_admin:
+                        is_admin = True
+                        break
+            meta_system = item_type.render.get('meta_system')
             table_rows = ['pubdate']
             render_table_row = item_type.render.get('table_row')
-            meta_system = item_type.render.get('meta_system')
             if isinstance(render_table_row, list):
                 table_rows.extend(render_table_row)
             for key in table_rows:
