@@ -416,6 +416,7 @@ class ItemTypeMappingView(BaseView):
                 meta_system=meta_system,
                 itemtype_list=itemtype_list,
                 id=ItemTypeID,
+                is_system_admin=is_admin,
                 lang_code=session.get('selected_language', 'en')  # Set default
             )
         except BaseException as e:

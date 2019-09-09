@@ -145,13 +145,11 @@
                         <span class="glyphicon glyphicon-plus"></span>&nbsp
                         {{_('Add')}}
                       </button>
-                      {% if not is_system_admin %}
                       <button type="button" class="btn btn-danger
                             ten-pixel-bottom-margin"
-                              style="position:unset;" data-action="del">
+                              style="position:unset;" data-action="del" disabled>
                         <span class="glyphicon glyphicon-remove"></span>
                       </button>
-                      {% endif %}
                       <!--Button-->
                     </div>
                   </div>
