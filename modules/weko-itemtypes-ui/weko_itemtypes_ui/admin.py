@@ -348,7 +348,7 @@ class ItemTypeMappingView(BaseView):
             itemtype_prop = item_type.schema.get('properties')
             table_rows = ['pubdate']
             render_table_row = item_type.render.get('table_row')
-            meta_systems = item_type.render.get('meta_system')
+            meta_system = item_type.render.get('meta_system')
             if isinstance(render_table_row, list):
                 table_rows.extend(render_table_row)
             for key in table_rows:
