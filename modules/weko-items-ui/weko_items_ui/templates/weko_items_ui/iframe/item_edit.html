@@ -155,7 +155,7 @@
                           <div class="well">
                             <center>{{_('Drop files or folders here')}}</center>
                           </div>
-                          <p class="text-center legend"><strong>— OR —</strong></p>
+                          <p class="text-center legend"><strong>— {{_('OR')}} —</strong></p>
                           <p class="text-center">
                             <button class="btn btn-primary" ng-click="uploadThumbnail()">{{_('Click to select')}}</button>
                           </p>
@@ -164,7 +164,7 @@
                             sf-schema="schema"
                             sf-form="form"
                             sf-model="model"
-                            data-files-thumbnail="{{ files_thumbnail }}">
+                            data-files-thumbnail='{{ files_thumbnail | tojson }}'>
                           </form>
                           <hr />
                           <input type="hidden" id="deposit-files-api" value="{{ config.DEPOSIT_FILES_API }}">

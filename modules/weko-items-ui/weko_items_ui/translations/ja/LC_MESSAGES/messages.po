@@ -352,3 +352,39 @@ msgstr "必須項目は全て入力して下さい。"
 
 msgid "Please input the correct data."
 msgstr "データを正しく入力して下さい。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:
+msgid "Thumbnail"
+msgstr "サムネイル"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:
+msgid "Drop files or folders here"
+msgstr "該当欄にファイルをドラッグ＆ドロップすることで複数ファイルを登録できます"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:
+msgid "OR"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:
+msgid "Click to select"
+msgstr "ファイル選択"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:
+msgid "Registerable file: 「gif, jpg, jpe, jpeg, png, bmp, tiff, tif」"
+msgstr "登録可能なファイルは「gif, jpg, jpe, jpeg, png, bmp, tiff, tif」"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/upload_thumbnail_list.html:
+msgid "Filename"
+msgstr "ファイル名"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/upload_thumbnail_list.html:
+msgid "Size"
+msgstr "サイズ"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/upload_thumbnail_list.html:
+msgid "Progress"
+msgstr "進捗"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/upload_thumbnail_list.html:
+msgid "Actions"
+msgstr "アクション"

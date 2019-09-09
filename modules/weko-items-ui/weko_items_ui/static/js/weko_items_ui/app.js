@@ -1555,7 +1555,7 @@ function handleSharePermission(value) {
         // set current data thumbnail if has
         let thumbnailsInfor = $("form[name='uploadThumbnailForm']").data('files-thumbnail');
         if (thumbnailsInfor.length > 0) {
-          $scope.model.thumbnailsInfor = angular.fromJson(thumbnailsInfor);
+          $scope.model.thumbnailsInfor = thumbnailsInfor;
         }
         // click input upload files
         $scope.uploadThumbnail = function() {

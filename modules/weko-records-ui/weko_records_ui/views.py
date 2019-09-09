@@ -30,7 +30,7 @@ from flask_login import current_user, login_required
 from flask_security import current_user
 from invenio_cache import current_cache
 from invenio_db import db
-from invenio_files_rest.proxies import current_permission_factory
+from invenio_files_rest.models import ObjectVersion
 from invenio_files_rest.views import ObjectResource, check_permission, \
     file_downloaded
 from invenio_oaiserver.response import getrecord
@@ -406,6 +406,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             get_min_price_billing_file_download(groups_price,
                                                 billing_files_permission)
 
+    files_thumbnail = []
+    if record.files:
+        files_thumbnail = ObjectVersion.get_by_bucket(
+            record.get('_buckets').get('deposit')).\
+            filter_by(is_thumbnail=True).all()
+
     return render_template(
         template,
         pid=pid,
@@ -422,6 +428,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         google_scholar_meta=google_scholar_meta,
         billing_files_permission=billing_files_permission,
         billing_files_prices=billing_files_prices,
+        files_thumbnail=files_thumbnail,
         **ctx,
         **kwargs
     )

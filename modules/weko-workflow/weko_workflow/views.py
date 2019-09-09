@@ -342,7 +342,8 @@ def display_activity(activity_id=0):
                 files = to_files_js(deposit)
 
         if files:
-            files_thumbnail = [i for i in files
+            if not files_thumbnail:
+                files_thumbnail = [i for i in files
                                if 'is_thumbnail' in i.keys()
                                and i['is_thumbnail']]
             files = [i for i in files if i not in files_thumbnail]

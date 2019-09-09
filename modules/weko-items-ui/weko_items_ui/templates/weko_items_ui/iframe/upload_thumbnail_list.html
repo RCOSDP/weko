@@ -26,10 +26,10 @@
   </div>
   <table class="table">
     <tr>
-      <th>Filename</th>
-      <th>Size</th>
-      <th class="text-center">Progress</th>
-      <th class="text-center">Actions</th>
+      <th>{{_('Filename')}}</th>
+      <th>{{_('Size')}}</th>
+      <th class="text-center">{{_('Progress')}}</th>
+      <th class="text-center">{{_('Actions')}}</th>
     </tr>
     <tr class="sel-file" ng-repeat="f in model.thumbnailsInfor | filter:{is_thumbnail: 'true'}">
       <td>

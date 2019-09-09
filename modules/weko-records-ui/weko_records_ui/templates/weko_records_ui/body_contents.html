@@ -215,61 +215,77 @@
               </tr>
               {% endif %}
               {%- for lst in record.items_show_list %}
-              <tr>
-                <th>{{ lst['attribute_name'] }}</th>
-                <td>
-                  <pre class="hide">{{lst|tojson}}</pre>
-                  {% if lst['attribute_value'] is string %}
-                  {{ lst['attribute_value'] }}
-                  {% else %}
-                  {%- for key in lst['attribute_value'] %}
-                  {{ key }}
-                  {% endfor %}
-                  {% endif %}
-                  {% if lst['attribute_type'] == 'creator' %}
-                  {%- for l in lst['attribute_value_mlt'] if l %}
-                  {%- for creatorName in l['creatorNames'] if creatorName -%}
-                  {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
-                  {%- set q = 'creator='+creatorName['creatorName'] -%}
-                  {%- else -%}
-                  {%- set q = 'id='+l['weko_id'] -%}
-                  {%- endif -%}
-                  <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label
-                    class="p-left-10"></label><br />
-                  {%- endfor -%}
-                  <br>
-                  {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
-                  {%- if nameIdentifierScheme in nameIdentifier.keys() and nameIdentifier['nameIdentifierScheme'] != "" -%}
-                  {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
-                  {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
-                  {%- else -%}
-                  <!--
-                                  {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
-                                  -->
-                  <!-- demo -->
-                  {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
+                {% if 'attribute_name_hidden' not in lst.keys() %}
+                  <tr>
+                    <th>{{ lst['attribute_name'] }}</th>
+                    <td>
+                      <pre class="hide">{{lst|tojson}}</pre>
+                      {% if lst['attribute_value'] is string %}
+                      {{ lst['attribute_value'] }}
+                      {% else %}
+                      {%- for key in lst['attribute_value'] %}
+                      {{ key }}
+                      {% endfor %}
+                      {% endif %}
+                      {% if lst['attribute_type'] == 'creator' %}
+                      {%- for l in lst['attribute_value_mlt'] if l %}
+                      {%- for creatorName in l['creatorNames'] if creatorName -%}
+                      {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
+                      {%- set q = 'creator='+creatorName['creatorName'] -%}
+                      {%- else -%}
+                      {%- set q = 'id='+l['weko_id'] -%}
+                      {%- endif -%}
+                      <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label
+                        class="p-left-10"></label><br />
+                      {%- endfor -%}
+                      <br>
+                      {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
+                      {%- if nameIdentifierScheme in nameIdentifier.keys() and nameIdentifier['nameIdentifierScheme'] != "" -%}
+                      {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
+                      {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
+                      {%- else -%}
+                      <!--
+                                      {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
+                                      -->
+                      <!-- demo -->
+                      {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
 
-                  {%- endif -%}
-                  <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a
-                    href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br />
-                  {%- endif -%}
-                  {%- endfor -%}
-                  {%- if config['EMAIL_DISPLAY_FLG'] -%}
-                  {%- for creatorMail in l['creatorMails'] if creatorMail -%}
-                  <label class="p-left-10">e-mail: </label><a
-                    href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br />
-                  {%- endfor -%}
-                  {%- endif -%}
+                      {%- endif -%}
+                      <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a
+                        href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br />
+                      {%- endif -%}
+                      {%- endfor -%}
+                      {%- if config['EMAIL_DISPLAY_FLG'] -%}
+                      {%- for creatorMail in l['creatorMails'] if creatorMail -%}
+                      <label class="p-left-10">e-mail: </label><a
+                        href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br />
+                      {%- endfor -%}
+                      {%- endif -%}
+                      {% endfor %}
+                      {% else %}
+                      {%- for l in lst['attribute_value_mlt'] %}
+                      {%- for k, v in l.items() %}
+                      {{ v }}<br>
+                      {% endfor %}
+                      {% endfor %}
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endif %}
+                {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
+                  {%- for thumb in files_thumbnail | sort(attribute='key') -%}
+                    {%- set thumb_name = thumb.filename or thumb.key -%}
+                    {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                    filename=thumb.key) %}
+                    <tr>
+                      <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
+                      <td>
+                        <p>{{ thumb_name }}</p>
+                        <img src="{{thumb_url}}" alt={{thumb_name}} style="width: 100%;" />
+                      </td>
+                    </tr>
                   {% endfor %}
-                  {% else %}
-                  {%- for l in lst['attribute_value_mlt'] %}
-                  {%- for k, v in l.items() %}
-                  {{ v }}<br>
-                  {% endfor %}
-                  {% endfor %}
-                  {% endif %}
-                </td>
-              </tr>
+                {% endif %}
               {% endfor %}
               {% if record.relation %}
               <tr>
@@ -278,41 +294,6 @@
                   {%- for sub_record in record.relation.relation_type%}
                   <a target="_self" href="{{sub_record.item_links}}">{{ sub_record.item_title}}</a><br>
                   {% endfor %}
-                </td>
-              </tr>
-              {% endif %}
-              {%- if files -%}
-              <tr>
-                <th>{{_('Thumbnail')}}</th>
-                <td>
-                  <div>
-                    {%- for file in files|sort(attribute='key') -%}
-                    {%- if file.filename -%}
-                    {%- set img = file.mimetype | get_image_src -%}
-                    {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                      filename=file.key) %}
-                    {%- set is_billing_file = False -%}
-                    {%- set billing_file_data = "" -%}
-                    {%- set billing_file_url = "" -%}
-                    {%- set billing_file_class = "" -%}
-                    {%- set billing_file_access_permission = True -%}
-                    {%- if billing_files_permission -%}
-                    {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
-                    {%- set is_billing_file = True -%}
-                    {%- set billing_file_class = " billing-file" -%}
-                    {%- set file_url = "JavaScript:void(0);" -%}
-                    {%- endif %}
-                    {%- set access_permission = record | check_file_permission(file.info()) -%}
-                    {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
-                      filename=file.key) %}
-                    <p>{{file.filename}}</p>
-                    <p>
-                      <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} href="{{url_for('workflowsetting.workflow_detail', workflow_id=0)}}">{{ file.filename }}
-                            ({{ file.size|filesizeformat }})</a><br>
-                    </p>
-                    {%- endif -%}
-                    {%- endfor -%}
-                  </div>
                 </td>
               </tr>
               {% endif %}
