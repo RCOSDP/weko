@@ -1,8 +1,8 @@
-<div ng-show="filesVM.files.length > 0" class="panel panel-default">
+<div ng-show="(filesVM.files|filter:{is_thumbnail: '!true'}).length > 0" class="panel panel-default">
   <div class="panel-heading">
     <div class="row">
       <div class="col-sm-6">
-        <p ng-show="filesVM.files.length > 0" class="text-muted">
+        <p ng-show="(filesVM.files|filter:{is_thumbnail: '!true'}).length > 0" class="text-muted">
         </p>
       </div>
       <div class="col-sm-offset-2 col-sm-4">
@@ -39,7 +39,7 @@
   </table>
   <div class="panel-footer">
     <div class="text-right">
-      <span class="text-muted" ng-show="filesVM.invenioFilesBusy && filesVM.getCompleted().length < filesVM.files.length">
+      <span class="text-muted" ng-show="filesVM.invenioFilesBusy && filesVM.getCompleted().length < (filesVM.files|filter:{is_thumbnail: '!true'}).length">
         Loading ..
       </span>
       <button class="btn btn-sm btn-default" type="submit" ng-show="filesVM.invenioFilesBusy" ng-click="filesVM.cancel()">Cancel</button>

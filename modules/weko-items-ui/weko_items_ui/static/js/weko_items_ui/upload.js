@@ -324,7 +324,14 @@ require([
                         files[0].is_thumbnail=true;
                         Array.prototype.push.apply($scope.$parent.model.thumbnailsInfor,files);
                         $rootScope.filesVM.addFiles(files);
+                        if ($rootScope.filesVM.invenioFilesEndpoints.bucket !== undefined) {
+                          var deposit_files_api = $("#deposit-files-api").val();
+                          var bucket_url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
+                          var bucket_url_arr = bucket_url.split(deposit_files_api)
+                          $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url_arr[0] + deposit_files_api + '/thumbnail' + bucket_url_arr[1];
+                        }
                         $rootScope.filesVM.upload();
+                        $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url;
                         reader.readAsDataURL(files[0]);
                     }
                 });

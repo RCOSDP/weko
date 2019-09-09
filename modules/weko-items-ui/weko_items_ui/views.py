@@ -549,7 +549,7 @@ def to_files_js(record):
                 'filename': f.get('filename', ''),
                 'mimetype': f.mimetype,
                 'key': f.key,
-                'version_id': f.version_id,
+                'version_id': str(f.version_id),
                 'checksum': f.file.checksum,
                 'size': f.file.size,
                 'completed': True,
@@ -563,7 +563,8 @@ def to_files_js(record):
                             version_id=f.version_id,
                         )),
                 },
-                'is_show': f.is_show
+                'is_show': f.is_show,
+                'is_thumbnail': f.is_thumbnail
             })
 
     return res

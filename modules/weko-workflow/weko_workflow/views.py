@@ -335,14 +335,17 @@ def display_activity(activity_id=0):
             item_str = sessionstore.get('activity_item_' + str(activity_id))
             item_json = json.loads(item_str.decode('utf-8'))
             if 'files' in item_json:
-                all_files = item_json.get('files')
-                files_thumbnail = [i for i in all_files
-                                   if 'is_thumbnail' in i.keys()]
-                files = [i for i in all_files if i not in files_thumbnail]
+                files = item_json.get('files')
         if not files:
             deposit = WekoDeposit.get_record(item.id)
             if deposit is not None:
                 files = to_files_js(deposit)
+
+        if files:
+            files_thumbnail = [i for i in files
+                               if 'is_thumbnail' in i.keys()
+                               and i['is_thumbnail']]
+            files = [i for i in files if i not in files_thumbnail]
 
         from weko_deposit.links import base_factory
         links = base_factory(pid)
@@ -403,7 +406,7 @@ def display_activity(activity_id=0):
         pid=pid,
         community_id=community_id,
         need_thumbnail=need_thumbnail,
-        files_thumbnail=json.dumps(files_thumbnail),
+        files_thumbnail=files_thumbnail,
         **ctx
     )
 

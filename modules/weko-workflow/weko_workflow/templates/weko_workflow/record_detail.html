@@ -49,14 +49,12 @@
               {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
               filename=file.key) %}
               <tr >
-                <td >{{file.filename}}</td>
-              </tr>
-              <tr >
+                <td >{{file.filename or file.key}}</td>
                 <td>
                     <span class="filename">
-                      <img src="{{img}}" alt={{file.filename}} />
+                      <img src="{{img}}" alt={{file.filename or file.key}} />
                       <a class="forcewrap"
-                          href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                          href="{{file_url}}">{{ file.filename or file.key }} ({{ file.size|filesizeformat }})</a>
                       <!--<span>[ 0 downloads ]</span><br>-->
                       <span>{{file.checksum.split(':')[0]}}</span>
                       <span class="break-word">{{file.checksum.split(':')[1]}}</span>
@@ -86,6 +84,7 @@
                 </tr>
               {% endif %}
               {%- for lst in record.items_show_list %}
+                {% if 'attribute_name_hidden' not in lst.keys() %}
                 <tr>
                   <th>{{ lst['attribute_name'] }}</th>
                   <td>
@@ -136,6 +135,21 @@
                     {% endif %}
                   </td>
                 </tr>
+                {% endif %}
+                {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
+                  {%- for thumb in files_thumbnail | sort(attribute='key') -%}
+                    {%- set thumb_name = thumb.filename or thumb.key -%}
+                    {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                    filename=thumb.key) %}
+                    <tr>
+                      <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
+                      <td>
+                        <p>{{ thumb_name }}</p>
+                        <img src="{{thumb_url}}" alt={{thumb_name}} style="width: 100%;" />
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% endif %}
               {% endfor %}
             </table>
             {%- if 'main_entry_personal_name' in record %}

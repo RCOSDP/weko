@@ -65,7 +65,8 @@ def item_login(item_type_id=0):
             if 'files' in item_json:
                 all_files = item_json.get('files')
                 files_thumbnail = [i for i in all_files
-                                   if 'is_thumbnail' in i.keys()]
+                                   if 'is_thumbnail' in i.keys()
+                                   and i['is_thumbnail']]
                 files = [i for i in all_files if i not in files_thumbnail]
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
