@@ -122,6 +122,7 @@ static:
     - /code/modules/weko-user-profiles/weko_user_profiles.egg-info
     - /code/modules/weko-deposit/weko_deposit.egg-info
     - /code/modules/weko-authors/weko_authors.egg-info
+    - /code/modules/weko-handle/weko_handle.egg-info
     - /code/modules/weko-workflow/weko_workflow.egg-info
     - /code/modules/weko-indextree-journal/weko_indextree_journal.egg-info
     - /code/modules/weko-bulkupdate/weko_bulkupdate.egg-info
