@@ -106,7 +106,6 @@ def load_repository():
 def load_widget_design_setting(current_language=''):
     """Load  Widget design setting from DB by repository id.
 
-    :param repository_id: Identifier of the repository.
     :param current_language: The language default
     :return:
     """

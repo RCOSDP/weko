@@ -202,13 +202,26 @@ class WidgetList extends React.Component {
 
     getPageDesign(id) {
         let url;
+        let requestParam;
         if(id == 0 || id == '0') {  // If zero, then the main layout was selected
-            url = '/api/admin/load_widget_design_setting/' + this.props.repositoryId;
+            url = '/api/admin/load_widget_design_setting';
+            let data = {
+              repository_id: this.props.repositoryId
+            };
+            requestParam = {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(data)
+            }
         }
-        else {  // Get deisgn setting for page not repository
+        else {  // Get design setting for page not repository
             url = '/api/admin/load_widget_design_page_setting/' + id;
         }
-        fetch(url)
+        fetch(url, {
+            ...requestParam
+        })
             .then(res => res.json())
             .then((result) => {
                     if (result.error) {
@@ -899,13 +912,26 @@ class ButtonLayout extends React.Component {
 
     handleCancel() {  // Reset to current settings
         let url;
+        let requestParam;
         if(this.props.pageId == 0) {  // If zero, then the main layout is selected
-            url = '/api/admin/load_widget_design_setting/' + this.props.repositoryId;
+            url = '/api/admin/load_widget_design_setting';
+            let data = {
+              repository_id: this.props.repositoryId
+            };
+            requestParam = {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(data)
+            }
         }
-        else {  // Get deisgn setting for page not repository
+        else {  // Get design setting for page not repository
             url = '/api/admin/load_widget_design_page_setting/' + this.props.pageId;
         }
-        fetch(url)
+        fetch(url,{
+          ...requestParam
+        })
             .then(res => res.json())
             .then(
                 (result) => {
