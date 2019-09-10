@@ -33,7 +33,7 @@ class Repository extends React.Component {
             .then(
                 (result) => {
                     if (result.error) {
-                        alter(result.error);
+                        alert(result.error);
                         return;
                     }
                     let options = result.repositories.map((option) => {
@@ -74,10 +74,10 @@ class Repository extends React.Component {
                     }
                     let widgetPreview = result['widget-preview'];
                     let widgetList = result['widget-list'];
-                    let data = widgetPreview['data'];
-                    loadWidgetPreview(data);  // TODO: Reuse below
-                    data = widgetList['data'];
-                    loadWidgetList(data);
+                    let  widgetPreviewElement= widgetPreview['data'];
+                    loadWidgetPreview(widgetPreviewElement);  // TODO: Reuse below
+                    widgetPreviewElement = widgetList['data'];
+                    loadWidgetList(widgetPreviewElement);
                 },
                 (error) => {
                     console.log(error);
@@ -142,7 +142,7 @@ class WidgetList extends React.Component {
         this.state = {
            options: [],
            selectedPage: 0
-        }
+        };
         this.getPages = this.getPages.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.displayOptions = this.displayOptions.bind(this);
@@ -249,7 +249,7 @@ class WidgetList extends React.Component {
         return (
          <div className="form-group row">
            <label htmlFor="pages-list-select" className="control-label col-xs-1">Pages</label>
-             <div class="controls col-xs-5">
+             <div className="controls col-xs-5">
                  <select id="pages-list-select" onChange={this.handleChange} className="form-control">
                      {this.state.options}
                  </select>
@@ -270,7 +270,7 @@ class PagesListSelectControls extends React.Component {
            deleteModalOpen: false,
            pageModalOpen: false,
            page: {}
-        }
+        };
         this.handleEdit = this.handleEdit.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
     }
@@ -335,8 +335,8 @@ class PagesListSelectControls extends React.Component {
         }
         return (
             [
-              <div class="col-xs-3">
-                  <div class="btn-toolbar">
+              <div className="col-xs-3">
+                  <div className="btn-toolbar">
                       {buttons}
                   </div>
               </div>,
@@ -376,23 +376,23 @@ class DeletePageModal extends React.Component {
 
     render() {
         return (
-          <div class="modal" tabindex="-1" role="dialog" style={this.props.deleteModalOpen ? {display: 'block'} : {display: 'none'}}>
-              <div class="modal-dialog" role="document">
-                  <div class="modal-content">
-                      <div class="modal-header">
-                          <button type="button" class="close" onClick={this.props.handleClose} aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                          <h4 class="modal-title">Delete Page</h4>
+          <div className="modal" tabIndex="-1" role="dialog" style={this.props.deleteModalOpen ? {display: 'block'} : {display: 'none'}}>
+              <div className="modal-dialog" role="document">
+                  <div className="modal-content">
+                      <div className="modal-header">
+                          <button type="button" className="close" onClick={this.props.handleClose} aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                          <h4 className="modal-title">Delete Page</h4>
                       </div>
-                      <div class="modal-body">
-                          <p class="text-center">Are you sure you want to delete the page?</p>
+                      <div className="modal-body">
+                          <p className="text-center">Are you sure you want to delete the page?</p>
                       </div>
-                      <div class="modal-footer">
-                          <button id="delete-page" class="btn btn-primary save-button" onClick={this.props.handleDelete}>
-                              <span class="glyphicon glyphicon-check"></span>
+                      <div className="modal-footer">
+                          <button id="delete-page" className="btn btn-primary save-button" onClick={this.props.handleDelete}>
+                              <span className="glyphicon glyphicon-check"></span>
                               Submit
                           </button>
                           <button type="button" class="btn btn-info close-button" onClick={this.props.handleClose}>
-                              <span class="glyphicon glyphicon-remove"></span>
+                              <span className="glyphicon glyphicon-remove"></span>
                               Close
                           </button>
                       </div>
@@ -504,15 +504,15 @@ class AddPageModal extends React.Component {
 
     render() {
         return (
-          <div class="modal" tabindex="-1" role="dialog" style={this.props.isOpen ? {display: 'block'} : {display: 'none'}}>
-              <div class="modal-dialog modal-lg" role="document">
-                  <div class="modal-content">
-                      <div class="modal-header">
-                          <button type="button" class="close" onClick={this.handleClose} aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                          <h4 class="modal-title">Page</h4>
+          <div className="modal" tabIndex="-1" role="dialog" style={this.props.isOpen ? {display: 'block'} : {display: 'none'}}>
+              <div className="modal-dialog modal-lg" role="document">
+                  <div className="modal-content">
+                      <div className="modal-header">
+                          <button type="button" className="close" onClick={this.handleClose} aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                          <h4 className="modal-title">Page</h4>
                       </div>
-                      <div class="modal-body">
-                          <p class="text-center text-danger">{this.state.errorMessage}</p>
+                      <div className="modal-body">
+                          <p className="text-center text-danger">{this.state.errorMessage}</p>
                           <AddPageForm
                               pageModalOpen={this.props.isOpen}
                               values={{
@@ -524,13 +524,13 @@ class AddPageModal extends React.Component {
                               handleInputChange={this.handleInputChange}
                           />
                       </div>
-                      <div class="modal-footer">
-                          <button class="btn btn-primary save-button" onClick={this.handleSave}>
-                              <span class="glyphicon glyphicon-check"></span>
+                      <div className="modal-footer">
+                          <button className="btn btn-primary save-button" onClick={this.handleSave}>
+                              <span className="glyphicon glyphicon-check"></span>
                               Save
                           </button>
                           <button type="button" class="btn btn-info close-button" onClick={this.handleClose}>
-                              <span class="glyphicon glyphicon-remove"></span>
+                              <span className="glyphicon glyphicon-remove"></span>
                               Close
                           </button>
                       </div>
@@ -556,7 +556,7 @@ class AddPageForm extends React.Component {
                   <label htmlFor="" className="control-label col-xs-2 text-right">
                       URL<span className="text-red">*</span>
                   </label>
-                  <div class="col-xs-6">
+                  <div className="col-xs-6">
                       <input name="url" type="text" value={this.props.values.url}
                           onChange={(e) => this.props.handleInputChange(e.target.name, e.target.value)}
                           className="form-control" />
@@ -588,7 +588,7 @@ class PageTitle extends React.Component {
             options: [],
             selectedLanguage: '0',  // Temporary, changed after data retrieval
             defaultLanguage: ''
-        }
+        };
         this.handleChange = this.handleChange.bind(this);
         this.handleChangeLanguage = this.handleChangeLanguage.bind(this);
         this.initLanguageList = this.initLanguageList.bind(this);
@@ -613,7 +613,7 @@ class PageTitle extends React.Component {
                             let newLang = {
                                 'code': lang.lang_code,
                                 'sequence': lang.sequence
-                            }
+                            };
                             systemRegisteredLang.push(newLang);
                         } else {
                             langList.push(lang.lang_code);
@@ -716,12 +716,12 @@ class PageTitle extends React.Component {
     render() {
         return (
             <div>
-                <div class="col-xs-6">
+                <div className="col-xs-6">
                     <input id="page-title-input" name="title" type="text" value={this.state.title}
                         onChange={this.handleChange}
                         className="form-control" />
                 </div>
-                <div class="col-xs-2">
+                <div className="col-xs-2">
                    <select id="page-language-select" onChange={this.handleChangeLanguage} className="form-control">
                        {this.state.options}
                    </select>
@@ -730,142 +730,6 @@ class PageTitle extends React.Component {
         );
     }
  }
-
-class ComponentFieldEditor extends React.Component {
-    constructor(props) {
-        super(props)
-        this.quillRef = null;
-        this.reactQuillRef = null;
-        this.state = {
-            // contents: 'Current Text',
-            modules: {
-                toolbar: [
-                    [{ 'font': [] }, { size: [] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': ["#000000", "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff", "#ffffff", "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff", "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff", "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2", "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466", 'custom-color'] }, { 'background': ["#000000", "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff", "#ffffff", "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff", "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff", "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2", "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466", 'custom-color'] }],
-                    [{ 'script': 'sub' }, { 'script': 'super' }],
-                    [{ 'header': '1' }, { 'header': '2' }, 'blockquote', 'code-block'],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' },
-                    { 'indent': '-1' }, { 'indent': '+1' }],
-                    ['direction', 'align'],
-                    ['link', 'image', 'video', 'formula'],
-                    ['clean']
-                ],
-                clipboard: {
-                    matchVisual: false,
-                }
-            },
-            formats: [
-                'font', 'size',
-                'bold', 'italic', 'underline', 'strike', 'color', 'background',
-                'script', 'script', 'header', 'blockquote', 'code-block',
-                'list', 'bullet', 'indent', 'direction', 'align',
-                'link', 'image', 'video', 'formula', 'clean'
-            ]
-        };
-        this.handleChange = this.handleChange.bind(this)
-        this.attachQuillRefs = this.attachQuillRefs.bind(this);
-    }
-    componentDidMount() {
-        this.attachQuillRefs();
-    }
-
-    componentDidUpdate() {
-        this.attachQuillRefs();
-    }
-
-    attachQuillRefs() {
-        // Ensure React-Quill reference is available:
-        if (typeof this.reactQuillRef.getEditor !== 'function') {
-            return false;
-        }
-        // Skip if Quill reference is defined:
-        if (this.quillRef != null) {
-            return false;
-        }
-
-        const quillRef = this.reactQuillRef.getEditor();
-        if (quillRef != null) this.quillRef = quillRef;
-    }
-
-    componentWillReceiveProps(props) {
-        // if (props.data_change) {
-        //     let setting = undefined;
-        //     setting = props.data_load;
-        //     this.setState({
-        //         contents: setting
-        //     })
-        //     //this.props.getValueOfField("language", false);
-        // }
-    }
-
-    handleChange(html) {
-        if (this.quillRef == null) {
-            return false;
-        }
-        var contents = this.quillRef.getContents();
-        let isResetHTML = true;
-        if(contents && Array.isArray(contents.ops)){
-            contents.ops.forEach(function (content) {
-                let data = content['insert'];
-                if (typeof data != "string"){
-                    isResetHTML = false;
-                }
-                else{
-                    if(data.trim() != ""){
-                        isResetHTML = false;
-                    }
-                }
-            })
-        }
-        let dataSending = html;
-        if(isResetHTML){
-            dataSending = "";
-        }
-        this.props.handleChange('content', html);
-    }
-
-    render() {
-        return (
-            <div class="my-editor">
-                <ReactQuill
-                    ref={(el) => { this.reactQuillRef = el }}
-                    onChange={this.handleChange}
-                    value={this.props.content || ''}
-                    modules={this.state.modules}
-                    formats={this.state.formats}
-                    bounds={'.app'}
-                />
-            </div>
-        )
-    }
-}
-
-/**
- *  Page List Controls
- */
-class PagesControl extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        return (
-            <div className="form-group">
-                <div class="btn-toolbar">
-                    <button id="add-page" className="btn btn-success" onClick={this.props.handleAdd}>
-                        <span className="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                        Add
-                    </button>
-                    <button id="remove-page" className="btn btn-danger" onClick={this.style = '0'} >
-                        <span className="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                        Remove
-                    </button>
-                </div>
-            </div>
-        )
-    }
-}
 
 /**
  * Preview widget panel layout.
@@ -1028,24 +892,24 @@ var PreviewGrid = new function () {
         this.serializedData = [];
 
         this.grid = $('#gridPreview').data('gridstack');
-    }
+    };
 
     this.loadGrid = function (widgetListItems) {
         this.grid.removeAll();
-        var items = GridStackUI.Utils.sort(widgetListItems);
+        let items = GridStackUI.Utils.sort(widgetListItems);
         isHasMainContent = false;
         isHasHeader = false;
         isHasFooter = false;
         _.each(items, function (node) {
-            if(MAIN_CONTENT_TYPE == node.type){
+            if(MAIN_CONTENT_TYPE === node.type){
                 isHasMainContent = true;
                 disableMainContentButton(true); // Figure this out
             }
-            if(node.type == HEADER_TYPE){
+            if(node.type === HEADER_TYPE){
                 isHasHeader = true;
                 disableHeaderButton(true);
             }
-            if(node.type == FOOTER_TYPE){
+            if(node.type === FOOTER_TYPE){
                 isHasFooter = true;
                 disableFooterButton(true);
             }
@@ -1076,7 +940,7 @@ var PreviewGrid = new function () {
             let widget_id = el.data("widget_id")
             if (!id) {
                 return;
-            } else if(MAIN_CONTENT_TYPE == type){
+            } else if(MAIN_CONTENT_TYPE === type){
                 isHasMainContent = true;
             }
             return {
@@ -1144,17 +1008,17 @@ function addWidget() {
             let widgetId = $(this).data('widgetId');
             let widgetType = $(this).data('widgetType');
             let id = $(this).data('id');
-            if(MAIN_CONTENT_TYPE == widgetType && isHasMainContent){
+            if(MAIN_CONTENT_TYPE === widgetType && isHasMainContent){
                 alert("Main Content has been existed in Preview panel.");
                 disableMainContentButton(true);
                 return false;
             }
-            if(HEADER_TYPE == widgetType && isHasHeader){
+            if(HEADER_TYPE === widgetType && isHasHeader){
                 alert("Header has been existed in Preview panel.");
                 disableHeaderButton(true);
                 return false;
             }
-            if(FOOTER_TYPE == widgetType && isHasFooter){
+            if(FOOTER_TYPE === widgetType && isHasFooter){
                 alert("Footer has been existed in Preview panel.");
                 disableFooterButton(true);
                 return false;
@@ -1171,15 +1035,15 @@ function addWidget() {
                 widget_id: id,
             };
             PreviewGrid.addNewWidget(node);
-            if(MAIN_CONTENT_TYPE == widgetType){
+            if(MAIN_CONTENT_TYPE === widgetType){
                 isHasMainContent = true;
                 disableMainContentButton(true);
             }
-            if(HEADER_TYPE == widgetType){
+            if(HEADER_TYPE === widgetType){
                 isHasHeader = true;
                 disableHeaderButton(true);
             }
-            if(FOOTER_TYPE == widgetType){
+            if(FOOTER_TYPE === widgetType){
                 isHasFooter = true;
                 disableFooterButton(true);
             }
@@ -1208,13 +1072,13 @@ function loadWidgetList(widgetListItems) {
     _.each(widgetListItems, function (widget) {
         let buttonId = "";
         let buttonClass = "";
-        if(MAIN_CONTENT_TYPE ==  widget.widgetType) {
+        if(MAIN_CONTENT_TYPE ===  widget.widgetType) {
             buttonId = 'id="' + MAIN_CONTENT_BUTTON_ID + '"';
         }else
-        if(widget.widgetType == HEADER_TYPE){
+        if(widget.widgetType === HEADER_TYPE){
             buttonClass = HEADER_CLASS;
         }else
-        if(widget.widgetType == FOOTER_TYPE){
+        if(widget.widgetType === FOOTER_TYPE){
             buttonClass = FOOTER_CLASS;
         }
         widgetList.addWidget($(
@@ -1254,15 +1118,15 @@ function removeWidget() {
         let widget = $(this).closest(".grid-stack-item");
         let widgetType = widget.data('type');
         PreviewGrid.deleteWidget(widget);
-        if(MAIN_CONTENT_TYPE == widgetType){
+        if(MAIN_CONTENT_TYPE === widgetType){
             isHasMainContent = false;
             disableMainContentButton(false);
         }
-        if(HEADER_TYPE == widgetType){
+        if(HEADER_TYPE === widgetType){
             isHasHeader = false;
             disableHeaderButton(false);
         }
-        if(FOOTER_TYPE == widgetType){
+        if(FOOTER_TYPE === widgetType){
             isHasFooter = false;
             disableFooterButton(false);
         }

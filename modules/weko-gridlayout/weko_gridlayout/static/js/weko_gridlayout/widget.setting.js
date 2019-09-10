@@ -208,7 +208,7 @@ const ComponentSelectColorFiled = (props) => {
         initColor = DEFAULT_TEXT_COLOR;
     }
     else if (props.key_binding === "background_color") {
-        if (props.type == HEADER_TYPE || props.type == FOOTER_TYPE) {
+        if (props.type === HEADER_TYPE || props.type === FOOTER_TYPE) {
             initColor = DEFAULT_BG_HEADER_FOOTER_COLOR;
         } else {
             initColor = DEFAULT_BG_COLOR;
@@ -254,6 +254,7 @@ const ComponentSelectColorFiled = (props) => {
 function userCheckboxInput(initialValue, getValueOfField, key_binding) {
     const [value, setValue] = useState(initialValue);
     function handleChange(e) {
+        setValue(e.target.value);
         getValueOfField(key_binding, e.target.checked);
     }
     return {
@@ -631,8 +632,7 @@ class ComponentFieldEditor extends React.Component {
     }
     componentWillReceiveProps(props) {
         if (props.data_change) {
-            let setting = undefined;
-            setting = props.data_load;
+            let setting = props.data_load;
             this.setState({
                 editorHtml: setting
             });
@@ -747,8 +747,7 @@ class ExtendComponent extends React.Component {
             };
         }
         if (nextProps.data_change) {
-            let setting = {};
-            setting = nextProps.data_load;
+            let setting = nextProps.data_load;
             nextProps.getValueOfField("language", false);
             let read_more = document.getElementById("read_more");
             let hide_the_rest = document.getElementById("hide_the_rest");
@@ -767,7 +766,7 @@ class ExtendComponent extends React.Component {
                 }
             }
             if (nextProps.type === ACCESS_COUNTER) {
-                setting["access_counter"] = nextProps.init_value
+                setting["access_counter"] = nextProps.init_value;
             }
             return {
                 settings: setting
@@ -914,8 +913,7 @@ class ExtendComponent extends React.Component {
                             <ComponentFieldEditor handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                         </div>
                         <div className="row">
-                            <label className="control-label col-xs-2 text-right"></label>
-                            <div className="controls col-xs-10">
+                            <div className="controls col-xs-offset-2 col-xs-10">
                                 <input name="write_more" type="checkbox" onChange={this.handleChangeCheckBox} defaultChecked={this.state.settings.write_more} />
                                 <span>&nbsp;Write more</span>
                             </div>
@@ -930,8 +928,7 @@ class ExtendComponent extends React.Component {
                             <ComponentFieldEditor handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                         </div>
                         <div className="row">
-                            <label className="control-label col-xs-2 text-right"></label>
-                            <div className="controls col-xs-10">
+                            <div className="controls col-xs-offset-2 col-xs-10">
                                 <div>
                                     <input name="write_more" type="checkbox" onChange={this.handleChangeCheckBox} defaultChecked={this.state.write_more} />
                                     <span>&nbsp;Write more</span>
@@ -947,8 +944,7 @@ class ExtendComponent extends React.Component {
                             <ComponentFieldEditor handleChange={this.handleChange} name="" key_binding="more_description" data_load={this.state.settings.more_description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                         </div>
                         <div className="row">
-                            <label className="control-label col-xs-2 text-right"></label>
-                            <div className="controls col-xs-10">
+                            <div className="controls col-xs-offset-2 col-xs-10">
                                 <div className="sub-text-box">
                                     <input type="text" id="hide_the_rest" name="hide_the_rest" onChange={this.handleChangeHideTheRest} className="form-control" placeholder="Hide the rest" value={this.state.settings.hide_the_rest} />
                                 </div>
@@ -1056,8 +1052,8 @@ class ComponentButtonLayout extends React.Component {
         let currentLanguage = $("#language")[0].value;
 
         let noData = true;
-        for (let data in currentDescription) {
-            if (currentDescription[data]) {
+        for (let currentDescriptionKey in currentDescription) {
+            if (currentDescription[currentDescriptionKey]) {
                 noData = false;
                 break;
             }
@@ -1066,14 +1062,14 @@ class ComponentButtonLayout extends React.Component {
             let currentLangData = {
                 label: currentLabel,
             };
-            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE || data['widget_type'] == ACCESS_COUNTER || data['widget_type'] == HEADER_TYPE || data['widget_type'] == FOOTER_TYPE){
+            if([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].includes(data['widget_type'])){
                 currentLangData["description"] = currentDescription;
             }
             multiLangData[currentLanguage] = currentLangData;
         }else {
             delete multiLangData[currentLanguage];
         }
-        if ((data['widget_type'] + "") == ACCESS_COUNTER) {
+        if ((data['widget_type'] + "") === ACCESS_COUNTER) {
             for (let [key, value] of Object.entries(multiLangData)) {
                 value.description['access_counter'] = data.accessInitValue
             }
@@ -1081,7 +1077,7 @@ class ComponentButtonLayout extends React.Component {
         this.props.getValueOfField('multiLangData', multiLangData);
         this.props.getValueOfField('accessInitValue', data.accessInitValue);
         data['multiLangSetting'] = multiLangData;
-        delete data['accessInitValue']
+        delete data['accessInitValue'];
 
         let request = {
             flag_edit: this.props.is_edit,
@@ -1091,17 +1087,17 @@ class ComponentButtonLayout extends React.Component {
         request.data_id = this.props.data_id;
         let data_validate = this.validateFieldIsValid(data.widget_type);
         if (data.repository === "0" || data.repository === "") {
-            let modalcontent = "Repository is required!";
-            this.showErrorMessage(modalcontent);
+            let errorMessage = "Repository is required!";
+            this.showErrorMessage(errorMessage);
         } else if (data.widget_type === "0" || data.widget_type === "") {
-            let modalcontent = "Type is required.";
-            this.showErrorMessage(modalcontent);
+            let errorMessage = "Type is required.";
+            this.showErrorMessage(errorMessage);
         } else if (!this.isLabelValid(data['multiLangSetting'])) {
-            let modalcontent = "Label is required!";
-            this.showErrorMessage(modalcontent);
+            let errorMessage = "Label is required!";
+            this.showErrorMessage(errorMessage);
         } else if(!data_validate.status){
-            let modalcontent = data_validate.error;
-            this.showErrorMessage(modalcontent);
+            let errorMessage = data_validate.error;
+            this.showErrorMessage(errorMessage);
         }else {
             return fetch(this.props.url_request, {
                 method: "POST",
@@ -1116,8 +1112,8 @@ class ComponentButtonLayout extends React.Component {
                         addAlert(result.message);
                     } else {
                         //alert(result.message);
-                        let modalcontent = result.message;
-                        this.showErrorMessage(modalcontent);
+                        let errorMessage = result.message;
+                        this.showErrorMessage(errorMessage);
                     }
                 });
         }
@@ -1212,9 +1208,8 @@ class ComponentButtonLayout extends React.Component {
                         window.location = this.props.return_url;
                     } else {
                         //alert(result.message);
-                        var modalcontent = result.message;
-                        $("#inputModal").html(modalcontent);
-                        $("#allModal").modal("show");
+                        let errorMessage = result.message;
+                        this.showErrorMessage(errorMessage);
                     }
                 });
         }
@@ -1270,7 +1265,7 @@ class ComponentLanguage extends React.Component {
             options: [],
             selectedLanguage: '0',
             defaultLanguage: ''
-        }
+        };
         this.initLanguageList = this.initLanguageList.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.displayOptions = this.displayOptions.bind(this);
@@ -1304,7 +1299,7 @@ class ComponentLanguage extends React.Component {
                             let newLang = {
                                 'code': lang.lang_code,
                                 'sequence': lang.sequence
-                            }
+                            };
                             systemRegisteredLang.push(newLang);
                         } else {
                             langList.push(lang.lang_code);
@@ -1321,7 +1316,7 @@ class ComponentLanguage extends React.Component {
                     if (!$.isEmptyObject(this.props.data_load)) {
                         registeredLang = Object.keys(this.props.data_load);
                         langList.forEach(function (lang) {
-                            if (registeredLang.indexOf(lang) != -1) {
+                            if (registeredLang.indexOf(lang) !== -1) {
                                 let index = langList.indexOf(lang);
                                 langList.slice(index, 1);
                             }
@@ -1558,7 +1553,7 @@ class MainLayout extends React.Component {
             accessInitValue = multiLangData.description.access_counter
         }
         if (multiLangData) {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER || (this.state.widget_type +"") == HEADER_TYPE || (this.state.widget_type +"") == FOOTER_TYPE){
+            if([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].includes(this.state.widget_type)){
                 this.setState({
                     multiLanguageChange: true,
                     label: multiLangData['label'],
@@ -1595,19 +1590,20 @@ class MainLayout extends React.Component {
         let setting = {
             label: this.state.label,
         };
-        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER || (this.state.widget_type +"") == HEADER_TYPE || (this.state.widget_type +"") == FOOTER_TYPE){
+
+        if([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].includes(this.state.widget_type)){
             setting["description"] = this.state.settings;
         }
         let accessInitValue = this.state.accessInitValue;
-        if ((this.state.widget_type+ "") == ACCESS_COUNTER) {
+        if ((this.state.widget_type+ "") === ACCESS_COUNTER) {
             if (setting.description.access_counter) {
                 accessInitValue = setting.description.access_counter;
             }else {
                 setting.description.access_counter = accessInitValue;
             }
         }
-        if ((this.state.widget_type+ "") == ACCESS_COUNTER && this.accessCounterValidation(setting)) {
-            delete setting.description["access_counter"]
+        if ((this.state.widget_type+ "") === ACCESS_COUNTER && this.accessCounterValidation(setting)) {
+            delete setting.description["access_counter"];
             result = false;
         }
         let storage = this.state.multiLangSetting;
@@ -1618,44 +1614,28 @@ class MainLayout extends React.Component {
                 delete storage[lang];
             }
         }
+        let currentLabel = '';
+        let currentSetting = {};
         if (this.state.multiLangSetting[newLanguage]) {
-            let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
-            let currentSetting = this.state.multiLangSetting[newLanguage]['description'];
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER || (this.state.widget_type +"") == HEADER_TYPE || (this.state.widget_type +"") == FOOTER_TYPE){
-                this.setState({
-                    label: currentLabel,
-                    multiLanguageChange: true,
-                    language: newLanguage,
-                    settings: currentSetting,
-                    accessInitValue: accessInitValue
-                });
-            }
-            else{
-                this.setState({
-                    label: currentLabel,
-                    multiLanguageChange: true,
-                    language: newLanguage,
-                    accessInitValue: accessInitValue
-                });
-            }
+            currentLabel = this.state.multiLangSetting[newLanguage]['label'];
+            currentSetting = this.state.multiLangSetting[newLanguage]['description'];
+
+        }
+        if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].includes(this.state.widget_type)) {
+            this.setState({
+                label: currentLabel,
+                settings: currentSetting,
+                multiLanguageChange: true,
+                language: newLanguage,
+                accessInitValue: accessInitValue
+            });
         } else {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER || (this.state.widget_type +"") == HEADER_TYPE || (this.state.widget_type +"") == FOOTER_TYPE){
-                this.setState({
-                    label: '',
-                    settings: {},
-                    multiLanguageChange: true,
-                    language: newLanguage,
-                    accessInitValue: accessInitValue
-                });
-            }
-            else{
-                this.setState({
-                    label: '',
-                    multiLanguageChange: true,
-                    language: newLanguage,
-                    accessInitValue: accessInitValue
-                });
-            }
+            this.setState({
+                label: currentLabel,
+                multiLanguageChange: true,
+                language: newLanguage,
+                accessInitValue: accessInitValue
+            });
         }
         this.setState({
             multiLangSetting: storage
