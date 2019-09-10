@@ -1175,12 +1175,12 @@ class AdminSettings(db.Model):
     def get(cls, name):
         """Get settings by name."""
         try:
-            o = cls.query.filter_by(name=name).first()
-            return cls.Dict2Obj(o.settings)
+            admin_setting_object = cls.query.filter_by(name=name).first()
+            if admin_setting_object:
+                return cls.Dict2Obj(admin_setting_object.settings)
         except Exception as ex:
             current_app.logger.debug('dict to object')
             current_app.logger.error(ex)
-
         return None
 
     @classmethod

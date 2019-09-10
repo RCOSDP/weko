@@ -38,9 +38,9 @@ def check_site_license_permission():
     else:
         ip_addr = request.environ[http_f]
 
-    current_app.logger. \
-        debug('-->>>>>>>>>>>>>>>>>>>>>>------------------ip address : {ip_adr}'.
-              format(ip_adr=ip_addr))
+    # current_app.logger. \
+    #     debug('-->>>>>>>>>>>>>>>>>>>>>>------------------ip address : {ip_adr}'.
+    #           format(ip_adr=ip_addr))
 
     sl_lst = SiteLicense.get_records()
     if ip_addr:

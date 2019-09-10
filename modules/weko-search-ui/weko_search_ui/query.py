@@ -55,15 +55,32 @@ def get_permission_filter(comm_id=None):
     rng = Q('range', **{'publish_date': {'lte': 'now/d'}})
     term_list = []
     mst = []
+    path = ''
     is_perm_paths = Indexes.get_browsing_tree_paths()
-    if comm_id is not None:
-        self_path = Indexes.get_self_path(comm_id)
-        if self_path.path in is_perm_paths:
-            term_list.append(self_path.path)
+    search_type = request.values.get('search_type')
 
-        mst.append(match)
-        mst.append(rng)
-        terms = Q('terms', path=term_list)
+    if comm_id:
+        if search_type == '0':
+            self_path = Indexes.get_self_path(comm_id)
+            if self_path.path in is_perm_paths:
+                term_list.append(self_path.path)
+
+            path = term_list[0] + '*'
+            should_path = []
+            wildcard_path = Q("wildcard", path=path)
+            should_path.append(wildcard_path)
+
+            mst.append(match)
+            mst.append(rng)
+            terms = Q('bool', should=should_path)
+        else:
+            self_path = Indexes.get_self_path(comm_id)
+            if self_path.path in is_perm_paths:
+                term_list.append(self_path.path)
+
+            mst.append(match)
+            mst.append(rng)
+            terms = Q('terms', path=term_list)
     else:
         mst.append(match)
         mst.append(rng)
@@ -335,6 +352,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
 
+        current_app.logger.debug("""Query parser for simple search.""")
         mt = get_permission_filter(root_node_id)
         q = _get_search_qs_query(qs)
 
@@ -345,6 +363,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
+        current_app.logger.debug(qstr)
         multi_cont_q = Q('multi_match', query=qstr, operator='and',
                          fields=['content.attachment.content'])
 
@@ -365,6 +384,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
+        current_app.logger.debug('Default parser that uses the Q() from elasticsearch_dsl.')
         mt = get_permission_filter()
 
         # multi keywords search filter
@@ -392,7 +412,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
-
+        current_app.logger.debug("""Default parser that uses the Q() from elasticsearch_dsl.""")
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
         mt = get_permission_filter(root_node_id)
@@ -400,6 +420,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # multi keywords search filter
         kmt = _get_detail_keywords_query()
         # detail search
+        current_app.logger.debug(mt)
         if kmt:
             mt.extend(kmt)
             q = _get_search_qs_query(qs)
@@ -419,8 +440,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     comm_ide = request.values.get('provisional_communities')
     # simple search
     comm_id_simple = request.values.get('community')
+    current_app.logger.debug('=======================')
+    current_app.logger.debug(comm_id_simple)
     # add by ryuu at 1004 end
-    if comm_id_simple is not None:
+    if comm_id_simple:
         query_parser = query_parser or _default_parser_community
     else:
         query_parser = query_parser or _default_parser
@@ -431,17 +454,18 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     qs = request.values.get('q')
 
     # full text search
-    if search_type and '0' in search_type:
-        if comm_id_simple is not None:
+    if search_type == '0':
+        if comm_id_simple:
             query_q = query_parser(comm_id_simple, qs)
         else:
             query_q = query_parser(qs)
-
+        current_app.logger.debug(comm_id_simple)
+        current_app.logger.debug(query_q)
     else:
         # simple search
-        if comm_ide is not None:
+        if comm_ide:
             query_q = _get_simple_search_community_query(comm_ide, qs)
-        elif comm_id_simple is not None:
+        elif comm_id_simple:
             query_q = _get_simple_search_community_query(comm_id_simple, qs)
         else:
             query_q = _get_simple_search_query(qs)
@@ -564,6 +588,7 @@ def item_path_search_factory(self, search, index_id=None):
             update(get_item_type_aggs(search._index[0]))
 
         q = request.values.get('q') if index_id is None else index_id
+        # search_type = request.values.get('search_type')
         if q:
             mut = get_permission_filter(q)
         else:
