@@ -9,11 +9,7 @@
 
 # extra configuration variables.
 
-WEKO_HANDLE_DEFAULT_VALUE = 'foobar'
-"""Default value for the application."""
-
 WEKO_HANDLE_BASE_TEMPLATE = 'weko_handle/base.html'
 """Default base template for the demo page."""
 
-WEKO_HANDLE_CREDS_JSON_PATH = '/code/scripts/demo/handle_configuration/creds' \
-                              '.json'
+WEKO_HANDLE_CREDS_JSON_PATH = '/code/modules/resources/handle_creds.json'
