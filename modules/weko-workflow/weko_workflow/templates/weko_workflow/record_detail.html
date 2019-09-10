@@ -137,18 +137,20 @@
                 </tr>
                 {% endif %}
                 {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
-                  {%- for thumb in files_thumbnail | sort(attribute='key') -%}
-                    {%- set thumb_name = thumb.filename or thumb.key -%}
-                    {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                    filename=thumb.key) %}
-                    <tr>
-                      <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
-                      <td>
-                        <p>{{ thumb_name }}</p>
-                        <img src="{{thumb_url}}" alt={{thumb_name}} style="width: 100%;" />
+                  <tr>
+                    <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
+                    <td>
+                      {%- for thumb in files_thumbnail | sort(attribute='key') -%}
+                        {%- set thumb_name = thumb.filename or thumb.key -%}
+                        {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                        filename=thumb.key) %}
+                        <p>
+                          <span>{{ thumb_name }}</span>
+                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width: 100%;" />
+                        </p>
+                      {% endfor %}
                       </td>
                     </tr>
-                  {% endfor %}
                 {% endif %}
               {% endfor %}
             </table>

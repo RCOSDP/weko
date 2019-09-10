@@ -363,7 +363,7 @@ msgstr "該当欄にファイルをドラッグ＆ドロップすることで複
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:
 msgid "OR"
-msgstr ""
+msgstr "または"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:
 msgid "Click to select"

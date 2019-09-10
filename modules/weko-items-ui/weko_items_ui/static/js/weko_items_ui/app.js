@@ -1550,6 +1550,7 @@ function handleSharePermission(value) {
         ];
         $scope.model = {
             thumbnailsInfor: [],
+            allowedType: ['image/gif', 'image/jpg', 'image/jpe', 'image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/tif'],
         };
 
         // set current data thumbnail if has
@@ -1573,6 +1574,20 @@ function handleSharePermission(value) {
           setTimeout(function() {
               document.getElementById('selectThumbnail').click();
           }, 0);
+        };
+        // remove file
+        $scope.removeThumbnail = function(file) {
+          if (angular.isUndefined(file.links)) {
+            var indexOfFile = _.indexOf($scope.model.thumbnailsInfor, file)
+            if (!angular.isUndefined(rootScope.filesVM.files[indexOfFile])) {
+              file.links = $rootScope.filesVM.files[indexOfFile].links;
+            } else {
+              console.log('File not found!');
+              return;
+            }
+          }
+          $rootScope.filesVM.remove(file);
+          $scope.model.thumbnailsInfor.splice(indexOfFile, 1);
         };
     }).$inject = [
       '$scope',

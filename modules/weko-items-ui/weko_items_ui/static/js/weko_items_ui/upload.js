@@ -280,7 +280,7 @@ require([
 (function (angular) {
   angular.element(document).ready(function () {
     angular.module('schemaForm')
-    .run(["$templateCache", function($templateCache) {$templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html","<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" id=\"selectThumbnail\" on-read-file/>\n        <img ng-show=\"$$value$$\" id=\"myimage\" src=\"\" alt=\"your image\" />\n    </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>");}]);
+    .run(["$templateCache", function($templateCache) {$templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html","<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" id=\"selectThumbnail\" on-read-file accept=\".gif,.jpg,.jpe,.jpeg,.png,.bmp,.tiff,.tif\" multiple/>\n        <img ng-show=\"$$value$$\" id=\"myimage\" src=\"\" alt=\"your image\" />\n    </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>");}]);
     angular.module('schemaForm').config(
     ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
       function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
@@ -314,14 +314,17 @@ require([
             scope: true,
             link: function ($scope, element, attrs, ngModelCtrl) {
                 element.on('change', function (onChangeEvent) {
-                    var reader = new FileReader();
-                    reader.onload = function (onLoadEvent) {
-                        // put into ngModel the file content.
-                        ngModelCtrl[0].$setViewValue(onLoadEvent.target.result);
-                    };
                     var files = (onChangeEvent.srcElement || onChangeEvent.target).files;
                     if (!angular.isUndefined(files) && files.length>0) {
-                        files[0].is_thumbnail=true;
+                        Array.prototype.forEach.call(files, f => {
+                            console.log('File mimeType: ' + f.type);
+                            if ($scope.$parent.model.allowedType.indexOf(f.type) < 0 ) {
+                              return;
+                            }
+                            var reader = new FileReader();
+                            f.is_thumbnail=true;
+                            reader.readAsDataURL(f);
+                        });
                         Array.prototype.push.apply($scope.$parent.model.thumbnailsInfor,files);
                         $rootScope.filesVM.addFiles(files);
                         if ($rootScope.filesVM.invenioFilesEndpoints.bucket !== undefined) {
@@ -332,7 +335,6 @@ require([
                         }
                         $rootScope.filesVM.upload();
                         $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url;
-                        reader.readAsDataURL(files[0]);
                     }
                 });
             }
