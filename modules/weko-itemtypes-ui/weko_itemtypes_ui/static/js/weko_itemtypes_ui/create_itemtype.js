@@ -71,12 +71,10 @@ $(document).ready(function () {
           "display_lang_type": "",
           "oai_dc_mapping": "",
           "jpcoar_mapping": {
-            "jpcoar_mapping": {
             "identifier": {
               "@attributes": {"identifierType": "subitem_1568005120251"},
               "@value": "subitem_1568005111766",
             },
-          },
           },
           "junii2_mapping": "",
           "lido_mapping": "",
@@ -342,12 +340,10 @@ $(document).ready(function () {
           "display_lang_type": "",
           "oai_dc_mapping": "",
           "jpcoar_mapping": {
-            "jpcoar_mapping": {
             "identifier": {
               "@attributes": {"identifierType": "subitem_1568005120251"},
               "@value": "subitem_1568005111766",
             },
-          },
           },
           "junii2_mapping": "",
           "lido_mapping": "",
