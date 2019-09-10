@@ -1034,6 +1034,8 @@ var PreviewGrid = new function () {
         this.grid.removeAll();
         var items = GridStackUI.Utils.sort(widgetListItems);
         isHasMainContent = false;
+        isHasHeader = false;
+        isHasFooter = false;
         _.each(items, function (node) {
             if(MAIN_CONTENT_TYPE == node.type){
                 isHasMainContent = true;
