@@ -335,7 +335,7 @@
             {% if record | check_permission %}
             <a class="btn btn-primary edit-button" href="#!" id="btn_edit"
               data-pid-value="{{ pid.pid_value }}"
-              {%- if community_id %}data-community="{{community_id}}"{% endif %}>
+              {%- if community_id %}data-community="{{ community_id }}"{% endif %}>
               <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
             <a class="btn btn-danger delete-button" id="btn_delete"
               ng-click="openConfirm('',

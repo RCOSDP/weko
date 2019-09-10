@@ -23,7 +23,7 @@
 import json
 import os
 import sys
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree
 
 from blinker import Namespace
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
@@ -45,6 +45,7 @@ from weko_theme.utils import get_design_layout
 from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
+from .config import WEKO_SEARCH_TYPE_DICT
 from .query import item_path_search_factory
 from .utils import get_feedback_mail_list, get_journal_info, \
     parse_feedback_mail_data
@@ -62,7 +63,6 @@ blueprint = Blueprint(
 blueprint_api = Blueprint(
     'weko_search_ui',
     __name__,
-    # url_prefix='/',
     template_folder='templates',
     static_folder='static',
 )
@@ -71,20 +71,23 @@ blueprint_api = Blueprint(
 @blueprint.route("/search/index")
 def search():
     """Index Search page ui."""
-    search_type = request.args.get('search_type', '0')
-    getArgs = request.args
+    search_type = request.args.get('search_type', WEKO_SEARCH_TYPE_DICT[
+        'FULL_TEXT'])
+    get_args = request.args
     community_id = ""
     ctx = {'community': None}
-    cur_index_id = search_type if search_type not in ('0', '1', ) else None
-    if 'community' in getArgs:
+    cur_index_id = search_type if search_type not in \
+        (WEKO_SEARCH_TYPE_DICT['FULL_TEXT'], WEKO_SEARCH_TYPE_DICT[
+            'KEYWORD'], ) else None
+    if 'community' in get_args:
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
 
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(community_id
-                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     # Get index style
     style = IndexStyle.get(
@@ -103,13 +106,14 @@ def search():
 
     height = style.height if style else None
 
-    if 'item_link' in getArgs:
+    if 'item_link' in get_args:
         activity_id = request.args.get('item_link')
         from weko_workflow.api import WorkActivity
-        workFlowActivity = WorkActivity()
-        activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, \
-            step_item_login_url, histories, res_check, pid, community_id, ctx \
-            = workFlowActivity.get_activity_index_search(activity_id=activity_id)
+        workflow_activity = WorkActivity()
+        activity_detail, item, steps, action_id, cur_step, temporary_comment,\
+            approval_record, step_item_login_url, histories, res_check, pid, \
+            community_id, ctx = workflow_activity.get_activity_index_search(
+                activity_id=activity_id)
         return render_template(
             'weko_workflow/activity_detail.html',
             page=page,
@@ -135,18 +139,18 @@ def search():
         journal_info = None
         index_display_format = '1'
         check_site_license_permission()
-        send_info = {}
+        send_info = dict()
         send_info['site_license_flag'] = True \
             if hasattr(current_user, 'site_license_flag') else False
         send_info['site_license_name'] = current_user.site_license_name \
             if hasattr(current_user, 'site_license_name') else ''
-        if search_type in ('0', '1', '2'):
+        if search_type in WEKO_SEARCH_TYPE_DICT.values():
             searched.send(
                 current_app._get_current_object(),
-                search_args=getArgs,
+                search_args=get_args,
                 info=send_info
             )
-            if search_type == '2':
+            if search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
                 cur_index_id = request.args.get('q', '0')
                 journal_info = get_journal_info(cur_index_id)
                 index_info = Indexes.get_index(cur_index_id)
@@ -190,37 +194,36 @@ def opensearch_description():
 
     # set the returned data, which will just contain the title
     ns_opensearch = "http://a9.com/-/spec/opensearch/1.1/"
-    # ns_jairo = "jairo.nii.ac.jp/opensearch/1.0/"
 
-    ET.register_namespace('', ns_opensearch)
-    # ET.register_namespace('jairo', ns_jairo)
+    ElementTree.register_namespace('', ns_opensearch)
+    # ElementTree.register_namespace('jairo', ns_jairo)
 
-    root = ET.Element('OpenSearchDescription')
+    root = ElementTree.Element('OpenSearchDescription')
 
-    sname = ET.SubElement(root, '{' + ns_opensearch + '}ShortName')
+    sname = ElementTree.SubElement(root, '{' + ns_opensearch + '}ShortName')
     sname.text = current_app.config['WEKO_OPENSEARCH_SYSTEM_SHORTNAME']
 
-    des = ET.SubElement(root, '{' + ns_opensearch + '}Description')
+    des = ElementTree.SubElement(root, '{' + ns_opensearch + '}Description')
     des.text = current_app.config['WEKO_OPENSEARCH_SYSTEM_DESCRIPTION']
 
-    img = ET.SubElement(root, '{' + ns_opensearch + '}Image')
+    img = ElementTree.SubElement(root, '{' + ns_opensearch + '}Image')
     img.set('height', '16')
     img.set('width', '16')
     img.set('type', 'image/x-icon')
     img.text = request.host_url + \
         current_app.config['WEKO_OPENSEARCH_IMAGE_URL']
 
-    url = ET.SubElement(root, '{' + ns_opensearch + '}Url')
+    url = ElementTree.SubElement(root, '{' + ns_opensearch + '}Url')
     url.set('type', 'application/atom+xml')
     url.set('template', request.host_url
             + 'api/opensearch/search?q={searchTerms}')
 
-    url = ET.SubElement(root, '{' + ns_opensearch + '}Url')
+    url = ElementTree.SubElement(root, '{' + ns_opensearch + '}Url')
     url.set('type', 'application/atom+xml')
     url.set('template', request.host_url
             + 'api/opensearch/search?q={searchTerms}&amp;format=atom')
 
-    response.data = ET.tostring(root)
+    response.data = ElementTree.tostring(root)
 
     # update headers
     response.headers['Content-Type'] = 'application/xml'

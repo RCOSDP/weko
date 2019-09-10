@@ -55,12 +55,11 @@ def get_permission_filter(comm_id=None):
     rng = Q('range', **{'publish_date': {'lte': 'now/d'}})
     term_list = []
     mst = []
-    path = ''
     is_perm_paths = Indexes.get_browsing_tree_paths()
     search_type = request.values.get('search_type')
 
     if comm_id:
-        if search_type == '0':
+        if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
             self_path = Indexes.get_self_path(comm_id)
             if self_path.path in is_perm_paths:
                 term_list.append(self_path.path)
@@ -73,7 +72,7 @@ def get_permission_filter(comm_id=None):
             mst.append(match)
             mst.append(rng)
             terms = Q('bool', should=should_path)
-        else:
+        else:   # In case search_type is keyword or index
             self_path = Indexes.get_self_path(comm_id)
             if self_path.path in is_perm_paths:
                 term_list.append(self_path.path)
@@ -110,6 +109,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     :param self: REST view.
     :param search: Elastic search DSL search instance.
     :param query_parser: Query parser. (Default: ``None``)
+    :param search_type: Search type. (Default: ``None``)
     :returns: Tuple with search instance and URL arguments.
     """
     def _get_search_qs_query(qs=None):
@@ -384,7 +384,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
-        current_app.logger.debug('Default parser that uses the Q() from elasticsearch_dsl.')
         mt = get_permission_filter()
 
         # multi keywords search filter
@@ -412,7 +411,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
-        current_app.logger.debug("""Default parser that uses the Q() from elasticsearch_dsl.""")
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
         mt = get_permission_filter(root_node_id)
@@ -440,8 +438,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     comm_ide = request.values.get('provisional_communities')
     # simple search
     comm_id_simple = request.values.get('community')
-    current_app.logger.debug('=======================')
-    current_app.logger.debug(comm_id_simple)
     # add by ryuu at 1004 end
     if comm_id_simple:
         query_parser = query_parser or _default_parser_community
@@ -454,13 +450,11 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     qs = request.values.get('q')
 
     # full text search
-    if search_type == '0':
+    if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
         if comm_id_simple:
             query_q = query_parser(comm_id_simple, qs)
         else:
             query_q = query_parser(qs)
-        current_app.logger.debug(comm_id_simple)
-        current_app.logger.debug(query_q)
     else:
         # simple search
         if comm_ide:
@@ -512,6 +506,7 @@ def item_path_search_factory(self, search, index_id=None):
 
     :param self: REST view.
     :param search: Elastic search DSL search instance.
+    :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
     def _get_index_earch_query():
@@ -588,7 +583,6 @@ def item_path_search_factory(self, search, index_id=None):
             update(get_item_type_aggs(search._index[0]))
 
         q = request.values.get('q') if index_id is None else index_id
-        # search_type = request.values.get('search_type')
         if q:
             mut = get_permission_filter(q)
         else:
@@ -719,6 +713,7 @@ def opensearch_factory(self, search, query_parser=None):
     :return:
     """
     index_id = request.values.get('index_id')
+    search_type = config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']
     if index_id:
         return item_path_search_factory(self,
                                         search,
@@ -727,7 +722,7 @@ def opensearch_factory(self, search, query_parser=None):
         return default_search_factory(self,
                                       search,
                                       query_parser,
-                                      search_type='0')
+                                      search_type=search_type)
 
 
 def item_search_factory(self,
@@ -822,8 +817,8 @@ def feedback_email_search_factory(self, search):
             "query": {
                 "bool": {
                     "must": [
-                        {"nested":
-                            {
+                        {
+                            "nested": {
                                 "path": "feedback_mail_list",
                                 "query": {
                                     "bool": {
@@ -836,14 +831,13 @@ def feedback_email_search_factory(self, search):
                                         ]
                                     }
                                 }
-
                             }
-                         },
-                        {"query_string":
-                            {
+                        },
+                        {
+                            "query_string": {
                                 "query": query_string
                             }
-                         }
+                        }
                     ]
                 }
             },

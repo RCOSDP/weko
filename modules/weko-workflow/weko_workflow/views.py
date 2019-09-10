@@ -89,8 +89,9 @@ def index():
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(request.args.get('community')
-                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(
+        request.args.get('community') or current_app.config[
+            'WEKO_THEME_DEFAULT_COMMUNITY'])
 
     return render_template(
         'weko_workflow/activity_list.html',
@@ -138,8 +139,8 @@ def iframe_success():
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(community_id
-                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     return render_template('weko_workflow/item_login_success.html',
                            page=page,
@@ -154,8 +155,7 @@ def iframe_success():
                            res_check=res_check,
                            pid=pid,
                            community_id=community_id,
-                           **ctx
-    )
+                           **ctx)
 
 
 @blueprint.route('/activity/new', methods=['GET'])
@@ -174,8 +174,8 @@ def new_activity():
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(community_id
-                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     return render_template(
         'weko_workflow/workflow_list.html',
@@ -391,8 +391,8 @@ def display_activity(activity_id=0):
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(community_id
-                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     return render_template(
         'weko_workflow/activity_detail.html',

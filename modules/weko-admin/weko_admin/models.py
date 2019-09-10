@@ -177,17 +177,17 @@ class SearchManagement(db.Model):
     def create(cls, data):
         """Create data."""
         try:
-            dataObj = SearchManagement()
+            data_obj = SearchManagement()
             with db.session.begin_nested():
-                dataObj.default_dis_num = data.get('dlt_dis_num_selected')
-                dataObj.default_dis_sort_index = data.get(
+                data_obj.default_dis_num = data.get('dlt_dis_num_selected')
+                data_obj.default_dis_sort_index = data.get(
                     'dlt_index_sort_selected')
-                dataObj.default_dis_sort_keyword = data.get(
+                data_obj.default_dis_sort_keyword = data.get(
                     'dlt_keyword_sort_selected')
-                dataObj.sort_setting = data.get('sort_options')
-                dataObj.search_conditions = data.get('detail_condition')
-                dataObj.search_setting_all = data
-                db.session.add(dataObj)
+                data_obj.sort_setting = data.get('sort_options')
+                data_obj.search_conditions = data.get('detail_condition')
+                data_obj.search_setting_all = data
+                db.session.add(data_obj)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -198,10 +198,10 @@ class SearchManagement(db.Model):
     @classmethod
     def get(cls):
         """Get setting."""
-        id = db.session.query(func.max(SearchManagement.id)).first()[0]
-        if id is None:
+        _id = db.session.query(func.max(SearchManagement.id)).first()[0]
+        if _id is None:
             return None
-        return cls.query.filter_by(id=id).one_or_none()
+        return cls.query.filter_by(id=_id).one_or_none()
 
     @classmethod
     def update(cls, id, data):
@@ -283,14 +283,14 @@ class AdminLangSettings(db.Model):
     def create(cls, lang_code, lang_name, is_registered, sequence, is_active):
         """Create language."""
         try:
-            dataObj = AdminLangSettings()
+            data_obj = AdminLangSettings()
             with db.session.begin_nested():
-                dataObj.lang_code = lang_code
-                dataObj.lang_name = lang_name
-                dataObj.is_registered = is_registered
-                dataObj.sequence = sequence
-                dataObj.is_active = is_active
-                db.session.add(dataObj)
+                data_obj.lang_code = lang_code
+                data_obj.lang_name = lang_name
+                data_obj.is_registered = is_registered
+                data_obj.sequence = sequence
+                data_obj.is_active = is_active
+                db.session.add(data_obj)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -461,14 +461,14 @@ class ApiCertificate(db.Model):
         :return: True if success, otherwise False
         """
         try:
-            dataObj = ApiCertificate()
+            data_obj = ApiCertificate()
             with db.session.begin_nested():
                 if api_code is not None:
-                    dataObj.api_code = api_code
-                    dataObj.api_name = api_name
+                    data_obj.api_code = api_code
+                    data_obj.api_name = api_name
                 if cert_data is not None:
-                    dataObj.cert_data = cert_data
-                db.session.add(dataObj)
+                    data_obj.cert_data = cert_data
+                db.session.add(data_obj)
             db.session.commit()
             return True
         except Exception as ex:
@@ -541,11 +541,11 @@ class StatisticUnit(db.Model):
         :return: Unit if create succesfully
         """
         try:
-            dataObj = StatisticUnit()
+            data_obj = StatisticUnit()
             with db.session.begin_nested():
-                dataObj.unit_id = unit_id
-                dataObj.unit_name = unit_name
-                db.session.add(dataObj)
+                data_obj.unit_id = unit_id
+                data_obj.unit_name = unit_name
+                db.session.add(data_obj)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -599,15 +599,16 @@ class StatisticTarget(db.Model):
 
         :param target_id: The target ID
         :param target_name: The target name
+        :param target_unit: The target unit
         :return: The Target if create succesfully
         """
         try:
-            dataObj = StatisticTarget()
+            data_obj = StatisticTarget()
             with db.session.begin_nested():
-                dataObj.target_id = target_id
-                dataObj.target_name = target_name
-                dataObj.target_unit = target_unit
-                db.session.add(dataObj)
+                data_obj.target_id = target_id
+                data_obj.target_name = target_name
+                data_obj.target_unit = target_unit
+                db.session.add(data_obj)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -875,10 +876,10 @@ class StatisticsEmail(db.Model):
     def insert_email_address(cls, email_address):
         """Insert Email Address."""
         try:
-            dataObj = StatisticsEmail()
+            data_obj = StatisticsEmail()
             with db.session.begin_nested():
-                dataObj.email_address = email_address
-                db.session.add(dataObj)
+                data_obj.email_address = email_address
+                db.session.add(data_obj)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()

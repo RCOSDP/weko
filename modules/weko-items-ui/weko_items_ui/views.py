@@ -491,7 +491,7 @@ def default_view_method(pid, record, template=None):
     Sends ``record_viewed`` signal and renders template.
     """
     check_site_license_permission()
-    send_info = {}
+    send_info = dict()
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
@@ -944,7 +944,6 @@ def ranking():
             timedelta(days=int(settings.new_item_period) - 1)
         if new_item_start_date < start_date:
             new_item_start_date = start_date
-        new_items_list = []
         result = QueryCommonReportsHelper.get(
             start_date=new_item_start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
@@ -1010,7 +1009,7 @@ def _get_max_export_items():
     try:
         roles = db.session.query(Role).join(userrole).filter_by(
             user_id=current_user_id).all()
-    except Exception as e:
+    except Exception:
         return current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
 
     current_max = non_user_max
@@ -1113,8 +1112,8 @@ def export():
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(community_id
-                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     sort_options, display_number = SearchSetting.get_results_setting()
     disply_setting = dict(size=display_number)
