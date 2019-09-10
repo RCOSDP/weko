@@ -265,7 +265,6 @@ $(document).ready(function () {
     $('#itemtype_name_warning').addClass('hide');
     create_itemtype_schema();
     send(url_update_schema, page_global);
-    console.log("page_global",JSON.stringify(page_global))
   });
 
   $('#btn_previews_itemtype_schema').on('click', function(){
@@ -343,10 +342,12 @@ $(document).ready(function () {
           "display_lang_type": "",
           "oai_dc_mapping": "",
           "jpcoar_mapping": {
+            "jpcoar_mapping": {
             "identifier": {
               "@attributes": {"identifierType": "subitem_1568005120251"},
               "@value": "subitem_1568005111766",
             },
+          },
           },
           "junii2_mapping": "",
           "lido_mapping": "",
@@ -836,7 +837,9 @@ $(document).ready(function () {
     tmp_pubdate.option.showlist = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_2').is(':checked') ? true : false);
     tmp_pubdate.option.crtf = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_3').is(':checked') ? true : false);
     page_global.meta_fix["pubdate"] = tmp_pubdate;
-	  page_global.meta_system = add_meta_system()
+//	  page_global.meta_system = add_meta_system()
+	  page_global.table_row_map.form = page_global.table_row_map.form.concat(get_form_system())
+	  add_system_schema_property()
   }
 
   // add new meta table row
@@ -1088,7 +1091,6 @@ $(document).ready(function () {
       Object.keys(defProps).forEach(function(row_id){
          property_default[defProps[row_id].value] = defProps[row_id].name
       })
-      console.log("properties_obj",properties_obj)
       isSelected = true;
       Object.keys(defProps).forEach(function(key) {
         if (isSelected) {
@@ -1142,7 +1144,6 @@ $(document).ready(function () {
     if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
       let item = properties_obj[meta_system_info[row_id].input_type.substr(4)] || {}
 
-      console.log('item',item)
       $('#select_input_type_'+row_id).text(item && item.name ? item.name : "");
       render_object('schema_'+row_id, properties_obj[meta_system_info[row_id].input_type.substr(4)].schema, true);
     } else if('checkboxes' == meta_system_info[row_id].input_type || 'radios' == meta_system_info[row_id].input_type
@@ -1404,4 +1405,56 @@ $(document).ready(function () {
     });
     // チェックボックス「非表示」が選択状態になると、
   }
+
+  function create_system_data(){
+    let result = {}
+    let system_row = Object.keys(meta_system_info);
+    result.system_row = system_row
+    let form = get_form_system()
+    result.form = form
+    return result
+  }
+
+  function get_form_system(){
+    let result = new Array()
+    let list_key = Object.keys(meta_system_info)
+    for(i = 0; i< list_key.length; ++i){
+      let row_id = list_key[i]
+      let item = new Object()
+      if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
+        item = {...properties_obj[meta_system_info[row_id].input_type.substr(4)].form};
+        item.title = meta_system_info[row_id].title
+        item.title_i18n = meta_system_info[row_id].title_i18n
+        item.key = row_id
+      } else {
+        item.type = meta_system_info[row_id].input_type
+        item.title = meta_system_info[row_id].title
+        item.title_i18n = meta_system_info[row_id].title_i18n
+        item.key = row_id
+      }
+      result.push(item)
+      item = {}
+
+    }
+    return result
+  }
+
+  function add_system_schema_property() {
+    let list_key = Object.keys(meta_system_info)
+    for(i = 0; i< list_key.length; ++i){
+      let row_id = list_key[i]
+      let item = new Object()
+      if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
+        item = {...properties_obj[meta_system_info[row_id].input_type.substr(4)].schema};
+        item.title = meta_system_info[row_id].title
+      } else {
+        item.type = 'string'
+        item.title = meta_system_info[row_id].title
+        item.format = 'text'
+      }
+      page_global.table_row_map.schema.properties[row_id] = {...item}
+      item = {}
+    }
+  }
+
 });

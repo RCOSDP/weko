@@ -38,6 +38,7 @@
 
 {%- block body %}
 <input id="lang-code" type="hidden" value="{{lang_code}}"/>
+<input id="is-system-admin" type="hidden" value="{{is_system_admin}}"/>
 <div id="alerts"></div>
 <div class="row">
   <div class="col-sm-12">
@@ -88,7 +89,7 @@
         <div class="form-inline">
           <label>{{_('Item type added by system')}}</label>&nbsp;
           <label>({{_('Parent')}})</label>&nbsp;
-          <a role="button" class="btn-collapse inline-block"
+          <a role="button" class="btn-collapse inline-block text-dark"
              data-toggle="collapse"
              data-parent="#accordion"
              href="#item-type-system" aria-expanded="false"
@@ -107,13 +108,13 @@
         <table class="table">
           <tbody>
 
-          {%- for key in meta_system -%}
+          {%- for key in ['updated_date', 'created_date', 'persistent_identifier_doi', 'persistent_identifier_h', 'ranking_page_url', 'belonging_index_info'] -%}
           <tr>
             <td class="col-sm-6">
               <label>{{ meta_system[key].title }}</label>
             </td>
             <td class="col-sm-6">
-              <ul class="list-group" id="{{'ul_'+key}}">
+              <ul class="list-group list-group-prop-items" id="{{'ul_'+key}}">
                 {%- for jpcoar_prop_key, jpcoar_prop_list in jpcoar_prop_lists.items() -%}
                 {%- if key in hide_mapping_prop and jpcoar_prop_key in hide_mapping_prop.get(key)
                 and hide_mapping_prop.get(key).get(jpcoar_prop_key) is mapping -%}
@@ -235,7 +236,7 @@
         <label>{{name}}</label>
       </td>
       <td>
-        <ul class="list-group" id="{{'ul_'+key}}">
+        <ul class="list-group list-group-prop-items" id="{{'ul_'+key}}">
           {%- for jpcoar_prop_key, jpcoar_prop_list in
           jpcoar_prop_lists.items() -%}
           {%- if key in hide_mapping_prop and jpcoar_prop_key in

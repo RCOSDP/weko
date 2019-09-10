@@ -19,12 +19,22 @@ $(document).ready(function () {
   page_global.src_mapping_name = $('#item-type-lists').val();
   page_global.dst_mapping_name = $('#item-type-lists').val();
 
+  initPropertiesItems()
+
   function addAlert(message) {
       $('#alerts').append(
           '<div class="alert alert-light" id="alert-style">' +
           '<button type="button" class="close" data-dismiss="alert">' +
           '&times;</button>' + message + '</div>');
        }
+
+  function initPropertiesItems(){
+    $(".list-group-prop-items").each(function( index ) {
+      if ($(this).children(".list_jpcoar_mapping").length > 1 && $("#is-system-admin").val() === 'True'){
+        $(this).children(".list_jpcoar_mapping").find("button").prop("disabled", false);
+      }
+    });
+  }
 
   $("#item-type-lists").change(function (ev) {
     page_global.dst_mapping_name = $(this).val();
