@@ -10,11 +10,17 @@ const FOOTER_TYPE = "Footer";
 const THEME_SETTING = [{"value" : 'default', "text": "Default"}, {"value": "simple", "text":"Simple"}, {"value": "side_line", "text":"Side Line"}];
 const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}];
 const MENU_TYPE = "Menu";
-const DEFAULT_COLOR = "#4169E1";
+const DEFAULT_BG_COLOR = "#FFFFFF";
+const DEFAULT_BG_HEADER_FOOTER_COLOR = "#3D7FA1";
+const DEFAULT_LABEL_COLOR = "#F5F5F5";
+const DEFAULT_TEXT_COLOR = "#333333";
+const DEFAULT_BORDER_COLOR = "#DDDDDD";
+const DEFAULT_BORDER_STYLE = "solid";
+const DEFAULT_THEME = "default";
 
 function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
-    if(key_binding == "border_style" && !initialValue){
-        initialValue = "solid";
+    if(key_binding === "border_style" && !initialValue){
+        initialValue = DEFAULT_BORDER_STYLE;
     }
     const [value, setValue] = useState(initialValue);
     function handleChange(e) {
@@ -36,7 +42,7 @@ const ComponentSelectField = function(props){
     const [selectOptions, setSelectOptions] = useState([]);
 
     useEffect(() => {
-        let options = []
+        let options = [];
         if(props.url_request){
             fetch(props.url_request)
             .then(res => res.json())
@@ -64,7 +70,7 @@ const ComponentSelectField = function(props){
             )
         }
         else{
-            if (props.key_binding == "border_style"){
+            if (props.key_binding === "border_style"){
                 props.getValueOfField(props.key_binding, props.data_load || "solid");
             }
             else{
@@ -82,7 +88,7 @@ const ComponentSelectField = function(props){
     return (
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}{props.is_required ? <span className="style-red">*</span>:null}</label>
-            <div class="controls col-xs-6">
+            <div className="controls col-xs-6">
                 <select className="form-control" name={props.name} {...selectedData}>
                     {props.url_request ? <option value="0">Please select the&nbsp;{props.key_binding}</option> : null}
                     {selectOptions}
@@ -90,7 +96,7 @@ const ComponentSelectField = function(props){
             </div>
         </div>
     )
-}
+};
 
 class ComponentRadioSelect extends React.Component {
     constructor(props) {
@@ -102,15 +108,15 @@ class ComponentRadioSelect extends React.Component {
 
     render() {
         return (
-            <div class="form-group row">
+            <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">Orientation</label>
                 <div className="controls col-xs-2">
-                    <label className="radio-inline" htmlFor="input_type">
-                        <input name="menu_orientation" value="horizontal" type="radio" onChange={this.props.handleChange} defaultChecked={this.state.menu_orientation == 'horizontal'} />
+                    <label className="radio-inline" htmlFor="radio_horizontal">
+                        <input name="menu_orientation" id="radio_horizontal" value="horizontal" type="radio" onChange={this.props.handleChange} defaultChecked={this.state.menu_orientation === 'horizontal'} />
                         Horizontal
                     </label>
-                    <label class="radio-inline" htmlFor="input_type">
-                        <input name="menu_orientation" value="vertical" type="radio" onChange={this.props.handleChange} defaultChecked={this.state.menu_orientation == 'vertical'} />
+                    <label className="radio-inline" htmlFor="radio_vertical">
+                        <input name="menu_orientation" id="radio_vertical" value="vertical" type="radio" onChange={this.props.handleChange} defaultChecked={this.state.menu_orientation === 'vertical'} />
                         Vertical
                      </label>
                 </div>
@@ -124,7 +130,7 @@ class ComponentTextboxField extends React.Component {
         super(props);
         this.state = {
             value: '',
-        }
+        };
         this.handleChange = this.handleChange.bind(this);
     }
     componentWillReceiveProps(props) {
@@ -136,7 +142,7 @@ class ComponentTextboxField extends React.Component {
         if (props.data_change) {
             this.setState({
                 value: props.data_load
-            })
+            });
             this.props.getValueOfField("language", false);
         }
     }
@@ -156,7 +162,7 @@ class ComponentTextboxField extends React.Component {
         return (
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}{this.props.is_required ? <span className="style-red">*</span>:null}</label>
-                <div class="controls col-xs-6">
+                <div className="controls col-xs-6">
                     <input name={this.props.name} id='label' type="text" value={this.state.value} onChange={this.handleChange} className="form-control" />
                 </div>
             </div>
@@ -184,53 +190,50 @@ const ComponentTextboxForAccessCounter = function(props){
 
     useEffect(() => {
         setValue(props.value);
-      }, [props.value])
+      }, [props.value]);
 
     return(
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
-            <div class="controls col-xs-6">
+            <div className="controls col-xs-6">
                 <input name={props.name} type="text" value={value} onChange={(event) => handleChange(event)} className="form-control" />
             </div>
         </div>
     )
-}
+};
 
 const ComponentSelectColorFiled = (props) => {
     let initColor = '';
-    if (props.key_binding == "label_text_color") {
-        initColor = '#333333';
+    if (props.key_binding === "label_text_color") {
+        initColor = DEFAULT_TEXT_COLOR;
     }
-    else if (props.key_binding == "background_color") {
+    else if (props.key_binding === "background_color") {
         if (props.type == HEADER_TYPE || props.type == FOOTER_TYPE) {
-            initColor = "#3d7fa1"
+            initColor = DEFAULT_BG_HEADER_FOOTER_COLOR;
         } else {
-            initColor = '#FFFFFF';
+            initColor = DEFAULT_BG_COLOR;
         }
     }
-    else if (props.key_binding == "label_color") {
-        initColor = '#F5F5F5';
+    else if (props.key_binding === "label_color") {
+        initColor = DEFAULT_LABEL_COLOR;
     }
     else {
-        initColor = '#DDDDDD';
+        initColor = DEFAULT_BORDER_COLOR;
     }
+
     const [value,setValue] = useState(props.data_load || initColor);
+    useEffect(() => {
+        props.getValueOfField(props.key_binding, props.data_load);
+    }, []);
 
     useEffect(() => {
-        props.getValueOfField(props.key_binding, props.data_load || initColor);
-    }, [])
-
-    useEffect(() => {
-        if (props.key_binding == "background_color") {
-            if (props.type == HEADER_TYPE || props.type == FOOTER_TYPE) {
-                setValue("#3d7fa1");
-                props.getValueOfField(props.key_binding, value);
-            } else {
-                setValue("#FFFFFF");
-                props.getValueOfField(props.key_binding, value);
+        if (props.key_binding === "background_color") {
+            if (!(props.is_edit) && [HEADER_TYPE, FOOTER_TYPE].includes(props.type)) {
+                setValue(DEFAULT_BG_HEADER_FOOTER_COLOR);
+                props.getValueOfField(props.key_binding, DEFAULT_BG_HEADER_FOOTER_COLOR);
             }
         }
-    }, [props.type])
+    }, [props.type]);
 
     function handleChange(e) {
         setValue(e.target.value);
@@ -246,12 +249,12 @@ const ComponentSelectColorFiled = (props) => {
             </div>
         </div>
     )
-}
+};
 
 function userCheckboxInput(initialValue, getValueOfField, key_binding) {
     const [value, setValue] = useState(initialValue);
     function handleChange(e) {
-        getValueOfField(key_binding, event.target.checked);
+        getValueOfField(key_binding, e.target.checked);
     }
     return {
         defaultChecked: value,
@@ -265,12 +268,12 @@ const ComponentCheckboxField = function(props){
     return (
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
-            <div class="controls col-xs-1">
+            <div className="controls col-xs-1">
                 <input name={props.name} type="checkbox" {...is_default_Checked}/>
             </div>
         </div>
     )
-}
+};
 
 class ComponentFieldContainSelectMultiple extends React.Component {
     constructor(props) {
@@ -326,14 +329,14 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                     let current_selections = this.props.data_load;
                     for (let i = 0; i < current_selections.length; i++) {
                         for (let j = 0; j < result.length; j++) {
-                            if(current_selections[i] == result[j].id.toString()) {
+                            if(current_selections[i] === result[j].id.toString()) {
                                 orderedOptions.push(<option key={result[j].id} value={result[j].id}>{result[j].name}</option>);
                             }
                         }
                     }
 
                     options = result.map((option) => {
-                        if (this.props.is_edit == true) {
+                        if (this.props.is_edit === true) {
                             if (!current_selections.includes(option.id.toString())) {
                                 let innerhtml = <option key={option.id} value={option.id}>{option.name}</option>;
                                 unOptions.push(innerhtml);
@@ -346,7 +349,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         }
                     });
 
-                    if(this.props.is_edit == true) {  // Only add ordered options if editing
+                    if(this.props.is_edit === true) {  // Only add ordered options if editing
                         options = orderedOptions.concat(options);
                     }
 
@@ -376,8 +379,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 
     // Get the new page titles on change of lang
     componentWillReceiveProps(nextProps) {
-        if(nextProps.language != this.state.language &&
-           this.props.key_binding == "menu_show_pages" ) {
+        if(nextProps.language !== this.state.language &&
+           this.props.key_binding === "menu_show_pages" ) {
               this.setState({language: nextProps.language});
               let loadPagesURL = "/api/admin/load_widget_design_pages/" +
                   nextProps.language;
@@ -386,10 +389,10 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     isValueExist(item, array) {
-        if (array == undefined) {
+        if (array === undefined) {
             return true;
         }
-        if (array.length != 0) {
+        if (array.length !== 0) {
             for (let prop in array) {
                 if (array[prop].props.value == item) {
                     return true;
@@ -444,7 +447,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         for (let option in options) {
             let registed = false;
             for (let index in selectedIndex) {
-                if (options[option].value == selectedIndex[index] && options[option].value) {
+                if (options[option].value === selectedIndex[index] && options[option].value) {
                     let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
                     if (!this.isValueExist(options[option].value, authorizedOptions)) {
                         authorizedOptions.push(innerhtml);
@@ -537,7 +540,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         return (
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right" >{this.props.name}</label>
-                <div class="controls col-xs-9">
+                <div className="controls col-xs-9">
                     <fieldset className="form-group style-container">
                         { upDownArrows }
                         <div className={"style-element " + rowClass}>
@@ -602,7 +605,7 @@ class ComponentFieldEditor extends React.Component {
                 'link', 'image', 'video', 'formula', 'clean'
             ]
         };
-        this.handleChange = this.handleChange.bind(this)
+        this.handleChange = this.handleChange.bind(this);
         this.attachQuillRefs = this.attachQuillRefs.bind(this);
     }
     componentDidMount() {
@@ -632,7 +635,7 @@ class ComponentFieldEditor extends React.Component {
             setting = props.data_load;
             this.setState({
                 editorHtml: setting
-            })
+            });
             this.props.getValueOfField("language", false);
         }
     }
@@ -641,7 +644,7 @@ class ComponentFieldEditor extends React.Component {
         if (this.quillRef == null) {
             return false;
         }
-        var contents = this.quillRef.getContents();
+        let contents = this.quillRef.getContents();
         let isResetHTML = true;
         if(contents && Array.isArray(contents.ops)){
             contents.ops.forEach(function (content) {
@@ -650,7 +653,7 @@ class ComponentFieldEditor extends React.Component {
                     isResetHTML = false;
                 }
                 else{
-                    if(data.trim() != ""){
+                    if(data.trim() !== ""){
                         isResetHTML = false;
                     }
                 }
@@ -668,7 +671,7 @@ class ComponentFieldEditor extends React.Component {
         return (
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                <div class="controls col-xs-9 my-editor">
+                <div className="controls col-xs-9 my-editor">
                     <ReactQuill
                         ref={(el) => { this.reactQuillRef = el }}
                         onChange={this.handleChange}
@@ -686,7 +689,7 @@ class ComponentFieldEditor extends React.Component {
 class ExtendComponent extends React.Component {
     constructor(props) {
         super(props);
-        if (this.props.type == NOTICE_TYPE) {
+        if (this.props.type === NOTICE_TYPE) {
             if (this.props.data_load.more_description) {
                 this.state = {
                     type: this.props.type,
@@ -730,7 +733,7 @@ class ExtendComponent extends React.Component {
         }
         if (nextProps.type !== prevState.type) {
             let defaultSettings = {};
-            if (nextProps.type == NEW_ARRIVALS){
+            if (nextProps.type === NEW_ARRIVALS){
                 defaultSettings['new_dates'] = '5';
                 defaultSettings['display_result'] = '5';
             }
@@ -763,7 +766,7 @@ class ExtendComponent extends React.Component {
                     hide_the_rest.value = '';
                 }
             }
-            if (nextProps.type == ACCESS_COUNTER) {
+            if (nextProps.type === ACCESS_COUNTER) {
                 setting["access_counter"] = nextProps.init_value
             }
             return {
@@ -814,7 +817,7 @@ class ExtendComponent extends React.Component {
         data[field] = value;
         this.setState({
             settings: data
-        })
+        });
         this.props.getValueOfField(this.props.key_binding, data);
     }
 
@@ -826,7 +829,7 @@ class ExtendComponent extends React.Component {
         this.setState({
             write_more: event.target.checked,
             settings: data,
-        })
+        });
         this.props.getValueOfField(this.props.key_binding, data);
         this.render();
     }
@@ -889,22 +892,22 @@ class ExtendComponent extends React.Component {
     }
 
     render() {
-        if (this.state.type == FREE_DESCRIPTION_TYPE) {
+        if (this.state.type === FREE_DESCRIPTION_TYPE) {
             return (
                 <div>
                     <ComponentFieldEditor key={this.state.type} handleChange={this.handleChange} name="Free description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
-        else if (this.state.type == HEADER_TYPE || this.state.type == FOOTER_TYPE){
+        else if (this.state.type === HEADER_TYPE || this.state.type === FOOTER_TYPE){
             return (
                 <div>
-                    <ComponentFieldEditor key={this.state.type} handleChange={this.handleChange} name={this.state.type == HEADER_TYPE ? "Header setting" : "Footer setting"} key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                    <ComponentFieldEditor key={this.state.type} handleChange={this.handleChange} name={this.state.type === HEADER_TYPE ? "Header setting" : "Footer setting"} key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
-        else if (this.state.type == NOTICE_TYPE) {
-            if (this.state.write_more == false) {
+        else if (this.state.type === NOTICE_TYPE) {
+            if (this.state.write_more === false) {
                 return (
                     <div>
                         <div>
@@ -912,7 +915,7 @@ class ExtendComponent extends React.Component {
                         </div>
                         <div className="row">
                             <label className="control-label col-xs-2 text-right"></label>
-                            <div class="controls col-xs-10">
+                            <div className="controls col-xs-10">
                                 <input name="write_more" type="checkbox" onChange={this.handleChangeCheckBox} defaultChecked={this.state.settings.write_more} />
                                 <span>&nbsp;Write more</span>
                             </div>
@@ -928,14 +931,14 @@ class ExtendComponent extends React.Component {
                         </div>
                         <div className="row">
                             <label className="control-label col-xs-2 text-right"></label>
-                            <div class="controls col-xs-10">
+                            <div className="controls col-xs-10">
                                 <div>
                                     <input name="write_more" type="checkbox" onChange={this.handleChangeCheckBox} defaultChecked={this.state.write_more} />
                                     <span>&nbsp;Write more</span>
                                 </div>
                                 <br />
                                 <div className="sub-text-box">
-                                    <input type="text"  id="read_more" name="read_more" onChange={this.handleChangeReadMore} className="form-control" placeholder="Read more" value={this.state.settings.read_more} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                                    <input type="text"  id="read_more" name="read_more" onChange={this.handleChangeReadMore} className="form-control" placeholder="Read more" value={this.state.settings.read_more} />
                                 </div>
                                 <br />
                             </div>
@@ -945,9 +948,9 @@ class ExtendComponent extends React.Component {
                         </div>
                         <div className="row">
                             <label className="control-label col-xs-2 text-right"></label>
-                            <div class="controls col-xs-10">
+                            <div className="controls col-xs-10">
                                 <div className="sub-text-box">
-                                    <input type="text" id="hide_the_rest" name="hide_the_rest" onChange={this.handleChangeHideTheRest} className="form-control" placeholder="Hide the rest" value={this.state.settings.hide_the_rest} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                                    <input type="text" id="hide_the_rest" name="hide_the_rest" onChange={this.handleChangeHideTheRest} className="form-control" placeholder="Hide the rest" value={this.state.settings.hide_the_rest} />
                                 </div>
                                 <br />
                             </div>
@@ -956,12 +959,12 @@ class ExtendComponent extends React.Component {
                 )
             }
         }
-        else if(this.state.type == ACCESS_COUNTER){
+        else if(this.state.type === ACCESS_COUNTER){
             return(
                 <div>
                     <div className="form-group row">
                         <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
-                        <div class="controls col-xs-3">
+                        <div className="controls col-xs-3">
                             <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter || "0"} onChange={this.handleChangeAccessCounter} className="form-control" />
                         </div>
                     </div>
@@ -977,31 +980,31 @@ class ExtendComponent extends React.Component {
                 </div>
             )
         }
-        else if(this.state.type == NEW_ARRIVALS){
+        else if(this.state.type === NEW_ARRIVALS){
             return(
                 <div>
                     <div className="form-group row">
                         <label htmlFor="new_dates" className="control-label col-xs-2 text-right">New date</label>
-                        <div class="controls col-xs-3">
+                        <div className="controls col-xs-3">
                             {this.generateNewDate()}
                         </div>
                     </div>
                     <div className="form-group row">
                         <label htmlFor="display_result" className="control-label col-xs-2 text-right">Display Results</label>
-                        <div class="controls col-xs-3">
+                        <div className="controls col-xs-3">
                             {this.generateDisplayResult()}
                         </div>
                     </div>
                     <div className="form-group row">
                         <label htmlFor="rss_feed" className="control-label col-xs-2 text-right">RSS feed</label>
-                        <div class="controls col-xs-1">
+                        <div className="controls col-xs-1">
                             <input name="rss_feed" type="checkbox" onChange={this.handleChangeRssFeed} defaultChecked={this.state.settings.rss_feed} />
                         </div>
                     </div>
                 </div>
             )
         }
-        else if(this.state.type == MENU_TYPE){
+        else if(this.state.type === MENU_TYPE){
             let loadPagesURL = "/api/admin/load_widget_design_pages/" +
                 this.props.language;
             return(
@@ -1035,6 +1038,7 @@ class ComponentButtonLayout extends React.Component {
         this.deleteCommand = this.deleteCommand.bind(this);
         this.isLabelValid = this.isLabelValid.bind(this);
         this.validateFieldIsValid = this.validateFieldIsValid.bind(this);
+        this.showErrorMessage = this.showErrorMessage.bind(this);
     }
 
     saveCommand(event) {
@@ -1061,7 +1065,7 @@ class ComponentButtonLayout extends React.Component {
         if (currentLabel || !noData) {
             let currentLangData = {
                 label: currentLabel,
-            }
+            };
             if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE || data['widget_type'] == ACCESS_COUNTER || data['widget_type'] == HEADER_TYPE || data['widget_type'] == FOOTER_TYPE){
                 currentLangData["description"] = currentDescription;
             }
@@ -1086,22 +1090,18 @@ class ComponentButtonLayout extends React.Component {
         };
         request.data_id = this.props.data_id;
         let data_validate = this.validateFieldIsValid(data.widget_type);
-        if (data.repository == "0" || data.repository == "") {
-            var modalcontent = "Repository is required!";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
-        } else if (data.widget_type == "0" || data.widget_type == "") {
-            var modalcontent = "Type is required.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+        if (data.repository === "0" || data.repository === "") {
+            let modalcontent = "Repository is required!";
+            this.showErrorMessage(modalcontent);
+        } else if (data.widget_type === "0" || data.widget_type === "") {
+            let modalcontent = "Type is required.";
+            this.showErrorMessage(modalcontent);
         } else if (!this.isLabelValid(data['multiLangSetting'])) {
-            var modalcontent = "Label is required!";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+            let modalcontent = "Label is required!";
+            this.showErrorMessage(modalcontent);
         } else if(!data_validate.status){
-            var modalcontent = data_validate.error;
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+            let modalcontent = data_validate.error;
+            this.showErrorMessage(modalcontent);
         }else {
             return fetch(this.props.url_request, {
                 method: "POST",
@@ -1116,17 +1116,21 @@ class ComponentButtonLayout extends React.Component {
                         addAlert(result.message);
                     } else {
                         //alert(result.message);
-                        var modalcontent = result.message;
-                        $("#inputModal").html(modalcontent);
-                        $("#allModal").modal("show");
+                        let modalcontent = result.message;
+                        this.showErrorMessage(modalcontent);
                     }
                 });
         }
     }
 
+    showErrorMessage(errorMessage) {
+      $("#inputModal").html(errorMessage);
+      $("#allModal").modal("show");
+    }
+
     validateFieldIsValid(widget_type){
-        if(widget_type == ACCESS_COUNTER){
-            let access_val =$('#Access_counter').val() || "0";
+        if(widget_type === ACCESS_COUNTER){
+            let access_val = $('#Access_counter').val() || "0";
             if (Number.isNaN(Number(access_val)) || Number(access_val) < 0){
                 return {
                     status : false,
@@ -1192,7 +1196,7 @@ class ComponentButtonLayout extends React.Component {
 
         let request = {
             data_id: this.props.data_id
-        }
+        };
         if (confirm("Are you sure to delete this widget Item ?")) {
             return fetch('/api/admin/delete_widget_item', {
                 method: "POST",
@@ -1230,7 +1234,7 @@ class ComponentButtonLayout extends React.Component {
                             &nbsp;Cancel
                         </a>
                         <button className="btn btn-danger delete-button style-my-button" onClick={this.deleteCommand}>
-                            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                            <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
                             &nbsp;Delete
                         </button>
                     </div>
@@ -1275,7 +1279,7 @@ class ComponentLanguage extends React.Component {
     removeDuplicatedLang(langList, registeredLang) {
         registeredLang.forEach(function(lang) {
             let index = langList.indexOf(lang);
-            if (index != -1) {
+            if (index !== -1) {
                 langList.splice(index, 1);
             }
         });
@@ -1368,7 +1372,7 @@ class ComponentLanguage extends React.Component {
         if (registeredLanguage) {
             registeredLanguage.forEach(function (lang) {
                 let innerHTML;
-                if (lang == selected) {
+                if (lang === selected) {
                     innerHTML = <option key={lang} value={lang} style={{ fontWeight: 'bold' }} selected>{languageNameList[lang]}&nbsp;(Registered)</option>;
                 }else {
                     innerHTML = <option key={lang} value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
@@ -1378,9 +1382,9 @@ class ComponentLanguage extends React.Component {
         }
         languageList.forEach(function (lang) {
             let innerHTML;
-            if ($.isEmptyObject(registeredLanguage) && lang == state.defaultLanguage && isReset) {
+            if ($.isEmptyObject(registeredLanguage) && lang === state.defaultLanguage && isReset) {
                 innerHTML = <option key={lang} value={lang} selected>{languageNameList[lang]}</option>;
-            } else if (lang == selected) {
+            } else if (lang === selected) {
                 innerHTML = <option key={lang} value={lang} selected>{languageNameList[lang]}</option>;
             } else {
                 innerHTML = <option key={lang} value={lang}>{languageNameList[lang]}</option>;
@@ -1393,9 +1397,9 @@ class ComponentLanguage extends React.Component {
     }
 
     handleChange(event) {
-        var language = event.target.value;
+        let language = event.target.value;
         this.props.getValueOfField('lang', language);  // Update what language is selected for other portions
-        if (this.state.selectedLanguage == "0") {
+        if (this.state.selectedLanguage === "0") {
             this.setState({
                 selectedLanguage: language
             });
@@ -1405,7 +1409,7 @@ class ComponentLanguage extends React.Component {
                 let langList = this.state.languageList;
                 let registeredLang = this.state.registeredLanguage;
                 let index = langList.indexOf(this.state.selectedLanguage);
-                if (index != -1) {
+                if (index !== -1) {
                     langList.splice(index, 1);
                     registeredLang.push(this.state.selectedLanguage);
                 }
@@ -1420,8 +1424,8 @@ class ComponentLanguage extends React.Component {
                 let langList = this.state.languageList;
                 let registeredLang = this.state.registeredLanguage;
                 let index = registeredLang.indexOf(this.state.selectedLanguage);
-                if (index != -1) {
-                    if (this.state.selectedLanguage == this.state.defaultLanguage) {
+                if (index !== -1) {
+                    if (this.state.selectedLanguage === this.state.defaultLanguage) {
                         langList.unshift(this.state.selectedLanguage);
                         registeredLang.splice(index, 1);
                     } else {
@@ -1441,7 +1445,7 @@ class ComponentLanguage extends React.Component {
         return (
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}{this.props.is_required ? <span className="style-red">*</span>:null}</label>
-                <div class="controls col-xs-6">
+                <div className="controls col-xs-6">
                     <select onChange={this.handleChange} className="form-control" id="language">
                         {this.state.options}
                     </select>
@@ -1484,25 +1488,20 @@ class MainLayout extends React.Component {
                 this.setState({ repository: value });
                 break;
             case 'type':
-                if (value == HEADER_TYPE || value == FOOTER_TYPE) {
-                    this.setState({
-                        label_enable: false,
-                        theme: "simple",
-                        widget_type: value,
-                        multiLangSetting: {},
-                        label: '',
-                        settings: {}
-                    });
-                } else {
-                    this.setState({
-                        label_enable: true,
-                        theme: "default",
-                        widget_type: value,
-                        multiLangSetting: {},
-                        label: '',
-                        settings: {}
-                    });
+                let labelEnable = true;
+                let theme = DEFAULT_THEME;
+                if (value === HEADER_TYPE || value === FOOTER_TYPE) {
+                    labelEnable = false;
+                    theme = "simple";
                 }
+                this.setState({
+                    label_enable: labelEnable,
+                    theme: theme,
+                    widget_type: value,
+                    multiLangSetting: {},
+                    label: '',
+                    settings: {}
+                });
                 break;
             case 'label':
                 this.setState({ label: value });
@@ -1554,8 +1553,8 @@ class MainLayout extends React.Component {
             return;
         }
         let multiLangData = this.state.multiLangSetting[selectedLang];
-        let accessInitValue = 0
-        if ((this.state.widget_type+ "") == ACCESS_COUNTER && multiLangData.description) {
+        let accessInitValue = 0;
+        if ((this.state.widget_type+ "") === ACCESS_COUNTER && multiLangData.description) {
             accessInitValue = multiLangData.description.access_counter
         }
         if (multiLangData) {
@@ -1578,8 +1577,8 @@ class MainLayout extends React.Component {
     }
 
     storeMultiLangSetting(lang, newLanguage) {
-        var result = true;
-        if (this.state.label == '' && $.isEmptyObject(this.state.settings)) {
+        let result = true;
+        if (this.state.label === '' && $.isEmptyObject(this.state.settings)) {
             result = false;
         } else {
             if (!this.state.label) {
@@ -1665,7 +1664,7 @@ class MainLayout extends React.Component {
     }
 
     accessCounterValidation(setting) {
-        if (setting.label != "" ) {
+        if (setting.label !== "" ) {
             return false;
         }
         if (setting.description.preceding_message) {
@@ -1697,11 +1696,11 @@ class MainLayout extends React.Component {
                 <div className="row">
                     <ComponentTextboxField getValueOfField={this.getValueOfField} name="Name" key_binding="label" data_load={this.state.label} data_change={this.state.multiLanguageChange} type={this.state.widget_type} is_required = {true}/>
                 </div>
-                {this.state.widget_type != HEADER_TYPE && this.state.widget_type != FOOTER_TYPE ?
+                {this.state.widget_type !== HEADER_TYPE && this.state.widget_type !== FOOTER_TYPE ?
                 <div className="row">
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Theme" data = {THEME_SETTING} key_binding="theme" data_load={this.state.theme} is_required = {false}/>
                 </div> : null}
-                {this.state.widget_type != HEADER_TYPE && this.state.widget_type != FOOTER_TYPE ?
+                {this.state.widget_type !== HEADER_TYPE && this.state.widget_type !== FOOTER_TYPE ?
                 <div className="row">
                     <ComponentCheckboxField name="Label Enable" getValueOfField={this.getValueOfField} key_binding="label_enable" data_load={this.state.label_enable} />
                 </div> : null}
@@ -1713,16 +1712,16 @@ class MainLayout extends React.Component {
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Text Color" key_binding="label_text_color" data_load={this.state.label_text_color} />
                 </div> : null }
-                {this.state.theme != "simple" ?
+                {this.state.theme !== "simple" ?
                 <div className="row">
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Border Style" data = {BORDER_STYLE_SETTING} key_binding="border_style" data_load={this.state.border_style} is_required = {false}/>
                 </div> : null }
-                {this.state.theme != "simple" ?
+                {this.state.theme !== "simple" ?
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Border Color" key_binding="frame_border_color" data_load={this.state.frame_border_color} />
                 </div> :null}
                 <div className="row">
-                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding="background_color" data_load={this.state.background_color} type={this.state.widget_type} />
+                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding="background_color" data_load={this.state.background_color} type={this.state.widget_type} is_edit={this.props.is_edit} />
                 </div>
                 <div className="row">
                     <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding="enable" data_load={this.state.enable} />
@@ -1754,13 +1753,13 @@ $(function () {
             repository_id: '',
             widget_type: '',
             label: '',
-            label_color: '#F5F5F5',
-            label_text_color: '#333333',
-            border_style: 'solid',
-            theme: 'default',
+            label_color: DEFAULT_LABEL_COLOR,
+            label_text_color: DEFAULT_TEXT_COLOR,
+            border_style: DEFAULT_BORDER_STYLE,
+            theme: DEFAULT_THEME,
             label_enable: true,
-            frame_border_color: '#DDDDDD',
-            background_color: '#FFFFFF',
+            frame_border_color: DEFAULT_BORDER_COLOR,
+            background_color: DEFAULT_BG_COLOR,
             is_enabled: true,
             language: '',
             multiLangSetting: {},
