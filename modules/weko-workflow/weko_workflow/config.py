@@ -46,8 +46,7 @@ WEKO_WORKFLOW_ACTION_ENDPOINTS = {
 IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          (1, 'JaLC DOI', 'http://doi.org'),
                          (2, 'JaLC CrossRef DOI', 'http://doi.org'),
-                         (3, 'JaLC DataCite DOI', 'http://doi.org'),
-                         (4, 'CNRI', 'http://hdl.handle.net')
+                         (3, 'JaLC DataCite DOI', 'http://doi.org')
                          ]
 """Options list for Identifier Grant action."""
 
@@ -86,3 +85,6 @@ IDENTIFIER_GRANT_SELECT_DICT = {
     'CrossRefDOI': '2'
 }
 """Identifier grant selected enum."""
+
+WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
+"""Host server of CNRI"""

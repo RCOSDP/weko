@@ -22,23 +22,25 @@
 
 from copy import deepcopy
 
-from flask import current_app
+from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
+from invenio_records.api import Record
+from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_index_tree.models import Index
+from weko_handle.api import Handle
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_records_ui.models import Identifier
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import WorkActivity
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, \
-    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY
+    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY, \
+    WEKO_SERVER_CNRI_HOST_LINK
 
 
 def get_identifier_setting(community_id):
@@ -72,12 +74,12 @@ def get_community_id_by_index(index_name):
     return None
 
 
-def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
+def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
     """
     Mapp doi pidstore data to ItemMetadata.
 
-    :param post_json: request data
-    :param idf_grant: identifier selected
+    :param data: request data
+    :param doi_select: identifier selected
     :param activity_id: activity id number
     """
     activity_obj = WorkActivity()
@@ -96,38 +98,31 @@ def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
     doi_register_val = ''
     doi_register_typ = ''
 
-    if idf_grant == IDENTIFIER_GRANT_LIST[1][0] and post_json.get(
+    if doi_select == IDENTIFIER_GRANT_LIST[1][0] and data.get(
             'identifier_grant_jalc_doi_link'):
-        jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
+        jalcdoi_link = data.get('identifier_grant_jalc_doi_link')
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_link
         identifier_type = 'DOI'
         doi_register_val = '/'.join(jalcdoi_tail[1:])
         doi_register_typ = 'JaLC'
-    elif idf_grant == IDENTIFIER_GRANT_LIST[2][0] and post_json.get(
+    elif doi_select == IDENTIFIER_GRANT_LIST[2][0] and data.get(
             'identifier_grant_jalc_cr_doi_link'):
-        jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
+        jalcdoi_cr_link = data.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_cr_link
         identifier_type = 'DOI'
         doi_register_val = '/'.join(jalcdoi_cr_tail[1:])
         doi_register_typ = 'Crossref'
-    elif idf_grant == IDENTIFIER_GRANT_LIST[3][0] and post_json.get(
+    elif doi_select == IDENTIFIER_GRANT_LIST[3][0] and data.get(
             'identifier_grant_jalc_dc_doi_link'):
-        jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
+        jalcdoi_dc_link = data.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_dc_link
         identifier_type = 'DOI'
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'Datacite'
-    # elif idf_grant == IDENTIFIER_GRANT_LIST[4][0] and post_json.get(
-    # 'identifier_grant_crni_link'):
-    #     jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
-    #     identifier_value = jalcdoi_crni_link
-    #     identifier_type = 'HDL'
-    #     del tempdata[attrs[2]]
-    #     del tempdata[attrs[3]]
-    elif idf_grant == IDENTIFIER_GRANT_CAN_WITHDRAW:  # with draw
+    elif doi_select == IDENTIFIER_GRANT_CAN_WITHDRAW:  # with draw
         # identifier_grant
         pidstore_identifier = item.get('pidstore_identifier')
         flag_del_pidstore = delete_doi_pidstore(
@@ -141,8 +136,7 @@ def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
     try:
         tempdata[attrs[0]] = identifier_value
         tempdata[attrs[1]] = identifier_type
-        if tempdata.get(attrs[2]) is not None \
-                and tempdata.get(attrs[3]) is not None:
+        if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
             tempdata[attrs[2]] = doi_register_val
             tempdata[attrs[3]] = doi_register_typ
 
@@ -270,45 +264,73 @@ def register_cnri(activity_id):
     """
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
-    record = WekoRecord.get_record(item_uuid)
-    path = record.get('path')
+    record = Record.get_record(item_uuid)
+    item = ItemsMetadata.get_record(item_uuid)
+
     deposit_id = record.get('_deposit')['id']
-    if len(path) > 1:
-        community_id = 'Root Index'
+    record_url = request.url.split('/workflow/')[0] \
+        + '/records/' + str(deposit_id)
+
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
+
+    if handle:
+        try:
+            handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+            item_type = ItemsMetadata.get_by_object_id(activity.item_id)
+            prev_cnri = PersistentIdentifier.query.filter_by(
+                pid_type='cnri',
+                object_uuid=item_uuid).one_or_none()
+
+            if prev_cnri:
+                return
+
+            PersistentIdentifier.create(
+                'cnri',
+                str(handle),
+                object_type='rec',
+                object_uuid=item_uuid,
+                status=PIDStatus.REGISTERED
+            )
+
+            identifier_map = identifier_jpcoar_mapping(
+                item_type.item_type_id, IDENTIFIER_ITEMSMETADATA_KEY[0:2])
+            record_data = record.get(identifier_map['id'])
+
+            if not record_data:
+                record_data = {
+                    identifier_map['id']: {
+                        "attribute_name": "Identifier",
+                        "attribute_value_mlt": [
+                            {
+                                identifier_map['val']: str(handle),
+                                identifier_map['type']: "HDL"
+                            }
+                        ]
+                    }
+                }
+
+            identifier_data = {
+                identifier_map['val']: str(handle),
+                identifier_map['type']: 'HDL'
+            }
+            res = {
+                identifier_map['id']: identifier_data,
+                'pidstore_identifier': {}
+            }
+
+            res['pidstore_identifier']['identifier_value'] = str(handle)
+            with db.session.begin_nested():
+                item.update(res)
+                item.commit()
+                record.update(record_data)
+                record.commit()
+            db.session.commit()
+        except Exception as pidNotEx:
+            db.session.rollback()
+            current_app.logger.error(pidNotEx)
     else:
-        index_address = path.pop(-1).split('/')
-        index_id = Index.query.filter_by(id=index_address.pop()).one()
-        community_id = get_community_id_by_index(
-            index_id.index_name)
-
-    with db.session.no_autoflush:
-        identifier = Identifier.query.filter_by(
-            repository=community_id).one_or_none()
-
-    if not identifier or not identifier.cnri or not identifier.cnri_flag:
-        return None
-
-    cnri_link = IDENTIFIER_GRANT_LIST[4][2] + '/' + identifier.cnri \
-        + '/' + "{:010d}".format(int(deposit_id))
-    try:
-        prev_cnri = PersistentIdentifier.query.filter_by(
-            pid_type='cnri',
-            object_uuid=item_uuid).one_or_none()
-
-        if prev_cnri:
-            return None
-
-        cnri_pidstore = PersistentIdentifier.create(
-            'cnri',
-            str(cnri_link),
-            object_type='rec',
-            object_uuid=item_uuid,
-            status=PIDStatus.REGISTERED
-        )
-        return cnri_pidstore
-    except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(pidNotEx)
-        return None
+        current_app.logger.error('Cannot connect Handle server!')
 
 
 def identifier_jpcoar_mapping(item_type_id, keys):

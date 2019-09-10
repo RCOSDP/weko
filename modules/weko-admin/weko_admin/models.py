@@ -1596,6 +1596,61 @@ class FeedbackMailFailed(db.Model):
             current_app.logger.debug(ex)
 
 
+class Identifier(db.Model):
+    """
+    Represent an Identifier.
+
+    The Identifier object contains a ``created``, a ``updated``
+    properties that are automatically updated.
+    """
+
+    __tablename__ = 'doi_identifier'
+
+    id = db.Column(db.BigInteger, primary_key=True, unique=True)
+    """ Identifier of the index """
+
+    repository = db.Column(db.String(100), nullable=False)
+    """ Repository of the community """
+
+    jalc_flag = db.Column(db.Boolean, default=True)
+    """ Jalc_flag of the Identifier """
+
+    jalc_crossref_flag = db.Column(db.Boolean, default=True)
+    """ Jalc_crossref_flag of the Identifier """
+
+    jalc_datacite_flag = db.Column(db.Boolean, default=True)
+    """ Jalc_datacite_flag of the Identifier """
+
+    jalc_doi = db.Column(db.String(100), nullable=True)
+    """ Jalc_doi of the Identifier """
+
+    jalc_crossref_doi = db.Column(db.String(100), nullable=True)
+    """ Jalc_crossref_doi of the Identifier """
+
+    jalc_datacite_doi = db.Column(db.String(100), nullable=True)
+    """ Jalc_datacite_doi of the Identifier """
+
+    suffix = db.Column(db.String(100), nullable=True)
+    """ Suffix of the Identifier """
+
+    created_userId = db.Column(db.String(50), nullable=False)
+    """ Created by user """
+
+    created_date = db.Column(db.DateTime, nullable=False)
+    """ Created date """
+
+    updated_userId = db.Column(db.String(50), nullable=False)
+    """ Updated by user """
+
+    updated_date = db.Column(db.DateTime, nullable=True)
+    """ Created date """
+
+    def __repr__(self):
+        """String representation of the Pidstore Identifier object."""
+        return '<Identifier {}, Repository: {}>'.format(self.id,
+                                                        self.repository)
+
+
 __all__ = ([
     'SearchManagement',
     'AdminLangSettings',
@@ -1611,5 +1666,6 @@ __all__ = ([
     'AdminSettings',
     'SiteInfo',
     'FeedbackMailHistory',
-    'FeedbackMailFailed'
+    'FeedbackMailFailed',
+    'Identifier'
 ])

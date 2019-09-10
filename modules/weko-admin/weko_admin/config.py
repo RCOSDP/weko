@@ -658,3 +658,9 @@ WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY = 20
 
 WEKO_ADMIN_NUMBER_OF_FAILED_MAIL = 10
 """Number of failed mail display per page."""
+
+WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR = 'weko_records_ui/admin/pidstore_identifier_creator.html'
+""" Pidstore identifier creator template. """
+
+WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR = 'weko_records_ui/admin/pidstore_identifier_editor.html'
+""" Pidstore identifier editor template. """
