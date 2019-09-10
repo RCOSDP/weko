@@ -5,94 +5,7 @@ $(document).ready(function () {
   page_global = {
     upload_file: false,
     table_row: [],        // 追加した行番号を保存する元々順番()
-    table_row_map: {
-      mapping: {
-        updated_date : {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
-            "date": {
-              "@attributes": {"dateType": "subitem_1568004930035"},
-              "@value": "subitem_1568004921909"
-            },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        },
-        created_date :{
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
-            "date": {
-              "@attributes": {"dateType": "subitem_1568004930035"},
-              "@value": "subitem_1568004921909",
-            },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        },
-        persistent_identifier_doi: {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
-            "identifier": {
-              "@attributes": {"identifierType": "subitem_1567658128206"},
-              "@value": "subitem_1567658121672",
-            },
-            "identifierRegistration": {
-              "@attributes": {"identifierType": "subitem_1567658033231"},
-              "@value": "subitem_1567658011176",
-            },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        },
-        persistent_identifier_h: {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
-            "identifier": {
-              "@attributes": {"identifierType": "subitem_1568005120251"},
-              "@value": "subitem_1568005111766",
-            },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        },
-        ranking_page_url: {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
-            "identifier": {
-              "@attributes": {"identifierType": "subitem_1568005120251"},
-              "@value": "subitem_1568005111766",
-            },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        },
-        belonging_index_info: {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": "",
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        }
-
-      }
-    },    // 生成したschemaとformの情報を保存する
+    table_row_map: {},    // 生成したschemaとformの情報を保存する
     meta_list: {},        // 追加した行の情報を保存する(セットした詳細情報)
     meta_fix: {},
     schemaeditor: {       // objectの場合
@@ -118,7 +31,7 @@ $(document).ready(function () {
       updated_date : {
         title : "Updated Date",
         title_i18n: {ja: "更新日時", en: "Updated Date"},
-        input_type: "cus_121",
+        input_type: "cus_122",
         option: {
           required : false,
           multiple : false,
@@ -130,7 +43,7 @@ $(document).ready(function () {
       created_date : {
         title: "Created Date",
         title_i18n: {ja: "作成日時", en: "Created Date"},
-        input_type: "cus_121",
+        input_type: "cus_122",
         option: {
           required : false,
           multiple : false,
@@ -140,7 +53,7 @@ $(document).ready(function () {
         }
       },
       persistent_identifier_doi : {
-        input_type: "cus_120",
+        input_type: "cus_121",
         title: "Persistent Identifier(DOI)",
         title_i18n: {ja: "永続識別子(DOI)", en: "Persistent Identifier(DOI)"},
         option: {
@@ -152,7 +65,7 @@ $(document).ready(function () {
         }
       },
       persistent_identifier_h : {
-        input_type: "cus_122",
+        input_type: "cus_123",
         title: "Persistent Identifier(Handle)",
         title_i18n: {ja: "永続識別子（ハンドル）", en: "Persistent Identifier(Handle)"},
         option: {
@@ -164,7 +77,7 @@ $(document).ready(function () {
         }
       },
       ranking_page_url : {
-        input_type: "cus_122",
+        input_type: "cus_123",
         title: "Ranking Page URL",
         title_i18n: {ja: "ランディングページのURL", en: "Ranking Page URL"},
         option: {
@@ -281,8 +194,8 @@ $(document).ready(function () {
           "oai_dc_mapping": "",
           "jpcoar_mapping": {
             "date": {
-              "@attributes": {"dateType": "subitem_1568004930035"},
-              "@value": "subitem_1568004921909"
+              "@attributes": {"dateType": "subitem_system_date_type"},
+              "@value": "subitem_system_date"
             },
           },
           "junii2_mapping": "",
@@ -295,8 +208,8 @@ $(document).ready(function () {
           "oai_dc_mapping": "",
           "jpcoar_mapping": {
             "date": {
-              "@attributes": {"dateType": "subitem_1568004930035"},
-              "@value": "subitem_1568004921909",
+              "@attributes": {"dateType": "subitem_system_date_type"},
+              "@value": "subitem_system_date",
             },
           },
           "junii2_mapping": "",
@@ -309,12 +222,12 @@ $(document).ready(function () {
           "oai_dc_mapping": "",
           "jpcoar_mapping": {
             "identifier": {
-              "@attributes": {"identifierType": "subitem_1567658128206"},
-              "@value": "subitem_1567658121672",
+              "@attributes": {"identifierType": "subitem_system_identifier_doi_type"},
+              "@value": "subitem_system_identifier_doi",
             },
             "identifierRegistration": {
-              "@attributes": {"identifierType": "subitem_1567658033231"},
-              "@value": "subitem_1567658011176",
+              "@attributes": {"identifierType": "subitem_system_id_re_doi_type"},
+              "@value": "subitem_system_id_re_doi",
             },
           },
           "junii2_mapping": "",
@@ -327,8 +240,8 @@ $(document).ready(function () {
           "oai_dc_mapping": "",
           "jpcoar_mapping": {
             "identifier": {
-              "@attributes": {"identifierType": "subitem_1568005120251"},
-              "@value": "subitem_1568005111766",
+              "@attributes": {"identifierType": "subitem_system_identifier_type"},
+              "@value": "subitem_system_identifier",
             },
           },
           "junii2_mapping": "",
@@ -341,8 +254,8 @@ $(document).ready(function () {
           "oai_dc_mapping": "",
           "jpcoar_mapping": {
             "identifier": {
-              "@attributes": {"identifierType": "subitem_1568005120251"},
-              "@value": "subitem_1568005111766",
+              "@attributes": {"identifierType": "subitem_system_identifier_type"},
+              "@value": "subitem_system_identifier",
             },
           },
           "junii2_mapping": "",
