@@ -837,7 +837,7 @@ $(document).ready(function () {
     tmp_pubdate.option.showlist = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_2').is(':checked') ? true : false);
     tmp_pubdate.option.crtf = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_3').is(':checked') ? true : false);
     page_global.meta_fix["pubdate"] = tmp_pubdate;
-//	  page_global.meta_system = add_meta_system()
+	  page_global.meta_system = add_meta_system()
 	  page_global.table_row_map.form = page_global.table_row_map.form.concat(get_form_system())
 	  add_system_schema_property()
   }
