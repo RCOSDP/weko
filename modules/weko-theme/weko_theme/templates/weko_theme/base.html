@@ -83,6 +83,9 @@
     {%- block body_inner %}
     {%- if not community_id %}
     <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
+      {%- block page_header %}
+        {% include config.THEME_HEADER_TEMPLATE %}
+      {%- endblock page_header %}
       <div id="main_contents">
     {%- endif%}
     <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />

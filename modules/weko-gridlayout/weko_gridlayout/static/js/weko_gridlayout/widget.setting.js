@@ -196,34 +196,53 @@ const ComponentTextboxForAccessCounter = function(props){
     )
 }
 
-const ComponentSelectColorFiled = function(props){
+const ComponentSelectColorFiled = (props) => {
     let initColor = '';
-    if(props.key_binding == "label_text_color"){
+    if (props.key_binding == "label_text_color") {
         initColor = '#333333';
     }
-    else if(props.key_binding == "background_color"){
-        initColor = '#FFFFFF';
+    else if (props.key_binding == "background_color") {
+        if (props.type == HEADER_TYPE || props.type == FOOTER_TYPE) {
+            initColor = "#3d7fa1"
+        } else {
+            initColor = '#FFFFFF';
+        }
     }
-    else if(props.key_binding == "label_color"){
+    else if (props.key_binding == "label_color") {
         initColor = '#F5F5F5';
     }
-    else{
+    else {
         initColor = '#DDDDDD';
     }
-    const color = userSelectedInput(props.data_load || initColor, props.getValueOfField, props.key_binding, props.handleChange);
+    const [value,setValue] = useState(props.data_load || initColor);
 
     useEffect(() => {
         props.getValueOfField(props.key_binding, props.data_load || initColor);
-        // if(this.props.handleChange != undefined) {
-        //     this.props.handleChange(this.props.key_binding, event.target.value);
-        // }
     }, [])
+
+    useEffect(() => {
+        if (props.key_binding == "background_color") {
+            if (props.type == HEADER_TYPE || props.type == FOOTER_TYPE) {
+                setValue("#3d7fa1");
+                props.getValueOfField(props.key_binding, value);
+            } else {
+                setValue("#FFFFFF");
+                props.getValueOfField(props.key_binding, value);
+            }
+        }
+    }, [props.type])
+
+    function handleChange(e) {
+        setValue(e.target.value);
+        props.getValueOfField(props.key_binding, e.target.value);
+        e.preventDefault();
+    }
 
     return (
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
             <div className="controls col-xs-2">
-                <input name={props.name} type="color" className="style-select-color" {...color} />
+                <input name={props.name} type="color" className="style-select-color" value = {value} onChange = {(event) => handleChange(event)} />
             </div>
         </div>
     )
@@ -1703,7 +1722,7 @@ class MainLayout extends React.Component {
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Border Color" key_binding="frame_border_color" data_load={this.state.frame_border_color} />
                 </div> :null}
                 <div className="row">
-                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding="background_color" data_load={this.state.background_color} />
+                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding="background_color" data_load={this.state.background_color} type={this.state.widget_type} />
                 </div>
                 <div className="row">
                     <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding="enable" data_load={this.state.enable} />

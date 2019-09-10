@@ -42,6 +42,21 @@ let PageBodyGrid = function () {
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
 
+    this.updateHeaderPage = function(node) {
+        let headerElement = $("#header");
+        let headerNav = $("#header_nav");
+        let headerContent = $("#header_content");
+        if (node.background_color) {
+            headerNav.css({"background-color": node.background_color});
+        }
+        if (node.multiLangSetting && node.multiLangSetting.description){
+            headerContent.css({"width": "calc(100vw - 470px)"});
+            headerContent.html(node.multiLangSetting.description.description);
+        }
+        this.grid.update(headerElement, node.x, node.y, node.width, node.height);
+        $("#header").removeClass("hidden");
+    };
+
     this.loadGrid = function (widgetListItems) {
         let items = GridStackUI.Utils.sort(widgetListItems);
         let hasMainContent = false;
@@ -49,6 +64,9 @@ let PageBodyGrid = function () {
             if (MAIN_CONTENT_TYPE == node.type) {
                 this.updateMainContent(node);
                 hasMainContent = true;
+                return false;
+            } else if (HEADER_TYPE == node.type) {
+                this.updateHeaderPage(node);
                 return false;
             }
         }, this);
@@ -59,8 +77,8 @@ let PageBodyGrid = function () {
         }
         for (var i = 0; i < items.length; i++) {
             let node = items[i];
-            if (MAIN_CONTENT_TYPE != node.type) {
-                    this.addNewWidget(node, i);
+            if (![MAIN_CONTENT_TYPE, HEADER_TYPE].includes(node.type)) {
+                this.addNewWidget(node, i);
             }
         }
         return false;
@@ -438,6 +456,7 @@ let WidgetTheme = function () {
 };
 
 function getWidgetDesignSetting() {
+    $("#header").addClass("hidden");
     let community_id = $("#community-id").text();
     let current_language = $("#current_language").val();
     let url;
