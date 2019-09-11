@@ -89,7 +89,7 @@ $(document).ready(function () {
         }
       },
       belonging_index_info : {
-        input_type: "text",
+        input_type: "cus_124",
         title: "Belonging Index Info",
         title_i18n: {ja: "所属インデックスの情報", en: "Belonging Index Info"},
         option: {
@@ -1034,73 +1034,6 @@ $(document).ready(function () {
     }
   });
 
-
-
-  Object.keys(meta_system_info).forEach(function(row_id){
-    new_meta_row_default(row_id);
-    $('#txt_title_'+row_id).text(meta_system_info[row_id].title);
-    //add by ryuu. start
-    $('#txt_title_ja_'+row_id).text(meta_system_info[row_id].title_i18n.ja);
-    $('#txt_title_en_'+row_id).text(meta_system_info[row_id].title_i18n.en);
-    //add by ryuu. end
-
-    $('#chk_'+row_id+'_0').attr('checked', meta_system_info[row_id].option.required);
-    $('#chk_'+row_id+'_1').attr('checked', meta_system_info[row_id].option.multiple);
-    $('#chk_'+row_id+'_2').attr('checked', meta_system_info[row_id].option.showlist);
-    $('#chk_'+row_id+'_3').attr('checked', meta_system_info[row_id].option.crtf);
-    $('#chk_'+row_id+'_4').attr('checked', meta_system_info[row_id].option.hidden);
-
-    if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
-      let item = properties_obj[meta_system_info[row_id].input_type.substr(4)] || {}
-
-      $('#select_input_type_'+row_id).text(item && item.name ? item.name : "");
-      render_object('schema_'+row_id, properties_obj[meta_system_info[row_id].input_type.substr(4)].schema, true);
-    } else if('checkboxes' == meta_system_info[row_id].input_type || 'radios' == meta_system_info[row_id].input_type
-            || 'select' == meta_system_info[row_id].input_type){
-      $('#select_input_type_'+row_id).text(meta_system_info[row_id].input_type);
-      $('#chk_prev_' + row_id + '_1').addClass('disabled');
-      $('#chk_' + row_id + '_1').attr('disabled', true);
-      render_select('schema_'+row_id, meta_system_info[row_id].input_value, true);
-    } else {
-      $('#select_input_type_'+row_id).text(property_default[meta_system_info[row_id].input_type] || meta_system_info[row_id].input_type);
-      render_empty('schema_'+row_id);
-    }
-    $('#schema_'+row_id).ready(function(){
-        $('#schema_'+row_id+' fieldset').attr("disabled",true)
-    })
-  })
-
-  Object.keys(meta_fix).forEach(function(row_id){
-    new_meta_row_default(row_id);
-    $('#txt_title_'+row_id).text(meta_fix[row_id].title);
-    //add by ryuu. start
-    $('#txt_title_ja_'+row_id).text(meta_fix[row_id].title_i18n.ja);
-    $('#txt_title_en_'+row_id).text(meta_fix[row_id].title_i18n.en);
-    //add by ryuu. end
-     $('#chk_'+row_id+'_0').attr('checked', meta_fix[row_id].option.required);
-      $('#chk_'+row_id+'_1').attr('checked', meta_fix[row_id].option.multiple);
-      $('#chk_'+row_id+'_2').attr('checked', meta_fix[row_id].option.showlist);
-      $('#chk_'+row_id+'_3').attr('checked', meta_fix[row_id].option.crtf);
-      $('#chk_'+row_id+'_4').attr('checked', meta_fix[row_id].option.hidden);
-
-
-    if(meta_fix[row_id].input_type.indexOf('cus_') != -1) {
-    $('#select_input_type_'+row_id).text(properties_obj[meta_fix[row_id].input_type.substr(4)].name);
-      render_object('schema_'+row_id, properties_obj[meta_fix[row_id].input_type.substr(4)].schema, true);
-    } else if('checkboxes' == meta_fix[row_id].input_type || 'radios' == meta_fix[row_id].input_type
-            || 'select' == meta_fix[row_id].input_type){
-      $('#select_input_type_'+row_id).text(meta_fix[row_id].input_type);
-      $('#chk_prev_' + row_id + '_1').addClass('disabled');
-      $('#chk_' + row_id + '_1').attr('disabled', true);
-      render_select('schema_'+row_id, meta_fix[row_id].input_value, true);
-    } else {
-      $('#select_input_type_'+row_id).text(meta_fix[row_id].input_type);
-      render_empty('schema_'+row_id);
-    }
-    $('#schema_'+row_id).ready(function(){
-        $('#schema_'+row_id+' fieldset').attr("disabled",true)
-    })
-  })
   if($('#item-type-lists').val().length > 0) {
     $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
       Object.assign(src_render ,data);
@@ -1229,19 +1162,12 @@ $(document).ready(function () {
   function add_meta_system(){
     var result = {}
     Object.keys(meta_system_info).forEach(function(key){
-      var option = {
-        required : $('#chk_'+key+'_0').is(':checked') ? true : false,
-        multiple : $('#chk_'+key+'_1').is(':checked') ? true : false,
-        hidden : $('#chk_'+key+'_4').is(':checked') ? true : false,
-        showlist : ($('#chk_'+key+'_4').is(':checked') ? true : false) ? false : $('#chk_'+key+'_2').is(':checked') ? true : false,
-        crtf : ($('#chk_'+key+'_4').is(':checked') ? true : false) ? false : $('#chk_'+key+'_3').is(':checked') ? true : false,
-      }
       result[key] = {
         title : meta_system_info[key].title,
         title_i18n : meta_system_info[key].title_i18n,
         input_type : meta_system_info[key].input_type,
         input_value : "",
-        option : option
+        option : meta_system_info[key].option
       }
     })
     return result
@@ -1249,12 +1175,12 @@ $(document).ready(function () {
 
   function new_meta_row_default(row_id) {
     var row_template = '<tr id="tr_' + row_id + '">'
-        + '<td><lable type="text"  id="txt_title_' + row_id + '" value="" disabled="true"></label>'
-        + '  <div class="" id="text_title_JaEn_' + row_id + '">'
+        + '<td><label type="text"  id="txt_title_' + row_id + '" value="" disabled="true"></label>'
+        + '  <div class="hide" id="text_title_JaEn_' + row_id + '">'
         +'     <p>' + "Japanese" + '：</p>'
-        +'     <lable type="text"  id="txt_title_ja_' + row_id + '" value="" disabled="true"></label>'
+        +'     <label type="text" class="text"  id="txt_title_ja_' + row_id + '" value="" disabled="true"></label>'
         +'     <p>' + "English" + '：</p>'
-        +'     <lable type="text"  id="txt_title_en_' + row_id + '" value="" disabled="true"></label>'
+        +'     <label type="text" class="text" id="txt_title_en_' + row_id + '" value="" disabled="true"></label>'
         + '  </div>'
         +'   <button type="button" class="btn btn-link" id="btn_link_' + row_id + '">' + "Localization Settings" + '</button>'
         +'</td>'
@@ -1289,7 +1215,7 @@ $(document).ready(function () {
         + '</td>'
         + '</tr>';
     $('#tbody_itemtype').append(row_template);
-    initSortedBtn();
+//    initSortedBtn();
 
      //add by ryuu. start
      //多言語linkをクリック
@@ -1357,9 +1283,9 @@ $(document).ready(function () {
         item = {...properties_obj[meta_system_info[row_id].input_type.substr(4)].schema};
         item.title = meta_system_info[row_id].title
       } else {
-        item.type = 'string'
+        item.type = ''
         item.title = meta_system_info[row_id].title
-        item.format = 'text'
+        item.format = ''
       }
       page_global.table_row_map.schema.properties[row_id] = {...item}
       item = {}

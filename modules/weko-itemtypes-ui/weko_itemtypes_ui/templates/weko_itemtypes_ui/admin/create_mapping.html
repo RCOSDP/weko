@@ -47,8 +47,7 @@
         <div class="form-inline">
           <div class="col-sm-6 item-type-list">
             <div class="form-group">
-              <label for="item-type-lists">{{_('Item Type
-                List')}}</label>
+              <label for="item-type-lists">{{_('Item Type List')}}</label>
               <select class="form-control" id="item-type-lists">
                 {%- for list in lists -%}
                 <option value="{{ list.item_type.0.id }}" {% if
@@ -62,8 +61,7 @@
           </div>
           <div class="col-sm-6">
             <div class="form-group">
-              <label for="jpcoar_lists">{{_('Schema
-                List')}}</label>
+              <label for="jpcoar_lists">{{_('Schema List')}}</label>
               <select class="form-control" id="jpcoar_lists">
                 {%- for mapping_list_name in
                 jpcoar_prop_lists.keys() -%}
@@ -89,7 +87,7 @@
         <div class="form-inline">
           <label>{{_('Item type added by system')}}</label>&nbsp;
           <label>({{_('Parent')}})</label>&nbsp;
-          <a role="button" class="btn-collapse inline-block text-dark"
+          <a role="button" class="btn-collapse inline-block text-dark collapsed"
              data-toggle="collapse"
              data-parent="#accordion"
              href="#item-type-system" aria-expanded="false"
@@ -102,7 +100,7 @@
       </div>
     </div>
   </div>
-  <div id="item-type-system" class="row collapse in">
+  <div id="item-type-system" class="row collapse">
     <div class="col-sm-12">
       <div class="pre-scrollable">
         <table class="table">
@@ -224,6 +222,9 @@
 <div class="pre-scrollable">
     <pre class="hide"
          id="hide_itemtype_prop">{{hide_itemtype_prop|tojson}}</pre>
+  <pre class="hide"
+         id="hide_meta_prop">{{meta_system|tojson}}</pre>
+
   <pre class="hide" id="meta_system">{{meta_system|tojson}}</pre>
   {%- for key, value in jpcoar_prop_lists.items() -%}
   <div class="hide" id="{{'hide_'+key}}">{{value|tojson}}</div>
@@ -397,8 +398,7 @@
       <div class="header-child-list">
         <div class="panel-body item-type-list-header">
           <div class="col-sm-6 item-type-list">
-            <label id="sub-item-type-lists-label">{{_('Item Type
-              List')}}</label><label>({{_('Child')}})</label>
+            <label id="sub-item-type-lists-label">{{_('Item Type List')}}</label><label>({{_('Child')}})</label>
           </div>
           <div class="col-sm-6">
             <label id="sub-jpcoar-lists-label">{{_('Schema')}}</label><label>({{_('Child')}})</label>
@@ -407,7 +407,7 @@
                     class="btn btn-success pull-right twentyeight-pixel-right-margin">
               <span class="glyphicon glyphicon-plus"></span>&nbsp
               {{_('Add')}}
-            </button>
+            </button>Mapping
           </div>
         </div>
       </div>

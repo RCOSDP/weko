@@ -353,19 +353,46 @@ class ItemTypeMappingView(BaseView):
                     if role.name == sys_admin:
                         is_admin = True
                         break
+
+            cur_lang = current_i18n.language
+
             meta_system = item_type.render.get('meta_system')
             table_rows = ['pubdate']
             render_table_row = item_type.render.get('table_row')
+
+            meta_system_items = ['updated_date', 'created_date',
+                                 'persistent_identifier_doi',
+                                 'persistent_identifier_h',
+                                 'ranking_page_url', 'belonging_index_info']
+
+            for key in meta_system_items:
+                if cur_lang in meta_system[key]['title_i18n'] and \
+                        meta_system[key]['title_i18n'][cur_lang] and \
+                        meta_system[key]['title_i18n'][cur_lang].strip():
+                    meta_system[key]['title'] = \
+                        meta_system[key]['title_i18n'][cur_lang]
+                else:
+                    meta_system[key]['title'] = \
+                        meta_system[key]['title_i18n']['en']
+
             if isinstance(render_table_row, list):
                 table_rows.extend(render_table_row)
             for key in table_rows:
                 prop = itemtype_prop.get(key)
-                cur_lang = current_i18n.language
                 schema_form = item_type.form
                 elem_str = ''
                 if 'default' != cur_lang:
                     for elem in schema_form:
                         if 'items' in elem:
+                            if elem['key'] == key:
+                                if 'title_i18n' in elem:
+                                    if cur_lang in elem['title_i18n']:
+                                        if len(elem['title_i18n']
+                                               [cur_lang]) > 0:
+                                            elem_str = elem['title_i18n'][
+                                                cur_lang]
+                                else:
+                                    elem_str = elem['title']
                             for sub_elem in elem['items']:
                                 if 'key' in sub_elem and \
                                         sub_elem['key'] == key:
