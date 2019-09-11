@@ -514,8 +514,6 @@ function getWidgetDesignSetting() {
                     });
                 }
                 else {  // Pages are able to not have main content, so hide if widget is not present
-                    $("#community_header").attr("hidden", false);
-                    $("#community_footer").attr("hidden", false);
                     if(is_page){
                         $("#main_contents").hide();
                     }
