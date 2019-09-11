@@ -900,7 +900,7 @@ class WekoRecord(Record):
                 hidden = option.get("hidden")
                 if hidden:
                     items.append({
-                        'attribute_name_hidden':  val.get('attribute_name')
+                        'attribute_name_hidden': val.get('attribute_name')
                     })
                     continue
 
