@@ -136,9 +136,8 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
     try:
         tempdata[attrs[0]] = identifier_value
         tempdata[attrs[1]] = identifier_type
-        if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
-            tempdata[attrs[2]] = doi_register_val
-            tempdata[attrs[3]] = doi_register_typ
+        tempdata[attrs[2]] = doi_register_val
+        tempdata[attrs[3]] = doi_register_typ
 
         if not flag_del_pidstore:
             reg_invenio_pidstore(tempdata[attrs[0]], item.id)
@@ -147,6 +146,7 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
         if tempdata != temp_form:
             # transfer to JPCOAR format
             record = WekoDeposit.get_record(activity_detail.item_id)
+            item_record = Record.get_record(activity_detail.item_id)
             item_type = ItemsMetadata.get_by_object_id(activity_detail.item_id)
             identifier_map = identifier_jpcoar_mapping(item_type.item_type_id,
                                                        attrs[0:2])
@@ -157,22 +157,42 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
                 identifier_map['val']: tempdata[attrs[0]],
                 identifier_map['type']: tempdata[attrs[1]]
             })
+            doi_register_map = identifier_jpcoar_mapping(
+                item_type.item_type_id, attrs[2:4])
+
             res = {
                 identifier_map['id']: _identifier_data,
                 'pidstore_identifier': {}
             }
-
+            res[doi_register_map['id']] = ({
+                'attribute_name': 'Identifier Registration',
+                'attribute_value_mlt': [
+                    {
+                        doi_register_map['val']: tempdata[attrs[2]],
+                        doi_register_map['type']: tempdata[attrs[3]]
+                    }
+                ],
+            })
             res['pidstore_identifier']['identifier_value'] = tempdata[attrs[0]]
-            if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
-                doi_register_map = identifier_jpcoar_mapping(
-                    item_type.item_type_id, attrs[2:4])
-                res[doi_register_map['id']] = ({
-                    doi_register_map['val']: tempdata[attrs[2]],
-                    doi_register_map['type']: tempdata[attrs[3]]
-                })
+
+            record_data = {
+                identifier_map['id']: record.get(identifier_map['id']),
+                doi_register_map['id']: {
+                    'attribute_name': 'Identifier Registration',
+                    'attribute_value_mlt': [
+                        {
+                            doi_register_map['val']: tempdata[attrs[2]],
+                            doi_register_map['type']: tempdata[attrs[3]]
+                        }
+                    ],
+                }
+            }
+
             with db.session.begin_nested():
                 item.update(res)
                 item.commit()
+                item_record.update(record_data)
+                item_record.commit()
             db.session.commit()
     except Exception as ex:
         current_app.logger.exception(str(ex))
@@ -309,7 +329,6 @@ def register_cnri(activity_id):
                         ]
                     }
                 }
-
             identifier_data = {
                 identifier_map['val']: str(handle),
                 identifier_map['type']: 'HDL'
