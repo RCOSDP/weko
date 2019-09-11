@@ -1579,7 +1579,7 @@ function handleSharePermission(value) {
         $scope.removeThumbnail = function(file) {
           if (angular.isUndefined(file.links)) {
             var indexOfFile = _.indexOf($scope.model.thumbnailsInfor, file)
-            if (!angular.isUndefined(rootScope.filesVM.files[indexOfFile])) {
+            if (!angular.isUndefined($rootScope.filesVM.files[indexOfFile])) {
               file.links = $rootScope.filesVM.files[indexOfFile].links;
             } else {
               console.log('File not found!');

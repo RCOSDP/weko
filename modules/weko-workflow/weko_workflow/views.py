@@ -292,6 +292,7 @@ def display_activity(activity_id=0):
     links = None
     need_thumbnail = False
     files_thumbnail = []
+    allow_thumbnail = False
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -303,7 +304,8 @@ def display_activity(activity_id=0):
         session['activity_info'] = activity_session
         # get item edit page info.
         step_item_login_url, need_file, record, json_schema, schema_form,\
-            item_save_uri, files, endpoints, need_thumbnail, files_thumbnail \
+            item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
+            allow_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
         if item:
             pid_identifier = PersistentIdentifier.get_by_object(
@@ -408,6 +410,7 @@ def display_activity(activity_id=0):
         community_id=community_id,
         need_thumbnail=need_thumbnail,
         files_thumbnail=files_thumbnail,
+        allow_thumbnail=allow_thumbnail,
         **ctx
     )
 

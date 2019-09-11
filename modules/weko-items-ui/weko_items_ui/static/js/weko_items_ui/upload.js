@@ -280,7 +280,11 @@ require([
 (function (angular) {
   angular.element(document).ready(function () {
     angular.module('schemaForm')
-    .run(["$templateCache", function($templateCache) {$templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html","<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" id=\"selectThumbnail\" on-read-file accept=\".gif,.jpg,.jpe,.jpeg,.png,.bmp,.tiff,.tif\" multiple/>\n        <img ng-show=\"$$value$$\" id=\"myimage\" src=\"\" alt=\"your image\" />\n    </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>");}]);
+    .run(["$templateCache", function($templateCache) {
+      var allow_multiple = $("#allow-thumbnail-flg").val() == 'True' ? 'multiple' : '';
+      var template = "<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" id=\"selectThumbnail\" on-read-file accept=\".gif,.jpg,.jpe,.jpeg,.png,.bmp,.tiff,.tif\" " + allow_multiple + "/>\n        <img ng-show=\"$$value$$\" id=\"myimage\" src=\"\" alt=\"your image\" />\n    </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>";
+      $templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html", template);
+    }]);
     angular.module('schemaForm').config(
     ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
       function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
@@ -315,7 +319,7 @@ require([
             link: function ($scope, element, attrs, ngModelCtrl) {
                 element.on('change', function (onChangeEvent) {
                     var files = (onChangeEvent.srcElement || onChangeEvent.target).files;
-                    if (!angular.isUndefined(files) && files.length>0) {
+                    if (!angular.isUndefined(files) && files.length > 0) {
                         Array.prototype.forEach.call(files, f => {
                             console.log('File mimeType: ' + f.type);
                             if ($scope.$parent.model.allowedType.indexOf(f.type) < 0 ) {

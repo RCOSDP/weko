@@ -282,7 +282,7 @@
                         filename=thumb.key) %}
                         <p>
                           <span>{{ thumb_name }}</span>
-                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width: 100%;" />
+                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
                         </p>
                       {% endfor %}
                       </td>
