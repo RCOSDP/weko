@@ -335,7 +335,7 @@ function handleSharePermission(value) {
             filemeta_filename_form = filemeta_form.items[0];
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(file => {
-              if (file.completed) {
+              if (file.completed && !file.is_thumbnail) {
                 filemeta_schema.items.properties['filename']['enum'].push(file.key);
                 filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
               }
@@ -1479,8 +1479,15 @@ function handleSharePermission(value) {
               }
             });
             if (thumbnail_list.length > 0) {
-              $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]] = {};
-              $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]][thumbnail_item[1]] = thumbnail_list;
+              if ($rootScope.$$childHead.model.allowMultiple == 'True') {
+                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]] = [];
+                var sub_item = {};
+                sub_item[thumbnail_item[1]] = thumbnail_list
+                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]].push(sub_item);
+              } else {
+                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]] = {};
+                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]][thumbnail_item[1]] = thumbnail_list;
+              }
             }
           }
         }
@@ -1490,8 +1497,9 @@ function handleSharePermission(value) {
         var thumbnail_attrs = [];
         $rootScope.recordsVM.invenioRecordsForm.forEach(RecordForm => {
           if (RecordForm.title == title) {
-            var subItem = Object.keys(RecordForm.schema.properties)[0] || 'subitem_thumbnail';
-            thumbnail_attrs = [RecordForm.key[0], subItem, Object.keys(RecordForm.schema.properties[subItem].items.properties)];
+            var properties = RecordForm.schema.properties || RecordForm.schema.items.properties;
+            var subItem = Object.keys(properties)[0] || 'subitem_thumbnail';
+            thumbnail_attrs = [RecordForm.key[0], subItem, Object.keys(properties[subItem].items.properties)];
           }
         });
         return thumbnail_attrs;
@@ -1551,6 +1559,7 @@ function handleSharePermission(value) {
         $scope.model = {
             thumbnailsInfor: [],
             allowedType: ['image/gif', 'image/jpg', 'image/jpe', 'image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/tif'],
+            allowMultiple: $("#allow-thumbnail-flg").val(),
         };
 
         // set current data thumbnail if has
@@ -1587,7 +1596,7 @@ function handleSharePermission(value) {
             }
           }
           $rootScope.filesVM.remove(file);
-          $scope.model.thumbnailsInfor.splice(indexOfFile, 1);
+          $scope.model.thumbnailsInfor.splice(indexOfFile || $scope.model.thumbnailsInfor.indexOf(file), 1);
         };
     }).$inject = [
       '$scope',

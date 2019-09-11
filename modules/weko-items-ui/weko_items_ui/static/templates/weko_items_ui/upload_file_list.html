@@ -8,7 +8,8 @@
       <div class="col-sm-offset-2 col-sm-4">
         <div class="form-inline text-right">
           <div class="form-group">
-            <span class="text-muted">{{ (filesVM.files | filter:fileSearch).length }} files </span>
+            <span class="text-muted" ng-bind="(filesVM.files | filter:fileSearch | filter:{is_thumbnail: '!true'}).length"></span>
+            <span class="text-muted"> files </span>
             <input type="text" class="input-sm form-control" placeholder="Search the files" ng-model="fileSearch" />
           </div>
         </div>

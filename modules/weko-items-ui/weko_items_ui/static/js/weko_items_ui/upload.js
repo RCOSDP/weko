@@ -320,8 +320,14 @@ require([
                 element.on('change', function (onChangeEvent) {
                     var files = (onChangeEvent.srcElement || onChangeEvent.target).files;
                     if (!angular.isUndefined(files) && files.length > 0) {
+                        if ($scope.$parent.model.allowMultiple != 'True') {
+                          files = Array.prototype.slice.call( files, 0, 1 );
+                          let overwriteFiles = $.extend(true,{},$scope.$parent.model.thumbnailsInfor);
+                          $.each(overwriteFiles, function(index, thumb) {
+                            $rootScope.$$childHead.removeThumbnail(thumb);
+                          });
+                        }
                         Array.prototype.forEach.call(files, f => {
-                            console.log('File mimeType: ' + f.type);
                             if ($scope.$parent.model.allowedType.indexOf(f.type) < 0 ) {
                               return;
                             }

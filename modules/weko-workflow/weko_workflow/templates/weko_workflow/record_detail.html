@@ -45,31 +45,33 @@
               </thead>
               <tbody>
               {%- for file in files|sort(attribute='key') -%}
-              {%- set img = file.mimetype | get_image_src -%}
-              {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-              filename=file.key) %}
-              <tr >
-                <td >{{file.filename or file.key}}</td>
-                <td>
-                    <span class="filename">
-                      <img src="{{img}}" alt={{file.filename or file.key}} />
-                      <a class="forcewrap"
-                          href="{{file_url}}">{{ file.filename or file.key }} ({{ file.size|filesizeformat }})</a>
-                      <!--<span>[ 0 downloads ]</span><br>-->
-                      <span>{{file.checksum.split(':')[0]}}</span>
-                      <span class="break-word">{{file.checksum.split(':')[1]}}</span>
-                    </span>
-                </td>
-              </tr>
-              <!-- demo -->
-              {%- if record | check_permission -%}
-              {%- if 'pdf' in file.mimetype -%}
-                  <tr><td colspan="2">
-                <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
-                <span class="glyphicon glyphicon-edit"
-                  aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
-              </td></tr>
-              {%- endif -%}
+              {% if file.is_thumbnail == False %}
+                {%- set img = file.mimetype | get_image_src -%}
+                {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                filename=file.key) %}
+                <tr >
+                  <td >{{file.filename or file.key}}</td>
+                  <td>
+                      <span class="filename">
+                        <img src="{{img}}" alt={{file.filename or file.key}} />
+                        <a class="forcewrap"
+                            href="{{file_url}}">{{ file.filename or file.key }} ({{ file.size|filesizeformat }})</a>
+                        <!--<span>[ 0 downloads ]</span><br>-->
+                        <span>{{file.checksum.split(':')[0]}}</span>
+                        <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                      </span>
+                  </td>
+                </tr>
+                <!-- demo -->
+                {%- if record | check_permission -%}
+                {%- if 'pdf' in file.mimetype -%}
+                    <tr><td colspan="2">
+                  <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
+                  <span class="glyphicon glyphicon-edit"
+                    aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
+                </td></tr>
+                {%- endif -%}
+                {%- endif -%}
               {%- endif -%}
               <!-- demo -->
               {%- endfor -%}
@@ -146,7 +148,7 @@
                         filename=thumb.key) %}
                         <p>
                           <span>{{ thumb_name }}</span>
-                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width:  {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
+                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
                         </p>
                       {% endfor %}
                       </td>
