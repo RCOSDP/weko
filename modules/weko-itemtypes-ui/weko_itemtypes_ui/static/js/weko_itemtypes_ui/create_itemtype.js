@@ -75,6 +75,7 @@ $(document).ready(function () {
       $('option.deleted_type').hide();
       $('#btn_restore_itemtype_schema').prop('disabled', true);
       $('div.metadata-content *').not("[id=btn_restore_itemtype_schema]").prop('disabled', false);
+      $('#chk_pubdate_0').attr('disabled', true);
   }
 
   $('#btn_create_itemtype_schema').on('click', function(){
@@ -844,6 +845,8 @@ $(document).ready(function () {
       $('#chk_upload_file').attr('checked', data.upload_file);
       $.each(data.table_row, function(idx, row_id){
         new_meta_row(row_id);
+        let requiredCheckbox = $('#chk_'+row_id+'_0');
+        let multipleCheckbox = $('#chk_'+row_id+'_1');
         $('#txt_title_'+row_id).val(data.meta_list[row_id].title);
         //add by ryuu. start
         $('#txt_title_ja_'+row_id).val(data.meta_list[row_id].title_i18n.ja);
@@ -852,8 +855,8 @@ $(document).ready(function () {
         $('#select_input_type_'+row_id).val(data.meta_list[row_id].input_type);
         $('#minItems_'+row_id).val(data.meta_list[row_id].input_minItems);
         $('#maxItems_'+row_id).val(data.meta_list[row_id].input_maxItems);
-        $('#chk_'+row_id+'_0').attr('checked', data.meta_list[row_id].option.required);
-        $('#chk_'+row_id+'_1').attr('checked', data.meta_list[row_id].option.multiple);
+        requiredCheckbox.attr('checked', data.meta_list[row_id].option.required);
+        multipleCheckbox.attr('checked', data.meta_list[row_id].option.multiple);
         $('#chk_'+row_id+'_2').attr('checked', data.meta_list[row_id].option.showlist);
         $('#chk_'+row_id+'_3').attr('checked', data.meta_list[row_id].option.crtf);
         $('#chk_'+row_id+'_4').attr('checked', data.meta_list[row_id].option.hidden);
@@ -861,6 +864,10 @@ $(document).ready(function () {
         // Add the notes for the row here
         if(row_id in data.edit_notes) {
           $('#edit_notes_' + row_id).val(data.edit_notes[row_id]);
+        }
+
+        if (row_id === "pubdate"){
+          requiredCheckbox.attr('disabled', true);
         }
 
         if(data.meta_list[row_id].option.hidden) {
@@ -876,6 +883,10 @@ $(document).ready(function () {
 
         if(data.meta_list[row_id].input_type.indexOf('cus_') != -1) {
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
+          let isAllowMultiple = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
+          if (isAllowMultiple) {
+            multipleCheckbox.attr('disabled', true);
+          }
         } else if('checkboxes' == data.meta_list[row_id].input_type || 'radios' == data.meta_list[row_id].input_type
                 || 'select' == data.meta_list[row_id].input_type){
           $('#chk_prev_' + row_id + '_1').addClass('disabled');
