@@ -221,7 +221,7 @@ const ComponentSelectColorFiled = (props) => {
         initColor = DEFAULT_BORDER_COLOR;
     }
 
-    const [value,setValue] = useState(props.data_load || initColor);
+    const color = userSelectedInput(props.data_load || initColor, props.getValueOfField, props.key_binding, props.handleChange);
     useEffect(() => {
         props.getValueOfField(props.key_binding, props.data_load);
     }, []);
@@ -235,17 +235,11 @@ const ComponentSelectColorFiled = (props) => {
         }
     }, [props.type]);
 
-    function handleChange(e) {
-        setValue(e.target.value);
-        props.getValueOfField(props.key_binding, e.target.value);
-        e.preventDefault();
-    }
-
     return (
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
             <div className="controls col-xs-2">
-                <input name={props.name} type="color" className="style-select-color" value = {value} onChange = {(event) => handleChange(event)} />
+                <input name={props.name} type="color" className="style-select-color" {...color} />
             </div>
         </div>
     )
