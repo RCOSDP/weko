@@ -12,6 +12,11 @@ require([
     $("#action_quit_confirmation").modal("hide");
     $("#btn_quit").attr("disabled", true);
     let comment = ''
+    let community = $('#community_id').text();
+    let community_para = ''
+    if (community) {
+      community_para = '?community=' + community;
+    }
     if ($('#input-comment') && $('#input-comment').val()) {
       comment = $('#input-comment').val();
     }
@@ -26,7 +31,7 @@ require([
       function (data) {
         if (data && data.code == 0) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href = data.data.redirect;
+            document.location.href = data.data.redirect + community_para;
           } else {
             document.location.reload(true);
           }

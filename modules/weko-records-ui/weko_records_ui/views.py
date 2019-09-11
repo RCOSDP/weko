@@ -348,12 +348,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record=record,
         info=send_info
     )
-    getargs = request.args
+    community_arg = request.args.get('community')
     community_id = ""
     ctx = {'community': None}
-    if 'community' in getargs:
+    if community_arg:
         from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        comm = GetCommunity.get_community_by_id(community_arg)
         ctx = {'community': comm}
         community_id = comm.id
 

@@ -1283,7 +1283,6 @@ class WorkActivity(object):
         if 'community' in getargs:
             comm = GetCommunity.get_community_by_id(
                 request.args.get('community'))
-            community_id = request.args.get('community')
             ctx = {'community': comm}
             community_id = comm.id
 

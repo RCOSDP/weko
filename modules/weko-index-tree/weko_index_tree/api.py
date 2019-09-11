@@ -639,7 +639,7 @@ class Indexes(object):
         """
         Get index title info.
 
-        :param node_path: Identifier list of the index.
+        :param node_path: List of the Index Identifiers.
         :return: the list of index.
         """
         recursive_t = cls.recs_query()

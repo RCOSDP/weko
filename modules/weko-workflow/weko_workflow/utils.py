@@ -364,15 +364,15 @@ def item_metadata_validation(item_id, identifier_type):
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
-    journalarticle_nameid = 14
+    journalarticle_nameid = [14, 3, 5 ,9]
     journalarticle_type = 'other（プレプリント）'
     thesis_nameid = 12
     report_nameid = 16
     report_types = ['technical report', 'research report', 'report']
     elearning_type = 'learning material'
-    dataset_nameid = 22
+    dataset_nameid = [22, 4]
     dataset_type = 'software'
-    datageneral_nameid = [13, 17, 18, 19, 20, 21]
+    datageneral_nameid = [13, 17, 18, 19, 20, 21, 1, 10]
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',
                          'musical notation', 'research proposal',
@@ -401,15 +401,14 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if (item_type.name_id == journalarticle_nameid
+        if (item_type.name_id in journalarticle_nameid
             or resource_type == journalarticle_type) \
             or (item_type.name_id == thesis_nameid) \
             or (item_type.name_id == report_nameid
                 or resource_type in report_types) \
             or (resource_type == elearning_type) \
             or (item_type.name_id in datageneral_nameid
-                or resource_type in datageneral_types) \
-                or item_type.name_id < 10:
+                or resource_type in datageneral_types):
             properties = ['title',
                           'identifier',
                           'identifierRegistration']
@@ -417,7 +416,7 @@ def item_metadata_validation(item_id, identifier_type):
                                                   identifier_type,
                                                   properties)
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
-        elif item_type.name_id == dataset_nameid or resource_type == \
+        elif item_type.name_id in dataset_nameid or resource_type == \
                 dataset_type:
             properties = ['title',
                           'givenName',
@@ -430,7 +429,7 @@ def item_metadata_validation(item_id, identifier_type):
             error_list = 'false'
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
-        if item_type.name_id == journalarticle_nameid or resource_type == \
+        if item_type.name_id in journalarticle_nameid or resource_type == \
                 journalarticle_type:
             properties = ['title',
                           'identifier',
