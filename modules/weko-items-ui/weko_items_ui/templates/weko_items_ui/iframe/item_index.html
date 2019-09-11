@@ -43,15 +43,15 @@
 {%- endblock page_body_tabs %}
 
 {%- block page_header %}
-{%-if not community %}
-{{ super() }}
-{%- endif%}
+  {%- if not community %}
+    {{ super() }}
+  {%- endif%}
 {%- endblock page_header %}
 
 {%- block page_footer %}
-{%-if not community%}
-{{ super() }}
-{%- endif%}
+  {%-if not community %}
+    {{ super() }}
+  {%- endif%}
 {%- endblock page_footer %}
 
 {%- block page_body_main %}
@@ -59,10 +59,10 @@
   {%- if page %}
     <div id="widget-page-id" hidden>{{ page.id }}</div>
   {%- endif %}
-  {%-if community%}
-  <div id="community_id" class="hide">{{community.id}}</div>
+  {%-if community %}
+    <div id="community_id" class="hide">{{ community.id }}</div>
   {%-else %}
-  <div id="community_id" class="hide"></div>
+    <div id="community_id" class="hide"></div>
   {%-endif %}
   <div class="col-sm-12">
     <div id="workFlow" class="panel-group">
@@ -259,16 +259,16 @@
         </div>
       </div>
     </div>
-    {%-if community%}
+    {%- if community %}
     <a class="btn btn-info pull-left back-button"
       href="{{url_for('weko_workflow.index',community=community.id)}}">
         <span class="glyphicon glyphicon-chevron-left"></span>
             {{_('Back')}}</a>
-    {%-else%}
+    {%- else %}
     <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
         <span class="glyphicon glyphicon-chevron-left"></span>
             {{_('Back')}}</a>
-    {%-endif%}
+    {%- endif %}
   </div>
 </div>
 {%- endblock page_body_main %}
