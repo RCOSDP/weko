@@ -44,7 +44,7 @@ def item_login(item_type_id=0):
     endpoints = {}
     need_thumbnail = False
     files_thumbnail = []
-    allow_thumbnail = False
+    allow_multi_thumbnail = False
 
     try:
         item_type = ItemTypes.get_by_id(item_type_id)
@@ -65,11 +65,10 @@ def item_login(item_type_id=0):
             if 'metainfo' in item_json:
                 record = item_json.get('metainfo')
             if 'files' in item_json:
-                all_files = item_json.get('files')
-                files_thumbnail = [i for i in all_files
+                files = item_json.get('files')
+                files_thumbnail = [i for i in files
                                    if 'is_thumbnail' in i.keys()
                                    and i['is_thumbnail']]
-                files = [i for i in all_files if i not in files_thumbnail]
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
         if 'filename' in json.dumps(item_type.schema):
@@ -78,14 +77,14 @@ def item_login(item_type_id=0):
             need_thumbnail = True
             key = [i[0].split('.')[0] for i in find_items(item_type.form)
                    if 'subitem_thumbnail' in i[0]]
-            option = item_type.render.get('meta_list', {}).\
-                get(key[0], {}).get('option')
+            option = item_type.render.get('meta_list', {}). \
+                get(key[0].split('[')[0], {}).get('option')
             if option:
-                allow_thumbnail = option.get('multiple')
+                allow_multi_thumbnail = option.get('multiple')
     except Exception as e:
         template_url = 'weko_items_ui/iframe/error.html'
         current_app.logger.debug(str(e))
 
     return template_url, need_file, record, json_schema, schema_form, \
-           item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
-           allow_thumbnail
+        item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
+        allow_multi_thumbnail
