@@ -46,10 +46,10 @@
                 <div class="row col-xs-6 col-md-6 col-lg-10 col-xl-12"><div
                     style="overflow:hidden;">
                 <ol class="breadcrumb" style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
-                  {%- if nav.name == None %}
-                    {%- set name = nav.name_en.split('/') -%}
-                  {%- else %} 
+                  {%- if nav.name != None and current_i18n.language == 'ja'  %}
                     {%- set name = nav.name.split('/') -%}
+                  {%- else %}
+                    {%- set name = nav.name_en.split('/') -%}
                   {%- endif -%}
                   {%- set p = nav.path.split('/') -%}
                   {%- for n in name -%}
