@@ -538,7 +538,7 @@ $(document).ready(function () {
     tmp_pubdate.title_i18n.en = "PubDate";
     tmp_pubdate.input_type = "datetime";
     tmp_pubdate.input_value = "";
-    tmp_pubdate.option = {}
+    tmp_pubdate.option = {};
     tmp_pubdate.option.required = $('#chk_pubdate_0').is(':checked') ? true : false;
     tmp_pubdate.option.multiple = $('#chk_pubdate_1').is(':checked') ? true : false;
     tmp_pubdate.option.hidden = $('#chk_pubdate_4').is(':checked') ? true : false;
@@ -716,24 +716,29 @@ $(document).ready(function () {
   $('#tbody_itemtype').on('change', '.change_input_type', function(){
     var meta_id = $(this).attr('metaid');
     let isAllowMultiple = false;
+    let checkboxMetaId = $('#chk_' + meta_id + '_1');
     if($(this).val().indexOf('cus_') != -1) {
       let product = properties_obj[$(this).val().substr(4)].schema;
       isAllowMultiple = properties_obj[$(this).val().substr(4)].is_file;
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
-      $('#chk_' + meta_id + '_1').attr('disabled', false);
-      $('#chk_' + meta_id + '_1').prop("checked", isAllowMultiple);
+      if (isAllowMultiple) {
+        checkboxMetaId.attr('disabled', true);
+      } else {
+        checkboxMetaId.attr('disabled', false);
+      }
+      checkboxMetaId.prop("checked", isAllowMultiple);
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
       $('#chk_prev_' + meta_id + '_1').addClass('disabled');
-      $('#chk_' + meta_id + '_1').attr('disabled', true);
-      $('#chk_' + meta_id + '_1').attr('checked', false);
-      $('#chk_' + meta_id + '_1').prop("checked", isAllowMultiple);
+      checkboxMetaId.attr('disabled', true);
+      checkboxMetaId.attr('checked', false);
+      checkboxMetaId.prop("checked", isAllowMultiple);
       render_select('schema_'+meta_id, '');
     } else {
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
-      $('#chk_' + meta_id + '_1').attr('disabled', false);
-      $('#chk_' + meta_id + '_1').prop("checked", isAllowMultiple);
+      checkboxMetaId.attr('disabled', false);
+      checkboxMetaId.prop("checked", isAllowMultiple);
       render_empty('schema_'+meta_id);
     }
   });
