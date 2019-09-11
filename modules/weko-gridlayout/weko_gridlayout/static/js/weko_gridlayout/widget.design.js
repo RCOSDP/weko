@@ -33,7 +33,7 @@ class Repository extends React.Component {
             .then(
                 (result) => {
                     if (result.error) {
-                        alert(result.error);
+                        addAlert(result.error);
                         return;
                     }
                     let options = result.repositories.map((option) => {
@@ -93,9 +93,9 @@ class Repository extends React.Component {
     render() {
         return (
             <div className="form-group row">
-              <div id="alerts"></div>
+              <div id="alerts"/>
               <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
-                <div class="controls col-xs-5">
+                <div className="controls col-xs-5">
                     <select id="repository-id" value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
                         <option value="0">Please select the Repository</option>
                         {this.state.selectOptions}
@@ -181,7 +181,6 @@ class WidgetList extends React.Component {
                      alertModal("Can't get page list! \nDetail: " + result.error);
                  }
                  else {
-                     let pages = result['page-list'];
                      this.displayOptions(result['page-list']['data']);  //this.state.selectedPage
                  }
           });
@@ -360,7 +359,7 @@ class IconButton extends React.Component {
     render() {
         return (
             <button id={this.props.id} className="icon" onClick={this.props.onClick}>
-                <span className={this.props.iconClass} aria-hidden="true"></span>
+                <span className={this.props.iconClass} aria-hidden="true"/>
             </button>
         )
     }
@@ -388,11 +387,11 @@ class DeletePageModal extends React.Component {
                       </div>
                       <div className="modal-footer">
                           <button id="delete-page" className="btn btn-primary save-button" onClick={this.props.handleDelete}>
-                              <span className="glyphicon glyphicon-check"></span>
+                              <span className="glyphicon glyphicon-check"/>
                               Submit
                           </button>
                           <button type="button" class="btn btn-info close-button" onClick={this.props.handleClose}>
-                              <span className="glyphicon glyphicon-remove"></span>
+                              <span className="glyphicon glyphicon-remove"/>
                               Close
                           </button>
                       </div>
@@ -526,11 +525,11 @@ class AddPageModal extends React.Component {
                       </div>
                       <div className="modal-footer">
                           <button className="btn btn-primary save-button" onClick={this.handleSave}>
-                              <span className="glyphicon glyphicon-check"></span>
+                              <span className="glyphicon glyphicon-check"/>
                               Save
                           </button>
-                          <button type="button" class="btn btn-info close-button" onClick={this.handleClose}>
-                              <span className="glyphicon glyphicon-remove"></span>
+                          <button type="button" className="btn btn-info close-button" onClick={this.handleClose}>
+                              <span className="glyphicon glyphicon-remove"/>
                               Close
                           </button>
                       </div>
@@ -818,11 +817,11 @@ class ButtonLayout extends React.Component {
         return (
             <div className="form-group col-xs-10">
                 <button id="save-grid" className="btn btn-primary save-button" style={this.style} onClick={this.handleSave}>
-                    <span className="glyphicon glyphicon-saved" aria-hidden="true"></span>
+                    <span className="glyphicon glyphicon-saved" aria-hidden="true"/>
                     &nbsp;Save
                 </button>
                 <button id="clear-grid" className="form-group btn btn-info cancel-button" onClick={this.handleCancel} >
-                    <span className="glyphicon glyphicon-remove"  aria-hidden="true"></span>
+                    <span className="glyphicon glyphicon-remove"  aria-hidden="true"/>
                     Cancel
                 </button>
             </div>
@@ -880,7 +879,7 @@ class MainLayout extends React.Component {
  */
 var PreviewGrid = new function () {
     this.init = function () {
-        var options = {
+        let options = {
             width: 12,
             float: true,
             removeTimeout: 100,
@@ -933,7 +932,7 @@ var PreviewGrid = new function () {
     this.saveGrid = function () {
         this.serializedData = _.map($('.grid-stack > .grid-stack-item:visible'), function (el) {
             el = $(el);
-            var node = el.data('_gridstack_node');
+            let node = el.data('_gridstack_node');
             let name = el.data("name");
             let id = el.data("id");
             let type = el.data("type");
@@ -995,7 +994,7 @@ var PreviewGrid = new function () {
         }
         return false;
     };
-}
+};
 
 /**
  * Add widget from List panel to Preview panel.
@@ -1009,17 +1008,17 @@ function addWidget() {
             let widgetType = $(this).data('widgetType');
             let id = $(this).data('id');
             if(MAIN_CONTENT_TYPE === widgetType && isHasMainContent){
-                alert("Main Content has been existed in Preview panel.");
+                alertModal("Main Content has been existed in Preview panel.");
                 disableMainContentButton(true);
                 return false;
             }
             if(HEADER_TYPE === widgetType && isHasHeader){
-                alert("Header has been existed in Preview panel.");
+                alertModal("Header has been existed in Preview panel.");
                 disableHeaderButton(true);
                 return false;
             }
             if(FOOTER_TYPE === widgetType && isHasFooter){
-                alert("Footer has been existed in Preview panel.");
+                alertModal("Footer has been existed in Preview panel.");
                 disableFooterButton(true);
                 return false;
             }
@@ -1144,7 +1143,6 @@ $(function () {
 
 /**
  * Handle disable Save and Cancel button.
- * @param {*} repositoryId
  */
 function disableButton() {
     let repositoryId = $("#repository-id").val();
@@ -1209,14 +1207,11 @@ function saveWidgetDesignSetting(widgetDesignData) {
     let repositoryId = $("#repository-id").val();
     let pageId = $("#pages-list-select").val();
     if (repositoryId == "0") {
-        //alert('Please select the Repository.');
-        var modalcontent =  "Please select the Repository.";
-        alertModal(modalcontent);
+        alertModal("Please select the Repository.");
         return false;
     } else if (!widgetDesignData) {
         //alert('Please add Widget to Preview panel.');
-        var modalcontent =  "Please add Widget to Preview panel";
-        alertModal(modalcontent);
+        alertModal("Please add Widget to Preview panel.");
         return false;
     }
     // else if(!isHasMainContent && (pageId == "0" || !pageId)) {  // Allow for pages not to have main contents
@@ -1248,13 +1243,9 @@ function saveWidgetDesignSetting(widgetDesignData) {
             success: function (data, status) {
                 let err_msg = data.error;
                 if (err_msg) {
-                    //alert(err_msg);
-                    var modalcontent = err_msg;
-                    alertModal(modalcontent);
+                    alertModal(err_msg);
                 } else if (!data.result) {
-                    //alert('Fail to save Widget design. Please check again.');
-                    var modalcontent = "Failed to save Widget design.";
-                    alertModal(modalcontent);
+                    alertModal("Failed to save Widget design.");
                     return;
                 } else {
                     addAlert('Widget design has been saved successfully.');
@@ -1267,8 +1258,7 @@ function saveWidgetDesignSetting(widgetDesignData) {
         });
     } else {
         //alert('Please add Widget to Preview panel.');
-        var modalcontent =  "Please add Widget to Preview panel.";
-        alertModal(modalcontent);
+        alertModal("Please add Widget to Preview panel.");
         return;
     }
 }

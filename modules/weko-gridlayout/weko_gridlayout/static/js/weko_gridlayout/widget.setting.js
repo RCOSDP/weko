@@ -1221,15 +1221,15 @@ class ComponentButtonLayout extends React.Component {
                 <div className="form-group row">
                     <div className="col-xs-offset-2 col-xs-5">
                         <button className="btn btn-primary save-button" onClick={this.saveCommand}>
-                            <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                            <span className="glyphicon glyphicon-download-alt" aria-hidden="true"/>
                             &nbsp;Save
                         </button>
                         <a href={this.props.return_url} className="form-group btn btn-info cancel-button style-my-button">
-                            <span className="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                            <span className="glyphicon glyphicon-remove" aria-hidden="true"/>
                             &nbsp;Cancel
                         </a>
                         <button className="btn btn-danger delete-button style-my-button" onClick={this.deleteCommand}>
-                            <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                            <span className="glyphicon glyphicon-trash" aria-hidden="true"/>
                             &nbsp;Delete
                         </button>
                     </div>
@@ -1241,11 +1241,11 @@ class ComponentButtonLayout extends React.Component {
                 <div className="form-group row">
                     <div className="col-xs-offset-2 col-xs-5">
                         <button className="btn btn-primary save-button " onClick={this.saveCommand}>
-                            <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                            <span className="glyphicon glyphicon-download-alt" aria-hidden="true"/>
                             &nbsp;Save
                         </button>
                         <a href={this.props.return_url} className="form-group btn btn-info cancel-button style-my-button">
-                            <span className="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                            <span className="glyphicon glyphicon-remove" aria-hidden="true"/>
                             &nbsp;Cancel
                         </a>
                     </div>
