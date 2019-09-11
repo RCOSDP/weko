@@ -51,7 +51,7 @@ let PageBodyGrid = function () {
             headerNav.css({"background-color": node.background_color});
         }
         if (node.multiLangSetting && node.multiLangSetting.description){
-            headerContent.css({"width": "calc(100vw - 470px)"});
+            headerContent.css({"width": "calc(100vw - 490px)"});
             headerContent.html(node.multiLangSetting.description.description);
         }
         this.grid.update(headerElement, node.x, node.y, node.width, node.height);
