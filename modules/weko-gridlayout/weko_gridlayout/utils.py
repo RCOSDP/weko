@@ -792,7 +792,8 @@ def get_widget_design_page_with_main(repository_id):
     """Get the page which contains Main contents widget."""
     if repository_id:
         for page in WidgetDesignPage.get_by_repository_id(repository_id):
-            if has_main_contents_widget(json.loads(page.settings)):
+            if page.settings and has_main_contents_widget(
+                    json.loads(page.settings)):
                 return page
     return None
 
