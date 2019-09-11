@@ -35,7 +35,7 @@ $(document).ready(function () {
         option: {
           required : false,
           multiple : false,
-          hidden : false,
+          hidden : true,
           showlist : false,
           crtf : false
         }
@@ -47,7 +47,7 @@ $(document).ready(function () {
         option: {
           required : false,
           multiple : false,
-          hidden : false,
+          hidden : true,
           showlist : false,
           crtf : false
         }
@@ -59,7 +59,7 @@ $(document).ready(function () {
         option: {
           required : false,
           multiple : false,
-          hidden : false,
+          hidden : true,
           showlist : false,
           crtf : false
         }
@@ -71,7 +71,7 @@ $(document).ready(function () {
         option: {
           required : false,
           multiple : false,
-          hidden : false,
+          hidden : true,
           showlist : false,
           crtf : false
         }
@@ -83,7 +83,7 @@ $(document).ready(function () {
         option: {
           required : false,
           multiple : false,
-          hidden : false,
+          hidden : true,
           showlist : false,
           crtf : false
         }
@@ -95,7 +95,7 @@ $(document).ready(function () {
         option: {
           required : false,
           multiple : false,
-          hidden : false,
+          hidden : true,
           showlist : false,
           crtf : false
         }
@@ -1250,7 +1250,7 @@ $(document).ready(function () {
   function new_meta_row_default(row_id) {
     var row_template = '<tr id="tr_' + row_id + '">'
         + '<td><lable type="text"  id="txt_title_' + row_id + '" value="" disabled="true"></label>'
-        + '  <div class="hide" id="text_title_JaEn_' + row_id + '">'
+        + '  <div class="" id="text_title_JaEn_' + row_id + '">'
         +'     <p>' + "Japanese" + '：</p>'
         +'     <lable type="text"  id="txt_title_ja_' + row_id + '" value="" disabled="true"></label>'
         +'     <p>' + "English" + '：</p>'
