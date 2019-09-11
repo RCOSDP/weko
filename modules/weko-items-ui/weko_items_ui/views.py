@@ -415,9 +415,16 @@ def iframe_items_index(pid_value=0):
         action = 'private' if record.get('publish_status', '1') == '1' \
             else 'publish'
 
+        community_id = session.get('itemlogin_community_id')
+        ctx = {'community': None}
+        if community_id:
+            comm = GetCommunity.get_community_by_id(community_id)
+            ctx = {'community': comm}
+
         if request.method == 'GET':
             # Get the design for widget rendering
             from weko_theme.utils import get_design_layout
+
             page, render_widgets = get_design_layout(
                 session['itemlogin_community_id']
                 or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -436,7 +443,9 @@ def iframe_items_index(pid_value=0):
                 histories=session['itemlogin_histories'],
                 res_check=session['itemlogin_res_check'],
                 pid=session['itemlogin_pid'],
-                community_id=session['itemlogin_community_id'])
+                community_id=community_id,
+                **ctx
+            )
 
         if request.headers['Content-Type'] != 'application/json':
             flash(_('Invalid Request'), 'error')
@@ -446,7 +455,10 @@ def iframe_items_index(pid_value=0):
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
-                render_widgets=render_widgets)
+                render_widgets=render_widgets,
+                community_id=community_id,
+                **ctx
+            )
 
         data = request.get_json()
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -479,7 +491,7 @@ def default_view_method(pid, record, template=None):
     Sends ``record_viewed`` signal and renders template.
     """
     check_site_license_permission()
-    send_info = {}
+    send_info = dict()
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
@@ -932,7 +944,6 @@ def ranking():
             timedelta(days=int(settings.new_item_period) - 1)
         if new_item_start_date < start_date:
             new_item_start_date = start_date
-        new_items_list = []
         result = QueryCommonReportsHelper.get(
             start_date=new_item_start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
@@ -998,7 +1009,7 @@ def _get_max_export_items():
     try:
         roles = db.session.query(Role).join(userrole).filter_by(
             user_id=current_user_id).all()
-    except Exception as e:
+    except Exception:
         return current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
 
     current_max = non_user_max
@@ -1101,8 +1112,8 @@ def export():
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(community_id
-                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     sort_options, display_number = SearchSetting.get_results_setting()
     disply_setting = dict(size=display_number)

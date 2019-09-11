@@ -352,8 +352,9 @@ def add_signals_info(record, obj):
 
     # Add index list info to send_obj
     index_list = ''
-    if len(record.navi) > 0:
-        for index in record.navi:
+    record_navs = record.navi
+    if len(record_navs) > 0:
+        for index in record_navs:
             index_list += index[3] + '|'
     obj.index_list = index_list[:len(index_list) - 1]
 
