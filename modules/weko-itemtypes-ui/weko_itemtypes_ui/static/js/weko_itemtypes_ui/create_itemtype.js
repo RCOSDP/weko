@@ -226,8 +226,8 @@ $(document).ready(function () {
               "@value": "subitem_system_identifier_doi",
             },
             "identifierRegistration": {
-              "@attributes": {"identifierType": "subitem_system_id_re_doi_type"},
-              "@value": "subitem_system_id_re_doi",
+              "@attributes": {"identifierType": "subitem_system_id_rg_doi_type"},
+              "@value": "subitem_system_id_rg_doi",
             },
           },
           "junii2_mapping": "",

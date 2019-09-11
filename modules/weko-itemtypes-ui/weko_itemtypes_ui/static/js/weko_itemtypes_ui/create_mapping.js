@@ -14,10 +14,12 @@ $(document).ready(function () {
     mapping_prop:null,
     sub_itemtype_list:[],
     sub_jpcoar_list:[],
-    sub_mapping_list:{}
+    sub_mapping_list:{},
+    meta_system:null,
   }
   page_global.src_mapping_name = $('#item-type-lists').val();
   page_global.dst_mapping_name = $('#item-type-lists').val();
+  page_global.meta_system = JSON.parse($('#meta_system').text());
 
   initPropertiesItems()
 
@@ -297,7 +299,7 @@ $(document).ready(function () {
     sub_itemtype_items = page_global.itemtype_prop[item_type_key];
     page_global.sub_itemtype_list=[];
     make_list_itemtype(sub_itemtype_items, item_type_key, '');
-    $('#sub-item-type-lists-label').text(sub_itemtype_items['title']);
+    $('#sub-item-type-lists-label').text(page_global.meta_system[item_type_key].title);
     // jpcoar sub_list logic
     sub_jpcoar_items = page_global.schema_prop[schema_name_str][jpcoar_key];
     page_global.sub_jpcoar_list=[];
