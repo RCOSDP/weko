@@ -299,7 +299,7 @@ $(document).ready(function () {
     sub_itemtype_items = page_global.itemtype_prop[item_type_key];
     page_global.sub_itemtype_list=[];
     make_list_itemtype(sub_itemtype_items, item_type_key, '');
-    $('#sub-item-type-lists-label').text(page_global.meta_system[item_type_key].title);
+    $('#sub-item-type-lists-label').text($('#ul_' + item_type_key).parent().parent('tr.active').find('label').text().trim());
     // jpcoar sub_list logic
     sub_jpcoar_items = page_global.schema_prop[schema_name_str][jpcoar_key];
     page_global.sub_jpcoar_list=[];
