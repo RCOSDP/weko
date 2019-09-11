@@ -717,7 +717,7 @@ $(document).ready(function () {
     var meta_id = $(this).attr('metaid');
     let isAllowMultiple = false;
     if($(this).val().indexOf('cus_') != -1) {
-      product = properties_obj[$(this).val().substr(4)].schema;
+      let product = properties_obj[$(this).val().substr(4)].schema;
       isAllowMultiple = properties_obj[$(this).val().substr(4)].is_file;
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       $('#chk_' + meta_id + '_1').attr('disabled', false);
