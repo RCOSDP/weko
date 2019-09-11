@@ -43,19 +43,21 @@ let PageBodyGrid = function () {
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
 
-    this.updateHeaderPage = function(node) {
+    this.updateHeaderPage = function (node) {
         let headerElement = $("#header");
-        let headerNav = $("#header_nav");
-        let headerContent = $("#header_content");
-        if (node.background_color) {
-            headerNav.css({"background-color": node.background_color});
-        }
-        if (node.multiLangSetting && node.multiLangSetting.description){
-            headerContent.css({"width": "calc(100vw - 490px)"});
-            headerContent.html(node.multiLangSetting.description.description);
-        }
-        this.grid.update(headerElement, node.x, node.y, node.width, node.height);
-        headerElement.removeClass("hidden");
+        if (headerElement.length) {
+            let headerNav = $("#header_nav");
+            let headerContent = $("#header_content");
+            if (node.background_color) {
+                headerNav.css({"background-color": node.background_color});
+            }
+            if (node.multiLangSetting && node.multiLangSetting.description) {
+                headerContent.css({"width": "calc(100vw - 490px)"});
+                headerContent.html(node.multiLangSetting.description.description);
+            }
+            this.grid.update(headerElement, node.x, node.y, node.width, node.height);
+            headerElement.removeClass("hidden");
+          }
     };
 
     this.loadGrid = function (widgetListItems) {
@@ -450,6 +452,7 @@ let WidgetTheme = function () {
 
 function getWidgetDesignSetting() {
     $("#header").addClass("hidden");
+    $("#header_wysiwyg").addClass("hidden");
     let community_id = $("#community-id").text();
     let current_language = $("#current_language").val();
     let url;

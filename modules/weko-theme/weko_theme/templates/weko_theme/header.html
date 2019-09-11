@@ -29,7 +29,9 @@
   <nav class="navbar navbar-default navbar-static-top full-height" id="header_nav">
     <div class="container-fluid">
       {%- block navbar_header %}
-        <!-- {% include "weko_theme/header_wysiwyg.html" %} -->
+      <div id="header_wysiwyg">
+        {% include "weko_theme/header_wysiwyg.html" %}
+      </div>
       <div id="header_content" class="navbar-form navbar-left ql-editor">
       </div>
       {%- block navbar_right %}
