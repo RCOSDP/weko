@@ -379,7 +379,7 @@ def item_metadata_validation(item_id, identifier_type):
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
-    journalarticle_nameid = [14, 3, 5 ,9]
+    journalarticle_nameid = [14, 3, 5, 9]
     journalarticle_type = 'other（プレプリント）'
     thesis_nameid = 12
     report_nameid = 16
