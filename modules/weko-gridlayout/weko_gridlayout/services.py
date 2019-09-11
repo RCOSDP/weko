@@ -446,6 +446,7 @@ class WidgetDesignServices:
 
         :param repository_id: Identifier of the repository
         :param default_language: The default language.
+        :param model: WidgetDesignSetting model
         :return: Widget preview json.
         """
         result = {
@@ -502,7 +503,6 @@ class WidgetDesignServices:
 
         :param repository_id: Identifier of the repository.
         :param current_language: The default language.
-        :param model: Detrmine whether we should get the data from
         :return: Widget design setting.
         """
         result = {
@@ -657,7 +657,8 @@ class WidgetDesignServices:
             data += [{'repository_id': page.repository_id,
                       'settings': page.settings,
                       'page_id': page.id}
-                     for page in WidgetDesignPage.get_by_repository_id(repo_id)]
+                     for page in WidgetDesignPage.get_by_repository_id(repo_id)
+                     ]
 
             success = True
             for model in data:  # FIXME: May be confusing to update both here
@@ -694,7 +695,8 @@ class WidgetDesignServices:
                 # Must check all pages too
                 data += [{'repository_id': page.repository_id,
                           'settings': page.settings}
-                         for page in WidgetDesignPage.get_by_repository_id(repo_id)]
+                         for page in
+                         WidgetDesignPage.get_by_repository_id(repo_id)]
 
                 for model in data:
                     if model.get('settings'):
@@ -758,12 +760,14 @@ class WidgetDesignPageServices:
         multi_lang_data = data.get('multi_lang_data')
         try:
             result['result'] = WidgetDesignPage.create_or_update(
-                repository_id, Markup.escape(title), url, Markup.escape(content), page_id=page_id,
+                repository_id, Markup.escape(title), url,
+                Markup.escape(content), page_id=page_id,
                 settings=settings, multi_lang_data=multi_lang_data
             )
         except IntegrityError:
             result['error'] = _('Unable to save page: URL already exists.')
         except Exception as e:
+            current_app.logger.error(e)
             result['error'] = _('Unable to save page: Unexpected error.')
         return result
 
@@ -781,6 +785,7 @@ class WidgetDesignPageServices:
         try:
             result['result'] = WidgetDesignPage.delete(page_id)
         except Exception as e:
+            current_app.logger.error(e)
             result['error'] = _('Unable to delete page.')
         return result
 
@@ -810,6 +815,7 @@ class WidgetDesignPageServices:
                 })
 
         except Exception as e:
+            current_app.logger.error(e)
             result['error'] = _('Unable to retrieve page list.')
         return result
 

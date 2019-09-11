@@ -464,9 +464,11 @@ class WidgetDesignPage(db.Model):
 
         :param repository_id: Identifier of the repository
         :param title: Page title
+        :param url: Page URL
         :param content: HTML content
-        :param is_visible: Display flag
+        :param page_id: Page identifier
         :param settings: Page widget setting data
+        :param multi_lang_data: Multi language data
         :return: True if successful, otherwise False
         """
         try:

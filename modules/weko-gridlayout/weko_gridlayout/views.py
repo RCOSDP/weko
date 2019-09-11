@@ -21,7 +21,7 @@ from weko_theme.utils import get_community_id, get_weko_contents
 from werkzeug.exceptions import NotFound
 
 from .api import WidgetItems
-from .models import WidgetDesignPage, WidgetDesignSetting
+from .models import WidgetDesignPage
 from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
@@ -119,7 +119,8 @@ def load_widget_design_setting(current_language=''):
     '/load_widget_design_page_setting/<string:page_id>', methods=['GET'])
 @blueprint_api.route('/load_widget_design_page_setting/<string:page_id>/'
                      '<string:current_language>',
-                     methods=['GET'])  # TODO: Temporary, must eventually make widgetdeisngPage have its own class
+                     methods=['GET'])
+# TODO: Temporary, must eventually make WidgetDesignPage have its own class
 def load_widget_design_page_setting(page_id: str, current_language=''):
     """Load  Widget design page setting from DB by page id.
 
@@ -166,7 +167,8 @@ def load_widget_list_design_setting():
 
 @blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
 @login_required
-def save_widget_layout_setting():  # TODO: Allow this to be used for both or make a different path
+# TODO: Allow this to be used for both or make a different path
+def save_widget_layout_setting():
     """Save Widget design setting into DB.
 
     :return:
