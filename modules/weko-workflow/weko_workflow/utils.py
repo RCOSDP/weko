@@ -160,10 +160,10 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
             doi_register_map = identifier_jpcoar_mapping(
                 item_type.item_type_id, attrs[2:4])
 
-            res = {
+            res = dict({
                 identifier_map['id']: _identifier_data,
                 'pidstore_identifier': {}
-            }
+            })
             res[doi_register_map['id']] = ({
                 doi_register_map['val']: tempdata[attrs[2]],
                 doi_register_map['type']: tempdata[attrs[3]]
