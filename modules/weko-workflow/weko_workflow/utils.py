@@ -532,7 +532,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
 
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
-        if requirements:
+        if requirements and not requirements == [None]:
             error_list['required'] += requirements
         # half-with and special character check
         # else:
@@ -541,15 +541,18 @@ def validation_item_property(mapping_data, identifier_type, properties):
         #         result = char_re.search(item)
         #         if bool(result):
         #             error_list['pattern'].append(key)
-        if type_requirements:
+        if type_requirements and not type_requirements == [None]:
             error_list['required'] += type_requirements
         else:
-            for item in type_data:
-                if (identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']
-                        and not item == 'JaLC') or \
-                    (identifier_type == IDENTIFIER_GRANT_SELECT_DICT[
-                        'CrossRefDOI'] and not item == 'Crossref'):
-                    error_list['required'].append(type_key)
+            if type_data:
+                for item in type_data:
+                    if (identifier_type ==
+                            IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']
+                            and not item == 'JaLC') or \
+                            (identifier_type ==
+                             IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']
+                             and not item == 'Crossref'):
+                        error_list['required'].append(type_key)
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
