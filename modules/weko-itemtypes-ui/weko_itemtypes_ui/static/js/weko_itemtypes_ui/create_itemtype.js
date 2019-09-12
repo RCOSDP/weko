@@ -55,7 +55,7 @@ $(document).ready(function () {
       persistent_identifier_doi : {
         input_type: "cus_121",
         title: "Persistent Identifier(DOI)",
-        title_i18n: {ja: "永続識別子(DOI)", en: "Persistent Identifier(DOI)"},
+        title_i18n: {ja: "永続識別子（DOI）", en: "Persistent Identifier(DOI)"},
         option: {
           required : false,
           multiple : false,
