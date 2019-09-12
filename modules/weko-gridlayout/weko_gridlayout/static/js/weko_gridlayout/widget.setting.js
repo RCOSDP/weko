@@ -558,7 +558,8 @@ class ComponentFieldEditor extends React.Component {
                     { 'indent': '-1' }, { 'indent': '+1' }],
                     ['direction', 'align'],
                     ['link', 'image', 'video', 'formula'],
-                    ['clean']
+                    ['clean'],
+                    ['html']
                 ],
                 clipboard: {
                     // toggle to add extra line breaks when pasting HTML:
@@ -596,6 +597,32 @@ class ComponentFieldEditor extends React.Component {
 
         const quillRef = this.reactQuillRef.getEditor();
         if (quillRef != null) this.quillRef = quillRef;
+
+        var txtArea = document.createElement('textarea');
+        txtArea.style.cssText = "width: 100%;margin: 0px;background: rgb(29, 29, 29);box-sizing: border-box;color: rgb(204, 204, 204);font-size: 15px;outline: none;padding: 20px;line-height: 24px;font-family: Consolas, Menlo, Monaco, &quot;Courier New&quot;, monospace;position: absolute;top: 0;bottom: 0;border: none;display:none";
+        txtArea.value = ''
+        var htmlEditor = this.quillRef.addContainer('ql-custom')
+        htmlEditor.appendChild(txtArea)
+        var qlEditor = document.querySelector('.ql-editor')
+        var htmlButton = document.querySelector('.ql-html');
+        htmlButton.innerHTML = '<b>HTML</b>'
+        htmlButton.addEventListener('click', function() {
+          if (txtArea.style.display === '') {
+            quillRef.pasteHTML(txtArea.value);
+        } else {
+            var text = qlEditor.innerHTML.replace(/\<\/p\>/g, '</p>\n');
+            text = text.replace(/\<\/blockquote\>/g, '</blockquote>\n');
+            text = text.replace(/\<\/h1\>/g, '</h1>\n');
+            text = text.replace(/\<\/h2\>/g, '</h2>\n');
+            text = text.replace(/\<ul\>/g, '<ul>\n');
+            text = text.replace(/\<\/ul\>/g, '</ul>\n');
+            text = text.replace(/\<ol\>/g, '<ol>\n');
+            text = text.replace(/\<\/ol\>/g, '</ol>\n');
+            text = text.replace(/\<\/li\>/g, '</li>\n');
+            txtArea.value = text
+        }
+            txtArea.style.display = txtArea.style.display === 'none' ? '' : 'none';
+        });
     }
     componentWillReceiveProps(props) {
         if (props.data_change) {
