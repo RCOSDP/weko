@@ -21,7 +21,18 @@
 <div ng-show="model.thumbnailsInfor[0]" class="panel panel-default">
   <div class="panel-heading">
     <div class="row">
+      <div class="col-sm-6">
       <p ng-show="model.thumbnailsInfor[0]" class="text-muted"></p>
+        </p>
+      </div>
+      <div class="col-sm-offset-2 col-sm-4">
+        <div class="form-inline text-right">
+          <div class="form-group">
+            <span class="text-muted" ng-bind="(filesVM.files | filter:fileSearch | filter:{is_thumbnail: 'true'}).length"></span>
+            <span class="text-muted"> files </span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <table class="table">
