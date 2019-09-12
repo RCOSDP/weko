@@ -1116,8 +1116,6 @@ def update_schema_remove_hidden_item(schema, render, items_name):
     :param items_name: list items which has hidden flg
     :return: The json object.
     """
-    if not schema or not items_name:
-        return '{}'
     for item in items_name:
         hidden_flg = False
         key = schema[item]['key']

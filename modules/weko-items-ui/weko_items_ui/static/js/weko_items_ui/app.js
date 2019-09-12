@@ -291,7 +291,6 @@ function handleSharePermission(value) {
   }
   // Bootstrap it!
   angular.element(document).ready(function () {
-    // angular.module('wekoRecords.controllers', []);
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
       $scope.resourceTypeKey = "";
       $scope.groups = [];
@@ -1474,7 +1473,7 @@ function handleSharePermission(value) {
                 var file_form = {};
                 file_form[thumbnail_item[2][0]] = file.key;
                 var deposit_files_api = $("#deposit-files-api").val();
-                file_form[thumbnail_item[2][1]] = deposit_files_api + (file.links ? file.links.version.split(deposit_files_api)[1] : '');
+                file_form[thumbnail_item[2][1]] = deposit_files_api + (file.links ? (file.links.version || file.links.self).split(deposit_files_api)[1] : '');
                 thumbnail_list.push(file_form);
               }
             });

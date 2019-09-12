@@ -337,7 +337,7 @@ require([
                         });
                         Array.prototype.push.apply($scope.$parent.model.thumbnailsInfor,files);
                         $rootScope.filesVM.addFiles(files);
-                        if ($rootScope.filesVM.invenioFilesEndpoints.bucket === undefined) {
+                        if ($rootScope.filesVM.invenioFilesEndpoints.bucket !== undefined) {
                           var deposit_files_api = $("#deposit-files-api").val();
                           var bucket_url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
                           var bucket_url_arr = bucket_url.split(deposit_files_api)
