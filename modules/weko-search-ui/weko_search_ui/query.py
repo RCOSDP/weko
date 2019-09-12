@@ -352,7 +352,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
 
-        current_app.logger.debug("""Query parser for simple search.""")
         mt = get_permission_filter(root_node_id)
         q = _get_search_qs_query(qs)
 
@@ -363,7 +362,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
-        current_app.logger.debug(qstr)
         multi_cont_q = Q('multi_match', query=qstr, operator='and',
                          fields=['content.attachment.content'])
 
@@ -418,7 +416,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # multi keywords search filter
         kmt = _get_detail_keywords_query()
         # detail search
-        current_app.logger.debug(mt)
         if kmt:
             mt.extend(kmt)
             q = _get_search_qs_query(qs)
