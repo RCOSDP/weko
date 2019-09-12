@@ -889,41 +889,35 @@ def delete_schema(pid):
     return WekoSchema.delete_by_id(pid)
 
 
-def reset_oai_metadata_formats(app):
-    """
-    Reset oaiserver metadata formats dict.
-
-    :return:
-
-    """
-    @app.before_first_request
-    def set_metadata_formats():
-        oad = app.config.get('OAISERVER_METADATA_FORMATS', {})
-        if isinstance(oad, dict):
-            try:
-                obj = WekoSchema.get_all()
-            except BaseException:
-                pass
-            else:
-                if isinstance(obj, list):
-                    sel = list(oad.values())[0].get('serializer')
-                    for lst in obj:
-                        schema_name = lst.schema_name.split('_')[0]
-                        if not oad.get(schema_name):
-                            scm = dict()
-                            if isinstance(lst.namespaces, dict):
-                                ns = lst.namespaces.get(
-                                    '') or lst.namespaces.get(schema_name)
-                                scm.update({'namespace': ns})
-                            scm.update({'schema': lst.schema_location})
-                            scm.update(
-                                {'serializer': (sel[0], {'schema_type': schema_name})})
-                            oad.update({schema_name: scm})
-                        else:
-                            if isinstance(lst.namespaces, dict):
-                                ns = lst.namespaces.get(
-                                    '') or lst.namespaces.get(schema_name)
-                                if ns:
-                                    oad[schema_name]['namespace'] = ns
-                            if lst.schema_location:
-                                oad[schema_name]['schema'] = lst.schema_location
+def get_oai_metadata_formats(app):
+    oad = app.config.get('OAISERVER_METADATA_FORMATS', {}).copy()
+    if isinstance(oad, dict):
+        try:
+            obj = WekoSchema.get_all()
+        except BaseException:
+            pass
+        else:
+            if isinstance(obj, list):
+                sel = list(oad.values())[0].get('serializer')
+                for lst in obj:
+                    if lst.schema_name.endswith('_mapping'):
+                        schema_name = lst.schema_name[:-8]
+                    if not oad.get(schema_name):
+                        scm = dict()
+                        if isinstance(lst.namespaces, dict):
+                            ns = lst.namespaces.get(
+                                '') or lst.namespaces.get(schema_name)
+                            scm.update({'namespace': ns})
+                        scm.update({'schema': lst.schema_location})
+                        scm.update(
+                            {'serializer': (sel[0], {'schema_type': schema_name})})
+                        oad.update({schema_name: scm})
+                    else:
+                        if isinstance(lst.namespaces, dict):
+                            ns = lst.namespaces.get(
+                                '') or lst.namespaces.get(schema_name)
+                            if ns:
+                                oad[schema_name]['namespace'] = ns
+                        if lst.schema_location:
+                            oad[schema_name]['schema'] = lst.schema_location
+    return oad

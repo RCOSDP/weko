@@ -65,10 +65,6 @@ class OAISchemaSettingView(BaseView):
         #             if v.get(schema_name):
         #                 v.pop(schema_name)
         #                 break
-        oaif = current_app.config["OAISERVER_METADATA_FORMATS"]
-        if oaif.get(schema_name):
-            oaif.pop(schema_name)
-            flash(_('Deleted the OAI schema.'))
         return redirect(url_for("schemasettings.list"))
 
 

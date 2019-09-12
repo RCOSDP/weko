@@ -22,7 +22,6 @@
 
 from . import config
 from .rest import create_blueprint
-from .schema import reset_oai_metadata_formats
 from .views import blueprint
 
 
@@ -60,7 +59,6 @@ class WekoSchemaUI(object):
         for k in dir(config):
             if k.startswith('WEKO_SCHEMA_'):
                 app.config.setdefault(k, getattr(config, k))
-        reset_oai_metadata_formats(app)
 
 
 class WekoSchemaREST(object):
