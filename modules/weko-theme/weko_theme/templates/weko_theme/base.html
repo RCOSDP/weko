@@ -93,6 +93,11 @@
     {%- endblock page_body %}
     {%- if not community_id %}
       </div>
+      <div id="main_footer">
+        {%- block page_footer %}
+      {% include config.THEME_FOOTER_TEMPLATE %}
+      {%- endblock page_footer %}
+      </div>
     </div>
     {%- endif%}
     {%- endblock body_inner %}
