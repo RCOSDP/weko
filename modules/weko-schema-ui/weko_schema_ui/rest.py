@@ -39,6 +39,7 @@ from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
+
 from .schema import SchemaConverter, get_oai_metadata_formats
 
 # from copy import deepcopy
