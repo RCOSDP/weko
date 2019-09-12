@@ -452,12 +452,13 @@ let WidgetTheme = function () {
 
 function getWidgetDesignSetting() {
     $("#header").addClass("hidden");
+    $("#main_footer").addClass("hidden");
     $("#header_wysiwyg").addClass("hidden");
     let community_id = $("#community-id").text();
     let current_language = $("#current_language").val();
     let url;
     if (!community_id) {
-        community_id = 'Root Index';
+        community_id = DEFAULT_REPOSITORY;
     }
     if (!current_language) {
         current_language = "en";
@@ -502,6 +503,7 @@ function getWidgetDesignSetting() {
             } else {
                 let widgetList = data['widget-settings'];
                 if (Array.isArray(widgetList) && widgetList.length) {
+                    $("#page_body").removeClass("hidden");
                     $("#main_contents").addClass("grid-stack-item");
                     $("#header").addClass("grid-stack-item no-scroll-bar");
                     $("#footer").addClass("grid-stack-item no-scroll-bar");
@@ -519,6 +521,14 @@ function getWidgetDesignSetting() {
                 else {  // Pages are able to not have main content, so hide if widget is not present
                     if(is_page){
                         $("#main_contents").hide();
+                    }
+                    $("#header").removeClass("hidden");
+                    $("#header_wysiwyg").removeClass("hidden");
+                    $("#main_footer").removeClass("hidden");
+                    if (community_id !== DEFAULT_REPOSITORY) {
+                        $("#community_header").removeAttr("hidden");
+                        $("footer > #community_footer").removeAttr("hidden");
+                        $("#page_body").removeClass("hidden");
                     }
                 }
             }
