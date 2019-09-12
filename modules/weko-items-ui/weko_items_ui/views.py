@@ -49,7 +49,7 @@ from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
-from weko_records.api import FeedbackMailList, ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
@@ -597,7 +597,7 @@ def to_files_js(record):
                 'mimetype': f.mimetype,
                 'licensetype': f.get('licensetype', ''),
                 'key': f.key,
-                'version_id': f.version_id,
+                'version_id': str(f.version_id),
                 'checksum': f.file.checksum,
                 'size': f.file.size,
                 'completed': True,
@@ -610,7 +610,9 @@ def to_files_js(record):
                             key=f.key,
                             version_id=f.version_id,
                         )),
-                }
+                },
+                'is_show': f.is_show,
+                'is_thumbnail': f.is_thumbnail
             })
 
     return res
