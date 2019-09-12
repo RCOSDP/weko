@@ -115,3 +115,8 @@
   white-space: pre-line !important;
   margin-top: 25px;
 }
+
+#header_content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
