@@ -14,10 +14,14 @@ $(document).ready(function () {
     mapping_prop:null,
     sub_itemtype_list:[],
     sub_jpcoar_list:[],
-    sub_mapping_list:{}
+    sub_mapping_list:{},
+    meta_system:null,
   }
   page_global.src_mapping_name = $('#item-type-lists').val();
   page_global.dst_mapping_name = $('#item-type-lists').val();
+  page_global.meta_system = JSON.parse($('#meta_system').text());
+
+  initPropertiesItems()
 
   function addAlert(message) {
       $('#alerts').append(
@@ -25,6 +29,14 @@ $(document).ready(function () {
           '<button type="button" class="close" data-dismiss="alert">' +
           '&times;</button>' + message + '</div>');
        }
+
+  function initPropertiesItems(){
+    $(".list-group-prop-items").each(function( index ) {
+      if ($(this).children(".list_jpcoar_mapping").length > 1 && $("#is-system-admin").val() === 'True'){
+        $(this).children(".list_jpcoar_mapping").find("button").prop("disabled", false);
+      }
+    });
+  }
 
   $("#item-type-lists").change(function (ev) {
     page_global.dst_mapping_name = $(this).val();
@@ -287,7 +299,7 @@ $(document).ready(function () {
     sub_itemtype_items = page_global.itemtype_prop[item_type_key];
     page_global.sub_itemtype_list=[];
     make_list_itemtype(sub_itemtype_items, item_type_key, '');
-    $('#sub-item-type-lists-label').text(sub_itemtype_items['title']);
+    $('#sub-item-type-lists-label').text($('#label_item_' + item_type_key).text().trim());
     // jpcoar sub_list logic
     sub_jpcoar_items = page_global.schema_prop[schema_name_str][jpcoar_key];
     page_global.sub_jpcoar_list=[];

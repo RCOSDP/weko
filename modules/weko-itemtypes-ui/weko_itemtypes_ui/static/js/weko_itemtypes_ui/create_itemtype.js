@@ -27,6 +27,95 @@ $(document).ready(function () {
     "lom_mapping": "",
     "spase_mapping": ""
   }
+  meta_system_info = {
+      updated_date : {
+        title : "Updated Date",
+        title_i18n: {ja: "更新日時", en: "Updated Date"},
+        input_type: "cus_122",
+        option: {
+          required : false,
+          multiple : false,
+          hidden : true,
+          showlist : false,
+          crtf : false
+        }
+      },
+      created_date : {
+        title: "Created Date",
+        title_i18n: {ja: "作成日時", en: "Created Date"},
+        input_type: "cus_122",
+        option: {
+          required : false,
+          multiple : false,
+          hidden : true,
+          showlist : false,
+          crtf : false
+        }
+      },
+      persistent_identifier_doi : {
+        input_type: "cus_121",
+        title: "Persistent Identifier(DOI)",
+        title_i18n: {ja: "永続識別子（DOI）", en: "Persistent Identifier(DOI)"},
+        option: {
+          required : false,
+          multiple : false,
+          hidden : true,
+          showlist : false,
+          crtf : false
+        }
+      },
+      persistent_identifier_h : {
+        input_type: "cus_123",
+        title: "Persistent Identifier(Handle)",
+        title_i18n: {ja: "永続識別子（ハンドル）", en: "Persistent Identifier(Handle)"},
+        option: {
+          required : false,
+          multiple : false,
+          hidden : true,
+          showlist : false,
+          crtf : false
+        }
+      },
+      ranking_page_url : {
+        input_type: "cus_123",
+        title: "Ranking Page URL",
+        title_i18n: {ja: "ランディングページのURL", en: "Ranking Page URL"},
+        option: {
+          required : false,
+          multiple : false,
+          hidden : true,
+          showlist : false,
+          crtf : false
+        }
+      },
+      belonging_index_info : {
+        input_type: "cus_124",
+        title: "Belonging Index Info",
+        title_i18n: {ja: "所属インデックスの情報", en: "Belonging Index Info"},
+        option: {
+          required : false,
+          multiple : false,
+          hidden : true,
+          showlist : false,
+          crtf : false
+        }
+      },
+    };
+    meta_fix = {
+      pubdate : {
+        input_type: "Date",
+        title: "Publish Date",
+        title_i18n: {ja: "公開日", en: "Publish Date"},
+        option: {
+          required : true,
+          multiple : false,
+          hidden : false,
+          showlist : false,
+          crtf : false
+        }
+      },
+    }
+    property_default = {}
 
   $('#myModal').modal({
     show: false
@@ -71,6 +160,7 @@ $(document).ready(function () {
           $('div.metadata-content *').not("[id=btn_restore_itemtype_schema]").prop('disabled', true);
       }
   });
+
   function disabled_deleted_type(){
       $('option.deleted_type').hide();
       $('#btn_restore_itemtype_schema').prop('disabled', true);
@@ -99,7 +189,91 @@ $(document).ready(function () {
   function create_itemtype_schema(){
     page_global.table_row_map['name'] = $('#itemtype_name').val();
     page_global.table_row_map['action'] = $('[name=radio_versionup]:checked').val();
-    page_global.table_row_map['mapping'] = {};
+    page_global.table_row_map['mapping'] = {
+        updated_date : {
+          "display_lang_type": "",
+          "oai_dc_mapping": "",
+          "jpcoar_mapping": {
+            "date": {
+              "@attributes": {"dateType": "subitem_system_date_type"},
+              "@value": "subitem_system_date"
+            },
+          },
+          "junii2_mapping": "",
+          "lido_mapping": "",
+          "lom_mapping": "",
+          "spase_mapping": ""
+        },
+        created_date :{
+          "display_lang_type": "",
+          "oai_dc_mapping": "",
+          "jpcoar_mapping": {
+            "date": {
+              "@attributes": {"dateType": "subitem_system_date_type"},
+              "@value": "subitem_system_date",
+            },
+          },
+          "junii2_mapping": "",
+          "lido_mapping": "",
+          "lom_mapping": "",
+          "spase_mapping": ""
+        },
+        persistent_identifier_doi: {
+          "display_lang_type": "",
+          "oai_dc_mapping": "",
+          "jpcoar_mapping": {
+            "identifier": {
+              "@attributes": {"identifierType": "subitem_system_identifier_doi_type"},
+              "@value": "subitem_system_identifier_doi",
+            },
+            "identifierRegistration": {
+              "@attributes": {"identifierType": "subitem_system_id_rg_doi_type"},
+              "@value": "subitem_system_id_rg_doi",
+            },
+          },
+          "junii2_mapping": "",
+          "lido_mapping": "",
+          "lom_mapping": "",
+          "spase_mapping": ""
+        },
+        persistent_identifier_h: {
+          "display_lang_type": "",
+          "oai_dc_mapping": "",
+          "jpcoar_mapping": {
+            "identifier": {
+              "@attributes": {"identifierType": "subitem_system_identifier_type"},
+              "@value": "subitem_system_identifier",
+            },
+          },
+          "junii2_mapping": "",
+          "lido_mapping": "",
+          "lom_mapping": "",
+          "spase_mapping": ""
+        },
+        ranking_page_url: {
+          "display_lang_type": "",
+          "oai_dc_mapping": "",
+          "jpcoar_mapping": {
+            "identifier": {
+              "@attributes": {"identifierType": "subitem_system_identifier_type"},
+              "@value": "subitem_system_identifier",
+            },
+          },
+          "junii2_mapping": "",
+          "lido_mapping": "",
+          "lom_mapping": "",
+          "spase_mapping": ""
+        },
+        belonging_index_info: {
+          "display_lang_type": "",
+          "oai_dc_mapping": "",
+          "jpcoar_mapping": "",
+          "junii2_mapping": "",
+          "lido_mapping": "",
+          "lom_mapping": "",
+          "spase_mapping": ""
+        }
+      };
     page_global.table_row_map['form'] = [];
     page_global.table_row_map['schema'] = {
       $schema: "http://json-schema.org/draft-04/schema#",
@@ -252,6 +426,33 @@ $(document).ready(function () {
       page_global.table_row_map.mapping['pubdate'] = mapping_value;
     }
 
+//    System mapping
+
+    if(src_mapping.hasOwnProperty('updated_date')) {
+      page_global.table_row_map.mapping['updated_date'] = src_mapping['updated_date'];
+    }
+
+    if(src_mapping.hasOwnProperty('created_date')) {
+      page_global.table_row_map.mapping['created_date'] = src_mapping['created_date'];
+    }
+
+    if(src_mapping.hasOwnProperty('persistent_identifier_doi')) {
+      page_global.table_row_map.mapping['persistent_identifier_doi'] = src_mapping['persistent_identifier_doi'];
+    }
+
+    if(src_mapping.hasOwnProperty('persistent_identifier_h')) {
+      page_global.table_row_map.mapping['persistent_identifier_h'] = src_mapping['persistent_identifier_h'];
+    }
+
+    if(src_mapping.hasOwnProperty('ranking_page_url')) {
+      page_global.table_row_map.mapping['ranking_page_url'] = src_mapping['ranking_page_url'];
+    }
+
+    if(src_mapping.hasOwnProperty('belonging_index_info')) {
+      page_global.table_row_map.mapping['belonging_index_info'] = src_mapping['belonging_index_info'];
+    }
+
+//    End system mapping
     // テーブルの行をトラバースし、マップに追加する
     err_input_id = []
 
@@ -546,6 +747,9 @@ $(document).ready(function () {
     tmp_pubdate.option.showlist = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_2').is(':checked') ? true : false);
     tmp_pubdate.option.crtf = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_3').is(':checked') ? true : false);
     page_global.meta_fix["pubdate"] = tmp_pubdate;
+	  page_global.meta_system = add_meta_system()
+	  page_global.table_row_map.form = page_global.table_row_map.form.concat(get_form_system())
+	  add_system_schema_property()
   }
 
   // add new meta table row
@@ -804,6 +1008,9 @@ $(document).ready(function () {
       properties_obj = data;
 
       defProps = data.defaults;
+      Object.keys(defProps).forEach(function(row_id){
+         property_default[defProps[row_id].value] = defProps[row_id].name
+      })
       isSelected = true;
       Object.keys(defProps).forEach(function(key) {
         if (isSelected) {
@@ -972,4 +1179,70 @@ $(document).ready(function () {
       }
     });
   }
+
+  function add_meta_system(){
+    var result = {}
+    Object.keys(meta_system_info).forEach(function(key){
+      result[key] = {
+        title : meta_system_info[key].title,
+        title_i18n : meta_system_info[key].title_i18n,
+        input_type : meta_system_info[key].input_type,
+        input_value : "",
+        option : meta_system_info[key].option
+      }
+    })
+    return result
+  }
+
+  function create_system_data(){
+    let result = {}
+    let system_row = Object.keys(meta_system_info);
+    result.system_row = system_row
+    let form = get_form_system()
+    result.form = form
+    return result
+  }
+
+  function get_form_system(){
+    let result = new Array()
+    let list_key = Object.keys(meta_system_info)
+    for(i = 0; i< list_key.length; ++i){
+      let row_id = list_key[i]
+      let item = new Object()
+      if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
+        item = {...properties_obj[meta_system_info[row_id].input_type.substr(4)].form};
+        item.title = meta_system_info[row_id].title
+        item.title_i18n = meta_system_info[row_id].title_i18n
+        item.key = row_id
+      } else {
+        item.type = meta_system_info[row_id].input_type
+        item.title = meta_system_info[row_id].title
+        item.title_i18n = meta_system_info[row_id].title_i18n
+        item.key = row_id
+      }
+      result.push(item)
+      item = {}
+
+    }
+    return result
+  }
+
+  function add_system_schema_property() {
+    let list_key = Object.keys(meta_system_info)
+    for(i = 0; i< list_key.length; ++i){
+      let row_id = list_key[i]
+      let item = new Object()
+      if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
+        item = {...properties_obj[meta_system_info[row_id].input_type.substr(4)].schema};
+        item.title = meta_system_info[row_id].title
+      } else {
+        item.type = ''
+        item.title = meta_system_info[row_id].title
+        item.format = ''
+      }
+      page_global.table_row_map.schema.properties[row_id] = {...item}
+      item = {}
+    }
+  }
+
 });

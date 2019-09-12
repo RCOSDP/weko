@@ -308,6 +308,25 @@ def get_schema_form(item_type_id=0):
             filemeta_form_group = filemeta_form.get('items')[-1]
             filemeta_form_group['type'] = 'select'
             filemeta_form_group['titleMap'] = group_list
+
+        # hidden option
+        hidden_subitem = ['subitem_thumbnail', 'subitem_system_id_rg_doi',
+                          'subitem_system_date_type',
+                          'subitem_system_date',
+                          'subitem_system_identifier_type',
+                          'subitem_system_identifier',
+                          'subitem_system_text'
+                          ]
+        for i in hidden_subitem:
+            hidden_items = [
+                schema_form.index(form) for form in schema_form
+                if form.get('items')
+                and form['items'][0]['key'].split('.')[1] in i]
+            if hidden_items and i in json.dumps(schema_form):
+                schema_form = update_schema_remove_hidden_item(schema_form,
+                                                               result.render,
+                                                               hidden_items)
+
         if 'default' != cur_lang:
             for elem in schema_form:
                 if 'title_i18n' in elem and cur_lang in elem['title_i18n']\
@@ -1168,3 +1187,24 @@ def check_validation_error_msg(activity_id):
                        error_list=error_list)
     else:
         return jsonify(code=0)
+
+
+def update_schema_remove_hidden_item(schema, render, items_name):
+    """Update schema: remove hidden items.
+
+    :param schema: json schema
+    :param render: json render
+    :param items_name: list items which has hidden flg
+    :return: The json object.
+    """
+    for item in items_name:
+        hidden_flg = False
+        key = schema[item]['key']
+        if render['meta_list'].get(key):
+            hidden_flg = render['meta_list'][key]['option']['hidden']
+        if render['meta_system'].get(key):
+            hidden_flg = render['meta_system'][key]['option']['hidden']
+        if hidden_flg:
+            schema[item]['condition'] = 1
+
+    return schema
