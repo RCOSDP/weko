@@ -24,12 +24,16 @@
   <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
 {% endblock %}
 
-<header id="header">
+<div id="header">
   {%- block navbar %}
-  <nav class="navbar navbar-default navbar-static-top">
+  <nav class="navbar navbar-default navbar-static-top full-height" id="header_nav">
     <div class="container-fluid">
       {%- block navbar_header %}
+      <div id="header_wysiwyg">
         {% include "weko_theme/header_wysiwyg.html" %}
+      </div>
+      <div id="header_content" class="navbar-form navbar-left ql-editor">
+      </div>
       {%- block navbar_right %}
         {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
       {%- endblock navbar_right %}
@@ -50,7 +54,7 @@
   {%- block breadcrumbs %}
 {%- include "invenio_theme/breadcrumbs.html" %}
   {%- endblock breadcrumbs %}
-</header>
+</div>
 
 {% block tail %}
 {% endblock %}

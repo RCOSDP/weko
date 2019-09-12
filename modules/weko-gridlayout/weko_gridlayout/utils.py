@@ -131,9 +131,7 @@ def update_menu_item(item, data_result):
     item['menu_active_bg_color'] = data_result.get('menu_active_bg_color')
     item['menu_default_color'] = data_result.get('menu_default_color')
     item['menu_active_color'] = data_result.get('menu_active_color')
-    # item['menu_show_pages'] = data_result.get('show_pages')  # Was this before
     item['menu_show_pages'] = data_result.get('menu_show_pages')
-    # item['menu_multi_lang_data'] = data_result.get('menu_multi_lang_data')
 
 
 def update_access_counter_item(item, data_result):
@@ -255,16 +253,6 @@ def build_data(data):
     result['multiLangSetting'] = multi_lang_data
 
     result['is_deleted'] = False
-    role = data.get('browsing_role')
-    if isinstance(role, list):
-        result['browsing_role'] = ','.join(str(e) for e in role)
-    else:
-        result['browsing_role'] = role
-    role = data.get('edit_role')
-    if isinstance(role, list):
-        result['edit_role'] = ','.join(str(e) for e in role)
-    else:
-        result['edit_role'] = role
     return result
 
 
@@ -304,13 +292,19 @@ def build_data_setting(data):
             == config.WEKO_GRIDLAYOUT_NOTICE_TYPE):
         _build_notice_setting_data(result, setting)
     elif str(data.get('widget_type')) == 'Menu':  # TODO: Change to constant
-        color = '#4169E1'  # current_app.config['WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR']
-        result['menu_orientation'] = data['settings'].get('menu_orientation') or 'horizontal'
-        result['menu_bg_color'] = data['settings'].get('menu_bg_color') or color
-        result['menu_active_bg_color'] = data['settings'].get('menu_active_bg_color') or color
-        result['menu_default_color'] = data['settings'].get('menu_default_color') or color
-        result['menu_active_color'] = data['settings'].get('menu_active_color') or color
-        result['menu_show_pages'] = data['settings'].get('menu_show_pages') or []
+        color = '#4169E1'
+        result['menu_orientation'] = data['settings'].get(
+            'menu_orientation') or 'horizontal'
+        result['menu_bg_color'] = data['settings'].get(
+            'menu_bg_color') or color
+        result['menu_active_bg_color'] = data['settings'].get(
+            'menu_active_bg_color') or color
+        result['menu_default_color'] = data['settings'].get(
+            'menu_default_color') or color
+        result['menu_active_color'] = data['settings'].get(
+            'menu_active_color') or color
+        result['menu_show_pages'] = data['settings'].get(
+            'menu_show_pages') or []
     return result
 
 
@@ -395,8 +389,6 @@ def convert_widget_data_to_dict(widget_data):
     result['repository_id'] = widget_data.repository_id
     result['widget_type'] = widget_data.widget_type
     result['settings'] = settings
-    result['browsing_role'] = widget_data.browsing_role
-    result['edit_role'] = widget_data.edit_role
     result['is_enabled'] = widget_data.is_enabled
     result['is_deleted'] = widget_data.is_deleted
     return result
@@ -440,8 +432,6 @@ def convert_data_to_design_pack(widget_data, list_multi_lang_data):
     result['widget_id'] = widget_data.get('widget_id')
     result['repository_id'] = widget_data.get('repository_id')
     result['widget_type'] = widget_data.get('widget_type')
-    result['browsing_role'] = widget_data.get('browsing_role')
-    result['edit_role'] = widget_data.get('edit_role')
     result['is_enabled'] = widget_data.get('is_enabled')
     result['is_deleted'] = widget_data.get('is_deleted')
 
@@ -476,8 +466,6 @@ def convert_data_to_edit_pack(data):
     settings = copy.deepcopy(data.get('settings'))
     convert_popular_data(settings, result)
     result['widget_id'] = data.get('widget_id')
-    result['browsing_role'] = data.get('browsing_role')
-    result['edit_role'] = data.get('edit_role')
     result['is_enabled'] = data.get('is_enabled')
     result['enable'] = data.get('is_enabled')
     result['multiLangSetting'] = settings.get('multiLangSetting')
@@ -495,13 +483,7 @@ def convert_data_to_edit_pack(data):
         result_settings['display_result'] = settings.get('display_result')
         result_settings['rss_feed'] = settings.get('rss_feed')
     if str(data.get('widget_type')) == 'Menu':  # TODO: Change to constant
-        result_settings['menu_orientation'] = settings.get('menu_orientation')
-        result_settings['menu_bg_color'] = settings.get('menu_bg_color')
-        result_settings['menu_active_bg_color'] = settings.get('menu_active_bg_color')
-        result_settings['menu_default_color'] = settings.get('menu_default_color')
-        result_settings['menu_active_color'] = settings.get('menu_active_color')
-        result_settings['menu_show_pages'] = settings.get('menu_show_pages')
-        # result_settings['menu_multi_lang_data'] = settings.get('menu_multi_lang_data')
+        update_menu_item(result_settings, settings)
     result['settings'] = result_settings
     return result
 
@@ -810,7 +792,8 @@ def get_widget_design_page_with_main(repository_id):
     """Get the page which contains Main contents widget."""
     if repository_id:
         for page in WidgetDesignPage.get_by_repository_id(repository_id):
-            if has_main_contents_widget(json.loads(page.settings)):
+            if page.settings and has_main_contents_widget(
+                    json.loads(page.settings)):
                 return page
     return None
 

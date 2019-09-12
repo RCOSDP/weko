@@ -5,10 +5,13 @@ const HIDE_REST_DEFAULT = "Hide the rest";
 const READ_MORE_DEFAULT = "Read more";
 const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
-const THEME_SIMPLE = 'simple'
-const THEME_SIDE_LINE = 'side_line'
+const THEME_SIMPLE = 'simple';
+const THEME_SIDE_LINE = 'side_line';
 const MENU_TYPE = "Menu";
 const DEFAULT_REPOSITORY = "Root Index";
+const HEADER_TYPE = "Header";
+const FOOTER_TYPE = "Footer";
+const BORDER_STYLE_DOUBLE = "double";
 const INTERVAL_TIME = 60000; //one minute
 
 (function () {
@@ -40,13 +43,36 @@ let PageBodyGrid = function () {
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
 
+    this.updateHeaderPage = function (node) {
+        let headerElement = $("#header");
+        if (headerElement.length) {
+            let headerNav = $("#header_nav");
+            let headerContent = $("#header_content");
+            if (node.background_color) {
+                headerNav.css({"background-color": node.background_color});
+            }
+            if (node.multiLangSetting && node.multiLangSetting.description) {
+                headerContent.css({"width": "calc(100vw - 490px)"});
+                headerContent.html(node.multiLangSetting.description.description);
+            }
+            this.grid.update(headerElement, node.x, node.y, node.width, node.height);
+            headerElement.removeClass("hidden");
+          }
+    };
+
     this.loadGrid = function (widgetListItems) {
         let items = GridStackUI.Utils.sort(widgetListItems);
         let hasMainContent = false;
         items.forEach(function (node) {
-            if (MAIN_CONTENT_TYPE == node.type) {
+            if (MAIN_CONTENT_TYPE === node.type) {
                 this.updateMainContent(node);
                 hasMainContent = true;
+                return false;
+            } else if (HEADER_TYPE === node.type) {
+                let community_id = $("#community-id").text();
+                if (!community_id){
+                    this.updateHeaderPage(node);
+                }
                 return false;
             }
         }, this);
@@ -55,11 +81,13 @@ let PageBodyGrid = function () {
         if(!hasMainContent) {
             $("#main_contents").hide();  // remove(); or empty() ?
         }
-
-        for (var i = 0; i < items.length; i++) {
+        for (let i = 0; i < items.length; i++) {
             let node = items[i];
-            if (MAIN_CONTENT_TYPE != node.type) {
-                this.addNewWidget(node, i);
+            let community_id = $("#community-id").text();
+            if (node.type === HEADER_TYPE && community_id) {
+              this.addNewWidget(node, i);
+            } else if (![MAIN_CONTENT_TYPE, HEADER_TYPE].includes(node.type)) {
+              this.addNewWidget(node, i);
             }
         }
         return false;
@@ -213,31 +241,18 @@ let PageBodyGrid = function () {
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
         let id = '';
-        let panelClasses = "panel-body no-padding-side ql-editor";
-        // Handle css style
-        if (node.background_color) {
-            backgroundColor = "background-color: " + node.background_color + "; ";
-        }
-
-        if (node.frame_border && node.frame_border_color) {
-            frameBorderColor = "border-color: " + node.frame_border_color + "; ";
-        }
-
-        if (node.label_color) {
-            labelColor = "color: " + node.label_color + "; ";
-        }
 
         if (!$.isEmptyObject(multiLangSetting.description)) {
             languageDescription = multiLangSetting.description;
         }
 
-        if (node.type == FREE_DESCRIPTION_TYPE) {
+        if (node.type === FREE_DESCRIPTION_TYPE) {
             if (!$.isEmptyObject(languageDescription)) {
                 content = languageDescription.description;
             }
-        } else if (node.type == NOTICE_TYPE) {
+        } else if (node.type === NOTICE_TYPE) {
             content = this.buildNoticeType(languageDescription, index);
-        } else if (node.type == ACCESS_COUNTER) {
+        } else if (node.type === ACCESS_COUNTER) {
             let initNumber = 0;
             if (node.access_counter &&
                 !Number.isNaN(Number(node.access_counter))) {
@@ -245,26 +260,35 @@ let PageBodyGrid = function () {
             }
             content = this.buildAccessCounter(initNumber, languageDescription);
             setInterval(() => { this.setAccessCounterValue(); }, INTERVAL_TIME);
-        } else if (node.type == NEW_ARRIVALS) {
+        } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
             this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
-        } else if (node.type == MENU_TYPE) {
+        } else if (node.type === MENU_TYPE) {
           let innerID = 'widget_pages_menu_' + node.widget_id;  // Allow multiple menus
-          panelClasses = "panel-body";
           id = 'id="' + innerID + '"';
           // Extract only the settings we want:
           let menuSettings = {};
           Object.keys(node).forEach((k) => {if (k.startsWith('menu_')) menuSettings[k] = node[k]});
           this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
+        } else if (node.type === HEADER_TYPE) {
+            $("#community_header").attr("hidden", true);
+            if (!$.isEmptyObject(languageDescription)) {
+                content = languageDescription.description;
+            }
+        } else if (node.type === FOOTER_TYPE) {
+            $("#community_footer").attr("hidden", true);
+            if (!$.isEmptyObject(languageDescription)) {
+                content = languageDescription.description;
+            }
         }
 
         let dataTheme = '';
         let widgetTheme = new WidgetTheme();
         if (node.theme) {
-            if (node.theme == THEME_SIMPLE) {
+            if (node.theme === THEME_SIMPLE) {
                 dataTheme = widgetTheme.TEMPLATE_SIMPLE;
-            } else if (node.theme == THEME_SIDE_LINE) {
+            } else if (node.theme === THEME_SIDE_LINE) {
                 dataTheme = widgetTheme.TEMPLATE_SIDE_LINE;
             } else {
                 // Default
@@ -274,8 +298,8 @@ let PageBodyGrid = function () {
         let widget_data = {
             'header': multiLangSetting.label,
             'body': content
-        }
-        if (id != '') {
+        };
+        if (id !== '') {
             widget_data['id'] = id
         }
         return widgetTheme.buildTemplate(widget_data, node, dataTheme);
@@ -302,7 +326,7 @@ let PageBodyGrid = function () {
                     data = response.all.count;
                 }
             }
-        })
+        });
         return data;
     };
 };
@@ -343,25 +367,25 @@ let WidgetTheme = function () {
         let borderColor = (widget_settings.frame_border_color) ? widget_settings.frame_border_color : '';
         let panelClasses = "panel-body no-padding-side ql-editor";
         let overFlowBody = "";
-        if (template == this.TEMPLATE_SIDE_LINE) {
+        if (template === this.TEMPLATE_SIDE_LINE) {
             template.border['border-left-style'] = (widget_settings.border_style) ? widget_settings.border_style : 'groove';
-            if (widget_settings.border_style == 'double') {
+            if (widget_settings.border_style === BORDER_STYLE_DOUBLE) {
                 delete template.border['border-style-left'];
                 template.border['border-left'] = '3px double'; //3px is necessary to display double type
             }
         } else {
             template.border['border-style'] = (widget_settings.border_style) ? widget_settings.border_style : template.border['border-style'];
-            if (widget_settings.border_style == 'double') {
+            if (widget_settings.border_style === BORDER_STYLE_DOUBLE) {
                 delete template.border['border-style'];
                 template.border['border'] = '3px double'; //3px is necessary to display double type
              }
         }
         let headerBorder = '';
-        if (template == this.TEMPLATE_SIMPLE || template == this.TEMPLATE_SIDE_LINE) {
+        if (template === this.TEMPLATE_SIMPLE || template === this.TEMPLATE_SIDE_LINE) {
             headerBorder = 'border-top-right-radius: 0px; border-top-left-radius: 0px; ';
         }else {
             headerBorder = 'border-bottom:';
-            if (widget_settings.border_style == 'double') {
+            if (widget_settings.border_style === BORDER_STYLE_DOUBLE) {
                 headerBorder += ' 3px double ' + borderColor + ';'
             }else {
                 headerBorder += ' 1px ' + widget_settings.border_style + ' ' + borderColor + ';'
@@ -370,31 +394,35 @@ let WidgetTheme = function () {
         let header = (widget_settings.label_enable) ?
             '        <div class="panel-heading no-padding-side widget-header widget-header-position" style="' + headerBorder + this.buildCssText('color', labelTextColor) + this.buildCssText('background-color', labelColor) + '">' +
             '            <strong>' + widget_data.header + '</strong>' +
-            '        </div>' : ''
+            '        </div>' : '';
         let headerClass = (widget_settings.label_enable) ? '' : 'no-pad-top-30';
-        headerClass += (widget_settings.type == NEW_ARRIVALS) ? 'no-before-content' : '';
-        if (widget_settings.type == ACCESS_COUNTER) {
-            overFlowBody = "overflow-y: hidden; ";
+        headerClass += (widget_settings.type === NEW_ARRIVALS || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) ? ' no-before-content' : '';
+        if (widget_settings.type === ACCESS_COUNTER || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) {
+            overFlowBody = "overflow-y: hidden; overflow-x: hidden; ";
         }
-        if (widget_settings.type == MENU_TYPE) {
+        if (widget_settings.type === MENU_TYPE) {
             panelClasses = "panel-body";
         }
-        let borderStyle = (template == this.TEMPLATE_SIMPLE) ? '' : this.buildBorderCss(template.border, borderColor);
+        let borderStyle = (template === this.TEMPLATE_SIMPLE) ? '' : this.buildBorderCss(template.border, borderColor);
         let backgroundColor = (widget_settings.background_color) ? widget_settings.background_color : '';
 
+        let setClass = "grid-stack-item-content panel widget";
+        if(widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE){
+            setClass = "grid-stack-item-content panel header-footer-type";
+        }
         let result = '<div class="grid-stack-item widget-resize">' +
-            '    <div class="grid-stack-item-content panel widget" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
+            '    <div class="' +setClass +'" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
             header +
             '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; ' + overFlowBody + '"' + id + '">' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
         return result;
-    }
+    };
 
     this.buildCssText = function (keyword, data) {
         let cssStr = '';
-        if (data == '') {
+        if (data === '') {
             return cssStr;
         }
         switch (keyword) {
@@ -408,7 +436,7 @@ let WidgetTheme = function () {
                 break;
         }
         return cssStr;
-    }
+    };
 
     this.buildBorderCss = function (borderSettings, borderColor) {
         let borderStyle = '';
@@ -423,6 +451,8 @@ let WidgetTheme = function () {
 };
 
 function getWidgetDesignSetting() {
+    $("#header").addClass("hidden");
+    $("#header_wysiwyg").addClass("hidden");
     let community_id = $("#community-id").text();
     let current_language = $("#current_language").val();
     let url;
@@ -435,18 +465,35 @@ function getWidgetDesignSetting() {
 
     // If the current page is a widget page get
     let is_page = false;
-    if($('#widget-page-id').length) {
-        let page_id = $('#widget-page-id').text();
+    let request_param = {};
+    let widgetPageId = $('#widget-page-id');
+    if(widgetPageId.length) {
+        let page_id = widgetPageId.text();
         url = '/api/admin/load_widget_design_page_setting/' + page_id + '/' + current_language;
         is_page = true;
+        request_param = {
+            type: 'GET',
+            url: url
+        }
     }
     else {
-        url = '/api/admin/load_widget_design_setting/' + community_id + '/' + current_language;
+        let data = {
+            repository_id: community_id
+        };
+        url = '/api/admin/load_widget_design_setting/' + current_language;
+        request_param = {
+            url: url,
+            type: "POST",
+            contentType: "application/json",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            data: JSON.stringify(data)
+        }
     }
 
     $.ajax({
-        type: 'GET',
-        url: url,
+        ...request_param,
         success: function (data) {  // TODO: If no settings default to main layout
             if (data.error) {
                 console.log(data.error);
@@ -456,6 +503,8 @@ function getWidgetDesignSetting() {
                 let widgetList = data['widget-settings'];
                 if (Array.isArray(widgetList) && widgetList.length) {
                     $("#main_contents").addClass("grid-stack-item");
+                    $("#header").addClass("grid-stack-item no-scroll-bar");
+                    $("#footer").addClass("grid-stack-item no-scroll-bar");
                     let pageBodyGrid = new PageBodyGrid();
                     pageBodyGrid.init();
                     pageBodyGrid.loadGrid(widgetList);
@@ -487,7 +536,7 @@ function toggleWidgetUI() {
 }
 
 function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
-    var moreDes = $("#" + moreDescriptionID);
+    let moreDes = $("#" + moreDescriptionID);
     if (moreDes) {
         if (moreDes.is(":hidden")) {
             moreDes.show();

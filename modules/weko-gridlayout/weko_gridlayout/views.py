@@ -21,7 +21,7 @@ from weko_theme.utils import get_community_id, get_weko_contents
 from werkzeug.exceptions import NotFound
 
 from .api import WidgetItems
-from .models import WidgetDesignPage, WidgetDesignSetting
+from .models import WidgetDesignPage
 from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
@@ -100,17 +100,17 @@ def load_repository():
 
 
 @blueprint_api.route(
-    '/load_widget_design_setting/<string:repository_id>', methods=['GET'])
-@blueprint_api.route('/load_widget_design_setting/<string:repository_id>/'
-                     '<string:current_language>', methods=['GET'])
-def load_widget_design_setting(repository_id: str, current_language='',
-                               page_id=''):
+    '/load_widget_design_setting', methods=['POST'])
+@blueprint_api.route('/load_widget_design_setting/'
+                     '<string:current_language>', methods=['POST'])
+def load_widget_design_setting(current_language=''):
     """Load  Widget design setting from DB by repository id.
 
-    :param repository_id: Identifier of the repository.
     :param current_language: The language default
     :return:
     """
+    data = request.get_json()
+    repository_id = data.get('repository_id')
     return jsonify(WidgetDesignServices.get_widget_design_setting(
         repository_id, current_language or get_default_language()))
 
@@ -119,7 +119,8 @@ def load_widget_design_setting(repository_id: str, current_language='',
     '/load_widget_design_page_setting/<string:page_id>', methods=['GET'])
 @blueprint_api.route('/load_widget_design_page_setting/<string:page_id>/'
                      '<string:current_language>',
-                     methods=['GET'])  # TODO: Temporary, must eventually make widgetdeisngPage have its own class
+                     methods=['GET'])
+# TODO: Temporary, must eventually make WidgetDesignPage have its own class
 def load_widget_design_page_setting(page_id: str, current_language=''):
     """Load  Widget design page setting from DB by page id.
 
@@ -131,10 +132,10 @@ def load_widget_design_page_setting(page_id: str, current_language=''):
         page_id, current_language or get_default_language()))
 
 
-@blueprint_api.route('/load_widget_list_design_setting/<string:repository_id>',
-                     methods=['GET'])
+@blueprint_api.route('/load_widget_list_design_setting',
+                     methods=['POST'])
 @login_required
-def load_widget_list_design_setting(repository_id):
+def load_widget_list_design_setting():
     """Get Widget list, to display on the Widget List panel on UI.
 
     :return: Example
@@ -147,6 +148,8 @@ def load_widget_list_design_setting(repository_id):
             "error": ""
     """
     result = dict()
+    data = request.get_json()
+    repository_id = data.get('repository_id')
     lang_default = get_default_language()
     result["widget-list"] = WidgetDesignServices.get_widget_list(
         repository_id, lang_default)
@@ -164,7 +167,8 @@ def load_widget_list_design_setting(repository_id):
 
 @blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
 @login_required
-def save_widget_layout_setting():  # TODO: Allow this to be used for both or make a different path
+# TODO: Allow this to be used for both or make a different path
+def save_widget_layout_setting():
     """Save Widget design setting into DB.
 
     :return:
@@ -181,13 +185,13 @@ def save_widget_layout_setting():  # TODO: Allow this to be used for both or mak
 
 
 @blueprint_api.route(
-    '/load_widget_design_pages/<string:repository_id>', methods=['GET'])
+    '/load_widget_design_pages', methods=['POST'])
 @blueprint_api.route(
-    '/load_widget_design_pages/<string:repository_id>/<string:lang>',
-    methods=['GET']
+    '/load_widget_design_pages/<string:lang>',
+    methods=['POST']
 )
 @login_required
-def load_widget_design_pages(repository_id, lang=''):
+def load_widget_design_pages(lang=''):
     """Get widget page list for repository.
 
     :return: Example
@@ -200,7 +204,8 @@ def load_widget_design_pages(repository_id, lang=''):
             "error": ""
     """
     result = dict()
-
+    data = request.get_json()
+    repository_id = data.get('repository_id')
     lang_default = get_default_language()
     lang_default = lang_default.get('lang_code') if lang_default else None
 
