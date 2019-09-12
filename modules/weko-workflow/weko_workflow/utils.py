@@ -182,7 +182,6 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
                     ],
                 }
             }
-            current_app.logger.debug(item_record.get(doi_register_map['id']))
 
             with db.session.begin_nested():
                 item.update(res)
