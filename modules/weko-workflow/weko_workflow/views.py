@@ -313,6 +313,9 @@ def display_activity(activity_id=0):
     files = []
     endpoints = {}
     links = None
+    need_thumbnail = False
+    files_thumbnail = []
+    allow_multi_thumbnail = False
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -323,9 +326,10 @@ def display_activity(activity_id=0):
         )
         session['activity_info'] = activity_session
         # get item edit page info.
-        step_item_login_url, need_file, record, json_schema, \
-            schema_form, item_save_uri, files, endpoints = item_login(
-                item_type_id=workflow_detail.itemtype_id)
+        step_item_login_url, need_file, record, json_schema, schema_form,\
+            item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
+            allow_multi_thumbnail \
+            = item_login(item_type_id=workflow_detail.itemtype_id)
         if item:
             # Remove the unused local variable
             # _pid_identifier = PersistentIdentifier.get_by_object(
@@ -362,6 +366,12 @@ def display_activity(activity_id=0):
             deposit = WekoDeposit.get_record(item.id)
             if deposit is not None:
                 files = to_files_js(deposit)
+
+        if files:
+            if not files_thumbnail:
+                files_thumbnail = [i for i in files
+                                   if 'is_thumbnail' in i.keys()
+                                   and i['is_thumbnail']]
 
         from weko_deposit.links import base_factory
         links = base_factory(pid)
@@ -426,6 +436,9 @@ def display_activity(activity_id=0):
         res_check=res_check,
         pid=pid,
         community_id=community_id,
+        need_thumbnail=need_thumbnail,
+        files_thumbnail=files_thumbnail,
+        allow_multi_thumbnail=allow_multi_thumbnail,
         **ctx
     )
 
