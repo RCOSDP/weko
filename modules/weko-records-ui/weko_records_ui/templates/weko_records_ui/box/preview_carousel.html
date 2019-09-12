@@ -58,7 +58,7 @@
         <div class="carousel-inner">
           <!-- TODO: Check if both previews below can ever both show at the same time. -->
           {%- for file in files | sort(attribute='key') if filename and file.key == filename or not filename -%}
-
+            {% if file.is_thumbnail == False %}
             {%- if edit_page_prev %}
               {%- set access_permission = True -%}
             {% else %}
@@ -128,6 +128,7 @@
                 </div>
               </div>
             {%- endif %}
+          {%- endif %}
           {%- endfor %}
         </div>
       </div>

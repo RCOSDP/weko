@@ -40,6 +40,9 @@
   {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- if need_thumbnail %}
+    {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% endif %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
@@ -134,10 +137,45 @@
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
                 </invenio-files-upload-zone>
                 <invenio-files-list
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
+                  template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
                 ></invenio-files-list>
               </div>
             </div>
+            {%- endif %}
+            {%- if need_thumbnail %}
+              <div class="row">
+                <div class="col-sm-9">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">{{_('Thumbnail')}}</h3>
+                    </div>
+                    <div ng-controller='UploadController' class="panel-body">
+                      <div class="row">
+                        <div class="col-sm-12" id="app">
+                          <div class="well">
+                            <center>{{_('Drop files or folders here')}}</center>
+                          </div>
+                          <p class="text-center legend"><strong>— {{_('OR')}} —</strong></p>
+                          <p class="text-center">
+                            <button class="btn btn-primary" ng-click="uploadThumbnail()">{{_('Click to select')}}</button>
+                          </p>
+                          <p class="text-center">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp, tiff, tif」')}}</p>
+                          <form name="uploadThumbnailForm" class="collapse"
+                            sf-schema="schema"
+                            sf-form="form"
+                            sf-model="model"
+                            data-files-thumbnail='{{ files_thumbnail | tojson }}'>
+                          </form>
+                          <hr />
+                          <input type="hidden" id="deposit-files-api" value="{{ config.DEPOSIT_FILES_API }}">
+                          <input type="hidden" id="allow-thumbnail-flg" value="{{ allow_multi_thumbnail }}">
+                          {%- include 'weko_items_ui/iframe/upload_thumbnail_list.html' %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             {%- endif %}
             <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
               <div class="row">
@@ -246,7 +284,7 @@
                               class="btn btn-danger" id="btn_quit">
                         <i class="fa fa-sign-out"></i>
                         {{_('Quit')}}</button>&nbsp
-                  </ul>
+                  </div>
                 </div>
               </div>
               {% include "weko_workflow/modal_quit_confirmation.html" %}
@@ -255,7 +293,6 @@
           {%- if need_file %}
           </invenio-files-uploader>
           {%- endif %}
-        </div>
       </div>
     </div>
   </div>
