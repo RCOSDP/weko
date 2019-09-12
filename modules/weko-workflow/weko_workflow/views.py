@@ -348,7 +348,6 @@ def display_activity(activity_id=0):
                 files_thumbnail = [i for i in files
                                    if 'is_thumbnail' in i.keys()
                                    and i['is_thumbnail']]
-            files = [i for i in files if i not in files_thumbnail]
 
         from weko_deposit.links import base_factory
         links = base_factory(pid)

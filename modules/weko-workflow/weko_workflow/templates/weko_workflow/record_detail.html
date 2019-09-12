@@ -32,7 +32,7 @@
         <div class="col-sm-12 col-md-12 col-left">
           {%- block record_author %}
             {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
-            {%- if files -%}
+            {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0-%}
             <!-- Preview Carousel -->
             {{ preview_carousel(files=files, pid=pid, el_id=preview_carousel_id, edit_page_prev=True) }}
             <hr />
@@ -147,8 +147,8 @@
                         {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                         filename=thumb.key) %}
                         <p>
-                          <span>{{ thumb_name }}</span>
-                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
+                          <span>{{ thumb_name }}</span><br>
+                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width:  {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
                         </p>
                       {% endfor %}
                       </td>
