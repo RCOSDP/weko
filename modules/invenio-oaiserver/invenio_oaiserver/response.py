@@ -17,6 +17,7 @@ from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 from weko_deposit.api import WekoRecord
+from weko_schema_ui.schema import get_oai_metadata_formats
 
 from .api import OaiIdentify
 from .fetchers import oaiid_fetcher
@@ -228,17 +229,17 @@ def listsets(**kwargs):
 
 def listmetadataformats(**kwargs):
     """Create OAI-PMH response for ListMetadataFormats verb."""
-    cfg = current_app.config
+    oad = get_oai_metadata_formats(current_app)
     e_tree, e_listmetadataformats = verb(**kwargs)
 
     if 'identifier' in kwargs:
         # test if record exists
         OAIIDProvider.get(pid_value=kwargs['identifier'])
 
-    if not len(cfg.get('OAISERVER_METADATA_FORMATS', {})):
+    if not len(oad):
         return error(get_error_code_msg('noMetadataFormats'), **kwargs)
 
-    for prefix, metadata in cfg.get('OAISERVER_METADATA_FORMATS', {}).items():
+    for prefix, metadata in oad.items():
         e_metadataformat = SubElement(
             e_listmetadataformats, etree.QName(NS_OAIPMH, 'metadataFormat')
         )

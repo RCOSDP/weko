@@ -39,8 +39,7 @@ from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
-
-from .schema import SchemaConverter
+from .schema import SchemaConverter, get_oai_metadata_formats
 
 # from copy import deepcopy
 # from functools import partial
@@ -243,7 +242,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             #                 break
 
             # update oai metadata formats
-            oad = current_app.config.get('OAISERVER_METADATA_FORMATS', {})
+            oad = get_oai_metadata_formats(current_app)
             sel = list(oad.values())[0].get('serializer')
             scm = dict()
             if isinstance(xsd.namespaces, dict):
