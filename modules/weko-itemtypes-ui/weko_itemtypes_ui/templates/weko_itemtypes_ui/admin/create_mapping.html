@@ -109,7 +109,7 @@
           {%- for key in ['updated_date', 'created_date', 'persistent_identifier_doi', 'persistent_identifier_h', 'ranking_page_url', 'belonging_index_info'] -%}
           <tr>
             <td class="col-sm-6">
-              <label>{{ meta_system[key].title }}</label>
+              <label id="{{'label_item_' + key}}">{{ meta_system[key].title }}</label>
             </td>
             <td class="col-sm-6">
               <ul class="list-group list-group-prop-items" id="{{'ul_'+key}}">
@@ -234,10 +234,10 @@
     {%- for (key, name) in itemtype_list -%}
     <tr>
       <td class="col-sm-6">
-        <label>{{name}}</label>
+        <label id="{{'label_item_' + key}}">{{name}}</label>
       </td>
       <td>
-        <ul class="list-group list-group-prop-items" id="{{'ul_'+key}}">
+        <ul class="list-group list-group-prop-items" id="{{'ul_' + key}}">
           {%- for jpcoar_prop_key, jpcoar_prop_list in
           jpcoar_prop_lists.items() -%}
           {%- if key in hide_mapping_prop and jpcoar_prop_key in

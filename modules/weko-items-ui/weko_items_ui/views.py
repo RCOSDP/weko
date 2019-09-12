@@ -322,17 +322,7 @@ def get_schema_form(item_type_id=0):
                 schema_form.index(form) for form in schema_form
                 if form.get('items')
                 and form['items'][0]['key'].split('.')[1] in i]
-
-            current_app.logger.debug("=============================")
-            current_app.logger.debug(hidden_items)
-            current_app.logger.debug("=============================")
-
             if hidden_items and i in json.dumps(schema_form):
-
-                current_app.logger.debug("=============================")
-                current_app.logger.debug("true")
-                current_app.logger.debug("=============================")
-
                 schema_form = update_schema_remove_hidden_item(schema_form,
                                                                result.render,
                                                                hidden_items)
