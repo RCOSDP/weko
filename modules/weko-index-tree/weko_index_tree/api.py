@@ -244,15 +244,21 @@ class Indexes(object):
                             literal_column("''", db.Text).label("name"),
                             literal_column("''", db.Text).label(
                                 "name_en"),
-                            literal_column("0", db.Integer).label("lev")
+                            literal_column("0", db.Integer).label("lev"),
+                            Index.public_state
                         ).filter(Index.id == index_id)).all()
 
                 if obj:
                     p_lst = [o.cid for o in obj]
                     with db.session.begin_nested():
-                        dct = db.session.query(Index).filter(
-                            Index.id.in_(p_lst)). \
-                            delete(synchronize_session='fetch')
+                        e = 0
+                        batch = 100
+                        while e <= len(p_lst):
+                            s = e
+                            e = e + batch
+                            dct = db.session.query(Index).filter(
+                                Index.id.in_(p_lst[s:e])). \
+                                delete(synchronize_session='fetch')
                     db.session.commit()
                     return dct
         except Exception as ex:
