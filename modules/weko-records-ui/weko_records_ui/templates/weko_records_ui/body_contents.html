@@ -28,12 +28,11 @@
     <div class="panel-heading clearfix" style="background-color: inherit;">
       <pre class="hide">{{record|tojson}}</pre>
       <div class="panel_bread" id="panel_bread">
-        {%- if record.navi -%}
+        {%- set record_navs = record.navi -%}
+        {%- if record_navs -%}
         <table style="font-size: 110%;">
           <col width="50">
-          {%- for nav in record.navi -%}
-          <!--<div class="row col-xs-6 col-md-6 col-lg-10 col-xl-10"><div
-               style="overflow:hidden;">-->
+          {%- for nav in record_navs -%}
           <tr>
             <td style="max-width:100%; white-space: nowrap;" valign="top">
                 <div class="row col-xs-4 col-md-4 col-lg-4 col-xl-4">
@@ -43,23 +42,23 @@
               </div>
             </td>
             <td width="2048" valign="bottom">
-                <div class="row col-xs-6 col-md-6 col-lg-10 col-xl-12"><div
-                    style="overflow:hidden;">
+                <div class="row col-xs-6 col-md-6 col-lg-10 col-xl-12">
+                <div style="overflow:hidden;">
                 <ol class="breadcrumb" style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
-                  {%- if nav.name == None %}
-                    {%- set name = nav.name_en.split('/') -%}
-                  {%- else %} 
+                  {%- if nav.name != None and current_i18n.language == 'ja'  %}
                     {%- set name = nav.name.split('/') -%}
+                  {%- else %}
+                    {%- set name = nav.name_en.split('/') -%}
                   {%- endif -%}
                   {%- set p = nav.path.split('/') -%}
                   {%- for n in name -%}
-                    {%- if community_id %}
+                    {%- if community %}
                       <li>
-                        <a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]+"&community="+community_id}}>{{n}}</a>
+                        <a href="{{ url_for("invenio_search_ui.search") + "?search_type=2&q=" + p[loop.index-1] + "&community=" + community.id }}">{{n}}</a>
                       </li>
                     {%-else%}
                       <li>
-                        <a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}>{{n}}</a>
+                        <a href="{{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}">{{n}}</a>
                       </li>
                     {%- endif -%}
                   {%- endfor -%}
@@ -94,7 +93,7 @@
           {%- block record_author %}
           {%- set files = record.files -%}
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
-            {%- if files -%}
+            {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0-%}
 
             <!-- Preview Carousel -->
             {{ preview_carousel(record=record, files=files, pid=pid) }}
@@ -219,61 +218,79 @@
               </tr>
               {% endif %}
               {%- for lst in record.items_show_list %}
-              <tr>
-                <th>{{ lst['attribute_name'] }}</th>
-                <td>
-                  <pre class="hide">{{lst|tojson}}</pre>
-                  {% if lst['attribute_value'] is string %}
-                  {{ lst['attribute_value'] }}
-                  {% else %}
-                  {%- for key in lst['attribute_value'] %}
-                  {{ key }}
-                  {% endfor %}
-                  {% endif %}
-                  {% if lst['attribute_type'] == 'creator' %}
-                  {%- for l in lst['attribute_value_mlt'] if l %}
-                  {%- for creatorName in l['creatorNames'] if creatorName -%}
-                  {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
-                  {%- set q = 'creator='+creatorName['creatorName'] -%}
-                  {%- else -%}
-                  {%- set q = 'id='+l['weko_id'] -%}
-                  {%- endif -%}
-                  <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label
-                    class="p-left-10"></label><br />
-                  {%- endfor -%}
-                  <br>
-                  {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
-                  {%- if nameIdentifierScheme in nameIdentifier.keys() and nameIdentifier['nameIdentifierScheme'] != "" -%}
-                  {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
-                  {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
-                  {%- else -%}
-                  <!--
-                                  {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
-                                  -->
-                  <!-- demo -->
-                  {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
+                {% if 'attribute_name_hidden' not in lst.keys() %}
+                  <tr>
+                    <th>{{ lst['attribute_name'] }}</th>
+                    <td>
+                      <pre class="hide">{{lst|tojson}}</pre>
+                      {% if lst['attribute_value'] is string %}
+                      {{ lst['attribute_value'] }}
+                      {% else %}
+                      {%- for key in lst['attribute_value'] %}
+                      {{ key }}
+                      {% endfor %}
+                      {% endif %}
+                      {% if lst['attribute_type'] == 'creator' %}
+                      {%- for l in lst['attribute_value_mlt'] if l %}
+                      {%- for creatorName in l['creatorNames'] if creatorName -%}
+                      {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
+                      {%- set q = 'creator='+creatorName['creatorName'] -%}
+                      {%- else -%}
+                      {%- set q = 'id='+l['weko_id'] -%}
+                      {%- endif -%}
+                      <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label
+                        class="p-left-10"></label><br />
+                      {%- endfor -%}
+                      <br>
+                      {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
+                      {%- if nameIdentifierScheme in nameIdentifier.keys() and nameIdentifier['nameIdentifierScheme'] != "" -%}
+                      {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
+                      {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
+                      {%- else -%}
+                      <!--
+                                      {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
+                                      -->
+                      <!-- demo -->
+                      {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
 
-                  {%- endif -%}
-                  <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a
-                    href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br />
-                  {%- endif -%}
-                  {%- endfor -%}
-                  {%- if config['EMAIL_DISPLAY_FLG'] -%}
-                  {%- for creatorMail in l['creatorMails'] if creatorMail -%}
-                  <label class="p-left-10">e-mail: </label><a
-                    href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br />
-                  {%- endfor -%}
-                  {%- endif -%}
-                  {% endfor %}
-                  {% else %}
-                  {%- for l in lst['attribute_value_mlt'] %}
-                  {%- for k, v in l.items() %}
-                  {{ v }}<br>
-                  {% endfor %}
-                  {% endfor %}
-                  {% endif %}
-                </td>
-              </tr>
+                      {%- endif -%}
+                      <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a
+                        href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br />
+                      {%- endif -%}
+                      {%- endfor -%}
+                      {%- if config['EMAIL_DISPLAY_FLG'] -%}
+                      {%- for creatorMail in l['creatorMails'] if creatorMail -%}
+                      <label class="p-left-10">e-mail: </label><a
+                        href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br />
+                      {%- endfor -%}
+                      {%- endif -%}
+                      {% endfor %}
+                      {% else %}
+                      {%- for l in lst['attribute_value_mlt'] %}
+                      {%- for k, v in l.items() %}
+                      {{ v }}<br>
+                      {% endfor %}
+                      {% endfor %}
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endif %}
+                {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
+                  <tr>
+                    <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
+                    <td>
+                      {%- for thumb in files_thumbnail | sort(attribute='key') -%}
+                        {%- set thumb_name = thumb.filename or thumb.key -%}
+                        {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                        filename=thumb.key) %}
+                        <p>
+                          <span>{{ thumb_name }}</span><br>
+                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
+                        </p>
+                      {% endfor %}
+                      </td>
+                    </tr>
+                {% endif %}
               {% endfor %}
               {% if record.relation %}
               <tr>
@@ -335,7 +352,7 @@
             {% if record | check_permission %}
             <a class="btn btn-primary edit-button" href="#!" id="btn_edit"
               data-pid-value="{{ pid.pid_value }}"
-              {%- if community_id %}data-community="{{community_id}}"{% endif %}>
+              {%- if community -%}data-community="{{ community.id }}"{%- endif -%}>
               <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
             <a class="btn btn-danger delete-button" id="btn_delete"
               ng-click="openConfirm('',

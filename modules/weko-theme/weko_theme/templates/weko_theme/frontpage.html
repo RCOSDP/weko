@@ -21,7 +21,7 @@
 {%- extends config.BASE_PAGE_TEMPLATE %}
 
 {%- from "invenio_communities/macros.html" import community_header %}
-{% set render_widgets = True %}
+{# set render_widgets = True #}
 
 {%- block css %}
   {{ super() }}
@@ -58,13 +58,16 @@
 {%- endblock page_footer %}
 
 {% block page_body %}
+  {%- if page %}
+      <div id="widget-page-id" hidden>{{ page.id }}</div>
+  {%- endif %}
   {%-if not community_id %}
     {{ super() }}
   {%- else%}
     <div class="communities">
       <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
       {{ community_header(community, subtitle='') }}
-      <div id="page_body" class="grid-stack collapse">
+      <div id="page_body" class="grid-stack collapse hidden">
         <div id="main_contents">
           {{ super() }}
         </div>

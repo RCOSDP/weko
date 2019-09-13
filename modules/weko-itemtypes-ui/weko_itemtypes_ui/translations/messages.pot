@@ -369,3 +369,7 @@ msgstr ""
 msgid "Register Itemtype"
 msgstr ""
 
+#: weko_itemtypes_ui/admin.py:384 weko_itemtypes_ui/admin.py:394
+#: weko_itemtypes_ui/admin.py:404
+msgid "Item type added by system"
+msgstr ""

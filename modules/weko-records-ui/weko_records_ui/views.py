@@ -30,7 +30,7 @@ from flask_login import current_user, login_required
 from flask_security import current_user
 from invenio_cache import current_cache
 from invenio_db import db
-from invenio_files_rest.proxies import current_permission_factory
+from invenio_files_rest.models import ObjectVersion
 from invenio_files_rest.views import ObjectResource, check_permission, \
     file_downloaded
 from invenio_i18n.ext import current_i18n
@@ -284,7 +284,7 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if len(mtdata):
+    if mtdata:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
             if found is not None:
@@ -311,9 +311,9 @@ def _get_google_scholar_meta(record):
                     'identifierType'] == 'ISSN':
                 res.append({'name': 'citation_issn',
                             'data': sourceIdentifier.text})
-        for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI', 
+        for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
                                       namespaces=mtdata.nsmap):
-            res.append({'name': 'citation_pdf_url', 
+            res.append({'name': 'citation_pdf_url',
                 'data': request.url.replace('records', 'record') +
                     '/files/' + pdf_url.text})
     res.append({'name': 'citation_dissertation_institution',
@@ -346,12 +346,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record=record,
         info=send_info
     )
-    getargs = request.args
+    community_arg = request.args.get('community')
     community_id = ""
     ctx = {'community': None}
-    if 'community' in getargs:
+    if community_arg:
         from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        comm = GetCommunity.get_community_by_id(community_arg)
         ctx = {'community': comm}
         community_id = comm.id
 
@@ -410,10 +410,21 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             get_min_price_billing_file_download(groups_price,
                                                 billing_files_permission)
 
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(request.args.get('community')
+                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     if hasattr(current_i18n, 'language'):
         index_link_list = get_index_link_list(current_i18n.language)
     else:
         index_link_list = get_index_link_list()
+
+    files_thumbnail = []
+    if record.files:
+        files_thumbnail = ObjectVersion.get_by_bucket(
+            record.get('_buckets').get('deposit')).\
+            filter_by(is_thumbnail=True).all()
 
     return render_template(
         template,
@@ -424,6 +435,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
         can_update_version=can_update_version,
+        page=page,
+        render_widgets=render_widgets,
         community_id=community_id,
         width=width,
         detail_condition=detail_condition,
@@ -433,6 +446,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         google_scholar_meta=google_scholar_meta,
         billing_files_permission=billing_files_permission,
         billing_files_prices=billing_files_prices,
+        files_thumbnail=files_thumbnail,
         **ctx,
         **kwargs
     )

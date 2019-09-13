@@ -161,7 +161,7 @@ require([
             if ($('#community').val()) {
                 query += $('#community').serialize().replace(/\+/g, ' ') + '&';
             }
-            var btn = sessionStorage.getItem('btn', '');
+            // var btn = sessionStorage.getItem('btn', '');
             if ($("#item_management_bulk_update").length != 0) {
               window.location.href = ('/admin/items/search?page=1&item_management=update&' + query).slice(0, -1);
             } else if($("#item_management_bulk_delete").length != 0) {

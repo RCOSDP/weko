@@ -331,6 +331,10 @@ ${INVENIO_WEB_INSTANCE} widget_type create \
 
 ${INVENIO_WEB_INSTANCE} widget_type create \
         "Menu" "Menu"
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Header" "Header"
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Footer" "Footer"
 ### sphinxdoc-create-widget_type-data-end
 
 # sphinxdoc-set-report-unit-and-target-begin

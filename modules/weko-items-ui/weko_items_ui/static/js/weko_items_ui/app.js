@@ -291,7 +291,6 @@ function handleSharePermission(value) {
   }
   // Bootstrap it!
   angular.element(document).ready(function () {
-    angular.module('wekoRecords.controllers', []);
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
       $scope.resourceTypeKey = "";
       $scope.groups = [];
@@ -335,7 +334,7 @@ function handleSharePermission(value) {
             filemeta_filename_form = filemeta_form.items[0];
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(file => {
-              if (file.completed) {
+              if (file.completed && !file.is_thumbnail) {
                 filemeta_schema.items.properties['filename']['enum'].push(file.key);
                 filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
               }
@@ -1342,6 +1341,7 @@ function handleSharePermission(value) {
           return false;
         } else {
           $scope.genTitleAndPubDate();
+          this.mappingThumbnailInfor();
           let next_frame = $('#next-frame').val();
           if ($scope.is_item_owner) {
             if (!this.registerUserPermission()) {
@@ -1402,6 +1402,7 @@ function handleSharePermission(value) {
       $scope.saveDataJsonCallback = function (item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
+          this.mappingThumbnailInfor();
           metainfo = angular.merge(
             {},
             metainfo,
@@ -1456,6 +1457,52 @@ function handleSharePermission(value) {
         });
         return result;
       }
+
+      // mapping URL & Name of file
+      $scope.mappingThumbnailInfor = function () {
+        if (!angular.isUndefined($rootScope.filesVM)
+          && !angular.isUndefined($rootScope.$$childHead.model)
+          && !angular.equals([], $rootScope.$$childHead.model.thumbnailsInfor)) {
+          // search thumbnail form
+          thumbnail_item = this.searchThumbnailForm("Thumbnail");
+          if (!angular.equals([], thumbnail_item)) {
+            var thumbnail_list = [];
+
+            $rootScope.filesVM.files.forEach(file => {
+              if (file.is_thumbnail) {
+                var file_form = {};
+                file_form[thumbnail_item[2][0]] = file.key;
+                var deposit_files_api = $("#deposit-files-api").val();
+                file_form[thumbnail_item[2][1]] = deposit_files_api + (file.links ? (file.links.version || file.links.self).split(deposit_files_api)[1] : '');
+                thumbnail_list.push(file_form);
+              }
+            });
+            if (thumbnail_list.length > 0) {
+              if ($rootScope.$$childHead.model.allowMultiple == 'True') {
+                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]] = [];
+                var sub_item = {};
+                sub_item[thumbnail_item[1]] = thumbnail_list
+                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]].push(sub_item);
+              } else {
+                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]] = {};
+                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]][thumbnail_item[1]] = thumbnail_list;
+              }
+            }
+          }
+        }
+      }
+
+      $scope.searchThumbnailForm = function (title) {
+        var thumbnail_attrs = [];
+        $rootScope.recordsVM.invenioRecordsForm.forEach(RecordForm => {
+          if (RecordForm.title == title) {
+            var properties = RecordForm.schema.properties || RecordForm.schema.items.properties;
+            var subItem = Object.keys(properties)[0] || 'subitem_thumbnail';
+            thumbnail_attrs = [RecordForm.key[0], subItem, Object.keys(properties[subItem].items.properties)];
+          }
+        });
+        return thumbnail_attrs;
+      }
     }
     // Inject depedencies
     WekoRecordsCtrl.$inject = [
@@ -1463,7 +1510,7 @@ function handleSharePermission(value) {
       '$rootScope',
       'InvenioRecordsAPI',
     ];
-    angular.module('wekoRecords.controllers')
+    angular.module('wekoRecords.controllers', [])
       .controller('WekoRecordsCtrl', WekoRecordsCtrl);
 
     var ModalInstanceCtrl = function ($scope, $modalInstance, items) {
@@ -1487,14 +1534,82 @@ function handleSharePermission(value) {
       'invenioRecords',
       'wekoRecords.controllers',
     ]);
+    
+    angular.module('uploadThumbnail', ['schemaForm', 'invenioFiles'])
+    .controller('UploadController', function ($scope, $rootScope, InvenioFilesAPI) {
+        'use strict';
+        $scope.schema = {
+            type: 'object',
+            title: 'Upload',
+            properties: {
+                "thumbnail": {
+                    "title": "thumbnail",
+                    "type": 'string',
+                    "format": 'file'
+                }
+            }
+        };
+        $scope.form = [
+            {
+                "key": "thumbnail",
+                "type": "fileUpload"
+            }
+        ];
+        $scope.model = {
+            thumbnailsInfor: [],
+            allowedType: ['image/gif', 'image/jpg', 'image/jpe', 'image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/tif'],
+            allowMultiple: $("#allow-thumbnail-flg").val(),
+        };
+
+        // set current data thumbnail if has
+        let thumbnailsInfor = $("form[name='uploadThumbnailForm']").data('files-thumbnail');
+        if (thumbnailsInfor.length > 0) {
+          $scope.model.thumbnailsInfor = thumbnailsInfor;
+        }
+        // click input upload files
+        $scope.uploadThumbnail = function() {
+          if ($rootScope.filesVM.invenioFilesEndpoints.bucket === undefined) {
+            InvenioFilesAPI.request({
+                method: 'POST',
+                url: $rootScope.filesVM.invenioFilesEndpoints.initialization,
+                data: {},
+                headers: ($rootScope.filesVM.invenioFilesArgs.headers !== undefined) ? $rootScope.filesVM.invenioFilesArgs.headers : {}
+            }).then(function success(response) {
+                $rootScope.filesVM.invenioFilesEndpoints = response.data.links;
+            }, function error(response) {
+            });
+          }
+          setTimeout(function() {
+              document.getElementById('selectThumbnail').click();
+          }, 0);
+        };
+        // remove file
+        $scope.removeThumbnail = function(file) {
+          if (angular.isUndefined(file.links)) {
+            var indexOfFile = _.indexOf($scope.model.thumbnailsInfor, file)
+            if (!angular.isUndefined($rootScope.filesVM.files[indexOfFile])) {
+              file.links = $rootScope.filesVM.files[indexOfFile].links;
+            } else {
+              console.log('File not found!');
+              return;
+            }
+          }
+          $rootScope.filesVM.remove(file);
+          $scope.model.thumbnailsInfor.splice(indexOfFile || $scope.model.thumbnailsInfor.indexOf(file), 1);
+        };
+    }).$inject = [
+      '$scope',
+      '$rootScope',
+      'InvenioFilesAPI',
+    ];
 
     angular.bootstrap(
       document.getElementById('weko-records'), [
-        'wekoRecords', 'invenioRecords', 'schemaForm', 'mgcrea.ngStrap',
+        'wekoRecords', 'invenioRecords', 'mgcrea.ngStrap',
         'mgcrea.ngStrap.modal', 'pascalprecht.translate', 'ui.sortable',
         'ui.select', 'mgcrea.ngStrap.select', 'mgcrea.ngStrap.datepicker',
         'mgcrea.ngStrap.helpers.dateParser', 'mgcrea.ngStrap.tooltip',
-        'invenioFiles'
+        'invenioFiles', 'uploadThumbnail'
       ]
     );
   });

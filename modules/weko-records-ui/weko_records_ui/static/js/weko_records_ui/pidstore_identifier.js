@@ -26,8 +26,8 @@ $(document).ready(function () {
   const moveRight = $('#moveRight');
   const moveLeft = $('#moveLeft');
 
-  let labels = ['JaLC DOI', 'JaLC CrossRef DOI', 'JaLC DataCite DOI', 'CNRI'];
-  let targets = ['jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri'];
+  let labels = ['JaLC DOI', 'JaLC CrossRef DOI', 'JaLC DataCite DOI'];
+  let targets = ['jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi'];
 
   for (let index = 0; index < targets.length; index++) {
     let isChecked = $('#' + flag(targets[index])).prop('checked');
@@ -90,8 +90,6 @@ $(document).ready(function () {
         return 'jalc_crossref_flag';
       case 'jalc_datacite_doi':
         return 'jalc_datacite_flag';
-      case 'cnri':
-        return 'cnri_flag';
       default:
         return inputId;
     } 

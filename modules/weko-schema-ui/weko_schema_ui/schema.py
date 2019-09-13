@@ -890,6 +890,7 @@ def delete_schema(pid):
 
 
 def get_oai_metadata_formats(app):
+    """Get oai metadata formats."""
     oad = app.config.get('OAISERVER_METADATA_FORMATS', {}).copy()
     if isinstance(oad, dict):
         try:

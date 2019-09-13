@@ -8,6 +8,7 @@
 """Module of weko-gridlayout."""
 from __future__ import absolute_import, print_function
 
+import json
 from datetime import date, timedelta
 
 import six
@@ -16,10 +17,11 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from sqlalchemy.orm.exc import NoResultFound
+from weko_theme.utils import get_community_id, get_weko_contents
 from werkzeug.exceptions import NotFound
 
 from .api import WidgetItems
-from .models import WidgetDesignPage, WidgetDesignSetting
+from .models import WidgetDesignPage
 from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
@@ -98,17 +100,17 @@ def load_repository():
 
 
 @blueprint_api.route(
-    '/load_widget_design_setting/<string:repository_id>', methods=['GET'])
-@blueprint_api.route('/load_widget_design_setting/<string:repository_id>/'
-                     '<string:current_language>', methods=['GET'])
-def load_widget_design_setting(repository_id: str, current_language='',
-                               page_id=''):
+    '/load_widget_design_setting', methods=['POST'])
+@blueprint_api.route('/load_widget_design_setting/'
+                     '<string:current_language>', methods=['POST'])
+def load_widget_design_setting(current_language=''):
     """Load  Widget design setting from DB by repository id.
 
-    :param repository_id: Identifier of the repository.
     :param current_language: The language default
     :return:
     """
+    data = request.get_json()
+    repository_id = data.get('repository_id')
     return jsonify(WidgetDesignServices.get_widget_design_setting(
         repository_id, current_language or get_default_language()))
 
@@ -117,7 +119,8 @@ def load_widget_design_setting(repository_id: str, current_language='',
     '/load_widget_design_page_setting/<string:page_id>', methods=['GET'])
 @blueprint_api.route('/load_widget_design_page_setting/<string:page_id>/'
                      '<string:current_language>',
-                     methods=['GET'])  # TODO: Temporary, must eventually make widgetdeisngPage have its own class
+                     methods=['GET'])
+# TODO: Temporary, must eventually make WidgetDesignPage have its own class
 def load_widget_design_page_setting(page_id: str, current_language=''):
     """Load  Widget design page setting from DB by page id.
 
@@ -129,10 +132,10 @@ def load_widget_design_page_setting(page_id: str, current_language=''):
         page_id, current_language or get_default_language()))
 
 
-@blueprint_api.route('/load_widget_list_design_setting/<string:repository_id>',
-                     methods=['GET'])
+@blueprint_api.route('/load_widget_list_design_setting',
+                     methods=['POST'])
 @login_required
-def load_widget_list_design_setting(repository_id):
+def load_widget_list_design_setting():
     """Get Widget list, to display on the Widget List panel on UI.
 
     :return: Example
@@ -145,6 +148,8 @@ def load_widget_list_design_setting(repository_id):
             "error": ""
     """
     result = dict()
+    data = request.get_json()
+    repository_id = data.get('repository_id')
     lang_default = get_default_language()
     result["widget-list"] = WidgetDesignServices.get_widget_list(
         repository_id, lang_default)
@@ -162,7 +167,8 @@ def load_widget_list_design_setting(repository_id):
 
 @blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
 @login_required
-def save_widget_layout_setting():  # TODO: Allow this to be used for both or make a different path
+# TODO: Allow this to be used for both or make a different path
+def save_widget_layout_setting():
     """Save Widget design setting into DB.
 
     :return:
@@ -179,13 +185,13 @@ def save_widget_layout_setting():  # TODO: Allow this to be used for both or mak
 
 
 @blueprint_api.route(
-    '/load_widget_design_pages/<string:repository_id>', methods=['GET'])
+    '/load_widget_design_pages', methods=['POST'])
 @blueprint_api.route(
-    '/load_widget_design_pages/<string:repository_id>/<string:lang>',
-    methods=['GET']
+    '/load_widget_design_pages/<string:lang>',
+    methods=['POST']
 )
 @login_required
-def load_widget_design_pages(repository_id, lang=''):
+def load_widget_design_pages(lang=''):
     """Get widget page list for repository.
 
     :return: Example
@@ -198,7 +204,8 @@ def load_widget_design_pages(repository_id, lang=''):
             "error": ""
     """
     result = dict()
-
+    data = request.get_json()
+    repository_id = data.get('repository_id')
     lang_default = get_default_language()
     lang_default = lang_default.get('lang_code') if lang_default else None
 
@@ -365,27 +372,40 @@ def get_widget_page_endpoints(widget_id, lang=''):
 # Based on invenio_pages.views
 def view_widget_page():
     """View user-created WidgetDesignPages."""
-    community_id, ctx = _get_community_id(request.args)
+    community_id, ctx = get_community_id(request.args)
     try:
         page = WidgetDesignPage.get_by_url(request.path)
+
+        # Check if has main and if it does use different template
+        if page.settings:
+            main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
+            settings = json.loads(page.settings)
+            for item in settings:
+                if item['type'] == main_type:
+                    return render_template(
+                        current_app.config['THEME_FRONTPAGE_TEMPLATE'],
+                        page=page,
+                        render_widgets=True,
+                        **get_weko_contents(request.args))
+
         return render_template(
             page.template_name
             or current_app.config['WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE'],
             page=page,
             community_id=community_id,
-            **ctx,
-        )
+            **ctx,)
     except Exception as e:
         current_app.logger.error(e)
         abort(404)
 
 
 # Based on invenio_pages.views
+# FIXME: Refactor with above
 def handle_not_found(exception, **extra):
     """Custom blueprint exception handler."""
     assert isinstance(exception, NotFound)  # Only handle 404 errors
 
-    community_id, ctx = _get_community_id(request.args)
+    community_id, ctx = get_community_id(request.args)
     try:  # Check if the page exists
         page = WidgetDesignPage.get_by_url(request.path)
     except NoResultFound:
@@ -393,6 +413,16 @@ def handle_not_found(exception, **extra):
 
     if page:
         _add_url_rule(page.url)
+        if page.settings:
+            main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
+            settings = json.loads(page.settings)
+            for item in settings:
+                if item['type'] == main_type:
+                    return render_template(
+                        current_app.config['THEME_FRONTPAGE_TEMPLATE'],
+                        page=page,
+                        **get_weko_contents(request.args))
+
         return render_template(
             page.template_name
             or current_app.config['WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE'],
@@ -418,15 +448,3 @@ def _add_url_rule(url_or_urls):
         current_app.add_url_rule(url, 'weko_gridlayout.view_widget_page',
                                  view_widget_page), url_or_urls)
     current_app._got_first_request = old
-
-
-def _get_community_id(getargs):
-    """Get the community data for specific args."""
-    ctx = {'community': None}
-    community_id = ""
-    if 'community' in getargs:  # TODO: Put into a function and use it EVERYWHERE
-        from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        ctx = {'community': comm}
-        community_id = comm.id
-    return community_id, ctx

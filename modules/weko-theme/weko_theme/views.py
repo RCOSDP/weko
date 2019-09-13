@@ -33,6 +33,8 @@ from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword
 
+from .utils import get_design_layout, get_weko_contents
+
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
 
@@ -87,14 +89,15 @@ def index():
     top_viewed.send(current_app._get_current_object(),
                     info=send_info)
 
+    # For front page, always use main layout
+    page = None
+    render_widgets = True
+
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
-        render_widgets=True,
-        community_id=community_id,
-        detail_condition=detail_condition,
-        width=width, height=height,
-        index_link_list=index_link_list,
-        index_link_enabled=index_link_enabled, **ctx)
+        page=page,
+        render_widgets=render_widgets,
+        **get_weko_contents(request.args))
 
 
 @blueprint.route('/edit')

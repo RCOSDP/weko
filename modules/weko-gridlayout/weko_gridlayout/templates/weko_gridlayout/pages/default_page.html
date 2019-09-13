@@ -55,7 +55,6 @@
   <div id="widget-page-id" hidden>{{ page.id }}</div>  <!-- Not needed? --> <!-- Needed to know which api to get widget info from! -->
   {%-if not community_id %}
     <div id="main_contents">
-      {{ page.content|safe }}
     </div>
   {%- else %}
     <div class="communities">
@@ -63,7 +62,6 @@
       {{ community_header(community, subtitle='') }}
       <div id="page_body" class="grid-stack collapse">
         <div id="main_contents">
-          {{ page.content|safe }}
         </div>
       </div>
       {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}

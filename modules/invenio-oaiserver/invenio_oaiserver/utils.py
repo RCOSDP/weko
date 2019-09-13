@@ -16,8 +16,8 @@ from flask import current_app
 from lxml import etree
 from lxml.builder import E
 from lxml.etree import Element
-from werkzeug.utils import import_string
 from weko_schema_ui.schema import get_oai_metadata_formats
+from werkzeug.utils import import_string
 
 try:
     from functools import lru_cache
