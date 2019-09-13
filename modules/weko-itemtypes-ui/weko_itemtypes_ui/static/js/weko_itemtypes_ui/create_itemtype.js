@@ -78,8 +78,8 @@ $(document).ready(function () {
       },
       ranking_page_url : {
         input_type: "cus_123",
-        title: "Ranking Page URL",
-        title_i18n: {ja: "ランディングページのURL", en: "Ranking Page URL"},
+        title: "Landing Page URL",
+        title_i18n: {ja: "ランディングページのURL", en: "Landing Page URL"},
         option: {
           required : false,
           multiple : false,
