@@ -23,7 +23,8 @@ import uuid
 from datetime import datetime
 
 import redis
-from flask import abort, current_app, has_request_context, json, session
+from flask import abort, current_app, has_request_context, json, request, \
+    session
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
@@ -890,7 +891,16 @@ class WekoRecord(Record):
     @property
     def navi(self):
         """Return the path name."""
-        return Indexes.get_path_name(self.get('path', []))
+        navs = Indexes.get_path_name(self.get('path', []))
+
+        community = request.args.get('community', None)
+        if not community:
+            return navs
+
+        from weko_workflow.api import GetCommunity
+        comm = GetCommunity.get_community_by_id(community)
+        comm_navs = [item for item in navs if str(comm.index.id) in item.path.split('/')]
+        return comm_navs
 
     @property
     def item_type_info(self):
@@ -917,6 +927,9 @@ class WekoRecord(Record):
 
                 hidden = option.get("hidden")
                 if hidden:
+                    items.append({
+                        'attribute_name_hidden': val.get('attribute_name')
+                    })
                     continue
 
                 mlt = val.get('attribute_value_mlt')

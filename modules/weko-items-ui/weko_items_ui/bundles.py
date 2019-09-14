@@ -21,7 +21,7 @@
 """Bundles for weko-items-ui."""
 
 from flask_assets import Bundle
-from invenio_assets import NpmBundle
+from invenio_assets import NpmBundle, RequireJSFilter
 
 indextree_style = Bundle(
     'css/weko_items_ui/indextree.bundle.css',
@@ -64,9 +64,16 @@ js = Bundle(
     output="gen/items_ui.%(version)s.js",
 )
 
-upload_js = Bundle(
+dependencies_upload_js = NpmBundle(
+    'node_modules/angular-schema-form/node_modules/tv4/tv4.js',
+    'node_modules/angular-schema-form/node_modules/objectpath/lib/ObjectPath.js',
+    filters=RequireJSFilter(),
+)
+upload_js = NpmBundle(
+    'node_modules/angular-sanitize/angular-sanitize.min.js',
+    dependencies_upload_js,
     'js/weko_items_ui/upload.js',
-    output="gen/items_ui_upload.js",
+    output="gen/items_ui_upload.%(version)s.js",
 )
 
 feedback_maillist_js = Bundle(

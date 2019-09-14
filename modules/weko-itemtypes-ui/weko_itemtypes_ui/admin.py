@@ -277,9 +277,12 @@ class ItemTypePropertiesView(BaseView):
                 lang in k.form['title_i18n'] and \
                     k.form['title_i18n'][lang]:
                 name = k.form['title_i18n'][lang]
-
+            is_file = False
+            if (k.schema.get('properties')
+                    and k.schema.get('properties').get('filename')):
+                is_file = True
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
-                   'forms': k.forms, 'sort': k.sort}
+                   'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
             lists[k.id] = tmp
 
         lists['defaults'] = current_app.config[
@@ -346,18 +349,53 @@ class ItemTypeMappingView(BaseView):
                                         ItemTypeID=lists[0].item_type[0].id))
             itemtype_list = []
             itemtype_prop = item_type.schema.get('properties')
+            sys_admin = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            is_admin = False
+            with db.session.no_autoflush:
+                for role in list(current_user.roles or []):
+                    if role.name == sys_admin:
+                        is_admin = True
+                        break
+
+            cur_lang = current_i18n.language
+
+            meta_system = item_type.render.get('meta_system')
             table_rows = ['pubdate']
             render_table_row = item_type.render.get('table_row')
+
+            meta_system_items = ['updated_date', 'created_date',
+                                 'persistent_identifier_doi',
+                                 'persistent_identifier_h',
+                                 'ranking_page_url', 'belonging_index_info']
+
+            for key in meta_system_items:
+                if cur_lang in meta_system[key]['title_i18n'] and \
+                        meta_system[key]['title_i18n'][cur_lang] and \
+                        meta_system[key]['title_i18n'][cur_lang].strip():
+                    meta_system[key]['title'] = \
+                        meta_system[key]['title_i18n'][cur_lang]
+                else:
+                    meta_system[key]['title'] = \
+                        meta_system[key]['title_i18n']['en']
+
             if isinstance(render_table_row, list):
                 table_rows.extend(render_table_row)
             for key in table_rows:
                 prop = itemtype_prop.get(key)
-                cur_lang = current_i18n.language
                 schema_form = item_type.form
                 elem_str = ''
                 if 'default' != cur_lang:
                     for elem in schema_form:
                         if 'items' in elem:
+                            if elem['key'] == key:
+                                if 'title_i18n' in elem:
+                                    if cur_lang in elem['title_i18n']:
+                                        if len(elem['title_i18n']
+                                               [cur_lang]) > 0:
+                                            elem_str = elem['title_i18n'][
+                                                cur_lang]
+                                else:
+                                    elem_str = elem['title']
                             for sub_elem in elem['items']:
                                 if 'key' in sub_elem and \
                                         sub_elem['key'] == key:
@@ -405,8 +443,10 @@ class ItemTypeMappingView(BaseView):
                 mapping_name=mapping_name,
                 hide_itemtype_prop=itemtype_prop,
                 jpcoar_prop_lists=remove_xsd_prefix(jpcoar_lists),
+                meta_system=meta_system,
                 itemtype_list=itemtype_list,
                 id=ItemTypeID,
+                is_system_admin=is_admin,
                 lang_code=session.get('selected_language', 'en')  # Set default
             )
         except BaseException as e:

@@ -2,6 +2,13 @@
   overflow: auto;
 }
 
+.header-footer-type {
+  left: 0 !important;
+  right: 0 !important;
+  overflow: hidden !important;
+  border-radius: 0% !important;
+}
+
 .widget {
   border-radius: 0px !important;
   left: 15px !important;
@@ -22,7 +29,6 @@
 }
 
 .widget-footer {
-  position: absolute;
   left: 0;
   bottom: 0;
   width: 100%;
@@ -60,7 +66,7 @@
   text-decoration: none;
 }
 
-.rss a>i {
+.rss a > i {
   color: white;
 }
 
@@ -108,4 +114,9 @@
 .widget-nav {
   white-space: pre-line !important;
   margin-top: 25px;
+}
+
+#header_content {
+  padding: 0 !important;
+  margin: 0 !important;
 }

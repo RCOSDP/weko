@@ -20,35 +20,41 @@
 
 """WEKO3 module docstring."""
 
-import csv
 import hashlib
 import json
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime, timedelta
 
 import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
     redirect, render_template, request, url_for
 from flask_admin import BaseView, expose
+from flask_admin.contrib.sqla import ModelView
+from flask_admin.contrib.sqla.fields import QuerySelectField
+from flask_admin.form import rules
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
-from invenio_indexer.api import RecordIndexer
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
+from wtforms.fields import StringField
+from wtforms.validators import ValidationError
 
-from .models import AdminSettings, FeedbackMailSetting, \
+from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
+    WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
+from .models import AdminSettings, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import allowed_file, get_redis_cache, get_response_json, \
-    get_search_setting
+from .utils import get_redis_cache, get_response_json, get_search_setting
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, reset_redis_cache, str_to_bool
 
@@ -175,7 +181,8 @@ class StyleSettingView(BaseView):
             if 'footer' == temp:
                 if 'True' == str(data.get('isEmpty')):
                     read_path = os.path.join(
-                        folder_path, current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
+                        folder_path, current_app.config[
+                            'THEME_FOOTER_EDITOR_TEMPLATE'])
                     wysiwyg_html = self.get_contents(read_path)
 
                 write_path = os.path.join(folder_path,
@@ -184,12 +191,12 @@ class StyleSettingView(BaseView):
             elif 'header' == temp:
                 if 'True' == str(data.get('isEmpty')):
                     read_path = os.path.join(
-                        folder_path, current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
+                        folder_path, current_app.config[
+                            'THEME_HEADER_EDITOR_TEMPLATE'])
                     wysiwyg_html = self.get_contents(read_path)
 
-                write_path = os.path.join(folder_path,
-                                          current_app.config[
-                                              'THEME_HEADER_WYSIWYG_TEMPLATE'])
+                write_path = os.path.join(folder_path, current_app.config[
+                    'THEME_HEADER_WYSIWYG_TEMPLATE'])
             else:
                 abort(400)
 
@@ -285,22 +292,20 @@ class ReportView(BaseView):
                 current_schedule else \
                 current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
 
-            # current_schedule = self.get_current_email_schedule() or \
-            #     current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
-
             # Emails to send reports to
-            all_emailAddress = StatisticsEmail().get_all()
-            current_app.logger.info(all_emailAddress)
+            all_email_address = StatisticsEmail().get_all()
+            current_app.logger.info(all_email_address)
             return self.render(
                 current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
                 result=result,
                 now=datetime.utcnow(),
-                emails=all_emailAddress,
+                emails=all_email_address,
                 days_of_week=[_('Monday'), _('Tuesday'), _('Wednesday'),
                               _('Thursday'), _('Friday'), _('Saturday'),
                               _('Sunday')],
                 current_schedule=current_schedule,
-                frequency_options=current_app.config['WEKO_ADMIN_REPORT_FREQUENCIES'])
+                frequency_options=current_app.config[
+                    'WEKO_ADMIN_REPORT_FREQUENCIES'])
         except Exception as e:
             current_app.logger.error('Unexpected error: ', e)
         return abort(400)
@@ -340,8 +345,8 @@ class ReportView(BaseView):
                 resp = make_response()
                 resp.data = zip_stream.getvalue()
                 resp.headers['Content-Type'] = 'application/x-zip-compressed'
-                resp.headers['Content-Disposition'] = 'attachment; filename=' + \
-                    zip_name
+                resp.headers['Content-Disposition'] = 'attachment; filename='\
+                                                      + zip_name
                 return resp
         except Exception as e:
             current_app.logger.error('Unexpected error: ', e)
@@ -388,14 +393,14 @@ class ReportView(BaseView):
     @expose('/get_email_address', methods=['POST'])
     def get_email_address(self):
         """Save Email Address."""
-        inputEmail = request.form.getlist('inputEmail')
+        input_email = request.form.getlist('input_email')
         StatisticsEmail.delete_all_row()
         alert_msg = 'Successfully saved email addresses.'
         category = 'info'
-        for input in inputEmail:
+        for input in input_email:
             if input:
-                match = re.match(
-                    r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
+                match = re.match(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+('
+                                 r'\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
                 if match:
                     StatisticsEmail.insert_email_address(input)
                 else:
@@ -476,8 +481,8 @@ class LogAnalysisSettings(BaseView):
             shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
             # current_app.logger.info(LogAnalysisRestrictedCrawlerList.get_all_active())
             if not shared_crawlers:
-                LogAnalysisRestrictedCrawlerList \
-                    .add_list(current_app.config["WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
+                LogAnalysisRestrictedCrawlerList.add_list(current_app.config[
+                    "WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
                 shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
         except Exception as e:
             current_app.logger.error(_('Could not get restricted data: '), e)
@@ -601,14 +606,14 @@ class SearchSettingsView(BaseView):
             jfy = {}
             try:
                 # update search setting
-                dbData = request.get_json()
+                db_data = request.get_json()
                 res = SearchManagement.get()
 
                 if res:
                     id = res.id
-                    SearchManagement.update(id, dbData)
+                    SearchManagement.update(id, db_data)
                 else:
-                    SearchManagement.create(dbData)
+                    SearchManagement.create(db_data)
                 jfy['status'] = 201
                 jfy['message'] = 'Search setting was successfully updated.'
             except BaseException:
@@ -813,6 +818,179 @@ class SiteInfoView(BaseView):
         )
 
 
+class IdentifierSettingView(ModelView):
+    """Pidstore Identifier admin view."""
+
+    can_create = True
+    can_edit = True
+    can_delete = False
+    can_view_details = True
+    create_template = WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR
+    edit_template = WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
+
+    column_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'suffix',
+        'jalc_flag',
+        'jalc_crossref_flag',
+        'jalc_datacite_flag')
+
+    column_searchable_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'suffix')
+
+    column_details_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'suffix', 'created_userId', 'created_date', 'updated_userId',
+        'updated_date')
+
+    form_extra_fields = {
+        'repo_selected': StringField('Repository Selector'),
+    }
+
+    form_create_rules = [rules.Header(_('Prefix')),
+                         'repository',
+                         'jalc_doi',
+                         'jalc_crossref_doi',
+                         'jalc_datacite_doi',
+                         rules.Header(_('Suffix')),
+                         'suffix',
+                         rules.Header(_('Enable/Disable')),
+                         'jalc_flag',
+                         'jalc_crossref_flag',
+                         'jalc_datacite_flag',
+                         'repo_selected',
+                         ]
+
+    form_edit_rules = form_create_rules
+
+    column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
+                         jalc_crossref_doi=_('JaLC CrossRef DOI'),
+                         jalc_datacite_doi=_('JaLC DataCite DOI'),
+                         suffix=_('Semi-automatic Suffix')
+                         )
+
+    def _validator_halfwidth_input(form, field):
+        """
+        Valid input character set.
+
+        :param form: Form used to create/update model
+        :param field: Template fields contain data need validator
+        """
+        if field.data is None:
+            return
+        else:
+            try:
+                for inchar in field.data:
+                    if unicodedata.east_asian_width(inchar) in 'FWA':
+                        raise ValidationError(
+                            _('Only allow half with 1-bytes character in '
+                              'input'))
+            except Exception as ex:
+                raise ValidationError('{}'.format(ex))
+
+    form_args = {
+        'jalc_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'jalc_crossref_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'jalc_datacite_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'suffix': {
+            'validators': [_validator_halfwidth_input]
+        }
+    }
+
+    form_widget_args = {
+        'jalc_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'jalc_crossref_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'jalc_datacite_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'suffix': {
+            'maxlength': 100,
+        }
+    }
+
+    form_overrides = {
+        'repository': QuerySelectField,
+    }
+
+    def on_model_change(self, form, model, is_created):
+        """
+        Perform some actions before a model is created or updated.
+
+        Called from create_model and update_model in the same transaction
+        (if it has any meaning for a store backend).
+        By default does nothing.
+
+        :param form: Form used to create/update model
+        :param model: Model that will be created/updated
+        :param is_created: Will be set to True if model was created
+            and to False if edited
+        """
+        # Update hidden data automation
+        if is_created:
+            model.created_userId = current_user.get_id()
+            model.created_date = datetime.utcnow().replace(microsecond=0)
+        model.updated_userId = current_user.get_id()
+        model.updated_date = datetime.utcnow().replace(microsecond=0)
+        model.repository = str(model.repository.id)
+
+    def on_form_prefill(self, form, id):
+        form.repo_selected.data = form.repository.data
+
+    def create_form(self, obj=None):
+        """
+        Instantiate model delete form and return it.
+
+        Override to implement custom behavior.
+        The delete form originally used a GET request, so delete_form
+        accepts both GET and POST request for backwards compatibility.
+
+        :param obj: input object
+        """
+        return self._use_append_repository(
+            super(IdentifierSettingView, self).create_form()
+        )
+
+    def edit_form(self, obj):
+        """
+        Instantiate model editing form and return it.
+
+        Override to implement custom behavior.
+
+        :param obj: input object
+        """
+        return self._use_append_repository(
+            super(IdentifierSettingView, self).edit_form(obj)
+        )
+
+    def _use_append_repository(self, form):
+        form.repository.query_factory = self._get_community_list
+        form.repo_selected.data = 'Root Index'
+        return form
+
+    def _get_community_list(self):
+        try:
+            query_data = Community.query.all()
+            query_data.insert(0, Community(id='Root Index'))
+        except Exception as ex:
+            current_app.logger.debug(ex)
+
+        return query_data
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -939,6 +1117,14 @@ site_info_settings_adminview = {
     }
 }
 
+identifier_adminview = dict(
+    modelview=IdentifierSettingView,
+    model=Identifier,
+    category=_('Setting'),
+    name=_('Identifier'),
+    endpoint='identifier'
+)
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -953,5 +1139,6 @@ __all__ = (
     'site_license_send_mail_settings_adminview',
     'file_preview_settings_adminview',
     'item_export_settings_adminview',
-    'site_info_settings_adminview'
+    'site_info_settings_adminview',
+    'identifier_adminview'
 )

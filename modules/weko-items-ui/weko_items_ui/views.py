@@ -49,7 +49,7 @@ from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
-from weko_records.api import FeedbackMailList, ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
@@ -93,6 +93,11 @@ def index(item_type_id=0):
     :return: The rendered template.
     """
     try:
+        from weko_theme.utils import get_design_layout
+        # Get the design for widget rendering
+        page, render_widgets = get_design_layout(
+            current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
         lists = ItemTypes.get_latest()
         if lists is None or len(lists) == 0:
             return render_template(
@@ -111,7 +116,8 @@ def index(item_type_id=0):
 
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
-            render_widgets=True,
+            page=page,
+            render_widgets=render_widgets,
             need_file=need_file,
             record={},
             jsonschema=json_schema,
@@ -302,6 +308,25 @@ def get_schema_form(item_type_id=0):
             filemeta_form_group = filemeta_form.get('items')[-1]
             filemeta_form_group['type'] = 'select'
             filemeta_form_group['titleMap'] = group_list
+
+        # hidden option
+        hidden_subitem = ['subitem_thumbnail', 'subitem_system_id_rg_doi',
+                          'subitem_system_date_type',
+                          'subitem_system_date',
+                          'subitem_system_identifier_type',
+                          'subitem_system_identifier',
+                          'subitem_system_text'
+                          ]
+        for i in hidden_subitem:
+            hidden_items = [
+                schema_form.index(form) for form in schema_form
+                if form.get('items')
+                and form['items'][0]['key'].split('.')[1] in i]
+            if hidden_items and i in json.dumps(schema_form):
+                schema_form = update_schema_remove_hidden_item(schema_form,
+                                                               result.render,
+                                                               hidden_items)
+
         if 'default' != cur_lang:
             for elem in schema_form:
                 if 'title_i18n' in elem and cur_lang in elem['title_i18n']\
@@ -350,18 +375,25 @@ def items_index(pid_value=0):
         action = 'private' if record.get('publish_status', '1') == '1' \
             else 'publish'
 
+        from weko_theme.utils import get_design_layout
+        # Get the design for widget rendering
+        page, render_widgets = get_design_layout(
+            current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
         if request.method == 'GET':
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
-                render_widgets=True,
+                page=page,
+                render_widgets=render_widgets,
                 pid_value=pid_value,
                 action=action)
 
         if request.headers['Content-Type'] != 'application/json':
-            flash(_('invalide request'), 'error')
+            flash(_('Invalid request'), 'error')
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
-                render_widgets=True)
+                page=page,
+                render_widgets=render_widgets)
 
         data = request.get_json()
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -402,10 +434,23 @@ def iframe_items_index(pid_value=0):
         action = 'private' if record.get('publish_status', '1') == '1' \
             else 'publish'
 
+        community_id = session.get('itemlogin_community_id')
+        ctx = {'community': None}
+        if community_id:
+            comm = GetCommunity.get_community_by_id(community_id)
+            ctx = {'community': comm}
+
         if request.method == 'GET':
+            # Get the design for widget rendering
+            from weko_theme.utils import get_design_layout
+
+            page, render_widgets = get_design_layout(
+                session['itemlogin_community_id']
+                or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
-                render_widgets=True,
+                page=page,
+                render_widgets=render_widgets,
                 pid_value=pid_value,
                 action=action,
                 activity=session['itemlogin_activity'],
@@ -417,13 +462,22 @@ def iframe_items_index(pid_value=0):
                 histories=session['itemlogin_histories'],
                 res_check=session['itemlogin_res_check'],
                 pid=session['itemlogin_pid'],
-                community_id=session['itemlogin_community_id'])
+                community_id=community_id,
+                **ctx
+            )
 
         if request.headers['Content-Type'] != 'application/json':
             flash(_('Invalid Request'), 'error')
+            from weko_theme.utils import get_design_layout
+            page, render_widgets = get_design_layout(
+                current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
-                render_widgets=True)
+                page=page,
+                render_widgets=render_widgets,
+                community_id=community_id,
+                **ctx
+            )
 
         data = request.get_json()
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -456,7 +510,7 @@ def default_view_method(pid, record, template=None):
     Sends ``record_viewed`` signal and renders template.
     """
     check_site_license_permission()
-    send_info = {}
+    send_info = dict()
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
@@ -541,8 +595,9 @@ def to_files_js(record):
                 'displaytype': f.get('displaytype', ''),
                 'filename': f.get('filename', ''),
                 'mimetype': f.mimetype,
+                'licensetype': f.get('licensetype', ''),
                 'key': f.key,
-                'version_id': f.version_id,
+                'version_id': str(f.version_id),
                 'checksum': f.file.checksum,
                 'size': f.file.size,
                 'completed': True,
@@ -555,7 +610,9 @@ def to_files_js(record):
                             key=f.key,
                             version_id=f.version_id,
                         )),
-                }
+                },
+                'is_show': f.is_show,
+                'is_thumbnail': f.is_thumbnail
             })
 
     return res
@@ -842,6 +899,11 @@ def ranking():
     start_date = end_date - \
         timedelta(days=int(settings.statistical_period) - 1)
 
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering -- Always default
+    page, render_widgets = get_design_layout(
+        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     rankings = {}
     # most_reviewed_items
     if settings.rankings['most_reviewed_items']:
@@ -903,7 +965,6 @@ def ranking():
             timedelta(days=int(settings.new_item_period) - 1)
         if new_item_start_date < start_date:
             new_item_start_date = start_date
-        new_items_list = []
         result = QueryCommonReportsHelper.get(
             start_date=new_item_start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
@@ -918,7 +979,8 @@ def ranking():
 
     return render_template(
         current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         is_show=settings.is_show,
         start_date=start_date,
         end_date=end_date,
@@ -968,7 +1030,7 @@ def _get_max_export_items():
     try:
         roles = db.session.query(Role).join(userrole).filter_by(
             user_id=current_user_id).all()
-    except Exception as e:
+    except Exception:
         return current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
 
     current_max = non_user_max
@@ -1069,12 +1131,18 @@ def export():
         ctx = {'community': comm}
         community_id = comm.id
 
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     sort_options, display_number = SearchSetting.get_results_setting()
     disply_setting = dict(size=display_number)
 
     return render_template(
         current_app.config['WEKO_ITEMS_UI_EXPORT_TEMPLATE'],
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         index_id=cur_index_id,
         community_id=community_id,
         sort_option=sort_options,
@@ -1121,3 +1189,24 @@ def check_validation_error_msg(activity_id):
                        error_list=error_list)
     else:
         return jsonify(code=0)
+
+
+def update_schema_remove_hidden_item(schema, render, items_name):
+    """Update schema: remove hidden items.
+
+    :param schema: json schema
+    :param render: json render
+    :param items_name: list items which has hidden flg
+    :return: The json object.
+    """
+    for item in items_name:
+        hidden_flg = False
+        key = schema[item]['key']
+        if render['meta_list'].get(key):
+            hidden_flg = render['meta_list'][key]['option']['hidden']
+        if render['meta_system'].get(key):
+            hidden_flg = render['meta_system'][key]['option']['hidden']
+        if hidden_flg:
+            schema[item]['condition'] = 1
+
+    return schema

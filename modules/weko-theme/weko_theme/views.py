@@ -28,9 +28,12 @@ from flask_login import login_required
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.utils import set_default_language
-from weko_index_tree.models import Index, IndexStyle
+from weko_index_tree.models import IndexStyle
+from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword
+
+from .utils import get_design_layout, get_weko_contents
 
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
@@ -71,18 +74,10 @@ def index():
     height = style.height
     index_link_enabled = style.index_link_enabled
 
-    index_link_list = []
-    for index in Index.query.all():
-        if index.index_link_enabled and index.public_state:
-            if hasattr(current_i18n, 'language'):
-                if current_i18n.language == 'ja' and index.index_link_name:
-                    index_link_list.append((index.id, index.index_link_name))
-                else:
-                    index_link_list.append(
-                        (index.id, index.index_link_name_english))
-            else:
-                index_link_list.append(
-                    (index.id, index.index_link_name_english))
+    if hasattr(current_i18n, 'language'):
+        index_link_list = get_index_link_list(current_i18n.language)
+    else:
+        index_link_list = get_index_link_list()
 
     detail_condition = get_search_detail_keyword('')
     check_site_license_permission()
@@ -94,14 +89,15 @@ def index():
     top_viewed.send(current_app._get_current_object(),
                     info=send_info)
 
+    # For front page, always use main layout
+    page = None
+    render_widgets = True
+
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
-        render_widgets=True,
-        community_id=community_id,
-        detail_condition=detail_condition,
-        width=width, height=height,
-        index_link_list=index_link_list,
-        index_link_enabled=index_link_enabled, **ctx)
+        page=page,
+        render_widgets=render_widgets,
+        **get_weko_contents(request.args))
 
 
 @blueprint.route('/edit')

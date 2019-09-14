@@ -32,7 +32,7 @@
         <div class="col-sm-12 col-md-12 col-left">
           {%- block record_author %}
             {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
-            {%- if files -%}
+            {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0-%}
             <!-- Preview Carousel -->
             {{ preview_carousel(record=record, files=files, pid=pid, el_id=preview_carousel_id, edit_page_prev=True) }}
             <hr />
@@ -45,33 +45,47 @@
               </thead>
               <tbody>
               {%- for file in files|sort(attribute='key') -%}
-              {%- set img = file.mimetype | get_image_src -%}
-              {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-              filename=file.key) %}
-              <tr >
-                <td >{{file.filename}}</td>
-              </tr>
-              <tr >
-                <td>
-                    <span class="filename">
-                      <img src="{{img}}" alt={{file.filename}} />
-                      <a class="forcewrap"
-                          href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
-                      <!--<span>[ 0 downloads ]</span><br>-->
-                      <span>{{file.checksum.split(':')[0]}}</span>
-                      <span class="break-word">{{file.checksum.split(':')[1]}}</span>
-                    </span>
-                </td>
-              </tr>
-              <!-- demo -->
-              {%- if record | check_permission -%}
-              {%- if 'pdf' in file.mimetype -%}
-                  <tr><td colspan="2">
-                <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
-                <span class="glyphicon glyphicon-edit"
-                  aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
-              </td></tr>
-              {%- endif -%}
+              {% if file.is_thumbnail == False %}
+                {%- set img = file.mimetype | get_image_src -%}
+                {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                filename=file.key) %}
+                <tr >
+                  <td >{{file.filename or file.key}}</td>
+                  <td rowspan="2">
+                    {%- if not 'simple' in file.displaytype -%}
+                      {%- if 'license_free' == file.licensetype -%}
+                        <span class="break-word">{{ file.licensefree }}</span>
+                      {%- else %}
+                      {% set lst = file.licensetype | get_license_icon %}
+                        <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
+                        <img src="{{lst[0]}}" alt="license.icon" /></a><br>
+                        {{ lst[1] }}
+                      {%- endif %}
+                    {%- endif -%}
+                  </td>
+                </tr>
+                <tr >
+                  <td>
+                      <span class="filename">
+                        <img src="{{img}}" alt={{file.filename or file.key}} />
+                        <a class="forcewrap"
+                            href="{{file_url}}">{{ file.filename or file.key }} ({{ file.size|filesizeformat }})</a>
+                        <!--<span>[ 0 downloads ]</span><br>-->
+                        <span>{{file.checksum.split(':')[0]}}</span>
+                        <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                      </span>
+                  </td>
+                </tr>
+                <!-- demo -->
+                {%- if record | check_permission -%}
+                {%- if 'pdf' in file.mimetype -%}
+                    <tr><td colspan="2">
+                  <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
+                  <span class="glyphicon glyphicon-edit"
+                    aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
+                </td></tr>
+                {%- endif -%}
+                {%- endif -%}
               {%- endif -%}
               <!-- demo -->
               {%- endfor -%}
@@ -86,6 +100,7 @@
                 </tr>
               {% endif %}
               {%- for lst in record.items_show_list %}
+                {% if 'attribute_name_hidden' not in lst.keys() %}
                 <tr>
                   <th>{{ lst['attribute_name'] }}</th>
                   <td>
@@ -136,6 +151,23 @@
                     {% endif %}
                   </td>
                 </tr>
+                {% endif %}
+                {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
+                  <tr>
+                    <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
+                    <td>
+                      {%- for thumb in files_thumbnail | sort(attribute='key') -%}
+                        {%- set thumb_name = thumb.filename or thumb.key -%}
+                        {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                        filename=thumb.key) %}
+                        <p>
+                          <span>{{ thumb_name }}</span><br>
+                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width:  {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
+                        </p>
+                      {% endfor %}
+                      </td>
+                    </tr>
+                {% endif %}
               {% endfor %}
             </table>
             {%- if 'main_entry_personal_name' in record %}

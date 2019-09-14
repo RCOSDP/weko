@@ -56,14 +56,30 @@ def get_permission_filter(comm_id=None):
     term_list = []
     mst = []
     is_perm_paths = Indexes.get_browsing_tree_paths()
-    if comm_id is not None:
-        self_path = Indexes.get_self_path(comm_id)
-        if self_path.path in is_perm_paths:
-            term_list.append(self_path.path)
+    search_type = request.values.get('search_type')
 
-        mst.append(match)
-        mst.append(rng)
-        terms = Q('terms', path=term_list)
+    if comm_id:
+        if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
+            self_path = Indexes.get_self_path(comm_id)
+            if self_path.path in is_perm_paths:
+                term_list.append(self_path.path)
+
+            path = term_list[0] + '*'
+            should_path = []
+            wildcard_path = Q("wildcard", path=path)
+            should_path.append(wildcard_path)
+
+            mst.append(match)
+            mst.append(rng)
+            terms = Q('bool', should=should_path)
+        else:   # In case search_type is keyword or index
+            self_path = Indexes.get_self_path(comm_id)
+            if self_path.path in is_perm_paths:
+                term_list.append(self_path.path)
+
+            mst.append(match)
+            mst.append(rng)
+            terms = Q('terms', path=term_list)
     else:
         mst.append(match)
         mst.append(rng)
@@ -93,6 +109,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     :param self: REST view.
     :param search: Elastic search DSL search instance.
     :param query_parser: Query parser. (Default: ``None``)
+    :param search_type: Search type. (Default: ``None``)
     :returns: Tuple with search instance and URL arguments.
     """
     def _get_search_qs_query(qs=None):
@@ -346,14 +363,11 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
         multi_cont_q = Q('multi_match', query=qstr, operator='and',
-                         fields=['content.attachment.content^1.5',
-                                 'content.attachment.content.ja^1.2'],
-                         type='most_fields', minimum_should_match='75%')
+                         fields=['content.attachment.content'])
 
         # Search fields may increase so leaving as multi
-        multi_q = Q('multi_match', query=qstr, operator='and',
-                    fields=['search_string'], type='most_fields',
-                    minimum_should_match='75%')
+        multi_q = Q('query_string', query=qs, default_operator='and',
+                    fields=['search_*', 'search_*.ja'])
 
         nested_content = Q('nested', query=multi_cont_q, path='content')
         return Q('bool', should=[nested_content, multi_q])
@@ -395,7 +409,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
-
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
         mt = get_permission_filter(root_node_id)
@@ -423,7 +436,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     # simple search
     comm_id_simple = request.values.get('community')
     # add by ryuu at 1004 end
-    if comm_id_simple is not None:
+    if comm_id_simple:
         query_parser = query_parser or _default_parser_community
     else:
         query_parser = query_parser or _default_parser
@@ -434,17 +447,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     qs = request.values.get('q')
 
     # full text search
-    if search_type and '0' in search_type:
-        if comm_id_simple is not None:
+    if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
+        if comm_id_simple:
             query_q = query_parser(comm_id_simple, qs)
         else:
             query_q = query_parser(qs)
-
     else:
         # simple search
-        if comm_ide is not None:
+        if comm_ide:
             query_q = _get_simple_search_community_query(comm_ide, qs)
-        elif comm_id_simple is not None:
+        elif comm_id_simple:
             query_q = _get_simple_search_community_query(comm_id_simple, qs)
         else:
             query_q = _get_simple_search_query(qs)
@@ -491,6 +503,7 @@ def item_path_search_factory(self, search, index_id=None):
 
     :param self: REST view.
     :param search: Elastic search DSL search instance.
+    :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
     def _get_index_earch_query():
@@ -697,6 +710,7 @@ def opensearch_factory(self, search, query_parser=None):
     :return:
     """
     index_id = request.values.get('index_id')
+    search_type = config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']
     if index_id:
         return item_path_search_factory(self,
                                         search,
@@ -705,7 +719,7 @@ def opensearch_factory(self, search, query_parser=None):
         return default_search_factory(self,
                                       search,
                                       query_parser,
-                                      search_type='0')
+                                      search_type=search_type)
 
 
 def item_search_factory(self,
@@ -800,8 +814,8 @@ def feedback_email_search_factory(self, search):
             "query": {
                 "bool": {
                     "must": [
-                        {"nested":
-                            {
+                        {
+                            "nested": {
                                 "path": "feedback_mail_list",
                                 "query": {
                                     "bool": {
@@ -814,14 +828,13 @@ def feedback_email_search_factory(self, search):
                                         ]
                                     }
                                 }
-
                             }
-                         },
-                        {"query_string":
-                            {
+                        },
+                        {
+                            "query_string": {
                                 "query": query_string
                             }
-                         }
+                        }
                     ]
                 }
             },

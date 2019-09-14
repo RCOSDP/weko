@@ -13,6 +13,7 @@ from __future__ import absolute_import
 from flask import current_app, request
 from marshmallow import Schema, ValidationError, fields, validates_schema
 from marshmallow.fields import DateTime as _DateTime
+from weko_schema_ui.schema import get_oai_metadata_formats
 
 from .resumption_token import ResumptionTokenSchema
 
@@ -23,7 +24,7 @@ def validate_metadata_prefix(value):
     :param value: One of the metadata identifiers configured in
         ``OAISERVER_METADATA_FORMATS``.
     """
-    metadataFormats = current_app.config['OAISERVER_METADATA_FORMATS']
+    metadataFormats = get_oai_metadata_formats(current_app)
     message = 'The metadataPrefix "{0}" is not supported ' \
         'by this repository.'.format(value)
     if value not in metadataFormats:

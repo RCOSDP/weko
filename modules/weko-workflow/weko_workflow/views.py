@@ -55,7 +55,8 @@ from werkzeug.utils import import_string
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD, ITEM_REGISTRATION_ACTION_ID
+    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD, \
+    ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_identifier_setting, is_withdrawn_doi, \
@@ -85,9 +86,17 @@ def index():
         community_id = comm.id
     else:
         activities = activity.get_activity_list()
+
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(
+        request.args.get('community') or current_app.config[
+            'WEKO_THEME_DEFAULT_COMMUNITY'])
+
     return render_template(
         'weko_workflow/activity_list.html',
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         activities=activities, community_id=community_id, **ctx
     )
 
@@ -109,7 +118,12 @@ def iframe_success():
     record = session['itemlogin_record']
     res_check = session['itemlogin_res_check']
     pid = session['itemlogin_pid']
-    community_id = session['itemlogin_community_id']
+    community_id = session.get('itemlogin_community_id')
+
+    ctx = {'community': None}
+    if community_id:
+        comm = GetCommunity.get_community_by_id(community_id)
+        ctx = {'community': comm}
 
     # delete session value
     del session['itemlogin_id']
@@ -123,8 +137,14 @@ def iframe_success():
     del session['itemlogin_pid']
     del session['itemlogin_community_id']
 
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     return render_template('weko_workflow/item_login_success.html',
-                           render_widgets=True,
+                           page=page,
+                           render_widgets=render_widgets,
                            activity=activity,
                            item=item,
                            steps=steps,
@@ -134,7 +154,8 @@ def iframe_success():
                            histories=histories,
                            res_check=res_check,
                            pid=pid,
-                           community_id=community_id)
+                           community_id=community_id,
+                           **ctx)
 
 
 @blueprint.route('/activity/new', methods=['GET'])
@@ -150,9 +171,16 @@ def new_activity():
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
+
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     return render_template(
         'weko_workflow/workflow_list.html',
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         workflows=workflows, community_id=community_id, **ctx
     )
 
@@ -189,9 +217,15 @@ def list_activity():
     """List activity."""
     activity = WorkActivity()
     activities = activity.get_activity_list()
+
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(
+        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
     return render_template(
         'weko_workflow/activity_list.html',
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         activities=activities
     )
 
@@ -279,6 +313,9 @@ def display_activity(activity_id=0):
     files = []
     endpoints = {}
     links = None
+    need_thumbnail = False
+    files_thumbnail = []
+    allow_multi_thumbnail = False
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -289,9 +326,10 @@ def display_activity(activity_id=0):
         )
         session['activity_info'] = activity_session
         # get item edit page info.
-        step_item_login_url, need_file, record, json_schema, \
-            schema_form, item_save_uri, files, endpoints = item_login(
-                item_type_id=workflow_detail.itemtype_id)
+        step_item_login_url, need_file, record, json_schema, schema_form,\
+            item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
+            allow_multi_thumbnail \
+            = item_login(item_type_id=workflow_detail.itemtype_id)
         if item:
             # Remove the unused local variable
             # _pid_identifier = PersistentIdentifier.get_by_object(
@@ -329,6 +367,12 @@ def display_activity(activity_id=0):
             if deposit is not None:
                 files = to_files_js(deposit)
 
+        if files:
+            if not files_thumbnail:
+                files_thumbnail = [i for i in files
+                                   if 'is_thumbnail' in i.keys()
+                                   and i['is_thumbnail']]
+
         from weko_deposit.links import base_factory
         links = base_factory(pid)
 
@@ -355,9 +399,15 @@ def display_activity(activity_id=0):
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
 
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     return render_template(
         'weko_workflow/activity_detail.html',
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         activity=activity_detail,
         item=item,
         steps=steps,
@@ -386,6 +436,9 @@ def display_activity(activity_id=0):
         res_check=res_check,
         pid=pid,
         community_id=community_id,
+        need_thumbnail=need_thumbnail,
+        files_thumbnail=files_thumbnail,
+        allow_multi_thumbnail=allow_multi_thumbnail,
         **ctx
     )
 
@@ -575,13 +628,13 @@ def next_action(activity_id='0', action_id=0):
         record_class = import_string('weko_deposit.api:WekoRecord')
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
-        pid, item_record = resolver.resolve(pid_identifier.pid_value)
+        _pid, item_record = resolver.resolve(pid_identifier.pid_value)
         updated_item = UpdateItem()
         updated_item.set_item_relation(relation_data, item_record)
 
     # save pidstore_identifier to ItemsMetadata
-    idf_grant = post_json.get('identifier_grant')
-    if 'identifier_grant' == action_endpoint and idf_grant is not None:
+    identifier_select = post_json.get('identifier_grant')
+    if 'identifier_grant' == action_endpoint and identifier_select:
         idf_grant_jalc_doi_manual = post_json.get(
             'identifier_grant_jalc_doi_suffix')
         idf_grant_jalc_cr_doi_manual = post_json.get(
@@ -591,7 +644,7 @@ def next_action(activity_id='0', action_id=0):
 
         # If is action identifier_grant, then save to to database
         identifier_grant = {
-            'action_identifier_select': idf_grant,
+            'action_identifier_select': identifier_select,
             'action_identifier_jalc_doi': idf_grant_jalc_doi_manual,
             'action_identifier_jalc_cr_doi': idf_grant_jalc_cr_doi_manual,
             'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual
@@ -604,7 +657,7 @@ def next_action(activity_id='0', action_id=0):
         )
 
         item_id = WorkActivity().get_activity_detail(activity_id).item_id
-        error_list = item_metadata_validation(item_id, idf_grant)
+        error_list = item_metadata_validation(item_id, identifier_select)
 
         if post_json.get('temporary_save') == 1:
             return jsonify(code=0, msg=_('success'))
@@ -625,8 +678,8 @@ def next_action(activity_id='0', action_id=0):
                     and session['update_json_schema'].get(activity_id):
                 session['update_json_schema'][activity_id] = {}
 
-        if idf_grant != '0':
-            saving_doi_pidstore(post_json, int(idf_grant), activity_id)
+        if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
+            saving_doi_pidstore(post_json, int(identifier_select), activity_id)
 
     if action_endpoint == 'item_login':
         register_cnri(activity_id)
@@ -985,7 +1038,8 @@ def get_feedback_maillist(activity_id='0'):
             mail_list = action_feedbackmail.feedback_maillist
             for mail in mail_list:
                 if mail.get('author_id'):
-                    email = Authors.get_first_email_by_id(mail.get('author_id'))
+                    email = Authors.get_first_email_by_id(
+                        mail.get('author_id'))
                     if email:
                         mail['email'] = email
                     else:

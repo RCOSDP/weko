@@ -23,7 +23,7 @@ import copy
 import json
 from datetime import date, timedelta
 
-from flask import current_app
+from flask import Markup, current_app
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -37,7 +37,8 @@ from .models import WidgetDesignPage, WidgetDesignSetting, WidgetItem, \
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
     convert_data_to_design_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
-    get_elasticsearch_result_by_date, update_general_item
+    get_elasticsearch_result_by_date, update_general_item, \
+    validate_main_widget_insertion
 
 
 class WidgetItemServices:
@@ -445,6 +446,7 @@ class WidgetDesignServices:
 
         :param repository_id: Identifier of the repository
         :param default_language: The default language.
+        :param model: WidgetDesignSetting model
         :return: Widget preview json.
         """
         result = {
@@ -501,7 +503,6 @@ class WidgetDesignServices:
 
         :param repository_id: Identifier of the repository.
         :param current_language: The default language.
-        :param model: Detrmine whether we should get the data from
         :return: Widget design setting.
         """
         result = {
@@ -564,7 +565,6 @@ class WidgetDesignServices:
         return widget
 
     @classmethod
-    # TODO: Edit this or create a new fn
     def update_widget_design_setting(cls, data):
         """Update Widget layout setting.
 
@@ -588,10 +588,14 @@ class WidgetDesignServices:
                     item.update(widget_item.get('settings'))
             setting_data = json.dumps(json_data)
 
-            if page_id and repository_id and setting_data:  # Is page, not main
+            # Main contents can only be in one page design or main design
+            valid = validate_main_widget_insertion(
+                repository_id, json_data, page_id=page_id)
+
+            if page_id and repository_id and setting_data and valid:  # Page
                 result["result"] = WidgetDesignPage.update_settings(
                     page_id, setting_data)
-            elif repository_id and setting_data:
+            elif repository_id and setting_data and valid:  # Main design
                 if WidgetDesignSetting.select_by_repository_id(repository_id):
                     result["result"] = WidgetDesignSetting.update(
                         repository_id, setting_data)
@@ -599,9 +603,16 @@ class WidgetDesignServices:
                     result["result"] = WidgetDesignSetting.create(
                         repository_id, setting_data)
             else:
-                result['error'] = _(
-                    'Failed to save design: Check input values.')
+                if not valid:  # Tried to insert main contents into two places
+                    result['error'] = _(
+                        'Failed to save design:\n \
+                        Main contents may only be set to one layout.'
+                    )
+                else:
+                    result['error'] = _(
+                        'Failed to save design:\n Check input values.')
         except Exception as e:
+            current_app.logger.info(e)
             result['error'] = _('Failed to save design: Unexpected error.')
         return result
 
@@ -646,7 +657,8 @@ class WidgetDesignServices:
             data += [{'repository_id': page.repository_id,
                       'settings': page.settings,
                       'page_id': page.id}
-                     for page in WidgetDesignPage.get_by_repository_id(repo_id)]
+                     for page in WidgetDesignPage.get_by_repository_id(repo_id)
+                     ]
 
             success = True
             for model in data:  # FIXME: May be confusing to update both here
@@ -683,7 +695,8 @@ class WidgetDesignServices:
                 # Must check all pages too
                 data += [{'repository_id': page.repository_id,
                           'settings': page.settings}
-                         for page in WidgetDesignPage.get_by_repository_id(repo_id)]
+                         for page in
+                         WidgetDesignPage.get_by_repository_id(repo_id)]
 
                 for model in data:
                     if model.get('settings'):
@@ -747,12 +760,14 @@ class WidgetDesignPageServices:
         multi_lang_data = data.get('multi_lang_data')
         try:
             result['result'] = WidgetDesignPage.create_or_update(
-                repository_id, title, url, content, page_id=page_id,
+                repository_id, Markup.escape(title), url,
+                Markup.escape(content), page_id=page_id,
                 settings=settings, multi_lang_data=multi_lang_data
             )
         except IntegrityError:
             result['error'] = _('Unable to save page: URL already exists.')
         except Exception as e:
+            current_app.logger.error(e)
             result['error'] = _('Unable to save page: Unexpected error.')
         return result
 
@@ -770,6 +785,7 @@ class WidgetDesignPageServices:
         try:
             result['result'] = WidgetDesignPage.delete(page_id)
         except Exception as e:
+            current_app.logger.error(e)
             result['error'] = _('Unable to delete page.')
         return result
 
@@ -799,6 +815,7 @@ class WidgetDesignPageServices:
                 })
 
         except Exception as e:
+            current_app.logger.error(e)
             result['error'] = _('Unable to retrieve page list.')
         return result
 

@@ -1,0 +1,61 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+<div ng-show="model.thumbnailsInfor[0]" class="panel panel-default">
+  <div class="panel-heading">
+    <div class="row">
+      <div class="col-sm-6">
+      <p ng-show="model.thumbnailsInfor[0]" class="text-muted"></p>
+        </p>
+      </div>
+      <div class="col-sm-offset-2 col-sm-4">
+        <div class="form-inline text-right">
+          <div class="form-group">
+            <span class="text-muted" ng-bind="(filesVM.files | filter:fileSearch | filter:{is_thumbnail: 'true'}).length"></span>
+            <span class="text-muted"> files </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table class="table">
+    <tr>
+      <th>{{_('Filename')}}</th>
+      <th>{{_('Size')}}</th>
+      <th class="text-center">{{_('Progress')}}</th>
+      <th class="text-center">{{_('Actions')}}</th>
+    </tr>
+    <tr class="sel-file" ng-repeat="f in model.thumbnailsInfor | filter:{is_thumbnail: 'true'}">
+      <td>
+        <span ng-bind="f.name || f.key | limitTo: 40"></span>
+        <span ng-show="f.name.length > 50">...</span>
+      </td>
+      <td ng-bind="f.size | bytesToHumanReadable"></td>
+      <td class="text-center">
+        <span ng-show="f.errored" class="text-danger">Error</span>
+        <span ng-show="f" class="text-success">✓</span>
+      </td>
+      <td ng-show="f" class="text-center"><a ng-click="removeThumbnail(f)">✗</a></td>
+    </tr>
+  </table>
+  <div class="panel-footer">
+    <p ng-show="model.thumbnailsInfor[0]" class="text-muted"></p>
+  </div>
+</div>

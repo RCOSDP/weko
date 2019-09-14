@@ -123,6 +123,7 @@ setup(
             'weko_admin_file_preview_settings = weko_admin.admin:file_preview_settings_adminview',
             'weko_admin_item_export_settings = weko_admin.admin:item_export_settings_adminview',
             'weko_admin_site_info = weko_admin.admin:site_info_settings_adminview',
+            'weko_admin_identifier = weko_admin.admin:identifier_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
