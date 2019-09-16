@@ -26,7 +26,7 @@
 
 <div id="header">
   {%- block navbar %}
-  <nav class="navbar navbar-default navbar-static-top full-height" id="header_nav">
+  <nav class="navbar navbar-default navbar-static-top full-height  {%- if not render_widgets %}hidden{%- endif %}" id="header_nav">
     <div class="container-fluid">
       {%- block navbar_header %}
       <div id="header_wysiwyg">
