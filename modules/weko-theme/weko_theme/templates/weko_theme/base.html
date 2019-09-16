@@ -96,7 +96,7 @@
     {%- endblock page_body %}
     {%- if not community_id %}
       </div>
-      <div id="main_footer">
+      <div id="main_footer" {%- if render_widgets or page %}class="hidden"{%- endif %}>
         {%- block page_footer %}
           {% include config.THEME_FOOTER_TEMPLATE %}
         {%- endblock page_footer %}

@@ -90,8 +90,9 @@ def index():
                     info=send_info)
 
     # For front page, always use main layout
+    page, render_widgets = get_design_layout(
+        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
     page = None
-    render_widgets = True
 
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],

@@ -23,17 +23,17 @@
   <link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
   <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
 {% endblock %}
-
-<div id="header">
+<div id="header" {% if render_widgets or page %}class="hidden"{% endif %}>
   {%- block navbar %}
-  <nav class="navbar navbar-default navbar-static-top full-height  {%- if not render_widgets %}hidden{%- endif %}" id="header_nav">
+  <nav class="navbar navbar-default navbar-static-top full-height" id="header_nav">
     <div class="container-fluid">
       {%- block navbar_header %}
-      <div id="header_wysiwyg">
-        {% include "weko_theme/header_wysiwyg.html" %}
-      </div>
-      <div id="header_content" class="navbar-form navbar-left ql-editor">
-      </div>
+        {% if not render_widgets and not page %}
+          {% include "weko_theme/header_wysiwyg.html" %}
+        {% else %}
+        <div id="header_content" class="navbar-form navbar-left ql-editor">
+        </div>
+        {% endif %}
       {%- block navbar_right %}
         {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
       {%- endblock navbar_right %}
