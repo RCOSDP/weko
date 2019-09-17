@@ -33,7 +33,7 @@ from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword
 
-from .utils import get_design_layout, get_weko_contents
+from .utils import get_design_layout, get_weko_contents, has_widget_design
 
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
@@ -92,12 +92,16 @@ def index():
     # For front page, always use main layout
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    render_header_footer = has_widget_design(
+        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'],
+        current_i18n.language)
     page = None
 
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         page=page,
         render_widgets=render_widgets,
+        render_header_footer=render_header_footer,
         **get_weko_contents(request.args))
 
 
