@@ -40,6 +40,45 @@ let PageBodyGrid = function () {
 
     this.updateMainContent = function (node) {
         let mainContents = $("#main_contents");
+        let titleMainContent = node.multiLangSetting.label;
+        let backgroundColorMainContent = node.background_color;
+        let frameBorderColorMainContent = node.frame_border_color;
+        let labelColor = node.label_color;
+        let labelTextColor = node.label_text_color;
+        let labelEnable = node.label_enable;
+        let borderStyle = node.border_style;
+        $("#titleMainContent").text(titleMainContent);
+        $("#titleMainContent").css("color", labelTextColor);
+        $("#background-color-main-content").css("background-color", backgroundColorMainContent);
+        $("#index-background").css("background-color", backgroundColorMainContent);
+        $(".panel-default").css("border-color", frameBorderColorMainContent);
+        $(".panel-default").css("background-color", backgroundColorMainContent);
+        $(".panel-heading").css("border-color", frameBorderColorMainContent);
+        $("#panel-heading-main-contents").css("background-color", labelColor);
+        $("#background-color-main-content").css("background-color", backgroundColorMainContent);
+        let stylePanel = '<style>' +
+        '#main_contents .panel{' +
+        'background-color: ' + backgroundColorMainContent + ' !important;' +
+        'border-color: ' + frameBorderColorMainContent + ';' +
+        '}' +
+        '#main_contents .active a{' +
+        'background-color: ' + labelColor + ';' +
+        '}' +
+        '</style>';
+        let styleBackgroundMainContent  = '<style>' +
+        '#background-color-main-content{' +
+        'background-color: ' + backgroundColorMainContent + ';' +
+        '}' +
+        '</style>';
+        $("#main_contents").append(stylePanel);
+        $("#background-color-main-content").append(styleBackgroundMainContent);
+
+        if(!labelEnable){
+            $("#panel-heading-main-contents").css('display', 'none');
+        }
+
+
+
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
 

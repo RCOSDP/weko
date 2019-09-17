@@ -25,7 +25,7 @@
   <div class="row">
     <div class="col-sm-12 col-md-12 col-md-12">
       <div class="panel panel-default">
-        <div class="panel-heading">
+        <div class="panel-heading" id="panel-heading-main-contents">
           {%- block body_title %}
             <div class="pull-right">
             {%- block body_title_right %}
@@ -33,7 +33,7 @@
             </div>
             {%- block body_title_left %}
               {%- if not community_id %}
-              <h5><strong><p class="text-uppercase">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
+              <h5><strong><p class="text-uppercase" id="titleMainContent">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
               {%- else%}
                 {%- if community %}
                   <h5><strong><p class="">{{ community.title }}</p></strong></h5>
@@ -42,7 +42,7 @@
             {%- endblock body_title_left %}
           {%- endblock body_title %}
         </div>
-        <div class="panel-body">
+        <div class="panel-body" id="background-color-main-content">
           {%- block body_center %}
             {#% include "weko_theme/body_center.html" %#}
           {%- endblock body_center %}
