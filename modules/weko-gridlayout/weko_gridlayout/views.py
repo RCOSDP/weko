@@ -478,7 +478,11 @@ def get_access_counter_record(repository_id, current_language):
                     topViewTotalByWidgetId['all'].update({'count': count})
                     topViewTotalByWidgetId.update(
                         {'access_counter': widget.get('access_counter')})
-                    result[widget.get('widget_id')] = \
-                        {start_date: topViewTotalByWidgetId}
+                    if not result.get(widget.get('widget_id')):
+                        result[widget.get('widget_id')] = \
+                            {start_date: topViewTotalByWidgetId}
+                    else:
+                        result[widget.get('widget_id')].update(
+                            {start_date: topViewTotalByWidgetId})
 
     return jsonify(result)
