@@ -538,7 +538,7 @@ def get_access_counter_record(repository_id, current_language):
     from weko_gridlayout.services import WidgetDesignServices
     from weko_gridlayout.utils import get_default_language
     from weko_gridlayout.config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
-    from datetime import datetime
+    from datetime import date
     result = {}
 
     widget_design_setting = WidgetDesignServices.get_widget_design_setting(
@@ -546,15 +546,22 @@ def get_access_counter_record(repository_id, current_language):
 
     if widget_design_setting.get('widget-settings'):
         for widget in widget_design_setting['widget-settings']:
-            if str(widget.get('widget_type')) == \
+            if str(widget.get('type')) == \
                 WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
                 start_date = widget.get('created_date')
 
                 if start_date:
-                    end_date = datetime.utcnow()
-                    result[widget.get('widget_id')] = \
-                        QueryCommonReportsHelper.get(
+                    end_date = date.today().strftime("%Y-%m-%d")
+                    topViewTotalByWidgetId =  QueryCommonReportsHelper.get(
                         start_date=start_date, end_date=end_date,
                         event='top_page_access')
+                    count = 0;
+                    for item in topViewTotalByWidgetId['all'].values():
+                        count = count + int(item['count'])
+                    topViewTotalByWidgetId['all'].update({'count': count})
+                    topViewTotalByWidgetId.update(
+                        {'access_counter': widget.get('access_counter')})
+                    result[widget.get('widget_id')] = \
+                        {start_date: topViewTotalByWidgetId}
 
-    return result
+    return jsonify(result)

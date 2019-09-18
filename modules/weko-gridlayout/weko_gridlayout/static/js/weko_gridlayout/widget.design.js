@@ -11,6 +11,8 @@ const FOOTER_CLASS = "footer_class";
 const FOOTER_TYPE = "Footer";
 let isHasFooter = false;
 
+const ACCESS_COUNTER = "Access counter";
+
 /**
  * Repository combo box.
  */
@@ -1258,6 +1260,16 @@ function saveWidgetDesignSetting(widgetDesignData) {
                     return;
                 } else {
                     addAlert('Widget design has been saved successfully.');
+                    data.data.forEach(function (widget) {
+                        if (widget.type == ACCESS_COUNTER && widget.created_date) {
+                            var elements  = document.querySelectorAll('[data-widget_id="' + widget.widget_id + '"]');
+                            elements.forEach(function (el) {
+                                if (!el.getAttribute('data-created_date')) {
+                                    el.setAttribute('data-created_date', widget.created_date);
+                                }
+                            })
+                        }
+                    });
                     return;
                 }
             },

@@ -615,6 +615,8 @@ class WidgetDesignServices:
                 else:
                     result['error'] = _(
                         'Failed to save design:\n Check input values.')
+            if not result['error']:
+                result.update({'data': json_data})
         except Exception as e:
             current_app.logger.info(e)
             result['error'] = _('Failed to save design: Unexpected error.')
