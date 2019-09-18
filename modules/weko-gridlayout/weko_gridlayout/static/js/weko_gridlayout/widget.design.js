@@ -936,13 +936,14 @@ var PreviewGrid = new function () {
             let name = el.data("name");
             let id = el.data("id");
             let type = el.data("type");
-            let widget_id = el.data("widget_id")
+            let widget_id = el.data("widget_id");
+            let created_date = el.data("created_date");
             if (!id) {
                 return;
             } else if(MAIN_CONTENT_TYPE === type){
                 isHasMainContent = true;
             }
-            return {
+            let result = {
                 x: node.x,
                 y: node.y,
                 width: node.width,
@@ -951,7 +952,11 @@ var PreviewGrid = new function () {
                 id: id,
                 type: type,
                 widget_id: widget_id,
-            };
+            }
+            if (created_date) {
+                result.created_date = created_date;
+            }
+            return result;
         }, this);
         var filtered = this.serializedData.filter(function (el) {
             return el != null;
@@ -976,8 +981,12 @@ var PreviewGrid = new function () {
         if(isAutoPosition){
             autoPosition = 'data-gs-auto-position="true"';
         }
+        let createdDate = "";
+        if(node.created_date){
+            createdDate = '" data-created_date="' + node.created_date + '"';
+        }
         let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"'
-        + '" data-widget_id="' + node.widget_id + '"' + autoPosition + '>'
+        + '" data-widget_id="' + node.widget_id + '"' + autoPosition + createdDate + '>'
         + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
         + ' <div class="grid-stack-item-content">'
         + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'

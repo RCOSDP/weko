@@ -1499,7 +1499,8 @@ class MainLayout extends React.Component {
             language: this.props.data_load.language,
             multiLangSetting: this.props.data_load.multiLangSetting,
             multiLanguageChange: false,
-            accessInitValue: 0
+            accessInitValue: 0,
+            created_date: this.props.data_load.created_date || ''
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);

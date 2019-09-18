@@ -30,7 +30,7 @@ from invenio_i18n.ext import current_i18n
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
+from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE, WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
 from .models import WidgetDesignPage, WidgetDesignSetting, WidgetItem, \
     WidgetMultiLangData
@@ -474,6 +474,8 @@ class WidgetDesignServices:
                         widget_preview["id"] = item.get("id")
                         widget_preview["type"] = item.get("type")
                         widget_preview["name"] = item.get("name")
+                        if item.get('type') == WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE and item.get('created_date'):
+                          widget_preview["created_date"] = item.get("created_date")
                         languages = item.get("multiLangSetting")
                         if isinstance(languages, dict) and lang_code_default \
                                 is not None:
@@ -586,6 +588,8 @@ class WidgetDesignServices:
                         WidgetItemServices.get_widget_data_by_widget_id(
                             item.get('widget_id'))
                     item.update(widget_item.get('settings'))
+                    if item.get('type') == WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE and not item.get('created_date'):
+                      item['created_date'] = date.today().strftime("%Y-%m-%d")
             setting_data = json.dumps(json_data)
 
             # Main contents can only be in one page design or main design
