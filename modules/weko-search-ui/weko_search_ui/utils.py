@@ -32,6 +32,7 @@ from invenio_records.api import Record
 from invenio_search import RecordsSearch
 from weko_deposit.api import WekoIndexer
 from weko_indextree_journal.api import Journals
+
 from .config import WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
