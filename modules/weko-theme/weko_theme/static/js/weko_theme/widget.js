@@ -7,6 +7,7 @@ const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
 const THEME_SIMPLE = 'simple';
 const THEME_SIDE_LINE = 'side_line';
+const THEME_DEFAULT = 'default';
 const MENU_TYPE = "Menu";
 const DEFAULT_REPOSITORY = "Root Index";
 const HEADER_TYPE = "Header";
@@ -47,15 +48,46 @@ let PageBodyGrid = function () {
         let labelTextColor = node.label_text_color;
         let labelEnable = node.label_enable;
         let borderStyle = node.border_style;
-        $("#titleMainContent").text(titleMainContent);
-        $("#titleMainContent").css("color", labelTextColor);
+        let theme = node.theme;
+        $("#title-main-content").text(titleMainContent);
+        $("#title-main-content").css("color", labelTextColor);
         $("#background-color-main-content").css("background-color", backgroundColorMainContent);
         $("#index-background").css("background-color", backgroundColorMainContent);
         $(".panel-default").css("border-color", frameBorderColorMainContent);
         $(".panel-default").css("background-color", backgroundColorMainContent);
-        $(".panel-heading").css("border-color", frameBorderColorMainContent);
-        $("#panel-heading-main-contents").css("background-color", labelColor);
-        $("#background-color-main-content").css("background-color", backgroundColorMainContent);
+        if(theme == THEME_SIMPLE){
+            $("#panel-main-content").css("border", 'none');
+            $("#panel-heading-main-contents").css("border-bottom", 'none');
+        }else if(theme == THEME_DEFAULT){
+            if(borderStyle == "double"){
+                $("#panel-main-content").css("border", '3px ' + borderStyle + ' ' + frameBorderColorMainContent);
+                $("#background-color-main-content").css("border-top", '3px ' + borderStyle + ' ' + frameBorderColorMainContent);
+                $("#panel-heading-main-contents").css("border-bottom", 'none');
+            }else{
+                $("#panel-main-content").css("border", '1px ' + borderStyle + ' ' + frameBorderColorMainContent);
+                $("#background-color-main-content").css("border-top", '1px ' + borderStyle + ' ' + frameBorderColorMainContent);
+                $("#panel-heading-main-contents").css("border-bottom", 'none');
+            }
+        }else{
+            if(borderStyle == "double"){
+                $("#panel-main-content").css("border-left", '3px ' + borderStyle + ' ' + frameBorderColorMainContent);
+                $("#panel-main-content").css("border-right", 'none');
+                $("#panel-main-content").css("border-top", 'none');
+                $("#panel-main-content").css("border-bottom", 'none');
+                $("#panel-heading-main-contents").css("border-bottom", 'none');
+            }else{
+                $("#panel-main-content").css("border-left", '1px ' + borderStyle + ' ' + frameBorderColorMainContent);
+                $("#panel-main-content").css("border-right", 'none');
+                $("#panel-main-content").css("border-top", 'none');
+                $("#panel-main-content").css("border-bottom", 'none');
+                $("#panel-heading-main-contents").css("border-bottom", 'none');
+            }
+        }
+        $(".list-group-item").each(function(){
+            if(!$(this).hasClass("style_li")){
+                $(this).css("background-color", backgroundColorMainContent);
+            }
+        });
         let stylePanel = '<style>' +
         '#main_contents .panel{' +
         'background-color: ' + backgroundColorMainContent + ' !important;' +
@@ -63,7 +95,10 @@ let PageBodyGrid = function () {
         '}' +
         '#main_contents .active a{' +
         'background-color: ' + labelColor + ';' +
-        '}' +
+        '}'+
+        '#main_contents .panel-heading{' +
+        'background-color: ' + labelColor + ';' +
+        '}'+
         '</style>';
         let styleBackgroundMainContent  = '<style>' +
         '#background-color-main-content{' +
@@ -77,10 +112,9 @@ let PageBodyGrid = function () {
             $("#panel-heading-main-contents").css('display', 'none');
         }
 
-
-
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
+
 
     this.updateHeaderPage = function (node) {
         let headerElement = $("#header");
@@ -450,9 +484,9 @@ let WidgetTheme = function () {
             setClass = "grid-stack-item-content panel header-footer-type";
         }
         let result = '<div class="grid-stack-item widget-resize">' +
-            '    <div class="' +setClass +'" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
+            '    <div class="' +setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; ' + overFlowBody + '"' + id + '">' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '">' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';

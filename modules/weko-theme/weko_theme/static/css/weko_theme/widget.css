@@ -120,3 +120,11 @@
   padding: 0 !important;
   margin: 0 !important;
 }
+
+.header-footer-type{
+  border: none;
+}
+
+.grid-stack-item{
+  box-shadow: none;
+}

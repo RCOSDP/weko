@@ -24,7 +24,7 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-md-12">
-      <div class="panel panel-default">
+      <div class="panel panel-default" id="panel-main-content">
         <div class="panel-heading" id="panel-heading-main-contents">
           {%- block body_title %}
             <div class="pull-right">
@@ -33,7 +33,7 @@
             </div>
             {%- block body_title_left %}
               {%- if not community_id %}
-              <h5><strong><p class="text-uppercase" id="titleMainContent">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
+              <h5><strong><p class="text-uppercase" id="title-main-content">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
               {%- else%}
                 {%- if community %}
                   <h5><strong><p class="">{{ community.title }}</p></strong></h5>
