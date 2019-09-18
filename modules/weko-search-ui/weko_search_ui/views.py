@@ -47,8 +47,9 @@ from weko_search_ui.api import get_search_detail_keyword
 from .api import SearchSetting
 from .config import WEKO_SEARCH_TYPE_DICT
 from .query import item_path_search_factory
-from .utils import get_feedback_mail_list, get_journal_info, check_permission, \
-    parse_feedback_mail_data
+from .utils import check_permission, get_feedback_mail_list, \
+    get_journal_info, parse_feedback_mail_data
+
 
 _signals = Namespace()
 searched = _signals.signal('searched')

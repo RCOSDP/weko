@@ -32,10 +32,8 @@ from invenio_records.api import Record
 from invenio_search import RecordsSearch
 from weko_deposit.api import WekoIndexer
 from weko_indextree_journal.api import Journals
-
+from .config import WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
-
-from .config import WEKO_SYS_USER, WEKO_REPO_USER
 
 
 def get_tree_items(index_tree_id):
@@ -159,7 +157,7 @@ def parse_feedback_mail_data(data):
 
 
 def check_permission():
-    """check user login is repo_user or sys_user"""
+    """Check user login is repo_user or sys_user."""
     from flask_security import current_user
     is_permission_user = False
     for role in list(current_user.roles or []):
