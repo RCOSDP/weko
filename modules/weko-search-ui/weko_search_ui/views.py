@@ -47,7 +47,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from .api import SearchSetting
 from .config import WEKO_SEARCH_TYPE_DICT
 from .query import item_path_search_factory
-from .utils import get_feedback_mail_list, get_journal_info, \
+from .utils import get_feedback_mail_list, get_journal_info, check_permission, \
     parse_feedback_mail_data
 
 _signals = Namespace()
@@ -105,7 +105,6 @@ def search():
             current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
 
     height = style.height if style else None
-
     if 'item_link' in get_args:
         activity_id = request.args.get('item_link')
         from weko_workflow.api import WorkActivity
@@ -134,6 +133,7 @@ def search():
             width=width,
             height=height,
             allow_item_exporting=export_settings.allow_item_exporting,
+            is_permission=check_permission(),
             **ctx)
     else:
         journal_info = None
@@ -180,6 +180,7 @@ def search():
             journal_info=journal_info,
             index_display_format=index_display_format,
             allow_item_exporting=export_settings.allow_item_exporting,
+            is_permission=check_permission(),
             **ctx)
 
 

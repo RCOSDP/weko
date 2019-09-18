@@ -109,6 +109,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.collapse_flg = true;
   $rootScope.journal_title = $("#journal_title_i18n").val();
   $rootScope.journal_details = $("#journal_details_i18n").val();
+  $rootScope.is_permission = $("#is_permission").val() === 'True' ? true : false
 
   $scope.itemManagementTabDisplay= function(){
     $rootScope.disable_flg = true;

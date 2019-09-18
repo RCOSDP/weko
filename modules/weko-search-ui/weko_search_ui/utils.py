@@ -35,6 +35,8 @@ from weko_indextree_journal.api import Journals
 
 from .query import feedback_email_search_factory, item_path_search_factory
 
+from .config import WEKO_SYS_USER, WEKO_REPO_USER
+
 
 def get_tree_items(index_tree_id):
     """Get tree items."""
@@ -154,3 +156,14 @@ def parse_feedback_mail_data(data):
                             '_source').get('author_id')
                     result[email]['item'].append(index.get('_id'))
     return result
+
+
+def check_permission():
+    """check user login is repo_user or sys_user"""
+    from flask_security import current_user
+    is_permission_user = False
+    for role in list(current_user.roles or []):
+        if role == WEKO_SYS_USER or role == WEKO_REPO_USER:
+            is_permission_user = True
+
+    return is_permission_user
