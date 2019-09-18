@@ -317,7 +317,7 @@ let PageBodyGrid = function () {
         $(".text-access-counter").each(function () {
             let widgetId = $(this).data("widgetId");
             let createdDate = $(this).data("createdDate");
-            if (data && data[widgetId][createdDate]) {
+            if (data && data[widgetId] && data[widgetId][createdDate]) {
                 var widget = data[widgetId][createdDate];
                 let result = widget.access_counter ? Number(widget.access_counter) : 0;
                 accessCounter = result + (widget.all.count ? Number(widget.all.count) : 0);
@@ -337,7 +337,6 @@ let PageBodyGrid = function () {
             current_language = "en";
         }
         $.ajax({
-//            url: '/api/stats/top_page_access/0/0',
             url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language,
             method: 'GET',
             async: false,
