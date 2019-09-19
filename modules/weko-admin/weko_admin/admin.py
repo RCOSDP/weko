@@ -129,14 +129,7 @@ class StyleSettingView(BaseView):
                     flash(_('deny access'))
                 else:
                     form_lines = []
-                    body_bg = request.form.get('body-bg', '#fff')
-                    panel_bg = request.form.get('panel-bg', '#fff')
-                    footer_default_bg = request.form.get(
-                        'footer-default-bg', 'rgba(13,95,137,0.8)')
-                    navbar_default_bg = request.form.get(
-                        'navbar-default-bg', '#f8f8f8')
-                    panel_default_border = request.form.get(
-                        'panel-default-border', '#ddd')
+                    body_bg = request.form.get('body-bg', body_bg)
                     form_lines.append(
                         '$body-bg: ' + body_bg + ';')
                     form_lines.append(
