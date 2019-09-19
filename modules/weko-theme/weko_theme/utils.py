@@ -23,6 +23,7 @@
 from flask import current_app
 from invenio_i18n.ext import current_i18n
 from weko_admin.utils import set_default_language
+from weko_gridlayout.services import WidgetDesignServices
 from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
 from weko_index_tree.models import Index, IndexStyle
@@ -112,3 +113,18 @@ def get_design_layout(repository_id):
     # OR
     # No page has main contents widget, disable widgets
     return page_with_main, False
+
+
+def has_widget_design(repository_id, current_language):
+    """Check repository as widget design.
+
+    :param repository_id: Repository Id
+    :param current_language: Current language
+    :return:
+    """
+    widget_design_setting = WidgetDesignServices.get_widget_design_setting(
+        repository_id, current_language)
+    if widget_design_setting and widget_design_setting.get('widget-settings'):
+        return True
+    else:
+        return False
