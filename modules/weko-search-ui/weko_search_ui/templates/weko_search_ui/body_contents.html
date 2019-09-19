@@ -17,7 +17,8 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
-
+{%- set is_permission = is_permission or False -%}
+<input type="text" value="{{is_permission}}" id="is_permission" style="display: none;">
 {%- if journal_info%}
   <div id="journal_info" class="panel panel-default" style="display: none;">
     <div class="panel-body">
