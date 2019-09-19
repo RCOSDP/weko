@@ -13,6 +13,7 @@ const DEFAULT_REPOSITORY = "Root Index";
 const HEADER_TYPE = "Header";
 const FOOTER_TYPE = "Footer";
 const BORDER_STYLE_DOUBLE = "double";
+const BORDER_STYLE_NONE = "none";
 const INTERVAL_TIME = 60000; //one minute
 
 (function () {
@@ -41,78 +42,106 @@ let PageBodyGrid = function () {
 
     this.updateMainContent = function (node) {
         let mainContents = $("#main_contents");
-        let titleMainContent = node.multiLangSetting.label;
-        let backgroundColorMainContent = node.background_color;
+        let titleMainContent = $("#title-main-content");
+        let backgroundColorMainContent = $("#background-color-main-content");
+        let indexBackground = $("#index-background");
+        let panelDefault = $(".panel-default");
+        let panelHeadingMainContents = $("#panel-heading-main-contents");
+        let panel = $(".panel");
+
+        let labelMainContent = node.multiLangSetting.label;
+        let backgroundColor = node.background_color;
         let frameBorderColorMainContent = node.frame_border_color;
-        let labelColor = node.label_color;
         let labelTextColor = node.label_text_color;
         let labelEnable = node.label_enable;
-        let borderStyle = node.border_style;
-        let theme = node.theme;
-        $("#title-main-content").text(titleMainContent);
-        $("#title-main-content").css("color", labelTextColor);
-        $("#background-color-main-content").css("background-color", backgroundColorMainContent);
-        $("#index-background").css("background-color", backgroundColorMainContent);
-        $(".panel-default").css("border-color", frameBorderColorMainContent);
-        $(".panel-default").css("background-color", backgroundColorMainContent);
-        if(theme == THEME_SIMPLE){
-            $("#panel-main-content").css("border", 'none');
-            $("#panel-heading-main-contents").css("border-bottom", 'none');
-        }else if(theme == THEME_DEFAULT){
-            if(borderStyle == "double"){
-                $("#panel-main-content").css("border", '3px ' + borderStyle + ' ' + frameBorderColorMainContent);
-                $("#background-color-main-content").css("border-top", '3px ' + borderStyle + ' ' + frameBorderColorMainContent);
-                $("#panel-heading-main-contents").css("border-bottom", 'none');
-            }else{
-                $("#panel-main-content").css("border", '1px ' + borderStyle + ' ' + frameBorderColorMainContent);
-                $("#background-color-main-content").css("border-top", '1px ' + borderStyle + ' ' + frameBorderColorMainContent);
-                $("#panel-heading-main-contents").css("border-bottom", 'none');
-            }
-        }else{
-            if(borderStyle == "double"){
-                $("#panel-main-content").css("border-left", '3px ' + borderStyle + ' ' + frameBorderColorMainContent);
-                $("#panel-main-content").css("border-right", 'none');
-                $("#panel-main-content").css("border-top", 'none');
-                $("#panel-main-content").css("border-bottom", 'none');
-                $("#panel-heading-main-contents").css("border-bottom", 'none');
-            }else{
-                $("#panel-main-content").css("border-left", '1px ' + borderStyle + ' ' + frameBorderColorMainContent);
-                $("#panel-main-content").css("border-right", 'none');
-                $("#panel-main-content").css("border-top", 'none');
-                $("#panel-main-content").css("border-bottom", 'none');
-                $("#panel-heading-main-contents").css("border-bottom", 'none');
-            }
-        }
-        $(".list-group-item").each(function(){
-            if(!$(this).hasClass("style_li")){
-                $(this).css("background-color", backgroundColorMainContent);
+
+        titleMainContent.text(labelMainContent);
+        titleMainContent.css("color", labelTextColor);
+        backgroundColorMainContent.css("background-color", backgroundColor);
+        indexBackground.css("background-color", backgroundColor);
+        indexBackground.css("border-bottom-right-radius", "3px");
+        indexBackground.css("border-bottom-left-radius", "3px");
+        panelDefault.css("border-color", frameBorderColorMainContent);
+        panelDefault.css("background-color", backgroundColor);
+        panel.css("box-shadow", "none");
+
+        $(".list-group-item").each(function () {
+            if (!$(this).hasClass("style_li")) {
+                $(this).css("background-color", backgroundColor);
             }
         });
-        let stylePanel = '<style>' +
-        '#main_contents .panel{' +
-        'background-color: ' + backgroundColorMainContent + ' !important;' +
-        'border-color: ' + frameBorderColorMainContent + ';' +
-        '}' +
-        '#main_contents .active a{' +
-        'background-color: ' + labelColor + ';' +
-        '}'+
-        '#main_contents .panel-heading{' +
-        'background-color: ' + labelColor + ';' +
-        '}'+
-        '</style>';
-        let styleBackgroundMainContent  = '<style>' +
-        '#background-color-main-content{' +
-        'background-color: ' + backgroundColorMainContent + ';' +
-        '}' +
-        '</style>';
-        $("#main_contents").append(stylePanel);
-        $("#background-color-main-content").append(styleBackgroundMainContent);
 
-        if(!labelEnable){
-            $("#panel-heading-main-contents").css('display', 'none');
+        if (!labelEnable) {
+            panelHeadingMainContents.css('display', 'none');
         }
 
+        let style = this.addStyle(node);
+        mainContents.append(style);
+        this.buildMainContentTheme(node);
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
+    };
+
+    this.addStyle = function(node){
+        let backgroundColor = node.background_color;
+        let frameBorderColorMainContent = node.frame_border_color;
+        let labelColor = node.label_color;
+        return '<style>' +
+                    '#main_contents .panel{' +
+                        'background-color: ' + backgroundColor + ' !important;' +
+                        'border-color: ' + frameBorderColorMainContent + ';' +
+                    '}' +
+                    '#main_contents .active > a{' +
+                        'background-color: ' + labelColor + ';' +
+                    '}' +
+                    '#main_contents .panel-heading{' +
+                        'background-color: ' + labelColor + ';' +
+                    '}' +
+                '</style>';
+    }
+
+    this.buildMainContentTheme = function (node){
+        let panelHeadingMainContents = $("#panel-heading-main-contents");
+        let backgroundColorMainContent = $("#background-color-main-content");
+        let panelMainContent = $("#panel-main-content");
+        let borderStyle = node.border_style;
+        let frameBorderColorMainContent = node.frame_border_color;
+        let theme = node.theme;
+        let borderRadius;
+        let pxBorder;
+        if (borderStyle == BORDER_STYLE_DOUBLE) {
+            pxBorder = "3px ";
+            borderRadius = "1px";
+        }else if(borderStyle == BORDER_STYLE_NONE){
+            pxBorder = "0px";
+            borderRadius = "3px";
+        }else {
+            pxBorder = "1px ";
+            borderRadius = "3px";
+        }
+
+        if (theme == THEME_SIMPLE) {
+            borderRadius = "0px";
+            pxBorder = "none";
+            panelMainContent.css("border", pxBorder);
+            panelHeadingMainContents.css('border-radius', borderRadius);
+            panelHeadingMainContents.css("border-bottom", pxBorder);
+        } else if (theme == THEME_DEFAULT) {
+            panelMainContent.css("border", pxBorder + ' ' + borderStyle + ' ' + frameBorderColorMainContent);
+            backgroundColorMainContent.css("border-top", pxBorder + borderStyle + ' ' + frameBorderColorMainContent);
+            backgroundColorMainContent.css('border-bottom-left-radius', borderRadius);
+            backgroundColorMainContent.css('border-bottom-right-radius', borderRadius);
+            panelHeadingMainContents.css("border-bottom", 'none');
+            panelHeadingMainContents.css("border-top-right-radius", borderRadius);
+            panelHeadingMainContents.css("border-top-left-radius", borderRadius);
+        } else {
+            panelMainContent.css("border-left", pxBorder + ' ' + borderStyle + ' ' + frameBorderColorMainContent);
+            panelMainContent.css("border-right", 'none');
+            panelMainContent.css("border-top", 'none');
+            panelMainContent.css("border-bottom", 'none');
+            panelMainContent.css("border-top-left-radius", '0px');
+            panelMainContent.css("border-bottom-left-radius", '0px');
+            panelHeadingMainContents.css('border-radius', '0px');
+        }
     };
 
 
@@ -434,6 +463,8 @@ let WidgetTheme = function () {
         if (!widget_data || !widget_settings) {
             return undefined;
         }
+        let panel = $(".panel");
+        panel.css('box-shadow', 'none');
         let id = (widget_data.id) ? widget_data.id : '';
         let labelTextColor = (widget_settings.label_text_color) ? widget_settings.label_text_color : '';
         let labelColor = (widget_settings.label_color) ? widget_settings.label_color : '';
