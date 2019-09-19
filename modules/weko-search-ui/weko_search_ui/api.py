@@ -102,7 +102,8 @@ class SearchSetting(object):
                     "order": "asc"
                 }
             }
-            default_sort = {'_created': {'order': 'desc'}}
+            default_sort = {'_created': {'order': 'desc',
+                                         'unmapped_type': 'long'}}
         else:
             factor_obj = Indexes.get_item_sort(index_id)
             script_str = {
@@ -117,7 +118,8 @@ class SearchSetting(object):
                     "order": "desc"
                 }
             }
-            default_sort = {'_created': {'order': 'asc'}}
+            default_sort = {'_created': {'order': 'asc',
+                                         'unmapped_type': 'long'}}
 
         return script_str, default_sort
 
