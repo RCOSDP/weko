@@ -1260,16 +1260,15 @@ function saveWidgetDesignSetting(widgetDesignData) {
                     return;
                 } else {
                     addAlert('Widget design has been saved successfully.');
-                    data.data.forEach(function (widget) {
-                        if (widget.type == ACCESS_COUNTER && widget.created_date) {
-                            var elements  = document.querySelectorAll('[data-widget_id="' + widget.widget_id + '"]');
-                            elements.forEach(function (el) {
-                                if (!el.getAttribute('data-created_date')) {
-                                    el.setAttribute('data-created_date', widget.created_date);
-                                }
-                            })
+                    var elements  = document.querySelectorAll('[data-type="' + ACCESS_COUNTER + '"]');
+                    var d = new Date();
+                    var date = d.getFullYear() +'-'+(d.getMonth()>8?'':'0')+(d.getMonth()+1)
+                              +'-'+(d.getDate()>9?'':'0')+d.getDate()
+                    elements.forEach(function (el) {
+                        if (!el.getAttribute('data-created_date')) {
+                            el.setAttribute('data-created_date', date);
                         }
-                    });
+                    })
                     return;
                 }
             },

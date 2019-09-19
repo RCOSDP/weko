@@ -464,25 +464,25 @@ def get_access_counter_record(repository_id, current_language):
     if widget_design_setting.get('widget-settings'):
         for widget in widget_design_setting['widget-settings']:
             if str(widget.get('type')) == \
-                WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
+                    WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
                 start_date = widget.get('created_date')
 
                 if start_date:
                     end_date = date.today().strftime("%Y-%m-%d")
-                    topViewTotalByWidgetId =  QueryCommonReportsHelper.get(
+                    top_view_total_by_widget_id = QueryCommonReportsHelper.get(
                         start_date=start_date, end_date=end_date,
                         event='top_page_access')
-                    count = 0;
-                    for item in topViewTotalByWidgetId['all'].values():
+                    count = 0
+                    for item in top_view_total_by_widget_id['all'].values():
                         count = count + int(item['count'])
-                    topViewTotalByWidgetId['all'].update({'count': count})
-                    topViewTotalByWidgetId.update(
+                    top_view_total_by_widget_id['all'].update({'count': count})
+                    top_view_total_by_widget_id.update(
                         {'access_counter': widget.get('access_counter')})
                     if not result.get(widget.get('widget_id')):
                         result[widget.get('widget_id')] = \
-                            {start_date: topViewTotalByWidgetId}
+                            {start_date: top_view_total_by_widget_id}
                     else:
                         result[widget.get('widget_id')].update(
-                            {start_date: topViewTotalByWidgetId})
+                            {start_date: top_view_total_by_widget_id})
 
     return jsonify(result)

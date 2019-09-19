@@ -476,10 +476,10 @@ class WidgetDesignServices:
                         widget_preview["type"] = item.get("type")
                         widget_preview["name"] = item.get("name")
                         if item.get('type') == \
-                            WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE \
-                            and item.get('created_date'):
-                          widget_preview["created_date"] = \
-                              item.get("created_date")
+                                WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE \
+                                and item.get('created_date'):
+                            widget_preview["created_date"] = \
+                                item.get("created_date")
                         languages = item.get("multiLangSetting")
                         if isinstance(languages, dict) and lang_code_default \
                                 is not None:
@@ -593,9 +593,9 @@ class WidgetDesignServices:
                             item.get('widget_id'))
                     item.update(widget_item.get('settings'))
                     if item.get('type') == \
-                        WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE \
-                        and not item.get('created_date'):
-                      item['created_date'] = date.today().strftime("%Y-%m-%d")
+                            WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE \
+                            and not item.get('created_date'):
+                        item['created_date'] = date.today().strftime("%Y-%m-%d")
             setting_data = json.dumps(json_data)
 
             # Main contents can only be in one page design or main design
@@ -621,8 +621,6 @@ class WidgetDesignServices:
                 else:
                     result['error'] = _(
                         'Failed to save design:\n Check input values.')
-            if not result['error']:
-                result.update({'data': json_data})
         except Exception as e:
             current_app.logger.info(e)
             result['error'] = _('Failed to save design: Unexpected error.')
