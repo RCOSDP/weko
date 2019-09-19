@@ -445,7 +445,7 @@ def iframe_items_index(pid_value=0):
             from weko_theme.utils import get_design_layout
 
             page, render_widgets = get_design_layout(
-                session['itemlogin_community_id']
+                community_id
                 or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
             return render_template(
                 'weko_items_ui/iframe/item_index.html',

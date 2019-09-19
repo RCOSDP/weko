@@ -109,7 +109,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.collapse_flg = true;
   $rootScope.journal_title = $("#journal_title_i18n").val();
   $rootScope.journal_details = $("#journal_details_i18n").val();
-    $rootScope.typeIndexList = (function(){
+  $rootScope.typeIndexList = (function(){
     var url = new URL(window.location.href );
     var q = url.searchParams.get("q");
     let result = 'item'
@@ -120,6 +120,8 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
     return result
   })()
+  $rootScope.is_permission = $("#is_permission").val() === 'True' ? true : false
+
   $scope.itemManagementTabDisplay= function(){
     $rootScope.disable_flg = true;
     $rootScope.display_flg = true;

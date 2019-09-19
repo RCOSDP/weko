@@ -451,9 +451,6 @@ let WidgetTheme = function () {
 };
 
 function getWidgetDesignSetting() {
-    $("#header").addClass("hidden");
-    $("#main_footer").addClass("hidden");
-    $("#header_wysiwyg").addClass("hidden");
     let community_id = $("#community-id").text();
     let current_language = $("#current_language").val();
     let url;
@@ -522,9 +519,6 @@ function getWidgetDesignSetting() {
                     if(is_page){
                         $("#main_contents").hide();
                     }
-                    $("#header").removeClass("hidden");
-                    $("#header_wysiwyg").removeClass("hidden");
-                    $("#main_footer").removeClass("hidden");
                     if (community_id !== DEFAULT_REPOSITORY) {
                         $("#community_header").removeAttr("hidden");
                         $("footer > #community_footer").removeAttr("hidden");

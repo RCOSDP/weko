@@ -127,7 +127,7 @@
                   filename=file.key) %}
                 <tr>
                   <td>{{file.filename}}
-                    <a href="{{file_details_url}}">{{_('Detail')}}</a>
+                    <a href="{{file_details_url}}{%- if community -%}?community={{ community.id }}{%- endif -%}">{{_('Detail')}}</a>
                     <a href="#preview_carousel" data-slide-to="{{ loop.index0 }}">
                       {{_('Preview')}}
                     </a>
