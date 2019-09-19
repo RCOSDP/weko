@@ -1132,3 +1132,22 @@ class Indexes(object):
     def get_index_count(cls):
         """Get the total number of indexes."""
         return Index.query.count()
+
+    @classmethod
+    def get_child_list(cls, node_path):
+        """
+        Get index list info.
+
+        :param node_path: Identifier of the index.
+        :return: the list of index.
+        """
+        index = node_path.rfind('/')
+        pid = node_path[index + 1:]
+        recursive_t = cls.recs_query()
+        query = db.session.query(recursive_t).filter(
+            db.or_(recursive_t.c.pid == pid,
+                   recursive_t.c.cid == pid))
+        if not get_user_roles()[0]:
+            query = query.filter(recursive_t.c.public)
+        q = query.order_by(recursive_t.c.path).all()
+        return q
