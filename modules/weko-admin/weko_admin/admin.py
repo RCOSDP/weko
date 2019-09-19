@@ -90,38 +90,6 @@ class StyleSettingView(BaseView):
                     if '$panel-default-border:' in line:
                         panel_default_border = line[line.find('#'):-1]
 
-            from weko_theme.views import blueprint as theme_bp
-
-            # Header
-            f_path_header_wysiwyg = os.path.join(
-                theme_bp.root_path,
-                theme_bp.template_folder,
-                current_app.config['THEME_HEADER_WYSIWYG_TEMPLATE'])
-            header_array_wysiwyg = self.get_contents(f_path_header_wysiwyg)
-
-            f_path_header_editor = os.path.join(
-                theme_bp.root_path,
-                theme_bp.template_folder,
-                current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
-
-            if self.cmp_files(f_path_header_wysiwyg, f_path_header_editor):
-                header_array_wysiwyg = wysiwyg_editor_default
-
-            # Footer
-            f_path_footer_wysiwyg = os.path.join(
-                theme_bp.root_path,
-                theme_bp.template_folder,
-                current_app.config['THEME_FOOTER_WYSIWYG_TEMPLATE'])
-            footer_array_wysiwyg = self.get_contents(f_path_footer_wysiwyg)
-
-            f_path_footer_editor = os.path.join(
-                theme_bp.root_path,
-                theme_bp.template_folder,
-                current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
-
-            if self.cmp_files(f_path_footer_wysiwyg, f_path_footer_editor):
-                footer_array_wysiwyg = wysiwyg_editor_default
-
             # Color
             if request.method == 'POST':
                 if not admin_permission_factory('update-style-action').can():
@@ -151,12 +119,6 @@ class StyleSettingView(BaseView):
         return self.render(
             current_app.config["WEKO_ADMIN_BlOCK_STYLE_TEMPLATE"],
             body_bg=body_bg,
-            panel_bg=panel_bg,
-            footer_default_bg=footer_default_bg,
-            navbar_default_bg=navbar_default_bg,
-            panel_default_border=panel_default_border,
-            header_innerHtml=''.join(header_array_wysiwyg),
-            footer_innerHtml=''.join(footer_array_wysiwyg)
         )
 
     @expose('/upload_editor', methods=['POST'])
