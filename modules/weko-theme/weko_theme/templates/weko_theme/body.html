@@ -33,7 +33,7 @@
             </div>
             {%- block body_title_left %}
               {%- if not community_id %}
-              <h5><strong><p class="text-uppercase" id="title-main-content">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
+              <h5><strong><p id="title-main-content">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
               {%- else%}
                 {%- if community %}
                   <h5><strong><p class="">{{ community.title }}</p></strong></h5>
