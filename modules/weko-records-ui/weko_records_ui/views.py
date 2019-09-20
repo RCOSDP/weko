@@ -311,10 +311,8 @@ def _get_google_scholar_meta(record):
                     'identifierType'] == 'ISSN':
                 res.append({'name': 'citation_issn',
                             'data': sourceIdentifier.text})
-        pdf_url = mtdata.find(
-            'jpcoar:file/jpcoar:URI',
-            namespaces=mtdata.nsmap)
-        if pdf_url is not None:
+        for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
+                                      namespaces=mtdata.nsmap):
             res.append({'name': 'citation_pdf_url',
                         'data': request.url.replace('records', 'record')
                         + '/files/' + pdf_url.text})

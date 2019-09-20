@@ -223,13 +223,17 @@ let PageBodyGrid = function () {
         return description;
     };
 
-    this.buildAccessCounter = function (initNumber, languageDescription) {
+    this.buildAccessCounter = function (widgetId, created_date, languageDescription) {
         let data = this.getAccessTopPageValue();
+        let result = 0;
         // Convert to display-able number
-        let initNum = Number(initNumber);
-        let result = Number(data);
-        if (!Number.isNaN(initNum)) {
-            result = result + initNumber;
+        if (data && data[widgetId] && data[widgetId][created_date]) {
+          var widget = data[widgetId][created_date];
+            let initNum = widget.access_counter ? Number(widget.access_counter) : 0;
+            result = widget.all.count ? Number(widget.all.count) : 0;
+            if (!Number.isNaN(initNum)) {
+                result = result + initNum;
+            }
         }
 
         let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + " " : "";
@@ -238,7 +242,8 @@ let PageBodyGrid = function () {
 
         return '<div>'
                 + ' <div class="counter-container">'
-                +       precedingMessage + '<span data-init-number="' + initNumber + '" class = "text-access-counter">' + result + '</span>' + followingMessage
+                +       precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date 
+                + '" class = "text-access-counter">' + result + '</span>' + followingMessage
                 + ' </div>'
                 + ' <div>' + otherMessage + '</div>'
                 + '</div>';
@@ -358,12 +363,12 @@ let PageBodyGrid = function () {
         } else if (node.type === NOTICE_TYPE) {
             content = this.buildNoticeType(languageDescription, index);
         } else if (node.type === ACCESS_COUNTER) {
-            let initNumber = 0;
+            let widgetId = 0;
             if (node.access_counter &&
-                !Number.isNaN(Number(node.access_counter))) {
-                initNumber = Number(node.access_counter);
+                !Number.isNaN(Number(node.widget_id))) {
+                widgetId = Number(node.widget_id);
             }
-            content = this.buildAccessCounter(initNumber, languageDescription);
+            content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
             setInterval(() => { this.setAccessCounterValue(); }, INTERVAL_TIME);
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
@@ -411,25 +416,37 @@ let PageBodyGrid = function () {
     };
 
     this.setAccessCounterValue = function () {
+        // list access counter information: id, innit Number, created date
         let data = this.getAccessTopPageValue();
-        let result = Number(data);
+        let accessCounter = 0;
         $(".text-access-counter").each(function () {
-            let initNumber = $(this).data("initNumber");
-            let accessCounter = result + initNumber;
+            let widgetId = $(this).data("widgetId");
+            let createdDate = $(this).data("createdDate");
+            if (data && data[widgetId] && data[widgetId][createdDate]) {
+                var widget = data[widgetId][createdDate];
+                let result = widget.access_counter ? Number(widget.access_counter) : 0;
+                accessCounter = result + (widget.all.count ? Number(widget.all.count) : 0);
+            }
             $(this).text(accessCounter);
         });
     };
 
     this.getAccessTopPageValue = function () {
         let data = 0;
+        let repository_id = $("#community-id").text();
+        if (!repository_id) {
+            repository_id = DEFAULT_REPOSITORY;
+        }
+        let current_language = $("#current_language").val();
+        if (!current_language) {
+            current_language = "en";
+        }
         $.ajax({
-            url: '/api/stats/top_page_access/0/0',
+            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language,
             method: 'GET',
             async: false,
             success: (response) => {
-                if (response.all && response.all.count) {
-                    data = response.all.count;
-                }
+                data = response;
             }
         });
         return data;

@@ -321,3 +321,6 @@ WEKO_SEARCH_TYPE_DICT = {
     'KEYWORD': '1',
     'INDEX': '2'
 }
+WEKO_SYS_USER = 'System Administrator'
+
+WEKO_REPO_USER = 'Repository Administrator'
