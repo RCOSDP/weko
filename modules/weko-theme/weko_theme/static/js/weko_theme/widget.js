@@ -144,6 +144,7 @@ let PageBodyGrid = function () {
             panelMainContent.css("border-top-left-radius", '0px');
             panelMainContent.css("border-bottom-left-radius", '0px');
             panelHeadingMainContents.css('border-radius', '0px');
+            panelHeadingMainContents.css('border-bottom', 'none');
         }
     };
 
