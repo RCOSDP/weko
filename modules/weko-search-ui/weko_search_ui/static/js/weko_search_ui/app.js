@@ -159,6 +159,9 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   }
 
   $scope.getJournalInfo= function(){
+    if (!$rootScope.index_id_q) {
+      return;
+    }
     // request api
     $http({
       method: 'GET',
