@@ -5,7 +5,7 @@
   </div>
   <div class="panel-body">
     <div class="panel_bread">
-      <ol class="breadcrumb">
+      <ol class="breadcrumb" ng-if="(typeIndexList !== 'root')">
         <li
           ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
           <span ng-if="is_permission">
@@ -81,7 +81,7 @@
     <div id="index_tree_list">
       <ul class="list-group">
         <div class="list-group-item"
-          ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0] track by $index" ng-if="!$first"
+          ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0] track by $index" ng-if="(typeIndexList !== 'root' && !$first)  || typeIndexList === 'root'"
           style="position: relative;">
           <a ng-href="/search?search_type=2&q={{ index_path.key.split('/').pop() }}{{commInfoIndex}}" style="
                 color: #333;
