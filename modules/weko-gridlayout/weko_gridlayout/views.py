@@ -16,11 +16,13 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_theme.utils import get_community_id, get_weko_contents
 from werkzeug.exceptions import NotFound
 
 from .api import WidgetItems
+from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
 from .models import WidgetDesignPage
 from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
@@ -448,3 +450,39 @@ def _add_url_rule(url_or_urls):
         current_app.add_url_rule(url, 'weko_gridlayout.view_widget_page',
                                  view_widget_page), url_or_urls)
     current_app._got_first_request = old
+
+
+@blueprint_api.route('/access_counter_record/<string:repository_id>'
+                     '/<string:current_language>', methods=['GET'])
+def get_access_counter_record(repository_id, current_language):
+    """Get access Top page value."""
+    result = {}
+
+    widget_design_setting = WidgetDesignServices.get_widget_design_setting(
+        repository_id, current_language or get_default_language())
+
+    if widget_design_setting.get('widget-settings'):
+        for widget in widget_design_setting['widget-settings']:
+            if str(widget.get('type')) == \
+                    WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
+                start_date = widget.get('created_date')
+
+                if start_date:
+                    end_date = date.today().strftime("%Y-%m-%d")
+                    top_view_total_by_widget_id = QueryCommonReportsHelper.get(
+                        start_date=start_date, end_date=end_date,
+                        event='top_page_access')
+                    count = 0
+                    for item in top_view_total_by_widget_id['all'].values():
+                        count = count + int(item['count'])
+                    top_view_total_by_widget_id['all'].update({'count': count})
+                    top_view_total_by_widget_id.update(
+                        {'access_counter': widget.get('access_counter')})
+                    if not result.get(widget.get('widget_id')):
+                        result[widget.get('widget_id')] = \
+                            {start_date: top_view_total_by_widget_id}
+                    else:
+                        result[widget.get('widget_id')].update(
+                            {start_date: top_view_total_by_widget_id})
+
+    return jsonify(result)
