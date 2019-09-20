@@ -25,7 +25,7 @@
   <div class="row">
     <div class="col-sm-12 col-md-12 col-md-12">
       <div class="panel panel-default" id="panel-main-content">
-        <div class="panel-heading" id="panel-heading-main-contents">
+        <div class="panel-heading no-padding-side" id="panel-heading-main-contents">
           {%- block body_title %}
             <div class="pull-right">
             {%- block body_title_right %}
@@ -33,10 +33,10 @@
             </div>
             {%- block body_title_left %}
               {%- if not community_id %}
-              <h5><strong><p id="title-main-content">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
+              <strong><p id="title-main-content">{{ _(config.THEME_SITENAME) }}</p></strong>
               {%- else%}
                 {%- if community %}
-                  <h5><strong><p class="">{{ community.title }}</p></strong></h5>
+                  <strong><p class="" id="title-main-content">{{ community.title }}</p></strong>
                 {%- endif%}
               {%- endif%}
             {%- endblock body_title_left %}
