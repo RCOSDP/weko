@@ -96,6 +96,9 @@ let PageBodyGrid = function () {
                     '#main_contents .panel-heading{' +
                         'background-color: ' + labelColor + ';' +
                     '}' +
+                    '.panel-default > .panel-heading{' +
+                        'border-bottom: ' + '1px ' + 'solid ' + frameBorderColorMainContent + ';' +
+                    '}' +
                 '</style>';
     }
 
