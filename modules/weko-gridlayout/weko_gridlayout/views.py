@@ -218,17 +218,20 @@ def load_widget_design_pages(lang=''):
     return jsonify(result)
 
 
-@blueprint_api.route('/load_widget_design_page/<string:page_id>',
-                     methods=['GET'])
+@blueprint_api.route('/load_widget_design_page',
+                     methods=['POST'])
 @login_required
-def load_widget_design_page(page_id):
+def load_widget_design_page():
     """Get widget page list for repository.
 
     :return: Example
             "data": {}
             "error": ""
     """
-    return jsonify(WidgetDesignPageServices.get_page(page_id))
+    data = request.get_json()
+    page_id = data.get('page_id')
+    repository_id = data.get('repository_id')
+    return jsonify(WidgetDesignPageServices.get_page(page_id, repository_id))
 
 
 @blueprint_api.route('/save_widget_design_page', methods=['POST'])

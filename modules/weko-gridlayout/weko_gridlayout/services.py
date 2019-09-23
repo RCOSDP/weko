@@ -753,26 +753,31 @@ class WidgetDesignPageServices:
     def add_or_update_page(cls, data):
         """Add a WidgetDesignPage.
 
-        :param repository_id: Identifier of the repository.
-        :param default_language: The default language.
+        :param data: Widget design page data.
         :return: formatted data of WidgetDesignPage.
         """
         result = {
             'result': False,
             'error': ''
         }
-        page_id = data.get('page_id', 0)
+        is_edit = data.get('is_edit', False)
+        if is_edit:
+            page_id = data.get('page_id', 0)
+        else:
+            page_id = 0
         repository_id = data.get('repository_id', 0)
         title = data.get('title')
         url = data.get('url')
         content = data.get('content')
         settings = data.get('settings')
         multi_lang_data = data.get('multi_lang_data')
+        is_main_layout = data.get('is_main_layout')
         try:
             result['result'] = WidgetDesignPage.create_or_update(
                 repository_id, Markup.escape(title), url,
                 Markup.escape(content), page_id=page_id,
-                settings=settings, multi_lang_data=multi_lang_data
+                settings=settings, multi_lang_data=multi_lang_data,
+                is_main_layout=is_main_layout
             )
         except IntegrityError:
             result['error'] = _('Unable to save page: URL already exists.')
@@ -805,7 +810,7 @@ class WidgetDesignPageServices:
         """Get WidgetDesignPage list.
 
         :param repository_id: Identifier of the repository.
-        :param default_language: The default language.
+        :param language: The default language.
         :return: formatted data of WidgetDesignPage.
         """
         result = {
@@ -822,6 +827,7 @@ class WidgetDesignPageServices:
                 result['data'].append({
                     'id': page.id,
                     'name': title,
+                    'is_main_layout': page.is_main_layout,
                 })
 
         except Exception as e:
@@ -830,11 +836,11 @@ class WidgetDesignPageServices:
         return result
 
     @classmethod
-    def get_page(cls, page_id):   # TODO: Localization ?
+    def get_page(cls, page_id, repository_id):   # TODO: Localization ?
         """Get WidgetDesignPage list.
 
-        :param page_id: Identifier of the repository.
-        :param default_language: The default language.
+        :param page_id: Identifier of the page design.
+        :param repository_id: Identifier of the repository.
         :return: formatted data of WidgetDesignPage.
         """
         result = {
@@ -854,10 +860,26 @@ class WidgetDesignPageServices:
                 'content': page.content,
                 'repository_id': page.repository_id,
                 'multi_lang_data': multi_lang_data,
+                'is_main_layout': page.is_main_layout
             }
 
         except NoResultFound:
-            result['error'] = _('Unable to retrieve page: Page not found.')
+            if str(page_id) == '0':
+                url = '/'
+                if repository_id != current_app.config[
+                        'WEKO_THEME_DEFAULT_COMMUNITY']:
+                    url += '?community=' + repository_id
+                result['data'] = {
+                    'id': page_id,
+                    'title': 'Main Layout',
+                    'url': url,
+                    'content': '',
+                    'repository_id': repository_id,
+                    'multi_lang_data': {},
+                    'is_main_layout': True
+                }
+            else:
+                result['error'] = _('Unable to retrieve page: Page not found.')
         except Exception as e:
             current_app.logger.error(e)
             result['error'] = _('Unable to retrieve page: Unexpected error.')

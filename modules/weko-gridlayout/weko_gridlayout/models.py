@@ -450,6 +450,8 @@ class WidgetDesignPage(db.Model):
         nullable=True
     )
 
+    is_main_layout = db.Column(db.Boolean('is_main_layout'), nullable=True)
+
     multi_lang_data = db.relationship(
         'WidgetDesignPageMultiLangData',
         backref='widget_design_page',
@@ -459,7 +461,8 @@ class WidgetDesignPage(db.Model):
 
     @classmethod
     def create_or_update(cls, repository_id, title, url, content,
-                         page_id=0, settings=None, multi_lang_data={}):
+                         page_id=0, settings=None, multi_lang_data={},
+                         is_main_layout=False):
         """Insert new widget design page.
 
         :param repository_id: Identifier of the repository
@@ -469,6 +472,7 @@ class WidgetDesignPage(db.Model):
         :param page_id: Page identifier
         :param settings: Page widget setting data
         :param multi_lang_data: Multi language data
+        :param is_main_layout: Main layout flash
         :return: True if successful, otherwise False
         """
         try:
@@ -486,6 +490,7 @@ class WidgetDesignPage(db.Model):
                 page.url = url
                 page.content = content
                 page.settings = settings
+                page.is_main_layout = is_main_layout
                 for lang in multi_lang_data:
                     page.multi_lang_data[lang] = \
                         WidgetDesignPageMultiLangData(
@@ -646,28 +651,6 @@ class WidgetDesignPageMultiLangData(db.Model):
     def get_by_id(cls, id):
         """Get widget multi language data by id."""
         return cls.query.filter_by(id=id).one_or_none()
-
-    # @classmethod
-    # def create_or_update(cls, page_id, lang_code, title, id=0):
-    #     """Insert or update translations for page title."""
-    #     try:
-    #         prev = cls.query.filter_by(id=int(id)).one_or_none()
-    #         page_multi_lang_data = prev or WidgetDesignPageMultiLangData()
-    #
-    #         if not page_id or not lang_code:
-    #             return False
-    #
-    #         with db.session.begin_nested():
-    #             page_multi_lang_data.widget_design_page_id = page_id
-    #             page_multi_lang_data.lang_code = lang_code
-    #             page_multi_lang_data.title = title
-    #             db.session.merge(page_multi_lang_data)
-    #         db.session.commit()
-    #         return True
-    #     except Exception as ex:
-    #         db.session.rollback()
-    #         current_app.logger.debug(ex)
-    #         raise ex
 
 
 __all__ = ([
