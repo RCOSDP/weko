@@ -243,7 +243,7 @@ let PageBodyGrid = function () {
 
         return '<div>'
                 + ' <div class="counter-container">'
-                +       precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date 
+                +       precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date
                 + '" class = "text-access-counter">' + result + '</span>' + followingMessage
                 + ' </div>'
                 + ' <div>' + otherMessage + '</div>'
@@ -288,10 +288,29 @@ let PageBodyGrid = function () {
             },
             success: (response) => {
                 let endpoints = response.endpoints;
-                let repoHomeURL = (repoID == DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
+                let repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
                 let navbarID = 'widgetNav_' + widgetID;  // Re-use to build unique class ids
-                let navbarClass = settings.menu_orientation == 'vertical' ?
+                let navbarClass = settings.menu_orientation === 'vertical' ?
                     'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
+                let mainLayoutTitle = "Main Layout";
+                let childNavBar = "";
+                for (let i in endpoints) {  // Create links
+                  let liClass = '';
+                  let linkStyle = ''; //'color:' + settings.menu_default_color + ';';
+                  let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
+                  let title = endpoints[i].title;
+                  let endpointsURL = endpoints[i].url;
+                  if (endpoints[i].is_main_layout) {
+                    mainLayoutTitle = title;
+                  } else {
+                    if (window.location.pathname === endpointsURL) {
+                      liClass = 'class="active"';
+                      linkStyle = 'color:' + settings.menu_active_color + ';';
+                    }
+                    childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                  }
+                }
+
                 let navbar =
                 '<style>' +  // Renaming classes allows for multiple menus on page
                 '.navbar-default.' + navbarID + ' .navbar-brand {' +
@@ -326,21 +345,12 @@ let PageBodyGrid = function () {
                 '        <span class="icon-bar"></span>' +
                 '        <span class="icon-bar"></span>' +
                 '      </button>' +
-                '      <a class="navbar-brand" href="' + repoHomeURL + '">' + repoID + '</a>' +
+                '      <a class="navbar-brand" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
                 '    </div>' +
                 '    <div class="collapse navbar-collapse" id="' + navbarID + '">' +
                 '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
 
-                for (let i in endpoints) {  // Create links
-                  let liClass = '';
-                  let linkStyle = ''; //'color:' + settings.menu_default_color + ';';
-                  let communityArgs = (repoID == DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
-                  if (window.location.pathname == endpoints[i].url) {
-                    liClass = 'active';
-                    linkStyle = 'color:' + settings.menu_active_color + ';';
-                  }
-                  navbar += '<li class="' + liClass + '"><a href="' + endpoints[i].url + communityArgs + '">' + endpoints[i].title + '</a></li>';
-                }
+                navbar += childNavBar;
                 navbar +='</ul></div></div></nav>';
                 $("#" + menuID).append(navbar);
             }

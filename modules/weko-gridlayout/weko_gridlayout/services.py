@@ -988,25 +988,15 @@ class WidgetDataLoaderServices:
                             if language and language in page.multi_lang_data:
                                 title = page.multi_lang_data[language].title
                             result['endpoints'].append(
-                                {'url': page.url, 'title': title})
+                                {
+                                    'url': page.url,
+                                    'title': title,
+                                    'is_main_layout': page.is_main_layout,
+                                }
+                            )
                         except NoResultFound:
                             pass
             except Exception as e:
                 current_app.logger.error(e)
                 result['endpoints'] = []
         return result
-
-
-# Utlils or all of the fucntions
-def get_design_setting(model):
-    """Extract the widget design setting from the model."""
-    widget_setting = model.settings
-    if widget_setting:
-        settings = widget_setting.get('settings')
-        if settings:
-            settings = json.loads(settings)
-            for widget_item in settings:
-                widget = cls._get_design_base_on_current_language(
-                    current_language,
-                    widget_item)
-                result["widget-settings"].append(widget)
