@@ -17,6 +17,8 @@ const DEFAULT_TEXT_COLOR = "#333333";
 const DEFAULT_BORDER_COLOR = "#DDDDDD";
 const DEFAULT_BORDER_STYLE = "solid";
 const DEFAULT_THEME = "default";
+const DEFAULT_MENU_BACKGROUND_COLOR = "#ffffff";
+const DEFAULT_MENU_COLOR = "#000000";
 
 function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
     if(key_binding === "border_style" && !initialValue){
@@ -104,6 +106,10 @@ class ComponentRadioSelect extends React.Component {
         this.state = {
           menu_orientation: this.props.data_load,
         }
+    }
+
+    componentDidMount(){
+        this.props.handleComponentDidMountOrientation(this.state.menu_orientation);
     }
 
     render() {
@@ -216,6 +222,10 @@ const ComponentSelectColorFiled = (props) => {
     }
     else if (props.key_binding === "label_color") {
         initColor = DEFAULT_LABEL_COLOR;
+    }else if(props.key_binding === "menu_bg_color" || props.key_binding === "menu_active_bg_color") {
+        initColor = DEFAULT_MENU_BACKGROUND_COLOR;
+    }else if(props.key_binding === "menu_default_color" || props.key_binding === "menu_active_color"){
+        initColor = DEFAULT_MENU_COLOR;
     }
     else {
         initColor = DEFAULT_BORDER_COLOR;
@@ -223,7 +233,10 @@ const ComponentSelectColorFiled = (props) => {
 
     const [value, setValue] = useState(props.data_load || initColor);
     useEffect(() => {
-        props.getValueOfField(props.key_binding, props.data_load);
+        if(props.handleChange){
+            props.handleChange(props.key_binding, value);
+        }
+        props.getValueOfField(props.key_binding, props.data_load || initColor);
     }, []);
 
     useEffect(() => {
@@ -306,7 +319,6 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         event.preventDefault();
     }
 
-
     initSelectBox(url, repositoryId) {
         let data = {
           repository_id: repositoryId
@@ -323,6 +335,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                     let unOptions = [];
                     let options = [];
                     let orderedOptions = [];
+                    let choseOptions = [];
 
                     // Special case for when we use this for page services
                     if(typeof result == 'object' && 'page-list' in result) {
@@ -331,22 +344,25 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 
                     // Display in order according to saved settings FIXME: High complexity, find another way
                     let current_selections = this.props.data_load;
+                    let currentSelectionString = current_selections.map(select => String(select));
                     for (let i = 0; i < current_selections.length; i++) {
                         for (let j = 0; j < result.length; j++) {
-                            if(current_selections[i] === result[j].id.toString()) {
+                            if(String(current_selections[i]) === result[j].id.toString()) {
                                 orderedOptions.push(<option key={result[j].id} value={result[j].id}>{result[j].name}</option>);
+                                choseOptions.push(result[j].id);
                             }
                         }
                     }
 
                     options = result.map((option) => {
                         if (this.props.is_edit === true) {
-                            if (!current_selections.includes(option.id.toString())) {
+                            if (!currentSelectionString.includes(option.id.toString())) {
                                 let innerhtml = <option key={option.id} value={option.id}>{option.name}</option>;
                                 unOptions.push(innerhtml);
                             }
                         }
                         else {
+                            choseOptions.push(option.id);
                             return (
                                 <option key={option.id} value={option.id}>{option.name}</option>
                             )
@@ -361,6 +377,9 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         selectOptions: options,
                         UnauthorizedOptions: unOptions
                     });
+                    if(choseOptions != []){
+                        this.props.getValueOfField(this.props.key_binding, choseOptions);
+                    }
                 },
                 (error) => {
                     console.log(error);
@@ -383,12 +402,16 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 
     // Get the new page titles on change of lang
     componentWillReceiveProps(nextProps) {
-        if(nextProps.language !== this.state.language &&
-           this.props.key_binding === "menu_show_pages" ) {
+        if((nextProps.language !== this.state.language &&
+           this.props.key_binding === "menu_show_pages" )) {
               this.setState({language: nextProps.language});
               let loadPagesURL = "/api/admin/load_widget_design_pages/" +
                   nextProps.language;
               this.initSelectBox(loadPagesURL, this.props.repositoryId); // Re-ender tables select box
+        }
+        if(nextProps.repositoryId !== this.props.repositoryId && this.props.key_binding === "menu_show_pages"){
+            let loadPagesURL = "/api/admin/load_widget_design_pages/" + this.state.language;
+            this.initSelectBox(loadPagesURL, nextProps.repositoryId);
         }
     }
 
@@ -753,6 +776,7 @@ class ExtendComponent extends React.Component {
         this.generateDisplayResult = this.generateDisplayResult.bind(this);
         this.handleOrientationRadio = this.handleOrientationRadio.bind(this);
         this.handleChangeMenuColor = this.handleChangeMenuColor.bind(this);
+        this.handleComponentDidMountOrientation = this.handleComponentDidMountOrientation.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
         if (nextProps.data_load && !prevState.write_more && nextProps.data_load.more_description) {
@@ -920,6 +944,14 @@ class ExtendComponent extends React.Component {
         this.handleChange('menu_orientation', event.target.value);
     }
 
+    handleComponentDidMountOrientation(typeOfOrientation){
+        let setting = this.state.settings;
+        setting['menu_orientation'] = typeOfOrientation;
+        this.setState({ settings: setting });
+        this.props.getValueOfField(this.props.key_binding, typeOfOrientation);
+    }
+
+
     render() {
         if (this.state.type === FREE_DESCRIPTION_TYPE) {
             return (
@@ -1035,7 +1067,7 @@ class ExtendComponent extends React.Component {
                 this.props.language;
             return(
                 <div>
-                  <ComponentRadioSelect handleChange={this.handleOrientationRadio} getValueOfField={this.props.getValueOfField} name="Display Orientation" key_binding="menu_orientation" data_load={this.state.settings.menu_orientation || 'horizontal'} />
+                  <ComponentRadioSelect handleComponentDidMountOrientation={this.handleComponentDidMountOrientation} handleChange={this.handleOrientationRadio} getValueOfField={this.props.getValueOfField} name="Display Orientation" key_binding="menu_orientation" data_load={this.state.settings.menu_orientation || 'horizontal'} />
                   <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Background Color" key_binding="menu_bg_color" data_load={this.state.settings.menu_bg_color} />
                   <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Active Background Color" key_binding="menu_active_bg_color" data_load={this.state.settings.menu_active_bg_color} />
                   <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Default Color" key_binding="menu_default_color" data_load={this.state.settings.menu_default_color} />
@@ -1499,8 +1531,7 @@ class MainLayout extends React.Component {
             language: this.props.data_load.language,
             multiLangSetting: this.props.data_load.multiLangSetting,
             multiLanguageChange: false,
-            accessInitValue: 0,
-            created_date: this.props.data_load.created_date || ''
+            accessInitValue: 0
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
@@ -1671,6 +1702,19 @@ class MainLayout extends React.Component {
         this.setState({
             multiLangSetting: storage
         });
+        if(this.state.widget_type === MENU_TYPE) {
+            if(this.state.label === ''){
+                result = false;
+            }else{
+                result = true;
+            }
+        }else if(this.state.widget_type === NEW_ARRIVALS){
+            if(this.state.label === ''){
+                result = false;
+            }else{
+                result = true;
+            }
+        }
         return result;
     }
 

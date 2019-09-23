@@ -136,3 +136,7 @@
 #panel-heading-main-contents {
   margin-top: 1px !important;
 }
+
+.pull-left > li > a{
+  font-size: 30px;
+}
