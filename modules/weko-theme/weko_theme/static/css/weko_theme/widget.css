@@ -66,7 +66,7 @@
   text-decoration: none;
 }
 
-.rss a > i {
+.rss a>i {
   color: white;
 }
 
@@ -119,4 +119,20 @@
 #header_content {
   padding: 0 !important;
   margin: 0 !important;
+}
+
+.header-footer-type {
+  border: none;
+}
+
+.grid-stack-item {
+  box-shadow: none;
+}
+
+#title-main-content {
+  margin: 0 0 1px !important;
+}
+
+#panel-heading-main-contents {
+  margin-top: 1px !important;
 }
