@@ -1338,14 +1338,12 @@ class WorkActivity(object):
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
                     item_id=item_id).one_or_none()
-                action_stus = activity.action_status
-                return action_stus
-        except NoResultFound as ex:
-            current_app.logger.exception(str(ex))
-            return None
+                if activity:
+                    return activity.action_status
+                else:
+                    return None
         except Exception as ex:
-            db.session.rollback()
-            current_app.logger.exception(str(ex))
+            current_app.logger.error(ex)
             return None
 
 

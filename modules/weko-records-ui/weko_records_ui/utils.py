@@ -54,11 +54,11 @@ def get_item_pidstore_identifier(object_uuid):
             item_id=object_uuid).one_or_none()
         meta = ItemsMetadata.get_record(object_uuid)
         if meta and action_status:
-            pidstore_identifier = meta.get('pidstore_identifier')
-            if pidstore_identifier is not None \
+            permalink = meta.get('permalink')
+            if permalink is not None \
                 and action_status.action_status == \
                     ActionStatusPolicy.ACTION_DONE:
-                return pidstore_identifier.get('identifier_value')
+                return permalink
 
     return None
 
