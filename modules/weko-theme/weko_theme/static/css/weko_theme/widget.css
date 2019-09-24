@@ -133,8 +133,12 @@
   margin: 0 0 1px !important;
 }
 
-#panel-heading-main-contents {
+/* #panel-heading-main-contents {
   margin-top: 1px !important;
+} */
+
+.navbar-nav > li > a{
+  font-size: 30px;
 }
 
 .pull-left > li > a{

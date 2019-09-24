@@ -353,6 +353,7 @@ let PageBodyGrid = function () {
                 navbar += childNavBar;
                 navbar +='</ul></div></div></nav>';
                 $("#" + menuID).append(navbar);
+                $("#" + menuID).css('height', '100%');
             }
         });
     };
@@ -386,7 +387,7 @@ let PageBodyGrid = function () {
             id = 'id="' + innerID + '"';
             this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
         } else if (node.type === MENU_TYPE) {
-          let innerID = 'widget_pages_menu_' + node.widget_id;  // Allow multiple menus
+          let innerID = 'widget_pages_menu_' + node.widget_id + '_' + index;  // Allow multiple menus
           id = 'id="' + innerID + '"';
           // Extract only the settings we want:
           let menuSettings = {};
@@ -548,7 +549,7 @@ let WidgetTheme = function () {
         let result = '<div class="grid-stack-item widget-resize">' +
             '    <div class="' +setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '">' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
