@@ -625,7 +625,7 @@ class IdentifierHandle(object):
                 permalink_uri = ''
                 cnri_datas = self.get_pistore('cnri')
                 if cnri_datas:
-                    permalink_uri = cnri_datas[-1]
+                    permalink_uri = cnri_datas[-1].pid_value
                 metadata_data = {
                     'permalink': permalink_uri
                 }
