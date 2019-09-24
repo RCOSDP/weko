@@ -103,6 +103,7 @@ ${INVENIO_WEB_INSTANCE} db create -v
 # sphinxdoc-create-database-end
 
 # sphinxdoc-index-initialisation-begin
+${INVENIO_WEB_INSTANCE} index destroy --yes-i-know
 ${INVENIO_WEB_INSTANCE} index init
 sleep 20
 ${INVENIO_WEB_INSTANCE} index queue init

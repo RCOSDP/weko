@@ -158,6 +158,33 @@ services:
     links:
       - elasticsearch
 
+  cadvisor:
+    restart: "always"
+    image: google/cadvisor:latest
+    ports:
+      - "8080:8080"
+    cap_add:
+      - SYS_TIME
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+
+  node_exporter:
+    restart: "always"
+    image: prom/node-exporter
+    ports:
+      - "9100:9100"
+    cap_add:
+      - SYS_TIME
+    volumes:
+      - /proc:/host/proc
+      - /sys:/host/sys
+      - /:/rootfs
+
 volumes:
   weko3_data:
   static_data:
