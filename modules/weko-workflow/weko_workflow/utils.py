@@ -547,7 +547,7 @@ class IdentifierHandle(object):
                     parent = PersistentIdentifier.get(
                         'recid',
                         child.parent.pid_value.split('/')[1])
-                    doi_pidstore = self.get_pistore(parent.object_uuid)
+                    doi_pidstore = self.get_pistore(pid_type, parent.object_uuid)
 
             return doi_pidstore
 
