@@ -191,6 +191,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         urlkwargs.update(qs_kwargs)
         # Execute search
         search_result = search.execute()
+
         # Generate links for prev/next
         urlkwargs.update(
             size=size,
@@ -210,101 +211,100 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                                     page=page + 1, **urlkwargs)
         # aggs result identify
         rd = search_result.to_dict()
-        q = request.values.get('q')
+        q = request.values.get('q') or '0'
         lang = current_i18n.language
 
-        if q:
-            try:
-                paths = Indexes.get_self_list(q)
-            except BaseException:
-                paths = []
-            agp = rd["aggregations"]["path"]["buckets"]
-            nlst = []
-
-            for p in paths:
-                m = 0
-                for k in range(len(agp)):
-                    if p.path == agp[k].get("key"):
-                        agp[k]["name"] = p.name if lang == "ja" else p.name_en
-                        date_range = agp[k].pop("date_range")
-                        no_available = agp[k].pop("no_available")
-                        pub = dict()
-                        bkt = date_range['available']['buckets']
-                        if bkt:
-                            for d in bkt:
-                                pub["pub_cnt" if d.get("to") else "un_pub_cnt"] = d.get(
-                                    "doc_count")
-                            pub["un_pub_cnt"] += no_available['doc_count']
-                            agp[k]["date_range"] = pub
-                            nlst.append(agp.pop(k))
-                            m = 1
-                        break
-                if m == 0:
-                    index_id = p.path if '/' not in p.path \
-                        else p.path.split('/').pop()
-                    index_info = Indexes.get_index(index_id=index_id)
-                    rss_status = index_info.rss_status
-                    nd = {
-                        'doc_count': 0,
-                        'key': p.path,
-                        'name': p.name if lang == "ja" else p.name_en,
-                        'date_range': {
-                            'pub_cnt': 0,
-                            'un_pub_cnt': 0},
-                        'rss_status': rss_status}
-                    nlst.append(nd)
-            agp.clear()
-            # process index tree image info
-            if len(nlst):
-                index_id = nlst[0].get('key')
-                index_id = index_id if '/' not in index_id \
-                    else index_id.split('/').pop()
+        try:
+            paths = Indexes.get_self_list(q)
+        except BaseException:
+            paths = []
+        agp = rd["aggregations"]["path"]["buckets"]
+        nlst = []
+        for p in paths:
+            m = 0
+            for k in range(len(agp)):
+                if p.path == agp[k].get("key"):
+                    agp[k]["name"] = p.name if lang == "ja" else p.name_en
+                    date_range = agp[k].pop("date_range")
+                    no_available = agp[k].pop("no_available")
+                    pub = dict()
+                    bkt = date_range['available']['buckets']
+                    if bkt:
+                        for d in bkt:
+                            pub["pub_cnt" if d.get(
+                                "to") else "un_pub_cnt"] = d.get(
+                                "doc_count")
+                        pub["un_pub_cnt"] += no_available['doc_count']
+                        agp[k]["date_range"] = pub
+                        nlst.append(agp.pop(k))
+                        m = 1
+                    break
+            if m == 0:
+                index_id = p.path if '/' not in p.path \
+                    else p.path.split('/').pop()
                 index_info = Indexes.get_index(index_id=index_id)
-                # update by weko_dev17 at 2019/04/04
-                if len(index_info.image_name) > 0:
-                    nlst[0]['img'] = index_info.image_name
-                nlst[0]['display_format'] = index_info.display_format
-                nlst[0]['rss_status'] = index_info.rss_status
-            # Update rss_status for index child
-            for idx in range(0, len(nlst)):
-                index_id = nlst[idx].get('key')
-                index_id = index_id if '/' not in index_id \
-                    else index_id.split('/').pop()
-                index_info = Indexes.get_index(index_id=index_id)
-                nlst[idx]['rss_status'] = index_info.rss_status
-            agp.append(nlst)
-            # Register comment
-            try:
-                for hit in rd['hits']['hits']:
-                    _comment = list()
-                    _comment.append(hit['_source']['title'][0])
-                    hit['_source']['_comment'] = _comment
-            except Exception:
-                pass
+                rss_status = index_info.rss_status
+                nd = {
+                    'doc_count': 0,
+                    'key': p.path,
+                    'name': p.name if lang == "ja" else p.name_en,
+                    'date_range': {
+                        'pub_cnt': 0,
+                        'un_pub_cnt': 0},
+                    'rss_status': rss_status}
+                nlst.append(nd)
+        agp.clear()
+        # process index tree image info
+        if len(nlst):
+            index_id = nlst[0].get('key')
+            index_id = index_id if '/' not in index_id \
+                else index_id.split('/').pop()
+            index_info = Indexes.get_index(index_id=index_id)
+            # update by weko_dev17 at 2019/04/04
+            if len(index_info.image_name) > 0:
+                nlst[0]['img'] = index_info.image_name
+            nlst[0]['display_format'] = index_info.display_format
+            nlst[0]['rss_status'] = index_info.rss_status
+        # Update rss_status for index child
+        for idx in range(0, len(nlst)):
+            index_id = nlst[idx].get('key')
+            index_id = index_id if '/' not in index_id \
+                else index_id.split('/').pop()
+            index_info = Indexes.get_index(index_id=index_id)
+            nlst[idx]['rss_status'] = index_info.rss_status
+        agp.append(nlst)
+        # Register comment
+        try:
+            for hit in rd['hits']['hits']:
+                _comment = list()
+                _comment.append(hit['_source']['title'][0])
+                hit['_source']['_comment'] = _comment
+        except Exception:
+            pass
 
-            # add info (headings & page info)
-            try:
-                item_type_list = {}
-                for hit in rd['hits']['hits']:
-                    # get item type schema
-                    item_type_id = \
-                        hit['_source']['_item_metadata']['item_type_id']
-                    if item_type_id in item_type_list:
-                        item_type = copy.deepcopy(item_type_list[item_type_id])
-                    else:
-                        item_type = ItemType.query.filter_by(
-                            id=item_type_id).first()
-                        item_type_list[item_type_id] = copy.deepcopy(item_type)
-                    # heading
-                    heading = get_heading_info(hit, lang, item_type)
-                    hit['_source']['heading'] = heading
-                    # page info
-                    if 'pageStart' not in hit['_source']:
-                        hit['_source']['pageStart'] = []
-                    if 'pageEnd' not in hit['_source']:
-                        hit['_source']['pageEnd'] = []
-            except Exception as ex:
-                current_app.logger.error(ex)
+        # add info (headings & page info)
+        try:
+            item_type_list = {}
+            for hit in rd['hits']['hits']:
+                # get item type schema
+                item_type_id = \
+                    hit['_source']['_item_metadata']['item_type_id']
+                if item_type_id in item_type_list:
+                    item_type = copy.deepcopy(item_type_list[item_type_id])
+                else:
+                    item_type = ItemType.query.filter_by(
+                        id=item_type_id).first()
+                    item_type_list[item_type_id] = copy.deepcopy(item_type)
+                # heading
+                heading = get_heading_info(hit, lang, item_type)
+                hit['_source']['heading'] = heading
+                # page info
+                if 'pageStart' not in hit['_source']:
+                    hit['_source']['pageStart'] = []
+                if 'pageEnd' not in hit['_source']:
+                    hit['_source']['pageEnd'] = []
+        except Exception as ex:
+            current_app.logger.error(ex)
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,

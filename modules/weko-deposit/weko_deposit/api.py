@@ -399,7 +399,7 @@ class WekoDeposit(Deposit):
             return None
 
     @classmethod
-    def create(cls, data, id_=None):
+    def create(cls, data, id_=None, recid=None):
         """Create a deposit.
 
         Adds bucket creation immediately on deposit creation.
@@ -428,7 +428,10 @@ class WekoDeposit(Deposit):
                     'displayname': displayname,
                     'email': current_user.email
                 }
-        deposit = super(WekoDeposit, cls).create(data, id_=id_)
+        if not recid:
+            deposit = super(WekoDeposit, cls).create(data, id_=id_)
+        else:
+            deposit = super(WekoDeposit, cls).create(data, id_=id_, recid=recid)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         recid = PersistentIdentifier.get('recid', str(data['_deposit']['id']))

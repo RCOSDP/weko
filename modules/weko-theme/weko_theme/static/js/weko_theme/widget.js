@@ -7,11 +7,13 @@ const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
 const THEME_SIMPLE = 'simple';
 const THEME_SIDE_LINE = 'side_line';
+const THEME_DEFAULT = 'default';
 const MENU_TYPE = "Menu";
 const DEFAULT_REPOSITORY = "Root Index";
 const HEADER_TYPE = "Header";
 const FOOTER_TYPE = "Footer";
 const BORDER_STYLE_DOUBLE = "double";
+const BORDER_STYLE_NONE = "none";
 const INTERVAL_TIME = 60000; //one minute
 
 (function () {
@@ -40,8 +42,112 @@ let PageBodyGrid = function () {
 
     this.updateMainContent = function (node) {
         let mainContents = $("#main_contents");
+        let titleMainContent = $("#title-main-content");
+        let backgroundColorMainContent = $("#background-color-main-content");
+        let indexBackground = $("#index-background");
+        let panelDefault = $(".panel-default");
+        let panelHeadingMainContents = $("#panel-heading-main-contents");
+        let panel = $(".panel");
+
+        let labelMainContent = node.multiLangSetting.label;
+        let backgroundColor = node.background_color;
+        let frameBorderColorMainContent = node.frame_border_color;
+        let labelTextColor = node.label_text_color;
+        let labelEnable = node.label_enable;
+
+        titleMainContent.text(labelMainContent);
+        titleMainContent.css("color", labelTextColor);
+        backgroundColorMainContent.css("background-color", backgroundColor);
+        indexBackground.css("background-color", backgroundColor);
+        indexBackground.css("border-bottom-right-radius", "3px");
+        indexBackground.css("border-bottom-left-radius", "3px");
+        panelDefault.css("border-color", frameBorderColorMainContent);
+        panelDefault.css("background-color", backgroundColor);
+        panel.css("box-shadow", "none");
+
+        $(".list-group-item").each(function () {
+            if (!$(this).hasClass("style_li")) {
+                $(this).css("background-color", backgroundColor);
+            }
+        });
+
+        if (!labelEnable) {
+            panelHeadingMainContents.css('display', 'none');
+        }
+
+        let style = this.addStyle(node);
+        mainContents.append(style);
+        this.buildMainContentTheme(node);
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
+
+    this.addStyle = function(node){
+        let backgroundColor = node.background_color;
+        let frameBorderColorMainContent = node.frame_border_color;
+        let labelColor = node.label_color;
+        return '<style>' +
+                    '#main_contents .panel{' +
+                        'background-color: ' + backgroundColor + ' !important;' +
+                        'border-color: ' + frameBorderColorMainContent + ';' +
+                    '}' +
+                    '#main_contents .active > a{' +
+                        'background-color: ' + labelColor + ';' +
+                    '}' +
+                    '#main_contents .panel-heading{' +
+                        'background-color: ' + labelColor + ';' +
+                    '}' +
+                    '.panel-default > .panel-heading{' +
+                        'border-bottom: ' + '1px ' + 'solid ' + frameBorderColorMainContent + ';' +
+                    '}' +
+                '</style>';
+    }
+
+    this.buildMainContentTheme = function (node){
+        let panelHeadingMainContents = $("#panel-heading-main-contents");
+        let backgroundColorMainContent = $("#background-color-main-content");
+        let panelMainContent = $("#panel-main-content");
+        let borderStyle = node.border_style;
+        let frameBorderColorMainContent = node.frame_border_color;
+        let theme = node.theme;
+        let borderRadius;
+        let pxBorder;
+        if (borderStyle == BORDER_STYLE_DOUBLE) {
+            pxBorder = "3px ";
+            borderRadius = "1px";
+        }else if(borderStyle == BORDER_STYLE_NONE){
+            pxBorder = "0px";
+            borderRadius = "3px";
+        }else {
+            pxBorder = "1px ";
+            borderRadius = "3px";
+        }
+
+        if (theme == THEME_SIMPLE) {
+            borderRadius = "0px";
+            pxBorder = "none";
+            panelMainContent.css("border", pxBorder);
+            panelHeadingMainContents.css('border-radius', borderRadius);
+            panelHeadingMainContents.css("border-bottom", pxBorder);
+        } else if (theme == THEME_DEFAULT) {
+            panelMainContent.css("border", pxBorder + ' ' + borderStyle + ' ' + frameBorderColorMainContent);
+            backgroundColorMainContent.css("border-top", pxBorder + borderStyle + ' ' + frameBorderColorMainContent);
+            backgroundColorMainContent.css('border-bottom-left-radius', borderRadius);
+            backgroundColorMainContent.css('border-bottom-right-radius', borderRadius);
+            panelHeadingMainContents.css("border-bottom", 'none');
+            panelHeadingMainContents.css("border-top-right-radius", borderRadius);
+            panelHeadingMainContents.css("border-top-left-radius", borderRadius);
+        } else {
+            panelMainContent.css("border-left", pxBorder + ' ' + borderStyle + ' ' + frameBorderColorMainContent);
+            panelMainContent.css("border-right", 'none');
+            panelMainContent.css("border-top", 'none');
+            panelMainContent.css("border-bottom", 'none');
+            panelMainContent.css("border-top-left-radius", '0px');
+            panelMainContent.css("border-bottom-left-radius", '0px');
+            panelHeadingMainContents.css('border-radius', '0px');
+            panelHeadingMainContents.css('border-bottom', 'none');
+        }
+    };
+
 
     this.updateHeaderPage = function (node) {
         let headerElement = $("#header");
@@ -118,13 +224,17 @@ let PageBodyGrid = function () {
         return description;
     };
 
-    this.buildAccessCounter = function (initNumber, languageDescription) {
+    this.buildAccessCounter = function (widgetId, created_date, languageDescription) {
         let data = this.getAccessTopPageValue();
+        let result = 0;
         // Convert to display-able number
-        let initNum = Number(initNumber);
-        let result = Number(data);
-        if (!Number.isNaN(initNum)) {
-            result = result + initNumber;
+        if (data && data[widgetId] && data[widgetId][created_date]) {
+          var widget = data[widgetId][created_date];
+            let initNum = widget.access_counter ? Number(widget.access_counter) : 0;
+            result = widget.all.count ? Number(widget.all.count) : 0;
+            if (!Number.isNaN(initNum)) {
+                result = result + initNum;
+            }
         }
 
         let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + " " : "";
@@ -133,7 +243,8 @@ let PageBodyGrid = function () {
 
         return '<div>'
                 + ' <div class="counter-container">'
-                +       precedingMessage + '<span data-init-number="' + initNumber + '" class = "text-access-counter">' + result + '</span>' + followingMessage
+                +       precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date 
+                + '" class = "text-access-counter">' + result + '</span>' + followingMessage
                 + ' </div>'
                 + ' <div>' + otherMessage + '</div>'
                 + '</div>';
@@ -253,12 +364,12 @@ let PageBodyGrid = function () {
         } else if (node.type === NOTICE_TYPE) {
             content = this.buildNoticeType(languageDescription, index);
         } else if (node.type === ACCESS_COUNTER) {
-            let initNumber = 0;
+            let widgetId = 0;
             if (node.access_counter &&
-                !Number.isNaN(Number(node.access_counter))) {
-                initNumber = Number(node.access_counter);
+                !Number.isNaN(Number(node.widget_id))) {
+                widgetId = Number(node.widget_id);
             }
-            content = this.buildAccessCounter(initNumber, languageDescription);
+            content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
             setInterval(() => { this.setAccessCounterValue(); }, INTERVAL_TIME);
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
@@ -306,25 +417,37 @@ let PageBodyGrid = function () {
     };
 
     this.setAccessCounterValue = function () {
+        // list access counter information: id, innit Number, created date
         let data = this.getAccessTopPageValue();
-        let result = Number(data);
+        let accessCounter = 0;
         $(".text-access-counter").each(function () {
-            let initNumber = $(this).data("initNumber");
-            let accessCounter = result + initNumber;
+            let widgetId = $(this).data("widgetId");
+            let createdDate = $(this).data("createdDate");
+            if (data && data[widgetId] && data[widgetId][createdDate]) {
+                var widget = data[widgetId][createdDate];
+                let result = widget.access_counter ? Number(widget.access_counter) : 0;
+                accessCounter = result + (widget.all.count ? Number(widget.all.count) : 0);
+            }
             $(this).text(accessCounter);
         });
     };
 
     this.getAccessTopPageValue = function () {
         let data = 0;
+        let repository_id = $("#community-id").text();
+        if (!repository_id) {
+            repository_id = DEFAULT_REPOSITORY;
+        }
+        let current_language = $("#current_language").val();
+        if (!current_language) {
+            current_language = "en";
+        }
         $.ajax({
-            url: '/api/stats/top_page_access/0/0',
+            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language,
             method: 'GET',
             async: false,
             success: (response) => {
-                if (response.all && response.all.count) {
-                    data = response.all.count;
-                }
+                data = response;
             }
         });
         return data;
@@ -361,6 +484,8 @@ let WidgetTheme = function () {
         if (!widget_data || !widget_settings) {
             return undefined;
         }
+        let panel = $(".panel");
+        panel.css('box-shadow', 'none');
         let id = (widget_data.id) ? widget_data.id : '';
         let labelTextColor = (widget_settings.label_text_color) ? widget_settings.label_text_color : '';
         let labelColor = (widget_settings.label_color) ? widget_settings.label_color : '';
@@ -411,9 +536,9 @@ let WidgetTheme = function () {
             setClass = "grid-stack-item-content panel header-footer-type";
         }
         let result = '<div class="grid-stack-item widget-resize">' +
-            '    <div class="' +setClass +'" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
+            '    <div class="' +setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; ' + overFlowBody + '"' + id + '">' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '">' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
@@ -451,9 +576,6 @@ let WidgetTheme = function () {
 };
 
 function getWidgetDesignSetting() {
-    $("#header").addClass("hidden");
-    $("#main_footer").addClass("hidden");
-    $("#header_wysiwyg").addClass("hidden");
     let community_id = $("#community-id").text();
     let current_language = $("#current_language").val();
     let url;
@@ -522,9 +644,6 @@ function getWidgetDesignSetting() {
                     if(is_page){
                         $("#main_contents").hide();
                     }
-                    $("#header").removeClass("hidden");
-                    $("#header_wysiwyg").removeClass("hidden");
-                    $("#main_footer").removeClass("hidden");
                     if (community_id !== DEFAULT_REPOSITORY) {
                         $("#community_header").removeAttr("hidden");
                         $("footer > #community_footer").removeAttr("hidden");
