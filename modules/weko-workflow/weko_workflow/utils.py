@@ -26,6 +26,7 @@ from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
 from invenio_records.api import Record
@@ -34,7 +35,6 @@ from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_records.api import ItemTypes
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
@@ -558,6 +558,7 @@ class MappingData(object):
                 data.append(attr.get(key.split('.')[1]))
         return data, key
 
+
 class IdentifierHandle(object):
     """Get Community Info."""
 
@@ -574,6 +575,35 @@ class IdentifierHandle(object):
         self.item_type_id = self.metadata_mapping.get_data_item_type().id
         self.item_metadata = ItemsMetadata.get_record(item_id)
         self.item_record = self.metadata_mapping.record
+
+    def get_doi_pistore(self, object_uuid=None):
+        """Get Persistent Identifier Object by pid_value or item_uuid.
+
+        Arguments:
+            pid_type     -- {string} data list
+
+        Returns:
+            dict -- error message
+
+        """
+        if not object_uuid:
+            object_uuid = self.item_uuid
+        with db.session.no_autoflush:
+            doi_pidstore = PersistentIdentifier.query.filter_by(
+                        pid_type='doi',
+                        object_uuid=object_uuid).one_or_none()
+            if not doi_pidstore:
+                current_pid = PersistentIdentifier.get_by_object(
+                    pid_type='recid',
+                    object_type='rec',
+                    object_uuid=object_uuid
+                )
+                child = PIDRelation.query.filter_by(child_id=current_pid.id).one_or_none()
+                if child and child.parent:
+                    parent = PersistentIdentifier.get('recid', child.parent.pid_value.split('/')[1])
+                    doi_pidstore = self.get_doi_pistore(parent.object_uuid)
+
+            return doi_pidstore
 
     def check_pidstore_exist(self, pid_type, chk_value):
         """Get Persistent Identifier Object by pid_value or item_uuid
@@ -620,7 +650,7 @@ class IdentifierHandle(object):
             current_app.logger.error(ex)
             return False
 
-    def delete_pidstore_status(self, pid_value):
+    def delete_doi_pidstore_status(self, pid_value=None):
         """Get Persistent Identifier Object by pid_value or item_uuid
 
         Arguments:
@@ -630,6 +660,8 @@ class IdentifierHandle(object):
             dict -- error message
         """
         try:
+            if not pid_value:
+                pid_value = self.get_doi_pistore().pid_value
             doi_pidstore = self.check_pidstore_exist('doi', pid_value)
 
             if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:

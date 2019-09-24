@@ -920,6 +920,8 @@ def cancel_action(activity_id='0', action_id=0):
                        activity_id=activity_id)})
 
 
+from .utils import IdentifierHandle
+
 @blueprint.route(
     '/activity/detail/<string:activity_id>/<int:action_id>'
     '/withdraw',
@@ -939,26 +941,29 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         wekouser = ShibUser()
         if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
+            activity_detail = activity.get_activity_detail(activity_id)
             identifier_actionid = get_actionid('identifier_grant')
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
+            identifier_handle = IdentifierHandle(activity_detail.item_id)
 
-            # Clear identifier in ItemMetadata
-            saving_doi_pidstore(None, -1, activity_id)
-            identifier['action_identifier_select'] = \
-                IDENTIFIER_GRANT_IS_WITHDRAWING
-            if identifier:
-                activity.create_or_update_action_identifier(
-                    activity_id,
-                    identifier_actionid,
-                    identifier)
+            if identifier_handle.delete_doi_pidstore_status():
+                identifier['action_identifier_select'] = \
+                    IDENTIFIER_GRANT_IS_WITHDRAWING
+                if identifier:
+                    activity.create_or_update_action_identifier(
+                        activity_id,
+                        identifier_actionid,
+                        identifier)
 
-            return jsonify(code=0,
-                           msg=_('success'),
-                           data={'redirect': url_for(
-                               'weko_workflow.display_activity',
-                               activity_id=activity_id)})
+                return jsonify(code=0,
+                            msg=_('success'),
+                            data={'redirect': url_for(
+                                'weko_workflow.display_activity',
+                                activity_id=activity_id)})
+            else:
+                return jsonify(code=-1, msg=_('DOI Persistent is not exist.'))
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
     except ValueError:
