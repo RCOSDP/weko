@@ -355,7 +355,7 @@ class PagesListSelectControls extends React.Component {
         const selected = this.props.selectedOption;
         let buttons = [];
         let addButton = <IconButton id={'add-page'} onClick={(e) => this.setState({pageModalOpen: true, isEdit: false})} iconClass={'fa fa-plus glyphicon glyphicon-plus'} />;
-        let editButton = <IconButton id={'edit-page'} onClick={() => {this.handleEdit(); this.setState({isEdit: true})}} iconClass={'fa fa-pencil glyphicon glyphicon-pencil'} />;
+        let editButton = <IconButton id={'edit-page'} onClick={(e) => {this.handleEdit(e); this.setState({isEdit: true})}} iconClass={'fa fa-pencil glyphicon glyphicon-pencil'} />;
         let deleteButton = <IconButton id={'delete-page'} onClick={(e) => this.setState({deleteModalOpen: true})} iconClass={'fa fa-trash glyphicon glyphicon-trash'} />;
         if(parseInt(selected) !== 0 && !this.props.isMainLayout) {  // Do not allow the deletion of parent layout
             buttons.push(editButton);

@@ -298,8 +298,9 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.state = {
             selectOptions: [],
             UnauthorizedOptions: [],
-            unauthorList: [],
             language: this.props.language,
+            rightSelected: [],
+            leftSelected: [],
         };
         this.handleChange = this.handleChange.bind(this);
         this.updateGlobalValues = this.updateGlobalValues.bind(this);
@@ -307,8 +308,10 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
         this.handleMoveUpClick = this.handleMoveUpClick.bind(this);
         this.handleMoveDownClick = this.handleMoveDownClick.bind(this);
-        this.onSelect = this.onSelect.bind(this);
         this.initSelectBox = this.initSelectBox.bind(this);
+        this.onLeftSelectChange = this.onLeftSelectChange.bind(this);
+        this.onRightSelectChange = this.onRightSelectChange.bind(this);
+        this.getSelectedOption = this.getSelectedOption.bind(this);
     }
     componentDidMount() {
         this.initSelectBox(this.props.url_request, this.props.repositoryId);
@@ -354,10 +357,14 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         }
                     }
 
+                    let hasMainLayout = false;
                     options = result.map((option) => {
+                        if (option.is_main_layout) {
+                          hasMainLayout = true;
+                        }
                         if (this.props.is_edit === true) {
                             if (!currentSelectionString.includes(option.id.toString())) {
-                                let innerhtml = <option key={option.id} value={option.id}>{option.name}</option>;
+                                let innerhtml = <option key={repositoryId} value={option.id}>{option.name}</option>;
                                 unOptions.push(innerhtml);
                             }
                         }
@@ -368,16 +375,23 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                             )
                         }
                     });
-
-                    if(this.props.is_edit === true) {  // Only add ordered options if editing
-                        options = orderedOptions.concat(options);
+                    options = options.filter((option)=> typeof option !== "undefined");
+                    if (this.props.is_edit === true) {  // Only add ordered options if editing
+                      options = orderedOptions.concat(options);
+                      if (currentSelectionString.includes("0")) {
+                        options.unshift(<option key={0} value={0}>Main Layout</option>);
+                        choseOptions.push("0");
+                      } else if (!hasMainLayout) {
+                        unOptions.unshift(<option key={0} value={0}>Main Layout</option>);
+                      }
+                    } else if (!hasMainLayout) {
+                      options.unshift(<option key={0} value={0}>Main Layout</option>);
                     }
-
                     this.setState({
                         selectOptions: options,
                         UnauthorizedOptions: unOptions
                     });
-                    if(choseOptions != []){
+                    if(Array.isArray(choseOptions) && choseOptions.length){
                         this.props.getValueOfField(this.props.key_binding, choseOptions);
                     }
                 },
@@ -416,21 +430,21 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     isValueExist(item, array) {
-        if (array === undefined) {
-            return true;
+      let isExisted = false;
+      if (array === undefined) {
+        return isExisted;
+      }
+      if (array.length > 0) {
+        for (let prop in array) {
+          if (array[prop].props.value === item) {
+              isExisted = true;
+              break;
+          }
         }
-        if (array.length !== 0) {
-            for (let prop in array) {
-                if (array[prop].props.value == item) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        } else {
-            return false;
-        }
-        return true;
+      } else {
+        return isExisted;
+      }
+      return isExisted;
     }
 
     updateGlobalValues(optionsList) {
@@ -442,6 +456,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     handleMoveRightClick(event) {
+        event.preventDefault();
         let options = document.getElementById(this.props.authorSelect).options;
         let selectedOptions = this.getListOption(this.props.unauthorSelect);
         let nonSelectOptions = [];
@@ -461,43 +476,38 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.setState({
             selectOptions: nonSelectOptions,
             UnauthorizedOptions: selectedOptions,
-            unauthorList: []
         });
         this.updateGlobalValues(nonSelectOptions);
     }
 
     handleMoveLeftClick(event) {
-        let selectedIndex = this.state.unauthorList;
+        event.preventDefault();
         let options = document.getElementById(this.props.unauthorSelect).options;
         let authorizedOptions = this.getListOption(this.props.authorSelect);
         let remainOption = [];
-        for (let option in options) {
-            let registed = false;
-            for (let index in selectedIndex) {
-                if (options[option].value === selectedIndex[index] && options[option].value) {
-                    let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                    if (!this.isValueExist(options[option].value, authorizedOptions)) {
-                        authorizedOptions.push(innerhtml);
-                    }
-                    registed = true;
-                    break;
-                }
+        for (let key in options) {
+          let option = options[key];
+          if (!option.value) {
+            continue;
+          }
+          let innerHTML = <option key={option.value} value={option.value}>{option.text}</option>;
+          if (option.selected) {
+            if (!this.isValueExist(option.value, authorizedOptions)) {
+              authorizedOptions.push(innerHTML);
             }
-            if (!registed) {
-                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                if (options[option].value) {
-                    remainOption.push(innerhtml);
-                }
-            }
+          } else {
+            remainOption.push(innerHTML);
+          }
         }
         this.setState({
             selectOptions: authorizedOptions,
-            UnauthorizedOptions: remainOption
+            UnauthorizedOptions: remainOption,
         });
         this.updateGlobalValues(authorizedOptions);
     }
 
     handleMoveUpClick(event) {
+        event.preventDefault();
         let options = document.getElementById(this.props.authorSelect).options;
         let reOrderedOptions = this.getListOption(this.props.authorSelect);
         for (let option in options) {
@@ -513,6 +523,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     handleMoveDownClick(event) {
+      event.preventDefault();
       let options = document.getElementById(this.props.authorSelect).options;
       let reOrderedOptions = this.getListOption(this.props.authorSelect);
       for (let option in options) {
@@ -534,17 +545,31 @@ class ComponentFieldContainSelectMultiple extends React.Component {
       // this.updateGlobalValues(reOrderedOptions);
     }
 
-    onSelect(event) {
-        var options = event.target.options;
-        var value = [];
-        for (var i = 0, l = options.length; i < l; i++) {
-            if (options[i].selected) {
-                value.push(options[i].value);
-            }
+    getSelectedOption(options) {
+      let data = [];
+      for (let key in options) {
+        let option = options[key];
+        if (option.value && option.selected) {
+          data.push(option.value);
         }
-        this.setState({
-            unauthorList: value
-        });
+      }
+      return data;
+    }
+
+    onLeftSelectChange(event) {
+      let options = event.target.options;
+      let data = this.getSelectedOption(options);
+      this.setState({
+        leftSelected: data
+      })
+    }
+
+    onRightSelectChange(event) {
+      let options = event.target.options;
+      let data = this.getSelectedOption(options);
+      this.setState({
+        rightSelected: data
+      })
     }
 
     render() {
@@ -572,7 +597,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         { upDownArrows }
                         <div className={"style-element " + rowClass}>
                             <span>{this.props.leftBoxTitle}</span><br />
-                            <select name={this.props.name} multiple className="style-select-left" id={this.props.authorSelect} name={this.props.authorSelect}>
+                            <select onChange={this.onLeftSelectChange} multiple className="style-select-left" value={this.state.leftSelected} id={this.props.authorSelect} name={this.props.authorSelect}>
                                 {this.state.selectOptions}
                             </select>
                         </div>
@@ -587,8 +612,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         </div>
                         <div className={"style-element style-element-right " + rowClass }>
                             <span>{this.props.rightBoxTitle}</span><br />
-                            <select multiple value={this.state.unauthorList} className="style-select-right"
-                                onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
+                            <select multiple onChange={this.onRightSelectChange} className="style-select-right" value={this.state.rightSelected}
+                                id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
                                 {this.state.UnauthorizedOptions}
                             </select>
                         </div>
