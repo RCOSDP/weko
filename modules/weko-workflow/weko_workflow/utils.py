@@ -221,13 +221,13 @@ def register_cnri(activity_id):
     record = WekoRecord.get_record(item_uuid)
 
     deposit_id = record.get('_deposit')['id']
-    # record_url = request.url.split('/workflow/')[0] \
-    #     + '/records/' + str(deposit_id)
+    record_url = request.url.split('/workflow/')[0] \
+        + '/records/' + str(deposit_id)
 
-    # weko_handle = Handle()
-    # handle = weko_handle.register_handle(location=record_url)
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
 
-    handle = '555-24/' + str(int(deposit_id) + 1009500)
+    # handle = '555-24/' + str(int(deposit_id) + 1009500)
 
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
