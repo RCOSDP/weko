@@ -605,7 +605,7 @@ class IdentifierHandle(object):
 
             return doi_pidstore
 
-    def check_pidstore_exist(self, pid_type, chk_value):
+    def check_pidstore_exist(self, pid_type, chk_value=None):
         """Get Persistent Identifier Object by pid_value or item_uuid
 
         Arguments:
@@ -617,6 +617,10 @@ class IdentifierHandle(object):
         """
         try:
             with db.session.no_autoflush:
+                if not chk_value:
+                    return PersistentIdentifier.query.filter_by(
+                        pid_type=pid_type,
+                        object_uuid=self.item_uuid).all()
                 return PersistentIdentifier.query.filter_by(
                     pid_type=pid_type,
                     pid_value=chk_value).one_or_none()
@@ -666,10 +670,25 @@ class IdentifierHandle(object):
 
             if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
                 doi_pidstore.delete()
+
+                permalink_uri = ''
+                cnri_datas = self.check_pidstore_exist('cnri')
+                if cnri_datas:
+                    permalink_uri = cnri_datas[-1]
+                metadata_data = {
+                    'permalink': permalink_uri
+                }
+                with db.session.begin_nested():
+                    self.item_metadata.update(metadata_data)
+                    self.item_metadata.commit()
+                db.session.commit()
                 return doi_pidstore.status == PIDStatus.DELETED
             return False
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
+            return False
+        except Exception as ex:
+            current_app.logger.error(ex)
             return False
 
     def update_identifier_data(self, value, type):
