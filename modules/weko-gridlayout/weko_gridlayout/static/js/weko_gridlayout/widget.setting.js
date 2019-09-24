@@ -336,7 +336,6 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             .then(
                 (result) => {
                     let unOptions = [];
-                    let options = [];
                     let orderedOptions = [];
                     let choseOptions = [];
 
@@ -358,7 +357,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                     }
 
                     let hasMainLayout = false;
-                    options = result.map((option) => {
+                    let options = result.map((option) => {
                         if (option.is_main_layout) {
                           hasMainLayout = true;
                         }
@@ -626,7 +625,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 
 class ComponentFieldEditor extends React.Component {
     constructor(props) {
-        super(props)
+        super(props);
         this.quillRef = null;
         this.reactQuillRef = null;
         this.state = {
@@ -684,12 +683,12 @@ class ComponentFieldEditor extends React.Component {
 
         var txtArea = document.createElement('textarea');
         txtArea.style.cssText = "width: 100%;margin: 0px;background: rgb(29, 29, 29);box-sizing: border-box;color: rgb(204, 204, 204);font-size: 15px;outline: none;padding: 20px;line-height: 24px;font-family: Consolas, Menlo, Monaco, &quot;Courier New&quot;, monospace;position: absolute;top: 0;bottom: 0;border: none;display:none";
-        txtArea.value = ''
-        var htmlEditor = this.quillRef.addContainer('ql-custom')
-        htmlEditor.appendChild(txtArea)
-        var qlEditor = document.querySelector('.ql-editor')
+        txtArea.value = '';
+        var htmlEditor = this.quillRef.addContainer('ql-custom');
+        htmlEditor.appendChild(txtArea);
+        var qlEditor = document.querySelector('.ql-editor');
         var htmlButton = document.querySelector('.ql-html');
-        htmlButton.innerHTML = '<b>HTML</b>'
+        htmlButton.innerHTML = '<b>HTML</b>';
         htmlButton.addEventListener('click', function() {
           if (txtArea.style.display === '') {
             quillRef.pasteHTML(txtArea.value);
@@ -1198,7 +1197,6 @@ class ComponentButtonLayout extends React.Component {
                     if (result.success) {
                         addAlert(result.message);
                     } else {
-                        //alert(result.message);
                         let errorMessage = result.message;
                         this.showErrorMessage(errorMessage);
                     }
@@ -1727,18 +1725,8 @@ class MainLayout extends React.Component {
         this.setState({
             multiLangSetting: storage
         });
-        if(this.state.widget_type === MENU_TYPE) {
-            if(this.state.label === ''){
-                result = false;
-            }else{
-                result = true;
-            }
-        }else if(this.state.widget_type === NEW_ARRIVALS){
-            if(this.state.label === ''){
-                result = false;
-            }else{
-                result = true;
-            }
+        if ([NEW_ARRIVALS, MENU_TYPE].includes(this.state.widget_type)) {
+          result = this.state.label !== '';
         }
         return result;
     }

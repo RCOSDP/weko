@@ -100,7 +100,7 @@ let PageBodyGrid = function () {
                         'border-bottom: ' + '1px ' + 'solid ' + frameBorderColorMainContent + ';' +
                     '}' +
                 '</style>';
-    }
+    };
 
     this.buildMainContentTheme = function (node){
         let panelHeadingMainContents = $("#panel-heading-main-contents");
@@ -111,10 +111,10 @@ let PageBodyGrid = function () {
         let theme = node.theme;
         let borderRadius;
         let pxBorder;
-        if (borderStyle == BORDER_STYLE_DOUBLE) {
+        if (borderStyle === BORDER_STYLE_DOUBLE) {
             pxBorder = "3px ";
             borderRadius = "1px";
-        }else if(borderStyle == BORDER_STYLE_NONE){
+        }else if(borderStyle === BORDER_STYLE_NONE){
             pxBorder = "0px";
             borderRadius = "3px";
         }else {
@@ -122,13 +122,13 @@ let PageBodyGrid = function () {
             borderRadius = "3px";
         }
 
-        if (theme == THEME_SIMPLE) {
+        if (theme === THEME_SIMPLE) {
             borderRadius = "0px";
             pxBorder = "none";
             panelMainContent.css("border", pxBorder);
             panelHeadingMainContents.css('border-radius', borderRadius);
             panelHeadingMainContents.css("border-bottom", pxBorder);
-        } else if (theme == THEME_DEFAULT) {
+        } else if (theme === THEME_DEFAULT) {
             panelMainContent.css("border", pxBorder + ' ' + borderStyle + ' ' + frameBorderColorMainContent);
             backgroundColorMainContent.css("border-top", pxBorder + borderStyle + ' ' + frameBorderColorMainContent);
             backgroundColorMainContent.css('border-bottom-left-radius', borderRadius);
@@ -229,7 +229,7 @@ let PageBodyGrid = function () {
         let result = 0;
         // Convert to display-able number
         if (data && data[widgetId] && data[widgetId][created_date]) {
-          var widget = data[widgetId][created_date];
+          let widget = data[widgetId][created_date];
             let initNum = widget.access_counter ? Number(widget.access_counter) : 0;
             result = widget.all.count ? Number(widget.all.count) : 0;
             if (!Number.isNaN(initNum)) {
@@ -292,11 +292,12 @@ let PageBodyGrid = function () {
                 let navbarID = 'widgetNav_' + widgetID;  // Re-use to build unique class ids
                 let navbarClass = settings.menu_orientation === 'vertical' ?
                     'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
-                let mainLayoutTitle = "Main Layout";
+                let mainLayoutTitle = "";
                 let childNavBar = "";
+                let navbarHeader = "";
                 for (let i in endpoints) {  // Create links
                   let liClass = '';
-                  let linkStyle = ''; //'color:' + settings.menu_default_color + ';';
+                  let linkStyle = '';
                   let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
                   let title = endpoints[i].title;
                   let endpointsURL = endpoints[i].url;
@@ -309,6 +310,22 @@ let PageBodyGrid = function () {
                     }
                     childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
                   }
+                }
+
+                if (mainLayoutTitle === "" && Array.isArray(settings.menu_show_pages) && settings.menu_show_pages.includes("0")) {
+                    mainLayoutTitle = "Main Layout";
+                }
+
+                if (mainLayoutTitle) {
+                  navbarHeader =
+                    '<div class="navbar-header">' +
+                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
+                    '        <span class="icon-bar"></span>' +
+                    '        <span class="icon-bar"></span>' +
+                    '        <span class="icon-bar"></span>' +
+                    '      </button>' +
+                    '      <a class="navbar-brand" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
+                    '    </div>';
                 }
 
                 let navbar =
@@ -339,14 +356,7 @@ let PageBodyGrid = function () {
                 '</style>' +
                 '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="background-color:' + settings.menu_bg_color + ';">' +
                 '  <div class="container-fluid">' +
-                '    <div class="navbar-header">' +
-                '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
-                '        <span class="icon-bar"></span>' +
-                '        <span class="icon-bar"></span>' +
-                '        <span class="icon-bar"></span>' +
-                '      </button>' +
-                '      <a class="navbar-brand" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
-                '    </div>' +
+                    navbarHeader +
                 '    <div class="collapse navbar-collapse" id="' + navbarID + '">' +
                 '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
 
