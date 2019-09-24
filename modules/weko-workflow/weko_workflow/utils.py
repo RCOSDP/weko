@@ -534,7 +534,7 @@ class IdentifierHandle(object):
         with db.session.no_autoflush:
             doi_pidstore = PersistentIdentifier.query.filter_by(
                         pid_type=pid_type,
-                        object_uuid=object_uuid).one_or_none()
+                        object_uuid=object_uuid).all()
             if not doi_pidstore:
                 current_pid = PersistentIdentifier.get_by_object(
                     pid_type='recid',
@@ -549,6 +549,8 @@ class IdentifierHandle(object):
                         child.parent.pid_value.split('/')[1])
                     doi_pidstore = self.get_pistore(pid_type, parent.object_uuid)
 
+            if pid_type == 'doi' and len(doi_pidstore):
+                doi_pidstore = doi_pidstore[0]
             return doi_pidstore
 
     def check_pidstore_exist(self, pid_type, chk_value=None):
