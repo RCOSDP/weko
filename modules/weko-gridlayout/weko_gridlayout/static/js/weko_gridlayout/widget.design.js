@@ -1272,7 +1272,7 @@ function saveWidgetDesignSetting(widgetDesignData) {
         'repository_id': repositoryId,
         'settings': saveData
     };
-    if (pageId && !isMainLayout) {  // Saving a page not the main layout
+    if (pageId && String(pageId) !== "0" && !isMainLayout) {  // Saving a page not the main layout
       postData.page_id = pageId
     }
 
