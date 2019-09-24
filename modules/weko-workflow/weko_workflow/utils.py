@@ -56,25 +56,6 @@ def get_identifier_setting(community_id):
             repository=community_id).one_or_none()
 
 
-def get_community_id_by_index(index_name):
-    """
-    Get community use indexName input is index_name_english.
-
-    :param index_name: Index Tree's Name
-    :return: None or Item Type's info
-    """
-    communities = Community.query.all()
-    ret_community = []
-    for community in communities:
-        if community.index.index_name == index_name \
-                or community.index.index_name_english == index_name:
-            ret_community.append(community.id)
-
-    if len(ret_community) > 0:
-        return ret_community[0]
-    return None
-
-
 def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
     """
     Mapp doi pidstore data to ItemMetadata.
@@ -172,43 +153,6 @@ def find_doi(doi_link):
         return is_existed
 
 
-def delete_doi_pidstore(link_doi):
-    """
-    Change status of registed doi_pidstore.
-
-    :param link_doi:
-    :return: True/False
-    """
-    try:
-        with db.session.no_autoflush:
-            doi_pidstore = PersistentIdentifier.query.filter_by(
-                pid_type='doi',
-                object_type='rec',
-                pid_value=link_doi,
-                status=PIDStatus.REGISTERED).one_or_none()
-
-        if doi_pidstore:
-            doi_pidstore.delete()
-            return doi_pidstore.status == PIDStatus.DELETED
-        return False
-    except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(pidNotEx)
-        return False
-
-
-def reg_invenio_pidstore(pid_value, item_id):
-    """
-    Register pids_tore.
-
-    :param: pid_value, item_id
-    """
-    try:
-        PersistentIdentifier.create('doi', pid_value, None,
-                                    PIDStatus.REGISTERED, 'rec', item_id)
-    except PIDAlreadyExists as pidArlEx:
-        current_app.logger.error(pidArlEx)
-
-
 def register_cnri(activity_id):
     """
     Register CNRI with Persistent Identifiers.
@@ -227,8 +171,6 @@ def register_cnri(activity_id):
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
 
-    # handle = '555-24/' + str(int(deposit_id) + 1009500)
-
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
@@ -238,6 +180,7 @@ def register_cnri(activity_id):
             identifier.update_identifier_data(handle, 'HDL')
     else:
         current_app.logger.error('Cannot connect Handle server!')
+
 
 def item_metadata_validation(item_id, identifier_type):
     """
@@ -562,10 +505,10 @@ class MappingData(object):
 class IdentifierHandle(object):
     """Get Community Info."""
 
-    item_uuid        = ''
-    item_type_id     = None
-    item_record      = None
-    item_metadata    = None
+    item_uuid = ''
+    item_type_id = None
+    item_record = None
+    item_metadata = None
     metadata_mapping = None
 
     def __init__(self, item_id):
@@ -576,7 +519,7 @@ class IdentifierHandle(object):
         self.item_metadata = ItemsMetadata.get_record(item_id)
         self.item_record = self.metadata_mapping.record
 
-    def get_doi_pistore(self, object_uuid=None):
+    def get_pistore(self, pid_type='doi', object_uuid=None):
         """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
@@ -590,7 +533,7 @@ class IdentifierHandle(object):
             object_uuid = self.item_uuid
         with db.session.no_autoflush:
             doi_pidstore = PersistentIdentifier.query.filter_by(
-                        pid_type='doi',
+                        pid_type=pid_type,
                         object_uuid=object_uuid).one_or_none()
             if not doi_pidstore:
                 current_pid = PersistentIdentifier.get_by_object(
@@ -598,15 +541,18 @@ class IdentifierHandle(object):
                     object_type='rec',
                     object_uuid=object_uuid
                 )
-                child = PIDRelation.query.filter_by(child_id=current_pid.id).one_or_none()
+                child = PIDRelation.query.filter_by(
+                    child_id=current_pid.id).one_or_none()
                 if child and child.parent:
-                    parent = PersistentIdentifier.get('recid', child.parent.pid_value.split('/')[1])
-                    doi_pidstore = self.get_doi_pistore(parent.object_uuid)
+                    parent = PersistentIdentifier.get(
+                        'recid',
+                        child.parent.pid_value.split('/')[1])
+                    doi_pidstore = self.get_pistore(parent.object_uuid)
 
             return doi_pidstore
 
     def check_pidstore_exist(self, pid_type, chk_value=None):
-        """Get Persistent Identifier Object by pid_value or item_uuid
+        """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
             pid_type     -- {string} data list
@@ -614,6 +560,7 @@ class IdentifierHandle(object):
 
         Returns:
             dict -- error message
+
         """
         try:
             with db.session.no_autoflush:
@@ -629,7 +576,7 @@ class IdentifierHandle(object):
             return None
 
     def register_pidstore(self, pid_type, reg_value):
-        """Get Persistent Identifier Object by pid_value or item_uuid
+        """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
             pid_type     -- {string} data list
@@ -637,6 +584,7 @@ class IdentifierHandle(object):
 
         Returns:
             dict -- error message
+
         """
         try:
             prev_pidstore = self.check_pidstore_exist(pid_type, reg_value)
@@ -655,24 +603,25 @@ class IdentifierHandle(object):
             return False
 
     def delete_doi_pidstore_status(self, pid_value=None):
-        """Get Persistent Identifier Object by pid_value or item_uuid
+        """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
             pid_value -- {string} data list
 
         Returns:
             dict -- error message
+
         """
         try:
             if not pid_value:
-                pid_value = self.get_doi_pistore().pid_value
+                pid_value = self.get_pistore().pid_value
             doi_pidstore = self.check_pidstore_exist('doi', pid_value)
 
             if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
                 doi_pidstore.delete()
 
                 permalink_uri = ''
-                cnri_datas = self.check_pidstore_exist('cnri')
+                cnri_datas = self.get_pistore('cnri')
                 if cnri_datas:
                     permalink_uri = cnri_datas[-1]
                 metadata_data = {
@@ -691,68 +640,77 @@ class IdentifierHandle(object):
             current_app.logger.error(ex)
             return False
 
-    def update_identifier_data(self, value, type):
-        """Get Persistent Identifier Object by pid_value or item_uuid
+    def update_identifier_data(self, input_value, input_type):
+        """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
             pid_value -- {string} data list
 
         Returns:
             dict -- error message
+
         """
-        _, key_value = self.metadata_mapping.get_data_by_property("identifier.@value")
-        _, key_type = self.metadata_mapping.get_data_by_property("identifier.@attributes.identifierType")
+        _, key_value = self.metadata_mapping.get_data_by_property(
+            "identifier.@value")
+        _, key_type = self.metadata_mapping.get_data_by_property(
+            "identifier.@attributes.identifierType")
 
         try:
             self.commit(key_id=key_value.split('.')[0],
                         key_val=key_value.split('.')[1],
                         key_typ=key_type.split('.')[1],
                         atr_nam='Identifier',
-                        atr_val=value,
-                        atr_typ=type
-            )
+                        atr_val=input_value,
+                        atr_typ=input_type
+                        )
         except Exception as pidNotEx:
             current_app.logger.error(pidNotEx)
             db.session.rollback()
 
-    def update_identifier_regist_data(self, value, type):
-        """Get Persistent Identifier Object by pid_value or item_uuid
+    def update_identifier_regist_data(self, input_value, input_type):
+        """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
             pid_value -- {string} data list
 
         Returns:
             dict -- error message
+
         """
-        _, key_value = self.metadata_mapping.get_data_by_property("identifierRegistration.@value")
-        _, key_type = self.metadata_mapping.get_data_by_property("identifierRegistration.@attributes.identifierType")
+        _, key_value = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@value")
+        _, key_type = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@attributes.identifierType")
 
         try:
             self.commit(key_id=key_value.split('.')[0],
                         key_val=key_value.split('.')[1],
                         key_typ=key_type.split('.')[1],
                         atr_nam='Identifier Registration',
-                        atr_val=value,
-                        atr_typ=type
-            )
+                        atr_val=input_value,
+                        atr_typ=input_type
+                        )
         except Exception as pidNotEx:
             current_app.logger.error(pidNotEx)
             db.session.rollback()
 
     def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
-        """Get Persistent Identifier Object by pid_value or item_uuid
+        """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
             pid_value -- {string} data list
 
         Returns:
             dict -- error message
+
         """
         item_type_obj = ItemTypes.get_by_id(self.item_type_id)
-        option = item_type_obj.render.get('meta_list', {}).get(key_id, {}).get('option')
+        option = item_type_obj.render.get('meta_list', {})\
+            .get(key_id, {}).get('option')
+
+        multi_option = None
         if option:
             multi_option = option.get('multiple')
-
 
         data = self.item_record.get(key_id)
 
@@ -779,7 +737,8 @@ class IdentifierHandle(object):
                     key_val: atr_val,
                     key_typ: atr_typ
                 }]
-            record_data = { key_id: data
+            record_data = {
+                key_id: data
             }
 
         metadata_data = self.item_metadata.get(key_id, [])
