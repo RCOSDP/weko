@@ -549,7 +549,7 @@ class IdentifierHandle(object):
                         child.parent.pid_value.split('/')[1])
                     doi_pidstore = self.get_pistore(pid_type, parent.object_uuid)
 
-            if pid_type == 'doi' and len(doi_pidstore):
+            if pid_type == 'doi' and isinstance(doi_pidstore, array):
                 doi_pidstore = doi_pidstore[0]
             return doi_pidstore
 
