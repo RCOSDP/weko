@@ -21,7 +21,7 @@ invenio-pidstore>=1.0.0
 invenio-query-parser==0.6.0
 invenio-queues==1.0.0a1
 invenio-records>=1.2.0
-invenio-records-files>=1.0.0a11
+invenio-records-files>=1.0.0b1
 invenio-records-ui>=1.0.1
 invenio-rest>=1.0.0
 invenio-search>=1.1.0
@@ -29,4 +29,3 @@ invenio-search-ui==1.0.0a9
 invenio-theme==1.0.0b4
 invenio-csl-rest==1.0.0a1
 flask-sitemap==0.1.0
-invenio-files-rest>=1.0.0b1
