@@ -312,6 +312,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.onLeftSelectChange = this.onLeftSelectChange.bind(this);
         this.onRightSelectChange = this.onRightSelectChange.bind(this);
         this.getSelectedOption = this.getSelectedOption.bind(this);
+        this.isValueExist = this.isValueExist.bind(this);
     }
     componentDidMount() {
         this.initSelectBox(this.props.url_request, this.props.repositoryId);
@@ -480,29 +481,29 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     handleMoveLeftClick(event) {
-        event.preventDefault();
         let options = document.getElementById(this.props.unauthorSelect).options;
         let authorizedOptions = this.getListOption(this.props.authorSelect);
         let remainOption = [];
         for (let key in options) {
-          let option = options[key];
-          if (!option.value) {
-            continue;
-          }
-          let innerHTML = <option key={option.value} value={option.value}>{option.text}</option>;
-          if (option.selected) {
-            if (!this.isValueExist(option.value, authorizedOptions)) {
-              authorizedOptions.push(innerHTML);
+            let option = options[key];
+            if (!option.value) {
+                continue;
             }
-          } else {
-            remainOption.push(innerHTML);
-          }
+            let innerHTML = <option key={option.value} value={option.value}>{option.text}</option>;
+            if (option.selected) {
+                if (!this.isValueExist(option.value, authorizedOptions)) {
+                    authorizedOptions.push(innerHTML);
+                }
+            } else {
+                remainOption.push(innerHTML);
+            }
         }
         this.setState({
             selectOptions: authorizedOptions,
             UnauthorizedOptions: remainOption,
         });
         this.updateGlobalValues(authorizedOptions);
+        event.preventDefault();
     }
 
     handleMoveUpClick(event) {
@@ -521,27 +522,21 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.updateGlobalValues(reOrderedOptions);
     }
 
-    handleMoveDownClick(event) {
-      event.preventDefault();
-      let options = document.getElementById(this.props.authorSelect).options;
-      let reOrderedOptions = this.getListOption(this.props.authorSelect);
-      for (let option in options) {
-          if(options[option].value) {
-              if (options[option].selected && option < (options.length - 1)) {
-                  let selectedOption = reOrderedOptions.splice(option, 1)[0];
-                  reOrderedOptions.splice((option + 1), 0, selectedOption);
-              }
-          }
-      }
-      this.setState({ selectOptions: reOrderedOptions });
-
-      let data = [];
-      for (let i = 0;  i < reOrderedOptions.length; i++) {
-          data.push(reOrderedOptions[i].props.value);
-      }
-      this.props.getValueOfField(this.props.key_binding, data);
-
-      // this.updateGlobalValues(reOrderedOptions);
+    handleMoveDownClick(event){
+        event.preventDefault();
+        let options = document.getElementById(this.props.authorSelect).options;
+        let reOrderedOptions = this.getListOption(this.props.authorSelect);
+        let choseOption;
+        for(let i = 0; i < options.length; i++){
+            if(options[i].selected){
+                choseOption = reOrderedOptions[i];
+                reOrderedOptions.splice(i, 1);
+                reOrderedOptions.splice(i + 1, 0, choseOption);
+                this.updateGlobalValues(reOrderedOptions);
+                this.setState({ selectOptions: reOrderedOptions });
+                break;
+            }
+        }
     }
 
     getSelectedOption(options) {
@@ -596,7 +591,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         { upDownArrows }
                         <div className={"style-element " + rowClass}>
                             <span>{this.props.leftBoxTitle}</span><br />
-                            <select onChange={this.onLeftSelectChange} multiple className="style-select-left" value={this.state.leftSelected} id={this.props.authorSelect} name={this.props.authorSelect}>
+                            <select onChange={this.onLeftSelectChange} multiple className="style-select-left" value={this.state.leftSelected}
+                                id={this.props.authorSelect} name={this.props.authorSelect}>
                                 {this.state.selectOptions}
                             </select>
                         </div>
