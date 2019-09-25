@@ -652,6 +652,25 @@ class WidgetDesignPageMultiLangData(db.Model):
         """Get widget multi language data by id."""
         return cls.query.filter_by(id=id).one_or_none()
 
+    @classmethod
+    def delete_by_page_id(cls, page_id):
+        """Delete widget page multi language by page id.
+
+        :param page_id: Page model's id
+        :return: True if successful or False
+        """
+        if page_id:
+            try:
+                with db.session.begin_nested():
+                    cls.query.filter_by(widget_design_page_id=page_id).delete()
+                db.session.commit()
+                return True
+            except Exception as ex:
+                db.session.rollback()
+                current_app.logger.error(ex)
+                raise ex
+        return False
+
 
 __all__ = ([
     'WidgetType',

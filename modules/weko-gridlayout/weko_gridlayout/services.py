@@ -33,8 +33,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE, \
     WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
-from .models import WidgetDesignPage, WidgetDesignSetting, WidgetItem, \
-    WidgetMultiLangData
+from .models import WidgetDesignPage, WidgetDesignPageMultiLangData, \
+    WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
     convert_data_to_design_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
@@ -799,7 +799,10 @@ class WidgetDesignPageServices:
             'error': ''
         }
         try:
-            result['result'] = WidgetDesignPage.delete(page_id)
+            delete_result = WidgetDesignPageMultiLangData.delete_by_page_id(
+                page_id)
+            if delete_result:
+                result['result'] = WidgetDesignPage.delete(page_id)
         except Exception as e:
             current_app.logger.error(e)
             result['error'] = _('Unable to delete page.')
