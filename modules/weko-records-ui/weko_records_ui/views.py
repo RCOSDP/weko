@@ -55,7 +55,7 @@ from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
 from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_item_pidstore_identifier, get_min_price_billing_file_download
+    get_record_permalink, get_min_price_billing_file_download
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -376,7 +376,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     # Get item meta data
     record['permalink_uri'] = None
-    permalink = get_item_pidstore_identifier(pid.object_uuid)
+    permalink = get_record_permalink(pid.object_uuid)
     if not permalink:
         record['permalink_uri'] = request.url
     else:

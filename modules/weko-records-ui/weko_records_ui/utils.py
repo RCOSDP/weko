@@ -42,25 +42,18 @@ def check_items_settings():
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
 
 
-def get_item_pidstore_identifier(object_uuid):
+def get_record_permalink(object_uuid):
     """
     Get identifier value from ItemsMetadata.
 
     :param: index_name_english
     :return: dict of item type info
     """
-    with db.session.no_autoflush:
-        action_status = Activity.query.filter_by(
-            item_id=object_uuid).one_or_none()
-        meta = ItemsMetadata.get_record(object_uuid)
-        if meta and action_status:
-            permalink = meta.get('permalink')
-            if permalink is not None \
-                and action_status.action_status == \
-                    ActionStatusPolicy.ACTION_DONE:
-                return permalink
-
-    return None
+    meta = ItemsMetadata.get_record(object_uuid)
+    if meta:
+        return meta.get('permalink')
+    else:
+        return None
 
 
 def get_groups_price(record: dict) -> list:
