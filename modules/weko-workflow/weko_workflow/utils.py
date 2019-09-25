@@ -512,7 +512,7 @@ class IdentifierHandle(object):
     metadata_mapping = None
 
     def __init__(self, item_id):
-        """Initilize pagination."""
+        """Initilize IdentifierHandle."""
         self.item_uuid = item_id
         self.metadata_mapping = MappingData(item_id)
         self.item_type_id = self.metadata_mapping.get_data_item_type().id
@@ -523,19 +523,20 @@ class IdentifierHandle(object):
         """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
-            pid_type     -- {string} data list
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            object_uuid  -- {uuid} assigned object's uuid
 
         Returns:
-            dict -- error message
+            pid_object   -- PID object or None
 
         """
         if not object_uuid:
             object_uuid = self.item_uuid
         with db.session.no_autoflush:
-            doi_pidstore = PersistentIdentifier.query.filter_by(
-                        pid_type=pid_type,
-                        object_uuid=object_uuid).all()
-            if not doi_pidstore:
+            pid_object = PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                object_uuid=object_uuid).all()
+            if not pid_object:
                 current_pid = PersistentIdentifier.get_by_object(
                     pid_type='recid',
                     object_type='rec',
@@ -547,21 +548,22 @@ class IdentifierHandle(object):
                     parent = PersistentIdentifier.get(
                         'recid',
                         child.parent.pid_value.split('/')[1])
-                    doi_pidstore = self.get_pistore(pid_type, parent.object_uuid)
+                    pid_object = self.get_pistore(pid_type,
+                                                  parent.object_uuid)
 
-            if pid_type == 'doi' and isinstance(doi_pidstore, list):
-                doi_pidstore = doi_pidstore[0]
-            return doi_pidstore
+            if pid_type == 'doi' and isinstance(pid_object, list):
+                pid_object = pid_object[0]
+            return pid_object
 
     def check_pidstore_exist(self, pid_type, chk_value=None):
-        """Get Persistent Identifier Object by pid_value or item_uuid.
+        """Get check whether PIDStore object exist.
 
         Arguments:
-            pid_type     -- {string} data list
-            search_value -- {string} is sending feedback
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            chk_value    -- {string} object_uuid or pid_value
 
         Returns:
-            dict -- error message
+            return       -- PID object if exist
 
         """
         try:
@@ -578,14 +580,14 @@ class IdentifierHandle(object):
             return None
 
     def register_pidstore(self, pid_type, reg_value):
-        """Get Persistent Identifier Object by pid_value or item_uuid.
+        """Register Persistent Identifier Object.
 
         Arguments:
-            pid_type     -- {string} data list
-            search_value -- {string} is sending feedback
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            reg_value    -- {string} pid_value
 
         Returns:
-            dict -- error message
+            return       -- PID object if exist
 
         """
         try:
@@ -605,13 +607,13 @@ class IdentifierHandle(object):
             return False
 
     def delete_doi_pidstore_status(self, pid_value=None):
-        """Get Persistent Identifier Object by pid_value or item_uuid.
+        """Change Persistent Identifier Object status to DELETE.
 
         Arguments:
-            pid_value -- {string} data list
+            pid_value -- {string} pid_value
 
         Returns:
-            dict -- error message
+            return    -- is pid object's status changed?
 
         """
         try:
@@ -643,13 +645,14 @@ class IdentifierHandle(object):
             return False
 
     def update_identifier_data(self, input_value, input_type):
-        """Get Persistent Identifier Object by pid_value or item_uuid.
+        """Update Identifier of WekoDeposit and ItemMetadata.
 
         Arguments:
-            pid_value -- {string} data list
+            input_value -- {string} Identifier input
+            input_type  -- {string} Identifier type
 
         Returns:
-            dict -- error message
+            None
 
         """
         _, key_value = self.metadata_mapping.get_data_by_property(
@@ -670,13 +673,14 @@ class IdentifierHandle(object):
             db.session.rollback()
 
     def update_identifier_regist_data(self, input_value, input_type):
-        """Get Persistent Identifier Object by pid_value or item_uuid.
+        """Update Identifier Registration of WekoDeposit and ItemMetadata.
 
         Arguments:
-            pid_value -- {string} data list
+            input_value -- {string} Identifier input
+            input_type  -- {string} Identifier type
 
         Returns:
-            dict -- error message
+            None
 
         """
         _, key_value = self.metadata_mapping.get_data_by_property(
@@ -697,13 +701,18 @@ class IdentifierHandle(object):
             db.session.rollback()
 
     def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
-        """Get Persistent Identifier Object by pid_value or item_uuid.
+        """Commit update.
 
         Arguments:
-            pid_value -- {string} data list
+            key_id  -- {string} Identifier subitem's ID
+            key_val -- {string} Identifier Value subitem's ID
+            key_typ -- {string} Identifier Type subitem's ID
+            atr_nam -- {string} attribute_name data
+            atr_val -- {string} attribute_value_mlt value data
+            atr_typ -- {string} attribute_value_mlt type data
 
         Returns:
-            dict -- error message
+            None
 
         """
         item_type_obj = ItemTypes.get_by_id(self.item_type_id)

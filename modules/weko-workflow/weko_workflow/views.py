@@ -59,8 +59,9 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import find_doi, get_identifier_setting, is_withdrawn_doi, \
-    item_metadata_validation, register_cnri, saving_doi_pidstore
+from .utils import IdentifierHandle, find_doi, get_identifier_setting, \
+    is_withdrawn_doi, item_metadata_validation, register_cnri, \
+    saving_doi_pidstore
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -920,8 +921,6 @@ def cancel_action(activity_id='0', action_id=0):
                        activity_id=activity_id)})
 
 
-from .utils import IdentifierHandle
-
 @blueprint.route(
     '/activity/detail/<string:activity_id>/<int:action_id>'
     '/withdraw',
@@ -957,11 +956,13 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                         identifier_actionid,
                         identifier)
 
-                return jsonify(code=0,
-                            msg=_('success'),
-                            data={'redirect': url_for(
-                                'weko_workflow.display_activity',
-                                activity_id=activity_id)})
+                return jsonify(
+                    code=0,
+                    msg=_('success'),
+                    data={'redirect': url_for(
+                        'weko_workflow.display_activity',
+                        activity_id=activity_id)}
+                )
             else:
                 return jsonify(code=-1, msg=_('DOI Persistent is not exist.'))
         else:
@@ -998,8 +999,10 @@ def check_existed_doi():
         respon['code'] = 0
     return jsonify(respon)
 
-@blueprint.route('/save_feedback_maillist/<string:activity_id>/<int:action_id>',
-                 methods=['POST'])
+
+@blueprint.route(
+    '/save_feedback_maillist/<string:activity_id>/<int:action_id>',
+    methods=['POST'])
 @login_required
 @check_authority
 def save_feedback_maillist(activity_id='0', action_id='0'):
