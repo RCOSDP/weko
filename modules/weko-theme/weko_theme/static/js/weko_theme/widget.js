@@ -297,7 +297,6 @@ let PageBodyGrid = function () {
                 let navbarHeader = "";
                 for (let i in endpoints) {  // Create links
                   let liClass = '';
-                  let linkStyle = '';
                   let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
                   let title = endpoints[i].title;
                   let endpointsURL = endpoints[i].url;
@@ -306,7 +305,6 @@ let PageBodyGrid = function () {
                   } else {
                     if (window.location.pathname === endpointsURL) {
                       liClass = 'class="active"';
-                      linkStyle = 'color:' + settings.menu_active_color + ';';
                     }
                     childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
                   }
@@ -317,6 +315,11 @@ let PageBodyGrid = function () {
                 }
 
                 if (mainLayoutTitle) {
+                  let mainLayoutActive = "";
+                  let currentMainLayout = window.location.pathname + window.location.search;
+                  if (currentMainLayout === repoHomeURL) {
+                      mainLayoutActive = 'active';
+                  }
                   navbarHeader =
                     '<div class="navbar-header">' +
                     '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
@@ -324,7 +327,7 @@ let PageBodyGrid = function () {
                     '        <span class="icon-bar"></span>' +
                     '        <span class="icon-bar"></span>' +
                     '      </button>' +
-                    '      <a class="navbar-brand" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
+                    '      <a class="navbar-brand '+ mainLayoutActive +'" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
                     '    </div>';
                 }
 
@@ -332,6 +335,10 @@ let PageBodyGrid = function () {
                 '<style>' +  // Renaming classes allows for multiple menus on page
                 '.navbar-default.' + navbarID + ' .navbar-brand {' +
                 '    color:' + settings.menu_default_color + ';' +
+                '}' +
+                '.navbar-default.' + navbarID + ' .navbar-header > a:hover, .navbar-default.' + navbarID + ' .navbar-header > a.active {' +
+                '    background-color:' + settings.menu_active_bg_color + ';' +
+                '    color:' +  settings.menu_active_color + ';' +
                 '}' +
                 '  .navbar-default.' + navbarID + ' .navbar-nav > li > a, .nav-pills > li > a {' +
                 '    color:' +  settings.menu_default_color + ';' +
