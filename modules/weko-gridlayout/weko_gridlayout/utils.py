@@ -295,8 +295,9 @@ def build_data_setting(data):
     elif (str(data.get('widget_type'))
             == config.WEKO_GRIDLAYOUT_NOTICE_TYPE):
         _build_notice_setting_data(result, setting)
-    elif str(data.get('widget_type')) == 'Menu':  # TODO: Change to constant
-        color = '#4169E1'
+    elif str(
+            data.get('widget_type')) == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
+        color = config.WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR
         result['menu_orientation'] = data['settings'].get(
             'menu_orientation') or 'horizontal'
         result['menu_bg_color'] = data['settings'].get(
@@ -475,18 +476,19 @@ def convert_data_to_edit_pack(data):
     result['multiLangSetting'] = settings.get('multiLangSetting')
     result['repository_id'] = data.get('repository_id')
     result['widget_type'] = data.get('widget_type')
-    if str(data.get('widget_type')) == 'Access counter':
+    if (str(data.get('widget_type')) ==
+            config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE):
         result_settings['access_counter'] = settings.get('access_counter')
         result_settings['preceding_message'] = settings.get(
             'preceding_message')
         result_settings['following_message'] = settings.get(
             'following_message')
         result_settings['other_message'] = settings.get('other_message')
-    if str(data.get('widget_type')) == 'New arrivals':
+    if str(data.get('widget_type')) == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
         result_settings['new_dates'] = settings.get('new_dates')
         result_settings['display_result'] = settings.get('display_result')
         result_settings['rss_feed'] = settings.get('rss_feed')
-    if str(data.get('widget_type')) == 'Menu':  # TODO: Change to constant
+    if str(data.get('widget_type')) == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
         update_menu_item(result_settings, settings)
     result['settings'] = result_settings
     return result
