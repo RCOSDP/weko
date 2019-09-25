@@ -363,7 +363,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         }
                         if (this.props.is_edit === true) {
                             if (!currentSelectionString.includes(option.id.toString())) {
-                                let innerhtml = <option key={repositoryId} value={option.id}>{option.name}</option>;
+                                let innerhtml = <option key={option.id} value={option.id}>{option.name}</option>;
                                 unOptions.push(innerhtml);
                             }
                         }
