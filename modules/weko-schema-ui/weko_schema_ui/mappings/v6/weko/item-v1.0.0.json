@@ -90,6 +90,7 @@
         },
         "itemtype": {
           "type": "text",
+          "fielddata": true,
           "copy_to": [
             "search_other"
           ]
@@ -126,10 +127,12 @@
           "type": "object",
           "properties": {
           "index_id": {
-            "type": "text"
+            "type": "text",
+            "fielddata": true
           },
           "sort": {
-            "type": "text"
+            "type": "text",
+            "fielddata": true
            }
           }
         },
