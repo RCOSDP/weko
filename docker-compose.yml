@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
+# Copyright (C) 2197 National Institute of Informatics.
 #
 # WEKO3 is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -84,7 +84,7 @@ services:
       - elasticsearch
       - rabbitmq
     ports:
-      - "5001:5000"
+      - "5019:5000"
 
   postgresql:
     restart: "always"
@@ -96,13 +96,13 @@ services:
     volumes:
       - pgsql-data:/var/lib/postgresql/data
     ports:
-      - "25401:5432"
+      - "25419:5432"
 
   redis:
     restart: "always"
     image: redis
     ports:
-      - "26301:6379"
+      - "26319:6379"
 
   elasticsearch:
     restart: "always"
@@ -114,15 +114,15 @@ services:
     environment:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
-      - "29201:9200"
-      - "29301:9300"
+      - "29219:9200"
+      - "29319:9300"
 
   rabbitmq:
     restart: "always"
     image: rabbitmq
     ports:
-      - "24301:4369"
-      - "45601:25672"
+      - "24319:4369"
+      - "45619:25672"
 
   nginx:
     restart: "always"
@@ -140,7 +140,7 @@ services:
     image: mher/flower
     command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
     ports:
-      - "5501:5555"
+      - "5519:5555"
     links:
       - rabbitmq
 
@@ -151,7 +151,7 @@ services:
     restart: "always"
     command: kibana
     ports:
-      - "5601:5601"
+      - "5619:5601"
     environment:
       - "ELASTICSEARCH_URL=http://elasticsearch:9200"
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
