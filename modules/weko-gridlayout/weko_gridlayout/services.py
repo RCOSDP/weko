@@ -51,6 +51,7 @@ class WidgetItemServices:
 
         Arguments:
             widget_id {int} -- id of widget item
+
         """
         widget_item = WidgetItem.get_by_id(widget_id)
         return widget_item.repository_id

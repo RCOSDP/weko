@@ -249,6 +249,7 @@ class WidgetItems(object):
 
         Arguments:
             in_result {WidgetItems} -- [data need to be parse]
+
         """
         record = dict()
         settings = json.loads(in_result.settings)
@@ -493,6 +494,7 @@ class WidgetMultiLangData(object):
 
         Arguments:
             in_result {WidgetItems} -- [data need to be parse]
+
         """
         record = dict()
         settings = json.loads(in_result.settings)

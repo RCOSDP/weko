@@ -88,6 +88,7 @@ def convert_popular_data(source_data, des_data):
     Arguments:
         source_data {dict} -- Source data
         des_data {dict} -- Destination data
+
     """
     des_data['background_color'] = source_data.get('background_color')
     des_data['label_enable'] = source_data.get('label_enable')
@@ -125,6 +126,7 @@ def update_menu_item(item, data_result):
     Arguments:
         item {WidgetItem} -- Item need to be update
         data_result {dict} -- [data to update]
+
     """
     item['menu_orientation'] = data_result.get('menu_orientation')
     item['menu_bg_color'] = data_result.get('menu_bg_color')
@@ -140,6 +142,7 @@ def update_access_counter_item(item, data_result):
     Arguments:
         item {WidgetItem} -- Item need to be update
         data_result {dict} -- [data to update]
+
     """
     item['access_counter'] = data_result.get('access_counter')
     item['preceding_message'] = data_result.get('preceding_message')
@@ -153,6 +156,7 @@ def update_new_arrivals_item(item, data_result):
     Arguments:
         item {WidgetItem} -- Item need to be update
         data_result {dict} -- [data to update]
+
     """
     item['new_dates'] = data_result.get('new_dates')
     item['display_result'] = data_result.get('display_result')
