@@ -35,7 +35,7 @@ from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
@@ -59,9 +59,8 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, find_doi, get_identifier_setting, \
-    is_withdrawn_doi, item_metadata_validation, register_cnri, \
-    saving_doi_pidstore
+from .utils import IdentifierHandle, get_identifier_setting, \
+    item_metadata_validation, register_cnri, saving_doi_pidstore
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -970,7 +969,6 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         current_app.logger.error('Unexpected error: {}', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error!'))
 
-
 # noinspection PyDictCreation
 @blueprint.route('/findDOI', methods=['POST'])
 @login_required
@@ -982,14 +980,16 @@ def check_existed_doi():
     respon['isWithdrawnDoi'] = False
     respon['code'] = 1
     respon['msg'] = 'error'
-    if doi_link is not None:
-        is_exist_doi = find_doi(doi_link)
-        doi_withdrawn = is_withdrawn_doi(doi_link)
-        if is_exist_doi:
+    if doi_link:
+        identifier = IdentifierHandle(None)
+        doi_pidstore = identifier.check_pidstore_exist(
+            'doi',
+            doi_link['doi_link'])
+        if doi_pidstore:
             respon['isExistDOI'] = is_exist_doi
             respon['msg'] = _('This DOI has been used already for another '
                               'item. Please input another DOI.')
-        elif doi_withdrawn:
+        elif doi_pidstore.status == PIDStatus.DELETED:
             respon['isWithdrawnDoi'] = doi_withdrawn
             respon['msg'] = _(
                 'This DOI was withdrawn. Please input another DOI.')

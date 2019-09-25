@@ -115,45 +115,6 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
         current_app.logger.exception(str(ex))
 
 
-def is_withdrawn_doi(doi_link):
-    """
-    Get doi was withdrawn.
-
-    :param: doi_link
-    :return: True/False
-    """
-    try:
-        link_doi = doi_link['doi_link']
-        query = PersistentIdentifier.query.filter_by(
-            pid_value=link_doi, status=PIDStatus.DELETED)
-        return query.count() > 0
-    except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(pidNotEx)
-        return False
-
-
-def find_doi(doi_link):
-    """
-    Get doi has been register by another item.
-
-    :param: doi_link
-    :return: True/False
-    """
-    is_existed = False
-    try:
-        link_doi = doi_link['doi_link']
-        pid_identifiers = PersistentIdentifier.query.filter_by(
-            pid_type='doi', object_type='rec',
-            pid_value=link_doi, status=PIDStatus.REGISTERED).all()
-        for pid_identifier in pid_identifiers:
-            if pid_identifier.pid_value == link_doi:
-                is_existed = True
-        return is_existed
-    except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(pidNotEx)
-        return is_existed
-
-
 def register_cnri(activity_id):
     """
     Register CNRI with Persistent Identifiers.
