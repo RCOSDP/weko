@@ -704,8 +704,7 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
-            if activity_detail is not None and \
-                    activity_detail.item_id is not None:
+            if activity_detail and activity_detail.item_id:
                 record = WekoDeposit.get_record(activity_detail.item_id)
                 if record is not None:
                     deposit = WekoDeposit(record, record.model)

@@ -26,6 +26,7 @@ from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
@@ -519,7 +520,7 @@ class IdentifierHandle(object):
         self.item_metadata = ItemsMetadata.get_record(item_id)
         self.item_record = self.metadata_mapping.record
 
-    def get_pistore(self, pid_type='doi', object_uuid=None):
+    def get_pidstore(self, pid_type='doi', object_uuid=None):
         """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
@@ -535,23 +536,25 @@ class IdentifierHandle(object):
         with db.session.no_autoflush:
             pid_object = PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
-                object_uuid=object_uuid).all()
+                object_uuid=object_uuid,
+                status=PIDStatus.REGISTERED).all()
             if not pid_object:
                 current_pid = PersistentIdentifier.get_by_object(
                     pid_type='recid',
                     object_type='rec',
                     object_uuid=object_uuid
                 )
-                child = PIDRelation.query.filter_by(
-                    child_id=current_pid.id).one_or_none()
-                if child and child.parent:
-                    parent = PersistentIdentifier.get(
-                        'recid',
-                        child.parent.pid_value.split('/')[1])
-                    pid_object = self.get_pistore(pid_type,
-                                                  parent.object_uuid)
+                current_pv = PIDVersioning(child=current_pid)
+                if current_pv and current_pv.parent:
+                    if current_pv.previous:
+                        pid_object = self.get_pidstore(
+                            pid_type,
+                            current_pv.previous.object_uuid)
+                    else:
+                        return None
 
-            if pid_type == 'doi' and isinstance(pid_object, list):
+            if pid_type == 'doi' and pid_object \
+                    and isinstance(pid_object, list):
                 pid_object = pid_object[0]
             return pid_object
 
@@ -618,14 +621,14 @@ class IdentifierHandle(object):
         """
         try:
             if not pid_value:
-                pid_value = self.get_pistore().pid_value
+                pid_value = self.get_pidstore().pid_value
             doi_pidstore = self.check_pidstore_exist('doi', pid_value)
 
             if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
                 doi_pidstore.delete()
 
                 permalink_uri = ''
-                cnri_datas = self.get_pistore('cnri')
+                cnri_datas = self.get_pidstore('cnri')
                 if cnri_datas:
                     permalink_uri = cnri_datas[-1].pid_value
                 metadata_data = {
