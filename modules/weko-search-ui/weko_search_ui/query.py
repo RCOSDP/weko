@@ -486,11 +486,14 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
         sort_obj = dict()
         key_fileds = SearchSetting.get_sort_key(sort_key)
+        nested_sorting = SearchSetting.get_nested_sorting(sort_key)
         if sort == 'desc':
-            sort_obj[key_fileds] = dict(order='desc')
+            sort_obj[key_fileds] = dict(order='desc', unmapped_type='long')
             sort_key = '-' + sort_key
         else:
-            sort_obj[key_fileds] = dict(order='asc')
+            sort_obj[key_fileds] = dict(order='asc', unmapped_type='long')
+        if nested_sorting:
+            sort_obj[key_fileds].update({'nested': nested_sorting})
         search._sort.append(sort_obj)
         urlkwargs.add('sort', sort_key)
 
@@ -756,10 +759,10 @@ def item_path_search_factory(self, search, index_id=None):
         key_fileds = SearchSetting.get_sort_key(sort_key)
         if 'custom_sort' not in sort_key:
             if sort == 'desc':
-                sort_obj[key_fileds] = dict(order='desc')
+                sort_obj[key_fileds] = dict(order='desc', unmapped_type='long')
                 sort_key = '-' + sort_key
             else:
-                sort_obj[key_fileds] = dict(order='asc')
+                sort_obj[key_fileds] = dict(order='asc', unmapped_type='long')
             search._sort.append(sort_obj)
         else:
             if sort == 'desc':
