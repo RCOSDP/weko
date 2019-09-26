@@ -476,8 +476,8 @@ def convert_data_to_edit_pack(data):
     result['multiLangSetting'] = settings.get('multiLangSetting')
     result['repository_id'] = data.get('repository_id')
     result['widget_type'] = data.get('widget_type')
-    if (str(data.get('widget_type')) ==
-            config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE):
+    if (str(data.get('widget_type'))
+            == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE):
         result_settings['access_counter'] = settings.get('access_counter')
         result_settings['preceding_message'] = settings.get(
             'preceding_message')
