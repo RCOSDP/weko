@@ -101,9 +101,11 @@ class Journals(object):
             data["jstage_code"] = journals.get('jstage_code')
             data["ichushi_code"] = journals.get('ichushi_code')
             data["is_output"] = journals.get('is_output')
-            data["title_url"] = request.host_url + '?action=' + \
-                current_app.config['WEKO_INDEXTREE_JOURNAL_OPENSEARCH_URI'] + \
-                '&index_id=' + index_id
+            # real url: '?action=' +
+            # current_app.config['WEKO_INDEXTREE_JOURNAL_OPENSEARCH_URI'] +
+            # '&index_id='
+            data["title_url"] = request.host_url + 'search?search_type=2&q={}'.\
+                format(index_id)
             data["title_id"] = index_id
 
             # get current user logged id.

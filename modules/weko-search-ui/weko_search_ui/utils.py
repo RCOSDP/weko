@@ -115,10 +115,7 @@ def get_journal_info(index_id=0):
                         data = res[0]
                     val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
                     result.update({value['key']: val})
-        # real url: ?action=repository_opensearch&index_id=
-        open_search_uri = request.url_root + "search?search_type=2&q={}".\
-            format(index_id) if not journal.get('title_url') \
-            else journal.get('title_url')
+        open_search_uri = journal.get('title_url')
         result.update({'openSearchUrl': open_search_uri})
 
     except BaseException:
