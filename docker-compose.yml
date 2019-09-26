@@ -54,7 +54,7 @@ web:
     - elasticsearch
     - rabbitmq
   ports:
-    - "5001:5000"
+    - "5019:5000"
 
 postgresql:
   restart: "always"
@@ -64,13 +64,13 @@ postgresql:
     - POSTGRES_DB=invenio
     - POSTGRES_PASSWORD=dbpass123
   ports:
-    - "25401:5432"
+    - "25419:5432"
 
 redis:
   restart: "always"
   image: redis
   ports:
-    - "26301:6379"
+    - "26319:6379"
 
 elasticsearch:
   restart: "always"
@@ -79,22 +79,22 @@ elasticsearch:
   environment:
     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
   ports:
-    - "29201:9200"
-    - "29301:9300"
+    - "29219:9200"
+    - "29319:9300"
 
 rabbitmq:
   restart: "always"
   image: rabbitmq
   ports:
-    - "24301:4369"
-    - "45601:25672"
+    - "24319:4369"
+    - "45619:25672"
 
 nginx:
   restart: "always"
   build: ./nginx
   ports:
-    - "8001:80"
-    - "4401:443"
+    - "8019:80"
+    - "4419:443"
   volumes_from:
     - static
   links:
@@ -137,7 +137,7 @@ flower:
   image: mher/flower
   command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
   ports:
-    - "5501:5555"
+    - "5519:5555"
   links:
     - rabbitmq
 
@@ -147,7 +147,7 @@ kibana:
   restart: "always"
   command: kibana
   ports:
-    - "5601:5601"
+    - "5619:5601"
   environment:
     - "ELASTICSEARCH_URL=http://elasticsearch:9200"
     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
