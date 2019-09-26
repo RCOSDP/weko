@@ -77,6 +77,7 @@ class WidgetSettingView(ModelView):
             widget_id {int} -- id of widget item
 
         Return: label to display to list
+
         """
         register_language = get_register_language()
         multi_lang_data = WidgetMultiLangData.get_by_widget_id(widget_id)

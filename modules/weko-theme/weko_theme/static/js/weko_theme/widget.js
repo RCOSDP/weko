@@ -100,7 +100,7 @@ let PageBodyGrid = function () {
                         'border-bottom: ' + '1px ' + 'solid ' + frameBorderColorMainContent + ';' +
                     '}' +
                 '</style>';
-    }
+    };
 
     this.buildMainContentTheme = function (node){
         let panelHeadingMainContents = $("#panel-heading-main-contents");
@@ -111,10 +111,10 @@ let PageBodyGrid = function () {
         let theme = node.theme;
         let borderRadius;
         let pxBorder;
-        if (borderStyle == BORDER_STYLE_DOUBLE) {
+        if (borderStyle === BORDER_STYLE_DOUBLE) {
             pxBorder = "3px ";
             borderRadius = "1px";
-        }else if(borderStyle == BORDER_STYLE_NONE){
+        }else if(borderStyle === BORDER_STYLE_NONE){
             pxBorder = "0px";
             borderRadius = "3px";
         }else {
@@ -122,13 +122,13 @@ let PageBodyGrid = function () {
             borderRadius = "3px";
         }
 
-        if (theme == THEME_SIMPLE) {
+        if (theme === THEME_SIMPLE) {
             borderRadius = "0px";
             pxBorder = "none";
             panelMainContent.css("border", pxBorder);
             panelHeadingMainContents.css('border-radius', borderRadius);
             panelHeadingMainContents.css("border-bottom", pxBorder);
-        } else if (theme == THEME_DEFAULT) {
+        } else if (theme === THEME_DEFAULT) {
             panelMainContent.css("border", pxBorder + ' ' + borderStyle + ' ' + frameBorderColorMainContent);
             backgroundColorMainContent.css("border-top", pxBorder + borderStyle + ' ' + frameBorderColorMainContent);
             backgroundColorMainContent.css('border-bottom-left-radius', borderRadius);
@@ -229,7 +229,7 @@ let PageBodyGrid = function () {
         let result = 0;
         // Convert to display-able number
         if (data && data[widgetId] && data[widgetId][created_date]) {
-          var widget = data[widgetId][created_date];
+          let widget = data[widgetId][created_date];
             let initNum = widget.access_counter ? Number(widget.access_counter) : 0;
             result = widget.all.count ? Number(widget.all.count) : 0;
             if (!Number.isNaN(initNum)) {
@@ -243,7 +243,7 @@ let PageBodyGrid = function () {
 
         return '<div>'
                 + ' <div class="counter-container">'
-                +       precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date 
+                +       precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date
                 + '" class = "text-access-counter">' + result + '</span>' + followingMessage
                 + ' </div>'
                 + ' <div>' + otherMessage + '</div>'
@@ -288,14 +288,58 @@ let PageBodyGrid = function () {
             },
             success: (response) => {
                 let endpoints = response.endpoints;
-                let repoHomeURL = (repoID == DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
+                let repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
                 let navbarID = 'widgetNav_' + widgetID;  // Re-use to build unique class ids
-                let navbarClass = settings.menu_orientation == 'vertical' ?
+                let navbarClass = settings.menu_orientation === 'vertical' ?
                     'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
+                let mainLayoutTitle = "";
+                let childNavBar = "";
+                let navbarHeader = "";
+                for (let i in endpoints) {  // Create links
+                  let liClass = '';
+                  let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
+                  let title = endpoints[i].title;
+                  let endpointsURL = endpoints[i].url;
+                  if (endpoints[i].is_main_layout) {
+                    mainLayoutTitle = title;
+                  } else {
+                    if (window.location.pathname === endpointsURL) {
+                      liClass = 'class="active"';
+                    }
+                    childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                  }
+                }
+
+                if (mainLayoutTitle === "" && Array.isArray(settings.menu_show_pages) && settings.menu_show_pages.includes("0")) {
+                    mainLayoutTitle = "Main Layout";
+                }
+
+                if (mainLayoutTitle) {
+                  let mainLayoutActive = "";
+                  let currentMainLayout = window.location.pathname + window.location.search;
+                  let repoHomeURL2 = "/communities/" + repoID + "/?view=weko";
+                  if (currentMainLayout === repoHomeURL || currentMainLayout === repoHomeURL2) {
+                      mainLayoutActive = 'active';
+                  }
+                  navbarHeader =
+                    '<div class="navbar-header">' +
+                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
+                    '        <span class="icon-bar"></span>' +
+                    '        <span class="icon-bar"></span>' +
+                    '        <span class="icon-bar"></span>' +
+                    '      </button>' +
+                    '      <a class="navbar-brand '+ mainLayoutActive +'" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
+                    '    </div>';
+                }
+
                 let navbar =
                 '<style>' +  // Renaming classes allows for multiple menus on page
                 '.navbar-default.' + navbarID + ' .navbar-brand {' +
                 '    color:' + settings.menu_default_color + ';' +
+                '}' +
+                '.navbar-default.' + navbarID + ' .navbar-header > a:hover, .navbar-default.' + navbarID + ' .navbar-header > a.active {' +
+                '    background-color:' + settings.menu_active_bg_color + ';' +
+                '    color:' +  settings.menu_active_color + ';' +
                 '}' +
                 '  .navbar-default.' + navbarID + ' .navbar-nav > li > a, .nav-pills > li > a {' +
                 '    color:' +  settings.menu_default_color + ';' +
@@ -320,29 +364,14 @@ let PageBodyGrid = function () {
                 '</style>' +
                 '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="background-color:' + settings.menu_bg_color + ';">' +
                 '  <div class="container-fluid">' +
-                '    <div class="navbar-header">' +
-                '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
-                '        <span class="icon-bar"></span>' +
-                '        <span class="icon-bar"></span>' +
-                '        <span class="icon-bar"></span>' +
-                '      </button>' +
-                '      <a class="navbar-brand" href="' + repoHomeURL + '">' + repoID + '</a>' +
-                '    </div>' +
+                    navbarHeader +
                 '    <div class="collapse navbar-collapse" id="' + navbarID + '">' +
                 '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
 
-                for (let i in endpoints) {  // Create links
-                  let liClass = '';
-                  let linkStyle = ''; //'color:' + settings.menu_default_color + ';';
-                  let communityArgs = (repoID == DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
-                  if (window.location.pathname == endpoints[i].url) {
-                    liClass = 'active';
-                    linkStyle = 'color:' + settings.menu_active_color + ';';
-                  }
-                  navbar += '<li class="' + liClass + '"><a href="' + endpoints[i].url + communityArgs + '">' + endpoints[i].title + '</a></li>';
-                }
+                navbar += childNavBar;
                 navbar +='</ul></div></div></nav>';
                 $("#" + menuID).append(navbar);
+                $("#" + menuID).css('height', '100%');
             }
         });
     };
@@ -376,7 +405,7 @@ let PageBodyGrid = function () {
             id = 'id="' + innerID + '"';
             this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
         } else if (node.type === MENU_TYPE) {
-          let innerID = 'widget_pages_menu_' + node.widget_id;  // Allow multiple menus
+          let innerID = 'widget_pages_menu_' + node.widget_id + '_' + index;  // Allow multiple menus
           id = 'id="' + innerID + '"';
           // Extract only the settings we want:
           let menuSettings = {};
@@ -522,7 +551,7 @@ let WidgetTheme = function () {
             '        </div>' : '';
         let headerClass = (widget_settings.label_enable) ? '' : 'no-pad-top-30';
         headerClass += (widget_settings.type === NEW_ARRIVALS || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) ? ' no-before-content' : '';
-        if (widget_settings.type === ACCESS_COUNTER || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) {
+        if (widget_settings.type === MENU_TYPE || widget_settings.type === ACCESS_COUNTER || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) {
             overFlowBody = "overflow-y: hidden; overflow-x: hidden; ";
         }
         if (widget_settings.type === MENU_TYPE) {
@@ -538,7 +567,7 @@ let WidgetTheme = function () {
         let result = '<div class="grid-stack-item widget-resize">' +
             '    <div class="' +setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '">' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
