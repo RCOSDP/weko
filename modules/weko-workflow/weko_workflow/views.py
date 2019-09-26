@@ -43,8 +43,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_authors.models import Authors
-from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_index_tree.models import Index
+from weko_deposit.api import WekoDeposit
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
@@ -986,13 +985,13 @@ def check_existed_doi():
             'doi',
             doi_link['doi_link'])
         if doi_pidstore:
-            respon['isExistDOI'] = is_exist_doi
+            respon['isExistDOI'] = True
             respon['msg'] = _('This DOI has been used already for another '
                               'item. Please input another DOI.')
-        elif doi_pidstore.status == PIDStatus.DELETED:
-            respon['isWithdrawnDoi'] = doi_withdrawn
-            respon['msg'] = _(
-                'This DOI was withdrawn. Please input another DOI.')
+            if doi_pidstore.status == PIDStatus.DELETED:
+                respon['isWithdrawnDoi'] = True
+                respon['msg'] = _(
+                    'This DOI was withdrawn. Please input another DOI.')
         else:
             respon['msg'] = _('success')
         respon['code'] = 0
