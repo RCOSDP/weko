@@ -244,15 +244,21 @@ class Indexes(object):
                             literal_column("''", db.Text).label("name"),
                             literal_column("''", db.Text).label(
                                 "name_en"),
-                            literal_column("0", db.Integer).label("lev")
+                            literal_column("0", db.Integer).label("lev"),
+                            Index.public_state
                         ).filter(Index.id == index_id)).all()
 
                 if obj:
                     p_lst = [o.cid for o in obj]
                     with db.session.begin_nested():
-                        dct = db.session.query(Index).filter(
-                            Index.id.in_(p_lst)). \
-                            delete(synchronize_session='fetch')
+                        e = 0
+                        batch = 100
+                        while e <= len(p_lst):
+                            s = e
+                            e = e + batch
+                            dct = db.session.query(Index).filter(
+                                Index.id.in_(p_lst[s:e])). \
+                                delete(synchronize_session='fetch')
                     db.session.commit()
                     return dct
         except Exception as ex:
@@ -1126,3 +1132,22 @@ class Indexes(object):
     def get_index_count(cls):
         """Get the total number of indexes."""
         return Index.query.count()
+
+    @classmethod
+    def get_child_list(cls, node_path):
+        """
+        Get index list info.
+
+        :param node_path: Identifier of the index.
+        :return: the list of index.
+        """
+        index = node_path.rfind('/')
+        pid = node_path[index + 1:]
+        recursive_t = cls.recs_query()
+        query = db.session.query(recursive_t).filter(
+            db.or_(recursive_t.c.pid == pid,
+                   recursive_t.c.cid == pid))
+        if not get_user_roles()[0]:
+            query = query.filter(recursive_t.c.public)
+        q = query.order_by(recursive_t.c.path).all()
+        return q

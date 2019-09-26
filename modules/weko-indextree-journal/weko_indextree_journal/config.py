@@ -52,3 +52,6 @@ WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API = "/admin/indexjournal/jsonschema"
 WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE = "schemas/schemaform.json"
 
 WEKO_INDEXTREE_JOURNAL_FORM_JSON_API = "/admin/indexjournal/schemaform"
+
+WEKO_INDEXTREE_JOURNAL_OPENSEARCH_URI = "repository_opensearch"
+"""WEKO index search result page display URL."""

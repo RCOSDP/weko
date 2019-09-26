@@ -24,7 +24,7 @@ import json
 import os
 import sys
 
-from flask import current_app, request
+from flask import abort, current_app, request
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -33,6 +33,7 @@ from invenio_search import RecordsSearch
 from weko_deposit.api import WekoIndexer
 from weko_indextree_journal.api import Journals
 
+from .config import WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
@@ -107,16 +108,15 @@ def get_journal_info(index_id=0):
             if title is not None:
                 data = journal.get(value['key'])
                 if data is not None and len(str(data)) > 0:
-                    dataMap = value.get('titleMap')
-                    if dataMap is not None:
+                    data_map = value.get('titleMap')
+                    if data_map is not None:
                         res = [x['name']
-                               for x in dataMap if x['value'] == data]
+                               for x in data_map if x['value'] == data]
                         data = res[0]
                     val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
                     result.update({value['key']: val})
-        # real url: ?action=repository_opensearch&index_id=
-        result.update({'openSearchUrl': request.url_root
-                       + "search?search_type=2&q={}".format(index_id)})
+        open_search_uri = journal.get('title_url')
+        result.update({'openSearchUrl': open_search_uri})
 
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
@@ -154,3 +154,14 @@ def parse_feedback_mail_data(data):
                             '_source').get('author_id')
                     result[email]['item'].append(index.get('_id'))
     return result
+
+
+def check_permission():
+    """Check user login is repo_user or sys_user."""
+    from flask_security import current_user
+    is_permission_user = False
+    for role in list(current_user.roles or []):
+        if role == WEKO_SYS_USER or role == WEKO_REPO_USER:
+            is_permission_user = True
+
+    return is_permission_user

@@ -20,7 +20,7 @@
 
 """API for weko-indextree-journal."""
 
-from flask import current_app
+from flask import current_app, request
 from flask_login import current_user
 from invenio_db import db
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -101,6 +101,12 @@ class Journals(object):
             data["jstage_code"] = journals.get('jstage_code')
             data["ichushi_code"] = journals.get('ichushi_code')
             data["is_output"] = journals.get('is_output')
+            # real url: '?action=' +
+            # current_app.config['WEKO_INDEXTREE_JOURNAL_OPENSEARCH_URI'] +
+            # '&index_id='
+            data["title_url"] = request.host_url + 'search?search_type=2&q={}'.\
+                format(index_id)
+            data["title_id"] = index_id
 
             # get current user logged id.
             data["owner_user_id"] = current_user.get_id()

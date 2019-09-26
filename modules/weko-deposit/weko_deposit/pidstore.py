@@ -25,9 +25,13 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus, \
     RecordIdentifier
 
 
-def weko_deposit_minter(record_uuid, data):
+def weko_deposit_minter(record_uuid, data, recid=None):
     """Weko deposit."""
-    id_ = RecordIdentifier.next()
+    if not recid:
+        id_ = RecordIdentifier.next()
+    else:
+        RecordIdentifier.insert(recid)
+        id_ = recid
     recid = PersistentIdentifier.create(
         'recid',
         str(id_),

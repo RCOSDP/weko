@@ -55,7 +55,7 @@ from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
 from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_item_pidstore_identifier, get_min_price_billing_file_download
+    get_min_price_billing_file_download, get_record_permalink
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -76,7 +76,6 @@ def publish(pid, record, template=None, **kwargs):
     :param pid: PID object.
     :param record: Record object.
     :param template: Template to render.
-    :param \*\*kwargs: Additional view arguments based on URL rule.
     :return: The rendered template.
     """
     from weko_deposit.api import WekoIndexer
@@ -104,7 +103,6 @@ def export(pid, record, template=None, **kwargs):
     :param pid: PID object.
     :param record: Record object.
     :param template: Template to render.
-    :param \*\*kwargs: Additional view arguments based on URL rule.
     :return: The rendered template.
     """
     formats = current_app.config.get('RECORDS_UI_EXPORT_FORMATS', {}).get(
@@ -190,8 +188,10 @@ def get_license_icon(type):
         'license_1': _('Creative Commons : Attribution - ShareAlike'),
         'license_2': _('Creative Commons : Attribution - NoDerivatives'),
         'license_3': _('Creative Commons : Attribution - NonCommercial'),
-        'license_4': _('Creative Commons : Attribution - NonCommercial - ShareAlike'),
-        'license_5': _('Creative Commons : Attribution - NonCommercial - NoDerivatives'),
+        'license_4': _('Creative Commons : Attribution - NonCommercial - '
+                       'ShareAlike'),
+        'license_5': _('Creative Commons : Attribution - NonCommercial - '
+                       'NoDerivatives'),
     }
 
     href_dict = {
@@ -205,11 +205,7 @@ def get_license_icon(type):
                      'licenses/by-nc-nd/4.0/deed.ja',
     }
 
-    if 'license_free' in type:
-        src = ''
-        lic = ''
-        href = '#'
-    elif 'license_0' in type:
+    if 'license_0' in type:
         src = '88x31(1).png'
         lic = lic_dict.get('license_0')
         href = href_dict.get('license_0')
@@ -311,10 +307,8 @@ def _get_google_scholar_meta(record):
                     'identifierType'] == 'ISSN':
                 res.append({'name': 'citation_issn',
                             'data': sourceIdentifier.text})
-        pdf_url = mtdata.find(
-            'jpcoar:file/jpcoar:URI',
-            namespaces=mtdata.nsmap)
-        if pdf_url is not None:
+        for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
+                                      namespaces=mtdata.nsmap):
             res.append({'name': 'citation_pdf_url',
                         'data': request.url.replace('records', 'record')
                         + '/files/' + pdf_url.text})
@@ -332,7 +326,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param record: Record object.
     :param filename: File name.
     :param template: Template to render.
-    :param \*\*kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
     check_site_license_permission()
@@ -383,11 +376,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     # Get item meta data
     record['permalink_uri'] = None
-    pidstore_identifier = get_item_pidstore_identifier(pid.object_uuid)
-    if not pidstore_identifier:
+    permalink = get_record_permalink(pid.object_uuid)
+    if not permalink:
         record['permalink_uri'] = request.url
     else:
-        record['permalink_uri'] = pidstore_identifier
+        record['permalink_uri'] = permalink
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
@@ -414,8 +407,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(request.args.get('community')
-                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(
+        request.args.get('community') or current_app.config[
+            'WEKO_THEME_DEFAULT_COMMUNITY'])
 
     if hasattr(current_i18n, 'language'):
         index_link_list = get_index_link_list(current_i18n.language)
@@ -504,7 +498,7 @@ def file_version_update():
         key = request.values.get('key')
         version_id = request.values.get('version_id')
         is_show = request.values.get('is_show')
-        if bucket_id is not None and key is not None and version_id is not None:
+        if not bucket_id and not key and not version_id:
             from invenio_files_rest.models import ObjectVersion
             object_version = ObjectVersion.get(bucket=bucket_id, key=key,
                                                version_id=version_id)
@@ -532,7 +526,8 @@ def citation(record, pid, style=None, ln=None):
         return citeproc_v1.serialize(pid, _record, style=style, locale=locale)
     except Exception:
         current_app.logger.exception(
-            'Citation formatting for record {0} failed.'.format(str(record.id)))
+            'Citation formatting for record {0} failed.'.format(str(
+                record.id)))
         return None
 
 

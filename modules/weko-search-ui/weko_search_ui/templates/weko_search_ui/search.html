@@ -82,7 +82,7 @@
 <div class="communities">
 <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
   {{ community_header(community, subtitle='') }}
-  <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
+  <div id="page_body" class="grid-stack hidden" {%- if render_widgets %}style="display: None;"{%- endif %}>
   <div id="main_contents">
   {{ super() }}
   </div>

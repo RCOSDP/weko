@@ -42,25 +42,18 @@ def check_items_settings():
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
 
 
-def get_item_pidstore_identifier(object_uuid):
+def get_record_permalink(object_uuid):
     """
     Get identifier value from ItemsMetadata.
 
     :param: index_name_english
     :return: dict of item type info
     """
-    with db.session.no_autoflush:
-        action_status = Activity.query.filter_by(
-            item_id=object_uuid).one_or_none()
-        meta = ItemsMetadata.get_record(object_uuid)
-        if meta and action_status:
-            pidstore_identifier = meta.get('pidstore_identifier')
-            if pidstore_identifier is not None \
-                and action_status.action_status == \
-                    ActionStatusPolicy.ACTION_DONE:
-                return pidstore_identifier.get('identifier_value')
-
-    return None
+    meta = ItemsMetadata.get_record(object_uuid)
+    if meta:
+        return meta.get('permalink')
+    else:
+        return None
 
 
 def get_groups_price(record: dict) -> list:
@@ -152,10 +145,9 @@ def is_billing_item(item_type_id):
         properties = item_type.schema['properties']
         for meta_key in properties:
             if properties[meta_key]['type'] == 'object' and \
-               'groupsprice' in properties[meta_key]['properties']:
-                return True
-            elif properties[meta_key]['type'] == 'array' and \
-                    'groupsprice' in properties[meta_key]['items']['properties']:
+               'groupsprice' in properties[meta_key]['properties'] or \
+                properties[meta_key]['type'] == 'array' and 'groupsprice' in \
+                    properties[meta_key]['items']['properties']:
                 return True
         return False
 
@@ -177,13 +169,14 @@ def soft_delete(recid):
             dep = WekoDeposit(rec.json, rec)
             dep['path'] = []
             dep.indexer.update_path(dep, update_revision=False)
-        pids = PersistentIdentifier.query.filter_by(object_uuid=pid.object_uuid)
+        pids = PersistentIdentifier.query.filter_by(
+            object_uuid=pid.object_uuid)
         for p in pids:
             p.status = PIDStatus.DELETED
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
-        raise(ex)
+        raise ex
 
 
 def restore(recid):
@@ -204,10 +197,11 @@ def restore(recid):
             rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
             dep = WekoDeposit(rec.json, rec)
             dep.indexer.update_path(dep, update_revision=False)
-        pids = PersistentIdentifier.query.filter_by(object_uuid=pid.object_uuid)
+        pids = PersistentIdentifier.query.filter_by(
+            object_uuid=pid.object_uuid)
         for p in pids:
             p.status = PIDStatus.REGISTERED
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
-        raise(ex)
+        raise ex
