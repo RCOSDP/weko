@@ -550,7 +550,7 @@ let WidgetTheme = function () {
             '        </div>' : '';
         let headerClass = (widget_settings.label_enable) ? '' : 'no-pad-top-30';
         headerClass += (widget_settings.type === NEW_ARRIVALS || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) ? ' no-before-content' : '';
-        if (widget_settings.type === ACCESS_COUNTER || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) {
+        if (widget_settings.type === MENU_TYPE || widget_settings.type === ACCESS_COUNTER || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) {
             overFlowBody = "overflow-y: hidden; overflow-x: hidden; ";
         }
         if (widget_settings.type === MENU_TYPE) {
