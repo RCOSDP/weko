@@ -386,6 +386,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                       }
                     } else if (!hasMainLayout) {
                       options.unshift(<option key={0} value={0}>Main Layout</option>);
+                      choseOptions.push("0");
                     }
                     this.setState({
                         selectOptions: options,
