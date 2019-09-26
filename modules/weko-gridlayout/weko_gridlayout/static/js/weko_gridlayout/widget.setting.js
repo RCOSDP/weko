@@ -378,7 +378,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                     options = options.filter((option)=> typeof option !== "undefined");
                     if (this.props.is_edit === true) {  // Only add ordered options if editing
                       options = orderedOptions.concat(options);
-                      if (currentSelectionString.includes("0")) {
+                      if (currentSelectionString.includes("0") && !hasMainLayout) {
                         options.unshift(<option key={0} value={0}>Main Layout</option>);
                         choseOptions.push("0");
                       } else if (!hasMainLayout) {

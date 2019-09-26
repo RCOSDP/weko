@@ -477,7 +477,7 @@ class AddPageModal extends React.Component {
             return false;
         }
 
-        if(!/\/[a-z0-9?&/=]+/.test(this.state.url)) {
+        if(!/\/[a-z0-9?&/=]*/.test(this.state.url)) {
             this.setState({'errorMessage': 'Not a valid URL.'});
             return false;
         }
@@ -1231,10 +1231,11 @@ function disableFooterButton(isDisable){
 }
 
 function addAlert(message) {
-  document.getElementById("alerts").innerHTML =
-    '<div class="alert alert-light" id="alert-style">' +
-    '<button type="button" class="close" data-dismiss="alert">' +
-    '&times;</button>' + message + '</div>';
+  $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>'
+    );
 }
 
 function alertModal(message) {
