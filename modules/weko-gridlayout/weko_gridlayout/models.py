@@ -180,6 +180,26 @@ class WidgetItem(db.Model):
         return widget
 
     @classmethod
+    def update_setting_by_id(cls, widget_id, settings):
+        """Update widget setting by widget id.
+
+        :param widget_id:
+        :param settings:
+        :return: True if update successful
+        """
+        try:
+            widget_item = cls.get_by_id(widget_id)
+            with db.session.begin_nested():
+                widget_item.settings = settings
+                db.session.merge(widget_item)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            return False
+
+    @classmethod
     def delete_by_id(cls, widget_id, session):
         """Delete the widget by id.
 

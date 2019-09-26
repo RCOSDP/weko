@@ -32,7 +32,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE, \
     WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
-    WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
+    WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE
 from .models import WidgetDesignPage, WidgetDesignPageMultiLangData, \
     WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
@@ -780,12 +780,98 @@ class WidgetDesignPageServices:
                 settings=settings, multi_lang_data=multi_lang_data,
                 is_main_layout=is_main_layout
             )
+
+            # Update Main Layout Id for widget design setting and widget item
+            if result['result'] and is_main_layout and is_edit:
+                cls._update_main_layout_id_for_widget(repository_id)
+
         except IntegrityError:
             result['error'] = _('Unable to save page: URL already exists.')
         except Exception as e:
             current_app.logger.error(e)
             result['error'] = _('Unable to save page: Unexpected error.')
         return result
+
+    @classmethod
+    def _update_main_layout_id_for_widget(cls, repository_id):
+        with db.session.no_autoflush:
+            design_page = WidgetDesignPage.query.filter_by(
+                repository_id=repository_id,
+                is_main_layout=True).one_or_none()
+            page_id = None
+            if design_page:
+                page_id = design_page.id
+
+            if page_id:
+                cls._update_main_layout_page_id_for_widget_design(
+                    repository_id,
+                    page_id
+                )
+                cls.__update_main_layout_page_id_for_widget_item(
+                    repository_id,
+                    page_id
+                )
+
+    @classmethod
+    def _update_main_layout_page_id_for_widget_design(
+        cls, repository_id, page_id
+    ):
+        with db.session.no_autoflush:
+            widget_design = WidgetDesignSetting.select_by_repository_id(
+                repository_id)
+            if widget_design:
+                settings = json.loads(widget_design.get('settings', '[]'))
+                if settings:
+                    settings = cls._update_page_id_for_widget_design_setting(
+                        settings,
+                        page_id)
+                    WidgetDesignSetting.update(repository_id,
+                                               json.dumps(settings))
+
+    @classmethod
+    def _update_page_id_for_widget_design_setting(cls, settings, page_id):
+        default_page_id = "0"
+        new_settings = list()
+        for item in settings:
+            if item.get('type') == WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
+                menu_show_pages = item.get('menu_show_pages')
+                if menu_show_pages and default_page_id in menu_show_pages:
+                    new_menu_show_pages = [
+                        page_id if x == default_page_id else x for x in
+                        menu_show_pages]
+                    item['menu_show_pages'] = new_menu_show_pages
+            new_settings.append(item)
+
+        return new_settings
+
+    @classmethod
+    def __update_main_layout_page_id_for_widget_item(cls, repository_id,
+                                                     page_id):
+        widget_item_id_list = WidgetItem.get_id_by_repository_and_type(
+            repository_id, WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE)
+        if widget_item_id_list:
+            for widget_id in widget_item_id_list:
+                widget_item = WidgetItem.get_by_id(widget_id)
+                if widget_item.settings:
+                    cls._update_page_id_for_widget_item_setting(
+                        page_id, widget_item)
+
+    @classmethod
+    def _update_page_id_for_widget_item_setting(cls, page_id,
+                                                widget_item):
+        settings = json.loads(widget_item.settings)
+        default_page_id = "0"
+        if settings and settings.get('menu_show_pages'):
+            menu_show_pages = settings.get('menu_show_pages')
+            if default_page_id in menu_show_pages:
+                new_menu_show_pages = [
+                    page_id if x == default_page_id else x for x in
+                    menu_show_pages
+                ]
+                settings['menu_show_pages'] = new_menu_show_pages
+                widget_item.settings = settings
+                WidgetItem.update_setting_by_id(
+                    widget_item.widget_id, json.dumps(settings))
 
     @classmethod
     def delete_page(cls, page_id):
