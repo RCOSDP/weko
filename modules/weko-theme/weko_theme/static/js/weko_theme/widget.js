@@ -317,7 +317,8 @@ let PageBodyGrid = function () {
                 if (mainLayoutTitle) {
                   let mainLayoutActive = "";
                   let currentMainLayout = window.location.pathname + window.location.search;
-                  if (currentMainLayout === repoHomeURL) {
+                  let repoHomeURL2 = "/communities/" + repoID + "/?view=weko";
+                  if (currentMainLayout === repoHomeURL || currentMainLayout === repoHomeURL2) {
                       mainLayoutActive = 'active';
                   }
                   navbarHeader =
