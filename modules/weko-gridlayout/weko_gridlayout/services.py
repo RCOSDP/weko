@@ -30,10 +30,11 @@ from invenio_i18n.ext import current_i18n
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
-    WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
-from .models import WidgetDesignPage, WidgetDesignSetting, WidgetItem, \
-    WidgetMultiLangData
+from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE, \
+    WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
+    WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE
+from .models import WidgetDesignPage, WidgetDesignPageMultiLangData, \
+    WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
     convert_data_to_design_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
@@ -50,6 +51,7 @@ class WidgetItemServices:
 
         Arguments:
             widget_id {int} -- id of widget item
+
         """
         widget_item = WidgetItem.get_by_id(widget_id)
         return widget_item.repository_id
@@ -474,6 +476,11 @@ class WidgetDesignServices:
                         widget_preview["id"] = item.get("id")
                         widget_preview["type"] = item.get("type")
                         widget_preview["name"] = item.get("name")
+                        if item.get('type') == \
+                                WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE \
+                                and item.get('created_date'):
+                            widget_preview["created_date"] = \
+                                item.get("created_date")
                         languages = item.get("multiLangSetting")
                         if isinstance(languages, dict) and lang_code_default \
                                 is not None:
@@ -586,6 +593,10 @@ class WidgetDesignServices:
                         WidgetItemServices.get_widget_data_by_widget_id(
                             item.get('widget_id'))
                     item.update(widget_item.get('settings'))
+                    if item.get('type') == \
+                            WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE \
+                            and not item.get('created_date'):
+                        item['created_date'] = date.today().strftime("%Y-%m-%d")
             setting_data = json.dumps(json_data)
 
             # Main contents can only be in one page design or main design
@@ -743,33 +754,124 @@ class WidgetDesignPageServices:
     def add_or_update_page(cls, data):
         """Add a WidgetDesignPage.
 
-        :param repository_id: Identifier of the repository.
-        :param default_language: The default language.
+        :param data: Widget design page data.
         :return: formatted data of WidgetDesignPage.
         """
         result = {
             'result': False,
             'error': ''
         }
-        page_id = data.get('page_id', 0)
+        is_edit = data.get('is_edit', False)
+        if is_edit:
+            page_id = data.get('page_id', 0)
+        else:
+            page_id = 0
         repository_id = data.get('repository_id', 0)
         title = data.get('title')
         url = data.get('url')
         content = data.get('content')
         settings = data.get('settings')
         multi_lang_data = data.get('multi_lang_data')
+        is_main_layout = data.get('is_main_layout')
         try:
             result['result'] = WidgetDesignPage.create_or_update(
                 repository_id, Markup.escape(title), url,
                 Markup.escape(content), page_id=page_id,
-                settings=settings, multi_lang_data=multi_lang_data
+                settings=settings, multi_lang_data=multi_lang_data,
+                is_main_layout=is_main_layout
             )
+
+            # Update Main Layout Id for widget design setting and widget item
+            if result['result'] and is_main_layout and is_edit:
+                cls._update_main_layout_id_for_widget(repository_id)
+
         except IntegrityError:
             result['error'] = _('Unable to save page: URL already exists.')
         except Exception as e:
             current_app.logger.error(e)
             result['error'] = _('Unable to save page: Unexpected error.')
         return result
+
+    @classmethod
+    def _update_main_layout_id_for_widget(cls, repository_id):
+        with db.session.no_autoflush:
+            design_page = WidgetDesignPage.query.filter_by(
+                repository_id=repository_id,
+                is_main_layout=True).one_or_none()
+            page_id = None
+            if design_page:
+                page_id = design_page.id
+
+            if page_id:
+                cls._update_main_layout_page_id_for_widget_design(
+                    repository_id,
+                    page_id
+                )
+                cls.__update_main_layout_page_id_for_widget_item(
+                    repository_id,
+                    page_id
+                )
+
+    @classmethod
+    def _update_main_layout_page_id_for_widget_design(
+        cls, repository_id, page_id
+    ):
+        with db.session.no_autoflush:
+            widget_design = WidgetDesignSetting.select_by_repository_id(
+                repository_id)
+            if widget_design:
+                settings = json.loads(widget_design.get('settings', '[]'))
+                if settings:
+                    settings = cls._update_page_id_for_widget_design_setting(
+                        settings,
+                        page_id)
+                    WidgetDesignSetting.update(repository_id,
+                                               json.dumps(settings))
+
+    @classmethod
+    def _update_page_id_for_widget_design_setting(cls, settings, page_id):
+        default_page_id = "0"
+        new_settings = list()
+        for item in settings:
+            if item.get('type') == WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
+                menu_show_pages = item.get('menu_show_pages')
+                if menu_show_pages and default_page_id in menu_show_pages:
+                    new_menu_show_pages = [
+                        page_id if x == default_page_id else x for x in
+                        menu_show_pages]
+                    item['menu_show_pages'] = new_menu_show_pages
+            new_settings.append(item)
+
+        return new_settings
+
+    @classmethod
+    def __update_main_layout_page_id_for_widget_item(cls, repository_id,
+                                                     page_id):
+        widget_item_id_list = WidgetItem.get_id_by_repository_and_type(
+            repository_id, WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE)
+        if widget_item_id_list:
+            for widget_id in widget_item_id_list:
+                widget_item = WidgetItem.get_by_id(widget_id)
+                if widget_item.settings:
+                    cls._update_page_id_for_widget_item_setting(
+                        page_id, widget_item)
+
+    @classmethod
+    def _update_page_id_for_widget_item_setting(cls, page_id,
+                                                widget_item):
+        settings = json.loads(widget_item.settings)
+        default_page_id = "0"
+        if settings and settings.get('menu_show_pages'):
+            menu_show_pages = settings.get('menu_show_pages')
+            if default_page_id in menu_show_pages:
+                new_menu_show_pages = [
+                    page_id if x == default_page_id else x for x in
+                    menu_show_pages
+                ]
+                settings['menu_show_pages'] = new_menu_show_pages
+                widget_item.settings = settings
+                WidgetItem.update_setting_by_id(
+                    widget_item.widget_id, json.dumps(settings))
 
     @classmethod
     def delete_page(cls, page_id):
@@ -783,7 +885,10 @@ class WidgetDesignPageServices:
             'error': ''
         }
         try:
-            result['result'] = WidgetDesignPage.delete(page_id)
+            delete_result = WidgetDesignPageMultiLangData.delete_by_page_id(
+                page_id)
+            if delete_result:
+                result['result'] = WidgetDesignPage.delete(page_id)
         except Exception as e:
             current_app.logger.error(e)
             result['error'] = _('Unable to delete page.')
@@ -795,7 +900,7 @@ class WidgetDesignPageServices:
         """Get WidgetDesignPage list.
 
         :param repository_id: Identifier of the repository.
-        :param default_language: The default language.
+        :param language: The default language.
         :return: formatted data of WidgetDesignPage.
         """
         result = {
@@ -812,6 +917,7 @@ class WidgetDesignPageServices:
                 result['data'].append({
                     'id': page.id,
                     'name': title,
+                    'is_main_layout': page.is_main_layout,
                 })
 
         except Exception as e:
@@ -820,11 +926,11 @@ class WidgetDesignPageServices:
         return result
 
     @classmethod
-    def get_page(cls, page_id):   # TODO: Localization ?
+    def get_page(cls, page_id, repository_id):   # TODO: Localization ?
         """Get WidgetDesignPage list.
 
-        :param page_id: Identifier of the repository.
-        :param default_language: The default language.
+        :param page_id: Identifier of the page design.
+        :param repository_id: Identifier of the repository.
         :return: formatted data of WidgetDesignPage.
         """
         result = {
@@ -844,10 +950,26 @@ class WidgetDesignPageServices:
                 'content': page.content,
                 'repository_id': page.repository_id,
                 'multi_lang_data': multi_lang_data,
+                'is_main_layout': page.is_main_layout
             }
 
         except NoResultFound:
-            result['error'] = _('Unable to retrieve page: Page not found.')
+            if str(page_id) == '0':
+                url = '/'
+                if repository_id != current_app.config[
+                        'WEKO_THEME_DEFAULT_COMMUNITY']:
+                    url += '?community=' + repository_id
+                result['data'] = {
+                    'id': page_id,
+                    'title': 'Main Layout',
+                    'url': url,
+                    'content': '',
+                    'repository_id': repository_id,
+                    'multi_lang_data': {},
+                    'is_main_layout': True
+                }
+            else:
+                result['error'] = _('Unable to retrieve page: Page not found.')
         except Exception as e:
             current_app.logger.error(e)
             result['error'] = _('Unable to retrieve page: Unexpected error.')
@@ -956,25 +1078,15 @@ class WidgetDataLoaderServices:
                             if language and language in page.multi_lang_data:
                                 title = page.multi_lang_data[language].title
                             result['endpoints'].append(
-                                {'url': page.url, 'title': title})
+                                {
+                                    'url': page.url,
+                                    'title': title,
+                                    'is_main_layout': page.is_main_layout,
+                                }
+                            )
                         except NoResultFound:
                             pass
             except Exception as e:
                 current_app.logger.error(e)
                 result['endpoints'] = []
         return result
-
-
-# Utlils or all of the fucntions
-def get_design_setting(model):
-    """Extract the widget design setting from the model."""
-    widget_setting = model.settings
-    if widget_setting:
-        settings = widget_setting.get('settings')
-        if settings:
-            settings = json.loads(settings)
-            for widget_item in settings:
-                widget = cls._get_design_base_on_current_language(
-                    current_language,
-                    widget_item)
-                result["widget-settings"].append(widget)

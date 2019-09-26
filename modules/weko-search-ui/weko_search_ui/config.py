@@ -162,15 +162,23 @@ RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
     ),
     pyear=dict(
         title='Date of Issued',
-        fields=['dateofissued'],
+        fields=['date.value'],  # dateofissued
         default_order='asc',
         order=7,
+        nested=dict(
+            path='date',
+            filter=dict(
+                term={
+                    'date.dateType': 'Issued'
+                }
+            )
+        )
     ),
     publish_date=dict(
         title='Publish date',
-        fields=['date.value'],
+        fields=['publish_date'],  # date.value
         default_order='asc',
-        order=8,
+        order=8
     ),
     # add 20181121 start
     custom_sort=dict(
@@ -321,3 +329,6 @@ WEKO_SEARCH_TYPE_DICT = {
     'KEYWORD': '1',
     'INDEX': '2'
 }
+WEKO_SYS_USER = 'System Administrator'
+
+WEKO_REPO_USER = 'Repository Administrator'

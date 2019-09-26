@@ -35,7 +35,7 @@ from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
@@ -43,8 +43,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_authors.models import Authors
-from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_index_tree.models import Index
+from weko_deposit.api import WekoDeposit
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
@@ -59,7 +58,7 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import find_doi, get_identifier_setting, is_withdrawn_doi, \
+from .utils import IdentifierHandle, get_identifier_setting, \
     item_metadata_validation, register_cnri, saving_doi_pidstore
 
 blueprint = Blueprint(
@@ -703,8 +702,7 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
-            if activity_detail is not None and \
-                    activity_detail.item_id is not None:
+            if activity_detail and activity_detail.item_id:
                 record = WekoDeposit.get_record(activity_detail.item_id)
                 if record is not None:
                     deposit = WekoDeposit(record, record.model)
@@ -939,32 +937,36 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         wekouser = ShibUser()
         if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
+            activity_detail = activity.get_activity_detail(activity_id)
             identifier_actionid = get_actionid('identifier_grant')
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
+            identifier_handle = IdentifierHandle(activity_detail.item_id)
 
-            # Clear identifier in ItemMetadata
-            saving_doi_pidstore(None, -1, activity_id)
-            identifier['action_identifier_select'] = \
-                IDENTIFIER_GRANT_IS_WITHDRAWING
-            if identifier:
-                activity.create_or_update_action_identifier(
-                    activity_id,
-                    identifier_actionid,
-                    identifier)
+            if identifier_handle.delete_doi_pidstore_status():
+                identifier['action_identifier_select'] = \
+                    IDENTIFIER_GRANT_IS_WITHDRAWING
+                if identifier:
+                    activity.create_or_update_action_identifier(
+                        activity_id,
+                        identifier_actionid,
+                        identifier)
 
-            return jsonify(code=0,
-                           msg=_('success'),
-                           data={'redirect': url_for(
-                               'weko_workflow.display_activity',
-                               activity_id=activity_id)})
+                return jsonify(
+                    code=0,
+                    msg=_('success'),
+                    data={'redirect': url_for(
+                        'weko_workflow.display_activity',
+                        activity_id=activity_id)}
+                )
+            else:
+                return jsonify(code=-1, msg=_('DOI Persistent is not exist.'))
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
     except ValueError:
         current_app.logger.error('Unexpected error: {}', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error!'))
-
 
 # noinspection PyDictCreation
 @blueprint.route('/findDOI', methods=['POST'])
@@ -977,24 +979,28 @@ def check_existed_doi():
     respon['isWithdrawnDoi'] = False
     respon['code'] = 1
     respon['msg'] = 'error'
-    if doi_link is not None:
-        is_exist_doi = find_doi(doi_link)
-        doi_withdrawn = is_withdrawn_doi(doi_link)
-        if is_exist_doi:
-            respon['isExistDOI'] = is_exist_doi
+    if doi_link:
+        identifier = IdentifierHandle(None)
+        doi_pidstore = identifier.check_pidstore_exist(
+            'doi',
+            doi_link['doi_link'])
+        if doi_pidstore:
+            respon['isExistDOI'] = True
             respon['msg'] = _('This DOI has been used already for another '
                               'item. Please input another DOI.')
-        elif doi_withdrawn:
-            respon['isWithdrawnDoi'] = doi_withdrawn
-            respon['msg'] = _(
-                'This DOI was withdrawn. Please input another DOI.')
+            if doi_pidstore.status == PIDStatus.DELETED:
+                respon['isWithdrawnDoi'] = True
+                respon['msg'] = _(
+                    'This DOI was withdrawn. Please input another DOI.')
         else:
             respon['msg'] = _('success')
         respon['code'] = 0
     return jsonify(respon)
 
-@blueprint.route('/save_feedback_maillist/<string:activity_id>/<int:action_id>',
-                 methods=['POST'])
+
+@blueprint.route(
+    '/save_feedback_maillist/<string:activity_id>/<int:action_id>',
+    methods=['POST'])
 @login_required
 @check_authority
 def save_feedback_maillist(activity_id='0', action_id='0'):

@@ -164,8 +164,12 @@ def export_journal_task(p_path):
                 journal_data.append(item.monograph_volume)
                 journal_data.append(item.monograph_edition)
                 journal_data.append(item.first_editor)
-                journal_data.append(item.parent_publication_title_id)
-                journal_data.append(item.preceding_publication_title_id)
+                journal_data.append(item.parent_publication_title_id
+                                    if item.parent_publication_title_id > 0
+                                    else 'NULL')
+                journal_data.append(item.preceding_publication_title_id
+                                    if item.preceding_publication_title_id > 0
+                                    else 'NULL')
                 journal_data.append(item.access_type)
                 journal_data.append(item.language)
                 journal_data.append(item.title_alternative)

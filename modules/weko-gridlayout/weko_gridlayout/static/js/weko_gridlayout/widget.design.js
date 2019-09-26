@@ -11,6 +11,8 @@ const FOOTER_CLASS = "footer_class";
 const FOOTER_TYPE = "Footer";
 let isHasFooter = false;
 
+const ACCESS_COUNTER = "Access counter";
+
 /**
  * Repository combo box.
  */
@@ -141,7 +143,8 @@ class WidgetList extends React.Component {
         super(props);
         this.state = {
            options: [],
-           selectedPage: 0
+           selectedPage: 0,
+           isMainLayout: false
         };
         this.getPages = this.getPages.bind(this);
         this.handleChange = this.handleChange.bind(this);
@@ -188,21 +191,31 @@ class WidgetList extends React.Component {
     }
 
     displayOptions(pages) {
-        let options = [<option value={0} selected>Main Layout</option>];
+        let options = [<option key={this.props.repositoryId} value={0} selected>Main Layout</option>];
+        let selectedPage = 0;
+        let isMainLayout = false;
         pages.forEach(function (page) {
-           options.push(<option value={page.id}>{page.name}</option>);
+          if (page.is_main_layout) {
+            options.shift();
+            options.unshift(<option data-is-main-layout={page.is_main_layout} key={page.id} value={page.id}>{page.name}</option>);
+            selectedPage = page.id;
+            isMainLayout = page.is_main_layout;
+          } else {
+            options.push(<option data-is-main-layout={page.is_main_layout} key={page.id} value={page.id}>{page.name}</option>);
+          }
         });
         this.setState({
             options: options,
-            selectedPage: 0
+            selectedPage: selectedPage,
+            isMainLayout: isMainLayout,
         });
-        this.props.callbackMainLayout('pageId', 0);  // Must set to change Preview
+        this.props.callbackMainLayout('pageId', selectedPage);  // Must set to change Preview
     }
 
-    getPageDesign(id) {
+    getPageDesign(id, isMainLayout) {
         let url;
         let requestParam;
-        if(id == 0 || id == '0') {  // If zero, then the main layout was selected
+        if(String(id) === '0' || isMainLayout) {  // If zero, then the main layout was selected
             url = '/api/admin/load_widget_design_setting';
             let data = {
               repository_id: this.props.repositoryId
@@ -238,9 +251,15 @@ class WidgetList extends React.Component {
     }
 
     handleChange(event) {
-        this.setState({selectedPage: event.target.value});
+        let target = event.target;
+        let option = target.options[target.selectedIndex];
+        let isMainLayout = (String(option.dataset.isMainLayout) === "true");
+        this.setState({
+          selectedPage: event.target.value,
+          isMainLayout: isMainLayout
+        });
         this.props.callbackMainLayout('pageId', event.target.value);
-        this.getPageDesign(event.target.value);
+        this.getPageDesign(event.target.value, isMainLayout);
     }
 
     render() {
@@ -253,7 +272,7 @@ class WidgetList extends React.Component {
                      {this.state.options}
                  </select>
              </div>
-             <PagesListSelectControls refreshList={this.refreshList} selectedOption={selectedOption} repositoryId={this.props.repositoryId}/>
+             <PagesListSelectControls isMainLayout={this.state.isMainLayout} refreshList={this.refreshList} selectedOption={selectedOption} repositoryId={this.props.repositoryId}/>
          </div>
         );
     }
@@ -268,14 +287,27 @@ class PagesListSelectControls extends React.Component {
         this.state = {
            deleteModalOpen: false,
            pageModalOpen: false,
-           page: {}
+           page: {},
+           isEdit: false,
         };
         this.handleEdit = this.handleEdit.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
     }
 
     handleEdit(event) {
-        fetch('/api/admin/load_widget_design_page/' + this.props.selectedOption)
+        event.preventDefault();
+        let requestData = {
+          page_id: this.props.selectedOption,
+          repository_id: this.props.repositoryId
+        };
+        fetch('/api/admin/load_widget_design_page',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+          })
            .then(res => res.json())
            .then((result) => {
                if (result.error) {
@@ -322,15 +354,16 @@ class PagesListSelectControls extends React.Component {
     render() {
         const selected = this.props.selectedOption;
         let buttons = [];
-        let addButton = <IconButton id={'add-page'} onClick={(e) => this.setState({pageModalOpen: true})} iconClass={'fa fa-plus glyphicon glyphicon-plus'} />;
-        let editButton = <IconButton id={'edit-page'} onClick={this.handleEdit} iconClass={'fa fa-pencil glyphicon glyphicon-pencil'} />;
+        let addButton = <IconButton id={'add-page'} onClick={(e) => this.setState({pageModalOpen: true, isEdit: false})} iconClass={'fa fa-plus glyphicon glyphicon-plus'} />;
+        let editButton = <IconButton id={'edit-page'} onClick={(e) => {this.handleEdit(e); this.setState({isEdit: true})}} iconClass={'fa fa-pencil glyphicon glyphicon-pencil'} />;
         let deleteButton = <IconButton id={'delete-page'} onClick={(e) => this.setState({deleteModalOpen: true})} iconClass={'fa fa-trash glyphicon glyphicon-trash'} />;
-        if(parseInt(selected) != 0) {  // Do not allow the edit or deletion of parent layout
+        if(parseInt(selected) !== 0 && !this.props.isMainLayout) {  // Do not allow the deletion of parent layout
             buttons.push(editButton);
             buttons.push(deleteButton);
         }
         else {
             buttons.push(addButton);
+            buttons.push(editButton);
         }
         return (
             [
@@ -341,7 +374,7 @@ class PagesListSelectControls extends React.Component {
               </div>,
               <DeletePageModal deleteModalOpen={this.state.deleteModalOpen}
                   handleDelete={this.handleDelete} handleClose={(e) => this.setState({deleteModalOpen: false})} />,
-              <AddPageModal isOpen={this.state.pageModalOpen} handleClose={(e) => this.setState({pageModalOpen: false})}
+              <AddPageModal isEdit={this.state.isEdit} isOpen={this.state.pageModalOpen} handleClose={(e) => this.setState({pageModalOpen: false})}
                 repositoryId={this.props.repositoryId} addPageEndpoint={'/api/admin/save_widget_design_page'}
                 pageId={selected} page={this.state.page} refreshList={this.props.refreshList}/>
             ]
@@ -390,7 +423,7 @@ class DeletePageModal extends React.Component {
                               <span className="glyphicon glyphicon-check"/>
                               Submit
                           </button>
-                          <button type="button" class="btn btn-info close-button" onClick={this.props.handleClose}>
+                          <button type="button" className="btn btn-info close-button" onClick={this.props.handleClose}>
                               <span className="glyphicon glyphicon-remove"/>
                               Close
                           </button>
@@ -413,7 +446,8 @@ class AddPageModal extends React.Component {
             url: (this.props.page.url || '/'),
             content: (this.props.page.content || ''),
             multiLangData: (this.props.page.multi_lang_data || {}),
-            errorMessage: ''
+            errorMessage: '',
+            isMainLayout: (this.props.page.is_main_layout || false),
         };
         this.handleSave = this.handleSave.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -432,7 +466,7 @@ class AddPageModal extends React.Component {
                 url: nextProps.page.url,
                 content: nextProps.page.content,
                 multiLangData: nextProps.page.multi_lang_data,
-
+                isMainLayout: nextProps.page.is_main_layout,
           });
         }
     }
@@ -443,7 +477,7 @@ class AddPageModal extends React.Component {
             return false;
         }
 
-        if(!/\/[a-z0-9/]+/.test(this.state.url)) {
+        if(!/\/[a-z0-9?&/=]*/.test(this.state.url)) {
             this.setState({'errorMessage': 'Not a valid URL.'});
             return false;
         }
@@ -451,6 +485,7 @@ class AddPageModal extends React.Component {
     }
 
     handleSave(event) {
+        event.preventDefault();
         if(this.validateInput()) {
             this.setState({'errorMessage': ''});
             this.props.handleClose();
@@ -460,7 +495,9 @@ class AddPageModal extends React.Component {
                 title: this.state.title,
                 url: this.state.url,
                 content: this.state.content,
-                multi_lang_data: this.state.multiLangData
+                multi_lang_data: this.state.multiLangData,
+                is_main_layout: this.state.isMainLayout,
+                is_edit: this.props.isEdit,
             };
             fetch(this.props.addPageEndpoint, {
                 method: 'POST',
@@ -472,20 +509,18 @@ class AddPageModal extends React.Component {
             ).then((result) => {
                 if (result.error) {  // Exception occured while saving
                     alertModal(result.error);
-                    return;
                 }
                 else if (!result.result) {  // No exception, but problem with request data
                     alertModal('Unable to save page: Unexpected error.');
-                    return;
                 }
                 else {
                     this.props.refreshList();
+                    this.handleClose(event);
                     addAlert('Successfully saved page.');
                 }
             },
             (error) => {
               alertModal('Unable to save page: Unexpected error.');
-              return;
             });
         }
     }
@@ -497,6 +532,7 @@ class AddPageModal extends React.Component {
             url: '/',
             content: '',
             multiLangData: {},
+            isMainLayout: false,
         });
         this.props.handleClose(event);
     }
@@ -518,7 +554,8 @@ class AddPageModal extends React.Component {
                                   title: this.state.title,
                                   url: this.state.url,
                                   content: this.state.content,
-                                  multiLangData: this.state.multiLangData
+                                  multiLangData: this.state.multiLangData,
+                                  isMainLayout: this.state.isMainLayout
                               }}
                               handleInputChange={this.handleInputChange}
                           />
@@ -558,7 +595,8 @@ class AddPageForm extends React.Component {
                   <div className="col-xs-6">
                       <input name="url" type="text" value={this.props.values.url}
                           onChange={(e) => this.props.handleInputChange(e.target.name, e.target.value)}
-                          className="form-control" />
+                             className="form-control"
+                             disabled={this.props.values.isMainLayout}/>
                   </div>
               </div>
               <div className="form-group row">
@@ -602,9 +640,8 @@ class PageTitle extends React.Component {
             .then(res => res.json())
             .then((result) => {   // TODO: Could all of this be simplified?
                 if (result.error) {
-                    let modalcontent = "Can't get system language! \nDetail: " + result.error;
-                    $("#inputModal").html(modalcontent);
-                    $("#allModal").modal("show");
+                    let message = "Can't get system language! \nDetail: " + result.error;
+                    addAlert(message);
                 } else {
                     let systemLang = result.language;
                     systemLang.forEach(function (lang) {
@@ -936,13 +973,14 @@ var PreviewGrid = new function () {
             let name = el.data("name");
             let id = el.data("id");
             let type = el.data("type");
-            let widget_id = el.data("widget_id")
+            let widget_id = el.data("widget_id");
+            let created_date = el.data("created_date");
             if (!id) {
                 return;
             } else if(MAIN_CONTENT_TYPE === type){
                 isHasMainContent = true;
             }
-            return {
+            let result = {
                 x: node.x,
                 y: node.y,
                 width: node.width,
@@ -952,6 +990,10 @@ var PreviewGrid = new function () {
                 type: type,
                 widget_id: widget_id,
             };
+            if (created_date) {
+                result.created_date = created_date;
+            }
+            return result;
         }, this);
         var filtered = this.serializedData.filter(function (el) {
             return el != null;
@@ -976,8 +1018,12 @@ var PreviewGrid = new function () {
         if(isAutoPosition){
             autoPosition = 'data-gs-auto-position="true"';
         }
+        let createdDate = "";
+        if(node.created_date){
+            createdDate = '" data-created_date="' + node.created_date + '"';
+        }
         let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"'
-        + '" data-widget_id="' + node.widget_id + '"' + autoPosition + '>'
+        + '" data-widget_id="' + node.widget_id + '"' + autoPosition + createdDate + '>'
         + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
         + ' <div class="grid-stack-item-content">'
         + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'
@@ -1145,20 +1191,18 @@ $(function () {
  * Handle disable Save and Cancel button.
  */
 function disableButton() {
-    let repositoryId = $("#repository-id").val();
+    let repositoryId = document.getElementById("repository-id").value;
     if(!repositoryId) {
         repositoryId = "0";
     }
-    if (repositoryId == "0") {
-        $("#save-grid").attr('disabled','disabled');
-        $("#clear-grid").attr('disabled','disabled');
-        $("#add-page").attr('disabled','disabled');
-        $("#remove-page").attr('disabled','disabled');
+    let saveGrid = document.getElementById("save-grid");
+    let clearGrid = document.getElementById("clear-grid");
+    if (String(repositoryId) === "0") {
+        saveGrid.setAttribute('disabled','disabled');
+        clearGrid.setAttribute('disabled','disabled');
     } else {
-        $("#save-grid").removeAttr('disabled');
-        $("#clear-grid").removeAttr('disabled');
-        $("#add-page").removeAttr('disabled','disabled');
-        $("#remove-page").removeAttr('disabled','disabled');
+        saveGrid.removeAttribute('disabled');
+        clearGrid.removeAttribute('disabled');
     }
 }
 
@@ -1187,7 +1231,7 @@ function disableFooterButton(isDisable){
 }
 
 function addAlert(message) {
-   $('#alerts').append(
+  $('#alerts').append(
         '<div class="alert alert-light" id="alert-style">' +
         '<button type="button" class="close" data-dismiss="alert">' +
         '&times;</button>' + message + '</div>'
@@ -1195,8 +1239,8 @@ function addAlert(message) {
 }
 
 function alertModal(message) {
-    $("#inputModal").html(message);
-    $("#allModal").modal("show");
+  document.querySelector("#inputModal").innerHTML = message;
+  $("#allModal").modal("show");
 }
 
 /**
@@ -1204,9 +1248,18 @@ function alertModal(message) {
  * @param {*} widgetDesignData
  */
 function saveWidgetDesignSetting(widgetDesignData) {
-    let repositoryId = $("#repository-id").val();
-    let pageId = $("#pages-list-select").val();
-    if (repositoryId == "0") {
+    let repositoryId = document.getElementById("repository-id").value;
+    let pageListSelectElement = document.getElementById("pages-list-select");
+    let pageId = "0";
+    let isMainLayout = true;
+    if (pageListSelectElement && pageListSelectElement.options) {
+      pageId = pageListSelectElement.value;
+      let option = pageListSelectElement.options[pageListSelectElement.selectedIndex];
+      if (option.dataset) {
+        isMainLayout = (String(option.dataset.isMainLayout) === "true");
+      }
+    }
+    if (String(repositoryId) === "0") {
         alertModal("Please select the Repository.");
         return false;
     } else if (!widgetDesignData) {
@@ -1214,20 +1267,13 @@ function saveWidgetDesignSetting(widgetDesignData) {
         alertModal("Please add Widget to Preview panel.");
         return false;
     }
-    // else if(!isHasMainContent && (pageId == "0" || !pageId)) {  // Allow for pages not to have main contents
-    //     //alert('Please add Main Content to Preview panel.');
-    //     var modalcontent =  "Please add Main Content to Preview panel.";
-    //     alertModal(modalcontent);
-    //     return false;
-    // }
 
     let saveData = JSON.stringify(widgetDesignData);
     let postData = {
         'repository_id': repositoryId,
         'settings': saveData
     };
-
-    if (pageId != "0" && pageId) {  // Saving a page not the main layout
+    if (pageId && String(pageId) !== "0" && !isMainLayout) {  // Saving a page not the main layout
       postData.page_id = pageId
     }
 
@@ -1240,16 +1286,23 @@ function saveWidgetDesignSetting(widgetDesignData) {
             },
             data: JSON.stringify(postData),
             dataType: 'json',
-            success: function (data, status) {
+            success: function (data) {
                 let err_msg = data.error;
                 if (err_msg) {
                     alertModal(err_msg);
                 } else if (!data.result) {
                     alertModal("Failed to save Widget design.");
-                    return;
                 } else {
                     addAlert('Widget design has been saved successfully.');
-                    return;
+                    let elements  = document.querySelectorAll('[data-type="' + ACCESS_COUNTER + '"]');
+                    let d = new Date();
+                    let date = d.getFullYear() + '-' + (d.getMonth() > 8 ? '' : '0') + (d.getMonth() + 1)
+                      + '-' + (d.getDate() > 9 ? '' : '0') + d.getDate();
+                    elements.forEach(function (el) {
+                        if (!el.getAttribute('data-created_date')) {
+                            el.setAttribute('data-created_date', date);
+                        }
+                    });
                 }
             },
             error: function (error) {
@@ -1257,9 +1310,7 @@ function saveWidgetDesignSetting(widgetDesignData) {
             }
         });
     } else {
-        //alert('Please add Widget to Preview panel.');
         alertModal("Please add Widget to Preview panel.");
-        return;
     }
 }
 

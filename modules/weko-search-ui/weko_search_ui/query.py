@@ -61,7 +61,7 @@ def get_permission_filter(comm_id=None):
     if comm_id:
         if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
             self_path = Indexes.get_self_path(comm_id)
-            if self_path.path in is_perm_paths:
+            if self_path and self_path.path in is_perm_paths:
                 term_list.append(self_path.path)
 
             path = term_list[0] + '*'
@@ -74,7 +74,7 @@ def get_permission_filter(comm_id=None):
             terms = Q('bool', should=should_path)
         else:   # In case search_type is keyword or index
             self_path = Indexes.get_self_path(comm_id)
-            if self_path.path in is_perm_paths:
+            if self_path and self_path.path in is_perm_paths:
                 term_list.append(self_path.path)
 
             mst.append(match)
@@ -486,11 +486,14 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
         sort_obj = dict()
         key_fileds = SearchSetting.get_sort_key(sort_key)
+        nested_sorting = SearchSetting.get_nested_sorting(sort_key)
         if sort == 'desc':
-            sort_obj[key_fileds] = dict(order='desc')
+            sort_obj[key_fileds] = dict(order='desc', unmapped_type='long')
             sort_key = '-' + sort_key
         else:
-            sort_obj[key_fileds] = dict(order='asc')
+            sort_obj[key_fileds] = dict(order='asc', unmapped_type='long')
+        if nested_sorting:
+            sort_obj[key_fileds].update({'nested': nested_sorting})
         search._sort.append(sort_obj)
         urlkwargs.add('sort', sort_key)
 
@@ -575,38 +578,141 @@ def item_path_search_factory(self, search, index_id=None):
             "post_filter": {}
         }
 
-        # add item type aggs
-        query_q['aggs']['path']['aggs']. \
-            update(get_item_type_aggs(search._index[0]))
+        q = request.values.get('q') or '0' if index_id is None else index_id
 
-        q = request.values.get('q') if index_id is None else index_id
-        if q:
-            mut = get_permission_filter(q)
-        else:
-            mut = get_permission_filter()
-        if mut:
-            mut = list(map(lambda x: x.to_dict(), mut))
-            post_filter = query_q['post_filter']
-            if mut[0].get('bool'):
-                post_filter['bool'] = mut[0]['bool']
+        if q != '0':
+            # add item type aggs
+            query_q['aggs']['path']['aggs']. \
+                update(get_item_type_aggs(search._index[0]))
+            if q:
+                mut = get_permission_filter(q)
             else:
-                post_filter['bool'] = {'must': mut}
+                mut = get_permission_filter()
 
-        # create search query
-        if q:
-            try:
-                fp = Indexes.get_self_path(q)
-                if fp:
+            if mut:
+                mut = list(map(lambda x: x.to_dict(), mut))
+                post_filter = query_q['post_filter']
+                if mut[0].get('bool'):
+                    post_filter['bool'] = mut[0]['bool']
+                else:
+                    post_filter['bool'] = {'must': mut}
+
+            # create search query
+            if q:
+                try:
+                    fp = Indexes.get_self_path(q)
+
                     query_q = json.dumps(query_q).replace("@index", fp.path)
                     query_q = json.loads(query_q)
-            except BaseException:
-                pass
+                except BaseException:
+                    pass
+            count = str(Indexes.get_index_count())
 
-        query_q = json.dumps(query_q).replace("@count",
-                                              str(Indexes.get_index_count()))
-        query_q = json.loads(query_q)
+            query_q = json.dumps(query_q).replace("@count", count)
+            query_q = json.loads(query_q)
 
-        return query_q
+            return query_q
+        else:
+            # add item type aggs
+            wild_card = []
+            child_list = Indexes.get_child_list(q)
+            if child_list:
+                for item in child_list:
+                    wc = {
+                        "wildcard": {
+                            "path.tree": item.cid
+                        }
+                    }
+                    wild_card.append(wc)
+
+            query_not_q = {
+                "_source": {
+                    "excludes": ["content"]
+                },
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "bool": {
+                                    "should": wild_card
+                                }
+                            },
+                            {
+                                "match": {
+                                    "relation_version_is_last": "true"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "path": {
+                        "terms": {
+                            "field": "path.tree",
+                            "size": "@count"
+                        },
+                        "aggs": {
+                            "date_range": {
+                                "filter": {
+                                    "match": {"publish_status": "0"}
+                                },
+                                "aggs": {
+                                    "available": {
+                                        "range": {
+                                            "field": "publish_date",
+                                            "ranges": [
+                                                {
+                                                    "from": "now+1d/d"
+                                                },
+                                                {
+                                                    "to": "now+1d/d"
+                                                }
+                                            ]
+                                        },
+                                    }
+                                }
+                            },
+                            "no_available": {
+                                "filter": {
+                                    "bool": {
+                                        "must_not": [
+                                            {
+                                                "match": {
+                                                    "publish_status": "0"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "post_filter": {}
+            }
+
+            query_not_q['aggs']['path']['aggs']. \
+                update(get_item_type_aggs(search._index[0]))
+
+            if q:
+                mut = get_permission_filter(q)
+            else:
+                mut = get_permission_filter()
+
+            if mut:
+                mut = list(map(lambda x: x.to_dict(), mut))
+                post_filter = query_not_q['post_filter']
+                if mut[0].get('bool'):
+                    post_filter['bool'] = mut[0]['bool']
+                else:
+                    post_filter['bool'] = {'must': mut}
+
+            # create search query
+            count = str(Indexes.get_index_count())
+            query_not_q = json.dumps(query_not_q).replace("@count", count)
+            query_not_q = json.loads(query_not_q)
+
+            return query_not_q
 
     # create a index search query
     query_q = _get_index_earch_query()
@@ -653,10 +759,10 @@ def item_path_search_factory(self, search, index_id=None):
         key_fileds = SearchSetting.get_sort_key(sort_key)
         if 'custom_sort' not in sort_key:
             if sort == 'desc':
-                sort_obj[key_fileds] = dict(order='desc')
+                sort_obj[key_fileds] = dict(order='desc', unmapped_type='long')
                 sort_key = '-' + sort_key
             else:
-                sort_obj[key_fileds] = dict(order='asc')
+                sort_obj[key_fileds] = dict(order='asc', unmapped_type='long')
             search._sort.append(sort_obj)
         else:
             if sort == 'desc':
