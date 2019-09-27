@@ -323,7 +323,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
             "identifierRegistration.@attributes.identifierType")
         idt_value, idt_key = mapping_data.get_data_by_property(
             "identifier.@value")
-        idt_type, _ = mapping_data.get_data_by_property(
+        idt_type, idt_type_key = mapping_data.get_data_by_property(
             "identifier.@attributes.identifierType")
 
         requirements = check_required_data(data, key)
@@ -341,8 +341,13 @@ def validation_item_property(mapping_data, identifier_type, properties):
             error_list['required'] += type_requirements
         else:
             if not check_suffix_identifier(data, idt_value, idt_type):
-                error_list['required'].append(idt_key)
                 error_list['required'].append(key)
+                error_list['required'].append(idt_key)
+                error_list['required'].append(idt_type_key)
+            else:
+                for item in type_data:
+                    if item == 'PMID（現在不使用）':
+                        error_list['required'].append(type_key)
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
