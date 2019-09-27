@@ -107,6 +107,7 @@
           <tbody>
 
           {%- for key in ['updated_date', 'created_date', 'persistent_identifier_doi', 'persistent_identifier_h', 'ranking_page_url', 'belonging_index_info'] -%}
+          {%- if key in meta_system.keys() -%}
           <tr>
             <td class="col-sm-6">
               <label id="{{'label_item_' + key}}">{{ meta_system[key].title }}</label>
@@ -201,6 +202,7 @@
               </ul>
             </td>
           </tr>
+          {%- endif -%}
           {%- endfor -%}
           </tbody>
         </table>
