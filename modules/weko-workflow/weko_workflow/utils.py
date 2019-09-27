@@ -452,9 +452,9 @@ def check_suffix_identifier(prefix, suffix_list, type_list):
     if suffix_list and prefix:
         for pre in prefix:
             for index in indices:
-                str = suffix_list[index]
-                if (pre in str and (
-                        len(str) - str.find(pre) - len(pre)) == 0):
+                data = suffix_list[index]
+                if (pre in data and (
+                        len(data) - data.find(pre) - len(pre)) == 0):
                     return True
         return False
     else:
