@@ -437,14 +437,15 @@ def check_required_data(data, key, repeatable=False):
 
 
 def check_suffix_identifier(prefix, suffix_list, type_list):
-    """Get Persistent Identifier Object by pid_value or item_uuid.
+    """Check prefix/suffiex in Identifier Registration contain in Identifier
 
     Arguments:
-        pid_type     -- {string} 'doi' (default) or 'cnri'
-        object_uuid  -- {uuid} assigned object's uuid
+        prefix       -- {string} prefix
+        suffix_list  -- {string} suffix
+        type_list    -- {list} types
 
     Returns:
-        pid_object   -- PID object or None
+        True/False   -- is prefix/suffix data exist
 
     """
     indices = [i for i, x in enumerate(type_list or []) if x == "DOI"]
