@@ -94,7 +94,7 @@
     <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
     {%- block page_body %}
     {%- endblock page_body %}
-    {%- if not community_id %}
+    {%- if not community_id and not community %}
       </div>
       {% if render_header_footer %}
         <div id="main_footer" class="hidden">

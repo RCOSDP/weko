@@ -17,6 +17,8 @@ const DEFAULT_TEXT_COLOR = "#333333";
 const DEFAULT_BORDER_COLOR = "#DDDDDD";
 const DEFAULT_BORDER_STYLE = "solid";
 const DEFAULT_THEME = "default";
+const DEFAULT_MENU_BACKGROUND_COLOR = "#ffffff";
+const DEFAULT_MENU_COLOR = "#000000";
 
 function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
     if(key_binding === "border_style" && !initialValue){
@@ -104,6 +106,10 @@ class ComponentRadioSelect extends React.Component {
         this.state = {
           menu_orientation: this.props.data_load,
         }
+    }
+
+    componentDidMount(){
+        this.props.handleComponentDidMountOrientation(this.state.menu_orientation);
     }
 
     render() {
@@ -216,6 +222,10 @@ const ComponentSelectColorFiled = (props) => {
     }
     else if (props.key_binding === "label_color") {
         initColor = DEFAULT_LABEL_COLOR;
+    }else if(props.key_binding === "menu_bg_color" || props.key_binding === "menu_active_bg_color") {
+        initColor = DEFAULT_MENU_BACKGROUND_COLOR;
+    }else if(props.key_binding === "menu_default_color" || props.key_binding === "menu_active_color"){
+        initColor = DEFAULT_MENU_COLOR;
     }
     else {
         initColor = DEFAULT_BORDER_COLOR;
@@ -223,7 +233,10 @@ const ComponentSelectColorFiled = (props) => {
 
     const [value, setValue] = useState(props.data_load || initColor);
     useEffect(() => {
-        props.getValueOfField(props.key_binding, props.data_load);
+        if(props.handleChange){
+            props.handleChange(props.key_binding, value);
+        }
+        props.getValueOfField(props.key_binding, props.data_load || initColor);
     }, []);
 
     useEffect(() => {
@@ -285,8 +298,9 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.state = {
             selectOptions: [],
             UnauthorizedOptions: [],
-            unauthorList: [],
             language: this.props.language,
+            rightSelected: [],
+            leftSelected: [],
         };
         this.handleChange = this.handleChange.bind(this);
         this.updateGlobalValues = this.updateGlobalValues.bind(this);
@@ -294,8 +308,11 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
         this.handleMoveUpClick = this.handleMoveUpClick.bind(this);
         this.handleMoveDownClick = this.handleMoveDownClick.bind(this);
-        this.onSelect = this.onSelect.bind(this);
         this.initSelectBox = this.initSelectBox.bind(this);
+        this.onLeftSelectChange = this.onLeftSelectChange.bind(this);
+        this.onRightSelectChange = this.onRightSelectChange.bind(this);
+        this.getSelectedOption = this.getSelectedOption.bind(this);
+        this.isValueExist = this.isValueExist.bind(this);
     }
     componentDidMount() {
         this.initSelectBox(this.props.url_request, this.props.repositoryId);
@@ -305,7 +322,6 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.setState({ repositoryId: event.target.value });
         event.preventDefault();
     }
-
 
     initSelectBox(url, repositoryId) {
         let data = {
@@ -321,8 +337,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             .then(
                 (result) => {
                     let unOptions = [];
-                    let options = [];
                     let orderedOptions = [];
+                    let choseOptions = [];
 
                     // Special case for when we use this for page services
                     if(typeof result == 'object' && 'page-list' in result) {
@@ -331,36 +347,54 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 
                     // Display in order according to saved settings FIXME: High complexity, find another way
                     let current_selections = this.props.data_load;
+                    let currentSelectionString = current_selections.map(select => String(select));
                     for (let i = 0; i < current_selections.length; i++) {
                         for (let j = 0; j < result.length; j++) {
-                            if(current_selections[i] === result[j].id.toString()) {
+                            if(String(current_selections[i]) === result[j].id.toString()) {
                                 orderedOptions.push(<option key={result[j].id} value={result[j].id}>{result[j].name}</option>);
+                                choseOptions.push(result[j].id);
                             }
                         }
                     }
 
-                    options = result.map((option) => {
+                    let hasMainLayout = false;
+                    let options = result.map((option) => {
+                        if (option.is_main_layout) {
+                          hasMainLayout = true;
+                        }
                         if (this.props.is_edit === true) {
-                            if (!current_selections.includes(option.id.toString())) {
+                            if (!currentSelectionString.includes(option.id.toString())) {
                                 let innerhtml = <option key={option.id} value={option.id}>{option.name}</option>;
                                 unOptions.push(innerhtml);
                             }
                         }
                         else {
+                            choseOptions.push(option.id);
                             return (
                                 <option key={option.id} value={option.id}>{option.name}</option>
                             )
                         }
                     });
-
-                    if(this.props.is_edit === true) {  // Only add ordered options if editing
-                        options = orderedOptions.concat(options);
+                    options = options.filter((option)=> typeof option !== "undefined");
+                    if (this.props.is_edit === true) {  // Only add ordered options if editing
+                      options = orderedOptions.concat(options);
+                      if (currentSelectionString.includes("0") && !hasMainLayout) {
+                        options.unshift(<option key={0} value={0}>Main Layout</option>);
+                        choseOptions.push("0");
+                      } else if (!hasMainLayout) {
+                        unOptions.unshift(<option key={0} value={0}>Main Layout</option>);
+                      }
+                    } else if (!hasMainLayout) {
+                      options.unshift(<option key={0} value={0}>Main Layout</option>);
+                      choseOptions.push("0");
                     }
-
                     this.setState({
                         selectOptions: options,
                         UnauthorizedOptions: unOptions
                     });
+                    if(Array.isArray(choseOptions) && choseOptions.length){
+                        this.props.getValueOfField(this.props.key_binding, choseOptions);
+                    }
                 },
                 (error) => {
                     console.log(error);
@@ -383,31 +417,35 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 
     // Get the new page titles on change of lang
     componentWillReceiveProps(nextProps) {
-        if(nextProps.language !== this.state.language &&
-           this.props.key_binding === "menu_show_pages" ) {
+        if((nextProps.language !== this.state.language &&
+           this.props.key_binding === "menu_show_pages" )) {
               this.setState({language: nextProps.language});
               let loadPagesURL = "/api/admin/load_widget_design_pages/" +
                   nextProps.language;
               this.initSelectBox(loadPagesURL, this.props.repositoryId); // Re-ender tables select box
         }
+        if(nextProps.repositoryId !== this.props.repositoryId && this.props.key_binding === "menu_show_pages"){
+            let loadPagesURL = "/api/admin/load_widget_design_pages/" + this.state.language;
+            this.initSelectBox(loadPagesURL, nextProps.repositoryId);
+        }
     }
 
     isValueExist(item, array) {
-        if (array === undefined) {
-            return true;
+      let isExisted = false;
+      if (array === undefined) {
+        return isExisted;
+      }
+      if (array.length > 0) {
+        for (let prop in array) {
+          if (array[prop].props.value === item) {
+              isExisted = true;
+              break;
+          }
         }
-        if (array.length !== 0) {
-            for (let prop in array) {
-                if (array[prop].props.value == item) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        } else {
-            return false;
-        }
-        return true;
+      } else {
+        return isExisted;
+      }
+      return isExisted;
     }
 
     updateGlobalValues(optionsList) {
@@ -419,6 +457,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     handleMoveRightClick(event) {
+        event.preventDefault();
         let options = document.getElementById(this.props.authorSelect).options;
         let selectedOptions = this.getListOption(this.props.unauthorSelect);
         let nonSelectOptions = [];
@@ -438,43 +477,38 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.setState({
             selectOptions: nonSelectOptions,
             UnauthorizedOptions: selectedOptions,
-            unauthorList: []
         });
         this.updateGlobalValues(nonSelectOptions);
     }
 
     handleMoveLeftClick(event) {
-        let selectedIndex = this.state.unauthorList;
         let options = document.getElementById(this.props.unauthorSelect).options;
         let authorizedOptions = this.getListOption(this.props.authorSelect);
         let remainOption = [];
-        for (let option in options) {
-            let registed = false;
-            for (let index in selectedIndex) {
-                if (options[option].value === selectedIndex[index] && options[option].value) {
-                    let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                    if (!this.isValueExist(options[option].value, authorizedOptions)) {
-                        authorizedOptions.push(innerhtml);
-                    }
-                    registed = true;
-                    break;
-                }
+        for (let key in options) {
+            let option = options[key];
+            if (!option.value) {
+                continue;
             }
-            if (!registed) {
-                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                if (options[option].value) {
-                    remainOption.push(innerhtml);
+            let innerHTML = <option key={option.value} value={option.value}>{option.text}</option>;
+            if (option.selected) {
+                if (!this.isValueExist(option.value, authorizedOptions)) {
+                    authorizedOptions.push(innerHTML);
                 }
+            } else {
+                remainOption.push(innerHTML);
             }
         }
         this.setState({
             selectOptions: authorizedOptions,
-            UnauthorizedOptions: remainOption
+            UnauthorizedOptions: remainOption,
         });
         this.updateGlobalValues(authorizedOptions);
+        event.preventDefault();
     }
 
     handleMoveUpClick(event) {
+        event.preventDefault();
         let options = document.getElementById(this.props.authorSelect).options;
         let reOrderedOptions = this.getListOption(this.props.authorSelect);
         for (let option in options) {
@@ -489,39 +523,48 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.updateGlobalValues(reOrderedOptions);
     }
 
-    handleMoveDownClick(event) {
-      let options = document.getElementById(this.props.authorSelect).options;
-      let reOrderedOptions = this.getListOption(this.props.authorSelect);
-      for (let option in options) {
-          if(options[option].value) {
-              if (options[option].selected && option < (options.length - 1)) {
-                  let selectedOption = reOrderedOptions.splice(option, 1)[0];
-                  reOrderedOptions.splice((option + 1), 0, selectedOption);
-              }
-          }
-      }
-      this.setState({ selectOptions: reOrderedOptions });
-
-      let data = [];
-      for (let i = 0;  i < reOrderedOptions.length; i++) {
-          data.push(reOrderedOptions[i].props.value);
-      }
-      this.props.getValueOfField(this.props.key_binding, data);
-
-      // this.updateGlobalValues(reOrderedOptions);
-    }
-
-    onSelect(event) {
-        var options = event.target.options;
-        var value = [];
-        for (var i = 0, l = options.length; i < l; i++) {
-            if (options[i].selected) {
-                value.push(options[i].value);
+    handleMoveDownClick(event){
+        event.preventDefault();
+        let options = document.getElementById(this.props.authorSelect).options;
+        let reOrderedOptions = this.getListOption(this.props.authorSelect);
+        let choseOption;
+        for(let i = 0; i < options.length; i++){
+            if(options[i].selected){
+                choseOption = reOrderedOptions[i];
+                reOrderedOptions.splice(i, 1);
+                reOrderedOptions.splice(i + 1, 0, choseOption);
+                this.updateGlobalValues(reOrderedOptions);
+                this.setState({ selectOptions: reOrderedOptions });
+                break;
             }
         }
-        this.setState({
-            unauthorList: value
-        });
+    }
+
+    getSelectedOption(options) {
+      let data = [];
+      for (let key in options) {
+        let option = options[key];
+        if (option.value && option.selected) {
+          data.push(option.value);
+        }
+      }
+      return data;
+    }
+
+    onLeftSelectChange(event) {
+      let options = event.target.options;
+      let data = this.getSelectedOption(options);
+      this.setState({
+        leftSelected: data
+      })
+    }
+
+    onRightSelectChange(event) {
+      let options = event.target.options;
+      let data = this.getSelectedOption(options);
+      this.setState({
+        rightSelected: data
+      })
     }
 
     render() {
@@ -549,7 +592,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         { upDownArrows }
                         <div className={"style-element " + rowClass}>
                             <span>{this.props.leftBoxTitle}</span><br />
-                            <select name={this.props.name} multiple className="style-select-left" id={this.props.authorSelect} name={this.props.authorSelect}>
+                            <select onChange={this.onLeftSelectChange} multiple className="style-select-left" value={this.state.leftSelected}
+                                id={this.props.authorSelect} name={this.props.authorSelect}>
                                 {this.state.selectOptions}
                             </select>
                         </div>
@@ -564,8 +608,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         </div>
                         <div className={"style-element style-element-right " + rowClass }>
                             <span>{this.props.rightBoxTitle}</span><br />
-                            <select multiple value={this.state.unauthorList} className="style-select-right"
-                                onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
+                            <select multiple onChange={this.onRightSelectChange} className="style-select-right" value={this.state.rightSelected}
+                                id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
                                 {this.state.UnauthorizedOptions}
                             </select>
                         </div>
@@ -578,7 +622,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 
 class ComponentFieldEditor extends React.Component {
     constructor(props) {
-        super(props)
+        super(props);
         this.quillRef = null;
         this.reactQuillRef = null;
         this.state = {
@@ -636,12 +680,12 @@ class ComponentFieldEditor extends React.Component {
 
         var txtArea = document.createElement('textarea');
         txtArea.style.cssText = "width: 100%;margin: 0px;background: rgb(29, 29, 29);box-sizing: border-box;color: rgb(204, 204, 204);font-size: 15px;outline: none;padding: 20px;line-height: 24px;font-family: Consolas, Menlo, Monaco, &quot;Courier New&quot;, monospace;position: absolute;top: 0;bottom: 0;border: none;display:none";
-        txtArea.value = ''
-        var htmlEditor = this.quillRef.addContainer('ql-custom')
-        htmlEditor.appendChild(txtArea)
-        var qlEditor = document.querySelector('.ql-editor')
+        txtArea.value = '';
+        var htmlEditor = this.quillRef.addContainer('ql-custom');
+        htmlEditor.appendChild(txtArea);
+        var qlEditor = document.querySelector('.ql-editor');
         var htmlButton = document.querySelector('.ql-html');
-        htmlButton.innerHTML = '<b>HTML</b>'
+        htmlButton.innerHTML = '<b>HTML</b>';
         htmlButton.addEventListener('click', function() {
           if (txtArea.style.display === '') {
             quillRef.pasteHTML(txtArea.value);
@@ -753,6 +797,7 @@ class ExtendComponent extends React.Component {
         this.generateDisplayResult = this.generateDisplayResult.bind(this);
         this.handleOrientationRadio = this.handleOrientationRadio.bind(this);
         this.handleChangeMenuColor = this.handleChangeMenuColor.bind(this);
+        this.handleComponentDidMountOrientation = this.handleComponentDidMountOrientation.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
         if (nextProps.data_load && !prevState.write_more && nextProps.data_load.more_description) {
@@ -920,6 +965,14 @@ class ExtendComponent extends React.Component {
         this.handleChange('menu_orientation', event.target.value);
     }
 
+    handleComponentDidMountOrientation(typeOfOrientation){
+        let setting = this.state.settings;
+        setting['menu_orientation'] = typeOfOrientation;
+        this.setState({ settings: setting });
+        this.props.getValueOfField(this.props.key_binding, typeOfOrientation);
+    }
+
+
     render() {
         if (this.state.type === FREE_DESCRIPTION_TYPE) {
             return (
@@ -1035,7 +1088,7 @@ class ExtendComponent extends React.Component {
                 this.props.language;
             return(
                 <div>
-                  <ComponentRadioSelect handleChange={this.handleOrientationRadio} getValueOfField={this.props.getValueOfField} name="Display Orientation" key_binding="menu_orientation" data_load={this.state.settings.menu_orientation || 'horizontal'} />
+                  <ComponentRadioSelect handleComponentDidMountOrientation={this.handleComponentDidMountOrientation} handleChange={this.handleOrientationRadio} getValueOfField={this.props.getValueOfField} name="Display Orientation" key_binding="menu_orientation" data_load={this.state.settings.menu_orientation || 'horizontal'} />
                   <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Background Color" key_binding="menu_bg_color" data_load={this.state.settings.menu_bg_color} />
                   <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Active Background Color" key_binding="menu_active_bg_color" data_load={this.state.settings.menu_active_bg_color} />
                   <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Default Color" key_binding="menu_default_color" data_load={this.state.settings.menu_default_color} />
@@ -1141,7 +1194,6 @@ class ComponentButtonLayout extends React.Component {
                     if (result.success) {
                         addAlert(result.message);
                     } else {
-                        //alert(result.message);
                         let errorMessage = result.message;
                         this.showErrorMessage(errorMessage);
                     }
@@ -1499,8 +1551,7 @@ class MainLayout extends React.Component {
             language: this.props.data_load.language,
             multiLangSetting: this.props.data_load.multiLangSetting,
             multiLanguageChange: false,
-            accessInitValue: 0,
-            created_date: this.props.data_load.created_date || ''
+            accessInitValue: 0
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
@@ -1671,6 +1722,9 @@ class MainLayout extends React.Component {
         this.setState({
             multiLangSetting: storage
         });
+        if ([NEW_ARRIVALS, MENU_TYPE].includes(this.state.widget_type)) {
+          result = this.state.label !== '';
+        }
         return result;
     }
 

@@ -24,7 +24,7 @@ import json
 import os
 import sys
 
-from flask import current_app, request
+from flask import abort, current_app, request
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -108,16 +108,15 @@ def get_journal_info(index_id=0):
             if title is not None:
                 data = journal.get(value['key'])
                 if data is not None and len(str(data)) > 0:
-                    dataMap = value.get('titleMap')
-                    if dataMap is not None:
+                    data_map = value.get('titleMap')
+                    if data_map is not None:
                         res = [x['name']
-                               for x in dataMap if x['value'] == data]
+                               for x in data_map if x['value'] == data]
                         data = res[0]
                     val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
                     result.update({value['key']: val})
-        # real url: ?action=repository_opensearch&index_id=
-        result.update({'openSearchUrl': request.url_root
-                       + "search?search_type=2&q={}".format(index_id)})
+        open_search_uri = journal.get('title_url')
+        result.update({'openSearchUrl': open_search_uri})
 
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
