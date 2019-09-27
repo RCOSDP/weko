@@ -187,13 +187,11 @@ def item_metadata_validation(item_id, identifier_type):
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
-        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if (item_type.name_id in journalarticle_nameid
-            or resource_type == journalarticle_type) \
-            or (item_type.name_id == thesis_nameid) \
+        if item_type.name_id in journalarticle_nameid \
+            or resource_type == journalarticle_type \
             or (item_type.name_id == report_nameid
                 or resource_type in report_types) \
             or (resource_type == elearning_type) \
@@ -205,9 +203,11 @@ def item_metadata_validation(item_id, identifier_type):
             error_list = validation_item_property(metadata_item,
                                                   identifier_type,
                                                   properties)
+        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
-        elif item_type.name_id in dataset_nameid or resource_type == \
-                dataset_type:
+        elif item_type.name_id in dataset_nameid \
+            or resource_type == dataset_type \
+                or item_type.name_id == thesis_nameid:
             properties = ['title',
                           'givenName',
                           'identifier',
@@ -321,6 +321,10 @@ def validation_item_property(mapping_data, identifier_type, properties):
             "identifierRegistration.@value")
         type_data, type_key = mapping_data.get_data_by_property(
             "identifierRegistration.@attributes.identifierType")
+        idt_value, idt_key = mapping_data.get_data_by_property(
+            "identifier.@value")
+        idt_type, _ = mapping_data.get_data_by_property(
+            "identifier.@attributes.identifierType")
 
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
@@ -336,15 +340,9 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if type_requirements and not type_requirements == [None]:
             error_list['required'] += type_requirements
         else:
-            if type_data:
-                for item in type_data:
-                    if (identifier_type
-                            == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']
-                            and not item == 'JaLC') or \
-                            (identifier_type
-                             == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']
-                             and not item == 'Crossref'):
-                        error_list['required'].append(type_key)
+            if not check_suffix_identifier(data, idt_value, idt_type):
+                error_list['required'].append(idt_key)
+                error_list['required'].append(key)
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
@@ -423,6 +421,30 @@ def check_required_data(data, key, repeatable=False):
         return None
     else:
         return error_list
+
+
+def check_suffix_identifier(prefix, suffix_list, type_list):
+    """Get Persistent Identifier Object by pid_value or item_uuid.
+
+    Arguments:
+        pid_type     -- {string} 'doi' (default) or 'cnri'
+        object_uuid  -- {uuid} assigned object's uuid
+
+    Returns:
+        pid_object   -- PID object or None
+
+    """
+    indices = [i for i, x in enumerate(type_list or []) if x == "DOI"]
+    if suffix_list and prefix:
+        for pre in prefix:
+            for index in indices:
+                str = suffix_list[index]
+                if (pre in str and (
+                        len(str) - str.find(pre) - len(pre)) == 0):
+                    return True
+        return False
+    else:
+        return False
 
 
 class MappingData(object):

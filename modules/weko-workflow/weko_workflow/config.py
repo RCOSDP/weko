@@ -88,3 +88,6 @@ IDENTIFIER_GRANT_SELECT_DICT = {
 
 WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
 """Host server of CNRI"""
+
+WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS = True
+"""Toggle display harvesting items in Workflow list."""
