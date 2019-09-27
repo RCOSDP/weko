@@ -230,9 +230,17 @@ def item_metadata_validation(item_id, identifier_type):
             error_list = validation_item_property(metadata_item,
                                                   identifier_type,
                                                   properties)
-        elif item_type.name_id in [thesis_nameid, report_nameid] or \
+        elif item_type.name_id == report_nameid or \
                 resource_type in report_types:
             properties = ['title',
+                          'identifier',
+                          'identifierRegistration']
+            error_list = validation_item_property(metadata_item,
+                                                  identifier_type,
+                                                  properties)
+        elif item_type.name_id == thesis_nameid:
+            properties = ['title',
+                          'givenName',
                           'identifier',
                           'identifierRegistration']
             error_list = validation_item_property(metadata_item,
