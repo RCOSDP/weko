@@ -236,7 +236,7 @@ def item_metadata_validation(item_id, identifier_type):
             error_list = validation_item_property(metadata_item,
                                                   identifier_type,
                                                   properties)
-        elif item_type.name_id in thesis_types:
+        elif resource_type in thesis_types:
             properties = ['title',
                           'givenName',
                           'identifier',
