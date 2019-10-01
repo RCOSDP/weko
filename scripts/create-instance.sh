@@ -131,6 +131,8 @@ CI=true git clone https://github.com/nmmf/base64image.git
 # sphinxdoc-run-npm-end
 
 # sphinxdoc-collect-and-build-assets-begin
+cdvirtualenv "var/instance/static/node_modules/jquery"
+cp -b dist/jquery.js ./
 ${INVENIO_WEB_INSTANCE} collect -v
 ${INVENIO_WEB_INSTANCE} assets build
 # sphinxdoc-collect-and-build-assets-end
