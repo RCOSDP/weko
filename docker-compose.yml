@@ -51,6 +51,7 @@ services:
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
+      - jcbackup:/jcbackup
       - type: bind
         source: .
         target: /code
@@ -163,4 +164,9 @@ volumes:
   static_data:
   pgsql-data:
   es-data:
+  jcbackup:
+    driver_opts:
+      type: nfs
+      o: "addr=136.187.110.101,rsize=1048576,wsize=1048576,nfsvers=4" 
+      device: ":/jcbackup" 
 
