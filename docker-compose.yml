@@ -167,6 +167,6 @@ volumes:
   jcbackup:
     driver_opts:
       type: nfs
-      o: "addr=136.187.110.101,rsize=1048576,wsize=1048576,nfsvers=4" 
+      o: "addr=136.187.110.101,ro,rsize=1048576,wsize=1048576,nfsvers=4" 
       device: ":/jcbackup" 
 
