@@ -157,6 +157,8 @@ def item_metadata_validation(item_id, identifier_type):
     journalarticle_nameid = [14, 3, 5, 9]
     journalarticle_type = 'other（プレプリント）'
     thesis_nameid = 12
+    thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
+                    'doctoral thesis']
     report_nameid = 16
     report_types = ['technical report', 'research report', 'report']
     elearning_type = 'learning material'
@@ -206,7 +208,7 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
-            or resource_type == dataset_type \
+            or resource_type in [dataset_type, thesis_types] \
                 or item_type.name_id == thesis_nameid:
             properties = ['title',
                           'givenName',
@@ -238,7 +240,7 @@ def item_metadata_validation(item_id, identifier_type):
             error_list = validation_item_property(metadata_item,
                                                   identifier_type,
                                                   properties)
-        elif item_type.name_id == thesis_nameid:
+        elif item_type.name_id in thesis_types:
             properties = ['title',
                           'givenName',
                           'identifier',
