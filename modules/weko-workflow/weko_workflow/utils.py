@@ -26,12 +26,10 @@ from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidrelations.models import PIDRelation
-from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
+from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
-from invenio_records.api import Record
 from weko_admin.models import Identifier
-from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.api import WekoRecord
 from weko_handle.api import Handle
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -39,9 +37,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import WorkActivity
-from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, \
-    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY, \
-    WEKO_SERVER_CNRI_HOST_LINK
+from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
 
 
 def get_identifier_setting(community_id):
@@ -207,7 +203,7 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
-            or resource_type in dataset_type \
+            or resource_type == dataset_type \
             or resource_type in thesis_types \
                 or item_type.name_id == thesis_nameid:
             properties = ['title',
