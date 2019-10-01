@@ -24,7 +24,6 @@ from copy import deepcopy
 
 from flask import current_app, request
 from flask_babelex import gettext as _
-from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
@@ -208,7 +207,8 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
-            or resource_type in [dataset_type, thesis_types] \
+            or resource_type in dataset_type \
+            or resource_type in thesis_types \
                 or item_type.name_id == thesis_nameid:
             properties = ['title',
                           'givenName',
