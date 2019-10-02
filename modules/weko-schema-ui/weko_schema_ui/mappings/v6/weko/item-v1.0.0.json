@@ -591,13 +591,13 @@
           ]
         },
         "numPages": {
-          "type": "integer"
+          "type": "text"
         },
         "pageStart": {
-          "type": "integer"
+          "type": "text"
         },
         "pageEnd": {
-          "type": "integer"
+          "type": "text"
         },
         "dissertationNumber": {
           "type": "text",
