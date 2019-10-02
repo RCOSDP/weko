@@ -219,6 +219,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         except BaseException:
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
+        current_app.logger.debug("=====================================paths")
+        current_app.logger.debug(paths)
+        current_app.logger.debug("=====================================paths")
         nlst = []
         for p in paths:
             m = 0
@@ -236,7 +239,11 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                                 "doc_count")
                         pub["un_pub_cnt"] += no_available['doc_count']
                         agp[k]["date_range"] = pub
-                        nlst.append(agp.pop(k))
+                        comment = p.comment
+                        agp[k]["comment"]= comment,
+                        result = agp.pop(k)
+                        result["comment"] = comment
+                        nlst.append(result)
                         m = 1
                     break
             if m == 0:
@@ -251,7 +258,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     'date_range': {
                         'pub_cnt': 0,
                         'un_pub_cnt': 0},
-                    'rss_status': rss_status}
+                    'rss_status': rss_status,
+                    'comment': p.comment,
+                }
                 nlst.append(nd)
         agp.clear()
         # process index tree image info

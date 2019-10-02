@@ -41,6 +41,7 @@
               <p>{{journal_info.publisher_name}}</p>
               <p>{{journal_info.language}}</p>
               <p>{{journal_info.online_identifier}}</p>
+              <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize"></p>
               <p style="margin: 20px 0;">URL: <a
                   href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
             </div>
@@ -88,17 +89,22 @@
                 display: block;
                 padding-right: 25px;
               ">
-            <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
-            <span ng-if="is_permission">{{ index_path.name.split('/').pop() }} <{{index_path.key.split('/').pop()}}></span>
-            <span ng-if="!is_permission">{{ index_path.name.split('/').pop() }}</span>
-<!--            <pre>{{ index_path.key}}</pre>-->
-            <span ng-if="index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0" class="badge"
-              style="float:right">{{index_path.date_range.pub_cnt}} items (Private {{index_path.date_range.un_pub_cnt}}
-              items )
-            </span>
-            <span ng-if="index_path.date_range.pub_cnt==0&&index_path.date_range.un_pub_cnt==0" class="badge"
-              style="float:right">{{index_path.date_range.pub_cnt}} items </span>
+            <div>
+                <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
+                <span ng-if="is_permission">{{ index_path.name.split('/').pop() }} <{{index_path.key.split('/').pop()}}></span>
+                <span ng-if="!is_permission">{{ index_path.name.split('/').pop() }}</span>
+                <span ng-if="index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0" class="badge"
+                  style="float:right">{{index_path.date_range.pub_cnt}} items (Private {{index_path.date_range.un_pub_cnt}}
+                  items )
+                </span>
+                <span ng-if="index_path.date_range.pub_cnt==0&&index_path.date_range.un_pub_cnt==0" class="badge"
+                  style="float:right">{{index_path.date_range.pub_cnt}} items </span>
+            </div>
+
           </a>
+          <div style="padding-left: 14px">
+                <span ng-bind-html="display_comment(index_path.comment) | sanitize"></span>
+          </div>
           <span ng-if="index_path.rss_status" style="position: absolute;top: 9px;right: 15px;">
             <a ng-href="/api/rss.xml?index_id={{ index_path.key.split('/').pop() }}&page=1&count=20&term=14&lang=en"
               target="_blank">
@@ -108,11 +114,14 @@
         </div>
       </ul>
     </div>
-    <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')">
+    <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" style="display: flex">
       <img ng-if="$last" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}"
         class="img-thumbnail ng-hide" id="thumbnail_img"
         alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}
         ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
+      <span ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('comment') && vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="padding: 0 10px">
+        <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize"></p>
+      </span>
     </div>
   </div>
 </div>
