@@ -343,6 +343,14 @@ function format_comment(comment){
     } else {
       result+=c
     }
+
+  }
+  if (text) {
+     result += '<a href="'+href+'">'+ text + '</a>'
+  } else {
+    if(href) {
+      result += '<a href="'+href+'">'+ href + '</a>'
+    }
   }
   return result
 }
