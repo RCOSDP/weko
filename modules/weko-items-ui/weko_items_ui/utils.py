@@ -20,7 +20,9 @@
 
 """Module of weko-items-ui utils.."""
 
+import csv
 from datetime import datetime
+from io import StringIO
 
 from flask import session
 from flask_babelex import gettext as _
@@ -410,3 +412,53 @@ def update_json_schema_by_activity_id(json, activity_id):
                                 givename['required'] = []
                             givename['required'].append(sub_item[1])
     return json
+
+
+def package_exports(output_file):
+    """Export TSV Files.
+
+        Arguments:
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            reg_value    -- {string} pid_value
+
+        Returns:
+            return       -- PID object if exist
+
+    """
+    """Package the .tsv files into one zip file."""
+    tsv_output = StringIO()
+    tsv_writer = csv.writer(tsv_output, delimiter='\t')
+    tsv_writer.writerow(['name', 'field'])
+    tsv_writer.writerow(['Dijkstra', 'Computer Science'])
+    tsv_writer.writerow(['Shelah', 'Math'])
+    tsv_writer.writerow(['Aumann', 'Economic Sciences'])
+    return tsv_output 
+
+
+def make_stats_tsv():
+    """Prepare TSV data for each Item Types.
+
+        Arguments:
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            reg_value    -- {string} pid_value
+
+        Returns:
+            return       -- PID object if exist
+
+    """
+    pass
+
+
+def write_report_tsv_rows():
+    """Fill Item Metadata to TSV Row.
+
+        Arguments:
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            reg_value    -- {string} pid_value
+
+        Returns:
+            return       -- PID object if exist
+
+    """
+    pass
+

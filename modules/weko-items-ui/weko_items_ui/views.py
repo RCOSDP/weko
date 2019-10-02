@@ -20,10 +20,7 @@
 
 """Blueprint for weko-items-ui."""
 
-import operator
 import os
-import random
-import re
 import shutil
 import sys
 import tempfile
@@ -31,13 +28,13 @@ from datetime import date, datetime, timedelta
 
 import bagit
 import redis
-from flask import Blueprint, abort, after_this_request, current_app, flash, \
-    json, jsonify, redirect, render_template, request, send_file, session, \
-    url_for
+from flask import Blueprint, abort, current_app, flash, json, jsonify, \
+    redirect, render_template, request, send_file, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from invenio_accounts.models import Role, userrole
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
@@ -49,7 +46,7 @@ from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
@@ -61,9 +58,9 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, parse_ranking_results, \
-    update_json_schema_by_activity_id, validate_form_input_data, \
-    validate_user
+    get_user_information, get_user_permission, package_exports, \
+    parse_ranking_results, update_json_schema_by_activity_id, \
+    validate_form_input_data, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -1072,6 +1069,7 @@ def export_items(post_data):
 
     :return: JSON, BIBTEX
     """
+    current_app.logger.debug(post_data)
     include_contents = True if \
         post_data['export_file_contents_radio'] == 'True' else False
     format = post_data['export_format_radio']
@@ -1081,6 +1079,7 @@ def export_items(post_data):
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory()
+    item_types_output = {}
     try:
         # Set export folder
         export_path = temp_path.name + '/' + \
@@ -1094,8 +1093,12 @@ def export_items(post_data):
                                                 include_contents,
                                                 record_path))
         # Create export info file
-        with open(export_path + "/export.json", "w") as file:
-            file.write(json.dumps(result))
+        with open(export_path + "/export.tsv", "w") as file:
+            # file.write(json.dumps(result))
+            tsvs_output = package_exports(file)
+            file.write(tsvs_output.getvalue())
+        # package_exports(file)
+
         # Create bag
         bagit.make_bag(export_path)
         # Create download file
