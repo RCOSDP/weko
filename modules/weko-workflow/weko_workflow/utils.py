@@ -347,7 +347,6 @@ def validation_item_property(mapping_data, identifier_type, properties):
             error_list['required'] += type_requirements
         else:
             if not check_suffix_identifier(data, idt_value, idt_type):
-                error_list['required'].append(key)
                 error_list['required'].append(idt_key)
                 error_list['required'].append(idt_type_key)
                 error_list['doi'] = 'Lỗi tè le!'
