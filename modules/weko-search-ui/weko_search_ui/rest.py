@@ -219,9 +219,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         except BaseException:
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
-        current_app.logger.debug("=====================================paths")
-        current_app.logger.debug(paths)
-        current_app.logger.debug("=====================================paths")
         nlst = []
         for p in paths:
             m = 0
