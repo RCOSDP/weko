@@ -176,7 +176,7 @@ def item_metadata_validation(item_id, identifier_type):
         return 'Resource Type Property either missing ' \
             'or jpcoar mapping not correct!'
     if not item_type or not resource_type and type_check:
-        error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
+        error_list = {'required': [], 'pattern': [], 'doi': ''}
         error_list['required'].append(type_key)
         return error_list
     resource_type = resource_type.pop()
@@ -256,6 +256,8 @@ def item_metadata_validation(item_id, identifier_type):
     return error_list
 
 
+import validators
+
 def validation_item_property(mapping_data, identifier_type, properties):
     """
     Validate item property.
@@ -265,7 +267,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
+    error_list = {'required': [], 'pattern': [], 'doi': '', 'url': ''}
     empty_list = deepcopy(error_list)
     # check タイトル dc:title
     if 'title' in properties:
@@ -327,33 +329,37 @@ def validation_item_property(mapping_data, identifier_type, properties):
             "identifierRegistration.@value")
         type_data, type_key = mapping_data.get_data_by_property(
             "identifierRegistration.@attributes.identifierType")
-        idt_value, idt_key = mapping_data.get_data_by_property(
+        idt_data, idt_key = mapping_data.get_data_by_property(
             "identifier.@value")
-        idt_type, idt_type_key = mapping_data.get_data_by_property(
+        idt_type_data, idt_type_key = mapping_data.get_data_by_property(
             "identifier.@attributes.identifierType")
 
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
+
         if requirements and not requirements == [None]:
             error_list['required'] += requirements
-        # half-with and special character check
-        # else:
-        #     for item in data:
-        #         char_re = re.compile(r'[^a-zA-Z0-9\-\.\_\;\(\)\/.]')
-        #         result = char_re.search(item)
-        #         if bool(result):
-        #             error_list['pattern'].append(key)
         if type_requirements and not type_requirements == [None]:
             error_list['required'] += type_requirements
         else:
-            if not check_suffix_identifier(data, idt_value, idt_type):
+            for item in type_data:
+                if item == 'PMID（現在不使用）':
+                    error_list['required'].append(type_key)
+            idx = 0
+            for item in idt_type_data:
+                if item in ['HDL', 'URI', 'DOI']:
+                    if not validators.url(idt_data[idx]):
+                        error_list['required'].append(type_key)
+                        error_list['url'] = 'Please input location information (URL) for Identifier.'
+                        break
+                idx += 1
+
+            if not check_suffix_identifier(data, idt_data, idt_type_data):
                 error_list['required'].append(idt_key)
                 error_list['required'].append(idt_type_key)
-                error_list['doi'] = 'Lỗi tè le!'
-            else:
-                for item in type_data:
-                    if item == 'PMID（現在不使用）':
-                        error_list['required'].append(type_key)
+                error_list['doi'] = 'Prefix/Suffix of Identifier is not consistency with content of Identifier Registration.'
+
+
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
