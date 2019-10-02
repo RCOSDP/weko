@@ -350,6 +350,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
                 error_list['required'].append(key)
                 error_list['required'].append(idt_key)
                 error_list['required'].append(idt_type_key)
+                error_list['doi'] = 'Lỗi tè le!'
             else:
                 for item in type_data:
                     if item == 'PMID（現在不使用）':

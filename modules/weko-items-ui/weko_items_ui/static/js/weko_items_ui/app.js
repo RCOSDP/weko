@@ -664,6 +664,9 @@ function handleSharePermission(value) {
           success: function (response) {
             if (response.code) {
               addAlert(response.msg, 'alert-danger');
+              if (response.error_list.doi) {
+                addAlert(response.error_list.doi, 'alert-danger');
+              }
               $scope.render_requirements = true;
               $scope.error_list = response.error_list;
             }
