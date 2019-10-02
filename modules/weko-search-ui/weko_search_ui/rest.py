@@ -237,7 +237,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         pub["un_pub_cnt"] += no_available['doc_count']
                         agp[k]["date_range"] = pub
                         comment = p.comment
-                        agp[k]["comment"]= comment,
+                        agp[k]["comment"] = comment,
                         result = agp.pop(k)
                         result["comment"] = comment
                         nlst.append(result)
