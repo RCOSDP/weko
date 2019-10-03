@@ -176,7 +176,7 @@ def item_metadata_validation(item_id, identifier_type):
         return 'Resource Type Property either missing ' \
             'or jpcoar mapping not correct!'
     if not item_type or not resource_type and type_check:
-        error_list = {'required': [], 'pattern': [], 'doi': ''}
+        error_list = {'required': [], 'pattern': [], 'pmid': '', 'doi': '', 'url': ''}
         error_list['required'].append(type_key)
         return error_list
     resource_type = resource_type.pop()
@@ -267,7 +267,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'doi': '', 'url': ''}
+    error_list = {'required': [], 'pattern': [], 'pmid': '', 'doi': '', 'url': ''}
     empty_list = deepcopy(error_list)
     # check タイトル dc:title
     if 'title' in properties:
@@ -344,20 +344,20 @@ def validation_item_property(mapping_data, identifier_type, properties):
         else:
             for item in type_data:
                 if item == 'PMID（現在不使用）':
-                    error_list['required'].append(type_key)
+                    error_list['pmid'] = type_key
             idx = 0
             for item in idt_type_data:
                 if item in ['HDL', 'URI', 'DOI']:
                     if not validators.url(idt_data[idx]):
                         error_list['required'].append(type_key)
-                        error_list['url'] = 'Please input location information (URL) for Identifier.'
+                        error_list['url'] = type_key
                         break
                 idx += 1
 
             if not check_suffix_identifier(data, idt_data, idt_type_data):
                 error_list['required'].append(idt_key)
                 error_list['required'].append(idt_type_key)
-                error_list['doi'] = 'Prefix/Suffix of Identifier is not consistency with content of Identifier Registration.'
+                error_list['doi'] = type_key
 
 
 
@@ -440,23 +440,23 @@ def check_required_data(data, key, repeatable=False):
         return error_list
 
 
-def check_suffix_identifier(prefix, suffix_list, type_list):
+def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
     """Check prefix/suffiex in Identifier Registration contain in Identifier
 
     Arguments:
-        prefix       -- {string} prefix
-        suffix_list  -- {string} suffix
-        type_list    -- {list} types
+        idt_regis_value -- {string array} Identifier Registration value
+        idt_list        -- {string array} Identifier Data
+        idt_type_list   -- {string array} Identifier Type List
 
     Returns:
         True/False   -- is prefix/suffix data exist
 
     """
-    indices = [i for i, x in enumerate(type_list or []) if x == "DOI"]
-    if suffix_list and prefix:
-        for pre in prefix:
+    indices = [i for i, x in enumerate(idt_type_list or []) if x == "DOI"]
+    if idt_list and idt_regis_value:
+        for pre in idt_regis_value:
             for index in indices:
-                data = suffix_list[index]
+                data = idt_list[index] or ''
                 if (pre in data and (
                         len(data) - data.find(pre) - len(pre)) == 0):
                     return True
