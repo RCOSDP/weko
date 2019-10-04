@@ -28,49 +28,9 @@
     <div class="panel-heading clearfix">
               <h3 class="panel-title">{{_('Item')}}</h3>
 </div>
-<div class="panel-group" >      
-<pre class="hide">{{record|tojson}}</pre>
-      <div class="panel_bread" id="panel_bread">
-        {%- set record_navs = record.navi -%}
-        {%- if record_navs -%}
-          {%- for nav in record_navs -%}
-                <div class="row col-xs-12 col-md-12 col-lg-12 col-xl-12">
-                <div style="overflow:hidden;">
-                <ol class="breadcrumb" style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
-                  {%- if nav.name != None and current_i18n.language == 'ja'  %}
-                    {%- set name = nav.name.split('/') -%}
-                  {%- else %}
-                    {%- set name = nav.name_en.split('/') -%}
-                  {%- endif -%}
-                  {%- set p = nav.path.split('/') -%}
-                  {%- for n in name -%}
-                    {%- if community %}
-                      <li>
-                        <a href="{{ url_for("invenio_search_ui.search") + "?search_type=2&q=" + p[loop.index-1] + "&community=" + community.id }}">{{n}}</a>
-                      </li>
-                    {%-else%}
-                      <li>
-                        <a href="{{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}">{{n}}</a>
-                      </li>
-                    {%- endif -%}
-                  {%- endfor -%}
-                </ol>
-                </div></div>
-          {%- endfor %}
-<div class="panel-group">
-              <h2 style="display: inline;"><a href='#' style="margin-left:
-                      0.2em;">{{ record.get('item_title', _('No title'))
-                      }}</a></h2>
-</div>
-	<div class="panel-group">
-{%- if record.permalink_uri -%}
-              <span class="pull-right" style="display: inline;padding-right:10px;">Permalink :
-                {{ record.permalink_uri }}</span>
-              {%- endif -%}
-        {%- endif -%}
-	</div>
-    </div>
-
+<div class="panel-body">
+{%- include "weko_records_ui/box/head.html" %}
+</div> 
     <div class="panel-body" style="padding-top: 10px;">
       <div class="row">
         <div id="detail-item" class="col-sm-9 col-md-9 col-left">
