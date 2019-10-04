@@ -18,9 +18,9 @@
 # MA 02111-1307, USA.
 #}
 
-<div class="panel-group-tmp">
+<div class="panel-group-tmp" style="height: 100%">
   {% if index_link_enabled  %}
-  <div class="panel panel-default">
+  <div class="panel panel-default" style="height: 100%">
   {% else %}
   <div class="panel panel-default hide">
   {% endif %}
@@ -40,13 +40,13 @@
         </div>
     </div>
   </div>
-  <div class="scroll">
-  <div class="panel panel-default">
+  <div class="scroll" style="height: 100%">
+  <div class="panel panel-default" style="height: 90%">
     <div class="panel-heading clearfix">
         <h3 class="panel-title"><a href="/search?page=1&size=20&search_type=2&q=0">{{_('Index Tree')}}</a></h3>
     </div>
     <div id="index-height" name="index-height" hidden>{{ height }}</div>
-    <div class="panel-body index-body" id="index-background" style="overflow: auto;">
+    <div class="panel-body index-body" id="index-background" style="overflow:auto;height: 90%;">
       <app-tree-items></app-tree-items>
     </div>
   </div>
