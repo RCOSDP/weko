@@ -165,6 +165,17 @@
               {% endif %}
               {%- for lst in record.items_show_list %}
                 {% if 'attribute_name_hidden' not in lst.keys() %}
+                  {% if lst['attribute_name'] == 'Reference' %}
+                  <tr>
+                      <th>{{ lst['attribute_name'] }}</th>
+                      <td>
+                        
+                        {{ lst['attribute_value_mlt'][0]['bibliographicInfo_authors'] }}. ({{ lst['attribute_value_mlt'][3]['bibliographicInfo_year'] }}). <i>{{ lst['attribute_value_mlt'][1]['bibliographicInfo_title'] }}</i>. {{ lst['attribute_value_mlt'][2]['bibliographicInfo_journal'] }}. <a href="{{ lst['attribute_value_mlt'][4]['bibliographicInfo_doi'] }}">{{ lst['attribute_value_mlt'][4]['bibliographicInfo_doi'] }}</a>
+                    
+                  
+              </td>
+              </tr>
+                  {% else %}
                   <tr>
                     <th>{{ lst['attribute_name'] }}</th>
                     <td>
@@ -220,6 +231,7 @@
                       {% endif %}
                     </td>
                   </tr>
+                  {% endif %}
                 {% endif %}
                 {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
                   <tr>
