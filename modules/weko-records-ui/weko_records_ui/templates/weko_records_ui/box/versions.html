@@ -1,4 +1,26 @@
 <div class="well metadata">
    <h4>{{_('Versions')}}</h4>
-    under construction
+  {%- set all_versions = pid_versioning.get_children(ordered=True, pid_status=None) | list %}
+  {%- if pid in all_versions %}
+    {%- set active_versions = pid_versioning.children|list %}
+    {%- set pid_version_index = all_versions.index(pid) %}
+    <table class="table">
+      {%- for pid_version in (active_versions|reverse|list) %}
+        {%- set version_record = pid_version.pid_value|record_from_pid %}
+        {%- set current_version_index = all_versions.index(pid_version) %}
+        {%- set version_label =  _('Ver.') + (current_version_index + 1) | string %}
+        {%- set version_date = pid_version.updated %}
+        <tr class="{% if pid_version_index == all_versions.index(pid_version) %}info {% endif %}{% if loop.index0 > 2 %}ng-hidden {% endif %}" {% if loop.index0 > 2 %}ng-show="versionsCollapse" {% endif %}>
+          <td>
+            <a href="{{ url_for('invenio_records_ui.recid', pid_value=pid_version.pid_value) }}">{{ version_label }} </a>
+          </td>
+          <td align="right">
+            <small class="text-muted">{{ version_date }}</small>
+          </td>
+        </tr>
+      {%- endfor %}
+      </table>
+     <a id="views-allversions" ng-click="versionsCollapse = !versionsCollapse">{{_('Show All versions')}}</a>
+      
+   {%- endif %}
 </div>
