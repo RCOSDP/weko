@@ -22,6 +22,7 @@
 
 from copy import deepcopy
 
+import validators
 from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
@@ -151,7 +152,6 @@ def item_metadata_validation(item_id, identifier_type):
 
     journalarticle_nameid = [14, 3, 5, 9]
     journalarticle_type = 'other（プレプリント）'
-    thesis_nameid = 12
     thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
                     'doctoral thesis']
     report_nameid = 16
@@ -176,10 +176,12 @@ def item_metadata_validation(item_id, identifier_type):
         return 'Resource Type Property either missing ' \
             'or jpcoar mapping not correct!'
     if not item_type or not resource_type and type_check:
-        error_list = {'required': [], 'pattern': [], 'pmid': '', 'doi': '', 'url': ''}
+        error_list = {'required': [], 'pattern': [], 'pmid': '',
+                      'doi': '', 'url': ''}
         error_list['required'].append(type_key)
         return error_list
     resource_type = resource_type.pop()
+    properties = []
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
@@ -197,24 +199,19 @@ def item_metadata_validation(item_id, identifier_type):
             properties = ['title',
                           'identifier',
                           'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
+        elif resource_type in thesis_types:
+            properties = ['title',
+                          'creator',
+                          'identifier',
+                          'identifierRegistration']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
-            or resource_type == dataset_type \
-            or resource_type in thesis_types \
-                or item_type.name_id == thesis_nameid:
+                or resource_type == dataset_type:
             properties = ['title',
                           'givenName',
                           'identifier',
                           'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
-        else:
-            error_list = 'false'
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if item_type.name_id in journalarticle_nameid or resource_type == \
@@ -225,38 +222,25 @@ def item_metadata_validation(item_id, identifier_type):
                           'identifierRegistration',
                           'sourceIdentifier',
                           'sourceTitle']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
         elif item_type.name_id == report_nameid or \
                 resource_type in report_types:
             properties = ['title',
                           'identifier',
                           'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
         elif resource_type in thesis_types:
             properties = ['title',
-                          'givenName',
+                          'creator',
                           'identifier',
                           'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
-        else:
-            error_list = 'false'
-    else:
-        error_list = 'false'
 
-    if error_list == 'false':
+    if properties:
+        return validation_item_property(metadata_item,
+                                        identifier_type,
+                                        properties)
+    else:
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
 
-    return error_list
-
-
-import validators
 
 def validation_item_property(mapping_data, identifier_type, properties):
     """
@@ -267,7 +251,8 @@ def validation_item_property(mapping_data, identifier_type, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'pmid': '', 'doi': '', 'url': ''}
+    error_list = {'required': [], 'pattern': [], 'pmid': '',
+                  'doi': '', 'url': ''}
     empty_list = deepcopy(error_list)
     # check タイトル dc:title
     if 'title' in properties:
@@ -303,6 +288,32 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if requirements:
             error_list['pattern'] += requirements
 
+    # check 識別子 jpcoar:givenName and jpcoar:nameIdentifier
+    if 'creator' in properties:
+        _, key = mapping_data.get_data_by_property(
+            "creator.givenName.@value")
+        _, idt_key = mapping_data.get_data_by_property(
+            "creator.nameIdentifier.@value")
+
+        data = []
+        idt_data = []
+        creators = mapping_data.record.get(key.split('.')[0])
+        for creator in creators.get("attribute_value_mlt"):
+            for subitem in creator:
+                for item in creator[subitem]:
+                    if item.get(key.split('.')[1]):
+                        data.append(item.get(key.split('.')[1]))
+                    if item.get(idt_key.split('.')[1]):
+                        idt_data.append(item.get(idt_key.split('.')[1]))
+
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        repeatable = True
+        idt_requirements = check_required_data(idt_data, idt_key, repeatable)
+        if requirements and idt_requirements:
+            error_list['pattern'] += requirements
+            error_list['pattern'] += idt_requirements
+
     # check 識別子 jpcoar:identifier
     if 'identifier' in properties:
         data, key = mapping_data.get_data_by_property("identifier.@value")
@@ -319,9 +330,14 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if type_requirements:
             error_list['required'] += type_requirements
         else:
+            idx = 0
             for item in type_data:
-                if item not in ['HDL', 'URI', 'DOI']:
+                if not validators.url(data[idx]):
+                    error_list['required'].append(key)
                     error_list['required'].append(type_key)
+                    error_list['url'] = idx
+                    break
+                idx += 1
 
     # check ID登録 jpcoar:identifierRegistration
     if 'identifierRegistration' in properties:
@@ -345,21 +361,10 @@ def validation_item_property(mapping_data, identifier_type, properties):
             for item in type_data:
                 if item == 'PMID（現在不使用）':
                     error_list['pmid'] = type_key
-            idx = 0
-            for item in idt_type_data:
-                if item in ['HDL', 'URI', 'DOI']:
-                    if not validators.url(idt_data[idx]):
-                        error_list['required'].append(type_key)
-                        error_list['url'] = type_key
-                        break
-                idx += 1
-
             if not check_suffix_identifier(data, idt_data, idt_type_data):
                 error_list['required'].append(idt_key)
                 error_list['required'].append(idt_type_key)
-                error_list['doi'] = type_key
-
-
+                error_list['doi'] = idt_type_key
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
@@ -441,7 +446,7 @@ def check_required_data(data, key, repeatable=False):
 
 
 def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
-    """Check prefix/suffiex in Identifier Registration contain in Identifier
+    """Check prefix/suffiex in Identifier Registration contain in Identifier.
 
     Arguments:
         idt_regis_value -- {string array} Identifier Registration value
