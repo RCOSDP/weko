@@ -336,12 +336,25 @@ function format_comment(comment){
         continue
       }
       if(where === 'text'){
-        text+=c
+        if(c=== '↵') {
+          text += "<br/>"
+        } else {
+          text+=c
+        }
       } else {
-        href+=c
+        if(c=== '↵') {
+          href += "<br/>"
+        } else {
+          href+=c
+        }
       }
     } else {
-      result+=c
+      if(c=== '↵') {
+        result += "<br/>"
+      } else {
+        result+=c
+
+      }
     }
 
   }
