@@ -336,20 +336,20 @@ function format_comment(comment){
         continue
       }
       if(where === 'text'){
-        if(c=== '↵') {
+        if(c == '\n') {
           text += "<br/>"
         } else {
           text+=c
         }
       } else {
-        if(c=== '↵') {
+        if(c == '\n') {
           href += "<br/>"
         } else {
           href+=c
         }
       }
     } else {
-      if(c=== '↵') {
+      if(c == '\n') {
         result += "<br/>"
       } else {
         result+=c
