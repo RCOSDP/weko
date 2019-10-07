@@ -1079,7 +1079,10 @@ def export_items(post_data):
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory()
-    item_types_output = {}
+    item_types_data = {}
+    current_app.logger.debug('============================')
+    current_app.logger.debug(record_ids)
+    current_app.logger.debug(request.url_root)
     try:
         # Set export folder
         export_path = temp_path.name + '/' + \
@@ -1092,12 +1095,25 @@ def export_items(post_data):
                                                 format,
                                                 include_contents,
                                                 record_path))
+
+            record = WekoRecord.get_record_by_pid(id)
+            record_item_type = ItemTypes.get_by_id(record.get('item_type_id'))
+            # current_app.logger.debug(record_item_type.item_type_name.name)
+            item_type_id = record.get('item_type_id')
+            if not item_types_data.get(item_type_id):
+                item_types_data[item_type_id] = {}
+                item_types_data[item_type_id] = {
+                    'name': record_item_type.item_type_name.name,
+                    'jsonschema': request.url_root + 'items/jsonschema/' + item_type_id,
+                    'recids': []
+                }
+
+        item_types_data[record.get('item_type_id')]['recids'].append(item_type_id)
         # Create export info file
         with open(export_path + "/export.tsv", "w") as file:
             # file.write(json.dumps(result))
             tsvs_output = package_exports(file)
             file.write(tsvs_output.getvalue())
-        # package_exports(file)
 
         # Create bag
         bagit.make_bag(export_path)
