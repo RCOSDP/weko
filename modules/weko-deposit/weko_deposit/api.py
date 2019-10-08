@@ -744,6 +744,9 @@ class WekoDeposit(Deposit):
 
         # convert item meta data
         dc, jrc, is_edit = json_loader(data, self.pid)
+        dc['publish_date'] = data.get('pubdate')
+        dc['title'] = [data.get('title')]
+        dc['relation_version_is_last'] = True
         self.data = data
         self.jrc = jrc
         self.is_edit = is_edit
