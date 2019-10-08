@@ -434,21 +434,23 @@ def package_exports(item_type_data):
     tsv_writer.writerow(['#ItemType', item_type_data.get('name'), jsonschema_url])
     # tsv_writer.writerow(['#.id', '.uri', '.path[0]', '.metadata.pubdate'])
 
-    keys = ['#.id', '.uri', '.path[0]', '.metadata.pubdate']
+    # keys = ['#.id', '.uri', '.path[0]', '.metadata.pubdate']
+    keys = item_type_data['keys']
     tsv_metadata_writer = csv.DictWriter(tsv_output, fieldnames=keys, delimiter='\t')
     tsv_metadata_writer.writeheader()
-    for recid in item_type_data.get('recids'):
-        record = WekoRecord.get_record_by_pid(recid)
-        tsv_metadata_writer.writerow({
-            '#.id': str(recid),
-            '.uri': item_type_data.get('root_url') + 'records/' + str(recid),
-            '.path[0]': record.get('path')[0]
-        })
+    # for recid in item_type_data.get('recids'):
+        # record = WekoRecord.get_record_by_pid(recid)
+        # tsv_metadata_writer.writerow({
+        #     '#.id': str(recid),
+        #     '.uri': item_type_data.get('root_url') + 'records/' + str(recid),
+        #     '.path[0]': record.get('path')[0]
+        # })
     
     return tsv_output 
 
+from flask import current_app
 
-def make_stats_tsv():
+def make_stats_tsv(item_type_id):
     """Prepare TSV data for each Item Types.
 
         Arguments:
@@ -459,7 +461,46 @@ def make_stats_tsv():
             return       -- PID object if exist
 
     """
-    pass
+    ret = ['#.id', '.uri', '.path', '.metadata.pubdate']
+    item_type = ItemTypes.get_by_id(item_type_id).render
+
+    table_row_properties = item_type['table_row_map']['schema'].get('properties')
+
+    for item_key in item_type.get('table_row'):
+        item = table_row_properties.get(item_key)
+        if item.get('type') == 'array':
+            ret.extend(get_sub_item('.metadata.' + item_key, item['items']['properties']))
+        elif item.get('type') == 'object':
+            ret.extend(get_sub_item('.metadata.' + item_key, item['properties']))
+
+    return ret
+
+
+def get_sub_item(item_key, properties):
+    """Prepare TSV data for each Item Types.
+
+        Arguments:
+            properties     -- {string} 'doi' (default) or 'cnri'
+
+        Returns:
+            return       -- PID object if exist
+
+    """
+    ret = []
+    for key in properties:
+        if properties[key].get('type'):
+            if properties[key]['type'] == 'object':
+                subret = get_sub_item(key, properties[key]['properties'])
+                for sub in subret:
+                    ret.append(item_key + '.' + sub)
+            elif properties[key]['type'] == 'array':
+                subret = get_sub_item(key, properties[key]['items']['properties'])
+                for sub in subret:
+                    ret.append(item_key + '.' + sub)
+            else:
+                ret.append(item_key + '.' + key)
+
+    return ret
 
 
 def write_report_tsv_rows():

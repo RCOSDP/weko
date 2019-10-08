@@ -58,9 +58,10 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, package_exports, \
-    parse_ranking_results, update_json_schema_by_activity_id, \
-    validate_form_input_data, validate_user
+    get_user_information, get_user_permission, make_stats_tsv, \
+    package_exports, parse_ranking_results, \
+    update_json_schema_by_activity_id, validate_form_input_data, \
+    validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -1063,6 +1064,7 @@ def _export_item(record_id, format, include_contents, tmp_path=None):
 
     return exported_item
 
+import sys, traceback
 
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
@@ -1093,19 +1095,23 @@ def export_items(post_data):
                                                 record_path))
 
             record = WekoRecord.get_record_by_pid(id)
-            item_type = ItemTypes.get_by_id(record.get('item_type_id'))
             item_type_id = record.get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
             if not item_types_data.get(item_type_id):
                 item_types_data[item_type_id] = {}
+
+                keys = make_stats_tsv(item_type_id)
                 item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
                     'name': item_type.item_type_name.name,
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
-                    'keys': [],
+                    'keys': keys,
                     'labels': [],
                     'recids': []
                 }
             item_types_data[item_type_id]['recids'].append(id)
+            # current_app.logger.debug(keys)
 
         # Create export info file
         for item_type_id in item_types_data:
@@ -1120,7 +1126,10 @@ def export_items(post_data):
         # Create download file
         shutil.make_archive(export_path, 'zip', export_path)
     except Exception as e:
-        current_app.logger.error(e)
+        # current_app.logger.error(e)
+        current_app.logger.error('-'*60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-'*60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
 
