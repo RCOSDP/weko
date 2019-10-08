@@ -31,6 +31,7 @@ from invenio_db import db
 from invenio_records.api import RecordBase
 from jsonschema import ValidationError
 from sqlalchemy import MetaData, Table
+from weko_deposit.api import WekoRecord
 from weko_records.api import ItemTypes
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
@@ -427,11 +428,23 @@ def package_exports(item_type_data):
     """
     """Package the .tsv files into one zip file."""
     tsv_output = StringIO()
+    jsonschema_url = '=HYPERLINK("' + item_type_data.get('root_url') +  item_type_data.get('jsonschema') + '")'
+
     tsv_writer = csv.writer(tsv_output, delimiter='\t')
-    tsv_writer.writerow(['#ItemType', item_type_data.get('name'), item_type_data.get('jsonschema')])
-    # tsv_writer.writerow(['Dijkstra', 'Computer Science'])
-    # tsv_writer.writerow(['Shelah', 'Math'])
-    # tsv_writer.writerow(['Aumann', 'Economic Sciences'])
+    tsv_writer.writerow(['#ItemType', item_type_data.get('name'), jsonschema_url])
+    # tsv_writer.writerow(['#.id', '.uri', '.path[0]', '.metadata.pubdate'])
+
+    keys = ['#.id', '.uri', '.path[0]', '.metadata.pubdate']
+    tsv_metadata_writer = csv.DictWriter(tsv_output, fieldnames=keys, delimiter='\t')
+    tsv_metadata_writer.writeheader()
+    for recid in item_type_data.get('recids'):
+        record = WekoRecord.get_record_by_pid(recid)
+        tsv_metadata_writer.writerow({
+            '#.id': str(recid),
+            '.uri': item_type_data.get('root_url') + 'records/' + str(recid),
+            '.path[0]': record.get('path')[0]
+        })
+    
     return tsv_output 
 
 
@@ -461,4 +474,3 @@ def write_report_tsv_rows():
 
     """
     pass
-

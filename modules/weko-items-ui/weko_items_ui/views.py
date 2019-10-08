@@ -1093,21 +1093,19 @@ def export_items(post_data):
                                                 record_path))
 
             record = WekoRecord.get_record_by_pid(id)
-            record_item_type = ItemTypes.get_by_id(record.get('item_type_id'))
-            current_app.logger.debug('==========================')
-            # current_app.logger.debug(record)
-            current_app.logger.debug(record_item_type.render)
-            # current_app.logger.debug(record_item_type.schema)
-            # current_app.logger.debug(record_item_type.item_type_name.name)
+            item_type = ItemTypes.get_by_id(record.get('item_type_id'))
             item_type_id = record.get('item_type_id')
             if not item_types_data.get(item_type_id):
                 item_types_data[item_type_id] = {}
                 item_types_data[item_type_id] = {
-                    'name': record_item_type.item_type_name.name,
-                    'jsonschema': '=HYPERLINK("' + request.url_root + 'items/jsonschema/' + item_type_id + ')',
+                    'name': item_type.item_type_name.name,
+                    'root_url': request.url_root,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
                     'recids': []
                 }
-            item_types_data[item_type_id]['recids'].append(item_type_id)
+            item_types_data[item_type_id]['recids'].append(id)
 
         # Create export info file
         for item_type_id in item_types_data:
