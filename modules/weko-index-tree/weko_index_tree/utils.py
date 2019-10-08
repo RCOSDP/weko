@@ -139,7 +139,7 @@ def get_tree_json(index_list, root_id):
         child_list = []
         for child_index_id in index_relation.get(parent_index_id, []):
             child_index = index_list[index_position[child_index_id]]
-            child_index_dict = generate_index_dict(child_index, parent_index_id == root_id)
+            child_index_dict = generate_index_dict(child_index, parent_index_id == 0)
 
             # Recursively get grandchildren
             child_index_dict['children'] = get_children(child_index_id)
@@ -149,7 +149,15 @@ def get_tree_json(index_list, root_id):
         child_list.sort(key=itemgetter('position'))
         return child_list
 
-    return get_children(root_id)
+    if root_id == 0:
+        index_tree = get_children(root_id)
+    else:
+        root_index = index_list[index_position[root_id]]
+        root_index_dict = generate_index_dict(root_index, True)
+        root_index_dict['children'] = get_children(root_id)
+        index_tree = [root_index_dict]
+
+    return index_tree
 
 
 def get_user_roles():
