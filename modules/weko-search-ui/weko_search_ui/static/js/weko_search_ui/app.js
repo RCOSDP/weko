@@ -113,14 +113,21 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     var url = new URL(window.location.href );
     var q = url.searchParams.get("q");
     let result = 'item'
-    console.log("url",url)
-    console.log("url",q)
     if (q === "0") {
         return 'root'
     }
     return result
   })()
+  $rootScope.display_comment = function(comment) {
+
+    return format_comment(comment)
+  };
   $rootScope.is_permission = $("#is_permission").val() === 'True' ? true : false
+
+  $rootScope.display_comment_jounal= function(){
+    $('#index_comment').append(format_comment($rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0].comment))
+  }
+
 
   $scope.itemManagementTabDisplay= function(){
     $rootScope.disable_flg = true;
@@ -161,6 +168,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $rootScope.display_flg = true;
     $("#tab_display").addClass("active")
   }
+
   $rootScope.confirmFunc=function(){
     if(!$rootScope.disable_flg){
       return confirm("Is the input contents discarded ?") ;
@@ -185,8 +193,11 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
       console.log(error);
     });
   }
-
   $scope.getJournalInfo();
+  // Check all records for restricted content
+  $scope.$on('invenio.search.finished', function(evt) {
+    $rootScope.display_comment_jounal()
+  });
 }
 
 // Item export controller
@@ -268,6 +279,8 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     });
   }
 
+
+
   // Check all records for restricted content
   $scope.$on('invenio.search.finished', function(evt) {
     $scope.checkForRestrictedContent();
@@ -282,6 +295,76 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
 
 angular.module('invenioSearch')
   .controller('searchResCtrl', searchResCtrl)
-  .controller('itemExportCtrl', itemExportCtrl);
+  .controller('itemExportCtrl', itemExportCtrl)
+  .filter("sanitize", ['$sce', function($sce) {
+        return function(htmlCode){
+            return $sce.trustAsHtml(htmlCode);
+        }
+  }]);
 
+function format_comment(comment){
+  let result = ""
+  let href = ''
+  let text = ''
+  let where = 'href'
+  let flat = false
+  for(let i = 0; i< comment.length; i++){
+    let c = comment[i]
+    if(c === '[') {
+      if(comment[i+1] === '['){
+        flat = true;
+        i++
+        continue
+      }
+    }
+    if(c === ']'){
+        if (flat === true && comment[i+1] === ']') {
+          flat = false
+          text = text ? text : href
+          result += '<a href="'+href+'">'+ text + '</a>'
+          text = ''
+          href = ''
+          where = 'href'
+          i++
+
+          continue
+        }
+    }
+    if(flat){
+      if(c === '|' && where === 'href') {
+        where = 'text'
+        continue
+      }
+      if(where === 'text'){
+        if(c == '\n') {
+          text += "<br/>"
+        } else {
+          text+=c
+        }
+      } else {
+        if(c == '\n') {
+          href += "<br/>"
+        } else {
+          href+=c
+        }
+      }
+    } else {
+      if(c == '\n') {
+        result += "<br/>"
+      } else {
+        result+=c
+
+      }
+    }
+
+  }
+  if (text) {
+     result += '<a href="'+href+'">'+ text + '</a>'
+  } else {
+    if(href) {
+      result += '<a href="'+href+'">'+ href + '</a>'
+    }
+  }
+  return result
+}
 // add by ryuu. at 20181129 end
