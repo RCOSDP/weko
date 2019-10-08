@@ -321,7 +321,7 @@ function format_comment(comment){
         if (flat === true && comment[i+1] === ']') {
           flat = false
           text = text ? text : href
-          result += '<a href="'+href+'">'+ text + '</a>'
+          result += '<a href="'+href+'" target="_blank">'+ text + '</a>'
           text = ''
           href = ''
           where = 'href'
@@ -359,10 +359,10 @@ function format_comment(comment){
 
   }
   if (text) {
-     result += '<a href="'+href+'">'+ text + '</a>'
+     result += '<a href="'+href+'" target="_blank">'+ text + '</a>'
   } else {
     if(href) {
-      result += '<a href="'+href+'">'+ href + '</a>'
+      result += '<a href="'+href+'" target="_blank">'+ href + '</a>'
     }
   }
   return result
