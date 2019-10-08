@@ -414,7 +414,7 @@ def update_json_schema_by_activity_id(json, activity_id):
     return json
 
 
-def package_exports(output_file):
+def package_exports(item_type_data):
     """Export TSV Files.
 
         Arguments:
@@ -428,10 +428,10 @@ def package_exports(output_file):
     """Package the .tsv files into one zip file."""
     tsv_output = StringIO()
     tsv_writer = csv.writer(tsv_output, delimiter='\t')
-    tsv_writer.writerow(['name', 'field'])
-    tsv_writer.writerow(['Dijkstra', 'Computer Science'])
-    tsv_writer.writerow(['Shelah', 'Math'])
-    tsv_writer.writerow(['Aumann', 'Economic Sciences'])
+    tsv_writer.writerow(['#ItemType', item_type_data.get('name'), item_type_data.get('jsonschema')])
+    # tsv_writer.writerow(['Dijkstra', 'Computer Science'])
+    # tsv_writer.writerow(['Shelah', 'Math'])
+    # tsv_writer.writerow(['Aumann', 'Economic Sciences'])
     return tsv_output 
 
 

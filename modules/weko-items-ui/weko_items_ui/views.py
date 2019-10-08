@@ -1069,7 +1069,6 @@ def export_items(post_data):
 
     :return: JSON, BIBTEX
     """
-    current_app.logger.debug(post_data)
     include_contents = True if \
         post_data['export_file_contents_radio'] == 'True' else False
     format = post_data['export_format_radio']
@@ -1080,9 +1079,6 @@ def export_items(post_data):
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory()
     item_types_data = {}
-    current_app.logger.debug('============================')
-    current_app.logger.debug(record_ids)
-    current_app.logger.debug(request.url_root)
     try:
         # Set export folder
         export_path = temp_path.name + '/' + \
@@ -1098,22 +1094,28 @@ def export_items(post_data):
 
             record = WekoRecord.get_record_by_pid(id)
             record_item_type = ItemTypes.get_by_id(record.get('item_type_id'))
+            current_app.logger.debug('==========================')
+            # current_app.logger.debug(record)
+            current_app.logger.debug(record_item_type.render)
+            # current_app.logger.debug(record_item_type.schema)
             # current_app.logger.debug(record_item_type.item_type_name.name)
             item_type_id = record.get('item_type_id')
             if not item_types_data.get(item_type_id):
                 item_types_data[item_type_id] = {}
                 item_types_data[item_type_id] = {
                     'name': record_item_type.item_type_name.name,
-                    'jsonschema': request.url_root + 'items/jsonschema/' + item_type_id,
+                    'jsonschema': '=HYPERLINK("' + request.url_root + 'items/jsonschema/' + item_type_id + ')',
                     'recids': []
                 }
+            item_types_data[item_type_id]['recids'].append(item_type_id)
 
-        item_types_data[record.get('item_type_id')]['recids'].append(item_type_id)
         # Create export info file
-        with open(export_path + "/export.tsv", "w") as file:
-            # file.write(json.dumps(result))
-            tsvs_output = package_exports(file)
-            file.write(tsvs_output.getvalue())
+        for item_type_id in item_types_data:
+            item_type_data = item_types_data[item_type_id]
+            with open(export_path + "/" + item_type_data.get('name') + ".tsv", "w") as file:
+                # file.write(json.dumps(result))
+                tsvs_output = package_exports(item_type_data)
+                file.write(tsvs_output.getvalue())
 
         # Create bag
         bagit.make_bag(export_path)
