@@ -102,7 +102,7 @@ def reset_tree(tree, path=None, more_ids=None):
 
 
 def get_tree_json(index_list, root_id):
-    index_relation = {}  # index_relation[parent_index_id] = child_index_id
+    index_relation = {}  # index_relation[parent_index_id] = [child_index_id, ...]
     index_position = {}  # index_position[index_id] = position_in_index_list
 
     for position, index_element in enumerate(index_list):
@@ -117,7 +117,7 @@ def get_tree_json(index_list, root_id):
         '''
         index_dict = index_element._asdict()
         if not is_root:
-            index_dict.update({'parent': index_element.pid})
+            index_dict.update({'parent': str(index_element.pid)})
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_element.name,
