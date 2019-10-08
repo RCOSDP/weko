@@ -21,8 +21,8 @@
 """Module of weko-index-tree utils."""
 
 from datetime import date, datetime
-from operator import itemgetter
 from functools import wraps
+from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
 from flask import current_app
@@ -102,6 +102,12 @@ def reset_tree(tree, path=None, more_ids=None):
 
 
 def get_tree_json(index_list, root_id):
+    """Get Tree Json.
+
+    :param index_list:
+    :param root_id:
+    :return:
+    """
     index_relation = {}  # index_relation[parent_index_id] = [child_index_id, ...]
     index_position = {}  # index_position[index_id] = position_in_index_list
 
@@ -112,9 +118,7 @@ def get_tree_json(index_list, root_id):
         index_position[index_element.cid] = position
 
     def generate_index_dict(index_element, is_root):
-        '''
-        Formats an index_element, which is a tuple, into a nicely formatted dictionary.
-        '''
+        """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
         index_dict = index_element._asdict()
         if not is_root:
             index_dict.update({'parent': str(index_element.pid)})
@@ -133,9 +137,7 @@ def get_tree_json(index_list, root_id):
         return index_dict
 
     def get_children(parent_index_id):
-        '''
-        Recursively gets all children of a given index id.
-        '''
+        """Recursively gets all children of a given index id."""
         child_list = []
         for child_index_id in index_relation.get(parent_index_id, []):
             child_index = index_list[index_position[child_index_id]]
