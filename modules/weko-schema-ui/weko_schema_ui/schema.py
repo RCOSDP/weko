@@ -608,9 +608,10 @@ class SchemaTree:
                                         set_children(k1, v1, chld, i)
                         else:
                             nodes = [node]
-                            if bool(node) \
-                                and len([i for i in node.values()
-                                         if i and not i.get(self._v)]) == 0:
+                            if bool(node) and len([i for i in node.values() if
+                                                   i and (not i.get(
+                                                       self._v) or not i.get(
+                                                       self._atr))]) == 0:
                                 multi = max(
                                     [len(attr) for n in node.values() for attr
                                      in n.get(self._atr).values()])
