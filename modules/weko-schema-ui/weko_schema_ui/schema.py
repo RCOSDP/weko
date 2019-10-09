@@ -487,7 +487,7 @@ class SchemaTree:
 
         vlst = []
         for k, v in self._record.items():
-            if isinstance(v, dict):
+            if k != 'pubdate' and isinstance(v, dict):
                 # Dict
                 mpdic = v.get(
                     self._schema_name) if self._schema_name in v else ''
@@ -582,6 +582,7 @@ class SchemaTree:
                                     for k2, v2 in atrt[i].items():
                                         chld.set(get_prefix(k2), v2)
                                 tree.append(chld)
+                            index += 1
                     else:
                         for i in range(len(val[index])):
                             chld = etree.Element(kname, None, ns)
@@ -606,13 +607,31 @@ class SchemaTree:
                                         k1 = get_prefix(k1)
                                         set_children(k1, v1, chld, i)
                         else:
-                            chld = etree.Element(kname, None, ns)
-                            tree.append(chld)
+                            nodes = [node]
+                            if bool(node) \
+                                and len([i for i in node.values()
+                                         if i and not i.get(self._v)]) == 0:
+                                multi = max(
+                                    [len(attr) for n in node.values() for attr
+                                     in n.get(self._atr).values()])
+                                if int(multi) > 1:
+                                    multi_nodes = [copy.deepcopy(node) for j in
+                                                   range(int(multi))]
+                                    for idx, item in enumerate(multi_nodes):
+                                        for nd in item.values():
+                                            nd[self._v] = [nd[self._v][idx]]
+                                            for key in nd.get(self._atr):
+                                                nd.get(self._atr)[key] = [
+                                                    nd.get(self._atr)[key][idx]]
+                                    nodes = multi_nodes
+                            for val in nodes:
+                                child = etree.Element(kname, None, ns)
+                                tree.append(child)
 
-                            for k1, v1 in node.items():
-                                if k1 != self._atr:
-                                    k1 = get_prefix(k1)
-                                    set_children(k1, v1, chld)
+                                for k1, v1 in val.items():
+                                    if k1 != self._atr:
+                                        k1 = get_prefix(k1)
+                                        set_children(k1, v1, child)
 
         if not self._schema_obj:
             E = ElementMaker()
