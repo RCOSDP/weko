@@ -432,12 +432,13 @@ def package_exports(item_type_data):
 
     tsv_writer = csv.writer(tsv_output, delimiter='\t')
     tsv_writer.writerow(['#ItemType', item_type_data.get('name'), jsonschema_url])
-    # tsv_writer.writerow(['#.id', '.uri', '.path[0]', '.metadata.pubdate'])
 
-    # keys = ['#.id', '.uri', '.path[0]', '.metadata.pubdate']
     keys = item_type_data['keys']
+    labels = item_type_data['labels']
     tsv_metadata_writer = csv.DictWriter(tsv_output, fieldnames=keys, delimiter='\t')
+    tsv_metadata_label_writer = csv.DictWriter(tsv_output, fieldnames=labels, delimiter='\t')
     tsv_metadata_writer.writeheader()
+    tsv_metadata_label_writer.writeheader()
     # for recid in item_type_data.get('recids'):
         # record = WekoRecord.get_record_by_pid(recid)
         # tsv_metadata_writer.writerow({
@@ -462,6 +463,7 @@ def make_stats_tsv(item_type_id):
 
     """
     ret = ['#.id', '.uri', '.path', '.metadata.pubdate']
+    ret_label = ['#ID', 'URI', 'インデックス', '公開日']
     item_type = ItemTypes.get_by_id(item_type_id).render
 
     table_row_properties = item_type['table_row_map']['schema'].get('properties')
@@ -469,14 +471,19 @@ def make_stats_tsv(item_type_id):
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
         if item.get('type') == 'array':
-            ret.extend(get_sub_item('.metadata.' + item_key, item['items']['properties']))
+            key, label = get_sub_item('.metadata.' + item_key, item.get('title'), item['items']['properties'])
+            ret.extend(key)
+            ret_label.extend(label)
         elif item.get('type') == 'object':
-            ret.extend(get_sub_item('.metadata.' + item_key, item['properties']))
+            key, label = get_sub_item('.metadata.' + item_key, item.get('title'), item['properties'])
+            ret.extend(key)
+            ret_label.extend(label)
 
-    return ret
+    current_app.logger.debug(ret)
+    return ret, ret_label
 
 
-def get_sub_item(item_key, properties):
+def get_sub_item(item_key, item_label, properties):
     """Prepare TSV data for each Item Types.
 
         Arguments:
@@ -487,20 +494,50 @@ def get_sub_item(item_key, properties):
 
     """
     ret = []
+    ret_label = []
     for key in properties:
         if properties[key].get('type'):
-            if properties[key]['type'] == 'object':
-                subret = get_sub_item(key, properties[key]['properties'])
-                for sub in subret:
-                    ret.append(item_key + '.' + sub)
-            elif properties[key]['type'] == 'array':
-                subret = get_sub_item(key, properties[key]['items']['properties'])
-                for sub in subret:
-                    ret.append(item_key + '.' + sub)
+            if properties[key]['type'] == 'array':
+                # max_ins = get_max_inst(key)
+                current_app.logger.debug(properties[key].get('title'))
+                subret, subretlabel = get_sub_item(key, properties[key].get('title'), properties[key]['items']['properties'])
+                for idx in range(len(subret)):
+                    if get_max_inst(key) != 0:
+                        for i in range(0, get_max_inst(key)):
+                            ret.append(item_key + '[' + str(i) + '].' + subret[idx])
+                    else:
+                        ret.append(item_key + '.' + subret[idx])
+                    ret_label.append(item_label + '.' + subretlabel[idx])
+            elif properties[key]['type'] == 'object':
+                subret, subretlabel = get_sub_item(key, properties[key].get('title'), properties[key]['properties'])
+                for idx in range(len(subret)):
+                    ret.append(item_key + '.' + subret[idx])
+                    ret_label.append(item_label + '.' + subretlabel[idx])
             else:
                 ret.append(item_key + '.' + key)
+                ret_label.append(item_label + '.' + properties[key].get('title'))
 
-    return ret
+    # current_app.logger.debug(ret)
+    # current_app.logger.debug(ret_label)
+    return ret, ret_label
+
+
+def get_max_inst(attribute_id):
+    """Fill Item Metadata to TSV Row.
+
+        Arguments:
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            reg_value    -- {string} pid_value
+
+        Returns:
+            return       -- PID object if exist
+
+    """
+    import random
+
+    ret = random.randrange(1, 6)
+
+    return 0 if ret > 3 else ret
 
 
 def write_report_tsv_rows():

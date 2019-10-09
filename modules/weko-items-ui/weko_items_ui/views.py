@@ -1077,6 +1077,9 @@ def export_items(post_data):
     record_ids = json.loads(post_data['record_ids'])
     if len(record_ids) > _get_max_export_items():
         return abort(400)
+    elif len(record_ids) == 0:
+        flash(_('Please select Items to export.'), 'error')
+        return redirect(url_for('weko_items_ui.export'))
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory()
@@ -1100,14 +1103,14 @@ def export_items(post_data):
             if not item_types_data.get(item_type_id):
                 item_types_data[item_type_id] = {}
 
-                keys = make_stats_tsv(item_type_id)
+                keys, labels = make_stats_tsv(item_type_id)
                 item_types_data[item_type_id] = {
                     'item_type_id': item_type_id,
                     'name': item_type.item_type_name.name,
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
                     'keys': keys,
-                    'labels': [],
+                    'labels': labels,
                     'recids': []
                 }
             item_types_data[item_type_id]['recids'].append(id)
