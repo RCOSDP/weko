@@ -471,15 +471,23 @@ def make_stats_tsv(item_type_id):
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
         if item.get('type') == 'array':
-            key, label = get_sub_item('.metadata.' + item_key, item.get('title'), item['items']['properties'])
-            ret.extend(key)
-            ret_label.extend(label)
+            max_ins = get_max_ins(item_key)
+            if max_ins != 0:
+                for i in range(0, max_ins):
+                    key, label = get_sub_item('.metadata.' + item_key + '[' + str(i) + ']', item.get('title'), item['items']['properties'])
+                    ret.extend(key)
+                    ret_label.extend(label)
+            else:
+                key, label = get_sub_item('.metadata.' + item_key, item.get('title') + '#' + str(i), item['items']['properties'])
+                ret.extend(key)
+                ret_label.extend(label)
         elif item.get('type') == 'object':
             key, label = get_sub_item('.metadata.' + item_key, item.get('title'), item['properties'])
             ret.extend(key)
             ret_label.extend(label)
 
     current_app.logger.debug(ret)
+    current_app.logger.debug(ret_label)
     return ret, ret_label
 
 
@@ -499,15 +507,22 @@ def get_sub_item(item_key, item_label, properties):
         if properties[key].get('type'):
             if properties[key]['type'] == 'array':
                 # max_ins = get_max_inst(key)
-                current_app.logger.debug(properties[key].get('title'))
-                subret, subretlabel = get_sub_item(key, properties[key].get('title'), properties[key]['items']['properties'])
-                for idx in range(len(subret)):
-                    if get_max_inst(key) != 0:
-                        for i in range(0, get_max_inst(key)):
-                            ret.append(item_key + '[' + str(i) + '].' + subret[idx])
-                    else:
+                # current_app.logger.debug(properties[key].get('title'))
+                # subret, subretlabel = get_sub_item(key, properties[key].get('title'), properties[key]['items']['properties'])
+                # subret, subretlabel = get_sub_item(key + '[' + str(i) + ']', properties[key].get('title') + '#' + str(i), properties[key]['items']['properties'])
+                # for idx in range(len(subret)):
+                max_ins = get_max_ins(key)
+                if max_ins != 0:
+                    for i in range(0, max_ins):
+                        subret, subretlabel = get_sub_item(key + '[' + str(i) + ']', properties[key].get('title') + '#' + str(i), properties[key]['items']['properties'])
+                        for idx in range(len(subret)):
+                            ret.append(item_key + '.' + subret[idx])
+                            ret_label.append(item_label + '.' + subretlabel[idx])
+                else:
+                    subret, subretlabel = get_sub_item(key, properties[key].get('title'), properties[key]['items']['properties'])
+                    for idx in range(len(subret)):
                         ret.append(item_key + '.' + subret[idx])
-                    ret_label.append(item_label + '.' + subretlabel[idx])
+                        ret_label.append(item_label + '.' + subretlabel[idx])
             elif properties[key]['type'] == 'object':
                 subret, subretlabel = get_sub_item(key, properties[key].get('title'), properties[key]['properties'])
                 for idx in range(len(subret)):
@@ -522,7 +537,7 @@ def get_sub_item(item_key, item_label, properties):
     return ret, ret_label
 
 
-def get_max_inst(attribute_id):
+def get_max_ins(attribute_id):
     """Fill Item Metadata to TSV Row.
 
         Arguments:
