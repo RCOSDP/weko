@@ -472,13 +472,13 @@ def make_stats_tsv(item_type_id):
         item = table_row_properties.get(item_key)
         if item.get('type') == 'array':
             max_ins = get_max_ins(item_key)
-            if max_ins != 0:
+            if max_ins > 1:
                 for i in range(0, max_ins):
-                    key, label = get_sub_item('.metadata.' + item_key + '[' + str(i) + ']', item.get('title'), item['items']['properties'])
+                    key, label = get_sub_item('.metadata.' + item_key + '[' + str(i) + ']', item.get('title') + '#' + str(i), item['items']['properties'])
                     ret.extend(key)
                     ret_label.extend(label)
             else:
-                key, label = get_sub_item('.metadata.' + item_key, item.get('title') + '#' + str(i), item['items']['properties'])
+                key, label = get_sub_item('.metadata.' + item_key, item.get('title'), item['items']['properties'])
                 ret.extend(key)
                 ret_label.extend(label)
         elif item.get('type') == 'object':
@@ -532,8 +532,6 @@ def get_sub_item(item_key, item_label, properties):
                 ret.append(item_key + '.' + key)
                 ret_label.append(item_label + '.' + properties[key].get('title'))
 
-    # current_app.logger.debug(ret)
-    # current_app.logger.debug(ret_label)
     return ret, ret_label
 
 
@@ -550,9 +548,7 @@ def get_max_ins(attribute_id):
     """
     import random
 
-    ret = random.randrange(1, 6)
-
-    return 0 if ret > 3 else ret
+    return random.randrange(0, 3)
 
 
 def write_report_tsv_rows():
