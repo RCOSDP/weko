@@ -83,19 +83,19 @@ def reset_tree(tree, path=None, more_ids=None):
         more_ids = []
     roles = get_user_roles()
     groups = get_user_groups()
-    if not roles[0]:
-        if path is not None:
-            id_tp = []
-            if isinstance(path, list):
-                for lp in path:
-                    index_id = lp.split('/')[-1]
-                    id_tp.append(index_id)
-            else:
-                index_id = path.split('/')[-1]
+    if path is not None:
+        id_tp = []
+        if isinstance(path, list):
+            for lp in path:
+                index_id = lp.split('/')[-1]
                 id_tp.append(index_id)
-
-            reduce_index_by_role(tree, roles, groups, False, id_tp)
         else:
+            index_id = path.split('/')[-1]
+            id_tp.append(index_id)
+
+        reduce_index_by_role(tree, roles, groups, False, id_tp)
+    else:
+        if not roles[0]:
             # for browsing role check
             reduce_index_by_role(tree, roles, groups)
             reduce_index_by_more(tree=tree, more_ids=more_ids)
@@ -193,10 +193,13 @@ def get_user_groups():
 def check_roles(user_role, roles):
     """Check roles."""
     is_can = True
+    if type(roles) == type(""):
+        roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
-            role = [x for x in (user_role[1] or []) if str(x) in (roles or [])]
-            if not role and "98" not in roles:
+            role = [x for x in (user_role[1] or ['98'])
+                    if str(x) in (roles or [])]
+            if not role and (user_role[1] or "98" not in roles):
                 is_can = False
         elif "99" not in roles:
             is_can = False
