@@ -24,14 +24,13 @@ import csv
 from datetime import datetime
 from io import StringIO
 
-from flask import session
+from flask import current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_records.api import RecordBase
 from jsonschema import ValidationError
 from sqlalchemy import MetaData, Table
-from weko_deposit.api import WekoRecord
 from weko_records.api import ItemTypes
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
@@ -48,13 +47,12 @@ def get_list_username():
     result = list()
     while True:
         try:
-            if (int(current_user_id) == user_index):
-                pass
-            else:
+            if not int(current_user_id) == user_index:
                 user_info = UserProfile.get_by_userid(user_index)
                 result.append(user_info.get_username)
             user_index = user_index + 1
-        except Exception:
+        except Exception as e:
+            current_app.logger.error(e)
             break
 
     return result
@@ -79,9 +77,7 @@ def get_list_email():
         data = record.all()
 
         for item in data:
-            if (int(current_user_id) == item[0]):
-                pass
-            else:
+            if not int(current_user_id) == item[0]:
                 result.append(item[1])
     except Exception as e:
         result = str(e)
@@ -297,9 +293,14 @@ def get_actionid(endpoint):
             return None
 
 
-def parse_ranking_results(results, display_rank, list_name='all',
-                          title_key='title', count_key=None, pid_key=None,
-                          search_key=None, date_key=None):
+def parse_ranking_results(results,
+                          display_rank,
+                          list_name='all',
+                          title_key='title',
+                          count_key=None,
+                          pid_key=None,
+                          search_key=None,
+                          date_key=None):
     """Parse the raw stats results to be usable by the view."""
     ranking_list = []
     if pid_key:
@@ -428,28 +429,34 @@ def package_exports(item_type_data):
     """
     """Package the .tsv files into one zip file."""
     tsv_output = StringIO()
-    jsonschema_url = '=HYPERLINK("' + item_type_data.get('root_url') +  item_type_data.get('jsonschema') + '")'
+    jsonschema_url = '=HYPERLINK("' + item_type_data.get('root_url') + \
+                     item_type_data.get('jsonschema') + '")'
 
     tsv_writer = csv.writer(tsv_output, delimiter='\t')
-    tsv_writer.writerow(['#ItemType', item_type_data.get('name'), jsonschema_url])
+    tsv_writer.writerow(['#ItemType',
+                         item_type_data.get('name'),
+                         jsonschema_url])
 
     keys = item_type_data['keys']
     labels = item_type_data['labels']
-    tsv_metadata_writer = csv.DictWriter(tsv_output, fieldnames=keys, delimiter='\t')
-    tsv_metadata_label_writer = csv.DictWriter(tsv_output, fieldnames=labels, delimiter='\t')
+    tsv_metadata_writer = csv.DictWriter(tsv_output,
+                                         fieldnames=keys,
+                                         delimiter='\t')
+    tsv_metadata_label_writer = csv.DictWriter(tsv_output,
+                                               fieldnames=labels,
+                                               delimiter='\t')
     tsv_metadata_writer.writeheader()
     tsv_metadata_label_writer.writeheader()
     # for recid in item_type_data.get('recids'):
-        # record = WekoRecord.get_record_by_pid(recid)
-        # tsv_metadata_writer.writerow({
-        #     '#.id': str(recid),
-        #     '.uri': item_type_data.get('root_url') + 'records/' + str(recid),
-        #     '.path[0]': record.get('path')[0]
-        # })
-    
-    return tsv_output 
+    # record = WekoRecord.get_record_by_pid(recid)
+    # tsv_metadata_writer.writerow({
+    #     '#.id': str(recid),
+    #     '.uri': item_type_data.get('root_url') + 'records/' + str(recid),
+    #     '.path[0]': record.get('path')[0]
+    # })
 
-from flask import current_app
+    return tsv_output
+
 
 def make_stats_tsv(item_type_id):
     """Prepare TSV data for each Item Types.
@@ -466,7 +473,8 @@ def make_stats_tsv(item_type_id):
     ret_label = ['#ID', 'URI', 'インデックス', '公開日']
     item_type = ItemTypes.get_by_id(item_type_id).render
 
-    table_row_properties = item_type['table_row_map']['schema'].get('properties')
+    table_row_properties = item_type['table_row_map']['schema'].get(
+        'properties')
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
@@ -474,15 +482,22 @@ def make_stats_tsv(item_type_id):
             max_ins = get_max_ins(item_key)
             if max_ins > 1:
                 for i in range(0, max_ins):
-                    key, label = get_sub_item('.metadata.' + item_key + '[' + str(i) + ']', item.get('title') + '#' + str(i), item['items']['properties'])
+                    key, label = get_sub_item('.metadata.' + item_key
+                                              + '[' + str(i) + ']',
+                                              item.get('title') + '#' + str(i),
+                                              item['items']['properties'])
                     ret.extend(key)
                     ret_label.extend(label)
             else:
-                key, label = get_sub_item('.metadata.' + item_key, item.get('title'), item['items']['properties'])
+                key, label = get_sub_item('.metadata.' + item_key,
+                                          item.get('title'),
+                                          item['items']['properties'])
                 ret.extend(key)
                 ret_label.extend(label)
         elif item.get('type') == 'object':
-            key, label = get_sub_item('.metadata.' + item_key, item.get('title'), item['properties'])
+            key, label = get_sub_item('.metadata.' + item_key,
+                                      item.get('title'),
+                                      item['properties'])
             ret.extend(key)
             ret_label.extend(label)
 
@@ -507,23 +522,34 @@ def get_sub_item(item_key, item_label, properties):
                 max_ins = get_max_ins(key)
                 if max_ins > 1:
                     for i in range(0, max_ins):
-                        subret, subretlabel = get_sub_item(key + '[' + str(i) + ']', properties[key].get('title') + '#' + str(i), properties[key]['items']['properties'])
-                        for idx in range(len(subret)):
-                            ret.append(item_key + '.' + subret[idx])
-                            ret_label.append(item_label + '.' + subretlabel[idx])
+                        sub, sublabel = get_sub_item(key + '[' + str(i) + ']',
+                                                     properties[
+                                                         key].get('title')
+                                                     + '#' + str(i),
+                                                     properties[key]['items'][
+                                                         'properties'])
+                        for idx in range(len(sub)):
+                            ret.append(item_key + '.' + sub[idx])
+                            ret_label.append(item_label + '.' + sublabel[idx])
                 else:
-                    subret, subretlabel = get_sub_item(key, properties[key].get('title'), properties[key]['items']['properties'])
-                    for idx in range(len(subret)):
-                        ret.append(item_key + '.' + subret[idx])
-                        ret_label.append(item_label + '.' + subretlabel[idx])
+                    sub, sublabel = get_sub_item(key,
+                                                 properties[key].get('title'),
+                                                 properties[key]['items'][
+                                                     'properties'])
+                    for idx in range(len(sub)):
+                        ret.append(item_key + '.' + sub[idx])
+                        ret_label.append(item_label + '.' + sublabel[idx])
             elif properties[key]['type'] == 'object':
-                subret, subretlabel = get_sub_item(key, properties[key].get('title'), properties[key]['properties'])
-                for idx in range(len(subret)):
-                    ret.append(item_key + '.' + subret[idx])
-                    ret_label.append(item_label + '.' + subretlabel[idx])
+                sub, sublabel = get_sub_item(key,
+                                             properties[key].get('title'),
+                                             properties[key]['properties'])
+                for idx in range(len(sub)):
+                    ret.append(item_key + '.' + sub[idx])
+                    ret_label.append(item_label + '.' + sublabel[idx])
             else:
                 ret.append(item_key + '.' + key)
-                ret_label.append(item_label + '.' + properties[key].get('title'))
+                ret_label.append(item_label + '.'
+                                 + properties[key].get('title'))
 
     return ret, ret_label
 
