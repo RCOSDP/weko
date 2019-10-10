@@ -193,7 +193,7 @@ def get_user_groups():
 def check_roles(user_role, roles):
     """Check roles."""
     is_can = True
-    if isinstance(roles, ""):
+    if isinstance(roles, type("")):
         roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
