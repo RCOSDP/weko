@@ -34,6 +34,7 @@ from sqlalchemy import MetaData, Table
 from weko_records.api import ItemTypes
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
+from invenio_indexer.api import RecordIndexer
 
 
 def get_list_username():
@@ -582,3 +583,45 @@ def write_report_tsv_rows():
 
     """
     pass
+
+
+def get_author_id_by_name(names=[]):
+    """Get Author_id by list name.
+
+        Arguments:
+            names     -- {string} list names
+
+        Returns:
+            weko_id       -- author id of author has search result
+
+    """
+    query_should = [
+        {
+            "match": {
+                "authorNameInfo.fullName": name
+            }
+        } for name in names]
+
+    body = {
+        "query": {
+            "bool": {
+                "should": query_should
+            }
+        },
+        "size": 1
+    }
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=body
+    )
+    weko_id = None
+
+    if isinstance(result, dict) and isinstance(result.get('hits'), dict) and \
+            isinstance(result['hits'].get('hits'), list) and \
+            len(result['hits']['hits']) > 0 and \
+            isinstance(result['hits']['hits'][0], dict) and \
+            isinstance(result['hits']['hits'][0].get('_source'), dict) and \
+            result['hits']['hits'][0]['_source']['pk_id']:
+        weko_id = result['hits']['hits'][0]['_source']['pk_id']
+    return weko_id
