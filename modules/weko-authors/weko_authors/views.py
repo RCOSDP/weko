@@ -187,12 +187,15 @@ def get():
     indexer = RecordIndexer()
     result = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=body
     )
     result_itemCnt = indexer.client.search(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=query_item
     )
+
 
     result['item_cnt'] = result_itemCnt
 
@@ -219,6 +222,7 @@ def getById():
     indexer = RecordIndexer()
     result = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=body
     )
     return json.dumps(result)
@@ -236,6 +240,7 @@ def mapping():
     indexer = RecordIndexer()
     result = indexer.client.get(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         id=author_id
     )
 

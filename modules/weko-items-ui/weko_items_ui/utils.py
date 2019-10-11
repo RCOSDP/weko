@@ -757,3 +757,48 @@ def get_author_id_by_name(names=[]):
             result['hits']['hits'][0]['_source']['pk_id']:
         weko_id = result['hits']['hits'][0]['_source']['pk_id']
     return weko_id
+
+
+def get_list_file_by_record_id(recid):
+    """Get Author_id by list name.
+
+        Arguments:
+            recid     -- {number} record id
+
+        Returns:
+            list_file  -- list file name of record
+
+    """
+
+    body = {
+        "query": {
+            "function_score": {
+                "query": {
+                    "match": {
+                        "_id": recid
+                    }
+                }
+            }
+        },
+        "_source": ["file"],
+        "size": 1
+    }
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['INDEXER_DEFAULT_INDEX'],
+        body=body
+    )
+    list_file_name = []
+
+    if isinstance(result, dict) and isinstance(result.get('hits'), dict) and \
+            isinstance(result['hits'].get('hits'), list) and \
+            len(result['hits']['hits']) > 0 and \
+            isinstance(result['hits']['hits'][0], dict) and \
+            isinstance(result['hits']['hits'][0].get('_source'), dict) and \
+            isinstance(result['hits']['hits'][0]['_source'].get('file'), dict) \
+            and result['hits']['hits'][0]['_source']['file'].get('URI'):
+        list_file = result['hits']['hits'][0]['_source']['file'].get('URI')
+
+        list_file_name = [
+            recid + '/' + item.get('value') for item in list_file]
+    return list_file_name
