@@ -803,3 +803,48 @@ def get_list_file_by_record_id(recid):
         list_file_name = [
             recid + '/' + item.get('value') for item in list_file]
     return list_file_name
+
+
+def get_metadata_by_list_id(list_id=[]):
+    """Get Author_id by list name.
+
+        Arguments:
+            list_id     -- {string} list Id record
+
+        Returns:
+            result       -- list_metadata of record has id in list_id
+
+    """
+    query_should = [
+        {
+            "match": {
+                "control_number": rec_id
+            }
+        } for rec_id in list_id]
+
+    body = {
+        "query": {
+            "bool": {
+                "should": query_should
+            }
+        },
+        "_source": ["_item_metadata"]
+    }
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['INDEXER_DEFAULT_INDEX'],
+        body=body
+    )
+    list_metadata = []
+
+    if isinstance(result, dict) and isinstance(result.get('hits'), dict) and \
+            isinstance(result['hits'].get('hits'), list):
+        list_source = result['hits'].get('hits')
+
+        list_metadata = [
+            item.get('_source').get("_item_metadata")
+            for item in list_source
+            if (isinstance(item.get('_source'), dict) and isinstance(item.get(
+                '_source').get("_item_metadata"), dict))
+        ]
+    return list_metadata
