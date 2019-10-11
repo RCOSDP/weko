@@ -192,6 +192,7 @@ def get():
     )
     result_itemCnt = indexer.client.search(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=query_item
     )
 
