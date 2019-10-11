@@ -1103,14 +1103,13 @@ def export_items(post_data):
             if not item_types_data.get(item_type_id):
                 item_types_data[item_type_id] = {}
 
-                keys, labels = make_stats_tsv(item_type_id)
                 item_types_data[item_type_id] = {
                     'item_type_id': item_type_id,
                     'name': item_type.item_type_name.name,
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
-                    'keys': keys,
-                    'labels': labels,
+                    'keys': [],
+                    'labels': [],
                     'recids': []
                 }
             item_types_data[item_type_id]['recids'].append(id)
@@ -1118,6 +1117,9 @@ def export_items(post_data):
 
         # Create export info file
         for item_type_id in item_types_data:
+            keys, labels = make_stats_tsv(item_type_id, item_types_data[item_type_id]['recids'])
+            item_types_data[item_type_id]['keys'] = keys
+            item_types_data[item_type_id]['labels'] = labels
             item_type_data = item_types_data[item_type_id]
             with open(export_path + "/" + item_type_data.get('name') + ".tsv", "w") as file:
                 # file.write(json.dumps(result))
