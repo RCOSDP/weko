@@ -572,6 +572,7 @@ def make_stats_tsv(item_type_id, recids):
                             else:
                                 ret_label.append('')
                         else:
+                            current_app.logger.debug(self.attr_data[item_key][recid])
                             ret.append(item_key + '.' + key)
                             ret_label.append(self.attr_data[item_key][recid][0][key])
                             # ret_label.append(item_label + '.'
