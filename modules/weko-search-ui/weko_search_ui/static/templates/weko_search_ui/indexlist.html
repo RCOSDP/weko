@@ -1,5 +1,5 @@
 <div class="panel panel-default"
-  ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && vm.invenioSearchResults.aggregations.path.buckets[0].length > 1">
+  ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && (vm.invenioSearchResults.aggregations.path.buckets[0].length > 1 || isCommunity)">
   <div class="panel-heading clearfix">
     <h3 class="panel-title">Index List</h3>
   </div>

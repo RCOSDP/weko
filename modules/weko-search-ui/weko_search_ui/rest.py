@@ -179,6 +179,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         """
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
+        community_id = request.values.get('community')
 
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
@@ -215,7 +216,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         lang = current_i18n.language
 
         try:
-            paths = Indexes.get_self_list(q)
+            paths = Indexes.get_self_list(q, community_id)
         except BaseException:
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
