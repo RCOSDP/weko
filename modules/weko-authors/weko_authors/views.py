@@ -196,6 +196,7 @@ def get():
         body=query_item
     )
 
+
     result['item_cnt'] = result_itemCnt
 
     return jsonify(result)
