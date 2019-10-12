@@ -20,6 +20,7 @@
 #}
 
 <div class="well">
+<h4>{{_('Export')}}</h4>
 {%- set formats = export_formats(pid.pid_type) %}
 {%- if formats %}
 <dt>{{_('OAI-PMH')}}</dt>
@@ -36,7 +37,7 @@
   {%- endif %}
   {%- endfor %}
 </ul>
-<dt>{{_('Export')}}</dt>
+<dt>{{_('Other Formats')}}</dt>
 <ul class="list-inline">
   {%- for slug, fmt in formats %}
   {%- if 'JSON' in fmt['title'] %}
