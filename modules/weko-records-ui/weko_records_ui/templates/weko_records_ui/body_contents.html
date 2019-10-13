@@ -177,11 +177,10 @@
                 <td>
                   {%- for l in lst['attribute_value_mlt'] %}
                   <div>
-                      {{ l[0].Authors }}.
-                      ({{ l[0].Year }}).
-                      <i>{{ l[0].Title }}</i>.
-                      {{ l[0].Journal }}. <a
-                        href="{{ l[0].DOI }}">{{ l[0].DOI }}</a>
+                    {{ l[0].Authors }}.
+                    ({{ l[0].Year }}).
+                    <i>{{ l[0].Title }}</i>.
+                    {{ l[0].Journal }}. <a href="{{ l[0].DOI }}">{{ l[0].DOI }}</a>
                   </div>
                   {%- endfor -%}
                 </td>

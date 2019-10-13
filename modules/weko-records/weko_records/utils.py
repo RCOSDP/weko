@@ -329,11 +329,6 @@ def get_all_items(nlst, klst):
     """
     alst = []
 
-    # def get_name(key):
-    #     for lst in klst:
-    #         k = lst[0].split('.')[-1]
-    #         if key == k:
-    #             return lst[1]
     def get_items(nlst):
         _list = []
         
@@ -358,7 +353,7 @@ def get_all_items(nlst, klst):
     return alst
 
 def get_all_items2(nlst, klst):
-    """Convert and sort item list.
+    """Convert and sort item list.(backup)
 
     :param nlst:
     :param klst:
