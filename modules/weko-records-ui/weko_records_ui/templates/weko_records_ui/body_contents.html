@@ -77,7 +77,7 @@
                   <a href="#preview_carousel" data-slide-to="{{ loop.index0 }}"><i
                       class="fa fa-play-circle fa-lg"></i></a>
                   <a
-                    href="https://service.jupyterhub.rdm.nii.ac.jp/user-redirect/weko3nb/import/weko3sbd.ir.rcos.nii.ac.jp/{{ record._buckets.deposit }}/{{ file.filename }}"><img
+                    href="{{ config.WEKO_JUPYTERHUB_URL }}/{{ record._buckets.deposit }}/{{ file.filename }}"><img
                       height="16px" src="/static/images/custom/jupyter.svg" /></a>
                 </td>
                 <td rowspan="2">
