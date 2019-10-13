@@ -951,6 +951,9 @@ class WekoRecord(Record):
                     items.append(nval)
                 else:
                     items.append(val)
+
+            current_app.logger.debug("items: {}".format(items))
+            
             return items
         except BaseException:
             abort(500)

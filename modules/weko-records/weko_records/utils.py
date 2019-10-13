@@ -346,14 +346,13 @@ def get_all_items(nlst, klst):
 
         return _list
     
-    current_app.logger.debug("nlst: {}".format(nlst))
     to_orderdict(nlst, klst)
     alst = get_items(nlst)
     
     return alst
 
 def get_all_items2(nlst, klst):
-    """Convert and sort item list.(backup)
+    """Convert and sort item list.(original)
 
     :param nlst:
     :param klst:
