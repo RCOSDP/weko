@@ -175,14 +175,15 @@
               <tr>
                 <th>{{ lst['attribute_name'] }}</th>
                 <td>
-
-                  {{ lst['attribute_value_mlt'][0]['bibliographicInfo_authors'] }}.
-                  ({{ lst['attribute_value_mlt'][3]['bibliographicInfo_year'] }}).
-                  <i>{{ lst['attribute_value_mlt'][1]['bibliographicInfo_title'] }}</i>.
-                  {{ lst['attribute_value_mlt'][2]['bibliographicInfo_journal'] }}. <a
-                    href="{{ lst['attribute_value_mlt'][4]['bibliographicInfo_doi'] }}">{{ lst['attribute_value_mlt'][4]['bibliographicInfo_doi'] }}</a>
-
-
+                  {%- for l in lst['attribute_value_mlt'] %}
+                  <div>
+                      {{ l[0].Authors }}.
+                      ({{ l[0].Year }}).
+                      <i>{{ l[0].Title }}</i>.
+                      {{ l[0].Journal }}. <a
+                        href="{{ l[0].DOI }}">{{ l[0].DOI }}</a>
+                  </div>
+                  {%- endfor -%}
                 </td>
               </tr>
               {% else %}
@@ -216,8 +217,8 @@
                   {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
                   {%- else -%}
                   <!--
-                                      {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
-                                      -->
+                                    {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
+                                    -->
                   <!-- demo -->
                   {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
 
@@ -235,13 +236,16 @@
                   {% endfor %}
                   {% else %}
                   {%- for l in lst['attribute_value_mlt'] %}
-                  {%- for k, v in l.items() %}
+                  {%- for ll in l -%}
+                  {%- for k, v in ll.items() -%}
                   {{ v }}<br>
-                  {% endfor %}
-                  {% endfor %}
+                  {%- endfor -%}
+                  {%- endfor -%}
+                  {%- endfor -%}
                   {% endif %}
                 </td>
               </tr>
+
               {% endif %}
               {% endif %}
               {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
