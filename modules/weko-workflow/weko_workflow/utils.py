@@ -355,7 +355,6 @@ def validation_item_property(mapping_data, identifier_type, properties):
                 error_list['required'].append(idt_type_key)
                 error_list['doi'] = [idt_key + '.' + str(key) for key in result]
 
-
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
         data, key = mapping_data.get_data_by_property(
