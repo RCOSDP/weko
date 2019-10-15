@@ -24,17 +24,19 @@ import csv
 from datetime import datetime
 from io import StringIO
 
+import numpy
 from flask import current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
+from invenio_indexer.api import RecordIndexer
 from invenio_records.api import RecordBase
 from jsonschema import ValidationError
 from sqlalchemy import MetaData, Table
+from weko_deposit.api import WekoRecord
 from weko_records.api import ItemTypes
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
-from invenio_indexer.api import RecordIndexer
 
 
 def get_list_username():
@@ -458,8 +460,6 @@ def package_exports(item_type_data):
 
     return tsv_output
 
-from weko_deposit.api import WekoRecord
-import numpy
 
 def make_stats_tsv(item_type_id, recids):
     """Prepare TSV data for each Item Types.
@@ -488,6 +488,7 @@ def make_stats_tsv(item_type_id, recids):
             for recid in recids:
                 record = WekoRecord.get_record_by_pid(recid)
                 self.records[recid] = record
+                self.attr_output[recid] = []
 
         def get_max_ins(self, attr):
             max = 0
@@ -533,7 +534,6 @@ def make_stats_tsv(item_type_id, recids):
             for key in properties:
                 if properties[key].get('type'):
                     if properties[key]['type'] == 'array':
-                        current_app.logger.debug(key)
                         max_ins = 0
                         if max_ins > 1:
                             for i in range(0, max_ins):
@@ -572,11 +572,8 @@ def make_stats_tsv(item_type_id, recids):
                             else:
                                 ret_label.append('')
                         else:
-                            current_app.logger.debug(self.attr_data[item_key][recid])
                             ret.append(item_key + '.' + key)
                             ret_label.append(self.attr_data[item_key][recid][0][key])
-                            # ret_label.append(item_label + '.'
-                            #                 + properties[key].get('title'))
 
             return ret, ret_label
 
@@ -589,8 +586,6 @@ def make_stats_tsv(item_type_id, recids):
     max_path = records.get_max_ins('path')
     ret.extend(['.path[{}]'.format(i) for i in range(max_path)])
     ret_label.extend(['.インデックス[{}]'.format(i) for i in range(max_path)])
-    # for recid in recids:
-    #     current_app.logger.debug(records.print_value(recid, 'path'))
 
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
@@ -598,31 +593,33 @@ def make_stats_tsv(item_type_id, recids):
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
         max_path = records.get_max_ins(item_key)
-        if item.get('type') == 'array':
-            if max_path > 1:
-                for i in range(0, max_path):
-                    key, label = records.get_sub_item(item_key,
-                                              item.get('title'),
-                                              i,
-                                              item['items']['properties'])
-                    ret.extend(key)
-                    ret_label.extend(label)
-            else:
-                key, label = records.get_sub_item('.metadata.' + item_key,
-                                          item.get('title'),
-                                          None,
-                                          item['items']['properties'])
+        for recid in recids:
+            if item.get('type') == 'array':
+                pass
+                # if max_path > 1:
+                #     for i in range(0, max_path):
+                #         key, label = records.get_sub_item(item_key,
+                #                                 item.get('title'),
+                #                                 i,
+                #                                 item['items']['properties'])
+                #         ret.extend(key)
+                #         # ret_label.extend(label)
+                # else:
+                #     key, label = records.get_sub_item('.metadata.' + item_key,
+                #                             item.get('title'),
+                #                             None,
+                #                             item['items']['properties'])
+                #     ret.extend(key)
+                #     # ret_label.extend(label)
+            elif item.get('type') == 'object':
+                key, data = records.get_sub_item(item_key,
+                                        item.get('title'),
+                                        None,
+                                        item['properties'],
+                                        records.attr_data[item_key])
                 ret.extend(key)
-                ret_label.extend(label)
-        elif item.get('type') == 'object':
-            key, label = records.get_sub_item(item_key,
-                                      item.get('title'),
-                                      None,
-                                      item['properties'])
-            ret.extend(key)
-            ret_label.extend(label)
-
-        current_app.logger.debug(ret_label)
+                records.attr_output[recid].append(data)
+                # ret_label.extend(label)
 
     return ret, ret_label
 
