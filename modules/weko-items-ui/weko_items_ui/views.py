@@ -1185,12 +1185,12 @@ def check_validation_error_msg(activity_id):
         msg.append(_('PID does not meet the conditions.'))
         if error_list.get('pmid'):
             msg.append(_(
-                "Since PMID is not subject to DOI registration, please " + \
+                "Since PMID is not subject to DOI registration, please " +
                 "select another type."
             ))
         if error_list.get('doi'):
             msg.append(_(
-                'Prefix/Suffix of Identifier is not consistency with' + \
+                'Prefix/Suffix of Identifier is not consistency with' +
                 ' content of Identifier Registration.'))
         if error_list.get('url'):
             msg.append(_(
