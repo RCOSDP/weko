@@ -573,7 +573,8 @@ def make_stats_tsv(item_type_id, recids):
                                 ret_label.append('')
                         else:
                             ret.append(item_key + '.' + key)
-                            ret_label.append(self.attr_data[item_key][recid][0][key])
+                            ret_label()
+                            # ret_label.append(self.attr_data[item_key][recid][0][key])
 
             return ret, ret_label
 
@@ -593,34 +594,20 @@ def make_stats_tsv(item_type_id, recids):
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
         max_path = records.get_max_ins(item_key)
+        keys = []
         for recid in recids:
             if item.get('type') == 'array':
                 pass
-                # if max_path > 1:
-                #     for i in range(0, max_path):
-                #         key, label = records.get_sub_item(item_key,
-                #                                 item.get('title'),
-                #                                 i,
-                #                                 item['items']['properties'])
-                #         ret.extend(key)
-                #         # ret_label.extend(label)
-                # else:
-                #     key, label = records.get_sub_item('.metadata.' + item_key,
-                #                             item.get('title'),
-                #                             None,
-                #                             item['items']['properties'])
-                #     ret.extend(key)
-                #     # ret_label.extend(label)
             elif item.get('type') == 'object':
                 key, data = records.get_sub_item(item_key,
                                         item.get('title'),
                                         None,
                                         item['properties'],
-                                        records.attr_data[item_key])
-                ret.extend(key)
+                                        records.attr_data[item_key][recid])
+                if not keys:
+                    keys = key
                 records.attr_output[recid].append(data)
-                # ret_label.extend(label)
-
+        ret.extend(keys)
     return ret, ret_label
 
 
