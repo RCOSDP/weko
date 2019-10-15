@@ -196,42 +196,30 @@ def item_metadata_validation(item_id, identifier_type):
             or (resource_type == elearning_type) \
             or (item_type.name_id in datageneral_nameid
                 or resource_type in datageneral_types):
-            properties = ['title',
-                          'identifier',
-                          'identifierRegistration']
+            properties = ['title']
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
             properties = ['title',
-                          'creator',
-                          'identifier',
-                          'identifierRegistration']
+                          'creator']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
                 or resource_type == dataset_type:
             properties = ['title',
-                          'givenName',
-                          'identifier',
-                          'identifierRegistration']
+                          'givenName']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if item_type.name_id in journalarticle_nameid or resource_type == \
                 journalarticle_type:
-            properties = ['title',
-                          'identifier',
+            properties = ['title'
                           'publisher',
-                          'identifierRegistration',
                           'sourceIdentifier',
                           'sourceTitle']
         elif item_type.name_id == report_nameid or \
                 resource_type in report_types:
-            properties = ['title',
-                          'identifier',
-                          'identifierRegistration']
+            properties = ['title']
         elif resource_type in thesis_types:
             properties = ['title',
-                          'creator',
-                          'identifier',
-                          'identifierRegistration']
+                          'creator']
 
     if properties:
         return validation_item_property(metadata_item,
@@ -361,10 +349,12 @@ def validation_item_property(mapping_data, identifier_type, properties):
             for item in type_data:
                 if item == 'PMID（現在不使用）':
                     error_list['pmid'] = type_key
-            if not check_suffix_identifier(data, idt_data, idt_type_data):
+            result = check_suffix_identifier(data, idt_data, idt_type_data)
+            if result:
                 error_list['required'].append(idt_key)
                 error_list['required'].append(idt_type_key)
-                error_list['doi'] = idt_type_key
+                error_list['doi'] = [idt_key + '.' + str(key) for key in result]
+
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
@@ -418,6 +408,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
     if error_list == empty_list:
         return None
     else:
+        error_list['required'] = list(set(error_list['required']))
         return error_list
 
 
@@ -458,16 +449,19 @@ def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
 
     """
     indices = [i for i, x in enumerate(idt_type_list or []) if x == "DOI"]
+    list_value_error = []
     if idt_list and idt_regis_value:
         for pre in idt_regis_value:
             for index in indices:
                 data = idt_list[index] or ''
                 if (pre in data and (
                         len(data) - data.find(pre) - len(pre)) == 0):
-                    return True
-        return False
+                    return False
+                else:
+                    list_value_error.append(index)
+        return list_value_error
     else:
-        return False
+        return list_value_error
 
 
 class MappingData(object):
