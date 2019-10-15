@@ -1181,7 +1181,9 @@ def check_validation_error_msg(activity_id):
             'update_json_schema'].get(activity_id):
         error_list = session[
             'update_json_schema'].get(activity_id)
+
         msg = []
+
         msg.append(_('PID does not meet the conditions.'))
         if error_list.get('pmid'):
             msg.append(_(
