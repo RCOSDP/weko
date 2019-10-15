@@ -369,14 +369,19 @@ class ItemTypeMappingView(BaseView):
                                  'ranking_page_url', 'belonging_index_info']
 
             for key in meta_system_items:
-                if cur_lang in meta_system[key]['title_i18n'] and \
+                if isinstance(meta_system, dict) and \
+                        isinstance(meta_system[key], dict):
+                    if meta_system[key]['title_i18n'] and cur_lang in \
+                        meta_system[key]['title_i18n'] and \
                         meta_system[key]['title_i18n'][cur_lang] and \
-                        meta_system[key]['title_i18n'][cur_lang].strip():
-                    meta_system[key]['title'] = \
-                        meta_system[key]['title_i18n'][cur_lang]
-                else:
-                    meta_system[key]['title'] = \
-                        meta_system[key]['title_i18n']['en']
+                            meta_system[key]['title_i18n'][cur_lang].strip():
+                        meta_system[key]['title'] = \
+                            meta_system[key]['title_i18n'][cur_lang]
+                    else:
+                        meta_system[key]['title'] = \
+                            meta_system[key]['title_i18n']['en'] if \
+                            meta_system[key]['title_i18n'] and \
+                            meta_system[key]['title_i18n']['en'] else ''
 
             if isinstance(render_table_row, list):
                 table_rows.extend(render_table_row)

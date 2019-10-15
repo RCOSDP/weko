@@ -742,7 +742,8 @@ class Indexes(object):
             Index.index_name_english.label("name_en"),
             # add by ryuu at 1108 end
             literal_column("1", db.Integer).label("lev"),
-            Index.public_state.label("public")
+            Index.public_state.label("public"),
+            Index.comment.label("comment")
         ).filter(Index.parent == pid). \
             cte(name="recursive_t", recursive=True)
 
@@ -758,7 +759,8 @@ class Indexes(object):
                 rec_alias.c.name_en + '/' + test_alias.index_name_english,
                 # add by ryuu at 1108 end
                 rec_alias.c.lev + 1,
-                test_alias.public_state
+                test_alias.public_state,
+                test_alias.comment
             ).filter(test_alias.parent == rec_alias.c.cid)
         )
 

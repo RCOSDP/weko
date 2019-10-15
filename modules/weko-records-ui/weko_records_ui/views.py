@@ -272,9 +272,11 @@ def _get_google_scholar_meta(record):
         'jpcoar:issue': 'citation_issue',
         'jpcoar:pageStart': 'citation_firstpage',
         'jpcoar:pageEnd': 'citation_lastpage', }
+    if '_oai' not in record:
+        return
     recstr = etree.tostring(
         getrecord(
-            identifier=record['_oai']['id'],
+            identifier=record['_oai'].get('id'),
             metadataPrefix='jpcoar',
             verb='getrecord'))
     et = etree.fromstring(recstr)
