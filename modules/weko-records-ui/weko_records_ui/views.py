@@ -35,6 +35,9 @@ from invenio_files_rest.views import ObjectResource, check_permission, \
     file_downloaded
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
@@ -46,9 +49,6 @@ from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionStatusPolicy
-from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
 from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings
@@ -79,6 +79,7 @@ def record_from_pid(pid_value):
         current_app.logger.debug('Unable to get version record: ')
         current_app.logger.debug(e)
         return {}
+
 
 def publish(pid, record, template=None, **kwargs):
     r"""Record publish  status change view.

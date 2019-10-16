@@ -431,7 +431,12 @@ class WekoDeposit(Deposit):
         if not recid:
             deposit = super(WekoDeposit, cls).create(data, id_=id_)
         else:
-            deposit = super(WekoDeposit, cls).create(data, id_=id_, recid=recid)
+            deposit = super(
+                WekoDeposit,
+                cls).create(
+                data,
+                id_=id_,
+                recid=recid)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         recid = PersistentIdentifier.get('recid', str(data['_deposit']['id']))
@@ -905,7 +910,8 @@ class WekoRecord(Record):
 
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(community)
-        comm_navs = [item for item in navs if str(comm.index.id) in item.path.split('/')]
+        comm_navs = [item for item in navs if str(
+            comm.index.id) in item.path.split('/')]
         return comm_navs
 
     @property
@@ -940,7 +946,7 @@ class WekoRecord(Record):
 
                 mlt = val.get('attribute_value_mlt')
                 if mlt is not None:
-                    
+
                     nval = dict()
                     nval['attribute_name'] = val.get('attribute_name')
                     nval['attribute_type'] = val.get('attribute_type')
@@ -953,7 +959,7 @@ class WekoRecord(Record):
                     items.append(val)
 
             current_app.logger.debug("items: {}".format(items))
-            
+
             return items
         except BaseException:
             abort(500)
