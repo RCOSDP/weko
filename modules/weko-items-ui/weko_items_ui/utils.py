@@ -516,7 +516,29 @@ def make_stats_tsv(item_type_id, recids):
             ret.extend(['' for i in range(len(self.attr_data[attr][recid]), self.attr_data[attr]['max_size'])])
             self.attr_output[recids].extend(ret)
 
-        def get_sub_item(self, item_key, item_label, pos, properties, data=None):
+        def get_sub_item(self, item_key, properties, data=None):
+            """Prepare TSV data for each Item Types.
+
+                Arguments:
+                    properties     -- {string} 'doi' (default) or 'cnri'
+
+                Returns:
+                    return       -- PID object if exist
+
+            """
+            ret = []
+            ret_label = []
+            for key in properties:
+                if properties[key].get('type'):
+                    ret.append(item_key + '.' + key)
+                    if data:
+                        ret_label.append(data[0][key])
+                    else:
+                        ret_label.append('')
+
+            return ret, ret_label
+
+        def get_subs_item(self, item_key, item_label, pos, properties, data=None):
             """Prepare TSV data for each Item Types.
 
                 Arguments:
@@ -537,7 +559,7 @@ def make_stats_tsv(item_type_id, recids):
                         max_ins = 0
                         if max_ins > 1:
                             for i in range(0, max_ins):
-                                sub, sublabel = self.get_sub_item(
+                                sub, sublabel = self.get_subs_item(
                                     key,
                                     properties[key].get('title'),
                                     i,
@@ -546,7 +568,7 @@ def make_stats_tsv(item_type_id, recids):
                                     ret.append(item_key + '.' + sub[idx])
                                     ret_label.append(item_label + '.' + sublabel[idx])
                         else:
-                            sub, sublabel = self.get_sub_item(
+                            sub, sublabel = self.get_subs_item(
                                 key,
                                 properties[key].get('title'),
                                 None,
@@ -555,7 +577,7 @@ def make_stats_tsv(item_type_id, recids):
                                 ret.append(item_key + '.' + sub[idx])
                                 ret_label.append(item_label + '.' + sublabel[idx])
                     elif properties[key]['type'] == 'object':
-                        sub, sublabel = self.get_sub_item(
+                        sub, sublabel = self.get_subs_item(
                             key,
                             properties[key].get('title'),
                             None,
@@ -597,95 +619,23 @@ def make_stats_tsv(item_type_id, recids):
         keys = []
         for recid in recids:
             if item.get('type') == 'array':
-                pass
-            elif item.get('type') == 'object':
-                key, data = records.get_sub_item(item_key,
+                key, data = records.get_subs_item(item_key,
                                         item.get('title'),
                                         None,
                                         item['properties'],
                                         records.attr_data[item_key][recid])
                 if not keys:
                     keys = key
+            elif item.get('type') == 'object':
+                key, data = records.get_sub_item(item_key,
+                                        item['properties'],
+                                        records.attr_data[item_key][recid])
+                if not keys:
+                    keys = key
                 records.attr_output[recid].append(data)
         ret.extend(keys)
-    return ret, ret_label
-
-
-def get_sub_item(item_key, item_label, pos, properties, data=None):
-    """Prepare TSV data for each Item Types.
-
-        Arguments:
-            properties     -- {string} 'doi' (default) or 'cnri'
-
-        Returns:
-            return       -- PID object if exist
-
-    """
-    ret = []
-    ret_label = []
-    for key in properties:
-        if properties[key].get('type'):
-            if properties[key]['type'] == 'array':
-                max_ins = 0
-                if max_ins > 1:
-                    for i in range(0, max_ins):
-                        sub, sublabel = get_sub_item(
-                            key,
-                            properties[key].get('title'),
-                            i,
-                            properties[key]['items']['properties'])
-                        for idx in range(len(sub)):
-                            ret.append(item_key + '.' + sub[idx])
-                            ret_label.append(item_label + '.' + sublabel[idx])
-                else:
-                    sub, sublabel = get_sub_item(
-                        key,
-                        properties[key].get('title'),
-                        None,
-                        properties[key]['items']['properties'])
-                    for idx in range(len(sub)):
-                        ret.append(item_key + '.' + sub[idx])
-                        ret_label.append(item_label + '.' + sublabel[idx])
-            elif properties[key]['type'] == 'object':
-                sub, sublabel = get_sub_item(
-                    key,
-                    properties[key].get('title'),
-                    None,
-                    properties[key]['properties'])
-                for idx in range(len(sub)):
-                    ret.append(item_key + '.' + sub[idx])
-                    ret_label.append(item_label + '.' + sublabel[idx])
-            else:
-                if data:
-                    current_app.logger.debug('----------------------------')
-                    current_app.logger.debug(item_key + '.' + key)
-                    # current_app.logger.debug(key)
-                    current_app.logger.debug(data)
-                
-                if pos:
-                    item_key = item_key + '[{}]'.format(str(pos))
-                    item_label = item_label + '#{}'.format(str(pos))
-                ret.append(item_key + '.' + key)
-                ret_label.append(item_label + '.'
-                                 + properties[key].get('title'))
 
     return ret, ret_label
-
-
-def get_max_ins(attribute_id):
-    """Fill Item Metadata to TSV Row.
-
-        Arguments:
-            pid_type     -- {string} 'doi' (default) or 'cnri'
-            reg_value    -- {string} pid_value
-
-        Returns:
-            return       -- PID object if exist
-
-    """
-    import random
-
-    return random.randrange(0, 3)
 
 
 def write_report_tsv_rows():
