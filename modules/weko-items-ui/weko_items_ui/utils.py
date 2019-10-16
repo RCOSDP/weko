@@ -538,7 +538,7 @@ def make_stats_tsv(item_type_id, recids):
 
             return ret, ret_label
 
-        def get_subs_item(self, item_key, item_label, pos, properties, data=None):
+        def get_subs_item(self, item_key, item_label, properties, data=None):
             """Prepare TSV data for each Item Types.
 
                 Arguments:
@@ -549,54 +549,34 @@ def make_stats_tsv(item_type_id, recids):
 
             """
             ret = []
-            ret_label = []
-            ret_data = {}
-            for recid in recids:
-                ret_data[recid] = []
-            for key in properties:
-                if properties[key].get('type'):
-                    if properties[key]['type'] == 'array':
-                        max_ins = 0
-                        if max_ins > 1:
-                            for i in range(0, max_ins):
-                                sub, sublabel = self.get_subs_item(
-                                    key,
-                                    properties[key].get('title'),
-                                    i,
-                                    properties[key]['items']['properties'])
-                                for idx in range(len(sub)):
-                                    ret.append(item_key + '.' + sub[idx])
-                                    ret_label.append(item_label + '.' + sublabel[idx])
-                        else:
+            ret_data = []
+            current_app.logger.debug(item_key)
+            current_app.logger.debug(properties)
+            current_app.logger.debug(data)
+            for idx in range(len(data)):
+                for key in properties:
+                    key_data = []
+                    if properties[key].get('type'):
+                        if properties[key]['type'] == 'array':
                             sub, sublabel = self.get_subs_item(
                                 key,
                                 properties[key].get('title'),
-                                None,
                                 properties[key]['items']['properties'])
-                            for idx in range(len(sub)):
-                                ret.append(item_key + '.' + sub[idx])
-                                ret_label.append(item_label + '.' + sublabel[idx])
-                    elif properties[key]['type'] == 'object':
-                        sub, sublabel = self.get_subs_item(
-                            key,
-                            properties[key].get('title'),
-                            None,
-                            properties[key]['properties'])
-                        for idx in range(len(sub)):
-                            ret.append(item_key + '.' + sub[idx])
-                            ret_label.append(item_label + '.' + sublabel[idx])
-                    else:
-                        if pos:
-                            ret.append(item_key + '[{}]'.format(str(pos)) + '.' + key)
-                            if pos < len(self.attr_data[item_key][recid]):
-                                # current_app.logger.debug(self.attr_data[item_key][recid])
-                                ret_label.append(self.attr_data[item_key][recid][pos][key])
-                            else:
-                                ret_label.append('')
+                            # for idx in range(len(sub)):
+                            #     ret.append(item_key + '.' + sub[idx])
+                            #     ret_label.append(item_label + '.' + sublabel[idx])
+                        elif properties[key]['type'] == 'object':
+                            sub, sublabel = self.get_subs_item(
+                                key,
+                                properties[key].get('title'),
+                                properties[key]['properties'])
+                            # for idx in range(len(sub)):
+                            #     ret.append(item_key + '.' + sub[idx])
+                            #     ret_label.append(item_label + '.' + sublabel[idx])
                         else:
                             ret.append(item_key + '.' + key)
-                            ret_label()
-                            # ret_label.append(self.attr_data[item_key][recid][0][key])
+                            key_data.append(data[idx][key])
+                ret_label.extend(key_data)
 
             return ret, ret_label
 
@@ -617,22 +597,27 @@ def make_stats_tsv(item_type_id, recids):
         item = table_row_properties.get(item_key)
         max_path = records.get_max_ins(item_key)
         keys = []
+        current_app.logger.debug('---------------' + item_key + '---------------')
         for recid in recids:
+            current_app.logger.debug('::' + str(recid))
             if item.get('type') == 'array':
                 key, data = records.get_subs_item(item_key,
                                         item.get('title'),
-                                        None,
-                                        item['properties'],
+                                        item['items']['properties'],
                                         records.attr_data[item_key][recid])
                 if not keys:
                     keys = key
+                records.attr_output[recid].extend(data)
+                current_app.logger.debug(data)
             elif item.get('type') == 'object':
                 key, data = records.get_sub_item(item_key,
                                         item['properties'],
                                         records.attr_data[item_key][recid])
                 if not keys:
                     keys = key
-                records.attr_output[recid].append(data)
+                # records.attr_output[recid].extend(data)
+            else:
+                current_app.logger.debug('CURRENT TYPE NOT MATCH')
         ret.extend(keys)
 
     return ret, ret_label
