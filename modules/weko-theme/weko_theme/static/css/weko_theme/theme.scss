@@ -163,6 +163,21 @@ tree-internal ul .more {
 tree-internal ul .value-container {
   font-size: 14px;
 }
+tree-internal ul .tree {
+  margin-left: 0;
+  padding-left: 1em;
+  text-indent: 0;
+  padding-inline-start: 1em;
+}
+tree-internal .rootless {
+  margin: -1em;
+  padding: -1em;
+  text-indent: 0;
+  padding-inline-start: -1em;
+}
+
+
+
 
 /* For Bootstrap collapse arrow */
 .hide-on-collapsed {

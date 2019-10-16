@@ -245,7 +245,8 @@ class Indexes(object):
                             literal_column("''", db.Text).label(
                                 "name_en"),
                             literal_column("0", db.Integer).label("lev"),
-                            Index.public_state
+                            Index.public_state,
+                            Index.comment
                         ).filter(Index.id == index_id)).all()
 
                 if obj:
@@ -754,6 +755,9 @@ class Indexes(object):
 
         :return: the query of db.session.
         """
+        # !!! Important !!!
+        # If add/delete columns in here,
+        # please add/delete columns in Indexes.delete function, too.
         recursive_t = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid"),
