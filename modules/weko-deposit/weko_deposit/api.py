@@ -939,7 +939,8 @@ class WekoRecord(Record):
                     continue
 
                 mlt = val.get('attribute_value_mlt')
-                if mlt:
+                if mlt is not None:
+                    
                     nval = dict()
                     nval['attribute_name'] = val.get('attribute_name')
                     nval['attribute_type'] = val.get('attribute_type')
@@ -950,6 +951,9 @@ class WekoRecord(Record):
                     items.append(nval)
                 else:
                     items.append(val)
+
+            current_app.logger.debug("items: {}".format(items))
+            
             return items
         except BaseException:
             abort(500)
