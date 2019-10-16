@@ -119,10 +119,12 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     return result
   })()
 
-  $rootScope.isCommunity = (function(){
+
+  $rootScope.isCommunityRootIndex = (function(){
     let url = new URL(window.location.href );
     let community = url.searchParams.get("community");
-    return !!community;
+    let rootIndexTree = url.searchParams.get("root_index");
+    return !!community && !!rootIndexTree;
   })();
 
   $rootScope.display_comment = function(comment) {

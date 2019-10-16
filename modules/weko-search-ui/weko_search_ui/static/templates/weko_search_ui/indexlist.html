@@ -1,11 +1,11 @@
 <div class="panel panel-default"
-  ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && (vm.invenioSearchResults.aggregations.path.buckets[0].length > 1 || (isCommunity && index_id_q == 0))">
+  ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && (vm.invenioSearchResults.aggregations.path.buckets[0].length > 1 || (isCommunityRootIndex && vm.invenioSearchResults.aggregations.path.buckets[0].length > 1))">
   <div class="panel-heading clearfix">
     <h3 class="panel-title">Index List</h3>
   </div>
   <div class="panel-body">
     <div class="panel_bread">
-      <ol class="breadcrumb" ng-if="(typeIndexList !== 'root')">
+      <ol class="breadcrumb" ng-if="(typeIndexList !== 'root' && !isCommunityRootIndex)">
         <li
           ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
           <span ng-if="is_permission">

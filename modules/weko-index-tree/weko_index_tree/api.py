@@ -663,19 +663,25 @@ class Indexes(object):
         :return: the list of index.
         """
         if community_id:
+            index = node_path.rfind('/')
+            pid = node_path[index + 1:]
             from invenio_communities.models import Community
             community_obj = Community.get(community_id)
             recursive_t = cls.recs_query()
-            query = db.session.query(recursive_t).filter(
-                recursive_t.c.cid == community_obj.root_node_id)
+            query = db.session.query(recursive_t).filter(db.or_(
+                recursive_t.c.cid == pid, recursive_t.c.pid == pid))
             if not get_user_roles()[0]:
                 query = query.filter(recursive_t.c.public)
             q = query.order_by(recursive_t.c.path).all()
-            if not isinstance(q, list):
-                lst = list()
-                lst.append(q)
+            lst = list()
+            if node_path != '0':
+                for item in q:
+                    if item.cid == community_obj.root_node_id \
+                            and item.pid == '0':
+                        lst.append(item)
+                    if item.pid != '0':
+                        lst.append(item)
                 return lst
-            return q
         else:
             index = node_path.rfind('/')
             pid = node_path[index + 1:]

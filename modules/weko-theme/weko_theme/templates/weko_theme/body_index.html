@@ -45,8 +45,12 @@
     <div class="panel-heading clearfix">
         {%-if community %}
           {% set community_param = '&community=' + community.id %}
+          {%- set index_id = '&root_index=true&q=' + community.index.id|string -%}
+          <input type="hidden" id="community_root_index" value="{{community.index.id}}">
+        {%- else %}
+          {%- set index_id = '&q=0' -%}
         {%- endif %}
-        <h3 class="panel-title"><a href="/search?page=1&size=20&search_type=2&q=0{{ community_param }}">{{_('Index Tree')}}</a></h3>
+        <h3 class="panel-title"><a href="/search?page=1&size=20&search_type=2&{{index_id}}{{ community_param }}">{{_('Index Tree')}}</a></h3>
     </div>
     <div id="index-height" name="index-height" hidden>{{ height }}</div>
     <div class="panel-body index-body" id="index-background" style="overflow: auto;">
