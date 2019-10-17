@@ -708,17 +708,22 @@ def next_action(activity_id='0', action_id=0):
 
                     current_app.logger.info('The data from record.model: ')
                     current_app.logger.info(record.model.__dict__)
-                    deposit = WekoDeposit(record, record.model)
-                    deposit.publish()
-                    # For current item: Make status Public as default
-
-                    updated_item = UpdateItem()
-                    updated_item.publish(record)
-                    # For previous item: Update status to Private
-
                     current_pid = PersistentIdentifier.get_by_object(
                         pid_type='recid', object_type='rec',
                         object_uuid=activity_detail.item_id)
+                    # publish item without version ID
+                    deposit = WekoDeposit(record, record.model)
+                    deposit.publish()
+                    # new item version ID for creating
+                    new_deposit = WekoDeposit(record, record.model)
+                    new_record = new_deposit.newversion(current_pid)
+                    new_deposit.publish()
+                    # For current item: Make status Public as default
+
+                    updated_item = UpdateItem()
+                    updated_item.publish(new_record)
+                    updated_item.publish(record)
+                    # For previous item: Update status to Private
                     current_pv = PIDVersioning(child=current_pid)
                     if current_pv.exists and current_pv.previous is not None:
                         prev_record = WekoDeposit.get_record(
