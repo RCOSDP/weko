@@ -173,8 +173,17 @@ def item_metadata_validation(item_id, identifier_type):
 
     # check resource type request
     if not resource_type and not type_key:
-        return 'Resource Type Property either missing ' \
-            'or jpcoar mapping not correct!'
+        return {
+            'required': [],
+            'pattern': [],
+            'pmid': '',
+            'doi': '',
+            'url': '',
+            "msg": 'Resource Type Property either missing '
+            'or jpcoar mapping not correct!',
+            'error_type': 'no_resource_type'
+        }
+
     if not item_type or not resource_type and type_check:
         error_list = {'required': [], 'pattern': [], 'pmid': '',
                       'doi': '', 'url': ''}

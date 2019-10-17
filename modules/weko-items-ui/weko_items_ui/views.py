@@ -1183,8 +1183,12 @@ def check_validation_error_msg(activity_id):
             'update_json_schema'].get(activity_id)
 
         msg = []
+        if error_list.get('error_type'):
+            if error_list.get('error_type') == 'no_resource_type':
+                msg.append(_(error_list.get('msg', '')))
 
-        msg.append(_('PID does not meet the conditions.'))
+        else:
+            msg.append(_('PID does not meet the conditions.'))
         if error_list.get('pmid'):
             msg.append(_(
                 'Since PMID is not subject to DOI registration, please '
