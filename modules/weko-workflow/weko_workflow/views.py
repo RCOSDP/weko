@@ -705,12 +705,17 @@ def next_action(activity_id='0', action_id=0):
             if activity_detail and activity_detail.item_id:
                 record = WekoDeposit.get_record(activity_detail.item_id)
                 if record is not None:
+
+                    current_app.logger.info('The data from record.model: ')
+                    current_app.logger.info(record.model.__dict__)
                     deposit = WekoDeposit(record, record.model)
                     deposit.publish()
                     # For current item: Make status Public as default
+
                     updated_item = UpdateItem()
                     updated_item.publish(record)
                     # For previous item: Update status to Private
+
                     current_pid = PersistentIdentifier.get_by_object(
                         pid_type='recid', object_type='rec',
                         object_uuid=activity_detail.item_id)

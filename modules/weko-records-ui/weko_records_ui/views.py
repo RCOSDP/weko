@@ -82,7 +82,7 @@ def record_from_pid(pid_value):
 
 
 def publish(pid, record, template=None, **kwargs):
-    r"""Record publish  status change view.
+    """Record publish  status change view.
 
     Change record publish status with given status and renders record export
     template.
@@ -90,6 +90,7 @@ def publish(pid, record, template=None, **kwargs):
     :param pid: PID object.
     :param record: Record object.
     :param template: Template to render.
+    :param kwargs: Additional view arguments based on URL rule.
     :return: The rendered template.
     """
     from weko_deposit.api import WekoIndexer
@@ -110,13 +111,14 @@ def publish(pid, record, template=None, **kwargs):
 
 
 def export(pid, record, template=None, **kwargs):
-    r"""Record serialization view.
+    """Record serialization view.
 
     Serializes record with given format and renders record export template.
 
     :param pid: PID object.
     :param record: Record object.
     :param template: Template to render.
+    :param kwargs: Additional view arguments based on URL rule.
     :return: The rendered template.
     """
     formats = current_app.config.get('RECORDS_UI_EXPORT_FORMATS', {}).get(
@@ -335,13 +337,14 @@ def _get_google_scholar_meta(record):
 
 
 def default_view_method(pid, record, filename=None, template=None, **kwargs):
-    r"""Display default view.
+    """Display default view.
 
     Sends record_viewed signal and renders template.
     :param pid: PID object.
     :param record: Record object.
     :param filename: File name.
     :param template: Template to render.
+    :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
     check_site_license_permission()
@@ -443,6 +446,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
     active_versions = list(pid_ver.children)
 
+    # Get PID version object to retrieve all versions of item
+    pid_ver = PIDVersioning(child=pid)
+    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
+    active_versions = list(pid_ver.children)
+
     return render_template(
         template,
         pid=pid,
@@ -470,6 +478,61 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         **ctx,
         **kwargs
     )
+
+
+@blueprint.route('/r/<parent_pid_value>', methods=['GET'])
+@blueprint.route('/r/<parent_pid_value>.<int:version>', methods=['GET'])
+@login_required
+def doi_ish_view_method(parent_pid_value=0, version=0):
+    """DOI-like item version endpoint view.
+
+    :param pid: PID value.
+    :returns: Redirect to correct version.
+    """
+    try:
+        p_pid = PersistentIdentifier.get('parent',
+                                         'parent:' + str(parent_pid_value))
+    except PIDDoesNotExistError:
+        p_pid = None
+
+    if p_pid:
+        pid_ver = PIDVersioning(parent=p_pid)
+        all_versions = list(
+            pid_ver.get_children(
+                ordered=True,
+                pid_status=None))
+        if version == 0 or version == len(all_versions):
+            return redirect(url_for('invenio_records_ui.recid',
+                                    pid_value=pid_ver.last_child.pid_value))
+        elif version <= len(all_versions):
+            version_pid = all_versions[(version - 1)]
+            current_app.logger.info(version_pid.__dict__)
+            if version_pid.status == PIDStatus.REGISTERED:
+                return redirect(url_for('invenio_records_ui.recid',
+                                        pid_value=version_pid.pid_value))
+
+    return abort(404)
+
+
+@blueprint.route('/records/parent:<pid_value>', methods=['GET'])
+@login_required
+def parent_view_method(pid_value=0):
+    """Parent view method to display latest version.
+
+    :param pid_value: PID value.
+    :returns: Redirect to original view.
+    """
+    try:
+        p_pid = PersistentIdentifier.get('parent', 'parent:' + str(pid_value))
+    except PIDDoesNotExistError:
+        p_pid = None
+
+    if p_pid:
+        pid_version = PIDVersioning(parent=p_pid)
+        if pid_version.last_child:
+            return redirect(url_for('invenio_records_ui.recid',
+                                    pid_value=pid_version.last_child.pid_value))
+    return abort(404)
 
 
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])

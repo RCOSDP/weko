@@ -31,7 +31,7 @@ from invenio_deposit.api import Deposit, index, preserve
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_indexer.api import RecordIndexer
-from invenio_pidrelations.contrib.records import RecordDraft
+from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDInvalidAction
@@ -357,6 +357,25 @@ class WekoDeposit(Deposit):
         """Check if deposit is published."""
         return self['_deposit'].get('pid') is not None
 
+    def _publish_new(self, id_=None):
+        """Override the publish new to avoid creating multiple pids."""
+        record_pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', object_uuid=self.id).first()
+
+        self['_deposit']['pid'] = {
+            'type': record_pid.pid_type,
+            'value': record_pid.pid_value,
+            'revision_id': 0,
+        }
+
+        data = dict(self.dumps())
+        data['$schema'] = self.record_schema
+
+        with self._process_files(id_, data):
+            record = self.published_record_class.create(data, id_=id_)
+
+        return record
+
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
         if self.data is None:
@@ -368,7 +387,13 @@ class WekoDeposit(Deposit):
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
         try:
+            # rec_pid = PersistentIdentifier.get('recid', self.data.get('id', 0))
+            # current_app.logger.info('The current id is : ')
+            # current_app.logger.info(self.data.get('id', 0))
+            # current_app.logger.info(self.pid)
+
             deposit = super(WekoDeposit, self).publish(pid, id_)
+            # deposit = super(WekoDeposit, self).publish(pid, id_)
 
             # update relation version current to ES
             pid = PersistentIdentifier.query.filter_by(
@@ -439,11 +464,12 @@ class WekoDeposit(Deposit):
                 recid=recid)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
-        recid = PersistentIdentifier.get('recid', str(data['_deposit']['id']))
-        depid = PersistentIdentifier.get('depid', str(data['_deposit']['id']))
+        dep_id = str(data['_deposit']['id'])
+        recid = PersistentIdentifier.get('recid', dep_id)
+        depid = PersistentIdentifier.get('depid', dep_id)
         p_depid = PersistentIdentifier.create(
             'parent',
-            'parent:recid/{0}'.format(str(data['_deposit']['id'])),
+            'parent:{0}'.format(str(data['_deposit']['id'])),
             object_type='rec',
             object_uuid=uuid.uuid4(),
             status=PIDStatus.REGISTERED
@@ -588,6 +614,7 @@ class WekoDeposit(Deposit):
                         'recid', str(data['_deposit']['id']))
                     depid = PersistentIdentifier.get(
                         'depid', str(data['_deposit']['id']))
+
                     PIDVersioning(
                         parent=pv.parent).insert_draft_child(
                         child=recid)
