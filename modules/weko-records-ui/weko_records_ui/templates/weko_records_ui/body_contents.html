@@ -23,6 +23,7 @@
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
+{% from "weko_records_ui/output_detail_data.html" import output_detail_data %}
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
@@ -235,11 +236,7 @@
                   {% endfor %}
                   {% else %}
                   {%- for l in lst['attribute_value_mlt'] %}
-                  {%- for ll in l -%}
-                  {%- for k, v in ll.items() -%}
-                  {{ v }}<br>
-                  {%- endfor -%}
-                  {%- endfor -%}
+                    {{ output_detail_data(l) }}
                   {%- endfor -%}
                   {% endif %}
                 </td>

@@ -19,6 +19,7 @@
  #}
 
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
+{% from "weko_records_ui/output_detail_data.html" import output_detail_data %}
 
 {%- if record !=[] -%}
 <div class="panel panel-default">
@@ -144,11 +145,7 @@
                       {% endfor %}
                     {% else %}
                       {%- for l in lst['attribute_value_mlt'] %}
-                      {%- for l2 in l %}
-                        {%- for k, v in l2.items() %}
-                          {{ v }}<br>
-                        {% endfor %}
-                        {% endfor %}
+                          {{ output_detail_data(l) }}
                       {% endfor %}
                     {% endif %}
                   </td>
