@@ -721,8 +721,9 @@ def next_action(activity_id='0', action_id=0):
                         # Make status Public as default
                         updated_item = UpdateItem()
                         updated_item.publish(record)
-                    else:
+                    # else:
                         # sync when editing
+                        # TODO
                     # For previous item: Update status to Private
                     """current_pv = PIDVersioning(child=current_pid)
                     if current_pv.exists and current_pv.previous is not None:

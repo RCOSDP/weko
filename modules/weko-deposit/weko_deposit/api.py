@@ -589,9 +589,9 @@ class WekoDeposit(Deposit):
             # Check that there is not a newer draft version for this record
             # and this is the latest version
             pv = PIDVersioning(child=pid)
-            if pv.exists and not pv.draft_child and pid == pv.last_child:
+            if pv.exists and not pv.draft_child:  # and pid == pv.last_child:
                 # the latest record: item without version ID
-                last_pid = pv.last_child
+                last_pid = pid  # pv.last_child
                 # Get copy of the latest record
                 latest_record = WekoDeposit.get_record(
                     last_pid.object_uuid)
