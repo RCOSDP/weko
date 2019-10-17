@@ -30,7 +30,9 @@ def weko_deposit_minter(record_uuid, data, recid=None):
     if not recid:
         id_ = RecordIdentifier.next()
     else:
-        RecordIdentifier.insert(recid)
+        if isinstance(recid, int):
+            RecordIdentifier.insert(recid)
+            data['recid'] = int(recid)
         id_ = recid
     recid = PersistentIdentifier.create(
         'recid',
@@ -39,7 +41,7 @@ def weko_deposit_minter(record_uuid, data, recid=None):
         object_uuid=record_uuid,
         status=PIDStatus.REGISTERED
     )
-    data['recid'] = int(recid.pid_value)
+    # data['recid'] = int(recid.pid_value)
 
     # Create depid with same pid_value of the recid
     depid = PersistentIdentifier.create(
@@ -67,3 +69,15 @@ def weko_deposit_fetcher(record_uuid, data):
         pid_type='depid',
         pid_value=pid_value,
     ) if pid_value else None
+
+
+def get_latest_version_id(recid):
+    """Get latest version ID to store item of before updating."""
+    version_id = 1
+    pid_value = "{}.%" . format(recid)
+    pid = PersistentIdentifier.query.filter_by(pid_type='recid')\
+        .filter(PersistentIdentifier.pid_value.like(pid_value)).all()
+    if pid:
+        version_id = int(max([idx.pid_value.split('.')[-1] for idx in pid])) + 1
+
+    return version_id

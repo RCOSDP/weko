@@ -361,13 +361,13 @@ def get_schema_form(item_type_id=0):
     return abort(400)
 
 
-@blueprint.route('/index/<int:pid_value>', methods=['GET', 'PUT', 'POST'])
+@blueprint.route('/index/<string:pid_value>', methods=['GET', 'PUT', 'POST'])
 @login_required
 @item_permission.require(http_exception=403)
-def items_index(pid_value=0):
+def items_index(pid_value='0'):
     """Items index."""
     try:
-        if pid_value == 0:
+        if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
@@ -419,14 +419,14 @@ def items_index(pid_value=0):
     return abort(400)
 
 
-@blueprint.route('/iframe/index/<int:pid_value>',
+@blueprint.route('/iframe/index/<string:pid_value>',
                  methods=['GET', 'PUT', 'POST'])
 @login_required
 @item_permission.require(http_exception=403)
-def iframe_items_index(pid_value=0):
+def iframe_items_index(pid_value='0'):
     """Iframe items index."""
     try:
-        if pid_value == 0:
+        if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.iframe_index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)

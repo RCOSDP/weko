@@ -50,7 +50,8 @@ from weko_records.utils import get_all_items, get_options_and_order_list, \
     json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
 
-from .pidstore import weko_deposit_fetcher, weko_deposit_minter
+from .pidstore import get_latest_version_id, weko_deposit_fetcher, \
+    weko_deposit_minter
 from .signals import item_created
 
 PRESERVE_FIELDS = (
@@ -469,7 +470,7 @@ class WekoDeposit(Deposit):
         depid = PersistentIdentifier.get('depid', dep_id)
         p_depid = PersistentIdentifier.create(
             'parent',
-            'parent:{0}'.format(str(data['_deposit']['id'])),
+            'parent:{0}'.format(dep_id),
             object_type='rec',
             object_uuid=uuid.uuid4(),
             status=PIDStatus.REGISTERED
@@ -589,6 +590,7 @@ class WekoDeposit(Deposit):
             # and this is the latest version
             pv = PIDVersioning(child=pid)
             if pv.exists and not pv.draft_child and pid == pv.last_child:
+                # the latest record: item without version ID
                 last_pid = pv.last_child
                 # Get copy of the latest record
                 latest_record = WekoDeposit.get_record(
@@ -602,10 +604,14 @@ class WekoDeposit(Deposit):
                     for k in keys_to_remove:
                         data.pop(k, None)
 
+                    # attaching version ID
+                    recid = '{0}.{1}' . format(
+                        last_pid.pid_value,
+                        get_latest_version_id(last_pid.pid_value))
                     # NOTE: We call the superclass `create()` method, because we
                     # don't want a new empty bucket, but an unlocked snapshot of
                     # the old record's bucket.
-                    deposit = super(WekoDeposit, self).create(data)
+                    deposit = super(WekoDeposit, self).create(data, recid=recid)
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
@@ -621,11 +627,13 @@ class WekoDeposit(Deposit):
                     RecordDraft.link(recid, depid)
 
                     # Create snapshot from the record's bucket and update data
-                    snapshot = latest_record.files.bucket.snapshot(lock=False)
-                    snapshot.locked = False
-                    deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                    RecordsBuckets.create(
-                        record=deposit.model, bucket=snapshot)
+                    if latest_record.files is not None:
+                        snapshot = latest_record.files.bucket.snapshot(
+                            lock=False)
+                        snapshot.locked = False
+                        deposit['_buckets'] = {'deposit': str(snapshot.id)}
+                        RecordsBuckets.create(
+                            record=deposit.model, bucket=snapshot)
                     if 'extra_formats' in latest_record['_buckets']:
                         extra_formats_snapshot = \
                             latest_record.extra_formats.bucket.snapshot(
@@ -634,8 +642,10 @@ class WekoDeposit(Deposit):
                             str(extra_formats_snapshot.id)
                         RecordsBuckets.create(record=deposit.model,
                                               bucket=extra_formats_snapshot)
-                    index = {'index': self.get('path', []), 'actions': 'private'
-                             if self.get('publish_status', '1') == '1' else 'publish'}
+                    index = {'index': self.get('path', []),
+                             'actions': 'private'
+                             if self.get('publish_status', '1') == '1'
+                             else 'publish'}
                     if 'activity_info' in session:
                         del session['activity_info']
                     item_metadata = ItemsMetadata.get_record(
