@@ -509,20 +509,15 @@ def make_stats_tsv(item_type_id, recids):
 
             return self.attr_data[attr]['max_size']
 
-        def print_value(self, recid, attr):
-            if not self.attr_output.get(recid):
-                self.attr_output[recids] = []
-            ret = self.attr_data[attr][recid]
-            ret.extend(['' for i in range(len(self.attr_data[attr][recid]), self.attr_data[attr]['max_size'])])
-            self.attr_output[recids].extend(ret)
-
-        def get_max_items(self, item_key, data):
-            current_app.logger.debug(item_key)
-            current_app.logger.debug(data)
+        def get_max_items(self, item_key):
+            # current_app.logger.debug(item_key)
+            # current_app.logger.debug(data)
             if 'subitem' in item_key:
-                pass
+                return None
             elif 'item' in item_key:
-                return len(data)
+                return get_max_ins(item_key)
+            else:
+                return None
 
         def get_sub_item(self, item_key, properties, data=None):
             """Prepare TSV data for each Item Types.
@@ -558,10 +553,8 @@ def make_stats_tsv(item_type_id, recids):
             """
             ret = []
             ret_data = []
-            max_items = self.get_max_items(item_key, data) or 0
-            current_app.logger.debug(item_key)
-            current_app.logger.debug(properties)
-            current_app.logger.debug(data)
+            max_items = self.get_max_items(item_key) or 5
+
             if not data:
                 return [], ['']
             for idx in range(max_items):
@@ -574,11 +567,11 @@ def make_stats_tsv(item_type_id, recids):
                             else:
                                 m_data = None
                             sub, sublabel = self.get_subs_item(
-                                key,
+                                item_key + '.' + key,
                                 properties[key].get('title'),
                                 properties[key]['items']['properties'],
                                 m_data)
-                            ret.extend([item_key + '.' + x for x in sub])
+                            ret.extend(sub)
                             key_data.extend(sublabel)
                         elif properties[key]['type'] == 'object':
                             if idx < len(data):
@@ -586,11 +579,11 @@ def make_stats_tsv(item_type_id, recids):
                             else:
                                 m_data = None
                             sub, sublabel = self.get_subs_item(
-                                key,
+                                item_key + '.' + key,
                                 properties[key].get('title'),
                                 properties[key]['properties'],
                                 m_data)
-                            ret.extend([item_key + '.' + x for x in sub])
+                            ret.extend(sub)
                             key_data.extend(sublabel)
                         else:
                             ret.append(item_key + '.' + key)
@@ -617,7 +610,7 @@ def make_stats_tsv(item_type_id, recids):
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
-        max_path = records.get_max_ins(item_key)
+        # max_path = records.get_max_ins(item_key)
         keys = []
         current_app.logger.debug('---------------' + item_key + '---------------')
         for recid in recids:
