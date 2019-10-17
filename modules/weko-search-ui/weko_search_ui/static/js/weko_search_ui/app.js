@@ -118,6 +118,15 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
     return result
   })()
+
+
+  $rootScope.isCommunityRootIndex = (function(){
+    let url = new URL(window.location.href );
+    let community = url.searchParams.get("community");
+    let rootIndexTree = url.searchParams.get("root_index");
+    return !!community && !!rootIndexTree;
+  })();
+
   $rootScope.display_comment = function(comment) {
 
     return format_comment(comment)
