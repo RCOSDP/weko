@@ -711,25 +711,25 @@ def next_action(activity_id='0', action_id=0):
                     current_pid = PersistentIdentifier.get_by_object(
                         pid_type='recid', object_type='rec',
                         object_uuid=activity_detail.item_id)
-                    # publish item without version ID
-                    deposit = WekoDeposit(record, record.model)
-                    deposit.publish()
-                    # new item version ID for creating
-                    new_deposit = WekoDeposit(record, record.model)
-                    new_record = new_deposit.newversion(current_pid)
-                    new_deposit.publish()
-                    # For current item: Make status Public as default
-
-                    updated_item = UpdateItem()
-                    updated_item.publish(new_record)
-                    updated_item.publish(record)
-                    # For previous item: Update status to Private
                     current_pv = PIDVersioning(child=current_pid)
+                    # publish item without version ID when registering newly
+                    if current_pv.exists and not current_pv.previous:
+                        deposit = WekoDeposit(record, record.model)
+                        deposit.publish()
+                        # new item version ID
+                        deposit.newversion(current_pid)
+                        # Make status Public as default
+                        updated_item = UpdateItem()
+                        updated_item.publish(record)
+                    else:
+                        # sync when editing
+                    # For previous item: Update status to Private
+                    """current_pv = PIDVersioning(child=current_pid)
                     if current_pv.exists and current_pv.previous is not None:
                         prev_record = WekoDeposit.get_record(
                             current_pv.previous.object_uuid)
                         if prev_record is not None:
-                            updated_item.update_status(prev_record)
+                            updated_item.update_status(prev_record)"""
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
