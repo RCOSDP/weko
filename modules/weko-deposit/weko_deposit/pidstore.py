@@ -85,6 +85,10 @@ def get_latest_version_id(recid):
 
 def get_record_identifier(recid):
     """Get record identifier."""
-    recid = PersistentIdentifier.query.filter_by(recid=recid).one_or_none()
-
-    return recid
+    record_id = None
+    try:
+        record_id = RecordIdentifier.query.filter_by(recid=int(recid))\
+            .one_or_none()
+    except ValueError:
+        pass
+    return record_id

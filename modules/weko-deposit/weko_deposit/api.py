@@ -643,13 +643,12 @@ class WekoDeposit(Deposit):
                         RecordsBuckets.create(record=deposit.model,
                                               bucket=extra_formats_snapshot)
                     index = {'index': self.get('path', []),
-                             'actions': 'private'
-                             if self.get('publish_status', '1') == '1'
-                             else 'publish'}
+                             'actions': 'private'}
                     if 'activity_info' in session:
                         del session['activity_info']
                     item_metadata = ItemsMetadata.get_record(
                         last_pid.object_uuid).dumps()
+                    item_metadata.pop('id', None)
                     args = [index, item_metadata]
                     deposit.update(*args)
                     deposit.commit()
