@@ -81,3 +81,10 @@ def get_latest_version_id(recid):
         version_id = int(max([idx.pid_value.split('.')[-1] for idx in pid])) + 1
 
     return version_id
+
+
+def get_record_identifier(recid):
+    """Get record identifier."""
+    recid = PersistentIdentifier.query.filter_by(recid=recid).one_or_none()
+
+    return recid

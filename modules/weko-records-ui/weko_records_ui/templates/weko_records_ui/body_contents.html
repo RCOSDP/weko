@@ -323,9 +323,11 @@
             <a class="btn btn-info back-button" id="btn_back" href="#!">
               <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span> {{_('Back')}}</a>
             {% if record | check_permission %}
-            <a class="btn btn-primary edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}"
-              {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
-              <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
+            {% if can_edit %}
+              <a class="btn btn-primary edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}"
+                {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
+                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
+            {% endif %}
             <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm('',
               '{{'/records/soft_delete/'+ pid.pid_value}}',
               '{{url_for('weko_search_ui.search')}}')">

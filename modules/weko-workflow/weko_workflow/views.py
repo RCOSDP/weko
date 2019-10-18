@@ -44,6 +44,7 @@ from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit
+from weko_deposit.pidstore import get_record_identifier
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
@@ -711,9 +712,9 @@ def next_action(activity_id='0', action_id=0):
                     current_pid = PersistentIdentifier.get_by_object(
                         pid_type='recid', object_type='rec',
                         object_uuid=activity_detail.item_id)
-                    current_pv = PIDVersioning(child=current_pid)
+                    recid = get_record_identifier(current_pid.pid_value)
                     # publish item without version ID when registering newly
-                    if current_pv.exists and not current_pv.previous:
+                    if recid is not None:
                         deposit = WekoDeposit(record, record.model)
                         deposit.publish()
                         # new item version ID
