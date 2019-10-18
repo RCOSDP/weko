@@ -320,14 +320,27 @@ def find_items(form):
     return lst
 
 
-def get_all_items(nlst, klst):
+def get_all_items(nlst, klst, is_get_name=False):
     """Convert and sort item list.
 
     :param nlst:
     :param klst:
+    :param is_get_name:
     :return: alst
     """
-    alst = []
+
+    def get_name(key):
+        for lst in klst:
+            key_arr = lst[0].split('.')
+            k = key_arr[-1]
+            if key != k:
+                continue
+            item_name = lst[1]
+            if len(key_arr) >= 3:
+                parent_key = key_arr[-2].replace('[]', '')
+                item_name = item_name + '.' + get_name(parent_key)
+
+            return item_name
 
     def get_items(nlst):
         _list = []
@@ -340,6 +353,10 @@ def get_all_items(nlst, klst):
             for k, v in nlst.items():
                 if isinstance(v, str):
                     d[k] = v
+                    if is_get_name:
+                        item_name = get_name(k)
+                        if item_name:
+                            d[k + '.name'] = item_name
                 else:
                     _list.append(get_items(v))
             _list.append(d)
