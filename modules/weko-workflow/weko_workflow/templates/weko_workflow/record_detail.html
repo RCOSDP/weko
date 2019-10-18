@@ -96,14 +96,14 @@
             <table class="table table-bordered table-striped">
               {% if record.item_type_info %}
                 <tr>
-                  <th>{{_('Item Type')}}</th>
+                  <th colspan="6">{{_('Item Type')}}</th>
                   <td>{{ record.item_type_info }}</td>
                 </tr>
               {% endif %}
               {%- for lst in record.items_show_list %}
-                {% if 'attribute_name_hidden' not in lst.keys() %}
+                {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' or lst['attribute_type'] == 'creator' %}
                 <tr>
-                  <th>{{ lst['attribute_name'] }}</th>
+                  <th colspan="6">{{ lst['attribute_name'] }}</th>
                   <td>
                     <pre class="hide">{{lst|tojson}}</pre>
                     {% if lst['attribute_value'] is string %}
@@ -144,16 +144,18 @@
                         {%- endfor -%}
                       {% endfor %}
                     {% else %}
-                      {%- for l in lst['attribute_value_mlt'] %}
-                          {{ output_detail_data(l) }}
-                      {% endfor %}
+{#                      {%- for l in lst['attribute_value_mlt'] %}#}
+{#                          {{ output_detail_data(l) }}#}
+{#                      {% endfor %}#}
                     {% endif %}
                   </td>
                 </tr>
+                {% elif 'attribute_name_hidden' not in lst.keys() %}
+                  {{ output_detail_data(lst) }}
                 {% endif %}
                 {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
                   <tr>
-                    <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
+                    <th colspan="6">{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
                     <td>
                       {%- for thumb in files_thumbnail | sort(attribute='key') -%}
                         {%- set thumb_name = thumb.filename or thumb.key -%}

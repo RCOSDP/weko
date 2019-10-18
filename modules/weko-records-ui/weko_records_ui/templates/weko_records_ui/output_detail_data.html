@@ -19,13 +19,85 @@
 #}
 
 {% macro output_detail_data(record_detail_data) %}
+    {% if record_detail_data['attribute_value_mlt'] is string or not record_detail_data['attribute_value_mlt'] %}
+      <tr>
+        <th colspan="6">{{ record_detail_data['attribute_name'] }}</th>
+        <td>{{ record_detail_data['attribute_value_mlt'] }}</td>
+      </tr>
+    {% else %}
+      <tr>
+        <th colspan="6"
+            style="border-bottom: none; background-color: #f9f9f9">{{ record_detail_data['attribute_name'] }}</th>
+        <td style="background-color: #ffffff"></td>
+      </tr>
+        {%- for l in record_detail_data['attribute_value_mlt'] %}
+            {{ output_child_data(l) }}
+        {%- endfor -%}
+    {% endif %}
+{% endmacro %}
+
+{% macro output_child_data(record_detail_data) %}
     {% if record_detail_data is mapping %}
+        {% set detail_data = [] %}
         {% for k, v in record_detail_data.items() %}
-            {{ v }}<br>
+            {% if 'name' not in k and not record_detail_data.get(k + '.name') %}
+                {{ v }}<br>
+            {% elif 'name' in k %}
+                {% set key = k.split('.')[0] %}
+                {% if v.split('.')|length == 1 %}
+                  <tr>
+                    <th style="border-top: none; border-bottom: none; background-color: #f9f9f9"></th>
+                    <th colspan="5"
+                        style="background-color: #f9f9f9">{{ v }}</th>
+                    <td style="background-color: #ffffff">{{ record_detail_data.get(key) }}</td>
+                  </tr>
+                {% else %}
+                  <pre class="hidden">{{ detail_data.append({'name': v, 'value': record_detail_data.get(key)}) }}</pre>
+                {% endif %}
+            {% endif %}
         {% endfor %}
+        {% if detail_data|length > 0 %}
+            {{ output_data(detail_data) }}
+        {% endif %}
     {% elif record_detail_data is iterable and record_detail_data is not string %}
-      {% for detail_data in record_detail_data %}
-        {{ output_detail_data(detail_data) }}
-      {% endfor %}
+        {% for detail_data in record_detail_data %}
+            {{ output_child_data(detail_data) }}
+        {% endfor %}
+    {% endif %}
+{% endmacro %}
+
+
+{% macro output_data(detail_data) %}
+    {% set parent_name_lst = detail_data[0].get('name').split('.') %}
+    {{ output_parent_detail(parent_name_lst, 1) }}
+    {% for out_detail_datum in detail_data %}
+      <tr>
+          {{ out_table_th(parent_name_lst|length) }}
+        <th style="background-color: #f9f9f9"
+            colspan="{{ 6 - parent_name_lst|length }}">{{ out_detail_datum.get('name').split('.')[0] }}</th>
+        <td style="background-color: #ffffff">{{ out_detail_datum.get('value') }}</td>
+      </tr>
+    {% endfor %}
+
+{% endmacro %}
+
+
+{% macro output_parent_detail(parent_name_lst, index) %}
+    {% if parent_name_lst|length > 1 %}
+      <tr>
+          {{ out_table_th(index) }}
+        <th style="background-color: #f9f9f9; border-bottom: none"
+            colspan="{{ 6 - index }}">{{ parent_name_lst[-1] }}</th>
+        <td style="background-color: #ffffff"></td>
+      </tr>
+        {{ output_parent_detail( parent_name_lst[0:-1], index + 1 ) }}
+    {% endif %}
+{% endmacro %}
+
+
+{% macro out_table_th(parrent_length) %}
+    {% if parrent_length > 0 %}
+      <th style="border-top: none; border-bottom: none;background-color: #f9f9f9"></th>
+        {{ out_table_th(parrent_length - 1) }}
     {% endif %}
 {% endmacro %}
