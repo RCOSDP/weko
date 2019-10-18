@@ -432,8 +432,8 @@ def package_exports(item_type_data):
     """
     """Package the .tsv files into one zip file."""
     tsv_output = StringIO()
-    jsonschema_url = '=HYPERLINK("' + item_type_data.get('root_url') + \
-                     item_type_data.get('jsonschema') + '")'
+    jsonschema_url = item_type_data.get('root_url') + \
+                     item_type_data.get('jsonschema')
 
     tsv_writer = csv.writer(tsv_output, delimiter='\t')
     tsv_writer.writerow(['#ItemType',
@@ -448,19 +448,16 @@ def package_exports(item_type_data):
     tsv_metadata_label_writer = csv.DictWriter(tsv_output,
                                                fieldnames=labels,
                                                delimiter='\t')
+    tsv_metadata_data_writer = csv.writer(tsv_output,
+                                          delimiter='\t')
     tsv_metadata_writer.writeheader()
     tsv_metadata_label_writer.writeheader()
-    # for recid in item_type_data.get('recids'):
-    # record = WekoRecord.get_record_by_pid(recid)
-    # tsv_metadata_writer.writerow({
-    #     '#.id': str(recid),
-    #     '.uri': item_type_data.get('root_url') + 'records/' + str(recid),
-    #     '.path[0]': record.get('path')[0]
-    # })
+    for recid in item_type_data.get('recids'):
+        tsv_metadata_data_writer.writerow(
+            [recid, item_type_data.get('root_url') + 'records/' + str(recid)] + item_type_data['data'].get(recid)
+        )
 
     return tsv_output
-
-from collections import OrderedDict
 
 def make_stats_tsv(item_type_id, recids):
     """Prepare TSV data for each Item Types.
@@ -488,7 +485,7 @@ def make_stats_tsv(item_type_id, recids):
             self.recids = recids
             for recid in recids:
                 record = WekoRecord.get_record_by_pid(recid)
-                self.records[recid] = OrderedDict(record)
+                self.records[recid] = record
                 self.attr_output[recid] = []
 
         def get_max_ins(self, attr):
@@ -567,7 +564,7 @@ def make_stats_tsv(item_type_id, recids):
             ret_label = []
             ret_data = []
 
-            for key in OrderedDict(properties):
+            for key in properties:
                 if properties[key].get('type'):
                     ret.append(item_key + '.' + key)
                     ret_label.append(item_label + '.' + properties[key].get('title'))
@@ -645,16 +642,16 @@ def make_stats_tsv(item_type_id, recids):
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
     for recid in recids:
-        current_app.logger.debug(records.attr_data['path'][recid])
+        records.attr_output[recid].extend(records.attr_data['path'][recid])
+        records.attr_output[recid].extend(['' for i in range(max_path - len(records.attr_output[recid]))])
+        records.attr_output[recid].append(records.records[recid]['pubdate']['attribute_value'])
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
         max_path = records.get_max_ins(item_key)
         keys = {}
         labels = []
-        current_app.logger.debug('---------------' + item_key + '---------------')
         for recid in recids:
-            current_app.logger.debug('::' + str(recid))
             if item.get('type') == 'array':
                 key, label, data = records.get_subs_item(item_key,
                                         item.get('title'),
@@ -676,7 +673,7 @@ def make_stats_tsv(item_type_id, recids):
                     labels = label
                 records.attr_output[recid].extend(data)
             else:
-                current_app.logger.debug('CURRENT TYPE NOT MATCH')
+                current_app.logger.error('CURRENT TYPE NOT MATCH')
         ret.extend(keys)
         ret_label.extend(labels)
 

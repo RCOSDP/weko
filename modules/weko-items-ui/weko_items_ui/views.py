@@ -1119,6 +1119,7 @@ def export_items(post_data):
         # Create export info file
         for item_type_id in item_types_data:
             keys, labels, records = make_stats_tsv(item_type_id, item_types_data[item_type_id]['recids'])
+            item_types_data[item_type_id]['recids'].sort()
             item_types_data[item_type_id]['keys'] = keys
             item_types_data[item_type_id]['labels'] = labels
             item_types_data[item_type_id]['data'] = records
