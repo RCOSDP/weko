@@ -460,6 +460,7 @@ def package_exports(item_type_data):
 
     return tsv_output
 
+from collections import OrderedDict
 
 def make_stats_tsv(item_type_id, recids):
     """Prepare TSV data for each Item Types.
@@ -487,7 +488,7 @@ def make_stats_tsv(item_type_id, recids):
             self.recids = recids
             for recid in recids:
                 record = WekoRecord.get_record_by_pid(recid)
-                self.records[recid] = record
+                self.records[recid] = OrderedDict(record)
                 self.attr_output[recid] = []
 
         def get_max_ins(self, attr):
@@ -510,16 +511,49 @@ def make_stats_tsv(item_type_id, recids):
             return self.attr_data[attr]['max_size']
 
         def get_max_items(self, item_key):
-            # current_app.logger.debug(item_key)
-            # current_app.logger.debug(data)
             if 'subitem' in item_key:
-                return None
-            elif 'item' in item_key:
-                return get_max_ins(item_key)
-            else:
-                return None
+                # current_app.logger.debug(item_key)
+                keys = item_key.split('.')
+                if len(keys) == 2:
+                    key = keys[0].split('[')
+                    item_attr = key[0]
+                    idx = int(key[1].split(']')[0])
+                    sub_attr = keys[1].split('[')[0]
+                    max_length = 0
+                    for record in self.records:
+                        if len(self.records[record][item_attr]['attribute_value_mlt']) > idx:
+                            if self.records[record][item_attr]['attribute_value_mlt'][idx].get(sub_attr):
+                                cur_len = len(self.records[record][item_attr]['attribute_value_mlt'][idx][sub_attr])
+                                if cur_len > max_length:
+                                    max_length = cur_len
+                    return max_length
+                if len(keys) == 3:
+                    key = keys[0].split('[')
+                    key2 = keys[1].split('[')
+                    item_attr = key[0]
+                    idx = int(key[1].split(']')[0])
+                    sub_attr = keys[1].split('[')[0]
+                    idx_2 = int(key2[1].split(']')[0])
+                    sub_attr_2 = keys[2].split('[')[0]
 
-        def get_sub_item(self, item_key, properties, data=None):
+                    max_length = 0
+                    for record in self.records:
+                        data = self.records[record][item_attr]['attribute_value_mlt']
+                        if len(data) > idx and data[idx].get(sub_attr):
+                            if len(data[idx][sub_attr]) > idx_2:
+                                if data[idx][sub_attr][idx_2].get(sub_attr_2):
+                                    # current_app.logger.debug(data[idx][sub_attr][idx_2][sub_attr_2])
+                                    cur_len = len(data[idx][sub_attr][idx_2][sub_attr_2])
+                                    if cur_len > max_length:
+                                        max_length = cur_len
+
+                    return max_length
+            elif 'item' in item_key:
+                return self.attr_data[item_key]['max_size']
+
+            return None
+
+        def get_sub_item(self, item_key, item_label, properties, data=None):
             """Prepare TSV data for each Item Types.
 
                 Arguments:
@@ -531,15 +565,18 @@ def make_stats_tsv(item_type_id, recids):
             """
             ret = []
             ret_label = []
-            for key in properties:
+            ret_data = []
+
+            for key in OrderedDict(properties):
                 if properties[key].get('type'):
                     ret.append(item_key + '.' + key)
+                    ret_label.append(item_label + '.' + properties[key].get('title'))
                     if data and data[0].get(key):
-                        ret_label.append(data[0][key])
+                        ret_data.append(data[0][key])
                     else:
-                        ret_label.append('')
+                        ret_data.append('')
 
-            return ret, ret_label
+            return ret, ret_label, ret_data
 
         def get_subs_item(self, item_key, item_label, properties, data=None):
             """Prepare TSV data for each Item Types.
@@ -552,89 +589,98 @@ def make_stats_tsv(item_type_id, recids):
 
             """
             ret = []
+            ret_label = []
             ret_data = []
-            max_items = self.get_max_items(item_key) or 5
+            max_items = self.get_max_items(item_key)
 
-            if not data:
-                return [], ['']
             for idx in range(max_items):
                 for key in properties:
                     key_data = []
-                    if properties[key].get('type'):
-                        if properties[key]['type'] == 'array':
-                            if idx < len(data):
-                                m_data = data[idx][key]
-                            else:
-                                m_data = None
-                            sub, sublabel = self.get_subs_item(
-                                item_key + '.' + key,
-                                properties[key].get('title'),
-                                properties[key]['items']['properties'],
-                                m_data)
-                            ret.extend(sub)
-                            key_data.extend(sublabel)
-                        elif properties[key]['type'] == 'object':
-                            if idx < len(data):
-                                m_data = data[idx][key]
-                            else:
-                                m_data = None
-                            sub, sublabel = self.get_subs_item(
-                                item_key + '.' + key,
-                                properties[key].get('title'),
-                                properties[key]['properties'],
-                                m_data)
-                            ret.extend(sub)
-                            key_data.extend(sublabel)
+                    if properties[key]['type'] == 'array':
+                        if data and idx < len(data):
+                            m_data = data[idx][key]
                         else:
-                            ret.append(item_key + '.' + key)
-                            if idx < len(data) and data[idx].get(key):
-                                key_data.append(data[idx][key])
-                            else:
-                                key_data.append('')
-                ret_data.extend(key_data)
-
-            return ret, ret_data
+                            m_data = None
+                        sub, sublabel, subdata = self.get_subs_item(
+                            item_key + ('[{}]').format(str(idx)) + '.' + key,
+                            item_label + ('#{}').format(str(idx)) + '.' + properties[key].get('title'),
+                            properties[key]['items']['properties'],
+                            m_data)
+                        ret.extend(sub)
+                        ret_label.extend(sublabel)
+                        key_data.extend(subdata)
+                    elif properties[key]['type'] == 'object':
+                        if data and idx < len(data):
+                            m_data = data[idx][key]
+                        else:
+                            m_data = None
+                        sub, sublabel, subdata = self.get_subs_item(
+                            item_key + ('[{}]').format(str(idx)) + '.' + key,
+                            item_label + ('#{}').format(str(idx)) + '.' + properties[key].get('title'),
+                            properties[key]['properties'],
+                            m_data)
+                        ret.extend(sub)
+                        ret_label.extend(sublabel)
+                        key_data.extend(subdata)
+                    else:
+                        ret.append(item_key + ('[{}]').format(str(idx)) + '.' + key)
+                        ret_label.append(item_label + ('#{}').format(str(idx)) + '.' + properties[key].get('title'))
+                        if data and idx < len(data) and data[idx].get(key):
+                            key_data.append(data[idx][key])
+                        else:
+                            key_data.append('')
+                    ret_data.extend(key_data)
+                    
+            return ret, ret_label, ret_data
 
     records = Records(recids)
 
-    ret = ['#.id', '.uri']
-    ret_label = ['#ID', 'URI', 'インデックス', '公開日']
+    ret = ['#.id', '.uri',]
+    ret_label = ['#ID', 'URI',]
 
     # for idx in range(records.get_max_ins('path')):
     max_path = records.get_max_ins('path')
     ret.extend(['.path[{}]'.format(i) for i in range(max_path)])
     ret_label.extend(['.インデックス[{}]'.format(i) for i in range(max_path)])
-
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
+    for recid in recids:
+        current_app.logger.debug(records.attr_data['path'][recid])
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
-        # max_path = records.get_max_ins(item_key)
-        keys = []
+        max_path = records.get_max_ins(item_key)
+        keys = {}
+        labels = []
         current_app.logger.debug('---------------' + item_key + '---------------')
         for recid in recids:
             current_app.logger.debug('::' + str(recid))
             if item.get('type') == 'array':
-                key, data = records.get_subs_item(item_key,
+                key, label, data = records.get_subs_item(item_key,
                                         item.get('title'),
                                         item['items']['properties'],
                                         records.attr_data[item_key][recid])
                 if not keys:
                     keys = key
+                if not labels:
+                    labels = label
                 records.attr_output[recid].extend(data)
             elif item.get('type') == 'object':
-                key, data = records.get_sub_item(item_key,
+                key, label, data = records.get_sub_item(item_key,
+                                        item.get('title'),
                                         item['properties'],
                                         records.attr_data[item_key][recid])
                 if not keys:
                     keys = key
-                # records.attr_output[recid].extend(data)
+                if not labels:
+                    labels = label
+                records.attr_output[recid].extend(data)
             else:
                 current_app.logger.debug('CURRENT TYPE NOT MATCH')
         ret.extend(keys)
+        ret_label.extend(labels)
 
-    return ret, ret_label
+    return ret, ret_label, records.attr_output
 
 
 def write_report_tsv_rows():

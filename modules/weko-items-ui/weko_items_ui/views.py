@@ -1110,16 +1110,18 @@ def export_items(post_data):
                     'jsonschema': 'items/jsonschema/' + item_type_id,
                     'keys': [],
                     'labels': [],
-                    'recids': []
+                    'recids': [],
+                    'data': {},
                 }
             item_types_data[item_type_id]['recids'].append(id)
             # current_app.logger.debug(keys)
 
         # Create export info file
         for item_type_id in item_types_data:
-            keys, labels = make_stats_tsv(item_type_id, item_types_data[item_type_id]['recids'])
+            keys, labels, records = make_stats_tsv(item_type_id, item_types_data[item_type_id]['recids'])
             item_types_data[item_type_id]['keys'] = keys
             item_types_data[item_type_id]['labels'] = labels
+            item_types_data[item_type_id]['data'] = records
             item_type_data = item_types_data[item_type_id]
             with open(export_path + "/" + item_type_data.get('name') + ".tsv", "w") as file:
                 # file.write(json.dumps(result))
