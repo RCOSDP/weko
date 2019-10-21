@@ -1037,6 +1037,12 @@ def _get_max_export_items():
             current_max = max_table[role]
     return current_max
 
+from weko_records.api import ItemsMetadata
+from collections import OrderedDict
+import json
+from .utils import get_metadata_by_list_id
+from invenio_records.models import RecordMetadata
+from weko_records.models import ItemMetadata
 
 def _export_item(record_id, format, include_contents, tmp_path=None):
     """Exports files for record according to view permissions."""
@@ -1045,12 +1051,14 @@ def _export_item(record_id, format, include_contents, tmp_path=None):
 
     if record:
         exported_item['record_id'] = record.id
+        exported_item['name'] = record.get('item_title')
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
 
         # Create metadata file.
-        with open(tmp_path + "/metadata.json", "w") as file:
-            file.write('{ [metadata] }')
+        with open(tmp_path + "/" + exported_item['name'] + "_metadata.json", "w") as file:
+            json.dump(record, file)
+            pass
         # First get all of the files, checking for permissions while doing so
         if include_contents:
             # Get files
@@ -1089,6 +1097,7 @@ def export_items(post_data):
         export_path = temp_path.name + '/' + \
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
         # Double check for limits
+
         for id in record_ids:
             record_path = export_path + '/recid_' + str(id)
             os.makedirs(record_path, exist_ok=True)

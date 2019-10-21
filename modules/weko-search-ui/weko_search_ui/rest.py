@@ -191,6 +191,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         urlkwargs.update(qs_kwargs)
         # Execute search
         search_result = search.execute()
+        from flask import current_app
+        current_app.logger.debug('============================')
+        current_app.logger.debug(search_result)
 
         # Generate links for prev/next
         urlkwargs.update(

@@ -509,6 +509,7 @@ def make_stats_tsv(item_type_id, recids):
 
         def get_max_items(self, item_key):
             keys = item_key.split('.')
+            max_length = None
             if len(keys) == 1:
                 return self.attr_data[item_key]['max_size']
             elif len(keys) == 2:
@@ -518,7 +519,7 @@ def make_stats_tsv(item_type_id, recids):
                 sub_attr = keys[1].split('[')[0]
                 max_length = 0
                 for record in self.records:
-                    if self.records[record].get(sub_attr) and len(self.records[record][item_attr]['attribute_value_mlt']) > idx:
+                    if self.records[record].get(item_attr) and len(self.records[record][item_attr]['attribute_value_mlt']) > idx:
                         if self.records[record][item_attr]['attribute_value_mlt'][idx].get(sub_attr):
                             cur_len = len(self.records[record][item_attr]['attribute_value_mlt'][idx][sub_attr])
                             if cur_len > max_length:
@@ -542,9 +543,7 @@ def make_stats_tsv(item_type_id, recids):
                                 cur_len = len(data[idx][sub_attr][idx_2][sub_attr_2])
                                 if cur_len > max_length:
                                     max_length = cur_len
-
-                return max_length
-            return None
+            return max_length
 
         def get_subs_item(self, item_key, item_label, properties, data=None):
             """Prepare TSV data for each Item Types.
@@ -591,6 +590,8 @@ def make_stats_tsv(item_type_id, recids):
                         ret_label.extend(sublabel)
                         key_data.extend(subdata)
                     else:
+                        if isinstance(data, dict):
+                            data = [data]
                         ret.append(item_key + ('[{}]').format(str(idx)) + '.' + key)
                         ret_label.append(item_label + ('#{}').format(str(idx)) + '.' + properties[key].get('title'))
                         if data and idx < len(data) and data[idx].get(key):
@@ -765,8 +766,7 @@ def get_metadata_by_list_id(list_id=[]):
             "bool": {
                 "should": query_should
             }
-        },
-        "_source": ["_item_metadata"]
+        }
     }
     indexer = RecordIndexer()
     result = indexer.client.search(
