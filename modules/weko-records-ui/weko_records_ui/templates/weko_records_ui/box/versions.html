@@ -1,6 +1,6 @@
 <div class="well metadata">
    <h4>{{_('Versions')}}</h4>
-  {%- set all_versions = pid_versioning.get_children(ordered=True, pid_status=None) | list %}
+  {%- set all_versions = pid_versioning.get_children(ordered=True, pid_status=None) | list if pid_versioning.exists else dict() %}
   {%- if pid in all_versions %}
     {%- set active_versions = pid_versioning.children|list %}
     {%- set pid_version_index = all_versions.index(pid) %}

@@ -20,6 +20,7 @@
 
 """Weko Deposit API."""
 import uuid
+from copy import deepcopy
 from datetime import datetime
 
 import redis
@@ -33,6 +34,7 @@ from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -920,6 +922,26 @@ class WekoDeposit(Deposit):
             except Exception as ex:
                 current_app.logger.debug(ex)
                 db.session.rollback()
+
+    def get_parent_id(self, pid):
+        """Check if deposit is published."""
+        parent_id = None
+        parent_relations = PIDRelation.get_child_relations(pid).one_or_none()
+        if parent_relations is not None:
+            parent_id = parent_relations.parent_id
+        return parent_id
+
+    def update_item_with_published(self, pid):
+        """Update changes with latest published version."""
+        with db.session.begin_nested():
+            _, record = self.fetch_published()
+            self.model.json = deepcopy(record.model.json)
+            # self.model.json['$schema'] = self.build_deposit_schema(record)
+
+            flag_modified(self.model, 'json')
+            db.session.merge(self.model)
+
+        return self.__class__(self.model.json, model=self.model)
 
 
 class WekoRecord(Record):

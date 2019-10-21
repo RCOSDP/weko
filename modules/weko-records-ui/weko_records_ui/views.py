@@ -442,15 +442,19 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             record.get('_buckets').get('deposit')).\
             filter_by(is_thumbnail=True).all()
 
+    all_versions = []
+    active_versions = []
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
-    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
-    active_versions = list(pid_ver.children)
+    if pid_ver.exists:
+        all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
+        active_versions = list(pid_ver.children)
 
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
-    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
-    active_versions = list(pid_ver.children)
+    if pid_ver.exists:
+        all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
+        active_versions = list(pid_ver.children)
 
     # Flag: can edit record
     can_edit = False if not get_record_identifier(pid.pid_value) else True

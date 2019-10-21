@@ -709,22 +709,30 @@ def next_action(activity_id='0', action_id=0):
 
                     current_app.logger.info('The data from record.model: ')
                     current_app.logger.info(record.model.__dict__)
+                    deposit = WekoDeposit(record, record.model)
+                    deposit.publish()
                     current_pid = PersistentIdentifier.get_by_object(
                         pid_type='recid', object_type='rec',
                         object_uuid=activity_detail.item_id)
                     recid = get_record_identifier(current_pid.pid_value)
                     # publish item without version ID when registering newly
                     if recid is not None:
-                        deposit = WekoDeposit(record, record.model)
-                        deposit.publish()
                         # new item version ID
                         deposit.newversion(current_pid)
                         # Make status Public as default
                         updated_item = UpdateItem()
                         updated_item.publish(record)
-                    # else:
-                        # sync when editing
-                        # TODO
+                    else:
+                        # update to item without version ID when editing
+                        parent_pid = deposit.get_parent_id(current_pid)
+                        if parent_pid is not None:
+                            parent_record = WekoDeposit.get_record(
+                                parent_pid.object_uuid)
+                            parent_deposit = WekoDeposit(parent_record,
+                                                         parent_record.model)
+                            json, model = parent_deposit.\
+                                update_item_with_published(parent_pid)
+
                     # For previous item: Update status to Private
                     """current_pv = PIDVersioning(child=current_pid)
                     if current_pv.exists and current_pv.previous is not None:
