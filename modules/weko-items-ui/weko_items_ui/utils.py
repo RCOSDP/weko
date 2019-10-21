@@ -471,7 +471,6 @@ def make_stats_tsv(item_type_id, recids):
 
     """
     item_type = ItemTypes.get_by_id(item_type_id).render
-    current_app.logger.debug(item_type)
 
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
@@ -488,7 +487,6 @@ def make_stats_tsv(item_type_id, recids):
                 record = WekoRecord.get_record_by_pid(recid)
                 self.records[recid] = record
                 self.attr_output[recid] = []
-                current_app.logger.debug(record)
 
         def get_max_ins(self, attr):
             max = 0
@@ -510,7 +508,6 @@ def make_stats_tsv(item_type_id, recids):
             return self.attr_data[attr]['max_size']
 
         def get_max_items(self, item_key):
-            # current_app.logger.debug(item_key)
             keys = item_key.split('.')
             if len(keys) == 1:
                 return self.attr_data[item_key]['max_size']
@@ -521,7 +518,7 @@ def make_stats_tsv(item_type_id, recids):
                 sub_attr = keys[1].split('[')[0]
                 max_length = 0
                 for record in self.records:
-                    if len(self.records[record][item_attr]['attribute_value_mlt']) > idx:
+                    if self.records[record].get(sub_attr) and len(self.records[record][item_attr]['attribute_value_mlt']) > idx:
                         if self.records[record][item_attr]['attribute_value_mlt'][idx].get(sub_attr):
                             cur_len = len(self.records[record][item_attr]['attribute_value_mlt'][idx][sub_attr])
                             if cur_len > max_length:
@@ -568,8 +565,6 @@ def make_stats_tsv(item_type_id, recids):
                 for key in properties:
                     key_data = []
                     if properties[key]['type'] == 'array':
-                        if item_key == 'affiliation':
-                            current_app.logger.debug('ARRAY')
                         if data and idx < len(data) and data[idx].get(key):
                             m_data = data[idx][key]
                         else:
@@ -583,7 +578,6 @@ def make_stats_tsv(item_type_id, recids):
                         ret_label.extend(sublabel)
                         key_data.extend(subdata)
                     elif properties[key]['type'] == 'object':
-                        current_app.logger.debug(data)
                         if data and idx < len(data) and data[idx].get(key):
                             m_data = data[idx][key]
                         else:
@@ -626,10 +620,9 @@ def make_stats_tsv(item_type_id, recids):
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
         max_path = records.get_max_ins(item_key)
-        keys = {}
+        keys = []
         labels = []
-        current_app.logger.debug('-----------------------' + item_key + \
-                                 '-----------------------')
+
         for recid in recids:
             if item.get('type') == 'array':
                 key, label, data = records.get_subs_item(item_key,
@@ -652,26 +645,16 @@ def make_stats_tsv(item_type_id, recids):
                     labels = label
                 records.attr_output[recid].extend(data)
             else:
-                current_app.logger.debug('CURRENT TYPE NOT MATCH')
+                if not keys:
+                    keys = [item_key]
+                if not labels:
+                    labels = [item.get('title')]
+                data = records.attr_data[item_key].get(recid) or ['']
+                records.attr_output[recid].extend(data)
         ret.extend(keys)
         ret_label.extend(labels)
 
     return ret, ret_label, records.attr_output
-
-
-def write_report_tsv_rows():
-    """Fill Item Metadata to TSV Row.
-
-        Arguments:
-            pid_type     -- {string} 'doi' (default) or 'cnri'
-            reg_value    -- {string} pid_value
-
-        Returns:
-            return       -- PID object if exist
-
-    """
-    pass
-
 
 def get_author_id_by_name(names=[]):
     """Get Author_id by list name.
