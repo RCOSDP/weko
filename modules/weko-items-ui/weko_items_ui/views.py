@@ -25,7 +25,6 @@ import os
 import shutil
 import sys
 import tempfile
-# import traceback
 from datetime import date, datetime, timedelta
 
 import bagit
@@ -41,8 +40,8 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryCommonReportsHelper, \
-    QueryItemRegReportHelper, QueryRecordViewReportHelper, \
-    QuerySearchReportHelper
+    QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -59,11 +58,11 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
-    get_list_username, get_user_info_by_email, \
-    get_user_info_by_username, get_user_information, get_user_permission, \
-    make_stats_tsv, package_exports, parse_ranking_results, \
-    update_json_schema_by_activity_id, validate_form_input_data, \
-    validate_user, get_metadata_by_list_id, get_new_items_by_date
+    get_list_username, get_metadata_by_list_id, get_new_items_by_date, \
+    get_user_info_by_email, get_user_info_by_username, get_user_information, \
+    get_user_permission, make_stats_tsv, package_exports, \
+    parse_ranking_results, update_json_schema_by_activity_id, \
+    validate_form_input_data, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -266,15 +265,17 @@ def get_json_schema(item_type_id=0, activity_id=""):
                     group_list = Group.get_group_list()
                     group_enum = list(group_list.keys())
                     filemeta_group = result.get('properties').get(
-                        'filemeta').get('items').get('properties').get('groups')
+                        'filemeta').get(
+                        'items').get('properties').get('groups')
                     filemeta_group['enum'] = group_enum
 
         if result is None:
             return '{}'
 
         if activity_id:
-            updated_json_schema = update_json_schema_by_activity_id(result,
-                                                                    activity_id)
+            updated_json_schema = update_json_schema_by_activity_id(
+                result,
+                activity_id)
             if updated_json_schema:
                 result = updated_json_schema
 
@@ -337,7 +338,8 @@ def get_schema_form(item_type_id=0):
                         if 'title_i18n' in sub_elem and cur_lang in \
                             sub_elem['title_i18n'] and len(
                                 sub_elem['title_i18n'][cur_lang]) > 0:
-                            sub_elem['title'] = sub_elem['title_i18n'][cur_lang]
+                            sub_elem['title'] = sub_elem[
+                                'title_i18n'][cur_lang]
                         if sub_elem.get('title') == 'Group/Price':
                             for sub_item in sub_elem['items']:
                                 if sub_item['title'] == "価格" and \
@@ -877,12 +879,16 @@ def prepare_edit_item():
 
                     if community:
                         comm = GetCommunity.get_community_by_id(community)
-                        url_redirect = url_for('weko_workflow.display_activity',
-                                               activity_id=rtn.activity_id,
-                                               community=comm.id)
+                        url_redirect = url_for(
+                            'weko_workflow.display_activity',
+                            activity_id=rtn.activity_id,
+                            community=comm.id
+                        )
                     else:
-                        url_redirect = url_for('weko_workflow.display_activity',
-                                               activity_id=rtn.activity_id)
+                        url_redirect = url_for(
+                            'weko_workflow.display_activity',
+                            activity_id=rtn.activity_id
+                        )
                     return jsonify(code=0, msg='success',
                                    data={'redirect': url_redirect})
         except Exception as e:
@@ -1018,7 +1024,8 @@ def check_restricted_content():
 def _get_max_export_items():
     """Get max amount of items to export."""
     max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
-    non_user_max = max_table[current_app.config['WEKO_PERMISSION_ROLE_GENERAL']]
+    non_user_max = max_table[current_app.config[
+        'WEKO_PERMISSION_ROLE_GENERAL']]
     current_user_id = current_user.get_id()
 
     if not current_user_id:  # Non-logged in users
@@ -1037,7 +1044,11 @@ def _get_max_export_items():
     return current_max
 
 
-def _export_item(record_id, format, include_contents, tmp_path=None, records_data=None):
+def _export_item(record_id,
+                 export_format,
+                 include_contents,
+                 tmp_path=None,
+                 records_data=None):
     """Exports files for record according to view permissions."""
     exported_item = {}
     record = WekoRecord.get_record_by_pid(record_id)
@@ -1049,8 +1060,12 @@ def _export_item(record_id, format, include_contents, tmp_path=None, records_dat
         exported_item['path'] = 'recid_' + str(record_id)
 
         # Create metadata file.
-        with open(tmp_path + "/" + exported_item['name'] + "_metadata.json", "w") as file:
-            json.dump(records_data.get(record_id), file, indent=2, sort_keys=True)
+        with open('{}/{}_metadata.json'.format(tmp_path,
+                                               exported_item['name']),
+                  'w',
+                  encoding='utf8') as output_file:
+            json.dump(records_data.get(record_id), output_file, indent=2,
+                      sort_keys=True, ensure_ascii=False)
         # First get all of the files, checking for permissions while doing so
         if include_contents:
             # Get files
@@ -1072,7 +1087,7 @@ def export_items(post_data):
     """
     include_contents = True if \
         post_data['export_file_contents_radio'] == 'True' else False
-    format = post_data['export_format_radio']
+    export_format = post_data['export_format_radio']
     record_ids = json.loads(post_data['record_ids'])
     if len(record_ids) > _get_max_export_items():
         return abort(400)
@@ -1089,16 +1104,16 @@ def export_items(post_data):
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
         # Double check for limits
         records_metadata = get_metadata_by_list_id(record_ids)
-        for id in record_ids:
-            record_path = export_path + '/recid_' + str(id)
+        for record_id in record_ids:
+            record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
-            result['items'].append(_export_item(id,
-                                                format,
+            result['items'].append(_export_item(record_id,
+                                                export_format,
                                                 include_contents,
                                                 record_path,
                                                 records_metadata))
 
-            record = WekoRecord.get_record_by_pid(id)
+            record = WekoRecord.get_record_by_pid(record_id)
             item_type_id = record.get('item_type_id')
             item_type = ItemTypes.get_by_id(item_type_id)
             if not item_types_data.get(item_type_id):
@@ -1114,19 +1129,22 @@ def export_items(post_data):
                     'recids': [],
                     'data': {},
                 }
-            item_types_data[item_type_id]['recids'].append(id)
+            item_types_data[item_type_id]['recids'].append(record_id)
             # current_app.logger.debug(keys)
 
         # Create export info file
         for item_type_id in item_types_data:
-            keys, labels, records = make_stats_tsv(item_type_id, item_types_data[item_type_id]['recids'])
+            keys, labels, records = make_stats_tsv(
+                item_type_id,
+                item_types_data[item_type_id]['recids'])
             item_types_data[item_type_id]['recids'].sort()
             item_types_data[item_type_id]['keys'] = keys
             item_types_data[item_type_id]['labels'] = labels
             item_types_data[item_type_id]['data'] = records
             item_type_data = item_types_data[item_type_id]
 
-            with open(export_path + "/" + item_type_data.get('name') + ".tsv", "w") as file:
+            with open('{}/{}.tsv'.format(export_path, item_type_data.get(
+                    'name')), 'w') as file:
                 tsvs_output = package_exports(item_type_data)
                 file.write(tsvs_output.getvalue())
 
@@ -1135,10 +1153,7 @@ def export_items(post_data):
         # Create download file
         shutil.make_archive(export_path, 'zip', export_path)
     except Exception as e:
-        # current_app.logger.error(e)
-        # current_app.logger.error('-'*60)
-        # traceback.print_exc(file=sys.stdout)
-        # current_app.logger.error('-'*60)
+        current_app.logger.error(e)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
 

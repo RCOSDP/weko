@@ -10,7 +10,7 @@
 #
 # WEKO3 is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -21,6 +21,7 @@
 """Module of weko-items-ui utils.."""
 
 import csv
+from collections import OrderedDict
 from datetime import datetime
 from io import StringIO
 
@@ -40,6 +41,8 @@ from weko_records.api import ItemTypes
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
+
+from .config import WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY
 
 
 def get_list_username():
@@ -462,8 +465,8 @@ def package_exports(item_type_data):
     """
     """Package the .tsv files into one zip file."""
     tsv_output = StringIO()
-    jsonschema_url = item_type_data.get('root_url') + \
-                     item_type_data.get('jsonschema')
+    jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
+        'jsonschema')
 
     tsv_writer = csv.writer(tsv_output, delimiter='\t')
     tsv_writer.writerow(['#ItemType',
@@ -484,13 +487,12 @@ def package_exports(item_type_data):
     tsv_metadata_label_writer.writeheader()
     for recid in item_type_data.get('recids'):
         tsv_metadata_data_writer.writerow(
-            [recid, item_type_data.get('root_url') + 'records/' + str(recid)] + item_type_data['data'].get(recid)
+            [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
+            + item_type_data['data'].get(recid)
         )
 
     return tsv_output
 
-from .config import WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY
-from collections import OrderedDict
 
 def make_stats_tsv(item_type_id, recids):
     """Prepare TSV data for each Item Types.
@@ -503,79 +505,89 @@ def make_stats_tsv(item_type_id, recids):
             return       -- PID object if exist
 
     """
-    item_type = OrderedDict(ItemTypes.get_by_id(item_type_id).render)
+    item_type = ItemTypes.get_by_id(item_type_id).render
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
+    current_app.logger.debug(item_type)
 
-    class Records:
+    class RecordsManager:
         cur_recid = 0
         recids = []
         records = {}
         attr_data = {}
         attr_output = {}
 
-        def __init__(self, recids):
-            self.recids = recids
-            for recid in recids:
-                record = WekoRecord.get_record_by_pid(recid)
-                self.records[recid] = record
-                self.attr_output[recid] = []
+        def __init__(self, record_ids):
+            self.recids = record_ids
+            for record_id in record_ids:
+                record = WekoRecord.get_record_by_pid(record_id)
+                self.records[record_id] = record
+                self.attr_output[record_id] = []
 
         def get_max_ins(self, attr):
-            max = 0
-            self.attr_data[attr] = {'max_size': 0
-            }
+            largest_size = 0
+            self.attr_data[attr] = {'max_size': 0}
             for record in self.records:
-                if isinstance(self.records[record].get(attr), dict) and self.records[record].get(attr).get('attribute_value_mlt'):
-                    self.attr_data[attr][record] = self.records[record][attr]['attribute_value_mlt']
+                if isinstance(self.records[record].get(attr), dict) \
+                    and self.records[record].get(attr).get(
+                        'attribute_value_mlt'):
+                    self.attr_data[attr][record] = self.records[record][attr][
+                        'attribute_value_mlt']
                 else:
                     if self.records[record].get(attr):
-                        self.attr_data[attr][record] = self.records[record].get(attr)
+                        self.attr_data[attr][record] = \
+                            self.records[record].get(attr)
                     else:
                         self.attr_data[attr][record] = []
                 rec_size = len(self.attr_data[attr][record])
-                if rec_size > max:
-                    max = rec_size
-            self.attr_data[attr]['max_size'] = max
+                if rec_size > largest_size:
+                    largest_size = rec_size
+            self.attr_data[attr]['max_size'] = largest_size
 
             return self.attr_data[attr]['max_size']
 
-        def get_max_items(self, item_key):
-            keys = item_key.split('.')
+        def get_max_items(self, item_attrs):
+            list_attr = item_attrs.split('.')
             max_length = None
-            if len(keys) == 1:
-                return self.attr_data[item_key]['max_size']
-            elif len(keys) == 2:
-                key = keys[0].split('[')
-                item_attr = key[0]
-                idx = int(key[1].split(']')[0])
-                sub_attr = keys[1].split('[')[0]
+            if len(list_attr) == 1:
+                return self.attr_data[item_attrs]['max_size']
+            elif len(list_attr) == 2:
+                first_attr = list_attr[0].split('[')
+                item_attr = first_attr[0]
+                idx = int(first_attr[1].split(']')[0])
+                sub_attr = list_attr[1].split('[')[0]
                 max_length = 0
                 for record in self.records:
-                    if self.records[record].get(item_attr) and len(self.records[record][item_attr]['attribute_value_mlt']) > idx:
-                        if self.records[record][item_attr]['attribute_value_mlt'][idx].get(sub_attr):
-                            cur_len = len(self.records[record][item_attr]['attribute_value_mlt'][idx][sub_attr])
-                            if cur_len > max_length:
-                                max_length = cur_len
+                    if self.records[record].get(item_attr) \
+                        and len(self.records[record][item_attr][
+                            'attribute_value_mlt']) > idx \
+                        and self.records[record][item_attr][
+                            'attribute_value_mlt'][idx].get(sub_attr):
+                        cur_len = len(self.records[record][item_attr][
+                              'attribute_value_mlt'][idx][sub_attr])
+                        if cur_len > max_length:
+                            max_length = cur_len
                 return max_length
-            elif len(keys) == 3:
-                key = keys[0].split('[')
-                key2 = keys[1].split('[')
-                item_attr = key[0]
-                idx = int(key[1].split(']')[0])
-                sub_attr = keys[1].split('[')[0]
+            elif len(list_attr) == 3:
+                first_attr = list_attr[0].split('[')
+                key2 = list_attr[1].split('[')
+                item_attr = first_attr[0]
+                idx = int(first_attr[1].split(']')[0])
+                sub_attr = list_attr[1].split('[')[0]
                 idx_2 = int(key2[1].split(']')[0])
-                sub_attr_2 = keys[2].split('[')[0]
+                sub_attr_2 = list_attr[2].split('[')[0]
 
                 max_length = 0
                 for record in self.records:
-                    data = self.records[record][item_attr]['attribute_value_mlt']
-                    if len(data) > idx and data[idx].get(sub_attr):
-                        if len(data[idx][sub_attr]) > idx_2:
-                            if data[idx][sub_attr][idx_2].get(sub_attr_2):
-                                cur_len = len(data[idx][sub_attr][idx_2][sub_attr_2])
-                                if cur_len > max_length:
-                                    max_length = cur_len
+                    attr_val = self.records[record][item_attr][
+                        'attribute_value_mlt']
+                    if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
+                        and len(attr_val[idx][sub_attr]) > idx_2 \
+                            and attr_val[idx][sub_attr][idx_2].get(sub_attr_2):
+                        cur_len = len(attr_val[idx][sub_attr][idx_2][
+                                          sub_attr_2])
+                        if cur_len > max_length:
+                            max_length = cur_len
             return max_length
 
         def get_subs_item(self, item_key, item_label, properties, data=None):
@@ -606,8 +618,9 @@ def make_stats_tsv(item_type_id, recids):
                         else:
                             m_data = None
                         sub, sublabel, subdata = self.get_subs_item(
-                            item_key + ('[{}]').format(str(idx)) + '.' + key,
-                            item_label + ('#{}').format(str(idx)) + '.' + properties[key].get('title'),
+                            '{}[{}].{}'.format(item_key, str(idx), key),
+                            '{}#{}.{}'.format(item_label, str(idx),
+                                              properties[key].get('title')),
                             properties[key]['items']['properties'],
                             m_data)
                         ret.extend(sub)
@@ -619,8 +632,9 @@ def make_stats_tsv(item_type_id, recids):
                         else:
                             m_data = None
                         sub, sublabel, subdata = self.get_subs_item(
-                            item_key + ('[{}]').format(str(idx)) + '.' + key,
-                            item_label + ('#{}').format(str(idx)) + '.' + properties[key].get('title'),
+                            '{}[{}].{}'.format(item_key, str(idx), key),
+                            '{}#{}.{}'.format(item_label, str(idx),
+                                              properties[key].get('title')),
                             properties[key]['properties'],
                             m_data)
                         ret.extend(sub)
@@ -629,29 +643,35 @@ def make_stats_tsv(item_type_id, recids):
                     else:
                         if isinstance(data, dict):
                             data = [data]
-                        ret.append(item_key + ('[{}]').format(str(idx)) + '.' + key)
-                        ret_label.append(item_label + ('#{}').format(str(idx)) + '.' + properties[key].get('title'))
+                        ret.append('{}[{}].{}'.format(item_key, str(idx), key))
+                        ret_label.append('{}#{}.{}'.format(
+                            item_label,
+                            str(idx),
+                            properties[key].get('title')))
                         if data and idx < len(data) and data[idx].get(key):
                             key_data.append(data[idx][key])
                         else:
                             key_data.append('')
 
-                    if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY and key == 'filename':
+                    if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY \
+                            and key == 'filename':
                         ret_range = len(ret_data)
                         for i in range(ret_range):
                             if ret_data[i] == 'recid_folder/file_name':
-                                if data and idx < len(data) and data[idx].get(key):
-                                    ret_data[i] = ('recid_{}/{}').format(str(self.cur_recid), data[idx][key])
+                                if data and idx < len(data) \
+                                        and data[idx].get(key):
+                                    ret_data[i] = 'recid_{}/{}'.format(str(
+                                        self.cur_recid), data[idx][key])
                                 else:
                                     ret_data[i] = ''
                     ret_data.extend(key_data)
 
             return ret, ret_label, ret_data
 
-    records = Records(recids)
+    records = RecordsManager(recids)
 
-    ret = ['#.id', '.uri',]
-    ret_label = ['#ID', 'URI',]
+    ret = ['#.id', '.uri']
+    ret_label = ['#ID', 'URI']
 
     # for idx in range(records.get_max_ins('path')):
     max_path = records.get_max_ins('path')
@@ -661,32 +681,38 @@ def make_stats_tsv(item_type_id, recids):
     ret_label.append('公開日')
     for recid in recids:
         records.attr_output[recid].extend(records.attr_data['path'][recid])
-        records.attr_output[recid].extend(['' for i in range(max_path - len(records.attr_output[recid]))])
-        records.attr_output[recid].append(records.records[recid]['pubdate']['attribute_value'])
+        records.attr_output[recid].extend(['']*(max_path - len(
+            records.attr_output[recid])))
+        records.attr_output[recid].append(records.records[recid][
+          'pubdate']['attribute_value'])
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
-        max_path = records.get_max_ins(item_key)
+        records.get_max_ins(item_key)
         keys = []
         labels = []
-        
+
         for recid in recids:
             records.cur_recid = recid
             if item.get('type') == 'array':
-                key, label, data = records.get_subs_item(item_key,
-                                        item.get('title'),
-                                        item['items']['properties'],
-                                        records.attr_data[item_key][recid])
+                key, label, data = records.get_subs_item(
+                    item_key,
+                    item.get('title'),
+                    item['items']['properties'],
+                    records.attr_data[item_key][recid]
+                )
                 if not keys:
                     keys = key
                 if not labels:
                     labels = label
                 records.attr_output[recid].extend(data)
             elif item.get('type') == 'object':
-                key, label, data = records.get_subs_item(item_key,
-                                        item.get('title'),
-                                        item['properties'],
-                                        records.attr_data[item_key][recid])
+                key, label, data = records.get_subs_item(
+                    item_key,
+                    item.get('title'),
+                    item['properties'],
+                    records.attr_data[item_key][recid]
+                )
                 if not keys:
                     keys = key
                 if not labels:
@@ -703,47 +729,6 @@ def make_stats_tsv(item_type_id, recids):
         ret_label.extend(labels)
 
     return ret, ret_label, records.attr_output
-
-def get_author_id_by_name(names=[]):
-    """Get Author_id by list name.
-
-        Arguments:
-            names     -- {string} list names
-
-        Returns:
-            weko_id       -- author id of author has search result
-
-    """
-    query_should = [
-        {
-            "match": {
-                "authorNameInfo.fullName": name
-            }
-        } for name in names]
-
-    body = {
-        "query": {
-            "bool": {
-                "should": query_should
-            }
-        },
-        "size": 1
-    }
-    indexer = RecordIndexer()
-    result = indexer.client.search(
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        body=body
-    )
-    weko_id = None
-
-    if isinstance(result, dict) and isinstance(result.get('hits'), dict) and \
-            isinstance(result['hits'].get('hits'), list) and \
-            len(result['hits']['hits']) > 0 and \
-            isinstance(result['hits']['hits'][0], dict) and \
-            isinstance(result['hits']['hits'][0].get('_source'), dict) and \
-            result['hits']['hits'][0]['_source']['pk_id']:
-        weko_id = result['hits']['hits'][0]['_source']['pk_id']
-    return weko_id
 
 
 def get_list_file_by_record_id(recid):
@@ -782,7 +767,7 @@ def get_list_file_by_record_id(recid):
             len(result['hits']['hits']) > 0 and \
             isinstance(result['hits']['hits'][0], dict) and \
             isinstance(result['hits']['hits'][0].get('_source'), dict) and \
-            isinstance(result['hits']['hits'][0]['_source'].get('file'), dict) \
+            isinstance(result['hits']['hits'][0]['_source'].get('file'), dict)\
             and result['hits']['hits'][0]['_source']['file'].get('URI'):
         list_file = result['hits']['hits'][0]['_source']['file'].get('URI')
 
@@ -791,7 +776,7 @@ def get_list_file_by_record_id(recid):
     return list_file_name
 
 
-def get_metadata_by_list_id(list_id=[]):
+def get_metadata_by_list_id(list_id: list):
     """Get Author_id by list name.
 
         Arguments:
@@ -834,7 +819,7 @@ def get_metadata_by_list_id(list_id=[]):
                     del data['_item_metadata']
                 if data.get('content'):
                     del data['content']
-                
+
                 list_metadata[list_id[idx]] = {}
                 list_metadata[list_id[idx]] = data
             else:
