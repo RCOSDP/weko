@@ -20,15 +20,17 @@
 
 """Blueprint for weko-items-ui."""
 
+import json
 import os
 import shutil
 import sys
 import tempfile
+# import traceback
 from datetime import date, datetime, timedelta
 
 import bagit
 import redis
-from flask import Blueprint, abort, current_app, flash, json, jsonify, \
+from flask import Blueprint, abort, current_app, flash, jsonify, \
     redirect, render_template, request, send_file, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -57,11 +59,11 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
-    get_list_username, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, make_stats_tsv, \
-    package_exports, parse_ranking_results, \
+    get_list_username, get_user_info_by_email, \
+    get_user_info_by_username, get_user_information, get_user_permission, \
+    make_stats_tsv, package_exports, parse_ranking_results, \
     update_json_schema_by_activity_id, validate_form_input_data, \
-    validate_user
+    validate_user, get_metadata_by_list_id
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -254,7 +256,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
                     return '{}'
                 json_schema = result.schema
                 properties = json_schema.get('properties')
-                for _, value in properties.items():
+                for _key, value in properties.items():
                     if 'validationMessage_i18n' in value:
                         value['validationMessage'] =\
                             value['validationMessage_i18n'][cur_lang]
@@ -1037,14 +1039,8 @@ def _get_max_export_items():
             current_max = max_table[role]
     return current_max
 
-from weko_records.api import ItemsMetadata
-from collections import OrderedDict
-import json
-from .utils import get_metadata_by_list_id
-from invenio_records.models import RecordMetadata
-from weko_records.models import ItemMetadata
 
-def _export_item(record_id, format, include_contents, tmp_path=None):
+def _export_item(record_id, format, include_contents, tmp_path=None, records_data=None):
     """Exports files for record according to view permissions."""
     exported_item = {}
     record = WekoRecord.get_record_by_pid(record_id)
@@ -1057,8 +1053,7 @@ def _export_item(record_id, format, include_contents, tmp_path=None):
 
         # Create metadata file.
         with open(tmp_path + "/" + exported_item['name'] + "_metadata.json", "w") as file:
-            json.dump(record, file)
-            pass
+            json.dump(records_data.get(record_id), file, indent=2, sort_keys=True)
         # First get all of the files, checking for permissions while doing so
         if include_contents:
             # Get files
@@ -1072,7 +1067,6 @@ def _export_item(record_id, format, include_contents, tmp_path=None):
 
     return exported_item
 
-import sys, traceback
 
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
@@ -1097,14 +1091,15 @@ def export_items(post_data):
         export_path = temp_path.name + '/' + \
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
         # Double check for limits
-
+        records_metadata = get_metadata_by_list_id(record_ids)
         for id in record_ids:
             record_path = export_path + '/recid_' + str(id)
             os.makedirs(record_path, exist_ok=True)
             result['items'].append(_export_item(id,
                                                 format,
                                                 include_contents,
-                                                record_path))
+                                                record_path,
+                                                records_metadata))
 
             record = WekoRecord.get_record_by_pid(id)
             item_type_id = record.get('item_type_id')
@@ -1133,8 +1128,8 @@ def export_items(post_data):
             item_types_data[item_type_id]['labels'] = labels
             item_types_data[item_type_id]['data'] = records
             item_type_data = item_types_data[item_type_id]
+
             with open(export_path + "/" + item_type_data.get('name') + ".tsv", "w") as file:
-                # file.write(json.dumps(result))
                 tsvs_output = package_exports(item_type_data)
                 file.write(tsvs_output.getvalue())
 

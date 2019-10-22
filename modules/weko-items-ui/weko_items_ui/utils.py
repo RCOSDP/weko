@@ -478,6 +478,7 @@ def make_stats_tsv(item_type_id, recids):
         'properties')
 
     class Records:
+        cur_recid = 0
         recids = []
         records = {}
         attr_data = {}
@@ -610,7 +611,7 @@ def make_stats_tsv(item_type_id, recids):
                         for i in range(ret_range):
                             if ret_data[i] == 'recid_folder/file_name':
                                 if data and idx < len(data) and data[idx].get(key):
-                                    ret_data[i] = 'recid_folder/' + data[idx][key]
+                                    ret_data[i] = ('recid_{}/{}').format(str(self.cur_recid), data[idx][key])
                                 else:
                                     ret_data[i] = ''
                     ret_data.extend(key_data)
@@ -640,6 +641,7 @@ def make_stats_tsv(item_type_id, recids):
         labels = []
         
         for recid in recids:
+            records.cur_recid = recid
             if item.get('type') == 'array':
                 key, label, data = records.get_subs_item(item_key,
                                         item.get('title'),
@@ -667,13 +669,8 @@ def make_stats_tsv(item_type_id, recids):
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or ['']
                 records.attr_output[recid].extend(data)
-
-        # if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY:
-        #     current_app.logger.debug(keys)
-        #     current_app.logger.debug(max_path)
         ret.extend(keys)
         ret_label.extend(labels)
-        
 
     return ret, ret_label, records.attr_output
 
@@ -793,16 +790,26 @@ def get_metadata_by_list_id(list_id=[]):
         index=current_app.config['INDEXER_DEFAULT_INDEX'],
         body=body
     )
-    list_metadata = []
+    list_metadata = {}
 
     if isinstance(result, dict) and isinstance(result.get('hits'), dict) and \
             isinstance(result['hits'].get('hits'), list):
         list_source = result['hits'].get('hits')
 
-        list_metadata = [
-            item.get('_source').get("_item_metadata")
-            for item in list_source
-            if (isinstance(item.get('_source'), dict) and isinstance(item.get(
-                '_source').get("_item_metadata"), dict))
-        ]
+        # current_app.logger.debug(list_source)
+        current_app.logger.debug(list_id)
+        ids_length = len(list_id)
+        current_app.logger.debug(ids_length)
+        for idx in range(ids_length):
+            if isinstance(list_source[idx].get('_source'), dict):
+                data = list_source[idx].get('_source')
+                if data.get('_item_metadata'):
+                    del data['_item_metadata']
+                if data.get('content'):
+                    del data['content']
+                
+                list_metadata[list_id[idx]] = {}
+                list_metadata[list_id[idx]] = data
+            else:
+                list_metadata[list_id[idx]] = {}
     return list_metadata
