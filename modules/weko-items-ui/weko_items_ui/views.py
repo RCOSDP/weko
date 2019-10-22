@@ -808,8 +808,13 @@ def prepare_edit_item():
 
             # check item is being editied
             item_id = pid_object.object_uuid
+            # get workflow of registering item version ID: x.1
+            pid_value_registering = '{}.1' . format(post_activity.get(
+                'pid_value'))
+            pid_object_registering = PersistentIdentifier.get(
+                'recid', pid_value_registering)
             wf_activity = activity.get_workflow_activity_by_item_id(
-                item_id=item_id)
+                item_id=pid_object_registering.object_uuid)
             if not wf_activity:
                 return jsonify(code=-1,
                                msg=_('This workflow activity is not found.'))
@@ -832,25 +837,20 @@ def prepare_edit_item():
             if not item_type:
                 return jsonify(code=-1, msg=_('This itemtype is not found.'))
 
-            # upt_current_activity = activity.upt_activity_detail(
-            #     item_id=pid_object.object_uuid)
-
+            # prepare params for new workflow activity
             post_activity['workflow_id'] = wf_activity.workflow_id
             post_activity['flow_id'] = wf_activity.flow_id
             post_activity['itemtype_id'] = item_type_id
             getargs = request.args
             community = getargs.get('community', None)
 
-            # Create a new version of a record.
             record = WekoDeposit.get_record(item_id)
             if not record:
                 return jsonify(code=-1, msg=_('Record does not exist.'))
-            deposit = WekoDeposit(record, record.model)
-            new_record = deposit.newversion(pid_object)
-            if not new_record:
-                return jsonify(code=-1, msg=_('An error has occurred.'))
+
+            # Create a new workflow activity.
             rtn = activity.init_activity(
-                post_activity, community, new_record.model.id)
+                post_activity, community, record.model.id)
             if rtn:
                 # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
                 identifier_actionid = get_actionid('identifier_grant')

@@ -923,26 +923,6 @@ class WekoDeposit(Deposit):
                 current_app.logger.debug(ex)
                 db.session.rollback()
 
-    def get_parent_id(self, pid):
-        """Check if deposit is published."""
-        parent_id = None
-        parent_relations = PIDRelation.get_child_relations(pid).one_or_none()
-        if parent_relations is not None:
-            parent_id = parent_relations.parent_id
-        return parent_id
-
-    def update_item_with_published(self, pid):
-        """Update changes with latest published version."""
-        with db.session.begin_nested():
-            _, record = self.fetch_published()
-            self.model.json = deepcopy(record.model.json)
-            # self.model.json['$schema'] = self.build_deposit_schema(record)
-
-            flag_modified(self.model, 'json')
-            db.session.merge(self.model)
-
-        return self.__class__(self.model.json, model=self.model)
-
 
 class WekoRecord(Record):
     """Extend Record obj for record ui."""

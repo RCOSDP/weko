@@ -853,6 +853,8 @@ class WorkActivity(object):
                     db_activity.action_id = activity.get('action_id')
                     db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()
+                    if activity.get('item_id') is not None:
+                        db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
                     db_history = ActivityHistory(
                         activity_id=activity.get('activity_id'),
