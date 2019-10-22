@@ -404,22 +404,9 @@ class WekoDeposit(Deposit):
             relations = serialize_relations(pid)
             if relations is not None and 'version' in relations:
                 relations_ver = relations['version'][0]
-                relations['version'][0]['id'] = pid.object_uuid
-                self.indexer.update_relation_version_is_last(relations[
-                    'version'][0])
-
-                # update relation version previous to ES
-                if relations_ver is not None and 'previous' in relations_ver \
-                        and relations_ver['previous'] is not None:
-                    pid_val_prev = relations_ver['previous']['pid_value']
-                    pid_prev = PersistentIdentifier.get(
-                        'recid', pid_val_prev)
-                    relations_prev = serialize_relations(pid_prev)
-                    if relations_prev is not None \
-                            and 'version' in relations_prev:
-                        relations_prev['version'][0]['id'] = pid_prev.object_uuid
-                        self.indexer.update_relation_version_is_last(
-                            relations_prev['version'][0])
+                relations_ver['id'] = pid.object_uuid
+                relations_ver['is_last'] = relations_ver.get('index') == 0
+                self.indexer.update_relation_version_is_last(relations_ver)
             return deposit
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
