@@ -97,6 +97,12 @@ def json_loader(data, pid):
             if iscreator:
                 item["attribute_type"] = 'creator'
 
+            item_data = ojson["properties"][k]
+            if 'array' == item_data.get('type'):
+                properties_data = item_data['items']['properties']
+                if 'filename' in properties_data:
+                    item["attribute_type"] = 'file'
+
             if isinstance(v, list):
                 if len(v) > 0 and isinstance(v[0], dict):
                     item["attribute_value_mlt"] = v

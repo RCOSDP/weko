@@ -19,7 +19,7 @@
  #}
 
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
-{% from "weko_records_ui/output_detail_data.html" import output_detail_data %}
+{% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
 
 {%- if record !=[] -%}
 <div class="panel panel-default">
@@ -93,7 +93,7 @@
               </tbody>
             </table>
             {%- endif %}
-            <table class="table table-bordered table-striped">
+            <table class="table table-bordered table-striped detail-table">
               {% if record.item_type_info %}
                 <tr>
                   <th colspan="6">{{_('Item Type')}}</th>
@@ -101,53 +101,21 @@
                 </tr>
               {% endif %}
               {%- for lst in record.items_show_list %}
-                {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' or lst['attribute_type'] == 'creator' %}
+                {% if 'attribute_name_hidden' not in lst.keys() and (lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file') %}
                 <tr>
                   <th colspan="6">{{ lst['attribute_name'] }}</th>
                   <td>
-                    <pre class="hide">{{lst|tojson}}</pre>
-                    {% if lst['attribute_value'] is string %}
-                      {{ lst['attribute_value'] }}
-                    {% else %}
-                      {%- for key in lst['attribute_value'] %}
-                        {{ key }}
+                    <pre class="hide">{{ lst|tojson }}</pre>
+                      {% if lst['attribute_value'] is string %}
+                          {{ lst['attribute_value'] }}
+                      {% else %}
+                          {%- for key in lst['attribute_value'] %}
+                              {{ key }}
+                          {% endfor %}
+                      {% endif %}
+                      {%- for l in lst['attribute_value_mlt'] %}
+                          {{ output_attribute_value(l) }}
                       {% endfor %}
-                    {% endif %}
-                    {% if lst['attribute_type'] == 'creator' %}
-                      {%- for l in lst['attribute_value_mlt'] if l %}
-                        {%- for creatorName in l['creatorNames'] if creatorName -%}
-                          {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
-                            {%- set q = 'creator='+creatorName['creatorName'] -%}
-                          {%- else -%}
-                            {%- set q = 'id='+l['weko_id'] -%}
-                          {%- endif -%}
-                          <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label class="p-left-10"></label><br/>
-                        {%- endfor -%}
-                        <br>
-                        {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
-                          {%- if nameIdentifierScheme in nameIdentifier.keys() and nameIdentifier['nameIdentifierScheme'] != "" -%}
-                            {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
-                              {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
-                            {%- else -%}
-                                  <!--
-                              {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
-                              -->
-                              <!-- demo -->
-                              {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
-
-                            {%- endif -%}
-                            <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br/>
-                          {%- endif -%}
-                        {%- endfor -%}
-                        {%- for creatorMail in l['creatorMails'] if creatorMail -%}
-                          <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br/>
-                        {%- endfor -%}
-                      {% endfor %}
-                    {% else %}
-{#                      {%- for l in lst['attribute_value_mlt'] %}#}
-{#                          {{ output_detail_data(l) }}#}
-{#                      {% endfor %}#}
-                    {% endif %}
                   </td>
                 </tr>
                 {% elif 'attribute_name_hidden' not in lst.keys() %}

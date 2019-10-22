@@ -950,11 +950,8 @@ class WekoRecord(Record):
                     nval = dict()
                     nval['attribute_name'] = val.get('attribute_name')
                     nval['attribute_type'] = val.get('attribute_type')
-                    if 'creator' == nval['attribute_type']:
-                        nval['attribute_value_mlt'] = mlt
-                    else:
-                        nval['attribute_value_mlt'] = get_all_items(mlt, solst,
-                                                                    True)
+                    nval['attribute_value_mlt'] = get_all_items(mlt, solst,
+                                                                True)
                     items.append(nval)
                 else:
                     items.append(val)

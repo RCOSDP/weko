@@ -115,3 +115,12 @@ ng\:form {
     transform: rotate(359deg);
   }
 }
+
+.detail-table th {
+  background-color: #f9f9f9 !important;
+}
+
+.detail-table td {
+  background-color: #ffffff !important;
+  word-break: break-word;
+}
