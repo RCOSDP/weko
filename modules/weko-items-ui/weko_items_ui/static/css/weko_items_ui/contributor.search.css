@@ -15,6 +15,10 @@
     background-color: #fff !important;
     width: 100%;
   }
+
+  input[disabled] {
+    background-color: #eee !important;
+  }
   
   input[type=submit] {
     background-color: DodgerBlue;

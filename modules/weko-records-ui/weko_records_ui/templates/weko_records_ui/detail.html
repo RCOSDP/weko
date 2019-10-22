@@ -44,7 +44,7 @@
 
   <!-- start demo block-->
   <script type="text/javascript">var addthis_config = {"data_track_addressbar": true};</script>
-  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5137aff66ad9c2a1"></script>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5d8af23e9a3a2633"></script>
   <!-- end demo block -->
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
@@ -71,7 +71,7 @@
   {%-if not community_id %}
     {{ super() }}
   {%- else%}
-    <div class="communities">
+    <div class="communities" >
       <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
       {{ community_header(community, subtitle='') }}
       <div id="page_body" class="grid-stack hidden" {%- if render_widgets %}style="display: None;"{%- endif %}>
@@ -92,8 +92,8 @@
       {% include "weko_theme/body_search.html" %}
     </div>
   </div>
-  <div class="row">
-    <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
+  <div class="row" style="height:100%">
+    <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}" style="height:100%">
       {% include "weko_theme/body_index.html" %}
     </div>
     <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}}">

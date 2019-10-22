@@ -23,68 +23,14 @@
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
+{% from "weko_records_ui/output_detail_data.html" import output_detail_data %}
 <div class="panel-group">
   <div class="panel panel-default">
-    <div class="panel-heading clearfix" style="background-color: inherit;">
-      <pre class="hide">{{record|tojson}}</pre>
-      <div class="panel_bread" id="panel_bread">
-        {%- set record_navs = record.navi -%}
-        {%- if record_navs -%}
-        <table style="font-size: 110%;">
-          <col width="50">
-          {%- for nav in record_navs -%}
-          <tr>
-            <td style="max-width:100%; white-space: nowrap;" valign="top">
-                <div class="row col-xs-4 col-md-4 col-lg-4 col-xl-4">
-              {%- if loop.index == 1 %}
-              <h4 style="display: inline;">{{_('Index')}}</h4>
-              {%- endif %}
-              </div>
-            </td>
-            <td width="2048" valign="bottom">
-                <div class="row col-xs-6 col-md-6 col-lg-10 col-xl-12">
-                <div style="overflow:hidden;">
-                <ol class="breadcrumb" style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
-                  {%- if nav.name != None and current_i18n.language == 'ja'  %}
-                    {%- set name = nav.name.split('/') -%}
-                  {%- else %}
-                    {%- set name = nav.name_en.split('/') -%}
-                  {%- endif -%}
-                  {%- set p = nav.path.split('/') -%}
-                  {%- for n in name -%}
-                    {%- if community %}
-                      <li>
-                        <a href="{{ url_for("invenio_search_ui.search") + "?search_type=2&q=" + p[loop.index-1] + "&community=" + community.id }}">{{n}}</a>
-                      </li>
-                    {%-else%}
-                      <li>
-                        <a href="{{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}">{{n}}</a>
-                      </li>
-                    {%- endif -%}
-                  {%- endfor -%}
-                </ol>
-                </div></div>
-            </td>
-          </tr>
-          {%- endfor %}
-          <tr style="height: 15px;"></tr>
-          <tr>
-            <td valign="bottom">
-              <h4 style="display: inline;">{{_('Item')}}</h4>
-            </td>
-            <td valign="bottom">
-              <h3 style="display: inline;"><a href='#' style="margin-left:
-                      0.2em;">{{ record.get('item_title', _('No title'))
-                      }}</a></h3>
-              {%- if record.permalink_uri -%}
-              <span class="pull-right" style="display: inline;">Permalink :
-                {{ record.permalink_uri }}</span>
-              {%- endif -%}
-            </td>
-          </tr>
-        </table>
-        {%- endif -%}
-      </div>
+    <div class="panel-heading clearfix">
+      <h3 class="panel-title">{{_('Item')}}</h3>
+    </div>
+    <div class="panel-body">
+      {%- include "weko_records_ui/box/head.html" %}
     </div>
     <div class="panel-body" style="padding-top: 10px;">
       <div class="row">
@@ -93,123 +39,129 @@
           {%- block record_author %}
           {%- set files = record.files -%}
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
-            {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0-%}
+          {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0-%}
 
-            <!-- Preview Carousel -->
-            {{ preview_carousel(record=record, files=files, pid=pid) }}
+          <!-- Preview Carousel -->
+          {{ preview_carousel(record=record, files=files, pid=pid) }}
 
-            <table class="table table-bordered table-striped">
-              <thead>
-                <tr>
-                  <th>{{_('Name')}} / {{_('File')}}</th>
-                  <th class="license">{{_('License')}}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {%- for file in files|sort(attribute='key') -%}
-                {%- if file.filename -%}
-                {%- set img = file.mimetype | get_image_src -%}
-                {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+          <table class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>{{_('Name')}} / {{_('File')}}</th>
+                <th class="license">{{_('License')}}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {%- for file in files|sort(attribute='key') -%}
+              {%- if file.filename -%}
+              {%- set img = file.mimetype | get_image_src -%}
+              {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                   filename=file.key) %}
-                {%- set is_billing_file = False -%}
-                {%- set billing_file_data = "" -%}
-                {%- set billing_file_url = "" -%}
-                {%- set billing_file_class = "" -%}
-                {%- set billing_file_access_permission = True -%}
-                {%- if billing_files_permission -%}
-                {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
-                {%- set is_billing_file = True -%}
-                {%- set billing_file_class = " billing-file" -%}
-                {%- set file_url = "JavaScript:void(0);" -%}
-                {%- endif %}
-                {%- set access_permission = record | check_file_permission(file.info()) -%}
-                {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
+              {%- set is_billing_file = False -%}
+              {%- set billing_file_data = "" -%}
+              {%- set billing_file_url = "" -%}
+              {%- set billing_file_class = "" -%}
+              {%- set billing_file_access_permission = True -%}
+              {%- if billing_files_permission -%}
+              {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
+              {%- set is_billing_file = True -%}
+              {%- set billing_file_class = " billing-file" -%}
+              {%- set file_url = "JavaScript:void(0);" -%}
+              {%- endif %}
+              {%- set access_permission = record | check_file_permission(file.info()) -%}
+              {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
                   filename=file.key) %}
-                <tr>
-                  <td>{{file.filename}}
-                    <a href="{{file_details_url}}{%- if community -%}?community={{ community.id }}{%- endif -%}">{{_('Detail')}}</a>
-                    <a href="#preview_carousel" data-slide-to="{{ loop.index0 }}">
-                      {{_('Preview')}}
-                    </a>
-                  </td>
-                  <td rowspan="2">
-                    {%- if not 'simple' in file.displaytype -%}
-                    {%- if 'license_free' == file.licensetype -%}
-                    <span class="break-word">{{ file.licensefree }}</span>
-                    {%- else %}
-                    {% set lst = file.licensetype | get_license_icon %}
-                    <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
-                      <img src="{{lst[0]}}" alt="license.icon" /></a><br>
-                    {{ lst[1] }}
-                    {%- endif %}
-                    {%- endif -%}
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <span class="filename">
-                      <img src="{{img}}" alt={{ file.filename }} />
-                      {%- if not file.groupsprice and not access_permission and file.accessrole == 'open_login' -%}
-                      {%- set file_url = url_for_security('login', next=request.path) -%}
-                      {%- set billing_file_class = "" -%}
-                      {%- elif is_billing_file or file.groupsprice -%}
-                      {%- if not session['user_id'] -%}
-                      {%- set file_url = url_for_security('login', next=request.path) -%}
-                      {%- set billing_file_class = "" -%}
-                      {%- elif billing_file_permission -%}
-                      {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key) -%}
-                      {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename)|string -%}
-                      {%- else -%}
-                      {%- set billing_file_data = "data-billing-file-permission=false" -%}
-                      <input id="download_permission_error" type="hidden" value="{{_('The file cannot be downloaded because you do not have permission to view this file.')}}" />
-                      {%- set billing_file_access_permission = False -%}
-                      {%- endif -%}
-                      {%- endif -%}
-                      <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} href="{{file_url}}">{{ file.filename }}
-                        ({{ file.size|filesizeformat }})</a><br>
-                      {%- if access_permission and billing_file_access_permission -%}
-                      <span>{{file.checksum.split(':')[0]}}: </span>
-                      <span class="break-word">{{file.checksum.split(':')[1]}}</span>
-                      {%- else -%}
-                      <div class="panel-body">
-                        <span class="fa fa-key"
-                          style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted Access')}}</span>
-                      </div>
-                      {%- endif -%}
-                    </span>
-                    {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
-                    {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                        filename=file.key, original=1) %}
-                    {%- if is_billing_file -%}
-                    {%- set original_file_url = "javascript:void(0)" -%}
-                    {%- if billing_file_permission -%}
-                    {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key, original=1) %}
+              <tr>
+                <td>{{file.filename}}
+                  <a href="{{file_details_url}}{%- if community -%}?community={{ community.id }}{%- endif -%}"><i
+                      class="fa fa-info-circle fa-lg"></i></a>
+                  <a href="#preview_carousel" data-slide-to="{{ loop.index0 }}"><i
+                      class="fa fa-play-circle fa-lg"></i></a>
+                  <a
+                    href="{{ config.WEKO_JUPYTERHUB_URL }}/{{ record._buckets.deposit }}/{{ file.filename }}"><img
+                      height="16px" src="/static/images/custom/jupyter.svg" /></a>
+                </td>
+                <td rowspan="2">
+                  {%- if not 'simple' in file.displaytype -%}
+                  {%- if 'license_free' == file.licensetype -%}
+                  <span class="break-word">{{ file.licensefree }}</span>
+                  {%- else %}
+                  {% set lst = file.licensetype | get_license_icon %}
+                  <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
+                    <img src="{{lst[0]}}" alt="license.icon" /></a><br>
+                  {{ lst[1] }}
+                  {%- endif %}
+                  {%- endif -%}
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="filename">
+                    <img src="{{img}}" alt={{ file.filename }} />
+                    {%- if not file.groupsprice and not access_permission and file.accessrole == 'open_login' -%}
+                    {%- set file_url = url_for_security('login', next=request.path) -%}
+                    {%- set billing_file_class = "" -%}
+                    {%- elif is_billing_file or file.groupsprice -%}
+                    {%- if not session['user_id'] -%}
+                    {%- set file_url = url_for_security('login', next=request.path) -%}
+                    {%- set billing_file_class = "" -%}
+                    {%- elif billing_file_permission -%}
+                    {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key) -%}
+                    {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename)|string -%}
+                    {%- else -%}
+                    {%- set billing_file_data = "data-billing-file-permission=false" -%}
+                    <input id="download_permission_error" type="hidden"
+                      value="{{_('The file cannot be downloaded because you do not have permission to view this file.')}}" />
+                    {%- set billing_file_access_permission = False -%}
                     {%- endif -%}
                     {%- endif -%}
-                    <div class="text-right">
-                      <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} href="{{original_file_url}}">{{_('Original')}}</a>
+                    <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
+                      href="{{file_url}}">{{ file.filename }}
+                      ({{ file.size|filesizeformat }})</a><br>
+                    {%- if access_permission and billing_file_access_permission -%}
+                    <span>{{file.checksum.split(':')[0]}}: </span>
+                    <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                    {%- else -%}
+                    <div class="panel-body">
+                      <span class="fa fa-key"
+                        style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted Access')}}</span>
                     </div>
                     {%- endif -%}
-                  </td>
-                </tr>
-                <!-- demo -->
-                {%- if record | check_permission -%}
-                {%- if 'pdf' in file.mimetype -%}
-                <tr>
-                  <td colspan="2">
-                    <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
-                      <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
-                  </td>
-                </tr>
-                {%- endif -%}
-                {%- endif -%}
-                <!-- demo -->
-                {%- endif -%}
-                {%- endfor -%}
-              </tbody>
-            </table>
-            {%- endif %}
-            <div class="table-responsive">
+                  </span>
+                  {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
+                  {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                        filename=file.key, original=1) %}
+                  {%- if is_billing_file -%}
+                  {%- set original_file_url = "javascript:void(0)" -%}
+                  {%- if billing_file_permission -%}
+                  {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key, original=1) %}
+                  {%- endif -%}
+                  {%- endif -%}
+                  <div class="text-right">
+                    <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
+                      href="{{original_file_url}}">{{_('Original')}}</a>
+                  </div>
+                  {%- endif -%}
+                </td>
+              </tr>
+              <!-- demo -->
+              {%- if record | check_permission -%}
+              {%- if 'pdf' in file.mimetype -%}
+              <tr>
+                <td colspan="2">
+                  <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
+                    <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
+                </td>
+              </tr>
+              {%- endif -%}
+              {%- endif -%}
+              <!-- demo -->
+              {%- endif -%}
+              {%- endfor -%}
+            </tbody>
+          </table>
+          {%- endif %}
+          <div class="table-responsive">
             <table class="table table-bordered table-striped">
               {% if record.item_type_info %}
               <tr>
@@ -218,79 +170,97 @@
               </tr>
               {% endif %}
               {%- for lst in record.items_show_list %}
-                {% if 'attribute_name_hidden' not in lst.keys() %}
-                  <tr>
-                    <th>{{ lst['attribute_name'] }}</th>
-                    <td>
-                      <pre class="hide">{{lst|tojson}}</pre>
-                      {% if lst['attribute_value'] is string %}
-                      {{ lst['attribute_value'] }}
-                      {% else %}
-                      {%- for key in lst['attribute_value'] %}
-                      {{ key }}
-                      {% endfor %}
-                      {% endif %}
-                      {% if lst['attribute_type'] == 'creator' %}
-                      {%- for l in lst['attribute_value_mlt'] if l %}
-                      {%- for creatorName in l['creatorNames'] if creatorName -%}
-                      {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
-                      {%- set q = 'creator='+creatorName['creatorName'] -%}
-                      {%- else -%}
-                      {%- set q = 'id='+l['weko_id'] -%}
-                      {%- endif -%}
-                      <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label
-                        class="p-left-10"></label><br />
-                      {%- endfor -%}
-                      <br>
-                      {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
-                      {%- if nameIdentifierScheme in nameIdentifier.keys() and nameIdentifier['nameIdentifierScheme'] != "" -%}
-                      {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
-                      {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
-                      {%- else -%}
-                      <!--
-                                      {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
-                                      -->
-                      <!-- demo -->
-                      {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
+              {% if 'attribute_name_hidden' not in lst.keys() %}
 
-                      {%- endif -%}
-                      <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a
-                        href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br />
-                      {%- endif -%}
-                      {%- endfor -%}
-                      {%- if config['EMAIL_DISPLAY_FLG'] -%}
-                      {%- for creatorMail in l['creatorMails'] if creatorMail -%}
-                      <label class="p-left-10">e-mail: </label><a
-                        href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br />
-                      {%- endfor -%}
-                      {%- endif -%}
-                      {% endfor %}
-                      {% else %}
-                      {%- for l in lst['attribute_value_mlt'] %}
-                      {%- for k, v in l.items() %}
-                      {{ v }}<br>
-                      {% endfor %}
-                      {% endfor %}
-                      {% endif %}
-                    </td>
-                  </tr>
-                {% endif %}
-                {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
-                  <tr>
-                    <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
-                    <td>
-                      {%- for thumb in files_thumbnail | sort(attribute='key') -%}
-                        {%- set thumb_name = thumb.filename or thumb.key -%}
-                        {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+              {% if lst['attribute_name'] == 'Reference' %}
+              <tr>
+                <th>{{ lst['attribute_name'] }}</th>
+                <td>
+                  {%- for l in lst['attribute_value_mlt'] %}
+                  <div>
+                    {{ l[0].Authors }}.
+                    ({{ l[0].Year }}).
+                    <i>{{ l[0].Title }}</i>.
+                    {{ l[0].Journal }}. <a href="{{ l[0].DOI }}">{{ l[0].DOI }}</a>
+                  </div>
+                  {%- endfor -%}
+                </td>
+              </tr>
+              {% else %}
+
+              <tr>
+                <th>{{ lst['attribute_name'] }}</th>
+                <td>
+                  <pre class="hide">{{lst|tojson}}</pre>
+                  {% if lst['attribute_value'] is string %}
+                  {{ lst['attribute_value'] }}
+                  {% else %}
+                  {%- for key in lst['attribute_value'] %}
+                  {{ key }}
+                  {% endfor %}
+                  {% endif %}
+                  {% if lst['attribute_type'] == 'creator' %}
+                  {%- for l in lst['attribute_value_mlt'] if l %}
+                  {%- for creatorName in l['creatorNames'] if creatorName -%}
+                  {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
+                  {%- set q = 'creator='+creatorName['creatorName'] -%}
+                  {%- else -%}
+                  {%- set q = 'id='+l['weko_id'] -%}
+                  {%- endif -%}
+                  <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label
+                    class="p-left-10"></label><br />
+                  {%- endfor -%}
+                  <br>
+                  {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
+                  {%- if nameIdentifierScheme in nameIdentifier.keys() and nameIdentifier['nameIdentifierScheme'] != "" -%}
+                  {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
+                  {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
+                  {%- else -%}
+                  <!--
+                                    {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
+                                    -->
+                  <!-- demo -->
+                  {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
+
+                  {%- endif -%}
+                  <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a
+                    href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br />
+                  {%- endif -%}
+                  {%- endfor -%}
+                  {%- if config['EMAIL_DISPLAY_FLG'] -%}
+                  {%- for creatorMail in l['creatorMails'] if creatorMail -%}
+                  <label class="p-left-10">e-mail: </label><a
+                    href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br />
+                  {%- endfor -%}
+                  {%- endif -%}
+                  {% endfor %}
+                  {% else %}
+                  {%- for l in lst['attribute_value_mlt'] %}
+                    {{ output_detail_data(l) }}
+                  {%- endfor -%}
+                  {% endif %}
+                </td>
+              </tr>
+
+              {% endif %}
+              {% endif %}
+              {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
+              <tr>
+                <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
+                <td>
+                  {%- for thumb in files_thumbnail | sort(attribute='key') -%}
+                  {%- set thumb_name = thumb.filename or thumb.key -%}
+                  {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                         filename=thumb.key) %}
-                        <p>
-                          <span>{{ thumb_name }}</span><br>
-                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
-                        </p>
-                      {% endfor %}
-                      </td>
-                    </tr>
-                {% endif %}
+                  <p>
+                    <span>{{ thumb_name }}</span><br>
+                    <img src="{{thumb_url}}" alt={{thumb_name}}
+                      style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
+                  </p>
+                  {% endfor %}
+                </td>
+              </tr>
+              {% endif %}
               {% endfor %}
               {% if record.relation %}
               <tr>
@@ -313,16 +283,19 @@
                 {% endif %}
                 <td>
                   <div>
-                    <form class="form form-inline" action="{{ url_for('invenio_records_ui.recid_publish', pid_value=pid.pid_value) }}" method="POST">
+                    <form class="form form-inline"
+                      action="{{ url_for('invenio_records_ui.recid_publish', pid_value=pid.pid_value) }}" method="POST">
                       {% if record | check_permission %}
                       {% if '0' in pubs %}
                       {{_('Public')}}
-                      <button class="btn btn-default btn-xs" type="submit" name="status" value="1" style="font-size:15px">
+                      <button class="btn btn-default btn-xs" type="submit" name="status" value="1"
+                        style="font-size:15px">
                         {{_('Change to Private')}}
                       </button>
                       {% else %}
                       {{_('Private')}}
-                      <button class="btn btn-default btn-xs" type="submit" name="status" value="0" style="font-size:15px">
+                      <button class="btn btn-default btn-xs" type="submit" name="status" value="0"
+                        style="font-size:15px">
                         {{_('Change to Public')}}
                       </button>
                       {% endif %}
@@ -336,32 +309,32 @@
               </tr>
               {% endif %}
             </table>
-            </div>
-            {%- if 'main_entry_personal_name' in record %}
-            <p class="record_authors">
-              <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>
-              {%- for author in record.get('added_entry_personal_name', []) %}
-              , <i>{{ author['personal_name'] }}</i>
-              {% endfor %}
-            </p>
-            {% endif %}
+          </div>
+          {%- if 'main_entry_personal_name' in record %}
+          <p class="record_authors">
+            <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>
+            {%- for author in record.get('added_entry_personal_name', []) %}
+            , <i>{{ author['personal_name'] }}</i>
+            {% endfor %}
+          </p>
+          {% endif %}
           {%- endblock %}
           <div class="text-center" ng-controller="ItemController">
             <a class="btn btn-info back-button" id="btn_back" href="#!">
               <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span> {{_('Back')}}</a>
             {% if record | check_permission %}
-            <a class="btn btn-primary edit-button" href="#!" id="btn_edit"
-              data-pid-value="{{ pid.pid_value }}"
-              {%- if community -%}data-community="{{ community.id }}"{%- endif -%}>
+            <a class="btn btn-primary edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}"
+              {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
               <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
-            <a class="btn btn-danger delete-button" id="btn_delete"
-              ng-click="openConfirm('',
+            <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm('',
               '{{'/records/soft_delete/'+ pid.pid_value}}',
               '{{url_for('weko_search_ui.search')}}')">
               <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
             <div class="row">
-              <p class="alert alert-danger alert-dismissible text-middle collapse" role="alert" style="min-width: 330px;">
-                <button type="button" class="close" id="btn_close_alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <p class="alert alert-danger alert-dismissible text-middle collapse" role="alert"
+                style="min-width: 330px;">
+                <button type="button" class="close" id="btn_close_alert" aria-label="Close"><span
+                    aria-hidden="true">&times;</span></button>
                 {{_('The workflow is being edited.')}}
               </p>
             </div>
@@ -399,22 +372,24 @@
   </div>
 </div>
 <div class="modal fade" id="confirm_download" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>{{_('Confirm')}}</h3>
-        </div>
-        <div class="modal-body">
-          <input id="download_confirm_message" type="hidden" value="{{_('This file is a Billing file. (Price: XXXXX). Do you want to download it?')}}" />
-          <p id="download_confirm_content"></p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" id="confirm_download_button" class="btn btn-primary">{{_('Yes')}}</button>
-          <button type="button" class="btn btn-default" data-dismiss="modal">{{_('No')}}</button>
-        </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>{{_('Confirm')}}</h3>
+      </div>
+      <div class="modal-body">
+        <input id="download_confirm_message" type="hidden"
+          value="{{_('This file is a Billing file. (Price: XXXXX). Do you want to download it?')}}" />
+        <p id="download_confirm_content"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="confirm_download_button" class="btn btn-primary">{{_('Yes')}}</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">{{_('No')}}</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 {% block css %}
 <style>
@@ -432,13 +407,13 @@
 </style>
 <style type="text/css">
   .table {
-      table-layout: fixed;
-      overflow-wrap: break-word;
-      word-wrap: break-word;
+    table-layout: fixed;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
   }
 
   .table tr th:nth-child(1) {
-      width: 30%;
+    width: 30%;
   }
 </style>
 {% endblock %}

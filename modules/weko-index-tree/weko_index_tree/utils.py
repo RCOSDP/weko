@@ -22,6 +22,7 @@
 
 from datetime import date, datetime
 from functools import wraps
+from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
 from flask import current_app
@@ -82,106 +83,83 @@ def reset_tree(tree, path=None, more_ids=None):
         more_ids = []
     roles = get_user_roles()
     groups = get_user_groups()
-    if not roles[0]:
-        if path is not None:
-            id_tp = []
-            if isinstance(path, list):
-                for lp in path:
-                    index_id = lp.split('/')[-1]
-                    id_tp.append(index_id)
-            else:
-                index_id = path.split('/')[-1]
+    if path is not None:
+        id_tp = []
+        if isinstance(path, list):
+            for lp in path:
+                index_id = lp.split('/')[-1]
                 id_tp.append(index_id)
-
-            reduce_index_by_role(tree, roles, groups, False, id_tp)
         else:
+            index_id = path.split('/')[-1]
+            id_tp.append(index_id)
+
+        reduce_index_by_role(tree, roles, groups, False, id_tp)
+    else:
+        if not roles[0]:
             # for browsing role check
             reduce_index_by_role(tree, roles, groups)
             reduce_index_by_more(tree=tree, more_ids=more_ids)
 
 
-def get_tree_json(obj, pid=0):
+def get_tree_json(index_list, root_id):
     """Get Tree Json.
 
-    :param obj:
-    :param pid:
+    :param index_list:
+    :param root_id:
     :return:
     """
-    def get_settings():
-        return dict(emitLoadNextLevel=False,
-                    settings=dict(isCollapsedOnInit=False, checked=False))
+    index_relation = {}  # index_relation[parent_index_id] = [child_index_id, ...]
+    index_position = {}  # index_position[index_id] = position_in_index_list
 
-    pmap = {}
-    def set_node(plst):
+    for position, index_element in enumerate(index_list):
+        if index_element.pid not in index_relation:
+            index_relation[index_element.pid] = []
+        index_relation[index_element.pid].append(index_element.cid)
+        index_position[index_element.cid] = position
 
-        if isinstance(plst, list):
-            attr = ['public_state', 'public_date',
-                    'browsing_role', 'contribute_role',
-                    'browsing_group', 'contribute_group',
-                    'more_check', 'display_no',
-                    'coverpage_state']
+    def generate_index_dict(index_element, is_root):
+        """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
+        index_dict = index_element._asdict()
+        if not is_root:
+            index_dict.update({'parent': str(index_element.pid)})
+        index_dict.update({
+            'id': str(index_element.cid),
+            'value': index_element.name,
+            'position': index_element.position,
+            'emitLoadNextLevel': False,
+            'settings': {'isCollapsedOnInit': True, 'checked': False}
+        })
+        for attr in ['public_state', 'public_date', 'browsing_role', 'contribute_role',
+                     'browsing_group', 'contribute_group', 'more_check', 'display_no',
+                     'coverpage_state']:
+            if hasattr(index_element, attr):
+                index_dict.update({attr: getattr(index_element, attr)})
+        return index_dict
 
-            for lst in plst:
-                lst['children'] = []
-                if isinstance(lst, dict):
-                    key = lst.get('id')
-                    i = 0
-                    while ntree:
-                        if str(ntree[i].pid) == key:
-                            index_obj = ntree.pop(i)
-                            i = 0
-                        elif i < len(ntree) - 1:
-                            i = i + 1
-                            continue
-                        else:
-                            break
-                        if isinstance(index_obj, tuple):
-                            cid = str(index_obj.cid)
-                            pid = str(index_obj.pid)
-                            if pid in pmap:
-                                pid = pmap[pid] + '/' + pid
-                            if cid not in pmap:
-                                pmap[cid] = pid
-                            name = index_obj.name
-                            dc = get_settings()
-                            dc.update(dict(position=index_obj.position))
-                            dc.update(dict(id=cid, value=name, parent=pid))
-                            for x in attr:
-                                if hasattr(index_obj, x):
-                                    dc.update({x: getattr(index_obj, x)})
-                            lst['children'].append(dc)
-                if not lst['children'] and lst.get('settings'):
-                    lst['settings']['isCollapsedOnInit'] = True
-            for lst in plst:
-                set_node(lst['children'])
-                lst['children'] = sorted(lst['children'],
-                                         key=lambda j: j["position"])
+    def get_children(parent_index_id):
+        """Recursively gets all children of a given index id."""
+        child_list = []
+        for child_index_id in index_relation.get(parent_index_id, []):
+            child_index = index_list[index_position[child_index_id]]
+            child_index_dict = generate_index_dict(child_index, parent_index_id == 0)
 
-    def remove_keys(lst):
-        lst = lst._asdict()
-        lst.update(get_settings())
-        lst.update(dict(value=lst.pop('name'),
-                        id=str(lst.pop('cid'))))
-        lst.pop('pid')
-        return lst
+            # Recursively get grandchildren
+            child_index_dict['children'] = get_children(child_index_id)
 
-    # update by ryuu for invenio community start
-    # parent = [remove_keys(x) for x in filter(lambda node: node.pid == 0,obj)]
-    if pid != 0:
-        parent = [
-            remove_keys(x) for x in filter(
-                lambda node: node.cid == pid, obj)]
+            child_list.append(child_index_dict)
+
+        child_list.sort(key=itemgetter('position'))
+        return child_list
+
+    if root_id == 0:
+        index_tree = get_children(root_id)
     else:
-        parent = [
-            remove_keys(x) for x in filter(
-                lambda node: node.pid == pid, obj)]
-    # update by ryuu for invenio community end
-    ntree = obj[len(parent):]
-    set_node(parent)
+        root_index = index_list[index_position[root_id]]
+        root_index_dict = generate_index_dict(root_index, True)
+        root_index_dict['children'] = get_children(root_id)
+        index_tree = [root_index_dict]
 
-    parent = sorted(parent, key=lambda x: x["position"])
-
-    return parent
+    return index_tree
 
 
 def get_user_roles():
@@ -215,10 +193,13 @@ def get_user_groups():
 def check_roles(user_role, roles):
     """Check roles."""
     is_can = True
+    if isinstance(roles, type("")):
+        roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
-            role = [x for x in (user_role[1] or []) if str(x) in (roles or [])]
-            if not role and "98" not in roles:
+            role = [x for x in (user_role[1] or ['98'])
+                    if str(x) in (roles or [])]
+            if not role and (user_role[1] or "98" not in roles):
                 is_can = False
         elif "99" not in roles:
             is_can = False

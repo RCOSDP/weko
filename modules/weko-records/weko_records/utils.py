@@ -329,6 +329,38 @@ def get_all_items(nlst, klst):
     """
     alst = []
 
+    def get_items(nlst):
+        _list = []
+
+        if isinstance(nlst, list):
+            for lst in nlst:
+                _list.append(get_items(lst))
+        if isinstance(nlst, dict):
+            d = {}
+            for k, v in nlst.items():
+                if isinstance(v, str):
+                    d[k] = v
+                else:
+                    _list.append(get_items(v))
+            _list.append(d)
+
+        return _list
+
+    to_orderdict(nlst, klst)
+    alst = get_items(nlst)
+
+    return alst
+
+
+def get_all_items2(nlst, klst):
+    """Convert and sort item list(original).
+
+    :param nlst:
+    :param klst:
+    :return: alst
+    """
+    alst = []
+
     # def get_name(key):
     #     for lst in klst:
     #         k = lst[0].split('.')[-1]

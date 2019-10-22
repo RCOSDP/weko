@@ -35,6 +35,9 @@ from invenio_files_rest.views import ObjectResource, check_permission, \
     file_downloaded
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
@@ -65,6 +68,17 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
 )
+
+
+@blueprint.app_template_filter()
+def record_from_pid(pid_value):
+    """Get record from PID."""
+    try:
+        return WekoRecord.get_record_by_pid(pid_value)
+    except Exception as e:
+        current_app.logger.debug('Unable to get version record: ')
+        current_app.logger.debug(e)
+        return {}
 
 
 def publish(pid, record, template=None, **kwargs):
@@ -272,15 +286,17 @@ def _get_google_scholar_meta(record):
         'jpcoar:issue': 'citation_issue',
         'jpcoar:pageStart': 'citation_firstpage',
         'jpcoar:pageEnd': 'citation_lastpage', }
+    if '_oai' not in record:
+        return
     recstr = etree.tostring(
         getrecord(
-            identifier=record['_oai']['id'],
+            identifier=record['_oai'].get('id'),
             metadataPrefix='jpcoar',
             verb='getrecord'))
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata:
+    if mtdata is not None:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
             if found is not None:
@@ -422,9 +438,17 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             record.get('_buckets').get('deposit')).\
             filter_by(is_thumbnail=True).all()
 
+    # Get PID version object to retrieve all versions of item
+    pid_ver = PIDVersioning(child=pid)
+    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
+    active_versions = list(pid_ver.children)
+
     return render_template(
         template,
         pid=pid,
+        pid_versioning=pid_ver,
+        active_versions=active_versions,
+        all_versions=all_versions,
         record=record,
         display_stats=display_stats,
         filename=filename,

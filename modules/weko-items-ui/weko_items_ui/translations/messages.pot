@@ -54,8 +54,20 @@ msgstr ""
 msgid "An error has occurred."
 msgstr ""
 
-#: weko_items_ui/views.py:929
+#: weko_items_ui/views.py:1188
 msgid "PID does not meet the conditions."
+msgstr ""
+
+#: weko_items_ui/views.py:1189
+msgid "Since PMID is not subject to DOI registration, please select another type."
+msgstr ""
+
+#: weko_items_ui/views.py:1190
+msgid "Prefix/Suffix of Identifier is not consistency with content of Identifier Registration."
+msgstr ""
+
+#: weko_items_ui/views.py:1191
+msgid "Please input location information (URL) for Identifier."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
