@@ -796,10 +796,7 @@ def get_metadata_by_list_id(list_id=[]):
             isinstance(result['hits'].get('hits'), list):
         list_source = result['hits'].get('hits')
 
-        # current_app.logger.debug(list_source)
-        current_app.logger.debug(list_id)
         ids_length = len(list_id)
-        current_app.logger.debug(ids_length)
         for idx in range(ids_length):
             if isinstance(list_source[idx].get('_source'), dict):
                 data = list_source[idx].get('_source')
