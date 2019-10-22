@@ -459,6 +459,9 @@ def package_exports(item_type_data):
 
     return tsv_output
 
+from .config import WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY
+from collections import OrderedDict
+
 def make_stats_tsv(item_type_id, recids):
     """Prepare TSV data for each Item Types.
 
@@ -470,8 +473,7 @@ def make_stats_tsv(item_type_id, recids):
             return       -- PID object if exist
 
     """
-    item_type = ItemTypes.get_by_id(item_type_id).render
-
+    item_type = OrderedDict(ItemTypes.get_by_id(item_type_id).render)
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
 
@@ -561,6 +563,10 @@ def make_stats_tsv(item_type_id, recids):
             max_items = self.get_max_items(item_key)
 
             for idx in range(max_items):
+                if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY:
+                    ret.append('.file_path#' + str(idx + 1))
+                    ret_label.append('.ファイルパス#' + str(idx + 1))
+                    ret_data.append('recid_folder/file_name')
                 for key in properties:
                     key_data = []
                     if properties[key]['type'] == 'array':
@@ -598,8 +604,17 @@ def make_stats_tsv(item_type_id, recids):
                             key_data.append(data[idx][key])
                         else:
                             key_data.append('')
+
+                    if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY and key == 'filename':
+                        ret_range = len(ret_data)
+                        for i in range(ret_range):
+                            if ret_data[i] == 'recid_folder/file_name':
+                                if data and idx < len(data) and data[idx].get(key):
+                                    ret_data[i] = 'recid_folder/' + data[idx][key]
+                                else:
+                                    ret_data[i] = ''
                     ret_data.extend(key_data)
-                    
+
             return ret, ret_label, ret_data
 
     records = Records(recids)
@@ -623,7 +638,7 @@ def make_stats_tsv(item_type_id, recids):
         max_path = records.get_max_ins(item_key)
         keys = []
         labels = []
-
+        
         for recid in recids:
             if item.get('type') == 'array':
                 key, label, data = records.get_subs_item(item_key,
@@ -652,8 +667,13 @@ def make_stats_tsv(item_type_id, recids):
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or ['']
                 records.attr_output[recid].extend(data)
+
+        # if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY:
+        #     current_app.logger.debug(keys)
+        #     current_app.logger.debug(max_path)
         ret.extend(keys)
         ret_label.extend(labels)
+        
 
     return ret, ret_label, records.attr_output
 
