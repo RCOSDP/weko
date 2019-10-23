@@ -710,25 +710,40 @@ def next_action(activity_id='0', action_id=0):
                     current_app.logger.info('The data from record.model: ')
                     current_app.logger.info(record.model.__dict__)
                     deposit = WekoDeposit(record, record.model)
-                    # publish item without version ID when registering newly
-                    if not deposit.is_published():
-                        # publish item without version ID
-                        deposit.publish()
-                        # Make status Public as default
-                        updated_item = UpdateItem()
-                        updated_item.publish(record)
-                    # create item version ID
+                    deposit.publish()
+                    updated_item = UpdateItem()
                     current_pid = PersistentIdentifier.get_by_object(
                         pid_type='recid', object_type='rec',
                         object_uuid=activity_detail.item_id)
-                    new_record = deposit.newversion(current_pid)
-                    new_deposit = WekoDeposit(new_record, new_record.model)
-                    # publish item version ID
-                    new_deposit.publish()
+                    recid = get_record_identifier(current_pid.pid_value)
+                    # publish record without version ID when registering newly
+                    if recid is not None:
+                        # new record attached version ID
+                        first_record_attached_ver = deposit.newversion(
+                            current_pid)
+                        activity_item_id = first_record_attached_ver.model.id
+                        # Record without version: Make status Public as default
+                        updated_item.publish(record)
+                    else:
+                        activity_item_id = record.model.id
+                        # update to record without version ID when editing
+                        pid_without_ver = deposit.get_record_without_version(
+                            current_pid)
+                        if pid_without_ver is not None:
+                            record_without_ver = WekoDeposit.get_record(
+                                pid_without_ver.object_uuid)
+                            deposit_without_ver = WekoDeposit(
+                                record_without_ver,
+                                record_without_ver.model)
+                            parent_record = deposit_without_ver. \
+                                merge_data_to_record_without_version(
+                                    current_pid)
+                            deposit_without_ver.publish()
+                            updated_item.publish(parent_record)
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
-                item_id=new_record.model.id,
+                item_id=activity_item_id,
             )
             work_activity.end_activity(activity)
         else:

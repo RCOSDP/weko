@@ -808,16 +808,19 @@ def prepare_edit_item():
 
             # check item is being editied
             item_id = pid_object.object_uuid
-            # get workflow of registering item version ID: x.1
-            pid_value_registering = '{}.1' . format(post_activity.get(
-                'pid_value'))
-            pid_object_registering = PersistentIdentifier.get(
-                'recid', pid_value_registering)
             wf_activity = activity.get_workflow_activity_by_item_id(
-                item_id=pid_object_registering.object_uuid)
+                item_id=item_id)
             if not wf_activity:
-                return jsonify(code=-1,
-                               msg=_('This workflow activity is not found.'))
+                # get workflow of first record attached version ID: x.1
+                first_pid_value_attached_ver = '{}.1' . format(post_activity.
+                                                               get('pid_value'))
+                first_pid_obj_attached_ver = PersistentIdentifier.get(
+                    'recid', first_pid_value_attached_ver)
+                wf_activity = activity.get_workflow_activity_by_item_id(
+                    item_id=first_pid_obj_attached_ver.object_uuid)
+                if not wf_activity:
+                    return jsonify(code=-1, msg=_(
+                        'This workflow activity is not found.'))
             # show error when has stt is Begin or Doing
             if wf_activity.action_status == ActionStatusPolicy.ACTION_BEGIN or \
                     wf_activity.action_status == \
@@ -844,13 +847,18 @@ def prepare_edit_item():
             getargs = request.args
             community = getargs.get('community', None)
 
+            # Create a new version of a record.
             record = WekoDeposit.get_record(item_id)
             if not record:
                 return jsonify(code=-1, msg=_('Record does not exist.'))
 
+            deposit = WekoDeposit(record, record.model)
+            new_record = deposit.newversion(pid_object)
+            if not new_record:
+                return jsonify(code=-1, msg=_('An error has occurred.'))
             # Create a new workflow activity.
             rtn = activity.init_activity(
-                post_activity, community, record.model.id)
+                post_activity, community, new_record.model.id)
             if rtn:
                 # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
                 identifier_actionid = get_actionid('identifier_grant')

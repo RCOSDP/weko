@@ -910,6 +910,37 @@ class WekoDeposit(Deposit):
                 current_app.logger.debug(ex)
                 db.session.rollback()
 
+    def get_record_without_version(self, pid):
+        """Get PID of record without version ID."""
+        recid_without_ver = None
+        parent_relations = PIDRelation.get_child_relations(pid).one_or_none()
+        if parent_relations is not None:
+            parent_pid = PersistentIdentifier.query. \
+                filter_by(id=parent_relations.parent_id).one_or_none()
+            if parent_pid is not None:
+                parent_pid_value = parent_pid.pid_value.split(':')[-1]
+                recid_without_ver = PersistentIdentifier.get(
+                    pid_type='recid',
+                    pid_value=parent_pid_value)
+        return recid_without_ver
+
+    def merge_data_to_record_without_version(self, pid):
+        """Update changes from record attached version to without version."""
+        with db.session.begin_nested():
+            # update item_metadata
+            index = {'index': self.get('path', []),
+                     'actions': 'private'}
+            item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
+            item_metadata.pop('id', None)
+            args = [index, item_metadata]
+            self.update(*args)
+            self.commit()
+            # update records_metadata
+            flag_modified(self.model, 'json')
+            db.session.merge(self.model)
+
+        return self.__class__(self.model.json, model=self.model)
+
 
 class WekoRecord(Record):
     """Extend Record obj for record ui."""
