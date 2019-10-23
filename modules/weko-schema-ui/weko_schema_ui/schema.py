@@ -613,8 +613,10 @@ class SchemaTree:
                                                        self._v) or not i.get(
                                                        self._atr))]:
                                 multi = max(
-                                    [len(attr) for n in node.values() for attr
-                                     in n.get(self._atr).values()])
+                                    [len(attr) for n in node.values()
+                                     if n and n.get(self._atr)
+                                     and isinstance(n.get(self._atr), dict)
+                                     for attr in n.get(self._atr).values()])
                                 if int(multi) > 1:
                                     multi_nodes = [copy.deepcopy(node) for j in
                                                    range(int(multi))]
