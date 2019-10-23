@@ -463,7 +463,6 @@ def package_exports(item_type_data):
             return       -- PID object if exist
 
     """
-    """Package the .tsv files into one zip file."""
     tsv_output = StringIO()
     jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
         'jsonschema')
@@ -508,7 +507,6 @@ def make_stats_tsv(item_type_id, recids):
     item_type = ItemTypes.get_by_id(item_type_id).render
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
-    current_app.logger.debug(item_type)
 
     class RecordsManager:
         cur_recid = 0
@@ -523,6 +521,7 @@ def make_stats_tsv(item_type_id, recids):
                 record = WekoRecord.get_record_by_pid(record_id)
                 self.records[record_id] = record
                 self.attr_output[record_id] = []
+                current_app.logger.debug(record.items_show_list)
 
         def get_max_ins(self, attr):
             largest_size = 0
@@ -604,7 +603,6 @@ def make_stats_tsv(item_type_id, recids):
             ret_label = []
             ret_data = []
             max_items = self.get_max_items(item_key)
-
             for idx in range(max_items):
                 if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY:
                     ret.append('.file_path#' + str(idx + 1))

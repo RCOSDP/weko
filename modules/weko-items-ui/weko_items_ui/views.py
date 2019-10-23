@@ -1079,6 +1079,7 @@ def _export_item(record_id,
 
     return exported_item
 
+import traceback
 
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
@@ -1130,7 +1131,6 @@ def export_items(post_data):
                     'data': {},
                 }
             item_types_data[item_type_id]['recids'].append(record_id)
-            # current_app.logger.debug(keys)
 
         # Create export info file
         for item_type_id in item_types_data:
@@ -1154,6 +1154,9 @@ def export_items(post_data):
         shutil.make_archive(export_path, 'zip', export_path)
     except Exception as e:
         current_app.logger.error(e)
+        current_app.logger.error('-'*60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-'*60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
 
