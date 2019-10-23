@@ -1064,7 +1064,7 @@ def _export_item(record_id,
                                                exported_item['name']),
                   'w',
                   encoding='utf8') as output_file:
-            json.dump(records_data.get(record_id), output_file, indent=2,
+            json.dump(record, output_file, indent=2,
                       sort_keys=True, ensure_ascii=False)
         # First get all of the files, checking for permissions while doing so
         if include_contents:
@@ -1103,7 +1103,7 @@ def export_items(post_data):
         export_path = temp_path.name + '/' + \
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
         # Double check for limits
-        records_metadata = get_metadata_by_list_id(record_ids)
+        # records_metadata = get_metadata_by_list_id(record_ids)
         for record_id in record_ids:
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
@@ -1111,7 +1111,7 @@ def export_items(post_data):
                                                 export_format,
                                                 include_contents,
                                                 record_path,
-                                                records_metadata))
+                                                None))
 
             record = WekoRecord.get_record_by_pid(record_id)
             item_type_id = record.get('item_type_id')
