@@ -334,7 +334,6 @@ def get_all_items(nlst, klst, is_get_name=False):
     :param is_get_name:
     :return: alst
     """
-
     def get_name(key):
         for lst in klst:
             key_arr = lst[0].split('.')
