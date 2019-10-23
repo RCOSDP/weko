@@ -758,8 +758,8 @@ class WekoDeposit(Deposit):
         for pth in index_lst:
             # es setting
             sub_sort[pth[-13:]] = ""
-        jrc.update(dict(custom_sort=sub_sort))
-        dc.update(dict(custom_sort=sub_sort))
+#        jrc.update(dict(custom_sort=sub_sort))
+#        dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')

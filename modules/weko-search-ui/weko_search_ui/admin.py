@@ -128,8 +128,8 @@ class ItemManagementCustomSort(BaseView):
             Indexes.set_item_sort_custom(index_id, item_sort)
 
             # update es
-            fp = Indexes.get_self_path(index_id)
-            Indexes.update_item_sort_custom_es(fp.path, sort_data)
+            #fp = Indexes.get_self_path(index_id)
+            #Indexes.update_item_sort_custom_es(fp.path, sort_data)
 
             jfy = {}
             jfy['status'] = 200
