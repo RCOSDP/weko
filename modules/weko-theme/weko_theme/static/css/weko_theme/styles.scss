@@ -118,9 +118,21 @@ ng\:form {
 
 .detail-table th {
   background-color: #f9f9f9 !important;
+  white-space: normal !important;
 }
 
 .detail-table td {
   background-color: #ffffff !important;
   word-break: break-word;
+  white-space: normal !important;
+}
+
+.detail-table {
+  table-layout: fixed;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.detail-table tr th:nth-child(1) {
+  width: 30%;
 }
