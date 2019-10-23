@@ -521,7 +521,6 @@ def make_stats_tsv(item_type_id, recids):
                 record = WekoRecord.get_record_by_pid(record_id)
                 self.records[record_id] = record
                 self.attr_output[record_id] = []
-                current_app.logger.debug(record.items_show_list)
 
         def get_max_ins(self, attr):
             largest_size = 0
@@ -608,7 +607,7 @@ def make_stats_tsv(item_type_id, recids):
                     ret.append('.file_path#' + str(idx + 1))
                     ret_label.append('.ファイルパス#' + str(idx + 1))
                     ret_data.append('recid_folder/file_name')
-                for key in properties:
+                for key in sorted(properties):
                     key_data = []
                     if properties[key]['type'] == 'array':
                         if data and idx < len(data) and data[idx].get(key):
@@ -663,6 +662,9 @@ def make_stats_tsv(item_type_id, recids):
                                 else:
                                     ret_data[i] = ''
                     ret_data.extend(key_data)
+                if max_items == 1:
+                    ret = [item.replace('[0]', '') for item in ret]
+                    ret_label = [item.replace('#0', '') for item in ret_label]
 
             return ret, ret_label, ret_data
 
