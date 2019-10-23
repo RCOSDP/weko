@@ -562,7 +562,7 @@ def make_stats_tsv(item_type_id, recids):
                         and self.records[record][item_attr][
                             'attribute_value_mlt'][idx].get(sub_attr):
                         cur_len = len(self.records[record][item_attr][
-                              'attribute_value_mlt'][idx][sub_attr])
+                            'attribute_value_mlt'][idx][sub_attr])
                         if cur_len > max_length:
                             max_length = cur_len
                 return max_length
@@ -583,7 +583,7 @@ def make_stats_tsv(item_type_id, recids):
                         and len(attr_val[idx][sub_attr]) > idx_2 \
                             and attr_val[idx][sub_attr][idx_2].get(sub_attr_2):
                         cur_len = len(attr_val[idx][sub_attr][idx_2][
-                                          sub_attr_2])
+                            sub_attr_2])
                         if cur_len > max_length:
                             max_length = cur_len
             return max_length
@@ -681,10 +681,10 @@ def make_stats_tsv(item_type_id, recids):
     ret_label.append('公開日')
     for recid in recids:
         records.attr_output[recid].extend(records.attr_data['path'][recid])
-        records.attr_output[recid].extend(['']*(max_path - len(
+        records.attr_output[recid].extend([''] * (max_path - len(
             records.attr_output[recid])))
         records.attr_output[recid].append(records.records[recid][
-          'pubdate']['attribute_value'])
+            'pubdate']['attribute_value'])
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)

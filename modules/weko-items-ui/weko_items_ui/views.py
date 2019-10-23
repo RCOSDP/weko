@@ -29,8 +29,8 @@ from datetime import date, datetime, timedelta
 
 import bagit
 import redis
-from flask import Blueprint, abort, current_app, flash, jsonify, \
-    redirect, render_template, request, send_file, session, url_for
+from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
+    render_template, request, send_file, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -40,8 +40,8 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryCommonReportsHelper, \
-    QueryItemRegReportHelper, \
-    QueryRecordViewReportHelper, QuerySearchReportHelper
+    QueryItemRegReportHelper, QueryRecordViewReportHelper, \
+    QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -1079,7 +1079,6 @@ def _export_item(record_id,
 
     return exported_item
 
-import traceback
 
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
