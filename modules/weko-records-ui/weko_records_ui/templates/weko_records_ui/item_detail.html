@@ -19,7 +19,7 @@
 #}
 
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
-{% macro output_item_detail(record, pid=none, is_top_page=false) %}
+{% macro output_item_detail(record, files_thumbnail, pid, is_top_page=false) %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info %}
         <tr>

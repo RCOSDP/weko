@@ -93,7 +93,7 @@
               </tbody>
             </table>
             {%- endif %}
-              {{ output_item_detail(record) }}
+              {{ output_item_detail(record, files_thumbnail, pid) }}
             {%- if 'main_entry_personal_name' in record %}
             <p class="record_authors">
               <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>
