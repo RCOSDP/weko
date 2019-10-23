@@ -234,13 +234,28 @@
                   {%- endif -%}
                   {% endfor %}
                   {% else %}
-                  {%- for l in lst['attribute_value_mlt'] %}
-                  {%- for ll in l -%}
-                  {%- for k, v in ll.items() -%}
-                  {{ v }}<br>
-                  {%- endfor -%}
-                  {%- endfor -%}
-                  {%- endfor -%}
+                  {% for attrs in lst['attribute_value_mlt'] %}
+                  {% for attr in attrs %}
+		  {% for k in attr %}
+			{% if k is string %}
+			{{ attr[k] }}<br/>
+			{% else %}
+		  	{% for k2 in k %}
+			{% if k2 is string %}
+			{{k[k2]}}<br/>
+			{% else %}
+		  	{% for k3 in k2 %}
+		  	{% if k3 is string %}
+			{{k2[k3]}}<br/>
+			{% endif %}
+		  	{% endfor %}
+			{% endif %}
+		  	{% endfor %}
+			{% endif %}
+		  {% endfor %}
+
+                  {% endfor %}
+                  {% endfor %}
                   {% endif %}
                 </td>
               </tr>

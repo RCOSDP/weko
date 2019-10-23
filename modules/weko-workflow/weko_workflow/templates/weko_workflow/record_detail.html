@@ -145,9 +145,10 @@
                     {% else %}
                       {%- for l in lst['attribute_value_mlt'] %}
                       {%- for l2 in l %}
-                        {%- for k, v in l2.items() %}
+                        
+                        {# for k, v in l2.items() #}
                           {{ v }}<br>
-                        {% endfor %}
+                        {# endfor #}
                         {% endfor %}
                       {% endfor %}
                     {% endif %}
