@@ -34,7 +34,6 @@ from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -909,20 +908,6 @@ class WekoDeposit(Deposit):
             except Exception as ex:
                 current_app.logger.debug(ex)
                 db.session.rollback()
-
-    def get_record_without_version(self, pid):
-        """Get PID of record without version ID."""
-        recid_without_ver = None
-        parent_relations = PIDRelation.get_child_relations(pid).one_or_none()
-        if parent_relations is not None:
-            parent_pid = PersistentIdentifier.query. \
-                filter_by(id=parent_relations.parent_id).one_or_none()
-            if parent_pid is not None:
-                parent_pid_value = parent_pid.pid_value.split(':')[-1]
-                recid_without_ver = PersistentIdentifier.get(
-                    pid_type='recid',
-                    pid_value=parent_pid_value)
-        return recid_without_ver
 
     def merge_data_to_record_without_version(self, pid):
         """Update changes from record attached version to without version."""

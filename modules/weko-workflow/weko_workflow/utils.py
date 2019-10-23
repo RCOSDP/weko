@@ -33,6 +33,8 @@ from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
 from invenio_records.api import Record
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.pidstore import get_record_identifier, \
+    get_record_without_version
 from weko_handle.api import Handle
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -57,18 +59,16 @@ def get_identifier_setting(community_id):
             repository=community_id).one_or_none()
 
 
-def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
+def saving_doi_pidstore(item_id, record_without_version, data=None,
+                        doi_select=0):
     """
     Mapp doi pidstore data to ItemMetadata.
 
     :param data: request data
     :param doi_select: identifier selected
-    :param activity_id: activity id number
+    :param item_id: object uuid
+    :param record_without_version: object uuid
     """
-    activity_obj = WorkActivity()
-    activity_detail = activity_obj.get_activity_detail(activity_id)
-    identifier = IdentifierHandle(activity_detail.item_id)
-
     flag_del_pidstore = False
     identifier_val = ''
     identifier_typ = ''
@@ -104,9 +104,11 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
 
     try:
         if not flag_del_pidstore and identifier_val and doi_register_val:
+            identifier = IdentifierHandle(record_without_version)
             reg = identifier.register_pidstore('doi', identifier_val)
 
             if reg:
+                identifier = IdentifierHandle(item_id)
                 identifier.update_identifier_data(identifier_val,
                                                   identifier_typ)
                 identifier.update_identifier_regist_data(doi_register_val,
@@ -423,6 +425,31 @@ def check_required_data(data, key, repeatable=False):
         return None
     else:
         return error_list
+
+
+def get_activity_id_of_record_without_version(record_attached_ver_id):
+    """
+    Get activity ID of record without version.
+
+    :param record_attached_version: object uuid
+    :return: string or None
+    """
+    record_without_ver_activity_id = None
+    current_pid = PersistentIdentifier.get_by_object(
+        pid_type='recid',
+        object_type='rec',
+        object_uuid=record_attached_ver_id)
+    recid = get_record_identifier(current_pid.pid_value)
+    if not recid:
+        pid_without_ver = get_record_without_version(current_pid)
+        activity = WorkActivity()
+        record_without_ver_activity = activity. \
+            get_workflow_activity_by_item_id(pid_without_ver.object_uuid)
+        if record_without_ver_activity is not None:
+            record_without_ver_activity_id = record_without_ver_activity.\
+                activity_id
+
+    return record_without_ver_activity_id
 
 
 class MappingData(object):

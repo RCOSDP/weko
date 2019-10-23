@@ -20,6 +20,7 @@
 
 """Weko Deposit Pid Store."""
 
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.fetchers import FetchedPID
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, \
     RecordIdentifier
@@ -92,3 +93,18 @@ def get_record_identifier(recid):
     except ValueError:
         pass
     return record_id
+
+
+def get_record_without_version(pid):
+    """Get PID of record without version ID."""
+    recid_without_ver = None
+    parent_relations = PIDRelation.get_child_relations(pid).one_or_none()
+    if parent_relations is not None:
+        parent_pid = PersistentIdentifier.query. \
+            filter_by(id=parent_relations.parent_id).one_or_none()
+        if parent_pid is not None:
+            parent_pid_value = parent_pid.pid_value.split(':')[-1]
+            recid_without_ver = PersistentIdentifier.get(
+                pid_type='recid',
+                pid_value=parent_pid_value)
+    return recid_without_ver
