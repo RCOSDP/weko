@@ -71,7 +71,10 @@
                   </tr>
                 {%- elif data_type is not none and data_type == 'creator' -%}
                     {%- if key == 'nameIdentifier' and record_detail_data.get(key) is not none -%}
-                        {%- set detail_data = detail_data.append({'name': v, 'value': record_detail_data.get(key), 'key': key, 'nameIdentifierURI':record_detail_data.get('nameIdentifierURI'), 'nameIdentifierScheme': record_detail_data.get('nameIdentifierScheme')}) -%}
+                        {%- set detail_data = detail_data.append(
+                        {'name': v, 'value': record_detail_data.get(key), 'key': key,
+                        'nameIdentifierURI':record_detail_data.get('nameIdentifierURI'),
+                        'nameIdentifierScheme': record_detail_data.get('nameIdentifierScheme')}) -%}
                     {%- else -%}
                         {%- set detail_data = detail_data.append({'name': v, 'value': record_detail_data.get(key), 'key': key}) -%}
                     {%- endif -%}

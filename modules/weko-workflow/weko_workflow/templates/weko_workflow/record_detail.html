@@ -19,7 +19,7 @@
  #}
 
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
-{% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
+{% from "weko_records_ui/item_detail.html" import output_item_detail %}
 
 {%- if record !=[] -%}
 <div class="panel panel-default">
@@ -93,52 +93,7 @@
               </tbody>
             </table>
             {%- endif %}
-            <table class="table table-bordered table-striped detail-table">
-              {% if record.item_type_info %}
-                <tr>
-                  <th colspan="6">{{_('Item Type')}}</th>
-                  <td>{{ record.item_type_info }}</td>
-                </tr>
-              {% endif %}
-              {%- for lst in record.items_show_list %}
-                {% if 'attribute_name_hidden' not in lst.keys() and (lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file') %}
-                <tr>
-                  <th colspan="6">{{ lst['attribute_name'] }}</th>
-                  <td>
-                    <pre class="hide">{{ lst|tojson }}</pre>
-                      {% if lst['attribute_value'] is string %}
-                          {{ lst['attribute_value'] }}
-                      {% else %}
-                          {%- for key in lst['attribute_value'] %}
-                              {{ key }}
-                          {% endfor %}
-                      {% endif %}
-                      {%- for l in lst['attribute_value_mlt'] %}
-                          {{ output_attribute_value(l) }}
-                      {% endfor %}
-                  </td>
-                </tr>
-                {% elif 'attribute_name_hidden' not in lst.keys() %}
-                  {{ output_detail_data(lst) }}
-                {% endif %}
-                {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
-                  <tr>
-                    <th colspan="6">{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
-                    <td>
-                      {%- for thumb in files_thumbnail | sort(attribute='key') -%}
-                        {%- set thumb_name = thumb.filename or thumb.key -%}
-                        {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                        filename=thumb.key) %}
-                        <p>
-                          <span>{{ thumb_name }}</span><br>
-                          <img src="{{thumb_url}}" alt={{thumb_name}} style="max-width:  {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
-                        </p>
-                      {% endfor %}
-                      </td>
-                    </tr>
-                {% endif %}
-              {% endfor %}
-            </table>
+              {{ output_item_detail(record) }}
             {%- if 'main_entry_personal_name' in record %}
             <p class="record_authors">
               <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>

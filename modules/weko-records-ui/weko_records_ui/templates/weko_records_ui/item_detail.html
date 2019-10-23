@@ -1,0 +1,144 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
+{% macro output_item_detail(record, pid=none, is_top_page=false) %}
+  <table class="table table-bordered table-striped detail-table">
+      {% if record.item_type_info %}
+        <tr>
+          <th scope="row" colspan="6">{{ _('item type') }}</th>
+          <td>{{ record.item_type_info }}</td>
+        </tr>
+      {% endif %}
+      {% for lst in record.items_show_list %}
+          {% if 'attribute_name_hidden' not in lst.keys() %}
+              {% if lst['attribute_name'] == 'Reference' %}
+                <tr>
+                  <th scope="row" colspan="6">{{ lst['attribute_name'] }}</th>
+                  <td>
+                      {%- for l in lst['attribute_value_mlt'] %}
+                        <div>
+                            {{ l[0].Authors }}.
+                          ({{ l[0].Year }}).
+                          <em>{{ l[0].Title }}</em>.
+                            {{ l[0].Journal }}. <a
+                                href="{{ l[0].DOI }}">{{ l[0].DOI }}</a>
+                        </div>
+                      {%- endfor -%}
+                  </td>
+                </tr>
+              {% else %}
+                  {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' %}
+                    <tr>
+                      <th scope="row"
+                          colspan="6">{{ lst['attribute_name'] }}</th>
+                      <td>
+                        <pre class="hide">{{ lst|tojson }}</pre>
+                          {% if lst['attribute_value'] is string %}
+                              {{ lst['attribute_value'] }}
+                          {% else %}
+                              {%- for key in lst['attribute_value'] %}
+                                  {{ key }}
+                              {% endfor %}
+                          {% endif %}
+                          {%- for l in lst['attribute_value_mlt'] -%}
+                              {{ output_attribute_value(l) }}
+                          {%- endfor -%}
+                      </td>
+                    </tr>
+                  {% else %}
+                      {{ output_detail_data(lst) }}
+                  {% endif %}
+              {% endif %}
+          {% endif %}
+          {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
+            <tr>
+              <th scope="row"
+                  colspan="6">{{ lst.get('attribute_name_hidden', _('Thumbnail')) }}</th>
+              <td>
+                  {%- for thumb in files_thumbnail | sort(attribute='key') -%}
+                      {%- set thumb_name = thumb.filename or thumb.key -%}
+                      {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                        filename=thumb.key) %}
+                    <p>
+                      <span>{{ thumb_name }}</span><br>
+                      <img src="{{ thumb_url }}" alt={{ thumb_name }}
+                              style="max-width:{{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;"
+                      />
+                    </p>
+                  {% endfor %}
+              </td>
+            </tr>
+          {% endif %}
+      {% endfor %}
+      {% if record.relation and is_top_page %}
+        <tr>
+          <th scope="row" colspan="6">{{ _('Link') }}</th>
+          <td>
+              {%- for sub_record in record.relation.relation_type %}
+                <a target="_self"
+                   href="{{ sub_record.item_links }}">{{ sub_record.item_title }}</a>
+                <br>
+              {% endfor %}
+          </td>
+        </tr>
+      {% endif %}
+      {% if record.pubdate and is_top_page %}
+        <tr>
+          <th scope="row" colspan="6">{{ _('Publish Status') }}</th>
+            {%- set pubs = record.get('publish_status','1') -%}
+            {% if record.editable %}
+                {%- set dis = '' -%}
+            {% else %}
+                {%- set dis = 'disabled' -%}
+            {% endif %}
+          <td>
+            <div>
+              <form class="form form-inline"
+                    action="{{ url_for('invenio_records_ui.recid_publish', pid_value=pid.pid_value) }}"
+                    method="POST">
+                  {% if record | check_permission %}
+                      {% if '0' in pubs %}
+                          {{ _('Public') }}
+                        <button class="btn btn-default btn-xs" type="submit"
+                                name="status" value="1"
+                                style="font-size:15px">
+                            {{ _('Change to Private') }}
+                        </button>
+                      {% else %}
+                          {{ _('Private') }}
+                        <button class="btn btn-default btn-xs" type="submit"
+                                name="status" value="0"
+                                style="font-size:15px">
+                            {{ _('Change to Public') }}
+                        </button>
+                      {% endif %}
+                  {% else %}
+                      {% if '0' in pubs %}{{ _('Publish') }}{% else %}
+                          {{ _('Private') }}
+                      {% endif %}
+                  {% endif %}
+              </form>
+            </div>
+          </td>
+        </tr>
+      {% endif %}
+  </table>
+{% endmacro %}
