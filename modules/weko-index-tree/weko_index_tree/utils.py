@@ -117,7 +117,11 @@ def get_tree_json(index_list, root_id):
         '''
         index_dict = index_element._asdict()
         if not is_root:
-            index_dict.update({'parent': str(index_element.pid)})
+            pid = str(index_element.pid)
+            parent = index_list[index_position[index_element.pid]]
+            if parent.pid:
+                pid = '{}/{}'.format(parent.pid, pid)
+            index_dict.update({'parent': pid})
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_element.name,
