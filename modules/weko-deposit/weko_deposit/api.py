@@ -361,6 +361,7 @@ class WekoDeposit(Deposit):
 
     def _publish_new(self, id_=None):
         """Override the publish new to avoid creating multiple pids."""
+        id_ = id_ or uuid.uuid4()
         record_pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', object_uuid=self.id).first()
 

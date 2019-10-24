@@ -727,11 +727,15 @@ def next_action(activity_id='0', action_id=0):
                     # new record attached version ID
                     first_record_attached_ver = deposit.newversion(current_pid)
                     activity_item_id = first_record_attached_ver.model.id
+                    deposit_attached_ver = WekoDeposit(
+                        first_record_attached_ver,
+                        first_record_attached_ver.model)
+                    deposit_attached_ver.publish()
                     # Record without version: Make status Public as default
                     updated_item.publish(record)
                 else:
-                    activity_item_id = record.model.id
                     # update to record without version ID when editing
+                    activity_item_id = record.model.id
                     pid_without_ver = get_record_without_version(current_pid)
                     if pid_without_ver is not None:
                         record_without_ver = WekoDeposit.get_record(
