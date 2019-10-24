@@ -235,7 +235,7 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                     if check_roles(roles, brw_role) \
                             or check_groups(groups, brw_group):
 
-                        if public_state or (
+                        if public_state and (
                             isinstance(
                                 public_date,
                                 datetime)
