@@ -123,19 +123,6 @@
           "type": "integer",
           "index": true
         },
-        "custom_sort": {
-          "type": "object",
-          "properties": {
-          "index_id": {
-            "type": "text",
-            "fielddata": true
-          },
-          "sort": {
-            "type": "text",
-            "fielddata": true
-           }
-          }
-        },
         "title": {
           "type": "keyword",
           "index": true,
