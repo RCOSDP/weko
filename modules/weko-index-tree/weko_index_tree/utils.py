@@ -235,11 +235,10 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                     if check_roles(roles, brw_role) \
                             or check_groups(groups, brw_group):
 
-                        if public_state and (
-                            isinstance(
-                                public_date,
-                                datetime)
-                                and date.today() >= public_date.date()):
+                        if public_state and \
+                                (public_date is None or \
+                                 (isinstance(public_date, datetime)
+                                  and date.today() >= public_date.date())):
                             reduce_index_by_role(children, roles, groups)
                             i += 1
                         else:
