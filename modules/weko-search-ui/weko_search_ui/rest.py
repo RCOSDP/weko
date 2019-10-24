@@ -289,7 +289,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         # custom_sort
                 cn = hit['_source']['control_number']
                 hit['_source']['custom_sort'] = {
-                    str(index_info.id) : str(index_info.item_custom_sort.get(cn))}
+                    str(index_info.id): str(index_info.item_custom_sort.get(cn))}
         except Exception:
             pass
 
