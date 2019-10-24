@@ -60,9 +60,9 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, get_activity_id_of_record_without_version,\
-    get_identifier_setting, item_metadata_validation, register_cnri, \
-    saving_doi_pidstore
+from .utils import IdentifierHandle, \
+    get_activity_id_of_record_without_version, get_identifier_setting, \
+    item_metadata_validation, register_cnri, saving_doi_pidstore
 
 blueprint = Blueprint(
     'weko_workflow',

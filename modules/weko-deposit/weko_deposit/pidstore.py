@@ -33,7 +33,6 @@ def weko_deposit_minter(record_uuid, data, recid=None):
     else:
         if isinstance(recid, int):
             RecordIdentifier.insert(recid)
-            data['recid'] = int(recid)
         id_ = recid
     recid = PersistentIdentifier.create(
         'recid',
@@ -42,7 +41,7 @@ def weko_deposit_minter(record_uuid, data, recid=None):
         object_uuid=record_uuid,
         status=PIDStatus.REGISTERED
     )
-    # data['recid'] = int(recid.pid_value)
+    data['recid'] = str(recid.pid_value)
 
     # Create depid with same pid_value of the recid
     depid = PersistentIdentifier.create(
