@@ -78,6 +78,8 @@ services:
       - /code/modules/weko-items-autofill/weko_items_autofill.egg-info
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
     user: invenio
+    cap_add:
+      - SYS_PTRACE
     links:
       - postgresql
       - redis

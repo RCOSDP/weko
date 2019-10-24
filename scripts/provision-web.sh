@@ -59,7 +59,8 @@ provision_web_common_ubuntu14 () {
          rlwrap \
          screen \
          vim \
-         gnupg
+         gnupg \
+         procps
     # sphinxdoc-install-useful-system-tools-ubuntu14-end
 
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin

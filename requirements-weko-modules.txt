@@ -1,3 +1,4 @@
+-e git+https://github.com/RCOSDP/invenio-app.git@feature/profile#egg=invenio-app
 -e git+https://github.com/RCOSDP/invenio-files-rest.git@feature/weko#egg=invenio-files-rest
 -e git+https://github.com/RCOSDP/invenio-s3.git@feature/weko#egg=invenio-s3
 -e /code/modules/invenio-oaiserver
