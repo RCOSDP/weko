@@ -286,6 +286,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 _comment = list()
                 _comment.append(hit['_source']['title'][0])
                 hit['_source']['_comment'] = _comment
+        # custom_sort
+                cn = hit['_source']['control_number']
+                hit['_source']['custom_sort'] = {
+                    str(index_info.id) : str(index_info.item_custom_sort[cn])}
         except Exception:
             pass
 
