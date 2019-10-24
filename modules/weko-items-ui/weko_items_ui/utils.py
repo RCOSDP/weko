@@ -420,6 +420,8 @@ def update_json_schema_by_activity_id(json, activity_id):
                     json['properties'][sub_item[0]]['items'][
                         'required'].append(sub_item[1])
                 else:
+                    if not json['properties'][sub_item[0]].get('required'):
+                        json['properties'][sub_item[0]]['required'] = []
                     json['properties'][sub_item[0]]['required'].append(
                         sub_item[1])
         for item in error_list['pattern']:

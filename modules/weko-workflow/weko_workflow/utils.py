@@ -22,17 +22,15 @@
 
 from copy import deepcopy
 
+import validators
 from flask import current_app, request
 from flask_babelex import gettext as _
-from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidrelations.models import PIDRelation
-from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
+from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
-from invenio_records.api import Record
 from weko_admin.models import Identifier
-from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_handle.api import Handle
@@ -42,9 +40,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import WorkActivity
-from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, \
-    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY, \
-    WEKO_SERVER_CNRI_HOST_LINK
+from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
 
 
 def get_identifier_setting(community_id):
@@ -158,7 +154,8 @@ def item_metadata_validation(item_id, identifier_type):
 
     journalarticle_nameid = [14, 3, 5, 9]
     journalarticle_type = 'other（プレプリント）'
-    thesis_nameid = 12
+    thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
+                    'doctoral thesis']
     report_nameid = 16
     report_types = ['technical report', 'research report', 'report']
     elearning_type = 'learning material'
@@ -178,78 +175,70 @@ def item_metadata_validation(item_id, identifier_type):
 
     # check resource type request
     if not resource_type and not type_key:
-        return 'Resource Type Property either missing ' \
-            'or jpcoar mapping not correct!'
+        return {
+            'required': [],
+            'pattern': [],
+            'pmid': '',
+            'doi': '',
+            'url': '',
+            "msg": 'Resource Type Property either missing '
+            'or jpcoar mapping not correct!',
+            'error_type': 'no_resource_type'
+        }
+
     if not item_type or not resource_type and type_check:
-        error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
+        error_list = {'required': [], 'pattern': [], 'pmid': '',
+                      'doi': '', 'url': ''}
         error_list['required'].append(type_key)
         return error_list
     resource_type = resource_type.pop()
+    properties = []
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
-        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if (item_type.name_id in journalarticle_nameid
-            or resource_type == journalarticle_type) \
-            or (item_type.name_id == thesis_nameid) \
+        if item_type.name_id in journalarticle_nameid \
+            or resource_type == journalarticle_type \
             or (item_type.name_id == report_nameid
                 or resource_type in report_types) \
             or (resource_type == elearning_type) \
             or (item_type.name_id in datageneral_nameid
                 or resource_type in datageneral_types):
+            properties = ['title']
+        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
+        elif resource_type in thesis_types:
             properties = ['title',
-                          'identifier',
-                          'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
+                          'creator']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
-        elif item_type.name_id in dataset_nameid or resource_type == \
-                dataset_type:
+        elif item_type.name_id in dataset_nameid \
+                or resource_type == dataset_type:
             properties = ['title',
-                          'givenName',
-                          'identifier',
-                          'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
-        else:
-            error_list = 'false'
+                          'givenName']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if item_type.name_id in journalarticle_nameid or resource_type == \
                 journalarticle_type:
-            properties = ['title',
-                          'identifier',
+            properties = ['title'
                           'publisher',
-                          'identifierRegistration',
                           'sourceIdentifier',
                           'sourceTitle']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
-        elif item_type.name_id in [thesis_nameid, report_nameid] or \
+        elif item_type.name_id == report_nameid or \
                 resource_type in report_types:
+            properties = ['title']
+        elif resource_type in thesis_types:
             properties = ['title',
-                          'identifier',
-                          'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
-        else:
-            error_list = 'false'
-    else:
-        error_list = 'false'
+                          'creator']
 
-    if error_list == 'false':
+    if properties:
+        return validation_item_property(metadata_item,
+                                        identifier_type,
+                                        properties)
+    else:
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
-
-    return error_list
 
 
 def validation_item_property(mapping_data, identifier_type, properties):
@@ -261,7 +250,8 @@ def validation_item_property(mapping_data, identifier_type, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
+    error_list = {'required': [], 'pattern': [], 'pmid': '',
+                  'doi': '', 'url': ''}
     empty_list = deepcopy(error_list)
     # check タイトル dc:title
     if 'title' in properties:
@@ -297,6 +287,32 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if requirements:
             error_list['pattern'] += requirements
 
+    # check 識別子 jpcoar:givenName and jpcoar:nameIdentifier
+    if 'creator' in properties:
+        _, key = mapping_data.get_data_by_property(
+            "creator.givenName.@value")
+        _, idt_key = mapping_data.get_data_by_property(
+            "creator.nameIdentifier.@value")
+
+        data = []
+        idt_data = []
+        creators = mapping_data.record.get(key.split('.')[0])
+        for creator in creators.get("attribute_value_mlt"):
+            for subitem in creator:
+                for item in creator[subitem]:
+                    if item.get(key.split('.')[1]):
+                        data.append(item.get(key.split('.')[1]))
+                    if item.get(idt_key.split('.')[1]):
+                        idt_data.append(item.get(idt_key.split('.')[1]))
+
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        repeatable = True
+        idt_requirements = check_required_data(idt_data, idt_key, repeatable)
+        if requirements and idt_requirements:
+            error_list['pattern'] += requirements
+            error_list['pattern'] += idt_requirements
+
     # check 識別子 jpcoar:identifier
     if 'identifier' in properties:
         data, key = mapping_data.get_data_by_property("identifier.@value")
@@ -313,9 +329,14 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if type_requirements:
             error_list['required'] += type_requirements
         else:
+            idx = 0
             for item in type_data:
-                if item not in ['HDL', 'URI', 'DOI']:
+                if not validators.url(data[idx]):
+                    error_list['required'].append(key)
                     error_list['required'].append(type_key)
+                    error_list['url'] = idx
+                    break
+                idx += 1
 
     # check ID登録 jpcoar:identifierRegistration
     if 'identifierRegistration' in properties:
@@ -323,30 +344,27 @@ def validation_item_property(mapping_data, identifier_type, properties):
             "identifierRegistration.@value")
         type_data, type_key = mapping_data.get_data_by_property(
             "identifierRegistration.@attributes.identifierType")
+        idt_data, idt_key = mapping_data.get_data_by_property(
+            "identifier.@value")
+        idt_type_data, idt_type_key = mapping_data.get_data_by_property(
+            "identifier.@attributes.identifierType")
 
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
+
         if requirements and not requirements == [None]:
             error_list['required'] += requirements
-        # half-with and special character check
-        # else:
-        #     for item in data:
-        #         char_re = re.compile(r'[^a-zA-Z0-9\-\.\_\;\(\)\/.]')
-        #         result = char_re.search(item)
-        #         if bool(result):
-        #             error_list['pattern'].append(key)
         if type_requirements and not type_requirements == [None]:
             error_list['required'] += type_requirements
         else:
-            if type_data:
-                for item in type_data:
-                    if (identifier_type
-                            == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']
-                            and not item == 'JaLC') or \
-                            (identifier_type
-                             == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']
-                             and not item == 'Crossref'):
-                        error_list['required'].append(type_key)
+            for item in type_data:
+                if item == 'PMID（現在不使用）':
+                    error_list['pmid'] = type_key
+            result = check_suffix_identifier(data, idt_data, idt_type_data)
+            if result:
+                error_list['required'].append(idt_key)
+                error_list['required'].append(idt_type_key)
+                error_list['doi'] = [idt_key + '.' + str(key) for key in result]
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
@@ -400,6 +418,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
     if error_list == empty_list:
         return None
     else:
+        error_list['required'] = list(set(error_list['required']))
         return error_list
 
 
@@ -450,6 +469,34 @@ def get_activity_id_of_record_without_version(record_attached_ver_id):
                 activity_id
 
     return record_without_ver_activity_id
+
+
+def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
+    """Check prefix/suffiex in Identifier Registration contain in Identifier.
+
+    Arguments:
+        idt_regis_value -- {string array} Identifier Registration value
+        idt_list        -- {string array} Identifier Data
+        idt_type_list   -- {string array} Identifier Type List
+
+    Returns:
+        True/False   -- is prefix/suffix data exist
+
+    """
+    indices = [i for i, x in enumerate(idt_type_list or []) if x == "DOI"]
+    list_value_error = []
+    if idt_list and idt_regis_value:
+        for pre in idt_regis_value:
+            for index in indices:
+                data = idt_list[index] or ''
+                if (pre in data and (
+                        len(data) - data.find(pre) - len(pre)) == 0):
+                    return False
+                else:
+                    list_value_error.append(index)
+        return list_value_error
+    else:
+        return list_value_error
 
 
 class MappingData(object):

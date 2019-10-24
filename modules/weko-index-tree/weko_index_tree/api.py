@@ -656,23 +656,44 @@ class Indexes(object):
         return q
 
     @classmethod
-    def get_self_list(cls, node_path):
+    def get_self_list(cls, node_path, community_id=None):
         """
         Get index list info.
 
         :param node_path: Identifier of the index.
         :return: the list of index.
         """
-        index = node_path.rfind('/')
-        pid = node_path[index + 1:]
-        recursive_t = cls.recs_query()
-        query = db.session.query(recursive_t).filter(
-            db.or_(recursive_t.c.pid == pid,
-                   recursive_t.c.cid == pid))
-        if not get_user_roles()[0]:
-            query = query.filter(recursive_t.c.public)
-        q = query.order_by(recursive_t.c.path).all()
-        return q
+        if community_id:
+            index = node_path.rfind('/')
+            pid = node_path[index + 1:]
+            from invenio_communities.models import Community
+            community_obj = Community.get(community_id)
+            recursive_t = cls.recs_query()
+            query = db.session.query(recursive_t).filter(db.or_(
+                recursive_t.c.cid == pid, recursive_t.c.pid == pid))
+            if not get_user_roles()[0]:
+                query = query.filter(recursive_t.c.public)
+            q = query.order_by(recursive_t.c.path).all()
+            lst = list()
+            if node_path != '0':
+                for item in q:
+                    if item.cid == community_obj.root_node_id \
+                            and item.pid == '0':
+                        lst.append(item)
+                    if item.pid != '0':
+                        lst.append(item)
+                return lst
+        else:
+            index = node_path.rfind('/')
+            pid = node_path[index + 1:]
+            recursive_t = cls.recs_query()
+            query = db.session.query(recursive_t).filter(
+                db.or_(recursive_t.c.pid == pid,
+                       recursive_t.c.cid == pid))
+            if not get_user_roles()[0]:
+                query = query.filter(recursive_t.c.public)
+            q = query.order_by(recursive_t.c.path).all()
+            return q
 
     @classmethod
     def get_all_path_list(cls, node_path):
