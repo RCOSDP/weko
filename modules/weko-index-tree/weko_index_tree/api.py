@@ -1036,14 +1036,15 @@ class Indexes(object):
     @classmethod
     def set_item_sort_custom(cls, index_id, sort_json={}):
         """Set custom sort."""
-        # change type of custom sort data
-        sort_dict_db = dict(sort_json)
+        sort_dict_db = {}
 
-        for k, v in sort_dict_db.items():
-            if v != "":
-                sort_dict_db[k] = int(v)
-            else:
-                sort_dict_db[k] = 0
+        for k, v in sort_json.items():
+            try:
+                i = int(v)
+                if i > 0:
+                    sort_dict_db[k] = i
+            except BaseException:
+                pass
 
         try:
             with db.session.begin_nested():

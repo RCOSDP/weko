@@ -108,7 +108,8 @@ def get_tree_json(index_list, root_id):
     :param root_id:
     :return:
     """
-    index_relation = {}  # index_relation[parent_index_id] = [child_index_id, ...]
+    index_relation = {
+    }  # index_relation[parent_index_id] = [child_index_id, ...]
     index_position = {}  # index_position[index_id] = position_in_index_list
 
     for position, index_element in enumerate(index_list):
@@ -121,7 +122,11 @@ def get_tree_json(index_list, root_id):
         """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
         index_dict = index_element._asdict()
         if not is_root:
-            index_dict.update({'parent': str(index_element.pid)})
+            pid = str(index_element.pid)
+            parent = index_list[index_position[index_element.pid]]
+            if parent.pid:
+                pid = '{}/{}'.format(parent.pid, pid)
+            index_dict.update({'parent': pid})
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_element.name,
@@ -141,7 +146,8 @@ def get_tree_json(index_list, root_id):
         child_list = []
         for child_index_id in index_relation.get(parent_index_id, []):
             child_index = index_list[index_position[child_index_id]]
-            child_index_dict = generate_index_dict(child_index, parent_index_id == 0)
+            child_index_dict = generate_index_dict(
+                child_index, parent_index_id == 0)
 
             # Recursively get grandchildren
             child_index_dict['children'] = get_children(child_index_id)
@@ -240,11 +246,10 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                     if check_roles(roles, brw_role) \
                             or check_groups(groups, brw_group):
 
-                        if public_state or (
-                            isinstance(
-                                public_date,
-                                datetime)
-                                and date.today() >= public_date.date()):
+                        if public_state and \
+                                (public_date is None
+                                 or (isinstance(public_date, datetime)
+                                     and date.today() >= public_date.date())):
                             reduce_index_by_role(children, roles, groups)
                             i += 1
                         else:

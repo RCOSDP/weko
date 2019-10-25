@@ -23,7 +23,7 @@
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
-{% from "weko_records_ui/output_detail_data.html" import output_detail_data %}
+{% from "weko_records_ui/item_detail.html" import output_item_detail %}
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
@@ -162,153 +162,7 @@
           </table>
           {%- endif %}
           <div class="table-responsive">
-            <table class="table table-bordered table-striped">
-              {% if record.item_type_info %}
-              <tr>
-                <th>{{_('item type')}}</th>
-                <td>{{ record.item_type_info }}</td>
-              </tr>
-              {% endif %}
-              {%- for lst in record.items_show_list %}
-              {% if 'attribute_name_hidden' not in lst.keys() %}
-
-              {% if lst['attribute_name'] == 'Reference' %}
-              <tr>
-                <th>{{ lst['attribute_name'] }}</th>
-                <td>
-                  {%- for l in lst['attribute_value_mlt'] %}
-                  <div>
-                    {{ l[0].Authors }}.
-                    ({{ l[0].Year }}).
-                    <i>{{ l[0].Title }}</i>.
-                    {{ l[0].Journal }}. <a href="{{ l[0].DOI }}">{{ l[0].DOI }}</a>
-                  </div>
-                  {%- endfor -%}
-                </td>
-              </tr>
-              {% else %}
-
-              <tr>
-                <th>{{ lst['attribute_name'] }}</th>
-                <td>
-                  <pre class="hide">{{lst|tojson}}</pre>
-                  {% if lst['attribute_value'] is string %}
-                  {{ lst['attribute_value'] }}
-                  {% else %}
-                  {%- for key in lst['attribute_value'] %}
-                  {{ key }}
-                  {% endfor %}
-                  {% endif %}
-                  {% if lst['attribute_type'] == 'creator' %}
-                  {%- for l in lst['attribute_value_mlt'] if l %}
-                  {%- for creatorName in l['creatorNames'] if creatorName -%}
-                  {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
-                  {%- set q = 'creator='+creatorName['creatorName'] -%}
-                  {%- else -%}
-                  {%- set q = 'id='+l['weko_id'] -%}
-                  {%- endif -%}
-                  <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label
-                    class="p-left-10"></label><br />
-                  {%- endfor -%}
-                  <br>
-                  {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
-                  {%- if nameIdentifierScheme in nameIdentifier.keys() and nameIdentifier['nameIdentifierScheme'] != "" -%}
-                  {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
-                  {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
-                  {%- else -%}
-                  <!--
-                                    {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
-                                    -->
-                  <!-- demo -->
-                  {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
-
-                  {%- endif -%}
-                  <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a
-                    href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br />
-                  {%- endif -%}
-                  {%- endfor -%}
-                  {%- if config['EMAIL_DISPLAY_FLG'] -%}
-                  {%- for creatorMail in l['creatorMails'] if creatorMail -%}
-                  <label class="p-left-10">e-mail: </label><a
-                    href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br />
-                  {%- endfor -%}
-                  {%- endif -%}
-                  {% endfor %}
-                  {% else %}
-                  {%- for l in lst['attribute_value_mlt'] %}
-                    {{ output_detail_data(l) }}
-                  {%- endfor -%}
-                  {% endif %}
-                </td>
-              </tr>
-
-              {% endif %}
-              {% endif %}
-              {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
-              <tr>
-                <th>{{lst.get('attribute_name_hidden', _('Thumbnail'))}}</th>
-                <td>
-                  {%- for thumb in files_thumbnail | sort(attribute='key') -%}
-                  {%- set thumb_name = thumb.filename or thumb.key -%}
-                  {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                        filename=thumb.key) %}
-                  <p>
-                    <span>{{ thumb_name }}</span><br>
-                    <img src="{{thumb_url}}" alt={{thumb_name}}
-                      style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;" />
-                  </p>
-                  {% endfor %}
-                </td>
-              </tr>
-              {% endif %}
-              {% endfor %}
-              {% if record.relation %}
-              <tr>
-                <th>{{_('Link')}}</th>
-                <td>
-                  {%- for sub_record in record.relation.relation_type%}
-                  <a target="_self" href="{{sub_record.item_links}}">{{ sub_record.item_title}}</a><br>
-                  {% endfor %}
-                </td>
-              </tr>
-              {% endif %}
-              {% if record.pubdate %}
-              <tr>
-                <th>{{_('Publish Status')}}</th>
-                {%- set pubs = record.get('publish_status','1') -%}
-                {% if record.editable %}
-                {%- set dis = '' -%}
-                {% else %}
-                {%- set dis = 'disabled' -%}
-                {% endif %}
-                <td>
-                  <div>
-                    <form class="form form-inline"
-                      action="{{ url_for('invenio_records_ui.recid_publish', pid_value=pid.pid_value) }}" method="POST">
-                      {% if record | check_permission %}
-                      {% if '0' in pubs %}
-                      {{_('Public')}}
-                      <button class="btn btn-default btn-xs" type="submit" name="status" value="1"
-                        style="font-size:15px">
-                        {{_('Change to Private')}}
-                      </button>
-                      {% else %}
-                      {{_('Private')}}
-                      <button class="btn btn-default btn-xs" type="submit" name="status" value="0"
-                        style="font-size:15px">
-                        {{_('Change to Public')}}
-                      </button>
-                      {% endif %}
-                      {% else %}
-                      {% if '0' in pubs %}{{_('Publish')}}{% else %}{{_('Private')}}
-                      {% endif %}
-                      {% endif %}
-                    </form>
-                  </div>
-                </td>
-              </tr>
-              {% endif %}
-            </table>
+              {{ output_item_detail(record, files_thumbnail, pid, true) }}
           </div>
           {%- if 'main_entry_personal_name' in record %}
           <p class="record_authors">
@@ -404,16 +258,5 @@
 
   #invenio-csl span.twitter-typeahead .empty-results {
     max-width: 250px;
-</style>
-<style type="text/css">
-  .table {
-    table-layout: fixed;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-  }
-
-  .table tr th:nth-child(1) {
-    width: 30%;
-  }
 </style>
 {% endblock %}
