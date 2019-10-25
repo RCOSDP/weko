@@ -1304,7 +1304,7 @@ class WorkActivity(object):
                     action_endpoint='end_action').one_or_none()
                 db_activity = _Activity.query.filter_by(
                     item_id=item_id).one_or_none()
-                if db_activity:
+                if db_activity is None:
                     return None
                 db_activity.item_id = None
                 db_activity.action_id = action.id

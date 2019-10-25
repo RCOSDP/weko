@@ -830,9 +830,12 @@ def prepare_edit_item():
             upt_current_activity = activity.upt_activity_detail(
                 item_id=pid_object.object_uuid)
 
-            if not upt_current_activity:
+            if upt_current_activity is None:
                 workflow = WorkFlow.query.filter_by(
                     itemtype_id=item_type_id).first()
+                if workflow is None:
+                    return jsonify(code=-1,
+                                   msg=_('Workflow setting does not exist.'))
                 post_activity['workflow_id'] = workflow.id
                 post_activity['flow_id'] = workflow.flow_id
             else:
