@@ -29,6 +29,7 @@ from invenio_accounts.models import Role, User
 from weko_records.api import ItemTypes
 
 from .api import Action, Flow, WorkFlow
+from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 
 
 class FlowSettingView(BaseView):
@@ -158,7 +159,10 @@ class WorkFlowSettingView(BaseView):
 
         :return:
         """
-        itemtype_list = ItemTypes.get_latest_custorm_harvesting()
+        if WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS:
+            itemtype_list = ItemTypes.get_latest()
+        else:
+            itemtype_list = ItemTypes.get_latest_custorm_harvesting()
         flow_api = Flow()
         flow_list = flow_api.get_flow_list()
         if '0' == workflow_id:

@@ -663,7 +663,10 @@ function handleSharePermission(value) {
           async: false,
           success: function (response) {
             if (response.code) {
-              addAlert(response.msg, 'alert-danger');
+              // addAlert(response.msg, 'alert-danger');
+              response.msg.map(item => {
+                addAlert(item, 'alert-danger');
+              })
               $scope.render_requirements = true;
               $scope.error_list = response.error_list;
             }

@@ -1181,8 +1181,28 @@ def check_validation_error_msg(activity_id):
             'update_json_schema'].get(activity_id):
         error_list = session[
             'update_json_schema'].get(activity_id)
+
+        msg = []
+        if error_list.get('error_type'):
+            if error_list.get('error_type') == 'no_resource_type':
+                msg.append(_(error_list.get('msg', '')))
+
+        else:
+            msg.append(_('PID does not meet the conditions.'))
+        if error_list.get('pmid'):
+            msg.append(_(
+                'Since PMID is not subject to DOI registration, please '
+                'select another type.'
+            ))
+        if error_list.get('doi'):
+            msg.append(_(
+                'Prefix/Suffix of Identifier is not consistency with'
+                ' content of Identifier Registration.'))
+        if error_list.get('url'):
+            msg.append(_(
+                'Please input location information (URL) for Identifier.'))
         return jsonify(code=1,
-                       msg=_('PID does not meet the conditions.'),
+                       msg=msg,
                        error_list=error_list)
     else:
         return jsonify(code=0)

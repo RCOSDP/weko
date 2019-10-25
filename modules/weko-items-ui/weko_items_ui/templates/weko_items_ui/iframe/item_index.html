@@ -55,7 +55,7 @@
 {%- endblock page_footer %}
 
 {%- block page_body_main %}
-<div class="row">
+<div class="row" style="height:100%">
   {%- if page %}
     <div id="widget-page-id" hidden>{{ page.id }}</div>
   {%- endif %}
@@ -283,7 +283,7 @@
   {%- endif%}
     {{ super() }}
     <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
-      <div class="modal-dialog modelWidth" role="document">
+      <div class="modal-dialog modelWidth modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-body">
             {% include 'weko_workflow/record_detail.html' %}

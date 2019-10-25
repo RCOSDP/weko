@@ -2,6 +2,7 @@
   "settings": {
     "number_of_shards": 1,
     "number_of_replicas": 0,
+    "index.mapping.total_fields.limit": 10000,
     "analysis": {
       "tokenizer": {
         "ja_tokenizer": {
@@ -122,19 +123,6 @@
         "control_number": {
           "type": "integer",
           "index": true
-        },
-        "custom_sort": {
-          "type": "object",
-          "properties": {
-          "index_id": {
-            "type": "text",
-            "fielddata": true
-          },
-          "sort": {
-            "type": "text",
-            "fielddata": true
-           }
-          }
         },
         "title": {
           "type": "keyword",
