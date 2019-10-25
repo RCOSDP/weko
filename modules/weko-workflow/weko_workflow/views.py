@@ -671,17 +671,19 @@ def next_action(activity_id='0', action_id=0):
             identifier=identifier_grant
         )
         # get workflow of first record attached version ID: x.1
-        first_pid_value_attached_ver = '{}.1'. format(pid_without_ver.pid_value)
-        first_pid_obj_attached_ver = PersistentIdentifier.get(
-            'recid', first_pid_value_attached_ver)
-        wf_activity_without_ver = work_activity.\
-            get_workflow_activity_by_item_id(
-                item_id=first_pid_obj_attached_ver.object_uuid)
-        work_activity.create_or_update_action_identifier(
-            activity_id=wf_activity_without_ver.activity_id,
-            action_id=action_id,
-            identifier=identifier_grant
-        )
+        if not recid:
+            first_pid_value_attached_ver = '{}.1' . format(
+                pid_without_ver.pid_value)
+            first_pid_obj_attached_ver = PersistentIdentifier.get(
+                'recid', first_pid_value_attached_ver)
+            wf_activity_without_ver = work_activity.\
+                get_workflow_activity_by_item_id(
+                    item_id=first_pid_obj_attached_ver.object_uuid)
+            work_activity.create_or_update_action_identifier(
+                activity_id=wf_activity_without_ver.activity_id,
+                action_id=action_id,
+                identifier=identifier_grant
+            )
 
         error_list = item_metadata_validation(item_id, identifier_select)
 
