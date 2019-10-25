@@ -21,11 +21,14 @@
 """Module of weko-items-ui utils.."""
 
 import csv
+import os
+import json
 from collections import OrderedDict
 from datetime import datetime
 from io import StringIO
 
 import numpy
+import redis
 from elasticsearch.exceptions import NotFoundError
 from flask import current_app, session
 from flask_babelex import gettext as _
@@ -35,6 +38,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
 from jsonschema import ValidationError
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoRecord
 from weko_records.api import ItemTypes
@@ -406,40 +410,44 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
             result['error'] = _(error.message)
 
 
-def update_json_schema_by_activity_id(json, activity_id):
+def update_json_schema_by_activity_id(json_data, activity_id):
     """Update json schema by activity id.
 
     :param json: The json schema
     :param activity_id: Activity ID
     :return: json schema
     """
-    if not session.get('update_json_schema') or not session[
-            'update_json_schema'].get(activity_id):
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    if not sessionstore.redis.exists('updated_json_schema_{}'.format(activity_id)) and not sessionstore.get('updated_json_schema_{}'.format(activity_id)):
         return None
-    error_list = session['update_json_schema'][activity_id]
+    session_data = sessionstore.get('updated_json_schema_{}'.format(activity_id))
+    error_list = json.loads(session_data.decode('utf-8'))
 
     if error_list:
         for item in error_list['required']:
             sub_item = item.split('.')
             if len(sub_item) == 1:
-                json['required'] = sub_item
+                json_data['required'] = sub_item
             else:
-                if json['properties'][sub_item[0]].get('items'):
-                    if not json['properties'][sub_item[0]]['items'].get(
+                if json_data['properties'][sub_item[0]].get('items'):
+                    if not json_data['properties'][sub_item[0]]['items'].get(
                             'required'):
-                        json['properties'][sub_item[0]]['items']['required'] \
+                        json_data['properties'][sub_item[0]]['items']['required'] \
                             = []
-                    json['properties'][sub_item[0]]['items'][
+                    json_data['properties'][sub_item[0]]['items'][
                         'required'].append(sub_item[1])
                 else:
-                    if not json['properties'][sub_item[0]].get('required'):
-                        json['properties'][sub_item[0]]['required'] = []
-                    json['properties'][sub_item[0]]['required'].append(
+                    if not json_data['properties'][sub_item[0]].get('required'):
+                        json_data['properties'][sub_item[0]]['required'] = []
+                    json_data['properties'][sub_item[0]]['required'].append(
                         sub_item[1])
         for item in error_list['pattern']:
             sub_item = item.split('.')
             if len(sub_item) == 2:
-                creators = json['properties'][sub_item[0]].get('items')
+                creators = json_data['properties'][sub_item[0]].get('items')
                 if not creators:
                     break
                 for creator in creators.get('properties'):
@@ -449,7 +457,7 @@ def update_json_schema_by_activity_id(json, activity_id):
                             if not givename.get('required'):
                                 givename['required'] = []
                             givename['required'].append(sub_item[1])
-    return json
+    return json_data
 
 
 def package_exports(item_type_data):
@@ -676,13 +684,17 @@ def make_stats_tsv(item_type_id, recids):
     # for idx in range(records.get_max_ins('path')):
     max_path = records.get_max_ins('path')
     ret.extend(['.path[{}]'.format(i) for i in range(max_path)])
-    ret_label.extend(['.インデックス[{}]'.format(i) for i in range(max_path)])
+    ret_label.extend(['.IndexID#{}'.format(i) for i in range(max_path)])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
+
     for recid in recids:
-        records.attr_output[recid].extend(records.attr_data['path'][recid])
+        paths = records.attr_data['path'].get(recid)
+        if paths:
+            index_ids = [path.split('/')[-1] for path in paths]
+            records.attr_output[recid].extend(index_ids)
         records.attr_output[recid].extend([''] * (max_path - len(
-            records.attr_output[recid])))
+        records.attr_output[recid])))
         records.attr_output[recid].append(records.records[recid][
             'pubdate']['attribute_value'])
 
@@ -732,7 +744,7 @@ def make_stats_tsv(item_type_id, recids):
 
 
 def get_list_file_by_record_id(recid):
-    """Get Author_id by list name.
+    """Get file buckets by record id.
 
         Arguments:
             recid     -- {number} record id
@@ -776,57 +788,6 @@ def get_list_file_by_record_id(recid):
     return list_file_name
 
 
-def get_metadata_by_list_id(list_id: list):
-    """Get Author_id by list name.
-
-        Arguments:
-            list_id     -- {string} list Id record
-
-        Returns:
-            result       -- list_metadata of record has id in list_id
-
-    """
-    query_should = [
-        {
-            "match": {
-                "control_number": rec_id
-            }
-        } for rec_id in list_id]
-
-    body = {
-        "query": {
-            "bool": {
-                "should": query_should
-            }
-        }
-    }
-    indexer = RecordIndexer()
-    result = indexer.client.search(
-        index=current_app.config['INDEXER_DEFAULT_INDEX'],
-        body=body
-    )
-    list_metadata = {}
-
-    if isinstance(result, dict) and isinstance(result.get('hits'), dict) and \
-            isinstance(result['hits'].get('hits'), list):
-        list_source = result['hits'].get('hits')
-
-        ids_length = len(list_id)
-        for idx in range(ids_length):
-            if isinstance(list_source[idx].get('_source'), dict):
-                data = list_source[idx].get('_source')
-                if data.get('_item_metadata'):
-                    del data['_item_metadata']
-                if data.get('content'):
-                    del data['content']
-
-                list_metadata[list_id[idx]] = {}
-                list_metadata[list_id[idx]] = data
-            else:
-                list_metadata[list_id[idx]] = {}
-    return list_metadata
-
-
 def get_new_items_by_date(start_date: str, end_date: str) -> dict:
     """Get ranking new item by date.
 
@@ -839,7 +800,7 @@ def get_new_items_by_date(start_date: str, end_date: str) -> dict:
     result = dict()
 
     try:
-        search_instance, qs_kwargs = item_search_factory(None, record_search,
+        search_instance, _qs_kwargs = item_search_factory(None, record_search,
                                                          start_date, end_date)
         search_result = search_instance.execute()
         result = search_result.to_dict()

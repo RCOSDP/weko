@@ -29,6 +29,7 @@
                 <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
                 {{ record.metadata.hasOwnProperty('title') ? record.metadata.title[0] : record.metadata['dc:title'][0] }}
               </a>
+              <div id="record_{{record.id}}_metadata" class="hidden">{{ record }}</div>
             </td>
             <td>
                 <p class="text-danger" ng-show="items_with_restricted_content.indexOf(record.id) != -1">Contains restricted content</p>

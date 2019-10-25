@@ -58,7 +58,7 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
-    get_list_username, get_metadata_by_list_id, get_new_items_by_date, \
+    get_list_username, get_new_items_by_date, \
     get_user_info_by_email, get_user_info_by_username, get_user_information, \
     get_user_permission, make_stats_tsv, package_exports, \
     parse_ranking_results, update_json_schema_by_activity_id, \
@@ -1058,13 +1058,15 @@ def _export_item(record_id,
         exported_item['name'] = record.get('item_title')
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
+        if not records_data:
+            records_data = record
 
         # Create metadata file.
         with open('{}/{}_metadata.json'.format(tmp_path,
                                                exported_item['name']),
                   'w',
                   encoding='utf8') as output_file:
-            json.dump(record, output_file, indent=2,
+            json.dump(records_data, output_file, indent=2,
                       sort_keys=True, ensure_ascii=False)
         # First get all of the files, checking for permissions while doing so
         if include_contents:
@@ -1079,6 +1081,7 @@ def _export_item(record_id,
 
     return exported_item
 
+import traceback
 
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
@@ -1089,6 +1092,7 @@ def export_items(post_data):
         post_data['export_file_contents_radio'] == 'True' else False
     export_format = post_data['export_format_radio']
     record_ids = json.loads(post_data['record_ids'])
+    record_metadata = json.loads(post_data['record_metadata'])
     if len(record_ids) > _get_max_export_items():
         return abort(400)
     elif len(record_ids) == 0:
@@ -1098,12 +1102,12 @@ def export_items(post_data):
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory()
     item_types_data = {}
+
     try:
         # Set export folder
         export_path = temp_path.name + '/' + \
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
         # Double check for limits
-        # records_metadata = get_metadata_by_list_id(record_ids)
         for record_id in record_ids:
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
@@ -1111,7 +1115,7 @@ def export_items(post_data):
                                                 export_format,
                                                 include_contents,
                                                 record_path,
-                                                None))
+                                                record_metadata.get(record_id)))
 
             record = WekoRecord.get_record_by_pid(record_id)
             item_type_id = record.get('item_type_id')
@@ -1152,7 +1156,10 @@ def export_items(post_data):
         # Create download file
         shutil.make_archive(export_path, 'zip', export_path)
     except Exception as e:
-        current_app.logger.error(e)
+        # current_app.logger.error(e)
+        current_app.logger.error('-'*60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-'*60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
 
@@ -1226,16 +1233,18 @@ def validate():
 @login_required
 @item_permission.require(http_exception=403)
 def check_validation_error_msg(activity_id):
-    """Check whether session('update_json_schema') is exist.
+    """Check whether sessionstore('updated_json_schema_') is exist.
 
     :param activity_id: The identify of Activity.
     :return: Show error message
     """
-    if session.get('update_json_schema') and session[
-            'update_json_schema'].get(activity_id):
-        error_list = session[
-            'update_json_schema'].get(activity_id)
-
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    if sessionstore.redis.exists('updated_json_schema_{}'.format(activity_id)) and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
+        session_data = sessionstore.get('updated_json_schema_{}'.format(activity_id))
+        error_list = json.loads(session_data.decode('utf-8'))
         msg = []
         if error_list.get('error_type'):
             if error_list.get('error_type') == 'no_resource_type':

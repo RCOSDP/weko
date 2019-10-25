@@ -335,8 +335,11 @@ def display_activity(activity_id=0):
             #     pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
 
-        if session.get('update_json_schema') and session[
-                'update_json_schema'].get(activity_id):
+        sessionstore = RedisStore(redis.StrictRedis.from_url(
+            'redis://{host}:{port}/1'.format(
+                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+        if sessionstore.redis.exists('updated_json_schema_{}'.format(activity_id)) and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
             json_schema = (json_schema + "/{}").format(activity_id)
 
     # if 'approval' == action_endpoint:
@@ -665,17 +668,23 @@ def next_action(activity_id='0', action_id=0):
             return jsonify(code=-1,
                            msg=_(error_list))
 
+        sessionstore = RedisStore(redis.StrictRedis.from_url(
+            'redis://{host}:{port}/1'.format(
+                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
         if error_list:
-            if not session.get('update_json_schema'):
-                session['update_json_schema'] = {}
-            session['update_json_schema'][activity_id] = error_list
-            return previous_action(activity_id=activity_id,
-                                   action_id=action_id,
-                                   req=-1)
+            sessionstore.put(
+                'updated_json_schema_{}'.format(activity_id),
+                json.dumps(error_list).encode('utf-8'),
+                ttl_secs=300)
+            return previous_action(
+                activity_id=activity_id,
+                action_id=action_id,
+                req=-1
+            )
         else:
-            if session.get('update_json_schema') \
-                    and session['update_json_schema'].get(activity_id):
-                session['update_json_schema'][activity_id] = {}
+            if sessionstore.redis.exists('updated_json_schema_{}'.format(activity_id)):
+                sessionstore.delete('updated_json_schema_{}'.format(activity_id))
 
         if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
             saving_doi_pidstore(post_json, int(identifier_select), activity_id)
