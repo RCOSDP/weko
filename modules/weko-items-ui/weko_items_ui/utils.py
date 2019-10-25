@@ -21,8 +21,8 @@
 """Module of weko-items-ui utils.."""
 
 import csv
-import os
 import json
+import os
 from collections import OrderedDict
 from datetime import datetime
 from io import StringIO
@@ -413,7 +413,7 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
 def update_json_schema_by_activity_id(json_data, activity_id):
     """Update json schema by activity id.
 
-    :param json: The json schema
+    :param json_data: The json schema
     :param activity_id: Activity ID
     :return: json schema
     """
@@ -421,9 +421,13 @@ def update_json_schema_by_activity_id(json_data, activity_id):
         'redis://{host}:{port}/1'.format(
             host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
             port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-    if not sessionstore.redis.exists('updated_json_schema_{}'.format(activity_id)) and not sessionstore.get('updated_json_schema_{}'.format(activity_id)):
+    if not sessionstore.redis.exists(
+        'updated_json_schema_{}'.format(activity_id)) \
+        and not sessionstore.get(
+            'updated_json_schema_{}'.format(activity_id)):
         return None
-    session_data = sessionstore.get('updated_json_schema_{}'.format(activity_id))
+    session_data = sessionstore.get(
+        'updated_json_schema_{}'.format(activity_id))
     error_list = json.loads(session_data.decode('utf-8'))
 
     if error_list:
@@ -435,12 +439,13 @@ def update_json_schema_by_activity_id(json_data, activity_id):
                 if json_data['properties'][sub_item[0]].get('items'):
                     if not json_data['properties'][sub_item[0]]['items'].get(
                             'required'):
-                        json_data['properties'][sub_item[0]]['items']['required'] \
-                            = []
+                        json_data['properties'][sub_item[0]][
+                            'items']['required'] = []
                     json_data['properties'][sub_item[0]]['items'][
                         'required'].append(sub_item[1])
                 else:
-                    if not json_data['properties'][sub_item[0]].get('required'):
+                    if not json_data[
+                            'properties'][sub_item[0]].get('required'):
                         json_data['properties'][sub_item[0]]['required'] = []
                     json_data['properties'][sub_item[0]]['required'].append(
                         sub_item[1])
@@ -694,7 +699,7 @@ def make_stats_tsv(item_type_id, recids):
             index_ids = [path.split('/')[-1] for path in paths]
             records.attr_output[recid].extend(index_ids)
         records.attr_output[recid].extend([''] * (max_path - len(
-        records.attr_output[recid])))
+            records.attr_output[recid])))
         records.attr_output[recid].append(records.records[recid][
             'pubdate']['attribute_value'])
 
@@ -788,6 +793,45 @@ def get_list_file_by_record_id(recid):
     return list_file_name
 
 
+def _export_item(record_id,
+                 export_format,
+                 include_contents,
+                 tmp_path=None,
+                 records_data=None):
+    """Exports files for record according to view permissions."""
+    exported_item = {}
+    record = WekoRecord.get_record_by_pid(record_id)
+
+    if record:
+        exported_item['record_id'] = record.id
+        exported_item['name'] = record.get('item_title')
+        exported_item['files'] = []
+        exported_item['path'] = 'recid_' + str(record_id)
+        exported_item['item_type_id'] = record.get('item_type_id')
+        if not records_data:
+            records_data = record
+
+        # Create metadata file.
+        with open('{}/{}_metadata.json'.format(tmp_path,
+                                               exported_item['name']),
+                  'w',
+                  encoding='utf8') as output_file:
+            json.dump(records_data, output_file, indent=2,
+                      sort_keys=True, ensure_ascii=False)
+        # First get all of the files, checking for permissions while doing so
+        if include_contents:
+            # Get files
+            for file in record.files:  # TODO: Temporary processing
+                if check_file_download_permission(record, file.info()):
+                    exported_item['files'].append(file.info())
+                    # TODO: Then convert the item into the desired format
+                    if file:
+                        shutil.copy2(file.obj.file.uri,
+                                     tmp_path + '/' + file.obj.basename)
+
+    return exported_item
+
+
 def get_new_items_by_date(start_date: str, end_date: str) -> dict:
     """Get ranking new item by date.
 
@@ -800,8 +844,10 @@ def get_new_items_by_date(start_date: str, end_date: str) -> dict:
     result = dict()
 
     try:
-        search_instance, _qs_kwargs = item_search_factory(None, record_search,
-                                                         start_date, end_date)
+        search_instance, _qs_kwargs = item_search_factory(None,
+                                                          record_search,
+                                                          start_date,
+                                                          end_date)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:

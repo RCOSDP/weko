@@ -25,6 +25,7 @@ import os
 import shutil
 import sys
 import tempfile
+import traceback
 from datetime import date, datetime, timedelta
 
 import bagit
@@ -57,8 +58,8 @@ from weko_workflow.models import ActionStatusPolicy
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
-from .utils import get_actionid, get_current_user, get_list_email, \
-    get_list_username, get_new_items_by_date, \
+from .utils import _export_item, get_actionid, get_current_user, \
+    get_list_email, get_list_username, get_new_items_by_date, \
     get_user_info_by_email, get_user_info_by_username, get_user_information, \
     get_user_permission, make_stats_tsv, package_exports, \
     parse_ranking_results, update_json_schema_by_activity_id, \
@@ -1044,45 +1045,6 @@ def _get_max_export_items():
     return current_max
 
 
-def _export_item(record_id,
-                 export_format,
-                 include_contents,
-                 tmp_path=None,
-                 records_data=None):
-    """Exports files for record according to view permissions."""
-    exported_item = {}
-    record = WekoRecord.get_record_by_pid(record_id)
-
-    if record:
-        exported_item['record_id'] = record.id
-        exported_item['name'] = record.get('item_title')
-        exported_item['files'] = []
-        exported_item['path'] = 'recid_' + str(record_id)
-        if not records_data:
-            records_data = record
-
-        # Create metadata file.
-        with open('{}/{}_metadata.json'.format(tmp_path,
-                                               exported_item['name']),
-                  'w',
-                  encoding='utf8') as output_file:
-            json.dump(records_data, output_file, indent=2,
-                      sort_keys=True, ensure_ascii=False)
-        # First get all of the files, checking for permissions while doing so
-        if include_contents:
-            # Get files
-            for file in record.files:  # TODO: Temporary processing
-                if check_file_download_permission(record, file.info()):
-                    exported_item['files'].append(file.info())
-                    # TODO: Then convert the item into the desired format
-                    if file:
-                        shutil.copy2(file.obj.file.uri,
-                                     tmp_path + '/' + file.obj.basename)
-
-    return exported_item
-
-import traceback
-
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
@@ -1111,14 +1073,17 @@ def export_items(post_data):
         for record_id in record_ids:
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
-            result['items'].append(_export_item(record_id,
-                                                export_format,
-                                                include_contents,
-                                                record_path,
-                                                record_metadata.get(str(record_id))))
+            exported_item = _export_item(
+                record_id,
+                export_format,
+                include_contents,
+                record_path,
+                record_metadata.get(str(record_id))
+            )
 
-            record = WekoRecord.get_record_by_pid(record_id)
-            item_type_id = record.get('item_type_id')
+            result['items'].append(exported_item)
+
+            item_type_id = exported_item.get('item_type_id')
             item_type = ItemTypes.get_by_id(item_type_id)
             if not item_types_data.get(item_type_id):
                 item_types_data[item_type_id] = {}
@@ -1156,13 +1121,9 @@ def export_items(post_data):
         # Create download file
         shutil.make_archive(export_path, 'zip', export_path)
     except Exception as e:
-        # current_app.logger.error(e)
-        current_app.logger.error('-'*60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-'*60)
+        current_app.logger.error(e)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
-
     return send_file(export_path + '.zip')
 
 
@@ -1242,8 +1203,11 @@ def check_validation_error_msg(activity_id):
         'redis://{host}:{port}/1'.format(
             host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
             port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-    if sessionstore.redis.exists('updated_json_schema_{}'.format(activity_id)) and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
-        session_data = sessionstore.get('updated_json_schema_{}'.format(activity_id))
+    if sessionstore.redis.exists(
+        'updated_json_schema_{}'.format(activity_id)) \
+            and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
+        session_data = sessionstore.get(
+            'updated_json_schema_{}'.format(activity_id))
         error_list = json.loads(session_data.decode('utf-8'))
         msg = []
         if error_list.get('error_type'):

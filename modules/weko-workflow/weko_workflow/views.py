@@ -339,7 +339,10 @@ def display_activity(activity_id=0):
             'redis://{host}:{port}/1'.format(
                 host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
                 port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-        if sessionstore.redis.exists('updated_json_schema_{}'.format(activity_id)) and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
+        if sessionstore.redis.exists(
+            'updated_json_schema_{}'.format(activity_id)) \
+            and sessionstore.get(
+                'updated_json_schema_{}'.format(activity_id)):
             json_schema = (json_schema + "/{}").format(activity_id)
 
     # if 'approval' == action_endpoint:
@@ -683,8 +686,10 @@ def next_action(activity_id='0', action_id=0):
                 req=-1
             )
         else:
-            if sessionstore.redis.exists('updated_json_schema_{}'.format(activity_id)):
-                sessionstore.delete('updated_json_schema_{}'.format(activity_id))
+            if sessionstore.redis.exists(
+                    'updated_json_schema_{}'.format(activity_id)):
+                sessionstore.delete(
+                    'updated_json_schema_{}'.format(activity_id))
 
         if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
             saving_doi_pidstore(post_json, int(identifier_select), activity_id)
