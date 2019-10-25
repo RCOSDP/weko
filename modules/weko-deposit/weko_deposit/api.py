@@ -24,11 +24,14 @@ from copy import deepcopy
 from datetime import datetime
 
 import redis
+from dictdiffer import patch
+from dictdiffer.merge import Merger, UnresolvedConflictsException
 from flask import abort, current_app, has_request_context, json, request, \
     session
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
+from invenio_deposit.errors import MergeConflict
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_indexer.api import RecordIndexer
@@ -358,6 +361,26 @@ class WekoDeposit(Deposit):
     def is_published(self):
         """Check if deposit is published."""
         return self['_deposit'].get('pid') is not None
+
+    @preserve(fields=('_deposit', '$schema'))
+    def merge_with_published(self):
+        """Merge changes with latest published version."""
+        pid, first = self.fetch_published()
+        lca = first.revisions[self['_deposit']['pid']['revision_id']]
+        # ignore _deposit and $schema field
+        args = [lca.dumps(), first.dumps(), self.dumps()]
+        for arg in args:
+            if '$schema' in arg:
+                del arg['$schema']
+            if '_deposit' in arg:
+                del arg['_deposit']
+        args.append({})
+        m = Merger(*args)
+        try:
+            m.run()
+        except UnresolvedConflictsException:
+            raise MergeConflict()
+        return patch(m.unified_patches, lca)
 
     def _publish_new(self, id_=None):
         """Override the publish new to avoid creating multiple pids."""
