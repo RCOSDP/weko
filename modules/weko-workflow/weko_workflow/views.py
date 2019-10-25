@@ -922,9 +922,6 @@ def cancel_action(activity_id='0', action_id=0):
                     object_uuid=cancel_item_id)
                 cancel_pv = PIDVersioning(child=cancel_pid)
                 if cancel_pv.exists:
-                    previous_pid = cancel_pv.previous
-                    if previous_pid:
-                        activity.update(dict(item_id=previous_pid.object_uuid))
                     cancel_pv.remove_child(cancel_pid)
 
     work_activity.upt_activity_action_status(
