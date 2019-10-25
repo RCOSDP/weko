@@ -274,17 +274,18 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             nlst[idx]['rss_status'] = index_info.rss_status
         agp.append(nlst)
         # Register comment
-        try:
-            for hit in rd['hits']['hits']:
+        for hit in rd['hits']['hits']:
+            try:
                 _comment = list()
                 _comment.append(hit['_source']['title'][0])
                 hit['_source']['_comment'] = _comment
         # custom_sort
                 cn = hit['_source']['control_number']
-                hit['_source']['custom_sort'] = {
-                    str(index_info.id) : str(index_info.item_custom_sort.get(cn))}
-        except Exception:
-            pass
+                if index_info.item_custom_sort.get(cn) != None:
+                    hit['_source']['custom_sort'] = {
+                        str(index_info.id) : str(index_info.item_custom_sort.get(cn))}
+            except Exception:
+                pass
 
         # add info (headings & page info)
         try:

@@ -122,8 +122,9 @@ class ItemManagementCustomSort(BaseView):
             # save data to DB
             item_sort = {}
             for sort in sort_data:
-                item_sort[sort.get('id')] = sort.get(
-                    'custom_sort').get(index_id)
+                sd = sort.get('custom_sort').get(index_id)
+                if sd != '' and sd != None:
+                    item_sort[sort.get('id')] = sd
 
             Indexes.set_item_sort_custom(index_id, item_sort)
 
