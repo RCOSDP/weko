@@ -23,6 +23,7 @@
 import csv
 import json
 import os
+import shutil
 from collections import OrderedDict
 from datetime import datetime
 from io import StringIO
@@ -42,6 +43,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoRecord
 from weko_records.api import ItemTypes
+from weko_records_ui.permissions import check_file_download_permission
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
