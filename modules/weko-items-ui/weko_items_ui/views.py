@@ -1115,7 +1115,7 @@ def export_items(post_data):
                                                 export_format,
                                                 include_contents,
                                                 record_path,
-                                                record_metadata.get(record_id)))
+                                                record_metadata.get(str(record_id))))
 
             record = WekoRecord.get_record_by_pid(record_id)
             item_type_id = record.get('item_type_id')
