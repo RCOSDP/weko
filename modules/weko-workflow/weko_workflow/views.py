@@ -576,6 +576,7 @@ def next_action(activity_id='0', action_id=0):
     item_id = None
     recid = None
     record = None
+    pid_without_ver = None
     if activity_detail and activity_detail.item_id:
         item_id = activity_detail.item_id
         current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
@@ -584,6 +585,7 @@ def next_action(activity_id='0', action_id=0):
         recid = get_record_identifier(current_pid.pid_value)
         record = WekoDeposit.get_record(item_id)
         if record is not None:
+            pid_without_ver = get_record_without_version(current_pid)
             deposit = WekoDeposit(record, record.model)
 
     if post_json.get('temporary_save') == 1 \
@@ -668,6 +670,18 @@ def next_action(activity_id='0', action_id=0):
             action_id=action_id,
             identifier=identifier_grant
         )
+        # get workflow of first record attached version ID: x.1
+        first_pid_value_attached_ver = '{}.1'. format(pid_without_ver.pid_value)
+        first_pid_obj_attached_ver = PersistentIdentifier.get(
+            'recid', first_pid_value_attached_ver)
+        wf_activity_without_ver = work_activity.\
+            get_workflow_activity_by_item_id(
+                item_id=first_pid_obj_attached_ver.object_uuid)
+        work_activity.create_or_update_action_identifier(
+            activity_id=wf_activity_without_ver.activity_id,
+            action_id=action_id,
+            identifier=identifier_grant
+        )
 
         error_list = item_metadata_validation(item_id, identifier_select)
 
@@ -693,7 +707,6 @@ def next_action(activity_id='0', action_id=0):
                 and item_id is not None:
             record_without_version = item_id
             if record is not None and not recid:
-                pid_without_ver = get_record_without_version(current_pid)
                 record_without_version = pid_without_ver.object_uuid
             saving_doi_pidstore(item_id, record_without_version, post_json,
                                 int(identifier_select))
@@ -736,7 +749,6 @@ def next_action(activity_id='0', action_id=0):
                 else:
                     # update to record without version ID when editing
                     activity_item_id = record.model.id
-                    pid_without_ver = get_record_without_version(current_pid)
                     if pid_without_ver is not None:
                         record_without_ver = WekoDeposit.get_record(
                             pid_without_ver.object_uuid)
