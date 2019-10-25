@@ -461,12 +461,19 @@ def get_activity_id_of_record_without_version(record_attached_ver_id):
     recid = get_record_identifier(current_pid.pid_value)
     if not recid:
         pid_without_ver = get_record_without_version(current_pid)
-        activity = WorkActivity()
-        record_without_ver_activity = activity. \
-            get_workflow_activity_by_item_id(pid_without_ver.object_uuid)
-        if record_without_ver_activity is not None:
-            record_without_ver_activity_id = record_without_ver_activity.\
-                activity_id
+        if pid_without_ver is not None:
+            # get workflow of first record attached version ID: x.1
+            first_pid_value_attached_ver = '{}.1' . format(
+                pid_without_ver.pid_value)
+            first_pid_obj_attached_ver = PersistentIdentifier.get(
+                'recid', first_pid_value_attached_ver)
+            activity = WorkActivity()
+            record_without_ver_activity = activity. \
+                get_workflow_activity_by_item_id(
+                    first_pid_obj_attached_ver.object_uuid)
+            if record_without_ver_activity is not None:
+                record_without_ver_activity_id = record_without_ver_activity.\
+                    activity_id
 
     return record_without_ver_activity_id
 

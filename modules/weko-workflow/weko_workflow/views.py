@@ -628,6 +628,11 @@ def next_action(activity_id='0', action_id=0):
                     item_id=item_id,
                     feedback_maillist=action_feedbackmail.feedback_maillist
                 )
+                if not recid and pid_without_ver is not None:
+                    FeedbackMailList.update(
+                        item_id=pid_without_ver.object_uuid,
+                        feedback_maillist=action_feedbackmail.feedback_maillist
+                    )
 
             if record is not None:
                 deposit.update_feedback_mail()
@@ -671,7 +676,7 @@ def next_action(activity_id='0', action_id=0):
             identifier=identifier_grant
         )
         # get workflow of first record attached version ID: x.1
-        if not recid:
+        if not recid and pid_without_ver is not None:
             first_pid_value_attached_ver = '{}.1' . format(
                 pid_without_ver.pid_value)
             first_pid_obj_attached_ver = PersistentIdentifier.get(
@@ -708,7 +713,7 @@ def next_action(activity_id='0', action_id=0):
         if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant'] \
                 and item_id is not None:
             record_without_version = item_id
-            if record is not None and not recid:
+            if record is not None and not recid and pid_without_ver is not None:
                 record_without_version = pid_without_ver.object_uuid
             saving_doi_pidstore(item_id, record_without_version, post_json,
                                 int(identifier_select))
