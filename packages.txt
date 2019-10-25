@@ -156,3 +156,4 @@ attrs==17.4.0
 b2handle==1.1.1
 pyinstrument==3.0.3
 flask-profiler==1.8.1
+py-spy==0.2.2
