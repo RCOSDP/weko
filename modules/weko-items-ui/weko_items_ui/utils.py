@@ -613,14 +613,14 @@ def make_stats_tsv(item_type_id, recids):
                     return       -- PID object if exist
 
             """
-            ret = []
-            ret_label = []
+            o_ret = []
+            o_ret_label = []
             ret_data = []
             max_items = self.get_max_items(item_key)
             for idx in range(max_items):
                 if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY:
-                    ret.append('.file_path#' + str(idx + 1))
-                    ret_label.append('.ファイルパス#' + str(idx + 1))
+                    o_ret.append('.file_path#' + str(idx + 1))
+                    o_ret_label.append('.ファイルパス#' + str(idx + 1))
                     ret_data.append('recid_folder/file_name')
                 for key in sorted(properties):
                     key_data = []
@@ -635,8 +635,8 @@ def make_stats_tsv(item_type_id, recids):
                                               properties[key].get('title')),
                             properties[key]['items']['properties'],
                             m_data)
-                        ret.extend(sub)
-                        ret_label.extend(sublabel)
+                        o_ret.extend(sub)
+                        o_ret_label.extend(sublabel)
                         key_data.extend(subdata)
                     elif properties[key]['type'] == 'object':
                         if data and idx < len(data) and data[idx].get(key):
@@ -649,14 +649,17 @@ def make_stats_tsv(item_type_id, recids):
                                               properties[key].get('title')),
                             properties[key]['properties'],
                             m_data)
-                        ret.extend(sub)
-                        ret_label.extend(sublabel)
+                        o_ret.extend(sub)
+                        o_ret_label.extend(sublabel)
                         key_data.extend(subdata)
                     else:
                         if isinstance(data, dict):
                             data = [data]
-                        ret.append('{}[{}].{}'.format(item_key, str(idx), key))
-                        ret_label.append('{}#{}.{}'.format(
+                        o_ret.append('{}[{}].{}'.format(
+                            item_key,
+                            str(idx),
+                            key))
+                        o_ret_label.append('{}#{}.{}'.format(
                             item_label,
                             str(idx + 1),
                             properties[key].get('title')))
@@ -678,10 +681,12 @@ def make_stats_tsv(item_type_id, recids):
                                     ret_data[i] = ''
                     ret_data.extend(key_data)
                 if max_items == 1:
-                    ret = [item.replace(item_key + '[0]', item_key) for item in ret]
-                    ret_label = [item.replace(item_label + '#1', item_label) for item in ret_label]
+                    o_ret = [c_ret.replace(item_key + '[0]', item_key) for
+                             c_ret in o_ret]
+                    o_ret_label = [c_ret.replace(item_label + '#1', item_label)
+                                   for c_ret in o_ret_label]
 
-            return ret, ret_label, ret_data
+            return o_ret, o_ret_label, ret_data
 
     records = RecordsManager(recids)
 

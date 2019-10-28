@@ -1090,7 +1090,9 @@ def export_items(post_data):
 
                 item_types_data[item_type_id] = {
                     'item_type_id': item_type_id,
-                    'name': '{}({})'.format(item_type.item_type_name.name, item_type_id),
+                    'name': '{}({})'.format(
+                        item_type.item_type_name.name,
+                        item_type_id),
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
                     'keys': [],
