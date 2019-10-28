@@ -680,6 +680,7 @@ def make_stats_tsv(item_type_id, recids):
                 if max_items == 1:
                     ret = [item.replace(item_key + '[0]', item_key) for item in ret]
                     ret_label = [item.replace(item_label + '#1', item_label) for item in ret_label]
+
             return ret, ret_label, ret_data
 
     records = RecordsManager(recids)
@@ -722,6 +723,7 @@ def make_stats_tsv(item_type_id, recids):
                     keys = key
                 if not labels:
                     labels = label
+                records.attr_output[recid].extend(data)
             elif item.get('type') == 'object':
                 key, label, data = records.get_subs_item(
                     item_key,
@@ -733,13 +735,14 @@ def make_stats_tsv(item_type_id, recids):
                     keys = key
                 if not labels:
                     labels = label
+                records.attr_output[recid].extend(data)
             else:
                 if not keys:
                     keys = [item_key]
                 if not labels:
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or ['']
-            records.attr_output[recid].extend(data)
+                records.attr_output[recid].extend(data)
         ret.extend(keys)
         ret_label.extend(labels)
 
@@ -802,7 +805,7 @@ def _export_item(record_id,
 
     if record:
         exported_item['record_id'] = record.id
-        exported_item['name'] = 'recid_{}'.format(record.id)
+        exported_item['name'] = 'recid_{}'.format(record_id)
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
         exported_item['item_type_id'] = record.get('item_type_id')

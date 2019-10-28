@@ -1044,8 +1044,6 @@ def _get_max_export_items():
             current_max = max_table[role]
     return current_max
 
-# import traceback
-
 
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
@@ -1092,7 +1090,7 @@ def export_items(post_data):
 
                 item_types_data[item_type_id] = {
                     'item_type_id': item_type_id,
-                    'name': item_type.item_type_name.name,
+                    'name': '{}({})'.format(item_type.item_type_name.name, item_type_id),
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
                     'keys': [],
@@ -1124,9 +1122,6 @@ def export_items(post_data):
         shutil.make_archive(export_path, 'zip', export_path)
     except Exception as e:
         current_app.logger.error(e)
-        # current_app.logger.error('-'*60)
-        # traceback.print_exc(file=sys.stdout)
-        # current_app.logger.error('-'*60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
     return send_file(export_path + '.zip')
