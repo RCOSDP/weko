@@ -739,9 +739,9 @@ def make_stats_tsv(item_type_id, recids):
                 if not labels:
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or ['']
+            records.attr_output[recid].extend(data)
         ret.extend(keys)
         ret_label.extend(labels)
-        records.attr_output[recid].extend(data)
 
     return ret, ret_label, records.attr_output
 
@@ -802,7 +802,7 @@ def _export_item(record_id,
 
     if record:
         exported_item['record_id'] = record.id
-        exported_item['name'] = record.get('item_title')
+        exported_item['name'] = 'recid_{}'.format(record.id)
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
         exported_item['item_type_id'] = record.get('item_type_id')
