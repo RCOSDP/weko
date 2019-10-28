@@ -677,15 +677,10 @@ def next_action(activity_id='0', action_id=0):
         )
         # get workflow of first record attached version ID: x.1
         if not recid and pid_without_ver is not None:
-            first_pid_value_attached_ver = '{}.1' . format(
-                pid_without_ver.pid_value)
-            first_pid_obj_attached_ver = PersistentIdentifier.get(
-                'recid', first_pid_value_attached_ver)
-            wf_activity_without_ver = work_activity.\
-                get_workflow_activity_by_item_id(
-                    item_id=first_pid_obj_attached_ver.object_uuid)
+            record_without_ver_activity_id = \
+                get_activity_id_of_record_without_version(pid_without_ver)
             work_activity.create_or_update_action_identifier(
-                activity_id=wf_activity_without_ver.activity_id,
+                activity_id=record_without_ver_activity_id,
                 action_id=action_id,
                 identifier=identifier_grant
             )
@@ -996,13 +991,22 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                         activity_id,
                         identifier_actionid,
                         identifier)
-                    record_without_ver_activity_id = \
-                        get_activity_id_of_record_without_version(item_id)
-                    if record_without_ver_activity_id is not None:
-                        activity.create_or_update_action_identifier(
-                            record_without_ver_activity_id,
-                            identifier_actionid,
-                            identifier)
+                    current_pid = PersistentIdentifier.get_by_object(
+                        pid_type='recid',
+                        object_type='rec',
+                        object_uuid=item_id)
+                    recid = get_record_identifier(current_pid.pid_value)
+                    if not recid:
+                        pid_without_ver = get_record_without_version(
+                            current_pid)
+                        record_without_ver_activity_id = \
+                            get_activity_id_of_record_without_version(
+                                pid_without_ver)
+                        if record_without_ver_activity_id is not None:
+                            activity.create_or_update_action_identifier(
+                                record_without_ver_activity_id,
+                                identifier_actionid,
+                                identifier)
 
                 return jsonify(
                     code=0,
