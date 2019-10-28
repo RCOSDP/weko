@@ -631,7 +631,7 @@ def make_stats_tsv(item_type_id, recids):
                             m_data = None
                         sub, sublabel, subdata = self.get_subs_item(
                             '{}[{}].{}'.format(item_key, str(idx), key),
-                            '{}#{}.{}'.format(item_label, str(idx),
+                            '{}#{}.{}'.format(item_label, str(idx + 1),
                                               properties[key].get('title')),
                             properties[key]['items']['properties'],
                             m_data)
@@ -645,7 +645,7 @@ def make_stats_tsv(item_type_id, recids):
                             m_data = None
                         sub, sublabel, subdata = self.get_subs_item(
                             '{}[{}].{}'.format(item_key, str(idx), key),
-                            '{}#{}.{}'.format(item_label, str(idx),
+                            '{}#{}.{}'.format(item_label, str(idx + 1),
                                               properties[key].get('title')),
                             properties[key]['properties'],
                             m_data)
@@ -658,7 +658,7 @@ def make_stats_tsv(item_type_id, recids):
                         ret.append('{}[{}].{}'.format(item_key, str(idx), key))
                         ret_label.append('{}#{}.{}'.format(
                             item_label,
-                            str(idx),
+                            str(idx + 1),
                             properties[key].get('title')))
                         if data and idx < len(data) and data[idx].get(key):
                             key_data.append(data[idx][key])
@@ -678,9 +678,8 @@ def make_stats_tsv(item_type_id, recids):
                                     ret_data[i] = ''
                     ret_data.extend(key_data)
                 if max_items == 1:
-                    ret = [item.replace('[0]', '') for item in ret]
-                    ret_label = [item.replace('#0', '') for item in ret_label]
-
+                    ret = [item.replace(item_key + '[0]', item_key) for item in ret]
+                    ret_label = [item.replace(item_label + '#1', item_label) for item in ret_label]
             return ret, ret_label, ret_data
 
     records = RecordsManager(recids)
@@ -691,7 +690,7 @@ def make_stats_tsv(item_type_id, recids):
     # for idx in range(records.get_max_ins('path')):
     max_path = records.get_max_ins('path')
     ret.extend(['.path[{}]'.format(i) for i in range(max_path)])
-    ret_label.extend(['.IndexID#{}'.format(i) for i in range(max_path)])
+    ret_label.extend(['.IndexID#{}'.format(i + 1) for i in range(max_path)])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
 
@@ -710,7 +709,6 @@ def make_stats_tsv(item_type_id, recids):
         records.get_max_ins(item_key)
         keys = []
         labels = []
-
         for recid in recids:
             records.cur_recid = recid
             if item.get('type') == 'array':
@@ -724,7 +722,6 @@ def make_stats_tsv(item_type_id, recids):
                     keys = key
                 if not labels:
                     labels = label
-                records.attr_output[recid].extend(data)
             elif item.get('type') == 'object':
                 key, label, data = records.get_subs_item(
                     item_key,
@@ -736,16 +733,15 @@ def make_stats_tsv(item_type_id, recids):
                     keys = key
                 if not labels:
                     labels = label
-                records.attr_output[recid].extend(data)
             else:
                 if not keys:
                     keys = [item_key]
                 if not labels:
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or ['']
-                records.attr_output[recid].extend(data)
         ret.extend(keys)
         ret_label.extend(labels)
+        records.attr_output[recid].extend(data)
 
     return ret, ret_label, records.attr_output
 
