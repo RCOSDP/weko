@@ -51,6 +51,7 @@ services:
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
+      - sockets:/home/invenio 
       - type: bind
         source: .
         target: /code
@@ -132,6 +133,7 @@ services:
       - "443:443"
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
+      - sockets:/home/invenio 
     links:
       - web
 
@@ -190,4 +192,5 @@ volumes:
   static_data:
   pgsql-data:
   es-data:
+  sockets:
 
