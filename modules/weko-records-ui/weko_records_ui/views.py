@@ -82,6 +82,18 @@ def record_from_pid(pid_value):
         return {}
 
 
+@blueprint.app_template_filter()
+def pid_value_version(pid_value):
+    """Get version from pid_value."""
+    try:
+        lists = str(pid_value).split('.')
+        return lists[-1] if len(lists) > 1 else None
+    except Exception as e:
+        current_app.logger.debug('Unable to get version from pid_value: ')
+        current_app.logger.debug(e)
+        return None
+
+
 def publish(pid, record, template=None, **kwargs):
     """Record publish  status change view.
 
@@ -348,6 +360,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    # Get PID version object to retrieve all versions of item
+    pid_ver = PIDVersioning(child=pid)
+    if not pid_ver.exists:
+        abort(404)
+    active_versions = list(pid_ver.children or [])
+    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
+                        or [])
+
     check_site_license_permission()
     check_items_settings()
     send_info = {}
@@ -442,20 +462,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             record.get('_buckets').get('deposit')).\
             filter_by(is_thumbnail=True).all()
 
-    all_versions = []
-    active_versions = []
-    # Get PID version object to retrieve all versions of item
-    pid_ver = PIDVersioning(child=pid)
-    if pid_ver.exists:
-        all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
-        active_versions = list(pid_ver.children)
-
-    # Get PID version object to retrieve all versions of item
-    pid_ver = PIDVersioning(child=pid)
-    if pid_ver.exists:
-        all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
-        active_versions = list(pid_ver.children)
-
     # Flag: can edit record
     can_edit = False if not get_record_identifier(pid.pid_value) else True
 
@@ -464,7 +470,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         pid=pid,
         pid_versioning=pid_ver,
         active_versions=active_versions,
-        all_versions=all_versions,
+        last_versions=all_versions[-1],
         record=record,
         display_stats=display_stats,
         filename=filename,
