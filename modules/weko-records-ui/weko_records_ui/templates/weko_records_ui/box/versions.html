@@ -10,7 +10,7 @@
           <a href="{{ url_for('invenio_records_ui.recid', pid_value=active_versions[0].pid_value) }}">{{ version_label_const + current_version_index | string }} </a>
         </td>
         <td align="right">
-          <small class="text-muted">{{ active_versions[0].updated }}</small>
+          <small class="text-muted">{{ last_versions.updated }}</small>
         </td>
       </tr>
       {%- for pid_version in (active_versions|reverse|list) %}
