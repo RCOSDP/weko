@@ -363,10 +363,12 @@ class ItemTypeMappingView(BaseView):
             table_rows = ['pubdate']
             render_table_row = item_type.render.get('table_row')
 
-            meta_system_items = ['updated_date', 'created_date',
+            meta_system_items = ['updated_date',
+                                 'created_date',
                                  'persistent_identifier_doi',
                                  'persistent_identifier_h',
-                                 'ranking_page_url', 'belonging_index_info']
+                                 'landing_page_url',
+                                 'belonging_index_info']
 
             for key in meta_system_items:
                 if isinstance(meta_system, dict) and \

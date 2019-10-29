@@ -76,7 +76,7 @@ $(document).ready(function () {
           crtf : false
         }
       },
-      ranking_page_url : {
+      landing_page_url : {
         input_type: "cus_123",
         title: "Landing Page URL",
         title_i18n: {ja: "ランディングページのURL", en: "Landing Page URL"},
@@ -250,7 +250,7 @@ $(document).ready(function () {
           "lom_mapping": "",
           "spase_mapping": ""
         },
-        ranking_page_url: {
+        landing_page_url: {
           "display_lang_type": "",
           "oai_dc_mapping": "",
           "jpcoar_mapping": {
@@ -444,8 +444,8 @@ $(document).ready(function () {
       page_global.table_row_map.mapping['persistent_identifier_h'] = src_mapping['persistent_identifier_h'];
     }
 
-    if(src_mapping.hasOwnProperty('ranking_page_url')) {
-      page_global.table_row_map.mapping['ranking_page_url'] = src_mapping['ranking_page_url'];
+    if(src_mapping.hasOwnProperty('landing_page_url')) {
+      page_global.table_row_map.mapping['landing_page_url'] = src_mapping['landing_page_url'];
     }
 
     if(src_mapping.hasOwnProperty('belonging_index_info')) {
