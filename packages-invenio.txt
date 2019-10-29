@@ -22,7 +22,7 @@ invenio-query-parser==0.6.0
 invenio-queues==1.0.0a1
 invenio-records-files==1.0.0a10
 invenio-records-ui==1.0.0
-invenio-rest==1.1.0
+invenio-rest==1.1.2
 invenio-search==1.1.0
 invenio-search-ui==1.0.0a9
 invenio-theme==1.0.0b4
