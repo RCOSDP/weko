@@ -569,4 +569,4 @@ msgstr "新しいバージョン"
 
 #: weko_records_ui/templates/weko_records_ui/box/head.html:6
 msgid "of this record available."
-msgstr "が利用可能です。"
+msgstr "があります。"
