@@ -54,7 +54,7 @@ from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.config import ITEM_REGISTRATION_ACTION_ID
-from weko_workflow.models import ActionStatusPolicy
+from weko_workflow.models import ActionStatusPolicy, WorkFlow
 
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
@@ -830,61 +830,70 @@ def prepare_edit_item():
             upt_current_activity = activity.upt_activity_detail(
                 item_id=pid_object.object_uuid)
 
-            if upt_current_activity is not None:
+            if not upt_current_activity:
+                workflow = WorkFlow.query.filter_by(
+                    itemtype_id=item_type_id).first()
+                post_activity['workflow_id'] = workflow.id
+                post_activity['flow_id'] = workflow.flow_id
+            else:
                 post_activity['workflow_id'] = upt_current_activity.workflow_id
                 post_activity['flow_id'] = upt_current_activity.flow_id
-                post_activity['itemtype_id'] = item_type_id
-                getargs = request.args
-                community = getargs.get('community', None)
+            post_activity['itemtype_id'] = item_type_id
+            getargs = request.args
+            community = getargs.get('community', None)
 
-                # Create a new version of a record.
-                record = WekoDeposit.get_record(item_id)
-                if record is None:
-                    return jsonify(code=-1, msg=_('Record does not exist.'))
-                deposit = WekoDeposit(record, record.model)
-                new_record = deposit.newversion(pid_object)
-                if new_record is None:
-                    return jsonify(code=-1, msg=_('An error has occurred.'))
-                rtn = activity.init_activity(
-                    post_activity, community, new_record.model.id)
-                if rtn:
-                    # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
-                    identifier_actionid = get_actionid('identifier_grant')
+            # Create a new version of a record.
+            record = WekoDeposit.get_record(item_id)
+            if record is None:
+                return jsonify(code=-1, msg=_('Record does not exist.'))
+            deposit = WekoDeposit(record, record.model)
+            new_record = deposit.newversion(pid_object)
+            if new_record is None:
+                return jsonify(code=-1, msg=_('An error has occurred.'))
+            rtn = activity.init_activity(
+                post_activity, community, new_record.model.id)
+            if rtn:
+                # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
+                identifier_actionid = get_actionid('identifier_grant')
+                if upt_current_activity:
                     identifier = activity.get_action_identifier_grant(
                         upt_current_activity.activity_id, identifier_actionid)
-                    if identifier:
-                        if identifier.get('action_identifier_select') > \
-                                IDENTIFIER_GRANT_DOI:
-                            identifier['action_identifier_select'] = \
-                                IDENTIFIER_GRANT_CAN_WITHDRAW
-                        elif identifier.get('action_identifier_select') == \
-                                IDENTIFIER_GRANT_IS_WITHDRAWING:
-                            identifier['action_identifier_select'] = \
-                                IDENTIFIER_GRANT_WITHDRAWN
-                        activity.create_or_update_action_identifier(
-                            rtn.activity_id,
-                            identifier_actionid,
-                            identifier)
+                else:
+                    identifier = activity.get_action_identifier_grant(
+                        '', identifier_actionid)
+                if identifier:
+                    if identifier.get('action_identifier_select') > \
+                            IDENTIFIER_GRANT_DOI:
+                        identifier['action_identifier_select'] = \
+                            IDENTIFIER_GRANT_CAN_WITHDRAW
+                    elif identifier.get('action_identifier_select') == \
+                            IDENTIFIER_GRANT_IS_WITHDRAWING:
+                        identifier['action_identifier_select'] = \
+                            IDENTIFIER_GRANT_WITHDRAWN
+                    activity.create_or_update_action_identifier(
+                        rtn.activity_id,
+                        identifier_actionid,
+                        identifier)
 
-                    mail_list = FeedbackMailList.get_mail_list_by_item_id(
-                        item_id=pid_object.object_uuid)
-                    if mail_list:
-                        activity.create_or_update_action_feedbackmail(
-                            activity_id=rtn.activity_id,
-                            action_id=ITEM_REGISTRATION_ACTION_ID,
-                            feedback_maillist=mail_list
-                        )
+                mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                    item_id=pid_object.object_uuid)
+                if mail_list:
+                    activity.create_or_update_action_feedbackmail(
+                        activity_id=rtn.activity_id,
+                        action_id=ITEM_REGISTRATION_ACTION_ID,
+                        feedback_maillist=mail_list
+                    )
 
-                    if community:
-                        comm = GetCommunity.get_community_by_id(community)
-                        url_redirect = url_for('weko_workflow.display_activity',
-                                               activity_id=rtn.activity_id,
-                                               community=comm.id)
-                    else:
-                        url_redirect = url_for('weko_workflow.display_activity',
-                                               activity_id=rtn.activity_id)
-                    return jsonify(code=0, msg='success',
-                                   data={'redirect': url_redirect})
+                if community:
+                    comm = GetCommunity.get_community_by_id(community)
+                    url_redirect = url_for('weko_workflow.display_activity',
+                                           activity_id=rtn.activity_id,
+                                           community=comm.id)
+                else:
+                    url_redirect = url_for('weko_workflow.display_activity',
+                                           activity_id=rtn.activity_id)
+                return jsonify(code=0, msg='success',
+                               data={'redirect': url_redirect})
         except Exception as e:
             current_app.logger.error('Unexpected error: ', str(e))
     return jsonify(code=-1, msg=_('An error has occurred.'))
