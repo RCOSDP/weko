@@ -4,7 +4,7 @@
     {%- set pid_version_index = active_versions.index(pid) %}
     {%- set version_label_const = _('Ver.') %}
     <table class="table">
-      {%- set current_version_index = last_versions.pid_value | pid_value_version | int + 1 %}
+      {%- set current_version_index = last_versions.pid_value | pid_value_version | int %}
       <tr class="{% if pid_version_index == 0 %}info {% endif %}">
         <td>
           <a href="{{ url_for('invenio_records_ui.recid', pid_value=active_versions[0].pid_value) }}">{{ version_label_const + current_version_index | string }} </a>

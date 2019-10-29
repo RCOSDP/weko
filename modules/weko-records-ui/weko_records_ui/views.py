@@ -362,9 +362,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     """
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
-    if not pid_ver.exists:
+    if not pid_ver.exists or pid_ver.is_last_child:
         abort(404)
     active_versions = list(pid_ver.children or [])
+    if active_versions:
+        active_versions.remove(pid_ver.last_child)
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
                         or [])
 
