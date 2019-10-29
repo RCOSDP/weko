@@ -472,7 +472,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         pid=pid,
         pid_versioning=pid_ver,
         active_versions=active_versions,
-        last_versions=all_versions[-1],
+        all_versions=all_versions,
         record=record,
         display_stats=display_stats,
         filename=filename,
