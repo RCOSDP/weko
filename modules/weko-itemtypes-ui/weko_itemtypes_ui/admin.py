@@ -545,6 +545,7 @@ item_import_adminview = {
     'kwargs': {
         'category': _('Items'),
         'name': _('Import'),
+        'url': '/admin/items/import',
         'endpoint': 'items/import'
     }
 }
