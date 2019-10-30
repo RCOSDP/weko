@@ -83,6 +83,3 @@ IDENTIFIER_GRANT_IS_WITHDRAWING = -2
 
 IDENTIFIER_GRANT_WITHDRAWN = -3
 """Identifier grant was withdrawn."""
-
-WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY = 'item_1538028827221'
-"""Property key of file Preview."""

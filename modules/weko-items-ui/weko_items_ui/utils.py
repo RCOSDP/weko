@@ -48,8 +48,6 @@ from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
 
-from .config import WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY
-
 
 def get_list_username():
     """Get list username.
@@ -618,12 +616,10 @@ def make_stats_tsv(item_type_id, recids):
             ret_data = []
             max_items = self.get_max_items(item_key)
             for idx in range(max_items):
-                if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY:
-                    o_ret.append('.file_path#' + str(idx + 1))
-                    o_ret_label.append('.ファイルパス#' + str(idx + 1))
-                    ret_data.append('recid_folder/file_name')
+                key_list = []
+                key_label = []
+                key_data = []
                 for key in sorted(properties):
-                    key_data = []
                     if properties[key]['type'] == 'array':
                         if data and idx < len(data) and data[idx].get(key):
                             m_data = data[idx][key]
@@ -635,8 +631,8 @@ def make_stats_tsv(item_type_id, recids):
                                               properties[key].get('title')),
                             properties[key]['items']['properties'],
                             m_data)
-                        o_ret.extend(sub)
-                        o_ret_label.extend(sublabel)
+                        key_list.extend(sub)
+                        key_label.extend(sublabel)
                         key_data.extend(subdata)
                     elif properties[key]['type'] == 'object':
                         if data and idx < len(data) and data[idx].get(key):
@@ -649,17 +645,17 @@ def make_stats_tsv(item_type_id, recids):
                                               properties[key].get('title')),
                             properties[key]['properties'],
                             m_data)
-                        o_ret.extend(sub)
-                        o_ret_label.extend(sublabel)
+                        key_list.extend(sub)
+                        key_label.extend(sublabel)
                         key_data.extend(subdata)
                     else:
                         if isinstance(data, dict):
                             data = [data]
-                        o_ret.append('{}[{}].{}'.format(
+                        key_list.append('{}[{}].{}'.format(
                             item_key,
                             str(idx),
                             key))
-                        o_ret_label.append('{}#{}.{}'.format(
+                        key_label.append('{}#{}.{}'.format(
                             item_label,
                             str(idx + 1),
                             properties[key].get('title')))
@@ -668,18 +664,21 @@ def make_stats_tsv(item_type_id, recids):
                         else:
                             key_data.append('')
 
-                    if item_key == WEKO_ITEMS_UI_FILE_PREVIEW_ITEM_KEY \
-                            and key == 'filename':
-                        ret_range = len(ret_data)
-                        for i in range(ret_range):
-                            if ret_data[i] == 'recid_folder/file_name':
-                                if data and idx < len(data) \
-                                        and data[idx].get(key):
-                                    ret_data[i] = 'recid_{}/{}'.format(str(
-                                        self.cur_recid), data[idx][key])
-                                else:
-                                    ret_data[i] = ''
-                    ret_data.extend(key_data)
+                key_list_len = len(key_list)
+                for key_index in range(key_list_len):
+                    if 'filename' in key_list[key_index]:
+                        key_list.insert(0, '.file_path#' + str(idx + 1))
+                        key_label.insert(0, '.ファイルパス#' + str(idx + 1))
+                        if key_data[key_index]:
+                            key_data.insert(0, 'recid_{}/{}'.format(str(
+                                self.cur_recid), key_data[key_index]))
+                        else:
+                            key_data.insert(0, '')
+                        break
+
+                o_ret.extend(key_list)
+                o_ret_label.extend(key_label)
+                ret_data.extend(key_data)
 
                 if max_items == 1:
                     new_ret = []
