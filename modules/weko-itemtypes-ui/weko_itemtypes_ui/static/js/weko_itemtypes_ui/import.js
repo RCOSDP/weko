@@ -32,7 +32,7 @@ class MainLayout extends React.Component {
           <li role="presentation"><a href="#">{list}</a></li>
         </ul>
 
-        <ImportComponent/>
+        <ImportComponent></ImportComponent>
       )
     }
 }
@@ -54,7 +54,7 @@ class ImportComponent extends React.Component {
               <div className="col-md-8">
                 <div>
                   <button className="btn btn-default">{select_file}</button>
-                  <input type="file" name="select_file">
+                  <input type="file" name="select_file"/>
                 </div>
                 <div>
                   <label>{selected_file_name}</label>
