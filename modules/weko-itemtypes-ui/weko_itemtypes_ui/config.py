@@ -41,6 +41,9 @@ WEKO_ITEMTYPES_UI_ADMIN_MAPPING_TEMPLATE = \
 WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE = 'weko_itemtypes_ui/admin/error.html'
 """Error template for the item type page."""
 
+WEKO_ADMIN_ITEM_IMPORT_TEMPLATE = 'weko_itemtypes_ui/admin/import.html'
+"""import template for the import page."""
+
 WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
     '1': {'name': _('Text Field'), 'value': 'text'},
     '2': {'name': _('Text Area'), 'value': 'textarea'},
