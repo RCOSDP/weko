@@ -55,7 +55,7 @@ class ImportComponent extends React.Component {
               </div>
               <div className="col-md-8">
                 <div>
-                  <button className="btn btn-default">{select_file}</button>
+                  <button className="btn btn-primary">{select_file}</button>
                   <input type="file" name="select_file"/>
                 </div>
                 <div>
@@ -71,7 +71,7 @@ class ImportComponent extends React.Component {
               </div>
               <div className="col-md-8">
                 <div>
-                  <button className="btn btn-default">{select_index}</button>
+                  <button className="btn btn-primary">{select_index}</button>
                 </div>
                 <div>
                   <label>{selected_index}</label>
@@ -86,7 +86,7 @@ class ImportComponent extends React.Component {
               </div>
               <div className="col-md-8">
                 <div>
-                  <button className="btn btn-default">{select_work_flow}</button>
+                  <button className="btn btn-primary">{select_work_flow}</button>
                 </div>
                 <div>
                   <label>{selected_work_flow}</label>
@@ -96,7 +96,7 @@ class ImportComponent extends React.Component {
           </div>
           <div className="col-md-12">
             <div className="row">
-              <div className="col-md-4"><button className="btn btn-default"><span className="glyphicon glyphicon-download-alt"></span>{import_label}</button></div>
+              <div className="col-md-4"><button className="btn btn-primary"><span className="glyphicon glyphicon-download-alt"></span>{import_label}</button></div>
             </div>
           </div>
         </div>
