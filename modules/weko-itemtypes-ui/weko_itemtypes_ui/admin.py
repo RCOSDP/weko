@@ -503,8 +503,9 @@ class ItemImportView(BaseView):
         :param
         :return: The rendered template.
         """
+        from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
         return self.render(
-            current_app.config['WEKO_ITEM_ADMIN_IMPORT_TEMPLATE'],
+            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
             lang_code=session.get('selected_language', 'en')  # Set default
         )
 
@@ -544,6 +545,7 @@ item_import_adminview = {
     'kwargs': {
         'category': _('Items'),
         'name': _('Import'),
+        'url': '/admin/items/import',
         'endpoint': 'items/import'
     }
 }
