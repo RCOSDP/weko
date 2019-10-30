@@ -27,12 +27,14 @@ class MainLayout extends React.Component {
     render() {
       return(
 
+        <div>
         <ul className="nav nav-tabs">
           <li role="presentation" className="active"><a href="#">{import_label}</a></li>
           <li role="presentation"><a href="#">{list}</a></li>
         </ul>
 
         <ImportComponent></ImportComponent>
+        </div>
       )
     }
 }
