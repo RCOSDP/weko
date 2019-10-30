@@ -107,7 +107,8 @@ setup(
         ],
         'invenio_assets.bundles': [
             'weko_itemtypes_ui_js = weko_itemtypes_ui.bundles:js',
-            'weko_admin_item_import_js = weko_admin_item_import_js.bundles:js',
+            'weko_admin_item_import_js = '
+            'weko_itemtypes_ui.bundles:weko_admin_item_import_js',
             'weko_itemtypes_mapping_ui_js'
             ' = weko_itemtypes_ui.bundles:js_mapping',
             'weko_itemtypes_property_ui_js'
