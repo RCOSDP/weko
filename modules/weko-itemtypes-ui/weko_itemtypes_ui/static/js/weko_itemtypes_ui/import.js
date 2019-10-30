@@ -26,10 +26,78 @@ class MainLayout extends React.Component {
 
     render() {
       return(
+
         <ul className="nav nav-tabs">
           <li role="presentation" className="active"><a href="#">{import_label}</a></li>
           <li role="presentation"><a href="#">{list}</a></li>
         </ul>
+
+        <ImportComponent/>
+      )
+    }
+}
+
+class ImportComponent extends React.Component {
+
+    componentDidMount() {
+      console.log("ImportComponent is work");
+    }
+
+    render() {
+      return(
+        <div className="row">
+          <div className="col-md-12">
+            <div className="row">
+              <div className="col-md-4">
+                <label>{import_file}</label>
+              </div>
+              <div className="col-md-8">
+                <div>
+                  <button className="btn btn-default">{select_file}</button>
+                  <input type="file" name="select_file">
+                </div>
+                <div>
+                  <label>{selected_file_name}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-12">
+            <div className="row">
+              <div className="col-md-4">
+                <label>{import_index}</label>
+              </div>
+              <div className="col-md-8">
+                <div>
+                  <button className="btn btn-default">{select_index}</button>
+                </div>
+                <div>
+                  <label>{selected_index}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-12">
+            <div className="row">
+              <div className="col-md-4">
+                <label>{work_flow}</label>
+              </div>
+              <div className="col-md-8">
+                <div>
+                  <button className="btn btn-default">{select_work_flow}</button>
+                </div>
+                <div>
+                  <label>{selected_work_flow}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-12">
+            <div className="row">
+              <div className="col-md-4"><button className="btn btn-default"><span className="glyphicon glyphicon-download-alt"></span>{import_label}</button></div>
+            </div>
+          </div>
+        </div>
       )
     }
 }
