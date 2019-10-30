@@ -40,9 +40,8 @@ from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
-from invenio_stats.utils import QueryCommonReportsHelper, \
-    QueryItemRegReportHelper, QueryRecordViewReportHelper, \
-    QuerySearchReportHelper
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -1122,8 +1121,10 @@ def export_items(post_data):
         bagit.make_bag(export_path)
         # Create download file
         shutil.make_archive(export_path, 'zip', export_path)
-    except Exception as e:
-        current_app.logger.error(e)
+    except Exception:
+        current_app.logger.error('-'*60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-'*60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
     return send_file(export_path + '.zip')

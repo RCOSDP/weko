@@ -680,12 +680,25 @@ def make_stats_tsv(item_type_id, recids):
                                 else:
                                     ret_data[i] = ''
                     ret_data.extend(key_data)
-                if max_items == 1:
-                    o_ret = [c_ret.replace(item_key + '[0]', item_key) for
-                             c_ret in o_ret]
-                    o_ret_label = [c_ret.replace(item_label + '#1', item_label)
-                                   for c_ret in o_ret_label]
 
+                if max_items == 1:
+                    new_ret = []
+                    new_ret_label = []
+                    for c_ret in o_ret:
+                        if item_key + '[0]' in c_ret:
+                            new_ret.append(c_ret.replace(item_key + '[0]',
+                                                         item_key))
+                        else:
+                            new_ret.append(c_ret)
+                    for c_ret in o_ret_label:
+                        if item_label + '#1' in c_ret:
+                            new_ret_label.append(c_ret.replace(item_label
+                                                               + '#1',
+                                                               item_label))
+                        else:
+                            new_ret_label.append(c_ret)
+                    o_ret = new_ret
+                    o_ret_label = new_ret_label
             return o_ret, o_ret_label, ret_data
 
     records = RecordsManager(recids)
@@ -695,7 +708,7 @@ def make_stats_tsv(item_type_id, recids):
 
     # for idx in range(records.get_max_ins('path')):
     max_path = records.get_max_ins('path')
-    ret.extend(['.path[{}]'.format(i) for i in range(max_path)])
+    ret.extend(['.metadata.path[{}]'.format(i) for i in range(max_path)])
     ret_label.extend(['.IndexID#{}'.format(i + 1) for i in range(max_path)])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
@@ -748,7 +761,13 @@ def make_stats_tsv(item_type_id, recids):
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or ['']
                 records.attr_output[recid].extend(data)
-        ret.extend(keys)
+
+        new_keys = []
+        for key in keys:
+            if 'file_path' not in key:
+                key = '.metadata.{}'.format(key)
+            new_keys.append(key)
+        ret.extend(new_keys)
         ret_label.extend(labels)
 
     return ret, ret_label, records.attr_output
