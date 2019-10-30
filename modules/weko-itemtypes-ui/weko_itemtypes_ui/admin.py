@@ -497,7 +497,6 @@ class ItemImportView(BaseView):
     """ItemImportView."""
 
     @expose('/', methods=['GET'])
-    @item_type_permission.require(http_exception=403)
     def index(self):
         """Renders an item import view.
 
@@ -505,8 +504,8 @@ class ItemImportView(BaseView):
         :return: The rendered template.
         """
         return self.render(
-            current_app.config['WEKO_ADMIN_ITEM_IMPORT_TEMPLATE'],
-            item='123',
+            current_app.config['WEKO_ITEMT_ADMIN_IMPORT_TEMPLATE'],
+            lang_code=session.get('selected_language', 'en')  # Set default
         )
 
 
