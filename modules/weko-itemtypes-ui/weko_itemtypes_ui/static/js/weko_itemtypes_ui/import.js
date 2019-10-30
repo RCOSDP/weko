@@ -26,6 +26,10 @@ class MainLayout extends React.Component {
 
     render() {
       return(
+        <ul className="nav nav-tabs">
+          <li role="presentation" className="active"><a href="#">{import_label}</a></li>
+          <li role="presentation"><a href="#">{list}</a></li>
+        </ul>
       )
     }
 }
