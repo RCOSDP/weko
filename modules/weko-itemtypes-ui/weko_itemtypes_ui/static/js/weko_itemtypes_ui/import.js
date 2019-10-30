@@ -1,4 +1,4 @@
-const import = document.getElementById("import").value;
+const import_label = document.getElementById("import").value;
 const list = document.getElementById("list").value;
 const import_file = document.getElementById("import_file").value;
 const import_index = document.getElementById("import_index").value;
@@ -20,15 +20,12 @@ const cancel = document.getElementById("cancel").value;
 class MainLayout extends React.Component {
 
     componentDidMount() {
-      console.log("import is work")
-      console.log("cancel", cancel)
+      console.log("import is work");
+      console.log("cancel", cancel);
     }
 
     render() {
       return(
-        <div>
-          hello
-        <div>
       )
     }
 }
