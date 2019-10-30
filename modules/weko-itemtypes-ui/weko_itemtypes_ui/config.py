@@ -41,7 +41,7 @@ WEKO_ITEMTYPES_UI_ADMIN_MAPPING_TEMPLATE = \
 WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE = 'weko_itemtypes_ui/admin/error.html'
 """Error template for the item type page."""
 
-WEKO_ITEMT_ADMIN_IMPORT_TEMPLATE = 'weko_itemtypes_ui/admin/import.html'
+WEKO_ITEM_ADMIN_IMPORT_TEMPLATE = 'weko_itemtypes_ui/admin/import.html'
 """import template for the import page."""
 
 WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {

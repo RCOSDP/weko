@@ -504,7 +504,7 @@ class ItemImportView(BaseView):
         :return: The rendered template.
         """
         return self.render(
-            current_app.config['WEKO_ITEMT_ADMIN_IMPORT_TEMPLATE'],
+            current_app.config['WEKO_ITEM_ADMIN_IMPORT_TEMPLATE'],
             lang_code=session.get('selected_language', 'en')  # Set default
         )
 
