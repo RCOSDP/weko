@@ -493,23 +493,6 @@ class ItemTypeMappingView(BaseView):
         return jsonify(remove_xsd_prefix(jpcoar_lists))
 
 
-class ItemImportView(BaseView):
-    """ItemImportView."""
-
-    @expose('/', methods=['GET'])
-    @item_type_permission.require(http_exception=403)
-    def index(self):
-        """Renders an item import view.
-
-        :param
-        :return: The rendered template.
-        """
-        return self.render(
-            current_app.config['WEKO_ADMIN_ITEM_IMPORT_TEMPLATE'],
-        )
-
-
-
 itemtype_meta_data_adminview = {
     'view_class': ItemTypeMetaDataView,
     'kwargs': {
@@ -540,19 +523,8 @@ itemtype_mapping_adminview = {
     }
 }
 
-item_import_adminview = {
-    'view_class': ItemImportView,
-    'kwargs': {
-        'category': _('Items'),
-        'name': _('Import'),
-        'url': '/admin/items/import',
-        'endpoint': 'items/import'
-    }
-}
-
 __all__ = (
     'itemtype_meta_data_adminview',
     'itemtype_properties_adminview',
-    'itemtype_mapping_adminview',
-    'item_import_adminview'
+    'itemtype_mapping_adminview'
 )

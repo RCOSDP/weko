@@ -209,6 +209,22 @@ class ItemManagementBulkSearch(BaseView):
         return False
 
 
+class ItemImportView(BaseView):
+    """ItemImportView."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        return self.render(
+            current_app.config['WEKO_ADMIN_ITEM_IMPORT_TEMPLATE'],
+        )
+
+
+
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,
     'kwargs': {
@@ -236,8 +252,19 @@ item_management_custom_sort_adminview = {
     }
 }
 
+item_import_adminview = {
+    'view_class': ItemImportView,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Import'),
+        'url': '/admin/items/import',
+        'endpoint': 'items/import'
+    }
+}
+
 __all__ = (
     'item_management_bulk_delete_adminview',
     'item_management_bulk_search_adminview',
     'item_management_custom_sort_adminview',
+    'item_import_adminview'
 )
