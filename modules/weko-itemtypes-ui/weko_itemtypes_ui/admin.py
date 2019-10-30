@@ -506,8 +506,8 @@ class ItemImportView(BaseView):
         """
         return self.render(
             current_app.config['WEKO_ADMIN_ITEM_IMPORT_TEMPLATE'],
+            item='123',
         )
-
 
 
 itemtype_meta_data_adminview = {
