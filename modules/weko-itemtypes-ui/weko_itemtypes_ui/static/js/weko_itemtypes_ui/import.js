@@ -107,7 +107,8 @@ class ImportComponent extends React.Component {
     }
 
     handleChangeWF(e) {
-      value = e.target.value
+
+      const value = e.target.value
       this.setState({
         wl_key: value
       })
