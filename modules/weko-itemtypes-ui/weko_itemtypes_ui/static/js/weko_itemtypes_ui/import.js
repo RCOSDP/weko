@@ -49,7 +49,8 @@ class ImportComponent extends React.Component {
         file: null,
         file_name: "",
         isShowModalWF: false,
-        work_flow : {}
+        work_flow : {},
+        wl_key: null
       }
       this.handleChangefile = this.handleChangefile.bind(this)
       this.handleClickFile = this.handleClickFile.bind(this)
@@ -104,8 +105,15 @@ class ImportComponent extends React.Component {
       }
     }
 
+    handleChangeWF(e) {
+      value = e.target.value
+      this.setState({
+        wl_key: value
+      })
+    }
+
     render() {
-      const {file_name,isShowModalWF} = this.state
+      const {file_name,isShowModalWF,wl_key,work_flow} = this.state
       return(
         <div className="container import_component">
           <div className="row layout">
@@ -158,7 +166,9 @@ class ImportComponent extends React.Component {
                     <button className="btn btn-primary" onClick={this.handleShowModalWorkFlow}>{select_work_flow}</button>
                   </div>
                   <div className="block-placeholder">
-                    <p>{selected_work_flow}</p>
+                    {
+                      work_flow ? <p className="active">{work_flow.flows_name}</p> : <p>{selected_work_flow}</p>
+                    }
                   </div>
                 </div>
               </div>
@@ -195,7 +205,14 @@ class ImportComponent extends React.Component {
                       workflows.map((item, key) => {
                         return (
                           <tr>
-                            <td><input type='radio' name='workflow' value={item.id}></input></td>
+                            <td style={{textAlign: 'center'}}>
+                              <input 
+                                type='radio'
+                                name='workflow' 
+                                value={key} 
+                                onChange={this.handleChangeWF}
+                                ></input>
+                            </td>
                             <td>{item.flows_name}</td>
                             <td>{item.item_type_name}</td>
                             <td>{item.flow_name}</td>
@@ -207,7 +224,7 @@ class ImportComponent extends React.Component {
                 </table>
               </div>
               <div class="col-sm-12 footer text-align-right">
-                <button className="btn btn-primary"><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
+                <button className="btn btn-primary" onClick={()=>{this.handleShowModalWorkFlow(workflows[wl_key])}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
                 <button className="btn btn-danger m-l-15" onClick={this.handleShowModalWorkFlow}>{cancel}</button>
               </div>
             </div>             
