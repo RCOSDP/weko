@@ -510,6 +510,10 @@ class ItemImportView(BaseView):
         current_app.logger.debug("========================")
         current_app.logger.debug(type(workflows))
         workflows_js = [get_content_workflow(item) for item in workflows]
+        for item in workflows_js:
+            current_app.logger.debug("========================")
+            current_app.logger.debug(type(item))
+            current_app.logger.debug(item)
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
             workflows=jsonify(workflows_js)
