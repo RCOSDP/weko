@@ -529,7 +529,7 @@ def get_content_workflow(item):
     result['item_type_name'] = item.itemtype.item_type_name.name
 
     
-    return jsonify(result)
+    return result
 
 
 itemtype_meta_data_adminview = {
