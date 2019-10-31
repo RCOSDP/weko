@@ -153,7 +153,7 @@ class ImportComponent extends React.Component {
                 </div>
                 <div className="col-md-8">
                   <div>
-                    <button className="btn btn-primary">{select_work_flow}</button>
+                    <button className="btn btn-primary" onClick={this.handleShowModalWorkFlow}>{select_work_flow}</button>
                   </div>
                   <div className="block-placeholder">
                     <p>{selected_work_flow}</p>
@@ -174,7 +174,7 @@ class ImportComponent extends React.Component {
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
             <div className="modal-mark"></div>
             <div className="modal-content">
-
+              content
             </div>
           </div>
         </div>
