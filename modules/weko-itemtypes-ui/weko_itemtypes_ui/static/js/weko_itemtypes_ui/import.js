@@ -254,7 +254,11 @@ class ImportComponent extends React.Component {
                   <h3>{import_index}</h3>
                 </div>
                 <div class="col-sm-12">
-
+                  <div className="row">
+                    <div className="col-md-6">
+                      <app-root-tree></app-root-tree>
+                    </div>
+                  </div>
                 </div>
                 <div class="col-sm-12 footer text-align-right">
                   <button className="btn btn-primary" onClick={()=>{this.handleShowModalIndex()}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
