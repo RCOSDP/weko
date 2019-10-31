@@ -719,10 +719,7 @@ def make_stats_tsv(item_type_id, recids):
     ret_label.append('公開日')
 
     for recid in recids:
-        paths = records.attr_data['path'].get(recid)
-        if paths:
-            index_ids = [path.split('/')[-1] for path in paths]
-            records.attr_output[recid].extend(index_ids)
+        records.attr_output[recid].extend(records.attr_data['path'][recid])
         records.attr_output[recid].extend([''] * (max_path - len(
             records.attr_output[recid])))
         records.attr_output[recid].append(records.records[recid][
