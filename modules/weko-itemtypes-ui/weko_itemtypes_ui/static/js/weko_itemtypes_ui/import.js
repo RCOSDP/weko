@@ -28,12 +28,12 @@ class MainLayout extends React.Component {
       return(
 
         <div>
-        <ul className="nav nav-tabs">
-          <li role="presentation" className="active"><a href="#">{import_label}</a></li>
-          <li role="presentation"><a href="#">{list}</a></li>
-        </ul>
+          <ul className="nav nav-tabs">
+            <li role="presentation" className="active"><a href="#">{import_label}</a></li>
+            <li role="presentation"><a href="#">{list}</a></li>
+          </ul>
 
-        <ImportComponent></ImportComponent>
+          <ImportComponent></ImportComponent>
         </div>
       )
     }
@@ -41,62 +41,105 @@ class MainLayout extends React.Component {
 
 class ImportComponent extends React.Component {
 
+    constructor(){
+      super()
+      this.state = {
+        file: null,
+        file_name: ""
+      }
+    }
+
     componentDidMount() {
       console.log("ImportComponent is work");
     }
 
+    handleChangefile = (e) => {
+      const file = e.target.files[0],
+            reader = new FileReader();
+        const file_name = this.getLastString(e.target.value, "\\")
+        if (this.getLastString(favicon_name,".") !== 'tsv') {
+          return false
+        }
+
+        this.setState({
+          file_name:file_name,
+         });
+
+        reader.onload = (e) => {
+            this.setState({
+                file: reader.result,
+            });
+        }
+        reader.readAsDataURL(file);
+    }
+
+    handleClickFile = () => {
+      this.inputElement.click();
+    }
+
     render() {
+      const {file_name} = this.state
       return(
-        <div className="row">
-          <div className="col-md-12">
-            <div className="row">
-              <div className="col-md-4">
-                <label>{import_file}</label>
-              </div>
-              <div className="col-md-8">
-                <div>
-                  <button className="btn btn-primary">{select_file}</button>
-                  <input type="file" name="select_file"/>
+        <div className="container import_component">
+          <div className="row layout">
+            <div className="col-md-12">
+              <div className="row">
+                <div className="col-md-4">
+                  <label>{import_file}</label>
                 </div>
-                <div>
-                  <label>{selected_file_name}</label>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-12">
-            <div className="row">
-              <div className="col-md-4">
-                <label>{import_index}</label>
-              </div>
-              <div className="col-md-8">
-                <div>
-                  <button className="btn btn-primary">{select_index}</button>
-                </div>
-                <div>
-                  <label>{selected_index}</label>
+                <div className="col-md-8">
+                  <div>
+                    <button className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
+                    <input
+                      type="file"
+                      className="input-file"
+                      ref={input => this.inputElement = input}
+                      accept=".tsv"
+                      onChange={this.handleChangefile}
+                      />
+                  </div>
+                  <div>
+                    {
+                      file_name ? <label>{file_name}</label> : <q>{selected_file_name}</q>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="col-md-12">
-            <div className="row">
-              <div className="col-md-4">
-                <label>{work_flow}</label>
-              </div>
-              <div className="col-md-8">
-                <div>
-                  <button className="btn btn-primary">{select_work_flow}</button>
+            <div className="col-md-12">
+              <div className="row">
+                <div className="col-md-4">
+                  <label>{import_index}</label>
                 </div>
-                <div>
-                  <label>{selected_work_flow}</label>
+                <div className="col-md-8">
+                  <div>
+                    <button className="btn btn-primary">{select_index}</button>
+                  </div>
+                  <div>
+                    <label>{selected_index}</label>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="col-md-12">
-            <div className="row">
-              <div className="col-md-4"><button className="btn btn-primary"><span className="glyphicon glyphicon-download-alt"></span>{import_label}</button></div>
+            <div className="col-md-12">
+              <div className="row">
+                <div className="col-md-4">
+                  <label>{work_flow}</label>
+                </div>
+                <div className="col-md-8">
+                  <div>
+                    <button className="btn btn-primary">{select_work_flow}</button>
+                  </div>
+                  <div>
+                    <label>{selected_work_flow}</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-12">
+              <div className="row">
+                <div className="col-md-4"><button className="btn btn-primary"><span className="glyphicon glyphicon-download-alt"></span>{import_label}</button></div>
+              </div>
             </div>
           </div>
         </div>
