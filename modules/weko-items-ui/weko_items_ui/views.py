@@ -502,6 +502,7 @@ def iframe_items_index(pid_value=0):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
+
 def default_view_method(pid, record, template=None):
     """Default view method.
 

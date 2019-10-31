@@ -898,9 +898,9 @@ def export_items(post_data):
         # Create download file
         shutil.make_archive(export_path, 'zip', export_path)
     except Exception:
-        current_app.logger.error('-'*60)
+        current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-'*60)
+        current_app.logger.error('-' * 60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
     return send_file(export_path + '.zip')
