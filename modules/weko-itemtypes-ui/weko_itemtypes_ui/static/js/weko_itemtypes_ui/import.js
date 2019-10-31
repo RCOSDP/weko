@@ -16,6 +16,8 @@ const item_type = document.getElementById("item_type").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
+const workflows = $("#workflows").text();
+
 
 class MainLayout extends React.Component {
 
@@ -174,7 +176,23 @@ class ImportComponent extends React.Component {
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
             <div className="modal-mark" onClick={this.handleShowModalWorkFlow}></div>
             <div className="modal-content">
-              content
+            <div class="row">
+              <div class="col-sm-12">
+                <table class="table table-striped table-bordered">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>{work_flow}</th>
+                      <th>{item_type}</th>
+                      <th>{flow}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>             
             </div>
           </div>
         </div>

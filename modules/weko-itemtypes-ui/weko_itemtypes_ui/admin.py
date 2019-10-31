@@ -504,8 +504,12 @@ class ItemImportView(BaseView):
         :return: The rendered template.
         """
         from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
+        from weko_workflow.api import WorkFlow
+        workflow = WorkFlow()
+        workflows = workflow.get_workflow_list()
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
+            workflows=workflows
             lang_code=session.get('selected_language', 'en')  # Set default
         )
 
