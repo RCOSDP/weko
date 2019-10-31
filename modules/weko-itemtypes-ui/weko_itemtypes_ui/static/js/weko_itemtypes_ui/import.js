@@ -50,17 +50,18 @@ class ImportComponent extends React.Component {
         file_name: "",
         isShowModalWF: false,
         work_flow_data : null,
-        wl_key: null
+        wl_key: null,
+        isShowModalIndex: false
       }
       this.handleChangefile = this.handleChangefile.bind(this)
       this.handleClickFile = this.handleClickFile.bind(this)
       this.getLastString = this.getLastString.bind(this)
       this.handleShowModalWorkFlow = this.handleShowModalWorkFlow.bind(this)
       this.handleChangeWF = this.handleChangeWF.bind(this)
+      this.handleShowModalIndex = this.handleShowModalIndex.bind(this)
     }
 
     componentDidMount() {
-      console.log("ImportComponent is work");
     }
 
     handleChangefile (e) {
@@ -114,8 +115,21 @@ class ImportComponent extends React.Component {
       })
     }
 
+    handleShowModalIndex(data) {
+      const {isShowModalIndex} = this.state
+      if(!isShowModalIndex) {
+        this.setState({
+          isShowModalIndex: !isShowModalIndex
+        })
+      } else {
+        this.setState({
+          isShowModalIndex: !isShowModalIndex,
+        })
+      }
+    }
+
     render() {
-      const {file_name,isShowModalWF,wl_key,work_flow_data} = this.state
+      const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex} = this.state
       return(
         <div className="container import_component">
           <div className="row layout">
@@ -150,7 +164,7 @@ class ImportComponent extends React.Component {
                 </div>
                 <div className="col-md-8">
                   <div>
-                    <button className="btn btn-primary">{select_index}</button>
+                    <button className="btn btn-primary" onClick={this.handleShowModalIndex}>{select_index}</button>
                   </div>
                   <div className="block-placeholder">
                     <p>{selected_index}</p>
@@ -188,48 +202,65 @@ class ImportComponent extends React.Component {
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
             <div className="modal-mark" onClick={this.handleShowModalWorkFlow}></div>
             <div className="modal-content">
-            <div class="row">
-              <div class="col-sm-12 header">
-                <h3>{work_flow}</h3>
-              </div>
-              <div class="col-sm-12">
-                <table class="table table-striped table-bordered">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>{work_flow}</th>
-                      <th>{item_type}</th>
-                      <th>{flow}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {
-                      workflows.map((item, key) => {
-                        return (
-                          <tr>
-                            <td style={{textAlign: 'center'}}>
-                              <input 
-                                type='radio'
-                                name='workflow' 
-                                value={key} 
-                                onChange={this.handleChangeWF}
-                                ></input>
-                            </td>
-                            <td>{item.flows_name}</td>
-                            <td>{item.item_type_name}</td>
-                            <td>{item.flow_name}</td>
-                          </tr>
-                        )
-                      })
-                    }
-                  </tbody>
-                </table>
-              </div>
-              <div class="col-sm-12 footer text-align-right">
-                <button className="btn btn-primary" onClick={()=>{this.handleShowModalWorkFlow(workflows[wl_key])}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
-                <button className="btn btn-danger m-l-15" onClick={this.handleShowModalWorkFlow}>{cancel}</button>
-              </div>
-            </div>             
+              <div class="row">
+                <div class="col-sm-12 header">
+                  <h3>{work_flow}</h3>
+                </div>
+                <div class="col-sm-12">
+                  <table class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>{work_flow}</th>
+                        <th>{item_type}</th>
+                        <th>{flow}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        workflows.map((item, key) => {
+                          return (
+                            <tr>
+                              <td style={{textAlign: 'center'}}>
+                                <input 
+                                  type='radio'
+                                  name='workflow' 
+                                  value={key} 
+                                  onChange={this.handleChangeWF}
+                                  ></input>
+                              </td>
+                              <td>{item.flows_name}</td>
+                              <td>{item.item_type_name}</td>
+                              <td>{item.flow_name}</td>
+                            </tr>
+                          )
+                        })
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="col-sm-12 footer text-align-right">
+                  <button className="btn btn-primary" onClick={()=>{this.handleShowModalWorkFlow(workflows[wl_key])}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
+                  <button className="btn btn-danger m-l-15" onClick={this.handleShowModalWorkFlow}>{cancel}</button>
+                </div>
+              </div>             
+            </div>
+          </div>
+          <div className={`modal ${isShowModalIndex ? "active" : ''}`}>
+            <div className="modal-mark" onClick={this.handleShowModalIndex}></div>
+            <div className="modal-content">
+              <div class="row">
+                <div class="col-sm-12 header">
+                  <h3>{import_index}</h3>
+                </div>
+                <div class="col-sm-12">
+
+                </div>
+                <div class="col-sm-12 footer text-align-right">
+                  <button className="btn btn-primary" onClick={()=>{this.handleShowModalIndex()}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
+                  <button className="btn btn-danger m-l-15" onClick={this.handleShowModalIndex}>{cancel}</button>
+                </div>
+              </div>             
             </div>
           </div>
         </div>
