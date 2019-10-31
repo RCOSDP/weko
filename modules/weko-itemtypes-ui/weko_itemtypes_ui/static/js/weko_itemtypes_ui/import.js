@@ -178,7 +178,7 @@ class ImportComponent extends React.Component {
             <div className="modal-content">
             <div class="row">
               <div class="col-sm-12 header">
-                <label>{work_flow}</label>
+                <h3>{work_flow}</h3>
               </div>
               <div class="col-sm-12">
                 <table class="table table-striped table-bordered">
