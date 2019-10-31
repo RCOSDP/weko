@@ -516,7 +516,7 @@ class ItemImportView(BaseView):
             current_app.logger.debug(item)
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
-            workflows=jsonify(workflows_js)
+            workflows=workflows_js
         )
 
 def get_content_workflow(item):
@@ -526,9 +526,10 @@ def get_content_workflow(item):
     result['itemtype_id'] = item.itemtype_id
     result['flow_id'] = item.flow_id
     result['flow_name'] = item.flow_define.flow_name
+    result['item_type_name'] = item.itemtype.item_type_name.name
 
     
-    return result
+    return jsonify(result)
 
 
 itemtype_meta_data_adminview = {
