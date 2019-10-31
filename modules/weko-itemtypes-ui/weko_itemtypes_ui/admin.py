@@ -505,6 +505,7 @@ class ItemImportView(BaseView):
         """
         from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
         from weko_workflow.api import WorkFlow
+        import json
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
         current_app.logger.debug("========================")
@@ -516,7 +517,7 @@ class ItemImportView(BaseView):
             current_app.logger.debug(item)
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
-            workflows=workflows_js
+            workflows=json.dumps(workflows_js) 
         )
 
 def get_content_workflow(item):
