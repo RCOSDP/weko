@@ -16,7 +16,7 @@ const item_type = document.getElementById("item_type").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
-const workflows = $("#workflows").text();
+const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 
 
 class MainLayout extends React.Component {
@@ -49,7 +49,7 @@ class ImportComponent extends React.Component {
         file: null,
         file_name: "",
         isShowModalWF: false,
-        work_flow
+        work_flow : {}
       }
       this.handleChangefile = this.handleChangefile.bind(this)
       this.handleClickFile = this.handleClickFile.bind(this)
@@ -188,7 +188,18 @@ class ImportComponent extends React.Component {
                     </tr>
                   </thead>
                   <tbody>
-                    
+                    {
+                      workflows.map((item, key) => {
+                        return (
+                          <tr>
+                            <td><input type='radio' name='workflow' value={item.id}></input></td>
+                            <td>{item.flows_name}</td>
+                            <td>{item.item_type_name}</td>
+                            <td>{item.flow_name}</td>
+                          </tr>
+                        )
+                      })
+                    }
                   </tbody>
                 </table>
               </div>
