@@ -521,7 +521,7 @@ def get_content_workflow(item):
     result['id'] = item.id
     result['itemtype_id'] = item.itemtype_id
     result['flow_id'] = item.flow_id
-    result['flow_define'] = item.flow_define.__dict__
+    result['flow_name'] = item.flow_define.flow_name
 
     
     return result
