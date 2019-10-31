@@ -49,13 +49,14 @@ class ImportComponent extends React.Component {
         file: null,
         file_name: "",
         isShowModalWF: false,
-        work_flow : {},
+        work_flow_data : {},
         wl_key: null
       }
       this.handleChangefile = this.handleChangefile.bind(this)
       this.handleClickFile = this.handleClickFile.bind(this)
       this.getLastString = this.getLastString.bind(this)
       this.handleShowModalWorkFlow = this.handleShowModalWorkFlow.bind(this)
+      this.handleChangeWF = this.handleChangeWF.bind(this)
     }
 
     componentDidMount() {
@@ -100,7 +101,7 @@ class ImportComponent extends React.Component {
       } else {
         this.setState({
           isShowModalWF: !isShowModalWF,
-          work_flow: data ? data : null
+          work_flow_data: data ? data : null
         })
       }
     }
@@ -113,7 +114,7 @@ class ImportComponent extends React.Component {
     }
 
     render() {
-      const {file_name,isShowModalWF,wl_key,work_flow} = this.state
+      const {file_name,isShowModalWF,wl_key,work_flow_data} = this.state
       return(
         <div className="container import_component">
           <div className="row layout">
@@ -167,7 +168,7 @@ class ImportComponent extends React.Component {
                   </div>
                   <div className="block-placeholder">
                     {
-                      work_flow ? <p className="active">{work_flow.flows_name}</p> : <p>{selected_work_flow}</p>
+                      work_flow_data ? <p className="active">{work_flow_data.flows_name}</p> : <p>{selected_work_flow}</p>
                     }
                   </div>
                 </div>
