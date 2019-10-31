@@ -509,8 +509,7 @@ class ItemImportView(BaseView):
         workflows = workflow.get_workflow_list()
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
-            workflows=workflows
-            lang_code=session.get('selected_language', 'en')  # Set default
+            workflows=workflows,
         )
 
 
