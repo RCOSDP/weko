@@ -46,8 +46,8 @@ from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes
 from weko_records.models import ItemMetadata
-from weko_records.utils import get_all_items, get_options_and_order_list, \
-    json_loader, set_timestamp
+from weko_records.utils import get_attribute_value_all_items, \
+    get_options_and_order_list, json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
@@ -950,8 +950,8 @@ class WekoRecord(Record):
                     nval = dict()
                     nval['attribute_name'] = val.get('attribute_name')
                     nval['attribute_type'] = val.get('attribute_type')
-                    nval['attribute_value_mlt'] = get_all_items(mlt, solst,
-                                                                True)
+                    nval['attribute_value_mlt'] = \
+                        get_attribute_value_all_items(mlt, solst)
                     items.append(nval)
                 else:
                     items.append(val)

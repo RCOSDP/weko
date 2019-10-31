@@ -545,3 +545,63 @@ def is_valid_openaire_type(resource_type, communities):
     is_defined = any(t['id'] == oa_subtype for t in subtypes)
     comms_match = len(set(communities) & set(defined_comms))
     return is_defined and comms_match
+
+
+def get_attribute_value_all_items(nlst, klst):
+    """Convert and sort item list.
+
+    :param nlst:
+    :param klst:
+    :return: alst
+    """
+    def get_name(key):
+        for lst in klst:
+            if key == lst[0].split('.')[-1]:
+                return lst[1]
+
+    def check_node(node):
+        try:
+            if isinstance(node, list):
+                for lst in node:
+                    return check_node(lst)
+            if isinstance(node, dict) and bool(node):
+                for val in node.values():
+                    if val:
+                        if isinstance(val, str):
+                            return True
+                        elif isinstance(val, dict):
+                            for v in val.values():
+                                return check_node(v)
+                        else: 
+                            return check_node(val)
+            return False
+        except BaseException as e:
+            current_app.logger.error('check_node error: ', e)
+            return False
+
+    def set_node(nlst):
+        _list = []
+        if isinstance(nlst, list):
+            for lst in nlst:
+                _list.extend(set_node(lst))
+        # check OrderedDict is dict and not empty
+        if isinstance(nlst, dict) and bool(nlst):
+            d = {}
+            for key, val in nlst.items():
+                item_name = get_name(key) or ''
+                if isinstance(val, str) and val:
+                    # the last children level
+                    d[item_name] = val
+                    print(d)
+                else:
+                    # parents level
+                    # check if have any child
+                    if check_node(val):
+                        d[item_name] = set_node(val)
+            _list.append(d)
+        return _list
+
+    # to_orderdict(nlst, klst)
+    alst = set_node(nlst)
+
+    return alst

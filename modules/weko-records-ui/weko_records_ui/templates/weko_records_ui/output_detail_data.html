@@ -48,10 +48,36 @@
           <pre class="hidden">{{ record_detail_data|tojson }}</pre>
         </td>
       </tr>
-        {%- for l in record_detail_data['attribute_value_mlt'] -%}
-            {{ output_child_data(l, record_detail_data['attribute_type']) }}
-        {%- endfor -%}
+      {{ output_attribute_value_mlt(record_detail_data['attribute_value_mlt'], 1) }}
     {%- endif -%}
+{% endmacro %}
+
+{% macro output_attribute_value_mlt(attribute_value_mlt, level) %}
+    {%- for attribute_data in attribute_value_mlt -%}
+      {%- if attribute_data is mapping -%}
+          {%- for k, v in attribute_data.items() -%}
+            {%- if v is string -%}
+              {{ child_data(k, v, level) }}
+            {%- else -%}
+              {{ child_data(k, '', level) }}
+              {{ output_attribute_value_mlt(v, level + 1) }}
+            {%- endif -%}
+          {%- endfor -%}
+      {%- endif -%}
+    {%- endfor -%}
+{% endmacro %}
+
+{% macro table_th() %}
+    <th scope="row" style="border-top: none; border-bottom: none"></th>
+{% endmacro %}
+
+{% macro child_data(label, content, level) %}
+    {%- set label_colspan_default = 6 -%}
+    <tr>
+      {{ out_table_th(level) }}
+      <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label }}</th>
+      <td>{{ content }}</td>
+    </tr>
 {% endmacro %}
 
 {% macro output_child_data(record_detail_data, data_type) %}
