@@ -528,7 +528,9 @@ def make_stats_tsv(item_type_id, recids):
         'properties')
 
     class RecordsManager:
+        first_recid = 0
         cur_recid = 0
+        filepath_idx = 1
         recids = []
         records = {}
         attr_data = {}
@@ -536,6 +538,7 @@ def make_stats_tsv(item_type_id, recids):
 
         def __init__(self, record_ids):
             self.recids = record_ids
+            self.first_recid = record_ids[0]
             for record_id in record_ids:
                 record = WekoRecord.get_record_by_pid(record_id)
                 self.records[record_id] = record
@@ -672,14 +675,21 @@ def make_stats_tsv(item_type_id, recids):
 
                 key_list_len = len(key_list)
                 for key_index in range(key_list_len):
-                    if 'filename' in key_list[key_index]:
-                        key_list.insert(0, '.file_path#' + str(idx + 1))
-                        key_label.insert(0, '.ファイルパス#' + str(idx + 1))
+                    if 'filename' in key_list[key_index] \
+                        or 'thumbnail_label' in key_list[key_index] \
+                            and len(item_key.split('.')) == 2:
+                        key_list.insert(0, '.file_path#'
+                                        + str(self.filepath_idx + idx))
+                        key_label.insert(0, '.ファイルパス#'
+                                         + str(self.filepath_idx + idx))
                         if key_data[key_index]:
                             key_data.insert(0, 'recid_{}/{}'.format(str(
                                 self.cur_recid), key_data[key_index]))
                         else:
                             key_data.insert(0, '')
+                        if idx == max_items - 1 \
+                                and self.first_recid == self.cur_recid:
+                            self.filepath_idx += max_items
                         break
 
                 o_ret.extend(key_list)
