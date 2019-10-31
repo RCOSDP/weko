@@ -60,7 +60,7 @@ class ImportComponent extends React.Component {
       const file = e.target.files[0],
             reader = new FileReader();
         const file_name = this.getLastString(e.target.value, "\\")
-        if (this.getLastString(favicon_name,".") !== 'tsv') {
+        if (this.getLastString(file_name,".") !== 'tsv') {
           return false
         }
 
@@ -146,7 +146,11 @@ class ImportComponent extends React.Component {
             </div>
             <div className="col-md-12">
               <div className="row">
-                <div className="col-md-4"><button className="btn btn-primary"><span className="glyphicon glyphicon-download-alt"></span>{import_label}</button></div>
+                <div className="col-md-4">
+                  <button className="btn btn-primary">
+                    <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
+                    </button>
+                    </div>
               </div>
             </div>
           </div>
