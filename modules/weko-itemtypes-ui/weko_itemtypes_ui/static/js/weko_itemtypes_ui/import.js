@@ -49,7 +49,7 @@ class ImportComponent extends React.Component {
         file: null,
         file_name: "",
         isShowModalWF: false,
-        work_flow_data : {},
+        work_flow_data : null,
         wl_key: null
       }
       this.handleChangefile = this.handleChangefile.bind(this)
@@ -93,7 +93,7 @@ class ImportComponent extends React.Component {
     }
 
     handleShowModalWorkFlow(data) {
-      const {isShowModalWF} = this.state
+      const {isShowModalWF,work_flow_data} = this.state
       if(!isShowModalWF) {
         this.setState({
           isShowModalWF: !isShowModalWF
@@ -101,7 +101,7 @@ class ImportComponent extends React.Component {
       } else {
         this.setState({
           isShowModalWF: !isShowModalWF,
-          work_flow_data: data ? data : null
+          work_flow_data: data ? data : work_flow_data
         })
       }
     }
