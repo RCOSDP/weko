@@ -45,11 +45,14 @@ class ImportComponent extends React.Component {
       super()
       this.state = {
         file: null,
-        file_name: ""
+        file_name: "",
+        isShowModalWF: false,
+        work_flow
       }
       this.handleChangefile = this.handleChangefile.bind(this)
       this.handleClickFile = this.handleClickFile.bind(this)
       this.getLastString = this.getLastString.bind(this)
+      this.handleShowModalWorkFlow = this.handleShowModalWorkFlow.bind(this)
     }
 
     componentDidMount() {
@@ -83,16 +86,30 @@ class ImportComponent extends React.Component {
     getLastString(path, code){
       const split_path = path.split(code)
       return split_path.pop()
-  }
+    }
+
+    handleShowModalWorkFlow(data) {
+      const {isShowModalWF} = this.state
+      if(!isShowModalWF) {
+        this.setState({
+          isShowModalWF: !isShowModalWF
+        })
+      } else {
+        this.setState({
+          isShowModalWF: !isShowModalWF,
+          work_flow: data ? data : null
+        })
+      }
+    }
 
     render() {
-      const {file_name} = this.state
+      const {file_name,isShowModalWF} = this.state
       return(
         <div className="container import_component">
           <div className="row layout">
             <div className="col-md-12">
               <div className="row">
-                <div className="col-md-4">
+                <div className="col-md-2">
                   <label>{import_file}</label>
                 </div>
                 <div className="col-md-8">
@@ -116,7 +133,7 @@ class ImportComponent extends React.Component {
             </div>
             <div className="col-md-12">
               <div className="row">
-                <div className="col-md-4">
+                <div className="col-md-2">
                   <label>{import_index}</label>
                 </div>
                 <div className="col-md-8">
@@ -131,7 +148,7 @@ class ImportComponent extends React.Component {
             </div>
             <div className="col-md-12">
               <div className="row">
-                <div className="col-md-4">
+                <div className="col-md-2">
                   <label>{work_flow}</label>
                 </div>
                 <div className="col-md-8">
@@ -146,12 +163,18 @@ class ImportComponent extends React.Component {
             </div>
             <div className="col-md-12">
               <div className="row">
-                <div className="col-md-4">
+                <div className="col-md-2">
                   <button className="btn btn-primary">
                     <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
                     </button>
                     </div>
               </div>
+            </div>
+          </div>
+          <div className={`modal ${isShowModalWF ? "active" : ''}`}>
+            <div className="modal-mark"></div>
+            <div className="modal-content">
+
             </div>
           </div>
         </div>

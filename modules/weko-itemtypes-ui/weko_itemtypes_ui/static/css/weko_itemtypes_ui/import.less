@@ -1,13 +1,18 @@
 .import_component {
-    padding: 10px;
+    padding: 20px;
 }
 
 .input-file{
     display: none!important;
 }
 
-.import_component .layout .col-md-4 {
+.import_component .layout .col-md-2 {
     text-align: right;
+}
+
+.import_component .layout .row {
+    display: flex;
+    align-items: baseline;
 }
 
 .block-placeholder {
@@ -24,4 +29,38 @@
 
 .icon{
     padding: 0px 5px;
+}
+
+.modal{
+    display: none;
+}
+
+.modal.active {
+    display: flex!important;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 9999;
+}
+
+.modal .modal-mark {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+.modal .modal-content {
+    background-color: #fff;
+    display: flex;
+    position: relative;
+    width: 90%;
+    max-width: 90%;
+    max-height: 90%;
+    z-index: 9999;
 }
