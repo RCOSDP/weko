@@ -505,12 +505,11 @@ class ItemImportView(BaseView):
         """
         from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
         from weko_workflow.api import WorkFlow
-        from flask import render_template
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
-        return render_template(
+        return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
-            workflows=workflows,
+            workflows=workflows
         )
 
 
