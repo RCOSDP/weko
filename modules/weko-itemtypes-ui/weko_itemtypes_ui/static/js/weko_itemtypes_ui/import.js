@@ -177,6 +177,9 @@ class ImportComponent extends React.Component {
             <div className="modal-mark" onClick={this.handleShowModalWorkFlow}></div>
             <div className="modal-content">
             <div class="row">
+              <div class="col-sm-12 header">
+                <label>{work_flow}</label>
+              </div>
               <div class="col-sm-12">
                 <table class="table table-striped table-bordered">
                   <thead>
@@ -202,6 +205,10 @@ class ImportComponent extends React.Component {
                     }
                   </tbody>
                 </table>
+              </div>
+              <div class="col-sm-12 footer text-align-right">
+                <button className="btn btn-primary"><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
+                <button className="btn btn-danger m-l-15" onClick={this.handleShowModalWorkFlow}>{cancel}</button>
               </div>
             </div>             
             </div>
