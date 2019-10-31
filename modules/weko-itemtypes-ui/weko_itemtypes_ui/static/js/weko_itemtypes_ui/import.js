@@ -172,7 +172,7 @@ class ImportComponent extends React.Component {
             </div>
           </div>
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
-            <div className="modal-mark"></div>
+            <div className="modal-mark" onClick={this.handleShowModalWorkFlow}></div>
             <div className="modal-content">
               content
             </div>
