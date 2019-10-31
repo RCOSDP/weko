@@ -244,7 +244,7 @@ def item_metadata_validation(item_id, identifier_type):
                  'item.')
 
 
-def validation_item_property(mapping_data, identifier_type='', properties):
+def validation_item_property(mapping_data, identifier_type, properties):
     """
     Validate item property.
 

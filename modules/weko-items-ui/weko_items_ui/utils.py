@@ -24,16 +24,22 @@ import csv
 import json
 import os
 import shutil
+import sys
+import tempfile
+import traceback
 from collections import OrderedDict
 from datetime import datetime
 from io import StringIO
 
+import bagit
 import numpy
 import redis
 from elasticsearch.exceptions import NotFoundError
-from flask import current_app, session
+from flask import abort, current_app, flash, redirect, request, send_file, \
+    session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_records.api import RecordBase
@@ -817,6 +823,115 @@ def get_list_file_by_record_id(recid):
     return list_file_name
 
 
+def export_items(post_data):
+    """Gather all the item data and export and return as a JSON or BIBTEX.
+
+    :return: JSON, BIBTEX
+    """
+    include_contents = True if \
+        post_data['export_file_contents_radio'] == 'True' else False
+    export_format = post_data['export_format_radio']
+    record_ids = json.loads(post_data['record_ids'])
+    record_metadata = json.loads(post_data['record_metadata'])
+    if len(record_ids) > _get_max_export_items():
+        return abort(400)
+    elif len(record_ids) == 0:
+        flash(_('Please select Items to export.'), 'error')
+        return redirect(url_for('weko_items_ui.export'))
+
+    result = {'items': []}
+    temp_path = tempfile.TemporaryDirectory()
+    item_types_data = {}
+
+    try:
+        # Set export folder
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        # Double check for limits
+        for record_id in record_ids:
+            record_path = export_path + '/recid_' + str(record_id)
+            os.makedirs(record_path, exist_ok=True)
+            exported_item = _export_item(
+                record_id,
+                export_format,
+                include_contents,
+                record_path,
+                record_metadata.get(str(record_id))
+            )
+
+            result['items'].append(exported_item)
+
+            item_type_id = exported_item.get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if not item_types_data.get(item_type_id):
+                item_types_data[item_type_id] = {}
+
+                item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
+                    'name': '{}({})'.format(
+                        item_type.item_type_name.name,
+                        item_type_id),
+                    'root_url': request.url_root,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
+                    'recids': [],
+                    'data': {},
+                }
+            item_types_data[item_type_id]['recids'].append(record_id)
+
+        # Create export info file
+        for item_type_id in item_types_data:
+            keys, labels, records = make_stats_tsv(
+                item_type_id,
+                item_types_data[item_type_id]['recids'])
+            item_types_data[item_type_id]['recids'].sort()
+            item_types_data[item_type_id]['keys'] = keys
+            item_types_data[item_type_id]['labels'] = labels
+            item_types_data[item_type_id]['data'] = records
+            item_type_data = item_types_data[item_type_id]
+
+            with open('{}/{}.tsv'.format(export_path, item_type_data.get(
+                    'name')), 'w') as file:
+                tsvs_output = package_exports(item_type_data)
+                file.write(tsvs_output.getvalue())
+
+        # Create bag
+        bagit.make_bag(export_path)
+        # Create download file
+        shutil.make_archive(export_path, 'zip', export_path)
+    except Exception:
+        current_app.logger.error('-'*60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-'*60)
+        flash(_('Error occurred during item export.'), 'error')
+        return redirect(url_for('weko_items_ui.export'))
+    return send_file(export_path + '.zip')
+
+
+def _get_max_export_items():
+    """Get max amount of items to export."""
+    max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
+    non_user_max = max_table[current_app.config[
+        'WEKO_PERMISSION_ROLE_GENERAL']]
+    current_user_id = current_user.get_id()
+
+    if not current_user_id:  # Non-logged in users
+        return non_user_max
+
+    try:
+        roles = db.session.query(Role).join(userrole).filter_by(
+            user_id=current_user_id).all()
+    except Exception:
+        return current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
+
+    current_max = non_user_max
+    for role in roles:
+        if role in max_table and max_table[role] > current_max:
+            current_max = max_table[role]
+    return current_max
+
+
 def _export_item(record_id,
                  export_format,
                  include_contents,
@@ -878,3 +993,57 @@ def get_new_items_by_date(start_date: str, end_date: str) -> dict:
         current_app.logger.debug("Indexes do not exist yet: ", str(e))
 
     return result
+
+
+def update_schema_remove_hidden_item(schema, render, items_name):
+    """Update schema: remove hidden items.
+
+    :param schema: json schema
+    :param render: json render
+    :param items_name: list items which has hidden flg
+    :return: The json object.
+    """
+    for item in items_name:
+        hidden_flg = False
+        key = schema[item]['key']
+        if render['meta_list'].get(key):
+            hidden_flg = render['meta_list'][key]['option']['hidden']
+        if render['meta_system'].get(key):
+            hidden_flg = render['meta_system'][key]['option']['hidden']
+        if hidden_flg:
+            schema[item]['condition'] = 1
+
+    return schema
+
+
+def to_files_js(record):
+    """List files in a deposit."""
+    res = []
+    files = record.files
+    if files is not None:
+        for f in files:
+            res.append({
+                'displaytype': f.get('displaytype', ''),
+                'filename': f.get('filename', ''),
+                'mimetype': f.mimetype,
+                'licensetype': f.get('licensetype', ''),
+                'key': f.key,
+                'version_id': str(f.version_id),
+                'checksum': f.file.checksum,
+                'size': f.file.size,
+                'completed': True,
+                'progress': 100,
+                'links': {
+                    'self': (
+                        current_app.config['DEPOSIT_FILES_API']
+                        + u'/{bucket}/{key}?versionId={version_id}'.format(
+                            bucket=f.bucket_id,
+                            key=f.key,
+                            version_id=f.version_id,
+                        )),
+                },
+                'is_show': f.is_show,
+                'is_thumbnail': f.is_thumbnail
+            })
+
+    return res

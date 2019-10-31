@@ -45,8 +45,7 @@ from weko_accounts.api import ShibUser
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit
 from weko_items_ui.api import item_login
-from weko_items_ui.utils import get_actionid
-from weko_items_ui.views import to_files_js
+from weko_items_ui.utils import get_actionid, to_files_js
 from weko_records.api import FeedbackMailList, ItemsMetadata
 from weko_records.models import ItemMetadata
 from werkzeug.utils import import_string
