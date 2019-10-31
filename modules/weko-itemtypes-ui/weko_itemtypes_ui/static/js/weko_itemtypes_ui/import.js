@@ -100,9 +100,9 @@ class ImportComponent extends React.Component {
                       onChange={this.handleChangefile}
                       />
                   </div>
-                  <div>
+                  <div className="block-placeholder">
                     {
-                      file_name ? <label>{file_name}</label> : <q>{selected_file_name}</q>
+                      file_name ? <p className="active">{file_name}</p> : <p>{selected_file_name}</p>
                     }
                   </div>
                 </div>
@@ -117,8 +117,8 @@ class ImportComponent extends React.Component {
                   <div>
                     <button className="btn btn-primary">{select_index}</button>
                   </div>
-                  <div>
-                    <label>{selected_index}</label>
+                  <div className="block-placeholder">
+                    <p>{selected_index}</p>
                   </div>
                 </div>
               </div>
@@ -132,8 +132,8 @@ class ImportComponent extends React.Component {
                   <div>
                     <button className="btn btn-primary">{select_work_flow}</button>
                   </div>
-                  <div>
-                    <label>{selected_work_flow}</label>
+                  <div className="block-placeholder">
+                    <p>{selected_work_flow}</p>
                   </div>
                 </div>
               </div>
