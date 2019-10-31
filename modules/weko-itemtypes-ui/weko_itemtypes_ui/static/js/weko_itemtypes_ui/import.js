@@ -47,13 +47,15 @@ class ImportComponent extends React.Component {
         file: null,
         file_name: ""
       }
+      this.handleChangefile = this.handleChangefile.bind(this)
+      this.handleClickFile = this.handleClickFile.bind(this)
     }
 
     componentDidMount() {
       console.log("ImportComponent is work");
     }
 
-    handleChangefile = (e) => {
+    handleChangefile (e) {
       const file = e.target.files[0],
             reader = new FileReader();
         const file_name = this.getLastString(e.target.value, "\\")
@@ -73,7 +75,7 @@ class ImportComponent extends React.Component {
         reader.readAsDataURL(file);
     }
 
-    handleClickFile = () => {
+    handleClickFile() {
       this.inputElement.click();
     }
 
