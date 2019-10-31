@@ -256,7 +256,7 @@ class ImportComponent extends React.Component {
                 <div class="col-sm-12">
                   <div className="row">
                     <div className="col-md-6">
-                      <app-root-tree></app-root-tree>
+                      <app-tree-items></app-tree-items>
                     </div>
                   </div>
                 </div>
