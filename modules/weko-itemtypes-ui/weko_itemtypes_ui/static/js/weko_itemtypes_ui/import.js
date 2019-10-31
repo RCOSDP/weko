@@ -49,6 +49,7 @@ class ImportComponent extends React.Component {
       }
       this.handleChangefile = this.handleChangefile.bind(this)
       this.handleClickFile = this.handleClickFile.bind(this)
+      this.getLastString = this.getLastString.bind(this)
     }
 
     componentDidMount() {
@@ -78,6 +79,11 @@ class ImportComponent extends React.Component {
     handleClickFile() {
       this.inputElement.click();
     }
+
+    getLastString(path, code){
+      const split_path = path.split(code)
+      return split_path.pop()
+  }
 
     render() {
       const {file_name} = this.state
