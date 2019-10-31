@@ -150,21 +150,28 @@ def item_metadata_validation(item_id, identifier_type):
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
-    journalarticle_nameid = [14, 3, 5, 9]
-    journalarticle_type = 'other（プレプリント）'
+    journalarticle_nameid = [3, 5, 9]
+    journalarticle_type = ['other（プレプリント）', 'conference paper',
+                           'data paper', 'departmental bulletin paper',
+                           'editorial', 'journal article', 'periodical',
+                           'review article', 'article']
     thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
                     'doctoral thesis']
-    report_nameid = 16
-    report_types = ['technical report', 'research report', 'report']
-    elearning_type = 'learning material'
-    dataset_nameid = [22, 4]
-    dataset_type = 'software'
-    datageneral_nameid = [13, 17, 18, 19, 20, 21, 1, 10]
+    report_types = ['technical report', 'research report', 'report',
+                    'book', 'book part']
+    elearning_type = ['learning material']
+    dataset_nameid = [4]
+    dataset_type = ['software', 'dataset']
+    datageneral_nameid = [1, 10]
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',
                          'musical notation', 'research proposal',
-                         'technical documentation',
-                         'workflow', 'その他（その他）']
+                         'technical documentation', 'workflow',
+                         'その他（その他）', 'sound', 'patent',
+                         'cartographic material', 'map', 'lecture', 'image',
+                         'still image', 'moving image', 'video',
+                         'conference object', 'conference proceedings',
+                         'conference poster']
 
     metadata_item = MappingData(item_id)
     item_type = metadata_item.get_data_item_type()
@@ -199,10 +206,9 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
         if item_type.name_id in journalarticle_nameid \
-            or resource_type == journalarticle_type \
-            or (item_type.name_id == report_nameid
-                or resource_type in report_types) \
-            or (resource_type == elearning_type) \
+            or resource_type in journalarticle_type \
+            or resource_type in report_types \
+            or (resource_type in elearning_type) \
             or (item_type.name_id in datageneral_nameid
                 or resource_type in datageneral_types):
             properties = ['title']
@@ -212,19 +218,18 @@ def item_metadata_validation(item_id, identifier_type):
                           'creator']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
-                or resource_type == dataset_type:
+                or resource_type in dataset_type:
             properties = ['title',
                           'givenName']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
-        if item_type.name_id in journalarticle_nameid or resource_type == \
+        if item_type.name_id in journalarticle_nameid or resource_type in \
                 journalarticle_type:
             properties = ['title'
                           'publisher',
                           'sourceIdentifier',
                           'sourceTitle']
-        elif item_type.name_id == report_nameid or \
-                resource_type in report_types:
+        elif resource_type in report_types:
             properties = ['title']
         elif resource_type in thesis_types:
             properties = ['title',
@@ -239,7 +244,7 @@ def item_metadata_validation(item_id, identifier_type):
                  'item.')
 
 
-def validation_item_property(mapping_data, identifier_type, properties):
+def validation_item_property(mapping_data, identifier_type='', properties):
     """
     Validate item property.
 
@@ -310,59 +315,6 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if requirements and idt_requirements:
             error_list['pattern'] += requirements
             error_list['pattern'] += idt_requirements
-
-    # check 識別子 jpcoar:identifier
-    if 'identifier' in properties:
-        data, key = mapping_data.get_data_by_property("identifier.@value")
-        type_data, type_key = mapping_data.get_data_by_property(
-            "identifier.@attributes.identifierType")
-
-        repeatable = True
-        requirements = check_required_data(data, key, repeatable)
-        type_requirements = check_required_data(type_data,
-                                                type_key,
-                                                repeatable)
-        if requirements:
-            error_list['required'] += requirements
-        if type_requirements:
-            error_list['required'] += type_requirements
-        else:
-            idx = 0
-            for item in type_data:
-                if not validators.url(data[idx]):
-                    error_list['required'].append(key)
-                    error_list['required'].append(type_key)
-                    error_list['url'] = idx
-                    break
-                idx += 1
-
-    # check ID登録 jpcoar:identifierRegistration
-    if 'identifierRegistration' in properties:
-        data, key = mapping_data.get_data_by_property(
-            "identifierRegistration.@value")
-        type_data, type_key = mapping_data.get_data_by_property(
-            "identifierRegistration.@attributes.identifierType")
-        idt_data, idt_key = mapping_data.get_data_by_property(
-            "identifier.@value")
-        idt_type_data, idt_type_key = mapping_data.get_data_by_property(
-            "identifier.@attributes.identifierType")
-
-        requirements = check_required_data(data, key)
-        type_requirements = check_required_data(type_data, type_key)
-
-        if requirements and not requirements == [None]:
-            error_list['required'] += requirements
-        if type_requirements and not type_requirements == [None]:
-            error_list['required'] += type_requirements
-        else:
-            for item in type_data:
-                if item == 'PMID（現在不使用）':
-                    error_list['pmid'] = type_key
-            result = check_suffix_identifier(data, idt_data, idt_type_data)
-            if result:
-                error_list['required'].append(idt_key)
-                error_list['required'].append(idt_type_key)
-                error_list['doi'] = [idt_key + '.' + str(key) for key in result]
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
