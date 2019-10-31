@@ -206,7 +206,7 @@ class ImportComponent extends React.Component {
                       workflows.map((item, key) => {
                         return (
                           <tr>
-                            <td style={{textAlign: 'center'}}>
+                            <td styles={{textAlign: 'center'}}>
                               <input 
                                 type='radio'
                                 name='workflow' 
