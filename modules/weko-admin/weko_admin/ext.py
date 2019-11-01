@@ -24,14 +24,15 @@ from datetime import timedelta
 from functools import partial
 
 from flask import current_app, request, session
-from flask_admin import Admin
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from invenio_i18n.views import set_lang
 
 from . import config
-from .models import SessionLifetime
+from .models import AdminLangSettings, SessionLifetime
 from .views import blueprint
 
 
@@ -95,6 +96,23 @@ class WekoAdmin(object):
                 setattr(view, 'is_visible', is_visible_fn)
                 new_views.append(view)
             app.extensions['admin'][0]._views = new_views  # Overwrite views
+
+        @app.before_request
+        def set_default_language():
+            """Set default language from admin language settings.
+
+            In case user opens the web for the first time,
+            set default language base on Admin language setting
+            """
+            if "selected_language" not in session:
+                registered_languages = AdminLangSettings\
+                    .get_registered_language()
+                if registered_languages:
+                    default_language = registered_languages[0].get('lang_code')
+                    session['selected_language'] = default_language
+                    set_lang(default_language)
+            else:
+                session['selected_language'] = current_i18n.language
 
     def init_config(self, app):
         """
