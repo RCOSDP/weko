@@ -84,3 +84,13 @@ weko_admin_item_import_js = Bundle(
     # filters='requirejs',
     output="gen/import.js"
 )
+
+weko_admin_item_import_index_js = NpmBundle(
+    'js/weko_itemtypes_ui/import.inline.bundle.js',
+    'js/weko_itemtypes_ui/import.polyfills.bundle.js',
+    'js/weko_itemtypes_ui/import.main.bundle.js',
+)
+
+import_index_js = NpmBundle(
+    weko_admin_item_import_index_js,
+    output='gen/import_index_js.js',
