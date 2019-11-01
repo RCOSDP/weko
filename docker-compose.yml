@@ -90,7 +90,7 @@ services:
 
   postgresql:
     restart: "always"
-    image: postgres
+    image: postgres:11
     environment:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
