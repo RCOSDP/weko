@@ -444,8 +444,8 @@ def get_options_and_order_list(item_type_id):
     """
     ojson = ItemTypes.get_record(item_type_id)
     solst = find_items(ojson.model.form)
-    meta_options = ojson.model.render.pop('meta_fix')
-    meta_options.update(ojson.model.render.pop('meta_list'))
+    meta_options = ojson.model.render.get('meta_fix')
+    meta_options.update(ojson.model.render.get('meta_list'))
     return solst, meta_options
 
 
@@ -454,6 +454,23 @@ def sort_meta_data_by_options(record_hit):
 
     :param record_hit:
     """
+    def get_meta_values(v):
+        """Get values from metadata."""
+        data_list = []
+        def get_values(v):
+            """Get value by recursive."""
+            if isinstance(v, list):
+                for temp in v:
+                    get_values(temp)
+            elif isinstance(v, dict):
+                for temp in v.values():
+                    data_list.append(temp)
+            elif isinstance(v, str):
+                data_list.append(v)
+
+        get_values(v)
+        return data_list
+
     try:
 
         src = record_hit['_source'].pop('_item_metadata')
@@ -485,8 +502,8 @@ def sort_meta_data_by_options(record_hit):
 
             mlt = val.get('attribute_value_mlt')
             if mlt:
-                data = list(map(lambda x: ''.join(x.values()),
-                                get_all_items(mlt, solst)))
+                meta_data = get_all_items(mlt, solst)
+                data = get_meta_values(meta_data)
             else:
                 data = val.get('attribute_value')
 
