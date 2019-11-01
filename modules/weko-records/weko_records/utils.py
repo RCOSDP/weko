@@ -457,6 +457,7 @@ def sort_meta_data_by_options(record_hit):
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
+
         def get_values(v):
             """Get value by recursive."""
             if isinstance(v, list):
