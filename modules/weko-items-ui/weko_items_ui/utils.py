@@ -545,7 +545,7 @@ def make_stats_tsv(item_type_id, recids):
                 self.attr_output[record_id] = []
 
         def get_max_ins(self, attr):
-            largest_size = 0
+            largest_size = 1
             self.attr_data[attr] = {'max_size': 0}
             for record in self.records:
                 if isinstance(self.records[record].get(attr), dict) \
@@ -572,11 +572,11 @@ def make_stats_tsv(item_type_id, recids):
             if len(list_attr) == 1:
                 return self.attr_data[item_attrs]['max_size']
             elif len(list_attr) == 2:
+                max_length = 1
                 first_attr = list_attr[0].split('[')
                 item_attr = first_attr[0]
                 idx = int(first_attr[1].split(']')[0])
                 sub_attr = list_attr[1].split('[')[0]
-                max_length = 0
                 for record in self.records:
                     if self.records[record].get(item_attr) \
                         and len(self.records[record][item_attr][
@@ -587,8 +587,8 @@ def make_stats_tsv(item_type_id, recids):
                             'attribute_value_mlt'][idx][sub_attr])
                         if cur_len > max_length:
                             max_length = cur_len
-                return max_length
             elif len(list_attr) == 3:
+                max_length = 1
                 first_attr = list_attr[0].split('[')
                 key2 = list_attr[1].split('[')
                 item_attr = first_attr[0]
@@ -596,8 +596,6 @@ def make_stats_tsv(item_type_id, recids):
                 sub_attr = list_attr[1].split('[')[0]
                 idx_2 = int(key2[1].split(']')[0])
                 sub_attr_2 = list_attr[2].split('[')[0]
-
-                max_length = 0
                 for record in self.records:
                     attr_val = self.records[record][item_attr][
                         'attribute_value_mlt']
