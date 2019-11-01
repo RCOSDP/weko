@@ -94,4 +94,4 @@ weko_admin_item_import_index_js = NpmBundle(
 import_index_js = NpmBundle(
     weko_admin_item_import_index_js,
     output='gen/import_index_js.js'
-    )
+)
