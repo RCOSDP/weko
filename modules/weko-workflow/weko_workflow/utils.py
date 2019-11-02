@@ -22,15 +22,15 @@
 
 from copy import deepcopy
 
+import validators
 from flask import current_app, request
 from flask_babelex import gettext as _
-from invenio_communities.models import Community
 from invenio_db import db
-from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
-from invenio_records.api import Record
 from weko_admin.models import Identifier
-from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.api import WekoRecord
 from weko_handle.api import Handle
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -38,9 +38,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import WorkActivity
-from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, \
-    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY, \
-    WEKO_SERVER_CNRI_HOST_LINK
+from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
 
 
 def get_identifier_setting(community_id):
@@ -55,25 +53,6 @@ def get_identifier_setting(community_id):
             repository=community_id).one_or_none()
 
 
-def get_community_id_by_index(index_name):
-    """
-    Get community use indexName input is index_name_english.
-
-    :param index_name: Index Tree's Name
-    :return: None or Item Type's info
-    """
-    communities = Community.query.all()
-    ret_community = []
-    for community in communities:
-        if community.index.index_name == index_name \
-                or community.index.index_name_english == index_name:
-            ret_community.append(community.id)
-
-    if len(ret_community) > 0:
-        return ret_community[0]
-    return None
-
-
 def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
     """
     Mapp doi pidstore data to ItemMetadata.
@@ -84,17 +63,11 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
     """
     activity_obj = WorkActivity()
     activity_detail = activity_obj.get_activity_detail(activity_id)
-    item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+    identifier = IdentifierHandle(activity_detail.item_id)
 
-    attrs = IDENTIFIER_ITEMSMETADATA_KEY
-    temp_form = {attrs[0]: '',
-                 attrs[1]: '',
-                 attrs[2]: '',
-                 attrs[3]: ''}
-    tempdata = deepcopy(temp_form)
     flag_del_pidstore = False
-    identifier_value = ''
-    identifier_type = ''
+    identifier_val = ''
+    identifier_typ = ''
     doi_register_val = ''
     doi_register_typ = ''
 
@@ -102,172 +75,40 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
             'identifier_grant_jalc_doi_link'):
         jalcdoi_link = data.get('identifier_grant_jalc_doi_link')
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
-        identifier_value = jalcdoi_link
-        identifier_type = 'DOI'
+        identifier_val = jalcdoi_link
+        identifier_typ = 'DOI'
         doi_register_val = '/'.join(jalcdoi_tail[1:])
         doi_register_typ = 'JaLC'
     elif doi_select == IDENTIFIER_GRANT_LIST[2][0] and data.get(
             'identifier_grant_jalc_cr_doi_link'):
         jalcdoi_cr_link = data.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
-        identifier_value = jalcdoi_cr_link
-        identifier_type = 'DOI'
+        identifier_val = jalcdoi_cr_link
+        identifier_typ = 'DOI'
         doi_register_val = '/'.join(jalcdoi_cr_tail[1:])
         doi_register_typ = 'Crossref'
     elif doi_select == IDENTIFIER_GRANT_LIST[3][0] and data.get(
             'identifier_grant_jalc_dc_doi_link'):
         jalcdoi_dc_link = data.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
-        identifier_value = jalcdoi_dc_link
-        identifier_type = 'DOI'
+        identifier_val = jalcdoi_dc_link
+        identifier_typ = 'DOI'
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
-        doi_register_typ = 'Datacite'
-    elif doi_select == IDENTIFIER_GRANT_CAN_WITHDRAW:  # with draw
-        # identifier_grant
-        pidstore_identifier = item.get('pidstore_identifier')
-        flag_del_pidstore = delete_doi_pidstore(
-            pidstore_identifier['identifier_value'])
+        doi_register_typ = 'DataCite'
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
-        pidstore_identifier = item.get('pidstore_identifier')
-        flag_del_pidstore = delete_doi_pidstore(
-            pidstore_identifier['identifier_value'])
 
     try:
-        tempdata[attrs[0]] = identifier_value
-        tempdata[attrs[1]] = identifier_type
-        tempdata[attrs[2]] = doi_register_val
-        tempdata[attrs[3]] = doi_register_typ
+        if not flag_del_pidstore and identifier_val and doi_register_val:
+            reg = identifier.register_pidstore('doi', identifier_val)
 
-        if not flag_del_pidstore:
-            reg_invenio_pidstore(tempdata[attrs[0]], item.id)
-
-        # Update metadata
-        if tempdata != temp_form:
-            # transfer to JPCOAR format
-            record = WekoDeposit.get_record(activity_detail.item_id)
-            item_record = Record.get_record(activity_detail.item_id)
-            item_type = ItemsMetadata.get_by_object_id(activity_detail.item_id)
-            identifier_map = identifier_jpcoar_mapping(item_type.item_type_id,
-                                                       attrs[0:2])
-            _identifier_data = record.get(identifier_map['id']).\
-                get('attribute_value_mlt')
-            # data DOI generate
-            _identifier_data.append({
-                identifier_map['val']: tempdata[attrs[0]],
-                identifier_map['type']: tempdata[attrs[1]]
-            })
-            doi_register_map = identifier_jpcoar_mapping(
-                item_type.item_type_id, attrs[2:4])
-
-            res = dict({
-                identifier_map['id']: _identifier_data,
-                'pidstore_identifier': {}
-            })
-            res[doi_register_map['id']] = ({
-                doi_register_map['val']: tempdata[attrs[2]],
-                doi_register_map['type']: tempdata[attrs[3]]
-            })
-            res['pidstore_identifier']['identifier_value'] = tempdata[attrs[0]]
-
-            record_data = {
-                identifier_map['id']: record.get(identifier_map['id']),
-                doi_register_map['id']: {
-                    'attribute_name': 'Identifier Registration',
-                    'attribute_value_mlt': [
-                        {
-                            doi_register_map['val']: tempdata[attrs[2]],
-                            doi_register_map['type']: tempdata[attrs[3]]
-                        }
-                    ],
-                }
-            }
-
-            with db.session.begin_nested():
-                item.update(res)
-                item.commit()
-                item_record.update(record_data)
-                item_record.commit()
-            db.session.commit()
+            if reg:
+                identifier.update_identifier_data(identifier_val,
+                                                  identifier_typ)
+                identifier.update_identifier_regist_data(doi_register_val,
+                                                         doi_register_typ)
     except Exception as ex:
         current_app.logger.exception(str(ex))
-        db.session.rollback()
-
-
-def is_withdrawn_doi(doi_link):
-    """
-    Get doi was withdrawn.
-
-    :param: doi_link
-    :return: True/False
-    """
-    try:
-        link_doi = doi_link['doi_link']
-        query = PersistentIdentifier.query.filter_by(
-            pid_value=link_doi, status=PIDStatus.DELETED)
-        return query.count() > 0
-    except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(pidNotEx)
-        return False
-
-
-def find_doi(doi_link):
-    """
-    Get doi has been register by another item.
-
-    :param: doi_link
-    :return: True/False
-    """
-    is_existed = False
-    try:
-        link_doi = doi_link['doi_link']
-        pid_identifiers = PersistentIdentifier.query.filter_by(
-            pid_type='doi', object_type='rec',
-            pid_value=link_doi, status=PIDStatus.REGISTERED).all()
-        for pid_identifier in pid_identifiers:
-            if pid_identifier.pid_value == link_doi:
-                is_existed = True
-        return is_existed
-    except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(pidNotEx)
-        return is_existed
-
-
-def delete_doi_pidstore(link_doi):
-    """
-    Change status of registed doi_pidstore.
-
-    :param link_doi:
-    :return: True/False
-    """
-    try:
-        with db.session.no_autoflush:
-            doi_pidstore = PersistentIdentifier.query.filter_by(
-                pid_type='doi',
-                object_type='rec',
-                pid_value=link_doi,
-                status=PIDStatus.REGISTERED).one_or_none()
-
-        if doi_pidstore:
-            doi_pidstore.delete()
-            return doi_pidstore.status == PIDStatus.DELETED
-        return False
-    except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(pidNotEx)
-        return False
-
-
-def reg_invenio_pidstore(pid_value, item_id):
-    """
-    Register pids_tore.
-
-    :param: pid_value, item_id
-    """
-    try:
-        PersistentIdentifier.create('doi', pid_value, None,
-                                    PIDStatus.REGISTERED, 'rec', item_id)
-    except PIDAlreadyExists as pidArlEx:
-        current_app.logger.error(pidArlEx)
 
 
 def register_cnri(activity_id):
@@ -279,8 +120,7 @@ def register_cnri(activity_id):
     """
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
-    record = Record.get_record(item_uuid)
-    item = ItemsMetadata.get_record(item_uuid)
+    record = WekoRecord.get_record(item_uuid)
 
     deposit_id = record.get('_deposit')['id']
     record_url = request.url.split('/workflow/')[0] \
@@ -290,82 +130,14 @@ def register_cnri(activity_id):
     handle = weko_handle.register_handle(location=record_url)
 
     if handle:
-        try:
-            handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
-            item_type = ItemsMetadata.get_by_object_id(activity.item_id)
-            prev_cnri = PersistentIdentifier.query.filter_by(
-                pid_type='cnri',
-                object_uuid=item_uuid).one_or_none()
+        handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+        identifier = IdentifierHandle(item_uuid)
+        reg = identifier.register_pidstore('cnri', handle)
 
-            if prev_cnri:
-                return
-
-            PersistentIdentifier.create(
-                'cnri',
-                str(handle),
-                object_type='rec',
-                object_uuid=item_uuid,
-                status=PIDStatus.REGISTERED
-            )
-
-            identifier_map = identifier_jpcoar_mapping(
-                item_type.item_type_id, IDENTIFIER_ITEMSMETADATA_KEY[0:2])
-            record_data = record.get(identifier_map['id'])
-
-            if not record_data:
-                record_data = {
-                    identifier_map['id']: {
-                        "attribute_name": "Identifier",
-                        "attribute_value_mlt": [
-                            {
-                                identifier_map['val']: str(handle),
-                                identifier_map['type']: "HDL"
-                            }
-                        ]
-                    }
-                }
-            identifier_data = {
-                identifier_map['val']: str(handle),
-                identifier_map['type']: 'HDL'
-            }
-            res = {
-                identifier_map['id']: identifier_data,
-                'pidstore_identifier': {}
-            }
-
-            res['pidstore_identifier']['identifier_value'] = str(handle)
-            with db.session.begin_nested():
-                item.update(res)
-                item.commit()
-                record.update(record_data)
-                record.commit()
-            db.session.commit()
-        except Exception as pidNotEx:
-            db.session.rollback()
-            current_app.logger.error(pidNotEx)
+        if reg:
+            identifier.update_identifier_data(handle, 'HDL')
     else:
         current_app.logger.error('Cannot connect Handle server!')
-
-
-def identifier_jpcoar_mapping(item_type_id, keys):
-    """
-    Mapping jpcoar for identifier.
-
-    :param item_type_id: id of item_type
-    :param keys: a list key of attribute mapping
-    :return: res_dict
-    """
-    res_dict = {}
-    if item_type_id:
-        type_mapping = Mapping.get_record(item_type_id)
-        item_map = get_mapping(type_mapping, "jpcoar_mapping")
-        if keys[0] in item_map:
-            _identifier_map = item_map[keys[0]].split('.')
-            res_dict['id'] = _identifier_map[0]
-            res_dict['val'] = _identifier_map[1]
-        if keys[1] in item_map:
-            res_dict['type'] = item_map[keys[1]].split('.')[1]
-    return res_dict
 
 
 def item_metadata_validation(item_id, identifier_type):
@@ -380,7 +152,8 @@ def item_metadata_validation(item_id, identifier_type):
 
     journalarticle_nameid = [14, 3, 5, 9]
     journalarticle_type = 'other（プレプリント）'
-    thesis_nameid = 12
+    thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
+                    'doctoral thesis']
     report_nameid = 16
     report_types = ['technical report', 'research report', 'report']
     elearning_type = 'learning material'
@@ -400,78 +173,70 @@ def item_metadata_validation(item_id, identifier_type):
 
     # check resource type request
     if not resource_type and not type_key:
-        return 'Resource Type Property either missing ' \
-            'or jpcoar mapping not correct!'
+        return {
+            'required': [],
+            'pattern': [],
+            'pmid': '',
+            'doi': '',
+            'url': '',
+            "msg": 'Resource Type Property either missing '
+            'or jpcoar mapping not correct!',
+            'error_type': 'no_resource_type'
+        }
+
     if not item_type or not resource_type and type_check:
-        error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
+        error_list = {'required': [], 'pattern': [], 'pmid': '',
+                      'doi': '', 'url': ''}
         error_list['required'].append(type_key)
         return error_list
     resource_type = resource_type.pop()
+    properties = []
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
-        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if (item_type.name_id in journalarticle_nameid
-            or resource_type == journalarticle_type) \
-            or (item_type.name_id == thesis_nameid) \
+        if item_type.name_id in journalarticle_nameid \
+            or resource_type == journalarticle_type \
             or (item_type.name_id == report_nameid
                 or resource_type in report_types) \
             or (resource_type == elearning_type) \
             or (item_type.name_id in datageneral_nameid
                 or resource_type in datageneral_types):
+            properties = ['title']
+        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
+        elif resource_type in thesis_types:
             properties = ['title',
-                          'identifier',
-                          'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
+                          'creator']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
-        elif item_type.name_id in dataset_nameid or resource_type == \
-                dataset_type:
+        elif item_type.name_id in dataset_nameid \
+                or resource_type == dataset_type:
             properties = ['title',
-                          'givenName',
-                          'identifier',
-                          'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
-        else:
-            error_list = 'false'
+                          'givenName']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if item_type.name_id in journalarticle_nameid or resource_type == \
                 journalarticle_type:
-            properties = ['title',
-                          'identifier',
+            properties = ['title'
                           'publisher',
-                          'identifierRegistration',
                           'sourceIdentifier',
                           'sourceTitle']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
-        elif item_type.name_id in [thesis_nameid, report_nameid] or \
+        elif item_type.name_id == report_nameid or \
                 resource_type in report_types:
+            properties = ['title']
+        elif resource_type in thesis_types:
             properties = ['title',
-                          'identifier',
-                          'identifierRegistration']
-            error_list = validation_item_property(metadata_item,
-                                                  identifier_type,
-                                                  properties)
-        else:
-            error_list = 'false'
-    else:
-        error_list = 'false'
+                          'creator']
 
-    if error_list == 'false':
+    if properties:
+        return validation_item_property(metadata_item,
+                                        identifier_type,
+                                        properties)
+    else:
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
-
-    return error_list
 
 
 def validation_item_property(mapping_data, identifier_type, properties):
@@ -483,8 +248,9 @@ def validation_item_property(mapping_data, identifier_type, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
-    empty_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
+    error_list = {'required': [], 'pattern': [], 'pmid': '',
+                  'doi': '', 'url': ''}
+    empty_list = deepcopy(error_list)
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property(
@@ -519,6 +285,32 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if requirements:
             error_list['pattern'] += requirements
 
+    # check 識別子 jpcoar:givenName and jpcoar:nameIdentifier
+    if 'creator' in properties:
+        _, key = mapping_data.get_data_by_property(
+            "creator.givenName.@value")
+        _, idt_key = mapping_data.get_data_by_property(
+            "creator.nameIdentifier.@value")
+
+        data = []
+        idt_data = []
+        creators = mapping_data.record.get(key.split('.')[0])
+        for creator in creators.get("attribute_value_mlt"):
+            for subitem in creator:
+                for item in creator[subitem]:
+                    if item.get(key.split('.')[1]):
+                        data.append(item.get(key.split('.')[1]))
+                    if item.get(idt_key.split('.')[1]):
+                        idt_data.append(item.get(idt_key.split('.')[1]))
+
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        repeatable = True
+        idt_requirements = check_required_data(idt_data, idt_key, repeatable)
+        if requirements and idt_requirements:
+            error_list['pattern'] += requirements
+            error_list['pattern'] += idt_requirements
+
     # check 識別子 jpcoar:identifier
     if 'identifier' in properties:
         data, key = mapping_data.get_data_by_property("identifier.@value")
@@ -535,9 +327,14 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if type_requirements:
             error_list['required'] += type_requirements
         else:
+            idx = 0
             for item in type_data:
-                if item not in ['HDL', 'URI', 'DOI']:
+                if not validators.url(data[idx]):
+                    error_list['required'].append(key)
                     error_list['required'].append(type_key)
+                    error_list['url'] = idx
+                    break
+                idx += 1
 
     # check ID登録 jpcoar:identifierRegistration
     if 'identifierRegistration' in properties:
@@ -545,30 +342,27 @@ def validation_item_property(mapping_data, identifier_type, properties):
             "identifierRegistration.@value")
         type_data, type_key = mapping_data.get_data_by_property(
             "identifierRegistration.@attributes.identifierType")
+        idt_data, idt_key = mapping_data.get_data_by_property(
+            "identifier.@value")
+        idt_type_data, idt_type_key = mapping_data.get_data_by_property(
+            "identifier.@attributes.identifierType")
 
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
+
         if requirements and not requirements == [None]:
             error_list['required'] += requirements
-        # half-with and special character check
-        # else:
-        #     for item in data:
-        #         char_re = re.compile(r'[^a-zA-Z0-9\-\.\_\;\(\)\/.]')
-        #         result = char_re.search(item)
-        #         if bool(result):
-        #             error_list['pattern'].append(key)
         if type_requirements and not type_requirements == [None]:
             error_list['required'] += type_requirements
         else:
-            if type_data:
-                for item in type_data:
-                    if (identifier_type
-                            == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']
-                            and not item == 'JaLC') or \
-                            (identifier_type
-                             == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']
-                             and not item == 'Crossref'):
-                        error_list['required'].append(type_key)
+            for item in type_data:
+                if item == 'PMID（現在不使用）':
+                    error_list['pmid'] = type_key
+            result = check_suffix_identifier(data, idt_data, idt_type_data)
+            if result:
+                error_list['required'].append(idt_key)
+                error_list['required'].append(idt_type_key)
+                error_list['doi'] = [idt_key + '.' + str(key) for key in result]
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
@@ -622,6 +416,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
     if error_list == empty_list:
         return None
     else:
+        error_list['required'] = list(set(error_list['required']))
         return error_list
 
 
@@ -647,6 +442,34 @@ def check_required_data(data, key, repeatable=False):
         return None
     else:
         return error_list
+
+
+def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
+    """Check prefix/suffiex in Identifier Registration contain in Identifier.
+
+    Arguments:
+        idt_regis_value -- {string array} Identifier Registration value
+        idt_list        -- {string array} Identifier Data
+        idt_type_list   -- {string array} Identifier Type List
+
+    Returns:
+        True/False   -- is prefix/suffix data exist
+
+    """
+    indices = [i for i, x in enumerate(idt_type_list or []) if x == "DOI"]
+    list_value_error = []
+    if idt_list and idt_regis_value:
+        for pre in idt_regis_value:
+            for index in indices:
+                data = idt_list[index] or ''
+                if (pre in data and (
+                        len(data) - data.find(pre) - len(pre)) == 0):
+                    return False
+                else:
+                    list_value_error.append(index)
+        return list_value_error
+    else:
+        return list_value_error
 
 
 class MappingData(object):
@@ -676,7 +499,7 @@ class MappingData(object):
         key = self.item_map.get(item_property)
         data = []
         if not key:
-            current_app.logger.debug(str(item_property) + ' jpcoar:mapping '
+            current_app.logger.error(str(item_property) + ' jpcoar:mapping '
                                                           'is not correct')
             return None, None
         attribute = self.record.get(key.split('.')[0])
@@ -686,3 +509,281 @@ class MappingData(object):
             for attr in attribute.get('attribute_value_mlt'):
                 data.append(attr.get(key.split('.')[1]))
         return data, key
+
+
+class IdentifierHandle(object):
+    """Get Community Info."""
+
+    item_uuid = ''
+    item_type_id = None
+    item_record = None
+    item_metadata = None
+    metadata_mapping = None
+
+    def __init__(self, item_id):
+        """Initilize IdentifierHandle."""
+        self.item_uuid = item_id
+        self.metadata_mapping = MappingData(item_id)
+        self.item_type_id = self.metadata_mapping.get_data_item_type().id
+        self.item_metadata = ItemsMetadata.get_record(item_id)
+        self.item_record = self.metadata_mapping.record
+
+    def get_pidstore(self, pid_type='doi', object_uuid=None):
+        """Get Persistent Identifier Object by pid_value or item_uuid.
+
+        Arguments:
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            object_uuid  -- {uuid} assigned object's uuid
+
+        Returns:
+            pid_object   -- PID object or None
+
+        """
+        if not object_uuid:
+            object_uuid = self.item_uuid
+        with db.session.no_autoflush:
+            pid_object = PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                object_uuid=object_uuid,
+                status=PIDStatus.REGISTERED).all()
+            if not pid_object:
+                current_pid = PersistentIdentifier.get_by_object(
+                    pid_type='recid',
+                    object_type='rec',
+                    object_uuid=object_uuid
+                )
+                current_pv = PIDVersioning(child=current_pid)
+                if current_pv and current_pv.parent:
+                    if current_pv.previous:
+                        pid_object = self.get_pidstore(
+                            pid_type,
+                            current_pv.previous.object_uuid)
+                    else:
+                        return None
+
+            if pid_type == 'doi' and pid_object \
+                    and isinstance(pid_object, list):
+                pid_object = pid_object[0]
+            return pid_object
+
+    def check_pidstore_exist(self, pid_type, chk_value=None):
+        """Get check whether PIDStore object exist.
+
+        Arguments:
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            chk_value    -- {string} object_uuid or pid_value
+
+        Returns:
+            return       -- PID object if exist
+
+        """
+        try:
+            with db.session.no_autoflush:
+                if not chk_value:
+                    return PersistentIdentifier.query.filter_by(
+                        pid_type=pid_type,
+                        object_uuid=self.item_uuid).all()
+                return PersistentIdentifier.query.filter_by(
+                    pid_type=pid_type,
+                    pid_value=chk_value).one_or_none()
+        except PIDDoesNotExistError as pid_not_exist:
+            current_app.logger.error(pid_not_exist)
+            return None
+
+    def register_pidstore(self, pid_type, reg_value):
+        """Register Persistent Identifier Object.
+
+        Arguments:
+            pid_type     -- {string} 'doi' (default) or 'cnri'
+            reg_value    -- {string} pid_value
+
+        Returns:
+            return       -- PID object if exist
+
+        """
+        try:
+            prev_pidstore = self.check_pidstore_exist(pid_type, reg_value)
+            if not prev_pidstore:
+                return PersistentIdentifier.create(
+                    pid_type,
+                    str(reg_value),
+                    object_type='rec',
+                    object_uuid=self.item_uuid,
+                    status=PIDStatus.REGISTERED
+                )
+            else:
+                return False
+        except Exception as ex:
+            current_app.logger.error(ex)
+            return False
+
+    def delete_doi_pidstore_status(self, pid_value=None):
+        """Change Persistent Identifier Object status to DELETE.
+
+        Arguments:
+            pid_value -- {string} pid_value
+
+        Returns:
+            return    -- is pid object's status changed?
+
+        """
+        try:
+            if not pid_value:
+                pid_value = self.get_pidstore().pid_value
+            doi_pidstore = self.check_pidstore_exist('doi', pid_value)
+
+            if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
+                doi_pidstore.delete()
+
+                permalink_uri = ''
+                cnri_datas = self.get_pidstore('cnri')
+                if cnri_datas:
+                    permalink_uri = cnri_datas[-1].pid_value
+                metadata_data = {
+                    'permalink': permalink_uri
+                }
+                with db.session.begin_nested():
+                    self.item_metadata.update(metadata_data)
+                    self.item_metadata.commit()
+                db.session.commit()
+                return doi_pidstore.status == PIDStatus.DELETED
+            return False
+        except PIDDoesNotExistError as pidNotEx:
+            current_app.logger.error(pidNotEx)
+            return False
+        except Exception as ex:
+            current_app.logger.error(ex)
+            return False
+
+    def update_identifier_data(self, input_value, input_type):
+        """Update Identifier of WekoDeposit and ItemMetadata.
+
+        Arguments:
+            input_value -- {string} Identifier input
+            input_type  -- {string} Identifier type
+
+        Returns:
+            None
+
+        """
+        _, key_value = self.metadata_mapping.get_data_by_property(
+            "identifier.@value")
+        _, key_type = self.metadata_mapping.get_data_by_property(
+            "identifier.@attributes.identifierType")
+
+        try:
+            self.commit(key_id=key_value.split('.')[0],
+                        key_val=key_value.split('.')[1],
+                        key_typ=key_type.split('.')[1],
+                        atr_nam='Identifier',
+                        atr_val=input_value,
+                        atr_typ=input_type
+                        )
+        except Exception as pidNotEx:
+            current_app.logger.error(pidNotEx)
+            db.session.rollback()
+
+    def update_identifier_regist_data(self, input_value, input_type):
+        """Update Identifier Registration of WekoDeposit and ItemMetadata.
+
+        Arguments:
+            input_value -- {string} Identifier input
+            input_type  -- {string} Identifier type
+
+        Returns:
+            None
+
+        """
+        _, key_value = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@value")
+        _, key_type = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@attributes.identifierType")
+
+        try:
+            self.commit(key_id=key_value.split('.')[0],
+                        key_val=key_value.split('.')[1],
+                        key_typ=key_type.split('.')[1],
+                        atr_nam='Identifier Registration',
+                        atr_val=input_value,
+                        atr_typ=input_type
+                        )
+        except Exception as pidNotEx:
+            current_app.logger.error(pidNotEx)
+            db.session.rollback()
+
+    def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
+        """Commit update.
+
+        Arguments:
+            key_id  -- {string} Identifier subitem's ID
+            key_val -- {string} Identifier Value subitem's ID
+            key_typ -- {string} Identifier Type subitem's ID
+            atr_nam -- {string} attribute_name data
+            atr_val -- {string} attribute_value_mlt value data
+            atr_typ -- {string} attribute_value_mlt type data
+
+        Returns:
+            None
+
+        """
+        item_type_obj = ItemTypes.get_by_id(self.item_type_id)
+        option = item_type_obj.render.get('meta_list', {})\
+            .get(key_id, {}).get('option')
+
+        multi_option = None
+        if option:
+            multi_option = option.get('multiple')
+
+        data = self.item_record.get(key_id)
+
+        if not data:
+            record_data = {
+                key_id: {
+                    "attribute_name": atr_nam,
+                    "attribute_value_mlt": [
+                        {
+                            key_val: atr_val,
+                            key_typ: atr_typ
+                        }
+                    ]
+                }
+            }
+        else:
+            if multi_option:
+                data['attribute_value_mlt'].append({
+                    key_val: atr_val,
+                    key_typ: atr_typ
+                })
+            else:
+                data['attribute_value_mlt'] = [{
+                    key_val: atr_val,
+                    key_typ: atr_typ
+                }]
+            record_data = {
+                key_id: data
+            }
+
+        metadata_data = self.item_metadata.get(key_id, [])
+        if atr_nam == 'Identifier':
+            metadata_data.append({
+                key_val: atr_val,
+                key_typ: atr_typ
+            })
+            metadata_data = {
+                key_id: metadata_data,
+                'permalink': atr_val
+            }
+        elif atr_nam == 'Identifier Registration':
+            metadata_data = {
+                key_id: {
+                    key_val: atr_val,
+                    key_typ: atr_typ
+                }
+            }
+
+        with db.session.begin_nested():
+            self.item_metadata.update(metadata_data)
+            self.item_metadata.commit()
+            self.item_record.update(record_data)
+            self.item_record.commit()
+        db.session.commit()

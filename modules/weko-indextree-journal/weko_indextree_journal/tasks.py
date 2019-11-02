@@ -142,40 +142,58 @@ def export_journal_task(p_path):
             for item in journals:
                 # get data
                 journal_data = []
-                journal_data.append(item.publication_title)
-                journal_data.append(item.print_identifier)
-                journal_data.append(item.online_identifier)
-                journal_data.append(item.date_first_issue_online)
-                journal_data.append(item.num_first_vol_online)
-                journal_data.append(item.num_first_issue_online)
-                journal_data.append(item.date_last_issue_online)
-                journal_data.append(item.num_last_vol_online)
-                journal_data.append(item.num_last_issue_online)
-                journal_data.append(item.title_url)
-                journal_data.append(item.first_author)
-                journal_data.append(item.title_id)
-                journal_data.append(item.embargo_info)
-                journal_data.append(item.coverage_depth)
-                journal_data.append(item.coverage_notes)
-                journal_data.append(item.publisher_name)
-                journal_data.append(item.publication_type)
-                journal_data.append(item.date_monograph_published_print)
-                journal_data.append(item.date_monograph_published_online)
-                journal_data.append(item.monograph_volume)
-                journal_data.append(item.monograph_edition)
-                journal_data.append(item.first_editor)
-                journal_data.append(item.parent_publication_title_id)
-                journal_data.append(item.preceding_publication_title_id)
-                journal_data.append(item.access_type)
-                journal_data.append(item.language)
-                journal_data.append(item.title_alternative)
-                journal_data.append(item.title_transcription)
-                journal_data.append(item.ncid)
-                journal_data.append(item.ndl_callno)
-                journal_data.append(item.ndl_bibid)
-                journal_data.append(item.jstage_code)
-                journal_data.append(item.ichushi_code)
-                journal_data.append(item.deleted)
+                journal_data.append(
+                    convert_none_to_blank(item.publication_title))
+                journal_data.append(
+                    convert_none_to_blank(item.print_identifier))
+                journal_data.append(
+                    convert_none_to_blank(item.online_identifier))
+                journal_data.append(
+                    convert_none_to_blank(item.date_first_issue_online))
+                journal_data.append(
+                    convert_none_to_blank(item.num_first_vol_online))
+                journal_data.append(
+                    convert_none_to_blank(item.num_first_issue_online))
+                journal_data.append(
+                    convert_none_to_blank(item.date_last_issue_online))
+                journal_data.append(
+                    convert_none_to_blank(item.num_last_vol_online))
+                journal_data.append(
+                    convert_none_to_blank(item.num_last_issue_online))
+                journal_data.append(convert_none_to_blank(item.title_url))
+                journal_data.append(convert_none_to_blank(item.first_author))
+                journal_data.append(convert_none_to_blank(item.title_id))
+                journal_data.append(convert_none_to_blank(item.embargo_info))
+                journal_data.append(convert_none_to_blank(item.coverage_depth))
+                journal_data.append(convert_none_to_blank(item.coverage_notes))
+                journal_data.append(convert_none_to_blank(item.publisher_name))
+                journal_data.append(
+                    convert_none_to_blank(item.publication_type))
+                journal_data.append(
+                    convert_none_to_blank(item.date_monograph_published_print))
+                journal_data.append(
+                    convert_none_to_blank(item.date_monograph_published_online))
+                journal_data.append(
+                    convert_none_to_blank(item.monograph_volume))
+                journal_data.append(
+                    convert_none_to_blank(item.monograph_edition))
+                journal_data.append(convert_none_to_blank(item.first_editor))
+                journal_data.append(
+                    convert_none_to_blank(item.parent_publication_title_id))
+                journal_data.append(
+                    convert_none_to_blank(item.preceding_publication_title_id))
+                journal_data.append(convert_none_to_blank(item.access_type))
+                journal_data.append(convert_none_to_blank(item.language))
+                journal_data.append(
+                    convert_none_to_blank(item.title_alternative))
+                journal_data.append(
+                    convert_none_to_blank(item.title_transcription))
+                journal_data.append(convert_none_to_blank(item.ncid))
+                journal_data.append(convert_none_to_blank(item.ndl_callno))
+                journal_data.append(convert_none_to_blank(item.ndl_bibid))
+                journal_data.append(convert_none_to_blank(item.jstage_code))
+                journal_data.append(convert_none_to_blank(item.ichushi_code))
+                journal_data.append(convert_none_to_blank(item.deleted))
 
                 # add to list.
                 journals_list.append(journal_data)
@@ -217,3 +235,15 @@ def export_journal_task(p_path):
     db_processing_status.status = False
     db_processing_status.save_export_info(db_processing_status)
     return {}
+
+
+def convert_none_to_blank(input_value):
+    """Convert None to blank.
+
+    :param input_value: input data
+    :return: Blank if input value is None.
+    """
+    if input_value is None:
+        return ''
+    else:
+        return input_value

@@ -2,6 +2,7 @@
   "settings": {
     "number_of_shards": 1,
     "number_of_replicas": 0,
+    "index.mapping.total_fields.limit": 10000,
     "analysis": {
       "tokenizer": {
         "ja_tokenizer": {
@@ -90,6 +91,7 @@
         },
         "itemtype": {
           "type": "text",
+          "fielddata": true,
           "copy_to": [
             "search_other"
           ]
@@ -121,17 +123,6 @@
         "control_number": {
           "type": "integer",
           "index": true
-        },
-        "custom_sort": {
-          "type": "object",
-          "properties": {
-          "index_id": {
-            "type": "text"
-          },
-          "sort": {
-            "type": "text"
-           }
-          }
         },
         "title": {
           "type": "keyword",
@@ -588,13 +579,13 @@
           ]
         },
         "numPages": {
-          "type": "integer"
+          "type": "text"
         },
         "pageStart": {
-          "type": "integer"
+          "type": "text"
         },
         "pageEnd": {
-          "type": "integer"
+          "type": "text"
         },
         "dissertationNumber": {
           "type": "text",

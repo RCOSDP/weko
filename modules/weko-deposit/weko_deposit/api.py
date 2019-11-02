@@ -399,7 +399,7 @@ class WekoDeposit(Deposit):
             return None
 
     @classmethod
-    def create(cls, data, id_=None):
+    def create(cls, data, id_=None, recid=None):
         """Create a deposit.
 
         Adds bucket creation immediately on deposit creation.
@@ -428,7 +428,15 @@ class WekoDeposit(Deposit):
                     'displayname': displayname,
                     'email': current_user.email
                 }
-        deposit = super(WekoDeposit, cls).create(data, id_=id_)
+        if not recid:
+            deposit = super(WekoDeposit, cls).create(data, id_=id_)
+        else:
+            deposit = super(
+                WekoDeposit,
+                cls).create(
+                data,
+                id_=id_,
+                recid=recid)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         recid = PersistentIdentifier.get('recid', str(data['_deposit']['id']))
@@ -741,6 +749,9 @@ class WekoDeposit(Deposit):
 
         # convert item meta data
         dc, jrc, is_edit = json_loader(data, self.pid)
+        dc['publish_date'] = data.get('pubdate')
+        dc['title'] = [data.get('title')]
+        dc['relation_version_is_last'] = True
         self.data = data
         self.jrc = jrc
         self.is_edit = is_edit
@@ -752,8 +763,8 @@ class WekoDeposit(Deposit):
         for pth in index_lst:
             # es setting
             sub_sort[pth[-13:]] = ""
-        jrc.update(dict(custom_sort=sub_sort))
-        dc.update(dict(custom_sort=sub_sort))
+#        jrc.update(dict(custom_sort=sub_sort))
+#        dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')
@@ -899,7 +910,8 @@ class WekoRecord(Record):
 
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(community)
-        comm_navs = [item for item in navs if str(comm.index.id) in item.path.split('/')]
+        comm_navs = [item for item in navs if str(
+            comm.index.id) in item.path.split('/')]
         return comm_navs
 
     @property
@@ -933,17 +945,19 @@ class WekoRecord(Record):
                     continue
 
                 mlt = val.get('attribute_value_mlt')
-                if mlt:
+                if mlt is not None:
+
                     nval = dict()
                     nval['attribute_name'] = val.get('attribute_name')
                     nval['attribute_type'] = val.get('attribute_type')
-                    if 'creator' == nval['attribute_type']:
-                        nval['attribute_value_mlt'] = mlt
-                    else:
-                        nval['attribute_value_mlt'] = get_all_items(mlt, solst)
+                    nval['attribute_value_mlt'] = get_all_items(mlt, solst,
+                                                                True)
                     items.append(nval)
                 else:
                     items.append(val)
+
+            current_app.logger.debug("items: {}".format(items))
+
             return items
         except BaseException:
             abort(500)

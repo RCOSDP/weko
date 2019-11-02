@@ -82,7 +82,7 @@
 <div class="communities">
 <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
   {{ community_header(community, subtitle='') }}
-  <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
+  <div id="page_body" class="grid-stack hidden" {%- if render_widgets %}style="display: None;"{%- endif %}>
   <div id="main_contents">
   {{ super() }}
   </div>
@@ -102,8 +102,8 @@
       {% include "weko_theme/body_search.html" %}
     </div>
   </div>
-  <div class="row">
-    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
+  <div class="row" style="height: 100%">
+    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}" style="height: 80%">
       {% include "weko_theme/body_index.html" %}
     </div>
     <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}}">

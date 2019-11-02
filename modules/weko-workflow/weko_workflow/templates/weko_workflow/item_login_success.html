@@ -272,12 +272,12 @@
     <div class="communities">
       <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
       {{ community_header(community, subtitle='') }}
-      <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
+      <div id="page_body" class="grid-stack hidden" {%- if render_widgets %}style="display: None;"{%- endif %}>
         <div id="main_contents">
   {%- endif%}
     {{ super() }}
     <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
-      <div class="modal-dialog modelWidth" role="document">
+      <div class="modal-dialog modelWidth modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-body">
             {% include 'weko_workflow/record_detail.html' %}

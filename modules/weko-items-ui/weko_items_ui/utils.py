@@ -20,16 +20,17 @@
 
 """Module of weko-items-ui utils.."""
 
-from datetime import datetime
-
-from flask import session
+from elasticsearch.exceptions import NotFoundError
+from flask import current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_records.api import RecordBase
+from invenio_search import RecordsSearch
 from jsonschema import ValidationError
 from sqlalchemy import MetaData, Table
 from weko_records.api import ItemTypes
+from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
 
@@ -308,6 +309,10 @@ def parse_ranking_results(results, display_rank, list_name='all',
     else:
         url = None
 
+    if date_key == 'create_date':
+        data_list = parse_ranking_new_items(results)
+        results = dict()
+        results['all'] = data_list
     if results and list_name in results:
         rank = 1
         count = 0
@@ -321,9 +326,7 @@ def parse_ranking_results(results, display_rank, list_name='all',
                 t['rank'] = rank
                 t['count'] = count
             elif date_key:
-                new_date = \
-                    datetime.utcfromtimestamp(
-                        item[date_key]).strftime('%Y-%m-%d')
+                new_date = item[date_key]
                 if new_date == date:
                     t['date'] = ''
                 else:
@@ -342,6 +345,29 @@ def parse_ranking_results(results, display_rank, list_name='all',
             if len(ranking_list) == display_rank:
                 break
     return ranking_list
+
+
+def parse_ranking_new_items(result_data):
+    """Parse ranking new items.
+
+    :param result_data: result data
+    """
+    data_list = list()
+    if not result_data or not result_data.get('hits') \
+            or not result_data.get('hits').get('hits'):
+        return data_list
+    for item_data in result_data.get('hits').get('hits'):
+        item_created = item_data.get('_source')
+        data = dict()
+        data['create_date'] = item_created.get('publish_date', '')
+        data['pid_value'] = item_created.get('control_number')
+        meta_data = item_created.get('_item_metadata')
+        item_title = ''
+        if isinstance(meta_data, dict):
+            item_title = meta_data.get('item_title')
+        data['record_name'] = item_title
+        data_list.append(data)
+    return data_list
 
 
 def validate_form_input_data(result: dict, item_id: str, data: dict):
@@ -394,6 +420,8 @@ def update_json_schema_by_activity_id(json, activity_id):
                     json['properties'][sub_item[0]]['items'][
                         'required'].append(sub_item[1])
                 else:
+                    if not json['properties'][sub_item[0]].get('required'):
+                        json['properties'][sub_item[0]]['required'] = []
                     json['properties'][sub_item[0]]['required'].append(
                         sub_item[1])
         for item in error_list['pattern']:
@@ -410,3 +438,25 @@ def update_json_schema_by_activity_id(json, activity_id):
                                 givename['required'] = []
                             givename['required'].append(sub_item[1])
     return json
+
+
+def get_new_items_by_date(start_date: str, end_date: str) -> dict:
+    """Get ranking new item by date.
+
+    :param start_date:
+    :param end_date:
+    :return:
+    """
+    record_search = RecordsSearch(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    result = dict()
+
+    try:
+        search_instance, qs_kwargs = item_search_factory(None, record_search,
+                                                         start_date, end_date)
+        search_result = search_instance.execute()
+        result = search_result.to_dict()
+    except NotFoundError as e:
+        current_app.logger.debug("Indexes do not exist yet: ", str(e))
+
+    return result

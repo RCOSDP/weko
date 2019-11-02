@@ -57,9 +57,21 @@ msgstr "レコードが存在しません"
 msgid "An error has occurred."
 msgstr "エラーが発生しました"
 
-#: weko_items_ui/views.py:929
+#: weko_items_ui/views.py:1188
 msgid "PID does not meet the conditions."
 msgstr "PID付与の条件を満たしていません。"
+
+#: weko_items_ui/views.py:1189
+msgid "Since PMID is not subject to DOI registration, please select another type."
+msgstr "PMIDはDOI登録の対象外のため、他のタイプを選択してください。"
+
+#: weko_items_ui/views.py:1190
+msgid "Prefix/Suffix of Identifier is not consistency with content of Identifier Registration."
+msgstr "識別子のプレフィックス・サフィックスがID登録の内容と一致しています。"
+
+#: weko_items_ui/views.py:1191
+msgid "Please input location information (URL) for Identifier."
+msgstr "識別子は所在情報（URL）を入力してください。"
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 msgid "Itemtype List"

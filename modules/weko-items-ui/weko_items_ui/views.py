@@ -60,10 +60,10 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
-    get_list_username, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, parse_ranking_results, \
-    update_json_schema_by_activity_id, validate_form_input_data, \
-    validate_user
+    get_list_username, get_new_items_by_date, get_user_info_by_email, \
+    get_user_info_by_username, get_user_information, get_user_permission, \
+    parse_ranking_results, update_json_schema_by_activity_id, \
+    validate_form_input_data, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -445,7 +445,7 @@ def iframe_items_index(pid_value=0):
             from weko_theme.utils import get_design_layout
 
             page, render_widgets = get_design_layout(
-                session['itemlogin_community_id']
+                community_id
                 or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
@@ -641,6 +641,7 @@ def get_search_data(data_type=''):
         data_type: type of response data (username, email)
     return:
         list of search data
+
     """
     result = {
         'results': '',
@@ -965,13 +966,9 @@ def ranking():
             timedelta(days=int(settings.new_item_period) - 1)
         if new_item_start_date < start_date:
             new_item_start_date = start_date
-        result = QueryCommonReportsHelper.get(
-            start_date=new_item_start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            event='item_create',
-            agg_size=settings.display_rank,
-            agg_sort={'_term': 'desc'}
-        )
+        result = get_new_items_by_date(
+            new_item_start_date.strftime('%Y-%m-%d'),
+            end_date.strftime('%Y-%m-%d'))
         rankings['new_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='all', title_key='record_name',
@@ -1184,8 +1181,28 @@ def check_validation_error_msg(activity_id):
             'update_json_schema'].get(activity_id):
         error_list = session[
             'update_json_schema'].get(activity_id)
+
+        msg = []
+        if error_list.get('error_type'):
+            if error_list.get('error_type') == 'no_resource_type':
+                msg.append(_(error_list.get('msg', '')))
+
+        else:
+            msg.append(_('PID does not meet the conditions.'))
+        if error_list.get('pmid'):
+            msg.append(_(
+                'Since PMID is not subject to DOI registration, please '
+                'select another type.'
+            ))
+        if error_list.get('doi'):
+            msg.append(_(
+                'Prefix/Suffix of Identifier is not consistency with'
+                ' content of Identifier Registration.'))
+        if error_list.get('url'):
+            msg.append(_(
+                'Please input location information (URL) for Identifier.'))
         return jsonify(code=1,
-                       msg=_('PID does not meet the conditions.'),
+                       msg=msg,
                        error_list=error_list)
     else:
         return jsonify(code=0)

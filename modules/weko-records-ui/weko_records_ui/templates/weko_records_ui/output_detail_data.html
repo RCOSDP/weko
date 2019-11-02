@@ -1,0 +1,156 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+
+{% macro output_attribute_value(attribute_value_mlt) %}
+    {%- if attribute_value_mlt is mapping -%}
+        {%- for k, v in attribute_value_mlt.items() -%}
+            {%- if '.name' not in k -%}
+                {{ v }}<br>
+            {%- endif -%}
+        {%- endfor -%}
+    {%- elif attribute_value_mlt is iterable and attribute_value_mlt is not string -%}
+        {%- for attribute_value in attribute_value_mlt -%}
+            {{ output_attribute_value(attribute_value) }}
+        {%- endfor -%}
+    {%- endif -%}
+{% endmacro %}
+
+{% macro output_detail_data(record_detail_data) %}
+    {%- if record_detail_data['attribute_value_mlt'] is string or not record_detail_data['attribute_value_mlt'] -%}
+      <tr>
+        <th scope="row"
+            colspan="6">{{ record_detail_data['attribute_name'] }}</th>
+        <td>{{ record_detail_data['attribute_value_mlt'] }}</td>
+      </tr>
+    {%- else -%}
+      <tr>
+        <th scope="row" colspan="6"
+            style="border-bottom: none">{{ record_detail_data['attribute_name'] }}</th>
+        <td>
+          <pre class="hidden">{{ record_detail_data|tojson }}</pre>
+        </td>
+      </tr>
+        {%- for l in record_detail_data['attribute_value_mlt'] -%}
+            {{ output_child_data(l, record_detail_data['attribute_type']) }}
+        {%- endfor -%}
+    {%- endif -%}
+{% endmacro %}
+
+{% macro output_child_data(record_detail_data, data_type) %}
+    {%- if record_detail_data is mapping -%}
+        {%- set detail_data = [] -%}
+        {%- for k, v in record_detail_data.items() -%}
+            {%- if '.name' not in k and not record_detail_data.get(k + '.name') -%}
+                {{ v }}<br>
+            {%- elif '.name' in k -%}
+                {% set key = k.split('.')[0] %}
+                {%- if v.split('.')|length == 1 -%}
+                  <tr>
+                    <th scope="row"
+                        style="border-top: none; border-bottom: none"></th>
+                    <th scope="row" colspan="5">{{ v }}</th>
+                    <td>{{ record_detail_data.get(key) }}</td>
+                  </tr>
+                {%- elif data_type is not none and data_type == 'creator' -%}
+                    {%- if key == 'nameIdentifier' and record_detail_data.get(key) is not none -%}
+                        {%- set detail_data = detail_data.append(
+                        {'name': v, 'value': record_detail_data.get(key), 'key': key,
+                        'nameIdentifierURI':record_detail_data.get('nameIdentifierURI'),
+                        'nameIdentifierScheme': record_detail_data.get('nameIdentifierScheme')}) -%}
+                    {%- else -%}
+                        {%- set detail_data = detail_data.append({'name': v, 'value': record_detail_data.get(key), 'key': key}) -%}
+                    {%- endif -%}
+                {%- else -%}
+                    {%- set detail_data = detail_data.append({'name': v, 'value': record_detail_data.get(key)}) -%}
+                {%- endif -%}
+            {%- endif -%}
+        {%- endfor -%}
+        {%- if detail_data|length > 0 -%}
+            {{ output_data(detail_data, data_type) }}
+        {%- endif -%}
+    {%- elif record_detail_data is iterable and record_detail_data is not string -%}
+        {%- for detail_data in record_detail_data -%}
+            {{ output_child_data(detail_data, data_type) }}
+        {%- endfor -%}
+    {%- endif -%}
+{% endmacro %}
+
+
+{% macro output_data(detail_data, data_type) %}
+    {% set parent_name_lst = detail_data[0].get('name').split('.') %}
+    {{ output_parent_detail(parent_name_lst, 1) }}
+    {%- for out_detail_datum in detail_data -%}
+      <tr>
+          {{ out_table_th(parent_name_lst|length) }}
+        <th scope="row"
+            colspan="{{ 6 - parent_name_lst|length }}">{{ out_detail_datum.get('name').split('.')[0] }}</th>
+        <td>
+            {%- if data_type == 'creator' -%}
+                {{ output_creator(out_detail_datum) }}
+            {%- else -%}
+                {{ out_detail_datum.get('value') }}
+            {%- endif -%}
+        </td>
+      </tr>
+    {%- endfor -%}
+
+{% endmacro %}
+
+
+{% macro output_parent_detail(parent_name_lst, index) %}
+    {%- if parent_name_lst|length > 1 -%}
+      <tr>
+          {{ out_table_th(index) }}
+        <th scope="row" style="border-bottom: none"
+            colspan="{{ 6 - index }}">{{ parent_name_lst[-1] }}</th>
+        <td></td>
+      </tr>
+        {{ output_parent_detail( parent_name_lst[0:-1], index + 1 ) }}
+    {%- endif -%}
+{% endmacro %}
+
+
+{% macro out_table_th(parrent_length) %}
+    {%- if parrent_length > 0 -%}
+      <th scope="row"
+          style="border-top: none; border-bottom: none"></th>
+        {{ out_table_th(parrent_length - 1) }}
+    {%- endif -%}
+{% endmacro %}
+
+
+{% macro output_creator(creator_data) %}
+    {%- if creator_data.get('key') == 'creatorMail' and config['EMAIL_DISPLAY_FLG'] -%}
+      <a href="{{ 'mailto:' + creator_data.get('value') }}">{{ creator_data.get('value') }}</a>
+    {%- elif creator_data.get('key') == 'creatorName' and 'name' == config['ITEM_SEARCH_FLG'] -%}
+        {%- set q = 'creator=' + creator_data.get('value') -%}
+      <a href="{{ url_for('invenio_search_ui.search') + '?q=&' + q }}">{{ creator_data.get('value') }}</a>
+    {%- elif creator_data.get('key') == 'nameIdentifier' -%}
+        {%- if creator_data.get('nameIdentifierURI') is not none and creator_data.get('value') is not none -%}
+            {%- set nid = creator_data.get('nameIdentifierURI') -%}
+        {%- elif creator_data.get('nameIdentifierScheme') is not none -%}
+            {%- set nid = 'http://' + creator_data.get('nameIdentifierScheme') + '.io/'+ creator_data.get('value') -%}
+        {%- endif -%}
+      <a href="{{ nid }}">{{ creator_data.get('value') }}</a>
+    {%- else -%}
+        {{ creator_data.get('value') }}
+    {%- endif -%}
+{% endmacro %}

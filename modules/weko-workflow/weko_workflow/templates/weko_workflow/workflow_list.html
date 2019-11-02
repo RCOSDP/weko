@@ -106,7 +106,12 @@
     </tbody>
   </table>
   <div class="hide" id="post_uri">{{url_for('weko_workflow.init_activity')}}</div>
-       <a class="btn btn-default pull-left" href="{{url_for('weko_workflow.index')}}">
+    {%-if community%}
+      {%- set back_url = url_for('weko_workflow.index',community=community.id) -%}
+    {%- else%}
+      {%- set back_url = url_for('weko_workflow.index') -%}
+    {%- endif%}
+       <a class="btn btn-default pull-left" href="{{back_url}}">
            <span class="glyphicon glyphicon-chevron-left"></span>&nbsp
              {{_('Back')}}
        </a>

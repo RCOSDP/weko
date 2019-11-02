@@ -133,29 +133,7 @@ class AtomSerializer(JSONSerializer):
             fe = fg.add_entry()
 
             # Set title
-            if 'title_en' in item_metadata:
-                _enTitle = item_metadata['title_en']['attribute_value']
-            if 'title_ja' in item_metadata:
-                _jaTitle = item_metadata['title_ja']['attribute_value']
-
-            if 'lang' in item_metadata:
-                _lang = item_metadata['lang']['attribute_value']
-            if _lang:
-                if(_lang == 'en'):
-                    if _enTitle:
-                        fe.title(_enTitle)
-                    elif _jaTitle:
-                        fe.title(_jaTitle)
-                else:
-                    if _jaTitle:
-                        fe.title(_jaTitle)
-                    elif _enTitle:
-                        fe.title(_enTitle)
-            else:
-                if _enTitle:
-                    fe.title(_enTitle)
-                if _jaTitle:
-                    fe.title(_jaTitle)
+            fe.title(item_metadata.get('item_title', ''))
 
             # Set link
             _pid = item_metadata['control_number']

@@ -25,13 +25,13 @@
 {% endblock %}
 
 {%- if render_widgets %}
-  <div id="footer" class="widget-footer">
+  <footer-fix id="footer" class="widget-footer">
     {% include "weko_theme/footer_wysiwyg.html" %}
-  </div>
+  </footer-fix>
 {%- endif %}
-<div id="footer"{%- if render_widgets %}style="display: None;"{%- endif %}>
+<footer id="footer"{%- if render_widgets %}style="display: None;"{%- endif %}>
   {% include "weko_theme/footer_wysiwyg.html" %}
-</div>
+</footer>
 
 {% block tail %}
 {% endblock %}

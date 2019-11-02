@@ -943,7 +943,8 @@ class WorkActivity(object):
                     break
             # Community users
             is_community_admin = False
-            community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+            community_role_name = current_app.config[
+                'WEKO_PERMISSION_ROLE_COMMUNITY']
             for role in list(current_user.roles or []):
                 if role.name in community_role_name:
                     is_community_admin = True
@@ -961,7 +962,8 @@ class WorkActivity(object):
                     asc(_Activity.id)).all()
             elif is_community_admin:
                 # Get the list of users who has the community role
-                community_users = User.query.outerjoin(userrole).outerjoin(Role)\
+                community_users = User.query.outerjoin(userrole).outerjoin(
+                    Role)\
                     .filter(community_role_name == Role.name)\
                     .filter(userrole.c.role_id == Role.id)\
                     .filter(User.id == userrole.c.user_id)\
@@ -1338,14 +1340,12 @@ class WorkActivity(object):
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
                     item_id=item_id).one_or_none()
-                action_stus = activity.action_status
-                return action_stus
-        except NoResultFound as ex:
-            current_app.logger.exception(str(ex))
-            return None
+                if activity:
+                    return activity.action_status
+                else:
+                    return None
         except Exception as ex:
-            db.session.rollback()
-            current_app.logger.exception(str(ex))
+            current_app.logger.error(ex)
             return None
 
 
@@ -1452,8 +1452,6 @@ class UpdateItem(object):
 
         :param pid: PID object.
         :param record: Record object.
-        :param template: Template to render.
-        :param \*\*kwargs: Additional view arguments based on URL rule.
         :return: The rendered template.
         """
         from invenio_db import db

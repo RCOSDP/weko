@@ -93,7 +93,8 @@ class SearchSetting(object):
             script_str = {
                 "_script": {
                     "script": {
-                        "source": "params.factor.containsKey(doc[\"control_number\"].value)&&params.factor.get(doc[\"control_number\"].value) !=0 ? params.factor.get(doc[\"control_number\"].value):Integer.MAX_VALUE",
+                        "source": "if(params.factor.get(doc[\"control_number\"].value.toString())!=null){params.factor.get(doc[\"control_number\"].value.toString())}else{Integer.MAX_VALUE}",
+                        "lang": "painless",
                         "params": {
                             "factor": factor_obj
                         }
@@ -102,13 +103,15 @@ class SearchSetting(object):
                     "order": "asc"
                 }
             }
-            default_sort = {'_created': {'order': 'desc'}}
+            default_sort = {'_created': {'order': 'desc',
+                                         'unmapped_type': 'long'}}
         else:
             factor_obj = Indexes.get_item_sort(index_id)
             script_str = {
                 "_script": {
                     "script": {
-                        "source": "params.factor.containsKey(doc[\"control_number\"].value)&&params.factor.get(doc[\"control_number\"].value) !=0 ? params.factor.get(doc[\"control_number\"].value):0",
+                        "source": "if(params.factor.get(doc[\"control_number\"].value.toString())!=null){params.factor.get(doc[\"control_number\"].value.toString())}else{0}",
+                        "lang": "painless",
                         "params": {
                             "factor": factor_obj
                         }
@@ -117,9 +120,20 @@ class SearchSetting(object):
                     "order": "desc"
                 }
             }
-            default_sort = {'_created': {'order': 'asc'}}
+            default_sort = {'_created': {'order': 'asc',
+                                         'unmapped_type': 'long'}}
 
         return script_str, default_sort
+
+    @classmethod
+    def get_nested_sorting(cls, key_str):
+        """Get nested sorting object."""
+        nested_sorting = None
+        sort_option = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
+            current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key_str)
+        if sort_option:
+            nested_sorting = sort_option.get('nested')
+        return nested_sorting
 
 
 def get_search_detail_keyword(str):
