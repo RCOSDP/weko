@@ -166,6 +166,8 @@ class ImportComponent extends React.Component {
 
     render() {
       const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex, list_index,term_select_index_list} = this.state
+      console.log(term_select_index_list)
+
       return(
         <div className="container import_component">
           <div className="row layout">
