@@ -186,12 +186,18 @@ li {
 }
 
 // folding
+
 .folding {
     width: 25px;
-    display: inline-block;
+    display: inline-block !important;
     line-height: 1px;
     padding: 0 5px;
     font-weight: bold;
+}
+
+.folding.weko-node-empty:before {
+    content: '\25B7';
+    color: #757575;
 }
 
 .folding.node-collapsed {
@@ -263,4 +269,8 @@ li {
     75%   { color: #8e24aa; }
     87.5% { color: #7b1fa2; }
     100%  { color: #6a1b9a; }
+}
+
+.hide {
+    display: none;
 }

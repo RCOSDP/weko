@@ -320,17 +320,28 @@ class TreeNode extends React.Component {
 
   constructor(){
     super()
+    this.state={
+      isCollabsed: true
+    }
+    this.handleShow = this.handleShow.bind(this)
+  }
+
+  handleShow(){
+    const {isCollabsed} = this.state
+    this.setState({
+      isCollabsed: !isCollabsed
+    })
   }
 
   render(){
     const {data} = this.props
     return(
       <div>
-        <div className="folding node-collapsed"></div>
+        <div className={`folding ${ data.children.length ? isCollabsed ? 'node-collapsed': 'node-expanded' : 'weko-node-empty'}`} onClick={this.handleShow}></div>
         <div className='node-value'>
           <span className="node-name">{data.name}</span>
         </div>
-        <div>
+        <div className={`${data.children.length ? '' : 'none'}`}>
           <TreeList children={data.children}></TreeList>
         </div>
       </div>
