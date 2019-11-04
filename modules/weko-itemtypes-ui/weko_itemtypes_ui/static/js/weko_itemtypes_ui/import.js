@@ -299,13 +299,17 @@ class TreeList extends React.Component {
     const {children} = this.props
     return(
       <div>
-        {
-          children.map((item,index)=> {
-            return (
-                  <TreeNode data={item} key={index}></TreeNode>
-            )
-          })
-        }
+        <ul>
+          {
+            children.map((item,index)=> {
+              return (
+                  <li>
+                    <TreeNode data={item} key={index}></TreeNode>
+                  </li>
+              )
+            })
+          }
+        </ul>
       </div>
     )
   }
