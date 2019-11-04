@@ -412,10 +412,14 @@ class TreeNode extends React.Component {
     })
   }
 
-  handleClick() {
+  handleClick(e) {
+    const checked = e.target.checked
     this.props.handleSelectIndex({
       id: this.props.data.id,
       name: [...this.props.tree_name, this.props.data.name]
+    })
+    this.setState({
+      defaultChecked: checked
     })
   }
 
@@ -442,7 +446,7 @@ class TreeNode extends React.Component {
         >
         </div>
         <div className='node-value'>
-          <input type="checkbox" onClick={this.handleClick} ref={re => this.input} defaultChecked={defaultChecked}></input>
+          <input type="checkbox" onChange={this.handleClick} ref={re => this.input} checked={defaultChecked}></input>
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
