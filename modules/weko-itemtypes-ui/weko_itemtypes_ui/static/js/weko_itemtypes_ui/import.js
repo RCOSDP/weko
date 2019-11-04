@@ -17,7 +17,7 @@ const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
-
+const urlTree = window.location.origin+'/api/tree'
 
 class MainLayout extends React.Component {
 
@@ -62,6 +62,24 @@ class ImportComponent extends React.Component {
     }
 
     componentDidMount() {
+      $.ajax({
+        url: urlTree,
+        type: 'GET',
+        success: function (data) {
+          console.log(data)
+          // const results = data.results;
+          // const list_lang_register = results.filter(item => item.is_registered)
+          // that.setState({
+          //   list_lang_register: list_lang_register,
+          //   default_lang_code: list_lang_register[0].lang_code
+          // })
+          // that.get_site_info()
+        },
+        error: function (error) {
+          console.log(error);
+          // alert();
+        }
+      });
     }
 
     handleChangefile (e) {
@@ -256,7 +274,7 @@ class ImportComponent extends React.Component {
                 <div class="col-sm-12">
                   <div className="row">
                     <div className="col-md-6">
-                      <app-root-tree></app-root-tree>
+                      <TreeList TreeList={[]}></TreeList>
                     </div>
                   </div>
                 </div>
@@ -270,6 +288,50 @@ class ImportComponent extends React.Component {
         </div>
       )
     }
+}
+
+class TreeList extends React.Component {
+
+  constructor(){
+
+  }
+
+  render(){
+    const {children} = this.props
+    return(
+      <div>
+        {
+          children.map((item,index)=> {
+            return (
+                  <TreeNode data={item} key={index}></TreeNode>
+            )
+          })
+        }
+      </div>
+    )
+  }
+
+}
+
+class TreeNode extends React.Component {
+
+  constructor(){
+
+  }
+
+  render(){
+    const {data} = this.props
+    return(
+      <div>
+        <div className="folding weko-node-empty"></div>
+        <div className='node-value'>
+          <span className="node-name">{data.name}</span>
+        </div>
+        <TreeList children={data.children}></TreeList>
+      </div>
+    )
+  }
+
 }
 
 $(function () {
