@@ -144,7 +144,7 @@ class ImportComponent extends React.Component {
       } else {
         this.setState({
           isShowModalIndex: !isShowModalIndex,
-          select_index_list: data ? term_select_index_list : select_index_list
+          select_index_list: data ? [...term_select_index_list] : [...select_index_list]
         })
       }
     }
