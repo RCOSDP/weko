@@ -397,7 +397,8 @@ class TreeNode extends React.Component {
   constructor(){
     super()
     this.state={
-      isCollabsed: true
+      isCollabsed: true,
+      defaultChecked: this.defaultChecked()
     }
     this.handleShow = this.handleShow.bind(this)
     this.handleClick = this.handleClick.bind(this)
@@ -424,8 +425,12 @@ class TreeNode extends React.Component {
     return result
   }
 
+  // componentDidMount(){
+  //   this.input.defaultChecked= this.defaultChecked()
+  // }
+
   render(){
-    const {data, tree_name,select_index_list} = this.props
+    const {data, tree_name,select_index_list,defaultChecked} = this.props
     const {isCollabsed} = this.state
     return(
       <div className="tree-node">
@@ -435,7 +440,7 @@ class TreeNode extends React.Component {
         >
         </div>
         <div className='node-value'>
-          <input type="checkbox" onClick={this.handleClick} defaultChecked={this.defaultChecked()}></input>
+          <input type="checkbox" onClick={this.handleClick} ref={re => this.input} defaultChecked={defaultChecked}></input>
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
