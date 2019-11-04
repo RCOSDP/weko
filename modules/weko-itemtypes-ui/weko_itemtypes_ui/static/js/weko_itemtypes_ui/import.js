@@ -326,11 +326,13 @@ class TreeNode extends React.Component {
     const {data} = this.props
     return(
       <div>
-        <div className="folding weko-node-empty"></div>
+        <div className="folding node-collapsed"></div>
         <div className='node-value'>
           <span className="node-name">{data.name}</span>
         </div>
-        <TreeList children={data.children}></TreeList>
+        <div>
+          <TreeList children={data.children}></TreeList>
+        </div>
       </div>
     )
   }
