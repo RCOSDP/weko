@@ -22,8 +22,6 @@ const urlTree = window.location.origin+'/api/tree'
 class MainLayout extends React.Component {
 
     componentDidMount() {
-      console.log("import is work");
-      console.log("cancel", cancel);
     }
 
     render() {
@@ -72,7 +70,6 @@ class ImportComponent extends React.Component {
         url: urlTree,
         type: 'GET',
         success: function (data) {
-          console.log(data)
           that.setState({
             list_index: data
           })
@@ -88,7 +85,7 @@ class ImportComponent extends React.Component {
       const file = e.target.files[0],
             reader = new FileReader();
         const file_name = this.getLastString(e.target.value, "\\")
-        if (this.getLastString(file_name,".") !== 'tsv') {
+        if (this.getLastString(file_name,".") !== 'zip') {
           return false
         }
 
@@ -137,7 +134,6 @@ class ImportComponent extends React.Component {
 
     handleShowModalIndex(data) {
       const {isShowModalIndex,select_index_list,term_select_index_list} = this.state
-      console.log(data)
       if(!isShowModalIndex) {
         this.setState({
           isShowModalIndex: !isShowModalIndex,
@@ -169,8 +165,6 @@ class ImportComponent extends React.Component {
 
     render() {
       const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex, list_index,term_select_index_list,select_index_list} = this.state
-      console.log(term_select_index_list)
-
       return(
         <div className="container import_component">
           <div className="row layout">
