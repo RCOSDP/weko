@@ -137,6 +137,7 @@ class ImportComponent extends React.Component {
 
     handleShowModalIndex(data) {
       const {isShowModalIndex,select_index_list,term_select_index_list} = this.state
+      console.log(data)
       if(!isShowModalIndex) {
         this.setState({
           isShowModalIndex: !isShowModalIndex
@@ -203,7 +204,7 @@ class ImportComponent extends React.Component {
                 </div>
                 <div className="col-md-8">
                   <div>
-                    <button className="btn btn-primary" onClick={this.handleShowModalIndex}>{select_index}</button>
+                    <button className="btn btn-primary" onClick={()=>this.handleShowModalIndex(false)}>{select_index}</button>
                   </div>
                   <div className="block-placeholder">
                     {
@@ -306,7 +307,7 @@ class ImportComponent extends React.Component {
             </div>
           </div>
           <div className={`modal ${isShowModalIndex ? "active" : ''}`}>
-            <div className="modal-mark" onClick={this.handleShowModalIndex}></div>
+            <div className="modal-mark" onClick={()=>this.handleShowModalIndex(false)}></div>
             <div className="modal-index">
               <div class="row">
                 <div class="col-sm-12 header">
@@ -347,7 +348,7 @@ class ImportComponent extends React.Component {
                 </div>
                 <div class="col-sm-12 footer text-align-right">
                   <button className="btn btn-primary" onClick={()=>{this.handleShowModalIndex(true)}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
-                  <button className="btn btn-danger m-l-15" onClick={this.handleShowModalIndex}>{cancel}</button>
+                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalIndex(false)}>{cancel}</button>
                 </div>
               </div>             
             </div>
