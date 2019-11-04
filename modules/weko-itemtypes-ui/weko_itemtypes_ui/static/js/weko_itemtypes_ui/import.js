@@ -136,7 +136,7 @@ class ImportComponent extends React.Component {
     }
 
     handleShowModalIndex(data) {
-      const {isShowModalIndex,select_index_list} = this.state
+      const {isShowModalIndex,select_index_list,term_select_index_list} = this.state
       if(!isShowModalIndex) {
         this.setState({
           isShowModalIndex: !isShowModalIndex
