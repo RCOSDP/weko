@@ -313,12 +313,10 @@ class ImportComponent extends React.Component {
                           {term_select_index_list.map((item,key)=>{
                             return (
                               <li className="list-group-item" key={key}>
-                                {item.name[-1]}
+                                {item.name[item.name.length-1]}
                               </li>
                             )
                           })}
-                          
-
                         </ul>
                           
                         </div>
