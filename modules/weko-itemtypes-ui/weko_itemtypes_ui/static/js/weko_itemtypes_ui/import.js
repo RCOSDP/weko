@@ -293,6 +293,7 @@ class ImportComponent extends React.Component {
 class TreeList extends React.Component {
 
   constructor(){
+    super()
 
   }
 
@@ -316,7 +317,7 @@ class TreeList extends React.Component {
 class TreeNode extends React.Component {
 
   constructor(){
-
+    super()
   }
 
   render(){
