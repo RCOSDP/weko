@@ -20,7 +20,6 @@
 
 """Item API."""
 
-import re
 from collections import OrderedDict
 
 import pytz
@@ -374,36 +373,6 @@ def get_all_items(nlst, klst, is_get_name=False):
     return alst
 
 
-def get_all_items2(nlst, klst):
-    """Convert and sort item list(original).
-
-    :param nlst:
-    :param klst:
-    :return: alst
-    """
-    alst = []
-
-    # def get_name(key):
-    #     for lst in klst:
-    #         k = lst[0].split('.')[-1]
-    #         if key == k:
-    #             return lst[1]
-    def get_items(nlst):
-        if isinstance(nlst, dict):
-            for k, v in nlst.items():
-                if isinstance(v, str):
-                    alst.append({k: v})
-                else:
-                    get_items(v)
-        elif isinstance(nlst, list):
-            for lst in nlst:
-                get_items(lst)
-
-    to_orderdict(nlst, klst)
-    get_items(nlst)
-    return alst
-
-
 def to_orderdict(alst, klst):
     """Sort item list.
 
@@ -547,6 +516,32 @@ def is_valid_openaire_type(resource_type, communities):
     return is_defined and comms_match
 
 
+def check_has_attribute_value(node):
+    """Check has value in items.
+
+    :param node:
+    :return: boolean
+    """
+    try:
+        if isinstance(node, list):
+            for lst in node:
+                return check_has_attribute_value(lst)
+        elif isinstance(node, dict) and bool(node):
+            for val in node.values():
+                if val:
+                    if isinstance(val, str):
+                        return True
+                    elif isinstance(val, dict):
+                        for v in val.values():
+                            return check_has_attribute_value(v)
+                    else:
+                        return check_has_attribute_value(val)
+        return False
+    except BaseException as e:
+        current_app.logger.error('Function check_has_attribute_value error:', e)
+        return False
+
+
 def get_attribute_value_all_items(nlst, klst):
     """Convert and sort item list.
 
@@ -559,49 +554,61 @@ def get_attribute_value_all_items(nlst, klst):
             if key == lst[0].split('.')[-1]:
                 return lst[1]
 
-    def check_node(node):
-        try:
-            if isinstance(node, list):
-                for lst in node:
-                    return check_node(lst)
-            if isinstance(node, dict) and bool(node):
-                for val in node.values():
-                    if val:
-                        if isinstance(val, str):
-                            return True
-                        elif isinstance(val, dict):
-                            for v in val.values():
-                                return check_node(v)
-                        else: 
-                            return check_node(val)
-            return False
-        except BaseException as e:
-            current_app.logger.error('check_node error: ', e)
-            return False
+    def to_sort_dict(alst, klst):
+        """Sort item list.
 
-    def set_node(nlst):
-        _list = []
-        if isinstance(nlst, list):
-            for lst in nlst:
-                _list.extend(set_node(lst))
-        # check OrderedDict is dict and not empty
-        if isinstance(nlst, dict) and bool(nlst):
-            d = {}
-            for key, val in nlst.items():
-                item_name = get_name(key) or ''
-                if isinstance(val, str) and val:
-                    # the last children level
-                    d[item_name] = val
-                    print(d)
+        :param alst:
+        :param klst:
+        """
+        if isinstance(klst, list):
+            result = []
+            try:
+                if isinstance(alst, list):
+                    for a in alst:
+                        result.extend(to_sort_dict(a, klst))
                 else:
-                    # parents level
-                    # check if have any child
-                    if check_node(val):
-                        d[item_name] = set_node(val)
-            _list.append(d)
-        return _list
+                    for lst in klst:
+                        key = lst[0].split('.')[-1]
+                        val = alst.pop(key, {})
+                        if isinstance(val, str) and val:
+                            result.append({key: val})
+                        else:
+                            if check_has_attribute_value(val):
+                                res = to_sort_dict(val, klst)
+                                result.append({key: res})
+                        if not alst:
+                            break
+                return result
+            except BaseException as e:
+                current_app.logger.error('Function to_sort_dict error: ', e)
+                return result
 
-    # to_orderdict(nlst, klst)
-    alst = set_node(nlst)
+    def set_attribute_value(nlst):
+        _list = []
+        try:
+            if isinstance(nlst, list):
+                for lst in nlst:
+                    _list.extend(set_attribute_value(lst))
+            # check OrderedDict is dict and not empty
+            elif isinstance(nlst, dict) and bool(nlst):
+                d = {}
+                for key, val in nlst.items():
+                    item_name = get_name(key) or ''
+                    if isinstance(val, str) and val:
+                        # the last children level
+                        d[item_name] = val
+                    else:
+                        # parents level
+                        # check if have any child
+                        if check_has_attribute_value(val):
+                            d[item_name] = set_attribute_value(val)
+                _list.append(d)
+            return _list
+        except BaseException as e:
+            current_app.logger.error('Function set_node error: ', e)
+            return _list
+
+    orderdict = to_sort_dict(nlst, klst)
+    alst = set_attribute_value(orderdict)
 
     return alst
