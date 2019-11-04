@@ -52,7 +52,9 @@ class ImportComponent extends React.Component {
         work_flow_data : null,
         wl_key: null,
         isShowModalIndex: false,
-        list_index: []
+        list_index: [],
+        term_select_index_list: [],
+        select_index_list: []
       }
       this.handleChangefile = this.handleChangefile.bind(this)
       this.handleClickFile = this.handleClickFile.bind(this)
@@ -60,6 +62,8 @@ class ImportComponent extends React.Component {
       this.handleShowModalWorkFlow = this.handleShowModalWorkFlow.bind(this)
       this.handleChangeWF = this.handleChangeWF.bind(this)
       this.handleShowModalIndex = this.handleShowModalIndex.bind(this)
+      this.handleSelectIndex = this.handleSelectIndex.bind(this)
+      
     }
 
     componentDidMount() {
@@ -140,6 +144,22 @@ class ImportComponent extends React.Component {
       } else {
         this.setState({
           isShowModalIndex: !isShowModalIndex,
+        })
+      }
+    }
+
+    handleSelectIndex(data) {
+      const {term_select_index_list} = this.state
+      const new_select_index = term_select_index_list.filter(item => {
+        return data.id !== item.id
+      })
+      if(new_select_index.length !== term_select_index_list.length) {
+        this.setState({
+          term_select_index_list: new_select_index
+        })
+      } else {
+        this.setState({
+          term_select_index_list: [...term_select_index_list, {...data}]
         })
       }
     }
@@ -272,7 +292,7 @@ class ImportComponent extends React.Component {
                 <div class="col-sm-12">
                   <div className="row">
                     <div className="col-md-6">
-                      <TreeList children={list_index}></TreeList>
+                      <TreeList children={list_index} handleSelectIndex={this.handleSelectIndex} tree_name={[]}></TreeList>
                     </div>
                   </div>
                 </div>
@@ -296,7 +316,7 @@ class TreeList extends React.Component {
   }
 
   render(){
-    const {children} = this.props
+    const {children, tree_name} = this.props
     return(
       <div>
         <ul>
@@ -304,7 +324,7 @@ class TreeList extends React.Component {
             children.map((item,index)=> {
               return (
                   <li>
-                    <TreeNode data={item} key={index}></TreeNode>
+                    <TreeNode data={item} key={index} handleSelectIndex={this.props.handleSelectIndex} tree_name={tree_name}></TreeNode>
                   </li>
               )
             })
@@ -324,6 +344,7 @@ class TreeNode extends React.Component {
       isCollabsed: true
     }
     this.handleShow = this.handleShow.bind(this)
+    this.handleChange = this.handleChange.bind(this)
   }
 
   handleShow(){
@@ -333,17 +354,29 @@ class TreeNode extends React.Component {
     })
   }
 
+  handleClick() {
+    this.props.handleSelectIndex({
+      id: this.props.data.id,
+      name: [...this.props.tree_name, this.props.data.name]
+    })
+  }
+
   render(){
-    const {data} = this.props
+    const {data, tree_name} = this.props
     const {isCollabsed} = this.state
     return(
-      <div>
-        <div className={`folding ${ data.children.length ? isCollabsed ? 'node-collapsed': 'node-expanded' : 'weko-node-empty'}`} onClick={this.handleShow}></div>
+      <div className="tree-node">
+        <div 
+          className={`folding ${ data.children.length ? isCollabsed ? 'node-collapsed': 'node-expanded' : 'weko-node-empty'}`} 
+          onClick={()=>{data.children.length && this.handleShow()}}
+        >
+        </div>
         <div className='node-value'>
+          <input type="checkbox" onClick={this.handleChange}></input>
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
-          <TreeList children={data.children}></TreeList>
+          <TreeList children={data.children} tree_name={[...tree_name, data.name]}></TreeList>
         </div>
       </div>
     )
