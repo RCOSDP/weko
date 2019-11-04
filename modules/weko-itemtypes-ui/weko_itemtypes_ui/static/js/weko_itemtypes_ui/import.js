@@ -436,8 +436,9 @@ class TreeNode extends React.Component {
   }
 
   render(){
-    const {data, tree_name,select_index_list,defaultChecked} = this.props
-    const {isCollabsed} = this.state
+    const {data, tree_name,select_index_list,} = this.props
+    const {isCollabsed,defaultChecked} = this.state
+    
     return(
       <div className="tree-node">
         <div 
