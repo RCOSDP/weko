@@ -322,7 +322,15 @@ class ImportComponent extends React.Component {
                           <h3 className="panel-title">{index_tree}</h3>
                         </div>
                         <div className="panel-body tree_list">
-                          <TreeList children={list_index} handleSelectIndex={this.handleSelectIndex} tree_name={[]} select_index_list={[...select_index_list]}></TreeList>
+                          {
+                            isShowModalIndex && <TreeList 
+                            children={list_index} 
+                            handleSelectIndex={this.handleSelectIndex} 
+                            tree_name={[]} 
+                            select_index_list={[...select_index_list]}
+                            ></TreeList>
+                          }
+                          
                         </div>
                       </div>
                     </div>
