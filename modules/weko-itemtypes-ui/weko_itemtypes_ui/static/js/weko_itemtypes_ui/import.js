@@ -307,7 +307,7 @@ class ImportComponent extends React.Component {
           </div>
           <div className={`modal ${isShowModalIndex ? "active" : ''}`}>
             <div className="modal-mark" onClick={this.handleShowModalIndex}></div>
-            <div className="modal-content">
+            <div className="modal-index">
               <div class="row">
                 <div class="col-sm-12 header">
                   <h3>{import_index}</h3>
@@ -329,7 +329,7 @@ class ImportComponent extends React.Component {
                         <div className="panel-heading">
                           <h3 className="panel-title">{designate_index}</h3>
                         </div>
-                        <div className="panel-body">
+                        <div className="panel-body index_list">
                         <ul className="list-group">
                           {term_select_index_list.map((item,key)=>{
                             return (
