@@ -274,7 +274,7 @@ class ImportComponent extends React.Component {
                 <div class="col-sm-12">
                   <div className="row">
                     <div className="col-md-6">
-                      <TreeList TreeList={[]}></TreeList>
+                      <TreeList children={[]}></TreeList>
                     </div>
                   </div>
                 </div>
