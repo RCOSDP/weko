@@ -113,7 +113,7 @@ class WekoAdmin(object):
                     session['selected_language'] = default_language
                     set_lang(default_language)
                     ctx = _request_ctx_stack.top
-                    if isinstance(ctx, dict) and hasattr(ctx, 'babel_locale'):
+                    if ctx is not None and hasattr(ctx, 'babel_locale'):
                         setattr(ctx, 'babel_locale', Locale(default_language))
             else:
                 session['selected_language'] = current_i18n.language
