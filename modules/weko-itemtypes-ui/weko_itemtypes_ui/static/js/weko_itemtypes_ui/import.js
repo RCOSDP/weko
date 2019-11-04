@@ -166,7 +166,7 @@ class ImportComponent extends React.Component {
     }
 
     render() {
-      const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex, list_index,term_select_index_list} = this.state
+      const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex, list_index,term_select_index_list,select_index_list} = this.state
       console.log(term_select_index_list)
 
       return(
@@ -206,7 +206,27 @@ class ImportComponent extends React.Component {
                     <button className="btn btn-primary" onClick={this.handleShowModalIndex}>{select_index}</button>
                   </div>
                   <div className="block-placeholder">
-                    <p>{selected_index}</p>
+                    {
+                      select_index_list.length ? select_index_list.map((item,key) => {
+                        return(
+                          <div className="panel_bread" key={key}>
+                            <ol className="breadcrumb">
+                              {
+                                item.name.map((item_name, key_item)=>{
+                                  return(
+                                    <li 
+                                      style={{listStylePosition: "inside",
+                                        padding: "10px 0 10px 20px",
+                                        textIndent: "-1em"
+                                      }}>{item_name}</li>
+                                  )
+                                })
+                              }
+                            </ol>
+                          </div>
+                        )
+                      }) : <p>{selected_index}</p>
+                    }
                   </div>
                 </div>
               </div>
@@ -299,7 +319,7 @@ class ImportComponent extends React.Component {
                         <div className="panel-heading">
                           <h3 className="panel-title">{index_tree}</h3>
                         </div>
-                        <div className="panel-body">
+                        <div className="panel-body tree_list">
                           <TreeList children={list_index} handleSelectIndex={this.handleSelectIndex} tree_name={[]}></TreeList>
                         </div>
                       </div>
