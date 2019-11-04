@@ -342,7 +342,7 @@ class TreeNode extends React.Component {
         <div className='node-value'>
           <span className="node-name">{data.name}</span>
         </div>
-        <div className={`${data.children.length ? '' : 'none'}`}>
+        <div className={`${isCollabsed ? '' : 'none'}`}>
           <TreeList children={data.children}></TreeList>
         </div>
       </div>

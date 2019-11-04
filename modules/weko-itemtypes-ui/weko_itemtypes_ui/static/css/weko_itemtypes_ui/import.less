@@ -185,16 +185,6 @@ li {
     width: 100%;    
 }
 
-// folding
-
-.folding {
-    width: 25px;
-    display: inline-block !important;
-    line-height: 1px;
-    padding: 0 5px;
-    font-weight: bold;
-}
-
 .folding.weko-node-empty:before {
     content: '\25B7';
     color: #757575;
@@ -238,6 +228,14 @@ li {
 .folding.node-leaf:before {
     content: '\25CF';
     color: #757575;
+}
+
+.folding {
+    width: 25px;
+    display: inline-block;
+    line-height: 1px;
+    padding: 0 5px;
+    font-weight: bold;
 }
 
 .tree-internal ul.rootless {
