@@ -439,7 +439,12 @@ class TreeNode extends React.Component {
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
-          <TreeList children={data.children} tree_name={[...tree_name, data.name]} handleSelectIndex={this.props.handleSelectIndex}></TreeList>
+          <TreeList 
+            children={data.children} 
+            tree_name={[...tree_name, data.name]} 
+            handleSelectIndex={this.props.handleSelectIndex}
+            select_index_list={select_index_list}
+            ></TreeList>
         </div>
       </div>
     )
