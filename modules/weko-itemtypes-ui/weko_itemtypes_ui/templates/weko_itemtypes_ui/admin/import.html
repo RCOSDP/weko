@@ -33,7 +33,6 @@
   {% assets "weko_admin_item_import_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_import_index_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 
 {%- endblock javascript %}
 
@@ -58,5 +57,4 @@
 <input id="select" type="hidden" value="{{_('Select')}}" />
 <input id="cancel" type="hidden" value="{{_('Cancel')}}" />
 <pre class="hide" id="workflows">{{workflows}}</pre>
-<app-root-tree></app-root-tree>
 {%- endblock body %}

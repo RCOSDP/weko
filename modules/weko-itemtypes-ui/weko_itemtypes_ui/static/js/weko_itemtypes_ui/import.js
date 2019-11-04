@@ -344,7 +344,7 @@ class TreeNode extends React.Component {
       isCollabsed: true
     }
     this.handleShow = this.handleShow.bind(this)
-    this.handleChange = this.handleChange.bind(this)
+    this.handleClick = this.handleClick.bind(this)
   }
 
   handleShow(){
@@ -372,7 +372,7 @@ class TreeNode extends React.Component {
         >
         </div>
         <div className='node-value'>
-          <input type="checkbox" onClick={this.handleChange}></input>
+          <input type="checkbox" onClick={this.handleClick}></input>
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
