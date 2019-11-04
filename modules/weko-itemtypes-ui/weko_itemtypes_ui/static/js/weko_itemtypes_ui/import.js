@@ -136,7 +136,7 @@ class ImportComponent extends React.Component {
     }
 
     handleShowModalIndex(data) {
-      const {isShowModalIndex} = this.state
+      const {isShowModalIndex,select_index_list} = this.state
       if(!isShowModalIndex) {
         this.setState({
           isShowModalIndex: !isShowModalIndex
@@ -144,6 +144,7 @@ class ImportComponent extends React.Component {
       } else {
         this.setState({
           isShowModalIndex: !isShowModalIndex,
+          select_index_list: data ? term_select_index_list : select_index_list
         })
       }
     }
@@ -325,7 +326,7 @@ class ImportComponent extends React.Component {
                   </div>
                 </div>
                 <div class="col-sm-12 footer text-align-right">
-                  <button className="btn btn-primary" onClick={()=>{this.handleShowModalIndex()}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
+                  <button className="btn btn-primary" onClick={()=>{this.handleShowModalIndex(true)}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
                   <button className="btn btn-danger m-l-15" onClick={this.handleShowModalIndex}>{cancel}</button>
                 </div>
               </div>             
