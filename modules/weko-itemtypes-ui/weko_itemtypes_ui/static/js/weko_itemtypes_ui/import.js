@@ -435,7 +435,7 @@ class TreeNode extends React.Component {
         >
         </div>
         <div className='node-value'>
-          <input type="checkbox" onClick={this.handleClick} checked={this.defaultChecked()}></input>
+          <input type="checkbox" onClick={this.handleClick} defaultChecked={this.defaultChecked()}></input>
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
