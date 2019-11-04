@@ -367,7 +367,7 @@ class TreeList extends React.Component {
   }
 
   render(){
-    const {children, tree_name} = this.props
+    const {children, tree_name,select_index_list} = this.props
     return(
       <div>
         <ul>
@@ -425,7 +425,7 @@ class TreeNode extends React.Component {
   }
 
   render(){
-    const {data, tree_name} = this.props
+    const {data, tree_name,select_index_list} = this.props
     const {isCollabsed} = this.state
     return(
       <div className="tree-node">
