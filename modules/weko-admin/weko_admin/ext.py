@@ -23,7 +23,8 @@
 from datetime import timedelta
 from functools import partial
 
-from flask import current_app, request, session
+from babel.core import Locale
+from flask import _request_ctx_stack, current_app, request, session
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
@@ -111,6 +112,9 @@ class WekoAdmin(object):
                     default_language = registered_languages[0].get('lang_code')
                     session['selected_language'] = default_language
                     set_lang(default_language)
+                    ctx = _request_ctx_stack.top
+                    if isinstance(ctx, dict) and hasattr(ctx, 'babel_locale'):
+                        setattr(ctx, 'babel_locale', Locale(default_language))
             else:
                 session['selected_language'] = current_i18n.language
 
