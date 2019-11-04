@@ -335,6 +335,7 @@ class TreeNode extends React.Component {
 
   render(){
     const {data} = this.props
+    const {isCollabsed} = this.state
     return(
       <div>
         <div className={`folding ${ data.children.length ? isCollabsed ? 'node-collapsed': 'node-expanded' : 'weko-node-empty'}`} onClick={this.handleShow}></div>
