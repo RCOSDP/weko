@@ -51,7 +51,8 @@ class ImportComponent extends React.Component {
         isShowModalWF: false,
         work_flow_data : null,
         wl_key: null,
-        isShowModalIndex: false
+        isShowModalIndex: false,
+        list_index: []
       }
       this.handleChangefile = this.handleChangefile.bind(this)
       this.handleClickFile = this.handleClickFile.bind(this)
@@ -62,18 +63,15 @@ class ImportComponent extends React.Component {
     }
 
     componentDidMount() {
+      const that = this
       $.ajax({
         url: urlTree,
         type: 'GET',
         success: function (data) {
           console.log(data)
-          // const results = data.results;
-          // const list_lang_register = results.filter(item => item.is_registered)
-          // that.setState({
-          //   list_lang_register: list_lang_register,
-          //   default_lang_code: list_lang_register[0].lang_code
-          // })
-          // that.get_site_info()
+          that.setState({
+            list_index: data
+          })
         },
         error: function (error) {
           console.log(error);
@@ -147,7 +145,7 @@ class ImportComponent extends React.Component {
     }
 
     render() {
-      const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex} = this.state
+      const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex, list_index} = this.state
       return(
         <div className="container import_component">
           <div className="row layout">
@@ -274,7 +272,7 @@ class ImportComponent extends React.Component {
                 <div class="col-sm-12">
                   <div className="row">
                     <div className="col-md-6">
-                      <TreeList children={[]}></TreeList>
+                      <TreeList children={list_index}></TreeList>
                     </div>
                   </div>
                 </div>
