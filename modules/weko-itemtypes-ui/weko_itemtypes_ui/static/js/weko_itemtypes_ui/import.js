@@ -140,7 +140,8 @@ class ImportComponent extends React.Component {
       console.log(data)
       if(!isShowModalIndex) {
         this.setState({
-          isShowModalIndex: !isShowModalIndex
+          isShowModalIndex: !isShowModalIndex,
+          term_select_index_list: [...select_index_list]
         })
       } else {
         this.setState({
@@ -321,7 +322,7 @@ class ImportComponent extends React.Component {
                           <h3 className="panel-title">{index_tree}</h3>
                         </div>
                         <div className="panel-body tree_list">
-                          <TreeList children={list_index} handleSelectIndex={this.handleSelectIndex} tree_name={[]}></TreeList>
+                          <TreeList children={list_index} handleSelectIndex={this.handleSelectIndex} tree_name={[]} select_index_list={[...select_index_list]}></TreeList>
                         </div>
                       </div>
                     </div>
@@ -374,7 +375,12 @@ class TreeList extends React.Component {
             children.map((item,index)=> {
               return (
                   <li>
-                    <TreeNode data={item} key={index} handleSelectIndex={this.props.handleSelectIndex} tree_name={tree_name}></TreeNode>
+                    <TreeNode 
+                      data={item} key={index} 
+                      handleSelectIndex={this.props.handleSelectIndex} 
+                      tree_name={tree_name}
+                      select_index_list={select_index_list}
+                      ></TreeNode>
                   </li>
               )
             })
@@ -395,6 +401,7 @@ class TreeNode extends React.Component {
     }
     this.handleShow = this.handleShow.bind(this)
     this.handleClick = this.handleClick.bind(this)
+    this.defaultChecked = this.defaultChecked.bind(this)
   }
 
   handleShow(){
@@ -411,6 +418,12 @@ class TreeNode extends React.Component {
     })
   }
 
+  defaultChecked() {
+    const {data, select_index_list} = this.props
+    const result = !!select_index_list.filter(item => item.id===data.id).length
+    return result
+  }
+
   render(){
     const {data, tree_name} = this.props
     const {isCollabsed} = this.state
@@ -422,7 +435,7 @@ class TreeNode extends React.Component {
         >
         </div>
         <div className='node-value'>
-          <input type="checkbox" onClick={this.handleClick}></input>
+          <input type="checkbox" onClick={this.handleClick} checked={this.defaultChecked()}></input>
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
