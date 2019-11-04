@@ -398,7 +398,7 @@ class TreeNode extends React.Component {
     super()
     this.state={
       isCollabsed: true,
-      defaultChecked: this.defaultChecked()
+      defaultChecked: false
     }
     this.handleShow = this.handleShow.bind(this)
     this.handleClick = this.handleClick.bind(this)
@@ -425,9 +425,11 @@ class TreeNode extends React.Component {
     return result
   }
 
-  // componentDidMount(){
-  //   this.input.defaultChecked= this.defaultChecked()
-  // }
+  componentDidMount(){
+    this.setState({
+      defaultChecked: this.defaultChecked()
+    })
+  }
 
   render(){
     const {data, tree_name,select_index_list,defaultChecked} = this.props
