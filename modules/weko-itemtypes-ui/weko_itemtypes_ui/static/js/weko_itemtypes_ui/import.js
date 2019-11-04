@@ -165,7 +165,7 @@ class ImportComponent extends React.Component {
     }
 
     render() {
-      const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex, list_index} = this.state
+      const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex, list_index,term_select_index_list} = this.state
       return(
         <div className="container import_component">
           <div className="row layout">
@@ -292,7 +292,35 @@ class ImportComponent extends React.Component {
                 <div class="col-sm-12">
                   <div className="row">
                     <div className="col-md-6">
-                      <TreeList children={list_index} handleSelectIndex={this.handleSelectIndex} tree_name={[]}></TreeList>
+                      <div className="panel panel-default">
+                        <div className="panel-heading">
+                          <h3 className="panel-title">{index_tree}</h3>
+                        </div>
+                        <div className="panel-body">
+                          <TreeList children={list_index} handleSelectIndex={this.handleSelectIndex} tree_name={[]}></TreeList>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="panel panel-default">
+                        <div className="panel-heading">
+                          <h3 className="panel-title">{designate_index}</h3>
+                        </div>
+                        <div className="panel-body">
+                        <ul className="list-group">
+                          {term_select_index_list.map((item,key)=>{
+                            return (
+                              <li className="list-group-item" key={key}>
+                                {item.name[-1]}
+                              </li>
+                            )
+                          })}
+                          
+
+                        </ul>
+                          
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -376,7 +404,7 @@ class TreeNode extends React.Component {
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
-          <TreeList children={data.children} tree_name={[...tree_name, data.name]}></TreeList>
+          <TreeList children={data.children} tree_name={[...tree_name, data.name]} handleSelectIndex={this.props.handleSelectIndex}></TreeList>
         </div>
       </div>
     )
