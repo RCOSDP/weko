@@ -88,7 +88,8 @@ class ImportComponent extends React.Component {
         isShowModalIndex: false,
         list_index: [],
         term_select_index_list: [],
-        select_index_list: []
+        select_index_list: [],
+        isShowModalImport: false
       }
       this.handleChangefile = this.handleChangefile.bind(this)
       this.handleClickFile = this.handleClickFile.bind(this)
@@ -97,6 +98,7 @@ class ImportComponent extends React.Component {
       this.handleChangeWF = this.handleChangeWF.bind(this)
       this.handleShowModalIndex = this.handleShowModalIndex.bind(this)
       this.handleSelectIndex = this.handleSelectIndex.bind(this)
+      this.handleSubmit = this.handleSubmit.bind(this)
       
     }
 
@@ -199,8 +201,26 @@ class ImportComponent extends React.Component {
       }
     }
 
+    handleSubmit() {
+      const {isShowModalImport,} = this.state
+      this.setState({
+        isShowModalImport: !isShowModalImport,
+      })
+    }
+
     render() {
-      const {file_name,isShowModalWF,wl_key,work_flow_data,isShowModalIndex, list_index,term_select_index_list,select_index_list} = this.state
+      const {
+        file_name,
+        isShowModalWF,
+        wl_key,
+        work_flow_data,
+        isShowModalIndex, 
+        list_index,
+        term_select_index_list,
+        select_index_list,
+        isShowModalImport,
+        isShowModalImport
+      } = this.state
       return(
         <div className="container import_component">
           <div className="row layout">
@@ -216,7 +236,7 @@ class ImportComponent extends React.Component {
                       type="file"
                       className="input-file"
                       ref={input => this.inputElement = input}
-                      accept=".tsv"
+                      accept=".zip"
                       onChange={this.handleChangefile}
                       />
                   </div>
@@ -283,13 +303,18 @@ class ImportComponent extends React.Component {
             <div className="col-md-12">
               <div className="row">
                 <div className="col-md-2">
-                  <button className="btn btn-primary">
+                  <button 
+                    className="btn btn-primary" 
+                    disabled={!file || !work_flow_data ||  !select_index_list.length} 
+                    onClick={()=>{file && work_flow_data && select_index_list.length && this.handleSubmit()}}
+                  >
                     <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
-                    </button>
-                    </div>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+          {/* Work Flow */}
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
             <div className="modal-mark" onClick={this.handleShowModalWorkFlow}></div>
             <div className="modal-content">
@@ -337,6 +362,7 @@ class ImportComponent extends React.Component {
               </div>             
             </div>
           </div>
+          {/* Index */}
           <div className={`modal ${isShowModalIndex ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleShowModalIndex(false)}></div>
             <div className="modal-index">
@@ -392,6 +418,49 @@ class ImportComponent extends React.Component {
               </div>             
             </div>
           </div>
+          {/* import */}
+          <div className={`modal ${isShowModalImport ? "active" : ''}`}>
+            <div className="modal-mark" onClick={()=>this.handleSubmit(false)}></div>
+            <div className="modal-index">
+              <div class="row">
+                <div class="col-sm-12 header">
+                  <h3>Import Items</h3>
+                </div>
+                <div class="col-sm-12">
+                  <table class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        <th>Item ID</th>
+                        <th>Title</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        workflows.map((item, key) => {
+                          return (
+                            <tr key={key}>
+                              <td style={{textAlign: 'center'}}>
+                               {key}
+                              </td>
+                              <td>{item.flows_name}</td>
+                              <td>{item.item_type_name}</td>
+                            </tr>
+                          )
+                        })
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="col-sm-12 footer footer-import text-center">
+                  <button className="btn btn-primary" onClick={()=>{this.handleSubmit(true)}}><span className="glyphicon glyphicon-download-alt icon"></span>{import_label}</button>
+                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleSubmit(false)}>{cancel}</button>
+                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleSubmit(false)}>Download</button>
+                </div>
+              </div>             
+            </div>
+          </div>
+
         </div>
       )
     }
