@@ -41,9 +41,8 @@ from invenio_accounts.models import Role, userrole
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
-from invenio_stats.utils import QueryCommonReportsHelper, \
-    QueryItemRegReportHelper, QueryRecordViewReportHelper, \
-    QuerySearchReportHelper
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -362,13 +361,13 @@ def get_schema_form(item_type_id=0):
     return abort(400)
 
 
-@blueprint.route('/index/<int:pid_value>', methods=['GET', 'PUT', 'POST'])
+@blueprint.route('/index/<string:pid_value>', methods=['GET', 'PUT', 'POST'])
 @login_required
 @item_permission.require(http_exception=403)
-def items_index(pid_value=0):
+def items_index(pid_value='0'):
     """Items index."""
     try:
-        if pid_value == 0:
+        if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
@@ -420,14 +419,14 @@ def items_index(pid_value=0):
     return abort(400)
 
 
-@blueprint.route('/iframe/index/<int:pid_value>',
+@blueprint.route('/iframe/index/<string:pid_value>',
                  methods=['GET', 'PUT', 'POST'])
 @login_required
 @item_permission.require(http_exception=403)
-def iframe_items_index(pid_value=0):
+def iframe_items_index(pid_value='0'):
     """Iframe items index."""
     try:
-        if pid_value == 0:
+        if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.iframe_index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
@@ -803,17 +802,31 @@ def prepare_edit_item():
             activity = WorkActivity()
             pid_object = PersistentIdentifier.get('recid', pid_value)
 
+            # TEMP:
+            current_app.logger.info('Record trying to edit: ')
+            current_app.logger.info(record)
+
             # check item is being editied
             item_id = pid_object.object_uuid
-            workflow_action_stt = \
-                activity.get_workflow_activity_status_by_item_id(
-                    item_id=item_id)
-            # show error when has stt is Begin or Doing
-            if workflow_action_stt is not None and \
-                (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN
-                 or workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
-                return jsonify(code=-13,
-                               msg=_('The workflow is being edited. '))
+            wf_activity = activity.get_workflow_activity_by_item_id(
+                item_id=item_id)
+            if not wf_activity:
+                # get workflow of first record attached version ID: x.1
+                first_pid_value_attached_ver = '{}.1' . format(post_activity.
+                                                               get('pid_value'))
+                first_pid_obj_attached_ver = PersistentIdentifier.get(
+                    'recid', first_pid_value_attached_ver)
+                wf_activity = activity.get_workflow_activity_by_item_id(
+                    item_id=first_pid_obj_attached_ver.object_uuid)
+
+            if wf_activity:
+                # show error when has stt is Begin or Doing
+                if wf_activity.action_status == \
+                        ActionStatusPolicy.ACTION_BEGIN or \
+                        wf_activity.action_status == \
+                        ActionStatusPolicy.ACTION_DOING:
+                    return jsonify(code=-13,
+                                   msg=_('The workflow is being edited. '))
 
             if user_id != owner and not is_admin[0] and user_id != shared_id:
                 return jsonify(code=-1,
@@ -824,23 +837,21 @@ def prepare_edit_item():
                                msg=_('You do not even have an itemtype.'))
             item_type_id = record.get('item_type_id')
             item_type = ItemTypes.get_by_id(item_type_id)
-            if item_type is None:
-                return jsonify(code=-1, msg=_('This itemtype not found.'))
+            if not item_type:
+                return jsonify(code=-1, msg=_('This itemtype not is found.'))
 
-            upt_current_activity = activity.upt_activity_detail(
-                item_id=pid_object.object_uuid)
-
-            if upt_current_activity is None:
+            # prepare params for new workflow activity
+            if wf_activity:
+                post_activity['workflow_id'] = wf_activity.workflow_id
+                post_activity['flow_id'] = wf_activity.flow_id
+            else:
                 workflow = WorkFlow.query.filter_by(
                     itemtype_id=item_type_id).first()
-                if workflow is None:
+                if not workflow:
                     return jsonify(code=-1,
                                    msg=_('Workflow setting does not exist.'))
                 post_activity['workflow_id'] = workflow.id
                 post_activity['flow_id'] = workflow.flow_id
-            else:
-                post_activity['workflow_id'] = upt_current_activity.workflow_id
-                post_activity['flow_id'] = upt_current_activity.flow_id
             post_activity['itemtype_id'] = item_type_id
             getargs = request.args
             community = getargs.get('community', None)
@@ -849,21 +860,25 @@ def prepare_edit_item():
             record = WekoDeposit.get_record(item_id)
             if record is None:
                 return jsonify(code=-1, msg=_('Record does not exist.'))
+
             deposit = WekoDeposit(record, record.model)
             new_record = deposit.newversion(pid_object)
             if new_record is None:
                 return jsonify(code=-1, msg=_('An error has occurred.'))
+
+            # Create a new workflow activity.
             rtn = activity.init_activity(
                 post_activity, community, new_record.model.id)
             if rtn:
                 # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
                 identifier_actionid = get_actionid('identifier_grant')
-                if upt_current_activity:
+                if wf_activity:
                     identifier = activity.get_action_identifier_grant(
-                        upt_current_activity.activity_id, identifier_actionid)
+                        wf_activity.activity_id, identifier_actionid)
                 else:
                     identifier = activity.get_action_identifier_grant(
                         '', identifier_actionid)
+
                 if identifier:
                     if identifier.get('action_identifier_select') > \
                             IDENTIFIER_GRANT_DOI:
@@ -909,8 +924,7 @@ def ranking():
     settings = RankingSettings.get()
     # get statistical period
     end_date = date.today()  # - timedelta(days=1)
-    start_date = end_date - \
-        timedelta(days=int(settings.statistical_period) - 1)
+    start_date = end_date - timedelta(days=int(settings.statistical_period))
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering -- Always default
@@ -926,8 +940,8 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'value': 'desc'})
         rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all', title_key='record_name',
+            parse_ranking_results(result, list_name='all',
+                                  title_key='record_name',
                                   count_key='total_all', pid_key='pid_value')
 
     # most_downloaded_items
@@ -940,8 +954,7 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='data', title_key='col2',
+            parse_ranking_results(result, list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
 
     # created_most_items_user
@@ -954,9 +967,9 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['created_most_items_user'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='data',
-                                  title_key='user_id', count_key='count')
+            parse_ranking_results(result, list_name='data',
+                                  title_key='username', count_key='count',
+                                  pid_key='')
 
     # most_searched_keywords
     if settings.rankings['most_searched_keywords']:
@@ -964,13 +977,12 @@ def ranking():
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
             agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'},
-            agg_filter={'search_type': [0, 1]}
+            agg_sort={'value': 'desc'}
         )
         rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all', title_key='search_key',
-                                  count_key='count', search_key='search_key')
+            parse_ranking_results(result, list_name='all',
+                                  title_key='search_key', count_key='count',
+                                  pid_key='')
 
     # new_items
     if settings.rankings['new_items']:

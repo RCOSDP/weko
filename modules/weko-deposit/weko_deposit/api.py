@@ -20,18 +20,22 @@
 
 """Weko Deposit API."""
 import uuid
+from copy import deepcopy
 from datetime import datetime
 
 import redis
+from dictdiffer import patch
+from dictdiffer.merge import Merger, UnresolvedConflictsException
 from flask import abort, current_app, has_request_context, json, request, \
     session
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
+from invenio_deposit.errors import MergeConflict
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_indexer.api import RecordIndexer
-from invenio_pidrelations.contrib.records import RecordDraft
+from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDInvalidAction
@@ -50,7 +54,8 @@ from weko_records.utils import get_all_items, get_options_and_order_list, \
     json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
 
-from .pidstore import weko_deposit_fetcher, weko_deposit_minter
+from .pidstore import get_latest_version_id, weko_deposit_fetcher, \
+    weko_deposit_minter
 from .signals import item_created
 
 PRESERVE_FIELDS = (
@@ -357,6 +362,46 @@ class WekoDeposit(Deposit):
         """Check if deposit is published."""
         return self['_deposit'].get('pid') is not None
 
+    @preserve(fields=('_deposit', '$schema'))
+    def merge_with_published(self):
+        """Merge changes with latest published version."""
+        pid, first = self.fetch_published()
+        lca = first.revisions[self['_deposit']['pid']['revision_id']]
+        # ignore _deposit and $schema field
+        args = [lca.dumps(), first.dumps(), self.dumps()]
+        for arg in args:
+            if '$schema' in arg:
+                del arg['$schema']
+            if '_deposit' in arg:
+                del arg['_deposit']
+        args.append({})
+        m = Merger(*args)
+        try:
+            m.run()
+        except UnresolvedConflictsException:
+            raise MergeConflict()
+        return patch(m.unified_patches, lca)
+
+    def _publish_new(self, id_=None):
+        """Override the publish new to avoid creating multiple pids."""
+        id_ = id_ or uuid.uuid4()
+        record_pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', object_uuid=self.id).first()
+
+        self['_deposit']['pid'] = {
+            'type': record_pid.pid_type,
+            'value': record_pid.pid_value,
+            'revision_id': 0,
+        }
+
+        data = dict(self.dumps())
+        data['$schema'] = self.record_schema
+
+        with self._process_files(id_, data):
+            record = self.published_record_class.create(data, id_=id_)
+
+        return record
+
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
         if self.data is None:
@@ -368,7 +413,13 @@ class WekoDeposit(Deposit):
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
         try:
+            # rec_pid = PersistentIdentifier.get('recid', self.data.get('id', 0))
+            # current_app.logger.info('The current id is : ')
+            # current_app.logger.info(self.data.get('id', 0))
+            # current_app.logger.info(self.pid)
+
             deposit = super(WekoDeposit, self).publish(pid, id_)
+            # deposit = super(WekoDeposit, self).publish(pid, id_)
 
             # update relation version current to ES
             pid = PersistentIdentifier.query.filter_by(
@@ -376,22 +427,9 @@ class WekoDeposit(Deposit):
             relations = serialize_relations(pid)
             if relations is not None and 'version' in relations:
                 relations_ver = relations['version'][0]
-                relations['version'][0]['id'] = pid.object_uuid
-                self.indexer.update_relation_version_is_last(relations[
-                    'version'][0])
-
-                # update relation version previous to ES
-                if relations_ver is not None and 'previous' in relations_ver \
-                        and relations_ver['previous'] is not None:
-                    pid_val_prev = relations_ver['previous']['pid_value']
-                    pid_prev = PersistentIdentifier.get(
-                        'recid', pid_val_prev)
-                    relations_prev = serialize_relations(pid_prev)
-                    if relations_prev is not None \
-                            and 'version' in relations_prev:
-                        relations_prev['version'][0]['id'] = pid_prev.object_uuid
-                        self.indexer.update_relation_version_is_last(
-                            relations_prev['version'][0])
+                relations_ver['id'] = pid.object_uuid
+                relations_ver['is_last'] = relations_ver.get('index') == 0
+                self.indexer.update_relation_version_is_last(relations_ver)
             return deposit
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
@@ -439,11 +477,12 @@ class WekoDeposit(Deposit):
                 recid=recid)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
-        recid = PersistentIdentifier.get('recid', str(data['_deposit']['id']))
-        depid = PersistentIdentifier.get('depid', str(data['_deposit']['id']))
+        dep_id = str(data['_deposit']['id'])
+        recid = PersistentIdentifier.get('recid', dep_id)
+        depid = PersistentIdentifier.get('depid', dep_id)
         p_depid = PersistentIdentifier.create(
             'parent',
-            'parent:recid/{0}'.format(str(data['_deposit']['id'])),
+            'parent:{0}'.format(dep_id),
             object_type='rec',
             object_uuid=uuid.uuid4(),
             status=PIDStatus.REGISTERED
@@ -562,8 +601,9 @@ class WekoDeposit(Deposit):
             # Check that there is not a newer draft version for this record
             # and this is the latest version
             pv = PIDVersioning(child=pid)
-            if pv.exists and not pv.draft_child and pid == pv.last_child:
-                last_pid = pv.last_child
+            if pv.exists and not pv.draft_child:  # and pid == pv.last_child:
+                # the latest record: item without version ID
+                last_pid = pid  # pv.last_child
                 # Get copy of the latest record
                 latest_record = WekoDeposit.get_record(
                     last_pid.object_uuid)
@@ -576,10 +616,14 @@ class WekoDeposit(Deposit):
                     for k in keys_to_remove:
                         data.pop(k, None)
 
+                    # attaching version ID
+                    recid = '{0}.{1}' . format(
+                        last_pid.pid_value,
+                        get_latest_version_id(last_pid.pid_value))
                     # NOTE: We call the superclass `create()` method, because we
                     # don't want a new empty bucket, but an unlocked snapshot of
                     # the old record's bucket.
-                    deposit = super(WekoDeposit, self).create(data)
+                    deposit = super(WekoDeposit, self).create(data, recid=recid)
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
@@ -588,17 +632,20 @@ class WekoDeposit(Deposit):
                         'recid', str(data['_deposit']['id']))
                     depid = PersistentIdentifier.get(
                         'depid', str(data['_deposit']['id']))
+
                     PIDVersioning(
                         parent=pv.parent).insert_draft_child(
                         child=recid)
                     RecordDraft.link(recid, depid)
 
                     # Create snapshot from the record's bucket and update data
-                    snapshot = latest_record.files.bucket.snapshot(lock=False)
-                    snapshot.locked = False
-                    deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                    RecordsBuckets.create(
-                        record=deposit.model, bucket=snapshot)
+                    if latest_record.files is not None:
+                        snapshot = latest_record.files.bucket.snapshot(
+                            lock=False)
+                        snapshot.locked = False
+                        deposit['_buckets'] = {'deposit': str(snapshot.id)}
+                        RecordsBuckets.create(
+                            record=deposit.model, bucket=snapshot)
                     if 'extra_formats' in latest_record['_buckets']:
                         extra_formats_snapshot = \
                             latest_record.extra_formats.bucket.snapshot(
@@ -607,12 +654,13 @@ class WekoDeposit(Deposit):
                             str(extra_formats_snapshot.id)
                         RecordsBuckets.create(record=deposit.model,
                                               bucket=extra_formats_snapshot)
-                    index = {'index': self.get('path', []), 'actions': 'private'
-                             if self.get('publish_status', '1') == '1' else 'publish'}
+                    index = {'index': self.get('path', []),
+                             'actions': 'private'}
                     if 'activity_info' in session:
                         del session['activity_info']
                     item_metadata = ItemsMetadata.get_record(
                         last_pid.object_uuid).dumps()
+                    item_metadata.pop('id', None)
                     args = [index, item_metadata]
                     deposit.update(*args)
                     deposit.commit()
@@ -884,6 +932,23 @@ class WekoDeposit(Deposit):
             except Exception as ex:
                 current_app.logger.debug(ex)
                 db.session.rollback()
+
+    def merge_data_to_record_without_version(self, pid):
+        """Update changes from record attached version to without version."""
+        with db.session.begin_nested():
+            # update item_metadata
+            index = {'index': self.get('path', []),
+                     'actions': 'private'}
+            item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
+            item_metadata.pop('id', None)
+            args = [index, item_metadata]
+            self.update(*args)
+            self.commit()
+            # update records_metadata
+            flag_modified(self.model, 'json')
+            db.session.merge(self.model)
+
+        return self.__class__(self.model.json, model=self.model)
 
 
 class WekoRecord(Record):

@@ -31,6 +31,8 @@ from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoRecord
+from weko_deposit.pidstore import get_record_identifier, \
+    get_record_without_version
 from weko_handle.api import Handle
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -53,18 +55,16 @@ def get_identifier_setting(community_id):
             repository=community_id).one_or_none()
 
 
-def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
+def saving_doi_pidstore(item_id, record_without_version, data=None,
+                        doi_select=0):
     """
     Mapp doi pidstore data to ItemMetadata.
 
     :param data: request data
     :param doi_select: identifier selected
-    :param activity_id: activity id number
+    :param item_id: object uuid
+    :param record_without_version: object uuid
     """
-    activity_obj = WorkActivity()
-    activity_detail = activity_obj.get_activity_detail(activity_id)
-    identifier = IdentifierHandle(activity_detail.item_id)
-
     flag_del_pidstore = False
     identifier_val = ''
     identifier_typ = ''
@@ -100,9 +100,11 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
 
     try:
         if not flag_del_pidstore and identifier_val and doi_register_val:
+            identifier = IdentifierHandle(record_without_version)
             reg = identifier.register_pidstore('doi', identifier_val)
 
             if reg:
+                identifier = IdentifierHandle(item_id)
                 identifier.update_identifier_data(identifier_val,
                                                   identifier_typ)
                 identifier.update_identifier_regist_data(doi_register_val,
@@ -442,6 +444,30 @@ def check_required_data(data, key, repeatable=False):
         return None
     else:
         return error_list
+
+
+def get_activity_id_of_record_without_version(pid_without_ver=None):
+    """
+    Get activity ID of record without version.
+
+    :param pid_without_ver: object pidstore
+    :return: string or None
+    """
+    record_without_ver_activity_id = None
+    if pid_without_ver is not None:
+        # get workflow of first record attached version ID: x.1
+        first_pid_value_attached_ver = '{}.1' . format(
+            pid_without_ver.pid_value)
+        first_pid_obj_attached_ver = PersistentIdentifier.get(
+            'recid', first_pid_value_attached_ver)
+        activity = WorkActivity()
+        record_without_ver_activity = activity.get_workflow_activity_by_item_id(
+            first_pid_obj_attached_ver.object_uuid)
+        if record_without_ver_activity is not None:
+            record_without_ver_activity_id = record_without_ver_activity.\
+                activity_id
+
+    return record_without_ver_activity_id
 
 
 def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):

@@ -187,6 +187,7 @@ class ItemTypeMetaDataView(BaseView):
 
             db.session.commit()
         except BaseException:
+            raise
             db.session.rollback()
             return jsonify(msg=_('Failed to register Item type.'))
         current_app.logger.debug('itemtype register: {}'.format(item_type_id))
