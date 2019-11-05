@@ -358,7 +358,13 @@ class ImportComponent extends React.Component {
                   </table>
                 </div>
                 <div class="col-sm-12 footer text-align-right">
-                  <button className="btn btn-primary" onClick={()=>{this.handleShowModalWorkFlow(workflows[wl_key])}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
+                  <button 
+                    className="btn btn-primary" 
+                    disabled={wl_key === null}
+                    onClick={()=>{wl_key!== null && this.handleShowModalWorkFlow(workflows[wl_key])}}
+                  >
+                    <span className="glyphicon glyphicon-download-alt icon"></span>{select}
+                  </button>
                   <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalWorkFlow()}>{cancel}</button>
                 </div>
               </div>             
