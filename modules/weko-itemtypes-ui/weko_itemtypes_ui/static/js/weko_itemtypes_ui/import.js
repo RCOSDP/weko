@@ -337,13 +337,13 @@ class ImportComponent extends React.Component {
                       {
                         workflows.map((item, key) => {
                           return (
-                            <tr>
+                            <tr key={key}>
                               <td style={{textAlign: 'center'}}>
                                 <input 
                                   type='radio'
                                   name='workflow' 
                                   value={key} 
-                                  defaultChecked={wl_key === key}
+                                  checked={wl_key === key}
                                   onChange={this.handleChangeWF}
                                   ></input>
                               </td>
