@@ -338,7 +338,7 @@ class ImportComponent extends React.Component {
                     <tbody>
                       {
                         workflows.map((item, key) => {
-                          wl_key === key && console.log("true", item)
+                          wl_key == key && console.log("true", item)
                           return (
                             <tr key={key}>
                               <td style={{textAlign: 'center'}}>
