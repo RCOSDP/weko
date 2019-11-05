@@ -56,7 +56,7 @@
     {%- for attribute_data in attribute_value_mlt -%}
       {%- if attribute_data is mapping -%}
           {%- for k, v in attribute_data.items() -%}
-            {%- if v is string -%}
+            {%- if v is string or k.split('.')[0] == 'nameIdentifier' -%}
               {{ child_data(k, v, level) }}
             {%- else -%}
               {{ child_data(k, '', level) }}
@@ -71,6 +71,11 @@
     {%- set label_colspan_default = 6 -%}
     <tr>
       {{ out_table_th(level) }}
+      {% set labels = label.split('.') %}
+      {%- if labels|length > 1 -%}
+          {% set label = labels[1] %}
+          {% set content = output_creator(labels[0], content) %}
+      {%- endif -%}
       <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label }}</th>
       <td>{{ content }}</td>
     </tr>
@@ -81,5 +86,18 @@
       <th scope="row"
           style="border-top: none; border-bottom: none"></th>
         {{ out_table_th(parrent_length - 1) }}
+    {%- endif -%}
+{% endmacro %}
+
+{% macro output_creator(creator_key, creator_data) %}
+    {%- if creator_key == 'creatorMail' and config['EMAIL_DISPLAY_FLG'] -%}
+      <a href="{{ 'mailto:' + creator_data }}">{{ creator_data }}</a>
+    {%- elif creator_key == 'creatorName' and 'name' == config['ITEM_SEARCH_FLG'] -%}
+        {%- set q = 'creator=' + creator_data -%}
+      <a href="{{ url_for('invenio_search_ui.search') + '?q=&' + q }}">{{ creator_data }}</a>
+    {%- elif creator_key == 'nameIdentifier' and creator_data -%}
+      <a href="{{ creator_data.get('uri') }}">{{ creator_data.get('name') }}</a>
+    {%- else -%}
+        {{ creator_data }}
     {%- endif -%}
 {% endmacro %}

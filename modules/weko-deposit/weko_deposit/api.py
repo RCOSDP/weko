@@ -46,7 +46,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes
 from weko_records.models import ItemMetadata
-from weko_records.utils import get_attribute_value_all_items, \
+from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
 
@@ -923,6 +923,20 @@ class WekoRecord(Record):
     @property
     def items_show_list(self):
         """Return the item show list."""
+        def get_name_iddentifier_uri(mlt):
+            for m in mlt:
+                if m.get('nameIdentifiers'):
+                    for v in m.get('nameIdentifiers'):
+                        name = v.get('nameIdentifier')
+                        if name:
+                            uri = ''
+                            if v.get('nameIdentifierURI'):
+                                uri = v.get('nameIdentifierURI')
+                            elif v.get('nameIdentifierScheme'):
+                                uri = 'http://' + v.get('nameIdentifierScheme')\
+                                      + '.io/' + name
+                            v['nameIdentifier'] = dict(name=name, uri=uri)
+            return mlt
         try:
 
             items = []
@@ -950,8 +964,16 @@ class WekoRecord(Record):
                     nval = dict()
                     nval['attribute_name'] = val.get('attribute_name')
                     nval['attribute_type'] = val.get('attribute_type')
-                    nval['attribute_value_mlt'] = \
-                        get_attribute_value_all_items(mlt, solst)
+                    if nval['attribute_name'] == 'Reference' \
+                            or nval['attribute_type'] == 'file':
+                        nval['attribute_value_mlt'] = \
+                            get_all_items(mlt, solst, True)
+                    else:
+                        is_author = nval['attribute_type'] == 'creator'
+                        if is_author:
+                            mlt = get_name_iddentifier_uri(mlt)
+                        nval['attribute_value_mlt'] = \
+                            get_attribute_value_all_items(mlt, solst, is_author)
                     items.append(nval)
                 else:
                     items.append(val)

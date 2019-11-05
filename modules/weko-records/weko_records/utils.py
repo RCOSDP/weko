@@ -373,6 +373,36 @@ def get_all_items(nlst, klst, is_get_name=False):
     return alst
 
 
+def get_all_items2(nlst, klst):
+    """Convert and sort item list(original).
+
+    :param nlst:
+    :param klst:
+    :return: alst
+    """
+    alst = []
+
+    # def get_name(key):
+    #     for lst in klst:
+    #         k = lst[0].split('.')[-1]
+    #         if key == k:
+    #             return lst[1]
+    def get_items(nlst):
+        if isinstance(nlst, dict):
+            for k, v in nlst.items():
+                if isinstance(v, str):
+                    alst.append({k: v})
+                else:
+                    get_items(v)
+        elif isinstance(nlst, list):
+            for lst in nlst:
+                get_items(lst)
+
+    to_orderdict(nlst, klst)
+    get_items(nlst)
+    return alst
+
+
 def to_orderdict(alst, klst):
     """Sort item list.
 
@@ -542,17 +572,18 @@ def check_has_attribute_value(node):
         return False
 
 
-def get_attribute_value_all_items(nlst, klst):
+def get_attribute_value_all_items(nlst, klst, is_author=False):
     """Convert and sort item list.
 
     :param nlst:
     :param klst:
+    :param is_author:
     :return: alst
     """
     def get_name(key):
         for lst in klst:
             if key == lst[0].split('.')[-1]:
-                return lst[1]
+                return lst[1] if not is_author else '{}.{}'. format(key, lst[1])
 
     def to_sort_dict(alst, klst):
         """Sort item list.
@@ -570,7 +601,8 @@ def get_attribute_value_all_items(nlst, klst):
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
-                        if isinstance(val, str) and val:
+                        if val and (isinstance(val, str)
+                                    or (key == 'nameIdentifier')):
                             result.append({key: val})
                         else:
                             if check_has_attribute_value(val):
@@ -594,7 +626,8 @@ def get_attribute_value_all_items(nlst, klst):
                 d = {}
                 for key, val in nlst.items():
                     item_name = get_name(key) or ''
-                    if isinstance(val, str) and val:
+                    if val and (isinstance(val, str)
+                                or (key == 'nameIdentifier')):
                         # the last children level
                         d[item_name] = val
                     else:
