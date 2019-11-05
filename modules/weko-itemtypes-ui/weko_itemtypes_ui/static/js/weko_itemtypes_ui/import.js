@@ -165,6 +165,7 @@ class ImportComponent extends React.Component {
 
     handleChangeWF(e) {
       const value = e.target.value
+      console.log('handleChangeWF value', value)
       this.setState({
         wl_key: value
       })
@@ -221,6 +222,7 @@ class ImportComponent extends React.Component {
         isShowModalImport,
         file
       } = this.state
+      console.log('render wl_key',wl_key)
       return(
         <div className="container import_component">
           <div className="row layout">
