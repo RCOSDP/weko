@@ -66,9 +66,9 @@ class MainLayout extends React.Component {
             })
           }
         </ul>
-        {
-          tab === tabs[0].tab_key && (<ImportComponent></ImportComponent>)
-        }
+        <div className={`${tab === tabs[0].tab_key ? '': 'hide'}`}>
+          <ImportComponent></ImportComponent>
+        </div>
         
       </div>
     )
