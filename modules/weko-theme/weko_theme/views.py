@@ -22,12 +22,9 @@
 
 
 from blinker import Namespace
-from flask import Blueprint, current_app, flash, render_template, request, \
-    session
-from flask_login import login_required
+from flask import Blueprint, current_app, render_template, request
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
-from weko_admin.utils import set_default_language
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
@@ -57,9 +54,6 @@ def index():
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
-    # In case user opens the web for the first time,
-    # set default language base on Admin language setting
-    set_default_language()
     # Get index style
     style = IndexStyle.get(
         current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
