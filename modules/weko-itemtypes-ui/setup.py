@@ -106,8 +106,6 @@ setup(
             'messages = weko_itemtypes_ui',
         ],
         'invenio_assets.bundles': [
-            'weko_import_index_js_dependencies = '
-            'weko_itemtypes_ui.bundles:import_index_js',
             'weko_itemtypes_ui_js = weko_itemtypes_ui.bundles:js',
             'weko_admin_item_import_js = '
             'weko_itemtypes_ui.bundles:weko_admin_item_import_js',

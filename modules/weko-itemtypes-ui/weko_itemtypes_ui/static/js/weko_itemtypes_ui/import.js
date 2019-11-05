@@ -441,7 +441,7 @@ class ImportComponent extends React.Component {
                         workflows.map((item, key) => {
                           return (
                             <tr key={key}>
-                              <td style={{textAlign: 'center'}}>
+                              <td>
                                {key}
                               </td>
                               <td>{item.flows_name}</td>
