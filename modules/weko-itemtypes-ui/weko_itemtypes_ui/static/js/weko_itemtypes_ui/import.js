@@ -152,7 +152,8 @@ class ImportComponent extends React.Component {
       const {isShowModalWF,work_flow_data} = this.state
       if(!isShowModalWF) {
         this.setState({
-          isShowModalWF: !isShowModalWF
+          isShowModalWF: !isShowModalWF,
+          wl_key: workflows.findIndex((item) => {return item.id === work_flow_data.id})
         })
       } else {
         this.setState({
@@ -163,7 +164,6 @@ class ImportComponent extends React.Component {
     }
 
     handleChangeWF(e) {
-
       const value = e.target.value
       this.setState({
         wl_key: value
@@ -343,6 +343,7 @@ class ImportComponent extends React.Component {
                                   type='radio'
                                   name='workflow' 
                                   value={key} 
+                                  checked={wl_key === key}
                                   onChange={this.handleChangeWF}
                                   ></input>
                               </td>
@@ -413,7 +414,12 @@ class ImportComponent extends React.Component {
                   </div>
                 </div>
                 <div class="col-sm-12 footer text-align-right">
-                  <button className="btn btn-primary" onClick={()=>{this.handleShowModalIndex(true)}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
+                  <button 
+                    className="btn btn-primary" 
+                    disabled={!term_select_index_list.length}
+                    onClick={()=>{term_select_index_list.length && this.handleShowModalIndex(true)}}
+                  >
+                    <span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
                   <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalIndex(false)}>{cancel}</button>
                 </div>
               </div>             
