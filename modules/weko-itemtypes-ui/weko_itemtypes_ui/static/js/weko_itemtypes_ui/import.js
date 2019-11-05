@@ -456,7 +456,7 @@ class ImportComponent extends React.Component {
                 <div class="col-sm-12 footer footer-import text-center">
                   <button className="btn btn-primary" onClick={()=>{this.handleSubmit(true)}}><span className="glyphicon glyphicon-download-alt icon"></span>{import_label}</button>
                   <button className="btn btn-danger m-l-15" onClick={()=>this.handleSubmit(false)}>{cancel}</button>
-                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleSubmit(false)}>Download</button>
+                  <button className="btn btn-success m-l-15" onClick={()=>this.handleSubmit(false)}>Download</button>
                 </div>
               </div>             
             </div>
