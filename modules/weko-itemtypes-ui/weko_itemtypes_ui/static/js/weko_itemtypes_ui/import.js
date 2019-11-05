@@ -317,7 +317,7 @@ class ImportComponent extends React.Component {
           </div>
           {/* Work Flow */}
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
-            <div className="modal-mark" onClick={this.handleShowModalWorkFlow}></div>
+            <div className="modal-mark" onClick={()=>this.handleShowModalWorkFlow()}></div>
             <div className="modal-content">
               <div class="row">
                 <div class="col-sm-12 header">
@@ -358,7 +358,7 @@ class ImportComponent extends React.Component {
                 </div>
                 <div class="col-sm-12 footer text-align-right">
                   <button className="btn btn-primary" onClick={()=>{this.handleShowModalWorkFlow(workflows[wl_key])}}><span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
-                  <button className="btn btn-danger m-l-15" onClick={this.handleShowModalWorkFlow}>{cancel}</button>
+                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalWorkFlow()}>{cancel}</button>
                 </div>
               </div>             
             </div>
