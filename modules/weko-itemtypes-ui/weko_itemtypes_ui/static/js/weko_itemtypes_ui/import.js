@@ -305,8 +305,9 @@ class ImportComponent extends React.Component {
                 <div className="col-md-2">
                   <button 
                     className="btn btn-primary" 
-                    disabled={!file || !work_flow_data ||  !select_index_list.length} 
-                    onClick={()=>{file && work_flow_data && select_index_list.length && this.handleSubmit()}}
+                    // disabled={!file || !work_flow_data ||  !select_index_list.length} 
+                    // file && work_flow_data && select_index_list.length && 
+                    onClick={()=>{this.handleSubmit()}}
                   >
                     <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
                   </button>
