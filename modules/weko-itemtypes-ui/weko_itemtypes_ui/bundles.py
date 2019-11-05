@@ -84,4 +84,3 @@ weko_admin_item_import_js = Bundle(
     # filters='requirejs',
     output="gen/import.js"
 )
-

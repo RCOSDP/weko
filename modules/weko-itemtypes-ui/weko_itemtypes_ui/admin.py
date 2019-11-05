@@ -509,12 +509,10 @@ class ItemImportView(BaseView):
         import json
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
-
         workflows_js = [get_content_workflow(item) for item in workflows]
-
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
-            workflows=json.dumps(workflows_js) 
+            workflows=json.dumps(workflows_js)
         )
 
 
