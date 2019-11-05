@@ -339,7 +339,7 @@ class ImportComponent extends React.Component {
                       {
                         workflows.map((item, key) => {
                           console.log("render", item)
-                          wl_key === key && console.log("true", item)
+                          wl_key == key && console.log("true", item)
                           return (
                             <tr key={key}>
                               <td style={{textAlign: 'center'}}>
@@ -347,7 +347,7 @@ class ImportComponent extends React.Component {
                                   type='radio'
                                   name='workflow' 
                                   value={key} 
-                                  checked={wl_key === key}
+                                  checked={wl_key == key}
                                   onChange={this.handleChangeWF}
                                   ></input>
                               </td>
