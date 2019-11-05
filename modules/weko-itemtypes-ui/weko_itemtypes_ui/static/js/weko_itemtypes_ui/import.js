@@ -343,7 +343,7 @@ class ImportComponent extends React.Component {
                                   type='radio'
                                   name='workflow' 
                                   value={key} 
-                                  checked={wl_key === key}
+                                  defaultChecked={wl_key === key}
                                   onChange={this.handleChangeWF}
                                   ></input>
                               </td>
