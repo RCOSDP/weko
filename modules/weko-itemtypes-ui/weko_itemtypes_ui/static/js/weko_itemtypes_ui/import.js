@@ -218,7 +218,8 @@ class ImportComponent extends React.Component {
         list_index,
         term_select_index_list,
         select_index_list,
-        isShowModalImport
+        isShowModalImport,
+        file
       } = this.state
       return(
         <div className="container import_component">
