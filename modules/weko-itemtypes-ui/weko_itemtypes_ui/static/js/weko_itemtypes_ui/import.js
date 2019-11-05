@@ -21,22 +21,58 @@ const urlTree = window.location.origin+'/api/tree'
 
 class MainLayout extends React.Component {
 
-    componentDidMount() {
+  constructor(){
+    super()
+    this.state = {
+      tab: 'import',
+      tabs: [
+        {
+          tab_key: 'import',
+          tab_name: import_label
+        },
+        {
+          tab_key: 'check',
+          tab_name: 'Check',
+        },
+        {
+          tab_key: 'list',
+          tab_name: list
+        }
+      ]
     }
+    this.handleChangeTab = this.handleChangeTab.bind(this)
+  }
 
-    render() {
-      return(
+  handleChangeTab(tab) {
+    this.setState({
+      tab: tab
+    })
+  }
 
-        <div>
-          <ul className="nav nav-tabs">
-            <li role="presentation" className="active"><a href="#">{import_label}</a></li>
-            <li role="presentation"><a href="#">{list}</a></li>
-          </ul>
+  componentDidMount() {
+  }
 
-          <ImportComponent></ImportComponent>
-        </div>
-      )
-    }
+  render() {
+    const {tab,tabs} = this.state
+    return(
+
+      <div>
+        <ul className="nav nav-tabs">
+          {
+            tabs.map((item,key)=>{
+              return(
+                <li role="presentation" className={`${item.tab_key===tab ? 'active' : ''}`} onClick={()=>this.handleChangeTab(item.tab_key)}><a href="#">{item.tab_name}</a></li>
+              )
+            })
+          }
+        </ul>
+        {
+          tab === tabs[0].tab_key && (<ImportComponent></ImportComponent>)
+        }
+        
+      </div>
+    )
+  }
 }
 
 class ImportComponent extends React.Component {
