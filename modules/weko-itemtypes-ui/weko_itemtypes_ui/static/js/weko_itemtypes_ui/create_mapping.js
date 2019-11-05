@@ -303,7 +303,11 @@ $(document).ready(function () {
     // jpcoar sub_list logic
     sub_jpcoar_items = page_global.schema_prop[schema_name_str][jpcoar_key];
     page_global.sub_jpcoar_list=[];
-    make_list_jpcoar(sub_jpcoar_items, jpcoar_key);
+    if(schema_name_str === "jpcoar_mapping"){
+      make_list_jpcoar(sub_jpcoar_items, jpcoar_key);
+    }else{
+      make_list_ddi(sub_jpcoar_items, jpcoar_key);
+    }
     $('#sub-jpcoar-lists-label').text(jpcoar_key);
     $('#sub_children_lists div.sub_child_list').remove();
     let re = /\s*;\s*|\s*,\s*|\s*-\s*|\s*:\s*/g;
@@ -444,6 +448,30 @@ $(document).ready(function () {
     }
     return;
   }
+
+  function make_list_ddi(entries, base_key) {
+    if(Object.keys(entries).length > 1) {
+      for(const [key, value] of Object.entries(entries)) {
+        if('type' == key) {
+          if(value.hasOwnProperty('attributes')) {
+            make_list_ddi_prop(value.attributes, base_key);
+          }
+          continue;
+        } else {
+          make_list_ddi(value, [base_key, key].join('.'));
+        }
+      }
+    } else {
+      page_global.sub_jpcoar_list.push(base_key);
+      if(entries.hasOwnProperty('type')) {
+        if(entries.type.hasOwnProperty('attributes')) {
+          make_list_ddi_prop(entries.type.attributes, base_key);
+        }
+      }
+    }
+    return;
+  }
+
 //    function make_list_jpcoar_level(entries, base_key) {
 //      if(Object.keys(entries).length > 1) {
 //        for(const [key, value] of Object.entries(entries)) {
@@ -470,6 +498,23 @@ $(document).ready(function () {
     attr_list.forEach(element => {
       page_global.sub_jpcoar_list.push([base_key, '@'+element.name].join('.'));
     });
+  }
+
+  function make_list_ddi_prop(attr_list, base_key){
+    attr_list.forEach(element => {
+      page_global.sub_jpcoar_list.push([base_key, '@'+element.name].join('.'));
+    });
+
+    let j = 0;
+    for(let i = 0; i < page_global.sub_jpcoar_list.length; i++){
+      if(page_global.sub_jpcoar_list[i] === base_key){
+        j++;
+      }
+    }
+
+    if(j == 0){
+      page_global.sub_jpcoar_list.push([base_key].join('.'));
+    }
   }
 
   $('#sub_mapping-add').on('click', function(ev){
