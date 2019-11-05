@@ -153,7 +153,7 @@ class ImportComponent extends React.Component {
       if(!isShowModalWF) {
         this.setState({
           isShowModalWF: !isShowModalWF,
-          wl_key: workflows.findIndex((item) => {return work_flow_data && item.id === work_flow_data.id})
+          wl_key: work_flow_data ? workflows.findIndex((item) => {return work_flow_data && item.id === work_flow_data.id}) : null
         })
       } else {
         this.setState({
