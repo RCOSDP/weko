@@ -322,7 +322,7 @@ class ImportComponent extends React.Component {
                 <div class="col-sm-12 header">
                   <h3>{work_flow}</h3>
                 </div>
-                <div class="col-sm-12">
+                <div class="col-sm-12 table-scroll-400">
                   <table class="table table-striped table-bordered">
                     <thead>
                       <tr>
@@ -449,7 +449,7 @@ class ImportComponent extends React.Component {
                     </thead>
                     <tbody>
                       {
-                        workflows.map((item, key) => {
+                        workflows.slice(0,5).map((item, key) => {
                           return (
                             <tr key={key}>
                               <td>
