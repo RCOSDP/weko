@@ -558,3 +558,15 @@ msgstr "本ファイルの参照権限がないためダウンロードできま
 #: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details.html:112
 msgid "This file is a Billing file. (Price: XXXXX). Do you want to download it?"
 msgstr "本ファイルは課金ファイルです。（価格：XXXXX）。 ダウンロードしますか。"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "There is a"
+msgstr "このレコードの"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "newer version"
+msgstr "新しいバージョン"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "of this record available."
+msgstr "があります。"

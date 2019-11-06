@@ -572,3 +572,15 @@ msgstr ""
 #: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details.html:112
 msgid "This file is a Billing file. (Price: XXXXX). Do you want to download it?"
 msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "There is a"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "newer version"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "of this record available."
+msgstr ""

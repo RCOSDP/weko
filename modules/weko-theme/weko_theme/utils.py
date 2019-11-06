@@ -22,7 +22,6 @@
 
 from flask import current_app
 from invenio_i18n.ext import current_i18n
-from weko_admin.utils import set_default_language
 from weko_gridlayout.services import WidgetDesignServices
 from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
@@ -34,9 +33,6 @@ from weko_search_ui.api import get_search_detail_keyword
 def get_weko_contents(getargs):
     """Get all contents needed for rendering WEKO frontpage."""
     community_id, ctx = get_community_id(getargs)
-
-    # set default language base on Admin language setting
-    set_default_language()
 
     # Index style
     style = IndexStyle.get(
