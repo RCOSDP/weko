@@ -250,10 +250,10 @@ class ImportComponent extends React.Component {
             </div>
             <div className="col-md-12">
               <div className="row">
-                <div className="col-md-cd-">
+                <div className="col-md-2 col-cd">
                   <label>{import_index}</label>
                 </div>
-                <div className="col-md-2 col-cd">
+                <div className="col-md-8 ">
                   <div>
                     <button className="btn btn-primary" onClick={()=>this.handleShowModalIndex(false)}>{select_index}</button>
                   </div>
