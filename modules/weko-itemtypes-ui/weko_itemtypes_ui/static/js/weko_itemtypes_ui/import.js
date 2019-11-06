@@ -264,14 +264,12 @@ class ImportComponent extends React.Component {
                       select_index_list.length ? select_index_list.map((item,key) => {
                         return(
                           <div className="panel_bread" key={key}>
-                            <ol className="breadcrumb">
+                            <ol className="breadcrumb-custorm">
                               {
                                 item.name.map((item_name, key_item)=>{
                                   return(
                                     <li 
                                       style={{listStylePosition: "inside",
-                                        padding: "10px 0 10px 20px",
-                                        textIndent: "-1em"
                                       }}>{item_name}</li>
                                   )
                                 })
