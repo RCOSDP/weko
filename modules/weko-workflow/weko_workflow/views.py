@@ -770,6 +770,7 @@ def next_action(activity_id='0', action_id=0):
                         deposit_without_ver = WekoDeposit(
                             record_without_ver,
                             record_without_ver.model)
+                        deposit_without_ver['path'] = deposit.get('path', [])
                         parent_record = deposit_without_ver. \
                             merge_data_to_record_without_version(current_pid)
                         deposit_without_ver.publish()
