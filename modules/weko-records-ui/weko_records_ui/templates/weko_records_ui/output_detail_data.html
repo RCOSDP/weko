@@ -48,85 +48,38 @@
           <pre class="hidden">{{ record_detail_data|tojson }}</pre>
         </td>
       </tr>
-        {%- for l in record_detail_data['attribute_value_mlt'] -%}
-            {{ output_child_data(l, record_detail_data['attribute_type']) }}
-        {%- endfor -%}
+      {{ output_attribute_value_mlt(record_detail_data['attribute_value_mlt'], 1) }}
     {%- endif -%}
 {% endmacro %}
 
-{% macro output_child_data(record_detail_data, data_type) %}
-    {%- if record_detail_data is mapping -%}
-        {%- set detail_data = [] -%}
-        {%- for k, v in record_detail_data.items() -%}
-            {%- if '.name' not in k and not record_detail_data.get(k + '.name') -%}
-                {{ v }}<br>
-            {%- elif '.name' in k -%}
-                {% set key = k.split('.')[0] %}
-                {%- if v.split('.')|length == 1 -%}
-                  <tr>
-                    <th scope="row"
-                        style="border-top: none; border-bottom: none"></th>
-                    <th scope="row" colspan="5">{{ v }}</th>
-                    <td>{{ record_detail_data.get(key) }}</td>
-                  </tr>
-                {%- elif data_type is not none and data_type == 'creator' -%}
-                    {%- if key == 'nameIdentifier' and record_detail_data.get(key) is not none -%}
-                        {%- set detail_data = detail_data.append(
-                        {'name': v, 'value': record_detail_data.get(key), 'key': key,
-                        'nameIdentifierURI':record_detail_data.get('nameIdentifierURI'),
-                        'nameIdentifierScheme': record_detail_data.get('nameIdentifierScheme')}) -%}
-                    {%- else -%}
-                        {%- set detail_data = detail_data.append({'name': v, 'value': record_detail_data.get(key), 'key': key}) -%}
-                    {%- endif -%}
-                {%- else -%}
-                    {%- set detail_data = detail_data.append({'name': v, 'value': record_detail_data.get(key)}) -%}
-                {%- endif -%}
-            {%- endif -%}
-        {%- endfor -%}
-        {%- if detail_data|length > 0 -%}
-            {{ output_data(detail_data, data_type) }}
-        {%- endif -%}
-    {%- elif record_detail_data is iterable and record_detail_data is not string -%}
-        {%- for detail_data in record_detail_data -%}
-            {{ output_child_data(detail_data, data_type) }}
-        {%- endfor -%}
-    {%- endif -%}
-{% endmacro %}
-
-
-{% macro output_data(detail_data, data_type) %}
-    {% set parent_name_lst = detail_data[0].get('name').split('.') %}
-    {{ output_parent_detail(parent_name_lst, 1) }}
-    {%- for out_detail_datum in detail_data -%}
-      <tr>
-          {{ out_table_th(parent_name_lst|length) }}
-        <th scope="row"
-            colspan="{{ 6 - parent_name_lst|length }}">{{ out_detail_datum.get('name').split('.')[0] }}</th>
-        <td>
-            {%- if data_type == 'creator' -%}
-                {{ output_creator(out_detail_datum) }}
+{% macro output_attribute_value_mlt(attribute_value_mlt, level) %}
+    {%- for attribute_data in attribute_value_mlt -%}
+      {%- if attribute_data is mapping -%}
+          {%- for k, v in attribute_data.items() -%}
+            {%- if v is string or k.split('.')[0] == 'nameIdentifier' -%}
+              {{ child_data(k, v, level) }}
             {%- else -%}
-                {{ out_detail_datum.get('value') }}
+              {{ child_data(k, '', level) }}
+              {{ output_attribute_value_mlt(v, level + 1) }}
             {%- endif -%}
-        </td>
-      </tr>
+          {%- endfor -%}
+      {%- endif -%}
     {%- endfor -%}
-
 {% endmacro %}
 
-
-{% macro output_parent_detail(parent_name_lst, index) %}
-    {%- if parent_name_lst|length > 1 -%}
-      <tr>
-          {{ out_table_th(index) }}
-        <th scope="row" style="border-bottom: none"
-            colspan="{{ 6 - index }}">{{ parent_name_lst[-1] }}</th>
-        <td></td>
-      </tr>
-        {{ output_parent_detail( parent_name_lst[0:-1], index + 1 ) }}
-    {%- endif -%}
+{% macro child_data(label, content, level) %}
+    {%- set label_colspan_default = 6 -%}
+    <tr>
+      {{ out_table_th(level) }}
+      {% set labels = label.split('.') %}
+      {%- if labels|length > 1 -%}
+          {% set label = labels[1] %}
+          {% set content = output_creator(labels[0], content) %}
+      {%- endif -%}
+      <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label }}</th>
+      <td>{{ content }}</td>
+    </tr>
 {% endmacro %}
-
 
 {% macro out_table_th(parrent_length) %}
     {%- if parrent_length > 0 -%}
@@ -136,21 +89,15 @@
     {%- endif -%}
 {% endmacro %}
 
-
-{% macro output_creator(creator_data) %}
-    {%- if creator_data.get('key') == 'creatorMail' and config['EMAIL_DISPLAY_FLG'] -%}
-      <a href="{{ 'mailto:' + creator_data.get('value') }}">{{ creator_data.get('value') }}</a>
-    {%- elif creator_data.get('key') == 'creatorName' and 'name' == config['ITEM_SEARCH_FLG'] -%}
-        {%- set q = 'creator=' + creator_data.get('value') -%}
-      <a href="{{ url_for('invenio_search_ui.search') + '?q=&' + q }}">{{ creator_data.get('value') }}</a>
-    {%- elif creator_data.get('key') == 'nameIdentifier' -%}
-        {%- if creator_data.get('nameIdentifierURI') is not none and creator_data.get('value') is not none -%}
-            {%- set nid = creator_data.get('nameIdentifierURI') -%}
-        {%- elif creator_data.get('nameIdentifierScheme') is not none -%}
-            {%- set nid = 'http://' + creator_data.get('nameIdentifierScheme') + '.io/'+ creator_data.get('value') -%}
-        {%- endif -%}
-      <a href="{{ nid }}">{{ creator_data.get('value') }}</a>
+{% macro output_creator(creator_key, creator_data) %}
+    {%- if creator_key == 'creatorMail' and config['EMAIL_DISPLAY_FLG'] -%}
+      <a href="{{ 'mailto:' + creator_data }}">{{ creator_data }}</a>
+    {%- elif creator_key == 'creatorName' and 'name' == config['ITEM_SEARCH_FLG'] -%}
+        {%- set q = 'creator=' + creator_data -%}
+      <a href="{{ url_for('invenio_search_ui.search') + '?q=&' + q }}">{{ creator_data }}</a>
+    {%- elif creator_key == 'nameIdentifier' and creator_data -%}
+      <a href="{{ creator_data.get('uri') }}">{{ creator_data.get('name') }}</a>
     {%- else -%}
-        {{ creator_data.get('value') }}
+        {{ creator_data }}
     {%- endif -%}
 {% endmacro %}

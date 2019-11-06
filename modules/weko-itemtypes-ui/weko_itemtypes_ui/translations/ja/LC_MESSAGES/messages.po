@@ -406,3 +406,83 @@ msgstr "アイテムタイプの登録"
 
 msgid "Item type added by system"
 msgstr "システムが付与したアイテムタイプ"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Import"
+msgstr "インポート"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "List"
+msgstr "一覧"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Import File"
+msgstr "ファイルインポート"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Import Index"
+msgstr "インデックスインポート"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "WorkFlow"
+msgstr "ワークフロー"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Select File"
+msgstr "ファイル選択"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Select Index"
+msgstr "インデックス選択"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Select WorkFlow"
+msgstr "ワークフロー選択"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Selected file name"
+msgstr "選択したファイル名"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Selected index"
+msgstr "選択したインデックス"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Selected workflow"
+msgstr "選択したワークフロー"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Index Tree"
+msgstr "インデックスツリー"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Designate Index"
+msgstr "インデックス指定"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Workflow"
+msgstr "ワークフロー"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Item Type"
+msgstr "アイテムタイプ"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Flow"
+msgstr "フロー"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Select"
+msgstr "選択"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Import"
+msgstr "インポート"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Check"
+msgstr "確認"
