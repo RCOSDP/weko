@@ -384,7 +384,7 @@ class ImportComponent extends React.Component {
                 </div>
                 <div class="col-sm-12">
                   <div className="row">
-                    <div className="col-md-6">
+                    <div className="col-md-4">
                       <div className="panel panel-default">
                         <div className="panel-heading">
                           <h3 className="panel-title">{index_tree}</h3>
@@ -402,7 +402,7 @@ class ImportComponent extends React.Component {
                         </div>
                       </div>
                     </div>
-                    <div className="col-md-6">
+                    <div className="col-md-8">
                       <div className="panel panel-default">
                         <div className="panel-heading">
                           <h3 className="panel-title">{designate_index}</h3>
@@ -571,7 +571,7 @@ class TreeNode extends React.Component {
         >
         </div>
         <div className='node-value'>
-          <input type="checkbox" onChange={this.handleClick} ref={re => this.input} checked={defaultChecked}></input>
+          <input type="checkbox" onChange={this.handleClick} ref={re => this.input} checked={defaultChecked} style={{marginRight: '5px'}}></input>
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
