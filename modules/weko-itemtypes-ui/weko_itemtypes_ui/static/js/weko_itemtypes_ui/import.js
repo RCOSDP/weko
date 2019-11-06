@@ -226,7 +226,7 @@ class ImportComponent extends React.Component {
           <div className="row layout">
             <div className="col-md-12">
               <div className="row">
-                <div className="col-md-2">
+                <div className="col-md-2 col-cd">
                   <label>{import_file}</label>
                 </div>
                 <div className="col-md-8">
@@ -250,10 +250,10 @@ class ImportComponent extends React.Component {
             </div>
             <div className="col-md-12">
               <div className="row">
-                <div className="col-md-1">
+                <div className="col-md-cd-">
                   <label>{import_index}</label>
                 </div>
-                <div className="col-md-11">
+                <div className="col-md-2 col-cd">
                   <div>
                     <button className="btn btn-primary" onClick={()=>this.handleShowModalIndex(false)}>{select_index}</button>
                   </div>
@@ -283,7 +283,7 @@ class ImportComponent extends React.Component {
             </div>
             <div className="col-md-12">
               <div className="row">
-                <div className="col-md-2">
+                <div className="col-md-2 col-cd">
                   <label>{work_flow}</label>
                 </div>
                 <div className="col-md-8">
