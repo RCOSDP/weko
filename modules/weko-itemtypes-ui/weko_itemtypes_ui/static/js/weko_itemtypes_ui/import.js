@@ -16,6 +16,7 @@ const item_type = document.getElementById("item_type").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
+const check = document.getElementById("check").value;
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin+'/api/tree'
 
@@ -32,7 +33,7 @@ class MainLayout extends React.Component {
         },
         {
           tab_key: 'check',
-          tab_name: 'Check',
+          tab_name: check,
         },
         {
           tab_key: 'list',

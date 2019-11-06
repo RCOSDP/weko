@@ -449,3 +449,7 @@ msgstr ""
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
 msgid "Cancel"
 msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Check"
+msgstr ""

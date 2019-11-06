@@ -482,3 +482,7 @@ msgstr "インポート"
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
 msgid "Cancel"
 msgstr "キャンセル"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Check"
+msgstr "確認"
