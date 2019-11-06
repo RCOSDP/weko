@@ -497,7 +497,7 @@ class OpenSearchDetailData:
             self._set_publication_date(fe, item_map, item_metadata)
 
             # Set content
-            self.set_description(fe, item_map, item_metadata, request_lang)
+            self._set_description(fe, item_map, item_metadata, request_lang)
 
             if self.output_type == self.OUTPUT_ATOM:
                 # Set updated
@@ -530,7 +530,7 @@ class OpenSearchDetailData:
 
             return fg.rss_str(pretty=True)
 
-    def set_description(self, fe, item_map, item_metadata, request_lang):
+    def _set_description(self, fe, item_map, item_metadata, request_lang):
         """Set description.
 
         :return:
