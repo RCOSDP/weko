@@ -10,7 +10,7 @@
 #
 # WEKO3 is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -20,16 +20,36 @@
 
 """Module of weko-items-ui utils.."""
 
+import csv
+import json
+import os
+import shutil
+import sys
+import tempfile
+import traceback
+from collections import OrderedDict
+from datetime import datetime
+from io import StringIO
+
+import bagit
+import numpy
+import redis
 from elasticsearch.exceptions import NotFoundError
-from flask import current_app, session
+from flask import abort, current_app, flash, redirect, request, send_file, \
+    session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_indexer.api import RecordIndexer
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
 from jsonschema import ValidationError
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
+from weko_deposit.api import WekoRecord
 from weko_records.api import ItemTypes
+from weko_records_ui.permissions import check_file_download_permission
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
@@ -46,13 +66,12 @@ def get_list_username():
     result = list()
     while True:
         try:
-            if (int(current_user_id) == user_index):
-                pass
-            else:
+            if not int(current_user_id) == user_index:
                 user_info = UserProfile.get_by_userid(user_index)
                 result.append(user_info.get_username)
             user_index = user_index + 1
-        except Exception:
+        except Exception as e:
+            current_app.logger.error(e)
             break
 
     return result
@@ -77,9 +96,7 @@ def get_list_email():
         data = record.all()
 
         for item in data:
-            if (int(current_user_id) == item[0]):
-                pass
-            else:
+            if not int(current_user_id) == item[0]:
                 result.append(item[1])
     except Exception as e:
         result = str(e)
@@ -295,9 +312,14 @@ def get_actionid(endpoint):
             return None
 
 
-def parse_ranking_results(results, display_rank, list_name='all',
-                          title_key='title', count_key=None, pid_key=None,
-                          search_key=None, date_key=None):
+def parse_ranking_results(results,
+                          display_rank,
+                          list_name='all',
+                          title_key='title',
+                          count_key=None,
+                          pid_key=None,
+                          search_key=None,
+                          date_key=None):
     """Parse the raw stats results to be usable by the view."""
     ranking_list = []
     if pid_key:
@@ -394,40 +416,49 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
             result['error'] = _(error.message)
 
 
-def update_json_schema_by_activity_id(json, activity_id):
+def update_json_schema_by_activity_id(json_data, activity_id):
     """Update json schema by activity id.
 
-    :param json: The json schema
+    :param json_data: The json schema
     :param activity_id: Activity ID
     :return: json schema
     """
-    if not session.get('update_json_schema') or not session[
-            'update_json_schema'].get(activity_id):
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    if not sessionstore.redis.exists(
+        'updated_json_schema_{}'.format(activity_id)) \
+        and not sessionstore.get(
+            'updated_json_schema_{}'.format(activity_id)):
         return None
-    error_list = session['update_json_schema'][activity_id]
+    session_data = sessionstore.get(
+        'updated_json_schema_{}'.format(activity_id))
+    error_list = json.loads(session_data.decode('utf-8'))
 
     if error_list:
         for item in error_list['required']:
             sub_item = item.split('.')
             if len(sub_item) == 1:
-                json['required'] = sub_item
+                json_data['required'] = sub_item
             else:
-                if json['properties'][sub_item[0]].get('items'):
-                    if not json['properties'][sub_item[0]]['items'].get(
+                if json_data['properties'][sub_item[0]].get('items'):
+                    if not json_data['properties'][sub_item[0]]['items'].get(
                             'required'):
-                        json['properties'][sub_item[0]]['items']['required'] \
-                            = []
-                    json['properties'][sub_item[0]]['items'][
+                        json_data['properties'][sub_item[0]][
+                            'items']['required'] = []
+                    json_data['properties'][sub_item[0]]['items'][
                         'required'].append(sub_item[1])
                 else:
-                    if not json['properties'][sub_item[0]].get('required'):
-                        json['properties'][sub_item[0]]['required'] = []
-                    json['properties'][sub_item[0]]['required'].append(
+                    if not json_data[
+                            'properties'][sub_item[0]].get('required'):
+                        json_data['properties'][sub_item[0]]['required'] = []
+                    json_data['properties'][sub_item[0]]['required'].append(
                         sub_item[1])
         for item in error_list['pattern']:
             sub_item = item.split('.')
             if len(sub_item) == 2:
-                creators = json['properties'][sub_item[0]].get('items')
+                creators = json_data['properties'][sub_item[0]].get('items')
                 if not creators:
                     break
                 for creator in creators.get('properties'):
@@ -437,7 +468,503 @@ def update_json_schema_by_activity_id(json, activity_id):
                             if not givename.get('required'):
                                 givename['required'] = []
                             givename['required'].append(sub_item[1])
-    return json
+    return json_data
+
+
+def package_exports(item_type_data):
+    """Export TSV Files.
+
+    Arguments:
+    pid_type     -- {string} 'doi' (default) or 'cnri'
+    reg_value    -- {string} pid_value
+    Returns:
+    return       -- PID object if exist
+    """
+    tsv_output = StringIO()
+    jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
+        'jsonschema')
+
+    tsv_writer = csv.writer(tsv_output, delimiter='\t')
+    tsv_writer.writerow(['#ItemType',
+                         item_type_data.get('name'),
+                         jsonschema_url])
+
+    keys = item_type_data['keys']
+    labels = item_type_data['labels']
+    tsv_metadata_writer = csv.DictWriter(tsv_output,
+                                         fieldnames=keys,
+                                         delimiter='\t')
+    tsv_metadata_label_writer = csv.DictWriter(tsv_output,
+                                               fieldnames=labels,
+                                               delimiter='\t')
+    tsv_metadata_data_writer = csv.writer(tsv_output,
+                                          delimiter='\t')
+    tsv_metadata_writer.writeheader()
+    tsv_metadata_label_writer.writeheader()
+    for recid in item_type_data.get('recids'):
+        tsv_metadata_data_writer.writerow(
+            [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
+            + item_type_data['data'].get(recid)
+        )
+
+    return tsv_output
+
+
+def make_stats_tsv(item_type_id, recids):
+    """Prepare TSV data for each Item Types.
+
+    Arguments:
+    pid_type     -- {string} 'doi' (default) or 'cnri'
+    reg_value    -- {string} pid_value
+    Returns:
+    return       -- PID object if exist
+    """
+    item_type = ItemTypes.get_by_id(item_type_id).render
+    table_row_properties = item_type['table_row_map']['schema'].get(
+        'properties')
+
+    class RecordsManager:
+        first_recid = 0
+        cur_recid = 0
+        filepath_idx = 1
+        recids = []
+        records = {}
+        attr_data = {}
+        attr_output = {}
+
+        def __init__(self, record_ids):
+            self.recids = record_ids
+            self.first_recid = record_ids[0]
+            for record_id in record_ids:
+                record = WekoRecord.get_record_by_pid(record_id)
+                self.records[record_id] = record
+                self.attr_output[record_id] = []
+
+        def get_max_ins(self, attr):
+            largest_size = 1
+            self.attr_data[attr] = {'max_size': 0}
+            for record in self.records:
+                if isinstance(self.records[record].get(attr), dict) \
+                    and self.records[record].get(attr).get(
+                        'attribute_value_mlt'):
+                    self.attr_data[attr][record] = self.records[record][attr][
+                        'attribute_value_mlt']
+                else:
+                    if self.records[record].get(attr):
+                        self.attr_data[attr][record] = \
+                            self.records[record].get(attr)
+                    else:
+                        self.attr_data[attr][record] = []
+                rec_size = len(self.attr_data[attr][record])
+                if rec_size > largest_size:
+                    largest_size = rec_size
+            self.attr_data[attr]['max_size'] = largest_size
+
+            return self.attr_data[attr]['max_size']
+
+        def get_max_items(self, item_attrs):
+            list_attr = item_attrs.split('.')
+            max_length = None
+            if len(list_attr) == 1:
+                return self.attr_data[item_attrs]['max_size']
+            elif len(list_attr) == 2:
+                max_length = 1
+                first_attr = list_attr[0].split('[')
+                item_attr = first_attr[0]
+                idx = int(first_attr[1].split(']')[0])
+                sub_attr = list_attr[1].split('[')[0]
+                for record in self.records:
+                    if self.records[record].get(item_attr) \
+                        and len(self.records[record][item_attr][
+                            'attribute_value_mlt']) > idx \
+                        and self.records[record][item_attr][
+                            'attribute_value_mlt'][idx].get(sub_attr):
+                        cur_len = len(self.records[record][item_attr][
+                            'attribute_value_mlt'][idx][sub_attr])
+                        if cur_len > max_length:
+                            max_length = cur_len
+            elif len(list_attr) == 3:
+                max_length = 1
+                first_attr = list_attr[0].split('[')
+                key2 = list_attr[1].split('[')
+                item_attr = first_attr[0]
+                idx = int(first_attr[1].split(']')[0])
+                sub_attr = list_attr[1].split('[')[0]
+                idx_2 = int(key2[1].split(']')[0])
+                sub_attr_2 = list_attr[2].split('[')[0]
+                for record in self.records:
+                    attr_val = self.records[record][item_attr][
+                        'attribute_value_mlt']
+                    if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
+                        and len(attr_val[idx][sub_attr]) > idx_2 \
+                            and attr_val[idx][sub_attr][idx_2].get(sub_attr_2):
+                        cur_len = len(attr_val[idx][sub_attr][idx_2][
+                            sub_attr_2])
+                        if cur_len > max_length:
+                            max_length = cur_len
+            return max_length
+
+        def get_subs_item(self, item_key, item_label, properties, data=None):
+            """Prepare TSV data for each Item Types.
+
+            Arguments:
+            properties     -- {string} 'doi' (default) or 'cnri'
+            Returns:
+            return       -- PID object if exist
+            """
+            o_ret = []
+            o_ret_label = []
+            ret_data = []
+            max_items = self.get_max_items(item_key)
+            for idx in range(max_items):
+                key_list = []
+                key_label = []
+                key_data = []
+                for key in sorted(properties):
+                    if properties[key]['type'] == 'array':
+                        if data and idx < len(data) and data[idx].get(key):
+                            m_data = data[idx][key]
+                        else:
+                            m_data = None
+                        sub, sublabel, subdata = self.get_subs_item(
+                            '{}[{}].{}'.format(item_key, str(idx), key),
+                            '{}#{}.{}'.format(item_label, str(idx + 1),
+                                              properties[key].get('title')),
+                            properties[key]['items']['properties'],
+                            m_data)
+                        key_list.extend(sub)
+                        key_label.extend(sublabel)
+                        key_data.extend(subdata)
+                    elif properties[key]['type'] == 'object':
+                        if data and idx < len(data) and data[idx].get(key):
+                            m_data = data[idx][key]
+                        else:
+                            m_data = None
+                        sub, sublabel, subdata = self.get_subs_item(
+                            '{}[{}].{}'.format(item_key, str(idx), key),
+                            '{}#{}.{}'.format(item_label, str(idx + 1),
+                                              properties[key].get('title')),
+                            properties[key]['properties'],
+                            m_data)
+                        key_list.extend(sub)
+                        key_label.extend(sublabel)
+                        key_data.extend(subdata)
+                    else:
+                        if isinstance(data, dict):
+                            data = [data]
+                        key_list.append('{}[{}].{}'.format(
+                            item_key,
+                            str(idx),
+                            key))
+                        key_label.append('{}#{}.{}'.format(
+                            item_label,
+                            str(idx + 1),
+                            properties[key].get('title')))
+                        if data and idx < len(data) and data[idx].get(key):
+                            key_data.append(data[idx][key])
+                        else:
+                            key_data.append('')
+
+                key_list_len = len(key_list)
+                for key_index in range(key_list_len):
+                    if 'filename' in key_list[key_index] \
+                        or 'thumbnail_label' in key_list[key_index] \
+                            and len(item_key.split('.')) == 2:
+                        key_list.insert(0, '.file_path#'
+                                        + str(self.filepath_idx + idx))
+                        key_label.insert(0, '.ファイルパス#'
+                                         + str(self.filepath_idx + idx))
+                        if key_data[key_index]:
+                            key_data.insert(0, 'recid_{}/{}'.format(str(
+                                self.cur_recid), key_data[key_index]))
+                        else:
+                            key_data.insert(0, '')
+                        if idx == max_items - 1 \
+                                and self.first_recid == self.cur_recid:
+                            self.filepath_idx += max_items
+                        break
+
+                o_ret.extend(key_list)
+                o_ret_label.extend(key_label)
+                ret_data.extend(key_data)
+
+                if max_items == 1:
+                    new_ret = []
+                    new_ret_label = []
+                    for c_ret in o_ret:
+                        if item_key + '[0]' in c_ret:
+                            new_ret.append(c_ret.replace(item_key + '[0]',
+                                                         item_key))
+                        else:
+                            new_ret.append(c_ret)
+                    for c_ret in o_ret_label:
+                        if item_label + '#1' in c_ret:
+                            new_ret_label.append(c_ret.replace(item_label
+                                                               + '#1',
+                                                               item_label))
+                        else:
+                            new_ret_label.append(c_ret)
+                    o_ret = new_ret
+                    o_ret_label = new_ret_label
+            return o_ret, o_ret_label, ret_data
+
+    records = RecordsManager(recids)
+
+    ret = ['#.id', '.uri']
+    ret_label = ['#ID', 'URI']
+
+    # for idx in range(records.get_max_ins('path')):
+    max_path = records.get_max_ins('path')
+    ret.extend(['.metadata.path[{}]'.format(i) for i in range(max_path)])
+    ret_label.extend(['.IndexID#{}'.format(i + 1) for i in range(max_path)])
+    ret.append('.metadata.pubdate')
+    ret_label.append('公開日')
+
+    for recid in recids:
+        records.attr_output[recid].extend(records.attr_data['path'][recid])
+        records.attr_output[recid].extend([''] * (max_path - len(
+            records.attr_output[recid])))
+        records.attr_output[recid].append(records.records[recid][
+            'pubdate']['attribute_value'])
+
+    for item_key in item_type.get('table_row'):
+        item = table_row_properties.get(item_key)
+        records.get_max_ins(item_key)
+        keys = []
+        labels = []
+        for recid in recids:
+            records.cur_recid = recid
+            if item.get('type') == 'array':
+                key, label, data = records.get_subs_item(
+                    item_key,
+                    item.get('title'),
+                    item['items']['properties'],
+                    records.attr_data[item_key][recid]
+                )
+                if not keys:
+                    keys = key
+                if not labels:
+                    labels = label
+                records.attr_output[recid].extend(data)
+            elif item.get('type') == 'object':
+                key, label, data = records.get_subs_item(
+                    item_key,
+                    item.get('title'),
+                    item['properties'],
+                    records.attr_data[item_key][recid]
+                )
+                if not keys:
+                    keys = key
+                if not labels:
+                    labels = label
+                records.attr_output[recid].extend(data)
+            else:
+                if not keys:
+                    keys = [item_key]
+                if not labels:
+                    labels = [item.get('title')]
+                data = records.attr_data[item_key].get(recid) or ['']
+                records.attr_output[recid].extend(data)
+
+        new_keys = []
+        for key in keys:
+            if 'file_path' not in key:
+                key = '.metadata.{}'.format(key)
+            new_keys.append(key)
+        ret.extend(new_keys)
+        ret_label.extend(labels)
+
+    return ret, ret_label, records.attr_output
+
+
+def get_list_file_by_record_id(recid):
+    """Get file buckets by record id.
+
+    Arguments:
+    recid     -- {number} record id
+    Returns:
+    list_file  -- list file name of record
+    """
+    body = {
+        "query": {
+            "function_score": {
+                "query": {
+                    "match": {
+                        "_id": recid
+                    }
+                }
+            }
+        },
+        "_source": ["file"],
+        "size": 1
+    }
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['INDEXER_DEFAULT_INDEX'],
+        body=body
+    )
+    list_file_name = []
+
+    if isinstance(result, dict) and isinstance(result.get('hits'), dict) and \
+            isinstance(result['hits'].get('hits'), list) and \
+            len(result['hits']['hits']) > 0 and \
+            isinstance(result['hits']['hits'][0], dict) and \
+            isinstance(result['hits']['hits'][0].get('_source'), dict) and \
+            isinstance(result['hits']['hits'][0]['_source'].get('file'), dict)\
+            and result['hits']['hits'][0]['_source']['file'].get('URI'):
+        list_file = result['hits']['hits'][0]['_source']['file'].get('URI')
+
+        list_file_name = [
+            recid + '/' + item.get('value') for item in list_file]
+    return list_file_name
+
+
+def export_items(post_data):
+    """Gather all the item data and export and return as a JSON or BIBTEX.
+
+    :return: JSON, BIBTEX
+    """
+    include_contents = True if \
+        post_data['export_file_contents_radio'] == 'True' else False
+    export_format = post_data['export_format_radio']
+    record_ids = json.loads(post_data['record_ids'])
+    record_metadata = json.loads(post_data['record_metadata'])
+    if len(record_ids) > _get_max_export_items():
+        return abort(400)
+    elif len(record_ids) == 0:
+        flash(_('Please select Items to export.'), 'error')
+        return redirect(url_for('weko_items_ui.export'))
+
+    result = {'items': []}
+    temp_path = tempfile.TemporaryDirectory()
+    item_types_data = {}
+
+    try:
+        # Set export folder
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        # Double check for limits
+        for record_id in record_ids:
+            record_path = export_path + '/recid_' + str(record_id)
+            os.makedirs(record_path, exist_ok=True)
+            exported_item = _export_item(
+                record_id,
+                export_format,
+                include_contents,
+                record_path,
+                record_metadata.get(str(record_id))
+            )
+
+            result['items'].append(exported_item)
+
+            item_type_id = exported_item.get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if not item_types_data.get(item_type_id):
+                item_types_data[item_type_id] = {}
+
+                item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
+                    'name': '{}({})'.format(
+                        item_type.item_type_name.name,
+                        item_type_id),
+                    'root_url': request.url_root,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
+                    'recids': [],
+                    'data': {},
+                }
+            item_types_data[item_type_id]['recids'].append(record_id)
+
+        # Create export info file
+        for item_type_id in item_types_data:
+            keys, labels, records = make_stats_tsv(
+                item_type_id,
+                item_types_data[item_type_id]['recids'])
+            item_types_data[item_type_id]['recids'].sort()
+            item_types_data[item_type_id]['keys'] = keys
+            item_types_data[item_type_id]['labels'] = labels
+            item_types_data[item_type_id]['data'] = records
+            item_type_data = item_types_data[item_type_id]
+
+            with open('{}/{}.tsv'.format(export_path, item_type_data.get(
+                    'name')), 'w') as file:
+                tsvs_output = package_exports(item_type_data)
+                file.write(tsvs_output.getvalue())
+
+        # Create bag
+        bagit.make_bag(export_path)
+        # Create download file
+        shutil.make_archive(export_path, 'zip', export_path)
+    except Exception:
+        current_app.logger.error('-' * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-' * 60)
+        flash(_('Error occurred during item export.'), 'error')
+        return redirect(url_for('weko_items_ui.export'))
+    return send_file(export_path + '.zip')
+
+
+def _get_max_export_items():
+    """Get max amount of items to export."""
+    max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
+    non_user_max = max_table[current_app.config[
+        'WEKO_PERMISSION_ROLE_GENERAL']]
+    current_user_id = current_user.get_id()
+
+    if not current_user_id:  # Non-logged in users
+        return non_user_max
+
+    try:
+        roles = db.session.query(Role).join(userrole).filter_by(
+            user_id=current_user_id).all()
+    except Exception:
+        return current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
+
+    current_max = non_user_max
+    for role in roles:
+        if role in max_table and max_table[role] > current_max:
+            current_max = max_table[role]
+    return current_max
+
+
+def _export_item(record_id,
+                 export_format,
+                 include_contents,
+                 tmp_path=None,
+                 records_data=None):
+    """Exports files for record according to view permissions."""
+    exported_item = {}
+    record = WekoRecord.get_record_by_pid(record_id)
+
+    if record:
+        exported_item['record_id'] = record.id
+        exported_item['name'] = 'recid_{}'.format(record_id)
+        exported_item['files'] = []
+        exported_item['path'] = 'recid_' + str(record_id)
+        exported_item['item_type_id'] = record.get('item_type_id')
+        if not records_data:
+            records_data = record
+
+        # Create metadata file.
+        with open('{}/{}_metadata.json'.format(tmp_path,
+                                               exported_item['name']),
+                  'w',
+                  encoding='utf8') as output_file:
+            json.dump(records_data, output_file, indent=2,
+                      sort_keys=True, ensure_ascii=False)
+        # First get all of the files, checking for permissions while doing so
+        if include_contents:
+            # Get files
+            for file in record.files:  # TODO: Temporary processing
+                if check_file_download_permission(record, file.info()):
+                    exported_item['files'].append(file.info())
+                    # TODO: Then convert the item into the desired format
+                    if file:
+                        shutil.copy2(file.obj.file.uri,
+                                     tmp_path + '/' + file.obj.basename)
+
+    return exported_item
 
 
 def get_new_items_by_date(start_date: str, end_date: str) -> dict:
@@ -452,11 +979,67 @@ def get_new_items_by_date(start_date: str, end_date: str) -> dict:
     result = dict()
 
     try:
-        search_instance, qs_kwargs = item_search_factory(None, record_search,
-                                                         start_date, end_date)
+        search_instance, _qs_kwargs = item_search_factory(None,
+                                                          record_search,
+                                                          start_date,
+                                                          end_date)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
         current_app.logger.debug("Indexes do not exist yet: ", str(e))
 
     return result
+
+
+def update_schema_remove_hidden_item(schema, render, items_name):
+    """Update schema: remove hidden items.
+
+    :param schema: json schema
+    :param render: json render
+    :param items_name: list items which has hidden flg
+    :return: The json object.
+    """
+    for item in items_name:
+        hidden_flg = False
+        key = schema[item]['key']
+        if render['meta_list'].get(key):
+            hidden_flg = render['meta_list'][key]['option']['hidden']
+        if render['meta_system'].get(key):
+            hidden_flg = render['meta_system'][key]['option']['hidden']
+        if hidden_flg:
+            schema[item]['condition'] = 1
+
+    return schema
+
+
+def to_files_js(record):
+    """List files in a deposit."""
+    res = []
+    files = record.files
+    if files is not None:
+        for f in files:
+            res.append({
+                'displaytype': f.get('displaytype', ''),
+                'filename': f.get('filename', ''),
+                'mimetype': f.mimetype,
+                'licensetype': f.get('licensetype', ''),
+                'key': f.key,
+                'version_id': str(f.version_id),
+                'checksum': f.file.checksum,
+                'size': f.file.size,
+                'completed': True,
+                'progress': 100,
+                'links': {
+                    'self': (
+                        current_app.config['DEPOSIT_FILES_API']
+                        + u'/{bucket}/{key}?versionId={version_id}'.format(
+                            bucket=f.bucket_id,
+                            key=f.key,
+                            version_id=f.version_id,
+                        )),
+                },
+                'is_show': f.is_show,
+                'is_thumbnail': f.is_thumbnail
+            })
+
+    return res

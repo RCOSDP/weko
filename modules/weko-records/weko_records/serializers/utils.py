@@ -531,6 +531,10 @@ class OpenSearchDetailData:
             return fg.rss_str(pretty=True)
 
     def set_description(self, fe, item_map, item_metadata, request_lang):
+        """Set description.
+
+        :return:
+        """
         _description_attr_lang = 'description.@attributes.xml:lang'
         _description_value = 'description.@value'
         if _description_value in item_map:
