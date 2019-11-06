@@ -165,7 +165,6 @@ class ImportComponent extends React.Component {
 
     handleChangeWF(e) {
       const value = e.target.value
-      console.log('handleChangeWF value', value)
       this.setState({
         wl_key: value
       })
@@ -222,7 +221,6 @@ class ImportComponent extends React.Component {
         isShowModalImport,
         file
       } = this.state
-      console.log('render wl_key',wl_key)
       return(
         <div className="container import_component">
           <div className="row layout">
@@ -264,7 +262,7 @@ class ImportComponent extends React.Component {
                       select_index_list.length ? select_index_list.map((item,key) => {
                         return(
                           <div className="panel_bread" key={key}>
-                            <ol className="breadcrumb-custorm">
+                            <ol className="breadcrumb breadcrumb-custorm">
                               {
                                 item.name.map((item_name, key_item)=>{
                                   return(
@@ -336,8 +334,6 @@ class ImportComponent extends React.Component {
                     <tbody>
                       {
                         workflows.map((item, key) => {
-                          console.log("render", item)
-                          wl_key == key && console.log("true", item)
                           return (
                             <tr key={key}>
                               <td style={{textAlign: 'center'}}>
