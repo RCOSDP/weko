@@ -182,7 +182,8 @@ $(document).ready(function () {
           }
         } else {
           let cur_obj = page_global.mapping_prop[itemtype_key][schema_name];
-          for(let idx=0; idx<sub_jpcoar_arr.length; idx++) {
+          let length_sub_jpcoar_arr = sub_jpcoar_arr.length;
+          for(let idx=0; idx<length_sub_jpcoar_arr; idx++) {
             if(cur_obj.hasOwnProperty(sub_jpcoar_arr[idx])) {
               cur_obj = cur_obj[sub_jpcoar_arr[idx]];
               continue;
@@ -506,7 +507,8 @@ $(document).ready(function () {
     });
 
     let j = 0;
-    for(let i = 0; i < page_global.sub_jpcoar_list.length; i++){
+    let length_sub_jpcoar_list = page_global.sub_jpcoar_list.length;
+    for(let i = 0; i < length_sub_jpcoar_list; i++){
       if(page_global.sub_jpcoar_list[i] === base_key){
         j++;
       }
@@ -618,8 +620,9 @@ $(document).ready(function () {
           cur_obj[jpcoar_type] = {};
         }
         cur_obj = cur_obj[jpcoar_type];
-        for(let idx = 0; idx < sub_jpcoar_arr.length; idx++) {
-          if(idx < sub_jpcoar_arr.length -1) {
+        length_sub_jpcoar_arr = sub_jpcoar_arr.length;
+        for(let idx = 0; idx < length_sub_jpcoar_arr; idx++) {
+          if(idx < length_sub_jpcoar_arr -1) {
             if(sub_jpcoar_arr[idx].startsWith('@')) {
               if(!cur_obj.hasOwnProperty('@attributes')) {
                 cur_obj['@attributes'] = {};
