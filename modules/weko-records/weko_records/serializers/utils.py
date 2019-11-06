@@ -21,10 +21,20 @@
 """WEKO Search Serializer."""
 
 import copy
+from datetime import datetime
 
+import pytz
+from flask import request
 from invenio_db import db
+from weko_index_tree.api import Index
 
+from weko_records.api import Mapping
 from weko_records.models import ItemType, ItemTypeName, ItemTypeProperty
+
+from .dc import DcWekoBaseExtension, DcWekoEntryExtension
+from .feed import WekoFeedGenerator
+from .opensearch import OpensearchEntryExtension, OpensearchExtension
+from .prism import PrismEntryExtension, PrismExtension
 
 
 def get_mapping(item_type_mapping, mapping_type):
@@ -152,3 +162,576 @@ def get_item_type_name(item_type_id):
             if type_name:
                 return type_name.name
     return None
+
+
+class OpenSearchDetailData:
+    """OpenSearch detail data."""
+
+    OUTPUT_ATOM = "atom"
+    OUTPUT_RSS = "rss"
+
+    def __init__(self, pid_fetcher, search_result, output_type, links=None,
+                 item_links_factory=None, **kwargs):
+        """Serialize a search result.
+
+        :param pid_fetcher: Persistent identifier fetcher.
+        :param search_result: Elasticsearch search result.
+        :param output_type: Output type.
+        :param links:Dictionary of links to add to response
+        :param item_links_factory:
+        """
+        self.pid_fetcher = pid_fetcher
+        self.search_result = search_result
+        self.output_type = output_type
+        self.links = links
+        self.item_links_factory = item_links_factory
+        self.kwargs = kwargs
+
+    def output_open_search_detail_data(self):
+        """Output open search detail data.
+
+        :return:
+        """
+        fg = WekoFeedGenerator()
+
+        # Add extentions
+        fg.register_extension('dc',
+                              DcWekoBaseExtension,
+                              DcWekoEntryExtension)
+        fg.register_extension('opensearch',
+                              extension_class_feed=OpensearchExtension,
+                              extension_class_entry=OpensearchEntryExtension)
+        fg.register_extension('prism',
+                              extension_class_feed=PrismExtension,
+                              extension_class_entry=PrismEntryExtension)
+
+        # Set title
+        index_meta = {}
+        _keywords = request.args.get('q', '')
+        _index_id = request.args.get('index_id', type=str)
+
+        if _index_id:
+            index = None
+            if _index_id.isnumeric():
+                index = Index.query.filter_by(id=int(_index_id)).one_or_none()
+            _index_name = 'Nonexistent Index' \
+                if index is None else index.index_name
+            index_meta[_index_id] = 'Unnamed Index' \
+                if _index_name is None else _index_name
+
+            fg.title('WEKO OpenSearch: ' + str(index_meta[_index_id]))
+        else:
+            fg.title('WEKO OpenSearch: ' + str(_keywords))
+
+        # Set link
+        fg.link(href=request.url)
+
+        # Set totalResults
+        _total_results = self.search_result['hits']['total']
+        fg.opensearch.totalResults(str(_total_results))
+
+        if self.output_type == self.OUTPUT_ATOM:
+            # Set id
+            fg.id(request.url)
+
+            # Set updated
+            fg.updated(datetime.now(pytz.utc))
+        else:
+            # Set date
+            fg.dc.dc_date(str(datetime.now(pytz.utc)))
+
+            # Set Request URL
+            if int(_total_results) != 0:
+                fg.requestUrl(request.url)
+
+        start_page = request.args.get('page_no', type=str)
+        start_page = 1 if start_page is None or not start_page.isnumeric() \
+            else int(start_page)
+
+        size = request.args.get('list_view_num', type=str)
+        size = 20 if size is None or not size.isnumeric() else int(size)
+
+        # Set startIndex
+        _start_index = (start_page - 1) * size + 1
+        fg.opensearch.startIndex(str(_start_index))
+
+        # Set itemPerPage
+        _item_per_page = len(self.search_result['hits']['hits'])
+        fg.opensearch.itemsPerPage(str(_item_per_page))
+
+        # Set language
+        request_lang = request.args.get('lang')
+        if request_lang:
+            fg.language(request_lang)
+        else:
+            fg.language('en')
+
+        rss_items = []
+        jpcoar_map = {}
+        for hit in self.search_result['hits']['hits']:
+            item_metadata = hit['_source']['_item_metadata']
+
+            item_type_id = item_metadata['item_type_id']
+            type_mapping = Mapping.get_record(item_type_id)
+
+            if item_type_id in jpcoar_map:
+                item_map = jpcoar_map[item_type_id]
+            else:
+                item_map = get_mapping(type_mapping, 'jpcoar_mapping')
+                jpcoar_map[item_type_id] = item_map
+
+            fe = fg.add_entry()
+
+            # Set title
+            fe.title(item_metadata.get('item_title', ''))
+
+            # Set link
+            _pid = item_metadata['control_number']
+            item_url = request.host_url + 'records/' + _pid
+            fe.link(href=item_url, rel='alternate', type='text/xml')
+
+            oai_param = 'oai2d?verb=GetRecord&metadataPrefix=jpcoar&identifier='
+            if self.output_type == self.OUTPUT_ATOM:
+                # Set oai
+                _oai = hit['_source']['_oai']['id']
+                item_url = request.host_url + oai_param + _oai
+                fe.link(href=item_url, rel='alternate', type='text/xml')
+
+                # Set id
+                fe.id(item_url)
+            else:
+                # Set oai
+                _oai = hit['_source']['_oai']['id']
+                oai_url = request.host_url + oai_param + _oai
+                fe.seeAlso(oai_url)
+
+                # Set item url
+                fe.itemUrl(item_url)
+
+                # Add to channel item list
+                rss_items.append(item_url)
+
+            # Set weko id
+            fe.dc.dc_identifier(_pid)
+
+            # Set aggregationType
+            _aggregation_type = 'type.@value'
+            if _aggregation_type in item_map:
+                aggregation_type_key = item_map[_aggregation_type]
+                item_id = aggregation_type_key.split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    type_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    aggregation_types = type_metadata[aggregation_type_key]
+                    if aggregation_types:
+                        if isinstance(aggregation_types, list):
+                            for aggregation_type in aggregation_types:
+                                fe.prism.aggregationType(aggregation_type)
+                        else:
+                            fe.prism.aggregationType(aggregation_types)
+
+            # Set item type
+            fe.dc.dc_type(hit['_source']['itemtype'])
+
+            # Set mimeType
+            _mime_type = 'file.mimeType.@value'
+            if _mime_type in item_map:
+                item_id = item_map[_mime_type].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    file_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    mime_types = file_metadata[item_map[_mime_type]]
+                    if mime_types:
+                        if isinstance(mime_types, list):
+                            for mime_type in mime_types:
+                                fe.dc.dc_format(mime_type)
+                        else:
+                            fe.dc.dc_format(mime_types)
+
+            # Set file uri
+            _uri = 'file.URI.@value'
+            if _uri in item_map:
+                item_id = item_map[_uri].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    uri_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    uri_list = uri_metadata[item_map[_uri]]
+                    if uri_list:
+                        if isinstance(uri_list, list):
+                            for uri in uri_list:
+                                fe.dc.dc_identifier(uri, False)
+                        else:
+                            fe.dc.dc_identifier(uri_list, False)
+
+            # Set author info
+            self._set_author_info(fe, item_map, item_metadata, request_lang)
+
+            # Set publisher
+            self._set_publisher(fe, item_map, item_metadata, request_lang)
+
+            # Set subject
+            if _index_id:
+                fe.dc.dc_subject(index_meta[_index_id])
+            else:
+                indexes = item_metadata['path'][0].split('/')
+                index_id = indexes[len(indexes) - 1]
+
+                if index_id in index_meta:
+                    index_name = index_meta[index_id]
+                else:
+                    index = Index.query.filter_by(id=index_id).one_or_none()
+                    index_name = index.index_name
+                    index_meta[index_id] = index_name
+
+                fe.dc.dc_subject(index_name)
+
+            # Set publicationName
+            _source_title_value = 'sourceTitle.@value'
+            if _source_title_value in item_map:
+                item_id = item_map[_source_title_value].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    source_title_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    source_titles = source_title_metadata[
+                        item_map[_source_title_value]]
+
+                    if source_titles:
+                        if isinstance(source_titles, list):
+                            for source_title in source_titles:
+                                fe.prism.publicationName(source_title)
+                        else:
+                            fe.prism.publicationName(source_titles)
+
+            # Set sourceIdentifier
+            self._set_source_identifier(fe, item_map, item_metadata)
+
+            # Set volume
+            _volume = 'volume'
+            if _volume in item_map:
+                item_id = item_map[_volume].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    volume_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    volumes = volume_metadata[item_map[_volume]]
+
+                    if volumes:
+                        if isinstance(volumes, list):
+                            for volume in volumes:
+                                fe.prism.volume(volume)
+                        else:
+                            fe.prism.volume(volumes)
+
+            # Set number
+            _issue = 'issue'
+            if _issue in item_map:
+                item_id = item_map[_issue].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    issue_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    issues = issue_metadata[item_map[_issue]]
+
+                    if issues:
+                        if isinstance(issues, list):
+                            for issue in issues:
+                                fe.prism.number(issue)
+                        else:
+                            fe.prism.number(issues)
+
+            # Set startingPage
+            _page_start = 'pageStart'
+            if _page_start in item_map:
+                item_id = item_map[_page_start].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    page_start_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    page_starts = page_start_metadata[item_map[_page_start]]
+
+                    if page_starts:
+                        if isinstance(page_starts, list):
+                            for page_start in page_starts:
+                                fe.prism.startingPage(page_start)
+                        else:
+                            fe.prism.startingPage(page_starts)
+
+            # Set endingPage
+            _page_end = 'pageEnd'
+            if _page_end in item_map:
+                item_id = item_map[_page_end].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    page_end_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    page_ends = page_end_metadata[item_map[_page_end]]
+
+                    if page_ends:
+                        if isinstance(page_ends, list):
+                            for page_end in page_ends:
+                                fe.prism.endingPage(page_end)
+                        else:
+                            fe.prism.endingPage(page_ends)
+
+            # Set publicationDate
+            self._set_publication_date(fe, item_map, item_metadata)
+
+            # Set content
+            self.set_description(fe, item_map, item_metadata, request_lang)
+
+            if self.output_type == self.OUTPUT_ATOM:
+                # Set updated
+                _updated = hit['_source']['_updated']
+                if _updated:
+                    fe.updated(_updated)
+            else:
+                publish_date = item_metadata['pubdate']['attribute_value']
+                if publish_date:
+                    fe.dc.dc_date(str(datetime.now(pytz.utc)))
+
+                # Set file preview url
+                fe.prism.url(item_url)
+
+            # Set creationDate
+            _creation_date = hit['_source']['_created']
+            if _creation_date:
+                fe.prism.creationDate(_creation_date)
+
+            # Set modificationDate
+            _modification_date = hit['_source']['_updated']
+            if _modification_date:
+                fe.prism.modificationDate(_modification_date)
+
+        if self.output_type == self.OUTPUT_ATOM:
+            return fg.atom_str(pretty=True)
+        else:
+            # Set channel items
+            fg.items(rss_items)
+
+            return fg.rss_str(pretty=True)
+
+    def set_description(self, fe, item_map, item_metadata, request_lang):
+        _description_attr_lang = 'description.@attributes.xml:lang'
+        _description_value = 'description.@value'
+        if _description_value in item_map:
+            item_id = item_map[_description_value].split('.')[0]
+
+            # Get item data
+            if item_id in item_metadata:
+                description_metadata = get_metadata_from_map(
+                    item_metadata[item_id], item_id)
+
+                descriptions = description_metadata[
+                    item_map[_description_value]]
+                description_langs = description_metadata[
+                    item_map[_description_attr_lang]]
+
+                if description_langs:
+                    if isinstance(description_langs, list):
+                        for i in range(len(description_langs)):
+                            description_lang = description_langs[i]
+                            if request_lang:
+                                if description_lang == request_lang:
+                                    fe.content(
+                                        descriptions[i], description_lang)
+                            else:
+                                fe.content(
+                                    descriptions[i], description_lang)
+                    else:
+                        if request_lang:
+                            if description_langs == request_lang:
+                                fe.content(descriptions, description_langs)
+                        else:
+                            fe.content(descriptions, description_langs)
+
+    def _set_publication_date(self, fe, item_map, item_metadata):
+        if self.output_type == self.OUTPUT_ATOM:
+            _date = 'date.@value'
+            if _date in item_map:
+                item_id = item_map[_date].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    date_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    dates = date_metadata[item_map[_date]]
+
+                    if dates:
+                        if isinstance(dates, list):
+                            for date in dates:
+                                fe.prism.publicationDate(date)
+                        else:
+                            fe.prism.publicationDate(dates)
+        else:
+            _date_attr_type = 'date.@attributes.dateType'
+            _date = 'date.@value'
+            if _date in item_map:
+                item_id = item_map[_date].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    date_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    dates = date_metadata[item_map[_date]]
+                    date_types = date_metadata[item_map[_date_attr_type]]
+
+                    if dates:
+                        if isinstance(dates, list):
+                            for i in range(len(dates)):
+                                date_type = date_types[i]
+                                if date_type and date_type == 'Issued':
+                                    fe.prism.publicationDate(dates[i])
+
+                        elif date_types and date_types == 'Issued':
+                            fe.prism.publicationDate(dates)
+
+    def _set_publisher(self, fe, item_map, item_metadata, request_lang):
+        _publisher_attr_lang = 'publisher.@attributes.xml:lang'
+        _publisher_value = 'publisher.@value'
+        if _publisher_value in item_map:
+            item_id = item_map[_publisher_value].split('.')[0]
+
+            # Get item data
+            if item_id in item_metadata:
+                publisher_metadata = get_metadata_from_map(
+                    item_metadata[item_id], item_id)
+
+                publisher_names = publisher_metadata[
+                    item_map[_publisher_value]]
+                publisher_name_langs = publisher_metadata[
+                    item_map[_publisher_attr_lang]]
+
+                if publisher_name_langs:
+                    if isinstance(publisher_name_langs, list):
+                        for i in range(len(publisher_name_langs)):
+                            publisher_name_lang = publisher_name_langs[i]
+                            if request_lang:
+                                if publisher_name_lang == request_lang:
+                                    fe.dc.dc_publisher(publisher_names[i],
+                                                       publisher_name_lang)
+                            else:
+                                fe.dc.dc_publisher(publisher_names[i],
+                                                   publisher_name_lang)
+                    else:
+                        if request_lang:
+                            if publisher_name_langs == request_lang:
+                                fe.dc.dc_publisher(publisher_names,
+                                                   publisher_name_langs)
+                        else:
+                            fe.dc.dc_publisher(publisher_names,
+                                               publisher_name_langs)
+
+    def _set_source_identifier(self, fe, item_map, item_metadata):
+        if self.output_type == self.OUTPUT_ATOM:
+            _source_identifier_value = 'sourceIdentifier.@value'
+            if _source_identifier_value in item_map:
+                item_id = item_map[_source_identifier_value].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    source_identifier_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    source_identifiers = source_identifier_metadata[
+                        item_map[_source_identifier_value]]
+
+                    if source_identifiers:
+                        if isinstance(source_identifiers, list):
+                            for source_identifier in source_identifiers:
+                                fe.prism.issn(source_identifier)
+                        else:
+                            fe.prism.issn(source_identifiers)
+        else:
+            _source_identifier_attr_type = \
+                'sourceIdentifier.@attributes.identifierType'
+            _source_identifier_value = 'sourceIdentifier.@value'
+            if _source_identifier_value in item_map:
+                item_id = item_map[_source_identifier_value].split('.')[0]
+
+                # Get item data
+                if item_id in item_metadata:
+                    source_identifier_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+
+                    source_identifiers = source_identifier_metadata[
+                        item_map[_source_identifier_attr_type]]
+
+                    source_identifier_types = source_identifier_metadata[
+                        item_map[_source_identifier_value]]
+
+                    if source_identifiers:
+                        if isinstance(source_identifiers, list):
+                            for i in range(len(source_identifiers)):
+                                source_identifier_type = \
+                                    source_identifier_types[i]
+                                if source_identifier_type \
+                                        and source_identifier_type == 'ISSN':
+                                    fe.prism.issn(source_identifiers[i])
+
+                        elif source_identifier_types \
+                                and source_identifier_types == 'ISSN':
+                            fe.prism.issn(source_identifiers)
+
+    def _set_author_info(self, fe, item_map, item_metadata, request_lang):
+        _creator_name_value = 'creator.creatorName.@value'
+        if _creator_name_value in item_map:
+            item_id = item_map[_creator_name_value].split('.')[0]
+
+            # Get item data
+            if item_id in item_metadata:
+                creator_metadata = get_metadata_from_map(
+                    item_metadata[item_id], item_id)
+
+                create_name_key = item_map[_creator_name_value]
+                if not isinstance(creator_metadata, dict) \
+                        or creator_metadata.get(create_name_key) is None:
+                    return
+
+                creator_names = creator_metadata[create_name_key]
+
+                _creator_name_attr_lang = item_id + '.' + 'creatorNameLang'
+                creator_name_langs = creator_metadata[
+                    _creator_name_attr_lang] \
+                    if _creator_name_attr_lang in creator_metadata else None
+
+                if creator_name_langs:
+                    if isinstance(creator_name_langs, list):
+                        for i in range(len(creator_name_langs)):
+                            creator_name_lang = creator_name_langs[i]
+                            if request_lang:
+                                if creator_name_lang == request_lang:
+                                    fe.author({'name': creator_names[i],
+                                               'lang': creator_name_lang})
+                            else:
+                                fe.author({'name': creator_names[i],
+                                           'lang': creator_name_lang})
+                    else:
+                        if request_lang:
+                            if creator_name_langs == request_lang:
+                                fe.author({'name': creator_names,
+                                           'lang': creator_name_langs})
+                        else:
+                            fe.author({'name': creator_names,
+                                       'lang': creator_name_langs})
