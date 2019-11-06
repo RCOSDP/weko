@@ -324,8 +324,10 @@ class OpenSearchDetailData:
                 if item_id in item_metadata:
                     type_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
-
-                    aggregation_types = type_metadata[aggregation_type_key]
+                    aggregation_types = None
+                    if isinstance(type_metadata, dict):
+                        aggregation_types = type_metadata.get(
+                            aggregation_type_key)
                     if aggregation_types:
                         if isinstance(aggregation_types, list):
                             for aggregation_type in aggregation_types:
@@ -339,14 +341,16 @@ class OpenSearchDetailData:
             # Set mimeType
             _mime_type = 'file.mimeType.@value'
             if _mime_type in item_map:
-                item_id = item_map[_mime_type].split('.')[0]
+                mime_type_key = item_map[_mime_type]
+                item_id = mime_type_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     file_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
-
-                    mime_types = file_metadata[item_map[_mime_type]]
+                    mime_types = None
+                    if isinstance(file_metadata, dict):
+                        mime_types = file_metadata.get(mime_type_key)
                     if mime_types:
                         if isinstance(mime_types, list):
                             for mime_type in mime_types:
@@ -357,14 +361,16 @@ class OpenSearchDetailData:
             # Set file uri
             _uri = 'file.URI.@value'
             if _uri in item_map:
-                item_id = item_map[_uri].split('.')[0]
+                uri_key = item_map[_uri]
+                item_id = uri_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     uri_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
-
-                    uri_list = uri_metadata[item_map[_uri]]
+                    uri_list = None
+                    if isinstance(uri_metadata, dict):
+                        uri_list = uri_metadata.get(uri_key)
                     if uri_list:
                         if isinstance(uri_list, list):
                             for uri in uri_list:
@@ -397,15 +403,17 @@ class OpenSearchDetailData:
             # Set publicationName
             _source_title_value = 'sourceTitle.@value'
             if _source_title_value in item_map:
-                item_id = item_map[_source_title_value].split('.')[0]
+                source_title_key = item_map[_source_title_value]
+                item_id = source_title_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     source_title_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
-
-                    source_titles = source_title_metadata[
-                        item_map[_source_title_value]]
+                    source_titles = None
+                    if isinstance(source_title_metadata, dict):
+                        source_titles = source_title_metadata.get(
+                            source_title_key)
 
                     if source_titles:
                         if isinstance(source_titles, list):
@@ -420,15 +428,17 @@ class OpenSearchDetailData:
             # Set volume
             _volume = 'volume'
             if _volume in item_map:
-                item_id = item_map[_volume].split('.')[0]
+                volume_key = item_map[_volume]
+                item_id = volume_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     volume_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
 
-                    volumes = volume_metadata[item_map[_volume]]
-
+                    volumes = None
+                    if isinstance(volume_metadata, dict):
+                        volumes = volume_metadata.get(volume_key)
                     if volumes:
                         if isinstance(volumes, list):
                             for volume in volumes:
@@ -439,14 +449,17 @@ class OpenSearchDetailData:
             # Set number
             _issue = 'issue'
             if _issue in item_map:
-                item_id = item_map[_issue].split('.')[0]
+                issue_key = item_map[_issue]
+                item_id = issue_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     issue_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
 
-                    issues = issue_metadata[item_map[_issue]]
+                    issues = None
+                    if isinstance(issue_metadata):
+                        issues = issue_metadata.get(issue_key)
 
                     if issues:
                         if isinstance(issues, list):
@@ -458,14 +471,17 @@ class OpenSearchDetailData:
             # Set startingPage
             _page_start = 'pageStart'
             if _page_start in item_map:
-                item_id = item_map[_page_start].split('.')[0]
+                page_start_key = item_map[_page_start]
+                item_id = page_start_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     page_start_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
 
-                    page_starts = page_start_metadata[item_map[_page_start]]
+                    page_starts = None
+                    if isinstance(page_start_metadata, dict):
+                        page_starts = page_start_metadata.get(page_start_key)
 
                     if page_starts:
                         if isinstance(page_starts, list):
@@ -477,14 +493,16 @@ class OpenSearchDetailData:
             # Set endingPage
             _page_end = 'pageEnd'
             if _page_end in item_map:
-                item_id = item_map[_page_end].split('.')[0]
+                page_end_key = item_map[_page_end]
+                item_id = page_end_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     page_end_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
-
-                    page_ends = page_end_metadata[item_map[_page_end]]
+                    page_ends = None
+                    if isinstance(page_end_metadata, dict):
+                        page_ends = page_end_metadata.get(page_end_key)
 
                     if page_ends:
                         if isinstance(page_ends, list):
@@ -497,7 +515,7 @@ class OpenSearchDetailData:
             self._set_publication_date(fe, item_map, item_metadata)
 
             # Set content
-            self.set_description(fe, item_map, item_metadata, request_lang)
+            self._set_description(fe, item_map, item_metadata, request_lang)
 
             if self.output_type == self.OUTPUT_ATOM:
                 # Set updated
@@ -530,21 +548,23 @@ class OpenSearchDetailData:
 
             return fg.rss_str(pretty=True)
 
-    def set_description(self, fe, item_map, item_metadata, request_lang):
+    def _set_description(self, fe, item_map, item_metadata, request_lang):
         _description_attr_lang = 'description.@attributes.xml:lang'
         _description_value = 'description.@value'
         if _description_value in item_map:
-            item_id = item_map[_description_value].split('.')[0]
+            description_key = item_map[_description_value]
+            item_id = description_key.split('.')[0]
 
             # Get item data
             if item_id in item_metadata:
                 description_metadata = get_metadata_from_map(
                     item_metadata[item_id], item_id)
-
-                descriptions = description_metadata[
-                    item_map[_description_value]]
-                description_langs = description_metadata[
-                    item_map[_description_attr_lang]]
+                if not isinstance(description_metadata, dict)\
+                        or description_metadata.get(description_key) is None:
+                    return
+                descriptions = description_metadata.get(description_key)
+                description_langs = description_metadata.get(
+                    item_map[_description_attr_lang])
 
                 if description_langs:
                     if isinstance(description_langs, list):
@@ -568,14 +588,16 @@ class OpenSearchDetailData:
         if self.output_type == self.OUTPUT_ATOM:
             _date = 'date.@value'
             if _date in item_map:
-                item_id = item_map[_date].split('.')[0]
+                date_key = item_map[_date]
+                item_id = date_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     date_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
-
-                    dates = date_metadata[item_map[_date]]
+                    if not isinstance(date_metadata, dict):
+                        return
+                    dates = date_metadata.get(date_key)
 
                     if dates:
                         if isinstance(dates, list):
@@ -587,17 +609,20 @@ class OpenSearchDetailData:
             _date_attr_type = 'date.@attributes.dateType'
             _date = 'date.@value'
             if _date in item_map:
-                item_id = item_map[_date].split('.')[0]
+                date_key = item_map[_date]
+                item_id = date_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     date_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
+                    if not isinstance(date_metadata, dict)\
+                            or date_metadata.get(date_key) is None:
+                        return
+                    dates = date_metadata[date_key]
+                    date_types = date_metadata.get(item_map[_date_attr_type])
 
-                    dates = date_metadata[item_map[_date]]
-                    date_types = date_metadata[item_map[_date_attr_type]]
-
-                    if dates:
+                    if dates and date_types:
                         if isinstance(dates, list):
                             for i in range(len(dates)):
                                 date_type = date_types[i]
@@ -611,17 +636,19 @@ class OpenSearchDetailData:
         _publisher_attr_lang = 'publisher.@attributes.xml:lang'
         _publisher_value = 'publisher.@value'
         if _publisher_value in item_map:
-            item_id = item_map[_publisher_value].split('.')[0]
+            publisher_key = item_map[_publisher_value]
+            item_id = publisher_key.split('.')[0]
 
             # Get item data
             if item_id in item_metadata:
                 publisher_metadata = get_metadata_from_map(
                     item_metadata[item_id], item_id)
-
-                publisher_names = publisher_metadata[
-                    item_map[_publisher_value]]
-                publisher_name_langs = publisher_metadata[
-                    item_map[_publisher_attr_lang]]
+                if not isinstance(publisher_metadata, dict) \
+                        or publisher_metadata.get(publisher_key) is None:
+                    return
+                publisher_names = publisher_metadata.get(publisher_key)
+                publisher_name_langs = publisher_metadata.get(
+                    item_map[_publisher_attr_lang])
 
                 if publisher_name_langs:
                     if isinstance(publisher_name_langs, list):
@@ -647,15 +674,20 @@ class OpenSearchDetailData:
         if self.output_type == self.OUTPUT_ATOM:
             _source_identifier_value = 'sourceIdentifier.@value'
             if _source_identifier_value in item_map:
-                item_id = item_map[_source_identifier_value].split('.')[0]
+                source_identifier_key = item_map[_source_identifier_value]
+                item_id = source_identifier_key.split('.')[0]
 
                 # Get item data
                 if item_id in item_metadata:
                     source_identifier_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
 
-                    source_identifiers = source_identifier_metadata[
-                        item_map[_source_identifier_value]]
+                    if not isinstance(source_identifier_metadata, dict) \
+                            or source_identifier_metadata.get(
+                            source_identifier_key) is None:
+                        return
+                    source_identifiers = source_identifier_metadata.get(
+                        source_identifier_key)
 
                     if source_identifiers:
                         if isinstance(source_identifiers, list):
