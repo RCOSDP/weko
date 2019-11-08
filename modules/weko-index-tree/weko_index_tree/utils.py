@@ -124,8 +124,9 @@ def get_tree_json(index_list, root_id):
         if not is_root:
             pid = str(index_element.pid)
             parent = index_list[index_position[index_element.pid]]
-            if parent.pid:
+            while parent.pid and parent.cid != root_id:
                 pid = '{}/{}'.format(parent.pid, pid)
+                parent = index_list[index_position[parent.pid]]
             index_dict.update({'parent': pid})
         index_dict.update({
             'id': str(index_element.cid),

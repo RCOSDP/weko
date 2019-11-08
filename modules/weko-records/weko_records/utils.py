@@ -20,7 +20,6 @@
 
 """Item API."""
 
-import re
 from collections import OrderedDict
 
 import pytz
@@ -444,8 +443,8 @@ def get_options_and_order_list(item_type_id):
     """
     ojson = ItemTypes.get_record(item_type_id)
     solst = find_items(ojson.model.form)
-    meta_options = ojson.model.render.pop('meta_fix')
-    meta_options.update(ojson.model.render.pop('meta_list'))
+    meta_options = ojson.model.render.get('meta_fix')
+    meta_options.update(ojson.model.render.get('meta_list'))
     return solst, meta_options
 
 
@@ -454,6 +453,24 @@ def sort_meta_data_by_options(record_hit):
 
     :param record_hit:
     """
+    def get_meta_values(v):
+        """Get values from metadata."""
+        data_list = []
+
+        def get_values(v):
+            """Get value by recursive."""
+            if isinstance(v, list):
+                for temp in v:
+                    get_values(temp)
+            elif isinstance(v, dict):
+                for temp in v.values():
+                    data_list.append(temp)
+            elif isinstance(v, str):
+                data_list.append(v)
+
+        get_values(v)
+        return data_list
+
     try:
 
         src = record_hit['_source'].pop('_item_metadata')
@@ -485,8 +502,8 @@ def sort_meta_data_by_options(record_hit):
 
             mlt = val.get('attribute_value_mlt')
             if mlt:
-                data = list(map(lambda x: ''.join(x.values()),
-                                get_all_items(mlt, solst)))
+                meta_data = get_all_items(mlt, solst)
+                data = get_meta_values(meta_data)
             else:
                 data = val.get('attribute_value')
 
@@ -545,3 +562,104 @@ def is_valid_openaire_type(resource_type, communities):
     is_defined = any(t['id'] == oa_subtype for t in subtypes)
     comms_match = len(set(communities) & set(defined_comms))
     return is_defined and comms_match
+
+
+def check_has_attribute_value(node):
+    """Check has value in items.
+
+    :param node:
+    :return: boolean
+    """
+    try:
+        if isinstance(node, list):
+            for lst in node:
+                return check_has_attribute_value(lst)
+        elif isinstance(node, dict) and bool(node):
+            for val in node.values():
+                if val:
+                    if isinstance(val, str):
+                        return True
+                    elif isinstance(val, dict):
+                        for v in val.values():
+                            return check_has_attribute_value(v)
+                    else:
+                        return check_has_attribute_value(val)
+        return False
+    except BaseException as e:
+        current_app.logger.error('Function check_has_attribute_value error:', e)
+        return False
+
+
+def get_attribute_value_all_items(nlst, klst, is_author=False):
+    """Convert and sort item list.
+
+    :param nlst:
+    :param klst:
+    :param is_author:
+    :return: alst
+    """
+    def get_name(key):
+        for lst in klst:
+            if key == lst[0].split('.')[-1]:
+                return lst[1] if not is_author else '{}.{}'. format(key, lst[1])
+
+    def to_sort_dict(alst, klst):
+        """Sort item list.
+
+        :param alst:
+        :param klst:
+        """
+        if isinstance(klst, list):
+            result = []
+            try:
+                if isinstance(alst, list):
+                    for a in alst:
+                        result.extend(to_sort_dict(a, klst))
+                else:
+                    for lst in klst:
+                        key = lst[0].split('.')[-1]
+                        val = alst.pop(key, {})
+                        if val and (isinstance(val, str)
+                                    or (key == 'nameIdentifier')):
+                            result.append({key: val})
+                        else:
+                            if check_has_attribute_value(val):
+                                res = to_sort_dict(val, klst)
+                                result.append({key: res})
+                        if not alst:
+                            break
+                return result
+            except BaseException as e:
+                current_app.logger.error('Function to_sort_dict error: ', e)
+                return result
+
+    def set_attribute_value(nlst):
+        _list = []
+        try:
+            if isinstance(nlst, list):
+                for lst in nlst:
+                    _list.extend(set_attribute_value(lst))
+            # check OrderedDict is dict and not empty
+            elif isinstance(nlst, dict) and bool(nlst):
+                d = {}
+                for key, val in nlst.items():
+                    item_name = get_name(key) or ''
+                    if val and (isinstance(val, str)
+                                or (key == 'nameIdentifier')):
+                        # the last children level
+                        d[item_name] = val
+                    else:
+                        # parents level
+                        # check if have any child
+                        if check_has_attribute_value(val):
+                            d[item_name] = set_attribute_value(val)
+                _list.append(d)
+            return _list
+        except BaseException as e:
+            current_app.logger.error('Function set_node error: ', e)
+            return _list
+
+    orderdict = to_sort_dict(nlst, klst)
+    alst = set_attribute_value(orderdict)
+
+    return alst

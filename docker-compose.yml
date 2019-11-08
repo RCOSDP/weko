@@ -158,6 +158,15 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     links:
       - elasticsearch
+  
+  idp:
+    restart: "always"
+    build: ./idp
+    ports:
+      - 8443:443
+    links:
+      - web
+      - nginx
       
 volumes:
   weko3_data:

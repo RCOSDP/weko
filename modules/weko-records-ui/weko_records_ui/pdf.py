@@ -168,6 +168,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     _file_item_id = None
     if _file in item_map:
         _file_item_id = item_map[_file].split('.')[0]
+        _file_item_id = _file_item_id.replace('fileinfo', 'files')
 
     _creator = 'creator.creatorName.@value'
     _creator_item_id = None
@@ -223,20 +224,24 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         keyword_item_lang = item_map[keyword_attr_lang].split('.')[1]
         keyword_item_value = item_map[keyword_attr_value].split('.')[1]
         keyword_base = item_metadata_json.get(keyword_item_id)
-        if keyword_base:
-            keyword_lang = keyword_base.get(keyword_item_lang)
-        if keyword_lang == 'ja':
-            keywords_ja = keyword_base.get(keyword_item_value)
-            keywords_en = None
-        elif keyword_lang == 'en':
-            keywords_en = keyword_base.get(keyword_item_value)
-            keywords_ja = None
-        else:
-            keywords_ja = None
-            keywords_en = None
-    except (KeyError, IndexError):
         keywords_ja = None
         keywords_en = None
+
+        if isinstance(keyword_base, dict):
+            keyword_lang = keyword_base.get(keyword_item_lang)
+            if keyword_lang == 'ja':
+                keywords_ja = keyword_base.get(keyword_item_value)
+            elif keyword_lang == 'en':
+                keywords_en = keyword_base.get(keyword_item_value)
+        elif isinstance(keyword_base, list):
+            for k in keyword_base:
+                keyword_lang = k.get(keyword_item_lang)
+                if keyword_lang == 'ja':
+                    keywords_ja = k.get(keyword_item_value)
+                elif keyword_lang == 'en':
+                    keywords_en = k.get(keyword_item_value)
+    except (KeyError, IndexError):
+        pass
     creator_item = item_metadata_json.get(_creator_item_id)
     try:
         creator_mail = creator_item['creatorMails'][0].get('creatorMail')

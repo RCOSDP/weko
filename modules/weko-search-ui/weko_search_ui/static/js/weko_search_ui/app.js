@@ -263,10 +263,15 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
   }
 
   $scope.exportItems = function() {
-   if($rootScope.item_export_checkboxes.length <= $rootScope.max_export_num) {
-     $('#record_ids').val(JSON.stringify($rootScope.item_export_checkboxes));
-     $('#export_items_form').submit();  // Submit form and let controller handle file making
-   }
+    if($rootScope.item_export_checkboxes.length <= $rootScope.max_export_num) {
+      $('#record_ids').val(JSON.stringify($rootScope.item_export_checkboxes));
+      let export_metadata = {}
+      $rootScope.item_export_checkboxes.map((recid)=>{
+        export_metadata[recid] = JSON.parse($('#record_' + recid + '_metadata').text());
+      })
+      $('#record_metadata').val(JSON.stringify(export_metadata));
+      $('#export_items_form').submit();  // Submit form and let controller handle file making
+    }
   }
 
   $scope.checkForRestrictedContent = function(record_id) {
