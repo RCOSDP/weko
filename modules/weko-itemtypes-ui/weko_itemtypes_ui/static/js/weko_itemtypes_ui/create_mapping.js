@@ -182,7 +182,8 @@ $(document).ready(function () {
           }
         } else {
           let cur_obj = page_global.mapping_prop[itemtype_key][schema_name];
-          for(let idx=0; idx<sub_jpcoar_arr.length; idx++) {
+          let length_sub_jpcoar_arr = sub_jpcoar_arr.length;
+          for(let idx=0; idx<length_sub_jpcoar_arr; idx++) {
             if(cur_obj.hasOwnProperty(sub_jpcoar_arr[idx])) {
               cur_obj = cur_obj[sub_jpcoar_arr[idx]];
               continue;
@@ -303,7 +304,11 @@ $(document).ready(function () {
     // jpcoar sub_list logic
     sub_jpcoar_items = page_global.schema_prop[schema_name_str][jpcoar_key];
     page_global.sub_jpcoar_list=[];
-    make_list_jpcoar(sub_jpcoar_items, jpcoar_key);
+    if(schema_name_str === "jpcoar_mapping"){
+      make_list_jpcoar(sub_jpcoar_items, jpcoar_key);
+    }else{
+      make_list_ddi(sub_jpcoar_items, jpcoar_key);
+    }
     $('#sub-jpcoar-lists-label').text(jpcoar_key);
     $('#sub_children_lists div.sub_child_list').remove();
     let re = /\s*;\s*|\s*,\s*|\s*-\s*|\s*:\s*/g;
@@ -319,14 +324,17 @@ $(document).ready(function () {
               let split_str = value.substr(value.indexOf(sub_val)+sub_val.length, 1);
               let sub_itemtype_sub_info_temp = sub_itemtype_sub_info.clone(true);
               sub_itemtype_sub_info_temp.find('select[name="sub_itemtype_list"]').empty();
+              let find_select_sub_itemtype_list = sub_itemtype_sub_info_temp.find('select[name="sub_itemtype_list"]');
+              let options = "";
               page_global.sub_itemtype_list.forEach(function(element){
                 let display_name = element[1].length>0?element[1]:$('#sub-item-type-lists-label').text();
                 if(element[0].endsWith(sub_val)) {
-                  sub_itemtype_sub_info_temp.find('select[name="sub_itemtype_list"]').append('<option value="'+element[0]+'" selected>'+display_name+'</option>');
+                  options += '<option value="'+element[0]+'" selected>'+display_name+'</option>';
                 } else {
-                  sub_itemtype_sub_info_temp.find('select[name="sub_itemtype_list"]').append('<option value="'+element[0]+'">'+display_name+'</option>');
+                  options += '<option value="'+element[0]+'">'+display_name+'</option>';
                 }
               });
+              find_select_sub_itemtype_list.append(options);
               if(split_str.length > 0) {
                 sub_itemtype_sub_info_temp.find('input[type="text"]').val(split_str);
                 sub_itemtype_sub_info_temp.find('input[type="text"]').parent().removeClass('has-error');
@@ -337,26 +345,32 @@ $(document).ready(function () {
             new_sub_info.find('.sub_child_itemtype_list:last').find('.sub_itemtype_link').find('.form-group').addClass('hide');
           } else {
             new_sub_info.find('select[name="sub_itemtype_list"]').empty();
+            let find_select_sub_itemtype_list = new_sub_info.find('select[name="sub_itemtype_list"]');
+            let options = "";
             page_global.sub_itemtype_list.forEach(function(element){
               let display_name = element[1].length>0?element[1]:$('#sub-item-type-lists-label').text();
               if(element[0].endsWith(value)) {
-                new_sub_info.find('select[name="sub_itemtype_list"]').append('<option value="'+element[0]+'" selected>'+display_name+'</option>');
+                options += '<option value="'+element[0]+'" selected>'+display_name+'</option>';
               } else {
-                new_sub_info.find('select[name="sub_itemtype_list"]').append('<option value="'+element[0]+'">'+display_name+'</option>');
+                options += '<option value="'+element[0]+'">'+display_name+'</option>';
               }
             });
+            find_select_sub_itemtype_list.append(options);
           }
           if(page_global.sub_itemtype_list.length == 1) {
             new_sub_info.find('select[name="sub_itemtype_list"]').attr('disabled', true);
           }
         }
-        if(page_global.sub_jpcoar_list.length > 0) {
+        if (page_global.sub_jpcoar_list.length > 0) {
           new_sub_info.find('select[name="sub_jpcoar_list"]').empty();
-          page_global.sub_jpcoar_list.forEach(function(element){
-            new_sub_info.find('select[name="sub_jpcoar_list"]').append('<option value="'+element+'">'+element+'</option>');
+          let find_select_sub_jpcoar_list = new_sub_info.find('select[name="sub_jpcoar_list"]');
+          let options = "";
+          page_global.sub_jpcoar_list.forEach(function (element) {
+            options += '<option value="' + element + '">' + element + '</option>';
           });
+          find_select_sub_jpcoar_list.append(options);
           new_sub_info.find('select[name="sub_jpcoar_list"]').val(key);
-          if(page_global.sub_jpcoar_list.length == 1) {
+          if (page_global.sub_jpcoar_list.length == 1) {
             new_sub_info.find('select[name="sub_jpcoar_list"]').attr('disabled', true);
           }
         }
@@ -367,19 +381,25 @@ $(document).ready(function () {
       let new_sub_info = $('div.sub_children_list').clone(true);
       if(page_global.sub_itemtype_list.length > 0) {
         new_sub_info.find('select[name="sub_itemtype_list"]').empty();
+        let find_select_sub_itemtype_list = new_sub_info.find('select[name="sub_itemtype_list"]');
+        let options = "";
         page_global.sub_itemtype_list.forEach(function(element){
           let display_name = element[1].length>0?element[1]:$('#sub-item-type-lists-label').text();
-          new_sub_info.find('select[name="sub_itemtype_list"]').append('<option value="'+element[0]+'">'+display_name+'</option>');
+          options += '<option value="'+element[0]+'">'+display_name+'</option>';
         });
+        find_select_sub_itemtype_list.append(options);
         if(page_global.sub_itemtype_list.length == 1) {
           new_sub_info.find('select[name="sub_itemtype_list"]').attr('disabled', true);
         }
       }
       if(page_global.sub_jpcoar_list.length > 0) {
         new_sub_info.find('select[name="sub_jpcoar_list"]').empty();
+        let find_select_sub_jpcoar_list = new_sub_info.find('select[name="sub_jpcoar_list"]');
+        let options = "";
         page_global.sub_jpcoar_list.forEach(function(element){
-          new_sub_info.find('select[name="sub_jpcoar_list"]').append('<option value="'+element+'">'+element+'</option>');
+          options += '<option value="'+element+'">'+element+'</option>';
         });
+        find_select_sub_jpcoar_list.append(options);
         if(page_global.sub_jpcoar_list.length == 1) {
           new_sub_info.find('select[name="sub_jpcoar_list"]').attr('disabled', true);
         }
@@ -444,6 +464,30 @@ $(document).ready(function () {
     }
     return;
   }
+
+  function make_list_ddi(entries, base_key) {
+    if(Object.keys(entries).length > 1) {
+      for(const [key, value] of Object.entries(entries)) {
+        if('type' == key) {
+          if(value.hasOwnProperty('attributes')) {
+            make_list_ddi_prop(value.attributes, base_key);
+          }
+          continue;
+        } else {
+          make_list_ddi(value, [base_key, key].join('.'));
+        }
+      }
+    } else {
+      page_global.sub_jpcoar_list.push(base_key);
+      if(entries.hasOwnProperty('type')) {
+        if(entries.type.hasOwnProperty('attributes')) {
+          make_list_ddi_prop(entries.type.attributes, base_key);
+        }
+      }
+    }
+    return;
+  }
+
 //    function make_list_jpcoar_level(entries, base_key) {
 //      if(Object.keys(entries).length > 1) {
 //        for(const [key, value] of Object.entries(entries)) {
@@ -472,20 +516,43 @@ $(document).ready(function () {
     });
   }
 
+  function make_list_ddi_prop(attr_list, base_key){
+    attr_list.forEach(element => {
+      page_global.sub_jpcoar_list.push([base_key, '@'+element.name].join('.'));
+    });
+
+    let j = 0;
+    let length_sub_jpcoar_list = page_global.sub_jpcoar_list.length;
+    for(let i = 0; i < length_sub_jpcoar_list; i++){
+      if(page_global.sub_jpcoar_list[i] === base_key){
+        j++;
+      }
+    }
+
+    if(j == 0){
+      page_global.sub_jpcoar_list.push([base_key].join('.'));
+    }
+  }
+
   $('#sub_mapping-add').on('click', function(ev){
     page_global.showDiag = true;
     let new_sub_info = $('div.sub_children_list').clone(true);
     if(page_global.sub_itemtype_list.length > 0) {
       new_sub_info.find('select[name="sub_itemtype_list"]').empty();
+      let find_select_sub_itemtype_list = new_sub_info.find('select[name="sub_itemtype_list"]');
+      let options = "";
       page_global.sub_itemtype_list.forEach(function(element){
         let display_name = element[1].length>0?element[1]:$('#sub-item-type-lists-label').text();
-        new_sub_info.find('select[name="sub_itemtype_list"]').append('<option value="'+element[0]+'">'+display_name+'</option>');
+        options += '<option value="'+element[0]+'">'+display_name+'</option>';
       });
+      find_select_sub_itemtype_list.append(options);
     }
     if(page_global.sub_jpcoar_list.length > 0) {
         new_sub_info.find('select[name="sub_jpcoar_list"]').empty();
         let currentSubList = getCurrentSubJPCOARList();
         let isSelected = false;
+        let find_select_sub_jpcoar_list = new_sub_info.find('select[name="sub_jpcoar_list"]');
+        let options = "";
         page_global.sub_jpcoar_list.forEach(function(element){
           let isDisabled = false;
           let selected = "";
@@ -499,8 +566,9 @@ $(document).ready(function () {
             selected = "selected";
             isSelected = true;
           }
-          new_sub_info.find('select[name="sub_jpcoar_list"]').append('<option ' + selected + ' value="'+element+'">'+element+'</option>');
+          options += '<option ' + selected + ' value="'+element+'">'+element+'</option>';
         });
+        find_select_sub_jpcoar_list.append(options);
       }
     new_sub_info.removeClass('sub_children_list hide').addClass('sub_child_list');
     new_sub_info.appendTo('#sub_children_lists');
@@ -573,8 +641,9 @@ $(document).ready(function () {
           cur_obj[jpcoar_type] = {};
         }
         cur_obj = cur_obj[jpcoar_type];
-        for(let idx = 0; idx < sub_jpcoar_arr.length; idx++) {
-          if(idx < sub_jpcoar_arr.length -1) {
+        let length_sub_jpcoar_arr = sub_jpcoar_arr.length;
+        for(let idx = 0; idx < length_sub_jpcoar_arr; idx++) {
+          if(idx < length_sub_jpcoar_arr -1) {
             if(sub_jpcoar_arr[idx].startsWith('@')) {
               if(!cur_obj.hasOwnProperty('@attributes')) {
                 cur_obj['@attributes'] = {};
