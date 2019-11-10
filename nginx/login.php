@@ -1,12 +1,13 @@
 <?php
 
+  // ERROR
   if(!$_SERVER['mail']){
-    // eduPersonTargetedID が存在しない場合は認証エラー
     header("HTTP/1.1 403 Forbidden");
     exit;
   }
 
-  $url = "https://weko3.example.org/weko/shib/login?next=%2F";
+  $base =  $_SERVER['REQUEST_SCHEME']."://".$_SERVER['SERVER_NAME'];
+  $url = $base."/weko/shib/login?next=%2F";
 
   $curl = curl_init($url);
 
@@ -39,6 +40,6 @@ $result = curl_exec($curl);
 curl_close($curl);
 
 header("HTTP/1.1 302 Found");
-header("Location: https://weko3.example.org".$result);
+header("Location: ".$base.$result);
   //var_dump($app_cookies[0]['value']);
 ?>
