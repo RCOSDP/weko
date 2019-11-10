@@ -47,7 +47,7 @@ WEKO_ACCOUNTS_STUB_USER_TEMPLATE = 'weko_accounts/shib_user.html'
 SHIB_ACCOUNTS_LOGIN_CACHE_TTL = 180
 """ cache default timeout 3 minute"""
 
-SHIB_IDP_LOGIN_URL = 'https://www.we50hitdev.com/secure/login.php'
+SHIB_IDP_LOGIN_URL = 'https://weko3.example.org/secure/login.php'
 
 SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_EPPN': (True, 'shib_eppn'),

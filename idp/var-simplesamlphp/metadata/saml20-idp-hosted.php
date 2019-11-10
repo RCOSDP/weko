@@ -5,13 +5,13 @@
  * See: https://simplesamlphp.org/docs/stable/simplesamlphp-reference-idp-hosted
  */
 
-$metadata['https://idptestbed/idp/simplesamlphp'] = array(
+$metadata['https://weko3.example.org/idp/simplesamlphp'] = array(
 	/*
 	 * The hostname of the server (VHOST) that will use this SAML entity.
 	 *
 	 * Can be '__DEFAULT__', to use this entry by default.
 	 */
-	'host' => 'idptestbed',
+	'host' => 'weko3.example.org',
 
 	// X.509 key and certificate. Relative to the cert directory.
 	'privatekey' => 'server.pem',
@@ -42,16 +42,38 @@ $metadata['https://idptestbed/idp/simplesamlphp'] = array(
 	 *
 	 * Please refer to the IdP hosted reference for more information.
 	 */
-	//'signature.algorithm' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
+	'signature.algorithm' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
 
 	/* Uncomment the following to use the uri NameFormat on attributes. */
-	/*
-	'attributes.NameFormat' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri',
+	
+	//'attributes.NameFormat' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri',
 	'authproc' => array(
-		// Convert LDAP names to oids.
-		100 => array('class' => 'core:AttributeMap', 'name2oid'),
+		// Generate the persistent NameID.
+		2 => array(
+			'class' => 'saml:PersistentNameID',
+			'attribute' => 'eduPersonPrincipalName',
+		),
+		// Add the persistent to the eduPersonTargetedID attribute
+		60 => array(
+			'class' => 'saml:PersistentNameID2TargetedID',
+			'attribute' => 'eduPersonTargetedID', // The default
+			'nameId' => TRUE, // The default
+		),
+		// Use OID attribute names.
+		90 => array(
+			'class' => 'core:AttributeMap',
+			'name2oid',
+		),
 	),
-	*/
+	// The URN attribute NameFormat for OID attributes.
+	'attributes.NameFormat' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri',
+	'attributeencodings' => array(
+		'urn:oid:1.3.6.1.4.1.5923.1.1.1.10' => 'raw', /* eduPersonTargetedID with oid NameFormat is a raw XML value */
+	),
+	'nameid.encryption' => false,
+	'assertion.encryption' => false,
+
+	
 
 	/*
 	 * Uncomment the following to specify the registration information in the
@@ -67,6 +89,24 @@ $metadata['https://idptestbed/idp/simplesamlphp'] = array(
 			'en' => 'http://example.org/policy',
 			'es' => 'http://example.org/politica',
 		),
+		
 	),
-	*/
+
+	'contacts' => [
+		[
+			'contactType'       => 'other',
+			'emailAddress'      => 'mailto:abuse@example.org',
+			'givenName'         => 'John',
+			'surName'           => 'Doe',
+			'telephoneNumber'   => '+31(0)12345678',
+			'company'           => 'Example Inc.',
+			'attributes'        => [
+				'xmlns:remd'        => 'http://refeds.org/metadata',
+				'remd:contactType'  => 'http://refeds.org/metadata/contactType/security',
+			],
+		],
+	],
+*/
+	'scope'=>['example.org'],
+	
 );

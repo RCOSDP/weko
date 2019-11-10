@@ -27,13 +27,20 @@ RUN \
 export DEBIAN_FRONTEND=noninteractive && \
 export DEBCONF_NONINTERACTIVE_SEEN=true && \
 apt-get update && \
-apt-get install -y man netcat wget curl openssl nano less sudo procps git supervisor shibboleth-sp-common shibboleth-sp-utils
+apt-get install -y man netcat wget curl openssl nano less sudo procps git supervisor && \
+apt-get install -y shibboleth-sp-common shibboleth-sp-utils php-fpm
+#apt-get install -y shibboleth-sp2-common shibboleth-sp2-utils
+
+
 
 # Build nginx shibboleth modules, taken from
 # https://github.com/ConsortiumGARR/idem-tutorials/blob/master/idem-community/HOWTO-Shibboleth/Service-Provider/Debian/HOW%20TO%20SETUP%20A%20SHIBBOLETH%20SP%20WITH%20NGINX.md
 RUN mkdir -p /root/nginx-modules/deb
 WORKDIR /root/nginx-modules
 ADD http://hg.nginx.org/pkg-oss/archive/tip.tar.gz tip.tar.gz
+# cant work!
+#ADD tip.tar.gz /root/nginx-modules/tip.tar.gz
+
 RUN \
 tar -xvf tip.tar.gz && mv pkg-oss-* pkg-oss/ && \
 git clone https://github.com/openresty/headers-more-nginx-module.git && \
@@ -52,8 +59,16 @@ RUN \
 adduser nginx _shibd && \
 adduser nginx www-data
 
+RUN apt-get install -y php-curl
+
 ADD shibboleth.conf /etc/supervisor/conf.d/shibboleth.conf
-ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml 
+ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml
+ADD attribute-map.xml /etc/shibboleth/attribute-map.xml
+ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml 
+
+ADD ./keys/server.crt /etc/shibboleth/server.crt
+ADD ./keys/server.key /etc/shibboleth/server.key
+
 
 RUN rm /etc/nginx/conf.d/default.conf
 RUN rm /etc/nginx/nginx.conf
@@ -61,7 +76,17 @@ ADD weko.conf /etc/nginx/conf.d/
 ADD nginx.conf /etc/nginx/nginx.conf
 ADD ./keys/server.crt /etc/nginx/server.crt
 ADD ./keys/server.key /etc/nginx/server.key
+ADD ./idp-metadata.xml /etc/shibboleth/idp-metadata.xml
 
 RUN chmod 400 /etc/nginx/server.key
+
+RUN mkdir  /usr/share/nginx/html/secure
+ADD ./phpinfo.php /usr/share/nginx/html/secure/phpinfo.php
+ADD ./index.php /usr/share/nginx/html/secure/index.php
+ADD ./login.php /usr/share/nginx/html/secure/login.php
+
+ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
+ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params
+
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/shibboleth.conf"]

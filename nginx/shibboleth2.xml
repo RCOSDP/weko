@@ -8,10 +8,22 @@
     By default, in-memory StorageService, ReplayCache, ArtifactMap, and SessionCache
     are used. See example-shibboleth2.xml for samples of explicitly configuring them.
     -->
+    <RequestMapper type="XML">
+    <RequestMap>
+        <Host name="weko3.example.org"
+                authType="shibboleth"
+                requireSession="true"
+                redirectToSSL="443">
+            <Path name="/secure" />
+            <!-- other Path, PathRegex or Query elements here -->
+        </Host>
+        <!-- other Host or HostRegex elements here -->
+    </RequestMap>
+    </RequestMapper>
 
     <!-- The ApplicationDefaults element is where most of Shibboleth's SAML bits are defined. -->
-    <ApplicationDefaults entityID="https://sp.example.org/shibboleth-sp"
-        REMOTE_USER="eppn subject-id pairwise-id persistent-id"
+    <ApplicationDefaults entityID="https://weko3.example.org/shibboleth-sp"
+        REMOTE_USER="eppn persistent-id targeted-id"
         cipherSuites="DEFAULT:!EXP:!LOW:!aNULL:!eNULL:!DES:!IDEA:!SEED:!RC4:!3DES:!kRSA:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1">
 
         <!--
@@ -30,7 +42,7 @@
             entityID property and adjust discoveryURL to point to discovery service.
             You can also override entityID on /Login query string, or in RequestMap/htaccess.
             -->
-            <SSO entityID="https://idp.example.org/idp/shibboleth"
+            <SSO entityID="https://weko3.example.org/idp/simplesamlphp"
                  discoveryProtocol="SAMLDS" discoveryURL="https://ds.example.org/DS/WAYF">
               SAML2
             </SSO>
@@ -71,6 +83,9 @@
         <MetadataProvider type="XML" validate="true" path="partner-metadata.xml"/>
         -->
 
+        <MetadataProvider type="XML" validate="true" path="idp-metadata.xml"/>
+        
+
         <!-- Example of remotely supplied batch of signed metadata. -->
         <!--
         <MetadataProvider type="XML" validate="true"
@@ -102,9 +117,9 @@
 
         <!-- Simple file-based resolvers for separate signing/encryption keys. -->
         <CredentialResolver type="File" use="signing"
-            key="sp-signing-key.pem" certificate="sp-signing-cert.pem"/>
+            key="server.key" certificate="server.crt"/>
         <CredentialResolver type="File" use="encryption"
-            key="sp-encrypt-key.pem" certificate="sp-encrypt-cert.pem"/>
+            key="server.key" certificate="server.crt"/>
         
     </ApplicationDefaults>
     

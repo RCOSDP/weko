@@ -87,7 +87,8 @@ $config = array(
      * A possible way to generate a random salt is by running the following command from a unix shell:
      * tr -c -d '0123456789abcdefghijklmnopqrstuvwxyz' </dev/urandom | dd bs=32 count=1 2>/dev/null;echo
      */
-    'secretsalt' => 'defaultsecretsalt',
+    //'secretsalt' => 'defaultsecretsalt',
+    'secretsalt' => 'm0e18fvhgdtcjy491d40xtacavxm2ib9',
 
     /*
      * Some information about the technical persons running this installation.
