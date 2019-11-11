@@ -516,6 +516,15 @@ class ItemImportView(BaseView):
             workflows=json.dumps(workflows_js)
         )
 
+    @expose('/check', methods=['POST'])
+    @item_type_permission.require(http_exception=403)
+    def check(self):
+        """Register an item type mapping."""
+        data = request.get_json()
+        
+        
+
+        return jsonify(data)
 
 itemtype_meta_data_adminview = {
     'view_class': ItemTypeMetaDataView,

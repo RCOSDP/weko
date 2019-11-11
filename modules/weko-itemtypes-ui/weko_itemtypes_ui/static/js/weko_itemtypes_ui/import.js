@@ -19,6 +19,7 @@ const cancel = document.getElementById("cancel").value;
 const check = document.getElementById("check").value;
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin+'/api/tree'
+const urlCheck = window.location.origin+'/admin/items/import/check'
 
 class MainLayout extends React.Component {
 
@@ -42,6 +43,7 @@ class MainLayout extends React.Component {
       ]
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
+    this.handleCheck = this.handleCheck.bind(this)
   }
 
   handleChangeTab(tab) {
@@ -51,6 +53,25 @@ class MainLayout extends React.Component {
   }
 
   componentDidMount() {
+  }
+
+  handleCheck(data){
+    const that = this
+    $.ajax({
+      url: urlCheck,
+      type: 'POST',
+      data: JSON.stringify(data),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      success: function (data) {
+        console.log(data)
+        that.handleChangeTab('check')
+      },
+      error: function (error) {
+        console.log(error);
+        // alert();
+      }
+    });
   }
 
   render() {
@@ -68,7 +89,10 @@ class MainLayout extends React.Component {
           }
         </ul>
         <div className={`${tab === tabs[0].tab_key ? '': 'hide'}`}>
-          <ImportComponent></ImportComponent>
+          <ImportComponent handleCheck={this.handleCheck}></ImportComponent>
+        </div>
+        <div className={`${tab === tabs[1].tab_key ? '': 'hide'}`}>
+        <CheckComponent></CheckComponent>
         </div>
         
       </div>
@@ -203,10 +227,15 @@ class ImportComponent extends React.Component {
     }
 
     handleSubmit() {
-      const {isShowModalImport,} = this.state
-      this.setState({
-        isShowModalImport: !isShowModalImport,
-      })
+      const {isShowModalImport,file,file_name, work_flow_data, select_index_list} = this.state
+      const {handleCheck} = this.props
+      const data = {
+        file,
+        file_name,
+        work_flow: work_flow_data,
+        index: select_index_list
+      }
+      handleCheck(data)
     }
 
     render() {
@@ -581,6 +610,83 @@ class TreeNode extends React.Component {
     )
   }
 
+}
+
+class CheckComponent extends React.Component {
+
+  constructor(){
+    super()
+  }
+
+  render(){
+    return(
+      <div className="check-component">
+        <div className="row">
+          <div className="col-md-12 text-center">
+            <button className="btn btn-primary"><span className="glyphicon glyphicon-download-alt icon"></span>{import_label}</button>
+          </div>
+          <div className="col-md-12 text-center">
+            <div className="row block-summary">
+              <div className="col-md-3 col-sm-3">
+                <h3><b>Summary</b></h3>
+                <div className="flex-box">
+                  <div>Total:</div>
+                  <div>5</div>
+                </div>
+                <div className="flex-box">
+                  <div>Total:</div>
+                  <div>5</div>
+                </div>
+                <div className="flex-box">
+                  <div>Total:</div>
+                  <div>5</div>
+                </div>
+                <div className="flex-box">
+                  <div>Total:</div>
+                  <div>5</div>
+                </div>
+              </div>
+              <div className="col-md-9 text-align-left">
+                <button className="btn btn-primary"><span className="glyphicon glyphicon-cloud-download"></span>Download</button>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-12 m-t-20">
+            <table class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>{item_type}</th>
+                  <th>ItemID</th>
+                  <th>title</th>
+                  <th>Check Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  workflows.map((item, key) => {
+                    return (
+                      <tr key={key}>
+                        <td>
+                          {key}
+                        </td>
+                        <td>{item.flows_name}</td>
+                        <td>
+                          {key}
+                        </td>
+                        <td>{item.item_type_name}</td>
+                        <td>{item.flow_name}</td>
+                      </tr>
+                    )
+                  })
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
 
 $(function () {
