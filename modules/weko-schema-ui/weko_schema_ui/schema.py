@@ -405,7 +405,7 @@ class SchemaTree:
                     elif isinstance(lst, str):
                         yield lst, atr_list
 
-        def get_items_value_lst(atr_vm, key, z=None, kn=None):
+        def get_items_value_lst(atr_vm, key, rlst, z=None, kn=None):
             klst = []
             blst = []
             parent_id = 0
@@ -413,24 +413,25 @@ class SchemaTree:
                 if parent_id != p2 and parent_id != 0:
                     klst.append(blst)
                     blst = []
+                rlst.append(k2)
                 blst.append(get_url(z, kn, k2))
                 parent_id = p2
             if blst:
                 klst.append(blst)
             return klst
 
-        def get_atr_value_lst(node, atr_vm):
+        def get_atr_value_lst(node, atr_vm, rlst):
             for k1, v1 in node.items():
                 # if 'item' not in v1:
                 #     continue
-                klst = get_items_value_lst(atr_vm, v1)
+                klst = get_items_value_lst(atr_vm, v1, rlst)
                 if klst:
                     node[k1] = klst
 
         def get_mapping_value(mpdic, atr_vm, k):
+            remain_keys = []
             def remove_empty_tag(mp):
-                pattern = r'(sub)?item_\d{13}$'
-                if type(mp) == str and re.match(pattern, mp):
+                if type(mp) == str and mp not in remain_keys:
                     return True
                 elif type(mp) == dict:
                     remove_list = []
@@ -451,7 +452,7 @@ class SchemaTree:
                 for z, y in get_key_value(vlc):
                     # if it`s attributes node
                     if y == self._atr:
-                        get_atr_value_lst(z, atr_vm)
+                        get_atr_value_lst(z, atr_vm, remain_keys)
                     else:
                         if not z.get(self._v):
                             continue
@@ -461,14 +462,14 @@ class SchemaTree:
                         # if not have expression or formula
                         if len(lk) == 1:
                             nlst = get_items_value_lst(
-                                atr_vm, lk[0].strip(), z, k)
+                                atr_vm, lk[0].strip(), remain_keys, z, k)
                             if nlst:
                                 z[self._v] = nlst
                         else:
                             nlst = []
                             for val in lk:
                                 klst = get_items_value_lst(
-                                    atr_vm, val.strip(), z, k)
+                                    atr_vm, val.strip(), remain_keys, z, k)
                                 nlst.append(klst)
 
                             if nlst:
