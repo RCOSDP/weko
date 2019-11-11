@@ -431,7 +431,7 @@ class SchemaTree:
         def get_mapping_value(mpdic, atr_vm, k):
             remain_keys = []
             def remove_empty_tag(mp):
-                if type(mp) == str and mp not in remain_keys:
+                if type(mp) == str and (not mp or mp not in remain_keys):
                     return True
                 elif type(mp) == dict:
                     remove_list = []
