@@ -209,6 +209,35 @@ class ItemManagementBulkSearch(BaseView):
         return False
 
 
+class ItemImportView(BaseView):
+    """ItemImportView."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
+        from weko_workflow.api import WorkFlow
+        from .utils import get_content_workflow
+        import json
+        workflow = WorkFlow()
+        workflows = workflow.get_workflow_list()
+        workflows_js = [get_content_workflow(item) for item in workflows]
+        return self.render(
+            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
+            workflows=json.dumps(workflows_js)
+        )
+
+    @expose('/check', methods=['POST'])
+    def check(self):
+        """Register an item type mapping."""
+        data = request.get_json()
+        return jsonify(data)
+
+
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,
     'kwargs': {
@@ -236,8 +265,18 @@ item_management_custom_sort_adminview = {
     }
 }
 
+item_management_import_adminview = {
+    'view_class': ItemImportView,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Import'),
+        'endpoint': 'items/import'
+    }
+}
+
 __all__ = (
     'item_management_bulk_delete_adminview',
     'item_management_bulk_search_adminview',
     'item_management_custom_sort_adminview',
+    'item_management_import_adminview'
 )

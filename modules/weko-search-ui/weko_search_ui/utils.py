@@ -165,3 +165,23 @@ def check_permission():
             is_permission_user = True
 
     return is_permission_user
+
+
+def get_content_workflow(item):
+    """Get content workflow.
+
+    Arguments:
+        item {Object PostgreSql} -- list work flow
+
+    Returns:
+        result {dictionary} -- content of work flow
+
+    """
+    result = dict()
+    result['flows_name'] = item.flows_name
+    result['id'] = item.id
+    result['itemtype_id'] = item.itemtype_id
+    result['flow_id'] = item.flow_id
+    result['flow_name'] = item.flow_define.flow_name
+    result['item_type_name'] = item.itemtype.item_type_name.name
+    return result

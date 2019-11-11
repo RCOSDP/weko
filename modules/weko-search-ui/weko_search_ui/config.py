@@ -74,6 +74,9 @@ SEARCH_UI_JSTEMPLATE_SELECT_BOX = 'templates/weko_search_ui/selectbox.html'
 
 SEARCH_UI_JSTEMPLATE_SORT_ORDER = 'templates/weko_search_ui/togglebutton.html'
 
+WEKO_ITEM_ADMIN_IMPORT_TEMPLATE = 'weko_search_ui/admin/import.html'
+"""import template for the import page."""
+
 INDEX_IMG = 'indextree/36466818-image.jpg'
 
 # Opensearch description
