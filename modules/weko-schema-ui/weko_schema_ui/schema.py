@@ -61,7 +61,6 @@ class SchemaConverter:
 
     def create_schema(self, schema_file):
         """Create_schema."""
-
         def getXSVal(element_name):  # replace prefix namespace
             if (element_name is not None
                     and isinstance(element_name, Iterable)
@@ -137,8 +136,8 @@ class SchemaConverter:
         def get_elements(element):
             chdsm = OrderedDict()
             for chd in element.iterchildren():
-                if (chd not in ignore_list and
-                        not getXSVal(element.name).__eq__(getXSVal(chd.name))
+                if (chd not in ignore_list
+                        and not getXSVal(element.name).__eq__(getXSVal(chd.name))
                         and is_valid_element(chd.name)
                         and not isinstance(chd, XsdAnyElement)):
                     ctp = OrderedDict()
@@ -378,8 +377,8 @@ class SchemaTree:
                     pid = self._record.get('control_number')
                     if pid:
                         return request.host_url[:-1] + \
-                               url_for('invenio_records_ui.recid_files',
-                                       pid_value=pid, filename=val)
+                            url_for('invenio_records_ui.recid_files',
+                                    pid_value=pid, filename=val)
                     else:
                         return val
                 else:
@@ -430,17 +429,18 @@ class SchemaTree:
 
         def get_mapping_value(mpdic, atr_vm, k):
             remain_keys = []
+
             def remove_empty_tag(mp):
-                if type(mp) == str and (not mp or mp not in remain_keys):
+                if isinstance(mp, str) and (not mp or mp not in remain_keys):
                     return True
-                elif type(mp) == dict:
+                elif isinstance(mp, dict):
                     remove_list = []
                     for it in mp:
                         if remove_empty_tag(mp[it]):
                             remove_list.append(it)
                     for it in remove_list:
                         mp.pop(it)
-                elif type(mp) == list:
+                elif isinstance(mp, list):
                     for it in mp:
                         if remove_empty_tag(it):
                             mp.remove(it)
