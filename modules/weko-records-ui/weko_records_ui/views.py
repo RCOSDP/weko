@@ -43,7 +43,7 @@ from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
 from weko_deposit.api import WekoIndexer, WekoRecord
-from weko_deposit.pidstore import get_record_identifier
+from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.serializers import citeproc_v1
@@ -465,7 +465,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             filter_by(is_thumbnail=True).all()
 
     # Flag: can edit record
-    can_edit = False if not get_record_identifier(pid.pid_value) else True
+    can_edit = True if pid == get_record_without_version(pid) else False
 
     return render_template(
         template,
