@@ -20,6 +20,7 @@ $(document).ready(function () {
   page_global.src_mapping_name = $('#item-type-lists').val();
   page_global.dst_mapping_name = $('#item-type-lists').val();
   page_global.meta_system = JSON.parse($('#meta_system').text());
+  page_global.mapping_prop = JSON.parse($('#hide_mapping_prop').text());
 
   initPropertiesItems()
 
