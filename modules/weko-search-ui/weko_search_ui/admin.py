@@ -235,8 +235,24 @@ class ItemImportView(BaseView):
     def check(self):
         """Register an item type mapping."""
         data = request.get_json()
+        import io, zipfile, json, base64
+
+        decoded = base64.b64decode(get_base64_string(data.get('file'))) 
+        
+        current_app.logger.debug("=======================================")
+        with zipfile.ZipFile(io.BytesIO(decoded)) as zf:
+            for name in zf.namelist():
+                current_app.logger.debug(name)
+        #         with zf.open(name) as f:
+        #             data = json.loads(f.read().decode())
+        # current_app.logger.debug(data)
         return jsonify(data)
 
+
+def get_base64_string(data): 
+    result = data.split(",")
+    current_app.logger.debug(result[-1])
+    return result[-1]
 
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,
