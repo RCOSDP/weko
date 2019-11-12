@@ -853,6 +853,8 @@ class WorkActivity(object):
                     db_activity.action_id = activity.get('action_id')
                     db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()
+                    if activity.get('item_id') is not None:
+                        db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
                     db_history = ActivityHistory(
                         activity_id=activity.get('activity_id'),
@@ -1333,7 +1335,7 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             return None
 
-    def get_workflow_activity_status_by_item_id(self, item_id):
+    def get_workflow_activity_by_item_id(self, item_id):
         """Get workflow activity status by item ID.
 
         :param item_id:
@@ -1342,10 +1344,7 @@ class WorkActivity(object):
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
                     item_id=item_id).one_or_none()
-                if activity:
-                    return activity.action_status
-                else:
-                    return None
+                return activity
         except Exception as ex:
             current_app.logger.error(ex)
             return None

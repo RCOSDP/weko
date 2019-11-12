@@ -17,7 +17,7 @@ $(document).ready(function () {
 
         for (let index = 0; index < results.length; index++) {
           const element = results[index];
-          if (element.lang_code == data.selected) {
+          if (element.lang_code === data.selected) {
             options += `<option value="${element.lang_code}" selected>${element.lang_name}</option>`;
             continue;
           }
@@ -27,12 +27,9 @@ $(document).ready(function () {
       const select = $('select[id=\'lang-code\']');
       select.children().remove();
       select.append(options);
-      if (data.refresh) {
-        location.reload();
-      }
     },
     error: function (error) {
       console.log(error);
     }
   });
-})
+});

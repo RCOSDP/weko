@@ -444,7 +444,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     if search_type is None:
         search_type = request.values.get('search_type')
 
-    qs = request.values.get('q')
+    if request.values.get('format'):
+        qs = request.values.get('keyword')
+    else:
+        qs = request.values.get('q')
 
     # full text search
     if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:

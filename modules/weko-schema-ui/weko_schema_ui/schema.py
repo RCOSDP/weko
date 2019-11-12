@@ -23,7 +23,7 @@
 import copy
 import json
 import re
-from collections import OrderedDict
+from collections import Iterable, OrderedDict
 from functools import partial
 
 import redis
@@ -33,9 +33,10 @@ from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import Mapping
-from xmlschema.validators import XsdAnyElement, XsdAtomicBuiltin, \
-    XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, XsdPatternsFacet, \
-    XsdSingleFacet, XsdUnion
+from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
+    XsdAtomicBuiltin, XsdAtomicRestriction, XsdAttribute, \
+    XsdEnumerationFacet, XsdGroup, XsdPatternsFacet, XsdSingleFacet, \
+    XsdUnion
 
 from .api import WekoSchema
 
@@ -59,21 +60,23 @@ class SchemaConverter:
         return json.dumps(self.schema)
 
     def create_schema(self, schema_file):
-        """Creat_schema."""
+        """Create_schema."""
         def getXSVal(element_name):  # replace prefix namespace
-            if "}" in element_name:
+            if (element_name is not None
+                    and isinstance(element_name, Iterable)
+                    and "}" in element_name):
                 for k, nsp in schema_data.namespaces.items():
                     if nsp in element_name:
                         if k == "":
                             k = self.rootname.split(
-                                ":")[-1] if ":" in self.rootname else self.rootname
-                        return element_name.replace("{" + nsp + "}", k + ":")
-
+                                ":")[
+                                -1] if ":" in self.rootname else self.rootname
+                        return element_name.replace("{" + nsp + "}",
+                                                    k + ":")
             return element_name
 
         def get_element_type(type):
             typd = OrderedDict()
-
             if isinstance(type, XsdAtomicRestriction):
                 rstr = typd['restriction'] = OrderedDict()
                 for va in type.validators:
@@ -91,8 +94,9 @@ class SchemaConverter:
                     for pat in type.patterns.patterns:
                         plst.append(pat.pattern)
                     rstr.update(OrderedDict(patterns=plst))
-
             elif isinstance(type, XsdAtomicBuiltin):
+                pass
+            elif isinstance(type, XsdAnyAttribute):
                 pass
             elif isinstance(type, XsdUnion):
                 for mt in type.member_types:
@@ -106,13 +110,12 @@ class SchemaConverter:
                         attrd = OrderedDict(
                             name=getXSVal(
                                 atrb.name),
-                            ref=atrb.ref,
-                            use=atrb.use)
-                        if 'lang' not in atrb.name:
-                            attrd.update(get_element_type(atrb.type))
-
-                        atrlst.append(attrd)
-
+                            ref=None if not hasattr(atrb, 'ref') else atrb.ref,
+                            use=None if not hasattr(atrb, 'use') else atrb.use)
+                        if not isinstance(atrb, XsdAnyAttribute):
+                            if 'lang' not in atrb.name:
+                                attrd.update(get_element_type(atrb.type))
+                            atrlst.append(attrd)
                 if len(atrlst):
                     typd['attributes'] = atrlst
                 if hasattr(type, 'content_type'):
@@ -121,18 +124,29 @@ class SchemaConverter:
 
             return typd
 
-        def get_elements(element):
+        def is_valid_element(element_name):
+            is_valid = True
+            if is_get_only_target_namespace:
+                if str(element_name).find(tagns) != -1:
+                    is_valid = True
+                else:
+                    is_valid = False
+            return is_valid
 
+        def get_elements(element):
             chdsm = OrderedDict()
             for chd in element.iterchildren():
-                if not isinstance(chd, XsdAnyElement):
+                if (chd not in ignore_list
+                        and not getXSVal(element.name).__eq__(getXSVal(chd.name))
+                        and is_valid_element(chd.name)
+                        and not isinstance(chd, XsdAnyElement)):
                     ctp = OrderedDict()
                     chn = getXSVal(chd.name)
                     ctp["type"] = OrderedDict(
                         minOccurs=chd.min_occurs,
-                        maxOccurs=chd.max_occurs if chd.max_occurs else 'unbounded')
+                        maxOccurs=chd.max_occurs if chd.max_occurs
+                        else 'unbounded')
                     ctp["type"].update(get_element_type(chd.type))
-
                     chdsm[chn] = ctp
                     chdsm[chn].update(get_elements(chd))
 
@@ -150,39 +164,47 @@ class SchemaConverter:
 
         # namespace
         nsp, tagns = schema_data.target_prefix, schema_data.target_namespace
-
+        # root node name is got by target namespace and expected root name
+        root_node_name = '{' + tagns + '}' + self.rootname
+        # Important note:
+        # this variable is used for ddi_codeBook schema
+        # because we just get elements of target namespace(ddi:codebook) only
+        # when you import new schema and want to get elements of specific target
+        # namespace,please modify this variable to be suitable for your purpose
+        is_get_only_target_namespace = True if tagns.__contains__(
+            'ddi:codebook') else False
         # create the xsd json schema
         schema = OrderedDict()
 
         try:
-            # get elements by root name
-            if nsp:
-                path = self.rootname if ':' in self.rootname \
-                    else '%s:%s' % (nsp, self.rootname)
-            else:
-                path = '*'
-            elements = schema_data.findall(path + '/*')
+            # get all elements
+            elements = schema_data.findall('*')
+            # ignore some attribute that is not necessary at present usage
+            ignore_list = []
+            # find and ignore unused elements
+            for Xsd_global_group in schema_data.groups:
+                for global_element in schema_data.groups[Xsd_global_group]:
+                    ignore_list.append(global_element)
+
         except Exception as ex:
             current_app.logger.error(str(ex))
             abort(400, "Error creating Schema: Can not find element")
         else:
             if len(elements) > 0:
                 for ems in elements:
-                    ename = getXSVal(ems.name)
-                    tp = OrderedDict()
-                    tp["type"] = OrderedDict(
-                        minOccurs=ems.min_occurs,
-                        maxOccurs=ems.max_occurs if ems.max_occurs else 'unbounded')
-
-                    tp["type"].update(get_element_type(ems.type))
-                    schema[ename] = tp
-
-                    for pae in schema_data.parent_map:
-                        if ems.name == pae.name:
-                            schema[ename].update(get_elements(pae))
+                    if ems.name.__eq__(root_node_name):
+                        for chd in ems.iterchildren():
+                            ename = getXSVal(chd.name)
+                            tp = OrderedDict()
+                            tp["type"] = OrderedDict(
+                                minOccurs=chd.min_occurs,
+                                maxOccurs=chd.max_occurs if chd.max_occurs
+                                else 'unbounded')
+                            tp["type"].update(get_element_type(chd.type))
+                            schema[ename] = tp
+                            schema[ename].update(get_elements(chd))
             else:
                 abort(400, "Error creating Schema: No xsd element")
-
         return schema, schema_data.namespaces, nsp
 
 
@@ -274,8 +296,10 @@ class SchemaTree:
                             lambda x: get_attr(x) in _need_to_nested,
                             attr.keys())) if attr else []
                     if attr and alst:
-                        return list(map(partial(create_json, get_attr(alst[0])), list_reduce(
-                            [attr.get(alst[0])]), list(list_reduce(val))))
+                        return list(map(partial(create_json, get_attr(alst[0])),
+                                        list_reduce(
+                                            [attr.get(alst[0])]),
+                                        list(list_reduce(val))))
 
                     return list(list_reduce(val))
                 else:
@@ -380,7 +404,7 @@ class SchemaTree:
                     elif isinstance(lst, str):
                         yield lst, atr_list
 
-        def get_items_value_lst(atr_vm, key, z=None, kn=None):
+        def get_items_value_lst(atr_vm, key, rlst, z=None, kn=None):
             klst = []
             blst = []
             parent_id = 0
@@ -388,33 +412,35 @@ class SchemaTree:
                 if parent_id != p2 and parent_id != 0:
                     klst.append(blst)
                     blst = []
+                rlst.append(k2)
                 blst.append(get_url(z, kn, k2))
                 parent_id = p2
             if blst:
                 klst.append(blst)
             return klst
 
-        def get_atr_value_lst(node, atr_vm):
+        def get_atr_value_lst(node, atr_vm, rlst):
             for k1, v1 in node.items():
                 # if 'item' not in v1:
                 #     continue
-                klst = get_items_value_lst(atr_vm, v1)
+                klst = get_items_value_lst(atr_vm, v1, rlst)
                 if klst:
                     node[k1] = klst
 
         def get_mapping_value(mpdic, atr_vm, k):
+            remain_keys = []
+
             def remove_empty_tag(mp):
-                pattern = r'(sub)?item_\d{13}$'
-                if type(mp) == str and re.match(pattern, mp):
+                if isinstance(mp, str) and (not mp or mp not in remain_keys):
                     return True
-                elif type(mp) == dict:
+                elif isinstance(mp, dict):
                     remove_list = []
                     for it in mp:
                         if remove_empty_tag(mp[it]):
                             remove_list.append(it)
                     for it in remove_list:
                         mp.pop(it)
-                elif type(mp) == list:
+                elif isinstance(mp, list):
                     for it in mp:
                         if remove_empty_tag(it):
                             mp.remove(it)
@@ -426,7 +452,7 @@ class SchemaTree:
                 for z, y in get_key_value(vlc):
                     # if it`s attributes node
                     if y == self._atr:
-                        get_atr_value_lst(z, atr_vm)
+                        get_atr_value_lst(z, atr_vm, remain_keys)
                     else:
                         if not z.get(self._v):
                             continue
@@ -436,14 +462,14 @@ class SchemaTree:
                         # if not have expression or formula
                         if len(lk) == 1:
                             nlst = get_items_value_lst(
-                                atr_vm, lk[0].strip(), z, k)
+                                atr_vm, lk[0].strip(), remain_keys, z, k)
                             if nlst:
                                 z[self._v] = nlst
                         else:
                             nlst = []
                             for val in lk:
                                 klst = get_items_value_lst(
-                                    atr_vm, val.strip(), z, k)
+                                    atr_vm, val.strip(), remain_keys, z, k)
                                 nlst.append(klst)
 
                             if nlst:
@@ -933,7 +959,8 @@ def get_oai_metadata_formats(app):
                             scm.update({'namespace': ns})
                         scm.update({'schema': lst.schema_location})
                         scm.update(
-                            {'serializer': (sel[0], {'schema_type': schema_name})})
+                            {'serializer': (
+                                sel[0], {'schema_type': schema_name})})
                         oad.update({schema_name: scm})
                     else:
                         if isinstance(lst.namespaces, dict):
