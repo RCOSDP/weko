@@ -537,6 +537,8 @@ def make_stats_tsv(item_type_id, recids):
             self.first_recid = record_ids[0]
             for record_id in record_ids:
                 record = WekoRecord.get_record_by_pid(record_id)
+                current_app.logger.debug("===================================")
+                current_app.logger.debug(record)
                 self.records[record_id] = record
                 self.attr_output[record_id] = []
 

@@ -235,24 +235,77 @@ class ItemImportView(BaseView):
     def check(self):
         """Register an item type mapping."""
         data = request.get_json()
-        import io, zipfile, json, base64
-
-        decoded = base64.b64decode(get_base64_string(data.get('file'))) 
-        
+        import io, zipfile, base64
+        import json
+        from collections import namedtuple
+        decoded = base64.b64decode(get_base64_string(data.get('file')))
         current_app.logger.debug("=======================================")
+        response = []
         with zipfile.ZipFile(io.BytesIO(decoded)) as zf:
-            for name in zf.namelist():
-                current_app.logger.debug(name)
-        #         with zf.open(name) as f:
-        #             data = json.loads(f.read().decode())
-        # current_app.logger.debug(data)
-        return jsonify(data)
+            list_file_tsv = [name for name in zf.namelist() if is_tsv(name)]
+            current_app.logger.debug(list_file_tsv)
+            for name in list_file_tsv:
+                with zf.open(name, 'r') as f:
+                    line1 = []
+                    line2 = []
+                    line3 = []
+                    data_record = []
+                    for i, line in enumerate(f, start=1):
+                        if i == 1:
+                            line1 = line.decode().rstrip('\n\r').split('\t')
+                        if i == 2:
+                            line2 = line.decode().rstrip('\n\r').split('\t')
+                        if i == 3:
+                            line3 = line.decode().rstrip('\n\r').split('\t')
+                        if i not in (1, 2, 3):
+                            data_record.append(zip(line2,line3,
+                                                        line.decode().rstrip(
+                                                            '\n\r').split(
+                                                            '\t')))
+                    for d in data_record:
+                        json_data = parse_to_json_form(d)
+                        response.append(json_data)
+        return jsonify(response)
 
 
-def get_base64_string(data): 
+def get_base64_string(data):
     result = data.split(",")
-    current_app.logger.debug(result[-1])
     return result[-1]
+
+def is_tsv(name):
+    term = name.split('.')
+    return term[-1] == "tsv"
+
+
+from functools import reduce
+from operator import getitem
+from collections import defaultdict
+
+
+def set_nested_item(dataDict, mapList, val):
+    """Set item in nested dictionary"""
+    reduce(getitem, mapList[:-1], dataDict)[mapList[-1]] = val
+    return dataDict
+
+
+def dd_rec():
+    return defaultdict(dd_rec)
+
+
+def defaultify(d):
+    if not isinstance(d, dict):
+        return d
+    return defaultdict(dd_rec, {k: defaultify(v) for k, v in d.items()})
+
+def parse_to_json_form(data):
+    result = defaultify({})
+    import json
+    for key, name, value in data:
+        key_path = key.split(".")
+        del key_path[0]
+        set_nested_item(result,key_path,value)
+
+    return json.loads(json.dumps(result))
 
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,

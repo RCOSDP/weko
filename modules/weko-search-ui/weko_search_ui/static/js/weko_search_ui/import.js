@@ -94,7 +94,7 @@ class MainLayout extends React.Component {
         <div className={`${tab === tabs[1].tab_key ? '': 'hide'}`}>
         <CheckComponent></CheckComponent>
         </div>
-        
+
       </div>
     )
   }
@@ -124,7 +124,7 @@ class ImportComponent extends React.Component {
       this.handleShowModalIndex = this.handleShowModalIndex.bind(this)
       this.handleSelectIndex = this.handleSelectIndex.bind(this)
       this.handleSubmit = this.handleSubmit.bind(this)
-      
+
     }
 
     componentDidMount() {
@@ -232,8 +232,8 @@ class ImportComponent extends React.Component {
       const data = {
         file,
         file_name,
-        work_flow: work_flow_data,
-        index: select_index_list
+        // work_flow: work_flow_data,
+        // index: select_index_list
       }
       handleCheck(data)
     }
@@ -244,7 +244,7 @@ class ImportComponent extends React.Component {
         isShowModalWF,
         wl_key,
         work_flow_data,
-        isShowModalIndex, 
+        isShowModalIndex,
         list_index,
         term_select_index_list,
         select_index_list,
@@ -278,6 +278,7 @@ class ImportComponent extends React.Component {
                 </div>
               </div>
             </div>
+{/*             
             <div className="col-md-12">
               <div className="row">
                 <div className="col-md-2 col-cd">
@@ -296,7 +297,7 @@ class ImportComponent extends React.Component {
                               {
                                 item.name.map((item_name, key_item)=>{
                                   return(
-                                    <li 
+                                    <li
                                       style={{listStylePosition: "inside",
                                       }}>{item_name}</li>
                                   )
@@ -328,14 +329,15 @@ class ImportComponent extends React.Component {
                 </div>
               </div>
             </div>
+             */}
             <div className="col-md-12">
               <div className="row">
                 <div className="col-md-2">
-                  <button 
-                    className="btn btn-primary" 
-                    disabled={!file || !work_flow_data ||  !select_index_list.length} 
-                    
-                    onClick={()=>{file && work_flow_data && select_index_list.length && this.handleSubmit()}}
+                  <button
+                    className="btn btn-primary"
+                    disabled={!file}
+
+                    onClick={()=>{file && this.handleSubmit()}}
                   >
                     <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
                   </button>
@@ -343,7 +345,9 @@ class ImportComponent extends React.Component {
               </div>
             </div>
           </div>
+          
           {/* Work Flow */}
+{/* 
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleShowModalWorkFlow()}></div>
             <div className="modal-content">
@@ -367,10 +371,10 @@ class ImportComponent extends React.Component {
                           return (
                             <tr key={key}>
                               <td style={{textAlign: 'center'}}>
-                                <input 
+                                <input
                                   type='radio'
-                                  name='workflow' 
-                                  value={key} 
+                                  name='workflow'
+                                  value={key}
                                   checked={wl_key == key}
                                   onChange={this.handleChangeWF}
                                   ></input>
@@ -386,8 +390,8 @@ class ImportComponent extends React.Component {
                   </table>
                 </div>
                 <div class="col-sm-12 footer text-align-right">
-                  <button 
-                    className="btn btn-primary" 
+                  <button
+                    className="btn btn-primary"
                     disabled={wl_key === null}
                     onClick={()=>{wl_key!== null && this.handleShowModalWorkFlow(workflows[wl_key])}}
                   >
@@ -395,10 +399,12 @@ class ImportComponent extends React.Component {
                   </button>
                   <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalWorkFlow()}>{cancel}</button>
                 </div>
-              </div>             
+              </div>
             </div>
           </div>
+           */}
           {/* Index */}
+{/*           
           <div className={`modal ${isShowModalIndex ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleShowModalIndex(false)}></div>
             <div className="modal-index">
@@ -415,14 +421,14 @@ class ImportComponent extends React.Component {
                         </div>
                         <div className="panel-body tree_list">
                           {
-                            isShowModalIndex && <TreeList 
-                            children={list_index} 
-                            handleSelectIndex={this.handleSelectIndex} 
-                            tree_name={[]} 
+                            isShowModalIndex && <TreeList
+                            children={list_index}
+                            handleSelectIndex={this.handleSelectIndex}
+                            tree_name={[]}
                             select_index_list={[...select_index_list]}
                             ></TreeList>
                           }
-                          
+
                         </div>
                       </div>
                     </div>
@@ -441,25 +447,27 @@ class ImportComponent extends React.Component {
                             )
                           })}
                         </ul>
-                          
+
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="col-sm-12 footer text-align-right">
-                  <button 
-                    className="btn btn-primary" 
+                  <button
+                    className="btn btn-primary"
                     disabled={!term_select_index_list.length}
                     onClick={()=>{term_select_index_list.length && this.handleShowModalIndex(true)}}
                   >
                     <span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
                   <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalIndex(false)}>{cancel}</button>
                 </div>
-              </div>             
+              </div>
             </div>
           </div>
+           */}
           {/* import */}
+{/*           
           <div className={`modal ${isShowModalImport ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleSubmit(false)}></div>
             <div className="modal-index">
@@ -498,9 +506,9 @@ class ImportComponent extends React.Component {
                   <button className="btn btn-danger m-l-15" onClick={()=>this.handleSubmit(false)}>{cancel}</button>
                   <button className="btn btn-success m-l-15" onClick={()=>this.handleSubmit(false)}>Download</button>
                 </div>
-              </div>             
+              </div>
             </div>
-          </div>
+          </div> */}
 
         </div>
       )
@@ -523,9 +531,9 @@ class TreeList extends React.Component {
             children.map((item,index)=> {
               return (
                   <li>
-                    <TreeNode 
-                      data={item} key={index} 
-                      handleSelectIndex={this.props.handleSelectIndex} 
+                    <TreeNode
+                      data={item} key={index}
+                      handleSelectIndex={this.props.handleSelectIndex}
                       tree_name={tree_name}
                       select_index_list={select_index_list}
                       ></TreeNode>
@@ -586,11 +594,11 @@ class TreeNode extends React.Component {
   render(){
     const {data, tree_name,select_index_list,} = this.props
     const {isCollabsed,defaultChecked} = this.state
-    
+
     return(
       <div className="tree-node">
-        <div 
-          className={`folding ${ data.children.length ? isCollabsed ? 'node-collapsed': 'node-expanded' : 'weko-node-empty'}`} 
+        <div
+          className={`folding ${ data.children.length ? isCollabsed ? 'node-collapsed': 'node-expanded' : 'weko-node-empty'}`}
           onClick={()=>{data.children.length && this.handleShow()}}
         >
         </div>
@@ -599,9 +607,9 @@ class TreeNode extends React.Component {
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
-          <TreeList 
-            children={data.children} 
-            tree_name={[...tree_name, data.name]} 
+          <TreeList
+            children={data.children}
+            tree_name={[...tree_name, data.name]}
             handleSelectIndex={this.props.handleSelectIndex}
             select_index_list={select_index_list}
             ></TreeList>
