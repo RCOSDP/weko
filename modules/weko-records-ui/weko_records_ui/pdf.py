@@ -37,11 +37,32 @@ from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 
 from .models import PDFCoverPageSettings
 from .views import blueprint
+from .config import URL_OA_POLICY_HEIGHT, TITLE_HEIGHT, HEADER_HEIGHT, \
+    FOOTER_HEIGHT, METADATA_HEIGHT
 
 
 """ Function counting numbers of full-width character and half-width character\
         differently """
 
+# Parameters such as width and height of rows/columns
+w1 = 60  # width of the left column
+w2 = 110  # width of the right column
+footer_w = 90  # width of the footer cell
+# url_oapolicy_h = 7  # height of the URL & OA-policy
+# height of the URL & OA-policy
+url_oapolicy_h = URL_OA_POLICY_HEIGHT
+# title_h = 8  # height of the title
+title_h = TITLE_HEIGHT  # height of the title
+# header_h = 20  # height of the header cell
+header_h = HEADER_HEIGHT  # height of the header cell
+# footer_h = 4  # height of the footer cell
+footer_h = FOOTER_HEIGHT  # height of the footer cell
+# meta_h = 9  # height of the metadata cell
+# height of the metadata cell
+meta_h = METADATA_HEIGHT
+max_letters_num = 41    # number of maximum letters that can be contained \
+# in the right column
+cc_logo_xposition = 160  # x-position of Creative Commons logos
 
 def get_east_asian_width_count(text):
     """Def eat asian width count."""
@@ -54,7 +75,66 @@ def get_east_asian_width_count(text):
     return count
 
 
-""" Function making PDF cover page """
+def get_creator_info(data, lang):
+    name_list = []
+    default_name_list = []
+    mail_list = []
+    affiliation_list = []
+    names = ''
+    mails = ''
+    affiliations = ''
+    if isinstance(data, dict):
+        # creator name
+        try:
+            for d in data['creatorNames']:
+                if d.get('creatorNameLang') == lang:
+                    name_list.append(d.get('creatorName'))
+                if d.get('creatorNameLang') == 'en':
+                    default_name_list.append(d.get('creatorName'))
+            names = ', '.join(name_list) \
+                if name_list else ', '.join(default_name_list)
+        except (KeyError, IndexError, TypeError):
+            names = ''
+
+        if names:
+            # creator mail
+            try:
+                for d in data['creatorMails']:
+                    mail_list.append(d.get('creatorMail'))
+                mails = ', '.join(mail_list)
+            except (KeyError, IndexError, TypeError):
+                mails = ''
+            # affiliation
+            try:
+                for d in data['affiliation']:
+                    affiliation_list.append(d.get('affiliationNames'))
+                affiliations = ', '.join(affiliation_list)
+            except (KeyError, IndexError, TypeError):
+                affiliations = ''
+    elif isinstance(data, list):
+        for l in data:
+            tnames, tmails, taffiliations = get_creator_info(l, lang)
+            if tnames:
+                names = names + ', ' + tnames if names else tnames
+            if tmails:
+                mails = mails + ', ' + tmails if mails else tmails
+            if taffiliations:
+                affiliations = affiliations + ', ' + taffiliations \
+                    if affiliations else taffiliations
+
+    return names, mails, affiliations
+
+
+def printing_text_to_pdf(pdf, offset, title, value):
+    value = value if value else ''
+    lfnum = int(get_east_asian_width_count(value)) // max_letters_num
+
+    top = pdf.y
+    pdf.multi_cell(w1, url_oapolicy_h,
+                   title + '\n' * (lfnum + 1), 1, 'C', True)
+    pdf.y = top
+    pdf.x = offset
+    pdf.multi_cell(w2, url_oapolicy_h, value, 1, 'L', False)
 
 
 def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
@@ -94,26 +174,6 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         '',
         current_app.config["JPAEXM_TTF_FILEPATH"],
         uni=True)
-
-    # Parameters such as width and height of rows/columns
-    w1 = 40  # width of the left column
-    w2 = 130  # width of the right column
-    footer_w = 90  # width of the footer cell
-    # url_oapolicy_h = 7  # height of the URL & OA-policy
-    # height of the URL & OA-policy
-    url_oapolicy_h = current_app.config['URL_OA_POLICY_HEIGHT']
-    # title_h = 8  # height of the title
-    title_h = current_app.config['TITLE_HEIGHT']  # height of the title
-    # header_h = 20  # height of the header cell
-    header_h = current_app.config['HEADER_HEIGHT']  # height of the header cell
-    # footer_h = 4  # height of the footer cell
-    footer_h = current_app.config['FOOTER_HEIGHT']  # height of the footer cell
-    # meta_h = 9  # height of the metadata cell
-    # height of the metadata cell
-    meta_h = current_app.config['METADATA_HEIGHT']
-    max_letters_num = 51    # number of maximum letters that can be contained \
-    # in the right column
-    cc_logo_xposition = 160  # x-position of Creative Commons logos
 
     # Get the header settings
     record = PDFCoverPageSettings.find(1)
@@ -242,121 +302,32 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
                     keywords_en = k.get(keyword_item_value)
     except (KeyError, IndexError):
         pass
+
     creator_item = item_metadata_json.get(_creator_item_id)
-    try:
-        creator_mail = creator_item['creatorMails'][0].get('creatorMail')
-    except (KeyError, IndexError, TypeError):
-        creator_mail = None
-    try:
-        creator_name = None
-        default_creator_name = None
-        for creator_metadata in creator_item['creatorNames']:
-            if creator_metadata.get('creatorNameLang') == lang_user:
-                creator_name = creator_metadata.get('creatorName')
-            if creator_metadata.get('creatorNameLang') == 'en':
-                default_creator_name = creator_metadata.get('creatorName')
+    creator_name, creator_mail, affiliation = \
+        get_creator_info(creator_item, lang_user)
 
-        if creator_name is None:
-            creator_name = default_creator_name
-    except (KeyError, IndexError, TypeError):
-        creator_name = None
-    try:
-        affiliation = creator_item['affiliation'][0].get(
-            'affiliationNames')
-    except (KeyError, IndexError, TypeError):
-        affiliation = None
-
-    metadata_dict = {
-        "lang": lang,
-        "publisher": publisher,
-        "pubdate": pubdate,
-        "keywords_ja": keywords_ja,
-        "keywords_en": keywords_en,
-        "creator_mail": creator_mail,
-        "creator_name": creator_name,
-        "affiliation": affiliation
-    }
-
-    # Change the values from None to '' for printing
-    for key in metadata_dict:
-        if metadata_dict[key] is None:
-            metadata_dict[key] = ''
-
-    metadata_list = [
-        "{}: {}".format(lang_data["Metadata"]["LANG"], metadata_dict["lang"]),
-        "{}: {}".format(
-            lang_data["Metadata"]["PUBLISHER"],
-            metadata_dict["publisher"]),
-        "{}: {}".format(
-            lang_data["Metadata"]["PUBLICDATE"],
-            metadata_dict["pubdate"]),
-        "{} (Ja): {}".format(
-            lang_data["Metadata"]["KEY"],
-            metadata_dict["keywords_ja"]),
-        "{} (En): {}".format(
-            lang_data["Metadata"]["KEY"],
-            metadata_dict["keywords_en"]),
-        "{}: {}".format(
-            lang_data["Metadata"]["AUTHOR"],
-            metadata_dict["creator_name"]),
-        "{}: {}".format(
-            lang_data["Metadata"]["EMAIL"],
-            metadata_dict["creator_mail"]),
-        "{}: {}".format(
-            lang_data["Metadata"]["AFFILIATED"],
-            metadata_dict["affiliation"])
-    ]
-
-    metadata = '\n'.join(metadata_list)
-    metadata_lfnum = int(metadata.count('\n'))
-    for item in metadata_list:
-        metadata_lfnum += int(get_east_asian_width_count(item)
-                              ) // max_letters_num
-
-    url = ''  # will be modified later
-    url_lfnum = int(get_east_asian_width_count(url)) // max_letters_num
-
-    oa_policy = ''  # will be modified later
-    oa_policy_lfnum = int(
-        get_east_asian_width_count(oa_policy)) // max_letters_num
-
-    # Save top coordinate
-    top = pdf.y
     # Calculate x position of next cell
     offset = pdf.x + w1
-    pdf.multi_cell(w1,
-                   meta_h,
-                   lang_data["Title"]["METADATA"]
-                   + '\n' * (metadata_lfnum + 1),
-                   1,
-                   'C',
-                   True)
-    # Reset y coordinate
-    pdf.y = top
-    # Move to computed offset
-    pdf.x = offset
-    pdf.multi_cell(w2, meta_h, metadata, 1, 'L', False)
-    top = pdf.y
-    pdf.multi_cell(w1,
-                   url_oapolicy_h,
-                   lang_data["Title"]["URL"] + '\n' * (url_lfnum + 1),
-                   1,
-                   'C',
-                   True)
-    pdf.y = top
-    pdf.x = offset
-    pdf.multi_cell(w2, url_oapolicy_h, url, 1, 'L', False)
-    top = pdf.y
-    pdf.multi_cell(w1,
-                   url_oapolicy_h,
-                   lang_data["Title"]["OAPOLICY"]
-                   + '\n' * (oa_policy_lfnum + 1),
-                   1,
-                   'C',
-                   True)
-    pdf.y = top
-    pdf.x = offset
-    pdf.multi_cell(w2, url_oapolicy_h, oa_policy, 1, 'L', False)
+
+    printing_text_to_pdf(pdf, offset, lang_data["Metadata"]["LANG"], lang)
+    printing_text_to_pdf(pdf, offset, lang_data["Metadata"]["PUBLISHER"],
+                         publisher)
+    printing_text_to_pdf(pdf, offset, lang_data["Metadata"]["PUBLICDATE"],
+                         pubdate)
+    printing_text_to_pdf(pdf, offset, lang_data["Metadata"]["KEY"] + ' (Ja)',
+                         keywords_ja)
+    printing_text_to_pdf(pdf, offset, lang_data["Metadata"]["KEY"] + ' (En)',
+                         keywords_en)
+    printing_text_to_pdf(pdf, offset, lang_data["Metadata"]["AUTHOR"],
+                         creator_name)
+    printing_text_to_pdf(pdf, offset, lang_data["Metadata"]["EMAIL"],
+                         creator_mail)
+    printing_text_to_pdf(pdf, offset, lang_data["Metadata"]["AFFILIATED"],
+                         affiliation)
+    printing_text_to_pdf(pdf, offset, lang_data["Title"]["URL"], '')
+    printing_text_to_pdf(pdf, offset, lang_data["Title"]["OAPOLICY"], '')
+
     pdf.ln(h=1)
 
     # Footer
