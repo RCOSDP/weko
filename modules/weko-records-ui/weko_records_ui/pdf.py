@@ -35,11 +35,10 @@ from weko_records.api import ItemMetadata, ItemsMetadata, ItemType, Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
 from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 
+from .config import FOOTER_HEIGHT, HEADER_HEIGHT, METADATA_HEIGHT, \
+    TITLE_HEIGHT, URL_OA_POLICY_HEIGHT
 from .models import PDFCoverPageSettings
 from .views import blueprint
-from .config import URL_OA_POLICY_HEIGHT, TITLE_HEIGHT, HEADER_HEIGHT, \
-    FOOTER_HEIGHT, METADATA_HEIGHT
-
 
 """ Function counting numbers of full-width character and half-width character\
         differently """
@@ -64,6 +63,7 @@ max_letters_num = 41    # number of maximum letters that can be contained \
 # in the right column
 cc_logo_xposition = 160  # x-position of Creative Commons logos
 
+
 def get_east_asian_width_count(text):
     """Def eat asian width count."""
     count = 0
@@ -76,6 +76,7 @@ def get_east_asian_width_count(text):
 
 
 def get_creator_info(data, lang):
+    """Get creator info from metadata."""
     name_list = []
     default_name_list = []
     mail_list = []
@@ -126,6 +127,7 @@ def get_creator_info(data, lang):
 
 
 def printing_text_to_pdf(pdf, offset, title, value):
+    """Add info to pdf cover page."""
     value = value if value else ''
     lfnum = int(get_east_asian_width_count(value)) // max_letters_num
 
