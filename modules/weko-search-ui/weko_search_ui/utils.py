@@ -24,6 +24,9 @@ import json
 import os
 import sys
 
+from functools import reduce
+from operator import getitem
+from collections import defaultdict
 from flask import abort, current_app, request
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -184,4 +187,73 @@ def get_content_workflow(item):
     result['flow_id'] = item.flow_id
     result['flow_name'] = item.flow_define.flow_name
     result['item_type_name'] = item.itemtype.item_type_name.name
+    return result
+
+def get_base64_string(data):
+    result = data.split(",")
+    return result[-1]
+
+
+def is_tsv(name):
+    term = name.split('.')
+    return term[-1] == "tsv"
+
+
+def set_nested_item(data_dict, map_list, val):
+    """Set item in nested dictionary"""
+    reduce(getitem, map_list[:-1], data_dict)[map_list[-1]] = val
+
+    return data_dict
+
+
+def convert_nested_item_to_list(data_dict, map_list):
+    """Set item in nested dictionary"""
+    a = reduce(getitem, map_list[:-1], data_dict)[map_list[-1]]
+    a = list(a.values())
+    reduce(getitem, map_list[:-1], data_dict)[map_list[-1]] = a
+
+    return data_dict
+
+
+def define_default_dict():
+    return defaultdict(define_default_dict)
+
+
+def defaultify(d):
+    if not isinstance(d, dict):
+        return d
+    return defaultdict(define_default_dict, {k: defaultify(v) for k, v in d.items()})
+
+
+def handle_generate_key_path(key):
+    key = key.replace('[', '.').replace(']', '')
+    key_path = key.split(".")
+    del key_path[0]
+    if not key_path[-1]:
+        del key_path[-1]
+
+    return key_path
+
+
+def parse_to_json_form(data):
+    result = defaultify({})
+    import json
+
+    def convert_data(pro, path=[]):
+        term_path = path
+        if isinstance(pro, dict):
+            list_pro = list(pro.keys())
+            for pro_name in list_pro:
+                term = list(term_path)
+                term.append(pro_name)
+                convert_data(pro[pro_name], term)
+            if list_pro[0].isnumeric():
+                convert_nested_item_to_list(result, term_path)
+        else:
+            return
+    for key, name, value in data:
+        key_path = handle_generate_key_path(key)
+        set_nested_item(result, key_path, value)
+    convert_data(result)
+    result = json.loads(json.dumps(result))
     return result

@@ -235,9 +235,11 @@ class ItemImportView(BaseView):
     def check(self):
         """Register an item type mapping."""
         data = request.get_json()
-        import io, zipfile, base64
-        import json
-        from collections import namedtuple
+        import io
+        import zipfile
+        import base64
+        from .utils import get_base64_string, is_tsv, parse_to_json_form
+        
         decoded = base64.b64decode(get_base64_string(data.get('file')))
         current_app.logger.debug("=======================================")
         response = []
@@ -267,45 +269,6 @@ class ItemImportView(BaseView):
                         response.append(json_data)
         return jsonify(response)
 
-
-def get_base64_string(data):
-    result = data.split(",")
-    return result[-1]
-
-def is_tsv(name):
-    term = name.split('.')
-    return term[-1] == "tsv"
-
-
-from functools import reduce
-from operator import getitem
-from collections import defaultdict
-
-
-def set_nested_item(dataDict, mapList, val):
-    """Set item in nested dictionary"""
-    reduce(getitem, mapList[:-1], dataDict)[mapList[-1]] = val
-    return dataDict
-
-
-def dd_rec():
-    return defaultdict(dd_rec)
-
-
-def defaultify(d):
-    if not isinstance(d, dict):
-        return d
-    return defaultdict(dd_rec, {k: defaultify(v) for k, v in d.items()})
-
-def parse_to_json_form(data):
-    result = defaultify({})
-    import json
-    for key, name, value in data:
-        key_path = key.split(".")
-        del key_path[0]
-        set_nested_item(result,key_path,value)
-
-    return json.loads(json.dumps(result))
 
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,
