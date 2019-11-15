@@ -257,3 +257,83 @@ def parse_to_json_form(data):
     convert_data(result)
     result = json.loads(json.dumps(result))
     return result
+
+
+import io
+import bagit
+import tempfile
+import traceback
+import shutil
+from datetime import datetime
+import base64
+
+def import_items(file_content: str):
+    """Validation importing zip file.
+
+    Arguments:
+        file_content     -- {string} 'doi' (default) or 'cnri'
+    Returns:
+        return       -- PID object if exist
+    """
+    file_content_decoded = base64.b64decode(file_content)
+    temp_path = tempfile.TemporaryDirectory()
+
+    try:
+        # Create temp dir for import data
+        import_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
+        data_path = temp_path.name + '/import'
+
+        with open(import_path + '.zip', 'wb+') as f:
+            f.write(file_content_decoded)
+        shutil.unpack_archive(import_path + '.zip', extract_dir=data_path)
+        bag = bagit.Bag(data_path)
+
+        # Valid importing zip file format
+        if bag.is_valid():
+            data_path += '/data'
+            # current_app.logger.debug('==========================')
+            for tsv_entry in os.listdir(data_path):
+                if tsv_entry.endswith('.tsv'):
+                    unpackage_import_file(data_path, tsv_entry)
+            # pass
+        else:
+            # TODO: Handle import file isn't zip file
+            pass
+    except Exception:
+        current_app.logger.error('-' * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-' * 60)
+    finally:
+        temp_path.cleanup()
+
+
+def unpackage_import_file(data_path: str, tsv_file_name: str):
+    """Getting record data from TSV file.
+
+    Arguments:
+        file_content     -- {string} 'doi' (default) or 'cnri'
+    Returns:
+        return       -- PID object if exist
+    """
+    tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
+    read_stats_tsv(tsv_file_path)
+    pass
+
+
+def read_stats_tsv(tsv_file_path: str) -> list:
+    """Read importing TSV file.
+
+    Arguments:
+        file_content     -- {string} 'doi' (default) or 'cnri'
+    Returns:
+        return       -- PID object if exist
+    """
+    tsv_data = []
+    with open(tsv_file_path, 'r') as tsvfile:
+        for row in tsvfile:
+            tsv_data.append(row.rstrip('\n').split('\t'))
+
+    # current_app.logger.debug(tsv_data[0])
+    
+    return tsv_data if len(tsv_data) > 3 else None

@@ -471,7 +471,7 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     return json_data
 
 
-def package_exports(item_type_data):
+def package_export_file(item_type_data):
     """Export TSV Files.
 
     Arguments:
@@ -891,7 +891,7 @@ def export_items(post_data):
 
             with open('{}/{}.tsv'.format(export_path, item_type_data.get(
                     'name')), 'w') as file:
-                tsvs_output = package_exports(item_type_data)
+                tsvs_output = package_export_file(item_type_data)
                 file.write(tsvs_output.getvalue())
 
         # Create bag

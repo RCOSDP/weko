@@ -42,7 +42,8 @@ from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
 from .query import item_path_search_factory
-from .utils import delete_records, get_journal_info, get_tree_items
+from .utils import delete_records, get_journal_info, get_tree_items, \
+    import_items
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -226,48 +227,21 @@ class ItemImportView(BaseView):
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
         workflows_js = [get_content_workflow(item) for item in workflows]
+
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
             workflows=json.dumps(workflows_js)
         )
 
     @expose('/check', methods=['POST'])
-    def check(self):
+    def check(self) -> jsonify:
         """Register an item type mapping."""
         data = request.get_json()
-        import io
-        import zipfile
-        import base64
-        from .utils import get_base64_string, is_tsv, parse_to_json_form
-        
-        decoded = base64.b64decode(get_base64_string(data.get('file')))
-        current_app.logger.debug("=======================================")
-        response = []
-        with zipfile.ZipFile(io.BytesIO(decoded)) as zf:
-            list_file_tsv = [name for name in zf.namelist() if is_tsv(name)]
-            current_app.logger.debug(list_file_tsv)
-            for name in list_file_tsv:
-                with zf.open(name, 'r') as f:
-                    line1 = []
-                    line2 = []
-                    line3 = []
-                    data_record = []
-                    for i, line in enumerate(f, start=1):
-                        if i == 1:
-                            line1 = line.decode().rstrip('\n\r').split('\t')
-                        if i == 2:
-                            line2 = line.decode().rstrip('\n\r').split('\t')
-                        if i == 3:
-                            line3 = line.decode().rstrip('\n\r').split('\t')
-                        if i not in (1, 2, 3):
-                            data_record.append(zip(line2,line3,
-                                                        line.decode().rstrip(
-                                                            '\n\r').split(
-                                                            '\t')))
-                    for d in data_record:
-                        json_data = parse_to_json_form(d)
-                        response.append(json_data)
-        return jsonify(response)
+
+        if data:
+            import_items(data.get('file').split(",")[-1])
+
+        return jsonify(code=-1, msg='error')
 
 
 item_management_bulk_search_adminview = {

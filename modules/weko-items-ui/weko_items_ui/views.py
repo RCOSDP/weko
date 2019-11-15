@@ -57,7 +57,7 @@ from .utils import _export_item, _get_max_export_items, export_items, \
     get_actionid, get_current_user, get_list_email, get_list_username, \
     get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, make_stats_tsv, \
-    package_exports, parse_ranking_results, to_files_js, \
+    package_export_file, parse_ranking_results, to_files_js, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     validate_form_input_data, validate_user
 

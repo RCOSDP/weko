@@ -63,13 +63,15 @@ class MainLayout extends React.Component {
       data: JSON.stringify(data),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
-      success: function (data) {
-        console.log(data)
-        that.handleChangeTab('check')
+      success: function (response) {
+        if (response.code) {
+          that.handleChangeTab('check');
+        } else {
+          console.log(response.msg);
+        }
       },
       error: function (error) {
         console.log(error);
-        // alert();
       }
     });
   }
