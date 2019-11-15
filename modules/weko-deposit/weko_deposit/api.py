@@ -655,7 +655,7 @@ class WekoDeposit(Deposit):
                         RecordsBuckets.create(record=deposit.model,
                                               bucket=extra_formats_snapshot)
                     index = {'index': self.get('path', []),
-                             'actions': 'private'}
+                             'actions': self.get('publish_status')}
                     if 'activity_info' in session:
                         del session['activity_info']
                     item_metadata = ItemsMetadata.get_record(
@@ -816,7 +816,7 @@ class WekoDeposit(Deposit):
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')
-        if actions == 'publish':
+        if actions == 'publish' or actions == '0':
             pubs = '0'
         elif 'id' in data:
             recid = PersistentIdentifier.query.filter_by(
@@ -938,7 +938,7 @@ class WekoDeposit(Deposit):
         with db.session.begin_nested():
             # update item_metadata
             index = {'index': self.get('path', []),
-                     'actions': 'private'}
+                     'actions': self.get('publish_status')}
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
             args = [index, item_metadata]

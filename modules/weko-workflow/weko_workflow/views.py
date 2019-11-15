@@ -774,7 +774,6 @@ def next_action(activity_id='0', action_id=0):
                         parent_record = deposit_without_ver. \
                             merge_data_to_record_without_version(current_pid)
                         deposit_without_ver.publish()
-                        updated_item.publish(parent_record)
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
