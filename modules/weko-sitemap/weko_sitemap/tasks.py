@@ -69,14 +69,13 @@ def link_error_handler(request, exc, traceback):
 
 
 @shared_task(ignore_results=True)
-def update_sitemap(baseurl, start_time, user_data):
+def update_sitemap(start_time, user_data):
     """Update sitemap cache."""
     with current_app.app_context():
         current_app.logger.info(
             '[{0}] [{1}] START'.format(
                 0, 'Sitemap update'))
         start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')
-        current_app.config['SERVER_NAME'] = baseurl
         flask_sitemap = current_app.extensions['sitemap']
         size = current_app.config['SITEMAP_MAX_URL_COUNT']
         args = [iter(flask_sitemap._generate_all_urls())] * size
@@ -111,7 +110,7 @@ def update_sitemap(baseurl, start_time, user_data):
         # Number of URLs is more than maximum, have to page them
         kwargs = dict(
             _external=True,
-            _scheme=current_app.config.get('SITEMAP_URL_SCHEME')
+            _scheme=current_app.config.get('WEKO_SITEMAP_URL_SCHEME')
         )
         kwargs['page'] = 1
         urlset = [url for url in urlset if url is not None]
