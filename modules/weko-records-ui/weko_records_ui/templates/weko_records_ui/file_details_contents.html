@@ -93,8 +93,12 @@
                                 <input id="download_permission_error" type="hidden" value="{{_('The file cannot be downloaded because you do not have permission to view this file.')}}" />
                               {%- endif -%}
                             {%- endif -%}
+                            {%- if access_permission = true -%}
+                              {%- set href_url = file_url -%}
+                            {%- else -%}
+                              {%- set href_url = '#' -%}
                             <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
-                               href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                               href={{href_url}}>{{ file.filename }} ({{ file.size|filesizeformat }})</a>
 
                             <span>{{file.checksum.split(':')[0]}}</span>
                             <span class="break-word">{{file.checksum.split(':')[1]}}</span>

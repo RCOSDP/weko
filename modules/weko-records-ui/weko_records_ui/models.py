@@ -69,12 +69,12 @@ class PDFCoverPageSettings(db.Model):
     """ Updated Date """
 
     def __init__(
-            self,
-            avail,
-            header_display_type,
-            header_output_string,
-            header_output_image,
-            header_display_position):
+        self,
+        avail,
+        header_display_type,
+        header_output_string,
+        header_output_image,
+        header_display_position):
         """Init."""
         self.avail = avail
         self.header_display_type = header_display_type
@@ -90,13 +90,13 @@ class PDFCoverPageSettings(db.Model):
 
     @classmethod
     def update(
-            cls,
-            id,
-            avail,
-            header_display_type,
-            header_output_string,
-            header_output_image,
-            header_display_position):
+        cls,
+        id,
+        avail,
+        header_display_type,
+        header_output_string,
+        header_output_image,
+        header_display_position):
         """Update."""
         settings = PDFCoverPageSettings(
             avail,
@@ -139,5 +139,18 @@ class InstitutionName(db.Model):
 
         """ Record UI models """
 
+
+class FilePermission(db.Model):
+    __tablename__ = 'file_permission'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
+    file_id = db.Column(db.String(255))
+    activity_id = db.Column(db.String(20))
+    created_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    def __init__(self, user_id, file_id, activity_id):
+        self.user_id = user_id
+        self.file_id = file_id
+        self.activity_id = activity_id
 
 __all__ = ('PDFCoverPageSettings')

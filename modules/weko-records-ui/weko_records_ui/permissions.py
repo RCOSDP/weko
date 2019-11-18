@@ -140,6 +140,14 @@ def check_file_download_permission(record, fjson):
         return is_can
 
 
+def check_open_restricted_permission():
+    # check if user already register an "Usage Application" activity here
+    # activity already accepted
+    # in time period
+    return False
+    # return True;
+
+
 def check_original_pdf_download_permission(record):
     """Check original pdf."""
     is_ok = True

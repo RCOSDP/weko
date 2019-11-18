@@ -290,6 +290,25 @@ def check_file_permission(record, fjson):
     return check_file_download_permission(record, fjson)
 
 
+@blueprint.app_template_filter('check_file_permission_status')
+def check_file_permission_status(record, fjson):
+    """Check File Download Permission Status.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    permission = check_file_permission(record, fjson)
+    if permission:
+        return check_is_clickable()
+    else:
+        return True
+
+
+def check_is_clickable():
+    return True
+
+
 def _get_google_scholar_meta(record):
     target_map = {
         'dc:title': 'citation_title',
