@@ -76,7 +76,9 @@ class WekoSitemap(Sitemap):
         current_key_set = current_cache.get(self.cached_pages_set_key) or set()
         current_key_set.add(key)
         current_cache.set(self.cached_pages_set_key, current_key_set)
-        current_cache.set(key, value, timeout=0)
+        current_cache.set(
+            key, value,
+            timeout=current_app.config['WEKO_SITEMAP_CACHE_TIMEOUT'])
 
     @staticmethod
     def get_cache_page(key):

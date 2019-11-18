@@ -69,7 +69,8 @@ def link_error_handler(request, exc, traceback):
 
 
 @shared_task(ignore_results=True)
-def update_sitemap(start_time, user_data):
+def update_sitemap(start_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S'),
+                   user_data={'user_id': 'System'}):
     """Update sitemap cache."""
     with current_app.app_context():
         current_app.logger.info(
