@@ -285,8 +285,14 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     let q = cur_url.searchParams.get("q");
     let search_type = cur_url.searchParams.get("search_type");
     let request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
-
     let search_results = []
+
+    if (q == null) {
+      q = "0";
+    }
+    if (search_type == null) {
+      search_type = "0";
+    }
     $('#item_export_button').attr("disabled", true);
     $.ajax({
       method: 'GET',
