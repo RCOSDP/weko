@@ -264,14 +264,45 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
 
   $scope.exportItems = function() {
     if($rootScope.item_export_checkboxes.length <= $rootScope.max_export_num) {
+      records_metadata = $scope.getExportItemsMetadata();
       $('#record_ids').val(JSON.stringify($rootScope.item_export_checkboxes));
       let export_metadata = {}
       $rootScope.item_export_checkboxes.map((recid)=>{
-        export_metadata[recid] = JSON.parse($('#record_' + recid + '_metadata').text());
+        $.each(records_metadata, function (index, value) {
+          if (value.id == recid) {
+            export_metadata[recid] = value;
+          }
+        });
       })
       $('#record_metadata').val(JSON.stringify(export_metadata));
       $('#export_items_form').submit();  // Submit form and let controller handle file making
     }
+    $('#item_export_button').attr("disabled", false);
+  }
+
+  $scope.getExportItemsMetadata = function() {
+    let cur_url = new URL(window.location.href);
+    let q = cur_url.searchParams.get("q");
+    let search_type = cur_url.searchParams.get("search_type");
+    let request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
+
+    let search_results = []
+    $('#item_export_button').attr("disabled", true);
+    $.ajax({
+      method: 'GET',
+      url: request_url,
+      async: false,
+      contentType: 'application/json',
+      dataType: 'json',
+      success: function(data, status){
+        search_results = data.hits.hits;
+      },
+      error: function(status, error){
+        console.log(error);
+      }
+    });
+    
+    return search_results;
   }
 
   $scope.checkForRestrictedContent = function(record_id) {
@@ -292,8 +323,6 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       console.log('ERROR: Unable to check for restricted items.'); // TODO: Do something useful
     });
   }
-
-
 
   // Check all records for restricted content
   $scope.$on('invenio.search.finished', function(evt) {
