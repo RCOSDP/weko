@@ -74,3 +74,9 @@ WEKO_SCHEMA_CACHE_PREFIX = 'cache_{schema_name}'
 #
 # WEKO_SCHEMA_UI_FORMAT_SCHEMAFORM = 'json/weko_schema_ui/format_form.json'
 # WEKO_SCHEMA_UI_FORMAT_FORM_JSONSCHEMA = 'json/weko_schema_ui/format_schema.json'
+
+WEKO_SCHEMA_DDI_VERSION = "2.5"
+"""DDI Schema version"""
+
+WEKO_SCHEMA_DDI_SCHEMA_NAME = "ddi_mapping"
+"""DDI schema name"""

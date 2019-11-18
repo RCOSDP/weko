@@ -198,6 +198,11 @@ RECORDS_UI_EXPORT_FORMATS = {
             serializer='weko_schema_ui.serializers.BibTexSerializer',
             order=5,
         ),
+        'ddi': dict(
+            title='DDI',
+            serializer='weko_schema_ui.serializers.WekoCommonSchema',
+            order=6,
+        ),
     }
 }
 
@@ -244,7 +249,16 @@ OAISERVER_METADATA_FORMATS = {
         ),
         'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
         'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
-    }
+    },
+    'ddi': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'ddi',
+            }
+        ),
+        'namespace': 'ddi:codebook:2_5',
+        'schema': 'https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd',
+    },
 }
 
 URL_OA_POLICY_HEIGHT = 7  # height of the URL & OA-policy

@@ -22,7 +22,6 @@
 
 import copy
 import json
-import re
 from collections import Iterable, OrderedDict
 from functools import partial
 
@@ -137,7 +136,7 @@ class SchemaConverter:
             chdsm = OrderedDict()
             for chd in element.iterchildren():
                 if (chd not in ignore_list
-                        and not getXSVal(element.name).__eq__(getXSVal(chd.name))
+                    and not getXSVal(element.name).__eq__(getXSVal(chd.name))
                         and is_valid_element(chd.name)
                         and not isinstance(chd, XsdAnyElement)):
                     ctp = OrderedDict()
@@ -159,8 +158,8 @@ class SchemaConverter:
         except Exception as ex:
             current_app.error(ex)
             abort(
-                400,
-                "Error creating Schema: Can not open xsd file. Please check it!")
+                400, "Error creating Schema: "
+                     "Can not open xsd file. Please check it!")
 
         # namespace
         nsp, tagns = schema_data.target_prefix, schema_data.target_namespace
@@ -662,6 +661,16 @@ class SchemaTree:
                                         k1 = get_prefix(k1)
                                         set_children(k1, v1, child)
 
+        def merge_child(new_xml_root, current_root):
+            for child in current_root:
+                new_child = new_xml_root.find(child.tag)
+                if new_child is None:
+                    new_xml_root.append(child)
+                elif child.getchildren():
+                    merge_child(new_child, child)
+                else:
+                    new_child.getparent().append(child)
+
         if not self._schema_obj:
             E = ElementMaker()
             root = E.Weko()
@@ -690,6 +699,15 @@ class SchemaTree:
                 k = get_prefix(k)
                 set_children(k, v, root)
 
+        if self._schema_name == current_app.config[
+                'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
+            ddi_root = E(rootname)
+            ddi_root.attrib[
+                '{{{pre}}}schemaLocation'.format(pre=xsi)] = self._location
+            ddi_root.attrib['version'] = current_app.config[
+                'WEKO_SCHEMA_DDI_VERSION']
+            merge_child(ddi_root, root)
+            return ddi_root
         return root
 
     def to_list(self):
