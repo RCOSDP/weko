@@ -235,7 +235,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
       if (checkAll &&  item_index == -1) {
         $rootScope.item_export_checkboxes.push(record.id);
-      } else if(!checkAll && item_index > 0) {
+      } else if(!checkAll && item_index >= 0) {
         $rootScope.item_export_checkboxes.splice(item_index, 1);
       }
     });
