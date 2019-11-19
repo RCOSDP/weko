@@ -262,11 +262,23 @@ def mapping():
                        'lang': i.get('language')}
                 res['creatorNames'].append(tmp)
 
+    prefix_settings = AuthorsPrefixSettings.query.all()
+    id_type_dict = {}
+    for prefix in prefix_settings:
+        id_type_dict[prefix.id] = prefix.name
+
     id_info = result.get('_source').get('authorIdInfo')
     for j in id_info:
+        try:
+            id_scheme = id_type_dict[int(j['idType'])]
+            if id_scheme == 'KAKEN2':
+                id_scheme = 'kakenhi'
+        except KeyError:
+            id_scheme = ''
+
         if j.get('authorIdShowFlg') == 'true':
             tmp = {'nameIdentifier': j.get('authorId'),
-                   'nameIdentifierScheme': j.get('idType'),
+                   'nameIdentifierScheme': id_scheme,
                    'nameIdentifierURI': ''}
             res['nameIdentifiers'].append(tmp)
 
