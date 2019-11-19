@@ -220,14 +220,14 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
 
   // Check if current hits in selected array
   $scope.checkIfAllInArray = function() {
-    all_in_array = true;
     angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
       item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
-      if(item_index == -1) {
-        all_in_array = false;
+      if (checkAll &&  item_index == -1) {
+        $rootScope.item_export_checkboxes.push(record.id);
+      } else if(!checkAll && item_index >= 0) {
+        $rootScope.item_export_checkboxes.splice(item_index, 1);
       }
     });
-    return all_in_array;
   }
 
   $scope.checkAll = function() {
@@ -241,11 +241,11 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
 
   $scope.checkAllExportItems = function(event) {
     if(event.target.checked) {
-      $scope.checkAll();
+      $scope.checkAll(true);
       $rootScope.check_all = true;
     }
     else {
-      $rootScope.item_export_checkboxes = [];
+      $scope.checkAll(false);
       $rootScope.check_all = false;
     }
   }

@@ -45,11 +45,6 @@ class WekoXMLSerializer(MarshmallowSerializer):
 
         self.schema_class = schema_class
 
-        from flask import current_app
-        current_app.logger.info('Here is some data: ')
-        current_app.logger.info(self.schema_class)
-        current_app.logger.info(self.dumps_kwargs)
-
         super(WekoXMLSerializer, self).__init__(replace_refs=replace_refs)
 
     def serialize(self, pid, record, links_factory=None):
