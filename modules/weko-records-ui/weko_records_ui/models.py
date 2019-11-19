@@ -144,13 +144,21 @@ class FilePermission(db.Model):
     __tablename__ = 'file_permission'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
-    file_id = db.Column(db.String(255))
-    activity_id = db.Column(db.String(20))
-    created_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    record_id = db.Column(db.Integer)
+    file_name = db.Column(db.String(255))
+    status = db.Column(db.Integer)
+    open_date = db.Column(db.DateTime, default=datetime.now())
 
-    def __init__(self, user_id, file_id, activity_id):
+    def __init__(self, user_id, record_id, file_name, status):
         self.user_id = user_id
-        self.file_id = file_id
-        self.activity_id = activity_id
+        self.record_id = record_id
+        self.file_name = file_name
+        self.status = status
+
+    @classmethod
+    def find(cls, user_id, record_id, file_name):
+        permission = db.session.query(cls).filter_by(user_id=user_id, record_id=record_id, file_name=file_name).first()
+        return permission
+
 
 __all__ = ('PDFCoverPageSettings')

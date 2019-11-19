@@ -20,13 +20,14 @@
 
 """Permissions for Detail Page."""
 
-from datetime import datetime as dt
+from datetime import datetime as dt, datetime, timedelta
 
 from flask import abort, current_app
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from weko_groups.api import Group, Membership, MembershipState
 from weko_records.api import ItemTypes
+from .models import FilePermission
 
 from .ipaddr import check_site_license_permission
 
@@ -41,6 +42,7 @@ download_original_pdf_permission = Permission(
 
 def page_permission_factory(record, *args, **kwargs):
     """Page permission factory."""
+
     def can(self):
         is_ok = True
         # item publish status check
@@ -63,6 +65,7 @@ def page_permission_factory(record, *args, **kwargs):
 
 def file_permission_factory(record, *args, **kwargs):
     """File permission factory."""
+
     def can(self):
         fjson = kwargs.get('fjson')
         return check_file_download_permission(record, fjson)
@@ -135,17 +138,53 @@ def check_file_download_permission(record, fjson):
             elif 'open_no' in acsrole:
                 # site license permission check
                 is_can = site_license_check()
+            elif 'open_restricted' in acsrole:
+                is_can = check_open_restricted_permission(record, fjson)
         except BaseException:
             abort(500)
         return is_can
 
 
-def check_open_restricted_permission():
+def check_open_restricted_permission(record, fjson):
     # check if user already register an "Usage Application" activity here
     # activity already accepted
     # in time period
-    return False
-    # return True;
+    # then return True
+    user_id = current_user.get_id()
+    record_id = record.id()
+    file_name = fjson.get('filename')
+    permission = FilePermission.find(user_id, record_id, file_name)
+    if permission:
+        return check_open_restricted_download_permission(permission)
+    else:
+        return False
+
+
+def check_content_clickable(record, fjson):
+    # Time expired, return False
+    # File permission status = 0 / -1, return False
+    user_id = current_user.get_id()
+    record_id = record.id()
+    file_name = fjson.get('filename')
+    permission = FilePermission.find(user_id, record_id, file_name)
+    # can click if user have not register
+    if not permission:
+        return True
+    else:
+        return check_open_restricted_download_permission(permission)
+
+
+def check_open_restricted_download_permission(permission):
+    if permission.status == 1:
+        open_date = permission.open_date()
+        current_time = datetime.now()
+        available_time = open_date + timedelta(days=current_app.config('DAISODAI_DOWNLOAD_DAYS'))
+        if available_time > current_time:
+            return True
+        else:
+            return False
+    else:
+        return False
 
 
 def check_original_pdf_download_permission(record):

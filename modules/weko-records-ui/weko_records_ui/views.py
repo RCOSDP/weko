@@ -57,7 +57,7 @@ from weko_records_ui.utils import check_items_settings
 from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
-    check_original_pdf_download_permission
+    check_original_pdf_download_permission, check_content_clickable
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink
 from .utils import restore as restore_imp
@@ -290,6 +290,17 @@ def check_file_permission(record, fjson):
     return check_file_download_permission(record, fjson)
 
 
+@blueprint.app_template_filter('check_content_clickable')
+def check_content_file_clickable(record, fjson):
+    """Check If content file is clickable.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    return check_content_clickable(record, fjson)
+
+
 @blueprint.app_template_filter('check_file_permission_status')
 def check_file_permission_status(record, fjson):
     """Check File Download Permission Status.
@@ -342,16 +353,16 @@ def _get_google_scholar_meta(record):
                 res.append(
                     {'name': 'citation_publication_date', 'data': date.text})
         for relatedIdentifier in mtdata.findall(
-                'jpcoar:relatedIdentifier',
-                namespaces=mtdata.nsmap):
+            'jpcoar:relatedIdentifier',
+            namespaces=mtdata.nsmap):
             if 'identifierType' in relatedIdentifier.attrib and \
                 relatedIdentifier.attrib[
                     'identifierType'] == 'DOI':
                 res.append({'name': 'citation_doi',
                             'data': relatedIdentifier.text})
         for sourceIdentifier in mtdata.findall(
-                'jpcoar:sourceIdentifier',
-                namespaces=mtdata.nsmap):
+            'jpcoar:sourceIdentifier',
+            namespaces=mtdata.nsmap):
             if 'identifierType' in sourceIdentifier.attrib and \
                 sourceIdentifier.attrib[
                     'identifierType'] == 'ISSN':
@@ -361,7 +372,7 @@ def _get_google_scholar_meta(record):
                                       namespaces=mtdata.nsmap):
             res.append({'name': 'citation_pdf_url',
                         'data': request.url.replace('records', 'record')
-                        + '/files/' + pdf_url.text})
+                                + '/files/' + pdf_url.text})
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
     res.append({'name': 'citation_abstract_html_url', 'data': request.url})
@@ -432,8 +443,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Check if user has the permission to download original pdf file
     # and the cover page setting is set and its value is enable (not disabled)
     can_download_original = check_original_pdf_download_permission(record) \
-        and pdfcoverpage_set_rec is not None \
-        and pdfcoverpage_set_rec.avail != 'disable'
+                            and pdfcoverpage_set_rec is not None \
+                            and pdfcoverpage_set_rec.avail != 'disable'
 
     # Get item meta data
     record['permalink_uri'] = None
@@ -448,7 +459,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     datastore = RedisStore(redis.StrictRedis.from_url(
         current_app.config['CACHE_REDIS_URL']))
-    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX']. \
         format(name='display_stats')
     if datastore.redis.exists(cache_key):
         curr_display_setting = datastore.get(cache_key).decode('utf-8')
@@ -480,7 +491,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     files_thumbnail = []
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
-            record.get('_buckets').get('deposit')).\
+            record.get('_buckets').get('deposit')). \
             filter_by(is_thumbnail=True).all()
 
     # Flag: can edit record

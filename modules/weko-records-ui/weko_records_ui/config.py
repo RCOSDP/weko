@@ -269,3 +269,5 @@ PDF_COVERPAGE_LANG_FILENAME = "/pdf_coverpage.json"
 
 WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL = 100
 """Default max width of thumbnail."""
+
+DAISODAI_DOWNLOAD_DAYS = 7

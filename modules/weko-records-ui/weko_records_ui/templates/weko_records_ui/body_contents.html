@@ -137,6 +137,20 @@
                   {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key, original=1) %}
                   {%- endif -%}
                   {%- endif -%}
+                  {%- set clickable = record | check_content_file_clickable(file.info()) = -%}
+                  {%- if clickable -%}
+
+                  <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
+                               >{{ file.filename }} ({{ file.size|filesizeformat }}) "You don't have download permission"</a>
+                  {%- endif -%}
+                  {%- if access_permission -%}
+                  {%- set href_url = file_url -%}
+                    {%- else -%}
+                  {%- set href_url = '/workflow/activity/new' -%}
+                  <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
+                               href={{href_url}}>{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                  {%- endif -%}
+
                   <div class="text-right">
                     <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
                       href="{{original_file_url}}">{{_('Original')}}</a>
