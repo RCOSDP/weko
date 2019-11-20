@@ -36,7 +36,7 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
-from sqlalchemy import Integer, cast
+from sqlalchemy import Float, cast
 
 from . import config
 
@@ -76,7 +76,9 @@ class WekoSitemap(Sitemap):
         current_key_set = current_cache.get(self.cached_pages_set_key) or set()
         current_key_set.add(key)
         current_cache.set(self.cached_pages_set_key, current_key_set)
-        current_cache.set(key, value, timeout=0)
+        current_cache.set(
+            key, value,
+            timeout=current_app.config['WEKO_SITEMAP_CACHE_TIMEOUT'])
 
     @staticmethod
     def get_cache_page(key):
@@ -116,7 +118,7 @@ class WekoSitemap(Sitemap):
                .query(PersistentIdentifier, RecordMetadata)
                .join(RecordMetadata, RecordMetadata.id == PersistentIdentifier.object_uuid)
                .filter(PersistentIdentifier.status == PIDStatus.REGISTERED, PersistentIdentifier.pid_type == 'recid')
-               .order_by(cast(PersistentIdentifier.pid_value, Integer).asc())
+               .order_by(cast(PersistentIdentifier.pid_value, Float).asc())
                .limit(current_app.config['WEKO_SITEMAP_TOTAL_MAX_URL_COUNT']))
 
         for recid, rm in q.yield_per(1000):
@@ -128,7 +130,7 @@ class WekoSitemap(Sitemap):
         """Get pages from cache instead of re-creating them."""
         kwargs = dict(
             _external=True,
-            _scheme=current_app.config.get('SITEMAP_URL_SCHEME')
+            _scheme=current_app.config.get('WEKO_SITEMAP_URL_SCHEME')
         )
         kwargs['page'] = 0
         page_keys = current_cache.get(self.cached_pages_set_key) or set()
@@ -157,12 +159,6 @@ class WekoSitemap(Sitemap):
         app.config['SITEMAP_ENDPOINT_PAGE_URL'] = '/sitemap_<int:page>.xml.gz'
         app.config['SITEMAP_MAX_URL_COUNT'] = 10000  # Defaults to 10000
         app.config['SITEMAP_VIEW_DECORATORS'] = [self.load_page]
-
-        @app.before_first_request
-        def set_server_name():
-            """Set the server name dynamically."""
-            baseurl = urlparse(request.base_url).netloc
-            app.config['SERVER_NAME'] = baseurl
 
         ext = Sitemap(app=app)
         ext.register_generator(self._generate_all_item_urls)
