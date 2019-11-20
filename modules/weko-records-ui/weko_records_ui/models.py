@@ -144,7 +144,7 @@ class FilePermission(db.Model):
     __tablename__ = 'file_permission'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
-    record_id = db.Column(db.Integer)
+    record_id = db.Column(db.String(255))
     file_name = db.Column(db.String(255))
     status = db.Column(db.Integer)
     open_date = db.Column(db.DateTime, default=datetime.now())

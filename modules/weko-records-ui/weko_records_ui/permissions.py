@@ -75,6 +75,7 @@ def file_permission_factory(record, *args, **kwargs):
 
 def check_file_download_permission(record, fjson):
     """Check file download."""
+
     def site_license_check():
         # site license permission check
         obj = ItemTypes.get_by_id(record.get('item_type_id'))
@@ -95,6 +96,7 @@ def check_file_download_permission(record, fjson):
 
         try:
             # can access
+
             if 'open_access' in acsrole:
                 pass
             # access with open date
@@ -139,6 +141,7 @@ def check_file_download_permission(record, fjson):
                 # site license permission check
                 is_can = site_license_check()
             elif 'open_restricted' in acsrole:
+
                 is_can = check_open_restricted_permission(record, fjson)
         except BaseException:
             abort(500)
@@ -150,10 +153,14 @@ def check_open_restricted_permission(record, fjson):
     # activity already accepted
     # in time period
     # then return True
+    current_app.logger.debug('start checking permission')
     user_id = current_user.get_id()
-    record_id = record.id()
+    current_app.logger.debug(user_id)
+    record_id = record.id
+    current_app.logger.debug(record_id)
     file_name = fjson.get('filename')
     permission = FilePermission.find(user_id, record_id, file_name)
+
     if permission:
         return check_open_restricted_download_permission(permission)
     else:
@@ -163,8 +170,9 @@ def check_open_restricted_permission(record, fjson):
 def check_content_clickable(record, fjson):
     # Time expired, return False
     # File permission status = 0 / -1, return False
+
     user_id = current_user.get_id()
-    record_id = record.id()
+    record_id = record.id
     file_name = fjson.get('filename')
     permission = FilePermission.find(user_id, record_id, file_name)
     # can click if user have not register
@@ -176,7 +184,7 @@ def check_content_clickable(record, fjson):
 
 def check_open_restricted_download_permission(permission):
     if permission.status == 1:
-        open_date = permission.open_date()
+        open_date = permission.open_date
         current_time = datetime.now()
         available_time = open_date + timedelta(days=current_app.config('DAISODAI_DOWNLOAD_DAYS'))
         if available_time > current_time:

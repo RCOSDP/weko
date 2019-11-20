@@ -290,7 +290,8 @@ def check_file_permission(record, fjson):
     return check_file_download_permission(record, fjson)
 
 
-@blueprint.app_template_filter('check_content_clickable')
+@blueprint.app_template_filter('check_content_file_clickable')
+@login_required
 def check_content_file_clickable(record, fjson):
     """Check If content file is clickable.
 
