@@ -83,8 +83,8 @@ preview_carousel = Bundle(
     output="gen/weko_records_ui_preview_carousel.%(version)s.js",
 )
 
-jupyter_js = Bundle(
-    'js/weko_records_ui/jupyter.js',
+file_action_js = Bundle(
+    'js/weko_records_ui/file_action.js',
     filters='jsmin',
-    output="gen/weko_records_ui_jupyter.%(version)s.js",
+    output="gen/weko_records_ui_file_action.%(version)s.js",
 )

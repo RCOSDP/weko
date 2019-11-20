@@ -66,3 +66,31 @@
 .carousel-indicators .active {
   background-color: #333333;
 }
+
+.filecheck-td {
+  width: 10%;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.action-button {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  display: block;
+  margin-right: auto;
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 12px;
+  background-color: #D3D3D3;
+  height: 27px;
+}
+
+.action-anchor {
+  color: #333333;
+  text-decoration: none;
+}
+
+.action-icon {
+  float:left;
+  margin-left:1px;
+}
