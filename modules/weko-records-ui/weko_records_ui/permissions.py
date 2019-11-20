@@ -172,7 +172,7 @@ def check_content_clickable(record, fjson):
     # File permission status = 0 / -1, return False
 
     user_id = current_user.get_id()
-    record_id = record.id
+    record_id = record.json.get('recid')
     file_name = fjson.get('filename')
     permission = FilePermission.find(user_id, record_id, file_name)
     # can click if user have not register
