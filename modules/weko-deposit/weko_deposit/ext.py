@@ -24,7 +24,6 @@ from . import config
 from .rest import create_blueprint
 from .views import blueprint
 
-
 class WekoDeposit(object):
     """weko-deposit extension."""
 
@@ -60,6 +59,10 @@ class WekoDeposit(object):
         for k in dir(config):
             if k.startswith('WEKO_DEPOSIT_'):
                 app.config.setdefault(k, getattr(config, k))
+        import invenio_indexer.cli
+        from .api import WekoIndexer
+        invenio_indexer.cli.RecordIndexer = WekoIndexer
+
 
 
 class WekoDepositREST(object):
