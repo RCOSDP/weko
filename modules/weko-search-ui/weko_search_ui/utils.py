@@ -27,7 +27,7 @@ import sys
 from functools import reduce
 from operator import getitem
 from collections import defaultdict
-from flask import abort, current_app, request
+from flask import abort, current_app, request, jsonify
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -189,6 +189,7 @@ def get_content_workflow(item):
     result['item_type_name'] = item.itemtype.item_type_name.name
     return result
 
+
 def get_base64_string(data):
     result = data.split(",")
     return result[-1]
@@ -226,11 +227,12 @@ def defaultify(d):
 
 
 def handle_generate_key_path(key):
-    key = key.replace('[', '.').replace(']', '')
+    key = key.replace('#.', '.').replace('[', '.').replace(']', '').replace('#', '.')
     key_path = key.split(".")
-    del key_path[0]
-    if not key_path[-1]:
-        del key_path[-1]
+    if len(key_path) > 0 and not key_path[0]:
+        del key_path[0]
+    # if len key_pathnot key_path[-1]:
+    #     del key_path[-1]
 
     return key_path
 
@@ -251,7 +253,7 @@ def parse_to_json_form(data):
                 convert_nested_item_to_list(result, term_path)
         else:
             return
-    for key, name, value in data:
+    for key, value in data:
         key_path = handle_generate_key_path(key)
         set_nested_item(result, key_path, value)
     convert_data(result)
@@ -267,7 +269,8 @@ import shutil
 from datetime import datetime
 import base64
 
-def import_items(file_content: str):
+
+def import_items(file_content: str) -> list:
     """Validation importing zip file.
 
     Arguments:
@@ -277,7 +280,6 @@ def import_items(file_content: str):
     """
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
-
     try:
         # Create temp dir for import data
         import_path = temp_path.name + '/' + \
@@ -292,11 +294,12 @@ def import_items(file_content: str):
         # Valid importing zip file format
         if bag.is_valid():
             data_path += '/data'
-            # current_app.logger.debug('==========================')
+            list_record = []
             for tsv_entry in os.listdir(data_path):
                 if tsv_entry.endswith('.tsv'):
-                    unpackage_import_file(data_path, tsv_entry)
-            # pass
+                    list_record.extend(
+                        unpackage_import_file(data_path, tsv_entry))
+            return list_record
         else:
             # TODO: Handle import file isn't zip file
             pass
@@ -308,7 +311,7 @@ def import_items(file_content: str):
         temp_path.cleanup()
 
 
-def unpackage_import_file(data_path: str, tsv_file_name: str):
+def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     """Getting record data from TSV file.
 
     Arguments:
@@ -317,11 +320,14 @@ def unpackage_import_file(data_path: str, tsv_file_name: str):
         return       -- PID object if exist
     """
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
-    read_stats_tsv(tsv_file_path)
-    pass
+    data = read_stats_tsv(tsv_file_path)
+    list_record = handle_validate_item_import(data.get('tsv_data'), data.get(
+        'item_type_schema'
+    ))
+    return list_record
 
 
-def read_stats_tsv(tsv_file_path: str) -> list:
+def read_stats_tsv(tsv_file_path: str) -> dict:
     """Read importing TSV file.
 
     Arguments:
@@ -329,11 +335,111 @@ def read_stats_tsv(tsv_file_path: str) -> list:
     Returns:
         return       -- PID object if exist
     """
+    from .config import WEKO_READ_FILE_ERROR_CODE
+    result = {
+        'error': False,
+        'error_code': 0,
+        'tsv_data': [],
+        'item_type_schema': {}
+    }
     tsv_data = []
+    item_path = []
+    item_path_name = []
+    check_item_type = {}
     with open(tsv_file_path, 'r') as tsvfile:
-        for row in tsvfile:
-            tsv_data.append(row.rstrip('\n').split('\t'))
+        for num, row in enumerate(tsvfile, start=1):
+            data_row = row.rstrip('\n').split('\t')
+            if num == 1:
+                if data_row[-1] and data_row[-1].split('/')[-1]:
+                    item_type_id = data_row[-1].split('/')[-1]
+                    check_item_type = get_item_type(
+                        int(item_type_id)
+                    ).get_json()
+                    if not check_item_type:
+                        result['error'] = True
+                        result['error_code'] = WEKO_READ_FILE_ERROR_CODE.get(
+                            'ITEM_TYPE_NOT_EXIST'
+                        )
+                        return result
+                    else:
+                        result['item_type_schema'] = check_item_type['schema']
 
-    # current_app.logger.debug(tsv_data[0])
-    
-    return tsv_data if len(tsv_data) > 3 else None
+            elif num == 2:
+                item_path = data_row
+            elif num == 3:
+                item_path_name = data_row
+            else:
+                data_parse_metadata = parse_to_json_form(zip(
+                    item_path,
+                    data_row)
+                )
+
+                json_data_parse = parse_to_json_form(zip(
+                    item_path_name,
+                    data_row)
+                )
+                tsv_item = dict(**json_data_parse, **data_parse_metadata, **{
+                    'item_type_name': check_item_type['name'],
+                    'item_type_id': check_item_type['item_type_id']
+                })
+                tsv_data.append(tsv_item)
+    result['tsv_data'] = tsv_data
+    return result
+
+
+def handle_validate_item_import(list_recond, schema) -> list:
+    """Validate item import.
+    Arguments:
+        list_recond     -- {list} list recond import
+        schema     -- {dict} item_type schema
+    Returns:
+        return       -- list_item_error
+    """
+    result = []
+
+    from jsonschema import validate, Draft4Validator
+    from jsonschema.exceptions import ValidationError
+
+    v2 = Draft4Validator(schema)
+    for record in list_recond:
+        if record.get('metadata'):
+            errors = []
+            a = v2.iter_errors(record.get('metadata'))
+            errors = [error.message for error in a]
+        item_error = dict(**record, **{
+            'errors': errors if len(errors) else None
+        })
+        result.append(item_error)
+    return result
+
+
+def get_item_type(item_type_id=0):
+    """Get json schema.
+
+    :param item_type_id: Item type ID. (Default: 0)
+    :param activity_id: Activity ID.  (Default: Null)
+    :return: The json object.
+    """
+
+    from weko_records.api import ItemTypes
+    try:
+        result = None
+        cur_lang = current_i18n.language
+
+        if item_type_id > 0:
+            itemType = ItemTypes.get_by_id(item_type_id)
+            result = {
+                'schema': itemType.schema,
+                'name': itemType.item_type_name.name,
+                'item_type_id': item_type_id
+            }
+
+        if result is None:
+            return '{}'
+
+        return jsonify(result)
+
+
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)

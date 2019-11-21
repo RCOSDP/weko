@@ -239,9 +239,9 @@ class ItemImportView(BaseView):
         data = request.get_json()
 
         if data:
-            import_items(data.get('file').split(",")[-1])
+            list_record = import_items(data.get('file').split(",")[-1])
 
-        return jsonify(code=-1, msg='error')
+        return jsonify(code = -1, list_record = list_record)
 
 
 item_management_bulk_search_adminview = {

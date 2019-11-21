@@ -40,7 +40,8 @@ class MainLayout extends React.Component {
           tab_key: 'list',
           tab_name: list
         }
-      ]
+      ],
+      list_record: []
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
@@ -65,6 +66,11 @@ class MainLayout extends React.Component {
       dataType: "json",
       success: function (response) {
         if (response.code) {
+          that.setState(()=>{
+            return {
+              list_record: response.list_record
+            }
+          })
           that.handleChangeTab('check');
         } else {
           console.log(response.msg);
@@ -77,7 +83,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const {tab,tabs} = this.state
+    const {tab, tabs, list_record} = this.state
     return(
 
       <div>
@@ -91,10 +97,14 @@ class MainLayout extends React.Component {
           }
         </ul>
         <div className={`${tab === tabs[0].tab_key ? '': 'hide'}`}>
-          <ImportComponent handleCheck={this.handleCheck}></ImportComponent>
+          <ImportComponent
+            handleCheck={this.handleCheck}
+           ></ImportComponent>
         </div>
         <div className={`${tab === tabs[1].tab_key ? '': 'hide'}`}>
-        <CheckComponent></CheckComponent>
+        <CheckComponent
+          list_record={list_record || []}
+        ></CheckComponent>
         </div>
 
       </div>
@@ -280,7 +290,7 @@ class ImportComponent extends React.Component {
                 </div>
               </div>
             </div>
-{/*             
+{/*
             <div className="col-md-12">
               <div className="row">
                 <div className="col-md-2 col-cd">
@@ -347,9 +357,9 @@ class ImportComponent extends React.Component {
               </div>
             </div>
           </div>
-          
+
           {/* Work Flow */}
-{/* 
+{/*
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleShowModalWorkFlow()}></div>
             <div className="modal-content">
@@ -406,7 +416,7 @@ class ImportComponent extends React.Component {
           </div>
            */}
           {/* Index */}
-{/*           
+{/*
           <div className={`modal ${isShowModalIndex ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleShowModalIndex(false)}></div>
             <div className="modal-index">
@@ -469,7 +479,7 @@ class ImportComponent extends React.Component {
           </div>
            */}
           {/* import */}
-{/*           
+{/*
           <div className={`modal ${isShowModalImport ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleSubmit(false)}></div>
             <div className="modal-index">
@@ -626,9 +636,51 @@ class CheckComponent extends React.Component {
 
   constructor(){
     super()
+    this.state = {
+      total: 0,
+      new_item: 0,
+      update_item: 0,
+      check_error: 0,
+      list_record: []
+    }
+    this.handleGenerateData = this.handleGenerateData.bind(this)
+    this.generateTitle = this.generateTitle.bind(this)
+  }
+
+  componentWillReceiveProps(nextProps, prevProps){
+    this.handleGenerateData(nextProps.list_record)
+  }
+
+  handleGenerateData(list_record = []){
+    const check_error = list_record.filter((item) => {
+      return item.errors
+    }).length
+    const new_item = list_record.filter((item) => {
+      return item.status && item.status === 'new'
+    }).length
+    const update_item = list_record.filter((item) => {
+      return item.status && item.status === 'update'
+    }).length
+
+    this.setState({
+      total: list_record.length,
+      check_error: check_error,
+      new_item: new_item,
+      update_item: update_item,
+      list_record: list_record
+    })
+  }
+
+  generateTitle(title, len) {
+    if (title.length <= len) {
+      return title
+    } else {
+      return title.substring(0, len+1)
+    }
   }
 
   render(){
+    const {total, list_record, update_item, new_item, check_error} = this.state
     return(
       <div className="check-component">
         <div className="row">
@@ -641,22 +693,22 @@ class CheckComponent extends React.Component {
                 <h3><b>Summary</b></h3>
                 <div className="flex-box">
                   <div>Total:</div>
-                  <div>5</div>
+                  <div>{total}</div>
                 </div>
                 <div className="flex-box">
-                  <div>Total:</div>
-                  <div>5</div>
+                  <div>New Item:</div>
+                  <div>{new_item}</div>
                 </div>
                 <div className="flex-box">
-                  <div>Total:</div>
-                  <div>5</div>
+                  <div>Update Item:</div>
+                  <div>{update_item}</div>
                 </div>
                 <div className="flex-box">
-                  <div>Total:</div>
-                  <div>5</div>
+                  <div>Check Error:</div>
+                  <div>{check_error}</div>
                 </div>
               </div>
-              <div className="col-md-9 text-align-left">
+              <div className="col-md-9 text-align-right">
                 <button className="btn btn-primary"><span className="glyphicon glyphicon-cloud-download"></span>Download</button>
               </div>
             </div>
@@ -674,18 +726,21 @@ class CheckComponent extends React.Component {
               </thead>
               <tbody>
                 {
-                  workflows.map((item, key) => {
+                  list_record.map((item, key) => {
                     return (
                       <tr key={key}>
                         <td>
                           {key}
                         </td>
-                        <td>{item.flows_name}</td>
-                        <td>
-                          {key}
-                        </td>
                         <td>{item.item_type_name}</td>
-                        <td>{item.flow_name}</td>
+                        <td>
+                          {item.id ? item.id : ''}
+                        </td>
+                        <td>{(item['Title'] && item['Title'][0] && item['Title'][0]['Title'])
+                         ? this.generateTitle(item['Title'][0]['Title'],50) : item['Title'] && item['Title']['Title']
+                         ? this.generateTitle(item['Title']['Title'],50) : '' }
+                         </td>
+                        <td>{item['errors'] ? 'ERRORS' : item.status === 'new'? 'Register' : item.status === 'update' ? 'Update' : ''}</td>
                       </tr>
                     )
                   })

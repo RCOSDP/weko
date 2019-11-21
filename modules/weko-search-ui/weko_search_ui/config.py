@@ -335,3 +335,7 @@ WEKO_SEARCH_TYPE_DICT = {
 WEKO_SYS_USER = 'System Administrator'
 
 WEKO_REPO_USER = 'Repository Administrator'
+
+WEKO_READ_FILE_ERROR_CODE = {
+    'ITEM_TYPE_NOT_EXIST': 1,
+}
