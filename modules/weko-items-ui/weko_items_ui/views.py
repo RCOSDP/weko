@@ -22,18 +22,17 @@
 
 import json
 import os
-import shutil
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 import redis
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
-    render_template, request, send_file, session, url_for
+    render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryItemRegReportHelper, \
@@ -53,13 +52,13 @@ from weko_workflow.models import ActionStatusPolicy, WorkFlow
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
-from .utils import _export_item, _get_max_export_items, export_items, \
-    get_actionid, get_current_user, get_list_email, get_list_username, \
+from .utils import _get_max_export_items, export_items, get_actionid, \
+    get_current_user, get_list_email, get_list_username, \
     get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, make_stats_tsv, \
-    package_export_file, parse_ranking_results, to_files_js, \
-    update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
-    validate_form_input_data, validate_user
+    get_user_information, get_user_permission, parse_ranking_results, \
+    to_files_js, update_json_schema_by_activity_id, \
+    update_schema_remove_hidden_item, validate_form_input_data, \
+    validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -759,6 +758,7 @@ def prepare_edit_item():
         return jsonify(code=-1, msg=_('Header Error'))
     post_activity = request.get_json()
     pid_value = post_activity.get('pid_value')
+
     if pid_value:
         try:
             record = WekoRecord.get_record_by_pid(pid_value)
@@ -768,19 +768,19 @@ def prepare_edit_item():
             is_admin = get_user_roles()
             activity = WorkActivity()
             pid_object = PersistentIdentifier.get('recid', pid_value)
-
-            # TEMP:
-            current_app.logger.info('Record trying to edit: ')
-            current_app.logger.info(record)
+            pv = PIDVersioning(child=pid_object)
 
             # check item is being editied
-            item_id = pid_object.object_uuid
+            item_id = pv.last_child.object_uuid \
+                if pv.exists else pid_object.object_uuid
             wf_activity = activity.get_workflow_activity_by_item_id(
                 item_id=item_id)
             if not wf_activity:
                 # get workflow of first record attached version ID: x.1
-                first_pid_value_attached_ver = '{}.1' . format(post_activity.
-                                                               get('pid_value'))
+                first_pid_value_attached_ver = '{}.1'.format(
+                    post_activity.
+                    get('pid_value')
+                )
                 first_pid_obj_attached_ver = PersistentIdentifier.get(
                     'recid', first_pid_value_attached_ver)
                 wf_activity = activity.get_workflow_activity_by_item_id(
