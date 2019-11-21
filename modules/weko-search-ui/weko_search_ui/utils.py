@@ -432,7 +432,7 @@ def get_item_type(item_type_id=0):
                 'schema': itemType.schema,
                 'name': itemType.item_type_name.name,
                 'item_type_id': item_type_id
-            }
+            } if itemType else None
 
         if result is None:
             return '{}'
