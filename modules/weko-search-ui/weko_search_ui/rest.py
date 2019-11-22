@@ -189,7 +189,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         search = search[(page - 1) * size:page * size]
         search, qs_kwargs = self.search_factory(self, search)
 
-        urlkwargs.update(qs_kwargs)
+        query = request.values.get('q')
+        if query:
+            urlkwargs['q'] = query
+
         # Execute search
         search_result = search.execute()
 

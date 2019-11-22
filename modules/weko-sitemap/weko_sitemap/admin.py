@@ -34,9 +34,8 @@ class SitemapSettingView(BaseView):
         """Start the task to update the sitemap."""
         from .tasks import update_sitemap, link_success_handler, link_error_handler
         # Celery cannot access config
-        baseurl = urlparse(request.base_url).netloc
         task = update_sitemap.apply_async(args=(
-            baseurl, datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
+            datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
             {'ip_address': request.remote_addr,
              'user_agent': request.user_agent.string,
              'user_id': (

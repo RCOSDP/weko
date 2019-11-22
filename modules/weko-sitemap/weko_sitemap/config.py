@@ -18,3 +18,7 @@ WEKO_SITEMAP_TOTAL_MAX_URL_COUNT = 10000000
 
 # WEKO_SITEMAP_CACHE_PREFIX = 'sitemap_cache::'
 """Sitemap pages cache prefix."""
+
+WEKO_SITEMAP_URL_SCHEME = 'https'
+
+WEKO_SITEMAP_CACHE_TIMEOUT = 60 * 60 * 24 * 3

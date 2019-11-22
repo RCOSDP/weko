@@ -230,11 +230,13 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     });
   }
 
-  $scope.checkAll = function() {
+  $scope.checkAll = function(checkAll) {
     angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
       item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
-      if(item_index == -1){
+      if (checkAll &&  item_index == -1) {
         $rootScope.item_export_checkboxes.push(record.id);
+      } else if(!checkAll && item_index >= 0) {
+        $rootScope.item_export_checkboxes.splice(item_index, 1);
       }
     });
   }
@@ -284,7 +286,20 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     let cur_url = new URL(window.location.href);
     let q = cur_url.searchParams.get("q");
     let search_type = cur_url.searchParams.get("search_type");
-    let request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
+
+    let request_url = '';
+
+    if (search_type == "2") {
+      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
+    } else {
+      if (search_type === null) {
+        search_type = "0";
+      }
+      if (q === null) {
+        q = "";
+      }
+      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
+    }
 
     let search_results = []
     $('#item_export_button').attr("disabled", true);
