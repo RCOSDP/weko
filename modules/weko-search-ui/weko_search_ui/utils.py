@@ -255,7 +255,8 @@ def parse_to_json_form(data):
             return
     for key, value in data:
         key_path = handle_generate_key_path(key)
-        set_nested_item(result, key_path, value)
+        if value:
+            set_nested_item(result, key_path, value)
     convert_data(result)
     result = json.loads(json.dumps(result))
     return result

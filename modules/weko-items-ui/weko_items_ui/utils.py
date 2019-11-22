@@ -604,7 +604,7 @@ def make_stats_tsv(item_type_id, recids):
                             max_length = cur_len
             return max_length
 
-        def get_subs_item(self, item_key, item_label, properties, data=None):
+        def get_subs_item(self, item_key, item_label, properties, data=None, isObject=False):
             """Prepare TSV data for each Item Types.
 
             Arguments:
@@ -616,6 +616,7 @@ def make_stats_tsv(item_type_id, recids):
             o_ret_label = []
             ret_data = []
             max_items = self.get_max_items(item_key)
+            max_items = 1 if isObject else max_items
             for idx in range(max_items):
                 key_list = []
                 key_label = []
@@ -632,34 +633,54 @@ def make_stats_tsv(item_type_id, recids):
                                               properties[key].get('title')),
                             properties[key]['items']['properties'],
                             m_data)
+                        if isObject:
+                            _sub_ = []
+                            for item in sub:
+                                if 'item_' in item:
+                                    _sub_.append(item.split('.')[0].replace('[0]', '') + '.' +\
+                                          '.'.join(item.split('.')[1:]))
+                                else :
+                                    _sub_.append(item)
+
+                            # sub = sub.split('.')[0].replace('[1]', '') + '.' +\
+                            #       '.'.join(sub.split('.')[1:])
+                            sub = _sub_
                         key_list.extend(sub)
                         key_label.extend(sublabel)
                         key_data.extend(subdata)
-                    elif properties[key]['type'] == 'object':
-                        if data and idx < len(data) and data[idx].get(key):
-                            m_data = data[idx][key]
-                        else:
-                            m_data = None
-                        sub, sublabel, subdata = self.get_subs_item(
-                            '{}[{}].{}'.format(item_key, str(idx), key),
-                            '{}#{}.{}'.format(item_label, str(idx + 1),
-                                              properties[key].get('title')),
-                            properties[key]['properties'],
-                            m_data)
-                        key_list.extend(sub)
-                        key_label.extend(sublabel)
-                        key_data.extend(subdata)
+                    # elif properties[key]['type'] == 'object':
+                        # if data and idx < len(data) and data[idx].get(key):
+                        #     m_data = data[idx][key]
+                        # else:
+                        #     m_data = None
+                        # sub, sublabel, subdata = self.get_subs_item(
+                        #     '{}[{}].{}'.format(item_key, str(idx), key),
+                        #     '{}#{}.{}'.format(item_label, str(idx + 1),
+                        #                       properties[key].get('title')),
+                        #     properties[key]['properties'],
+                        #     m_data)
+                        # key_list.extend(sub)
+                        # key_label.extend(sublabel)
+                        # key_data.extend(subdata)
                     else:
                         if isinstance(data, dict):
                             data = [data]
-                        key_list.append('{}[{}].{}'.format(
-                            item_key,
-                            str(idx),
-                            key))
-                        key_label.append('{}#{}.{}'.format(
-                            item_label,
-                            str(idx + 1),
-                            properties[key].get('title')))
+                        if isObject:
+                            key_list.append('{}.{}'.format(
+                                item_key,
+                                key))
+                            key_label.append('{}.{}'.format(
+                                item_label,
+                                properties[key].get('title')))
+                        else:
+                            key_list.append('{}[{}].{}'.format(
+                                item_key,
+                                str(idx),
+                                key))
+                            key_label.append('{}#{}.{}'.format(
+                                item_label,
+                                str(idx + 1),
+                                properties[key].get('title')))
                         if data and idx < len(data) and data[idx].get(key):
                             key_data.append(data[idx][key])
                         else:
@@ -688,24 +709,24 @@ def make_stats_tsv(item_type_id, recids):
                 o_ret_label.extend(key_label)
                 ret_data.extend(key_data)
 
-                if max_items == 1:
-                    new_ret = []
-                    new_ret_label = []
-                    for c_ret in o_ret:
-                        if item_key + '[0]' in c_ret:
-                            new_ret.append(c_ret.replace(item_key + '[0]',
-                                                         item_key))
-                        else:
-                            new_ret.append(c_ret)
-                    for c_ret in o_ret_label:
-                        if item_label + '#1' in c_ret:
-                            new_ret_label.append(c_ret.replace(item_label
-                                                               + '#1',
-                                                               item_label))
-                        else:
-                            new_ret_label.append(c_ret)
-                    o_ret = new_ret
-                    o_ret_label = new_ret_label
+                # if max_items == 1:
+                #     new_ret = []
+                #     new_ret_label = []
+                #     for c_ret in o_ret:
+                #         if item_key + '[0]' in c_ret:
+                #             new_ret.append(c_ret.replace(item_key + '[0]',
+                #                                          item_key))
+                #         else:
+                #             new_ret.append(c_ret)
+                #     for c_ret in o_ret_label:
+                #         if item_label + '#1' in c_ret:
+                #             new_ret_label.append(c_ret.replace(item_label
+                #                                                + '#1',
+                #                                                item_label))
+                #         else:
+                #             new_ret_label.append(c_ret)
+                #     o_ret = new_ret
+                #     o_ret_label = new_ret_label
             return o_ret, o_ret_label, ret_data
 
     records = RecordsManager(recids)
@@ -751,7 +772,8 @@ def make_stats_tsv(item_type_id, recids):
                     item_key,
                     item.get('title'),
                     item['properties'],
-                    records.attr_data[item_key][recid]
+                    records.attr_data[item_key][recid],
+                    True
                 )
                 if not keys:
                     keys = key
