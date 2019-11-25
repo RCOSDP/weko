@@ -325,7 +325,7 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
     data = read_stats_tsv(tsv_file_path)
     list_record = handle_validate_item_import(data.get('tsv_data'), data.get(
-        'item_type_schema'
+        'item_type_schema', {}
     ))
     return list_record
 
@@ -359,11 +359,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                         int(item_type_id)
                     )
                     if not check_item_type:
-                        result['error'] = True
-                        result['error_code'] = WEKO_READ_FILE_ERROR_CODE.get(
-                            'ITEM_TYPE_NOT_EXIST'
-                        )
-                        return result
+                        result['item_type_schema'] = {}
                     else:
                         result['item_type_schema'] = check_item_type['schema']
 
@@ -382,8 +378,10 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                     data_row)
                 )
                 tsv_item = dict(**json_data_parse, **data_parse_metadata, **{
-                    'item_type_name': check_item_type['name'],
+                    'item_type_name': check_item_type['name']
+                    if check_item_type else '',
                     'item_type_id': check_item_type['item_type_id']
+                    if check_item_type else ''
                 })
                 tsv_data.append(tsv_item)
     result['tsv_data'] = tsv_data
@@ -403,11 +401,15 @@ def handle_validate_item_import(list_recond, schema) -> list:
     from jsonschema import validate, Draft4Validator
     from jsonschema.exceptions import ValidationError
 
-    v2 = Draft4Validator(schema)
+    v2 = Draft4Validator(schema) if schema else None
     for record in list_recond:
         if record.get('metadata'):
             errors = []
-            a = v2.iter_errors(record.get('metadata'))
+            a = v2.iter_errors(record.get('metadata')) if v2 else [
+                {
+                    'message': 'Item Type is not exist'
+                }
+            ]
             errors = [error.message for error in a]
         item_error = dict(**record, **{
             'errors': errors if len(errors) else None
@@ -466,7 +468,7 @@ def handle_check_exist_record(list_recond) -> list:
     list_record_id = [item.json.get(
         'id', '') for item in list_record_in_system]
     for item in list_recond:
-        if item.get('status') != 'error':
+        if item.get('errors'):
             if url_root in item.get('uri', ''):
                 if item.get('id') in list_record_id:
                     item['status'] = 'update'
