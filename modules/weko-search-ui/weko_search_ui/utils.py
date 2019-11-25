@@ -357,7 +357,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                     item_type_id = data_row[-1].split('/')[-1]
                     check_item_type = get_item_type(
                         int(item_type_id)
-                    ).get_json()
+                    )
                     if not check_item_type:
                         result['error'] = True
                         result['error_code'] = WEKO_READ_FILE_ERROR_CODE.get(
@@ -443,7 +443,7 @@ def get_item_type(item_type_id=0) -> dict:
         current_app.logger.debug('========================')
         current_app.logger.debug(result)
 
-        return jsonify(result)
+        return result
 
 
     except BaseException:
