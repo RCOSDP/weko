@@ -744,21 +744,19 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
-            if record is not None:
-
-                current_app.logger.info('The data from record.model: ')
-                current_app.logger.info(record.model.__dict__)
+            if record:
                 deposit.publish()
                 updated_item = UpdateItem()
                 # publish record without version ID when registering newly
-                if recid is not None:
+                if recid:
                     # new record attached version ID
                     first_record_attached_ver = deposit.newversion(current_pid)
-                    activity_item_id = first_record_attached_ver.model.id
-                    deposit_attached_ver = WekoDeposit(
-                        first_record_attached_ver,
-                        first_record_attached_ver.model)
-                    deposit_attached_ver.publish()
+                    # activity_item_id = first_record_attached_ver.model.id
+                    activity_item_id = activity_detail.item_id
+                    # deposit_attached_ver = WekoDeposit(
+                    #     first_record_attached_ver,
+                    #     first_record_attached_ver.model)
+                    # first_record_attached_ver.publish()
                     # Record without version: Make status Public as default
                     updated_item.publish(record)
                 else:
@@ -771,8 +769,8 @@ def next_action(activity_id='0', action_id=0):
                             record_without_ver,
                             record_without_ver.model)
                         deposit_without_ver['path'] = deposit.get('path', [])
-                        parent_record = deposit_without_ver. \
-                            merge_data_to_record_without_version(current_pid)
+                        # parent_record = deposit_without_ver. \
+                        #     merge_data_to_record_without_version(current_pid)
                         deposit_without_ver.publish()
             activity.update(
                 action_id=next_flow_action[0].action_id,

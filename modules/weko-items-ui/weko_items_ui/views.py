@@ -487,10 +487,8 @@ def iframe_items_index(pid_value='0'):
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
             sessionstore.delete('item_index_{}'.format(pid_value))
-            current_app.logger.debug(item_str)
             item = json.loads(item_str)
             item['index'] = data
-            current_app.logger.debug(item)
         elif request.method == 'POST':
             """update item data info."""
             sessionstore.put(
@@ -769,10 +767,6 @@ def prepare_edit_item():
             activity = WorkActivity()
             pid_object = PersistentIdentifier.get('recid', pid_value)
 
-            # TEMP:
-            current_app.logger.info('Record trying to edit: ')
-            current_app.logger.info(record)
-
             # check item is being editied
             item_id = pid_object.object_uuid
             wf_activity = activity.get_workflow_activity_by_item_id(
@@ -825,12 +819,12 @@ def prepare_edit_item():
 
             # Create a new version of a record.
             record = WekoDeposit.get_record(item_id)
-            if record is None:
+            if not record:
                 return jsonify(code=-1, msg=_('Record does not exist.'))
 
             deposit = WekoDeposit(record, record.model)
             new_record = deposit.newversion(pid_object)
-            if new_record is None:
+            if not new_record:
                 return jsonify(code=-1, msg=_('An error has occurred.'))
 
             # Create a new workflow activity.

@@ -603,7 +603,6 @@ def file_version_update():
         version_id = request.values.get('version_id')
         is_show = request.values.get('is_show')
         if not bucket_id and not key and not version_id:
-            from invenio_files_rest.models import ObjectVersion
             object_version = ObjectVersion.get(bucket=bucket_id, key=key,
                                                version_id=version_id)
             if object_version is not None:

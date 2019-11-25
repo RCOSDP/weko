@@ -74,7 +74,7 @@ def weko_deposit_fetcher(record_uuid, data):
 def get_latest_version_id(recid):
     """Get latest version ID to store item of before updating."""
     version_id = 1
-    pid_value = "{}.%" . format(recid)
+    pid_value = "{}.%".format(recid)
     pid = PersistentIdentifier.query.filter_by(pid_type='recid')\
         .filter(PersistentIdentifier.pid_value.like(pid_value)).all()
     if pid:

@@ -413,11 +413,6 @@ class WekoDeposit(Deposit):
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
         try:
-            # rec_pid = PersistentIdentifier.get('recid', self.data.get('id', 0))
-            # current_app.logger.info('The current id is : ')
-            # current_app.logger.info(self.data.get('id', 0))
-            # current_app.logger.info(self.pid)
-
             deposit = super(WekoDeposit, self).publish(pid, id_)
             # deposit = super(WekoDeposit, self).publish(pid, id_)
 
@@ -425,7 +420,7 @@ class WekoDeposit(Deposit):
             pid = PersistentIdentifier.query.filter_by(
                 pid_type='recid', object_uuid=self.id).first()
             relations = serialize_relations(pid)
-            if relations is not None and 'version' in relations:
+            if relations and 'version' in relations:
                 relations_ver = relations['version'][0]
                 relations_ver['id'] = pid.object_uuid
                 relations_ver['is_last'] = relations_ver.get('index') == 0
@@ -442,6 +437,8 @@ class WekoDeposit(Deposit):
 
         Adds bucket creation immediately on deposit creation.
         """
+        current_app.logger.debug('=================================')
+        current_app.logger.debug('Adds bucket creation')
         bucket = Bucket.create(
             quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
             max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
@@ -593,7 +590,7 @@ class WekoDeposit(Deposit):
 
     def newversion(self, pid=None):
         """Create a new version deposit."""
-        deposit = None
+        # deposit = None
         try:
             if not self.is_published():
                 raise PIDInvalidAction()
@@ -610,9 +607,10 @@ class WekoDeposit(Deposit):
                 if latest_record is not None:
                     data = latest_record.dumps()
 
+                    current_app.logger.debug('xxxxxxxxxxxxxxxxxxxxxxxxxxx')
                     owners = data['_deposit']['owners']
                     keys_to_remove = ('_deposit', 'doi', '_oai',
-                                      '_files', '_buckets', '$schema')
+                                      '_files', '$schema')
                     for k in keys_to_remove:
                         data.pop(k, None)
 
@@ -639,7 +637,7 @@ class WekoDeposit(Deposit):
                     RecordDraft.link(recid, depid)
 
                     # Create snapshot from the record's bucket and update data
-                    if latest_record.files is not None:
+                    if latest_record.files:
                         snapshot = latest_record.files.bucket.snapshot(
                             lock=False)
                         snapshot.locked = False
@@ -662,6 +660,7 @@ class WekoDeposit(Deposit):
                         last_pid.object_uuid).dumps()
                     item_metadata.pop('id', None)
                     args = [index, item_metadata]
+                    current_app.logger.debug(deposit)
                     deposit.update(*args)
                     deposit.commit()
             return deposit

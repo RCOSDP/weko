@@ -70,9 +70,6 @@ def send_all_reports(report_type=None, year=None, month=None):
             year=year, month=month, event='site_access')
     }
     with current_app.app_context():
-        current_app.logger.info(
-            '[{0}] [{1}] '.format(0, 'Got all stats reports'))
-
         # Allow for this to be used to get specific emails as well
         reports = {}
         if report_type is not None and report_type in all_results:
@@ -106,16 +103,12 @@ def check_send_all_reports():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
         schedule = None
-        current_app.logger.info(
-            '[{0}] [{1}] '.format(0, 'Checking if report emails are due'))
 
         cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
             format(name='email_schedule')
         schedule = get_redis_cache(cache_key)  # Schedule set in the view
         schedule = json.loads(schedule) if schedule else None
         if schedule and _due_to_run(schedule):
-            current_app.logger.info(
-                '[{0}] [{1}] '.format(0, 'Started report email task'))
             send_all_reports.delay()
 
 

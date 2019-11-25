@@ -1,74 +1,78 @@
 {# -*- coding: utf-8 -*-
-#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
+ #
+ # This file is part of WEKO3.
+ # Copyright (C) 2017 National Institute of Informatics.
+ #
+ # WEKO3 is free software; you can redistribute it
+ # and/or modify it under the terms of the GNU General Public License as
+ # published by the Free Software Foundation; either version 2 of the
+ # License, or (at your option) any later version.
+ #
+ # WEKO3 is distributed in the hope that it will be
+ # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ # General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with WEKO3; if not, write to the
+ # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ # MA 02111-1307, USA.
+ #}
 
 
 {%- if pid in active_versions and pid | pid_value_version %}
-  <div style="padding: 0 15px;">
-    <div class="alert alert-warning" style="margin-bottom: 0;">
-      {{ _('There is a') }}&nbsp;<a class="alert-link" href="{{ url_for('invenio_records_ui.recid', pid_value=all_versions[0].pid_value) }}">{{ _('newer version') }}</a>&nbsp;{{ _('of this record available.') }}
-    </div>
+<div style="padding: 0 15px;">
+  <div class="alert alert-warning" style="margin-bottom: 0;">
+    {{ _('There is a') }}&nbsp;<a class="alert-link"
+      href="{{ url_for('invenio_records_ui.recid', pid_value=all_versions[0].pid_value) }}">{{ _('newer version') }}</a>&nbsp;{{ _('of this record available.') }}
   </div>
+</div>
 {%- endif %}
+
 <div class="panel-body">
-<div class="row">
-<div class="col-sm-12 col-md-12 col-lg-12 col-left">
-<pre class="hide">{{record|tojson}}</pre>
+  <div class="row">
+    <div class="col-sm-12 col-md-12 col-lg-12 col-left">
+      <pre class="hide">{{record|tojson}}</pre>
       <div class="panel_bread" id="panel_bread">
         {%- set record_navs = record.navi -%}
         {%- if record_navs -%}
           {%- for nav in record_navs -%}
-                <div style="overflow:hidden;">
-                <ol class="breadcrumb" style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
-                  {%- if nav.name != None and current_i18n.language == 'ja'  %}
-                    {%- set name = nav.name.split('/') -%}
-                  {%- else %}
-                    {%- set name = nav.name_en.split('/') -%}
+            <div style="overflow:hidden;">
+              <ol class="breadcrumb"
+                style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
+                {%- if nav.name != None and current_i18n.language == 'ja'  %}
+                  {%- set name = nav.name.split('/') -%}
+                {%- else %}
+                  {%- set name = nav.name_en.split('/') -%}
+                {%- endif -%}
+                {%- set p = nav.path.split('/') -%}
+                {%- for n in name -%}
+                  {%- if community %}
+                    <li>
+                      <a href="{{ url_for("invenio_search_ui.search") + "?search_type=2&q=" + p[loop.index-1] + "&community=" + community.id }}">{{n}}</a>
+                    </li>
+                  {%-else%}
+                    <li>
+                      <a href="{{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}">{{n}}</a>
+                    </li>
                   {%- endif -%}
-                  {%- set p = nav.path.split('/') -%}
-                  {%- for n in name -%}
-                    {%- if community %}
-                      <li>
-                        <a href="{{ url_for("invenio_search_ui.search") + "?search_type=2&q=" + p[loop.index-1] + "&community=" + community.id }}">{{n}}</a>
-                      </li>
-                    {%-else%}
-                      <li>
-                        <a href="{{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}">{{n}}</a>
-                      </li>
-                    {%- endif -%}
-                  {%- endfor -%}
-                </ol>
-           </div>
+                {%- endfor -%}
+              </ol>
+            </div>
           {%- endfor %}
-<div class="panel-group" style="padding-top: 10px;">
-              <h2 style="display: inline;"><a href='#' style="margin-left:
-                      0.2em;">{{ record.get('item_title', _('No title'))
-                      }}</a></h2>
-</div>
-	<div class="panel-group">
-{%- if record.permalink_uri -%}
+          <div class="panel-group" style="padding-top: 10px;">
+            <h2 style="display: inline;">
+              <a href='#' style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) }}</a>
+            </h2>
+          </div>
+          <div class="panel-group">
+            {%- if record.permalink_uri -%}
               <span class="pull-right" style="display: inline;padding-right:10px;">Permalink :
                 {{ record.permalink_uri }}</span>
-              {%- endif -%}
+            {%- endif -%}
+          </div>
         {%- endif -%}
-	</div>
-</div>
-</div>
+      </div>
+    </div>
+  </div>
 </div>

@@ -131,11 +131,6 @@ def export_journal_task(p_path):
         header_string = "\t".join(header)
 
         # Get journal data.
-        current_app.logger.info(
-            '[{0}] [{1}]'.format(
-                0, 'Celery export_journal_task call api get all journal'
-            )
-        )
         journals = Journals.get_all_journals()
         journals_list = []
         if journals is not None:
