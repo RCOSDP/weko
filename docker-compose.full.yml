@@ -88,7 +88,7 @@ services:
 
   postgresql:
     restart: "always"
-    image: postgres
+    image: postgres:12
     environment:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
@@ -190,4 +190,3 @@ volumes:
   static_data:
   pgsql-data:
   es-data:
-

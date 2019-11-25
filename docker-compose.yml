@@ -89,7 +89,7 @@ services:
 
   postgresql:
     restart: "always"
-    image: postgres:11
+    image: postgres:12
     environment:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
@@ -158,7 +158,7 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     links:
       - elasticsearch
-      
+
 volumes:
   weko3_data:
   static_data:

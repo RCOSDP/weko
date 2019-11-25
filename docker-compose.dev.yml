@@ -56,7 +56,7 @@ web:
 
 postgresql:
   restart: "always"
-  image: postgres
+  image: postgres:12
   environment:
     - POSTGRES_USER=invenio
     - POSTGRES_DB=invenio
@@ -127,4 +127,3 @@ clamav:
   image: mkodockx/docker-clamav
   ports:
     - "3301:3310"
-
