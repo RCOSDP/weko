@@ -405,12 +405,11 @@ def handle_validate_item_import(list_recond, schema) -> list:
     for record in list_recond:
         if record.get('metadata'):
             errors = []
-            a = v2.iter_errors(record.get('metadata')) if v2 else [
-                {
-                    'message': 'Item Type is not exist'
-                }
-            ]
-            errors = [error.message for error in a]
+            if v2:
+                a = v2.iter_errors(record.get('metadata'))
+                errors = [error.message for error in a]
+            else:
+                errors = ['ItemType is not exist']
         item_error = dict(**record, **{
             'errors': errors if len(errors) else None
         })
