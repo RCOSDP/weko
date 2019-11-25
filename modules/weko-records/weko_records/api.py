@@ -1106,6 +1106,16 @@ class ItemsMetadata(RecordBase):
             return [cls(obj.json, model=obj) for obj in query.all()]
 
     @classmethod
+    def get_all_record(cls):
+        """Retrieve multiple records.
+
+        :returns: A list of :class:`Record` instances.
+        """
+        with db.session.no_autoflush:
+            query = ItemMetadata.query.filter()
+            return [obj for obj in query.all()]
+
+    @classmethod
     def get_by_item_type_id(cls, item_type_id, with_deleted=False):
         """Retrieve multiple records by item types identifier.
 

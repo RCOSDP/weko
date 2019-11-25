@@ -300,6 +300,8 @@ def import_items(file_content: str) -> list:
                 if tsv_entry.endswith('.tsv'):
                     list_record.extend(
                         unpackage_import_file(data_path, tsv_entry))
+            list_record = handle_check_exist_record(list_record)
+
             return list_record
         else:
             # TODO: Handle import file isn't zip file
@@ -414,8 +416,8 @@ def handle_validate_item_import(list_recond, schema) -> list:
     return result
 
 
-def get_item_type(item_type_id=0):
-    """Get json schema.
+def get_item_type(item_type_id=0) -> dict:
+    """Get item type.
 
     :param item_type_id: Item type ID. (Default: 0)
     :param activity_id: Activity ID.  (Default: Null)
@@ -444,3 +446,31 @@ def get_item_type(item_type_id=0):
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
+
+def handle_check_exist_record(list_recond) -> list:
+    """Check record is exist in system.
+    Arguments:
+        list_recond     -- {list} list recond import
+    Returns:
+        return       -- list record has property status
+    """
+    from weko_records.api import ItemsMetadata
+    result = []
+    url_root = request.url_root
+    list_record_in_system = ItemsMetadata.get_all_record()
+    current_app.logger.debug("======list_record_in_system")
+    current_app.logger.debug(list_record_in_system)
+    list_record_id = [item.json.get(
+        'id', '') for item in list_record_in_system]
+    for item in list_recond:
+        if item.get('status') != 'error':
+            if url_root in item.get('uri', ''):
+                if item.get('id') in list_record_id:
+                    item['status'] = 'update'
+                    result
+            else:
+                item = dict(**item, **{
+                    'status': 'new'
+                })
+        result.append(item)
+    return result
