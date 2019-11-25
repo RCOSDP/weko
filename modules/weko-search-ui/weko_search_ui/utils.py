@@ -438,7 +438,7 @@ def get_item_type(item_type_id=0) -> dict:
             } if itemType else None
 
         if result is None:
-            return '{}'
+            return {}
 
         current_app.logger.debug('========================')
         current_app.logger.debug(result)
