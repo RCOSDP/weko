@@ -301,7 +301,6 @@ def import_items(file_content: str) -> list:
                     list_record.extend(
                         unpackage_import_file(data_path, tsv_entry))
             list_record = handle_check_exist_record(list_record)
-
             return list_record
         else:
             # TODO: Handle import file isn't zip file
@@ -447,6 +446,7 @@ def get_item_type(item_type_id=0) -> dict:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
+
 def handle_check_exist_record(list_recond) -> list:
     """Check record is exist in system.
     Arguments:
@@ -454,18 +454,20 @@ def handle_check_exist_record(list_recond) -> list:
     Returns:
         return       -- list record has property status
     """
-    from weko_records.api import ItemsMetadata
+    from weko_deposit.api import WekoRecord
     result = []
     url_root = request.url_root
-    list_record_in_system = ItemsMetadata.get_all_record()
-    list_record_id = [item.json.get(
-        'id', '') for item in list_record_in_system]
     for item in list_recond:
         if not item.get('errors'):
             if url_root in item.get('uri', ''):
-                if item.get('id') in list_record_id:
-                    item['status'] = 'update'
-                    result
+                item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+                if item_exist:
+                    if item_exist.pid.is_deleted():
+                        item['status'] = 'delete'
+                    else:
+                        item['status'] = 'update'
+                else:
+                    item['status'] = 'new'
             else:
                 item = dict(**item, **{
                     'status': 'new'
