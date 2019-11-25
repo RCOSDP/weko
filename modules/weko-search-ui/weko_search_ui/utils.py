@@ -441,11 +441,7 @@ def get_item_type(item_type_id=0) -> dict:
         if result is None:
             return {}
 
-        current_app.logger.debug('========================')
-        current_app.logger.debug(result)
-
         return result
-
 
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
@@ -462,12 +458,10 @@ def handle_check_exist_record(list_recond) -> list:
     result = []
     url_root = request.url_root
     list_record_in_system = ItemsMetadata.get_all_record()
-    current_app.logger.debug("======list_record_in_system")
-    current_app.logger.debug(list_record_in_system)
     list_record_id = [item.json.get(
         'id', '') for item in list_record_in_system]
     for item in list_recond:
-        if item.get('errors'):
+        if not item.get('errors'):
             if url_root in item.get('uri', ''):
                 if item.get('id') in list_record_id:
                     item['status'] = 'update'
