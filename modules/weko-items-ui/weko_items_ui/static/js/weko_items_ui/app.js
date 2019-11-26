@@ -1201,12 +1201,56 @@ function handleSharePermission(value) {
         return invalid_emails;
       }
 
+      $scope.getItemsDictionary = function (item) {
+        let result = {};
+        if (item.hasOwnProperty('items')) {
+          let subitem = item.items;
+          for (let i = 0; i < subitem.length; i++) {
+            result = Object.assign(this.getItemsDictionary(subitem[i]), result);
+          }
+        } else if (item.key && item.key.length) {
+          title = item.title;
+          if (item.hasOwnProperty('title_i18n')) {
+            let currentLanguage = $("#current_language").val();
+            title = item.title_i18n[currentLanguage];
+          }
+          result[item.key[item.key.length - 1]] = title;
+        }
+        return result;
+      }
+
       $scope.validateInputData = function () {
         if (!this.validateRequiredItem()) {
           // Check required item
           return false;
         } else if ($scope.depositionForm.$invalid) {
           // Check containing control or form is invalid
+
+          let recordsForm = $rootScope.recordsVM.invenioRecordsForm;
+          let itemsDict = {};
+          for (let i = 0; i < recordsForm.length; i++) {
+            itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
+          }
+
+          let schemaForm = $scope.depositionForm.$error.schemaForm;
+          let listItemErrors = [];
+          for (let i = 0; i < schemaForm.length; i++) {
+            let name = schemaForm[i].$name;
+            if (itemsDict.hasOwnProperty(name)) {
+              name = itemsDict[name];
+            }
+            listItemErrors.push(name);
+          }
+
+          // Generate error message and show modal
+          let message = $("#validate_error").val() + '<br/><br/>';
+          message += listItemErrors[0];
+          for (let k = 1; k < listItemErrors.length; k++) {
+            let subMessage = ', ' + listItemErrors[k];
+            message += subMessage;
+          }
+          $("#inputModal").html(message);
+          $("#allModal").modal("show");
           return false;
         } else {
           // Call API to validate input data base on json schema define
