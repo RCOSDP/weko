@@ -544,6 +544,8 @@ def check_authority_action(activity_id='0', action_id=0):
     # Otherwise, user has no permission
     return 1
 
+from .utils import removeDraftBuckets
+
 
 @blueprint.route(
     '/activity/action/<string:activity_id>/<int:action_id>',
@@ -751,12 +753,13 @@ def next_action(activity_id='0', action_id=0):
                 if recid:
                     # new record attached version ID
                     first_record_attached_ver = deposit.newversion(current_pid)
-                    # activity_item_id = first_record_attached_ver.model.id
-                    activity_item_id = activity_detail.item_id
-                    # deposit_attached_ver = WekoDeposit(
-                    #     first_record_attached_ver,
-                    #     first_record_attached_ver.model)
-                    # first_record_attached_ver.publish()
+                    activity_item_id = first_record_attached_ver.model.id
+                    # activity_item_id = activity_detail.item_id
+                    deposit_attached_ver = WekoDeposit(
+                        first_record_attached_ver,
+                        first_record_attached_ver.model)
+                    deposit_attached_ver.publish()
+                    removeDraftBuckets(activity_item_id)
                     # Record without version: Make status Public as default
                     updated_item.publish(record)
                 else:

@@ -765,3 +765,16 @@ class IdentifierHandle(object):
             self.item_record.update(record_data)
             self.item_record.commit()
         db.session.commit()
+
+
+from invenio_files_rest.models import Bucket
+from invenio_records_files.models import RecordsBuckets
+
+
+def removeDraftBuckets(item_uuid):
+    """ """
+    with db.session.begin_nested():
+        draft_records_buckets = RecordsBuckets.query.filter_by(record_id=item_uuid).one_or_none()
+        draft_bucket = Bucket.get(draft_records_buckets.bucket_id)
+        RecordsBuckets.query.filter_by(record_id=item_uuid).delete()
+        draft_bucket.remove()
