@@ -122,9 +122,12 @@ class WekoSitemap(Sitemap):
                .limit(current_app.config['WEKO_SITEMAP_TOTAL_MAX_URL_COUNT']))
 
         for recid, rm in q.yield_per(1000):
-            yield ('invenio_records_ui.recid',
-                   {'pid_value': recid.pid_value, '_external': True},
-                   rm.updated.strftime('%Y-%m-%dT%H:%M:%S%z'))
+            yield {
+                'loc': url_for('invenio_records_ui.recid',
+                               pid_value=recid.pid_value,
+                               _external=True),
+                'lastmod': rm.updated.strftime('%Y-%m-%dT%H:%M:%S%z')
+            }
 
     def _load_cache_pages(self):
         """Get pages from cache instead of re-creating them."""
