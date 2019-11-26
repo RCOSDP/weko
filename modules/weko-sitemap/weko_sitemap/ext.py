@@ -151,13 +151,6 @@ class WekoSitemap(Sitemap):
         self.init_config(app)
         self.cached_pages_set_key = 'sitemap_page_keys'  # Keep track of cached pages
         app.extensions['weko-sitemap'] = self
-
-        # Get base URL for site:
-        app.config['SITEMAP_BLUEPRINT'] = None  # Set our own Blueprint
-        app.config['SITEMAP_BLUEPRINT_URL_PREFIX'] = '/weko/sitemaps'
-        app.config['SITEMAP_ENDPOINT_URL'] = '/sitemapindex.xml'
-        app.config['SITEMAP_ENDPOINT_PAGE_URL'] = '/sitemap_<int:page>.xml.gz'
-        app.config['SITEMAP_MAX_URL_COUNT'] = 10000  # Defaults to 10000
         app.config['SITEMAP_VIEW_DECORATORS'] = [self.load_page]
 
         ext = Sitemap(app=app)
@@ -189,5 +182,5 @@ class WekoSitemap(Sitemap):
                 app.config['BASE_TEMPLATE'],
             )
         for k in dir(config):
-            if k.startswith('WEKO_SITEMAP_'):
+            if k.startswith('WEKO_SITEMAP_') or k.startswith('SITEMAP_'):
                 app.config.setdefault(k, getattr(config, k))
