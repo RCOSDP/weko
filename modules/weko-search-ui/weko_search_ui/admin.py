@@ -241,7 +241,34 @@ class ItemImportView(BaseView):
         if data:
             list_record = import_items(data.get('file').split(",")[-1])
 
-        return jsonify(code = -1, list_record = list_record)
+        return jsonify(code=-1, list_record=list_record)
+
+    @expose('/download', methods=['POST'])
+    def download(self):
+        """Register an item type mapping."""
+        data = request.get_json()
+        from datetime import datetime
+        from .utils import make_stats_tsv
+        from flask import Response
+        now = str(datetime.date(datetime.now()))
+        file_name = "check_"+now+".tsv"
+        if data:
+            tsv_file = make_stats_tsv(data.get('list_result'))
+            return Response(
+                tsv_file.getvalue(),
+                mimetype="text/tsv",
+                headers={
+                    "Content-disposition": "attachment; filename="+file_name
+                }
+            )
+        else:
+            return Response(
+                [],
+                mimetype="text/tsv",
+                headers={
+                    "Content-disposition": "attachment; filename="+file_name
+                }
+            )
 
 
 item_management_bulk_search_adminview = {

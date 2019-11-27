@@ -20,6 +20,7 @@ const check = document.getElementById("check").value;
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin+'/api/tree'
 const urlCheck = window.location.origin+'/admin/items/import/check'
+const urlDownload = window.location.origin+'/admin/items/import/download'
 
 class MainLayout extends React.Component {
 
@@ -645,6 +646,7 @@ class CheckComponent extends React.Component {
     }
     this.handleGenerateData = this.handleGenerateData.bind(this)
     this.generateTitle = this.generateTitle.bind(this)
+    this.handleDownload = this.handleDownload.bind(this)
   }
 
   componentWillReceiveProps(nextProps, prevProps){
@@ -679,6 +681,45 @@ class CheckComponent extends React.Component {
     }
   }
 
+  handleDownload() {
+    const {list_record} = this.state
+    const result = Array.from(list_record, (item, key) => {
+      return {
+        'No': key,
+        'Item type': item.item_type_name,
+        'Item id': item.id,
+        'Title' : (item['Title'] && item['Title'][0] && item['Title'][0]['Title']) ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title'] ? item['Title']['Title'] : '',
+        'Check result': item['errors'] ? 'ERRORS' : item.status === 'new' ? 'Register' : item.status === 'update' ? 'Update' : ''
+      }
+    })
+    const data = {
+      list_result: result
+    }
+    fetch(urlDownload, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+     })
+    .then(resp => resp.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      // the filename you want
+      const today = new Date();
+      const date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+      a.download = 'check_'+ date+'.tsv';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(() => alert('oh no!'));
+
+  }
+
   render(){
     const {total, list_record, update_item, new_item, check_error} = this.state
     return(
@@ -709,7 +750,10 @@ class CheckComponent extends React.Component {
                 </div>
               </div>
               <div className="col-md-9 text-align-right">
-                <button className="btn btn-primary"><span className="glyphicon glyphicon-cloud-download"></span>Download</button>
+                <button
+                  className="btn btn-primary"
+                  onClick={this.handleDownload}
+                 ><span className="glyphicon glyphicon-cloud-download"></span>Download</button>
               </div>
             </div>
           </div>

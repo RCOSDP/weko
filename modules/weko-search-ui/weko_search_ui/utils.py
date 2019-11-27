@@ -253,10 +253,18 @@ def parse_to_json_form(data):
                 convert_nested_item_to_list(result, term_path)
         else:
             return
-    for key, value in data:
+    for key, name, value in data:
         key_path = handle_generate_key_path(key)
+        name_path = handle_generate_key_path(name)
         if value:
-            set_nested_item(result, key_path, value)
+            a = handle_check_identifier(name_path)
+            if not a:
+                set_nested_item(result, key_path, value)
+            else:
+                set_nested_item(result, key_path, value)
+                a += ' key'
+                set_nested_item(result, [a], key_path[1])
+
     convert_data(result)
     result = json.loads(json.dumps(result))
     return result
@@ -369,11 +377,13 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
             else:
                 data_parse_metadata = parse_to_json_form(zip(
                     item_path,
+                    item_path_name,
                     data_row)
                 )
 
                 json_data_parse = parse_to_json_form(zip(
                     item_path_name,
+                    item_path,
                     data_row)
                 )
                 tsv_item = dict(**json_data_parse, **data_parse_metadata, **{
@@ -459,18 +469,92 @@ def handle_check_exist_record(list_recond) -> list:
     url_root = request.url_root
     for item in list_recond:
         if not item.get('errors'):
+            item = dict(**item, **{
+                'status': 'new'
+            })
             if url_root in item.get('uri', ''):
-                item_exist = WekoRecord.get_record_by_pid(item.get('id'))
-                if item_exist:
-                    if item_exist.pid.is_deleted():
-                        item['status'] = 'delete'
+                try:
+                    item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+                    if item_exist:
+                        if item_exist.pid.is_deleted():
+                            continue
+                        else:
+                            item['status'] = 'update'
+                            compare_identifier(item, item_exist)
                     else:
-                        item['status'] = 'update'
-                else:
-                    item['status'] = 'new'
-            else:
-                item = dict(**item, **{
-                    'status': 'new'
-                })
+                        item['status'] = 'new'
+                except BaseException:
+                    current_app.logger.error('Unexpected error: ',
+                                             sys.exc_info()[0])
+        if item.get('status') == 'new':
+            handle_remove_identifier(item)
         result.append(item)
     return result
+
+
+def handle_check_identifier(name) -> str:
+    """Check data is Identifier of Identifier Registration.
+        Arguments:
+            name_path     -- {list} list name path
+        Returns:
+            return       -- Name of key if is Identifier
+        """
+    url_root = request.url_root
+    result = ''
+    if 'Identifier' in name or 'Identifier Registration' in name:
+        result = name[0]
+    return result
+
+
+def handle_remove_identifier(item) -> dict:
+    """Remove Identifier of Identifier Registration.
+        Arguments:
+            item         -- Item
+        Returns:
+            return       -- Item had been removed property
+        """
+    if item and item.get('Identifier key'):
+        del item.metadata[item.get('Identifier key')]
+        del item['Identifier key']
+        del item['Identifier']
+    if item and item.get('Identifier Registration key'):
+        del item.metadata[item.get('Identifier Registration key')]
+        del item['Identifier Registration key']
+        del item['Identifier Registration']
+    return item
+
+
+def compare_identifier(item, item_exist):
+    """Check data is Identifier of Identifier Registration.
+        Arguments:
+            name_path     -- {list} list name path
+        Returns:
+            return       -- Name of key if is Identifier
+    """
+    current_app.logger.debug("=====================================item")
+    current_app.logger.debug(item)
+    current_app.logger.debug("=====================================item_exist")
+    current_app.logger.debug(item_exist)
+
+    if item.get('Identifier'):
+        pass
+
+
+def make_stats_tsv(raw_stats):
+    """Make TSV report file for stats."""
+    import csv
+    from io import StringIO
+    tsv_output = StringIO()
+
+    writer = csv.writer(tsv_output, delimiter='\t',
+                        lineterminator="\n")
+    cols = []
+    list_name = ['No', 'Item type', 'Item id', 'Title', 'Check result']
+    writer.writerow(list_name)
+    for item in raw_stats:
+        term = []
+        for name in list_name:
+            term.append(item.get(name))
+        writer.writerow(term)
+
+    return tsv_output
