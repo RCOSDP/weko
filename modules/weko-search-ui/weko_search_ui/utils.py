@@ -514,11 +514,11 @@ def handle_remove_identifier(item) -> dict:
             return       -- Item had been removed property
         """
     if item and item.get('Identifier key'):
-        del item.metadata[item.get('Identifier key')]
+        del item['metadata'][item.get('Identifier key')]
         del item['Identifier key']
         del item['Identifier']
     if item and item.get('Identifier Registration key'):
-        del item.metadata[item.get('Identifier Registration key')]
+        del item['metadata'][item.get('Identifier Registration key')]
         del item['Identifier Registration key']
         del item['Identifier Registration']
     return item
