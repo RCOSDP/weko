@@ -35,7 +35,7 @@ from invenio_records.api import Record
 from invenio_search import RecordsSearch
 from weko_deposit.api import WekoIndexer
 from weko_indextree_journal.api import Journals
-
+from weko_deposit.api import WekoRecord
 from .config import WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
@@ -430,7 +430,6 @@ def get_item_type(item_type_id=0) -> dict:
     """Get item type.
 
     :param item_type_id: Item type ID. (Default: 0)
-    :param activity_id: Activity ID.  (Default: Null)
     :return: The json object.
     """
 
@@ -464,7 +463,7 @@ def handle_check_exist_record(list_recond) -> list:
     Returns:
         return       -- list record has property status
     """
-    from weko_deposit.api import WekoRecord
+
     result = []
     url_root = request.url_root
     for item in list_recond:
@@ -483,6 +482,7 @@ def handle_check_exist_record(list_recond) -> list:
                             compare_identifier(item, item_exist)
                     else:
                         item['status'] = 'new'
+                        check_identifier_new(item)
                 except BaseException:
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])
@@ -525,19 +525,45 @@ def handle_remove_identifier(item) -> dict:
 
 
 def compare_identifier(item, item_exist):
-    """Check data is Identifier of Identifier Registration.
+    """Compare data is Identifier.
         Arguments:
-            name_path     -- {list} list name path
+            item           -- {dict} item import
+            item_exist     -- {dict} item in system
         Returns:
             return       -- Name of key if is Identifier
     """
-    current_app.logger.debug("=====================================item")
-    current_app.logger.debug(item)
-    current_app.logger.debug("=====================================item_exist")
-    current_app.logger.debug(item_exist)
-
-    if item.get('Identifier'):
-        pass
+    if item.get('Identifier key'):
+        item_iden = item.get('metadata', '').get(item.get('Identifier key'))
+        item_exist_iden = item_exist.get(item.get(
+            'Identifier key')).get('attribute_value_mlt')
+        if len(item_iden) == len(item_exist_iden):
+            list_dif = difference(item_iden, item_exist_iden)
+            if list_dif:
+                item['errors'] = ['Errors in Identifier']
+                item['status'] = ''
+        elif len(item_iden) > len(item_exist_iden):
+            list_dif = difference(item_iden, item_exist_iden)
+            for i in list_dif + item_iden:
+                if i not in item_exist_iden:
+                    try:
+                        pids = [
+                            k for k in i.values() if k != 'DOI' or k != 'HDL']
+                        for pid in pids:
+                            item_check = \
+                                WekoRecord.get_record_by_pid(pid)
+                            if item_check and item_check.id != item.id:
+                                item['errors'] = ['Errors in Identifier']
+                                item['status'] = ''
+                    except BaseException:
+                        current_app.logger.error('Unexpected error: ',
+                                                 sys.exc_info()[0])
+            if item['errors']:
+                item['metadata'][item.get('Identifier key')] = list(set([
+                    it for it in list_dif + item_iden
+                ]))
+        elif len(item_iden) < len(item_exist_iden):
+            item['metadata'][item.get('Identifier key')] = item_exist_iden
+    return item
 
 
 def make_stats_tsv(raw_stats):
@@ -558,3 +584,36 @@ def make_stats_tsv(raw_stats):
         writer.writerow(term)
 
     return tsv_output
+
+
+def difference(list1, list2):
+    """Make TSV report file for stats."""
+    list_dif = [i for i in list1 + list2 if i not in list1 or i not in list2]
+    return list_dif
+
+
+def check_identifier_new(item):
+    """Check data Identifier.
+        Arguments:
+            item           -- {dict} item import
+            item_exist     -- {dict} item in system
+        Returns:
+            return       -- Name of key if is Identifier
+    """
+    if item.get('Identifier key'):
+        item_iden = item.get('metadata', '').get(item.get('Identifier key'))
+        for it in item_iden:
+            try:
+                pids = [
+                    k for k in it.values() if k != 'DOI' or k != 'HDL']
+                for pid in pids:
+                    item_check = \
+                        WekoRecord.get_record_by_pid(pid)
+                    if item_check and item_check.id != item.id:
+                        item['errors'] = ['Errors in Identifier']
+                        item['status'] = ''
+
+            except BaseException:
+                current_app.logger.error('Unexpected error: ',
+                                         sys.exc_info()[0])
+    return item
