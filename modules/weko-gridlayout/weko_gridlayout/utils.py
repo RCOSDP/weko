@@ -388,7 +388,8 @@ def convert_widget_data_to_dict(widget_data):
 
     """
     result = dict()
-    settings = json.loads(widget_data.settings)
+    settings = json.loads(widget_data.settings) \
+        if isinstance(widget_data.settings, str) else widget_data.settings
 
     result['widget_id'] = widget_data.widget_id
     result['repository_id'] = widget_data.repository_id
@@ -410,7 +411,8 @@ def convert_widget_multi_lang_to_dict(multi_lang_data):
 
     """
     result = dict()
-    description = json.loads(multi_lang_data.description_data)
+    description = json.loads(multi_lang_data.description_data) \
+        if isinstance(multi_lang_data.description_data, str) else multi_lang_data.description_data
 
     result['id'] = multi_lang_data.id
     result['widget_id'] = multi_lang_data.widget_id
