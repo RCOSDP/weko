@@ -533,7 +533,7 @@ class WidgetDesignServices:
         """Extract the design from model."""
         result_settings = []
         if settings:
-            settings = json.loads(settings)
+            settings = json.loads(settings) if isinstance(settings, str) else settings
             for widget_item in settings:
                 widget = cls._get_design_base_on_current_language(
                     current_language,
