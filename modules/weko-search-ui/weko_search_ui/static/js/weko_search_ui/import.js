@@ -21,6 +21,7 @@ const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "
 const urlTree = window.location.origin+'/api/tree'
 const urlCheck = window.location.origin+'/admin/items/import/check'
 const urlDownload = window.location.origin+'/admin/items/import/download'
+const urlImport = window.location.origin+'/admin/items/import/import'
 
 class MainLayout extends React.Component {
 
@@ -46,6 +47,8 @@ class MainLayout extends React.Component {
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
+    this.handleImport = this.handleImport.bind(this)
+    this.getStatus = this.getStatus.bind(this)
   }
 
   handleChangeTab(tab) {
@@ -69,7 +72,8 @@ class MainLayout extends React.Component {
         if (response.code) {
           that.setState(()=>{
             return {
-              list_record: response.list_record
+              list_record: response.list_record,
+              root_path: response.data_path
             }
           })
           that.handleChangeTab('check');
@@ -83,10 +87,60 @@ class MainLayout extends React.Component {
     });
   }
 
+  handleImport() {
+    const{list_record, root_path} = this.state
+    const that = this
+    $.ajax({
+      url: urlImport,
+      type: 'POST',
+      data: JSON.stringify({
+        list_record,
+        root_path
+      }),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      success: function (response) {
+        console.log(response)
+        console.log(root_path)
+
+          that.handleChangeTab('list');
+//          that.getStatus(response.data.task_id)
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
+  }
+
+  getStatus(taskID) {
+    const that = this
+    $.ajax({
+      url: urlImport+'/'+taskID,
+      method: 'GET'
+    })
+    .done((res) => {
+      console.log(res)
+      const html = `
+      <tr>
+        <td>${res.data.task_id}</td>
+        <td>${res.data.task_status}</td>
+        <td>${res.data.task_result}</td>
+      </tr>`
+      $('#tasks').prepend(html);
+      const taskStatus = res.data.task_status;
+      if (taskStatus === 'finished' || taskStatus === 'failed') return false;
+      setTimeout(function() {
+        that.getStatus(res.data.task_id);
+      }, 1000);
+    })
+    .fail((err) => {
+      console.log(err);
+    });
+  }
+
   render() {
     const {tab, tabs, list_record} = this.state
     return(
-
       <div>
         <ul className="nav nav-tabs">
           {
@@ -103,11 +157,24 @@ class MainLayout extends React.Component {
            ></ImportComponent>
         </div>
         <div className={`${tab === tabs[1].tab_key ? '': 'hide'}`}>
-        <CheckComponent
-          list_record={list_record || []}
-        ></CheckComponent>
+          <CheckComponent
+            list_record={list_record || []}
+            handleImport={this.handleImport}
+          ></CheckComponent>
         </div>
-
+        <div className={`${tab === tabs[2].tab_key ? '': 'hide'}`}>
+          <table className="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>{item_type}</th>
+                  <th>ItemID</th>
+                </tr>
+              </thead>
+              <tbody id="tasks">
+              </tbody>
+          </table>
+        </div>
       </div>
     )
   }
@@ -677,7 +744,7 @@ class CheckComponent extends React.Component {
     if (title.length <= len) {
       return title
     } else {
-      return title.substring(0, len+1)
+      return title.substring(0, len+1) +'...'
     }
   }
 
@@ -726,7 +793,12 @@ class CheckComponent extends React.Component {
       <div className="check-component">
         <div className="row">
           <div className="col-md-12 text-center">
-            <button className="btn btn-primary"><span className="glyphicon glyphicon-download-alt icon"></span>{import_label}</button>
+            <button
+              className="btn btn-primary"
+              onClick={this.props.handleImport}
+            >
+              <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
+             </button>
           </div>
           <div className="col-md-12 text-center">
             <div className="row block-summary">

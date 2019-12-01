@@ -279,7 +279,7 @@ from datetime import datetime
 import base64
 
 
-def import_items(file_content: str) -> list:
+def import_items(file_content: str):
     """Validation importing zip file.
 
     Arguments:
@@ -309,7 +309,7 @@ def import_items(file_content: str) -> list:
                     list_record.extend(
                         unpackage_import_file(data_path, tsv_entry))
             list_record = handle_check_exist_record(list_record)
-            return list_record
+            return list_record, data_path
         else:
             # TODO: Handle import file isn't zip file
             pass
@@ -355,7 +355,8 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     tsv_data = []
     item_path = []
     item_path_name = []
-    check_item_type = {}
+    check_item_type = {},
+    schema = ''
     with open(tsv_file_path, 'r') as tsvfile:
         for num, row in enumerate(tsvfile, start=1):
             data_row = row.rstrip('\n').split('\t')
@@ -365,6 +366,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                     check_item_type = get_item_type(
                         int(item_type_id)
                     )
+                    schema = data_row[-1]
                     if not check_item_type:
                         result['item_type_schema'] = {}
                     else:
@@ -390,7 +392,8 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                     'item_type_name': check_item_type['name']
                     if check_item_type else '',
                     'item_type_id': check_item_type['item_type_id']
-                    if check_item_type else ''
+                    if check_item_type else '',
+                    '$schema': schema if schema else ''
                 })
                 tsv_data.append(tsv_item)
     result['tsv_data'] = tsv_data
@@ -419,10 +422,36 @@ def handle_validate_item_import(list_recond, schema) -> list:
                 errors = [error.message for error in a]
             else:
                 errors = ['ItemType is not exist']
+            if record.get('metadata').get('path'):
+                if not handle_check_index(record.get('metadata').get('path')):
+                    errors.append('Index Error')
         item_error = dict(**record, **{
             'errors': errors if len(errors) else None
         })
         result.append(item_error)
+    return result
+
+
+def handle_check_index(list_index) -> bool:
+    """Handle check index.
+    Arguments:
+        list_index     -- {list} list index id
+    Returns:
+        return       -- true if exist
+    """
+    result = True
+    from weko_index_tree.api import Indexes
+    index_lst = []
+    if list_index:
+        index_id_lst = []
+        for index in list_index:
+            indexes = str(index).split('/')
+            index_id_lst.append(indexes[len(indexes) - 1])
+        index_lst = index_id_lst
+
+    plst = Indexes.get_path_list(index_lst)
+    if not plst or len(index_lst) != len(plst):
+        result = False
     return result
 
 
@@ -486,8 +515,8 @@ def handle_check_exist_record(list_recond) -> list:
                 except BaseException:
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])
-        if item.get('status') == 'new':
-            handle_remove_identifier(item)
+        # if item.get('status') == 'new':
+        #     handle_remove_identifier(item)
         result.append(item)
     return result
 
@@ -499,7 +528,6 @@ def handle_check_identifier(name) -> str:
         Returns:
             return       -- Name of key if is Identifier
         """
-    url_root = request.url_root
     result = ''
     if 'Identifier' in name or 'Identifier Registration' in name:
         result = name[0]
@@ -617,3 +645,153 @@ def check_identifier_new(item):
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
     return item
+
+
+def create_deposit(rids):
+    """Create deposit.
+        Arguments:
+            item           -- {dict} item import
+            item_exist     -- {dict} item in system
+    """
+    from invenio_db import db
+    from weko_deposit.api import WekoDeposit
+    try:
+        for rid in rids:
+            try:
+                WekoDeposit.create({}, recid=rid)
+                db.session.commit()
+                current_app.logger.info('Deposit id: %s created.' % rid)
+            except Exception as ex:
+                current_app.logger.error(
+                    'Error occurred during creating deposit id: %s' % rid)
+                current_app.logger.info(str(ex))
+                db.session.rollback()
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+
+
+def up_load_file_content(list_record, file_path):
+    """Upload file content
+        Arguments:
+            list_record    -- {list} list item import
+            file_path      -- {str} file path
+    """
+    from invenio_db import db
+    from invenio_files_rest.models import ObjectVersion
+    from invenio_pidstore.models import PersistentIdentifier
+    from invenio_records.models import RecordMetadata
+    try:
+        for record in list_record:
+            try:
+                current_app.logger.debug(record)
+                if record.get('file_path'):
+                    for file_name in record.get('file_path'):
+                        with open(file_path + '/' + file_name,
+                                  'rb') as file:
+                            pid = PersistentIdentifier.query.filter_by(
+                                pid_type='recid',
+                                pid_value=record.get('id')).first()
+                            rec = RecordMetadata.query.filter_by(
+                                id=pid.object_uuid).first()
+                            bucket = rec.json['_buckets']['deposit']
+                            obj = ObjectVersion.create(bucket,
+                                                       get_file_name(file_name))
+                            obj.set_contents(file)
+                            db.session.commit()
+            except Exception as ex:
+                current_app.logger.info(str(ex))
+                db.session.rollback()
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+
+
+def get_file_name(file_path):
+    return file_path.split('/')[-1] if file_path.split('/')[-1] else ''
+
+
+def register_item_metadata(list_record):
+    """Upload file content
+            Arguments:
+                list_record    -- {list} list item import
+                file_path      -- {str} file path
+        """
+    from invenio_db import db
+    from weko_deposit.api import WekoDeposit
+    from invenio_pidstore.models import PersistentIdentifier
+    from invenio_records.models import RecordMetadata
+    try:
+        success_count = 0
+        failure_list = []
+        for data in list_record:
+            try:
+                item_id = str(data.get('id'))
+                item_status = {
+                    'index': ['1575025786425'],
+                    'actions': 'publish',
+                }
+
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type='recid',
+                    pid_value=item_id
+                ).first()
+                r = RecordMetadata.query.filter_by(
+                    id=pid.object_uuid).first()
+                _depisit_data = r.json.get('_deposit')
+                # _depisit_data.pop('status', None)
+                dep = WekoDeposit(r.json, r)
+                #
+                new_data = dict(
+                    **data.get('metadata'),
+                    **_depisit_data,
+                    **{
+                        '$schema': data.get('$schema'),
+                        'title': handle_get_title(data.get('Title')),
+                        # 'status': 'published',
+                    }
+                )
+                if not new_data.get('pid'):
+                    new_data = dict(**new_data, **{
+                        'pid': {
+                            'revision_id': 0,
+                            'type': 'recid',
+                            'value': item_id
+                        }
+                    })
+                dep.update(item_status, new_data)
+                dep.commit()
+                dep.publish()
+
+                with current_app.test_request_context() as ctx:
+                    first_ver = dep.newversion(pid)
+                    first_ver.publish()
+
+                db.session.commit()
+
+                success_count += 1
+                if success_count % 100 == 0:
+                    current_app.logger.info('%s items processed.' % success_count)
+            except Exception as ex:
+                db.session.rollback()
+                current_app.logger.error('item id: %s update error.' % item_id)
+                current_app.logger.error(ex)
+                failure_list.append(item_id)
+        current_app.logger.info('%s items updated.' % success_count)
+        current_app.logger.info('failure list:')
+        current_app.logger.info(failure_list)
+
+    except Exception as e:
+        current_app.logger.error(e)
+
+# def create_task_import(list_record):
+#     import time
+#     # time.sleep(int(10) * 10)
+#     return True
+
+
+def handle_get_title(title):
+
+    if isinstance(title, dict):
+        return title.get('Title', '')
+    elif isinstance(title, list):
+        return title[0].get('Title') if title[0] and isinstance(title[0], dict)\
+            else ''
