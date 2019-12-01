@@ -303,29 +303,29 @@ class ItemImportView(BaseView):
             register_item_metadata(list_record)
         return jsonify(code=1)
 
-    @expose('/import/<task_id>', methods=['GET'])
-    def get_status(self, task_id) -> jsonify:
-        """Register an item type mapping."""
-        import redis
-        from rq import Queue, Connection
-        with Connection(redis.from_url('redis://{host}:{port}/2'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379')
-        ))):
-            q = Queue()
-            task = q.fetch_job(task_id)
-        if task:
-            response_object = {
-                "status": "success",
-                "data": {
-                    "task_id": task.get_id(),
-                    "task_status": task.get_status(),
-                    "task_result": task.result,
-                },
-            }
-        else:
-            response_object = {"status": "error"}
-        return jsonify(response_object)
+    # @expose('/import/<task_id>', methods=['GET'])
+    # def get_status(self, task_id) -> jsonify:
+    #     """Register an item type mapping."""
+    #     import redis
+    #     from rq import Queue, Connection
+    #     with Connection(redis.from_url('redis://{host}:{port}/2'.format(
+    #         host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+    #         port=os.getenv('INVENIO_REDIS_PORT', '6379')
+    #     ))):
+    #         q = Queue()
+    #         task = q.fetch_job(task_id)
+    #     if task:
+    #         response_object = {
+    #             "status": "success",
+    #             "data": {
+    #                 "task_id": task.get_id(),
+    #                 "task_status": task.get_status(),
+    #                 "task_result": task.result,
+    #             },
+    #         }
+    #     else:
+    #         response_object = {"status": "error"}
+    #     return jsonify(response_object)
 
 
 item_management_bulk_search_adminview = {
