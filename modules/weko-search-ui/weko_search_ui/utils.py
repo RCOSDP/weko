@@ -726,7 +726,7 @@ def register_item_metadata(list_record):
             try:
                 item_id = str(data.get('id'))
                 item_status = {
-                    'index': ['1575025786425'],
+                    'index': data.get('IndexID'),
                     'actions': 'publish',
                 }
 
