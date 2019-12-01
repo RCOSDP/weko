@@ -746,7 +746,6 @@ def register_item_metadata(list_record):
                     **{
                         '$schema': data.get('$schema'),
                         'title': handle_get_title(data.get('Title')),
-                        # 'status': 'published',
                     }
                 )
                 if not new_data.get('pid'):
@@ -782,10 +781,11 @@ def register_item_metadata(list_record):
     except Exception as e:
         current_app.logger.error(e)
 
-# def create_task_import(list_record):
-#     import time
-#     # time.sleep(int(10) * 10)
-#     return True
+
+def create_task_import(list_record):
+    import time
+    time.sleep(int(1000) * 10)
+    return True
 
 
 def handle_get_title(title):
