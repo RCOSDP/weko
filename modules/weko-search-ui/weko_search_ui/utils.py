@@ -388,6 +388,8 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                     item_path,
                     data_row)
                 )
+                current_app.logger.debug('============================')
+                current_app.logger.debug(check_item_type)
                 item_type_name = check_item_type[
                     'name'] if check_item_type else ''
                 item_type_id = check_item_type[
