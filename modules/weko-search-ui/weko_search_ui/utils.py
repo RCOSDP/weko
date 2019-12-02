@@ -388,11 +388,13 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                     item_path,
                     data_row)
                 )
+                item_type_name = check_item_type[
+                    'name'] if check_item_type else ''
+                item_type_id = check_item_type[
+                    'item_type_id'] if check_item_type else ''
                 tsv_item = dict(**json_data_parse, **data_parse_metadata, **{
-                    'item_type_name': check_item_type['name']
-                    if check_item_type else '',
-                    'item_type_id': check_item_type['item_type_id']
-                    if check_item_type else '',
+                    'item_type_name': item_type_name,
+                    'item_type_id': item_type_id,
                     '$schema': schema if schema else ''
                 })
                 tsv_data.append(tsv_item)
