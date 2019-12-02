@@ -27,7 +27,7 @@ let PageBodyGrid = function () {
             width: 12,
             float: true,
             verticalMargin: 4,
-            cellHeight: 100,
+            cellHeight: 80,
             acceptWidgets: '.grid-stack-item'
         };
         let widget = $('#page_body');
@@ -39,6 +39,18 @@ let PageBodyGrid = function () {
         this.grid.addWidget($(this.widgetTemplate(node, index)), node.x, node.y, node.width, node.height);
         return false;
     }.bind(this);
+
+    this.resizeWidget = function (widget, width, height) {
+      this.grid.resize(widget, width, height);
+    };
+
+    this.getCellHeight = function () {
+      return this.grid.cellHeight();
+    };
+
+    this.getVerticalMargin = function () {
+      return this.grid.opts.verticalMargin;
+    };
 
     this.updateMainContent = function (node) {
         let mainContents = $("#main_contents");
@@ -668,6 +680,50 @@ function getWidgetDesignSetting() {
                             $(this).find('.panel-body').css("bottom", "10px");
                         });
                     });
+
+                    new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
+                      $('.grid-stack-item-content > .panel-body').each(function () {
+                        let _this = $(this);
+                        let scrollHeight = _this.prop("scrollHeight");
+                        let clientHeight = _this.prop("clientHeight");
+                        if (scrollHeight > clientHeight) {
+                          let cellHeight = pageBodyGrid.getCellHeight();
+                          let verticalMargin = pageBodyGrid.getVerticalMargin();
+                          let newHeight = Math.ceil((scrollHeight + verticalMargin) / (cellHeight + verticalMargin));
+                          let parent = _this.closest(".grid-stack-item");
+                          let width = parent.data("gsWidth");
+                          let headerHeight = _this.siblings(".widget-header").height() + 20;
+                          let newClientHeight = (newHeight * (cellHeight + verticalMargin) - (verticalMargin + headerHeight));
+                          if (clientHeight > newClientHeight) {
+                            pageBodyGrid.resizeWidget(parent, width, newHeight + 1);
+                          } else if ((newClientHeight - (cellHeight + verticalMargin)) > clientHeight) {
+                            let subValue = Math.ceil((newClientHeight - scrollHeight + verticalMargin) / (cellHeight + verticalMargin));
+                            pageBodyGrid.resizeWidget(parent, width, newHeight - 1);
+                          } else {
+                            pageBodyGrid.resizeWidget(parent, width, newHeight);
+                          }
+                        }
+                      });
+                    });
+
+                    new ResizeSensor($('#main_contents'), function () {
+                      let mainContent = $('#main_contents');
+                      let scrollHeight = mainContent.prop("scrollHeight");
+                      let clientHeight = mainContent.prop("clientHeight");
+                      let currentHeight = mainContent.data("gsHeight");
+                      if (scrollHeight > clientHeight) {
+                        let cellHeight = pageBodyGrid.getCellHeight();
+                        let verticalMargin = pageBodyGrid.getVerticalMargin();
+                        let newHeight = Math.ceil((scrollHeight + verticalMargin) / (cellHeight + verticalMargin));
+                        let width = mainContent.data("gsWidth");
+                        if (newHeight > currentHeight) {
+                          pageBodyGrid.resizeWidget(mainContent, width, newHeight);
+                        } else if (newHeight === currentHeight) {
+                          pageBodyGrid.resizeWidget(mainContent, width, newHeight + 1);
+                        }
+                      }
+                    });
+
                 }
                 else {  // Pages are able to not have main content, so hide if widget is not present
                     if(is_page){
