@@ -849,7 +849,7 @@ class CheckComponent extends React.Component {
                         <td>
                           {key}
                         </td>
-                        <td>{item.item_type_name}</td>
+                        <td>{item.item_type_name || 'NOT MATCH'}</td>
                         <td>
                           {item.status === 'new' && item.id ? ('New Item('+ item.id+')') : item.id ? item.id :''}
                         </td>
