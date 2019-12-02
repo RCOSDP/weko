@@ -1124,8 +1124,9 @@ class WorkActivity(object):
             history_dict[history.action_id] = {
                 'Updater': history.user.email,
                 'Result': ActionStatusPolicy.describe(
-                    self.get_activity_action_status(activity_id=activity_id,
-                                                    action_id=history.action_id)
+                    self.get_activity_action_status(
+                        activity_id=activity_id,
+                        action_id=history.action_id)
                 )
             }
         with db.session.no_autoflush:
@@ -1285,8 +1286,8 @@ class WorkActivity(object):
             community_id = comm.id
 
         return activity_detail, item, steps, action_id, cur_step, \
-            temporary_comment, approval_record, step_item_login_url, histories,\
-            res_check, pid, community_id, ctx
+            temporary_comment, approval_record, step_item_login_url,\
+            histories, res_check, pid, community_id, ctx
 
     def upt_activity_detail(self, item_id):
         """Update activity info for item id.
@@ -1335,7 +1336,6 @@ class WorkActivity(object):
         :param item_id:
         """
         try:
-            current_app.logger.debug(object_uuid)
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
                     item_id=object_uuid).one_or_none()

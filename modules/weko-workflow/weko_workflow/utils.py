@@ -409,7 +409,10 @@ def get_activity_id_of_record_without_version(pid_object=None):
     if pid_object:
         # get workflow of first record attached version ID: x.1
         pid_value_first_ver = "{}.1".format(pid_object.pid_value)
-        pid_object_first_ver = PersistentIdentifier.get('recid', pid_value_first_ver)
+        pid_object_first_ver = PersistentIdentifier.get(
+            'recid',
+            pid_value_first_ver
+        )
         activity = WorkActivity()
         activity_first_ver = activity.get_workflow_activity_by_item_id(
             pid_object_first_ver.object_uuid)
@@ -766,10 +769,10 @@ class IdentifierHandle(object):
 
 def delete_bucket(bucket_id):
     """
-    Adds bucket creation immediately on deposit creation.
+    Delete a bucket and remove it size in location.
 
     Arguments:
-        bucket_id       -- record metadata
+        bucket_id       -- id of bucket have to be deleted.
     Returns:
         bucket_id       -- ...
 
@@ -780,21 +783,26 @@ def delete_bucket(bucket_id):
     bucket.remove()
 
 
-def merge_buckets_by_records(main_record_id, sub_record_id, sub_bucket_delete=False):
+def merge_buckets_by_records(main_record_id,
+                             sub_record_id,
+                             sub_bucket_delete=False):
     """
-    Adds bucket creation immediately on deposit creation.
+    Change bucket_id of all sub bucket base on main bucket.
 
     Arguments:
-        main_bucket_id  -- record metadata
-        sub_bucket_id   -- r..
+        main_record_id  -- record uuid link with main bucket.
+        sub_record_id   -- record uuid link with sub buckets.
+        sub_bucket_delete -- Either delete subbucket after unlink?
     Returns:
-        bucket_id       -- ...
+        bucket_id       -- main bucket id.
 
     """
     try:
         with db.session.begin_nested():
-            main_rec_bucket = RecordsBuckets.query.filter_by(record_id=main_record_id).one_or_none()
-            sub_rec_buckets = RecordsBuckets.query.filter_by(record_id=sub_record_id).all()
+            main_rec_bucket = RecordsBuckets.query.filter_by(
+                record_id=main_record_id).one_or_none()
+            sub_rec_buckets = RecordsBuckets.query.filter_by(
+                record_id=sub_record_id).all()
 
             for sub_rec_bucket in sub_rec_buckets:
                 if sub_rec_bucket.record_id == sub_record_id:
@@ -812,32 +820,41 @@ def merge_buckets_by_records(main_record_id, sub_record_id, sub_bucket_delete=Fa
 
 def delete_unregister_buckets(record_uuid):
     """
-    Adds bucket creation immediately on deposit creation.
+    Delete unregister bucket by pid.
 
+    Find all bucket have same object version but link with unregister records.
     Arguments:
-        main_bucket_id  -- record metadata
-        sub_bucket_id   -- r..
+        record_uuid     -- record uuid link to checking bucket.
     Returns:
-        bucket_id       -- ...
+        None.
 
     """
     try:
-        draft_record_bucket = RecordsBuckets.query.filter_by(record_id=record_uuid).one_or_none()
+        draft_record_bucket = RecordsBuckets.query.filter_by(
+            record_id=record_uuid).one_or_none()
         with db.session.begin_nested():
-            object_ver = ObjectVersion.query.filter_by(bucket_id=draft_record_bucket.bucket_id).first()
+            object_ver = ObjectVersion.query.filter_by(
+                bucket_id=draft_record_bucket.bucket_id).first()
             if object_ver:
-                draft_object_vers = ObjectVersion.query.filter_by(file_id=object_ver.file_id).all()
+                draft_object_vers = ObjectVersion.query.filter_by(
+                    file_id=object_ver.file_id).all()
                 for draft_object in draft_object_vers:
                     if draft_object.bucket_id != draft_record_bucket.bucket_id:
-                        delete_record_bucket = RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).all()
+                        delete_record_bucket = RecordsBuckets.query.filter_by(
+                            bucket_id=draft_object.bucket_id).all()
                         if len(delete_record_bucket) == 1:
-                            delete_pid_object = PersistentIdentifier.query.filter_by(pid_type='recid', object_type='rec', object_uuid=delete_record_bucket[0].record_id).one_or_none()
+                            delete_pid_object = PersistentIdentifier.query.\
+                                filter_by(pid_type='recid',
+                                          object_type='rec',
+                                          object_uuid=delete_record_bucket[
+                                              0].record_id).one_or_none()
                             if not delete_pid_object:
-                                delete_bucket = Bucket.get(draft_object.bucket_id)
-                                RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).delete()
-                                delete_bucket.locked = False
-                                delete_bucket.location.size -= delete_bucket.size
-                                delete_bucket.remove()
+                                bucket = Bucket.get(draft_object.bucket_id)
+                                RecordsBuckets.query.filter_by(
+                                    bucket_id=draft_object.bucket_id).delete()
+                                bucket.locked = False
+                                bucket.location.size -= bucket.size
+                                bucket.remove()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))
@@ -845,21 +862,23 @@ def delete_unregister_buckets(record_uuid):
 
 def set_bucket_default_size(record_uuid):
     """
-    Adds bucket creation immediately on deposit creation.
+    Set Weko default size for draft bucket.
 
     Arguments:
-        main_bucket_id  -- record metadata
-        sub_bucket_id   -- r..
+        record_uuid     -- record uuid link to bucket.
     Returns:
-        bucket_id       -- ...
+        None.
 
     """
-    draft_record_bucket = RecordsBuckets.query.filter_by(record_id=record_uuid).one_or_none()
+    draft_record_bucket = RecordsBuckets.query.filter_by(
+        record_id=record_uuid).one_or_none()
     try:
         with db.session.begin_nested():
             draft_bucket = Bucket.get(draft_record_bucket.bucket_id)
-            draft_bucket.quota_size = current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
-            draft_bucket.max_file_size = current_app.config['WEKO_MAX_FILE_SIZE'],
+            draft_bucket.quota_size = current_app.config[
+                'WEKO_BUCKET_QUOTA_SIZE'],
+            draft_bucket.max_file_size = current_app.config[
+                'WEKO_MAX_FILE_SIZE'],
             db.session.add(draft_bucket)
     except Exception as ex:
         db.session.rollback()

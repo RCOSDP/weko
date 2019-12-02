@@ -26,13 +26,11 @@ import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
-from flask_login import current_user, login_required
+from flask_login import login_required
 from flask_security import current_user
-from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
-from invenio_files_rest.views import ObjectResource, check_permission, \
-    file_downloaded
+from invenio_files_rest.views import check_permission
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -48,8 +46,6 @@ from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
-from weko_workflow.api import WorkActivity
-from weko_workflow.models import ActionStatusPolicy
 
 from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings
@@ -544,8 +540,9 @@ def parent_view_method(pid_value=0):
     if p_pid:
         pid_version = PIDVersioning(parent=p_pid)
         if pid_version.last_child:
-            return redirect(url_for('invenio_records_ui.recid',
-                                    pid_value=pid_version.last_child.pid_value))
+            return redirect(
+                url_for('invenio_records_ui.recid',
+                        pid_value=pid_version.last_child.pid_value))
     return abort(404)
 
 

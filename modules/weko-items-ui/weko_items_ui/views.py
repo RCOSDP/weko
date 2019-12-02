@@ -22,13 +22,12 @@
 
 import json
 import os
-import shutil
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 import redis
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
-    render_template, request, send_file, session, url_for
+    render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -54,13 +53,13 @@ from weko_workflow.models import ActionStatusPolicy, WorkFlow
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
-from .utils import _export_item, _get_max_export_items, export_items, \
-    get_actionid, get_current_user, get_list_email, get_list_username, \
+from .utils import _get_max_export_items, export_items, get_actionid, \
+    get_current_user, get_list_email, get_list_username, \
     get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, make_stats_tsv, \
-    package_exports, parse_ranking_results, to_files_js, \
-    update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
-    validate_form_input_data, validate_user
+    get_user_information, get_user_permission, parse_ranking_results, \
+    to_files_js, update_json_schema_by_activity_id, \
+    update_schema_remove_hidden_item, validate_form_input_data, \
+    validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -773,8 +772,10 @@ def prepare_edit_item():
 
             # check user's permission
             if user_id != owner and not is_admin[0] and user_id != shared_id:
-                return jsonify(code=-1,
-                               msg=_(r"You are not allowed to edit this item."))
+                return jsonify(
+                    code=-1,
+                    msg=_(r"You are not allowed to edit this item.")
+                )
             lists = ItemTypes.get_latest()
             if not lists:
                 return jsonify(code=-1,
@@ -786,16 +787,27 @@ def prepare_edit_item():
 
             # check item is being editied
             item_id = latest_pid.object_uuid
-            workflow_activity = activity.get_workflow_activity_by_item_id(item_id)
+            workflow_activity = activity.get_workflow_activity_by_item_id(
+                item_id
+            )
             if not workflow_activity:
                 # get workflow of first record attached version ID: x.1
-                workflow_activity = activity.get_workflow_activity_by_item_id(pid_object.object_uuid)
+                workflow_activity = activity.get_workflow_activity_by_item_id(
+                    pid_object.object_uuid
+                )
                 if not workflow_activity:
-                    return jsonify(code=-1, msg=_(r"The Workflow of this Item is not found."))
+                    return jsonify(
+                        code=-1,
+                        msg=_(r"The Workflow of this Item is not found.")
+                    )
             else:
                 # show error when has stt is Begin or Doing
-                if workflow_activity.action_status == ActionStatusPolicy.ACTION_BEGIN or workflow_activity.action_status == ActionStatusPolicy.ACTION_DOING:
-                    return jsonify(code=-1, msg=_('The workflow is being edited. '))
+                if workflow_activity.action_status == \
+                    ActionStatusPolicy.ACTION_BEGIN \
+                    or workflow_activity.action_status == \
+                        ActionStatusPolicy.ACTION_DOING:
+                    return jsonify(code=-1,
+                                   msg=_(r"The workflow is being edited."))
 
             # prepare params for new workflow activity
             if workflow_activity:
@@ -824,14 +836,19 @@ def prepare_edit_item():
             if not draft_record:
                 return jsonify(code=-1, msg=_('An error has occurred.'))
 
+            # Create snapshot bucket for draft record
             from invenio_records_files.models import RecordsBuckets
             try:
                 with db.session.begin_nested():
-                    draft_deposit = WekoDeposit(draft_record, draft_record.model)
+                    draft_deposit = WekoDeposit(
+                        draft_record,
+                        draft_record.model
+                    )
                     snapshot = record.files.bucket.snapshot(lock=False)
                     snapshot.locked = False
                     draft_deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                    RecordsBuckets.create(record=draft_record.model, bucket=snapshot)
+                    RecordsBuckets.create(record=draft_record.model,
+                                          bucket=snapshot)
                     draft_deposit.commit()
             except Exception as ex:
                 db.session.rollback()
@@ -839,7 +856,9 @@ def prepare_edit_item():
                 return jsonify(code=-1, msg=_('error'))
 
             # Create a new workflow activity.
-            rtn = activity.init_activity(post_activity, community, draft_record.model.id)
+            rtn = activity.init_activity(post_activity,
+                                         community,
+                                         draft_record.model.id)
 
             if rtn:
                 # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER

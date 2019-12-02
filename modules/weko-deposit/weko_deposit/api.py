@@ -20,7 +20,6 @@
 
 """Weko Deposit API."""
 import uuid
-from copy import deepcopy
 from datetime import datetime
 
 import redis
@@ -35,7 +34,7 @@ from invenio_deposit.errors import MergeConflict
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_indexer.api import RecordIndexer
-from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
+from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDInvalidAction
@@ -192,9 +191,9 @@ class WekoIndexer(RecordIndexer):
 
     def get_item_link_info(self, pid):
         """Get item link info."""
+        item_link_info = None
         try:
             self.get_es_index()
-            item_link_info = None
             get_item_link_q = {
                 "query": {
                     "match": {
@@ -544,7 +543,7 @@ class WekoDeposit(Deposit):
             ).delete(synchronize_session='fetch')
             mp_q.delete(synchronize_session='fetch')
         bucket.locked = False
-        bucket.location.size += bucket.size
+        bucket.location.size -= bucket.size
         bucket.remove()
 
         return super(Deposit, self).delete()
@@ -582,7 +581,7 @@ class WekoDeposit(Deposit):
 
     def newversion(self, pid=None):
         """Create a new version deposit."""
-        # deposit = None
+        deposit = None
         try:
             if not self.is_published():
                 raise PIDInvalidAction()
@@ -608,10 +607,11 @@ class WekoDeposit(Deposit):
                     recid = '{0}.{1}' . format(
                         last_pid.pid_value,
                         get_latest_version_id(last_pid.pid_value))
-                    # NOTE: We call the superclass `create()` method, because we
-                    # don't want a new empty bucket, but an unlocked snapshot of
-                    # the old record's bucket.
-                    deposit = super(WekoDeposit, self).create(data, recid=recid)
+                    # NOTE: We call the superclass `create()` method, because
+                    # we don't want a new empty bucket, but
+                    # an unlocked snapshot of the old record's bucket.
+                    deposit = super(WekoDeposit, self).create(data,
+                                                              recid=recid)
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
@@ -754,8 +754,8 @@ class WekoDeposit(Deposit):
         # Prepare index id list if the current index_lst is a path list
         if index_lst:
             index_id_lst = []
-            for index in index_lst:
-                indexes = str(index).split('/')
+            for _index in index_lst:
+                indexes = str(_index).split('/')
                 index_id_lst.append(indexes[len(indexes) - 1])
             index_lst = index_id_lst
 
@@ -819,13 +819,13 @@ class WekoDeposit(Deposit):
                     flag_modified(r, 'json')
                 except BaseException:
                     pass
-                if r.json['path'] == []:
+                if not r.json['path']:
                     from weko_records_ui.utils import soft_delete
                     soft_delete(obj_uuid)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
-            raise(ex)
+            raise ex
 
     @classmethod
     def update_by_index_tree_id(cls, path, target):
@@ -884,7 +884,12 @@ class WekoDeposit(Deposit):
             self.indexer.update_feedback_mail_list(feedback_mail)
 
     def update_jpcoar_identifier(self):
-        """Update JPCOAR meta data item for grant DOI which added at the Identifier Grant screen."""
+        """
+        Update JPCOAR meta data item.
+
+        Update JPCOAR meta data item for grant DOI which added at the
+        Identifier Grant screen.
+        """
         obj = ItemsMetadata.get_record(self.id)
         attrs = ['attribute_value_mlt',
                  'item_1551265147138',
@@ -985,7 +990,8 @@ class WekoRecord(Record):
                             if v.get('nameIdentifierURI'):
                                 uri = v.get('nameIdentifierURI')
                             elif v.get('nameIdentifierScheme'):
-                                uri = 'http://' + v.get('nameIdentifierScheme')\
+                                uri = 'http://'\
+                                      + v.get('nameIdentifierScheme')\
                                       + '.io/' + name
                             v['nameIdentifier'] = dict(name=name, uri=uri)
             return mlt
@@ -1025,7 +1031,9 @@ class WekoRecord(Record):
                         if is_author:
                             mlt = get_name_iddentifier_uri(mlt)
                         nval['attribute_value_mlt'] = \
-                            get_attribute_value_all_items(mlt, solst, is_author)
+                            get_attribute_value_all_items(mlt,
+                                                          solst,
+                                                          is_author)
                     items.append(nval)
                 else:
                     items.append(val)

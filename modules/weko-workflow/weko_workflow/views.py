@@ -745,7 +745,6 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
-            current_app.logger.debug(deposit.id)
             if record:
                 deposit.publish()
                 updated_item = UpdateItem()
@@ -758,11 +757,13 @@ def next_action(activity_id='0', action_id=0):
                         ver_attaching_record,
                         ver_attaching_record.model)
                     ver_attaching_deposit.publish()
-                    record_bucket_id = record['_buckets']['deposit']
-                    record_bucket_id = merge_buckets_by_records(current_pid.object_uuid, ver_attaching_record.model.id, sub_bucket_delete=True)
+                    record_bucket_id = merge_buckets_by_records(
+                        current_pid.object_uuid,
+                        ver_attaching_record.model.id,
+                        sub_bucket_delete=True
+                    )
                     if not record_bucket_id:
                         return jsonify(code=-1, msg=_('error'))
-                    # db.session.commit()
                     # Record without version: Make status Public as default
                     updated_item.publish(record)
                 else:
@@ -780,7 +781,10 @@ def next_action(activity_id='0', action_id=0):
                         deposit_without_ver.publish()
 
                         set_bucket_default_size(new_activity_id)
-                        record_bucket_id = merge_buckets_by_records(new_activity_id, pid_without_ver.object_uuid)
+                        merge_buckets_by_records(
+                            new_activity_id,
+                            pid_without_ver.object_uuid
+                        )
                         updated_item.publish(parent_record)
                 delete_unregister_buckets(new_activity_id)
             activity.update(
