@@ -840,6 +840,7 @@ def prepare_edit_item():
             from invenio_records_files.models import RecordsBuckets
             try:
                 with db.session.begin_nested():
+                    from weko_workflow.utils import delete_bucket
                     draft_deposit = WekoDeposit(
                         draft_record,
                         draft_record.model
@@ -847,13 +848,26 @@ def prepare_edit_item():
                     snapshot = record.files.bucket.snapshot(lock=False)
                     snapshot.locked = False
                     draft_deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                    RecordsBuckets.create(record=draft_record.model,
-                                          bucket=snapshot)
+                    draft_record_bucket = RecordsBuckets.create(
+                        record=draft_record.model,
+                        bucket=snapshot
+                    )
+
+                    # Remove duplicated buckets
+                    draft_record_buckets = RecordsBuckets.query.filter_by(
+                        record_id=draft_record.model.id
+                    ).all()
+                    for record_bucket in draft_record_buckets:
+                        if record_bucket != draft_record_bucket:
+                            delete_bucket_id = record_bucket.bucket_id
+                            RecordsBuckets.query.filter_by(
+                                bucket_id=delete_bucket_id).delete()
+                            delete_bucket(delete_bucket_id)
                     draft_deposit.commit()
             except Exception as ex:
                 db.session.rollback()
                 current_app.logger.exception(str(ex))
-                return jsonify(code=-1, msg=_('error'))
+                return jsonify(code=-1, msg=_('An error has occurred.'))
 
             # Create a new workflow activity.
             rtn = activity.init_activity(post_activity,

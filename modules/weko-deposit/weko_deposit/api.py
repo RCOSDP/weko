@@ -627,7 +627,6 @@ class WekoDeposit(Deposit):
                         child=recid)
                     RecordDraft.link(recid, depid)
 
-                    # Create snapshot from the record's bucket and update data
                     index = {'index': self.get('path', []),
                              'actions': self.get('publish_status')}
                     if 'activity_info' in session:
