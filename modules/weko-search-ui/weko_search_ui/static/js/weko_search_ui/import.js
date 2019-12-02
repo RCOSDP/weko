@@ -856,7 +856,7 @@ class CheckComponent extends React.Component {
                          ? this.generateTitle(item['Title'][0]['Title'],50) : item['Title'] && item['Title']['Title']
                          ? this.generateTitle(item['Title']['Title'],50) : '' }
                          </td>
-                        <td>{item['errors'] ? 'ERRORS' : item.status === 'new'?
+                        <td>{item['errors'] ? item['errors'][0] && ('ERRORS: '+ item['errors'][0]) || 'ERRORS' : item.status === 'new'?
                           <span className="badge badge-success">Register</span> :
                            item.status === 'update' ?
                             <span className="badge badge-primary">Update</span> :

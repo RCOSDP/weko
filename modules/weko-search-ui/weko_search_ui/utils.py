@@ -503,9 +503,6 @@ def handle_check_exist_record(list_recond) -> list:
             if url_root in item.get('uri', ''):
                 try:
                     item_exist = WekoRecord.get_record_by_pid(item.get('id'))
-                    current_app.logger.debug('=============================')
-                    current_app.logger.debug(item.get('id'))
-                    current_app.logger.debug(item_exist)
                     if item_exist:
                         if item_exist.pid.is_deleted():
                             continue
@@ -518,8 +515,8 @@ def handle_check_exist_record(list_recond) -> list:
                 except BaseException:
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])
-        # if item.get('status') == 'new':
-        #     handle_remove_identifier(item)
+        if item.get('status') == 'new':
+            handle_remove_identifier(item)
         result.append(item)
     return result
 
