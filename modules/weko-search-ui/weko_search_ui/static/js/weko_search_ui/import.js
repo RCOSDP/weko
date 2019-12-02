@@ -850,7 +850,7 @@ class CheckComponent extends React.Component {
                         </td>
                         <td>{item.item_type_name}</td>
                         <td>
-                          {item.id ? item.id : ''}
+                          {item.status === 'new' && item.id ? ('New Item('+ item.id+')') : item.id ? item.id :''}
                         </td>
                         <td>{(item['Title'] && item['Title'][0] && item['Title'][0]['Title'])
                          ? this.generateTitle(item['Title'][0]['Title'],50) : item['Title'] && item['Title']['Title']
