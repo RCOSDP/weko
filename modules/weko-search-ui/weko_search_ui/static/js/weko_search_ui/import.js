@@ -79,6 +79,7 @@ class MainLayout extends React.Component {
           that.handleChangeTab('check');
         } else {
           console.log(response.msg);
+          alert(response.error || '')
         }
       },
       error: function (error) {

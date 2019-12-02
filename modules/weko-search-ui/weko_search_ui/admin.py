@@ -244,12 +244,12 @@ class ItemImportView(BaseView):
         data_path = ''
         if data:
             result = import_items(data.get('file').split(",")[-1])
-            if result.get('error'):
-                return jsonify(code=0 ,error=result.get('error'))
+            if isinstance(result, dict) and result.get('error'):
+                return jsonify(code=0, error=result.get('error'))
             else:
                 list_record = result.get('list_record', [])
                 data_path = result.get('data_path', '')
-        return jsonify(code=-1, list_record=list_record, data_path=data_path)
+        return jsonify(code=1, list_record=list_record, data_path=data_path)
 
     @expose('/download', methods=['POST'])
     def download(self):
