@@ -240,10 +240,15 @@ class ItemImportView(BaseView):
     def check(self) -> jsonify:
         """Register an item type mapping."""
         data = request.get_json()
-
+        list_record = [],
+        data_path = ''
         if data:
-            list_record, data_path = import_items(data.get('file').split(",")[-1])
-
+            result = import_items(data.get('file').split(",")[-1])
+            if result.get('error'):
+                return jsonify(code=0 ,error=result.get('error'))
+            else:
+                list_record = result.get('list_record', [])
+                data_path = result.get('data_path', '')
         return jsonify(code=-1, list_record=list_record, data_path=data_path)
 
     @expose('/download', methods=['POST'])

@@ -309,10 +309,14 @@ def import_items(file_content: str):
                     list_record.extend(
                         unpackage_import_file(data_path, tsv_entry))
             list_record = handle_check_exist_record(list_record)
-            return list_record, data_path
+            return {
+                'list_record': list_record,
+                'data_path': data_path
+            }
         else:
-            # TODO: Handle import file isn't zip file
-            pass
+            return {
+                'error': 'Zip file is not follow Bagit format.'
+            }
     except Exception:
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
