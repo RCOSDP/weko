@@ -414,7 +414,6 @@ class WekoDeposit(Deposit):
         self.is_edit = True
         try:
             deposit = super(WekoDeposit, self).publish(pid, id_)
-            # deposit = super(WekoDeposit, self).publish(pid, id_)
 
             # update relation version current to ES
             pid = PersistentIdentifier.query.filter_by(
@@ -437,55 +436,47 @@ class WekoDeposit(Deposit):
 
         Adds bucket creation immediately on deposit creation.
         """
-        current_app.logger.debug('=================================')
-        current_app.logger.debug('Adds bucket creation')
+        if '$schema' in data:
+            data.pop('$schema')
+
         bucket = Bucket.create(
             quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
             max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
         )
-        if '$schema' in data:
-            data.pop('$schema')
-
         data['_buckets'] = {'deposit': str(bucket.id)}
 
         # save user_name & display name.
         if current_user and current_user.is_authenticated:
             user = UserProfile.get_by_userid(current_user.get_id())
-
-            username = ''
-            displayname = ''
-            if user is not None:
-                username = user._username
-                displayname = user._displayname
             if '_deposit' in data:
                 data['_deposit']['owners_ext'] = {
-                    'username': username,
-                    'displayname': displayname,
+                    'username': user._username if user else '',
+                    'displayname': user._displayname if user else '',
                     'email': current_user.email
                 }
-        if not recid:
-            deposit = super(WekoDeposit, cls).create(data, id_=id_)
-        else:
-            deposit = super(
-                WekoDeposit,
-                cls).create(
-                data,
-                id_=id_,
-                recid=recid)
-        RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
-        dep_id = str(data['_deposit']['id'])
-        recid = PersistentIdentifier.get('recid', dep_id)
-        depid = PersistentIdentifier.get('depid', dep_id)
-        p_depid = PersistentIdentifier.create(
+        record_id = str(data['_deposit']['id'])
+        parent_pid = PersistentIdentifier.create(
             'parent',
-            'parent:{0}'.format(dep_id),
+            'parent:{0}'.format(record_id),
             object_type='rec',
-            object_uuid=uuid.uuid4(),
+            object_uuid=id_,
             status=PIDStatus.REGISTERED
         )
+        if recid:
+            deposit = super(WekoDeposit, cls).create(
+                data,
+                id_=id_,
+                recid=recid
+            )
+        else:
+            deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
-        PIDVersioning(parent=p_depid).insert_draft_child(child=recid)
+        RecordsBuckets.create(record=deposit.model, bucket=bucket)
+
+        recid = PersistentIdentifier.get('recid', record_id)
+        depid = PersistentIdentifier.get('depid', record_id)
+        PIDVersioning(parent=parent_pid).insert_draft_child(child=recid)
         RecordDraft.link(recid, depid)
 
         return deposit
@@ -553,6 +544,7 @@ class WekoDeposit(Deposit):
             ).delete(synchronize_session='fetch')
             mp_q.delete(synchronize_session='fetch')
         bucket.locked = False
+        bucket.location.size += bucket.size
         bucket.remove()
 
         return super(Deposit, self).delete()
@@ -602,15 +594,13 @@ class WekoDeposit(Deposit):
                 # the latest record: item without version ID
                 last_pid = pid  # pv.last_child
                 # Get copy of the latest record
-                latest_record = WekoDeposit.get_record(
-                    last_pid.object_uuid)
-                if latest_record is not None:
+                latest_record = WekoDeposit.get_record(last_pid.object_uuid)
+                if latest_record:
                     data = latest_record.dumps()
-
-                    current_app.logger.debug('xxxxxxxxxxxxxxxxxxxxxxxxxxx')
                     owners = data['_deposit']['owners']
+                    bucket = data['_buckets']
                     keys_to_remove = ('_deposit', 'doi', '_oai',
-                                      '_files', '$schema')
+                                      '_files', '_buckets', '$schema')
                     for k in keys_to_remove:
                         data.pop(k, None)
 
@@ -625,6 +615,7 @@ class WekoDeposit(Deposit):
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
+                    deposit['_buckets'] = {'deposit': bucket['deposit']}
 
                     recid = PersistentIdentifier.get(
                         'recid', str(data['_deposit']['id']))
@@ -637,21 +628,11 @@ class WekoDeposit(Deposit):
                     RecordDraft.link(recid, depid)
 
                     # Create snapshot from the record's bucket and update data
-                    if latest_record.files:
-                        snapshot = latest_record.files.bucket.snapshot(
-                            lock=False)
-                        snapshot.locked = False
-                        deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                        RecordsBuckets.create(
-                            record=deposit.model, bucket=snapshot)
-                    if 'extra_formats' in latest_record['_buckets']:
-                        extra_formats_snapshot = \
-                            latest_record.extra_formats.bucket.snapshot(
-                                lock=False)
-                        deposit['_buckets']['extra_formats'] = \
-                            str(extra_formats_snapshot.id)
-                        RecordsBuckets.create(record=deposit.model,
-                                              bucket=extra_formats_snapshot)
+                    # with db.session.begin_nested():
+                    #     snapshot = latest_record.files.bucket.snapshot(lock=False)
+                    #     snapshot.locked = False
+                    #     deposit['_buckets'] = {'deposit': str(snapshot.id)}
+                    #     RecordsBuckets.create(record=deposit.model, bucket=snapshot)
                     index = {'index': self.get('path', []),
                              'actions': self.get('publish_status')}
                     if 'activity_info' in session:
@@ -660,7 +641,6 @@ class WekoDeposit(Deposit):
                         last_pid.object_uuid).dumps()
                     item_metadata.pop('id', None)
                     args = [index, item_metadata]
-                    current_app.logger.debug(deposit)
                     deposit.update(*args)
                     deposit.commit()
             return deposit
@@ -940,8 +920,21 @@ class WekoDeposit(Deposit):
                      'actions': self.get('publish_status')}
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
+
+            # Get draft bucket's data
+            record_bucket = RecordsBuckets.query.filter_by(
+                record_id=pid.object_uuid
+            ).first()
+            bucket = {
+                "_buckets": {
+                    "deposit": str(record_bucket.bucket_id)
+                }
+            }
+
             args = [index, item_metadata]
             self.update(*args)
+            # Update '_buckets'
+            super(WekoDeposit, self).update(bucket)
             self.commit()
             # update records_metadata
             flag_modified(self.model, 'json')

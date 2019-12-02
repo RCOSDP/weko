@@ -48,7 +48,7 @@ from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.config import ITEM_REGISTRATION_ACTION_ID
-from weko_workflow.models import ActionStatusPolicy, WorkFlow
+from weko_workflow.models import WorkFlow, ActionStatusPolicy
 
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
@@ -734,6 +734,7 @@ def get_current_login_user_id():
 
     return jsonify(result)
 
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 
 @blueprint_api.route('/prepare_edit_item', methods=['POST'])
 @login_required
@@ -765,46 +766,44 @@ def prepare_edit_item():
             user_id = str(get_current_user())
             is_admin = get_user_roles()
             activity = WorkActivity()
+
             pid_object = PersistentIdentifier.get('recid', pid_value)
 
-            # check item is being editied
-            item_id = pid_object.object_uuid
-            wf_activity = activity.get_workflow_activity_by_item_id(
-                item_id=item_id)
-            if not wf_activity:
-                # get workflow of first record attached version ID: x.1
-                first_pid_value_attached_ver = '{}.1' . format(post_activity.
-                                                               get('pid_value'))
-                first_pid_obj_attached_ver = PersistentIdentifier.get(
-                    'recid', first_pid_value_attached_ver)
-                wf_activity = activity.get_workflow_activity_by_item_id(
-                    item_id=first_pid_obj_attached_ver.object_uuid)
+            latest_pid = PIDVersioning(child=pid_object).last_child
+            current_app.logger.debug('=================prepare_edit_item===============')
+            current_app.logger.debug(latest_pid)
+            current_app.logger.debug(pid_object)
 
-            if wf_activity:
-                # show error when has stt is Begin or Doing
-                if wf_activity.action_status == \
-                        ActionStatusPolicy.ACTION_BEGIN or \
-                        wf_activity.action_status == \
-                        ActionStatusPolicy.ACTION_DOING:
-                    return jsonify(code=-13,
-                                   msg=_('The workflow is being edited. '))
-
+            # check user's permission
             if user_id != owner and not is_admin[0] and user_id != shared_id:
                 return jsonify(code=-1,
-                               msg=_('You are not allowed to edit this item.'))
+                               msg=_(r"You are not allowed to edit this item."))
             lists = ItemTypes.get_latest()
             if not lists:
                 return jsonify(code=-1,
-                               msg=_('You do not even have an itemtype.'))
+                               msg=_(r"You do not even have an Itemtype."))
             item_type_id = record.get('item_type_id')
             item_type = ItemTypes.get_by_id(item_type_id)
             if not item_type:
-                return jsonify(code=-1, msg=_('This itemtype not is found.'))
+                return jsonify(code=-1, msg=_(r"This itemtype isn't found."))
+
+            # check item is being editied
+            item_id = latest_pid.object_uuid
+            workflow_activity = activity.get_workflow_activity_by_item_id(item_id)
+            if not workflow_activity:
+                # get workflow of first record attached version ID: x.1
+                workflow_activity = activity.get_workflow_activity_by_item_id(pid_object.object_uuid)
+                if not workflow_activity:
+                    return jsonify(code=-1, msg=_(r"The Workflow of this Item is not found."))
+            else:
+                # show error when has stt is Begin or Doing
+                if workflow_activity.action_status == ActionStatusPolicy.ACTION_BEGIN or workflow_activity.action_status == ActionStatusPolicy.ACTION_DOING:
+                    return jsonify(code=-1, msg=_('The workflow is being edited. '))
 
             # prepare params for new workflow activity
-            if wf_activity:
-                post_activity['workflow_id'] = wf_activity.workflow_id
-                post_activity['flow_id'] = wf_activity.flow_id
+            if workflow_activity:
+                post_activity['workflow_id'] = workflow_activity.workflow_id
+                post_activity['flow_id'] = workflow_activity.flow_id
             else:
                 workflow = WorkFlow.query.filter_by(
                     itemtype_id=item_type_id).first()
@@ -823,19 +822,34 @@ def prepare_edit_item():
                 return jsonify(code=-1, msg=_('Record does not exist.'))
 
             deposit = WekoDeposit(record, record.model)
-            new_record = deposit.newversion(pid_object)
-            if not new_record:
+            draft_record = deposit.newversion(pid_object)
+
+            if not draft_record:
                 return jsonify(code=-1, msg=_('An error has occurred.'))
 
+            from invenio_records_files.models import RecordsBuckets
+            try:
+                with db.session.begin_nested():
+                    draft_deposit = WekoDeposit(draft_record, draft_record.model)
+                    snapshot = record.files.bucket.snapshot(lock=False)
+                    snapshot.locked = False
+                    draft_deposit['_buckets'] = {'deposit': str(snapshot.id)}
+                    RecordsBuckets.create(record=draft_record.model, bucket=snapshot)
+                    draft_deposit.commit()
+            except Exception as ex:
+                db.session.rollback()
+                current_app.logger.exception(str(ex))
+                return jsonify(code=-1, msg=_('error'))
+
             # Create a new workflow activity.
-            rtn = activity.init_activity(
-                post_activity, community, new_record.model.id)
+            rtn = activity.init_activity(post_activity, community, draft_record.model.id)
+
             if rtn:
                 # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
                 identifier_actionid = get_actionid('identifier_grant')
-                if wf_activity:
+                if workflow_activity:
                     identifier = activity.get_action_identifier_grant(
-                        wf_activity.activity_id, identifier_actionid)
+                        workflow_activity.activity_id, identifier_actionid)
                 else:
                     identifier = activity.get_action_identifier_grant(
                         '', identifier_actionid)

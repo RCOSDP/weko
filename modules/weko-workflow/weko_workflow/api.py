@@ -27,6 +27,7 @@ from flask import current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from sqlalchemy import asc, desc, types
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
@@ -35,15 +36,14 @@ from weko_records.models import ItemMetadata
 
 from .config import ITEM_REGISTRATION_FLOW_ID
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionFeedbackMail, \
-    ActionIdentifier, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
-from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
-from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
+from .models import ActionCommentPolicy, ActionFeedbackMail, \
+    ActionIdentifier, ActionJournal, ActionStatusPolicy, ActivityAction, \
+    ActivityHistory, ActivityStatusPolicy, FlowStatusPolicy
 
 
 class Flow(object):
@@ -490,11 +490,9 @@ class WorkActivity(object):
                 activity_community_id=community_id
             )
             db.session.add(db_activity)
-
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
-
             return None
         else:
             db.session.commit()
@@ -535,16 +533,13 @@ class WorkActivity(object):
                     '{inc:05d}'.format(inc=number))
 
                 # Update the activity with calculated activity_id
-                from invenio_pidstore.models import PersistentIdentifier, \
-                    PIDStatus
-                aid = PersistentIdentifier.create(
-                    'actid',
-                    str(activity_id),
-                    status=PIDStatus.REGISTERED,
-                    object_type='act',
-                    object_uuid=uuid.uuid4()
+                action_pid = PersistentIdentifier.create(
+                    pid_type='actid',
+                    pid_value=str(activity_id),
+                    status=PIDStatus.REGISTERED
+                    # object_type='act', #Workflow Activity Object Type
                 )
-                db_activity.activity_id = aid.pid_value
+                db_activity.activity_id = action_pid.pid_value
 
                 # Add history and flow_action
                 db_history = ActivityHistory(
@@ -1216,7 +1211,6 @@ class WorkActivity(object):
         """Get page info after item search."""
         from weko_records.api import ItemsMetadata
         from flask_babelex import gettext as _
-        from invenio_pidstore.models import PersistentIdentifier
         from werkzeug.utils import import_string
         from invenio_pidstore.resolver import Resolver
         from .views import check_authority_action
@@ -1335,15 +1329,16 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             return None
 
-    def get_workflow_activity_by_item_id(self, item_id):
+    def get_workflow_activity_by_item_id(self, object_uuid):
         """Get workflow activity status by item ID.
 
         :param item_id:
         """
         try:
+            current_app.logger.debug(object_uuid)
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
-                    item_id=item_id).one_or_none()
+                    item_id=object_uuid).one_or_none()
                 return activity
         except Exception as ex:
             current_app.logger.error(ex)

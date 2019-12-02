@@ -366,7 +366,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         abort(404)
     active_versions = list(pid_ver.children or [])
     if active_versions:
-        active_versions.remove(pid_ver.last_child)
+        # active_versions.remove(pid_ver.last_child)
+        active_versions.pop()
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
                         or [])
 
@@ -413,8 +414,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Check if user has the permission to download original pdf file
     # and the cover page setting is set and its value is enable (not disabled)
     can_download_original = check_original_pdf_download_permission(record) \
-        and pdfcoverpage_set_rec is not None \
-        and pdfcoverpage_set_rec.avail != 'disable'
+        and pdfcoverpage_set_rec and pdfcoverpage_set_rec.avail != 'disable'
 
     # Get item meta data
     record['permalink_uri'] = None
@@ -438,14 +438,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = True
 
     groups_price = get_groups_price(record)
-    billing_files_permission = None
-    billing_files_prices = None
-    if groups_price:
-        billing_files_permission = \
-            get_billing_file_download_permission(groups_price)
-        billing_files_prices = \
-            get_min_price_billing_file_download(groups_price,
-                                                billing_files_permission)
+    billing_files_permission = get_billing_file_download_permission(
+        groups_price) if groups_price else None
+    billing_files_prices = get_min_price_billing_file_download(
+        groups_price,
+        billing_files_permission) if groups_price else None
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering

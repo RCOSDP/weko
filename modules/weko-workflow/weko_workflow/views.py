@@ -371,7 +371,7 @@ def display_activity(activity_id=0):
                 files = item_json.get('files')
         if not files:
             deposit = WekoDeposit.get_record(item.id)
-            if deposit is not None:
+            if deposit:
                 files = to_files_js(deposit)
 
         if files:
@@ -544,8 +544,11 @@ def check_authority_action(activity_id='0', action_id=0):
     # Otherwise, user has no permission
     return 1
 
-from .utils import removeDraftBuckets
-
+from invenio_files_rest.models import Bucket
+from invenio_records_files.models import RecordsBuckets
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_files_rest.models import ObjectVersion
+from .utils import merge_buckets_by_records
 
 @blueprint.route(
     '/activity/action/<string:activity_id>/<int:action_id>',
@@ -591,7 +594,7 @@ def next_action(activity_id='0', action_id=0):
                                                          object_uuid=item_id)
         recid = get_record_identifier(current_pid.pid_value)
         record = WekoDeposit.get_record(item_id)
-        if record is not None:
+        if record:
             pid_without_ver = get_record_without_version(current_pid)
             deposit = WekoDeposit(record, record.model)
 
@@ -635,13 +638,13 @@ def next_action(activity_id='0', action_id=0):
                     item_id=item_id,
                     feedback_maillist=action_feedbackmail.feedback_maillist
                 )
-                if not recid and pid_without_ver is not None:
+                if not recid and pid_without_ver:
                     FeedbackMailList.update(
                         item_id=pid_without_ver.object_uuid,
                         feedback_maillist=action_feedbackmail.feedback_maillist
                     )
 
-            if record is not None:
+            if record:
                 deposit.update_feedback_mail()
                 deposit.update_jpcoar_identifier()
             # TODO: Make private as default.
@@ -683,11 +686,11 @@ def next_action(activity_id='0', action_id=0):
             identifier=identifier_grant
         )
         # get workflow of first record attached version ID: x.1
-        if not recid and pid_without_ver is not None:
-            record_without_ver_activity_id = \
+        if not recid and pid_without_ver:
+            activity_without_ver = \
                 get_activity_id_of_record_without_version(pid_without_ver)
             work_activity.create_or_update_action_identifier(
-                activity_id=record_without_ver_activity_id,
+                activity_id=activity_without_ver,
                 action_id=action_id,
                 identifier=identifier_grant
             )
@@ -723,13 +726,13 @@ def next_action(activity_id='0', action_id=0):
         if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant'] \
                 and item_id is not None:
             record_without_version = item_id
-            if record is not None and not recid and pid_without_ver is not None:
+            if record and pid_without_ver and not recid:
                 record_without_version = pid_without_ver.object_uuid
             saving_doi_pidstore(item_id, record_without_version, post_json,
                                 int(identifier_select))
 
     rtn = history.create_activity_history(activity)
-    if rtn is None:
+    if not rtn:
         return jsonify(code=-1, msg=_('error'))
     # next action
     work_activity.upt_activity_action_status(
@@ -752,33 +755,72 @@ def next_action(activity_id='0', action_id=0):
                 # publish record without version ID when registering newly
                 if recid:
                     # new record attached version ID
-                    first_record_attached_ver = deposit.newversion(current_pid)
-                    activity_item_id = first_record_attached_ver.model.id
-                    # activity_item_id = activity_detail.item_id
-                    deposit_attached_ver = WekoDeposit(
-                        first_record_attached_ver,
-                        first_record_attached_ver.model)
-                    deposit_attached_ver.publish()
-                    removeDraftBuckets(activity_item_id)
+                    ver_attaching_record = deposit.newversion(current_pid)
+                    new_activity_id = ver_attaching_record.model.id
+                    ver_attaching_deposit = WekoDeposit(
+                        ver_attaching_record,
+                        ver_attaching_record.model)
+                    ver_attaching_deposit.publish()
+                    record_bucket_id = record['_buckets']['deposit']
+                    record_bucket_id = merge_buckets_by_records(current_pid.object_uuid, ver_attaching_record.model.id, sub_bucket_delete=True)
+                    if not record_bucket_id:
+                        return jsonify(code=-1, msg=_('error'))
+                    # db.session.commit()
                     # Record without version: Make status Public as default
                     updated_item.publish(record)
                 else:
                     # update to record without version ID when editing
-                    activity_item_id = record.model.id
-                    if pid_without_ver is not None:
+                    new_activity_id = record.model.id
+                    if pid_without_ver:
                         record_without_ver = WekoDeposit.get_record(
                             pid_without_ver.object_uuid)
                         deposit_without_ver = WekoDeposit(
                             record_without_ver,
                             record_without_ver.model)
                         deposit_without_ver['path'] = deposit.get('path', [])
-                        # parent_record = deposit_without_ver. \
-                        #     merge_data_to_record_without_version(current_pid)
-                        deposit_without_ver.publish()
+                        parent_record = deposit_without_ver.\
+                            merge_data_to_record_without_version(current_pid)
+                        # deposit_without_ver.publish()
+
+                        draft_record_bucket = RecordsBuckets.query.filter_by(record_id=new_activity_id).one_or_none()
+                        try:
+                            with db.session.begin_nested():
+                                draft_bucket = Bucket.get(draft_record_bucket.bucket_id)
+                                draft_bucket.quota_size = current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+                                draft_bucket.max_file_size = current_app.config['WEKO_MAX_FILE_SIZE'],
+                                db.session.add(draft_bucket)
+                        except Exception as ex:
+                            db.session.rollback()
+                            current_app.logger.exception(str(ex))
+                            return jsonify(code=-1, msg=_('error'))
+
+                        record_bucket_id = merge_buckets_by_records(new_activity_id, pid_without_ver.object_uuid)
+                        updated_item.publish(parent_record)
+                try:
+                    draft_record_bucket = RecordsBuckets.query.filter_by(record_id=new_activity_id).one_or_none()
+                    with db.session.begin_nested():
+                        object_ver = ObjectVersion.query.filter_by(bucket_id=draft_record_bucket.bucket_id).all()
+                        current_app.logger.debug(object_ver)
+                        # if object_ver:
+                        #     draft_object_vers = ObjectVersion.query.filter_by(file_id=object_ver.file_id).all()
+                        #     current_app.logger.debug('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+                        #     current_app.logger.debug(draft_object_vers)
+                        #     if draft_object_vers:
+                        #         for draft_object in draft_object_vers:
+                        #             if draft_object.bucket_id != draft_record_bucket.bucket_id:
+                        #                 delete_bucket = Bucket.get(draft_object.bucket_id)
+                        #                 RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).delete()
+                        #                 delete_bucket.locked = False
+                        #                 delete_bucket.location.size -= delete_bucket.size
+                        #                 delete_bucket.remove()
+                except Exception as ex:
+                    db.session.rollback()
+                    current_app.logger.exception(str(ex))
+                    return jsonify(code=-1, msg=_('error'))
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
-                item_id=activity_item_id,
+                item_id=new_activity_id,
             )
             work_activity.end_activity(activity)
         else:

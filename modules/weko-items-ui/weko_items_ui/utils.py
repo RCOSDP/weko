@@ -1043,3 +1043,16 @@ def to_files_js(record):
             })
 
     return res
+
+
+def check_editting_pid(pid: str) -> bool:
+    """
+    Create a deposit.
+    Adds bucket creation immediately on deposit creation.
+
+    Arguments:
+        data        -- record metadata
+    Returns:
+        deposit     -- record's deposit
+    """
+    pass
