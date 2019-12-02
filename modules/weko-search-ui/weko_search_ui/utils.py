@@ -515,6 +515,14 @@ def handle_check_exist_record(list_recond) -> list:
                 except BaseException:
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])
+            else:
+                try:
+                    item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+                    if item_exist:
+                        item['errors'] = ['Item already exists in the system']
+                except BaseException:
+                    current_app.logger.error('Unexpected error: ',
+                                             sys.exc_info()[0])
         if item.get('status') == 'new':
             handle_remove_identifier(item)
         result.append(item)
