@@ -404,7 +404,7 @@ class WekoDeposit(Deposit):
 
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
-        if self.data is None:
+        if not self.data:
             self.data = self.get('_deposit', {})
         if 'control_number' in self:
             self.pop('control_number')
@@ -628,11 +628,6 @@ class WekoDeposit(Deposit):
                     RecordDraft.link(recid, depid)
 
                     # Create snapshot from the record's bucket and update data
-                    # with db.session.begin_nested():
-                    #     snapshot = latest_record.files.bucket.snapshot(lock=False)
-                    #     snapshot.locked = False
-                    #     deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                    #     RecordsBuckets.create(record=deposit.model, bucket=snapshot)
                     index = {'index': self.get('path', []),
                              'actions': self.get('publish_status')}
                     if 'activity_info' in session:

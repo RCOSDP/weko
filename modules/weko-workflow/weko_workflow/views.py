@@ -749,6 +749,7 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
+            current_app.logger.debug(deposit.id)
             if record:
                 deposit.publish()
                 updated_item = UpdateItem()
@@ -780,7 +781,7 @@ def next_action(activity_id='0', action_id=0):
                         deposit_without_ver['path'] = deposit.get('path', [])
                         parent_record = deposit_without_ver.\
                             merge_data_to_record_without_version(current_pid)
-                        # deposit_without_ver.publish()
+                        deposit_without_ver.publish()
 
                         draft_record_bucket = RecordsBuckets.query.filter_by(record_id=new_activity_id).one_or_none()
                         try:
@@ -792,31 +793,33 @@ def next_action(activity_id='0', action_id=0):
                         except Exception as ex:
                             db.session.rollback()
                             current_app.logger.exception(str(ex))
-                            return jsonify(code=-1, msg=_('error'))
 
                         record_bucket_id = merge_buckets_by_records(new_activity_id, pid_without_ver.object_uuid)
                         updated_item.publish(parent_record)
                 try:
                     draft_record_bucket = RecordsBuckets.query.filter_by(record_id=new_activity_id).one_or_none()
                     with db.session.begin_nested():
-                        object_ver = ObjectVersion.query.filter_by(bucket_id=draft_record_bucket.bucket_id).all()
-                        current_app.logger.debug(object_ver)
-                        # if object_ver:
-                        #     draft_object_vers = ObjectVersion.query.filter_by(file_id=object_ver.file_id).all()
-                        #     current_app.logger.debug('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-                        #     current_app.logger.debug(draft_object_vers)
-                        #     if draft_object_vers:
-                        #         for draft_object in draft_object_vers:
-                        #             if draft_object.bucket_id != draft_record_bucket.bucket_id:
-                        #                 delete_bucket = Bucket.get(draft_object.bucket_id)
-                        #                 RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).delete()
-                        #                 delete_bucket.locked = False
-                        #                 delete_bucket.location.size -= delete_bucket.size
-                        #                 delete_bucket.remove()
+                        current_app.logger.debug('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+                        object_ver = ObjectVersion.query.filter_by(bucket_id=draft_record_bucket.bucket_id).first()
+                        if object_ver:
+                            draft_object_vers = ObjectVersion.query.filter_by(file_id=object_ver.file_id).all()
+                            current_app.logger.debug(draft_object_vers)
+                            for draft_object in draft_object_vers:
+                                if draft_object.bucket_id != draft_record_bucket.bucket_id:
+                                    delete_record_bucket = RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).all()
+                                    if len(delete_record_bucket) == 1:
+                                        delete_pid_object = PersistentIdentifier.query.filter_by(pid_type='recid', object_type='rec', object_uuid=delete_record_bucket[0].record_id).one_or_none()
+                                        if not delete_pid_object:
+                                            current_app.logger.debug(draft_object)
+                                            delete_bucket = Bucket.get(draft_object.bucket_id)
+                                            RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).delete()
+                                            delete_bucket.locked = False
+                                            delete_bucket.location.size -= delete_bucket.size
+                                            delete_bucket.remove()
+                    db.session.commit()
                 except Exception as ex:
                     db.session.rollback()
                     current_app.logger.exception(str(ex))
-                    return jsonify(code=-1, msg=_('error'))
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
