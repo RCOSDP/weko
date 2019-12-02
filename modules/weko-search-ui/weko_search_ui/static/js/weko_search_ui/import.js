@@ -104,7 +104,7 @@ class MainLayout extends React.Component {
         console.log(root_path)
 
           that.handleChangeTab('list');
-          that.getStatus(response.data.task_id)
+//          that.getStatus(response.data.task_id)
       },
       error: function (error) {
         console.log(error);

@@ -277,22 +277,14 @@ class ItemImportView(BaseView):
     def import_item(self) -> jsonify:
         """Register an item type mapping."""
         from .utils import create_deposit, up_load_file_content,\
-            register_item_metadata,create_task_import
+            register_item_metadata, create_task_import,create_worker
         import redis
-        from rq import Queue, Connection, Worker
+        from rq import Queue, Connection
         data = request.get_json()
 
         conn = redis.from_url('redis://{host}:{port}/2'.format(
                 host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
                 port=os.getenv('INVENIO_REDIS_PORT', '6379')))
-
-        listen = ['default']
-        try:
-            with Connection(conn):
-                worker = Worker(list(map(Queue, listen)))
-                worker.work()
-        except Exception as e:
-            current_app.logger.error(e)
 
         with Connection(conn):
             q = Queue()
@@ -313,6 +305,7 @@ class ItemImportView(BaseView):
             file_path = data.get('root_path')
             up_load_file_content(list_record, file_path)
             register_item_metadata(list_record)
+        # create_worker()
         return jsonify(response_object)
 
     @expose('/import/<task_id>', methods=['GET'])

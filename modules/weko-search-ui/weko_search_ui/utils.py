@@ -788,6 +788,19 @@ def create_task_import(list_record):
     return True
 
 
+def create_worker():
+    import redis
+    from rq import Queue, Connection, Worker
+    conn = redis.from_url('redis://{host}:{port}/2'.format(
+        host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+        port=os.getenv('INVENIO_REDIS_PORT', '6379')))
+
+    listen = ['default']
+    with Connection(conn):
+        worker = Worker(list(map(Queue, listen)))
+        worker.work()
+
+
 def handle_get_title(title):
 
     if isinstance(title, dict):
