@@ -838,7 +838,6 @@ def delete_unregister_buckets(record_uuid):
                                 delete_bucket.locked = False
                                 delete_bucket.location.size -= delete_bucket.size
                                 delete_bucket.remove()
-        db.session.commit()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))

@@ -602,7 +602,7 @@ def file_version_update():
         if not bucket_id and not key and not version_id:
             object_version = ObjectVersion.get(bucket=bucket_id, key=key,
                                                version_id=version_id)
-            if object_version is not None:
+            if object_version:
                 # Do update the path on record
                 object_version.is_show = True if is_show == '1' else False
                 db.session.commit()

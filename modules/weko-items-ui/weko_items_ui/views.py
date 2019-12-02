@@ -770,9 +770,6 @@ def prepare_edit_item():
             pid_object = PersistentIdentifier.get('recid', pid_value)
 
             latest_pid = PIDVersioning(child=pid_object).last_child
-            current_app.logger.debug('=================prepare_edit_item===============')
-            current_app.logger.debug(latest_pid)
-            current_app.logger.debug(pid_object)
 
             # check user's permission
             if user_id != owner and not is_admin[0] and user_id != shared_id:
