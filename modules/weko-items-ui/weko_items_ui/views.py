@@ -34,6 +34,7 @@ from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryItemRegReportHelper, \
@@ -48,7 +49,7 @@ from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.config import ITEM_REGISTRATION_ACTION_ID
-from weko_workflow.models import WorkFlow, ActionStatusPolicy
+from weko_workflow.models import ActionStatusPolicy, WorkFlow
 
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
@@ -734,7 +735,6 @@ def get_current_login_user_id():
 
     return jsonify(result)
 
-from invenio_pidrelations.contrib.versioning import PIDVersioning
 
 @blueprint_api.route('/prepare_edit_item', methods=['POST'])
 @login_required

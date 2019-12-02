@@ -54,9 +54,9 @@ from .models import AdminSettings, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import get_redis_cache, get_response_json, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, reset_redis_cache, str_to_bool
+from .utils import get_redis_cache, get_response_json, get_search_setting, \
+    package_reports, reset_redis_cache, str_to_bool
 
 
 # FIXME: Change all setting views' path to be under settings/
@@ -64,9 +64,9 @@ class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Block style setting page."""
-        wysiwyg_editor_default = [
-            '<div class="ql-editor ql-blank" data-gramm="false" '
-            'contenteditable="true"><p><br></p></div>']
+        # wysiwyg_editor_default = [
+        #     '<div class="ql-editor ql-blank" data-gramm="false" '
+        #     'contenteditable="true"><p><br></p></div>']
 
         body_bg = '#fff'
         panel_bg = '#fff'
@@ -268,7 +268,7 @@ class ReportView(BaseView):
     def get_file_stats_tsv(self):
         """Get file download/preview stats report."""
         stats_json = json.loads(request.form.get('report'))
-        file_type = request.form.get('type')
+        # file_type = request.form.get('type')
         year = request.form.get('year')
         month = request.form.get('month').zfill(2)
 
@@ -577,8 +577,8 @@ class SearchSettingsView(BaseView):
                 setting_data=result
             )
         except BaseException as e:
+            current_app.logger.error('Could not save search settings', e)
             abort(500)
-            # current_app.logger.error('Could not save search settings', e)
             # flash(_('Unable to change search settings.'), 'error')
 
 

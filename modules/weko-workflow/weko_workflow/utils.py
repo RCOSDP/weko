@@ -25,7 +25,7 @@ from copy import deepcopy
 from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
-from invenio_files_rest.models import Bucket
+from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
@@ -764,6 +764,22 @@ class IdentifierHandle(object):
         db.session.commit()
 
 
+def delete_bucket(bucket_id):
+    """
+    Adds bucket creation immediately on deposit creation.
+
+    Arguments:
+        bucket_id       -- record metadata
+    Returns:
+        bucket_id       -- ...
+
+    """
+    bucket = Bucket.get(bucket_id)
+    bucket.locked = False
+    bucket.location.size -= bucket.size
+    bucket.remove()
+
+
 def merge_buckets_by_records(main_record_id, sub_record_id, sub_bucket_delete=False):
     """
     Adds bucket creation immediately on deposit creation.
@@ -773,6 +789,7 @@ def merge_buckets_by_records(main_record_id, sub_record_id, sub_bucket_delete=Fa
         sub_bucket_id   -- r..
     Returns:
         bucket_id       -- ...
+
     """
     try:
         with db.session.begin_nested():
@@ -793,16 +810,58 @@ def merge_buckets_by_records(main_record_id, sub_record_id, sub_bucket_delete=Fa
         return None
 
 
-def delete_bucket(bucket_id):
+def delete_unregister_buckets(record_uuid):
     """
     Adds bucket creation immediately on deposit creation.
 
     Arguments:
-        bucket_id       -- record metadata
+        main_bucket_id  -- record metadata
+        sub_bucket_id   -- r..
     Returns:
         bucket_id       -- ...
+
     """
-    bucket = Bucket.get(bucket_id)
-    bucket.locked = False
-    bucket.location.size -= bucket.size
-    bucket.remove()
+    try:
+        draft_record_bucket = RecordsBuckets.query.filter_by(record_id=record_uuid).one_or_none()
+        with db.session.begin_nested():
+            object_ver = ObjectVersion.query.filter_by(bucket_id=draft_record_bucket.bucket_id).first()
+            if object_ver:
+                draft_object_vers = ObjectVersion.query.filter_by(file_id=object_ver.file_id).all()
+                for draft_object in draft_object_vers:
+                    if draft_object.bucket_id != draft_record_bucket.bucket_id:
+                        delete_record_bucket = RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).all()
+                        if len(delete_record_bucket) == 1:
+                            delete_pid_object = PersistentIdentifier.query.filter_by(pid_type='recid', object_type='rec', object_uuid=delete_record_bucket[0].record_id).one_or_none()
+                            if not delete_pid_object:
+                                delete_bucket = Bucket.get(draft_object.bucket_id)
+                                RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).delete()
+                                delete_bucket.locked = False
+                                delete_bucket.location.size -= delete_bucket.size
+                                delete_bucket.remove()
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.exception(str(ex))
+
+
+def set_bucket_default_size(record_uuid):
+    """
+    Adds bucket creation immediately on deposit creation.
+
+    Arguments:
+        main_bucket_id  -- record metadata
+        sub_bucket_id   -- r..
+    Returns:
+        bucket_id       -- ...
+
+    """
+    draft_record_bucket = RecordsBuckets.query.filter_by(record_id=record_uuid).one_or_none()
+    try:
+        with db.session.begin_nested():
+            draft_bucket = Bucket.get(draft_record_bucket.bucket_id)
+            draft_bucket.quota_size = current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+            draft_bucket.max_file_size = current_app.config['WEKO_MAX_FILE_SIZE'],
+            db.session.add(draft_bucket)
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.exception(str(ex))

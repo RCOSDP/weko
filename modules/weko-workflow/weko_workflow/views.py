@@ -59,9 +59,10 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, \
+from .utils import IdentifierHandle, delete_unregister_buckets, \
     get_activity_id_of_record_without_version, get_identifier_setting, \
-    item_metadata_validation, register_cnri, saving_doi_pidstore
+    item_metadata_validation, merge_buckets_by_records, register_cnri, \
+    saving_doi_pidstore, set_bucket_default_size
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -544,11 +545,6 @@ def check_authority_action(activity_id='0', action_id=0):
     # Otherwise, user has no permission
     return 1
 
-from invenio_files_rest.models import Bucket
-from invenio_records_files.models import RecordsBuckets
-from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_files_rest.models import ObjectVersion
-from .utils import merge_buckets_by_records
 
 @blueprint.route(
     '/activity/action/<string:activity_id>/<int:action_id>',
@@ -783,43 +779,10 @@ def next_action(activity_id='0', action_id=0):
                             merge_data_to_record_without_version(current_pid)
                         deposit_without_ver.publish()
 
-                        draft_record_bucket = RecordsBuckets.query.filter_by(record_id=new_activity_id).one_or_none()
-                        try:
-                            with db.session.begin_nested():
-                                draft_bucket = Bucket.get(draft_record_bucket.bucket_id)
-                                draft_bucket.quota_size = current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
-                                draft_bucket.max_file_size = current_app.config['WEKO_MAX_FILE_SIZE'],
-                                db.session.add(draft_bucket)
-                        except Exception as ex:
-                            db.session.rollback()
-                            current_app.logger.exception(str(ex))
-
+                        set_bucket_default_size(new_activity_id)
                         record_bucket_id = merge_buckets_by_records(new_activity_id, pid_without_ver.object_uuid)
                         updated_item.publish(parent_record)
-                try:
-                    draft_record_bucket = RecordsBuckets.query.filter_by(record_id=new_activity_id).one_or_none()
-                    with db.session.begin_nested():
-                        current_app.logger.debug('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-                        object_ver = ObjectVersion.query.filter_by(bucket_id=draft_record_bucket.bucket_id).first()
-                        if object_ver:
-                            draft_object_vers = ObjectVersion.query.filter_by(file_id=object_ver.file_id).all()
-                            current_app.logger.debug(draft_object_vers)
-                            for draft_object in draft_object_vers:
-                                if draft_object.bucket_id != draft_record_bucket.bucket_id:
-                                    delete_record_bucket = RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).all()
-                                    if len(delete_record_bucket) == 1:
-                                        delete_pid_object = PersistentIdentifier.query.filter_by(pid_type='recid', object_type='rec', object_uuid=delete_record_bucket[0].record_id).one_or_none()
-                                        if not delete_pid_object:
-                                            current_app.logger.debug(draft_object)
-                                            delete_bucket = Bucket.get(draft_object.bucket_id)
-                                            RecordsBuckets.query.filter_by(bucket_id=draft_object.bucket_id).delete()
-                                            delete_bucket.locked = False
-                                            delete_bucket.location.size -= delete_bucket.size
-                                            delete_bucket.remove()
-                    db.session.commit()
-                except Exception as ex:
-                    db.session.rollback()
-                    current_app.logger.exception(str(ex))
+                delete_unregister_buckets(new_activity_id)
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,

@@ -39,10 +39,9 @@ from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
-from .models import FileMetadata, ItemMetadata, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
-from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
-    SiteLicenseInfo, SiteLicenseIpAddress
+from .models import FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, \
+    ItemTypeName, ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress
 
 _records_state = LocalProxy(
     lambda: current_app.extensions['invenio-records'])
