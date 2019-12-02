@@ -468,22 +468,18 @@ def get_item_type(item_type_id=0) -> dict:
 
     from weko_records.api import ItemTypes
     result = None
-    try:
-        if item_type_id > 0:
-            itemType = ItemTypes.get_by_id(item_type_id)
+    if item_type_id > 0:
+        itemtype = ItemTypes.get_by_id(item_type_id)
+        if itemtype and itemtype.schema and itemtype.item_type_name.name and item_type_id:
             result = {
-                'schema': itemType.schema,
-                'name': itemType.item_type_name.name,
+                'schema': itemtype.schema,
+                'name': itemtype.item_type_name.name,
                 'item_type_id': item_type_id
-            } if itemType else None
+            }
 
-        if result is None:
-            return {}
+    if result is None:
+        return {}
 
-        return result
-
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return result
 
 
