@@ -285,21 +285,21 @@ class ItemImportView(BaseView):
         from .utils import create_deposit, up_load_file_content,\
             register_item_metadata, create_task_import,create_worker
         import redis
-        from rq import Queue, Connection
+        # from rq import Queue, Connection
         data = request.get_json()
-
-        conn = redis.from_url('redis://{host}:{port}/2'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379')))
-
-        with Connection(conn):
-            q = Queue()
-            task = q.enqueue(create_task_import, data.get('list_record'))
+        #
+        # conn = redis.from_url('redis://{host}:{port}/2'.format(
+        #         host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+        #         port=os.getenv('INVENIO_REDIS_PORT', '6379')))
+        #
+        # with Connection(conn):
+        #     q = Queue()
+        #     task = q.enqueue(create_task_import, data.get('list_record'))
         response_object = {
             "status": "success",
-            "data": {
-                "task_id": task.get_id()
-            }
+            # "data": {
+            #     "task_id": task.get_id()
+            # }
         }
         if data:
             list_record = data.get('list_record')
