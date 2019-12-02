@@ -314,8 +314,6 @@ def import_items(file_content: str):
                 'data_path': data_path
             }
         else:
-            current_app.logger.debug('===================================')
-            current_app.logger.debug('Zip file is not follow Bagit format.')
             return {
                 'error': 'Zip file is not follow Bagit format.'
             }
