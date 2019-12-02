@@ -614,7 +614,7 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
             try:
                 if isinstance(alst, list):
                     for a in alst:
-                        result.extend(to_sort_dict(a, klst))
+                        result.append(to_sort_dict(a, klst))
                 else:
                     for lst in klst:
                         key = lst[0].split('.')[-1]
@@ -638,7 +638,7 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
         try:
             if isinstance(nlst, list):
                 for lst in nlst:
-                    _list.extend(set_attribute_value(lst))
+                    _list.append(set_attribute_value(lst))
             # check OrderedDict is dict and not empty
             elif isinstance(nlst, dict) and bool(nlst):
                 d = {}
