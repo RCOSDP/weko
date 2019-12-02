@@ -363,9 +363,9 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
             if num == 1:
                 if data_row[-1] and data_row[-1].split('/')[-1]:
                     item_type_id = data_row[-1].split('/')[-1]
-                    check_item_type = get_item_type(
-                        int(item_type_id)
-                    )
+                    check_item_type = get_item_type(int(item_type_id))
+                    current_app.logger.debug('============================')
+                    current_app.logger.debug(check_item_type)
                     schema = data_row[-1]
                     if not check_item_type:
                         result['item_type_schema'] = {}
@@ -388,8 +388,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                     item_path,
                     data_row)
                 )
-                current_app.logger.debug('============================')
-                current_app.logger.debug(check_item_type)
+
                 item_type_name = check_item_type[
                     'name'] if check_item_type else ''
                 item_type_id = check_item_type[
