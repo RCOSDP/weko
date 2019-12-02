@@ -449,6 +449,8 @@ def handle_check_index(list_index) -> bool:
     if list_index:
         index_id_lst = []
         for index in list_index:
+            if index.isdigit():
+                return False
             indexes = str(index).split('/')
             index_id_lst.append(indexes[len(indexes) - 1])
         index_lst = index_id_lst
