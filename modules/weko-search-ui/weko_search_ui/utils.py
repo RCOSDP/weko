@@ -467,10 +467,8 @@ def get_item_type(item_type_id=0) -> dict:
     """
 
     from weko_records.api import ItemTypes
+    result = None
     try:
-        result = None
-        cur_lang = current_i18n.language
-
         if item_type_id > 0:
             itemType = ItemTypes.get_by_id(item_type_id)
             result = {
@@ -486,7 +484,7 @@ def get_item_type(item_type_id=0) -> dict:
 
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return abort(400)
+    return result
 
 
 def handle_check_exist_record(list_recond) -> list:
