@@ -364,8 +364,6 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                 if data_row[-1] and data_row[-1].split('/')[-1]:
                     item_type_id = data_row[-1].split('/')[-1]
                     check_item_type = get_item_type(int(item_type_id))
-                    current_app.logger.debug('============================')
-                    current_app.logger.debug(check_item_type)
                     schema = data_row[-1]
                     if not check_item_type:
                         result['item_type_schema'] = {}
@@ -520,6 +518,7 @@ def handle_check_exist_record(list_recond) -> list:
                     item_exist = WekoRecord.get_record_by_pid(item.get('id'))
                     if item_exist:
                         item['errors'] = ['Item already exists in the system']
+                        item['status'] = None
                 except BaseException:
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])
