@@ -23,6 +23,13 @@
 import json
 import os
 import sys
+import io
+import bagit
+import tempfile
+import traceback
+import shutil
+from datetime import datetime
+import base64
 
 from functools import reduce
 from operator import getitem
@@ -190,12 +197,26 @@ def get_content_workflow(item):
     return result
 
 
-def get_base64_string(data):
+def get_base64_string(data: str) -> str:
+    """Get base64 string
+
+        Arguments:
+            data        -- {string} string has base64 string
+        Returns:
+           return       -- {string} base64 string
+        """
     result = data.split(",")
     return result[-1]
 
 
 def is_tsv(name):
+    """Check file is tsv file
+
+    Arguments:
+        name        -- {string} file name
+    Returns:
+       return       -- {bool} True if its tsv file
+    """
     term = name.split('.')
     return term[-1] == "tsv"
 
@@ -217,27 +238,66 @@ def convert_nested_item_to_list(data_dict, map_list):
 
 
 def define_default_dict():
+    """Define nested dict
+
+    Returns:
+       return       -- {dict}
+    """
     return defaultdict(define_default_dict)
 
 
-def defaultify(d):
+def defaultify(d: dict) -> dict:
+    """Create default dict
+
+    Arguments:
+        d            -- {dict} current dict
+    Returns:
+        return       -- {dict} default dict
+    """
     if not isinstance(d, dict):
         return d
-    return defaultdict(define_default_dict, {k: defaultify(v) for k, v in d.items()})
+    return defaultdict(
+        define_default_dict,
+        {k: defaultify(v) for k, v in d.items()}
+    )
 
 
-def handle_generate_key_path(key):
-    key = key.replace('#.', '.').replace('[', '.').replace(']', '').replace('#', '.')
+def handle_generate_key_path(key) -> list:
+    """Handle generate key path
+
+    Arguments:
+        key     -- {string} string key
+    Returns:
+        return       -- {list} list key path after convert
+    """
+    key = key.replace(
+        '#.',
+        '.'
+    ).replace(
+        '[',
+        '.'
+    ).replace(
+        ']',
+        ''
+    ).replace(
+        '#',
+        '.'
+    )
     key_path = key.split(".")
     if len(key_path) > 0 and not key_path[0]:
         del key_path[0]
-    # if len key_pathnot key_path[-1]:
-    #     del key_path[-1]
 
     return key_path
 
 
-def parse_to_json_form(data):
+def parse_to_json_form(data: list) -> dict:
+    """Parse set argument to json object
+
+    Arguments:
+        key     -- {list zip} argument if json object
+    Returns:
+        return       -- {dict} dict after convert argument
+    """
     result = defaultify({})
     import json
 
@@ -268,15 +328,6 @@ def parse_to_json_form(data):
     convert_data(result)
     result = json.loads(json.dumps(result))
     return result
-
-
-import io
-import bagit
-import tempfile
-import traceback
-import shutil
-from datetime import datetime
-import base64
 
 
 def import_items(file_content: str):
@@ -349,7 +400,6 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     Returns:
         return       -- PID object if exist
     """
-    from .config import WEKO_READ_FILE_ERROR_CODE
     result = {
         'error': False,
         'error_code': 0,
@@ -379,26 +429,26 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
             elif num == 3:
                 item_path_name = data_row
             else:
-                data_parse_metadata = parse_to_json_form(zip(
-                    item_path,
-                    item_path_name,
-                    data_row)
+                data_parse_metadata = parse_to_json_form(
+                    zip(item_path, item_path_name, data_row)
                 )
 
-                json_data_parse = parse_to_json_form(zip(
-                    item_path_name,
-                    item_path,
-                    data_row)
+                json_data_parse = parse_to_json_form(
+                    zip(item_path_name, item_path, data_row)
                 )
                 if isinstance(check_item_type, dict):
                     item_type_name = check_item_type.get(
                         'name')
                     item_type_id = check_item_type.get('item_type_id')
-                    tsv_item = dict(**json_data_parse, **data_parse_metadata, **{
-                        'item_type_name': item_type_name or '',
-                        'item_type_id': item_type_id or '',
-                        '$schema': schema if schema else ''
-                    })
+                    tsv_item = dict(
+                        **json_data_parse,
+                        **data_parse_metadata,
+                        **{
+                            'item_type_name': item_type_name or '',
+                            'item_type_id': item_type_id or '',
+                            '$schema': schema if schema else ''
+                        }
+                    )
                 else:
                     tsv_item = dict(**json_data_parse, **data_parse_metadata)
                 tsv_data.append(tsv_item)
@@ -438,7 +488,7 @@ def handle_validate_item_import(list_recond, schema) -> list:
     return result
 
 
-def handle_check_index(list_index) -> bool:
+def handle_check_index(list_index: list) -> bool:
     """Handle check index.
     Arguments:
         list_index     -- {list} list index id
@@ -748,7 +798,6 @@ def register_item_metadata(list_record):
                 r = RecordMetadata.query.filter_by(
                     id=pid.object_uuid).first()
                 _depisit_data = r.json.get('_deposit')
-                # _depisit_data.pop('status', None)
                 dep = WekoDeposit(r.json, r)
                 #
                 new_data = dict(
@@ -778,8 +827,6 @@ def register_item_metadata(list_record):
                 db.session.commit()
 
                 success_count += 1
-                if success_count % 100 == 0:
-                    current_app.logger.info('%s items processed.' % success_count)
             except Exception as ex:
                 db.session.rollback()
                 current_app.logger.error('item id: %s update error.' % item_id)
@@ -793,27 +840,13 @@ def register_item_metadata(list_record):
         current_app.logger.error(e)
 
 
-def create_task_import(list_record):
-    import time
-    time.sleep(int(1000) * 10)
-    return True
-
-
-def create_worker():
-    import redis
-    from rq import Queue, Connection, Worker
-    conn = redis.from_url('redis://{host}:{port}/2'.format(
-        host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-        port=os.getenv('INVENIO_REDIS_PORT', '6379')))
-
-    listen = ['default']
-    with Connection(conn):
-        worker = Worker(list(map(Queue, listen)))
-        worker.work()
-
-
-def handle_get_title(title):
-
+def handle_get_title(title) -> str:
+    """Handle get title
+        Arguments:
+            title           -- {dict or list} title
+        Returns:
+            return       -- title string
+    """
     if isinstance(title, dict):
         return title.get('Title', '')
     elif isinstance(title, list):

@@ -50,8 +50,6 @@ _signals = Namespace()
 searched = _signals.signal('searched')
 
 
-
-
 class ItemManagementBulkDelete(BaseView):
     """Item Management - Bulk Delete view."""
 
@@ -283,23 +281,11 @@ class ItemImportView(BaseView):
     def import_item(self) -> jsonify:
         """Register an item type mapping."""
         from .utils import create_deposit, up_load_file_content,\
-            register_item_metadata, create_task_import,create_worker
-        import redis
-        # from rq import Queue, Connection
+            register_item_metadata
         data = request.get_json()
-        #
-        # conn = redis.from_url('redis://{host}:{port}/2'.format(
-        #         host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-        #         port=os.getenv('INVENIO_REDIS_PORT', '6379')))
-        #
-        # with Connection(conn):
-        #     q = Queue()
-        #     task = q.enqueue(create_task_import, data.get('list_record'))
+
         response_object = {
             "status": "success",
-            # "data": {
-            #     "task_id": task.get_id()
-            # }
         }
         if data:
             list_record = data.get('list_record')
@@ -311,31 +297,6 @@ class ItemImportView(BaseView):
             file_path = data.get('root_path')
             up_load_file_content(list_record, file_path)
             register_item_metadata(list_record)
-        # create_worker()
-        return jsonify(response_object)
-
-    @expose('/import/<task_id>', methods=['GET'])
-    def get_status(self, task_id) -> jsonify:
-        """Register an item type mapping."""
-        from rq import Queue, Connection, Worker
-
-        conn = redis.from_url('redis://{host}:{port}/2'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379')))
-        with Connection(conn):
-            q = Queue()
-            task = q.fetch_job(task_id)
-        if task:
-            response_object = {
-                "status": "success",
-                "data": {
-                    "task_id": task.get_id(),
-                    "task_status": task.get_status(),
-                    "task_result": task.result,
-                },
-            }
-        else:
-            response_object = {"status": "error"}
         return jsonify(response_object)
 
 
