@@ -637,13 +637,11 @@ def make_stats_tsv(item_type_id, recids):
                             _sub_ = []
                             for item in sub:
                                 if 'item_' in item:
-                                    _sub_.append(item.split('.')[0].replace('[0]', '') + '.' +\
-                                          '.'.join(item.split('.')[1:]))
-                                else :
+                                    _sub_.append(item.split('.')[0].replace(
+                                        '[0]', '') + '.' + '.'.join(
+                                        item.split('.')[1:]))
+                                else:
                                     _sub_.append(item)
-
-                            # sub = sub.split('.')[0].replace('[1]', '') + '.' +\
-                            #       '.'.join(sub.split('.')[1:])
                             sub = _sub_
                         key_list.extend(sub)
                         key_label.extend(sublabel)

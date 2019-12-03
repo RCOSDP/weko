@@ -257,7 +257,7 @@ class ItemImportView(BaseView):
         from .utils import make_stats_tsv
         from flask import Response
         now = str(datetime.date(datetime.now()))
-        file_name = "check_"+now+".tsv"
+        file_name = "check_" + now + ".tsv"
         if data:
             tsv_file = make_stats_tsv(data.get('list_result'))
             return Response(
