@@ -264,7 +264,7 @@ class ItemImportView(BaseView):
                 tsv_file.getvalue(),
                 mimetype="text/tsv",
                 headers={
-                    "Content-disposition": "attachment; filename="+file_name
+                    "Content-disposition": "attachment; filename=" + file_name
                 }
             )
         else:
@@ -272,7 +272,7 @@ class ItemImportView(BaseView):
                 [],
                 mimetype="text/tsv",
                 headers={
-                    "Content-disposition": "attachment; filename="+file_name
+                    "Content-disposition": "attachment; filename=" + file_name
                 }
             )
 

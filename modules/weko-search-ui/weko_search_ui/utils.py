@@ -248,7 +248,6 @@ def define_default_dict():
     :return
        return       -- {dict}.
     """
-
     return defaultdict(define_default_dict)
 
 
@@ -678,7 +677,6 @@ def compare_identifier(item, item_exist):
 
 def make_stats_tsv(raw_stats):
     """Make TSV report file for stats."""
-
     import csv
     from io import StringIO
     tsv_output = StringIO()
