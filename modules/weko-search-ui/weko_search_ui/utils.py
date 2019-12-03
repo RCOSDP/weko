@@ -291,9 +291,8 @@ def parse_to_json_form(data: list) -> dict:
     Returns:
         return       -- {dict} dict after convert argument.
     """
-    result = defaultify({})
     import json
-
+    result = defaultify({})
     def convert_data(pro, path=[]):
         term_path = path
         if isinstance(pro, dict):
@@ -454,11 +453,9 @@ def handle_validate_item_import(list_recond, schema) -> list:
     Returns:
         return       -- list_item_error.
     """
-    result = []
-
     from jsonschema import validate, Draft4Validator
     from jsonschema.exceptions import ValidationError
-
+    result = []
     v2 = Draft4Validator(schema) if schema else None
     for record in list_recond:
         if record.get('metadata'):
@@ -505,11 +502,9 @@ def handle_check_index(list_index: list) -> bool:
 
 def get_item_type(item_type_id=0) -> dict:
     """Get item type.
-
     :param item_type_id: Item type ID. (Default: 0).
     :return: The json object.
     """
-
     from weko_records.api import ItemTypes
     result = None
     if item_type_id > 0:
@@ -534,7 +529,6 @@ def handle_check_exist_record(list_recond) -> list:
     Returns:
         return       -- list record has property status.
     """
-
     result = []
     url_root = request.url_root
     for item in list_recond:
@@ -574,10 +568,10 @@ def handle_check_exist_record(list_recond) -> list:
 
 def handle_check_identifier(name) -> str:
     """Check data is Identifier of Identifier Registration.
-        Arguments:
-            name_path     -- {list} list name path.
-        Returns:
-            return       -- Name of key if is Identifier.
+    Arguments:
+        name_path     -- {list} list name path.
+    Returns:
+        return       -- Name of key if is Identifier.
         """
     result = ''
     if 'Identifier' in name or 'Identifier Registration' in name:
@@ -587,11 +581,11 @@ def handle_check_identifier(name) -> str:
 
 def handle_remove_identifier(item) -> dict:
     """Remove Identifier of Identifier Registration.
-        Arguments:
-            item         -- Item.
-        Returns:
-            return       -- Item had been removed property.
-        """
+    Arguments:
+        item         -- Item.
+    Returns:
+        return       -- Item had been removed property.
+    """
     if item and item.get('Identifier key'):
         del item['metadata'][item.get('Identifier key')]
         del item['Identifier key']
@@ -605,11 +599,11 @@ def handle_remove_identifier(item) -> dict:
 
 def compare_identifier(item, item_exist):
     """Compare data is Identifier.
-        Arguments:
-            item           -- {dict} item import.
-            item_exist     -- {dict} item in system.
-        Returns:
-            return       -- Name of key if is Identifier.
+    Arguments:
+        item           -- {dict} item import.
+        item_exist     -- {dict} item in system.
+    Returns:
+        return       -- Name of key if is Identifier.
     """
     if item.get('Identifier key'):
         item_iden = item.get('metadata', '').get(item.get('Identifier key'))
@@ -762,10 +756,10 @@ def get_file_name(file_path):
 
 def register_item_metadata(list_record):
     """Upload file content.
-        Arguments:
-            list_record    -- {list} list item import.
-            file_path      -- {str} file path.
-        """
+    Arguments:
+        list_record    -- {list} list item import.
+        file_path      -- {str} file path.
+    """
     from invenio_db import db
     from weko_deposit.api import WekoDeposit
     from invenio_pidstore.models import PersistentIdentifier
