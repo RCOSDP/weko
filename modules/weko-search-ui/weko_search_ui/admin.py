@@ -37,7 +37,6 @@ from invenio_i18n.ext import current_i18n
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui.ipaddr import check_site_license_permission
-import redis
 
 from weko_search_ui.api import get_search_detail_keyword
 

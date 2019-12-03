@@ -20,29 +20,28 @@
 
 """Weko Search-UI admin."""
 
+import base64
+import io
 import json
 import os
+import shutil
 import sys
-import io
-import bagit
 import tempfile
 import traceback
-import shutil
+from collections import defaultdict
 from datetime import datetime
-import base64
-
 from functools import reduce
 from operator import getitem
-from collections import defaultdict
+
+import bagit
 from flask import abort, current_app, request, jsonify
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_records.api import Record
 from invenio_search import RecordsSearch
-from weko_deposit.api import WekoIndexer
+from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_indextree_journal.api import Journals
-from weko_deposit.api import WekoRecord
 from .config import WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
@@ -198,38 +197,36 @@ def get_content_workflow(item):
 
 
 def get_base64_string(data: str) -> str:
-    """Get base64 string
-
-        Arguments:
-            data        -- {string} string has base64 string
-        Returns:
-           return       -- {string} base64 string
-        """
+    """Get base64 string.
+    Arguments:
+        data        -- {string} string has base64 string.
+    Returns:
+       return       -- {string} base64 string.
+    """
     result = data.split(",")
     return result[-1]
 
 
 def is_tsv(name):
-    """Check file is tsv file
-
+    """Check file is tsv file.
     Arguments:
-        name        -- {string} file name
+        name        -- {string} file name.
     Returns:
-       return       -- {bool} True if its tsv file
+       return       -- {bool} True if its tsv file.
     """
     term = name.split('.')
     return term[-1] == "tsv"
 
 
 def set_nested_item(data_dict, map_list, val):
-    """Set item in nested dictionary"""
+    """Set item in nested dictionary."""
     reduce(getitem, map_list[:-1], data_dict)[map_list[-1]] = val
 
     return data_dict
 
 
 def convert_nested_item_to_list(data_dict, map_list):
-    """Set item in nested dictionary"""
+    """Set item in nested dictionary."""
     a = reduce(getitem, map_list[:-1], data_dict)[map_list[-1]]
     a = list(a.values())
     reduce(getitem, map_list[:-1], data_dict)[map_list[-1]] = a
@@ -238,21 +235,19 @@ def convert_nested_item_to_list(data_dict, map_list):
 
 
 def define_default_dict():
-    """Define nested dict
-
+    """Define nested dict.
     Returns:
-       return       -- {dict}
+       return       -- {dict}.
     """
     return defaultdict(define_default_dict)
 
 
 def defaultify(d: dict) -> dict:
-    """Create default dict
-
+    """Create default dict.
     Arguments:
-        d            -- {dict} current dict
+        d            -- {dict} current dict.
     Returns:
-        return       -- {dict} default dict
+        return       -- {dict} default dict.
     """
     if not isinstance(d, dict):
         return d
@@ -263,12 +258,11 @@ def defaultify(d: dict) -> dict:
 
 
 def handle_generate_key_path(key) -> list:
-    """Handle generate key path
-
+    """Handle generate key path.
     Arguments:
-        key     -- {string} string key
+        key     -- {string} string key.
     Returns:
-        return       -- {list} list key path after convert
+        return       -- {list} list key path after convert.
     """
     key = key.replace(
         '#.',
@@ -291,12 +285,11 @@ def handle_generate_key_path(key) -> list:
 
 
 def parse_to_json_form(data: list) -> dict:
-    """Parse set argument to json object
-
+    """Parse set argument to json object.
     Arguments:
-        key     -- {list zip} argument if json object
+        key     -- {list zip} argument if json object.
     Returns:
-        return       -- {dict} dict after convert argument
+        return       -- {dict} dict after convert argument.
     """
     result = defaultify({})
     import json
@@ -332,11 +325,10 @@ def parse_to_json_form(data: list) -> dict:
 
 def import_items(file_content: str):
     """Validation importing zip file.
-
     Arguments:
-        file_content     -- {string} 'doi' (default) or 'cnri'
+        file_content     -- {string} 'doi' (default) or 'cnri'.
     Returns:
-        return       -- PID object if exist
+        return       -- PID object if exist.
     """
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
@@ -378,11 +370,10 @@ def import_items(file_content: str):
 
 def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     """Getting record data from TSV file.
-
     Arguments:
-        file_content     -- {string} 'doi' (default) or 'cnri'
+        file_content     -- {string} 'doi' (default) or 'cnri'.
     Returns:
-        return       -- PID object if exist
+        return       -- PID object if exist.
     """
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
     data = read_stats_tsv(tsv_file_path)
@@ -394,11 +385,10 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
 
 def read_stats_tsv(tsv_file_path: str) -> dict:
     """Read importing TSV file.
-
     Arguments:
-        file_content     -- {string} 'doi' (default) or 'cnri'
+        file_content     -- {string} 'doi' (default) or 'cnri'.
     Returns:
-        return       -- PID object if exist
+        return       -- PID object if exist.
     """
     result = {
         'error': False,
@@ -459,10 +449,10 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
 def handle_validate_item_import(list_recond, schema) -> list:
     """Validate item import.
     Arguments:
-        list_recond     -- {list} list recond import
-        schema     -- {dict} item_type schema
+        list_recond     -- {list} list recond import.
+        schema     -- {dict} item_type schema.
     Returns:
-        return       -- list_item_error
+        return       -- list_item_error.
     """
     result = []
 
@@ -491,9 +481,9 @@ def handle_validate_item_import(list_recond, schema) -> list:
 def handle_check_index(list_index: list) -> bool:
     """Handle check index.
     Arguments:
-        list_index     -- {list} list index id
+        list_index     -- {list} list index id.
     Returns:
-        return       -- true if exist
+        return       -- true if exist.
     """
     result = True
     from weko_index_tree.api import Indexes
@@ -516,7 +506,7 @@ def handle_check_index(list_index: list) -> bool:
 def get_item_type(item_type_id=0) -> dict:
     """Get item type.
 
-    :param item_type_id: Item type ID. (Default: 0)
+    :param item_type_id: Item type ID. (Default: 0).
     :return: The json object.
     """
 
@@ -540,9 +530,9 @@ def get_item_type(item_type_id=0) -> dict:
 def handle_check_exist_record(list_recond) -> list:
     """Check record is exist in system.
     Arguments:
-        list_recond     -- {list} list recond import
+        list_recond     -- {list} list recond import.
     Returns:
-        return       -- list record has property status
+        return       -- list record has property status.
     """
 
     result = []
@@ -585,9 +575,9 @@ def handle_check_exist_record(list_recond) -> list:
 def handle_check_identifier(name) -> str:
     """Check data is Identifier of Identifier Registration.
         Arguments:
-            name_path     -- {list} list name path
+            name_path     -- {list} list name path.
         Returns:
-            return       -- Name of key if is Identifier
+            return       -- Name of key if is Identifier.
         """
     result = ''
     if 'Identifier' in name or 'Identifier Registration' in name:
@@ -598,9 +588,9 @@ def handle_check_identifier(name) -> str:
 def handle_remove_identifier(item) -> dict:
     """Remove Identifier of Identifier Registration.
         Arguments:
-            item         -- Item
+            item         -- Item.
         Returns:
-            return       -- Item had been removed property
+            return       -- Item had been removed property.
         """
     if item and item.get('Identifier key'):
         del item['metadata'][item.get('Identifier key')]
@@ -616,10 +606,10 @@ def handle_remove_identifier(item) -> dict:
 def compare_identifier(item, item_exist):
     """Compare data is Identifier.
         Arguments:
-            item           -- {dict} item import
-            item_exist     -- {dict} item in system
+            item           -- {dict} item import.
+            item_exist     -- {dict} item in system.
         Returns:
-            return       -- Name of key if is Identifier
+            return       -- Name of key if is Identifier.
     """
     if item.get('Identifier key'):
         item_iden = item.get('metadata', '').get(item.get('Identifier key'))
@@ -683,11 +673,11 @@ def difference(list1, list2):
 
 def check_identifier_new(item):
     """Check data Identifier.
-        Arguments:
-            item           -- {dict} item import
-            item_exist     -- {dict} item in system
-        Returns:
-            return       -- Name of key if is Identifier
+    Arguments:
+        item           -- {dict} item import.
+        item_exist     -- {dict} item in system.
+    Returns:
+        return       -- Name of key if is Identifier.
     """
     if item.get('Identifier key'):
         item_iden = item.get('metadata', '').get(item.get('Identifier key'))
@@ -710,9 +700,9 @@ def check_identifier_new(item):
 
 def create_deposit(rids):
     """Create deposit.
-        Arguments:
-            item           -- {dict} item import
-            item_exist     -- {dict} item in system
+    Arguments:
+        item           -- {dict} item import.
+        item_exist     -- {dict} item in system.
     """
     from invenio_db import db
     from weko_deposit.api import WekoDeposit
@@ -732,10 +722,10 @@ def create_deposit(rids):
 
 
 def up_load_file_content(list_record, file_path):
-    """Upload file content
-        Arguments:
-            list_record    -- {list} list item import
-            file_path      -- {str} file path
+    """Upload file content.
+    Arguments:
+        list_record    -- {list} list item import.
+        file_path      -- {str} file path.
     """
     from invenio_db import db
     from invenio_files_rest.models import ObjectVersion
@@ -771,10 +761,10 @@ def get_file_name(file_path):
 
 
 def register_item_metadata(list_record):
-    """Upload file content
-            Arguments:
-                list_record    -- {list} list item import
-                file_path      -- {str} file path
+    """Upload file content.
+        Arguments:
+            list_record    -- {list} list item import.
+            file_path      -- {str} file path.
         """
     from invenio_db import db
     from weko_deposit.api import WekoDeposit
@@ -841,11 +831,11 @@ def register_item_metadata(list_record):
 
 
 def handle_get_title(title) -> str:
-    """Handle get title
-        Arguments:
-            title           -- {dict or list} title
-        Returns:
-            return       -- title string
+    """Handle get title.
+    Arguments:
+        title           -- {dict or list} title.
+    Returns:
+        return       -- title string.
     """
     if isinstance(title, dict):
         return title.get('Title', '')
