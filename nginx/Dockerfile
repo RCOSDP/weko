@@ -18,6 +18,8 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+FROM weko_web as builder
+
 FROM nginx
 RUN rm /etc/nginx/conf.d/default.conf
 RUN rm /etc/nginx/nginx.conf
@@ -25,5 +27,7 @@ ADD weko.conf /etc/nginx/conf.d/
 ADD nginx.conf /etc/nginx/nginx.conf
 ADD ./keys/server.crt /etc/nginx/server.crt
 ADD ./keys/server.key /etc/nginx/server.key
-
 RUN chmod 400 /etc/nginx/server.key
+
+COPY --from=builder /home/invenio/.virtualenvs/invenio/var/instance/static  \
+    /home/invenio/.virtualenvs/invenio/var/instance/static

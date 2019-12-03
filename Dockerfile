@@ -61,6 +61,7 @@ RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
 RUN echo "workon invenio" >> ~/.bashrc
 
 # Start the Weko application:
-CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
+CMD ["/bin/bash", "-c", "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D && uwsgi --ini /code/scripts/uwsgi.ini"]
+#CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
 # CMD ["/bin/bash", "-c", "gunicorn invenio_app.wsgi --workers=4 --worker-class=meinheld.gmeinheld.MeinheldWorker -b 0.0.0.0:5000 "]
 #CMD ["/bin/bash","-c","uwsgi --ini /code/scripts/uwsgi.ini"]
