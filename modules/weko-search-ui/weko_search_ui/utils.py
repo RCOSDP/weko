@@ -853,7 +853,7 @@ def register_item_metadata(list_record):
                 dep.update(item_status, new_data)
                 dep.commit()
                 dep.publish()
-
+                handle_workflow(data)
                 with current_app.test_request_context() as ctx:
                     first_ver = dep.newversion(pid)
                     first_ver.publish()
@@ -888,3 +888,73 @@ def handle_get_title(title) -> str:
     elif isinstance(title, list):
         return title[0].get('Title') if title[0] and isinstance(title[0], dict)\
             else ''
+
+
+def handle_workflow(item: dict):
+    """Handle workflow.
+
+    :argument
+        title           -- {dict or list} title.
+    :return
+        return       -- title string.
+
+    """
+    from weko_workflow.api import GetCommunity, WorkActivity
+    from weko_workflow.models import FlowDefine, WorkFlow
+    activity = WorkActivity()
+    wf_activity = activity.get_workflow_activity_by_item_id(
+        item_id=item.get('item_id'))
+    if wf_activity:
+        return
+    else:
+        workflow = WorkFlow.query.filter_by(
+            itemtype_id=item.get('item_type_id')).first()
+        if workflow:
+            return
+        else:
+            create_work_flow(item.get('item_type_id'))
+
+
+def create_work_flow(item_type_id):
+    """Handle create work flow.
+
+    :argument
+        item_type_id        -- {str} item_type_id.
+    :return
+
+    """
+    from weko_workflow.models import FlowDefine, WorkFlow
+    from weko_records.api import ItemTypes
+    import uuid
+    flow_define = FlowDefine.query.filter_by(
+            flow_name='Registration Flow').first()
+    it = ItemTypes.get_by_id(item_type_id)
+
+    if not flow_define:
+        create_flow_define()
+        flow_define = FlowDefine.query.filter_by(
+            flow_name='Registration Flow').first()
+    if flow_define and it:
+        with db.session.begin_nested():
+            data = WorkFlow()
+            data.flows_id = uuid.uuid4()
+            data.flows_name = it.item_type_name.name
+            data.itemtype_id = it.id
+            data.flow_id = flow_define.id
+            db.session.add(data)
+        db.session.commit()
+        current_app.logger.info('creating workflow is finished')
+    else:
+        if not flow_define:
+            current_app.logger.error('workflow define is not exist')
+        if not it:
+            current_app.logger.error('item type is not exist')
+
+
+def create_flow_define():
+    """Handle create flow_define."""
+    from weko_workflow.api import Flow
+    from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION
+    the_flow = Flow()
+    flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
+    the_flow.upt_flow_action(flow.flow_id, WEKO_FLOW_DEFINE_LIST_ACTION)

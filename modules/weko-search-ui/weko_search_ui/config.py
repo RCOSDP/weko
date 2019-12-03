@@ -339,3 +339,64 @@ WEKO_REPO_USER = 'Repository Administrator'
 WEKO_READ_FILE_ERROR_CODE = {
     'ITEM_TYPE_NOT_EXIST': 1,
 }
+
+WEKO_FLOW_DEFINE = {'flow_name': 'Registration Flow'}
+
+WEKO_FLOW_DEFINE_LIST_ACTION = [
+    {
+        "id": "1",
+        "name": "Start",
+        "date": "2019-12-03",
+        "version": "1.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "3",
+        "name": "Item Registration",
+        "date": "2019-12-3",
+        "version": "1.0.1",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "7",
+        "name": "Identifier Grant",
+        "date": "2019-12-3",
+        "version": "1.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "4",
+        "name": "Approval",
+        "date": "2019-12-3",
+        "version": "2.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "2",
+        "name": "End",
+        "date": "2019-12-03",
+        "version": "1.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    }
+]
+
