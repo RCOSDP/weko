@@ -646,20 +646,6 @@ def make_stats_tsv(item_type_id, recids):
                         key_list.extend(sub)
                         key_label.extend(sublabel)
                         key_data.extend(subdata)
-                    # elif properties[key]['type'] == 'object':
-                        # if data and idx < len(data) and data[idx].get(key):
-                        #     m_data = data[idx][key]
-                        # else:
-                        #     m_data = None
-                        # sub, sublabel, subdata = self.get_subs_item(
-                        #     '{}[{}].{}'.format(item_key, str(idx), key),
-                        #     '{}#{}.{}'.format(item_label, str(idx + 1),
-                        #                       properties[key].get('title')),
-                        #     properties[key]['properties'],
-                        #     m_data)
-                        # key_list.extend(sub)
-                        # key_label.extend(sublabel)
-                        # key_data.extend(subdata)
                     else:
                         if isinstance(data, dict):
                             data = [data]
@@ -707,24 +693,6 @@ def make_stats_tsv(item_type_id, recids):
                 o_ret_label.extend(key_label)
                 ret_data.extend(key_data)
 
-                # if max_items == 1:
-                #     new_ret = []
-                #     new_ret_label = []
-                #     for c_ret in o_ret:
-                #         if item_key + '[0]' in c_ret:
-                #             new_ret.append(c_ret.replace(item_key + '[0]',
-                #                                          item_key))
-                #         else:
-                #             new_ret.append(c_ret)
-                #     for c_ret in o_ret_label:
-                #         if item_label + '#1' in c_ret:
-                #             new_ret_label.append(c_ret.replace(item_label
-                #                                                + '#1',
-                #                                                item_label))
-                #         else:
-                #             new_ret_label.append(c_ret)
-                #     o_ret = new_ret
-                #     o_ret_label = new_ret_label
             return o_ret, o_ret_label, ret_data
 
     records = RecordsManager(recids)
@@ -732,7 +700,6 @@ def make_stats_tsv(item_type_id, recids):
     ret = ['#.id', '.uri']
     ret_label = ['#ID', 'URI']
 
-    # for idx in range(records.get_max_ins('path')):
     max_path = records.get_max_ins('path')
     ret.extend(['.metadata.path[{}]'.format(i) for i in range(max_path)])
     ret_label.extend(['.IndexID#{}'.format(i + 1) for i in range(max_path)])
