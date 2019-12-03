@@ -34,7 +34,7 @@ from functools import reduce
 from operator import getitem
 
 import bagit
-from flask import abort, current_app, request, jsonify
+from flask import abort, current_app, jsonify, request
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -42,12 +42,14 @@ from invenio_records.api import Record
 from invenio_search import RecordsSearch
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_indextree_journal.api import Journals
+
 from .config import WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
 def get_tree_items(index_tree_id):
     """Get tree items."""
+
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
@@ -60,6 +62,7 @@ def get_tree_items(index_tree_id):
 
 def delete_records(index_tree_id):
     """Bulk delete records."""
+
     record_indexer = RecordIndexer()
     hits = get_tree_items(index_tree_id)
     for hit in hits:
@@ -95,8 +98,12 @@ def delete_records(index_tree_id):
 def get_journal_info(index_id=0):
     """Get journal information.
 
+    :argument
+        index_id -- {int} index id
     :return: The object.
+
     """
+
     try:
         if index_id == 0:
             return None
@@ -135,6 +142,7 @@ def get_journal_info(index_id=0):
 
 def get_feedback_mail_list():
     """Get tree items."""
+
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
@@ -147,6 +155,7 @@ def get_feedback_mail_list():
 
 def parse_feedback_mail_data(data):
     """Parse data."""
+
     result = {}
     if data is not None and isinstance(data, list):
         for author in data:
@@ -167,6 +176,7 @@ def parse_feedback_mail_data(data):
 
 def check_permission():
     """Check user login is repo_user or sys_user."""
+
     from flask_security import current_user
     is_permission_user = False
     for role in list(current_user.roles or []):
@@ -179,13 +189,14 @@ def check_permission():
 def get_content_workflow(item):
     """Get content workflow.
 
-    Arguments:
+    :argument
         item {Object PostgreSql} -- list work flow
 
-    Returns:
+    :return
         result {dictionary} -- content of work flow
 
     """
+
     result = dict()
     result['flows_name'] = item.flows_name
     result['id'] = item.id
@@ -198,28 +209,33 @@ def get_content_workflow(item):
 
 def get_base64_string(data: str) -> str:
     """Get base64 string.
-    Arguments:
+    :argument
         data        -- {string} string has base64 string.
-    Returns:
+    :return
        return       -- {string} base64 string.
+
     """
+
     result = data.split(",")
     return result[-1]
 
 
 def is_tsv(name):
     """Check file is tsv file.
-    Arguments:
+    :argument
         name        -- {string} file name.
-    Returns:
+    :return
        return       -- {bool} True if its tsv file.
+
     """
+
     term = name.split('.')
     return term[-1] == "tsv"
 
 
 def set_nested_item(data_dict, map_list, val):
     """Set item in nested dictionary."""
+
     reduce(getitem, map_list[:-1], data_dict)[map_list[-1]] = val
 
     return data_dict
@@ -227,6 +243,7 @@ def set_nested_item(data_dict, map_list, val):
 
 def convert_nested_item_to_list(data_dict, map_list):
     """Set item in nested dictionary."""
+
     a = reduce(getitem, map_list[:-1], data_dict)[map_list[-1]]
     a = list(a.values())
     reduce(getitem, map_list[:-1], data_dict)[map_list[-1]] = a
@@ -236,19 +253,22 @@ def convert_nested_item_to_list(data_dict, map_list):
 
 def define_default_dict():
     """Define nested dict.
-    Returns:
+    :return
        return       -- {dict}.
     """
+
     return defaultdict(define_default_dict)
 
 
 def defaultify(d: dict) -> dict:
     """Create default dict.
-    Arguments:
+    :argument
         d            -- {dict} current dict.
-    Returns:
+    :return
         return       -- {dict} default dict.
+
     """
+
     if not isinstance(d, dict):
         return d
     return defaultdict(
@@ -259,11 +279,13 @@ def defaultify(d: dict) -> dict:
 
 def handle_generate_key_path(key) -> list:
     """Handle generate key path.
-    Arguments:
+    :argument
         key     -- {string} string key.
-    Returns:
+    :return
         return       -- {list} list key path after convert.
+
     """
+
     key = key.replace(
         '#.',
         '.'
@@ -286,13 +308,16 @@ def handle_generate_key_path(key) -> list:
 
 def parse_to_json_form(data: list) -> dict:
     """Parse set argument to json object.
-    Arguments:
+    :argument
         key     -- {list zip} argument if json object.
-    Returns:
+    :return
         return       -- {dict} dict after convert argument.
+
     """
+
     import json
     result = defaultify({})
+
     def convert_data(pro, path=[]):
         term_path = path
         if isinstance(pro, dict):
@@ -324,11 +349,13 @@ def parse_to_json_form(data: list) -> dict:
 
 def import_items(file_content: str):
     """Validation importing zip file.
-    Arguments:
+    :argument
         file_content     -- {string} 'doi' (default) or 'cnri'.
-    Returns:
+    :return
         return       -- PID object if exist.
+
     """
+
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
     try:
@@ -369,11 +396,13 @@ def import_items(file_content: str):
 
 def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     """Getting record data from TSV file.
-    Arguments:
+    :argument
         file_content     -- {string} 'doi' (default) or 'cnri'.
-    Returns:
+    :return
         return       -- PID object if exist.
+
     """
+
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
     data = read_stats_tsv(tsv_file_path)
     list_record = handle_validate_item_import(data.get('tsv_data'), data.get(
@@ -384,11 +413,13 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
 
 def read_stats_tsv(tsv_file_path: str) -> dict:
     """Read importing TSV file.
-    Arguments:
+    :argument
         file_content     -- {string} 'doi' (default) or 'cnri'.
-    Returns:
+    :return
         return       -- PID object if exist.
+
     """
+
     result = {
         'error': False,
         'error_code': 0,
@@ -447,12 +478,14 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
 
 def handle_validate_item_import(list_recond, schema) -> list:
     """Validate item import.
-    Arguments:
+    :argument
         list_recond     -- {list} list recond import.
         schema     -- {dict} item_type schema.
-    Returns:
+    :return
         return       -- list_item_error.
+
     """
+
     from jsonschema import validate, Draft4Validator
     from jsonschema.exceptions import ValidationError
     result = []
@@ -477,11 +510,13 @@ def handle_validate_item_import(list_recond, schema) -> list:
 
 def handle_check_index(list_index: list) -> bool:
     """Handle check index.
-    Arguments:
+    :argument
         list_index     -- {list} list index id.
-    Returns:
+    :return
         return       -- true if exist.
+
     """
+
     result = True
     from weko_index_tree.api import Indexes
     index_lst = []
@@ -504,7 +539,9 @@ def get_item_type(item_type_id=0) -> dict:
     """Get item type.
     :param item_type_id: Item type ID. (Default: 0).
     :return: The json object.
+
     """
+
     from weko_records.api import ItemTypes
     result = None
     if item_type_id > 0:
@@ -524,11 +561,13 @@ def get_item_type(item_type_id=0) -> dict:
 
 def handle_check_exist_record(list_recond) -> list:
     """Check record is exist in system.
-    Arguments:
+    :argument
         list_recond     -- {list} list recond import.
-    Returns:
+    :return
         return       -- list record has property status.
+
     """
+
     result = []
     url_root = request.url_root
     for item in list_recond:
@@ -568,11 +607,13 @@ def handle_check_exist_record(list_recond) -> list:
 
 def handle_check_identifier(name) -> str:
     """Check data is Identifier of Identifier Registration.
-    Arguments:
+    :argument
         name_path     -- {list} list name path.
-    Returns:
+    :return
         return       -- Name of key if is Identifier.
-        """
+
+    """
+
     result = ''
     if 'Identifier' in name or 'Identifier Registration' in name:
         result = name[0]
@@ -581,11 +622,13 @@ def handle_check_identifier(name) -> str:
 
 def handle_remove_identifier(item) -> dict:
     """Remove Identifier of Identifier Registration.
-    Arguments:
+    :argument
         item         -- Item.
-    Returns:
+    :return
         return       -- Item had been removed property.
+
     """
+
     if item and item.get('Identifier key'):
         del item['metadata'][item.get('Identifier key')]
         del item['Identifier key']
@@ -599,12 +642,14 @@ def handle_remove_identifier(item) -> dict:
 
 def compare_identifier(item, item_exist):
     """Compare data is Identifier.
-    Arguments:
+    :argument
         item           -- {dict} item import.
         item_exist     -- {dict} item in system.
-    Returns:
+    :return
         return       -- Name of key if is Identifier.
+
     """
+
     if item.get('Identifier key'):
         item_iden = item.get('metadata', '').get(item.get('Identifier key'))
         item_exist_iden = item_exist.get(item.get(
@@ -641,6 +686,7 @@ def compare_identifier(item, item_exist):
 
 def make_stats_tsv(raw_stats):
     """Make TSV report file for stats."""
+
     import csv
     from io import StringIO
     tsv_output = StringIO()
@@ -661,18 +707,21 @@ def make_stats_tsv(raw_stats):
 
 def difference(list1, list2):
     """Make TSV report file for stats."""
+
     list_dif = [i for i in list1 + list2 if i not in list1 or i not in list2]
     return list_dif
 
 
 def check_identifier_new(item):
     """Check data Identifier.
-    Arguments:
+    :argument
         item           -- {dict} item import.
         item_exist     -- {dict} item in system.
-    Returns:
+    :return
         return       -- Name of key if is Identifier.
+
     """
+
     if item.get('Identifier key'):
         item_iden = item.get('metadata', '').get(item.get('Identifier key'))
         for it in item_iden:
@@ -694,10 +743,13 @@ def check_identifier_new(item):
 
 def create_deposit(rids):
     """Create deposit.
-    Arguments:
+
+    :argument
         item           -- {dict} item import.
         item_exist     -- {dict} item in system.
+
     """
+
     from invenio_db import db
     from weko_deposit.api import WekoDeposit
     try:
@@ -717,10 +769,12 @@ def create_deposit(rids):
 
 def up_load_file_content(list_record, file_path):
     """Upload file content.
-    Arguments:
+    :argument
         list_record    -- {list} list item import.
         file_path      -- {str} file path.
+
     """
+
     from invenio_db import db
     from invenio_files_rest.models import ObjectVersion
     from invenio_pidstore.models import PersistentIdentifier
@@ -751,15 +805,25 @@ def up_load_file_content(list_record, file_path):
 
 
 def get_file_name(file_path):
+    """Get file name.
+    :argument
+        file_path    -- {str} file_path.
+    :returns         -- {str} file name
+
+    """
+
     return file_path.split('/')[-1] if file_path.split('/')[-1] else ''
 
 
 def register_item_metadata(list_record):
     """Upload file content.
-    Arguments:
+
+    :argument
         list_record    -- {list} list item import.
         file_path      -- {str} file path.
+
     """
+
     from invenio_db import db
     from weko_deposit.api import WekoDeposit
     from invenio_pidstore.models import PersistentIdentifier
@@ -826,11 +890,13 @@ def register_item_metadata(list_record):
 
 def handle_get_title(title) -> str:
     """Handle get title.
-    Arguments:
+    :argument
         title           -- {dict or list} title.
-    Returns:
+    :return
         return       -- title string.
+
     """
+
     if isinstance(title, dict):
         return title.get('Title', '')
     elif isinstance(title, list):

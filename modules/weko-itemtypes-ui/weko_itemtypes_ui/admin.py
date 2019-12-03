@@ -494,8 +494,6 @@ class ItemTypeMappingView(BaseView):
         return jsonify(remove_xsd_prefix(jpcoar_lists))
 
 
-
-
 itemtype_meta_data_adminview = {
     'view_class': ItemTypeMetaDataView,
     'kwargs': {

@@ -72,5 +72,3 @@ js_mapping = Bundle(
     # filters='requirejs',
     output="gen/itemtypes_ui_mapping.js"
 )
-
-

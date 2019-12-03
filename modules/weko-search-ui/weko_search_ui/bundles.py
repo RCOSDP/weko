@@ -64,6 +64,7 @@ weko_admin_item_import_css = Bundle(
     output="gen/import.%(version)s.css"
 )
 
+
 def catalog(domain):
     """Return glob matching path to tranlated messages for a given domain."""
     return os.path.join(
