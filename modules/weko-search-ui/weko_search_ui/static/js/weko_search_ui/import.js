@@ -17,6 +17,23 @@ const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
 const check = document.getElementById("check").value;
+// label check
+const summary = document.getElementById("summary").value;
+const total_label = document.getElementById("total").value;
+const new_item_label = document.getElementById("new_item").value;
+const update_item_label = document.getElementById("update_item").value;
+const check_error_label = document.getElementById("check_error").value;
+const download = document.getElementById("download").value;
+const no = document.getElementById("no").value;
+const item_id = document.getElementById("item_id").value;
+const title = document.getElementById("title").value;
+const check_result = document.getElementById("check_result").value;
+const error = document.getElementById("error").value;
+const update = document.getElementById("update").value;
+const not_match = document.getElementById("not_match").value;
+const register = document.getElementById("register").value;
+
+
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin+'/api/tree'
 const urlCheck = window.location.origin+'/admin/items/import/check'
@@ -806,19 +823,19 @@ class CheckComponent extends React.Component {
               <div className="col-md-3 col-sm-3">
                 <h3><b>Summary</b></h3>
                 <div className="flex-box">
-                  <div>Total:</div>
+                  <div>{total_label}:</div>
                   <div>{total}</div>
                 </div>
                 <div className="flex-box">
-                  <div>New Item:</div>
+                  <div>{new_item_label}:</div>
                   <div>{new_item}</div>
                 </div>
                 <div className="flex-box">
-                  <div>Update Item:</div>
+                  <div>{update_item_label}:</div>
                   <div>{update_item}</div>
                 </div>
                 <div className="flex-box">
-                  <div>Check Error:</div>
+                  <div>{check_error_label}:</div>
                   <div>{check_error}</div>
                 </div>
               </div>
@@ -826,7 +843,7 @@ class CheckComponent extends React.Component {
                 <button
                   className="btn btn-primary"
                   onClick={this.handleDownload}
-                 ><span className="glyphicon glyphicon-cloud-download"></span>Download</button>
+                 ><span className="glyphicon glyphicon-cloud-download"></span>{download}</button>
               </div>
             </div>
           </div>
@@ -834,11 +851,11 @@ class CheckComponent extends React.Component {
             <table class="table table-striped table-bordered">
               <thead>
                 <tr>
-                  <th>No</th>
+                  <th>{no}</th>
                   <th>{item_type}</th>
-                  <th>ItemID</th>
-                  <th>title</th>
-                  <th>Check Result</th>
+                  <th>{item_id}</th>
+                  <th>{title}</th>
+                  <th>{check_result}</th>
                 </tr>
               </thead>
               <tbody>
@@ -849,21 +866,18 @@ class CheckComponent extends React.Component {
                         <td>
                           {key}
                         </td>
-                        <td>{item.item_type_name || 'NOT MATCH'}</td>
+                        <td>{item.item_type_name || not_match}</td>
                         <td>
-                          {item.status === 'new' && item.id ? ('New Item('+ item.id+')') : item.id ? item.id :''}
+                          {item.status === 'new' && item.id ? (new_item_label+'('+ item.id+')') : item.id ? item.id :''}
                         </td>
                         <td>{(item['Title'] && item['Title'][0] && item['Title'][0]['Title'])
                          ? this.generateTitle(item['Title'][0]['Title'],50) : item['Title'] && item['Title']['Title']
                          ? this.generateTitle(item['Title']['Title'],50) : '' }
                          </td>
-                        <td>{item['errors'] ? item['errors'][0] && ('ERROR: '+ item['errors'][0]) || 'ERROR' : item.status === 'new'?
-                          <span className="badge badge-success">Register</span> :
+                        <td>{item['errors'] ? item['errors'][0] && (error+ ': '+ item['errors'][0]) || error : item.status === 'new'?
+                          <span className="badge badge-success">{register}</span> :
                            item.status === 'update' ?
-                            <span className="badge badge-primary">Update</span> :
-                             item.status === 'delete' ?
-                             <span className="badge badge-danger">Delete</span>:
-                             ''}</td>
+                            <span className="badge badge-primary">{update}</span> :''}</td>
                       </tr>
                     )
                   })
