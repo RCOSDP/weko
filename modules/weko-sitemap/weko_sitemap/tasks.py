@@ -72,14 +72,15 @@ def link_error_handler(request, exc, traceback):
 def update_sitemap(start_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S'),
                    user_data={'user_id': 'System'}):
     """Update sitemap cache."""
-    with current_app.app_context():
+    site_url = current_app.config['THEME_SITEURL']
+    with current_app.test_request_context(site_url):
         current_app.logger.info(
             '[{0}] [{1}] START'.format(
                 0, 'Sitemap update'))
         start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')
-        flask_sitemap = current_app.extensions['sitemap']
+        flask_sitemap = current_app.extensions['weko-sitemap']
         size = current_app.config['SITEMAP_MAX_URL_COUNT']
-        args = [iter(flask_sitemap._generate_all_urls())] * size
+        args = [iter(flask_sitemap._generate_all_item_urls())] * size
         run = zip_longest(*args)
         try:
             urlset = next(run)
