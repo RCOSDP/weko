@@ -39,12 +39,16 @@ from flask import abort, current_app, jsonify, request
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
+from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
-from weko_deposit.api import WekoIndexer, WekoRecord
+from jsonschema import Draft4Validator, validate
+from jsonschema.exceptions import ValidationError
+from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_indextree_journal.api import Journals
 from weko_records.api import ItemTypes
-from weko_workflow.api import Flow
+from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.models import FlowDefine, WorkFlow
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
@@ -55,7 +59,8 @@ from .query import feedback_email_search_factory, item_path_search_factory
 def get_tree_items(index_tree_id):
     """Get tree items."""
     records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(version=False)
+    records_search = records_search.with_preference_param().params(
+        version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
     search_instance, qs_kwargs = item_path_search_factory(
         None, records_search, index_id=index_tree_id)
@@ -66,7 +71,6 @@ def get_tree_items(index_tree_id):
 
 def delete_records(index_tree_id):
     """Bulk delete records."""
-    record_indexer = RecordIndexer()
     hits = get_tree_items(index_tree_id)
     for hit in hits:
         recid = hit.get('_id')
@@ -106,6 +110,7 @@ def get_journal_info(index_id=0):
     :return: The object.
 
     """
+    result = {}
     try:
         if index_id == 0:
             return None
@@ -120,7 +125,6 @@ def get_journal_info(index_id=0):
         if len(journal) <= 0 or journal.get('is_output') is False:
             return None
 
-        result = {}
         for value in schema_data:
             title = value.get('title_i18n')
             if title is not None:
@@ -145,7 +149,8 @@ def get_journal_info(index_id=0):
 def get_feedback_mail_list():
     """Get tree items."""
     records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(version=False)
+    records_search = records_search.with_preference_param().params(
+        version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
     search_instance = feedback_email_search_factory(None, records_search)
     search_result = search_instance.execute()
@@ -314,7 +319,9 @@ def parse_to_json_form(data: list) -> dict:
     import json
     result = defaultify({})
 
-    def convert_data(pro, path=[]):
+    def convert_data(pro, path=None):
+        if path is None:
+            path = []
         term_path = path
         if isinstance(pro, dict):
             list_pro = list(pro.keys())
@@ -326,6 +333,7 @@ def parse_to_json_form(data: list) -> dict:
                 convert_nested_item_to_list(result, term_path)
         else:
             return
+
     for key, name, value in data:
         key_path = handle_generate_key_path(key)
         name_path = handle_generate_key_path(name)
@@ -482,25 +490,26 @@ def handle_validate_item_import(list_recond, schema) -> list:
         return       -- list_item_error.
 
     """
-    from jsonschema import validate, Draft4Validator
-    from jsonschema.exceptions import ValidationError
     result = []
     v2 = Draft4Validator(schema) if schema else None
     for record in list_recond:
+        errors = []
         if record.get('metadata'):
-            errors = []
             if v2:
                 a = v2.iter_errors(record.get('metadata'))
                 errors = [error.message for error in a]
             else:
                 errors = ['ItemType is not exist']
-            if record.get('metadata').get('path'):
-                if not handle_check_index(record.get('metadata').get('path')):
-                    errors.append('Index Error')
+
+            if record.get('metadata').get('path') and not handle_check_index(
+                    record.get('metadata').get('path')):
+                errors.append('Index Error')
+
         item_error = dict(**record, **{
             'errors': errors if len(errors) else None
         })
         result.append(item_error)
+
     return result
 
 
@@ -542,7 +551,8 @@ def get_item_type(item_type_id=0) -> dict:
     result = None
     if item_type_id > 0:
         itemtype = ItemTypes.get_by_id(item_type_id)
-        if itemtype and itemtype.schema and itemtype.item_type_name.name and item_type_id:
+        if itemtype and itemtype.schema \
+                and itemtype.item_type_name.name and item_type_id:
             result = {
                 'schema': itemtype.schema,
                 'name': itemtype.item_type_name.name,
@@ -815,13 +825,10 @@ def register_item_metadata(list_record):
         list_record    -- {list} list item import.
         file_path      -- {str} file path.
     """
-    from invenio_db import db
-    from weko_deposit.api import WekoDeposit
-    from invenio_pidstore.models import PersistentIdentifier
-    from invenio_records.models import RecordMetadata
     try:
         success_count = 0
         failure_list = []
+        item_id = 0
         for data in list_record:
             try:
                 item_id = str(data.get('id'))
@@ -859,10 +866,9 @@ def register_item_metadata(list_record):
                 dep.commit()
                 dep.publish()
                 handle_workflow(data)
-                with current_app.test_request_context() as ctx:
+                with current_app.test_request_context():
                     first_ver = dep.newversion(pid)
                     first_ver.publish()
-
                 db.session.commit()
 
                 success_count += 1
@@ -904,8 +910,6 @@ def handle_workflow(item: dict):
         return       -- title string.
 
     """
-    from weko_workflow.api import GetCommunity, WorkActivity
-    from weko_workflow.models import FlowDefine, WorkFlow
     activity = WorkActivity()
     wf_activity = activity.get_workflow_activity_by_item_id(
         item_id=item.get('item_id'))

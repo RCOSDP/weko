@@ -336,10 +336,6 @@ WEKO_SYS_USER = 'System Administrator'
 
 WEKO_REPO_USER = 'Repository Administrator'
 
-WEKO_READ_FILE_ERROR_CODE = {
-    'ITEM_TYPE_NOT_EXIST': 1,
-}
-
 WEKO_FLOW_DEFINE = {'flow_name': 'Registration Flow'}
 
 WEKO_FLOW_DEFINE_LIST_ACTION = [
