@@ -34,9 +34,9 @@ from weko_index_tree.models import IndexStyle
 from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
-from .utils import create_deposit, delete_records, get_content_workflow, \
-    get_tree_items, check_import_items, make_stats_tsv, register_item_metadata, \
-    up_load_file_content, import_items_to_system
+from .utils import check_import_items, delete_records, \
+    get_content_workflow, get_tree_items, import_items_to_system, \
+    make_stats_tsv
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -126,14 +126,10 @@ class ItemManagementCustomSort(BaseView):
             # fp = Indexes.get_self_path(index_id)
             # Indexes.update_item_sort_custom_es(fp.path, sort_data)
 
-            jfy = {}
-            jfy['status'] = 200
-            jfy['message'] = 'Data is successfully updated.'
-            return make_response(jsonify(jfy), jfy['status'])
-        except Exception as ex:
-            jfy['status'] = 405
-            jfy['message'] = 'Error'
-            return make_response(jsonify(jfy), jfy['status'])
+            jfy = {'status': 200, 'message': 'Data is successfully updated.'}
+        except Exception:
+            jfy = {'status': 405, 'message': 'Error.'}
+        return make_response(jsonify(jfy), jfy['status'])
 
 
 class ItemManagementBulkSearch(BaseView):
