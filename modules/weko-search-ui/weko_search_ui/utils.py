@@ -389,8 +389,7 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
 
     """
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
-    u = unicode(tsv_file_path, "utf-8")
-    data = read_stats_tsv(u)
+    data = read_stats_tsv(tsv_file_path)
     list_record = handle_validate_item_import(data.get('tsv_data'), data.get(
         'item_type_schema', {}
     ))
