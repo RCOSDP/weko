@@ -122,9 +122,12 @@ class WekoSitemap(Sitemap):
                .limit(current_app.config['WEKO_SITEMAP_TOTAL_MAX_URL_COUNT']))
 
         for recid, rm in q.yield_per(1000):
-            yield ('invenio_records_ui.recid',
-                   {'pid_value': recid.pid_value, '_external': True},
-                   rm.updated.strftime('%Y-%m-%dT%H:%M:%S%z'))
+            yield {
+                'loc': url_for('invenio_records_ui.recid',
+                               pid_value=recid.pid_value,
+                               _external=True),
+                'lastmod': rm.updated.strftime('%Y-%m-%dT%H:%M:%S%z')
+            }
 
     def _load_cache_pages(self):
         """Get pages from cache instead of re-creating them."""
@@ -151,13 +154,6 @@ class WekoSitemap(Sitemap):
         self.init_config(app)
         self.cached_pages_set_key = 'sitemap_page_keys'  # Keep track of cached pages
         app.extensions['weko-sitemap'] = self
-
-        # Get base URL for site:
-        app.config['SITEMAP_BLUEPRINT'] = None  # Set our own Blueprint
-        app.config['SITEMAP_BLUEPRINT_URL_PREFIX'] = '/weko/sitemaps'
-        app.config['SITEMAP_ENDPOINT_URL'] = '/sitemapindex.xml'
-        app.config['SITEMAP_ENDPOINT_PAGE_URL'] = '/sitemap_<int:page>.xml.gz'
-        app.config['SITEMAP_MAX_URL_COUNT'] = 10000  # Defaults to 10000
         app.config['SITEMAP_VIEW_DECORATORS'] = [self.load_page]
 
         ext = Sitemap(app=app)
@@ -189,5 +185,5 @@ class WekoSitemap(Sitemap):
                 app.config['BASE_TEMPLATE'],
             )
         for k in dir(config):
-            if k.startswith('WEKO_SITEMAP_'):
+            if k.startswith('WEKO_SITEMAP_') or k.startswith('SITEMAP_'):
                 app.config.setdefault(k, getattr(config, k))
