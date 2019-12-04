@@ -290,7 +290,10 @@ class ItemImportView(BaseView):
             list_record = data.get('list_record')
             list_record = [item for item in list_record if not item.get(
                 'errors')]
-            ids = [item.get('id', None) for item in list_record]
+            ids = [
+                item.get('id', None)
+                for item in list_record if item.get('status') == 'new'
+            ]
             current_app.logger.debug(ids)
             create_deposit(ids)
             file_path = data.get('root_path')
