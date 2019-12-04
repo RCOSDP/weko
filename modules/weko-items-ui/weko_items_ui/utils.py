@@ -600,15 +600,16 @@ def make_stats_tsv(item_type_id, recids):
                 idx_2 = int(key2[1].split(']')[0])
                 sub_attr_2 = list_attr[2].split('[')[0]
                 for record in self.records:
-                    attr_val = self.records[record][item_attr][
-                        'attribute_value_mlt']
-                    if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
-                        and len(attr_val[idx][sub_attr]) > idx_2 \
-                            and attr_val[idx][sub_attr][idx_2].get(sub_attr_2):
-                        cur_len = len(attr_val[idx][sub_attr][idx_2][
-                            sub_attr_2])
-                        if cur_len > max_length:
-                            max_length = cur_len
+                    if self.records[record].get(item_attr):
+                        attr_val = self.records[record][item_attr][
+                            'attribute_value_mlt']
+                        if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
+                            and len(attr_val[idx][sub_attr]) > idx_2 \
+                                and attr_val[idx][sub_attr][idx_2].get(sub_attr_2):
+                            cur_len = len(attr_val[idx][sub_attr][idx_2][
+                                sub_attr_2])
+                            if cur_len > max_length:
+                                max_length = cur_len
             return max_length
 
         def get_subs_item(self,

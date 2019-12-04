@@ -34,9 +34,8 @@ from weko_index_tree.models import IndexStyle
 from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
-from .utils import check_import_items, delete_records, \
-    get_content_workflow, get_tree_items, import_items_to_system, \
-    make_stats_tsv
+from .utils import check_import_items, delete_records, get_content_workflow, \
+    get_tree_items, import_items_to_system, make_stats_tsv
 
 _signals = Namespace()
 searched = _signals.signal('searched')

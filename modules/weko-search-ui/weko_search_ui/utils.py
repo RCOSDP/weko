@@ -37,6 +37,7 @@ from operator import getitem
 import bagit
 from flask import abort, current_app, jsonify, request
 from invenio_db import db
+from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier
@@ -46,6 +47,7 @@ from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator, validate
 from jsonschema.exceptions import ValidationError
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
+from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import ItemTypes
 from weko_workflow.api import Flow, WorkActivity
@@ -194,10 +196,10 @@ def get_content_workflow(item):
     """Get content workflow.
 
     :argument
-        item {Object PostgreSql} -- list work flow
+        item    -- {Object PostgreSql} list work flow
 
     :return
-        result {dictionary} -- content of work flow
+        result  -- {dictionary} content of work flow
 
     """
     result = dict()
@@ -208,32 +210,6 @@ def get_content_workflow(item):
     result['flow_name'] = item.flow_define.flow_name
     result['item_type_name'] = item.itemtype.item_type_name.name
     return result
-
-
-def get_base64_string(data: str) -> str:
-    """Get base64 string.
-
-    :argument
-        data        -- {string} string has base64 string.
-    :return
-       return       -- {string} base64 string.
-
-    """
-    result = data.split(",")
-    return result[-1]
-
-
-def is_tsv(name):
-    """Check file is tsv file.
-
-    :argument
-        name        -- {string} file name.
-    :return
-       return       -- {bool} True if its tsv file.
-
-    """
-    term = name.split('.')
-    return term[-1] == "tsv"
 
 
 def set_nested_item(data_dict, map_list, val):
@@ -311,17 +287,18 @@ def parse_to_json_form(data: list) -> dict:
     """Parse set argument to json object.
 
     :argument
-        key     -- {list zip} argument if json object.
+        data    -- {list zip} argument if json object.
     :return
-        return       -- {dict} dict after convert argument.
+        return  -- {dict} dict after convert argument.
 
     """
-    import json
     result = defaultify({})
 
     def convert_data(pro, path=None):
+        """Convert data."""
         if path is None:
             path = []
+
         term_path = path
         if isinstance(pro, dict):
             list_pro = list(pro.keys())
@@ -362,12 +339,15 @@ def check_import_items(file_content: str):
     """
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
+    save_path = "/tmp"
+
     try:
         # Create temp dir for import data
         import_path = temp_path.name + '/' + \
             datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
-        data_path = temp_path.name + '/import'
+        data_path = save_path + '/import'
 
+        os.mkdir(data_path)
         with open(import_path + '.zip', 'wb+') as f:
             f.write(file_content_decoded)
         shutil.unpack_archive(import_path + '.zip', extract_dir=data_path)
@@ -461,8 +441,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                     zip(item_path_name, item_path, data_row)
                 )
                 if isinstance(check_item_type, dict):
-                    item_type_name = check_item_type.get(
-                        'name')
+                    item_type_name = check_item_type.get('name')
                     item_type_id = check_item_type.get('item_type_id')
                     tsv_item = dict(
                         **json_data_parse,
@@ -476,6 +455,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                 else:
                     tsv_item = dict(**json_data_parse, **data_parse_metadata)
                 tsv_data.append(tsv_item)
+
     result['tsv_data'] = tsv_data
     return result
 
@@ -523,7 +503,7 @@ def handle_check_index(list_index: list) -> bool:
 
     """
     result = True
-    from weko_index_tree.api import Indexes
+
     index_lst = []
     if list_index:
         index_id_lst = []
@@ -545,7 +525,7 @@ def get_item_type(item_type_id=0) -> dict:
     :return: The json object.
 
     """
-    from weko_records.api import ItemTypes
+
     result = None
     if item_type_id > 0:
         itemtype = ItemTypes.get_by_id(item_type_id)
@@ -567,9 +547,9 @@ def handle_check_exist_record(list_recond) -> list:
     """Check record is exist in system.
 
     :argument
-        list_recond     -- {list} list recond import.
+        list_recond -- {list} list recond import.
     :return
-        return       -- list record has property status.
+        return      -- list record has property status.
 
     """
     result = []
@@ -736,7 +716,6 @@ def check_identifier_new(item):
                     if item_check and item_check.id != item.id:
                         item['errors'] = ['Errors in Identifier']
                         item['status'] = ''
-
             except BaseException:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
@@ -776,16 +755,13 @@ def up_load_file_content(list_record, file_path):
         file_path      -- {str} file path.
 
     """
-    from invenio_db import db
-    from invenio_files_rest.models import ObjectVersion
-    from invenio_pidstore.models import PersistentIdentifier
-    from invenio_records.models import RecordMetadata
     try:
         for record in list_record:
             try:
-                current_app.logger.debug(record)
                 if record.get('file_path'):
+                    current_app.logger.debug(record.get('file_path'))
                     for file_name in record.get('file_path'):
+                        current_app.logger.debug(file_path + '/' + file_name)
                         with open(file_path + '/' + file_name,
                                   'rb') as file:
                             pid = PersistentIdentifier.query.filter_by(
@@ -794,8 +770,10 @@ def up_load_file_content(list_record, file_path):
                             rec = RecordMetadata.query.filter_by(
                                 id=pid.object_uuid).first()
                             bucket = rec.json['_buckets']['deposit']
-                            obj = ObjectVersion.create(bucket,
-                                                       get_file_name(file_name))
+                            obj = ObjectVersion.create(
+                                bucket,
+                                get_file_name(file_name)
+                            )
                             obj.set_contents(file)
                             db.session.commit()
             except Exception as ex:
@@ -895,8 +873,8 @@ def handle_get_title(title) -> str:
     if isinstance(title, dict):
         return title.get('Title', '')
     elif isinstance(title, list):
-        return title[0].get('Title') if title[0] and isinstance(title[0], dict)\
-            else ''
+        return title[0].get('Title') if title[0] \
+            and isinstance(title[0], dict) else ''
 
 
 def handle_workflow(item: dict):
@@ -931,7 +909,7 @@ def create_work_flow(item_type_id):
 
     """
     flow_define = FlowDefine.query.filter_by(
-            flow_name='Registration Flow').first()
+        flow_name='Registration Flow').first()
     it = ItemTypes.get_by_id(item_type_id)
 
     if not flow_define:
@@ -983,3 +961,6 @@ def import_items_to_system(data: dict):
     file_path = data.get('root_path')
     up_load_file_content(list_record, file_path)
     register_item_metadata(list_record)
+
+    # Remove tempDir
+    os.rmdir(str(file_path - "/data"))
