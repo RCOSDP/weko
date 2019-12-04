@@ -826,7 +826,6 @@ def get_list_file_by_record_id(recid):
             recid + '/' + item.get('value') for item in list_file]
     return list_file_name
 
-
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
@@ -895,9 +894,10 @@ def export_items(post_data):
             item_types_data[item_type_id]['data'] = records
             item_type_data = item_types_data[item_type_id]
 
-            export_file_name = unicode(item_type_data.get('name'), 'utf-8')
+            export_file_name = item_type_data.get('name').decode('utf-8',
+                                                                 'ignore')
 
-            with open('{}/{}.tsv'.format(export_path,export_file_name),
+            with open('{}/{}.tsv'.format(export_path, export_file_name),
                       'w') as file:
                 tsvs_output = package_export_file(item_type_data)
                 file.write(tsvs_output.getvalue())
