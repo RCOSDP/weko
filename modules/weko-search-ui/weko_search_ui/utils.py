@@ -28,6 +28,7 @@ import shutil
 import sys
 import tempfile
 import traceback
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
@@ -42,8 +43,12 @@ from invenio_records.api import Record
 from invenio_search import RecordsSearch
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_indextree_journal.api import Journals
+from weko_records.api import ItemTypes
+from weko_workflow.api import Flow
+from weko_workflow.models import FlowDefine, WorkFlow
 
-from .config import WEKO_REPO_USER, WEKO_SYS_USER
+from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
+    WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
@@ -338,7 +343,7 @@ def parse_to_json_form(data: list) -> dict:
     return result
 
 
-def import_items(file_content: str):
+def check_import_items(file_content: str):
     """Validation importing zip file.
 
     :argument
@@ -683,7 +688,7 @@ def make_stats_tsv(raw_stats):
 
     writer = csv.writer(tsv_output, delimiter='\t',
                         lineterminator="\n")
-    cols = []
+
     list_name = ['No', 'Item type', 'Item id', 'Title', 'Check result']
     writer.writerow(list_name)
     for item in raw_stats:
@@ -923,9 +928,6 @@ def create_work_flow(item_type_id):
     :return
 
     """
-    from weko_workflow.models import FlowDefine, WorkFlow
-    from weko_records.api import ItemTypes
-    import uuid
     flow_define = FlowDefine.query.filter_by(
             flow_name='Registration Flow').first()
     it = ItemTypes.get_by_id(item_type_id)
@@ -953,8 +955,29 @@ def create_work_flow(item_type_id):
 
 def create_flow_define():
     """Handle create flow_define."""
-    from weko_workflow.api import Flow
-    from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION
     the_flow = Flow()
     flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
     the_flow.upt_flow_action(flow.flow_id, WEKO_FLOW_DEFINE_LIST_ACTION)
+
+
+def import_items_to_system(data: dict):
+    """Validation importing zip file.
+
+    :argument
+        file_content     -- {string} 'doi' (default) or 'cnri'.
+    :return
+        return       -- PID object if exist.
+
+    """
+    list_record = data.get('list_record')
+    list_record = [item for item in list_record if not item.get(
+        'errors')]
+    ids = [
+        item.get('id', None)
+        for item in list_record if item.get('status') == 'new'
+    ]
+
+    create_deposit(ids)
+    file_path = data.get('root_path')
+    up_load_file_content(list_record, file_path)
+    register_item_metadata(list_record)

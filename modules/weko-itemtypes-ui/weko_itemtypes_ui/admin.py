@@ -26,7 +26,7 @@ from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from flask_login import current_user, login_required
+from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import BillingPermission
