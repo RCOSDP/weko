@@ -743,7 +743,7 @@ def create_deposit(rids):
     try:
         for rid in rids:
             try:
-                WekoDeposit.create({}, recid=rid)
+                WekoDeposit.create({}, recid=int(rid))
                 db.session.commit()
                 current_app.logger.info('Deposit id: %s created.' % rid)
             except Exception as ex:
