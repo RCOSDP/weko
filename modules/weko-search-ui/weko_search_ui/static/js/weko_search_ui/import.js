@@ -181,17 +181,6 @@ class MainLayout extends React.Component {
           ></CheckComponent>
         </div>
         <div className={`${tab === tabs[2].tab_key ? '': 'hide'}`}>
-          <table className="table table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>{item_type}</th>
-                  <th>ItemID</th>
-                </tr>
-              </thead>
-              <tbody id="tasks">
-              </tbody>
-          </table>
         </div>
       </div>
     )
@@ -821,7 +810,7 @@ class CheckComponent extends React.Component {
           <div className="col-md-12 text-center">
             <div className="row block-summary">
               <div className="col-md-3 col-sm-3">
-                <h3><b>Summary</b></h3>
+                <h3><b>{summary}</b></h3>
                 <div className="flex-box">
                   <div>{total_label}:</div>
                   <div>{total}</div>

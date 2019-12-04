@@ -220,56 +220,56 @@ msgstr "入力内容を破棄してもよろしいですか？"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Summary"
-msgstr ""
+msgstr "サマリー"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Total"
-msgstr ""
+msgstr "総計"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "New Item"
-msgstr ""
+msgstr "新規登録アイテム"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Update Item"
-msgstr ""
+msgstr "更新アイテム"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Check Error"
-msgstr ""
+msgstr "チェックエラー"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Download"
-msgstr ""
+msgstr "ダウンロード"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
-msgid "No"
-msgstr ""
+msgid "No."
+msgstr "No."
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
-msgid "ItemID"
-msgstr ""
+msgid "Item Id"
+msgstr "アイテムID"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Title"
-msgstr ""
+msgstr "タイトル"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Check Result"
-msgstr ""
+msgstr "チェック結果"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
-msgid "ERROR"
-msgstr ""
+msgid "Error"
+msgstr "エラー"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Update"
-msgstr ""
+msgstr "更新"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Not match"
-msgstr ""
+msgstr "一致しない"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Register"
-msgstr ""
+msgstr "登録"
