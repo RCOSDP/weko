@@ -60,7 +60,8 @@ class MainLayout extends React.Component {
           tab_name: list
         }
       ],
-      list_record: []
+      list_record: [],
+      is_import: true
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
@@ -90,7 +91,8 @@ class MainLayout extends React.Component {
           that.setState(()=>{
             return {
               list_record: response.list_record,
-              root_path: response.data_path
+              root_path: response.data_path,
+              is_import: false
             }
           })
           that.handleChangeTab('check');
@@ -106,8 +108,14 @@ class MainLayout extends React.Component {
   }
 
   handleImport() {
-    const{list_record, root_path} = this.state
+    const{list_record, root_path,is_import} = this.state
     const that = this
+    if (is_import){
+      return
+    }
+    this.setState({
+      is_import: true
+    })
     $.ajax({
       url: urlImport,
       type: 'POST',
@@ -122,6 +130,8 @@ class MainLayout extends React.Component {
         console.log(root_path)
 
           that.handleChangeTab('list');
+          const mess = 'Import success :'+response.success+'\n'+ "Import failure :"+ response.failure_list
+          alert(mess)
 //          that.getStatus(response.data.task_id)
       },
       error: function (error) {
@@ -157,7 +167,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const {tab, tabs, list_record} = this.state
+    const {tab, tabs, list_record,is_import} = this.state
     return(
       <div>
         <ul className="nav nav-tabs">
@@ -178,6 +188,7 @@ class MainLayout extends React.Component {
           <CheckComponent
             list_record={list_record || []}
             handleImport={this.handleImport}
+            is_import={is_import}
           ></CheckComponent>
         </div>
         <div className={`${tab === tabs[2].tab_key ? '': 'hide'}`}>
@@ -796,6 +807,7 @@ class CheckComponent extends React.Component {
 
   render(){
     const {total, list_record, update_item, new_item, check_error} = this.state
+    const {is_import} = this.props
     return(
       <div className="check-component">
         <div className="row">
@@ -803,6 +815,7 @@ class CheckComponent extends React.Component {
             <button
               className="btn btn-primary"
               onClick={this.props.handleImport}
+              disabled={is_import}
             >
               <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
              </button>

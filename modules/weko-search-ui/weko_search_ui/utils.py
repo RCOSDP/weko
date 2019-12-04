@@ -345,9 +345,10 @@ def check_import_items(file_content: str):
         # Create temp dir for import data
         import_path = temp_path.name + '/' + \
             datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
-        data_path = save_path + '/import'
-
+        data_path = save_path + '/' + \
+            datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
         os.mkdir(data_path)
+
         with open(import_path + '.zip', 'wb+') as f:
             f.write(file_content_decoded)
         shutil.unpack_archive(import_path + '.zip', extract_dir=data_path)
@@ -856,7 +857,10 @@ def register_item_metadata(list_record):
         current_app.logger.info('%s items updated.' % success_count)
         current_app.logger.info('failure list:')
         current_app.logger.info(failure_list)
-
+        return {
+            'success': success_count,
+            'failure_list': len(failure_list) or 0
+        }
     except Exception as e:
         current_app.logger.error(e)
 
@@ -960,7 +964,8 @@ def import_items_to_system(data: dict):
     create_deposit(ids)
     file_path = data.get('root_path')
     up_load_file_content(list_record, file_path)
-    register_item_metadata(list_record)
+    response = register_item_metadata(list_record)
 
     # Remove tempDir
-    os.rmdir(str(file_path - "/data"))
+    shutil.rmtree(str(file_path.replace("/data", "")))
+    return response

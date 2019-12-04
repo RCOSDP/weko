@@ -272,11 +272,11 @@ class ItemImportView(BaseView):
         response_object = {
             "status": "success",
         }
-
+        result = dict()
         if data:
-            import_items_to_system(data)
+            result = import_items_to_system(data)
 
-        return jsonify(response_object)
+        return jsonify(dict(**response_object, **result))
 
 
 item_management_bulk_search_adminview = {
