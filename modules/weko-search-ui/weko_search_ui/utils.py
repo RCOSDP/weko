@@ -355,22 +355,22 @@ def check_import_items(file_content: str):
         bag = bagit.Bag(data_path)
 
         # Valid importing zip file format
-        if bag.is_valid():
-            data_path += '/data'
-            list_record = []
-            for tsv_entry in os.listdir(data_path):
-                if tsv_entry.endswith('.tsv'):
-                    list_record.extend(
-                        unpackage_import_file(data_path, tsv_entry))
-            list_record = handle_check_exist_record(list_record)
-            return {
-                'list_record': list_record,
-                'data_path': data_path
-            }
-        else:
-            return {
-                'error': 'Zip file is not follow Bagit format.'
-            }
+        # if bag.is_valid():
+        data_path += '/data'
+        list_record = []
+        for tsv_entry in os.listdir(data_path):
+            if tsv_entry.endswith('.tsv'):
+                list_record.extend(
+                    unpackage_import_file(data_path, tsv_entry))
+        list_record = handle_check_exist_record(list_record)
+        return {
+            'list_record': list_record,
+            'data_path': data_path
+        }
+        # else:
+        #     return {
+        #         'error': 'Zip file is not follow Bagit format.'
+        #     }
     except Exception:
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)

@@ -894,10 +894,8 @@ def export_items(post_data):
             item_types_data[item_type_id]['data'] = records
             item_type_data = item_types_data[item_type_id]
 
-            export_file_name = item_type_data.get('name').decode('utf-8',
-                                                                 'ignore')
-
-            with open('{}/{}.tsv'.format(export_path, export_file_name),
+            with open('{}/{}.tsv'.format(export_path,
+                                         item_type_data.get('name')),
                       'w') as file:
                 tsvs_output = package_export_file(item_type_data)
                 file.write(tsvs_output.getvalue())
