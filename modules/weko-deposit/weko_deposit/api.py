@@ -543,7 +543,6 @@ class WekoDeposit(Deposit):
             ).delete(synchronize_session='fetch')
             mp_q.delete(synchronize_session='fetch')
         bucket.locked = False
-        bucket.location.size -= bucket.size
         bucket.remove()
 
         return super(Deposit, self).delete()

@@ -779,7 +779,6 @@ def delete_bucket(bucket_id):
     """
     bucket = Bucket.get(bucket_id)
     bucket.locked = False
-    bucket.location.size -= bucket.size
     bucket.remove()
 
 
@@ -853,7 +852,6 @@ def delete_unregister_buckets(record_uuid):
                                 RecordsBuckets.query.filter_by(
                                     bucket_id=draft_object.bucket_id).delete()
                                 bucket.locked = False
-                                bucket.location.size -= bucket.size
                                 bucket.remove()
     except Exception as ex:
         db.session.rollback()

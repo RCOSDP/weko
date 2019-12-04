@@ -682,14 +682,14 @@ def next_action(activity_id='0', action_id=0):
             identifier=identifier_grant
         )
         # get workflow of first record attached version ID: x.1
-        if not recid and pid_without_ver:
-            activity_without_ver = \
-                get_activity_id_of_record_without_version(pid_without_ver)
-            work_activity.create_or_update_action_identifier(
-                activity_id=activity_without_ver,
-                action_id=action_id,
-                identifier=identifier_grant
-            )
+        # if not recid and pid_without_ver:
+        #     activity_without_ver = \
+        #         get_activity_id_of_record_without_version(pid_without_ver)
+        #     work_activity.create_or_update_action_identifier(
+        #         activity_id=activity_without_ver,
+        #         action_id=action_id,
+        #         identifier=identifier_grant
+        #     )
 
         error_list = item_metadata_validation(item_id, identifier_select)
 
