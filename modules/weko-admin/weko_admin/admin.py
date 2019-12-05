@@ -54,9 +54,9 @@ from .models import AdminSettings, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
+from .utils import get_redis_cache, get_response_json, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import get_redis_cache, get_response_json, get_search_setting, \
-    package_reports, reset_redis_cache, str_to_bool
+from .utils import package_reports, reset_redis_cache, str_to_bool
 
 
 # FIXME: Change all setting views' path to be under settings/
