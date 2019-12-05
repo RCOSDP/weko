@@ -26,13 +26,11 @@ import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
-from flask_login import current_user, login_required
+from flask_login import login_required
 from flask_security import current_user
-from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
-from invenio_files_rest.views import ObjectResource, check_permission, \
-    file_downloaded
+from invenio_files_rest.views import check_permission
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -48,8 +46,6 @@ from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
-from weko_workflow.api import WorkActivity
-from weko_workflow.models import ActionStatusPolicy
 
 from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings
@@ -58,10 +54,10 @@ from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
-from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_min_price_billing_file_download, get_record_permalink
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
+from .utils import get_billing_file_download_permission, get_groups_price, \
+    get_min_price_billing_file_download, get_record_permalink
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -366,7 +362,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         abort(404)
     active_versions = list(pid_ver.children or [])
     if active_versions:
-        active_versions.remove(pid_ver.last_child)
+        # active_versions.remove(pid_ver.last_child)
+        active_versions.pop()
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
                         or [])
 
@@ -413,8 +410,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Check if user has the permission to download original pdf file
     # and the cover page setting is set and its value is enable (not disabled)
     can_download_original = check_original_pdf_download_permission(record) \
-        and pdfcoverpage_set_rec is not None \
-        and pdfcoverpage_set_rec.avail != 'disable'
+        and pdfcoverpage_set_rec and pdfcoverpage_set_rec.avail != 'disable'
 
     # Get item meta data
     record['permalink_uri'] = None
@@ -438,14 +434,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = True
 
     groups_price = get_groups_price(record)
-    billing_files_permission = None
-    billing_files_prices = None
-    if groups_price:
-        billing_files_permission = \
-            get_billing_file_download_permission(groups_price)
-        billing_files_prices = \
-            get_min_price_billing_file_download(groups_price,
-                                                billing_files_permission)
+    billing_files_permission = get_billing_file_download_permission(
+        groups_price) if groups_price else None
+    billing_files_prices = get_min_price_billing_file_download(
+        groups_price,
+        billing_files_permission) if groups_price else None
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
@@ -547,8 +540,9 @@ def parent_view_method(pid_value=0):
     if p_pid:
         pid_version = PIDVersioning(parent=p_pid)
         if pid_version.last_child:
-            return redirect(url_for('invenio_records_ui.recid',
-                                    pid_value=pid_version.last_child.pid_value))
+            return redirect(
+                url_for('invenio_records_ui.recid',
+                        pid_value=pid_version.last_child.pid_value))
     return abort(404)
 
 
@@ -603,10 +597,9 @@ def file_version_update():
         version_id = request.values.get('version_id')
         is_show = request.values.get('is_show')
         if not bucket_id and not key and not version_id:
-            from invenio_files_rest.models import ObjectVersion
             object_version = ObjectVersion.get(bucket=bucket_id, key=key,
                                                version_id=version_id)
-            if object_version is not None:
+            if object_version:
                 # Do update the path on record
                 object_version.is_show = True if is_show == '1' else False
                 db.session.commit()

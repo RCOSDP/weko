@@ -839,7 +839,6 @@ class BillingPermission(db.Model):
                     db.session.merge(billing_data)
                 else:
                     cls.create(user_id, is_active)
-                    current_app.logger.info('New user is created!')
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()

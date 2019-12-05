@@ -22,17 +22,16 @@
 
 from copy import deepcopy
 
-import validators
 from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
+from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
+from invenio_records_files.models import RecordsBuckets
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoRecord
-from weko_deposit.pidstore import get_record_identifier, \
-    get_record_without_version
 from weko_handle.api import Handle
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -398,28 +397,29 @@ def check_required_data(data, key, repeatable=False):
         return error_list
 
 
-def get_activity_id_of_record_without_version(pid_without_ver=None):
+def get_activity_id_of_record_without_version(pid_object=None):
     """
     Get activity ID of record without version.
 
-    :param pid_without_ver: object pidstore
-    :return: string or None
+    Arguments:
+        pid_object  -- object pidstore
+    Returns:
+        deposit     -- string or None
     """
-    record_without_ver_activity_id = None
-    if pid_without_ver is not None:
+    if pid_object:
         # get workflow of first record attached version ID: x.1
-        first_pid_value_attached_ver = '{}.1' . format(
-            pid_without_ver.pid_value)
-        first_pid_obj_attached_ver = PersistentIdentifier.get(
-            'recid', first_pid_value_attached_ver)
+        pid_value_first_ver = "{}.1".format(pid_object.pid_value)
+        pid_object_first_ver = PersistentIdentifier.get(
+            'recid',
+            pid_value_first_ver
+        )
         activity = WorkActivity()
-        record_without_ver_activity = activity.get_workflow_activity_by_item_id(
-            first_pid_obj_attached_ver.object_uuid)
-        if record_without_ver_activity is not None:
-            record_without_ver_activity_id = record_without_ver_activity.\
-                activity_id
-
-    return record_without_ver_activity_id
+        activity_first_ver = activity.get_workflow_activity_by_item_id(
+            pid_object_first_ver.object_uuid)
+        if activity_first_ver:
+            return activity_first_ver.activity_id
+        else:
+            return None
 
 
 def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
@@ -765,3 +765,119 @@ class IdentifierHandle(object):
             self.item_record.update(record_data)
             self.item_record.commit()
         db.session.commit()
+
+
+def delete_bucket(bucket_id):
+    """
+    Delete a bucket and remove it size in location.
+
+    Arguments:
+        bucket_id       -- id of bucket have to be deleted.
+    Returns:
+        bucket_id       -- ...
+
+    """
+    bucket = Bucket.get(bucket_id)
+    bucket.locked = False
+    bucket.remove()
+
+
+def merge_buckets_by_records(main_record_id,
+                             sub_record_id,
+                             sub_bucket_delete=False):
+    """
+    Change bucket_id of all sub bucket base on main bucket.
+
+    Arguments:
+        main_record_id  -- record uuid link with main bucket.
+        sub_record_id   -- record uuid link with sub buckets.
+        sub_bucket_delete -- Either delete subbucket after unlink?
+    Returns:
+        bucket_id       -- main bucket id.
+
+    """
+    try:
+        with db.session.begin_nested():
+            main_rec_bucket = RecordsBuckets.query.filter_by(
+                record_id=main_record_id).one_or_none()
+            sub_rec_buckets = RecordsBuckets.query.filter_by(
+                record_id=sub_record_id).all()
+
+            for sub_rec_bucket in sub_rec_buckets:
+                if sub_rec_bucket.record_id == sub_record_id:
+                    _sub_rec_bucket_id = sub_rec_bucket.bucket_id
+                    sub_rec_bucket.bucket_id = main_rec_bucket.bucket_id
+                    if sub_bucket_delete:
+                        delete_bucket(_sub_rec_bucket_id)
+                    db.session.add(sub_rec_bucket)
+        return main_rec_bucket.bucket_id
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.exception(str(ex))
+        return None
+
+
+def delete_unregister_buckets(record_uuid):
+    """
+    Delete unregister bucket by pid.
+
+    Find all bucket have same object version but link with unregister records.
+    Arguments:
+        record_uuid     -- record uuid link to checking bucket.
+    Returns:
+        None.
+
+    """
+    try:
+        draft_record_bucket = RecordsBuckets.query.filter_by(
+            record_id=record_uuid).one_or_none()
+        with db.session.begin_nested():
+            object_ver = ObjectVersion.query.filter_by(
+                bucket_id=draft_record_bucket.bucket_id).first()
+            if object_ver:
+                draft_object_vers = ObjectVersion.query.filter_by(
+                    file_id=object_ver.file_id).all()
+                for draft_object in draft_object_vers:
+                    if draft_object.bucket_id != draft_record_bucket.bucket_id:
+                        delete_record_bucket = RecordsBuckets.query.filter_by(
+                            bucket_id=draft_object.bucket_id).all()
+                        if len(delete_record_bucket) == 1:
+                            delete_pid_object = PersistentIdentifier.query.\
+                                filter_by(pid_type='recid',
+                                          object_type='rec',
+                                          object_uuid=delete_record_bucket[
+                                              0].record_id).one_or_none()
+                            if not delete_pid_object:
+                                bucket = Bucket.get(draft_object.bucket_id)
+                                RecordsBuckets.query.filter_by(
+                                    bucket_id=draft_object.bucket_id).delete()
+                                bucket.locked = False
+                                bucket.remove()
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.exception(str(ex))
+
+
+def set_bucket_default_size(record_uuid):
+    """
+    Set Weko default size for draft bucket.
+
+    Arguments:
+        record_uuid     -- record uuid link to bucket.
+    Returns:
+        None.
+
+    """
+    draft_record_bucket = RecordsBuckets.query.filter_by(
+        record_id=record_uuid).one_or_none()
+    try:
+        with db.session.begin_nested():
+            draft_bucket = Bucket.get(draft_record_bucket.bucket_id)
+            draft_bucket.quota_size = current_app.config[
+                'WEKO_BUCKET_QUOTA_SIZE'],
+            draft_bucket.max_file_size = current_app.config[
+                'WEKO_MAX_FILE_SIZE'],
+            db.session.add(draft_bucket)
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.exception(str(ex))

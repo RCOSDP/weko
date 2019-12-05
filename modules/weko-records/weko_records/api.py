@@ -39,10 +39,9 @@ from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
-from .models import FileMetadata, ItemMetadata, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
-from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
-    SiteLicenseInfo, SiteLicenseIpAddress
+from .models import FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, \
+    ItemTypeName, ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress
 
 _records_state = LocalProxy(
     lambda: current_app.extensions['invenio-records'])
@@ -981,9 +980,8 @@ class ItemTypeProps(RecordBase):
         Arguments:
             data {dict} -- schema to remove required key
         """
-        if "required" in data:
-            if not data.get("required"):
-                data.pop("required", None)
+        if "required" in data and not data.get("required"):
+            data.pop("required", None)
         if "properties" in data:
             for k, v in data.get("properties").items():
                 if v.get("items"):

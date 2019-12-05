@@ -59,9 +59,10 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, \
+from .utils import IdentifierHandle, delete_unregister_buckets, \
     get_activity_id_of_record_without_version, get_identifier_setting, \
-    item_metadata_validation, register_cnri, saving_doi_pidstore
+    item_metadata_validation, merge_buckets_by_records, register_cnri, \
+    saving_doi_pidstore, set_bucket_default_size
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -371,7 +372,7 @@ def display_activity(activity_id=0):
                 files = item_json.get('files')
         if not files:
             deposit = WekoDeposit.get_record(item.id)
-            if deposit is not None:
+            if deposit:
                 files = to_files_js(deposit)
 
         if files:
@@ -589,7 +590,7 @@ def next_action(activity_id='0', action_id=0):
                                                          object_uuid=item_id)
         recid = get_record_identifier(current_pid.pid_value)
         record = WekoDeposit.get_record(item_id)
-        if record is not None:
+        if record:
             pid_without_ver = get_record_without_version(current_pid)
             deposit = WekoDeposit(record, record.model)
 
@@ -633,13 +634,13 @@ def next_action(activity_id='0', action_id=0):
                     item_id=item_id,
                     feedback_maillist=action_feedbackmail.feedback_maillist
                 )
-                if not recid and pid_without_ver is not None:
+                if not recid and pid_without_ver:
                     FeedbackMailList.update(
                         item_id=pid_without_ver.object_uuid,
                         feedback_maillist=action_feedbackmail.feedback_maillist
                     )
 
-            if record is not None:
+            if record:
                 deposit.update_feedback_mail()
                 deposit.update_jpcoar_identifier()
             # TODO: Make private as default.
@@ -681,14 +682,14 @@ def next_action(activity_id='0', action_id=0):
             identifier=identifier_grant
         )
         # get workflow of first record attached version ID: x.1
-        if not recid and pid_without_ver is not None:
-            record_without_ver_activity_id = \
-                get_activity_id_of_record_without_version(pid_without_ver)
-            work_activity.create_or_update_action_identifier(
-                activity_id=record_without_ver_activity_id,
-                action_id=action_id,
-                identifier=identifier_grant
-            )
+        # if not recid and pid_without_ver:
+        #     activity_without_ver = \
+        #         get_activity_id_of_record_without_version(pid_without_ver)
+        #     work_activity.create_or_update_action_identifier(
+        #         activity_id=activity_without_ver,
+        #         action_id=action_id,
+        #         identifier=identifier_grant
+        #     )
 
         error_list = item_metadata_validation(item_id, identifier_select)
 
@@ -721,13 +722,13 @@ def next_action(activity_id='0', action_id=0):
         if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant'] \
                 and item_id is not None:
             record_without_version = item_id
-            if record is not None and not recid and pid_without_ver is not None:
+            if record and pid_without_ver and not recid:
                 record_without_version = pid_without_ver.object_uuid
             saving_doi_pidstore(item_id, record_without_version, post_json,
                                 int(identifier_select))
 
     rtn = history.create_activity_history(activity)
-    if rtn is None:
+    if not rtn:
         return jsonify(code=-1, msg=_('error'))
     # next action
     work_activity.upt_activity_action_status(
@@ -744,41 +745,52 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
-            if record is not None:
-
-                current_app.logger.info('The data from record.model: ')
-                current_app.logger.info(record.model.__dict__)
+            if record:
                 deposit.publish()
                 updated_item = UpdateItem()
                 # publish record without version ID when registering newly
-                if recid is not None:
+                if recid:
                     # new record attached version ID
-                    first_record_attached_ver = deposit.newversion(current_pid)
-                    activity_item_id = first_record_attached_ver.model.id
-                    deposit_attached_ver = WekoDeposit(
-                        first_record_attached_ver,
-                        first_record_attached_ver.model)
-                    deposit_attached_ver.publish()
+                    ver_attaching_record = deposit.newversion(current_pid)
+                    new_activity_id = ver_attaching_record.model.id
+                    ver_attaching_deposit = WekoDeposit(
+                        ver_attaching_record,
+                        ver_attaching_record.model)
+                    ver_attaching_deposit.publish()
+                    record_bucket_id = merge_buckets_by_records(
+                        current_pid.object_uuid,
+                        ver_attaching_record.model.id,
+                        sub_bucket_delete=True
+                    )
+                    if not record_bucket_id:
+                        return jsonify(code=-1, msg=_('error'))
                     # Record without version: Make status Public as default
                     updated_item.publish(record)
                 else:
                     # update to record without version ID when editing
-                    activity_item_id = record.model.id
-                    if pid_without_ver is not None:
+                    new_activity_id = record.model.id
+                    if pid_without_ver:
                         record_without_ver = WekoDeposit.get_record(
                             pid_without_ver.object_uuid)
                         deposit_without_ver = WekoDeposit(
                             record_without_ver,
                             record_without_ver.model)
                         deposit_without_ver['path'] = deposit.get('path', [])
-                        parent_record = deposit_without_ver. \
+                        parent_record = deposit_without_ver.\
                             merge_data_to_record_without_version(current_pid)
                         deposit_without_ver.publish()
+
+                        set_bucket_default_size(new_activity_id)
+                        merge_buckets_by_records(
+                            new_activity_id,
+                            pid_without_ver.object_uuid
+                        )
                         updated_item.publish(parent_record)
+                delete_unregister_buckets(new_activity_id)
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
-                item_id=activity_item_id,
+                item_id=new_activity_id,
             )
             work_activity.end_activity(activity)
         else:
