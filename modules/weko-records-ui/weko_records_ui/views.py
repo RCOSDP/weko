@@ -58,10 +58,10 @@ from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
-from .utils import restore as restore_imp
-from .utils import soft_delete as soft_delete_imp
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink
+from .utils import restore as restore_imp
+from .utils import soft_delete as soft_delete_imp
 
 blueprint = Blueprint(
     'weko_records_ui',

@@ -524,9 +524,7 @@ def get_item_type(item_type_id=0) -> dict:
 
     :param item_type_id: Item type ID. (Default: 0).
     :return: The json object.
-
     """
-
     result = None
     if item_type_id > 0:
         itemtype = ItemTypes.get_by_id(item_type_id)
