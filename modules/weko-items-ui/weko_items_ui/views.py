@@ -31,6 +31,7 @@ from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
