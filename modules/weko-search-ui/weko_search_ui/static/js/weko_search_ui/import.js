@@ -131,7 +131,7 @@ class MainLayout extends React.Component {
 
           that.handleChangeTab('list');
           const mess = 'Import success :'+response.success+'\n'+ "Import failure :"+ response.failure_list
-          alert(mess)
+//          alert(mess)
 //          that.getStatus(response.data.task_id)
       },
       error: function (error) {
