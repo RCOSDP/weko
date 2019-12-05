@@ -454,7 +454,8 @@ class WekoDeposit(Deposit):
                     'email': current_user.email
                 }
 
-        record_id = str(data['_deposit']['id'])
+        if data.get('_deposit'):
+            record_id = str(data['_deposit']['id'])
         parent_pid = PersistentIdentifier.create(
             'parent',
             'parent:{0}'.format(record_id),
