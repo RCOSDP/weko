@@ -36,14 +36,15 @@ from weko_records.models import ItemMetadata
 
 from .config import ITEM_REGISTRATION_FLOW_ID
 from .models import Action as _Action
+from .models import ActionCommentPolicy, ActionFeedbackMail, \
+    ActionIdentifier, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
+from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
+from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
-from .models import ActionCommentPolicy, ActionFeedbackMail, \
-    ActionIdentifier, ActionJournal, ActionStatusPolicy, ActivityAction, \
-    ActivityHistory, ActivityStatusPolicy, FlowStatusPolicy
 
 
 class Flow(object):
