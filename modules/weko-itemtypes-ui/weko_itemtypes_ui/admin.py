@@ -187,6 +187,7 @@ class ItemTypeMetaDataView(BaseView):
 
             db.session.commit()
         except BaseException:
+            raise
             db.session.rollback()
             return jsonify(msg=_('Failed to register Item type.'))
         current_app.logger.debug('itemtype register: {}'.format(item_type_id))
@@ -493,6 +494,29 @@ class ItemTypeMappingView(BaseView):
         return jsonify(remove_xsd_prefix(jpcoar_lists))
 
 
+class ItemImportView(BaseView):
+    """ItemImportView."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
+        from weko_workflow.api import WorkFlow
+        from .utils import get_content_workflow
+        import json
+        workflow = WorkFlow()
+        workflows = workflow.get_workflow_list()
+        workflows_js = [get_content_workflow(item) for item in workflows]
+        return self.render(
+            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
+            workflows=json.dumps(workflows_js)
+        )
+
+
 itemtype_meta_data_adminview = {
     'view_class': ItemTypeMetaDataView,
     'kwargs': {
@@ -523,8 +547,19 @@ itemtype_mapping_adminview = {
     }
 }
 
+item_import_adminview = {
+    'view_class': ItemImportView,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Import'),
+        'url': '/admin/items/import',
+        'endpoint': 'items/import'
+    }
+}
+
 __all__ = (
     'itemtype_meta_data_adminview',
     'itemtype_properties_adminview',
     'itemtype_mapping_adminview',
+    'item_import_adminview'
 )

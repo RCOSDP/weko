@@ -373,3 +373,83 @@ msgstr ""
 #: weko_itemtypes_ui/admin.py:404
 msgid "Item type added by system"
 msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Import"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "List"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Import File"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Import Index"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "WorkFlow"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Select File"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Select Index"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Select WorkFlow"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Selected file name"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Selected index"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Selected workflow"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Index Tree"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Designate Index"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Workflow"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Item Type"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Flow"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Select"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Import"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Cancel"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/import.html:
+msgid "Check"
+msgstr ""

@@ -20,36 +20,30 @@
 
 """Blueprint for weko-items-ui."""
 
-import operator
+import json
 import os
-import random
-import re
 import shutil
 import sys
-import tempfile
 from datetime import date, datetime, timedelta
 
-import bagit
 import redis
-from flask import Blueprint, abort, after_this_request, current_app, flash, \
-    json, jsonify, redirect, render_template, request, send_file, session, \
-    url_for
+from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
+    render_template, request, send_file, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
-from invenio_accounts.models import Role, userrole
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
-from invenio_stats.utils import QueryCommonReportsHelper, \
-    QueryItemRegReportHelper, QueryRecordViewReportHelper, \
-    QuerySearchReportHelper
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
@@ -59,10 +53,12 @@ from weko_workflow.models import ActionStatusPolicy, WorkFlow
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
-from .utils import get_actionid, get_current_user, get_list_email, \
-    get_list_username, get_new_items_by_date, get_user_info_by_email, \
-    get_user_info_by_username, get_user_information, get_user_permission, \
-    parse_ranking_results, update_json_schema_by_activity_id, \
+from .utils import _export_item, _get_max_export_items, export_items, \
+    get_actionid, get_current_user, get_list_email, get_list_username, \
+    get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
+    get_user_information, get_user_permission, make_stats_tsv, \
+    package_exports, parse_ranking_results, to_files_js, \
+    update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     validate_form_input_data, validate_user
 
 blueprint = Blueprint(
@@ -256,7 +252,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
                     return '{}'
                 json_schema = result.schema
                 properties = json_schema.get('properties')
-                for _, value in properties.items():
+                for _key, value in properties.items():
                     if 'validationMessage_i18n' in value:
                         value['validationMessage'] =\
                             value['validationMessage_i18n'][cur_lang]
@@ -266,15 +262,17 @@ def get_json_schema(item_type_id=0, activity_id=""):
                     group_list = Group.get_group_list()
                     group_enum = list(group_list.keys())
                     filemeta_group = result.get('properties').get(
-                        'filemeta').get('items').get('properties').get('groups')
+                        'filemeta').get(
+                        'items').get('properties').get('groups')
                     filemeta_group['enum'] = group_enum
 
         if result is None:
             return '{}'
 
         if activity_id:
-            updated_json_schema = update_json_schema_by_activity_id(result,
-                                                                    activity_id)
+            updated_json_schema = update_json_schema_by_activity_id(
+                result,
+                activity_id)
             if updated_json_schema:
                 result = updated_json_schema
 
@@ -337,7 +335,8 @@ def get_schema_form(item_type_id=0):
                         if 'title_i18n' in sub_elem and cur_lang in \
                             sub_elem['title_i18n'] and len(
                                 sub_elem['title_i18n'][cur_lang]) > 0:
-                            sub_elem['title'] = sub_elem['title_i18n'][cur_lang]
+                            sub_elem['title'] = sub_elem[
+                                'title_i18n'][cur_lang]
                         if sub_elem.get('title') == 'Group/Price':
                             for sub_item in sub_elem['items']:
                                 if sub_item['title'] == "価格" and \
@@ -362,13 +361,13 @@ def get_schema_form(item_type_id=0):
     return abort(400)
 
 
-@blueprint.route('/index/<int:pid_value>', methods=['GET', 'PUT', 'POST'])
+@blueprint.route('/index/<string:pid_value>', methods=['GET', 'PUT', 'POST'])
 @login_required
 @item_permission.require(http_exception=403)
-def items_index(pid_value=0):
+def items_index(pid_value='0'):
     """Items index."""
     try:
-        if pid_value == 0:
+        if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
@@ -420,14 +419,14 @@ def items_index(pid_value=0):
     return abort(400)
 
 
-@blueprint.route('/iframe/index/<int:pid_value>',
+@blueprint.route('/iframe/index/<string:pid_value>',
                  methods=['GET', 'PUT', 'POST'])
 @login_required
 @item_permission.require(http_exception=403)
-def iframe_items_index(pid_value=0):
+def iframe_items_index(pid_value='0'):
     """Iframe items index."""
     try:
-        if pid_value == 0:
+        if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.iframe_index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
@@ -583,39 +582,6 @@ def to_links_js(pid):
     from weko_deposit.links import base_factory
     links.update(base_factory(pid))
     return links
-
-
-def to_files_js(record):
-    """List files in a deposit."""
-    res = []
-    files = record.files
-    if files is not None:
-        for f in files:
-            res.append({
-                'displaytype': f.get('displaytype', ''),
-                'filename': f.get('filename', ''),
-                'mimetype': f.mimetype,
-                'licensetype': f.get('licensetype', ''),
-                'key': f.key,
-                'version_id': str(f.version_id),
-                'checksum': f.file.checksum,
-                'size': f.file.size,
-                'completed': True,
-                'progress': 100,
-                'links': {
-                    'self': (
-                        current_app.config['DEPOSIT_FILES_API']
-                        + u'/{bucket}/{key}?versionId={version_id}'.format(
-                            bucket=f.bucket_id,
-                            key=f.key,
-                            version_id=f.version_id,
-                        )),
-                },
-                'is_show': f.is_show,
-                'is_thumbnail': f.is_thumbnail
-            })
-
-    return res
 
 
 @blueprint.route('/upload', methods=['GET'])
@@ -803,17 +769,31 @@ def prepare_edit_item():
             activity = WorkActivity()
             pid_object = PersistentIdentifier.get('recid', pid_value)
 
+            # TEMP:
+            current_app.logger.info('Record trying to edit: ')
+            current_app.logger.info(record)
+
             # check item is being editied
             item_id = pid_object.object_uuid
-            workflow_action_stt = \
-                activity.get_workflow_activity_status_by_item_id(
-                    item_id=item_id)
-            # show error when has stt is Begin or Doing
-            if workflow_action_stt is not None and \
-                (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN
-                 or workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
-                return jsonify(code=-13,
-                               msg=_('The workflow is being edited. '))
+            wf_activity = activity.get_workflow_activity_by_item_id(
+                item_id=item_id)
+            if not wf_activity:
+                # get workflow of first record attached version ID: x.1
+                first_pid_value_attached_ver = '{}.1' . format(post_activity.
+                                                               get('pid_value'))
+                first_pid_obj_attached_ver = PersistentIdentifier.get(
+                    'recid', first_pid_value_attached_ver)
+                wf_activity = activity.get_workflow_activity_by_item_id(
+                    item_id=first_pid_obj_attached_ver.object_uuid)
+
+            if wf_activity:
+                # show error when has stt is Begin or Doing
+                if wf_activity.action_status == \
+                        ActionStatusPolicy.ACTION_BEGIN or \
+                        wf_activity.action_status == \
+                        ActionStatusPolicy.ACTION_DOING:
+                    return jsonify(code=-13,
+                                   msg=_('The workflow is being edited. '))
 
             if user_id != owner and not is_admin[0] and user_id != shared_id:
                 return jsonify(code=-1,
@@ -824,23 +804,21 @@ def prepare_edit_item():
                                msg=_('You do not even have an itemtype.'))
             item_type_id = record.get('item_type_id')
             item_type = ItemTypes.get_by_id(item_type_id)
-            if item_type is None:
-                return jsonify(code=-1, msg=_('This itemtype not found.'))
+            if not item_type:
+                return jsonify(code=-1, msg=_('This itemtype not is found.'))
 
-            upt_current_activity = activity.upt_activity_detail(
-                item_id=pid_object.object_uuid)
-
-            if upt_current_activity is None:
+            # prepare params for new workflow activity
+            if wf_activity:
+                post_activity['workflow_id'] = wf_activity.workflow_id
+                post_activity['flow_id'] = wf_activity.flow_id
+            else:
                 workflow = WorkFlow.query.filter_by(
                     itemtype_id=item_type_id).first()
-                if workflow is None:
+                if not workflow:
                     return jsonify(code=-1,
                                    msg=_('Workflow setting does not exist.'))
                 post_activity['workflow_id'] = workflow.id
                 post_activity['flow_id'] = workflow.flow_id
-            else:
-                post_activity['workflow_id'] = upt_current_activity.workflow_id
-                post_activity['flow_id'] = upt_current_activity.flow_id
             post_activity['itemtype_id'] = item_type_id
             getargs = request.args
             community = getargs.get('community', None)
@@ -849,21 +827,25 @@ def prepare_edit_item():
             record = WekoDeposit.get_record(item_id)
             if record is None:
                 return jsonify(code=-1, msg=_('Record does not exist.'))
+
             deposit = WekoDeposit(record, record.model)
             new_record = deposit.newversion(pid_object)
             if new_record is None:
                 return jsonify(code=-1, msg=_('An error has occurred.'))
+
+            # Create a new workflow activity.
             rtn = activity.init_activity(
                 post_activity, community, new_record.model.id)
             if rtn:
                 # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
                 identifier_actionid = get_actionid('identifier_grant')
-                if upt_current_activity:
+                if wf_activity:
                     identifier = activity.get_action_identifier_grant(
-                        upt_current_activity.activity_id, identifier_actionid)
+                        wf_activity.activity_id, identifier_actionid)
                 else:
                     identifier = activity.get_action_identifier_grant(
                         '', identifier_actionid)
+
                 if identifier:
                     if identifier.get('action_identifier_select') > \
                             IDENTIFIER_GRANT_DOI:
@@ -897,6 +879,7 @@ def prepare_edit_item():
                                            activity_id=rtn.activity_id)
                 return jsonify(code=0, msg='success',
                                data={'redirect': url_redirect})
+
         except Exception as e:
             current_app.logger.error('Unexpected error: ', str(e))
     return jsonify(code=-1, msg=_('An error has occurred.'))
@@ -909,8 +892,7 @@ def ranking():
     settings = RankingSettings.get()
     # get statistical period
     end_date = date.today()  # - timedelta(days=1)
-    start_date = end_date - \
-        timedelta(days=int(settings.statistical_period) - 1)
+    start_date = end_date - timedelta(days=int(settings.statistical_period))
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering -- Always default
@@ -926,8 +908,8 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'value': 'desc'})
         rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all', title_key='record_name',
+            parse_ranking_results(result, list_name='all',
+                                  title_key='record_name',
                                   count_key='total_all', pid_key='pid_value')
 
     # most_downloaded_items
@@ -940,8 +922,7 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='data', title_key='col2',
+            parse_ranking_results(result, list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
 
     # created_most_items_user
@@ -954,9 +935,9 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['created_most_items_user'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='data',
-                                  title_key='user_id', count_key='count')
+            parse_ranking_results(result, list_name='data',
+                                  title_key='username', count_key='count',
+                                  pid_key='')
 
     # most_searched_keywords
     if settings.rankings['most_searched_keywords']:
@@ -964,13 +945,12 @@ def ranking():
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
             agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'},
-            agg_filter={'search_type': [0, 1]}
+            agg_sort={'value': 'desc'}
         )
         rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all', title_key='search_key',
-                                  count_key='count', search_key='search_key')
+            parse_ranking_results(result, list_name='all',
+                                  title_key='search_key', count_key='count',
+                                  pid_key='')
 
     # new_items
     if settings.rankings['new_items']:
@@ -1025,96 +1005,6 @@ def check_restricted_content():
         except Exception:
             pass
     return jsonify({'restricted_records': list(restricted_records)})
-
-
-def _get_max_export_items():
-    """Get max amount of items to export."""
-    max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
-    non_user_max = max_table[current_app.config['WEKO_PERMISSION_ROLE_GENERAL']]
-    current_user_id = current_user.get_id()
-
-    if not current_user_id:  # Non-logged in users
-        return non_user_max
-
-    try:
-        roles = db.session.query(Role).join(userrole).filter_by(
-            user_id=current_user_id).all()
-    except Exception:
-        return current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
-
-    current_max = non_user_max
-    for role in roles:
-        if role in max_table and max_table[role] > current_max:
-            current_max = max_table[role]
-    return current_max
-
-
-def _export_item(record_id, format, include_contents, tmp_path=None):
-    """Exports files for record according to view permissions."""
-    exported_item = {}
-    record = WekoRecord.get_record_by_pid(record_id)
-
-    if record:
-        exported_item['record_id'] = record.id
-        exported_item['files'] = []
-        exported_item['path'] = 'recid_' + str(record_id)
-
-        # Create metadata file.
-        with open(tmp_path + "/metadata.json", "w") as file:
-            file.write('{ [metadata] }')
-        # First get all of the files, checking for permissions while doing so
-        if include_contents:
-            # Get files
-            for file in record.files:  # TODO: Temporary processing
-                if check_file_download_permission(record, file.info()):
-                    exported_item['files'].append(file.info())
-                    # TODO: Then convert the item into the desired format
-                    if file:
-                        shutil.copy2(file.obj.file.uri,
-                                     tmp_path + '/' + file.obj.basename)
-
-    return exported_item
-
-
-def export_items(post_data):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
-
-    :return: JSON, BIBTEX
-    """
-    include_contents = True if \
-        post_data['export_file_contents_radio'] == 'True' else False
-    format = post_data['export_format_radio']
-    record_ids = json.loads(post_data['record_ids'])
-    if len(record_ids) > _get_max_export_items():
-        return abort(400)
-
-    result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory()
-    try:
-        # Set export folder
-        export_path = temp_path.name + '/' + \
-            datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        # Double check for limits
-        for id in record_ids:
-            record_path = export_path + '/recid_' + str(id)
-            os.makedirs(record_path, exist_ok=True)
-            result['items'].append(_export_item(id,
-                                                format,
-                                                include_contents,
-                                                record_path))
-        # Create export info file
-        with open(export_path + "/export.json", "w") as file:
-            file.write(json.dumps(result))
-        # Create bag
-        bagit.make_bag(export_path)
-        # Create download file
-        shutil.make_archive(export_path, 'zip', export_path)
-    except Exception as e:
-        current_app.logger.error(e)
-        flash(_('Error occurred during item export.'), 'error')
-        return redirect(url_for('weko_items_ui.export'))
-
-    return send_file(export_path + '.zip')
 
 
 @blueprint.route('/export', methods=['GET', 'POST'])
@@ -1184,16 +1074,21 @@ def validate():
 @login_required
 @item_permission.require(http_exception=403)
 def check_validation_error_msg(activity_id):
-    """Check whether session('update_json_schema') is exist.
+    """Check whether sessionstore('updated_json_schema_') is exist.
 
     :param activity_id: The identify of Activity.
     :return: Show error message
     """
-    if session.get('update_json_schema') and session[
-            'update_json_schema'].get(activity_id):
-        error_list = session[
-            'update_json_schema'].get(activity_id)
-
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    if sessionstore.redis.exists(
+        'updated_json_schema_{}'.format(activity_id)) \
+            and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
+        session_data = sessionstore.get(
+            'updated_json_schema_{}'.format(activity_id))
+        error_list = json.loads(session_data.decode('utf-8'))
         msg = []
         if error_list.get('error_type'):
             if error_list.get('error_type') == 'no_resource_type':
@@ -1218,24 +1113,3 @@ def check_validation_error_msg(activity_id):
                        error_list=error_list)
     else:
         return jsonify(code=0)
-
-
-def update_schema_remove_hidden_item(schema, render, items_name):
-    """Update schema: remove hidden items.
-
-    :param schema: json schema
-    :param render: json render
-    :param items_name: list items which has hidden flg
-    :return: The json object.
-    """
-    for item in items_name:
-        hidden_flg = False
-        key = schema[item]['key']
-        if render['meta_list'].get(key):
-            hidden_flg = render['meta_list'][key]['option']['hidden']
-        if render['meta_system'].get(key):
-            hidden_flg = render['meta_system'][key]['option']['hidden']
-        if hidden_flg:
-            schema[item]['condition'] = 1
-
-    return schema

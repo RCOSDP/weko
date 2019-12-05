@@ -64,6 +64,9 @@ THEME_FOOTER_WYSIWYG_TEMPLATE = 'weko_theme/footer_wysiwyg.html'
 THEME_SITENAME = 'WEKO3'
 """The name of the site to be used on the header and as a title."""
 
+THEME_SITEURL = 'https://localhost'
+"""The URL displayed in the sitemap. Change it to self domain name."""
+
 THEME_SEARCHBAR = True
 """Enable or disable the search bar."""
 

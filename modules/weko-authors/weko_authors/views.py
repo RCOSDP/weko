@@ -187,10 +187,12 @@ def get():
     indexer = RecordIndexer()
     result = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=body
     )
     result_itemCnt = indexer.client.search(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=query_item
     )
 
@@ -219,6 +221,7 @@ def getById():
     indexer = RecordIndexer()
     result = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=body
     )
     return json.dumps(result)
@@ -236,6 +239,7 @@ def mapping():
     indexer = RecordIndexer()
     result = indexer.client.get(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         id=author_id
     )
 
@@ -258,11 +262,23 @@ def mapping():
                        'lang': i.get('language')}
                 res['creatorNames'].append(tmp)
 
+    prefix_settings = AuthorsPrefixSettings.query.all()
+    id_type_dict = {}
+    for prefix in prefix_settings:
+        id_type_dict[prefix.id] = prefix.name
+
     id_info = result.get('_source').get('authorIdInfo')
     for j in id_info:
+        try:
+            id_scheme = id_type_dict[int(j['idType'])]
+            if id_scheme == 'KAKEN2':
+                id_scheme = 'kakenhi'
+        except KeyError:
+            id_scheme = ''
+
         if j.get('authorIdShowFlg') == 'true':
             tmp = {'nameIdentifier': j.get('authorId'),
-                   'nameIdentifierScheme': j.get('idType'),
+                   'nameIdentifierScheme': id_scheme,
                    'nameIdentifierURI': ''}
             res['nameIdentifiers'].append(tmp)
 
