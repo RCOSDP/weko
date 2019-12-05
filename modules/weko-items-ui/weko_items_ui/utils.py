@@ -527,7 +527,8 @@ def make_stats_tsv(item_type_id, recids):
         'properties')
 
     class RecordsManager:
-        """Management data for exporting records"""
+        """Management data for exporting records."""
+
         first_recid = 0
         cur_recid = 0
         filepath_idx = 1
@@ -825,6 +826,7 @@ def get_list_file_by_record_id(recid):
         list_file_name = [
             recid + '/' + item.get('value') for item in list_file]
     return list_file_name
+
 
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
