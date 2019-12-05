@@ -179,7 +179,7 @@ def validate_admin_widget_item_setting(widget_id):
         data = WidgetDesignSetting.select_by_repository_id(
             repository_id)
         if data.get('settings'):
-            json_data = json.loads(data.get('settings'))
+            json_data = json.loads(data.get('settings')) if isinstance(data.get('settings'), str) else data.get('settings')
             for item in json_data:
                 if str(item.get('widget_id')) == str(widget_item_id):
                     return True
@@ -388,7 +388,8 @@ def convert_widget_data_to_dict(widget_data):
 
     """
     result = dict()
-    settings = json.loads(widget_data.settings)
+    settings = json.loads(widget_data.settings) \
+        if isinstance(widget_data.settings, str) else widget_data.settings
 
     result['widget_id'] = widget_data.widget_id
     result['repository_id'] = widget_data.repository_id
@@ -410,7 +411,8 @@ def convert_widget_multi_lang_to_dict(multi_lang_data):
 
     """
     result = dict()
-    description = json.loads(multi_lang_data.description_data)
+    description = json.loads(multi_lang_data.description_data) \
+        if isinstance(multi_lang_data.description_data, str) else multi_lang_data.description_data
 
     result['id'] = multi_lang_data.id
     result['widget_id'] = multi_lang_data.widget_id
@@ -774,7 +776,7 @@ def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
     main_design = \
         WidgetDesignSetting.select_by_repository_id(repository_id or '')
     main_has_main = has_main_contents_widget(
-        json.loads(main_design.get('settings', '[]'))) if main_design else False
+        json.loads(main_design.get('settings', '[]')) if isinstance(main_design.get('settings', '[]'), str) else main_design.get('settings')) if main_design else False
 
     # Get page which has main
     page_with_main = get_widget_design_page_with_main(repository_id)
@@ -799,7 +801,7 @@ def get_widget_design_page_with_main(repository_id):
     if repository_id:
         for page in WidgetDesignPage.get_by_repository_id(repository_id):
             if page.settings and has_main_contents_widget(
-                    json.loads(page.settings)):
+                    json.loads(page.settings) if isinstance(page.settings, str) else page.settings):
                 return page
     return None
 
@@ -809,7 +811,7 @@ def main_design_has_main_widget(repository_id):
     main_design = WidgetDesignSetting.select_by_repository_id(repository_id)
     if main_design:
         return has_main_contents_widget(
-            json.loads(main_design.get('settings', '[]')))
+            json.loads(main_design.get('settings', '[]')) if isinstance(main_design.get('settings', '[]'), str) else main_design.get('settings'))
     return False
 
 
