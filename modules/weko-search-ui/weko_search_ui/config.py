@@ -74,6 +74,9 @@ SEARCH_UI_JSTEMPLATE_SELECT_BOX = 'templates/weko_search_ui/selectbox.html'
 
 SEARCH_UI_JSTEMPLATE_SORT_ORDER = 'templates/weko_search_ui/togglebutton.html'
 
+WEKO_ITEM_ADMIN_IMPORT_TEMPLATE = 'weko_search_ui/admin/import.html'
+"""import template for the import page."""
+
 INDEX_IMG = 'indextree/36466818-image.jpg'
 
 # Opensearch description
@@ -332,3 +335,63 @@ WEKO_SEARCH_TYPE_DICT = {
 WEKO_SYS_USER = 'System Administrator'
 
 WEKO_REPO_USER = 'Repository Administrator'
+
+WEKO_FLOW_DEFINE = {'flow_name': 'Registration Flow'}
+
+WEKO_FLOW_DEFINE_LIST_ACTION = [
+    {
+        "id": "1",
+        "name": "Start",
+        "date": "2019-12-03",
+        "version": "1.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "3",
+        "name": "Item Registration",
+        "date": "2019-12-3",
+        "version": "1.0.1",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "7",
+        "name": "Identifier Grant",
+        "date": "2019-12-3",
+        "version": "1.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "4",
+        "name": "Approval",
+        "date": "2019-12-3",
+        "version": "2.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "2",
+        "name": "End",
+        "date": "2019-12-03",
+        "version": "1.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    }
+]

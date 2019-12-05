@@ -21,28 +21,21 @@
 """Weko Search-UI admin."""
 
 import json
-import os
-import sys
 from datetime import datetime
-from xml.etree import ElementTree as ET
 
 from blinker import Namespace
-from flask import abort, current_app, jsonify, make_response, redirect, \
-    render_template, request, url_for
+from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from flask_security import current_user
 from invenio_db import db
-from invenio_i18n.ext import current_i18n
 from weko_index_tree.api import Indexes
-from weko_index_tree.models import Index, IndexStyle
-from weko_records_ui.ipaddr import check_site_license_permission
+from weko_index_tree.models import IndexStyle
 
 from weko_search_ui.api import get_search_detail_keyword
 
-from .api import SearchSetting
-from .query import item_path_search_factory
-from .utils import delete_records, get_journal_info, get_tree_items
+from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
+from .utils import check_import_items, delete_records, get_content_workflow, \
+    get_tree_items, import_items_to_system, make_stats_tsv
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -66,10 +59,10 @@ class ItemManagementBulkDelete(BaseView):
                     # Delete items in current_tree
                     delete_records(current_tree.id)
 
-                    # If recursively, then delete all child index trees and theirs
-                    # items
-                    if request.values.get(
-                            'recursively') == 'true' and recursive_tree is not None:
+                    # If recursively, then delete all child index trees
+                    # and theirs items
+                    if request.values.get('recursively') == 'true'\
+                            and recursive_tree is not None:
                         # Delete recursively
                         direct_child_trees = []
                         for index, obj in enumerate(recursive_tree):
@@ -132,14 +125,10 @@ class ItemManagementCustomSort(BaseView):
             # fp = Indexes.get_self_path(index_id)
             # Indexes.update_item_sort_custom_es(fp.path, sort_data)
 
-            jfy = {}
-            jfy['status'] = 200
-            jfy['message'] = 'Data is successfully updated.'
-            return make_response(jsonify(jfy), jfy['status'])
-        except Exception as ex:
-            jfy['status'] = 405
-            jfy['message'] = 'Error'
-            return make_response(jsonify(jfy), jfy['status'])
+            jfy = {'status': 200, 'message': 'Data is successfully updated.'}
+        except Exception:
+            jfy = {'status': 405, 'message': 'Error.'}
+        return make_response(jsonify(jfy), jfy['status'])
 
 
 class ItemManagementBulkSearch(BaseView):
@@ -149,11 +138,11 @@ class ItemManagementBulkSearch(BaseView):
     def index(self):
         """Index Search page ui."""
         search_type = request.args.get('search_type', '0')
-        getArgs = request.args
+        get_args = request.args
         community_id = ""
         ctx = {'community': None}
         cur_index_id = search_type if search_type not in ('0', '1', ) else None
-        if 'community' in getArgs:
+        if 'community' in get_args:
             from weko_workflow.api import GetCommunity
             comm = GetCommunity.get_community_by_id(
                 request.args.get('community'))
@@ -169,7 +158,7 @@ class ItemManagementBulkSearch(BaseView):
 
         height = style.height if style else None
 
-        if 'item_management' in getArgs:
+        if 'item_management' in get_args:
             management_type = request.args.get('item_management', 'sort')
 
             has_items = False
@@ -188,14 +177,17 @@ class ItemManagementBulkSearch(BaseView):
                             has_child_trees = len(recursive_tree) > 1
 
             return self.render(
-                current_app.config['WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE'],
+                current_app.config[
+                    'WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE'],
                 index_id=cur_index_id,
                 community_id=community_id,
                 width=width,
                 height=height,
                 management_type=management_type,
-                fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
-                licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
+                fields=current_app.config[
+                    'WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
+                licences=current_app.config[
+                    'WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
                 has_items=has_items,
                 has_child_trees=has_child_trees,
                 detail_condition=detail_condition,
@@ -207,6 +199,84 @@ class ItemManagementBulkSearch(BaseView):
     def is_visible():
         """Should never be visible."""
         return False
+
+
+class ItemImportView(BaseView):
+    """BaseView for Admin Import."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        from weko_workflow.api import WorkFlow
+
+        workflow = WorkFlow()
+        workflows = workflow.get_workflow_list()
+        workflows_js = [get_content_workflow(item) for item in workflows]
+
+        return self.render(
+            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
+            workflows=json.dumps(workflows_js)
+        )
+
+    @expose('/check', methods=['POST'])
+    def check(self) -> jsonify:
+        """Register an item type mapping."""
+        data = request.get_json()
+        list_record = []
+        data_path = ''
+
+        if data:
+            result = check_import_items(data.get('file').split(",")[-1])
+            if isinstance(result, dict):
+                if result.get('error'):
+                    return jsonify(code=0, error=result.get('error'))
+                else:
+                    list_record = result.get('list_record', [])
+                    data_path = result.get('data_path', '')
+
+        return jsonify(code=1, list_record=list_record, data_path=data_path)
+
+    @expose('/download', methods=['POST'])
+    def download(self):
+        """Register an item type mapping."""
+        data = request.get_json()
+        now = str(datetime.date(datetime.now()))
+
+        file_name = "check_" + now + ".tsv"
+        if data:
+            tsv_file = make_stats_tsv(data.get('list_result'))
+            return Response(
+                tsv_file.getvalue(),
+                mimetype="text/tsv",
+                headers={
+                    "Content-disposition": "attachment; filename=" + file_name
+                }
+            )
+        else:
+            return Response(
+                [],
+                mimetype="text/tsv",
+                headers={
+                    "Content-disposition": "attachment; filename=" + file_name
+                }
+            )
+
+    @expose('/import', methods=['POST'])
+    def import_items(self) -> jsonify:
+        """Register an item type mapping."""
+        data = request.get_json()
+        response_object = {
+            "status": "success",
+        }
+        result = dict()
+        if data:
+            result = import_items_to_system(data)
+
+        return jsonify(dict(**response_object, **result))
 
 
 item_management_bulk_search_adminview = {
@@ -236,8 +306,18 @@ item_management_custom_sort_adminview = {
     }
 }
 
+item_management_import_adminview = {
+    'view_class': ItemImportView,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Import'),
+        'endpoint': 'items/import'
+    }
+}
+
 __all__ = (
     'item_management_bulk_delete_adminview',
     'item_management_bulk_search_adminview',
     'item_management_custom_sort_adminview',
+    'item_management_import_adminview'
 )

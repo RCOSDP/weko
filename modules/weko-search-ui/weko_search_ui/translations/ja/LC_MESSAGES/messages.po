@@ -218,3 +218,58 @@ msgstr "入力内容を破棄してもよろしいですか？"
 #~ msgid "Index List"
 #~ msgstr "インデクスリスト"
 
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Summary"
+msgstr "サマリー"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Total"
+msgstr "総計"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "New Item"
+msgstr "新規登録アイテム"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Update Item"
+msgstr "更新アイテム"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Check Error"
+msgstr "チェックエラー"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Download"
+msgstr "ダウンロード"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "No."
+msgstr "No."
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Item Id"
+msgstr "アイテムID"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Title"
+msgstr "タイトル"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Check Result"
+msgstr "チェック結果"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Error"
+msgstr "エラー"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Update"
+msgstr "更新"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Not match"
+msgstr "一致しない"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Register"
+msgstr "登録"
