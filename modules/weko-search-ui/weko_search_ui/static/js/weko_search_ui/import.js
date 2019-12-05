@@ -855,9 +855,9 @@ class CheckComponent extends React.Component {
                 <tr>
                   <th>{no}</th>
                   <th>{item_type}</th>
-                  <th>{item_id}</th>
+                  <th><p className="item_id">{item_id}</p></th>
                   <th>{title}</th>
-                  <th>{check_result}</th>
+                  <th><p className="check_result">{check_result}</p></th>
                 </tr>
               </thead>
               <tbody>
