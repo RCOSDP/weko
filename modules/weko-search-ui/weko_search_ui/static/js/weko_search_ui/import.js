@@ -350,7 +350,7 @@ class ImportComponent extends React.Component {
         file
       } = this.state
       return(
-        <div className="container import_component">
+        <div className="import_component">
           <div className="row layout">
             <div className="col-md-12">
               <div className="row">
@@ -822,7 +822,7 @@ class CheckComponent extends React.Component {
           </div>
           <div className="col-md-12 text-center">
             <div className="row block-summary">
-              <div className="col-md-3 col-sm-3">
+              <div className="col-lg-2 col-md-3 col-sm-3">
                 <h3><b>{summary}</b></h3>
                 <div className="flex-box">
                   <div>{total_label}:</div>
@@ -841,7 +841,7 @@ class CheckComponent extends React.Component {
                   <div>{check_error}</div>
                 </div>
               </div>
-              <div className="col-md-9 text-align-right">
+              <div className="col-lg-10 col-md-9 text-align-right">
                 <button
                   className="btn btn-primary"
                   onClick={this.handleDownload}
@@ -872,9 +872,13 @@ class CheckComponent extends React.Component {
                         <td>
                           {item.status === 'new' && item.id ? (new_item_label+'('+ item.id+')') : item.id ? item.id :''}
                         </td>
-                        <td>{(item['Title'] && item['Title'][0] && item['Title'][0]['Title'])
-                         ? this.generateTitle(item['Title'][0]['Title'],50) : item['Title'] && item['Title']['Title']
-                         ? this.generateTitle(item['Title']['Title'],50) : '' }
+                        <td>
+                        <p className="title_item">
+                          {(item['Title'] && item['Title'][0] && item['Title'][0]['Title'])
+                           ? item['Title'][0]['Title']: item['Title'] && item['Title']['Title']
+                           ? item['Title']['Title'] : '' }
+                        </p>
+
                          </td>
                         <td>{item['errors'] ? item['errors'][0] && (error+ ': '+ item['errors'][0]) || error : item.status === 'new'?
                           <span className="badge badge-success">{register}</span> :
