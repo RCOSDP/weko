@@ -893,7 +893,7 @@ def handle_workflow(item: dict):
     """
     activity = WorkActivity()
     wf_activity = activity.get_workflow_activity_by_item_id(
-        item.get('item_id'))
+        item.get('id'))
     if wf_activity:
         return
     else:
