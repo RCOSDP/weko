@@ -453,7 +453,14 @@ class WekoDeposit(Deposit):
                     'displayname': user._displayname if user else '',
                     'email': current_user.email
                 }
-        record_id = recid
+        if recid:
+            deposit = super(WekoDeposit, cls).create(
+                data,
+                id_=id_,
+                recid=recid
+            )
+        else:
+            deposit = super(WekoDeposit, cls).create(data, id_=id_)
         if data.get('_deposit'):
             record_id = str(data['_deposit']['id'])
         parent_pid = PersistentIdentifier.create(
@@ -463,14 +470,6 @@ class WekoDeposit(Deposit):
             object_uuid=id_,
             status=PIDStatus.REGISTERED
         )
-        if recid:
-            deposit = super(WekoDeposit, cls).create(
-                data,
-                id_=id_,
-                recid=recid
-            )
-        else:
-            deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
