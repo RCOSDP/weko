@@ -453,7 +453,7 @@ class WekoDeposit(Deposit):
                     'displayname': user._displayname if user else '',
                     'email': current_user.email
                 }
-
+        record_id = recid
         if data.get('_deposit'):
             record_id = str(data['_deposit']['id'])
         parent_pid = PersistentIdentifier.create(

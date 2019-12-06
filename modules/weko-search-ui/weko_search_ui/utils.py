@@ -892,8 +892,10 @@ def handle_workflow(item: dict):
 
     """
     activity = WorkActivity()
+    current_app.logger.debug('==========================================')
+    current_app.logger.debug(item.get('id'))
     wf_activity = activity.get_workflow_activity_by_item_id(
-        item_id=item.get('item_id'))
+        item.get('id'))
     if wf_activity:
         return
     else:
