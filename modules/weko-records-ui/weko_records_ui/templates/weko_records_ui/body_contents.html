@@ -196,7 +196,7 @@
           {%- endif %}
 
           <div class="table-responsive" style="display: inline-block; _display: inline;">
-              {{ output_item_detail(record, files_thumbnail, pid, true) }}
+              {{ output_item_detail(record, files_thumbnail, pid, true, is_logged_in) }}
           </div>
           {%- if 'main_entry_personal_name' in record %}
           <p class="record_authors">
