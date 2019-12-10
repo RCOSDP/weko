@@ -204,6 +204,9 @@ class MainLayout extends React.Component {
           ></CheckComponent>
         </div>
         <div className={`${tab === tabs[2].tab_key ? '': 'hide'}`}>
+          <ResultComponent
+            list_record={list_record || []}
+          ></ResultComponent>
         </div>
       </div>
     )
@@ -857,7 +860,9 @@ class CheckComponent extends React.Component {
                 <button
                   className="btn btn-primary"
                   onClick={this.handleDownload}
-                 ><span className="glyphicon glyphicon-cloud-download"></span>{download}</button>
+                 >
+                  <span className="glyphicon glyphicon-cloud-download"></span>{download}
+                 </button>
               </div>
             </div>
           </div>
@@ -878,7 +883,7 @@ class CheckComponent extends React.Component {
                     return (
                       <tr key={key}>
                         <td>
-                          {key}
+                          {key+1}
                         </td>
                         <td>{item.item_type_name || not_match}</td>
                         <td>
@@ -904,6 +909,87 @@ class CheckComponent extends React.Component {
             </table>
           </div>
         </div>
+      </div>
+    )
+  }
+}
+
+class ResultComponent extends React.Component {
+  constructor(){
+    super()
+    this.state = {
+      list_record: []
+    }
+    this.handleDownload = this.handleDownload.bind(this)
+  }
+
+  handleDownload(){
+    console.log('download')
+  }
+
+  componentWillReceiveProps(nextProps,prevProps){
+    const {list_record} = nextProps
+    const new_data = Array.from(list_record, item => {
+      return{
+        id : item.id,
+        action: 'end',
+        start_date: moment(),
+        end_date: moment().add(1, 'days'),
+        wf_status: 'done'
+      }
+    })
+    this.setState({
+      list_record: new_data
+    })
+  }
+
+  render(){
+    const {list_record} = this.state
+    return(
+      <div className="result_container row">
+        <div className="col-md-12 text-align-right">
+          <button
+            className="btn btn-primary"
+            onClick={this.handleDownload}
+           >
+            <span className="glyphicon glyphicon-cloud-download"></span>{download}
+           </button>
+        </div>
+        <div className="col-md-12 m-t-20">
+            <table class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>{no}</th>
+                  <th><p className="t_head start_date">{start_date}</p></th>
+                  <th><p className="t_head end_date">{end_date}</p></th>
+                  <th><p className="t_head item_id">{item_id}</p></th>
+                  <th><p className="t_head action">{action}</p></th>
+                  <th><p className="t_head wf_status">{work_flow_status}</p></th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  list_record.map((item, key) => {
+                    return (
+                      <tr key={key}>
+                        <td>
+                          {key+1}
+                        </td>
+                        <td>{item.start_date ? item.start_date.format("YYYY-MM-DD hh:mm:ss"): ''}</td>
+                        <td>{item.end_date ? item.end_date.format("YYYY-MM-DD hh:mm:ss"): ''}</td>
+                        <td>{item.id || ''}</td>
+                        <td>{item.action && item.action === 'end' ? end : ''}</td>
+                        <td>
+                          {item.wf_status && item.wf_status === 'to_do' ? to_do: ''}
+                          {item.wf_status && item.wf_status === 'done' ? done: ''}
+                         </td>
+                      </tr>
+                    )
+                  })
+                }
+              </tbody>
+            </table>
+          </div>
       </div>
     )
   }

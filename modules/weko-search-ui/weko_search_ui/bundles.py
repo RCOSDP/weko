@@ -58,6 +58,12 @@ weko_admin_item_import_js = Bundle(
     output="gen/import.js"
 )
 
+weko_moment_js = Bundle(
+    'js/weko_search_ui/moment.min.js',
+    # filters='requirejs',
+    output="gen/monent.min.js"
+)
+
 weko_admin_item_import_css = Bundle(
     'css/weko_search_ui/import.less',
     filters='cleancss',
