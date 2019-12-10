@@ -58,18 +58,22 @@ class MainLayout extends React.Component {
     super()
     this.state = {
       tab: 'select',
+      step: 0,
       tabs: [
         {
           tab_key: 'select',
-          tab_name: select
+          tab_name: select,
+          step: 0
         },
         {
           tab_key: 'import',
           tab_name: import_label,
+          step: 1
         },
         {
           tab_key: 'result',
-          tab_name: result_label
+          tab_name: result_label,
+          step: 2
         }
       ],
       list_record: [],
@@ -82,9 +86,18 @@ class MainLayout extends React.Component {
   }
 
   handleChangeTab(tab) {
-    this.setState({
-      tab: tab
+    const {step, tabs} = this.state
+    const a = tabs.filter(item => {
+      return item.tab_key === tab
     })
+    if(a[0]) {
+      const item = a[0]
+      if (step >= item.step){
+        this.setState({
+          tab: tab
+        })
+      }
+    }
   }
 
   componentDidMount() {
@@ -104,10 +117,12 @@ class MainLayout extends React.Component {
             return {
               list_record: response.list_record,
               root_path: response.data_path,
-              is_import: false
+              is_import: false,
+              step: 1
             }
+          }, ()=>{
+            that.handleChangeTab('import');
           })
-          that.handleChangeTab('import');
         } else {
           console.log(response.msg);
           alert(response.error || '')
@@ -140,8 +155,13 @@ class MainLayout extends React.Component {
       success: function (response) {
         console.log(response)
         console.log(root_path)
-
-          that.handleChangeTab('result');
+          that.setState(()=>{
+            return {
+              step: 2
+            }
+          }, ()=>{
+            that.handleChangeTab('result');
+          })
           const mess = 'Import success :'+response.success+'\n'+ "Import failure :"+ response.failure_list
           alert(mess)
 //          that.getStatus(response.data.task_id)
