@@ -661,23 +661,33 @@ class SchemaTree:
                                         k1 = get_prefix(k1)
                                         set_children(k1, v1, child)
 
-        def merge_child(new_xml_root, current_root):
-            for child in current_root:
-                new_child = new_xml_root.find(child.tag)
-                if new_child is None:
-                    new_xml_root.append(child)
-                elif child.getchildren():
-                    merge_child(new_child, child)
-                else:
-                    new_child.getparent().append(child)
+        def merge_json_xml(json_child, dct_xml):
+            if isinstance(json_child, dict):
+                for k, v in json_child.items():
+                    if k in dct_xml:
+                        merge_json_xml(json_child[k], dct_xml[k])
+                    else:
+                        dct_xml[k] = json_child[k]
+            elif isinstance(json_child, list):
+                for i in json_child:
+                    merge_json_xml(i, dct_xml)
 
         if not self._schema_obj:
             E = ElementMaker()
             root = E.Weko()
             root.text = "Sorry! This Item has not been mappinged."
             return root
+        list_json_xml = self.__get_value_list(remove_empty=True)
+        if self._schema_name == current_app.config[
+                'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
+            dct_xml = dict()
+            list_dict = list()
+            for json_child in list_json_xml:
+                merge_json_xml(json_child, dct_xml)
+            list_dict.append(dct_xml)
+            list_json_xml = list_dict
 
-        node_tree = self.find_nodes(self.__get_value_list(remove_empty=True))
+        node_tree = self.find_nodes(list_json_xml)
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
         ns.update({'xml': "http://www.w3.org/XML/1998/namespace"})
@@ -698,16 +708,6 @@ class SchemaTree:
             for k, v in lst.items():
                 k = get_prefix(k)
                 set_children(k, v, root)
-
-        if self._schema_name == current_app.config[
-                'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
-            ddi_root = E(rootname)
-            ddi_root.attrib[
-                '{{{pre}}}schemaLocation'.format(pre=xsi)] = self._location
-            ddi_root.attrib['version'] = current_app.config[
-                'WEKO_SCHEMA_DDI_VERSION']
-            merge_child(ddi_root, root)
-            return ddi_root
         return root
 
     def to_list(self):
