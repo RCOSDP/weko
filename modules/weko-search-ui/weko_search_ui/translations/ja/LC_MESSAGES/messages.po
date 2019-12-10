@@ -273,3 +273,34 @@ msgstr "一致しない"
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Register"
 msgstr "登録"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Start Date"
+msgstr "開始日"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "End Date"
+msgstr "終了日"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Action"
+msgstr "アクション"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "End"
+msgstr "End"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Work Flow Status"
+msgstr "ワークフローステータス"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Done"
+msgstr "作業済"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "To Do"
+msgstr ""
+
+
+

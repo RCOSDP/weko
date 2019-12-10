@@ -33,6 +33,18 @@ const update = document.getElementById("update").value;
 const not_match = document.getElementById("not_match").value;
 const register = document.getElementById("register").value;
 
+//label result
+const start_date = document.getElementById("start_date").value;
+const end_date = document.getElementById("end_date").value;
+const action = document.getElementById("action").value;
+const end = document.getElementById("end").value;
+const work_flow_status = document.getElementById("work_flow_status").value;
+const done = document.getElementById("done").value;
+const to_do = document.getElementById("to_do").value;
+const result_label = document.getElementById("result").value;
+const next = document.getElementById("next").value;
+
+
 
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin+'/api/tree'
@@ -45,19 +57,19 @@ class MainLayout extends React.Component {
   constructor(){
     super()
     this.state = {
-      tab: 'import',
+      tab: 'select',
       tabs: [
         {
+          tab_key: 'select',
+          tab_name: select
+        },
+        {
           tab_key: 'import',
-          tab_name: import_label
+          tab_name: import_label,
         },
         {
-          tab_key: 'check',
-          tab_name: check,
-        },
-        {
-          tab_key: 'list',
-          tab_name: list
+          tab_key: 'result',
+          tab_name: result_label
         }
       ],
       list_record: [],
@@ -95,7 +107,7 @@ class MainLayout extends React.Component {
               is_import: false
             }
           })
-          that.handleChangeTab('check');
+          that.handleChangeTab('import');
         } else {
           console.log(response.msg);
           alert(response.error || '')
@@ -129,7 +141,7 @@ class MainLayout extends React.Component {
         console.log(response)
         console.log(root_path)
 
-          that.handleChangeTab('list');
+          that.handleChangeTab('result');
           const mess = 'Import success :'+response.success+'\n'+ "Import failure :"+ response.failure_list
           alert(mess)
 //          that.getStatus(response.data.task_id)
@@ -355,7 +367,7 @@ class ImportComponent extends React.Component {
             <div className="col-md-12">
               <div className="row">
                 <div className="col-md-2 col-cd">
-                  <label>{import_file}</label>
+                  <label>{select_file}</label>
                 </div>
                 <div className="col-md-8">
                   <div>
@@ -437,7 +449,7 @@ class ImportComponent extends React.Component {
 
                     onClick={()=>{file && this.handleSubmit()}}
                   >
-                    <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
+                    {next}<span className="glyphicon glyphicon-chevron-right"></span>
                   </button>
                 </div>
               </div>
@@ -854,7 +866,7 @@ class CheckComponent extends React.Component {
               <thead>
                 <tr>
                   <th>{no}</th>
-                  <th>{item_type}</th>
+                  <th><p className="item_type">{item_type}</p></th>
                   <th><p className="item_id">{item_id}</p></th>
                   <th>{title}</th>
                   <th><p className="check_result">{check_result}</p></th>
@@ -881,9 +893,9 @@ class CheckComponent extends React.Component {
 
                          </td>
                         <td>{item['errors'] ? item['errors'][0] && (error+ ': '+ item['errors'][0]) || error : item.status === 'new'?
-                          <span className="badge badge-success">{register}</span> :
+                          register:
                            item.status === 'update' ?
-                            <span className="badge badge-primary">{update}</span> :''}</td>
+                            update :''}</td>
                       </tr>
                     )
                   })
