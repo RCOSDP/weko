@@ -132,6 +132,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     return format_comment(comment)
   };
   $rootScope.is_permission = $("#is_permission").val() === 'True' ? true : false
+  $rootScope.is_login = $("#is_login").val() === 'True' ? true : false
 
   $rootScope.display_comment_jounal= function(){
     $('#index_comment').append(format_comment($rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0].comment))

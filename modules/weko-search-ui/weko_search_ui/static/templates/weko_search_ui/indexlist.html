@@ -93,14 +93,15 @@
                 <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
                 <span ng-if="is_permission">{{ index_path.name.split('/').pop() }} <{{index_path.key.split('/').pop()}}></span>
                 <span ng-if="!is_permission">{{ index_path.name.split('/').pop() }}</span>
-                <span ng-if="index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0" class="badge"
+                <span
+                    ng-if="(index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0)&&(is_login)" class="badge"
                   style="float:right">{{index_path.date_range.pub_cnt}} items (Private {{index_path.date_range.un_pub_cnt}}
                   items )
                 </span>
-                <span ng-if="index_path.date_range.pub_cnt==0&&index_path.date_range.un_pub_cnt==0" class="badge"
+                <span
+                    ng-if="(index_path.date_range.pub_cnt==0&&index_path.date_range.un_pub_cnt==0)||(!is_login)" class="badge"
                   style="float:right">{{index_path.date_range.pub_cnt}} items </span>
             </div>
-
           </a>
           <div style="padding-left: 14px">
                 <span ng-bind-html="display_comment(index_path.comment) | sanitize"></span>
