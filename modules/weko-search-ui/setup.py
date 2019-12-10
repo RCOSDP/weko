@@ -123,7 +123,7 @@ setup(
             'weko_admin_item_import_css = '
             'weko_search_ui.bundles:weko_admin_item_import_css',
             'weko_moment_js = '
-            'weko_search_ui.bundles:weko_monent_js',
+            'weko_search_ui.bundles:weko_moment_js',
         ],
         'invenio_i18n.translations': [
             'messages = weko_search_ui',
