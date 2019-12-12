@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 
 from functools import partial
 
-from flask import current_app
+from flask import current_app, request
 from lxml import etree
 from lxml.builder import E
 from lxml.etree import Element
@@ -57,6 +57,7 @@ def serializer(metadata_prefix):
     """
     metadataFormats = get_oai_metadata_formats(current_app)
     serializer_ = metadataFormats[metadata_prefix]['serializer']
+
     if isinstance(serializer_, tuple):
         return partial(import_string(serializer_[0]), **serializer_[1])
     return import_string(serializer_)
@@ -168,3 +169,19 @@ def friends_description(baseURLs):
     for baseURL in baseURLs:
         friends.append(E('baseURL', baseURL))
     return etree.tostring(friends, pretty_print=True)
+
+
+def update_custom_mapping(root, **kwargs):
+    """Dump MARC21 compatible record.
+
+    :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
+        instance.
+    :param record: The :class:`invenio_records.api.Record` instance.
+    :returns: A LXML Element instance.
+    """
+    file_custom = root.find("file_custom")
+    e_custom_uri = file_custom.find('jpcoar:URI', namespaces=root.nsmap)
+    if e_custom_uri is not None and 'record_id' in kwargs:
+        e_custom_uri.text = '{}record/{}/files/{}'.format(request.url_root, kwargs['record_id'], e_custom_uri.text)
+
+    return root

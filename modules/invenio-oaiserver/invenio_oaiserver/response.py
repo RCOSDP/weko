@@ -25,7 +25,7 @@ from .models import OAISet
 from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
-from .utils import datetime_to_datestamp, serializer
+from .utils import datetime_to_datestamp, serializer, update_custom_mapping
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -303,7 +303,11 @@ def getrecord(**kwargs):
     )
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
-    e_metadata.append(record_dumper(pid, {'_source': record}))
+    # e_metadata.append(record_dumper(pid, {'_source': record}))
+    root = record_dumper(pid, {'_source': record})
+    ret_root = update_custom_mapping(root, record_id=record.dumps().get('recid'))
+
+    e_metadata.append(ret_root)
 
     return e_tree
 
