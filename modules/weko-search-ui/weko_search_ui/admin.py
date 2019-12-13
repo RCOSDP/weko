@@ -273,8 +273,6 @@ class ItemImportView(BaseView):
     @expose('/import', methods=['POST'])
     def import_items(self) -> jsonify:
         """Register an item type mapping."""
-        import redis
-        from rq import Connection, Queue
         from .tasks import import_item
         data = request.get_json() or {}
         tasks = []
