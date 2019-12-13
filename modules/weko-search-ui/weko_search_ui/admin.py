@@ -319,7 +319,7 @@ class ItemImportView(BaseView):
                             "task_status": task.status,
                             "task_result": task.result,
                             "start_date": start_date,
-                            "end_date": end_date,
+                            "end_date": task_item.get("end_date") or end_date,
                             "task_id": task_id,
                             "item_id": task_item.get("item_id"),
                         }))
