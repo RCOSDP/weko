@@ -27,7 +27,7 @@ let PageBodyGrid = function () {
             width: 12,
             float: true,
             verticalMargin: 4,
-            cellHeight: 80,
+            cellHeight: 10,
             acceptWidgets: '.grid-stack-item'
         };
         let widget = $('#page_body');
@@ -577,9 +577,9 @@ let WidgetTheme = function () {
             setClass = "grid-stack-item-content panel header-footer-type";
         }
         let result = '<div class="grid-stack-item widget-resize">' +
-            '    <div class="' +setClass +'" style="' + borderStyle + '">' +
+            '    <div class="' + setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + ' " style="padding-top: 30px; overflow: hidden!important; padding-bottom: 0!important;'+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
@@ -677,7 +677,7 @@ function getWidgetDesignSetting() {
                         $('.widget-resize').each(function () {
                             let headerElementHeight = $(this).find('.panel-heading').height();
                             $(this).find('.panel-body').css("padding-top", String(headerElementHeight + 11) + "px");
-                            $(this).find('.panel-body').css("bottom", "10px");
+                            // $(this).find('.panel-body').css("bottom", "10px");
                         });
                     });
 
@@ -692,15 +692,17 @@ function getWidgetDesignSetting() {
                           let newHeight = Math.ceil((scrollHeight + verticalMargin) / (cellHeight + verticalMargin));
                           let parent = _this.closest(".grid-stack-item");
                           let width = parent.data("gsWidth");
-                          let headerHeight = _this.siblings(".widget-header").height() + 20;
-                          let newClientHeight = (newHeight * (cellHeight + verticalMargin) - (verticalMargin + headerHeight));
-                          if (clientHeight > newClientHeight) {
-                            pageBodyGrid.resizeWidget(parent, width, newHeight + 1);
-                          } else if ((newClientHeight - (cellHeight + verticalMargin)) > clientHeight) {
-                            let subValue = Math.ceil((newClientHeight - scrollHeight + verticalMargin) / (cellHeight + verticalMargin));
-                            pageBodyGrid.resizeWidget(parent, width, newHeight - 1);
+                          let isUpdated = _this.data("isUpdated");
+                          if (isUpdated) {
+                            let currentClientHeight = newHeight * (cellHeight + verticalMargin);
+                            if (currentClientHeight > scrollHeight) {
+                              pageBodyGrid.resizeWidget(parent, width, newHeight - 1);
+                            } else {
+                              pageBodyGrid.resizeWidget(parent, width, newHeight);
+                            }
                           } else {
-                            pageBodyGrid.resizeWidget(parent, width, newHeight);
+                            pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
+                            _this.data("isUpdated", true);
                           }
                         }
                       });
@@ -723,6 +725,24 @@ function getWidgetDesignSetting() {
                         }
                       }
                     });
+
+                  new ResizeSensor($('#header_content'), function () {
+                    let headerContent = $('#header_content').closest(".grid-stack-item");
+                    let scrollHeight = headerContent.prop("scrollHeight");
+                    let clientHeight = headerContent.prop("clientHeight");
+                    let currentHeight = headerContent.data("gsHeight");
+                    if (scrollHeight > clientHeight) {
+                      let cellHeight = pageBodyGrid.getCellHeight();
+                      let verticalMargin = pageBodyGrid.getVerticalMargin();
+                      let newHeight = Math.ceil((scrollHeight + verticalMargin) / (cellHeight + verticalMargin));
+                      let width = headerContent.data("gsWidth");
+                      if (newHeight > currentHeight) {
+                        pageBodyGrid.resizeWidget(headerContent, width, newHeight);
+                      } else if (newHeight === currentHeight) {
+                        pageBodyGrid.resizeWidget(headerContent, width, newHeight + 1);
+                      }
+                    }
+                  });
 
                 }
                 else {  // Pages are able to not have main content, so hide if widget is not present
