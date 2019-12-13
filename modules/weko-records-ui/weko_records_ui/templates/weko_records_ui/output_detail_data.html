@@ -56,10 +56,16 @@
 
 {% macro output_attribute_value_mlt(attribute_value_mlt, level, parrent_name) %}
     {%- for attribute_data in attribute_value_mlt -%}
+        {%- set displayflag = True -%}
         {% if parrent_name %}
-            {{ child_data(parrent_name, '', level) }}
+            {%- set labels = parrent_name.split('.') -%}
+            {%- if labels|length == 1 or labels[0] != 'creatorMails' or config['EMAIL_DISPLAY_FLG'] -%}
+                {{ child_data(parrent_name, '', level) }}
+            {%- else -%}
+                {%- set displayflag = False -%}
+            {%- endif -%}
         {% endif %}
-        {%- if attribute_data is mapping -%}
+        {%- if attribute_data is mapping and displayflag -%}
             {%- for k, v in attribute_data.items() -%}
                 {%- if v is string or k.split('.')[0] == 'nameIdentifier' -%}
                     {{ child_data(k, v, level) }}
@@ -67,7 +73,7 @@
                     {{ output_attribute_value_mlt(v, level, k) }}
                 {%- endif -%}
             {%- endfor -%}
-        {%- elif attribute_data is iterable and attribute_data is not string -%}
+        {%- elif attribute_data is iterable and attribute_data is not string and displayflag -%}
             {% if parrent_name %}
                 {{ output_attribute_value_mlt(attribute_data, level + 1) }}
             {% else %}
@@ -101,7 +107,7 @@
 {% endmacro %}
 
 {% macro output_creator(creator_key, creator_data) %}
-    {%- if creator_key == 'creatorMail' and config['EMAIL_DISPLAY_FLG'] -%}
+    {%- if creator_key == 'creatorMail' -%}
       <a href="{{ 'mailto:' + creator_data }}">{{ creator_data }}</a>
     {%- elif creator_key == 'creatorName' and 'name' == config['ITEM_SEARCH_FLG'] -%}
         {%- set q = 'creator=' + creator_data -%}
