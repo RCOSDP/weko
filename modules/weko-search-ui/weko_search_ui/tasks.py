@@ -32,5 +32,5 @@ def import_item(item):
                             "%Y-%m-%d %H:%M:%S")
     result = import_items_to_system(item) or dict()
     result['start_date'] = start_date
-    time.sleep(randint(1, 15))
+    # time.sleep(randint(1, 15))
     return result
