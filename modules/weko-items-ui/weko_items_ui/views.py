@@ -796,11 +796,8 @@ def prepare_edit_item():
                 workflow_activity = activity.get_workflow_activity_by_item_id(
                     pid_object.object_uuid
                 )
-                if not workflow_activity:
-                    return jsonify(
-                        code=-1,
-                        msg=_(r"The Workflow of this Item is not found.")
-                    )
+                # if workflow of the item is not found
+                # use default settings of item type to which the item belongs
             else:
                 # show error when has stt is Begin or Doing
                 if workflow_activity.action_status == \
