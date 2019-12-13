@@ -49,7 +49,9 @@ const next = document.getElementById("next").value;
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin+'/api/tree'
 const urlCheck = window.location.origin+'/admin/items/import/check'
-const urlDownload = window.location.origin+'/admin/items/import/download'
+const urlCheckStatus = window.location.origin+'/admin/items/import/check_status'
+const urlDownloadCheck = window.location.origin+'/admin/items/import/download_check'
+const urlDownloadImport = window.location.origin+'/admin/items/import/download_import'
 const urlImport = window.location.origin+'/admin/items/import/import'
 
 class MainLayout extends React.Component {
@@ -77,7 +79,9 @@ class MainLayout extends React.Component {
         }
       ],
       list_record: [],
-      is_import: true
+      tasks: [],
+      is_import: true,
+      import_status: false
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
@@ -124,7 +128,6 @@ class MainLayout extends React.Component {
             that.handleChangeTab('import');
           })
         } else {
-          console.log(response.msg);
           alert(response.error || '')
         }
       },
@@ -147,24 +150,20 @@ class MainLayout extends React.Component {
       url: urlImport,
       type: 'POST',
       data: JSON.stringify({
-        list_record,
+        list_record: list_record.filter(item => !item.errors),
         root_path
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
       success: function (response) {
-        console.log(response)
-        console.log(root_path)
           that.setState(()=>{
             return {
-              step: 2
+              step: 2,
+              tasks: response.data.tasks,
             }
           }, ()=>{
             that.handleChangeTab('result');
           })
-          const mess = 'Import success :'+response.success+'\n'+ "Import failure :"+ response.failure_list
-          alert(mess)
-//          that.getStatus(response.data.task_id)
       },
       error: function (error) {
         console.log(error);
@@ -172,25 +171,35 @@ class MainLayout extends React.Component {
     });
   }
 
-  getStatus(taskID) {
+  getStatus() {
     const that = this
+    const {tasks, root_path} = this.state
+    that.setState({
+      import_status: false
+    })
     $.ajax({
-      url: urlImport+'/'+taskID,
-      method: 'GET'
+      url: urlCheckStatus,
+      method: 'POST',
+      data: JSON.stringify({
+        tasks,
+        root_path
+      }),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
     })
     .done((res) => {
-      console.log(res)
-      const html = `
-      <tr>
-        <td>${res.data.task_id}</td>
-        <td>${res.data.task_status}</td>
-        <td>${res.data.task_result}</td>
-      </tr>`
-      $('#tasks').prepend(html);
-      const taskStatus = res.data.task_status;
-      if (taskStatus === 'finished' || taskStatus === 'failed') return false;
+
+      that.setState({
+        tasks: res.result
+      })
+      if (res.status === 'done'){
+        that.setState({
+          import_status: true
+        })
+        return
+      }
       setTimeout(function() {
-        that.getStatus(res.data.task_id);
+        that.getStatus();
       }, 1000);
     })
     .fail((err) => {
@@ -199,7 +208,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const {tab, tabs, list_record,is_import} = this.state
+    const {tab, tabs, list_record,is_import,tasks ,import_status} = this.state
     return(
       <div>
         <ul className="nav nav-tabs">
@@ -224,9 +233,14 @@ class MainLayout extends React.Component {
           ></CheckComponent>
         </div>
         <div className={`${tab === tabs[2].tab_key ? '': 'hide'}`}>
-          <ResultComponent
-            list_record={list_record || []}
+          {
+            tab === tabs[2].tab_key && <ResultComponent
+            tasks={tasks || []}
+            getStatus={this.getStatus}
+            import_status = {import_status}
           ></ResultComponent>
+          }
+
         </div>
       </div>
     )
@@ -472,7 +486,7 @@ class ImportComponent extends React.Component {
 
                     onClick={()=>{file && this.handleSubmit()}}
                   >
-                    {next}<span className="glyphicon glyphicon-chevron-right"></span>
+                    {next}<span className="glyphicon glyphicon-chevron-right icon"></span>
                   </button>
                 </div>
               </div>
@@ -806,8 +820,8 @@ class CheckComponent extends React.Component {
     const result = Array.from(list_record, (item, key) => {
       return {
         'No': key,
-        'Item type': item.item_type_name,
-        'Item id': item.id,
+        'Item Type': item.item_type_name,
+        'Item Id': item.id,
         'Title' : (item['Title'] && item['Title'][0] && item['Title'][0]['Title']) ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title'] ? item['Title']['Title'] : '',
         'Check result': item['errors'] ? 'ERRORS' + (item['errors'][0] ? ': '+item['errors'][0] : '' ) : item.status === 'new' ? 'Register' : item.status === 'update' ? 'Update' : ''
       }
@@ -815,7 +829,7 @@ class CheckComponent extends React.Component {
     const data = {
       list_result: result
     }
-    fetch(urlDownload, {
+    fetch(urlDownloadCheck, {
       method: 'POST',
       body: JSON.stringify(data),
       headers: {
@@ -836,8 +850,7 @@ class CheckComponent extends React.Component {
       a.click();
       window.URL.revokeObjectURL(url);
     })
-    .catch(() => alert('oh no!'));
-
+    .catch(() => alert('Error in download'));
   }
 
   render(){
@@ -881,7 +894,7 @@ class CheckComponent extends React.Component {
                   className="btn btn-primary"
                   onClick={this.handleDownload}
                  >
-                  <span className="glyphicon glyphicon-cloud-download"></span>{download}
+                  <span className="glyphicon glyphicon-cloud-download icon"></span>{download}
                  </button>
               </div>
             </div>
@@ -938,41 +951,63 @@ class ResultComponent extends React.Component {
   constructor(){
     super()
     this.state = {
-      list_record: []
     }
     this.handleDownload = this.handleDownload.bind(this)
   }
 
-  handleDownload(){
-    console.log('download')
+  componentDidMount(){
+    this.props.getStatus()
   }
 
-  componentWillReceiveProps(nextProps,prevProps){
-    const {list_record} = nextProps
-    const new_data = Array.from(list_record, item => {
-      return{
-        id : item.id,
-        action: 'end',
-        start_date: moment(),
-        end_date: moment().add(1, 'days'),
-        wf_status: 'done'
+  handleDownload() {
+    const {tasks} = this.props
+    const result = Array.from(tasks, (item, key) => {
+      return {
+        'No': key+1,
+        'Start Date': item.start_date ? item.start_date : '',
+        'End Date': item.end_date ? item.end_date : '',
+        'Item Id': item.item_id || '',
+        'Action' : item.task_result ? item.task_result.success ? "End" : item.task_result.error ? "Error" : "" : "Start",
+        'Work Flow Status': item.task_status ? item.task_status === "PENDING" ? "To Do" : item.task_status === "SUCCESS" ? "Done" : item.task_status === "FAILURE" ? "FAILURE" : '' : ''
       }
     })
-    this.setState({
-      list_record: new_data
+    const data = {
+      list_result: result
+    }
+    fetch(urlDownloadImport, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+     })
+    .then(resp => resp.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      // the filename you want
+      const date = moment()
+      a.download = 'List_Download '+ date.format("YYYY-DD-MM")+'.tsv';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
     })
+    .catch(() => alert('Error in download'));
   }
 
   render(){
-    const {list_record} = this.state
+    const {tasks, import_status} = this.props
     return(
       <div className="result_container row">
         <div className="col-md-12 text-align-right">
           <button
             className="btn btn-primary"
             onClick={this.handleDownload}
+            disabled={!import_status}
            >
-            <span className="glyphicon glyphicon-cloud-download"></span>{download}
+            <span className="glyphicon glyphicon-cloud-download icon"></span>{download}
            </button>
         </div>
         <div className="col-md-12 m-t-20">
@@ -980,8 +1015,8 @@ class ResultComponent extends React.Component {
               <thead>
                 <tr>
                   <th>{no}</th>
-                  <th><p className="t_head start_date">{start_date}</p></th>
-                  <th><p className="t_head end_date">{end_date}</p></th>
+                  <th className="start_date"><p className="t_head">{start_date}</p></th>
+                  <th className="end_date"><p className="t_head ">{end_date}</p></th>
                   <th><p className="t_head item_id">{item_id}</p></th>
                   <th><p className="t_head action">{action}</p></th>
                   <th><p className="t_head wf_status">{work_flow_status}</p></th>
@@ -989,19 +1024,20 @@ class ResultComponent extends React.Component {
               </thead>
               <tbody>
                 {
-                  list_record.map((item, key) => {
+                  tasks.map((item, key) => {
                     return (
                       <tr key={key}>
                         <td>
                           {key+1}
                         </td>
-                        <td>{item.start_date ? item.start_date.format("YYYY-MM-DD hh:mm:ss"): ''}</td>
-                        <td>{item.end_date ? item.end_date.format("YYYY-MM-DD hh:mm:ss"): ''}</td>
-                        <td>{item.id || ''}</td>
-                        <td>{item.action && item.action === 'end' ? end : ''}</td>
+                        <td>{item.start_date ? item.start_date : ''}</td>
+                        <td>{item.end_date ? item.end_date : ''}</td>
+                        <td>{item.item_id || ''}</td>
+                        <td>{item.task_result ? item.task_result.success ? end : item.task_result.error ? "Error" : "" : "Start"}</td>
                         <td>
-                          {item.wf_status && item.wf_status === 'to_do' ? to_do: ''}
-                          {item.wf_status && item.wf_status === 'done' ? done: ''}
+                          {item.task_status && item.task_status === "PENDING" ? to_do : ''}
+                          {item.task_status && item.task_status === "SUCCESS" ? done : ''}
+                          {item.task_status && item.task_status === "FAILURE" ? "FAILURE" : ''}
                          </td>
                       </tr>
                     )

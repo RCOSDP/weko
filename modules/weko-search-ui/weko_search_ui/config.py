@@ -395,3 +395,11 @@ WEKO_FLOW_DEFINE_LIST_ACTION = [
         "action": "ADD"
     }
 ]
+
+WEKO_IMPORT_CHECK_LIST_NAME = [
+    'No', 'Item Type', 'Item Id', 'Title', 'Check result'
+]
+
+WEKO_IMPORT_LIST_NAME = [
+    'No', 'Start Date', 'End Date', 'Item Id', 'Action', 'Work Flow Status'
+]

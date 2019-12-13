@@ -22,6 +22,7 @@
 
 import json
 from datetime import datetime
+import os
 
 from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request
@@ -35,7 +36,7 @@ from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .utils import check_import_items, delete_records, get_content_workflow, \
-    get_tree_items, import_items_to_system, make_stats_tsv
+    get_tree_items, import_items_to_system, make_stats_tsv, remove_temp_dir
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -240,15 +241,19 @@ class ItemImportView(BaseView):
 
         return jsonify(code=1, list_record=list_record, data_path=data_path)
 
-    @expose('/download', methods=['POST'])
-    def download(self):
+    @expose('/download_check', methods=['POST'])
+    def download_check(self):
         """Register an item type mapping."""
+        from .config import WEKO_IMPORT_CHECK_LIST_NAME
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
 
         file_name = "check_" + now + ".tsv"
         if data:
-            tsv_file = make_stats_tsv(data.get('list_result'))
+            tsv_file = make_stats_tsv(
+                data.get('list_result'),
+                WEKO_IMPORT_CHECK_LIST_NAME
+            )
             return Response(
                 tsv_file.getvalue(),
                 mimetype="text/tsv",
@@ -268,15 +273,96 @@ class ItemImportView(BaseView):
     @expose('/import', methods=['POST'])
     def import_items(self) -> jsonify:
         """Register an item type mapping."""
-        data = request.get_json()
+        import redis
+        from rq import Connection, Queue
+        from .tasks import import_item
+        data = request.get_json() or {}
+        tasks = []
+        list_record = [item for item in data.get(
+            'list_record', []) if not item.get(
+            'errors')]
+        for item in list_record:
+            item['root_path'] = data.get('root_path')
+            task = import_item.delay(item)
+            tasks.append({
+                'task_id': task.task_id,
+                'item_id': item.get('id'),
+            })
         response_object = {
             "status": "success",
+            "data": {
+                "tasks": tasks
+            }
         }
-        result = dict()
-        if data:
-            result = import_items_to_system(data)
+        return jsonify(response_object)
 
-        return jsonify(dict(**response_object, **result))
+    @expose("/check_status", methods=["POST"])
+    def get_status(self):
+        from .tasks import import_item
+        data = request.get_json()
+        result = []
+        if data and data.get('tasks'):
+            status = 'done'
+            for task_item in data.get('tasks'):
+                task_id = task_item.get('task_id')
+                task = import_item.AsyncResult(task_id)
+
+                if task:
+                    if isinstance(task.result, dict):
+                        start_date = task.result.get("start_date")
+                    else:
+                        start_date = ''
+                    if task.successful() or task.failed():
+                        end_date = datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S")
+                    else:
+                        end_date = ''
+                    result.append(dict(**{
+                            "task_status": task.status,
+                            "task_result": task.result,
+                            "start_date": start_date,
+                            "end_date": end_date,
+                            "task_id": task_id,
+                            "item_id": task_item.get("item_id"),
+                        }))
+                    if not (task.successful() or task.failed()):
+                        status = 'doing'
+
+            response_object = {"status": status, "result": result}
+        else:
+            response_object = {"status": "error", "result": result}
+        if response_object.get("status") in ["done", "error"]:
+            remove_temp_dir(data.get("root_path"))
+        return jsonify(response_object)
+
+    @expose('/download_import', methods=['POST'])
+    def download_import(self):
+        """Register an item type mapping."""
+        from .config import WEKO_IMPORT_LIST_NAME
+        data = request.get_json()
+        now = str(datetime.date(datetime.now()))
+
+        file_name = "List_Download " + now + ".tsv"
+        if data:
+            tsv_file = make_stats_tsv(
+                data.get('list_result'),
+                WEKO_IMPORT_LIST_NAME
+            )
+            return Response(
+                tsv_file.getvalue(),
+                mimetype="text/tsv",
+                headers={
+                    "Content-disposition": "attachment; filename=" + file_name
+                }
+            )
+        else:
+            return Response(
+                [],
+                mimetype="text/tsv",
+                headers={
+                    "Content-disposition": "attachment; filename=" + file_name
+                }
+            )
 
 
 item_management_bulk_search_adminview = {

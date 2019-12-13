@@ -35,7 +35,7 @@ from functools import reduce
 from operator import getitem
 
 import bagit
-from flask import abort, current_app, jsonify, request
+from flask import Flask, abort, current_app, jsonify, request
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
@@ -670,7 +670,7 @@ def compare_identifier(item, item_exist):
     return item
 
 
-def make_stats_tsv(raw_stats):
+def make_stats_tsv(raw_stats, list_name):
     """Make TSV report file for stats."""
     import csv
     from io import StringIO
@@ -679,7 +679,6 @@ def make_stats_tsv(raw_stats):
     writer = csv.writer(tsv_output, delimiter='\t',
                         lineterminator="\n")
 
-    list_name = ['No', 'Item type', 'Item id', 'Title', 'Check result']
     writer.writerow(list_name)
     for item in raw_stats:
         term = []
@@ -724,7 +723,7 @@ def check_identifier_new(item):
     return item
 
 
-def create_deposit(rids):
+def create_deposit(item_id):
     """Create deposit.
 
     :argument
@@ -735,55 +734,45 @@ def create_deposit(rids):
     from invenio_db import db
     from weko_deposit.api import WekoDeposit
     try:
-        for rid in rids:
-            try:
-                WekoDeposit.create({}, recid=int(rid))
-                db.session.commit()
-                current_app.logger.info('Deposit id: %s created.' % rid)
-            except Exception as ex:
-                current_app.logger.error(
-                    'Error occurred during creating deposit id: %s' % rid)
-                current_app.logger.info(str(ex))
-                db.session.rollback()
+        try:
+            WekoDeposit.create({}, recid=int(item_id))
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        pass
 
 
-def up_load_file_content(list_record, file_path):
+def up_load_file_content(record, root_path):
     """Upload file content.
 
     :argument
-        list_record    -- {list} list item import.
-        file_path      -- {str} file path.
+        record         -- {dict} item import.
+        root_path      -- {str} root_path.
 
     """
     try:
-        for record in list_record:
-            try:
-                if record.get('file_path'):
-                    current_app.logger.debug(record.get('file_path'))
-                    for file_name in record.get('file_path'):
-                        current_app.logger.debug(file_path + '/' + file_name)
-                        with open(file_path + '/' + file_name,
-                                  'rb') as file:
-                            pid = PersistentIdentifier.query.filter_by(
-                                pid_type='recid',
-                                pid_value=record.get('id')).first()
-                            rec = RecordMetadata.query.filter_by(
-                                id=pid.object_uuid).first()
-                            bucket = rec.json['_buckets']['deposit']
-                            obj = ObjectVersion.create(
-                                bucket,
-                                get_file_name(file_name)
-                            )
-                            obj.set_contents(file)
-                            db.session.commit()
-            except Exception as ex:
-                current_app.logger.info(str(ex))
-                db.session.rollback()
+        try:
+            if record.get('file_path'):
+                for file_name in record.get('file_path'):
+                    with open(root_path + '/' + file_name,
+                              'rb') as file:
+                        pid = PersistentIdentifier.query.filter_by(
+                            pid_type='recid',
+                            pid_value=record.get('id')).first()
+                        rec = RecordMetadata.query.filter_by(
+                            id=pid.object_uuid).first()
+                        bucket = rec.json['_buckets']['deposit']
+                        obj = ObjectVersion.create(
+                            bucket,
+                            get_file_name(file_name)
+                        )
+                        obj.set_contents(file)
+                        db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-
+        pass
 
 def get_file_name(file_path):
     """Get file name.
@@ -796,74 +785,72 @@ def get_file_name(file_path):
     return file_path.split('/')[-1] if file_path.split('/')[-1] else ''
 
 
-def register_item_metadata(list_record):
+def register_item_metadata(item):
     """Upload file content.
 
     :argument
         list_record    -- {list} list item import.
         file_path      -- {str} file path.
     """
+    from weko_workflow.utils import merge_buckets_by_records
     try:
-        success_count = 0
-        failure_list = []
-        item_id = 0
-        for data in list_record:
-            try:
-                item_id = str(data.get('id'))
-                item_status = {
-                    'index': data.get('IndexID'),
-                    'actions': 'publish',
-                }
-
-                pid = PersistentIdentifier.query.filter_by(
-                    pid_type='recid',
-                    pid_value=item_id
-                ).first()
-                r = RecordMetadata.query.filter_by(
-                    id=pid.object_uuid).first()
-                _depisit_data = r.json.get('_deposit')
-                dep = WekoDeposit(r.json, r)
-                #
-                new_data = dict(
-                    **data.get('metadata'),
-                    **_depisit_data,
-                    **{
-                        '$schema': data.get('$schema'),
-                        'title': handle_get_title(data.get('Title')),
-                    }
-                )
-                if not new_data.get('pid'):
-                    new_data = dict(**new_data, **{
-                        'pid': {
-                            'revision_id': 0,
-                            'type': 'recid',
-                            'value': item_id
-                        }
-                    })
-                dep.update(item_status, new_data)
-                dep.commit()
-                dep.publish()
-                handle_workflow(data)
-                with current_app.test_request_context():
-                    first_ver = dep.newversion(pid)
-                    first_ver.publish()
-                db.session.commit()
-
-                success_count += 1
-            except Exception as ex:
-                db.session.rollback()
-                current_app.logger.error('item id: %s update error.' % item_id)
-                current_app.logger.error(ex)
-                failure_list.append(item_id)
-        current_app.logger.info('%s items updated.' % success_count)
-        current_app.logger.info('failure list:')
-        current_app.logger.info(failure_list)
-        return {
-            'success': success_count,
-            'failure_list': len(failure_list) or 0
+        item_id = str(item.get('id'))
+        item_status = {
+            'index': item.get('IndexID'),
+            'actions': 'publish',
         }
-    except Exception as e:
-        current_app.logger.error(e)
+
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value=item_id
+        ).first()
+        # r = RecordMetadata.query.filter_by(
+        #     id=pid.object_uuid).first()
+
+        record = WekoDeposit.get_record(pid.object_uuid)
+
+        _deposit_data = record.dumps().get("_deposit")
+        deposit = WekoDeposit(record, record.model)
+        new_data = dict(
+            **item.get('metadata'),
+            **_deposit_data,
+            **{
+                '$schema': item.get('$schema'),
+                'title': handle_get_title(item.get('Title')),
+            }
+        )
+        if not new_data.get('pid'):
+            new_data = dict(**new_data, **{
+                'pid': {
+                    'revision_id': 0,
+                    'type': 'recid',
+                    'value': item_id
+                }
+            })
+        deposit.update(item_status, new_data)
+        deposit.commit()
+        deposit.publish()
+        handle_workflow(item)
+        with current_app.test_request_context():
+            first_ver = deposit.newversion(pid)
+            first_ver.publish()
+        # record_bucket_id = merge_buckets_by_records(
+        #     pid.object_uuid,
+        #     _deposit_data.get("id"),
+        #     sub_bucket_delete=True
+        # )
+        db.session.commit()
+        return {
+            'success': True
+        }
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error('item id: %s update error.' % item_id)
+        current_app.logger.error(ex)
+        return {
+            'success': False,
+            'error': str(ex)
+        }
 
 
 def handle_get_title(title) -> str:
@@ -930,12 +917,6 @@ def create_work_flow(item_type_id):
             data.flow_id = flow_define.id
             db.session.add(data)
         db.session.commit()
-        current_app.logger.info('creating workflow is finished')
-    else:
-        if not flow_define:
-            current_app.logger.error('workflow define is not exist')
-        if not it:
-            current_app.logger.error('item type is not exist')
 
 
 def create_flow_define():
@@ -945,7 +926,7 @@ def create_flow_define():
     the_flow.upt_flow_action(flow.flow_id, WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-def import_items_to_system(data: dict):
+def import_items_to_system(item: dict):
     """Validation importing zip file.
 
     :argument
@@ -954,19 +935,23 @@ def import_items_to_system(data: dict):
         return       -- PID object if exist.
 
     """
-    list_record = data.get('list_record')
-    list_record = [item for item in list_record if not item.get(
-        'errors')]
-    ids = [
-        item.get('id', None)
-        for item in list_record if item.get('status') == 'new'
-    ]
+    if not item:
+        return None
+    else:
+        root_path = item.get('root_path', '')
+        if item.get('status') == 'new' and item.get('id'):
+            create_deposit(item.get('id'))
+        up_load_file_content(item, root_path)
+        response = register_item_metadata(item)
+        return response
 
-    create_deposit(ids)
-    file_path = data.get('root_path')
-    up_load_file_content(list_record, file_path)
-    response = register_item_metadata(list_record)
 
-    # Remove tempDir
-    shutil.rmtree(str(file_path.replace("/data", "")))
-    return response
+def remove_temp_dir(path):
+    """Validation importing zip file.
+
+    :argument
+        path     -- {string} path temp_dir.
+    :return
+
+    """
+    shutil.rmtree(str(path.replace("/data", "")))
