@@ -1,0 +1,237 @@
+# French translations for invenio-communities.
+# Copyright (C) 2016 CERN
+# This file is distributed under the same license as the invenio-communities
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-communities 1.0.0a9\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2016-08-24 17:04+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Alizee Pace <alizee.pace@gmail.com>, 2016\n"
+"Language: fr\n"
+"Language-Team: French "
+"(https://www.transifex.com/inveniosoftware/teams/23537/fr/)\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+
+#: invenio_communities/admin.py:92 invenio_communities/admin.py:98
+#: invenio_communities/admin.py:104 invenio_communities/views/ui.py:119
+msgid "Communities"
+msgstr "Communautés"
+
+#: invenio_communities/forms.py:90
+#: invenio_communities/templates/invenio_communities/mycommunities.html:39
+msgid "Identifier"
+msgstr "Identifiant"
+
+#: invenio_communities/forms.py:91
+msgid ""
+"Required. Only letters, numbers and dash are allowed. The identifier is "
+"used in the URL for the community collection, and cannot be modified "
+"later."
+msgstr ""
+"Champ obligatoire. Seuls les lettres, chiffres et tirets sont autorisés. "
+"L'identifiant est utilisé dans l'URL de la collection de la communauté, "
+"et ne peut pas être modifié par la suite."
+
+#: invenio_communities/forms.py:97
+msgid "The identifier must be less than 100 characters long."
+msgstr "L'identifiant doit faire moins de 100 caractères."
+
+#: invenio_communities/forms.py:101
+msgid "Only letters, numbers and dash are allowed"
+msgstr "Seuls les lettres, chiffres et tirets sont autorisés."
+
+#: invenio_communities/forms.py:106
+msgid "Required."
+msgstr "Champ obligatoire."
+
+#: invenio_communities/forms.py:111
+msgid ""
+"Optional. A short description of the community collection, which will be "
+"displayed on the index page of the community."
+msgstr ""
+"Facultatif. Une brève description de la collection de la communauté, qui "
+"sera publiée sur la page d'index de la communauté."
+
+#: invenio_communities/forms.py:117
+msgid ""
+"Optional. Please describe briefly and precisely the policy by which you "
+"accepted/reject new uploads in this community."
+msgstr ""
+"Facultatif. Veuillez décrire de façon brève et précise les raisons pour "
+"lesquelles vous acceptez/rejetez les téléchargements dans cette "
+"communauté."
+
+#: invenio_communities/forms.py:123
+msgid ""
+"Optional. A long description of the community collection, which will be "
+"displayed on a separate page linked from the index page."
+msgstr ""
+"Facultatif. Une longue description de la collection de la communauté. "
+"Elle sera publiée sur une page distincte à laquelle donnera accès un lien"
+" sur la page d'index."
+
+#: invenio_communities/forms.py:137
+msgid "Logo"
+msgstr "Logo"
+
+#: invenio_communities/forms.py:138
+msgid ""
+"Optional. Image file used to aid and promote instant public recognition. "
+"Supported formats: png and jpg. Max file size: 1.5MB"
+msgstr ""
+"Facultatif. Un fichier image pour aider et promouvoir une reconnaissance "
+"immédiate du public. Formats supportés: png et jpg. Taille de fichier "
+"maximum: 1.5MB."
+
+#: invenio_communities/forms.py:153
+msgid "The identifier already exists. Please choose a different one."
+msgstr "Cet identifiant est déjà pris. Veuillez en choisir un autre."
+
+#: invenio_communities/templates/invenio_communities/detail.html:34
+msgid "Search "
+msgstr "Chercher"
+
+#: invenio_communities/templates/invenio_communities/detail.html:48
+msgid "Error"
+msgstr "Erreur"
+
+#: invenio_communities/templates/invenio_communities/detail.html:54
+msgid "Loading..."
+msgstr "Chargement..."
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:28
+msgid "My communities"
+msgstr "Mes communautés"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:30
+#: invenio_communities/templates/invenio_communities/mycommunities.html:62
+msgid "New"
+msgstr "Nouveau"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:44
+msgid "Actions"
+msgstr "Actions"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:48
+msgid "View"
+msgstr "Affichage"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:49
+#: invenio_communities/templates/invenio_communities/mycommunities.html:68
+#: invenio_communities/templates/invenio_communities/mycommunities.html:82
+msgid "Curate"
+msgstr "Organiser"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:50
+msgid "Edit"
+msgstr "Modifier"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:58
+msgid "You currently have no community collections."
+msgstr "Vous n'avez pas de collections de communautés."
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:64
+#: invenio_communities/templates/invenio_communities/mycommunities.html:78
+msgid "Want your own community?"
+msgstr "Vous voulez votre propre communauté?"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:66
+#: invenio_communities/templates/invenio_communities/mycommunities.html:80
+msgid "It's easy. Just click the button to get started."
+msgstr "C'est facile. Cliquez sur le bouton pour commencer."
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:68
+#: invenio_communities/templates/invenio_communities/mycommunities.html:82
+msgid "accept/reject what goes in your community collection."
+msgstr "accepter/refuser ce qui entre dans votre collection de communauté."
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:69
+#: invenio_communities/templates/invenio_communities/mycommunities.html:83
+msgid "Export"
+msgstr "Exporter"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:69
+#: invenio_communities/templates/invenio_communities/mycommunities.html:83
+msgid "your community collection is automatically exported via OAI-PMH"
+msgstr "votre collection de communauté est exportée automatiquement via OAI-PMH"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:70
+#: invenio_communities/templates/invenio_communities/mycommunities.html:84
+msgid "Upload"
+msgstr "Télécharger"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:70
+#: invenio_communities/templates/invenio_communities/mycommunities.html:84
+msgid "get custom upload link to send to people"
+msgstr "obtenez un lien de téléchargement personalisé à envoyer à des tiers"
+
+#: invenio_communities/templates/invenio_communities/mycommunities.html:76
+msgid "Sign Up"
+msgstr "Inscription"
+
+#: invenio_communities/templates/invenio_communities/new.html:109
+msgid "New community"
+msgstr "Nouvelle communauté"
+
+#: invenio_communities/templates/invenio_communities/new.html:111
+msgid "Edit community"
+msgstr "Modifier la communauté"
+
+#: invenio_communities/templates/invenio_communities/portalbox_main.html:25
+msgid "Community"
+msgstr "Communauté"
+
+#: invenio_communities/templates/invenio_communities/portalbox_main.html:39
+msgid "Read more"
+msgstr "En savoir plus"
+
+#: invenio_communities/templates/invenio_communities/portalbox_main.html:46
+msgid "Curated by:"
+msgstr "Organisé par:"
+
+#: invenio_communities/templates/invenio_communities/portalbox_main.html:48
+msgid "Curation policy:"
+msgstr "Politique d'organisation:"
+
+#: invenio_communities/templates/invenio_communities/portalbox_main.html:48
+msgid "Not specified"
+msgstr "Non spécifié"
+
+#: invenio_communities/templates/invenio_communities/portalbox_main.html:49
+msgid "Created:"
+msgstr "Créé:"
+
+#: invenio_communities/templates/invenio_communities/portalbox_main.html:50
+msgid "Harvesting API:"
+msgstr ""
+
+#: invenio_communities/templates/invenio_communities/portalbox_main.html:50
+msgid "OAI-PMH Interface"
+msgstr "Interface OAI-PMH"
+
+#: invenio_communities/templates/invenio_communities/portalbox_upload.html:28
+#, python-format
+msgid ""
+"If your upload is rejected by the curator, it will still be available on "
+"%(name)s, just not in this community."
+msgstr ""
+"Si votre téléchargement est refusé par l'organisateur, il sera toujours "
+"disponible sur %(name)s, simplement pas dans cette communauté."
+
+#: invenio_communities/views/ui.py:194 invenio_communities/views/ui.py:235
+msgid ""
+"Cannot add this file as a logo. Supported formats:   png and jpg. Max "
+"file size: 1.5MB."
+msgstr ""
+"Impossible d'ajouter ce fichier comme logo. Formats supportés: png et "
+"jpg. Taille de fichier maximum: 1.5MB."
+
