@@ -362,6 +362,12 @@ class ItemImportView(BaseView):
                 }
             )
 
+    @expose('/test', methods=['POST'])
+    def download_import(self):
+        from .utils import handle_replace_new_index
+        result = handle_replace_new_index()
+        return jsonify(result)
+
 
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,

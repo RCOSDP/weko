@@ -596,6 +596,14 @@ class Indexes(object):
         return obj
 
     @classmethod
+    def get_index_by_name(cls, index_name="", pid=0):
+        """Get index."""
+        with db.session.begin_nested():
+            obj = db.session.query(Index). \
+                filter_by(index_name=index_name, parent=pid).one_or_none()
+        return obj
+
+    @classmethod
     def get_root_index_count(cls):
         """Get root index."""
         with db.session.begin_nested():

@@ -482,9 +482,9 @@ def handle_validate_item_import(list_recond, schema) -> list:
             else:
                 errors = ['ItemType is not exist']
 
-            if record.get('metadata').get('path') and not handle_check_index(
-                    record.get('metadata').get('path')):
-                errors.append('Index Error')
+            # if record.get('metadata').get('path') and not handle_check_index(
+            #         record.get('metadata').get('path')):
+            #     errors.append('Index Error')
 
         item_error = dict(**record, **{
             'errors': errors if len(errors) else None
@@ -577,14 +577,15 @@ def handle_check_exist_record(list_recond) -> list:
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])
             else:
-                try:
-                    item_exist = WekoRecord.get_record_by_pid(item.get('id'))
-                    if item_exist:
-                        item['errors'] = ['Item already exists in the system']
-                        item['status'] = None
-                except BaseException:
-                    current_app.logger.error('Unexpected error: ',
-                                             sys.exc_info()[0])
+                # try:
+                #     item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+                #     if item_exist:
+                #         item['errors'] = ['Item already exists in the system']
+                #         item['status'] = None
+                # except BaseException:
+                #     current_app.logger.error('Unexpected error: ',
+                #                              sys.exc_info()[0])
+                pass
         if item.get('status') == 'new':
             handle_remove_identifier(item)
         result.append(item)
@@ -819,6 +820,7 @@ def register_item_metadata(item):
                 'title': handle_get_title(item.get('Title')),
             }
         )
+        new_data['path'] = handle_replace_new_index()
         if not new_data.get('pid'):
             new_data = dict(**new_data, **{
                 'pid': {
@@ -955,3 +957,29 @@ def remove_temp_dir(path):
 
     """
     shutil.rmtree(str(path.replace("/data", "")))
+
+
+def handle_replace_new_index() -> list:
+    """Validation importing zip file.
+
+    :argument
+    :return
+        return       -- index id import item
+
+    """
+    from datetime import datetime
+    now = datetime.now()
+    index_import = Indexes.get_index_by_name("Index_import")
+    if index_import:
+        return [index_import.id]
+    else:
+        create_index = Indexes.create(
+            pid=0,
+            indexes={'id': int(datetime.timestamp(now)*10**3),
+                     'value': 'Index_import'}
+        )
+        if create_index:
+            index_import = Indexes.get_index_by_name("Index_import")
+            if index_import:
+                return [index_import.id]
+        return []
