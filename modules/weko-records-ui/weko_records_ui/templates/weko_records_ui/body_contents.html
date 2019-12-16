@@ -42,7 +42,6 @@
         <div id="detail-item" class="col-sm-9 col-md-9 col-lg-9 col-left">
           <div id="record_id" class="hide">{{ record.id }}</div>
           {%- block record_author %}
-          {%- set files = record.files -%}
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0-%}
 
