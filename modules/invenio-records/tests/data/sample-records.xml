@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Search-Engine-Total-Number-Of-Results: 378802 -->
+<collection xmlns="http://www.loc.gov/MARC21/slim">
+<record>
+  <controlfield tag="001">2033464</controlfield>
+  <controlfield tag="003">SzGeCERN</controlfield>
+  <controlfield tag="005">20150713073109.0</controlfield>
+  <datafield tag="024" ind1="7" ind2=" ">
+    <subfield code="2">DOI</subfield>
+    <subfield code="a">10.1007/978-1-4614-6170-8_247</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">oai:arXiv.org:1507.02851</subfield>
+    <subfield code="u">http://export.arxiv.org/oai2</subfield>
+    <subfield code="d">2015-07-13</subfield>
+    <subfield code="h">2015-07-13T05:19:24Z</subfield>
+    <subfield code="m">arXiv</subfield>
+    <subfield code="t">false</subfield>
+    <subfield code="9">arXiv</subfield>
+  </datafield>
+  <datafield tag="037" ind1=" " ind2=" ">
+    <subfield code="a">arXiv:1507.02851</subfield>
+  </datafield>
+  <datafield tag="041" ind1=" " ind2=" ">
+    <subfield code="a">eng</subfield>
+  </datafield>
+  <datafield tag="100" ind1=" " ind2=" ">
+    <subfield code="a">Zygmunt, Anna</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2=" ">
+    <subfield code="u">http://arxiv.org/pdf/1507.02851.pdf</subfield>
+    <subfield code="y">Preprint</subfield>
+  </datafield>
+  <datafield tag="916" ind1=" " ind2=" ">
+    <subfield code="s">n</subfield>
+    <subfield code="w">201528</subfield>
+  </datafield>
+  <datafield tag="245" ind1=" " ind2=" ">
+    <subfield code="a">Role Identification of Social Networkers</subfield>
+  </datafield>
+  <datafield tag="269" ind1=" " ind2=" ">
+    <subfield code="c">10 Jul 2015</subfield>
+  </datafield>
+  <datafield tag="300" ind1=" " ind2=" ">
+    <subfield code="a">mult. p</subfield>
+  </datafield>
+  <datafield tag="520" ind1=" " ind2=" ">
+    <subfield code="a">A social network consists of a set of actors and a set of relationships between them which describe certain patterns of communication. Most current networks are huge and difficult to analyze and visualize. One of the methods frequently used is to extract the most important features, namely to create a certain abstraction, that is the transformation of a large network to a much smaller one, so the latter is a useful summary of the original one, still keeping the most important characteristics. In the case of a social network it can be achieved in two ways. One is to find groups of actors and present only them and relationships between them. The other is to find actors who play similar roles and to construct a smaller network in which the connection between the actors would be replaced with connections between the roles. Classifying actors by the roles they are playing in the network can help to understand 'who is who' in a social network. This classification can be very useful, because it gives us a comprehensive view of the network and helps to understand how the network is organized, and to predict how it could behave in the case of certain events (internal or external).</subfield>
+  </datafield>
+  <datafield tag="540" ind1=" " ind2=" ">
+    <subfield code="u">http://arxiv.org/licenses/nonexclusive-distrib/1.0/</subfield>
+    <subfield code="b">arXiv</subfield>
+  </datafield>
+  <datafield tag="595" ind1=" " ind2=" ">
+    <subfield code="a">LANL EDS</subfield>
+  </datafield>
+  <datafield tag="650" ind1="1" ind2="7">
+    <subfield code="a">cs.SI</subfield>
+    <subfield code="2">arXiv</subfield>
+  </datafield>
+  <datafield tag="650" ind1="2" ind2="7">
+    <subfield code="a">Other Fields of Physics</subfield>
+    <subfield code="2">arXiv</subfield>
+  </datafield>
+  <datafield tag="695" ind1=" " ind2=" ">
+    <subfield code="a">cs.SI</subfield>
+    <subfield code="9">LANL EDS</subfield>
+  </datafield>
+  <datafield tag="695" ind1=" " ind2=" ">
+    <subfield code="a">physics.soc-ph</subfield>
+    <subfield code="9">LANL EDS</subfield>
+  </datafield>
+  <datafield tag="773" ind1=" " ind2=" ">
+    <subfield code="o">Encyclopedia of Social Network Analysis and Mining, 1598--1606, 2014</subfield>
+  </datafield>
+  <datafield tag="260" ind1=" " ind2=" ">
+    <subfield code="c">2015</subfield>
+  </datafield>
+  <datafield tag="690" ind1="C" ind2=" ">
+    <subfield code="a">ARTICLE</subfield>
+  </datafield>
+  <datafield tag="980" ind1=" " ind2=" ">
+    <subfield code="a">ARTICLE</subfield>
+  </datafield>
+  <datafield tag="960" ind1=" " ind2=" ">
+    <subfield code="a">13</subfield>
+  </datafield>
+</record>
+<record>
+  <controlfield tag="001">2033397</controlfield>
+  <controlfield tag="003">SzGeCERN</controlfield>
+  <controlfield tag="005">20150713072925.0</controlfield>
+  <datafield tag="024" ind1="7" ind2=" ">
+    <subfield code="2">DOI</subfield>
+    <subfield code="a">10.1016/j.pss.2013.10.006</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">oai:arXiv.org:1507.02823</subfield>
+    <subfield code="u">http://export.arxiv.org/oai2</subfield>
+    <subfield code="d">2015-07-13</subfield>
+    <subfield code="h">2015-07-13T05:16:08Z</subfield>
+    <subfield code="m">arXiv</subfield>
+    <subfield code="t">false</subfield>
+    <subfield code="9">arXiv</subfield>
+  </datafield>
+  <datafield tag="037" ind1=" " ind2=" ">
+    <subfield code="a">arXiv:1507.02823</subfield>
+  </datafield>
+  <datafield tag="041" ind1=" " ind2=" ">
+    <subfield code="a">eng</subfield>
+  </datafield>
+  <datafield tag="100" ind1=" " ind2=" ">
+    <subfield code="a">Grenfell, John Lee</subfield>
+  </datafield>
+  <datafield tag="700" ind1=" " ind2=" ">
+    <subfield code="a">Gebauer, Stefanie</subfield>
+  </datafield>
+  <datafield tag="700" ind1=" " ind2=" ">
+    <subfield code="a">von Paris, Philip</subfield>
+  </datafield>
+  <datafield tag="700" ind1=" " ind2=" ">
+    <subfield code="a">Godolt, Mareike</subfield>
+  </datafield>
+  <datafield tag="700" ind1=" " ind2=" ">
+    <subfield code="a">Rauer, Heike</subfield>
+  </datafield>
+  <datafield tag="773" ind1=" " ind2=" ">
+    <subfield code="p">Phys. Status Solidi</subfield>
+    <subfield code="v">98</subfield>
+    <subfield code="y">2014</subfield>
+    <subfield code="c">66-76</subfield>
+    <subfield code="o">PSS, 98, 66-76 2014</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2=" ">
+    <subfield code="u">http://arxiv.org/pdf/1507.02823.pdf</subfield>
+    <subfield code="y">Preprint</subfield>
+  </datafield>
+  <datafield tag="916" ind1=" " ind2=" ">
+    <subfield code="s">n</subfield>
+    <subfield code="w">201528</subfield>
+  </datafield>
+  <datafield tag="245" ind1=" " ind2=" ">
+    <subfield code="a">Sensitivity of Biosignatures on Earth-like Planets orbiting in the Habitable Zone of Cool M-Dwarf Stars to varying Stellar UV Radiation and Surface Biomass Emissions</subfield>
+  </datafield>
+  <datafield tag="269" ind1=" " ind2=" ">
+    <subfield code="c">10 Jul 2015</subfield>
+  </datafield>
+  <datafield tag="300" ind1=" " ind2=" ">
+    <subfield code="a">mult. p</subfield>
+  </datafield>
+  <datafield tag="520" ind1=" " ind2=" ">
+    <subfield code="a">We find that variations in the UV emissions of cool M-dwarf stars have a potentially large impact upon atmospheric biosignatures in simulations of Earth-like exoplanets i.e. planets with Earths development, and biomass and a molecular nitrogen-oxygen dominated atmosphere. Starting with an assumed black-body stellar emission for an M7 class dwarf star, the stellar UV irradiation was increased stepwise and the resulting climate-photochemical response of the planetary atmosphere was calculated. Results suggest a Goldilocks effect with respect to the spectral detection of ozone. At weak UV levels, the ozone column was weak (due to weaker production from the Chapman mechanism) hence its spectral detection was challenging. At strong UV levels, ozone formation is stronger but its associated stratospheric heating leads to a weakening in temperature gradients between the stratosphere and troposphere, which results in weakened spectral bands. Also, increased UV levels can lead to enhanced abundances of hydrogen oxides which oppose the ozone formation effect. At intermediate UV (i.e. with x10 the stellar UV radiative flux of black body Planck curves corresponding to spectral class M7) the conditions are just right for spectral detection. Results suggest that the planetary O3 profile is sensitive to the UV output of the star from about(200-350) nm. We also investigated the effect of increasing the top-of-atmosphere incoming Lyman-alpha radiation but this had only a minimal effect on the biosignatures since it was efficiently absorbed in the uppermost planetary atmospheric layer, mainly by abundant methane. Earlier studies have suggested that the planetary methane is an important stratospheric heater which critically affects the vertical temperature gradient, hence the strength of spectral emission bands.</subfield>
+  </datafield>
+  <datafield tag="540" ind1=" " ind2=" ">
+    <subfield code="u">http://arxiv.org/licenses/nonexclusive-distrib/1.0/</subfield>
+    <subfield code="b">arXiv</subfield>
+  </datafield>
+  <datafield tag="595" ind1=" " ind2=" ">
+    <subfield code="a">LANL EDS</subfield>
+  </datafield>
+  <datafield tag="595" ind1=" " ind2=" ">
+    <subfield code="a">Title has not been found in the knowledge base. Please add "PHYS STATUS SOLIDI" </subfield>
+  </datafield>
+  <datafield tag="650" ind1="1" ind2="7">
+    <subfield code="a">Astrophysics and Astronomy</subfield>
+    <subfield code="2">arXiv</subfield>
+  </datafield>
+  <datafield tag="695" ind1=" " ind2=" ">
+    <subfield code="a">astro-ph.EP</subfield>
+    <subfield code="9">LANL EDS</subfield>
+  </datafield>
+  <datafield tag="260" ind1=" " ind2=" ">
+    <subfield code="c">2015</subfield>
+  </datafield>
+  <datafield tag="690" ind1="C" ind2=" ">
+    <subfield code="a">ARTICLE</subfield>
+  </datafield>
+  <datafield tag="980" ind1=" " ind2=" ">
+    <subfield code="a">Article</subfield>
+  </datafield>
+  <datafield tag="960" ind1=" " ind2=" ">
+    <subfield code="a">13</subfield>
+  </datafield>
+</record>
+</collection>
