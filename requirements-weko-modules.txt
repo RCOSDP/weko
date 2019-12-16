@@ -7,7 +7,7 @@
 -e git+https://github.com/RCOSDP/invenio-stats.git@feature/weko#egg=invenio-stats
 -e git+https://github.com/RCOSDP/invenio-records-rest.git@feature/weko#egg=invenio-records-rest
 -e git+https://github.com/RCOSDP/invenio-communities.git@feature/weko#egg=invenio-communities
--e git+https://github.com/RCOSDP/invenio-mail.git@feature/weko#egg=invenio-mail
+-e /code/modules/invenio-mail
 -e git+https://github.com/RCOSDP/invenio-deposit.git@feature/weko#egg=invenio-deposit
 -e /code/modules/weko-theme
 -e /code/modules/weko-itemtypes-ui
