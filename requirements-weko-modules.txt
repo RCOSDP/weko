@@ -8,7 +8,7 @@
 -e /code/modules/invenio-records-rest
 -e /code/modules/invenio-communities
 -e /code/modules/invenio-mail
--e git+https://github.com/RCOSDP/invenio-deposit.git@feature/weko#egg=invenio-deposit
+-e /code/modules/invenio-deposit
 -e /code/modules/weko-theme
 -e /code/modules/weko-itemtypes-ui
 -e /code/modules/weko-items-ui
