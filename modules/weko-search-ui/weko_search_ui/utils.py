@@ -796,11 +796,6 @@ def register_item_metadata(item):
     from weko_workflow.utils import merge_buckets_by_records
     try:
         item_id = str(item.get('id'))
-        item_status = {
-            'index': item.get('IndexID'),
-            'actions': 'publish',
-        }
-
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid',
             pid_value=item_id
@@ -821,6 +816,10 @@ def register_item_metadata(item):
             }
         )
         new_data['path'] = handle_replace_new_index()
+        item_status = {
+            'index': new_data['path'],
+            'actions': 'publish',
+        }
         if not new_data.get('pid'):
             new_data = dict(**new_data, **{
                 'pid': {
@@ -830,6 +829,7 @@ def register_item_metadata(item):
                 }
             })
         deposit.update(item_status, new_data)
+
         deposit.commit()
         deposit.publish()
         handle_workflow(item)
@@ -945,6 +945,7 @@ def import_items_to_system(item: dict):
             create_deposit(item.get('id'))
         up_load_file_content(item, root_path)
         response = register_item_metadata(item)
+
         return response
 
 
