@@ -1,4 +1,4 @@
--e git+https://github.com/RCOSDP/invenio-files-rest.git@feature/weko#egg=invenio-files-rest
+-e /code/modules/invenio-files-rest
 -e /code/modules/invenio-s3
 -e /code/modules/invenio-oaiserver
 -e /code/modules/invenio-oaiharvester
