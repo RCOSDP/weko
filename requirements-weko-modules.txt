@@ -3,7 +3,7 @@
 -e /code/modules/invenio-oaiserver
 -e /code/modules/invenio-oaiharvester
 -e /code/modules/invenio-records
--e git+https://github.com/RCOSDP/invenio-previewer.git@feature/weko#egg=invenio-previewer
+-e /code/modules/invenio-previewer
 -e /code/modules/invenio-stats
 -e /code/modules/invenio-records-rest
 -e /code/modules/invenio-communities
