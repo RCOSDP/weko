@@ -55,6 +55,7 @@ services:
       - type: bind
         source: .
         target: /code
+      - /code/modules/invenio-s3/invenio_s3.egg-info
       - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
       - /code/modules/invenio-oaiserver/invenio_oaiserver.egg-info
       - /code/modules/weko-theme/weko_theme.egg-info
