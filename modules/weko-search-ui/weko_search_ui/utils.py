@@ -481,7 +481,7 @@ def handle_validate_item_import(list_recond, schema) -> list:
                 errors = [error.message for error in a]
             else:
                 errors = ['ItemType is not exist']
-
+            record['metadata']['path'] = handle_replace_new_index()
             # if record.get('metadata').get('path') and not handle_check_index(
             #         record.get('metadata').get('path')):
             #     errors.append('Index Error')
@@ -815,7 +815,6 @@ def register_item_metadata(item):
                 'title': handle_get_title(item.get('Title')),
             }
         )
-        new_data['path'] = handle_replace_new_index()
         item_status = {
             'index': new_data['path'],
             'actions': 'publish',
@@ -829,13 +828,13 @@ def register_item_metadata(item):
                 }
             })
         deposit.update(item_status, new_data)
-
         deposit.commit()
         deposit.publish()
         handle_workflow(item)
         with current_app.test_request_context():
             first_ver = deposit.newversion(pid)
-            first_ver.publish()
+            if first_ver:
+                first_ver.publish()
         # record_bucket_id = merge_buckets_by_records(
         #     pid.object_uuid,
         #     _deposit_data.get("id"),
@@ -880,9 +879,14 @@ def handle_workflow(item: dict):
         return       -- title string.
 
     """
+    from invenio_pidstore.models import PersistentIdentifier
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value=item.get('id')).first()
+    if not pid:
+        return
     activity = WorkActivity()
     wf_activity = activity.get_workflow_activity_by_item_id(
-        item.get('id'))
+        pid.object_uuid)
     if wf_activity:
         return
     else:
@@ -909,7 +913,7 @@ def create_work_flow(item_type_id):
     if not flow_define:
         create_flow_define()
         flow_define = FlowDefine.query.filter_by(
-            flow_name='Registration Flow').first()
+            flow_name=WEKO_FLOW_DEFINE.get("flow_name")).first()
     if flow_define and it:
         with db.session.begin_nested():
             data = WorkFlow()
@@ -925,7 +929,9 @@ def create_flow_define():
     """Handle create flow_define."""
     the_flow = Flow()
     flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
-    the_flow.upt_flow_action(flow.flow_id, WEKO_FLOW_DEFINE_LIST_ACTION)
+    if flow and flow.flow_id:
+        the_flow.upt_flow_action(flow.flow_id, WEKO_FLOW_DEFINE_LIST_ACTION)
+
 
 
 def import_items_to_system(item: dict):

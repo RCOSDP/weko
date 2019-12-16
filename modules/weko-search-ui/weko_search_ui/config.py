@@ -362,28 +362,6 @@ WEKO_FLOW_DEFINE_LIST_ACTION = [
         "action": "ADD"
     },
     {
-        "id": "7",
-        "name": "Identifier Grant",
-        "date": "2019-12-3",
-        "version": "1.0.0",
-        "user": "0",
-        "user_deny": False,
-        "role": "0",
-        "role_deny": False,
-        "action": "ADD"
-    },
-    {
-        "id": "4",
-        "name": "Approval",
-        "date": "2019-12-3",
-        "version": "2.0.0",
-        "user": "0",
-        "user_deny": False,
-        "role": "0",
-        "role_deny": False,
-        "action": "ADD"
-    },
-    {
         "id": "2",
         "name": "End",
         "date": "2019-12-03",
