@@ -4,7 +4,7 @@
 -e /code/modules/invenio-oaiharvester
 -e git+https://github.com/RCOSDP/invenio-records.git@feature/weko#egg=invenio-records
 -e git+https://github.com/RCOSDP/invenio-previewer.git@feature/weko#egg=invenio-previewer
--e git+https://github.com/RCOSDP/invenio-stats.git@feature/weko#egg=invenio-stats
+-e /code/modules/invenio-stats
 -e git+https://github.com/RCOSDP/invenio-records-rest.git@feature/weko#egg=invenio-records-rest
 -e /code/modules/invenio-communities
 -e /code/modules/invenio-mail

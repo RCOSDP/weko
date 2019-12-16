@@ -1,0 +1,149 @@
+{
+  "template": "events-stats-file-preview-*",
+  "settings": {
+    "index.mapper.dynamic": false,
+    "index": {
+      "refresh_interval": "5s"
+    }
+  },
+  "mappings": {
+    "_default_": {
+      "dynamic_templates": [
+        {
+          "date_fields": {
+            "match_mapping_type": "date",
+            "mapping": {
+              "type": "date",
+              "format": "strict_date_hour_minute_second"
+            }
+          }
+        }
+      ]
+    },
+    "stats-file-preview": {
+      "_all": {
+        "enabled": false
+      },
+      "date_detection": false,
+      "dynamic": false,
+      "numeric_detection": false,
+      "properties": {
+        "timestamp": {
+          "type": "date",
+          "format": "strict_date_hour_minute_second"
+        },
+        "item_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "item_title": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "bucket_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "file_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "file_key": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "unique_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "country": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "visitor_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "collection": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "unique_session_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "referrer": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "is_robot": {
+          "type": "boolean",
+          "index": "not_analyzed"
+        },
+        "is_restricted": {
+          "type": "boolean",
+          "index": "not_analyzed"
+        },
+        "is_billing_item": {
+          "type": "boolean",
+          "index": "not_analyzed"
+        },
+        "billing_file_price": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "size": {
+          "type": "double",
+          "index": "not_analyzed"
+        },
+        "accessrole": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "userrole": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "site_license_name": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "site_license_flag": {
+          "type": "boolean",
+          "index": "not_analyzed"
+        },
+        "index_list": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "cur_user_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "user_group_list": {
+          "type": "nested",
+          "properties": {
+            "group_id": {
+              "type": "string"
+            },
+            "group_name": {
+              "type": "string",
+              "index": "not_analyzed"
+            }
+          }
+        },
+        "hostname": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "remote_addr": {
+          "type": "string",
+          "index": "not_analyzed"
+        }
+      }
+    }
+  },
+  "aliases": {
+    "events-stats-file-preview": {}
+  }
+}
