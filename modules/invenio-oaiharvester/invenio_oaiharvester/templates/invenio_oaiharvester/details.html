@@ -1,0 +1,152 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#                                                                                                                                           # WEKO3
+is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{% extends 'admin/model/details.html' %}
+
+{% block body %}
+{{ super() }}
+</br>
+<h4>Running logs</h4>
+<table id='logs_table' class='table table-striped table-bordered table-hover'>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>{{_('Start Time')}}</th>
+      <th>{{_('End Time')}}</th>
+      <th>{{_('Status')}}</th>
+      <th>{{_('Processed Items')}}</th>
+      <th>{{_('Created Items')}}</th>
+      <th>{{_('Updated Items')}}</th>
+      <th>{{_('Deleted Items')}}</th>
+      <th>{{_('Error Items')}}</th>
+      <th>{{_('Error Message, Url')}}</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel">{{_('Setting')}}</h4>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+                    <span class="glyphicon glyphicon-remove"></span>
+                    {{_('Close')}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div><!-- /.modal -->
+
+<script>
+function _(x) {
+    return x
+}
+
+function createRow(id, count, start_time, end_time, status, counter, errmsg, requrl) {
+  let table = document.getElementById('logs_table').getElementsByTagName('tbody')[0];
+  let row = table.insertRow();
+  let result = _('Running')
+  if (status == 'Successful') {
+      result = _('Successful')
+  } else if (status == 'Suspended') {
+      result = _('Suspended')
+  } else if (status == 'Failed') {
+      result = _('Failed')
+  } else if (status == 'Cancel') {
+      result = _('Cancel')
+  } else {
+      result = _('Running')
+  }
+  row.insertCell().innerHTML = '<a href="#" onclick="return check_detail(' + id + ')">' + count + '</a>';
+  row.insertCell().innerHTML = start_time;
+  row.insertCell().innerHTML = end_time;
+  row.insertCell().innerHTML = result;
+  if (status == 'Running') {
+      row.insertCell().innerHTML = '';
+      row.insertCell().innerHTML = '';
+      row.insertCell().innerHTML = '';
+      row.insertCell().innerHTML = '';
+      row.insertCell().innerHTML = '';
+  } else {
+      row.insertCell().innerHTML = counter['processed_items'] ? counter['processed_items'] : 0;
+      row.insertCell().innerHTML = counter['created_items'] ? counter['created_items'] : 0;
+      row.insertCell().innerHTML = counter['updated_items'] ? counter['updated_items'] : 0;
+      row.insertCell().innerHTML = counter['deleted_items'] ? counter['deleted_items'] : 0;
+      row.insertCell().innerHTML = counter['error_items'] ? counter['error_items'] : 0;
+  }
+  if (errmsg) { 
+    row.insertCell().innerText = errmsg + '\n' + requrl;
+  } else {
+    row.insertCell().innerText = '';
+  }
+}
+
+function processLogs() {
+  let logs_url = window.location.href.replace('details', 'get_logs')
+  $.getJSON(logs_url, function(data) {
+    for (i = 0; i < data.length; ++i) { 
+        createRow(
+            data[i]['id'],
+            i + 1, 
+            data[i]['start_time'],
+            data[i]['end_time'],
+            data[i]['status'],
+            data[i]['counter'],
+            data[i]['errmsg'],
+            data[i]['requrl']
+        );
+    }
+  })
+}
+
+function check_detail(id) {
+    let logs_url = window.location.href.replace('details', 'get_log_detail/' + id.toString())
+    $.getJSON(logs_url, function(data) {
+        $('#myModal').modal('show');
+        let html = '';
+        html += '<table class="table table-hover table-bordered searchable">';
+        html += '<tr><td><b>' + _('Repository Name') + '</b></td><td>' + data.repository_name + '</td></tr>';
+        html += '<tr><td><b>' + _('Base Url') + '</b></td><td>' + data.base_url + '</td></tr>';
+        html += '<tr><td><b>' + _('From Date') + '</b></td><td>' + data.from_date + '</td></tr>';
+        html += '<tr><td><b>' + _('Until Date') + '</b></td><td>' + data.until_date + '</td></tr>';
+        html += '<tr><td><b>' + _('Set Spec') + '</b></td><td>' + data.set_spec + '</td></tr>';
+        html += '<tr><td><b>' + _('Metadata Prefix') + '</b></td><td>' + data.metadata_prefix + '</td></tr>';
+        html += '<tr><td><b>' + _('Target Index Name') + '</b></td><td>' + data.target_index + '</td></tr>';
+        html += '<tr><td><b>' + _('Update Style') + '</b></td><td>' + data.update_style + '</td></tr>';
+        html += '<tr><td><b>' + _('Auto Distribution') + '</b></td><td>' + data.auto_distribution + '</td></tr>';
+        html += '</table>';
+        $('.modal-body').html(html);
+    })
+}
+
+window.addEventListener('load', processLogs)
+</script>
+{% endblock %}
+
