@@ -77,8 +77,8 @@ class MainLayout extends React.Component {
           step: step.IMPORT_STEP
         },
         {
-          tab_key: 'list',
-          tab_name: result_label,
+          tab_key: 'result',
+          tab_name: list,
           step: step.RESULT_STEP
         }
       ],
