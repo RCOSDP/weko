@@ -21,7 +21,6 @@
 """Weko Search-UI admin."""
 
 import base64
-import io
 import json
 import os
 import shutil
@@ -35,17 +34,16 @@ from functools import reduce
 from operator import getitem
 
 import bagit
-from flask import Flask, abort, current_app, jsonify, request
+from flask import abort, current_app, request
+from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
-from jsonschema import Draft4Validator, validate
-from jsonschema.exceptions import ValidationError
+from jsonschema import Draft4Validator
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
@@ -209,6 +207,7 @@ def get_content_workflow(item):
     result['flow_id'] = item.flow_id
     result['flow_name'] = item.flow_define.flow_name
     result['item_type_name'] = item.itemtype.item_type_name.name
+
     return result
 
 
@@ -482,9 +481,6 @@ def handle_validate_item_import(list_recond, schema) -> list:
             else:
                 errors = ['ItemType is not exist']
             record['metadata']['path'] = handle_replace_new_index()
-            # if record.get('metadata').get('path') and not handle_check_index(
-            #         record.get('metadata').get('path')):
-            #     errors.append('Index Error')
 
         item_error = dict(**record, **{
             'errors': errors if len(errors) else None
@@ -564,7 +560,8 @@ def handle_check_exist_record(list_recond) -> list:
                     if item_exist:
                         if item_exist.pid.is_deleted():
                             item['status'] = None
-                            item['errors'] = ['Item already DELETED in the system']
+                            item['errors'] = [_('Item already DELETED'
+                                                ' in the system')]
                             result.append(item)
                             continue
                         else:
@@ -576,16 +573,6 @@ def handle_check_exist_record(list_recond) -> list:
                 except BaseException:
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])
-            else:
-                # try:
-                #     item_exist = WekoRecord.get_record_by_pid(item.get('id'))
-                #     if item_exist:
-                #         item['errors'] = ['Item already exists in the system']
-                #         item['status'] = None
-                # except BaseException:
-                #     current_app.logger.error('Unexpected error: ',
-                #                              sys.exc_info()[0])
-                pass
         if item.get('status') == 'new':
             handle_remove_identifier(item)
         result.append(item)
@@ -732,16 +719,11 @@ def create_deposit(item_id):
         item_exist     -- {dict} item in system.
 
     """
-    from invenio_db import db
-    from weko_deposit.api import WekoDeposit
     try:
-        try:
-            WekoDeposit.create({}, recid=int(item_id))
-            db.session.commit()
-        except Exception as ex:
-            db.session.rollback()
-    except BaseException:
-        pass
+        WekoDeposit.create({}, recid=int(item_id))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 
 def up_load_file_content(record, root_path):
@@ -753,27 +735,24 @@ def up_load_file_content(record, root_path):
 
     """
     try:
-        try:
-            if record.get('file_path'):
-                for file_name in record.get('file_path'):
-                    with open(root_path + '/' + file_name,
-                              'rb') as file:
-                        pid = PersistentIdentifier.query.filter_by(
-                            pid_type='recid',
-                            pid_value=record.get('id')).first()
-                        rec = RecordMetadata.query.filter_by(
-                            id=pid.object_uuid).first()
-                        bucket = rec.json['_buckets']['deposit']
-                        obj = ObjectVersion.create(
-                            bucket,
-                            get_file_name(file_name)
-                        )
-                        obj.set_contents(file)
-                        db.session.commit()
-        except Exception as ex:
-            db.session.rollback()
-    except BaseException:
-        pass
+        if record.get('file_path'):
+            for file_name in record.get('file_path'):
+                with open(root_path + '/' + file_name, 'rb') as file:
+                    pid = PersistentIdentifier.query.filter_by(
+                        pid_type='recid',
+                        pid_value=record.get('id')).first()
+                    rec = RecordMetadata.query.filter_by(
+                        id=pid.object_uuid).first()
+                    bucket = rec.json['_buckets']['deposit']
+                    obj = ObjectVersion.create(
+                        bucket,
+                        get_file_name(file_name)
+                    )
+                    obj.set_contents(file)
+                    db.session.commit()
+    except Exception:
+        db.session.rollback()
+
 
 def get_file_name(file_path):
     """Get file name.
@@ -793,15 +772,12 @@ def register_item_metadata(item):
         list_record    -- {list} list item import.
         file_path      -- {str} file path.
     """
-    from weko_workflow.utils import merge_buckets_by_records
+    item_id = str(item.get('id'))
     try:
-        item_id = str(item.get('id'))
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid',
             pid_value=item_id
         ).first()
-        # r = RecordMetadata.query.filter_by(
-        #     id=pid.object_uuid).first()
 
         record = WekoDeposit.get_record(pid.object_uuid)
 
@@ -835,18 +811,11 @@ def register_item_metadata(item):
             first_ver = deposit.newversion(pid)
             if first_ver:
                 first_ver.publish()
-
-        # record_bucket_id = merge_buckets_by_records(
-        #     pid.object_uuid,
-        #     _deposit_data.get("id"),
-        #     sub_bucket_delete=True
-        # )
         db.session.commit()
 
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error('item id: %s update error.' % item_id)
-        print('item id: %s update error.' % item_id)
         current_app.logger.error(ex)
         return {
             'success': False,
@@ -872,7 +841,6 @@ def handle_get_title(title) -> str:
         return title[0].get('Title') if title[0] \
             and isinstance(title[0], dict) else ''
 
-
 def handle_workflow(item: dict):
     """Handle workflow.
 
@@ -882,18 +850,14 @@ def handle_workflow(item: dict):
         return       -- title string.
 
     """
-    from invenio_pidstore.models import PersistentIdentifier
     pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=item.get('id')).first()
     if not pid:
-        current_app.logger.debug("=======================pid")
         return
     activity = WorkActivity()
     wf_activity = activity.get_workflow_activity_by_item_id(
         pid.object_uuid)
     if wf_activity:
-        current_app.logger.debug("=======================wf_activity")
-
         return
     else:
         workflow = WorkFlow.query.filter_by(
@@ -928,7 +892,6 @@ def create_work_flow(item_type_id):
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error("create work flow error")
-            print("create work flow error")
             current_app.logger.error(ex)
 
 
@@ -936,12 +899,14 @@ def create_flow_define():
     """Handle create flow_define."""
     flow_define = FlowDefine.query.filter_by(
         flow_name='Registration Flow').first()
+
     if not flow_define:
         the_flow = Flow()
         flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
-        print("==================================flow")
+
         if flow and flow.flow_id:
-            the_flow.upt_flow_action(flow.flow_id, WEKO_FLOW_DEFINE_LIST_ACTION)
+            the_flow.upt_flow_action(flow.flow_id,
+                                     WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
 def import_items_to_system(item: dict):
