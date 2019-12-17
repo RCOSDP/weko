@@ -10,8 +10,8 @@ from __future__ import absolute_import, print_function
 
 import boto3
 from flask import current_app
-from werkzeug.utils import cached_property
 from invenio_files_rest.models import Location
+from werkzeug.utils import cached_property
 
 from . import config
 

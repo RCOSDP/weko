@@ -40,6 +40,7 @@ class DepositScope(Scope):
             group='deposit', *args, **kwargs
         )
 
+
 write_scope = DepositScope('write',
                            help_text=_('Allow upload (but not publishing).'))
 """Allow upload (but not publishing)."""

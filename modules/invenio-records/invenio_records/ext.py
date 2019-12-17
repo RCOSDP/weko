@@ -19,6 +19,7 @@ from jsonschema import validate
 from . import config
 from .views import blueprint
 
+
 class _RecordsState(object):
     """State for record JSON resolver."""
 

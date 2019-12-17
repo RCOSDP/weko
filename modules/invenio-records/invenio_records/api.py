@@ -47,7 +47,7 @@ class RecordBase(dict):
     @property
     def revision_id(self):
         """Get revision identifier."""
-        return self.model.version_id-1 if self.model else None
+        return (self.model.version_id - 1) if self.model else None
 
     @property
     def created(self):

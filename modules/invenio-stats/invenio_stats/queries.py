@@ -261,10 +261,9 @@ class ESTermsQuery(ESQuery):
         if self.aggregated_fields:
             cur_agg = base_agg
             for term in self.aggregated_fields:
-                cur_agg = cur_agg.bucket(
-                    term, 'terms', field=term,
-                    size=kwargs.get('agg_size') or \
-                    current_app.config['STATS_ES_INTEGER_MAX_VALUE'])
+                size = kwargs.get('agg_size') if kwargs.get('agg_size') else \
+                    current_app.config['STATS_ES_INTEGER_MAX_VALUE']
+                cur_agg = cur_agg.bucket(term, 'terms', field=term, size=size)
                 _apply_metric_aggs(cur_agg)
 
         if self.copy_fields:
@@ -356,11 +355,11 @@ class ESWekoTermsQuery(ESTermsQuery):
         _apply_metric_aggs(base_agg)
         if self.aggregated_fields:
             cur_agg = base_agg
+            size = kwargs.get('agg_size') if kwargs.get('agg_size') else \
+                current_app.config['STATS_ES_INTEGER_MAX_VALUE']
             for term in self.aggregated_fields:  # Added size and sort
                 cur_agg = cur_agg.bucket(
-                    term, 'terms', field=term,
-                    size=kwargs.get('agg_size') or \
-                    current_app.config['STATS_ES_INTEGER_MAX_VALUE'],
+                    term, 'terms', field=term, size=size,
                     order=kwargs.get('agg_sort', {"_count": "desc"})
                 )
                 _apply_metric_aggs(cur_agg)

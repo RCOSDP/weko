@@ -114,7 +114,6 @@ class S3FSFileStorage(PyFSFileStorage):
     def send_file(self, filename, mimetype=None, restricted=True, checksum=None,
                   trusted=False, chunk_size=None, as_attachment=False):
         """Send the file to the client."""
-
         if S3_SEND_FILE_DIRECTLY:
             return super(S3FSFileStorage, self).send_file(filename,
                                                           mimetype=mimetype,
