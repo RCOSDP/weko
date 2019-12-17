@@ -960,7 +960,7 @@ def handle_replace_new_index() -> list:
     else:
         create_index = Indexes.create(
             pid=0,
-            indexes={'id': int(datetime.timestamp(now)*10**3),
+            indexes={'id': int(datetime.timestamp(now) * 10 ** 3),
                      'value': 'Index_import'}
         )
         if create_index:

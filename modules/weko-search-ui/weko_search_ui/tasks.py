@@ -19,18 +19,16 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-from celery import shared_task
-from .utils import import_items_to_system
 from datetime import datetime
-from random import randint
-import time
+from celery import shared_task
+
+from .utils import import_items_to_system
+
 
 @shared_task
 def import_item(item):
     """Import Item ."""
-    start_date = datetime.now().strftime(
-                            "%Y-%m-%d %H:%M:%S")
+    start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     result = import_items_to_system(item) or dict()
     result['start_date'] = start_date
-    # time.sleep(randint(1, 15))
     return result

@@ -21,8 +21,8 @@
 """Weko Search-UI admin."""
 
 import json
-from datetime import datetime
 import os
+from datetime import datetime
 
 from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request
@@ -35,8 +35,9 @@ from weko_index_tree.models import IndexStyle
 from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
-from .utils import check_import_items, delete_records, get_content_workflow, \
-    get_tree_items, create_flow_define, make_stats_tsv, remove_temp_dir
+
+from .utils import check_import_items, create_flow_define, delete_records, \
+    get_content_workflow, get_tree_items, make_stats_tsv, remove_temp_dir
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -317,13 +318,13 @@ class ItemImportView(BaseView):
                     else:
                         end_date = ''
                     result.append(dict(**{
-                            "task_status": task.status,
-                            "task_result": task.result,
-                            "start_date": start_date,
-                            "end_date": task_item.get("end_date") or end_date,
-                            "task_id": task_id,
-                            "item_id": task_item.get("item_id"),
-                        }))
+                        "task_status": task.status,
+                        "task_result": task.result,
+                        "start_date": start_date,
+                        "end_date": task_item.get("end_date") or end_date,
+                        "task_id": task_id,
+                        "item_id": task_item.get("item_id"),
+                    }))
                     if not (task.successful() or task.failed()):
                         status = 'doing'
 
