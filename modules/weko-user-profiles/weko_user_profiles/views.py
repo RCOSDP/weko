@@ -20,13 +20,14 @@
 
 """VIews for weko-user-profiles."""
 
-
+import json
 from flask import Blueprint, current_app, flash, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
 from flask_security.confirmable import send_confirmation_instructions
+from invenio_accounts.models import Role
 from invenio_db import db
 
 from .api import current_userprofile
@@ -117,20 +118,36 @@ def profile():
 def profile_form_factory():
     """Create a profile form."""
     if current_app.config['USERPROFILES_EMAIL_ENABLED']:
-        return EmailProfileForm(
+        form = EmailProfileForm(
             formdata=None,
             username=current_userprofile.username,
-            # full_name=current_userprofile.full_name,
             timezone=current_userprofile.timezone,
             language=current_userprofile.language,
             email=current_user.email,
             email_repeat=current_user.email,
+            university=current_userprofile.university,
+            department=current_userprofile.department,
+            position=current_userprofile.position,
+            otherPosition=current_userprofile.otherPosition,
+            phoneNumber=current_userprofile.phoneNumber,
+            instituteName=current_userprofile.instituteName,
+            institutePosition=current_userprofile.institutePosition,
+            instituteName2=current_userprofile.instituteName2,
+            institutePosition2=current_userprofile.institutePosition2,
+            instituteName3=current_userprofile.instituteName3,
+            institutePosition3=current_userprofile.institutePosition3,
+            instituteName4=current_userprofile.instituteName4,
+            institutePosition4=current_userprofile.institutePosition4,
+            instituteName5=current_userprofile.instituteName5,
+            institutePosition5=current_userprofile.institutePosition5,
             prefix='profile', )
+        return form
     else:
-        return ProfileForm(
+        form = ProfileForm(
             formdata=None,
             obj=current_userprofile,
             prefix='profile', )
+        return form
 
 
 def handle_verification_form(form):
@@ -151,10 +168,23 @@ def handle_profile_form(form):
         email_changed = False
         with db.session.begin_nested():
             # Update profile.
-            current_userprofile.username = form.username.data
-            # current_userprofile.full_name = form.full_name.data
-            current_userprofile.timezone = form.timezone.data
-            current_userprofile.language = form.language.data
+            for key in form.__dict__:
+                if getattr(form, key) and hasattr(current_userprofile, key):
+                    form_data = getattr(form, key).data
+                    setattr(current_userprofile, key, form_data)
+            # Mapping role
+            if (current_app.config['USERPROFILES_EMAIL_ENABLED'] and
+                    current_userprofile.position):
+                role_name = get_role_by_position(current_userprofile.position)
+                roles1 = db.session.query(Role).filter_by(
+                    name=role_name).all()
+                roles2 = [
+                    role for role in current_user.roles
+                    if role not in current_app.config.get(
+                        "USERPROFILES_DAISHODAI_ROLES")
+                ]
+                roles = roles1 + roles2
+                current_user.roles = roles
             db.session.add(current_userprofile)
 
             # Update email
@@ -176,3 +206,39 @@ def handle_profile_form(form):
         else:
             # NOTE: Flash message after successful update of profile.
             flash(_('Profile was updated.'), category='success')
+
+
+def get_role_by_position(position):
+    """Get role by position.
+
+    :param position:
+    :return:
+    """
+    # key for key in USERPROFILES_POSITION_LIST if position  in key:
+    current_config = current_app.config
+    weko_account_settings = current_config.get('WEKO_ACCOUNTS')
+    if (weko_account_settings and isinstance(weko_account_settings, dict) and
+            weko_account_settings.get("weko_accounts_default_role")):
+        role_setting = weko_account_settings.get("weko_accounts_default_role")
+        role_setting = json.loads(role_setting)
+        position_list = current_config.get("USERPROFILES_POSITION_LIST")
+        if not isinstance(position_list, list):
+            return
+        for item in position_list:
+            if position == item[0]:
+                if item in \
+                    current_config.get(
+                        "USERPROFILES_POSITION_LIST_GENERAL"):
+                    key = role_setting.get('USERPROFILES_POSITION_LIST_GENERAL')
+                    return current_config.get(key)
+                elif item in \
+                    current_config.get(
+                        "USERPROFILES_POSITION_LIST_GRADUATED_STUDENT"):
+                    key = role_setting.get(
+                        'USERPROFILES_POSITION_LIST_GRADUATED_STUDENT')
+                    return current_config.get(key)
+                elif item in \
+                    current_config.get(
+                        "USERPROFILES_POSITION_LIST_STUDENT"):
+                    key = role_setting.get('USERPROFILES_POSITION_LIST_STUDENT')
+                    return current_config.get(key)

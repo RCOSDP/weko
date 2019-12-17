@@ -20,6 +20,7 @@
 
 """Extensions for weko-admin."""
 
+from configparser import ConfigParser
 from datetime import timedelta
 from functools import partial
 
@@ -84,6 +85,7 @@ class WekoAdmin(object):
         """
         self.make_session_permanent(app)
         self.init_config(app)
+        self.init_env_config(app)
         app.register_blueprint(blueprint)
         app.extensions['weko-admin'] = self
 
@@ -166,3 +168,21 @@ class WekoAdmin(object):
                 db_lifetime.create()
             app.permanent_session_lifetime = timedelta(
                 minutes=db_lifetime.lifetime)
+
+    def init_env_config(self, app):
+        """Initialize environment configuration.
+
+        @param app:
+        """
+        @app.before_first_request
+        def init_env_config():
+            config_path = "/code/" + current_app.config['ENV_CONFIG_FILE_PATH']
+            if config_path:
+                parser = ConfigParser()
+                parser.read(config_path)
+                for section_name in parser.sections():
+                    config_dict = dict()
+                    for key, value in parser.items(section_name):
+                        config_dict[key] = value
+                    if config_dict:
+                        app.config.setdefault(section_name, config_dict)

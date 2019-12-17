@@ -93,3 +93,78 @@ USERPROFILES_LANGUAGE_LIST = [('', _('Automatic')),
 
 USERPROFILES_LANGUAGE_DEFAULT = 'ja'
 """Settings default value of language for user profile module."""
+
+USERPROFILES_OTHERS_INPUT_DETAIL = "Others (Input Detail)"
+"""Other input detail"""
+
+USERPROFILES_POSITION_LIST_GENERAL = [
+    ('', ''),
+    ('Professor', _('Professor')),
+    ('Assistant Professor', _('Assistant Professor')),
+    ('Full-time Instructor', _('Full-time Instructor')),
+    ('Assistant Teacher', _('Assistant Teacher')),
+    ('Full-time Researcher', _('Full-time Researcher')),
+    (USERPROFILES_OTHERS_INPUT_DETAIL, _('Others (Input Detail)')),
+    ('JSPS Research Fellowship for Young Scientists (PD, SPD etc.)',
+        _('JSPS Research Fellowship for Young Scientists (PD, SPD etc.)'))
+]
+"""General Position list"""
+
+USERPROFILES_POSITION_LIST_GRADUATED_STUDENT = [
+    ('JSPS Research Fellowship for Young Scientists (DC1, DC2)',
+     _('JSPS Research Fellowship for Young Scientists (DC1, DC2)')),
+    ('Doctoral Course (Doctoral Program)',
+     _('Doctoral Course (Doctoral Program)')),
+    ('Master Course (Master Program)', _('Master Course (Master Program)')),
+    ('Fellow Researcher', _('Fellow Researcher')),
+    ('Listener', _('Listener'))
+]
+"""Graduated Student Position list"""
+
+USERPROFILES_POSITION_LIST_STUDENT = [('Student', _('Student'))]
+"""Student Position list"""
+
+USERPROFILES_POSITION_LIST = \
+    USERPROFILES_POSITION_LIST_GENERAL +\
+    USERPROFILES_POSITION_LIST_GRADUATED_STUDENT + \
+    USERPROFILES_POSITION_LIST_STUDENT
+"""Position list"""
+
+USERPROFILES_INSTITUTE_POSITION_LIST = [
+    ('', ''),
+    ('Member', _('Member')),
+    ('Committee member', _('Committee member')),
+    ('Director/Officer', _('Director/Officer')),
+    ('President', _('President'))
+]
+"""Institute Position list"""
+
+USERPROFILES_ADMINISTRATOR_ROLE = 'Administrator'
+"""Administrator Role"""
+
+USERPROFILES_GENERAL_ROLE = 'General'
+"""General Role"""
+
+USERPROFILES_GRADUATED_STUDENT_ROLE = 'Graduated Student'
+"""Graduated Student Role"""
+
+USERPROFILES_STUDENT_ROLE = 'Student'
+"""Student Role"""
+
+USERPROFILES_ROLE_MAPPING_ENABLED = False
+"""Enable role mapping"""
+
+USERPROFILES_DAISHODAI_ROLES = [
+    USERPROFILES_ADMINISTRATOR_ROLE,
+    USERPROFILES_GENERAL_ROLE,
+    USERPROFILES_GRADUATED_STUDENT_ROLE,
+    USERPROFILES_STUDENT_ROLE
+]
+"""Roles"""
+
+ENV_CONFIG_FILE_PATH = ""
+"""Environment configuration file path"""
+
+USERPROFILES_FORM_COLUMN = ["username", "timezone", "language", "email",
+                            "email_repeat"]
+"""User profile form column"""

@@ -61,6 +61,8 @@ class WekoUserProfiles(object):
 
         app.config.setdefault('USERPROFILES', True)
 
+        app.config.setdefault('ENV_CONFIG_FILE_PATH', "")
+
         app.config.setdefault(
             'USERPROFILES_BASE_TEMPLATE',
             app.config.get('BASE_TEMPLATE',
