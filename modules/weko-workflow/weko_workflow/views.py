@@ -745,6 +745,7 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
+            new_activity_id = None
             if record:
                 deposit.publish()
                 updated_item = UpdateItem()
