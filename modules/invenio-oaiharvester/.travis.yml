@@ -1,0 +1,92 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio
+# Copyright (C) 2015, 2016 CERN
+#
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+
+addons:
+  postgresql: 9.3
+
+notifications:
+  email: false
+
+sudo: false
+
+language: python
+
+cache:
+  - pip
+
+services:
+  - mysql
+  - postgresql
+
+
+env:
+  - REQUIREMENTS=lowest EXTRAS=all,sqlite SQLALCHEMY_DATABASE_URI="sqlite:///test.db"
+  - REQUIREMENTS=lowest EXTRAS=all,mysql SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio"
+  - REQUIREMENTS=lowest EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
+  - REQUIREMENTS=release EXTRAS=all,sqlite SQLALCHEMY_DATABASE_URI="sqlite:///test.db"
+  - REQUIREMENTS=release EXTRAS=all,mysql SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio"
+  - REQUIREMENTS=release EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
+  - REQUIREMENTS=devel EXTRAS=all,sqlite SQLALCHEMY_DATABASE_URI="sqlite:///test.db"
+  - REQUIREMENTS=devel EXTRAS=all,mysql SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio"
+  - REQUIREMENTS=devel EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
+
+python:
+  - "2.7"
+  - "3.5"
+  - "pypy"
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - python: pypy
+
+before_install:
+  - "travis_retry pip install --upgrade pip setuptools py"
+  - "travis_retry pip install twine wheel coveralls requirements-builder"
+  - "requirements-builder -e all --level=min setup.py > .travis-lowest-requirements.txt"
+  - "requirements-builder -e all --level=pypi setup.py > .travis-release-requirements.txt"
+  - "requirements-builder -e all --level=dev --req requirements-devel.txt setup.py > .travis-devel-requirements.txt"
+  - "mysql -e 'CREATE DATABASE IF NOT EXISTS invenio;' -uroot"
+  - "psql -c 'CREATE DATABASE invenio;' -U postgres"
+
+install:
+  - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
+  - "travis_retry pip install -e .[${EXTRAS}]"
+
+script:
+  - "./run-tests.sh"
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: jirikuncar
+  password:
+    secure: ExZDS/y8lrSIO3/a95TkiwEXPvT2rMOOz9pXHc2JftBSZERe4/VHrar8WJf4AhNALow+A4q3hoi8Yv0FWVJDt83yIARyCrQuTkpSKmR15Wy2S1EeX8n3WgZutyAZIBOwwkH/pdrbzZhBOHA1wQO8DL7QPMjG6VcMJPfwgYrSKzkjdmCtWOpd1rmjuYVGpzUqrsjJgrozqXrMdJVzA1yE/a9OstTSx4NVojqTLLFRg+6evNeNoTDFtmuoxlR52tLYs43kCHI6JTHSQu3VhyfqOyUeIcwPPOQvNufjVgltLDTxHLOIjWOamwe1Up3IzXwYhn8JZ50ZrgYamnzcJouQRYP//YFVZSppxaPNUiIUemyOHI800QNTskhSd8XDd795ev+WQWtV0UENQOGJnHX9zQFT1yrHHa3/I3X3wAAptLQVGW6MqVc1Hhi2IYIbXs3QTiRwZCk8coD/3f2ATRiB4bQ/xlrY+Iej7ycAVS6F2JW2fM2iT1CvYcuB+6xi6+UOQqp5sZuiAR/FOkADYbQdZWw0grLt6BznuZRIsG3dC6eTkw44K4ZZOjVWYFoAYSV1icv/A5x+lPBP1zJhDY+GUg5oWCiI2ETnNOonPYUfpjt441914bg/hbafQdorYwGfS+Rv3YJndcbNmsangUhznC7mdP2iDeneQbyyNlKAFDo=
+  distributions: "sdist bdist_wheel"
+  on:
+    tags: true
+    python: "2.7"
+    condition: $REQUIREMENTS = release

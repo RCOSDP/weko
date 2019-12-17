@@ -1,0 +1,50 @@
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+    <responseDate>2014-11-05T09:30:08Z</responseDate>
+    <request from="2014-05-01" metadataPrefix="marcxml" set="INSPIRE:Conferences" until="2014-05-02" verb="ListRecords">http://inspirehep.net/oai2d</request>
+    <ListRecords>
+        <record>
+            <header>
+                <identifier>oai:inspirehep.net:972855</identifier>
+                <datestamp>2014-05-02T12:22:51Z</datestamp>
+                <setSpec>INSPIRE:Conferences</setSpec>
+            </header>
+            <metadata>
+                <marc:record type="Bibliographic" xmlns:marc="http://www.loc.gov/MARC21/slim" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd">
+                    <marc:leader>00000coc  2200000uu 4500</marc:leader>
+                    <marc:controlfield tag="001">972855</marc:controlfield>
+                    <marc:controlfield tag="005">20140502142251.0</marc:controlfield>
+                    <marc:datafield ind1=" " ind2=" " tag="111">
+                        <marc:subfield code="a">2000 IEEE Nuclear and Space Radiation Effects Conference</marc:subfield>
+                        <marc:subfield code="c">Reno, Nevada</marc:subfield>
+                        <marc:subfield code="d">24-28 Jul 2000</marc:subfield>
+                        <marc:subfield code="e">NSREC 2000</marc:subfield>
+                        <marc:subfield code="g">C00-07-24.3</marc:subfield>
+                        <marc:subfield code="x">2000-07-24</marc:subfield>
+                    </marc:datafield>
+                </marc:record>
+            </metadata>
+        </record>
+        <record>
+            <header>
+                <identifier>oai:inspirehep.net:974318</identifier>
+                <datestamp>2014-05-02T12:22:47Z</datestamp>
+                <setSpec>INSPIRE:Conferences</setSpec>
+            </header>
+            <metadata>
+                <marc:record type="Bibliographic" xmlns:marc="http://www.loc.gov/MARC21/slim" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd">
+                    <marc:leader>00000coc  2200000uu 4500</marc:leader>
+                    <marc:controlfield tag="001">974318</marc:controlfield>
+                    <marc:controlfield tag="005">20140502142246.0</marc:controlfield>
+                    <marc:datafield ind1=" " ind2=" " tag="111">
+                        <marc:subfield code="a">2002 IEEE Nuclear and Space Radiation Effects Conference</marc:subfield>
+                        <marc:subfield code="c">Phoenix, Arizona</marc:subfield>
+                        <marc:subfield code="d">15-19 Jul 2002</marc:subfield>
+                        <marc:subfield code="e">NSREC 2002</marc:subfield>
+                        <marc:subfield code="g">C02-07-15.3</marc:subfield>
+                        <marc:subfield code="x">2002-07-15</marc:subfield>
+                    </marc:datafield>
+                </marc:record>
+            </metadata>
+        </record>
+    </ListRecords>
+</OAI-PMH>

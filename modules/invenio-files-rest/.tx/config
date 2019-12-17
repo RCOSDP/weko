@@ -1,0 +1,16 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2015-2019 CERN.
+#
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+
+[main]
+host = https://www.transifex.com
+
+[invenio-1.invenio-files-rest-messages]
+file_filter = invenio_files_rest/translations/<lang>/LC_MESSAGES/messages.po
+source_file = invenio_files_rest/translations/messages.pot
+source_lang = en
+type = PO

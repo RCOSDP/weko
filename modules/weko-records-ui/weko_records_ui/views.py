@@ -456,7 +456,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail = ObjectVersion.get_by_bucket(
             record.get('_buckets').get('deposit')).\
             filter_by(is_thumbnail=True).all()
-
+    files = []
+    for f in record.files:
+        if check_file_permission(record, f.data):
+            files.append(f)
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
@@ -467,6 +470,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         active_versions=active_versions,
         all_versions=all_versions,
         record=record,
+        files=files,
         display_stats=display_stats,
         filename=filename,
         can_download_original_pdf=can_download_original,

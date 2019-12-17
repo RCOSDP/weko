@@ -158,7 +158,7 @@ let PageBodyGrid = function () {
                 headerNav.css({"background-color": node.background_color});
             }
             if (node.multiLangSetting && node.multiLangSetting.description) {
-                headerContent.css({"width": "calc(100vw - 490px)"});
+                headerContent.css({"width": "calc(100vw - 490px)", "height": "100px", "overflow": "hidden"});
                 headerContent.html(node.multiLangSetting.description.description);
             }
             this.grid.update(headerElement, node.x, node.y, node.width, node.height);
@@ -656,7 +656,7 @@ function getWidgetDesignSetting() {
                 if (Array.isArray(widgetList) && widgetList.length) {
                     $("#page_body").removeClass("hidden");
                     $("#main_contents").addClass("grid-stack-item");
-                    $("#header").addClass("grid-stack-item no-scroll-bar");
+                    $("#header").css("height", "100px");
                     $("#footer").addClass("grid-stack-item no-scroll-bar");
                     let pageBodyGrid = new PageBodyGrid();
                     pageBodyGrid.init();

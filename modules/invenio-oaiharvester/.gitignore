@@ -1,0 +1,20 @@
+*~
+*.py[cod]
+
+# Packages
+*.egg
+*.egg-info
+.eggs
+__pycache__
+dist
+
+# Unit test / coverage reports
+.cache
+.coverage
+.tox
+
+# doc
+docs/_build
+
+# ignore compiled translations
+*.mo
