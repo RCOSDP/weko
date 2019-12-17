@@ -68,16 +68,16 @@ class MainLayout extends React.Component {
       tabs: [
         {
           tab_key: 'select',
-          tab_name: select,
+          tab_name: import_label,
           step: step.SELECT_STEP
         },
         {
           tab_key: 'import',
-          tab_name: import_label,
+          tab_name: check,
           step: step.IMPORT_STEP
         },
         {
-          tab_key: 'result',
+          tab_key: 'list',
           tab_name: result_label,
           step: step.RESULT_STEP
         }
@@ -412,7 +412,7 @@ class ImportComponent extends React.Component {
               </div>
               <div className="col-md-8">
                 <div>
-                  <button className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
+                  <button className="btn btn-primary" onClick={this.handleClickFile}>{import_file}</button>
                   <input
                     type="file"
                     className="input-file"
@@ -490,7 +490,7 @@ class ImportComponent extends React.Component {
 
                   onClick={() => { file && this.handleSubmit() }}
                 >
-                  {next}<span className="glyphicon glyphicon-chevron-right icon"></span>
+                  <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
                 </button>
               </div>
             </div>
