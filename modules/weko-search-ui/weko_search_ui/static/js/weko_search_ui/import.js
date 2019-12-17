@@ -47,16 +47,20 @@ const next = document.getElementById("next").value;
 
 
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
-const urlTree = window.location.origin+'/api/tree'
-const urlCheck = window.location.origin+'/admin/items/import/check'
-const urlCheckStatus = window.location.origin+'/admin/items/import/check_status'
-const urlDownloadCheck = window.location.origin+'/admin/items/import/download_check'
-const urlDownloadImport = window.location.origin+'/admin/items/import/export_import'
-const urlImport = window.location.origin+'/admin/items/import/import'
-
+const urlTree = window.location.origin + '/api/tree'
+const urlCheck = window.location.origin + '/admin/items/import/check'
+const urlCheckStatus = window.location.origin + '/admin/items/import/check_status'
+const urlDownloadCheck = window.location.origin + '/admin/items/import/download_check'
+const urlDownloadImport = window.location.origin + '/admin/items/import/export_import'
+const urlImport = window.location.origin + '/admin/items/import/import'
+const step = {
+  "SELECT_STEP": 0,
+  "IMPORT_STEP": 1,
+  "RESULT_STEP": 2,
+}
 class MainLayout extends React.Component {
 
-  constructor(){
+  constructor() {
     super()
     this.state = {
       tab: 'select',
@@ -65,17 +69,17 @@ class MainLayout extends React.Component {
         {
           tab_key: 'select',
           tab_name: select,
-          step: 0
+          step: step.SELECT_STEP
         },
         {
           tab_key: 'import',
           tab_name: import_label,
-          step: 1
+          step: step.IMPORT_STEP
         },
         {
           tab_key: 'result',
           tab_name: result_label,
-          step: 2
+          step: step.RESULT_STEP
         }
       ],
       list_record: [],
@@ -90,13 +94,13 @@ class MainLayout extends React.Component {
   }
 
   handleChangeTab(tab) {
-    const {step, tabs} = this.state
+    const { step, tabs } = this.state
     const a = tabs.filter(item => {
       return item.tab_key === tab
     })
-    if(a[0]) {
+    if (a[0]) {
       const item = a[0]
-      if (step >= item.step){
+      if (step >= item.step) {
         this.setState({
           tab: tab
         })
@@ -107,7 +111,7 @@ class MainLayout extends React.Component {
   componentDidMount() {
   }
 
-  handleCheck(data){
+  handleCheck(data) {
     const that = this
     $.ajax({
       url: urlCheck,
@@ -117,14 +121,14 @@ class MainLayout extends React.Component {
       dataType: "json",
       success: function (response) {
         if (response.code) {
-          that.setState(()=>{
+          that.setState(() => {
             return {
               list_record: response.list_record,
               root_path: response.data_path,
               is_import: false,
-              step: 1
+              step: step.SELECT_STEP
             }
-          }, ()=>{
+          }, () => {
             that.handleChangeTab('import');
           })
         } else {
@@ -138,9 +142,9 @@ class MainLayout extends React.Component {
   }
 
   handleImport() {
-    const{list_record, root_path,is_import} = this.state
+    const { list_record, root_path, is_import } = this.state
     const that = this
-    if (is_import){
+    if (is_import) {
       return
     }
     this.setState({
@@ -156,14 +160,14 @@ class MainLayout extends React.Component {
       contentType: "application/json; charset=utf-8",
       dataType: "json",
       success: function (response) {
-          that.setState(()=>{
-            return {
-              step: 2,
-              tasks: response.data.tasks,
-            }
-          }, ()=>{
-            that.handleChangeTab('result');
-          })
+        that.setState(() => {
+          return {
+            step: step.IMPORT_STEP,
+            tasks: response.data.tasks,
+          }
+        }, () => {
+          that.handleChangeTab('result');
+        })
       },
       error: function (error) {
         console.log(error);
@@ -173,7 +177,7 @@ class MainLayout extends React.Component {
 
   getStatus() {
     const that = this
-    const {tasks, root_path} = this.state
+    const { tasks, root_path } = this.state
     that.setState({
       import_status: false
     })
@@ -187,58 +191,58 @@ class MainLayout extends React.Component {
       contentType: "application/json; charset=utf-8",
       dataType: "json",
     })
-    .done((res) => {
+      .done((res) => {
 
-      that.setState({
-        tasks: res.result
-      })
-      if (res.status === 'done'){
         that.setState({
-          import_status: true
+          tasks: res.result
         })
-        return
-      }
-      setTimeout(function() {
-        that.getStatus();
-      }, 1000);
-    })
-    .fail((err) => {
-      console.log(err);
-    });
+        if (res.status === 'done') {
+          that.setState({
+            import_status: true
+          })
+          return
+        }
+        setTimeout(function () {
+          that.getStatus();
+        }, 1000);
+      })
+      .fail((err) => {
+        console.log(err);
+      });
   }
 
   render() {
-    const {tab, tabs, list_record,is_import,tasks ,import_status} = this.state
-    return(
+    const { tab, tabs, list_record, is_import, tasks, import_status } = this.state
+    return (
       <div>
         <ul className="nav nav-tabs">
           {
-            tabs.map((item,key)=>{
-              return(
-                <li role="presentation" className={`${item.tab_key===tab ? 'active' : ''}`} onClick={()=>this.handleChangeTab(item.tab_key)}><a href="#">{item.tab_name}</a></li>
+            tabs.map((item, key) => {
+              return (
+                <li role="presentation" className={`${item.tab_key === tab ? 'active' : ''}`} onClick={() => this.handleChangeTab(item.tab_key)}><a href="#">{item.tab_name}</a></li>
               )
             })
           }
         </ul>
-        <div className={`${tab === tabs[0].tab_key ? '': 'hide'}`}>
+        <div className={`${tab === tabs[0].tab_key ? '' : 'hide'}`}>
           <ImportComponent
             handleCheck={this.handleCheck}
-           ></ImportComponent>
+          ></ImportComponent>
         </div>
-        <div className={`${tab === tabs[1].tab_key ? '': 'hide'}`}>
+        <div className={`${tab === tabs[1].tab_key ? '' : 'hide'}`}>
           <CheckComponent
             list_record={list_record || []}
             handleImport={this.handleImport}
             is_import={is_import}
           ></CheckComponent>
         </div>
-        <div className={`${tab === tabs[2].tab_key ? '': 'hide'}`}>
+        <div className={`${tab === tabs[2].tab_key ? '' : 'hide'}`}>
           {
             tab === tabs[2].tab_key && <ResultComponent
-            tasks={tasks || []}
-            getStatus={this.getStatus}
-            import_status = {import_status}
-          ></ResultComponent>
+              tasks={tasks || []}
+              getStatus={this.getStatus}
+              import_status={import_status}
+            ></ResultComponent>
           }
 
         </div>
@@ -249,183 +253,183 @@ class MainLayout extends React.Component {
 
 class ImportComponent extends React.Component {
 
-    constructor(){
-      super()
-      this.state = {
-        file: null,
-        file_name: "",
-        isShowModalWF: false,
-        work_flow_data : null,
-        wl_key: null,
-        isShowModalIndex: false,
-        list_index: [],
-        term_select_index_list: [],
-        select_index_list: [],
-        isShowModalImport: false
-      }
-      this.handleChangefile = this.handleChangefile.bind(this)
-      this.handleClickFile = this.handleClickFile.bind(this)
-      this.getLastString = this.getLastString.bind(this)
-      this.handleShowModalWorkFlow = this.handleShowModalWorkFlow.bind(this)
-      this.handleChangeWF = this.handleChangeWF.bind(this)
-      this.handleShowModalIndex = this.handleShowModalIndex.bind(this)
-      this.handleSelectIndex = this.handleSelectIndex.bind(this)
-      this.handleSubmit = this.handleSubmit.bind(this)
+  constructor() {
+    super()
+    this.state = {
+      file: null,
+      file_name: "",
+      isShowModalWF: false,
+      work_flow_data: null,
+      wl_key: null,
+      isShowModalIndex: false,
+      list_index: [],
+      term_select_index_list: [],
+      select_index_list: [],
+      isShowModalImport: false
+    }
+    this.handleChangefile = this.handleChangefile.bind(this)
+    this.handleClickFile = this.handleClickFile.bind(this)
+    this.getLastString = this.getLastString.bind(this)
+    this.handleShowModalWorkFlow = this.handleShowModalWorkFlow.bind(this)
+    this.handleChangeWF = this.handleChangeWF.bind(this)
+    this.handleShowModalIndex = this.handleShowModalIndex.bind(this)
+    this.handleSelectIndex = this.handleSelectIndex.bind(this)
+    this.handleSubmit = this.handleSubmit.bind(this)
 
+  }
+
+  componentDidMount() {
+    const that = this
+    $.ajax({
+      url: urlTree,
+      type: 'GET',
+      success: function (data) {
+        that.setState({
+          list_index: data
+        })
+      },
+      error: function (error) {
+        console.log(error);
+        // alert();
+      }
+    });
+  }
+
+  handleChangefile(e) {
+    const file = e.target.files[0],
+      reader = new FileReader();
+    const file_name = this.getLastString(e.target.value, "\\")
+    if (this.getLastString(file_name, ".") !== 'zip') {
+      return false
     }
 
-    componentDidMount() {
-      const that = this
-      $.ajax({
-        url: urlTree,
-        type: 'GET',
-        success: function (data) {
-          that.setState({
-            list_index: data
-          })
-        },
-        error: function (error) {
-          console.log(error);
-          // alert();
-        }
+    this.setState({
+      file_name: file_name,
+    });
+
+    reader.onload = (e) => {
+      this.setState({
+        file: reader.result,
       });
     }
+    reader.readAsDataURL(file);
+  }
 
-    handleChangefile (e) {
-      const file = e.target.files[0],
-            reader = new FileReader();
-        const file_name = this.getLastString(e.target.value, "\\")
-        if (this.getLastString(file_name,".") !== 'zip') {
-          return false
-        }
+  handleClickFile() {
+    this.inputElement.click();
+  }
 
-        this.setState({
-          file_name:file_name,
-         });
+  getLastString(path, code) {
+    const split_path = path.split(code)
+    return split_path.pop()
+  }
 
-        reader.onload = (e) => {
-            this.setState({
-                file: reader.result,
-            });
-        }
-        reader.readAsDataURL(file);
-    }
-
-    handleClickFile() {
-      this.inputElement.click();
-    }
-
-    getLastString(path, code){
-      const split_path = path.split(code)
-      return split_path.pop()
-    }
-
-    handleShowModalWorkFlow(data) {
-      const {isShowModalWF,work_flow_data} = this.state
-      if(!isShowModalWF) {
-        this.setState({
-          isShowModalWF: !isShowModalWF,
-          wl_key: work_flow_data ? workflows.findIndex((item) => {return work_flow_data && item.id === work_flow_data.id}) : null
-        })
-      } else {
-        this.setState({
-          isShowModalWF: !isShowModalWF,
-          work_flow_data: data ? data : work_flow_data
-        })
-      }
-    }
-
-    handleChangeWF(e) {
-      const value = e.target.value
+  handleShowModalWorkFlow(data) {
+    const { isShowModalWF, work_flow_data } = this.state
+    if (!isShowModalWF) {
       this.setState({
-        wl_key: value
+        isShowModalWF: !isShowModalWF,
+        wl_key: work_flow_data ? workflows.findIndex((item) => { return work_flow_data && item.id === work_flow_data.id }) : null
+      })
+    } else {
+      this.setState({
+        isShowModalWF: !isShowModalWF,
+        work_flow_data: data ? data : work_flow_data
       })
     }
+  }
 
-    handleShowModalIndex(data) {
-      const {isShowModalIndex,select_index_list,term_select_index_list} = this.state
-      if(!isShowModalIndex) {
-        this.setState({
-          isShowModalIndex: !isShowModalIndex,
-          term_select_index_list: [...select_index_list]
-        })
-      } else {
-        this.setState({
-          isShowModalIndex: !isShowModalIndex,
-          select_index_list: data ? [...term_select_index_list] : [...select_index_list]
-        })
-      }
-    }
+  handleChangeWF(e) {
+    const value = e.target.value
+    this.setState({
+      wl_key: value
+    })
+  }
 
-    handleSelectIndex(data) {
-      const {term_select_index_list} = this.state
-      const new_select_index = term_select_index_list.filter(item => {
-        return data.id !== item.id
+  handleShowModalIndex(data) {
+    const { isShowModalIndex, select_index_list, term_select_index_list } = this.state
+    if (!isShowModalIndex) {
+      this.setState({
+        isShowModalIndex: !isShowModalIndex,
+        term_select_index_list: [...select_index_list]
       })
-      if(new_select_index.length !== term_select_index_list.length) {
-        this.setState({
-          term_select_index_list: new_select_index
-        })
-      } else {
-        this.setState({
-          term_select_index_list: [...term_select_index_list, {...data}]
-        })
-      }
+    } else {
+      this.setState({
+        isShowModalIndex: !isShowModalIndex,
+        select_index_list: data ? [...term_select_index_list] : [...select_index_list]
+      })
     }
+  }
 
-    handleSubmit() {
-      const {isShowModalImport,file,file_name, work_flow_data, select_index_list} = this.state
-      const {handleCheck} = this.props
-      const data = {
-        file,
-        file_name,
-        // work_flow: work_flow_data,
-        // index: select_index_list
-      }
-      handleCheck(data)
+  handleSelectIndex(data) {
+    const { term_select_index_list } = this.state
+    const new_select_index = term_select_index_list.filter(item => {
+      return data.id !== item.id
+    })
+    if (new_select_index.length !== term_select_index_list.length) {
+      this.setState({
+        term_select_index_list: new_select_index
+      })
+    } else {
+      this.setState({
+        term_select_index_list: [...term_select_index_list, { ...data }]
+      })
     }
+  }
 
-    render() {
-      const {
-        file_name,
-        isShowModalWF,
-        wl_key,
-        work_flow_data,
-        isShowModalIndex,
-        list_index,
-        term_select_index_list,
-        select_index_list,
-        isShowModalImport,
-        file
-      } = this.state
-      return(
-        <div className="import_component">
-          <div className="row layout">
-            <div className="col-md-12">
-              <div className="row">
-                <div className="col-md-2 col-cd">
-                  <label>{select_file}</label>
+  handleSubmit() {
+    const { isShowModalImport, file, file_name, work_flow_data, select_index_list } = this.state
+    const { handleCheck } = this.props
+    const data = {
+      file,
+      file_name,
+      // work_flow: work_flow_data,
+      // index: select_index_list
+    }
+    handleCheck(data)
+  }
+
+  render() {
+    const {
+      file_name,
+      isShowModalWF,
+      wl_key,
+      work_flow_data,
+      isShowModalIndex,
+      list_index,
+      term_select_index_list,
+      select_index_list,
+      isShowModalImport,
+      file
+    } = this.state
+    return (
+      <div className="import_component">
+        <div className="row layout">
+          <div className="col-md-12">
+            <div className="row">
+              <div className="col-md-2 col-cd">
+                <label>{select_file}</label>
+              </div>
+              <div className="col-md-8">
+                <div>
+                  <button className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
+                  <input
+                    type="file"
+                    className="input-file"
+                    ref={input => this.inputElement = input}
+                    accept=".zip"
+                    onChange={this.handleChangefile}
+                  />
                 </div>
-                <div className="col-md-8">
-                  <div>
-                    <button className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
-                    <input
-                      type="file"
-                      className="input-file"
-                      ref={input => this.inputElement = input}
-                      accept=".zip"
-                      onChange={this.handleChangefile}
-                      />
-                  </div>
-                  <div className="block-placeholder">
-                    {
-                      file_name ? <p className="active">{file_name}</p> : <p>{selected_file_name}</p>
-                    }
-                  </div>
+                <div className="block-placeholder">
+                  {
+                    file_name ? <p className="active">{file_name}</p> : <p>{selected_file_name}</p>
+                  }
                 </div>
               </div>
             </div>
-{/*
+          </div>
+          {/*
             <div className="col-md-12">
               <div className="row">
                 <div className="col-md-2 col-cd">
@@ -477,24 +481,24 @@ class ImportComponent extends React.Component {
               </div>
             </div>
              */}
-            <div className="col-md-12">
-              <div className="row">
-                <div className="col-md-2">
-                  <button
-                    className="btn btn-primary"
-                    disabled={!file}
+          <div className="col-md-12">
+            <div className="row">
+              <div className="col-md-2">
+                <button
+                  className="btn btn-primary"
+                  disabled={!file}
 
-                    onClick={()=>{file && this.handleSubmit()}}
-                  >
-                    {next}<span className="glyphicon glyphicon-chevron-right icon"></span>
-                  </button>
-                </div>
+                  onClick={() => { file && this.handleSubmit() }}
+                >
+                  {next}<span className="glyphicon glyphicon-chevron-right icon"></span>
+                </button>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Work Flow */}
-{/*
+        {/* Work Flow */}
+        {/*
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleShowModalWorkFlow()}></div>
             <div className="modal-content">
@@ -550,8 +554,8 @@ class ImportComponent extends React.Component {
             </div>
           </div>
            */}
-          {/* Index */}
-{/*
+        {/* Index */}
+        {/*
           <div className={`modal ${isShowModalIndex ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleShowModalIndex(false)}></div>
             <div className="modal-index">
@@ -613,8 +617,8 @@ class ImportComponent extends React.Component {
             </div>
           </div>
            */}
-          {/* import */}
-{/*
+        {/* import */}
+        {/*
           <div className={`modal ${isShowModalImport ? "active" : ''}`}>
             <div className="modal-mark" onClick={()=>this.handleSubmit(false)}></div>
             <div className="modal-index">
@@ -657,34 +661,34 @@ class ImportComponent extends React.Component {
             </div>
           </div> */}
 
-        </div>
-      )
-    }
+      </div>
+    )
+  }
 }
 
 class TreeList extends React.Component {
 
-  constructor(){
+  constructor() {
     super()
 
   }
 
-  render(){
-    const {children, tree_name,select_index_list} = this.props
-    return(
+  render() {
+    const { children, tree_name, select_index_list } = this.props
+    return (
       <div>
         <ul>
           {
-            children.map((item,index)=> {
+            children.map((item, index) => {
               return (
-                  <li>
-                    <TreeNode
-                      data={item} key={index}
-                      handleSelectIndex={this.props.handleSelectIndex}
-                      tree_name={tree_name}
-                      select_index_list={select_index_list}
-                      ></TreeNode>
-                  </li>
+                <li>
+                  <TreeNode
+                    data={item} key={index}
+                    handleSelectIndex={this.props.handleSelectIndex}
+                    tree_name={tree_name}
+                    select_index_list={select_index_list}
+                  ></TreeNode>
+                </li>
               )
             })
           }
@@ -697,9 +701,9 @@ class TreeList extends React.Component {
 
 class TreeNode extends React.Component {
 
-  constructor(){
+  constructor() {
     super()
-    this.state={
+    this.state = {
       isCollabsed: true,
       defaultChecked: false
     }
@@ -708,8 +712,8 @@ class TreeNode extends React.Component {
     this.defaultChecked = this.defaultChecked.bind(this)
   }
 
-  handleShow(){
-    const {isCollabsed} = this.state
+  handleShow() {
+    const { isCollabsed } = this.state
     this.setState({
       isCollabsed: !isCollabsed
     })
@@ -727,30 +731,30 @@ class TreeNode extends React.Component {
   }
 
   defaultChecked() {
-    const {data, select_index_list} = this.props
-    const result = !!select_index_list.filter(item => item.id===data.id).length
+    const { data, select_index_list } = this.props
+    const result = !!select_index_list.filter(item => item.id === data.id).length
     return result
   }
 
-  componentDidMount(){
+  componentDidMount() {
     this.setState({
       defaultChecked: this.defaultChecked()
     })
   }
 
-  render(){
-    const {data, tree_name,select_index_list,} = this.props
-    const {isCollabsed,defaultChecked} = this.state
+  render() {
+    const { data, tree_name, select_index_list, } = this.props
+    const { isCollabsed, defaultChecked } = this.state
 
-    return(
+    return (
       <div className="tree-node">
         <div
-          className={`folding ${ data.children.length ? isCollabsed ? 'node-collapsed': 'node-expanded' : 'weko-node-empty'}`}
-          onClick={()=>{data.children.length && this.handleShow()}}
+          className={`folding ${data.children.length ? isCollabsed ? 'node-collapsed' : 'node-expanded' : 'weko-node-empty'}`}
+          onClick={() => { data.children.length && this.handleShow() }}
         >
         </div>
         <div className='node-value'>
-          <input type="checkbox" onChange={this.handleClick} ref={re => this.input} checked={defaultChecked} style={{marginRight: '5px'}}></input>
+          <input type="checkbox" onChange={this.handleClick} ref={re => this.input} checked={defaultChecked} style={{ marginRight: '5px' }}></input>
           <span className="node-name">{data.name}</span>
         </div>
         <div className={`${isCollabsed ? 'hide' : ''}`}>
@@ -759,7 +763,7 @@ class TreeNode extends React.Component {
             tree_name={[...tree_name, data.name]}
             handleSelectIndex={this.props.handleSelectIndex}
             select_index_list={select_index_list}
-            ></TreeList>
+          ></TreeList>
         </div>
       </div>
     )
@@ -769,7 +773,7 @@ class TreeNode extends React.Component {
 
 class CheckComponent extends React.Component {
 
-  constructor(){
+  constructor() {
     super()
     this.state = {
       total: 0,
@@ -783,11 +787,11 @@ class CheckComponent extends React.Component {
     this.handleDownload = this.handleDownload.bind(this)
   }
 
-  componentWillReceiveProps(nextProps, prevProps){
+  componentWillReceiveProps(nextProps, prevProps) {
     this.handleGenerateData(nextProps.list_record)
   }
 
-  handleGenerateData(list_record = []){
+  handleGenerateData(list_record = []) {
     const check_error = list_record.filter((item) => {
       return item.errors
     }).length
@@ -811,19 +815,19 @@ class CheckComponent extends React.Component {
     if (title.length <= len) {
       return title
     } else {
-      return title.substring(0, len+1) +'...'
+      return title.substring(0, len + 1) + '...'
     }
   }
 
   handleDownload() {
-    const {list_record} = this.state
+    const { list_record } = this.state
     const result = Array.from(list_record, (item, key) => {
       return {
         'No': key,
         'Item Type': item.item_type_name,
         'Item Id': item.id,
-        'Title' : (item['Title'] && item['Title'][0] && item['Title'][0]['Title']) ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title'] ? item['Title']['Title'] : '',
-        'Check result': item['errors'] ? 'ERRORS' + (item['errors'][0] ? ': '+item['errors'][0] : '' ) : item.status === 'new' ? 'Register' : item.status === 'update' ? 'Update' : ''
+        'Title': (item['Title'] && item['Title'][0] && item['Title'][0]['Title']) ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title'] ? item['Title']['Title'] : '',
+        'Check result': item['errors'] ? 'ERRORS' + (item['errors'][0] ? ': ' + item['errors'][0] : '') : item.status === 'new' ? 'Register' : item.status === 'update' ? 'Update' : ''
       }
     })
     const data = {
@@ -835,28 +839,28 @@ class CheckComponent extends React.Component {
       headers: {
         'Content-Type': 'application/json'
       },
-     })
-    .then(resp => resp.blob())
-    .then(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      // the filename you want
-      const today = new Date();
-      const date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
-      a.download = 'check_'+ date+'.tsv';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
     })
-    .catch(() => alert('Error in download'));
+      .then(resp => resp.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        // the filename you want
+        const today = new Date();
+        const date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+        a.download = 'check_' + date + '.tsv';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(() => alert('Error in download'));
   }
 
-  render(){
-    const {total, list_record, update_item, new_item, check_error} = this.state
-    const {is_import} = this.props
-    return(
+  render() {
+    const { total, list_record, update_item, new_item, check_error } = this.state
+    const { is_import } = this.props
+    return (
       <div className="check-component">
         <div className="row">
           <div className="col-md-12 text-center">
@@ -866,7 +870,7 @@ class CheckComponent extends React.Component {
               disabled={is_import}
             >
               <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
-             </button>
+            </button>
           </div>
           <div className="col-md-12 text-center">
             <div className="row block-summary">
@@ -893,9 +897,9 @@ class CheckComponent extends React.Component {
                 <button
                   className="btn btn-primary"
                   onClick={this.handleDownload}
-                 >
+                >
                   <span className="glyphicon glyphicon-cloud-download icon"></span>{download}
-                 </button>
+                </button>
               </div>
             </div>
           </div>
@@ -916,24 +920,24 @@ class CheckComponent extends React.Component {
                     return (
                       <tr key={key}>
                         <td>
-                          {key+1}
+                          {key + 1}
                         </td>
                         <td>{item.item_type_name || not_match}</td>
                         <td>
-                          {item.status === 'new' && item.id ? (new_item_label+'('+ item.id+')') : item.id ? item.id :''}
+                          {item.status === 'new' && item.id ? (new_item_label + '(' + item.id + ')') : item.id ? item.id : ''}
                         </td>
                         <td>
-                        <p className="title_item">
-                          {(item['Title'] && item['Title'][0] && item['Title'][0]['Title'])
-                           ? item['Title'][0]['Title']: item['Title'] && item['Title']['Title']
-                           ? item['Title']['Title'] : '' }
-                        </p>
+                          <p className="title_item">
+                            {(item['Title'] && item['Title'][0] && item['Title'][0]['Title'])
+                              ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title']
+                                ? item['Title']['Title'] : ''}
+                          </p>
 
-                         </td>
-                        <td>{item['errors'] ? item['errors'][0] && (error+ ': '+ item['errors'][0]) || error : item.status === 'new'?
-                          register:
-                           item.status === 'update' ?
-                            update :''}</td>
+                        </td>
+                        <td>{item['errors'] ? item['errors'][0] && (error + ': ' + item['errors'][0]) || error : item.status === 'new' ?
+                          register :
+                          item.status === 'update' ?
+                            update : ''}</td>
                       </tr>
                     )
                   })
@@ -948,26 +952,26 @@ class CheckComponent extends React.Component {
 }
 
 class ResultComponent extends React.Component {
-  constructor(){
+  constructor() {
     super()
     this.state = {
     }
     this.handleDownload = this.handleDownload.bind(this)
   }
 
-  componentDidMount(){
+  componentDidMount() {
     this.props.getStatus()
   }
 
   handleDownload() {
-    const {tasks} = this.props
+    const { tasks } = this.props
     const result = Array.from(tasks, (item, key) => {
       return {
-        'No': key+1,
+        'No': key + 1,
         'Start Date': item.start_date ? item.start_date : '',
         'End Date': item.end_date ? item.end_date : '',
         'Item Id': item.item_id || '',
-        'Action' : item.task_result ? item.task_result.success ? "End" : item.task_result.error ? "Error" : "" : "Start",
+        'Action': item.task_result ? item.task_result.success ? "End" : item.task_result.error ? "Error" : "" : "Start",
         'Work Flow Status': item.task_status ? item.task_status === "PENDING" ? "To Do" : item.task_status === "SUCCESS" ? "Done" : item.task_status === "FAILURE" ? "FAILURE" : '' : ''
       }
     })
@@ -980,80 +984,80 @@ class ResultComponent extends React.Component {
       headers: {
         'Content-Type': 'application/json'
       },
-     })
-    .then(resp => resp.blob())
-    .then(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      // the filename you want
-      const date = moment()
-      a.download = 'List_Download '+ date.format("YYYY-DD-MM")+'.tsv';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
     })
-    .catch(() => alert('Error in download'));
+      .then(resp => resp.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        // the filename you want
+        const date = moment()
+        a.download = 'List_Download ' + date.format("YYYY-DD-MM") + '.tsv';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(() => alert('Error in download'));
   }
 
-  render(){
-    const {tasks, import_status} = this.props
-    return(
+  render() {
+    const { tasks, import_status } = this.props
+    return (
       <div className="result_container row">
         <div className="col-md-12 text-align-right">
           <button
             className="btn btn-primary"
             onClick={this.handleDownload}
             disabled={!import_status}
-           >
+          >
             <span className="glyphicon glyphicon-cloud-download icon"></span>{download}
-           </button>
+          </button>
         </div>
         <div className="col-md-12 m-t-20">
-            <table class="table table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th>{no}</th>
-                  <th className="start_date"><p className="t_head">{start_date}</p></th>
-                  <th className="end_date"><p className="t_head ">{end_date}</p></th>
-                  <th><p className="t_head item_id">{item_id}</p></th>
-                  <th><p className="t_head action">{action}</p></th>
-                  <th><p className="t_head wf_status">{work_flow_status}</p></th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  tasks.map((item, key) => {
-                    return (
-                      <tr key={key}>
-                        <td>
-                          {key+1}
-                        </td>
-                        <td>{item.start_date ? item.start_date : ''}</td>
-                        <td>{item.end_date ? item.end_date : ''}</td>
-                        <td>{item.item_id || ''}</td>
-                        <td>{item.task_result ? item.task_result.success ? end : item.task_result.error ? "Error" : "" : "Start"}</td>
-                        <td>
-                          {item.task_status && item.task_status === "PENDING" ? to_do : ''}
-                          {item.task_status && item.task_status === "SUCCESS" ? done : ''}
-                          {item.task_status && item.task_status === "FAILURE" ? "FAILURE" : ''}
-                         </td>
-                      </tr>
-                    )
-                  })
-                }
-              </tbody>
-            </table>
-          </div>
+          <table class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <th>{no}</th>
+                <th className="start_date"><p className="t_head">{start_date}</p></th>
+                <th className="end_date"><p className="t_head ">{end_date}</p></th>
+                <th><p className="t_head item_id">{item_id}</p></th>
+                <th><p className="t_head action">{action}</p></th>
+                <th><p className="t_head wf_status">{work_flow_status}</p></th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                tasks.map((item, key) => {
+                  return (
+                    <tr key={key}>
+                      <td>
+                        {key + 1}
+                      </td>
+                      <td>{item.start_date ? item.start_date : ''}</td>
+                      <td>{item.end_date ? item.end_date : ''}</td>
+                      <td>{item.item_id || ''}</td>
+                      <td>{item.task_result ? item.task_result.success ? end : item.task_result.error ? "Error" : "" : "Start"}</td>
+                      <td>
+                        {item.task_status && item.task_status === "PENDING" ? to_do : ''}
+                        {item.task_status && item.task_status === "SUCCESS" ? done : ''}
+                        {item.task_status && item.task_status === "FAILURE" ? "FAILURE" : ''}
+                      </td>
+                    </tr>
+                  )
+                })
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }
 }
 
 $(function () {
-    ReactDOM.render(
-        <MainLayout/>,
-        document.getElementById('root')
-    )
+  ReactDOM.render(
+    <MainLayout />,
+    document.getElementById('root')
+  )
 });

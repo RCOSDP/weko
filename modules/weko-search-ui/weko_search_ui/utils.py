@@ -735,15 +735,16 @@ def up_load_file_content(record, root_path):
 
     """
     try:
-        if record.get('file_path'):
-            for file_name in record.get('file_path'):
+        file_path = record.get('file_path')
+        if file_path:
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid',
+                pid_value=record.get('id')).first()
+            rec = RecordMetadata.query.filter_by(
+                id=pid.object_uuid).first()
+            bucket = rec.json['_buckets']['deposit']
+            for file_name in file_path:
                 with open(root_path + '/' + file_name, 'rb') as file:
-                    pid = PersistentIdentifier.query.filter_by(
-                        pid_type='recid',
-                        pid_value=record.get('id')).first()
-                    rec = RecordMetadata.query.filter_by(
-                        id=pid.object_uuid).first()
-                    bucket = rec.json['_buckets']['deposit']
                     obj = ObjectVersion.create(
                         bucket,
                         get_file_name(file_name)
@@ -806,7 +807,6 @@ def register_item_metadata(item):
         deposit.update(item_status, new_data)
         deposit.commit()
         deposit.publish()
-
         with current_app.test_request_context():
             first_ver = deposit.newversion(pid)
             if first_ver:
@@ -840,6 +840,7 @@ def handle_get_title(title) -> str:
     elif isinstance(title, list):
         return title[0].get('Title') if title[0] \
             and isinstance(title[0], dict) else ''
+
 
 def handle_workflow(item: dict):
     """Handle workflow.
