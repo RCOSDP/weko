@@ -830,28 +830,31 @@ def register_item_metadata(item):
         deposit.update(item_status, new_data)
         deposit.commit()
         deposit.publish()
-        handle_workflow(item)
+
         with current_app.test_request_context():
             first_ver = deposit.newversion(pid)
             if first_ver:
                 first_ver.publish()
+
         # record_bucket_id = merge_buckets_by_records(
         #     pid.object_uuid,
         #     _deposit_data.get("id"),
         #     sub_bucket_delete=True
         # )
         db.session.commit()
-        return {
-            'success': True
-        }
+
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error('item id: %s update error.' % item_id)
+        print('item id: %s update error.' % item_id)
         current_app.logger.error(ex)
         return {
             'success': False,
             'error': str(ex)
         }
+    return {
+        'success': True
+    }
 
 
 def handle_get_title(title) -> str:
@@ -915,23 +918,29 @@ def create_work_flow(item_type_id):
         flow_define = FlowDefine.query.filter_by(
             flow_name=WEKO_FLOW_DEFINE.get("flow_name")).first()
     if flow_define and it:
-        with db.session.begin_nested():
-            data = WorkFlow()
-            data.flows_id = uuid.uuid4()
-            data.flows_name = it.item_type_name.name
-            data.itemtype_id = it.id
-            data.flow_id = flow_define.id
-            db.session.add(data)
-        db.session.commit()
+        try:
+            with db.session.begin_nested():
+                data = WorkFlow()
+                data.flows_id = uuid.uuid4()
+                data.flows_name = it.item_type_name.name
+                data.itemtype_id = it.id
+                data.flow_id = flow_define.id
+                db.session.add(data)
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error("create work flow error")
+            print("create work flow error")
+            current_app.logger.error(ex)
 
 
 def create_flow_define():
     """Handle create flow_define."""
     the_flow = Flow()
     flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
+    print("==================================flow")
     if flow and flow.flow_id:
         the_flow.upt_flow_action(flow.flow_id, WEKO_FLOW_DEFINE_LIST_ACTION)
-
 
 
 def import_items_to_system(item: dict):

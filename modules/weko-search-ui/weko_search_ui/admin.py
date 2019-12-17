@@ -36,7 +36,7 @@ from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .utils import check_import_items, delete_records, get_content_workflow, \
-    get_tree_items, import_items_to_system, make_stats_tsv, remove_temp_dir
+    get_tree_items, handle_workflow, make_stats_tsv, remove_temp_dir
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -281,6 +281,8 @@ class ItemImportView(BaseView):
             'errors')]
         for item in list_record:
             item['root_path'] = data.get('root_path')
+            handle_workflow(item)
+
             task = import_item.delay(item)
             tasks.append({
                 'task_id': task.task_id,
