@@ -918,13 +918,12 @@ def create_work_flow(item_type_id):
 
     if flow_define and it:
         try:
-            with db.session.begin_nested():
-                data = WorkFlow()
-                data.flows_id = uuid.uuid4()
-                data.flows_name = it.item_type_name.name
-                data.itemtype_id = it.id
-                data.flow_id = flow_define.id
-                db.session.add(data)
+            data = WorkFlow()
+            data.flows_id = uuid.uuid4()
+            data.flows_name = it.item_type_name.name
+            data.itemtype_id = it.id
+            data.flow_id = flow_define.id
+            db.session.add(data)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
