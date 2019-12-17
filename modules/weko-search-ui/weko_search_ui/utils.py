@@ -886,11 +886,14 @@ def handle_workflow(item: dict):
     pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=item.get('id')).first()
     if not pid:
+        current_app.logger.debug("=======================pid")
         return
     activity = WorkActivity()
     wf_activity = activity.get_workflow_activity_by_item_id(
         pid.object_uuid)
     if wf_activity:
+        current_app.logger.debug("=======================wf_activity")
+
         return
     else:
         workflow = WorkFlow.query.filter_by(
@@ -913,10 +916,6 @@ def create_work_flow(item_type_id):
         flow_name='Registration Flow').first()
     it = ItemTypes.get_by_id(item_type_id)
 
-    if not flow_define:
-        create_flow_define()
-        flow_define = FlowDefine.query.filter_by(
-            flow_name=WEKO_FLOW_DEFINE.get("flow_name")).first()
     if flow_define and it:
         try:
             with db.session.begin_nested():
@@ -936,11 +935,14 @@ def create_work_flow(item_type_id):
 
 def create_flow_define():
     """Handle create flow_define."""
-    the_flow = Flow()
-    flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
-    print("==================================flow")
-    if flow and flow.flow_id:
-        the_flow.upt_flow_action(flow.flow_id, WEKO_FLOW_DEFINE_LIST_ACTION)
+    flow_define = FlowDefine.query.filter_by(
+        flow_name='Registration Flow').first()
+    if not flow_define:
+        the_flow = Flow()
+        flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
+        print("==================================flow")
+        if flow and flow.flow_id:
+            the_flow.upt_flow_action(flow.flow_id, WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
 def import_items_to_system(item: dict):
@@ -959,6 +961,8 @@ def import_items_to_system(item: dict):
         if item.get('status') == 'new' and item.get('id'):
             create_deposit(item.get('id'))
         up_load_file_content(item, root_path)
+        handle_workflow(item)
+
         response = register_item_metadata(item)
 
         return response
