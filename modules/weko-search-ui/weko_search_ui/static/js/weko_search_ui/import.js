@@ -126,7 +126,7 @@ class MainLayout extends React.Component {
               list_record: response.list_record,
               root_path: response.data_path,
               is_import: false,
-              step: step.SELECT_STEP
+              step: step.IMPORT_STEP
             }
           }, () => {
             that.handleChangeTab('import');
