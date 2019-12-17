@@ -334,7 +334,7 @@ class ItemImportView(BaseView):
             remove_temp_dir(data.get("root_path"))
         return jsonify(response_object)
 
-    @expose('/download_import', methods=['POST'])
+    @expose('/export_import', methods=['POST'])
     def download_import(self):
         """Register an item type mapping."""
         from .config import WEKO_IMPORT_LIST_NAME

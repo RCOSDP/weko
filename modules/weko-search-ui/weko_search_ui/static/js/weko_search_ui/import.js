@@ -51,7 +51,7 @@ const urlTree = window.location.origin+'/api/tree'
 const urlCheck = window.location.origin+'/admin/items/import/check'
 const urlCheckStatus = window.location.origin+'/admin/items/import/check_status'
 const urlDownloadCheck = window.location.origin+'/admin/items/import/download_check'
-const urlDownloadImport = window.location.origin+'/admin/items/import/download_import'
+const urlDownloadImport = window.location.origin+'/admin/items/import/export_import'
 const urlImport = window.location.origin+'/admin/items/import/import'
 
 class MainLayout extends React.Component {
