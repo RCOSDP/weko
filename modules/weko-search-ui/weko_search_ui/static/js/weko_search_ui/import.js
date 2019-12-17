@@ -162,7 +162,7 @@ class MainLayout extends React.Component {
       success: function (response) {
         that.setState(() => {
           return {
-            step: step.IMPORT_STEP,
+            step: step.RESULT_STEP,
             tasks: response.data.tasks,
           }
         }, () => {
