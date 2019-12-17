@@ -173,18 +173,22 @@ def handle_profile_form(form):
                     form_data = getattr(form, key).data
                     setattr(current_userprofile, key, form_data)
             # Mapping role
-            if (current_app.config['USERPROFILES_EMAIL_ENABLED'] and
+            current_config = current_app.config
+            if (current_config['USERPROFILES_ROLE_MAPPING_ENABLED'] and
                     current_userprofile.position):
                 role_name = get_role_by_position(current_userprofile.position)
                 roles1 = db.session.query(Role).filter_by(
                     name=role_name).all()
+                admin_role = current_config.get(
+                    "USERPROFILES_ADMINISTRATOR_ROLE")
+                userprofile_roles = current_config.get("USERPROFILES_ROLES")
                 roles2 = [
                     role for role in current_user.roles
-                    if role not in current_app.config.get(
-                        "USERPROFILES_DAISHODAI_ROLES")
+                    if role not in userprofile_roles or role == admin_role
                 ]
                 roles = roles1 + roles2
-                current_user.roles = roles
+                if roles:
+                    current_user.roles = roles
             db.session.add(current_userprofile)
 
             # Update email
