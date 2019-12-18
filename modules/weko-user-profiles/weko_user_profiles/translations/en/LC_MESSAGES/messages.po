@@ -262,3 +262,113 @@ msgstr ""
 #~ msgid "Update profile"
 #~ msgstr ""
 
+### Label on 'Profile' screen
+msgid "University/Institution"
+msgstr ""
+
+msgid "Affiliated Division/Department"
+msgstr ""
+
+msgid "Position"
+msgstr ""
+
+msgid "Other Position"
+msgstr ""
+
+msgid "Phone number"
+msgstr ""
+
+msgid "Affiliated Institution Name"
+msgstr ""
+
+msgid "Affiliated Institution Position"
+msgstr ""
+
+### Position's data list in combobox
+msgid "Professor"
+msgstr ""
+
+msgid "Assistant Professor"
+msgstr ""
+
+msgid "Full-time Instructor"
+msgstr ""
+
+msgid "Assistant Teacher"
+msgstr ""
+
+msgid "Full-time Researcher"
+msgstr ""
+
+msgid "Others (Input Detail)"
+msgstr ""
+
+msgid "JSPS Research Fellowship for Young Scientists (PD, SPD etc.)"
+msgstr ""
+
+msgid "JSPS Research Fellowship for Young Scientists (DC1, DC2)"
+msgstr ""
+
+msgid "Doctoral Course (Doctoral Program)"
+msgstr ""
+
+msgid "Master Course (Master Program)"
+msgstr ""
+
+msgid "Fellow Researcher"
+msgstr ""
+
+msgid "Listener"
+msgstr ""
+
+msgid "Student"
+msgstr ""
+
+### Affiliated Institution Position's data list in combobox
+msgid "Member"
+msgstr ""
+
+msgid "Committee member"
+msgstr ""
+
+msgid "Director/Officer"
+msgstr ""
+
+msgid "President"
+msgstr ""
+
+msgid "Input when selecting Others"
+msgstr ""
+
+###
+### Message validate
+###
+msgid "University/Institution not provided."
+msgstr ""
+
+msgid "Affiliated Division/Department not provided."
+msgstr ""
+
+msgid "Position not provided."
+msgstr ""
+
+msgid "Phone number not provided."
+msgstr ""
+
+msgid "Affiliated Institution Name not provided."
+msgstr ""
+
+msgid "Affiliated Institution Position not provided."
+msgstr ""
+
+msgid "Phone number must be less than 15 characters."
+msgstr ""
+
+msgid "Text field must be less than 100 characters."
+msgstr ""
+
+msgid "Phone Number format is incorrect."
+msgstr ""
+
+msgid "Position is being inputted (Only input when selecting 'Others')"
+msgstr ""
