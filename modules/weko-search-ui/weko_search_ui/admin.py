@@ -35,8 +35,8 @@ from weko_workflow.api import WorkFlow
 
 from weko_search_ui.api import get_search_detail_keyword
 
-from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_IMPORT_LIST_NAME, \
-    WEKO_IMPORT_CHECK_LIST_NAME
+from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 
 from .tasks import import_item
 from .utils import check_import_items, create_flow_define, delete_records, \
@@ -212,6 +212,7 @@ class ItemImportView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
         """Renders an item import view.
+
         :param
         :return: The rendered template.
         """
@@ -272,7 +273,7 @@ class ItemImportView(BaseView):
 
     @expose('/import', methods=['POST'])
     def import_items(self) -> jsonify:
-        """Import item into System. """
+        """Import item into System."""
         data = request.get_json() or {}
         tasks = []
         list_record = [item for item in data.get(
@@ -296,7 +297,7 @@ class ItemImportView(BaseView):
 
     @expose("/check_status", methods=["POST"])
     def get_status(self):
-        """Get status of import proccess. """
+        """Get status of import process."""
         data = request.get_json()
         result = []
         if data and data.get('tasks'):
