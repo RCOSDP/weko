@@ -24,6 +24,7 @@ import datetime
 import uuid
 
 import click
+from flask import current_app
 from flask.cli import with_appcontext
 from invenio_db import db
 from sqlalchemy import asc
@@ -118,7 +119,7 @@ def init_workflow_tables(tables):
         """Init Action Table."""
         db_action = list()
         db_action.append(dict(
-            action_name='Start',
+            action_name=current_app.config['WEKO_WORKFLOW_ACTION_START'],
             action_desc='Indicates that the action has started.',
             action_version='1.0.0',
             action_endpoint='begin_action',
@@ -126,7 +127,7 @@ def init_workflow_tables(tables):
             action_lastdate=datetime.date(2018, 5, 15)
         ))
         db_action.append(dict(
-            action_name='End',
+            action_name=current_app.config['WEKO_WORKFLOW_ACTION_END'],
             action_desc='Indicates that the action has been completed.',
             action_version='1.0.0',
             action_endpoint='end_action',
@@ -134,7 +135,8 @@ def init_workflow_tables(tables):
             action_lastdate=datetime.date(2018, 5, 15)
         ))
         db_action.append(dict(
-            action_name='Item Registration',
+            action_name=current_app.config[
+                'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION'],
             action_desc='Registering items.',
             action_version='1.0.1',
             action_endpoint='item_login',
@@ -142,7 +144,7 @@ def init_workflow_tables(tables):
             action_lastdate=datetime.date(2018, 5, 22)
         ))
         db_action.append(dict(
-            action_name='Approval',
+            action_name=current_app.config['WEKO_WORKFLOW_ACTION_APPROVAL'],
             action_desc='Approval action for approval requested items.',
             action_version='2.0.0',
             action_endpoint='approval',
@@ -151,7 +153,7 @@ def init_workflow_tables(tables):
         ))
         #
         db_action.append(dict(
-            action_name='Item Link',
+            action_name=current_app.config['WEKO_WORKFLOW_ACTION_ITEM_LINK'],
             action_desc='Plug-in for link items.',
             action_version='1.0.1',
             action_endpoint='item_link',
@@ -159,7 +161,8 @@ def init_workflow_tables(tables):
             action_lastdate=datetime.date(2018, 5, 22)
         ))
         db_action.append(dict(
-            action_name='OA Policy Confirmation',
+            action_name=current_app.config[
+                'WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION'],
             action_desc='Action for OA Policy confirmation.',
             action_version='1.0.0',
             action_endpoint='oa_policy',
@@ -168,13 +171,43 @@ def init_workflow_tables(tables):
         ))
         # Identifier Grant
         db_action.append(dict(
-            action_name='Identifier Grant',
+            action_name=current_app.config[
+                'WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION'],
             action_desc='Select DOI issuing organization and CNRI.',
             action_version='1.0.0',
             action_endpoint='identifier_grant',
             action_makedate=datetime.date(2019, 3, 15),
             action_lastdate=datetime.date(2019, 3, 15)
         ))
+        if current_app.config['WEKO_WORKFLOW_ACTION_GUARANTOR']:
+            db_action.append(dict(
+                action_name=current_app.config[
+                    'WEKO_WORKFLOW_ACTION_GUARANTOR'],
+                action_desc='Approval action performed by Guarantor.',
+                action_version='1.0.0',
+                action_endpoint='approval_guarantor',
+                action_makedate=datetime.date(2019, 11, 13),
+                action_lastdate=datetime.date(2018, 11, 13)
+            ))
+        if current_app.config['WEKO_WORKFLOW_ACTION_ADVISOR']:
+            db_action.append(dict(
+                action_name=current_app.config['WEKO_WORKFLOW_ACTION_ADVISOR'],
+                action_desc='Approval action performed by Advisor.',
+                action_version='1.0.0',
+                action_endpoint='approval_advisor',
+                action_makedate=datetime.date(2019, 11, 13),
+                action_lastdate=datetime.date(2019, 11, 13)
+            ))
+        if current_app.config['WEKO_WORKFLOW_ACTION_ADMINISTRATOR']:
+            db_action.append(dict(
+                action_name=current_app.config[
+                    'WEKO_WORKFLOW_ACTION_ADMINISTRATOR'],
+                action_desc='Approval action performed by Administrator.',
+                action_version='1.0.0',
+                action_endpoint='approval_administrator',
+                action_makedate=datetime.date(2019, 11, 13),
+                action_lastdate=datetime.date(2019, 11, 13)
+            ))
         return db_action
 
     def init_flow():
