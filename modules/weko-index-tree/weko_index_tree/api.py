@@ -597,7 +597,15 @@ class Indexes(object):
 
     @classmethod
     def get_index_by_name(cls, index_name="", pid=0):
-        """Get index."""
+        """Validation importing zip file.
+
+        :argument
+            index_name   -- {str} index_name query
+            pid          -- {number} parent index id
+        :return
+            return       -- index id import item
+
+        """
         with db.session.begin_nested():
             obj = db.session.query(Index). \
                 filter_by(index_name=index_name, parent=pid).one_or_none()

@@ -31,10 +31,14 @@ from flask_babelex import gettext as _
 from invenio_db import db
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
+from weko_workflow.api import WorkFlow
 
 from weko_search_ui.api import get_search_detail_keyword
 
-from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
+from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_IMPORT_LIST_NAME, \
+    WEKO_IMPORT_CHECK_LIST_NAME
+
+from .tasks import import_item
 from .utils import check_import_items, create_flow_define, delete_records, \
     get_content_workflow, get_tree_items, make_stats_tsv, remove_temp_dir
 
@@ -208,12 +212,9 @@ class ItemImportView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
         """Renders an item import view.
-
         :param
         :return: The rendered template.
         """
-        from weko_workflow.api import WorkFlow
-
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
         workflows_js = [get_content_workflow(item) for item in workflows]
@@ -225,7 +226,7 @@ class ItemImportView(BaseView):
 
     @expose('/check', methods=['POST'])
     def check(self) -> jsonify:
-        """Register an item type mapping."""
+        """Validate item import."""
         data = request.get_json()
         list_record = []
         data_path = ''
@@ -243,8 +244,7 @@ class ItemImportView(BaseView):
 
     @expose('/download_check', methods=['POST'])
     def download_check(self):
-        """Register an item type mapping."""
-        from .config import WEKO_IMPORT_CHECK_LIST_NAME
+        """Download report check result."""
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
 
@@ -272,8 +272,7 @@ class ItemImportView(BaseView):
 
     @expose('/import', methods=['POST'])
     def import_items(self) -> jsonify:
-        """Register an item type mapping."""
-        from .tasks import import_item
+        """Import item into System. """
         data = request.get_json() or {}
         tasks = []
         list_record = [item for item in data.get(
@@ -297,7 +296,7 @@ class ItemImportView(BaseView):
 
     @expose("/check_status", methods=["POST"])
     def get_status(self):
-        from .tasks import import_item
+        """Get status of import proccess. """
         data = request.get_json()
         result = []
         if data and data.get('tasks'):
@@ -305,28 +304,22 @@ class ItemImportView(BaseView):
             for task_item in data.get('tasks'):
                 task_id = task_item.get('task_id')
                 task = import_item.AsyncResult(task_id)
-
-                if task:
-                    if isinstance(task.result, dict):
-                        start_date = task.result.get("start_date")
-                    else:
-                        start_date = ''
-                    if task.successful() or task.failed():
-                        end_date = datetime.now().strftime(
-                            "%Y-%m-%d %H:%M:%S")
-                    else:
-                        end_date = ''
-                    result.append(dict(**{
-                        "task_status": task.status,
-                        "task_result": task.result,
-                        "start_date": start_date,
-                        "end_date": task_item.get("end_date") or end_date,
-                        "task_id": task_id,
-                        "item_id": task_item.get("item_id"),
-                    }))
-                    if not (task.successful() or task.failed()):
-                        status = 'doing'
-
+                start_date = task.result.get(
+                    "start_date"
+                ) if task and isinstance(task.result, dict) else ""
+                end_date = datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ) if task.successful() or task.failed() else ""
+                result.append(dict(**{
+                    "task_status": task.status,
+                    "task_result": task.result,
+                    "start_date": start_date,
+                    "end_date": task_item.get("end_date") or end_date,
+                    "task_id": task_id,
+                    "item_id": task_item.get("item_id"),
+                }))
+                status = 'doing' if not (task.successful() or task.failed())\
+                    else ""
             response_object = {"status": status, "result": result}
         else:
             response_object = {"status": "error", "result": result}
@@ -336,8 +329,7 @@ class ItemImportView(BaseView):
 
     @expose('/export_import', methods=['POST'])
     def download_import(self):
-        """Register an item type mapping."""
-        from .config import WEKO_IMPORT_LIST_NAME
+        """Download import result."""
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
 
