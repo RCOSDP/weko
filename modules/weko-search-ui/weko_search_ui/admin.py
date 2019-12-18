@@ -318,7 +318,7 @@ class ItemImportView(BaseView):
                     "item_id": task_item.get("item_id"),
                 }))
                 status = 'doing' if not (task.successful() or task.failed())\
-                    else ""
+                    else "done"
             response_object = {"status": status, "result": result}
         else:
             response_object = {"status": "error", "result": result}
