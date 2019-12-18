@@ -156,7 +156,6 @@ class MainLayout extends React.Component {
       } else {
         notifyResult = [{ notify_name: "", language: default_lang_code }];
       }
-      console.log("notifyResult:", notifyResult);
       this.setState({
         notify: notifyResult
       })
@@ -535,15 +534,18 @@ class MainLayout extends React.Component {
                   </div>
                 </div>
 
-                <div className="row form-group">
-                  <div className="col-md-2 col-md-offset-8">
-                      <button
-                       className="btn btn-success"
-                       onClick={this.handleAddNotify}
-                       disabled={!this.isEnableAddNotify()}>
-                        <span className="glyphicon glyphicon-plus icon"></span>{add_notify_label}</button>
+                {this.props.enable_notify ? (
+                    <div className="row form-group">
+                    <div className="col-md-2 col-md-offset-8">
+                        <button
+                          className="btn btn-success"
+                          onClick={this.handleAddNotify}
+                          disabled={!this.isEnableAddNotify()}
+                          ><span className="glyphicon glyphicon-plus icon"></span>{add_notify_label}</button>
+                    </div>
                   </div>
-                </div>
+                  ) :null
+                }
 
                 {
                  notify && this.props.enable_notify ? notify.map((notifyInfo, key) => {
