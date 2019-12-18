@@ -178,9 +178,6 @@ class MainLayout extends React.Component {
   getStatus() {
     const that = this
     const { tasks, root_path } = this.state
-    that.setState({
-      import_status: false
-    })
     $.ajax({
       url: urlCheckStatus,
       method: 'POST',
