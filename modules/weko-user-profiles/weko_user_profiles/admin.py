@@ -36,8 +36,8 @@ from invenio_accounts.models import Role, User
 from invenio_db import db
 from wtforms import SelectField
 
-from .config import USERPROFILES_INSTITUTE_POSITION_LIST, \
-    USERPROFILES_LANGUAGE_LIST, USERPROFILES_POSITION_LIST, \
+from .config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+    USERPROFILES_LANGUAGE_LIST, WEKO_USERPROFILES_POSITION_LIST, \
     USERPROFILES_TIMEZONE_LIST
 from .models import UserProfile
 from .views import get_role_by_position
@@ -164,30 +164,30 @@ class UserProfileView(ModelView):
         __('Affiliated Institution Position')
 
     """column_choices"""
-    column_choices['position'] = USERPROFILES_POSITION_LIST
+    column_choices['position'] = WEKO_USERPROFILES_POSITION_LIST
     column_choices['institutePosition'] = \
-        USERPROFILES_INSTITUTE_POSITION_LIST
+        WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     column_choices['institutePosition2'] = \
-        USERPROFILES_INSTITUTE_POSITION_LIST
+        WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     column_choices['institutePosition3'] = \
-        USERPROFILES_INSTITUTE_POSITION_LIST
+        WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     column_choices['institutePosition4'] = \
-        USERPROFILES_INSTITUTE_POSITION_LIST
+        WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     column_choices['institutePosition5'] = \
-        USERPROFILES_INSTITUTE_POSITION_LIST
+        WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
 
     """form_args"""
-    form_args["position"] = dict(choices=USERPROFILES_POSITION_LIST)
+    form_args["position"] = dict(choices=WEKO_USERPROFILES_POSITION_LIST)
     form_args["institutePosition"] = \
-        dict(choices=USERPROFILES_INSTITUTE_POSITION_LIST)
+        dict(choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST)
     form_args["institutePosition2"] = \
-        dict(choices=USERPROFILES_INSTITUTE_POSITION_LIST)
+        dict(choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST)
     form_args["institutePosition3"] = \
-        dict(choices=USERPROFILES_INSTITUTE_POSITION_LIST)
+        dict(choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST)
     form_args["institutePosition4"] = \
-        dict(choices=USERPROFILES_INSTITUTE_POSITION_LIST)
+        dict(choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST)
     form_args["institutePosition5"] = \
-        dict(choices=USERPROFILES_INSTITUTE_POSITION_LIST)
+        dict(choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST)
 
     """form_overrides"""
     form_overrides["position"] = SelectField
@@ -202,7 +202,7 @@ class UserProfileView(ModelView):
         return 'Search'
 
     def on_form_prefill(self, form, id):
-        form_column = current_app.config['USERPROFILES_FORM_COLUMN']
+        form_column = current_app.config['WEKO_USERPROFILES_FORM_COLUMN']
         if isinstance(form_column, list):
             for field in list(form):
                 if field.name not in form_column:
@@ -283,7 +283,7 @@ class UserProfileView(ModelView):
                                                               search=None,
                                                               filters=None))
 
-        form_column = current_app.config['USERPROFILES_FORM_COLUMN']
+        form_column = current_app.config['WEKO_USERPROFILES_FORM_COLUMN']
         if isinstance(form_column, list):
             form_column.append("user_id")
             form_column.append("_displayname")

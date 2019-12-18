@@ -174,14 +174,15 @@ def handle_profile_form(form):
                     setattr(current_userprofile, key, form_data)
             # Mapping role
             current_config = current_app.config
-            if (current_config['USERPROFILES_ROLE_MAPPING_ENABLED'] and
+            if (current_config['WEKO_USERPROFILES_ROLE_MAPPING_ENABLED'] and
                     current_userprofile.position):
                 role_name = get_role_by_position(current_userprofile.position)
                 roles1 = db.session.query(Role).filter_by(
                     name=role_name).all()
                 admin_role = current_config.get(
-                    "USERPROFILES_ADMINISTRATOR_ROLE")
-                userprofile_roles = current_config.get("USERPROFILES_ROLES")
+                    "WEKO_USERPROFILES_ADMINISTRATOR_ROLE")
+                userprofile_roles = current_config.get(
+                    "WEKO_USERPROFILES_ROLES")
                 roles2 = [
                     role for role in current_user.roles
                     if role not in userprofile_roles or role == admin_role
@@ -218,31 +219,31 @@ def get_role_by_position(position):
     :param position:
     :return:
     """
-    # key for key in USERPROFILES_POSITION_LIST if position  in key:
     current_config = current_app.config
-    weko_account_settings = current_config.get('WEKO_ACCOUNTS')
-    if (weko_account_settings and isinstance(weko_account_settings, dict) and
-            weko_account_settings.get("weko_accounts_default_role")):
-        role_setting = weko_account_settings.get("weko_accounts_default_role")
-        role_setting = json.loads(role_setting)
-        position_list = current_config.get("USERPROFILES_POSITION_LIST")
+    role_setting = current_config.get('WEKO_USERPROFILES_ROLE_MAPPING')
+    enable_mapping = current_config.get(
+        'WEKO_USERPROFILES_ROLE_MAPPING_ENABLED')
+    if isinstance(role_setting, dict) and enable_mapping:
+        position_list = current_config.get("WEKO_USERPROFILES_POSITION_LIST")
         if not isinstance(position_list, list):
             return
         for item in position_list:
             if position == item[0]:
                 if item in \
                     current_config.get(
-                        "USERPROFILES_POSITION_LIST_GENERAL"):
-                    key = role_setting.get('USERPROFILES_POSITION_LIST_GENERAL')
-                    return current_config.get(key)
-                elif item in \
-                    current_config.get(
-                        "USERPROFILES_POSITION_LIST_GRADUATED_STUDENT"):
+                        "WEKO_USERPROFILES_POSITION_LIST_GENERAL"):
                     key = role_setting.get(
-                        'USERPROFILES_POSITION_LIST_GRADUATED_STUDENT')
+                        'WEKO_USERPROFILES_POSITION_LIST_GENERAL')
                     return current_config.get(key)
                 elif item in \
                     current_config.get(
-                        "USERPROFILES_POSITION_LIST_STUDENT"):
-                    key = role_setting.get('USERPROFILES_POSITION_LIST_STUDENT')
+                        "WEKO_USERPROFILES_POSITION_LIST_GRADUATED_STUDENT"):
+                    key = role_setting.get(
+                        'WEKO_USERPROFILES_POSITION_LIST_GRADUATED_STUDENT')
+                    return current_config.get(key)
+                elif item in \
+                    current_config.get(
+                        "WEKO_USERPROFILES_POSITION_LIST_STUDENT"):
+                    key = role_setting.get(
+                        'WEKO_USERPROFILES_POSITION_LIST_STUDENT')
                     return current_config.get(key)

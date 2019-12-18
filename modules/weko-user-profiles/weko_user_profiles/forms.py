@@ -32,9 +32,9 @@ from wtforms.validators import DataRequired, EqualTo, StopValidation, \
     ValidationError
 
 from .api import current_userprofile
-from .config import USERPROFILES_INSTITUTE_POSITION_LIST, \
-    USERPROFILES_LANGUAGE_LIST, USERPROFILES_OTHERS_INPUT_DETAIL, \
-    USERPROFILES_POSITION_LIST, USERPROFILES_TIMEZONE_LIST
+from .config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+    USERPROFILES_LANGUAGE_LIST, WEKO_USERPROFILES_OTHERS_INPUT_DETAIL, \
+    WEKO_USERPROFILES_POSITION_LIST, USERPROFILES_TIMEZONE_LIST
 from .models import UserProfile
 from .validators import USERNAME_RULES, validate_username
 
@@ -78,7 +78,7 @@ def check_other_position(form, field):
     @param form:
     @param field:
     """
-    if form.position.data != USERPROFILES_OTHERS_INPUT_DETAIL:
+    if form.position.data != WEKO_USERPROFILES_OTHERS_INPUT_DETAIL:
         if len(strip_filter(field.data)) > 0:
             raise ValidationError(_("Position is being inputted "
                                     "(Only input when selecting 'Others')"))
@@ -146,7 +146,7 @@ class ProfileForm(FlaskForm):
         validators=[
             DataRequired(message=_('Position not provided.')),
         ],
-        choices=USERPROFILES_POSITION_LIST
+        choices=WEKO_USERPROFILES_POSITION_LIST
     )
 
     # Other Position
@@ -187,7 +187,7 @@ class ProfileForm(FlaskForm):
                 message=_('Affiliated Institution Position not provided.'))
         ],
         filters=[strip_filter],
-        choices=USERPROFILES_INSTITUTE_POSITION_LIST
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     )
 
     # Affiliation institute 2
@@ -206,7 +206,7 @@ class ProfileForm(FlaskForm):
     institutePosition2 = SelectField(
         _('Affiliated Institution Position'),
         filters=[strip_filter],
-        choices=USERPROFILES_INSTITUTE_POSITION_LIST
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     )
 
     # Affiliation institute 3
@@ -223,7 +223,7 @@ class ProfileForm(FlaskForm):
     institutePosition3 = SelectField(
         _('Affiliated Institution Position'),
         filters=[strip_filter],
-        choices=USERPROFILES_INSTITUTE_POSITION_LIST
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     )
 
     # Affiliation institute 4
@@ -240,7 +240,7 @@ class ProfileForm(FlaskForm):
     institutePosition4 = SelectField(
         _('Affiliated Institution Position'),
         filters=[strip_filter],
-        choices=USERPROFILES_INSTITUTE_POSITION_LIST
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     )
 
     # Affiliation institute 5
@@ -257,7 +257,7 @@ class ProfileForm(FlaskForm):
     institutePosition5 = SelectField(
         _('Affiliated Institution Position'),
         filters=[strip_filter],
-        choices=USERPROFILES_INSTITUTE_POSITION_LIST
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     )
 
     def validate_username(form, field):
@@ -283,7 +283,7 @@ class EmailProfileForm(ProfileForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        form_column = current_app.config['USERPROFILES_FORM_COLUMN']
+        form_column = current_app.config['WEKO_USERPROFILES_FORM_COLUMN']
         disable_column_lst = list()
         if isinstance(form_column, list):
             for key in kwargs:
