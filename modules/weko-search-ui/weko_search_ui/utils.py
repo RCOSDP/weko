@@ -474,12 +474,17 @@ def handle_validate_item_import(list_recond, schema) -> list:
     v2 = Draft4Validator(schema) if schema else None
     for record in list_recond:
         errors = []
+        record_id = record.get("id")
+        if not (
+            record_id and represents_int(record_id)
+        ):
+            errors.append("Incorrect Item id")
         if record.get('metadata'):
             if v2:
                 a = v2.iter_errors(record.get('metadata'))
-                errors = [error.message for error in a]
+                errors = errors + [error.message for error in a]
             else:
-                errors = ['ItemType is not exist']
+                errors = errors = errors + ['ItemType is not exist']
             record['metadata']['path'] = handle_replace_new_index()
 
         item_error = dict(**record, **{
@@ -488,6 +493,22 @@ def handle_validate_item_import(list_recond, schema) -> list:
         result.append(item_error)
 
     return result
+
+
+def represents_int(s):
+    """Handle check string is int.
+
+    :argument
+        s     -- {str} string number.
+    :return
+        return       -- true if is Int.
+
+    """
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 
 def handle_check_index(list_index: list) -> bool:
