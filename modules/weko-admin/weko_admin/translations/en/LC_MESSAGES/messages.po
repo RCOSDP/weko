@@ -634,3 +634,20 @@ msgstr ""
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:59
 msgid "There is no data."
 msgstr ""
+
+
+#: weko_admin/template/weko_admin/admin/site_info.html:59
+msgid "Log in Instructions"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:60
+msgid "Add Instructions"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:61
+msgid "The same language is set for many instructions."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:61
+msgid "Maximum length of instruction is 200 characters. "
+msgstr ""

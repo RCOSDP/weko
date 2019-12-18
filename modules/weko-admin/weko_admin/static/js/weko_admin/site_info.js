@@ -7,14 +7,18 @@ const favicon_label = document.getElementById("favicon_label").value;
 const copyright_label = document.getElementById("copyright_label").value;
 const description_label = document.getElementById("description_label").value;
 const keyword_label = document.getElementById("keyword_label").value;
+const notify_label = document.getElementById("notify_label").value;
 const selected_icon_label = document.getElementById("selected_icon_label").value;
 const add_site_name_label = document.getElementById("add_site_name_label").value;
+const add_notify_label = document.getElementById("add_notify_label").value;
 const site_name_not_set_label = document.getElementById("site_name_not_set_label").value;
 const language_label = document.getElementById("language_label").value;
 const save_label = document.getElementById("save_label").value;
 const must_set_at_least_1_site_name_label = document.getElementById("must_set_at_least_1_site_name_label").value;
 const please_input_site_infomation_for_empty_field_label = document.getElementById("please_input_site_infomation_for_empty_field_label").value;
 const the_same_language_is_set_for_many_site_names_label = document.getElementById("the_same_language_is_set_for_many_site_names_label").value;
+const the_notify_limit_to_200_characters = document.getElementById("the_notify_limit_to_200_characters").value;
+const the_same_language_is_set_for_many_notify_label = document.getElementById("the_same_language_is_set_for_many_notify_label").value;
 const error_when_get_languages_label = document.getElementById("error_when_get_languages_label").value;
 const error_when_get_site_infomation_label = document.getElementById("error_when_get_site_infomation_label").value;
 const language_not_match_label = document.getElementById("language_not_match_label").value;
@@ -34,6 +38,7 @@ class MainLayout extends React.Component {
            description: "",
            favicon_name: "",
            favicon: "",
+           notify: [],
            errors: [],
            show_alert: false,
            success: true,
@@ -41,10 +46,14 @@ class MainLayout extends React.Component {
         this.get_site_info = this.get_site_info.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.handleChangeSiteName = this.handleChangeSiteName.bind(this)
+        this.handleChangeNotify = this.handleChangeNotify.bind(this);
         this.handleAddSiteName = this.handleAddSiteName.bind(this)
+        this.handleAddNotify = this.handleAddNotify.bind(this);
         this.handleSave = this.handleSave.bind(this)
         this.handleRemoveSiteName = this.handleRemoveSiteName.bind(this)
+        this.handleRemoveNotify = this.handleRemoveNotify.bind(this);
         this.isEnableAddSiteName = this.isEnableAddSiteName.bind(this)
+        this.isEnableAddNotify = this.isEnableAddNotify.bind(this);
         this.handleValidation = this.handleValidation.bind(this)
         this.handleChangeFavicon = this.handleChangeFavicon.bind(this)
         this.getLastString = this.getLastString.bind(this)
@@ -83,11 +92,13 @@ class MainLayout extends React.Component {
             that.setState({
               ...result,
               favicon: (result && result.favicon) ? result.favicon :  default_favicon,
-              favicon_name: (result && result.favicon_name) ? result.favicon_name :  default_favicon_name,
-            })
+              favicon_name: (result && result.favicon_name) ? result.favicon_name :  default_favicon_name
+            });
             if(!result  || !result.site_name ||!result.site_name.length){
-
               that.handleAddSiteName()
+            }
+            if(!result  || !result.notify ||!result.notify.length){
+              that.handleAddNotify()
             }
           },
           error: function (error) {
@@ -104,10 +115,19 @@ class MainLayout extends React.Component {
     }
 
     handleChangeSiteName(index, name, value) {
-      let {site_name} = this.state
-      site_name[index][name] = value
+      let {site_name} = this.state;
+      site_name[index][name] = value;
       this.setState({
         site_name: site_name
+      })
+    }
+
+
+    handleChangeNotify(index, name, value) {
+      let {notify} = this.state;
+      notify[index][name] = value;
+      this.setState({
+        notify: notify
       })
     }
 
@@ -123,6 +143,25 @@ class MainLayout extends React.Component {
       })
     }
 
+    handleAddNotify() {
+      const {default_lang_code} = this.state;
+      const new_notify = {
+        notify_name: "",
+        language: default_lang_code
+      };
+      let {notify} = this.state;
+      let notifyResult = [];
+      if (notify != null){
+        notifyResult = [...notify, {...new_notify}];
+      } else {
+        notifyResult = [{ notify_name: "", language: default_lang_code }];
+      }
+      console.log("notifyResult:", notifyResult);
+      this.setState({
+        notify: notifyResult
+      })
+    }
+
     handleRemoveSiteName(index){
       const {site_name} = this.state
       this.setState({
@@ -130,8 +169,16 @@ class MainLayout extends React.Component {
       })
     }
 
+
+    handleRemoveNotify(index){
+      const {notify} = this.state;
+      this.setState({
+        notify: notify.filter((value,key) => key!=index)
+      })
+    }
+
     handleSave(){
-      const {site_name,copy_right,keyword,description,favicon_name,favicon} = this.state
+      const {site_name,copy_right,keyword,description,favicon_name,favicon, notify} = this.state
       const validate = this.handleValidation()
       console.log("validate",validate)
       if(validate.status) {
@@ -139,6 +186,11 @@ class MainLayout extends React.Component {
         ...item,
         index: index
       }})
+
+      const new_notify = Array.from(notify, (item,index) => {return {
+        ...item,
+        index: index
+      }});
       fetch("/api/admin/update_site_info", {
           method: "POST",
           headers: {
@@ -150,7 +202,8 @@ class MainLayout extends React.Component {
             keyword: keyword,
             description: description,
             favicon_name: favicon_name,
-            favicon: favicon
+            favicon: favicon,
+            notify: new_notify
           }),
       })
       .then(res => res.json())
@@ -184,13 +237,19 @@ class MainLayout extends React.Component {
       }
     }
 
-    isEnableAddSiteName(){
-    const {site_name, list_lang_register} = this.state
-      return site_name.length < list_lang_register.length
+    isEnableAddNotify(){
+    const {notify, list_lang_register} = this.state;
+      return notify ? notify.length < list_lang_register.length : true
     }
 
+
+    isEnableAddSiteName(){
+      const {site_name, list_lang_register} = this.state;
+        return site_name.length < list_lang_register.length
+      }
+
     handleValidation(){
-      const {site_name, list_lang_register} = this.state
+      const {site_name, list_lang_register, notify} = this.state
       const errors = {}
       const site_name_test = Array.from(site_name, (item, key) => ({...item, index: key}))
       const list_lang_code = Array.from(list_lang_register, item => item.lang_code)
@@ -235,6 +294,34 @@ class MainLayout extends React.Component {
           }
         }
       }
+
+      const notify_test = Array.from(notify, (item, key) => ({...item, index: key}));
+      for (let index in notify_test) {
+        const item = notify_test[index];
+        const check_dub = notify_test.filter(nt => nt.language === item.language && nt.language);
+        if(check_dub.length>=2) {
+          return {
+            message : the_same_language_is_set_for_many_notify_label,
+            item: [`site_name_${item.index}`],
+            status: false
+          }
+        }
+        if(!list_lang_code.includes(item.language)){
+          return {
+            message : language_not_match_label,
+            item: [`site_name_${item.index}`],
+            status: false
+          }
+        }
+        if(item.notify_name.length > 200){
+          return {
+            message : the_notify_limit_to_200_characters,
+            item: [`site_name_${item.index}`],
+            status: false
+          }
+        }
+      }
+
       return {
         status: true
       }
@@ -288,7 +375,7 @@ class MainLayout extends React.Component {
       })
     }
     render() {
-        const {errors,site_name,list_lang_register,copy_right,description,keyword, favicon,favicon_name,success, show_alert, list_error} = this.state
+        const {errors,site_name,list_lang_register,copy_right,description,keyword, favicon,favicon_name,success, show_alert, list_error, notify} = this.state
         return (
             <div className="site_info row">
             {
@@ -447,6 +534,69 @@ class MainLayout extends React.Component {
                      />
                   </div>
                 </div>
+
+                <div className="row form-group">
+                  <div className="col-md-2 col-md-offset-8">
+                      <button
+                       className="btn btn-success"
+                       onClick={this.handleAddNotify}
+                       disabled={!this.isEnableAddNotify()}>
+                        <span className="glyphicon glyphicon-plus icon"></span>{add_notify_label}</button>
+                  </div>
+                </div>
+
+                {
+                 notify && this.props.enable_notify ? notify.map((notifyInfo, key) => {
+                    return(
+                      <div className={`row form-group`} key={key}>
+                        <div className="col-md-2 text-right">
+                          <label>{notify_label}</label>
+                        </div>
+                        <div className="col-md-6">
+                          <textarea
+                            maxlength="200"
+                            rows="3"
+                            className="form-control"
+                            id="notify_name"
+                            defaultValue={notifyInfo.notify_name}
+                            onBlur={e => {
+                              this.handleChangeNotify(key, 'notify_name', e.target.value)
+                            }}
+                          />
+                        </div>
+                        <div className="col-md-2 text-right">
+                          <select
+                          className="form-control"
+                          value={notifyInfo.language}
+                          onChange={e => {
+                            this.handleChangeNotify(key, 'language', e.target.value)
+                          }}
+                          >
+                            {
+                              list_lang_register.map((item)=>{
+                                return(
+                                  <option value={item.lang_code} key={item.lang_code}>{item.lang_name}</option>
+                                )
+                              })
+                            }
+                          </select>
+                        </div>
+                        {
+                          key > 0 &&
+                          <div className="col-md-2">
+                            <button
+                             className="btn btn-danger"
+                             onClick={()=>{this.handleRemoveNotify(key)}}
+                             ><span className="glyphicon glyphicon-trash icon"></span>{delete_label}</button>
+                          </div>
+                        }
+
+                      </div>
+                    )
+                  }): null
+                }
+
+
                 <div className="row">
                   <div className="col-md-2 text-right"></div>
                   <div className="col-md-6">
@@ -460,8 +610,9 @@ class MainLayout extends React.Component {
 }
 
 $(function () {
+    let enable_notify = document.getElementById('enable_notify').value == 'True' ? true : false;
     ReactDOM.render(
-        <MainLayout/>,
+        <MainLayout enable_notify={enable_notify} />,
         document.getElementById('root')
     )
 });

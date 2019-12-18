@@ -764,7 +764,9 @@ class SiteInfoView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         return self.render(
-            current_app.config["WEKO_ADMIN_SITE_INFO"]
+            current_app.config["WEKO_ADMIN_SITE_INFO"],
+            enable_notify=current_app.config[
+                "WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS"]
         )
 
 

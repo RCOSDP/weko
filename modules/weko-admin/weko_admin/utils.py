@@ -1428,6 +1428,7 @@ def validation_site_info(site_info):
                           lang.get('is_registered')]
     list_lang_code = [lang.get('lang_code') for lang in list_lang_register]
     site_name = site_info.get("site_name")
+    notify = site_info.get("notify")
     errors_mess = []
     errors = []
 
@@ -1441,6 +1442,7 @@ def validation_site_info(site_info):
         'site_name_is_required_label': __('Site name is required.'),
         'language_not_match_label': __(
             'Language is deleted from Registered Language of system.'),
+        'the_limit_is_200_characters': __('The limit is 200 characters'),
     }
 
     """check site_name len"""
@@ -1483,7 +1485,7 @@ def validation_site_info(site_info):
                 'data': errors,
                 'status': False
             }
-        if item.get("index") > len(list_lang_register):
+        if int(item.get("index")) > len(list_lang_register):
             return {
                 'error': weko_admin_site_info_message.get(
                     'language_not_match_label'),
@@ -1499,6 +1501,18 @@ def validation_site_info(site_info):
                     "index"))],
                 'status': False
             }
+
+    '''Check length input notify'''
+    for item in notify:
+        if len(item.get('notify_name')) > 200:
+            return {
+                'error': weko_admin_site_info_message.get(
+                    'the_limit_is_200_characters'),
+                'data': ["notify_" + str(item.get(
+                    "index"))],
+                'status': False
+            }
+
     return {
         'error': '',
         'data': [],
@@ -1522,12 +1536,20 @@ def format_site_info_data(site_info):
             "name": sn.get('name').strip(),
             "language": sn.get('language'),
         })
+    notify = []
+    list_notify = site_info.get('notify') or []
+    for nt in list_notify:
+        notify.append({
+            "notify_name": nt.get('notify_name').strip(),
+            "language": nt.get('language'),
+        })
     result['site_name'] = site_name
     result['copy_right'] = site_info.get('copy_right').strip()
     result['description'] = site_info.get('description').strip()
     result['keyword'] = site_info.get('keyword').strip()
     result['favicon'] = site_info.get('favicon')
     result['favicon_name'] = site_info.get('favicon_name')
+    result['notify'] = notify
     return result
 
 
@@ -1551,5 +1573,25 @@ def get_site_name_for_current_language(site_name):
             return site_name[0].get("name")
         else:
             return site_name[0].get("name")
+    else:
+        return ''
+
+
+def get_notify_for_current_language(notify):
+    """
+    Get notify for current language system.
+
+    :param notify:
+    :return: notify_sign_up
+    """
+    lang_code_english = 'en'
+    if notify:
+        for nt in notify:
+            if nt.get('language') == current_i18n.language:
+                return nt.get("notify_name")
+        for nt in notify:
+            if nt.get('language') == lang_code_english:
+                return nt.get("notify_name")
+        return ''
     else:
         return ''
