@@ -383,11 +383,14 @@ class UserProfileView(ModelView):
                         """Get account_user by user profile id"""
                         account_user = db.session.query(User).filter_by(
                             id=id).first()
-
+                        admin_role = current_app.config.get(
+                            "WEKO_USERPROFILES_ADMINISTRATOR_ROLE")
+                        userprofile_roles = current_app.config.get(
+                            "WEKO_USERPROFILES_ROLES")
                         roles2 = [
                             role for role in account_user.roles
-                            if role not in current_app.config.get(
-                                "USERPROFILES_DAISHODAI_ROLES")
+                            if
+                            role not in userprofile_roles or role == admin_role
                         ]
                         roles = roles1 + roles2
                         account_user.roles = roles
