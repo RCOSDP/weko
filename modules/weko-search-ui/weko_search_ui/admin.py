@@ -21,7 +21,6 @@
 """Weko Search-UI admin."""
 
 import json
-import os
 from datetime import datetime
 
 from blinker import Namespace

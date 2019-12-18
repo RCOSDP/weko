@@ -475,10 +475,11 @@ def package_export_file(item_type_data):
     """Export TSV Files.
 
     Arguments:
-    pid_type     -- {string} 'doi' (default) or 'cnri'
-    reg_value    -- {string} pid_value
+        item_type_data  -- schema's Item Type
+
     Returns:
-    return       -- PID object if exist
+        return          -- TSV file
+
     """
     tsv_output = StringIO()
     jsonschema_url = item_type_data.get('root_url') + item_type_data.get(

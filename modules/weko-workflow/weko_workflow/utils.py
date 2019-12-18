@@ -403,8 +403,10 @@ def get_activity_id_of_record_without_version(pid_object=None):
 
     Arguments:
         pid_object  -- object pidstore
+
     Returns:
         deposit     -- string or None
+
     """
     if pid_object:
         # get workflow of first record attached version ID: x.1
