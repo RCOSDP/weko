@@ -37,7 +37,6 @@ from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
-
 from .tasks import import_item
 from .utils import check_import_items, create_flow_define, delete_records, \
     get_content_workflow, get_tree_items, make_stats_tsv, remove_temp_dir
