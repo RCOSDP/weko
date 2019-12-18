@@ -32,9 +32,9 @@ from wtforms.validators import DataRequired, EqualTo, StopValidation, \
     ValidationError
 
 from .api import current_userprofile
-from .config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
-    USERPROFILES_LANGUAGE_LIST, WEKO_USERPROFILES_OTHERS_INPUT_DETAIL, \
-    WEKO_USERPROFILES_POSITION_LIST, USERPROFILES_TIMEZONE_LIST
+from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+    WEKO_USERPROFILES_OTHERS_INPUT_DETAIL, WEKO_USERPROFILES_POSITION_LIST
 from .models import UserProfile
 from .validators import USERNAME_RULES, validate_username
 
@@ -55,6 +55,11 @@ def current_user_email(form, field):
 
 
 def check_phone_number(form, field):
+    """Validate phone number.
+
+    @param form:
+    @param field:
+    """
     if len(field.data) > 15:
         raise ValidationError('Phone number must be less than 15 characters.')
     field = field.data.split("-")
@@ -116,6 +121,31 @@ class ProfileForm(FlaskForm):
         _('Language'),
         filters=[strip_filter],
         choices=USERPROFILES_LANGUAGE_LIST,
+    )
+
+    email = StringField(
+        # NOTE: Form field label
+        _('Email address'),
+        filters=[lambda x: x.lower() if x is not None else x, ],
+        validators=[
+            email_required,
+            current_user_email,
+            email_validator,
+            unique_user_email,
+        ],
+    )
+
+    email_repeat = StringField(
+        # NOTE: Form field label
+        _('Re-enter email address'),
+        # NOTE: Form field help text
+        description=_('Please re-enter your email address.'),
+        filters=[lambda x: x.lower() if x else x, ],
+        validators=[
+            email_required,
+            # NOTE: Form validation error.
+            EqualTo('email', message=_('Email addresses do not match.'))
+        ]
     )
 
     # University / Institution
@@ -282,6 +312,11 @@ class EmailProfileForm(ProfileForm):
     """Form to allow editing of email address."""
 
     def __init__(self, *args, **kwargs):
+        """Initial Profile Form.
+
+        @param args:
+        @param kwargs:
+        """
         super().__init__(*args, **kwargs)
         form_column = current_app.config['WEKO_USERPROFILES_FORM_COLUMN']
         disable_column_lst = list()
@@ -293,31 +328,6 @@ class EmailProfileForm(ProfileForm):
             for key in disable_column_lst:
                 if hasattr(self, key):
                     delattr(self, key)
-
-    email = StringField(
-        # NOTE: Form field label
-        _('Email address'),
-        filters=[lambda x: x.lower() if x is not None else x, ],
-        validators=[
-            email_required,
-            current_user_email,
-            email_validator,
-            unique_user_email,
-        ],
-    )
-
-    email_repeat = StringField(
-        # NOTE: Form field label
-        _('Re-enter email address'),
-        # NOTE: Form field help text
-        description=_('Please re-enter your email address.'),
-        filters=[lambda x: x.lower() if x else x, ],
-        validators=[
-            email_required,
-            # NOTE: Form validation error.
-            EqualTo('email', message=_('Email addresses do not match.'))
-        ]
-    )
 
 
 class VerificationForm(FlaskForm):
