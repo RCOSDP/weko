@@ -823,7 +823,7 @@ class CheckComponent extends React.Component {
     const { list_record } = this.state
     const result = Array.from(list_record, (item, key) => {
       return {
-        'No': key,
+        'No': key+1,
         'Item Type': item.item_type_name,
         'Item Id': item.id,
         'Title': (item['Title'] && item['Title'][0] && item['Title'][0]['Title']) ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title'] ? item['Title']['Title'] : '',
