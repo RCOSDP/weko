@@ -36,9 +36,9 @@ from invenio_accounts.models import Role, User
 from invenio_db import db
 from wtforms import SelectField
 
-from .config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
-    USERPROFILES_LANGUAGE_LIST, WEKO_USERPROFILES_POSITION_LIST, \
-    USERPROFILES_TIMEZONE_LIST
+from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+    WEKO_USERPROFILES_POSITION_LIST
 from .models import UserProfile
 from .views import get_role_by_position
 
@@ -202,6 +202,7 @@ class UserProfileView(ModelView):
         return 'Search'
 
     def on_form_prefill(self, form, id):
+        """Return form prefill."""
         form_column = current_app.config['WEKO_USERPROFILES_FORM_COLUMN']
         if isinstance(form_column, list):
             for field in list(form):
@@ -211,9 +212,7 @@ class UserProfileView(ModelView):
 
     @expose('/')
     def index_view(self):
-        """
-            List view
-        """
+        """List view."""
         if self.can_delete:
             delete_form = self.delete_form()
         else:
@@ -375,8 +374,8 @@ class UserProfileView(ModelView):
             if self.update_model(form, model):
                 with db.session.begin_nested():
                     """Get role by position"""
-                    if (current_app.config['USERPROFILES_EMAIL_ENABLED'] and
-                            form.position):
+                    if (current_app.config['USERPROFILES_EMAIL_ENABLED']
+                            and form.position):
                         role_name = get_role_by_position(form.position.data)
                         roles1 = db.session.query(Role).filter_by(
                             name=role_name).all()

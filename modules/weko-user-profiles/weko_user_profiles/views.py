@@ -21,6 +21,7 @@
 """VIews for weko-user-profiles."""
 
 import json
+
 from flask import Blueprint, current_app, flash, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
@@ -174,8 +175,8 @@ def handle_profile_form(form):
                     setattr(current_userprofile, key, form_data)
             # Mapping role
             current_config = current_app.config
-            if (current_config['WEKO_USERPROFILES_ROLE_MAPPING_ENABLED'] and
-                    current_userprofile.position):
+            if (current_config['WEKO_USERPROFILES_ROLE_MAPPING_ENABLED']
+                    and current_userprofile.position):
                 role_name = get_role_by_position(current_userprofile.position)
                 roles1 = db.session.query(Role).filter_by(
                     name=role_name).all()

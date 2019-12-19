@@ -120,8 +120,7 @@ class FlowSettingView(BaseView):
         )
 
     def get_actions(self):
-        """Get Actions info.
-        """
+        """Get Actions info."""
         actions = Action().get_action_list()
         action_list = list()
         for action in actions:

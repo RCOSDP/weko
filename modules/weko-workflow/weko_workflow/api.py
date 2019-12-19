@@ -229,6 +229,7 @@ class Flow(object):
         return True
 
     def validate_flow_setting(self, actions, list_code):
+        """Validate flow setting."""
         if not current_app.config['WEKO_WORKFLOW_VALIDATION_ENABLE']:
             return
         actions_copy = actions.copy()

@@ -341,6 +341,7 @@ def register_form_factory(Form):
     """Factory for creating an extended user registration form."""
     class CsrfDisabledProfileForm(ProfileForm):
         """Subclass of ProfileForm to disable CSRF token in the inner form.
+
         This class will always be a inner form field of the parent class
         `Form`. The parent will add/remove the CSRF token in the form.
         """
