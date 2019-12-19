@@ -20,11 +20,13 @@
 
 """WEKO3 module docstring."""
 from datetime import datetime
+import time
 
 from celery import shared_task
 
-from .utils import import_items_to_system
-
+from weko_admin.models import SessionLifetime
+from .utils import import_items_to_system, remove_temp_dir
+from .config import WEKO_ADMIN_LIFETIME_DEFAULT
 
 @shared_task
 def import_item(item):
@@ -33,3 +35,19 @@ def import_item(item):
     result = import_items_to_system(item) or dict()
     result['start_date'] = start_date
     return result
+
+
+@shared_task
+def remove_temp_dir_task(path):
+    """Import Item ."""
+    try:
+        db_lifetime = SessionLifetime.get_validtime()
+        if db_lifetime is None:
+            time.sleep(WEKO_ADMIN_LIFETIME_DEFAULT)
+            remove_temp_dir(path)
+        else:
+            time.sleep(db_lifetime.lifetime * 60)
+            remove_temp_dir(path)
+
+    except BaseException:
+        pass

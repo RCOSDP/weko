@@ -36,9 +36,9 @@ from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
-from .tasks import import_item
+from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
-    get_content_workflow, get_tree_items, make_stats_tsv, remove_temp_dir
+    get_content_workflow, get_tree_items, make_stats_tsv
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -238,7 +238,7 @@ class ItemImportView(BaseView):
                 else:
                     list_record = result.get('list_record', [])
                     data_path = result.get('data_path', '')
-
+        remove_temp_dir_task.delay(data_path)
         return jsonify(code=1, list_record=list_record, data_path=data_path)
 
     @expose('/download_check', methods=['POST'])
@@ -322,8 +322,6 @@ class ItemImportView(BaseView):
             response_object = {"status": status, "result": result}
         else:
             response_object = {"status": "error", "result": result}
-        if response_object.get("status") in ["done", "error"]:
-            remove_temp_dir(data.get("root_path"))
         return jsonify(response_object)
 
     @expose('/export_import', methods=['POST'])
