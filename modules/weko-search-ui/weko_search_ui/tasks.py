@@ -19,14 +19,15 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-from datetime import datetime
 import time
+from datetime import datetime
 
 from celery import shared_task
-
 from weko_admin.models import SessionLifetime
-from .utils import import_items_to_system, remove_temp_dir
+
 from .config import WEKO_ADMIN_LIFETIME_DEFAULT
+from .utils import import_items_to_system, remove_temp_dir
+
 
 @shared_task
 def import_item(item):
