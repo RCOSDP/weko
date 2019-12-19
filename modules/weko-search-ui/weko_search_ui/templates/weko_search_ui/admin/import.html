@@ -33,7 +33,7 @@
   {% assets "weko_admin_item_import_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-
+  {% assets "weko_moment_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block body %}
@@ -57,7 +57,7 @@
 <input id="select" type="hidden" value="{{_('Select')}}" />
 <input id="cancel" type="hidden" value="{{_('Cancel')}}" />
 <input id="check" type="hidden" value="{{_('Check')}}" />
-
+<!--label check-->
 <input id="summary" type="hidden" value="{{_('Summary')}}" />
 <input id="total" type="hidden" value="{{_('Total')}}" />
 <input id="new_item" type="hidden" value="{{_('New Item')}}" />
@@ -72,6 +72,17 @@
 <input id="update" type="hidden" value="{{_('Update')}}" />
 <input id="not_match" type="hidden" value="{{_('Not match')}}" />
 <input id="register" type="hidden" value="{{_('Register')}}" />
+<!--label result-->
+<input id="start_date" type="hidden" value="{{_('Start Date')}}" />
+<input id="end_date" type="hidden" value="{{_('End Date')}}" />
+<input id="action" type="hidden" value="{{_('Action')}}" />
+<input id="end" type="hidden" value="{{_('End')}}" />
+<input id="work_flow_status" type="hidden" value="{{_('Work Flow Status')}}" />
+<input id="done" type="hidden" value="{{_('Done')}}" />
+<input id="to_do" type="hidden" value="{{_('To Do')}}" />
+<input id="result" type="hidden" value="{{_('Result')}}" />
+<input id="next" type="hidden" value="{{_('Next')}}" />
+
 
 <pre class="hide" id="workflows">{{workflows}}</pre>
 {%- endblock body %}

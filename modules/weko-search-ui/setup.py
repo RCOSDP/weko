@@ -100,6 +100,9 @@ setup(
         'invenio_base.api_apps': [
             'weko_search_rest = weko_search_ui:WekoSearchREST',
         ],
+        'invenio_celery.tasks': [
+            'weko_search_ui = weko_search_ui.tasks'
+        ],
         'invenio_admin.views': [
             'weko_search_ui_bulk_delete = weko_search_ui.admin:item_management_bulk_delete_adminview',
             'weko_search_ui_custom_sort = weko_search_ui.admin:item_management_custom_sort_adminview',
@@ -122,6 +125,8 @@ setup(
             'weko_search_ui.bundles:weko_admin_item_import_js',
             'weko_admin_item_import_css = '
             'weko_search_ui.bundles:weko_admin_item_import_css',
+            'weko_moment_js = '
+            'weko_search_ui.bundles:weko_moment_js',
         ],
         'invenio_i18n.translations': [
             'messages = weko_search_ui',
