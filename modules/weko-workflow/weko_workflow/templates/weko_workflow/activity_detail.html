@@ -229,7 +229,7 @@
               {%- elif 'identifier_grant' == cur_step %}
                 {%- include 'weko_workflow/identifier_grant.html' %}
                 {%- include "weko_workflow/modal_quit_confirmation.html" %}
-              {%- elif 'approval' == cur_step %}
+              {%- elif 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
                 {%- with preview_carousel_id='main_preview_carousel' %}
                   {% include 'weko_workflow/record_detail.html' %}
                 {%- endwith %}
@@ -246,7 +246,7 @@
               {%- if 'approval_request' == cur_step %}
                 <button type="button" class="btn btn-primary action-big-button" id="btn-approval-req">{{_('Approval Request')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
-              {%- elif 'approval' == cur_step %}
+              {%- elif 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
                 <button type="button" class="btn btn-danger action-button" id="btn-return">{{_('Return')}}</button>
                 <button type="button" class="btn btn-danger action-button" id="btn-reject">{{_('Reject')}}</button>
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">

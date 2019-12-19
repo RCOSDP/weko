@@ -56,7 +56,8 @@ class WekoUserProfiles(object):
             'USERPROFILES_SETTINGS_TEMPLATE',
         ]
         for k in dir(config):
-            if k.startswith('USERPROFILES_') and k not in excludes:
+            if (k.startswith('USERPROFILES_') or k.startswith(
+                    'WEKO_USERPROFILES_')) and k not in excludes:
                 app.config.setdefault(k, getattr(config, k))
 
         app.config.setdefault('USERPROFILES', True)

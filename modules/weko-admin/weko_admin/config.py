@@ -664,3 +664,6 @@ WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR = 'weko_records_ui/admin/pidstore_iden
 
 WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR = 'weko_records_ui/admin/pidstore_identifier_editor.html'
 """ Pidstore identifier editor template. """
+
+WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS = False
+""" Enable Login Instructions """
