@@ -38,7 +38,7 @@ from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
-    get_content_workflow, get_tree_items, make_stats_tsv
+    get_content_workflow, get_tree_items, make_stats_tsv, handle_workflow
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -280,6 +280,7 @@ class ItemImportView(BaseView):
         for item in list_record:
             item['root_path'] = data.get('root_path')
             create_flow_define()
+            handle_workflow(item)
             task = import_item.delay(item)
             tasks.append({
                 'task_id': task.task_id,

@@ -956,8 +956,6 @@ def import_items_to_system(item: dict):
         if item.get('status') == 'new' and item.get('id'):
             create_deposit(item.get('id'))
         up_load_file_content(item, root_path)
-        handle_workflow(item)
-
         response = register_item_metadata(item)
 
         return response
