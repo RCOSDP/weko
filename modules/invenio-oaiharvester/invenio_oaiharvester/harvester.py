@@ -805,6 +805,233 @@ def add_publisher_dc(schema, res, publisher, lang=''):
         {publisher_item_name: publisher, language_item_name: lang})
 
 
+def add_titlStmt_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_titlStmt_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'titlStmt':
+                    for k1, v1 in v.items():
+                        if k1 == 'titl':
+                            add_title_ddi(schema, res, v1)
+                        elif k1 == 'altTitl':
+                            add_alternative_title_ddi(schema, res, v1)
+                else:
+                    add_titlStmt_ddi(schema, res, v)
+
+
+def add_title_ddi(schema, res, titl):
+    title = 'Title'
+    root_key = map_field(schema).get(title)
+    # if not root_key:
+    #     return
+    res[root_key] = []
+    # item = {}
+    title_sub = map_field(schema['properties'][root_key]['items'])[title]
+    # language = map_field(schema['properties'][root_key]['items'])['Language']
+    # for k,v in titl.items():
+    #     if k == '@xml:lang':
+    #         item[language] = v
+    #     elif k == '#text':
+    #         item[title] = v
+    item = add_medium_ddi(schema, titl, title)
+
+    res[root_key].append(item)
+    res['title'] = res[root_key][0][title_sub]
+
+
+def add_alternative_title_ddi(schema, res, altTitl):
+    alternative_title = 'Alternative Title'
+    root_key = map_field(schema).get(alternative_title)
+    # if not root_key:
+    #     return
+    res[root_key] = []
+    # item = {}
+    # title = map_field(schema['properties'][root_key]['items'])['Alternative Title']
+    # language = map_field(schema['properties'][root_key]['items'])['Language']
+    # for k,v in altTitl.items():
+    #     if k == '@xml:lang':
+    #         item[language] = v
+    #     elif k == '#text':
+    #         item[title] = v
+    item = add_medium_ddi(schema, altTitl, alternative_title)
+    res[root_key].append(item)
+
+
+def add_medium_ddi(schema, altTitl, key):
+    root_key = map_field(schema).get(key)
+    if not root_key:
+        return
+    # res[root_key] = []
+    item = {}
+    title = map_field(schema['properties'][root_key]['items'])[key]
+    language = map_field(schema['properties'][root_key]['items'])['Language']
+    for k, v in altTitl.items():
+        if k == '@xml:lang':
+            item[language] = v
+        elif k == '#text':
+            item[title] = v
+    return item
+
+
+def add_rspStmt_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_rspStmt_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'rspStmt':
+                    for k1, v1 in v.items():
+                        if k1 == 'AuthEnty':
+                            add_creator_ddi(schema, res, v1)
+                else:
+                    add_rspStmt_ddi(schema, res, v)
+
+
+def add_creator_ddi(schema, res, authEnty):
+    root_key = map_field(schema).get('Creator')
+    if not root_key:
+        return
+    item_schema = schema['properties'][root_key]['items']
+    creator_name_identifier_parent = map_field(item_schema)[
+        'Creator Name Identifier']
+    creator_name_identifier_child = map_field(
+        item_schema['properties'][creator_name_identifier_parent]['items'])[
+        'Creator Name Identifier']
+    creator_name_parent = map_field(item_schema)['Creator Name']
+    creator_name_child = \
+    map_field(item_schema['properties'][creator_name_parent]['items'])[
+        'Creator Name']
+    affiliation = map_field(item_schema)['Affiliation']
+    item_schema_affiliation = item_schema['properties'][affiliation]['items']
+    affiliation_name_parent = map_field(item_schema_affiliation)[
+        'Affiliation Name']
+    affiliation_name_child = map_field(
+        item_schema_affiliation['properties'][affiliation_name_parent][
+            'items'])['Affiliation Name']
+    res[root_key] = []
+    item = {}
+    for k, v in authEnty.items():
+        if k == '#text':
+            item[creator_name_parent] = {}
+            item[creator_name_parent][creator_name_child] = v
+        elif k == '@ID':
+            item[creator_name_identifier_parent] = {}
+            item[creator_name_identifier_parent][
+                creator_name_identifier_child] = v
+        elif k == '@affiliation':
+            item[affiliation] = {}
+            item[affiliation][affiliation_name_parent] = {}
+            item[affiliation][affiliation_name_parent][
+                affiliation_name_child] = v
+    res[root_key].append(item)
+
+
+def add_prodStmt_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_prodStmt_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'prodStmt':
+                    for k1, v1 in v.items():
+                        if k1 == 'producer':
+                            add_publisher_ddi(schema, res, v1)
+                        elif k1 == 'copyright':
+                            add_rights_ddi(schema, res, v1)
+                        elif k1 == 'prodDate':
+                            add_date_ddi(schema, res, v1)
+                        elif k1 == 'fundAg':
+                            add_funderName_ddi(schema, res, v1)
+                        elif k1 == 'grantNo':
+                            add_awardNumber_ddi(schema, res, v1)
+                else:
+                    add_prodStmt_ddi(schema, res, v)
+
+
+def add_publisher_ddi(schema, res, producer):
+    publisher = 'Publisher'
+    root_key = map_field(schema).get(publisher)
+    res[root_key] = []
+    item = add_medium_ddi(schema, producer, publisher)
+    res[root_key].append(item)
+
+
+def add_rights_ddi(schema, res, rights):
+    root_key = map_field(schema).get('Rights')
+    if not root_key:
+        return
+    item_chema = schema['properties'][root_key]['items']
+    rights_parent = map_field(item_chema)['Rights']
+    rights_child = map_field(item_chema['properties'][rights_parent]['items'])[
+        'Rights']
+    res[root_key] = []
+    item = {}
+    for k, v in rights.items():
+        if k == '#text':
+            item[rights_parent] = {}
+            item[rights_parent][rights_child] = v
+    res[root_key].append(item)
+
+
+def add_date_ddi(schema, res, prodDate):
+    root_key = map_field(schema).get('Date')
+    if not root_key:
+        return
+    item_chema = schema['properties'][root_key]['items']
+    date = map_field(item_chema)['Date']
+    res[root_key] = []
+    item = {}
+    if prodDate:
+        item[date] = prodDate
+    res[root_key].append(item)
+
+
+def add_funderName_ddi(schema, res, fundAg):
+    root_key = map_field(schema).get('Funding Reference')
+    if not root_key:
+        return
+    item_schema_funder = schema['properties'][root_key]['items']
+    funder_name_parent = map_field(item_schema_funder)['Funder Name']
+    funder_name_child = \
+    map_field(item_schema_funder['properties'][funder_name_parent]['items'])[
+        'Funder Name']
+    funder_identifier_parent = map_field(item_schema_funder)[
+        'Funder Identifier']
+    funder_identifier_child = map_field(
+        item_schema_funder['properties'][funder_identifier_parent]['items'])[
+        'Funder Identifier']
+    res[root_key] = []
+    item = {}
+    for k, v in fundAg.items():
+        if k == '#text':
+            item[funder_name_parent] = {}
+            item[funder_name_parent][funder_name_child] = v
+        if k == '@ID':
+            item[funder_identifier_parent] = {}
+            item[funder_identifier_parent][funder_identifier_child] = v
+    res[root_key].append(item)
+
+
+def add_awardNumber_ddi(schema, res, grantNo):
+    pass
+
+
+def add_stdyDscr_ddi(schema, res, list_stdyDscr):
+    if not isinstance(list_stdyDscr, list):
+        list_stdyDscr = [list_stdyDscr]
+    add_titlStmt_ddi(schema, res, list_stdyDscr)
+    add_rspStmt_ddi(schema, res, list_stdyDscr)
+    add_prodStmt_ddi(schema, res, list_stdyDscr)
+
+
 RESOURCE_TYPE_MAP = {
     'conference paper': 'Article',
     'data paper': 'Article',
@@ -1014,4 +1241,26 @@ class JPCOARMapper(BaseMapper):
                 add_funcs[tag](
                     self.json['record']['metadata']['jpcoar:jpcoar'][tag])
 
+        return res
+
+
+class DDIMapper(BaseMapper):
+    def __init__(self, xml):
+        """Init."""
+        super().__init__(xml)
+
+    def map(self):
+        if self.is_deleted():
+            return {}
+        self.map_itemtype('codeBook')
+        res = {'$schema': self.itemtype.id,
+               'pubdate': str(self.datestamp())}
+        add_funcs = {
+            'stdyDscr': partial(add_stdyDscr_ddi, self.itemtype.schema, res)
+        }
+
+        for tag in self.json['record']['metadata']['codeBook']:
+            if tag in add_funcs:
+                add_funcs[tag](
+                    self.json['record']['metadata']['codeBook'][tag])
         return res
