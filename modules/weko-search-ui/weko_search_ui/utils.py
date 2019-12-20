@@ -898,7 +898,6 @@ def handle_workflow(item: dict):
             create_work_flow(item.get('item_type_id'))
 
 
-
 def create_work_flow(item_type_id):
     """Handle create work flow.
 
