@@ -883,13 +883,12 @@ def handle_workflow(item: dict):
     """
     pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=item.get('id')).first()
-    if not pid:
-        return
-    activity = WorkActivity()
-    wf_activity = activity.get_workflow_activity_by_item_id(
-        pid.object_uuid)
-    if wf_activity:
-        return
+    if pid:
+        activity = WorkActivity()
+        wf_activity = activity.get_workflow_activity_by_item_id(
+            pid.object_uuid)
+        if wf_activity:
+            return
     else:
         workflow = WorkFlow.query.filter_by(
             itemtype_id=item.get('item_type_id')).first()
@@ -956,8 +955,6 @@ def import_items_to_system(item: dict):
         if item.get('status') == 'new' and item.get('id'):
             create_deposit(item.get('id'))
         up_load_file_content(item, root_path)
-        handle_workflow(item)
-
         response = register_item_metadata(item)
 
         return response
