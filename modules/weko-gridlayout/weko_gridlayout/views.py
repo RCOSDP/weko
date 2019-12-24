@@ -384,7 +384,7 @@ def view_widget_page():
         # Check if has main and if it does use different template
         if page.settings:
             main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
-            settings = json.loads(page.settings)
+            settings = json.loads(page.settings) if isinstance(page.settings, str) else page.settings
             for item in settings:
                 if item['type'] == main_type:
                     return render_template(
@@ -420,7 +420,7 @@ def handle_not_found(exception, **extra):
         _add_url_rule(page.url)
         if page.settings:
             main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
-            settings = json.loads(page.settings)
+            settings = json.loads(page.settings) if isinstance(page.settings, str) else page.settings
             for item in settings:
                 if item['type'] == main_type:
                     return render_template(

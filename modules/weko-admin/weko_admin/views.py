@@ -36,7 +36,6 @@ from sqlalchemy.orm import session
 from weko_records.models import SiteLicenseInfo
 from werkzeug.local import LocalProxy
 
-from . import config
 from .api import send_site_license_mail
 from .models import SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
@@ -508,6 +507,7 @@ def get_site_info():
     result['favicon'] = site_info.favicon
     result['favicon_name'] = site_info.favicon_name
     result['site_name'] = site_info.site_name
+    result['notify'] = site_info.notify
     return jsonify(result)
 
 

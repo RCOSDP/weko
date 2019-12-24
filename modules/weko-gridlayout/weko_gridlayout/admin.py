@@ -275,7 +275,8 @@ class WidgetSettingView(ModelView):
             :param name: Field name
         """
         data_settings = model.settings
-        data_settings = json.loads(data_settings)
+        data_settings = json.loads(data_settings) \
+            if isinstance(data_settings, str) else data_settings
         data_settings_model = namedtuple("Settings", data_settings.keys())(
             *data_settings.values())
         if name == "label_color" or name == "frame_border" \

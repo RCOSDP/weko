@@ -182,7 +182,7 @@
       <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp
       {{_('Back')}}
    </button>
-  <button type="button" class="btn btn-primary pull-right" id="btn_submit" 
+  <button type="button" class="btn btn-primary pull-right" id="btn_submit"
       data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
       <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
        {{_('Save')}}
@@ -303,13 +303,26 @@
       Object.assign(apply_action, {user_deny: $(this).is(':checked')});
       localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     });
-    
-    function addAlert(message) {
-        $('#alerts').append(
-            '<div class="alert alert-light" id="alert-style">' +
+
+    function addAlert(data) {
+      let result = data.result;
+      let status = data.status;
+      if(status == true){
+        result.forEach(element => {
+          $('#alerts').append(
+          '<div class="alert alert-light" id="alert-style">' +
             '<button type="button" class="close" data-dismiss="alert">' +
-            '&times;</button>' + message + '</div>');
-         }
+              '&times;</button>' + element.msg + '</div>');
+        });
+      }else{
+        result.forEach(element => {
+          $('#alerts').append(
+          '<div class="alert alert-light" id="alert-style" style="background: #dd4b39; border-color: #d73925;">' +
+            '<button type="button" class="close" data-dismiss="alert">' +
+              '&times;</button>' + element.msg + '</div>');
+        });
+      }
+    }
 
     $('#btn_submit').on('click', function(){
       $.ajax({
@@ -320,7 +333,7 @@
         data: localStorage.getItem('apply_action_list'),
         success: function(data, status) {
           uptOrderInfo(false);
-          addAlert(data.msg);
+          addAlert(data);
         },
         error: function(jqXHR, status) {
           //alert('update failed');

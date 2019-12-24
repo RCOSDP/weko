@@ -27,6 +27,7 @@ from flask import current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from sqlalchemy import asc, desc, types
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
@@ -151,51 +152,175 @@ class Flow(object):
         db.session.commit()
         return True
 
+    def check_approval_admin(self, actions, name_admin):
+        """Check order approval by admin.
+
+        :param actions:
+        :param name_admin:
+        :return:
+        """
+        if actions[-2] and actions[-2].get('name') == name_admin:
+            return True
+        else:
+            return False
+
+    def check_approval_guarantor(self, actions, count, name_guarantor,
+                                 name_advisor):
+        """Check order approval by guarantor.
+
+        :param actions:
+        :param count:
+        :param name_guarantor:
+        :param name_advisor:
+        :return:
+        """
+        return self.check_approval(actions, count, name_guarantor, name_advisor)
+
+    def check_approval_advisor(self, actions, count, name_advisor,
+                               name_guarantor):
+        """Check order approval by advisor.
+
+        :param actions:
+        :param count:
+        :param name_guarantor:
+        :param name_advisor:
+        :return:
+        """
+        return self.check_approval(actions, count, name_advisor, name_guarantor)
+
+    def check_approval(self, actions, count, approval_1, approval_2):
+        """Check order approval by advisor.
+
+        :param actions:
+        :param count:
+        :param approval_1:
+        :param approval_2:
+        :return:
+        """
+        action_name_1 = actions[-3].get('name')
+        action_name_2 = actions[-4].get('name') if actions[-4] else ""
+        if count == 2:
+            if action_name_1 != approval_1 and action_name_1 != approval_2:
+                return False
+            if action_name_1 != approval_1 and action_name_2 != approval_1:
+                for action in actions:
+                    if action.get('name') == approval_1:
+                        return False
+            elif action_name_1 == approval_1 or action_name_2 == approval_1:
+                return True
+        else:
+            if action_name_1 != approval_1:
+                for action in actions:
+                    if action.get('name') == approval_1:
+                        return False
+                return True
+            elif action_name_1 == approval_1:
+                return True
+
+    def check_start_end_flow(self, actions):
+        """Check start end flow.
+
+        :param actions:
+        :return:
+        """
+        if actions[0] and actions[0].get('name') != "Start" or actions[-1] and \
+                actions[-1].get('name') != "End":
+            return False
+        return True
+
+    def validate_flow_setting(self, actions, list_code):
+        """Validate flow setting."""
+        if not current_app.config['WEKO_WORKFLOW_VALIDATION_ENABLE']:
+            return
+        actions_copy = actions.copy()
+        count = 0
+        is_has_admin = False
+        approve_by_admin = current_app.config[
+            'WEKO_WORKFLOW_ACTION_ADMINISTRATOR']
+        approve_by_advisor = current_app.config[
+            'WEKO_WORKFLOW_ACTION_ADVISOR']
+        approve_by_guarantor = current_app.config[
+            'WEKO_WORKFLOW_ACTION_GUARANTOR']
+        for action in actions_copy:
+            if (action.get('name') == approve_by_admin
+                    and action.get('action') != 'DEL'):
+                is_has_admin = True
+            if (action.get('name') == approve_by_advisor
+                    or action.get('name')
+                    == approve_by_guarantor):
+                count += 1
+            if action.get('action') == 'DEL':
+                actions_copy.remove(action)
+        if not self.check_start_end_flow(actions_copy):
+            list_code.append(4)
+        elif not is_has_admin and count > 0:
+            list_code.append(1)
+        elif is_has_admin:
+            if (self.check_approval_admin(actions_copy,
+                                          approve_by_admin) is False):
+                list_code.append(1)
+            if self.check_approval_advisor(actions_copy, count,
+                                           approve_by_advisor,
+                                           approve_by_guarantor) is False:
+                list_code.append(2)
+            if self.check_approval_guarantor(actions_copy, count,
+                                             approve_by_guarantor,
+                                             approve_by_advisor) is False:
+                list_code.append(3)
+
     def upt_flow_action(self, flow_id, actions):
         """Update FlowAction Info."""
-        with db.session.begin_nested():
-            for order, action in enumerate(actions):
-                flowaction_filter = _FlowAction.query.filter_by(
-                    flow_id=flow_id, action_id=action.get('id'))
-                if action.get('action', None) == 'DEL':
-                    flowaction_id = flowaction_filter.one_or_none().id
+        list_code = []
+        dict_code = {'list_code': list_code}
+        self.validate_flow_setting(actions, list_code)
+        if len(list_code) == 0:
+            with db.session.begin_nested():
+                for order, action in enumerate(actions):
+                    flowaction_filter = _FlowAction.query.filter_by(
+                        flow_id=flow_id, action_id=action.get('id'))
+                    if action.get('action', None) == 'DEL':
+                        flowaction_id = flowaction_filter.one_or_none().id
+                        _FlowActionRole.query.filter_by(
+                            flow_action_id=flowaction_id).delete()
+                        flowaction_filter.delete()
+                        continue
+                    flowaction = flowaction_filter.one_or_none()
+                    if flowaction is None:
+                        """new"""
+                        flowaction = _FlowAction(
+                            flow_id=flow_id,
+                            action_id=action.get('id'),
+                            action_order=order + 1,
+                            action_version=action.get('version')
+                        )
+                        _flow = _Flow.query.filter_by(
+                            flow_id=flow_id).one_or_none()
+                        _flow.flow_status = FlowStatusPolicy.AVAILABLE
+                        db.session.add(flowaction)
+                    else:
+                        """Update"""
+                        flowaction.action_order = order + 1
+                        db.session.merge(flowaction)
                     _FlowActionRole.query.filter_by(
-                        flow_action_id=flowaction_id).delete()
-                    flowaction_filter.delete()
-                    continue
-                flowaction = flowaction_filter.one_or_none()
-                if flowaction is None:
-                    """new"""
-                    flowaction = _FlowAction(
-                        flow_id=flow_id,
-                        action_id=action.get('id'),
-                        action_order=order + 1,
-                        action_version=action.get('version')
+                        flow_action_id=flowaction.id).delete()
+                    flowactionrole = _FlowActionRole(
+                        flow_action_id=flowaction.id,
+                        action_role=action.get(
+                            'role') if '0' != action.get('role') else None,
+                        action_role_exclude=action.get(
+                            'role_deny') if '0' != action.get(
+                            'role') else False,
+                        action_user=action.get(
+                            'user') if '0' != action.get('user') else None,
+                        action_user_exclude=action.get(
+                            'user_deny') if '0' != action.get('user') else False
                     )
-                    _flow = _Flow.query.filter_by(
-                        flow_id=flow_id).one_or_none()
-                    _flow.flow_status = FlowStatusPolicy.AVAILABLE
-                    db.session.add(flowaction)
-                else:
-                    """Update"""
-                    flowaction.action_order = order + 1
-                    db.session.merge(flowaction)
-                _FlowActionRole.query.filter_by(
-                    flow_action_id=flowaction.id).delete()
-                flowactionrole = _FlowActionRole(
-                    flow_action_id=flowaction.id,
-                    action_role=action.get(
-                        'role') if '0' != action.get('role') else None,
-                    action_role_exclude=action.get(
-                        'role_deny') if '0' != action.get('role') else False,
-                    action_user=action.get(
-                        'user') if '0' != action.get('user') else None,
-                    action_user_exclude=action.get(
-                        'user_deny') if '0' != action.get('user') else False
-                )
-                if flowactionrole.action_role or flowactionrole.action_user:
-                    db.session.add(flowactionrole)
-        db.session.commit()
+                    if flowactionrole.action_role or flowactionrole.action_user:
+                        db.session.add(flowactionrole)
+            db.session.commit()
+            list_code.append(0)
+            return dict_code
+        return dict_code
 
     def get_next_flow_action(self, flow_id, cur_action_id):
         """Return next action info.
@@ -490,11 +615,9 @@ class WorkActivity(object):
                 activity_community_id=community_id
             )
             db.session.add(db_activity)
-
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
-
             return None
         else:
             db.session.commit()
@@ -535,16 +658,13 @@ class WorkActivity(object):
                     '{inc:05d}'.format(inc=number))
 
                 # Update the activity with calculated activity_id
-                from invenio_pidstore.models import PersistentIdentifier, \
-                    PIDStatus
-                aid = PersistentIdentifier.create(
-                    'actid',
-                    str(activity_id),
-                    status=PIDStatus.REGISTERED,
-                    object_type='act',
-                    object_uuid=uuid.uuid4()
+                action_pid = PersistentIdentifier.create(
+                    pid_type='actid',
+                    pid_value=str(activity_id),
+                    status=PIDStatus.REGISTERED
+                    # object_type='act', #Workflow Activity Object Type
                 )
-                db_activity.activity_id = aid.pid_value
+                db_activity.activity_id = action_pid.pid_value
 
                 # Add history and flow_action
                 db_history = ActivityHistory(
@@ -1129,8 +1249,9 @@ class WorkActivity(object):
             history_dict[history.action_id] = {
                 'Updater': history.user.email,
                 'Result': ActionStatusPolicy.describe(
-                    self.get_activity_action_status(activity_id=activity_id,
-                                                    action_id=history.action_id)
+                    self.get_activity_action_status(
+                        activity_id=activity_id,
+                        action_id=history.action_id)
                 )
             }
         with db.session.no_autoflush:
@@ -1216,7 +1337,6 @@ class WorkActivity(object):
         """Get page info after item search."""
         from weko_records.api import ItemsMetadata
         from flask_babelex import gettext as _
-        from invenio_pidstore.models import PersistentIdentifier
         from werkzeug.utils import import_string
         from invenio_pidstore.resolver import Resolver
         from .views import check_authority_action
@@ -1291,8 +1411,8 @@ class WorkActivity(object):
             community_id = comm.id
 
         return activity_detail, item, steps, action_id, cur_step, \
-            temporary_comment, approval_record, step_item_login_url, histories,\
-            res_check, pid, community_id, ctx
+            temporary_comment, approval_record, step_item_login_url,\
+            histories, res_check, pid, community_id, ctx
 
     def upt_activity_detail(self, item_id):
         """Update activity info for item id.
@@ -1335,7 +1455,7 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             return None
 
-    def get_workflow_activity_by_item_id(self, item_id):
+    def get_workflow_activity_by_item_id(self, object_uuid):
         """Get workflow activity status by item ID.
 
         :param item_id:
@@ -1343,7 +1463,7 @@ class WorkActivity(object):
         try:
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
-                    item_id=item_id).one_or_none()
+                    item_id=object_uuid).one_or_none()
                 return activity
         except Exception as ex:
             current_app.logger.error(ex)

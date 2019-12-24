@@ -26,7 +26,7 @@ from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from flask_login import current_user, login_required
+from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import BillingPermission
@@ -494,29 +494,6 @@ class ItemTypeMappingView(BaseView):
         return jsonify(remove_xsd_prefix(jpcoar_lists))
 
 
-class ItemImportView(BaseView):
-    """ItemImportView."""
-
-    @expose('/', methods=['GET'])
-    def index(self):
-        """Renders an item import view.
-
-        :param
-        :return: The rendered template.
-        """
-        from .config import WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
-        from weko_workflow.api import WorkFlow
-        from .utils import get_content_workflow
-        import json
-        workflow = WorkFlow()
-        workflows = workflow.get_workflow_list()
-        workflows_js = [get_content_workflow(item) for item in workflows]
-        return self.render(
-            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
-            workflows=json.dumps(workflows_js)
-        )
-
-
 itemtype_meta_data_adminview = {
     'view_class': ItemTypeMetaDataView,
     'kwargs': {
@@ -546,20 +523,8 @@ itemtype_mapping_adminview = {
         'endpoint': 'itemtypesmapping'
     }
 }
-
-item_import_adminview = {
-    'view_class': ItemImportView,
-    'kwargs': {
-        'category': _('Items'),
-        'name': _('Import'),
-        'url': '/admin/items/import',
-        'endpoint': 'items/import'
-    }
-}
-
 __all__ = (
     'itemtype_meta_data_adminview',
     'itemtype_properties_adminview',
     'itemtype_mapping_adminview',
-    'item_import_adminview'
 )

@@ -134,6 +134,7 @@ def search():
             height=height,
             allow_item_exporting=export_settings.allow_item_exporting,
             is_permission=check_permission(),
+            is_login=bool(current_user.get_id()),
             **ctx)
     else:
         journal_info = None
@@ -163,7 +164,6 @@ def search():
             index_link_list = get_index_link_list(current_i18n.language)
         else:
             index_link_list = get_index_link_list()
-
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
             page=page,
@@ -181,6 +181,7 @@ def search():
             index_display_format=index_display_format,
             allow_item_exporting=export_settings.allow_item_exporting,
             is_permission=check_permission(),
+            is_login=bool(current_user.get_id()),
             **ctx)
 
 

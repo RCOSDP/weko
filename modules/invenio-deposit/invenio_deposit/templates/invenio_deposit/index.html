@@ -1,0 +1,136 @@
+{#
+# This file is part of Invenio.
+# Copyright (C) 2016 CERN.
+#
+# Invenio is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+#}
+
+{%- extends config.DEPOSIT_BASE_TEMPLATE %}
+
+{%- block css %}
+    {{ super() }}
+    {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body_inner %}
+<div id="invenio-search">
+  <invenio-search
+   search-endpoint="{{ config.DEPOSIT_SEARCH_API }}"
+   search-headers='{"Accept": "{{ config.DEPOSIT_SEARCH_MIMETYPE|default('application/json')}}"}'
+  >
+  {{super()}}
+  </invenio-search>
+</div>
+{%- endblock body_inner %}
+
+{%- block page_body %}
+<div class="container search-page">
+  {%- block search_body %}
+    <div class="row">
+      <div class="col-md-8 col-sm-8 col-xs-8">
+        <div class="row">
+          {%- block search_bar %}
+          <div class="col-md-8">
+            <invenio-search-bar
+            template="{{ url_for('static', filename='templates/invenio_deposit/searchbar.html') }}"
+            placeholder="{{ _('Search uploads...') }}">
+            </invenio-search-bar>
+          </div>
+          {%- endblock search_bar %}
+          {%- block search_loading %}
+          <div class="col-md-4">
+            <invenio-search-loading
+              template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
+              message="{{ _('Loading...') }}">
+            </invenio-search-loading>
+          </div>
+          {%- endblock search_loading %}
+        </div>
+      </div>
+      {%- block new_upload %}
+      <div class="col-md-offset-2 col-md-2 col-sm-4 col-xs-4">
+        <a class="btn btn-success btn-block" href="{{ url_for('invenio_deposit_ui.new') }}">
+          <i class="pull-left glyphicon glyphicon-upload"></i> {{ _('New Upload') }}
+        </a>
+      </div>
+      {%- endblock new_upload %}
+    </div>
+
+    {%- block search_error %}
+    <invenio-search-error
+      template="{{ url_for('static', filename='templates/invenio_search_ui/error.html') }}"
+      message="{{ _('Search failed.') }}">
+    </invenio-search-error>
+    {%- endblock search_error %}
+
+    <div class="panel panel-default deposit-panel">
+      <div class="panel-heading">
+        {%- block search_facets %}
+        <invenio-search-facets
+        template="{{ url_for('static', filename='templates/invenio_deposit/selectstatus.html') }}">
+        </invenio-search-facets>
+        {%- endblock search_facets %}
+        {%- block search_sort %}
+        <div class="pull-right form-inline">
+          <div class="form-group">
+          {%- set sort_options = config.get('DEPOSIT_REST_SORT_OPTIONS', {}).get(config.DEPOSIT_UI_SEARCH_INDEX) %}
+          {%- if sort_options %}
+            <label>{{ _('Sort') }}</label>
+            {%- block search_sort_select scoped %}
+            <invenio-search-select-box
+              sort-key="sort"
+              available-options='{{ sort_options|format_sortoptions|safe }}'
+              template="{{ url_for('static', filename='templates/invenio_deposit/selectbox.html') }}"
+              >
+            </invenio-search-select-box>
+            {%- endblock search_sort_select %}
+            {%- block search_sort_order scoped %}
+            <invenio-search-sort-order
+            sort-key="sort"
+            template="{{ url_for('static', filename='templates/invenio_deposit/togglebutton.html') }}"
+            >
+            </invenio-search-sort-order>
+            {%- endblock search_sort_order %}
+          {%- endif %}
+          </div>
+        </div>
+        {%- endblock search_sort %}
+      </div>
+      {%- block search_results %}
+      <invenio-search-results
+        class="list-group"
+        template="{{ url_for('static', filename='templates/invenio_deposit/results.html') }}">
+      </invenio-search-results>
+      {%- endblock search_results %}
+    </div>
+    {%- block search_pagination_bottom %}
+    <div align="center">
+      <invenio-search-pagination
+        template="{{ url_for('static', filename='templates/invenio_search_ui/pagination.html') }}">
+      </invenio-search-pagination>
+    </div>
+    {%- endblock search_pagination_bottom %}
+  {%- endblock search_body %}
+</div>
+{%- endblock page_body -%}

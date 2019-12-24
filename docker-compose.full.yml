@@ -54,7 +54,17 @@ services:
       - type: bind
         source: .
         target: /code
+      - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
+      - /code/modules/invenio-s3/invenio_s3.egg-info
+      - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
       - /code/modules/invenio-oaiserver/invenio_oaiserver.egg-info
+      - /code/modules/invenio-records/invenio_records.egg-info
+      - /code/modules/invenio-previewer/invenio_previewer.egg-info
+      - /code/modules/invenio-stats/invenio_stats.egg-info
+      - /code/modules/invenio-records-rest/invenio_records_rest.egg-info
+      - /code/modules/invenio-communities/invenio_communities.egg-info
+      - /code/modules/invenio-mail/invenio_mail.egg-info
+      - /code/modules/invenio-deposit/invenio_deposit.egg-info
       - /code/modules/weko-theme/weko_theme.egg-info
       - /code/modules/weko-itemtypes-ui/weko_itemtypes_ui.egg-info
       - /code/modules/weko-items-ui/weko_items_ui.egg-info
@@ -88,7 +98,7 @@ services:
 
   postgresql:
     restart: "always"
-    image: postgres
+    image: postgres:12
     environment:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
@@ -185,9 +195,18 @@ services:
       - /sys:/host/sys
       - /:/rootfs
 
+  redisCommander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      REDIS_HOSTS: redis
+      TZ: JST-9
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+
 volumes:
   weko3_data:
   static_data:
   pgsql-data:
   es-data:
-

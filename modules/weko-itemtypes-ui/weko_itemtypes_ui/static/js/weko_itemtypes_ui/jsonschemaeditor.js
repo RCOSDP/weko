@@ -496,8 +496,9 @@ var SchemaObject = React.createClass({
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this.state.propertyDels[index]) return;
-			var itemKey = self.state.propertyItems[index];
+			// var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
+				var itemKey = self.createSubItemName(value.title);
 				var sub_form = {};
 				if ('text' === value.format || 'textarea' === value.format) {
 					sub_form = {
@@ -554,8 +555,9 @@ var SchemaObject = React.createClass({
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this2.state.propertyDels[index]) return;
-			var itemKey = self.state.propertyItems[index];
+			// var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
+				var itemKey = self.createSubItemName(value.title);
 				if ('text' === value.format || 'textarea' === value.format || 'datetime' === value.format) {
 					properties[itemKey] = value;
 				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
@@ -589,6 +591,18 @@ var SchemaObject = React.createClass({
 		}
 
 		return result;
+	},
+	// Defined prefix for sub item name
+	prefixSubitemname: 'subitem_',
+	customSuffixSubItemName: function customSuffixSubItemName(suffix){
+		// Replace all space to _
+		suffix = suffix.replace(/ /g, '_');
+		// convert to lower case character
+		suffix = suffix.toLowerCase();
+		return suffix;
+	},
+	createSubItemName: function createSubItemName(suffix){
+		return this.prefixSubitemname + this.customSuffixSubItemName(suffix);
 	},
 	on: function on(event, callback) {
 		this.callbacks = this.callbacks || {};

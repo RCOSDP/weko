@@ -19,6 +19,8 @@
 #}
 {%- set is_permission = is_permission or False -%}
 <input type="text" value="{{is_permission}}" id="is_permission" style="display: none;">
+{%- set is_login = is_login or False -%}
+<input type="text" value="{{is_login}}" id="is_login" style="display: none;">
 {%- if journal_info%}
   <div id="journal_info" class="panel panel-default" style="display: none;">
     <div class="panel-body">

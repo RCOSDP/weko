@@ -19,7 +19,7 @@
 #}
 
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
-{% macro output_item_detail(record, files_thumbnail, pid, is_top_page=false) %}
+{% macro output_item_detail(record, files_thumbnail, pid, is_top_page=false, is_logged_in=false) %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info %}
         <tr>
@@ -100,7 +100,7 @@
           </td>
         </tr>
       {% endif %}
-      {% if record.pubdate and is_top_page %}
+      {% if record.pubdate and is_top_page and is_logged_in %}
         <tr>
           <th scope="row" colspan="6">{{ _('Publish Status') }}</th>
             {%- set pubs = record.get('publish_status','1') -%}

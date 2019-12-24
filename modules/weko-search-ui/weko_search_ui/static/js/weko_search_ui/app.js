@@ -132,6 +132,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     return format_comment(comment)
   };
   $rootScope.is_permission = $("#is_permission").val() === 'True' ? true : false
+  $rootScope.is_login = $("#is_login").val() === 'True' ? true : false
 
   $rootScope.display_comment_jounal= function(){
     $('#index_comment').append(format_comment($rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0].comment))
@@ -220,14 +221,14 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
 
   // Check if current hits in selected array
   $scope.checkIfAllInArray = function() {
-    all_in_array = true;
     angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
       item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
-      if(item_index == -1) {
-        all_in_array = false;
+      if (checkAll &&  item_index == -1) {
+        $rootScope.item_export_checkboxes.push(record.id);
+      } else if(!checkAll && item_index >= 0) {
+        $rootScope.item_export_checkboxes.splice(item_index, 1);
       }
     });
-    return all_in_array;
   }
 
   $scope.checkAll = function(checkAll) {
@@ -286,6 +287,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     let cur_url = new URL(window.location.href);
     let q = cur_url.searchParams.get("q");
     let search_type = cur_url.searchParams.get("search_type");
+
     let request_url = '';
 
     if (search_type == "2") {

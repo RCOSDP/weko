@@ -1,0 +1,36 @@
+{
+  "index_patterns": ["__SEARCH_INDEX_PREFIX__stats-bookmark-record-view-*"],
+  "settings": {
+    "index.mapper.dynamic": false,
+    "index": {
+      "refresh_interval": "1m"
+    }
+  },
+  "mappings": {
+    "_default_": {
+      "dynamic_templates": [
+        {
+          "date_fields": {
+            "match_mapping_type": "date",
+            "mapping": {
+              "type": "date",
+              "format": "date_optional_time"
+            }
+          }
+        }
+      ]
+    },
+    "record-view-agg-bookmark": {
+      "date_detection": false,
+      "properties": {
+        "date": {
+          "type": "date",
+          "format": "date_optional_time"
+        }
+      }
+    }
+  },
+  "aliases": {
+    "__SEARCH_INDEX_PREFIX__stats-bookmark-record-view": {}
+  }
+}

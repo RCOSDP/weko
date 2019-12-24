@@ -471,14 +471,15 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     return json_data
 
 
-def package_exports(item_type_data):
+def package_export_file(item_type_data):
     """Export TSV Files.
 
     Arguments:
-    pid_type     -- {string} 'doi' (default) or 'cnri'
-    reg_value    -- {string} pid_value
+        item_type_data  -- schema's Item Type
+
     Returns:
-    return       -- PID object if exist
+        return          -- TSV file
+
     """
     tsv_output = StringIO()
     jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
@@ -514,16 +515,21 @@ def make_stats_tsv(item_type_id, recids):
     """Prepare TSV data for each Item Types.
 
     Arguments:
-    pid_type     -- {string} 'doi' (default) or 'cnri'
-    reg_value    -- {string} pid_value
+        item_type_id    -- ItemType ID
+        recids          -- List records ID
     Returns:
-    return       -- PID object if exist
+        ret             -- Key properties
+        ret_label       -- Label properties
+        records.attr_output -- Record data
+
     """
     item_type = ItemTypes.get_by_id(item_type_id).render
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
 
     class RecordsManager:
+        """Management data for exporting records."""
+
         first_recid = 0
         cur_recid = 0
         filepath_idx = 1
@@ -533,6 +539,7 @@ def make_stats_tsv(item_type_id, recids):
         attr_output = {}
 
         def __init__(self, record_ids):
+            """Class initialization."""
             self.recids = record_ids
             self.first_recid = record_ids[0]
             for record_id in record_ids:
@@ -541,6 +548,7 @@ def make_stats_tsv(item_type_id, recids):
                 self.attr_output[record_id] = []
 
         def get_max_ins(self, attr):
+            """Get max data each main property in all exporting records."""
             largest_size = 1
             self.attr_data[attr] = {'max_size': 0}
             for record in self.records:
@@ -563,6 +571,7 @@ def make_stats_tsv(item_type_id, recids):
             return self.attr_data[attr]['max_size']
 
         def get_max_items(self, item_attrs):
+            """Get max data each sub property in all exporting records."""
             list_attr = item_attrs.split('.')
             max_length = None
             if len(list_attr) == 1:
@@ -593,29 +602,43 @@ def make_stats_tsv(item_type_id, recids):
                 idx_2 = int(key2[1].split(']')[0])
                 sub_attr_2 = list_attr[2].split('[')[0]
                 for record in self.records:
-                    attr_val = self.records[record][item_attr][
-                        'attribute_value_mlt']
-                    if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
-                        and len(attr_val[idx][sub_attr]) > idx_2 \
-                            and attr_val[idx][sub_attr][idx_2].get(sub_attr_2):
-                        cur_len = len(attr_val[idx][sub_attr][idx_2][
-                            sub_attr_2])
-                        if cur_len > max_length:
-                            max_length = cur_len
+                    if self.records[record].get(item_attr):
+                        attr_val = self.records[record][item_attr][
+                            'attribute_value_mlt']
+                        if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
+                            and len(attr_val[idx][sub_attr]) > idx_2 \
+                                and attr_val[idx][sub_attr][idx_2].get(sub_attr_2):
+                            cur_len = len(attr_val[idx][sub_attr][idx_2][
+                                sub_attr_2])
+                            if cur_len > max_length:
+                                max_length = cur_len
             return max_length
 
-        def get_subs_item(self, item_key, item_label, properties, data=None):
-            """Prepare TSV data for each Item Types.
+        def get_subs_item(self,
+                          item_key,
+                          item_label,
+                          properties,
+                          data=None,
+                          is_object=False):
+            """Building key, label and data from key properties.
 
             Arguments:
-            properties     -- {string} 'doi' (default) or 'cnri'
+                item_key    -- Key properties
+                item_label  -- Label properties
+                properties  -- Data properties
+                data        -- Record data
+                is_object   -- Is objecting property?
             Returns:
-            return       -- PID object if exist
+                o_ret       -- Key properties
+                o_ret_label -- Label properties
+                ret_data    -- Record data
+
             """
             o_ret = []
             o_ret_label = []
             ret_data = []
             max_items = self.get_max_items(item_key)
+            max_items = 1 if is_object else max_items
             for idx in range(max_items):
                 key_list = []
                 key_label = []
@@ -632,34 +655,38 @@ def make_stats_tsv(item_type_id, recids):
                                               properties[key].get('title')),
                             properties[key]['items']['properties'],
                             m_data)
-                        key_list.extend(sub)
-                        key_label.extend(sublabel)
-                        key_data.extend(subdata)
-                    elif properties[key]['type'] == 'object':
-                        if data and idx < len(data) and data[idx].get(key):
-                            m_data = data[idx][key]
-                        else:
-                            m_data = None
-                        sub, sublabel, subdata = self.get_subs_item(
-                            '{}[{}].{}'.format(item_key, str(idx), key),
-                            '{}#{}.{}'.format(item_label, str(idx + 1),
-                                              properties[key].get('title')),
-                            properties[key]['properties'],
-                            m_data)
+                        if is_object:
+                            _sub_ = []
+                            for item in sub:
+                                if 'item_' in item:
+                                    _sub_.append(item.split('.')[0].replace(
+                                        '[0]', '') + '.' + '.'.join(
+                                        item.split('.')[1:]))
+                                else:
+                                    _sub_.append(item)
+                            sub = _sub_
                         key_list.extend(sub)
                         key_label.extend(sublabel)
                         key_data.extend(subdata)
                     else:
                         if isinstance(data, dict):
                             data = [data]
-                        key_list.append('{}[{}].{}'.format(
-                            item_key,
-                            str(idx),
-                            key))
-                        key_label.append('{}#{}.{}'.format(
-                            item_label,
-                            str(idx + 1),
-                            properties[key].get('title')))
+                        if is_object:
+                            key_list.append('{}.{}'.format(
+                                item_key,
+                                key))
+                            key_label.append('{}.{}'.format(
+                                item_label,
+                                properties[key].get('title')))
+                        else:
+                            key_list.append('{}[{}].{}'.format(
+                                item_key,
+                                str(idx),
+                                key))
+                            key_label.append('{}#{}.{}'.format(
+                                item_label,
+                                str(idx + 1),
+                                properties[key].get('title')))
                         if data and idx < len(data) and data[idx].get(key):
                             key_data.append(data[idx][key])
                         else:
@@ -688,24 +715,6 @@ def make_stats_tsv(item_type_id, recids):
                 o_ret_label.extend(key_label)
                 ret_data.extend(key_data)
 
-                if max_items == 1:
-                    new_ret = []
-                    new_ret_label = []
-                    for c_ret in o_ret:
-                        if item_key + '[0]' in c_ret:
-                            new_ret.append(c_ret.replace(item_key + '[0]',
-                                                         item_key))
-                        else:
-                            new_ret.append(c_ret)
-                    for c_ret in o_ret_label:
-                        if item_label + '#1' in c_ret:
-                            new_ret_label.append(c_ret.replace(item_label
-                                                               + '#1',
-                                                               item_label))
-                        else:
-                            new_ret_label.append(c_ret)
-                    o_ret = new_ret
-                    o_ret_label = new_ret_label
             return o_ret, o_ret_label, ret_data
 
     records = RecordsManager(recids)
@@ -713,7 +722,6 @@ def make_stats_tsv(item_type_id, recids):
     ret = ['#.id', '.uri']
     ret_label = ['#ID', 'URI']
 
-    # for idx in range(records.get_max_ins('path')):
     max_path = records.get_max_ins('path')
     ret.extend(['.metadata.path[{}]'.format(i) for i in range(max_path)])
     ret_label.extend(['.IndexID#{}'.format(i + 1) for i in range(max_path)])
@@ -751,7 +759,8 @@ def make_stats_tsv(item_type_id, recids):
                     item_key,
                     item.get('title'),
                     item['properties'],
-                    records.attr_data[item_key][recid]
+                    records.attr_data[item_key][recid],
+                    True
                 )
                 if not keys:
                     keys = key
@@ -781,9 +790,10 @@ def get_list_file_by_record_id(recid):
     """Get file buckets by record id.
 
     Arguments:
-    recid     -- {number} record id
+        recid     -- {number} record id.
     Returns:
-    list_file  -- list file name of record
+        list_file  -- list file name of record.
+
     """
     body = {
         "query": {
@@ -887,9 +897,10 @@ def export_items(post_data):
             item_types_data[item_type_id]['data'] = records
             item_type_data = item_types_data[item_type_id]
 
-            with open('{}/{}.tsv'.format(export_path, item_type_data.get(
-                    'name')), 'w') as file:
-                tsvs_output = package_exports(item_type_data)
+            with open('{}/{}.tsv'.format(export_path,
+                                         item_type_data.get('name')),
+                      'w') as file:
+                tsvs_output = package_export_file(item_type_data)
                 file.write(tsvs_output.getvalue())
 
         # Create bag

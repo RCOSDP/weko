@@ -1,0 +1,12 @@
+<ul class="list-inline text-right">
+  <li><a class="btn btn-success" href="#" ng-click="vm.actionSave()">Save</a></li>
+  <li><a href="#" class="btn btn-danger" ng-click="vm.actionDelete()">Delete</a></li>
+</ul>
+
+<div ng-show="vm.invenioRecordsError.data.message" class="alert alert-danger">
+  <strong>Error</strong> {{ vm.invenioRecordsError.data.message }}
+</div>
+
+<div ng-show="vm.invenioRecordsNotify" class="alert alert-info">
+  <strong>Info</strong> {{ vm.invenioRecordsNotify }}
+</div>

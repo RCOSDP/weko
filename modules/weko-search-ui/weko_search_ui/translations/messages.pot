@@ -208,3 +208,98 @@ msgstr ""
 msgid "Is the input contents discarded ?"
 msgstr ""
 
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Summary"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Total"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "New Item"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Update Item"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Check Error"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Download"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "No"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "ItemID"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Title"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Check Result"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "ERROR"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Update"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Not match"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Register"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Start Date"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "End Date"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Action"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "End"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Work Flow Status"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Done"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "To Do"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Select"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Result"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Next"
+msgstr ""

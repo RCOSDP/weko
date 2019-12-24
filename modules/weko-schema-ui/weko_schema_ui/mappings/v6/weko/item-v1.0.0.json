@@ -20,7 +20,7 @@
         }
       },
       "analyzer": {
-        "ja_analyzer": {
+        "default": {
           "tokenizer": "ja_tokenizer",
           "filter": [
             "kuromoji_baseform",
@@ -546,8 +546,7 @@
           "type": "text",
           "fields": {
             "ja": {
-              "type": "text",
-              "analyzer": "ja_analyzer"
+              "type": "text"
             }
           },
           "copy_to": [
@@ -587,8 +586,7 @@
           "type": "text",
           "fields": {
             "ja": {
-              "type": "text",
-              "analyzer": "ja_analyzer"
+              "type": "text"
             }
           },
           "copy_to": [
@@ -708,8 +706,7 @@
               "type": "text",
               "fields": {
                 "ja": {
-                  "type": "text",
-                  "analyzer": "ja_analyzer"
+                  "type": "text"
                 }
               }
             },
@@ -717,8 +714,7 @@
               "type": "text",
               "fields": {
                 "ja": {
-                  "type": "text",
-                  "analyzer": "ja_analyzer"
+                  "type": "text"
                 }
               }
             },
@@ -733,8 +729,7 @@
                 "ja": {
                   "type": "text",
                   "term_vector": "with_positions_offsets",
-                  "store": true,
-                  "analyzer": "ja_analyzer"
+                  "store": true
                 }
               }
             },
@@ -748,8 +743,7 @@
                     "ja": {
                       "type": "text",
                       "term_vector": "with_positions_offsets",
-                      "store": true,
-                      "analyzer": "ja_analyzer"
+                      "store": true
                     }
                   }
                 }
@@ -771,8 +765,7 @@
           "type": "text",
           "fields": {
             "ja": {
-              "type": "text",
-              "analyzer": "ja_analyzer"
+              "type": "text"
             }
           }
         },
@@ -780,8 +773,7 @@
           "type": "text",
           "fields": {
             "ja": {
-              "type": "text",
-              "analyzer": "ja_analyzer"
+              "type": "text"
             }
           }
         },
@@ -789,8 +781,7 @@
           "type": "text",
           "fields": {
             "ja": {
-              "type": "text",
-              "analyzer": "ja_analyzer"
+              "type": "text"
             }
           }
         },
@@ -798,8 +789,7 @@
           "type": "text",
           "fields": {
             "ja": {
-              "type": "text",
-              "analyzer": "ja_analyzer"
+              "type": "text"
             }
           }
         },
@@ -816,8 +806,7 @@
           "type": "text",
           "fields": {
             "ja": {
-              "type": "text",
-              "analyzer": "ja_analyzer"
+              "type": "text"
             }
           }
         },
@@ -825,8 +814,7 @@
           "type": "text",
           "fields": {
             "ja": {
-              "type": "text",
-              "analyzer": "ja_analyzer"
+              "type": "text"
             }
           }
         },
@@ -834,8 +822,7 @@
           "type": "text",
           "fields": {
             "ja": {
-              "type": "text",
-              "analyzer": "ja_analyzer"
+              "type": "text"
             }
           }
         }

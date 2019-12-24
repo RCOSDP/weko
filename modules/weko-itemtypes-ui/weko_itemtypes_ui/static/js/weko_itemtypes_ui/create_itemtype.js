@@ -31,7 +31,7 @@ $(document).ready(function () {
       updated_date : {
         title : "Updated Date",
         title_i18n: {ja: "更新日時", en: "Updated Date"},
-        input_type: "cus_122",
+        input_type: "S_Date",
         option: {
           required : false,
           multiple : false,
@@ -43,7 +43,7 @@ $(document).ready(function () {
       created_date : {
         title: "Created Date",
         title_i18n: {ja: "作成日時", en: "Created Date"},
-        input_type: "cus_122",
+        input_type: "S_Date",
         option: {
           required : false,
           multiple : false,
@@ -53,7 +53,7 @@ $(document).ready(function () {
         }
       },
       persistent_identifier_doi : {
-        input_type: "cus_121",
+        input_type: "S_Persistent Identifier(DOI)",
         title: "Persistent Identifier(DOI)",
         title_i18n: {ja: "永続識別子（DOI）", en: "Persistent Identifier(DOI)"},
         option: {
@@ -65,7 +65,7 @@ $(document).ready(function () {
         }
       },
       persistent_identifier_h : {
-        input_type: "cus_123",
+        input_type: "S_Identifier",
         title: "Persistent Identifier(Handle)",
         title_i18n: {ja: "永続識別子（ハンドル）", en: "Persistent Identifier(Handle)"},
         option: {
@@ -77,7 +77,7 @@ $(document).ready(function () {
         }
       },
       ranking_page_url : {
-        input_type: "cus_123",
+        input_type: "S_Identifier",
         title: "Landing Page URL",
         title_i18n: {ja: "ランディングページのURL", en: "Landing Page URL"},
         option: {
@@ -89,7 +89,7 @@ $(document).ready(function () {
         }
       },
       belonging_index_info : {
-        input_type: "cus_124",
+        input_type: "S_Text",
         title: "Belonging Index Info",
         title_i18n: {ja: "所属インデックスの情報", en: "Belonging Index Info"},
         option: {
@@ -1025,8 +1025,20 @@ $(document).ready(function () {
       others = ''
       for (var key in data) {
         if (key == 'defaults') continue;
-
-        option = '<option value="cus_' + key + '">' + data[key].name + '</option>'
+        if (data[key].name === meta_system_info.updated_date.input_type){
+          meta_system_info.updated_date.input_type = "cus_" + key;
+        } else if (data[key].name === meta_system_info.created_date.input_type){
+          meta_system_info.created_date.input_type = "cus_" + key;
+        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type){
+          meta_system_info.persistent_identifier_doi.input_type = "cus_" + key;
+        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type){
+          meta_system_info.created_date.input_type = "cus_" + key;
+        } else if (data[key].name === meta_system_info.ranking_page_url.input_type){
+          meta_system_info.ranking_page_url.input_type = "cus_" + key;
+        } else if (data[key].name === meta_system_info.belonging_index_info.input_type){
+          meta_system_info.belonging_index_info.input_type = "cus_" + key;
+        }
+        option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
         if (data[key].sort != null) {
           odered[data[key].sort] = option;
         } else {

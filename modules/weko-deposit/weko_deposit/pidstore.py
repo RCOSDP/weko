@@ -74,7 +74,7 @@ def weko_deposit_fetcher(record_uuid, data):
 def get_latest_version_id(recid):
     """Get latest version ID to store item of before updating."""
     version_id = 1
-    pid_value = "{}.%" . format(recid)
+    pid_value = "{}.%".format(recid)
     pid = PersistentIdentifier.query.filter_by(pid_type='recid')\
         .filter(PersistentIdentifier.pid_value.like(pid_value)).all()
     if pid:
@@ -98,12 +98,13 @@ def get_record_without_version(pid):
     """Get PID of record without version ID."""
     recid_without_ver = None
     parent_relations = PIDRelation.get_child_relations(pid).one_or_none()
-    if parent_relations is not None:
+    if parent_relations:
         parent_pid = PersistentIdentifier.query. \
             filter_by(id=parent_relations.parent_id).one_or_none()
-        if parent_pid is not None:
+        if parent_pid:
             parent_pid_value = parent_pid.pid_value.split(':')[-1]
             recid_without_ver = PersistentIdentifier.get(
                 pid_type='recid',
                 pid_value=parent_pid_value)
+
     return recid_without_ver

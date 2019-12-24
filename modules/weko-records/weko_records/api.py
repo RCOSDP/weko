@@ -981,9 +981,8 @@ class ItemTypeProps(RecordBase):
         Arguments:
             data {dict} -- schema to remove required key
         """
-        if "required" in data:
-            if not data.get("required"):
-                data.pop("required", None)
+        if "required" in data and not data.get("required"):
+            data.pop("required", None)
         if "properties" in data:
             for k, v in data.get("properties").items():
                 if v.get("items"):

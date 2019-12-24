@@ -41,9 +41,6 @@ def login_listener(app, user):
         """
         user_id, sid_s = user.id, session.sid_s
         login_ip = get_remote_addr()
-        current_app.logger.info(
-            'auth login success: {user_id},{session_id},{login_ip}'.format(
-                user_id=user_id, session_id=sid_s, login_ip=login_ip))
 
         return response
 
@@ -64,8 +61,5 @@ def logout_listener(app, user):
         """
         user_id, login_date = user.id, user.current_login_at
         logout_ip = get_remote_addr()
-        current_app.logger.info(
-            'auth logout success: {user_id},{login_date},{logout_ip}'.format(
-                user_id=user_id, login_date=login_date, logout_ip=logout_ip))
 
         return response

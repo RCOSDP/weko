@@ -56,7 +56,7 @@ web:
 
 postgresql:
   restart: "always"
-  image: postgres
+  image: postgres:12
   environment:
     - POSTGRES_USER=invenio
     - POSTGRES_DB=invenio
@@ -100,6 +100,7 @@ static:
   build: .
   volumes:
     - /home/invenio/.virtualenvs/invenio/var/instance/static
+    - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
     - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
     - /code/modules/invenio-oaiserver/invenio_oaiserver.egg-info
     - /code/modules/weko-theme/weko_theme.egg-info
@@ -127,4 +128,3 @@ clamav:
   image: mkodockx/docker-clamav
   ports:
     - "3301:3310"
-
