@@ -368,7 +368,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             active_versions.pop()
         if WekoRecord.get_record(id_=all_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
             all_versions.pop()
-    except:
+    except Exception:
         pass
     if active_versions:
         # active_versions.remove(pid_ver.last_child)
