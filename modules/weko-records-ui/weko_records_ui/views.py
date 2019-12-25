@@ -361,11 +361,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if not pid_ver.exists or pid_ver.is_last_child:
         abort(404)
     active_versions = list(pid_ver.children or [])
+    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
+                        or [])
+    try:
+        if WekoRecord.get_record(id_=active_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+            active_versions.pop()
+        if WekoRecord.get_record(id_=all_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+            all_versions.pop()
+    except Exception:
+        pass
     if active_versions:
         # active_versions.remove(pid_ver.last_child)
         active_versions.pop()
-    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
-                        or [])
 
     check_site_license_permission()
     check_items_settings()
