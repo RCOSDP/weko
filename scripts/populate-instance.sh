@@ -110,7 +110,7 @@ ${INVENIO_WEB_INSTANCE} index queue init
 # sphinxdoc-index-initialisation-end
 
 # sphinxdoc-pipeline-registration-begin
-curl -XPUT 'http://elasticsearch:9200/_ingest/pipeline/item-file-pipeline' -H 'Content-Type: application/json' -d '{
+curl -XPUT "http://${INVENIO_ELASTICSEARCH_HOST}/_ingest/pipeline/item-file-pipeline" -H 'Content-Type: application/json' -d '{
  "description" : "Index contents of each file.",
  "processors" : [
    {
