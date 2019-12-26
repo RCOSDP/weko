@@ -104,7 +104,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
   $rootScope.disable_flg = true;
   $rootScope.display_flg = true;
-  $rootScope.index_id_q = $location.search().q;
+  $rootScope.index_id_q = $location.search().q != undefined ? $location.search().q : '';
   $rootScope.journal_info = [];
   $rootScope.collapse_flg = true;
   $rootScope.journal_title = $("#journal_title_i18n").val();
