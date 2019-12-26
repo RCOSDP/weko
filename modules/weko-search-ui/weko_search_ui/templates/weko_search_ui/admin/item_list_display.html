@@ -37,6 +37,7 @@
         {{_('Target Index')}}
       </span>
     </div>
+    {%- if index_id %}
     <div class="panel-body">
       <div id="index_item_list">
         {%- if not page_id %}
@@ -100,6 +101,7 @@
         </div>
       </div>
     </div>
+    {%- endif %}
   </div>
   </div >
   </invenio-search>
