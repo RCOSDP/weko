@@ -27,6 +27,7 @@ import shutil
 import sys
 import tempfile
 import traceback
+import re
 from collections import OrderedDict
 from datetime import datetime
 from io import StringIO
@@ -834,6 +835,11 @@ def export_items(post_data):
 
     :return: JSON, BIBTEX
     """
+    def check_item_type_name(name):
+        """Check a list of allowed characters in filenames."""
+        new_name = re.sub('[\/:*"<>|]', '', name)
+        return new_name
+
     include_contents = True if \
         post_data['export_file_contents_radio'] == 'True' else False
     export_format = post_data['export_format_radio']
@@ -870,12 +876,12 @@ def export_items(post_data):
             item_type_id = exported_item.get('item_type_id')
             item_type = ItemTypes.get_by_id(item_type_id)
             if not item_types_data.get(item_type_id):
-                item_types_data[item_type_id] = {}
-
+                item_type_name = check_item_type_name(
+                    item_type.item_type_name.name)
                 item_types_data[item_type_id] = {
                     'item_type_id': item_type_id,
                     'name': '{}({})'.format(
-                        item_type.item_type_name.name,
+                        item_type_name,
                         item_type_id),
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
