@@ -22,6 +22,7 @@
 import re
 from collections import OrderedDict
 from functools import partial
+from flask import current_app
 
 import dateutil
 import requests
@@ -823,6 +824,7 @@ def add_titlStmt_ddi(schema, res, list_stdyDscr):
                     add_titlStmt_ddi(schema, res, v)
 
 
+
 def add_title_ddi(schema, res, titl):
     title = 'Title'
     root_key = map_field(schema).get(title)
@@ -868,7 +870,8 @@ def add_medium_ddi(schema, altTitl, key):
     # res[root_key] = []
     item = {}
     title = map_field(schema['properties'][root_key]['items'])[key]
-    language = map_field(schema['properties'][root_key]['items'])['Language']
+    language = map_field(schema['properties'][root_key]['items']).get(
+        'Language')
     for k, v in altTitl.items():
         if k == '@xml:lang':
             item[language] = v
@@ -1027,10 +1030,180 @@ def add_awardNumber_ddi(schema, res, grantNo):
 def add_stdyDscr_ddi(schema, res, list_stdyDscr):
     if not isinstance(list_stdyDscr, list):
         list_stdyDscr = [list_stdyDscr]
+    current_app.logger.info("========================list_stdyDscr")
+    current_app.logger.info(list_stdyDscr)
+    current_app.logger.info("========================schema")
+    current_app.logger.info(map_field(schema))
     add_titlStmt_ddi(schema, res, list_stdyDscr)
     add_rspStmt_ddi(schema, res, list_stdyDscr)
     add_prodStmt_ddi(schema, res, list_stdyDscr)
+    add_topic_ddi(schema, res, list_stdyDscr)
+    add_version_ddi(schema, res, list_stdyDscr)
+    add_summary_ddi(schema, res, list_stdyDscr)
+    add_time_period_ddi(schema, res, list_stdyDscr)
+    add_uri_ddi(schema, res, list_stdyDscr)
+    add_geographic_ddi(schema, res, list_stdyDscr)
 
+# function by Viet Huynh
+# function by Viet Huynh
+# function by Viet Huynh
+# function by Viet Huynh
+# function by Viet Huynh
+# function by Viet Huynh
+from json import loads, dumps
+from collections import OrderedDict
+
+def to_dict(input_ordered_dict):
+    return loads(dumps(input_ordered_dict))
+
+def add_topic_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_topic_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'stdyInfo':
+                    for k1, v1 in v.items():
+                        if k1 == 'subject':
+                            for k2, v2 in v1.items():
+                                if k2 == 'topcClas':
+                                    subject = 'Subject'
+                                    root_key = map_field(schema).get(subject)
+                                    res[root_key] = []
+                                    item = add_medium_ddi(schema, v2, subject)
+                                    res[root_key].append(item)
+
+
+def add_version_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_version_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        data = to_dict(list_stdyDscr)
+        if data.get("citation"):
+            citation = data.get("citation")
+            if citation.get("verStmt"):
+                verstmt = citation.get("verStmt")
+                if verstmt.get('version'):
+                    version_value = verstmt.get('version')
+                    version = 'Version'
+                    root_key = map_field(schema).get(version)
+                    res[root_key] = []
+                    term = map_field(
+                        schema['properties'][root_key])[version]
+                    item = dict()
+                    item[term] = version_value
+                    res[root_key].append(item)
+
+
+def add_summary_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_summary_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        data = to_dict(list_stdyDscr)
+        if data.get("stdyInfo"):
+            stdy_info = data.get("stdyInfo")
+            if stdy_info.get("abstract"):
+                abstract = stdy_info.get("abstract")
+                if abstract:
+                    summary = 'Description'
+                    root_key = map_field(schema).get(summary)
+                    res[root_key] = []
+                    item = add_medium_ddi(schema, abstract, summary)
+                    res[root_key].append(item)
+
+
+def add_time_period_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_time_period_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        data = to_dict(list_stdyDscr)
+        if data.get("stdyInfo"):
+            stdy_info = data.get("stdyInfo")
+            if stdy_info.get("sumDscr"):
+                sum_dscr = stdy_info.get("sumDscr")
+                if sum_dscr.get('timePrd'):
+                    temporal_value = sum_dscr.get('timePrd')
+                    temporal = 'Temporal'
+                    root_key = map_field(schema).get(temporal)
+                    res[root_key] = []
+                    term = dict(**{
+                        "#text": temporal_value
+                    })
+                    item = add_medium_ddi(schema, term, temporal)
+                    res[root_key].append(item)
+
+
+def add_uri_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_uri_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        data = to_dict(list_stdyDscr)
+        if data.get("citation"):
+            citation = data.get("citation")
+            if citation.get("holdings"):
+                holdings = citation.get("holdings")
+                identifier = 'Identifier'
+                root_key = map_field(schema).get(identifier)
+                res[root_key] = []
+                item = dict()
+                title = map_field(schema['properties'][root_key]['items']).get(
+                    identifier)
+                item[title] = holdings
+                res[root_key].append(item)
+
+
+def add_geographic_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_geographic_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        data = to_dict(list_stdyDscr)
+        if data.get("stdyInfo"):
+            stdy_info = data.get("stdyInfo")
+            if stdy_info.get("sumDscr"):
+                sum_dscr = stdy_info.get("sumDscr")
+                if sum_dscr.get("geogCover"):
+                    geo_grap = sum_dscr.get("geogCover")
+                    geo_location = 'Geo Location'
+                    geo_location_place = 'Geo Location Place'
+                    root_key = map_field(schema).get(geo_location)
+                    res[root_key] = []
+                    nested_key_1 = map_field(schema['properties'][root_key][
+                        'items']).get(geo_location_place)
+                    current_app.logger.info("=====================nested_key_1")
+                    current_app.logger.info(nested_key_1)
+                    nested_key_2 = map_field(schema['properties'][root_key][
+                        'items']['properties'][nested_key_1]['items']).get(
+                        geo_location_place
+                    )
+                    current_app.logger.info("=====================nested_key_2")
+                    current_app.logger.info(nested_key_2)
+                    item = dict(**{
+                        nested_key_1: [
+                            {
+                                nested_key_2: geo_grap
+                            }
+                        ]
+                    })
+                    res[root_key].append(item)
+
+# function by Viet Huynh
+# function by Viet Huynh
+# function by Viet Huynh
+# function by Viet Huynh
+# function by Viet Huynh
+# function by Viet Huynh
 
 RESOURCE_TYPE_MAP = {
     'conference paper': 'Article',
@@ -1263,4 +1436,7 @@ class DDIMapper(BaseMapper):
             if tag in add_funcs:
                 add_funcs[tag](
                     self.json['record']['metadata']['codeBook'][tag])
+        current_app.logger.info("***************************************")
+        current_app.logger.info(res)
+        current_app.logger.info("***************************************")
         return res
