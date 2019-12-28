@@ -32,7 +32,8 @@ from invenio_db import db
 from lxml import etree
 from weko_deposit.api import WekoDeposit
 from weko_records.models import ItemType
-
+from json import loads, dumps
+from collections import OrderedDict
 from .models import HarvestSettings
 
 DEFAULT_FIELD = [
@@ -824,7 +825,6 @@ def add_titlStmt_ddi(schema, res, list_stdyDscr):
                     add_titlStmt_ddi(schema, res, v)
 
 
-
 def add_title_ddi(schema, res, titl):
     title = 'Title'
     root_key = map_field(schema).get(title)
@@ -1030,10 +1030,6 @@ def add_awardNumber_ddi(schema, res, grantNo):
 def add_stdyDscr_ddi(schema, res, list_stdyDscr):
     if not isinstance(list_stdyDscr, list):
         list_stdyDscr = [list_stdyDscr]
-    current_app.logger.info("========================list_stdyDscr")
-    current_app.logger.info(list_stdyDscr)
-    current_app.logger.info("========================schema")
-    current_app.logger.info(map_field(schema))
     add_titlStmt_ddi(schema, res, list_stdyDscr)
     add_rspStmt_ddi(schema, res, list_stdyDscr)
     add_prodStmt_ddi(schema, res, list_stdyDscr)
@@ -1044,25 +1040,21 @@ def add_stdyDscr_ddi(schema, res, list_stdyDscr):
     add_uri_ddi(schema, res, list_stdyDscr)
     add_geographic_ddi(schema, res, list_stdyDscr)
 
-# function by Viet Huynh
-# function by Viet Huynh
-# function by Viet Huynh
-# function by Viet Huynh
-# function by Viet Huynh
-# function by Viet Huynh
-from json import loads, dumps
-from collections import OrderedDict
 
+# function by Viet Huynh
 def to_dict(input_ordered_dict):
+    """Convert OrderDict to Dict."""
     return loads(dumps(input_ordered_dict))
 
-def add_topic_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+
+def add_topic_ddi(schema, res, list_stdy_dscr):
+    """Convert Topic to item metadata."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
                 add_topic_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'stdyInfo':
                     for k1, v1 in v.items():
@@ -1076,13 +1068,14 @@ def add_topic_ddi(schema, res, list_stdyDscr):
                                     res[root_key].append(item)
 
 
-def add_version_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_version_ddi(schema, res, list_stdy_dscr):
+    """Convert Version to item metadata."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
                 add_version_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        data = to_dict(list_stdyDscr)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        data = to_dict(list_stdy_dscr)
         if data.get("citation"):
             citation = data.get("citation")
             if citation.get("verStmt"):
@@ -1099,13 +1092,14 @@ def add_version_ddi(schema, res, list_stdyDscr):
                     res[root_key].append(item)
 
 
-def add_summary_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_summary_ddi(schema, res, list_stdy_dscr):
+    """Convert Description to item metadata."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
                 add_summary_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        data = to_dict(list_stdyDscr)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        data = to_dict(list_stdy_dscr)
         if data.get("stdyInfo"):
             stdy_info = data.get("stdyInfo")
             if stdy_info.get("abstract"):
@@ -1118,13 +1112,14 @@ def add_summary_ddi(schema, res, list_stdyDscr):
                     res[root_key].append(item)
 
 
-def add_time_period_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_time_period_ddi(schema, res, list_stdy_dscr):
+    """Convert Temporal to item metadata."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
                 add_time_period_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        data = to_dict(list_stdyDscr)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        data = to_dict(list_stdy_dscr)
         if data.get("stdyInfo"):
             stdy_info = data.get("stdyInfo")
             if stdy_info.get("sumDscr"):
@@ -1141,13 +1136,14 @@ def add_time_period_ddi(schema, res, list_stdyDscr):
                     res[root_key].append(item)
 
 
-def add_uri_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_uri_ddi(schema, res, list_stdy_dscr):
+    """Convert Identifier to item metadata."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
                 add_uri_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        data = to_dict(list_stdyDscr)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        data = to_dict(list_stdy_dscr)
         if data.get("citation"):
             citation = data.get("citation")
             if citation.get("holdings"):
@@ -1162,13 +1158,14 @@ def add_uri_ddi(schema, res, list_stdyDscr):
                 res[root_key].append(item)
 
 
-def add_geographic_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_geographic_ddi(schema, res, list_stdy_dscr):
+    """Convert Geo Location Place to item metadata."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
                 add_geographic_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        data = to_dict(list_stdyDscr)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        data = to_dict(list_stdy_dscr)
         if data.get("stdyInfo"):
             stdy_info = data.get("stdyInfo")
             if stdy_info.get("sumDscr"):
@@ -1181,14 +1178,10 @@ def add_geographic_ddi(schema, res, list_stdyDscr):
                     res[root_key] = []
                     nested_key_1 = map_field(schema['properties'][root_key][
                         'items']).get(geo_location_place)
-                    current_app.logger.info("=====================nested_key_1")
-                    current_app.logger.info(nested_key_1)
                     nested_key_2 = map_field(schema['properties'][root_key][
                         'items']['properties'][nested_key_1]['items']).get(
                         geo_location_place
                     )
-                    current_app.logger.info("=====================nested_key_2")
-                    current_app.logger.info(nested_key_2)
                     item = dict(**{
                         nested_key_1: [
                             {
@@ -1197,13 +1190,8 @@ def add_geographic_ddi(schema, res, list_stdyDscr):
                         ]
                     })
                     res[root_key].append(item)
+# function by Viet Huynh
 
-# function by Viet Huynh
-# function by Viet Huynh
-# function by Viet Huynh
-# function by Viet Huynh
-# function by Viet Huynh
-# function by Viet Huynh
 
 RESOURCE_TYPE_MAP = {
     'conference paper': 'Article',
