@@ -31,3 +31,4 @@
 -e /code/modules/weko-bulkupdate
 -e /code/modules/weko-items-autofill
 -e /code/modules/weko-sitemap
+-e /code/modules/weko-resourcesyncserver
