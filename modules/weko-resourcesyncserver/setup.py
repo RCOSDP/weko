@@ -70,13 +70,27 @@ setup(
     platforms='any',
     entry_points={
         'invenio_base.apps': [
-            'weko_resourcesyncserver = weko_resourcesyncserver:WekoResourceSyncServer',
+            'weko_resourcesyncserver = '
+            'weko_resourcesyncserver:WekoResourceSyncServer',
         ],
         'invenio_base.blueprints': [
             'weko_resourcesyncserver = weko_resourcesyncserver.views:blueprint',
         ],
         'invenio_i18n.translations': [
             'messages = weko_resourcesyncserver',
+        ],
+        'invenio_admin.views': [
+            'weko_admin_resource = weko_resourcesyncserver.admin:weko_admin_resource',
+        ],
+        'invenio_assets.bundles': [
+            'weko_admin_resource_js = '
+            'weko_resourcesyncserver.bundles:weko_admin_resource_js',
+            'weko_admin_resource_css = '
+            'weko_resourcesyncserver.bundles:weko_admin_resource_css',
+
+        ],
+        'invenio_db.models': [
+            'weko_resourcesyncserver = weko_resourcesyncserver.models',
         ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],

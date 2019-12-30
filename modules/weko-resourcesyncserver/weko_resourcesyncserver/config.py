@@ -16,3 +16,6 @@ WEKO_RESOURCESYNCSERVER_DEFAULT_VALUE = 'foobar'
 
 WEKO_RESOURCESYNCSERVER_BASE_TEMPLATE = 'weko_resourcesyncserver/base.html'
 """Default base template for the demo page."""
+
+WEKO_RESOURCESYNCSERVER_ADMIN_TEMPLATE = 'weko_resourcesyncserver/resource.html'
+"""Admin template for the demo page."""
