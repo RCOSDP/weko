@@ -79,25 +79,25 @@ class MainLayout extends React.Component {
               </ul>
 
               {current_tab === tabs[0].tab_key ? <div>
-                <ListResourceComponent>
+                <ListResourceComponent
                   handleChangeTab={this.handleChangeTab}
                 ></ListResourceComponent>
               </div> : ''}
 
               {current_tab === tabs[1].tab_key ? <div>
-                <CreateResourceComponent>
+                <CreateResourceComponent
                   handleChangeTab={this.handleChangeTab}
                 ></CreateResourceComponent>
               </div> : ''}
 
               {current_tab === tabs[2].tab_key ? <div>
-                <EditResourceComponent>
+                <EditResourceComponent
                   handleChangeTab={this.handleChangeTab}
                 ></EditResourceComponent>
               </div> : ''}
 
               {current_tab === tabs[3].tab_key ? <div>
-                <DetailResourceComponent>
+                <DetailResourceComponent
                   handleChangeTab={this.handleChangeTab}
                 ></DetailResourceComponent>
               </div> : ''}
@@ -151,7 +151,7 @@ class CreateResourceComponent extends React.Component {
             <label>Repository</label>
           </div>
           <div className="col-md-8">
-            <select class="form-control">
+            <select className="form-control">
               <option>Large select</option>
             </select>
           </div>
