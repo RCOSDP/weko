@@ -108,8 +108,8 @@ class MainLayout extends React.Component {
 }
 
 class ListResourceComponent extends React.Component {
-  constructor(){
-    super()
+  constructor(props){
+    super(props)
     this.state = {
 
     }
@@ -126,8 +126,8 @@ class ListResourceComponent extends React.Component {
 
 
 class CreateResourceComponent extends React.Component {
-  constructor(){
-    super()
+  constructor(props){
+    super(props)
     this.state = {
 
     }
@@ -138,7 +138,7 @@ class CreateResourceComponent extends React.Component {
       <div className="create-resource">
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4">
+          <div className="col-md-4 text-right">
             <label>Status</label>
           </div>
           <div className="col-md-8">
@@ -147,7 +147,7 @@ class CreateResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4">
+          <div className="col-md-4 text-right">
             <label>Repository</label>
           </div>
           <div className="col-md-8">
@@ -158,7 +158,7 @@ class CreateResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4">
+          <div className="col-md-4 text-right">
             <label>Resource Dump Manifest</label>
           </div>
           <div className="col-md-8">
@@ -167,16 +167,16 @@ class CreateResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4">
+          <div className="col-md-4 text-right">
             <label>Resource List uri</label>
           </div>
           <div className="col-md-8">
-            <input type="text" disabled></input>
+            <input type="text" className="form-control" disabled></input>
           </div>
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4">
+          <div className="col-md-4 text-right">
             <label>Resource Dump uri</label>
           </div>
           <div className="col-md-8">
@@ -185,7 +185,7 @@ class CreateResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4">
+          <div className="col-md-4 text-right">
             <label>Auto start after save</label>
           </div>
           <div className="col-md-8">
@@ -224,8 +224,8 @@ class CreateResourceComponent extends React.Component {
 
 
 class EditResourceComponent extends React.Component {
-  constructor(){
-    super()
+  constructor(props){
+    super(props)
     this.state = {
 
     }
@@ -242,8 +242,8 @@ class EditResourceComponent extends React.Component {
 
 
 class DetailResourceComponent extends React.Component {
-  constructor(){
-    super()
+  constructor(props){
+    super(props)
     this.state = {
 
     }
