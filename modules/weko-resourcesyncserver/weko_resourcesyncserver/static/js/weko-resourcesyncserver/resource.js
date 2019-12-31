@@ -227,7 +227,7 @@ class CreateResourceComponent extends React.Component {
               type="text"
               className="form-control"
               disabled
-              value={state.url_path ? state.url_path+'/resource_list'}
+              value={state.url_path && state.url_path+'/resource_list'}
             ></input>
           </div>
         </div>
@@ -241,7 +241,7 @@ class CreateResourceComponent extends React.Component {
               type="text"
               className="form-control"
               disabled
-              value={state.url_path ? state.url_path+'/resource_dump'}
+              value={state.url_path && state.url_path+'/resource_dump'}
 
             ></input>
           </div>
