@@ -91,9 +91,6 @@ setup(
         'invenio_db.models': [
             'weko_resourcesyncserver = weko_resourcesyncserver.models',
         ],
-        'invenio_access.actions': [
-            'resource_access = weko_resourcesyncserver.permissions:action_search_access',
-        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
