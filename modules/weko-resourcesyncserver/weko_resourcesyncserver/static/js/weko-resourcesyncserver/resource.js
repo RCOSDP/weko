@@ -145,10 +145,8 @@ class CreateResourceComponent extends React.Component {
   handleChangeState(name, value) {
     const {state} = this
     this.setState({
-      current_state: {
-        ...state,
-        [name]: value
-      }
+      ...state,
+      [name]: value
     },() => {
       if (name === 'repository'){
         this.handleChangeURL()
