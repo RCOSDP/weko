@@ -139,6 +139,7 @@ class CreateResourceComponent extends React.Component {
     }
     this.handleChangeState = this.handleChangeState.bind(this)
     this.handleChangeURL = this.handleChangeURL.bind(this)
+    this.handleSubmit = this.handleSubmit.bind(this)
   }
 
   handleChangeState(name, value) {
@@ -160,6 +161,10 @@ class CreateResourceComponent extends React.Component {
     const {repository} = state
     url_path = window.location.origin + '/resource/'+ repository
     this.handleChangeState('url_path',url_path)
+  }
+
+  handleSubmit(){
+    console.log(this.state)
   }
 
   render(){
