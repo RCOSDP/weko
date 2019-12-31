@@ -159,7 +159,7 @@ class CreateResourceComponent extends React.Component {
   handleChangeURL(){
     const {state} = this
     const {repository} = state
-    url_path = window.location.origin + '/resource/'+ repository
+    const url_path = window.location.origin + '/resource/'+ repository
     this.handleChangeState('url_path',url_path)
   }
 
@@ -223,7 +223,12 @@ class CreateResourceComponent extends React.Component {
             <label>Resource List uri</label>
           </div>
           <div className="col-md-8">
-            <input type="text" className="form-control" disabled></input>
+            <input
+              type="text"
+              className="form-control"
+              disabled
+              value={state.url_path ? state.url_path+'/resource_list'}
+            ></input>
           </div>
         </div>
 
@@ -232,7 +237,13 @@ class CreateResourceComponent extends React.Component {
             <label>Resource Dump uri</label>
           </div>
           <div className="col-md-8">
-            <input type="text" className="form-control" disabled></input>
+            <input
+              type="text"
+              className="form-control"
+              disabled
+              value={state.url_path ? state.url_path+'/resource_dump'}
+
+            ></input>
           </div>
         </div>
 
