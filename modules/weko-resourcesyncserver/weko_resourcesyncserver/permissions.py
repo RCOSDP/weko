@@ -18,18 +18,9 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Bundles for weko-admin-ui."""
+"""Permissions for Search."""
 
-from flask_assets import Bundle
+from invenio_access import Permission, action_factory
 
-
-weko_admin_resource_js = Bundle(
-    'js/weko-resourcesyncserver/resource.js',
-    filters='jsmin',
-    output="gen/weko_admin_resource_js.%(version)s.js",
-)
-
-weko_admin_resource_css = Bundle(
-    'css/weko-resourcesyncserver/resource.css',
-    output="gen/weko_resource_css.%(version)s.css",
-)
+action_search_access = action_factory('search-access')
+search_permission = Permission(action_search_access)

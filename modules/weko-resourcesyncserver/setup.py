@@ -87,22 +87,13 @@ setup(
             'weko_resourcesyncserver.bundles:weko_admin_resource_js',
             'weko_admin_resource_css = '
             'weko_resourcesyncserver.bundles:weko_admin_resource_css',
-
         ],
         'invenio_db.models': [
             'weko_resourcesyncserver = weko_resourcesyncserver.models',
         ],
-        # TODO: Edit these entry points to fit your needs.
-        # 'invenio_access.actions': [],
-        # 'invenio_admin.actions': [],
-        # 'invenio_assets.bundles': [],
-        # 'invenio_base.api_apps': [],
-        # 'invenio_base.api_blueprints': [],
-        # 'invenio_base.blueprints': [],
-        # 'invenio_celery.tasks': [],
-        # 'invenio_db.models': [],
-        # 'invenio_pidstore.minters': [],
-        # 'invenio_records.jsonresolver': [],
+        'invenio_access.actions': [
+            'resource_access = weko_resourcesyncserver.permissions:action_search_access',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
