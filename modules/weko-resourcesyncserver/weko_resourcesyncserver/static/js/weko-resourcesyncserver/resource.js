@@ -124,16 +124,46 @@ class ListResourceComponent extends React.Component {
   }
 }
 
+const default_state = {
+  status: false,
+  repository: '',
+  resource_dump_manifest: false,
+  url_path: ''
+}
 
 class CreateResourceComponent extends React.Component {
   constructor(props){
     super(props)
     this.state = {
-
+      ...default_state
     }
+    this.handleChangeState = this.handleChangeState.bind(this)
+    this.handleChangeURL = this.handleChangeURL.bind(this)
+  }
+
+  handleChangeState(name, value) {
+    const {state} = this
+    this.setState({
+      current_state: {
+        ...state,
+        [name]: value
+      }
+    },() => {
+      if (name === 'repository'){
+        this.handleChangeURL()
+      }
+    })
+  }
+
+  handleChangeURL(){
+    const {state} = this
+    const {repository} = state
+    url_path = window.location.origin + '/resource/'+ repository
+    this.handleChangeState('url_path',url_path)
   }
 
   render(){
+    const {state} = this
     return(
       <div className="create-resource">
 
@@ -142,7 +172,10 @@ class CreateResourceComponent extends React.Component {
             <label>Status</label>
           </div>
           <div className="col-md-8">
-            <input type="checkbox"></input>
+            <input type="checkbox" onChange={(e) => {
+              const value = e.target.checked
+              this.handleChangeState('status', value)
+            }}></input>
           </div>
         </div>
 
@@ -151,8 +184,16 @@ class CreateResourceComponent extends React.Component {
             <label>Repository</label>
           </div>
           <div className="col-md-8">
-            <select className="form-control">
-              <option>Large select</option>
+            <select className="form-control"
+              onChange={(e) => {
+                const value = e.target.value
+                this.handleChangeState('repository', value)
+              }}
+            >
+              <option value="1">Large 1</option>
+              <option value="2">Large 2</option>
+              <option value="3">Large 3</option>
+              <option value="4">Large 4</option>
             </select>
           </div>
         </div>
@@ -162,7 +203,13 @@ class CreateResourceComponent extends React.Component {
             <label>Resource Dump Manifest</label>
           </div>
           <div className="col-md-8">
-            <input type="checkbox"></input>
+            <input
+              type="checkbox"
+              onChange={(e) => {
+                const value = e.target.checked
+                this.handleChangeState('resource_dump_manifest', value)
+              }}
+            ></input>
           </div>
         </div>
 
