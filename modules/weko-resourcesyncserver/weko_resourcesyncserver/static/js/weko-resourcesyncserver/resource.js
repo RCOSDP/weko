@@ -199,7 +199,7 @@ class CreateResourceComponent extends React.Component {
           <div className="col-md-8">
             <button
                   className="btn btn-primary"
-                  onClick={() => { this.props.handleChangeTab(0) }}
+                  onClick={() => { this.props.handleChangeTab('list') }}
                 >
                   Save
              </button>
@@ -211,7 +211,7 @@ class CreateResourceComponent extends React.Component {
              </button>
              <button
                   className="btn btn-danger"
-                  onClick={() => { this.props.handleChangeTab(2) }}
+                  onClick={() => { this.props.handleChangeTab('edit') }}
                 >
                   Cancel
              </button>
