@@ -51,7 +51,7 @@ class MainLayout extends React.Component {
         const item = a[0]
         this.setState({
           current_tab: item.tab_key,
-          current_step: item
+          current_step: item.step
         })
         if(select_item){
           this.setState({
@@ -78,25 +78,25 @@ class MainLayout extends React.Component {
                 }
               </ul>
 
-              {tab === tabs[0].tab_key ? <div>
+              {current_tab === tabs[0].tab_key ? <div>
                 <ListResourceComponent>
                   handleChangeTab={this.handleChangeTab}
                 ></ListResourceComponent>
               </div> : ''}
 
-              {tab === tabs[1].tab_key ? <div>
+              {current_tab === tabs[1].tab_key ? <div>
                 <CreateResourceComponent>
                   handleChangeTab={this.handleChangeTab}
                 ></CreateResourceComponent>
               </div> : ''}
 
-              {tab === tabs[2].tab_key ? <div>
+              {current_tab === tabs[2].tab_key ? <div>
                 <EditResourceComponent>
                   handleChangeTab={this.handleChangeTab}
                 ></EditResourceComponent>
               </div> : ''}
 
-              {tab === tabs[3].tab_key ? <div>
+              {current_tab === tabs[3].tab_key ? <div>
                 <DetailResourceComponent>
                   handleChangeTab={this.handleChangeTab}
                 ></DetailResourceComponent>
