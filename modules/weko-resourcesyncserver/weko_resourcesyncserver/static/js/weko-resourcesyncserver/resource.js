@@ -135,8 +135,88 @@ class CreateResourceComponent extends React.Component {
 
   render(){
     return(
-      <div>
-        Create ne
+      <div className="container">
+
+        <div className="row form-group">
+          <div className="col-md-4">
+            <label>Status</label>
+          </div>
+          <div className="col-md-8">
+            <input type="checkbox" className="form-control"></input>
+          </div>
+        </div>
+
+        <div className="row form-group">
+          <div className="col-md-4">
+            <label>Repository</label>
+          </div>
+          <div className="col-md-8">
+            <select class="form-control">
+              <option>Large select</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="row form-group">
+          <div className="col-md-4">
+            <label>Resource Dump Manifest</label>
+          </div>
+          <div className="col-md-8">
+            <input type="checkbox" className="form-control"></input>
+          </div>
+        </div>
+
+        <div className="row form-group">
+          <div className="col-md-4">
+            <label>Resource List uri</label>
+          </div>
+          <div className="col-md-8">
+            <input type="checkbox" className="form-control" disabled></input>
+          </div>
+        </div>
+
+        <div className="row form-group">
+          <div className="col-md-4">
+            <label>Resource Dump uri</label>
+          </div>
+          <div className="col-md-8">
+            <input type="text" className="form-control" disabled></input>
+          </div>
+        </div>
+
+        <div className="row form-group">
+          <div className="col-md-4">
+            <label>Auto start after save</label>
+          </div>
+          <div className="col-md-8">
+            <input type="checkbox" className="form-control"></input>
+          </div>
+        </div>
+
+        <div className="row form-group">
+          <div className="col-md-4">
+          </div>
+          <div className="col-md-8">
+            <button
+                  className="btn btn-primary"
+                  onClick={() => { this.props.handleChangeTab(0) }}
+                >
+                  Save
+             </button>
+             <button
+                  className="btn btn-default"
+                  onClick={() => {  }}
+                >
+                  Save add Add Another
+             </button>
+             <button
+                  className="btn btn-danger"
+                  onClick={() => { this.props.handleChangeTab(2) }}
+                >
+                  Cancel
+             </button>
+          </div>
+        </div>
       </div>
     )
   }
