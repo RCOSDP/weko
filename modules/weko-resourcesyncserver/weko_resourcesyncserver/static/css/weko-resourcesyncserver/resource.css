@@ -1,9 +1,17 @@
-.input-favicon{
-  position: absolute;
-  opacity: 0;
-  height: 100%;
-  display: none;
+.text-right{
+  text-align: right;
 }
-.icon {
-  padding-right: 5px;
+
+.create-resource .flex-baseline{
+  display: flex;
+  align-items: baseline;
+}
+
+.create-resource .btn{
+  margin-right: 10px;
+}
+
+.create-resource {
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
