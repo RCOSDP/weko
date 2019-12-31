@@ -262,7 +262,7 @@ class CreateResourceComponent extends React.Component {
           <div className="col-md-8">
             <button
                   className="btn btn-primary"
-                  onClick={() => { this.props.handleChangeTab('list') }}
+                  onClick={() => { this.handleSubmit();this.props.handleChangeTab('list') }}
                 >
                   Save
              </button>
