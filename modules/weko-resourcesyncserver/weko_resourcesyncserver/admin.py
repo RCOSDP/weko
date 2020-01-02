@@ -23,6 +23,8 @@
 from flask_admin import BaseView, expose
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_babelex import gettext as _
+from .api import ResourceSync
+from .utils import to_dict
 
 
 class AdminResourceSyncView(BaseView):
@@ -39,6 +41,55 @@ class AdminResourceSyncView(BaseView):
         return self.render(
             current_app.config['WEKO_RESOURCESYNCSERVER_ADMIN_TEMPLATE'],
         )
+
+    @expose('/get_list', methods=['GET'])
+    def get_list(self):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        list_resource = ResourceSync.get_list_resource()
+        result = list(map(lambda item: to_dict(item), list_resource))
+        return jsonify(result)
+
+    @expose('/get_resource/<id>', methods=['GET'])
+    def get_resource(self, id):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        resource = ResourceSync.get_resource(id)
+        return jsonify(resource)
+
+    @expose('/create', methods=['POST'])
+    def create(self):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        data = request.get_json()
+        resource = ResourceSync.create(data)
+        if resource:
+            return jsonify(data=resource, success=True)
+        else:
+            return jsonify(data=None, success=False)
+
+    @expose('/get_list/<id>', methods=['POST'])
+    def update(self, id):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        data = request.get_json()
+        resource = ResourceSync.update(id, data)
+        if resource:
+            return jsonify(data=resource, success=True)
+        else:
+            return jsonify(data=None, success=False)
 
 
 weko_admin_resource = {

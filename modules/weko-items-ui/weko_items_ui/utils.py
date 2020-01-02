@@ -834,6 +834,8 @@ def export_items(post_data):
 
     :return: JSON, BIBTEX
     """
+    current_app.logger.debug("===============================")
+    current_app.logger.debug(post_data)
     include_contents = True if \
         post_data['export_file_contents_radio'] == 'True' else False
     export_format = post_data['export_format_radio']
@@ -913,6 +915,83 @@ def export_items(post_data):
         current_app.logger.error('-' * 60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
+    return send_file(export_path + '.zip')
+
+
+def export_item_custorm(post_data):
+    """Gather all the item data and export and return as a JSON or BIBTEX.
+
+    :return: JSON, BIBTEX
+    """
+    current_app.logger.debug("===============================")
+    current_app.logger.debug(post_data)
+    include_contents = True
+    record_id = post_data['record_id']
+
+    result = {'items': []}
+    temp_path = tempfile.TemporaryDirectory()
+    item_types_data = {}
+
+    try:
+        # Set export folder
+        export_path = temp_path.name + '/' + \
+                      datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        # Double check for limits
+        record_path = export_path + '/recid_' + str(record_id)
+        os.makedirs(record_path, exist_ok=True)
+        exported_item = _export_item(
+            record_id,
+            None,
+            include_contents,
+            record_path,
+        )
+
+        result['items'].append(exported_item)
+
+        item_type_id = exported_item.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        if not item_types_data.get(item_type_id):
+            item_types_data[item_type_id] = {}
+
+            item_types_data[item_type_id] = {
+                'item_type_id': item_type_id,
+                'name': '{}({})'.format(
+                    item_type.item_type_name.name,
+                    item_type_id),
+                'root_url': request.url_root,
+                'jsonschema': 'items/jsonschema/' + item_type_id,
+                'keys': [],
+                'labels': [],
+                'recids': [],
+                'data': {},
+            }
+        item_types_data[item_type_id]['recids'].append(record_id)
+
+        # Create export info file
+        for item_type_id in item_types_data:
+            keys, labels, records = make_stats_tsv(
+                item_type_id,
+                item_types_data[item_type_id]['recids'])
+            item_types_data[item_type_id]['recids'].sort()
+            item_types_data[item_type_id]['keys'] = keys
+            item_types_data[item_type_id]['labels'] = labels
+            item_types_data[item_type_id]['data'] = records
+            item_type_data = item_types_data[item_type_id]
+
+            with open('{}/{}.tsv'.format(export_path,
+                                         item_type_data.get('name')),
+                      'w') as file:
+                tsvs_output = package_export_file(item_type_data)
+                file.write(tsvs_output.getvalue())
+
+        # Create bag
+        bagit.make_bag(export_path)
+        # Create download file
+        shutil.make_archive(export_path, 'zip', export_path)
+    except Exception:
+        current_app.logger.error('-' * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-' * 60)
     return send_file(export_path + '.zip')
 
 

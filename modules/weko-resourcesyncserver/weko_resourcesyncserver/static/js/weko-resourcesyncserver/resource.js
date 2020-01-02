@@ -2,7 +2,15 @@ const list_label = "List"
 const create_label = "Create"
 const edit_label = "Edit"
 const detail_label = "Detail"
-
+const urlCreate =  window.location.origin + '/admin/resource/create'
+const urlGetList =  window.location.origin + '/admin/resource/get_list'
+const urlGetTreeList =  window.location.origin + '/api/tree'
+const default_state = {
+  status: false,
+  repository: '',
+  resource_dump_manifest: false,
+  url_path: ''
+}
 
 class MainLayout extends React.Component {
 
@@ -111,35 +119,90 @@ class ListResourceComponent extends React.Component {
   constructor(props){
     super(props)
     this.state = {
-
+      list_resource: []
     }
+    this.handleGetList = this.handleGetList.bind(this)
+  }
+
+  componentDidMount() {
+    this.handleGetList()
+  }
+
+  handleGetList() {
+    fetch(urlGetList, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+    .then(res => res.json())
+    .then(res => {
+        console.log(res)
+        this.setState({
+          list_resource: res
+        })
+    })
+    .catch(() => alert('Error in get list'));
   }
 
   render(){
+    const {list_resource} = this.state
     return(
-      <div>
-        List ne
+      <div className="row list_resource">
+        <div className="col-md-12 m-t-20">
+            <table class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th><p className="">Repository</p></th>
+                  <th><p className="">Resource List Url</p></th>
+                  <th><p className="">Resource Dump Url</p></th>
+                  <th><p className="">status</p></th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  list_resource.map((item, key) => {
+                    return (
+                      <tr key={key}>
+                        <td>
+                          {key + 1}
+                        </td>
+                        <td>{item.repository}</td>
+                        <td>
+                          <a href={item.url_path+'/resource_list'}  target="_blank">{item.url_path+'/resource_list'}</a>
+
+                        </td>
+                        <td>
+                           <a href={item.url_path+'/resource_dump'}  target="_blank">{item.url_path+'/resource_dump'}</a>
+                        </td>
+                        <td>{item.status}</td>
+                      </tr>
+                    )
+                  })
+                }
+              </tbody>
+            </table>
+          </div>
       </div>
     )
   }
 }
 
-const default_state = {
-  status: false,
-  repository: '',
-  resource_dump_manifest: false,
-  url_path: ''
-}
+
 
 class CreateResourceComponent extends React.Component {
   constructor(props){
     super(props)
     this.state = {
-      ...default_state
+      ...default_state,
+      tree_list: []
     }
     this.handleChangeState = this.handleChangeState.bind(this)
     this.handleChangeURL = this.handleChangeURL.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
+    this.generateTreeList = this.generateTreeList.bind(this)
+    this.getTreeList = this.getTreeList.bind(this)
   }
 
   handleChangeState(name, value) {
@@ -163,10 +226,69 @@ class CreateResourceComponent extends React.Component {
 
   handleSubmit(){
     console.log(this.state)
+    const new_data = {...this.state}
+    delete new_data.tree_list;
+    fetch(urlCreate, {
+      method: 'POST',
+      body: JSON.stringify(new_data),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+    .then(res => res.json())
+    .then(res => {
+        console.log(res)
+        if (res.success) {
+           this.props.handleChangeTab('list')
+        }
+        else {
+          alert('Error in Create')
+        }
+    })
+    .catch(() => alert('Error in Create'));
+  }
+
+  getTreeList() {
+    fetch(urlGetTreeList, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+    .then(res => res.json())
+    .then(res => {
+        console.log(res)
+        let treeList = []
+        res.map(item => {
+          treeList = [...treeList, ...this.generateTreeList(item, '')]
+        })
+        this.setState({
+          tree_list : treeList
+        })
+    })
+    .catch(() => alert('Error in get Tree list'));
+  }
+
+  generateTreeList(item ,path = '') {
+    const real_path = path ? (path + ' / ' + item.value) : (item.value)
+    if(!item.children.length) {
+      return [{id: item.id, value: real_path}]
+    } else {
+      let result = []
+      item.children.map(i => {
+        result = [...result, ...this.generateTreeList(i, real_path )]
+      })
+      return [{id: item.id, value: real_path}, ...result, ]
+    }
+  }
+
+  componentDidMount() {
+    this.getTreeList()
   }
 
   render(){
     const {state} = this
+    console.log(state)
     return(
       <div className="create-resource">
 
@@ -193,10 +315,12 @@ class CreateResourceComponent extends React.Component {
                 this.handleChangeState('repository', value)
               }}
             >
-              <option value="1">Large 1</option>
-              <option value="2">Large 2</option>
-              <option value="3">Large 3</option>
-              <option value="4">Large 4</option>
+              <option value=""></option>
+              {
+                state.tree_list.map(item => {
+                  return <option value={item.id}>{item.value}</option>
+                })
+              }
             </select>
           </div>
         </div>
@@ -260,7 +384,7 @@ class CreateResourceComponent extends React.Component {
           <div className="col-md-8">
             <button
                   className="btn btn-primary"
-                  onClick={() => { this.handleSubmit();this.props.handleChangeTab('list') }}
+                  onClick={() => { this.handleSubmit()}}
                 >
                   Save
              </button>

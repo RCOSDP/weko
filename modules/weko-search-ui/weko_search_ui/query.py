@@ -788,6 +788,116 @@ def item_path_search_factory(self, search, index_id=None):
     return search, urlkwargs
 
 
+def item_path_search_factory_custom(self, search, index_id=None):
+    """Parse query using Weko-Query-Parser.
+
+    :param self: REST view.
+    :param search: Elastic search DSL search instance.
+    :param index_id: Index Identifier contains item's path
+    :returns: Tuple with search instance and URL arguments.
+    """
+    def _get_index_earch_query():
+
+        query_q = {
+            "_source": {
+                "excludes": ['content']
+            },
+            "from": "0", "size": "1000",
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "path.tree": "@index"
+                            }
+                        },
+                        {
+                            "match": {
+                                "relation_version_is_last": "true"
+                            }
+                        }
+                    ]
+                }
+            },
+            "aggs": {
+                "path": {
+                    "terms": {
+                        "field": "path.tree",
+                        "include": "@index|@index/[^/]+",
+                    },
+                    "aggs": {
+                        "date_range": {
+                            "filter": {
+                                "match": {"publish_status": "0"}
+                            },
+                        },
+                        "no_available": {
+                            "filter": {
+                                "bool": {
+                                    "must_not": [
+                                        {
+                                            "match": {
+                                                "publish_status": "0"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post_filter": {}
+        }
+
+        q = index_id
+
+        if q != '0':
+            # add item type aggs
+            query_q['aggs']['path']['aggs']. \
+                update(get_item_type_aggs(search._index[0]))
+            if q:
+                mut = get_permission_filter(q)
+            else:
+                mut = get_permission_filter()
+
+            if mut:
+                mut = list(map(lambda x: x.to_dict(), mut))
+                post_filter = query_q['post_filter']
+                if mut[0].get('bool'):
+                    post_filter['bool'] = mut[0]['bool']
+                else:
+                    post_filter['bool'] = {'must': mut}
+
+            # create search query
+            if q:
+                try:
+                    fp = Indexes.get_self_path(q)
+
+                    query_q = json.dumps(query_q).replace("@index", fp.path)
+                    query_q = json.loads(query_q)
+                except BaseException:
+                    pass
+            current_app.logger.debug("===========================")
+            current_app.logger.debug(query_q)
+            return query_q
+    # create a index search query
+    query_q = _get_index_earch_query()
+    try:
+        # Aggregations.
+        extr = search._extra.copy()
+        search.update_from_dict(query_q)
+        search._extra.update(extr)
+    except SyntaxError:
+        q = request.values.get('q', '') if index_id is None else index_id
+        current_app.logger.debug(
+            "Failed parsing query: {0}".format(q),
+            exc_info=True)
+        raise InvalidQueryRESTError()
+
+    return search
+
+
 def check_admin_user():
     """
     Check administrator role user.

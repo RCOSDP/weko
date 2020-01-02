@@ -53,7 +53,8 @@ from weko_workflow.models import FlowDefine, WorkFlow
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_REPO_USER, WEKO_SYS_USER
-from .query import feedback_email_search_factory, item_path_search_factory
+from .query import feedback_email_search_factory, item_path_search_factory, \
+    item_path_search_factory_custom
 
 
 def get_tree_items(index_tree_id):
@@ -63,6 +64,19 @@ def get_tree_items(index_tree_id):
         version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
     search_instance, qs_kwargs = item_path_search_factory(
+        None, records_search, index_id=index_tree_id)
+    search_result = search_instance.execute()
+    rd = search_result.to_dict()
+    return rd.get('hits').get('hits')
+
+
+def get_items_by_index_tree(index_tree_id):
+    """Get tree items."""
+    records_search = RecordsSearch()
+    records_search = records_search.with_preference_param().params(
+        version=False)
+    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    search_instance = item_path_search_factory_custom(
         None, records_search, index_id=index_tree_id)
     search_result = search_instance.execute()
     rd = search_result.to_dict()
