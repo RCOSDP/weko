@@ -73,7 +73,7 @@ class AdminResourceSyncView(BaseView):
         data = request.get_json()
         resource = ResourceSync.create(data)
         if resource:
-            return jsonify(data=to_dict(resource), success=True)
+            return jsonify(data=resource, success=True)
         else:
             return jsonify(data=None, success=False)
 

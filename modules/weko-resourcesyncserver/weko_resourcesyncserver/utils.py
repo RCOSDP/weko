@@ -43,8 +43,5 @@ def render_resource_dump_xml(index_id):
 
 def get_file_content(record_id):
     record = WekoRecord.get_record_by_pid(record_id)
-    current_app.logger.debug("========================")
-    current_app.logger.debug(record)
-    return None
-    # return export_item_custorm({'record_id': record_id})
+    return export_item_custorm({'record_id': record_id})
 
