@@ -923,8 +923,6 @@ def export_item_custorm(post_data):
 
     :return: JSON, BIBTEX
     """
-    current_app.logger.debug("===============================")
-    current_app.logger.debug(post_data)
     include_contents = True
     record_id = post_data['record_id']
 
@@ -934,8 +932,8 @@ def export_item_custorm(post_data):
 
     try:
         # Set export folder
-        export_path = temp_path.name + '/' + \
-                      datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        export_path = temp_path.name + '/' + datetime.utcnow().strftime(
+            "%Y%m%d%H%M%S")
         # Double check for limits
         record_path = export_path + '/recid_' + str(record_id)
         os.makedirs(record_path, exist_ok=True)
