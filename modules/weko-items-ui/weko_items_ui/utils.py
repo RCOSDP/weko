@@ -834,8 +834,6 @@ def export_items(post_data):
 
     :return: JSON, BIBTEX
     """
-    current_app.logger.debug("===============================")
-    current_app.logger.debug(post_data)
     include_contents = True if \
         post_data['export_file_contents_radio'] == 'True' else False
     export_format = post_data['export_format_radio']

@@ -878,8 +878,6 @@ def item_path_search_factory_custom(self, search, index_id=None):
                     query_q = json.loads(query_q)
                 except BaseException:
                     pass
-            current_app.logger.debug("===========================")
-            current_app.logger.debug(query_q)
             return query_q
     # create a index search query
     query_q = _get_index_earch_query()
