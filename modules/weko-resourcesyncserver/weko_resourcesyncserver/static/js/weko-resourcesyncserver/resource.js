@@ -217,11 +217,11 @@ class ListResourceComponent extends React.Component {
                         </td>
                         <td>{item.repository}</td>
                         <td>
-                          <a href={item.url_path+'/resource_list'}  target="_blank">{item.url_path+'/resource_list'}</a>
+                          <a href={item.url_path+'/resourcelist.xml'}  target="_blank">{item.url_path+'/resourcelist.xml'}</a>
 
                         </td>
                         <td>
-                           <a href={item.url_path+'/resource_dump'}  target="_blank">{item.url_path+'/resource_dump'}</a>
+                           <a href={item.url_path+'/resourcedump.xml'}  target="_blank">{item.url_path+'/resourcedump.xml'}</a>
                         </td>
                         <td>{item.status ? "ON": "OFF"}</td>
                       </tr>
@@ -267,7 +267,7 @@ class CreateResourceComponent extends React.Component {
   handleChangeURL(){
     const {state} = this
     const {repository} = state
-    const url_path = window.location.origin + '/resource/'+ repository
+    const url_path = window.location.origin + '/resync/'+ repository
     this.handleChangeState('url_path',url_path)
   }
 
@@ -392,7 +392,7 @@ class CreateResourceComponent extends React.Component {
               type="text"
               className="form-control"
               disabled
-              value={state.url_path && state.url_path+'/resource_list'}
+              value={state.url_path && state.url_path+'/resourcelist.xml'}
             ></input>
           </div>
         </div>
@@ -406,7 +406,7 @@ class CreateResourceComponent extends React.Component {
               type="text"
               className="form-control"
               disabled
-              value={state.url_path && state.url_path+'/resource_dump'}
+              value={state.url_path && state.url_path+'/resourcedump.xml'}
 
             ></input>
           </div>
@@ -484,7 +484,7 @@ class EditResourceComponent extends React.Component {
   handleChangeURL(){
     const {state} = this
     const {repository} = state
-    const url_path = window.location.origin + '/resource/'+ repository
+    const url_path = window.location.origin + '/resync/'+ repository
     this.handleChangeState('url_path',url_path)
   }
 
@@ -624,7 +624,7 @@ class EditResourceComponent extends React.Component {
               type="text"
               className="form-control"
               disabled
-              value={state.url_path && state.url_path+'/resource_list'}
+              value={state.url_path && state.url_path+'/resourcelist.xml'}
             ></input>
           </div>
         </div>
@@ -638,7 +638,7 @@ class EditResourceComponent extends React.Component {
               type="text"
               className="form-control"
               disabled
-              value={state.url_path && state.url_path+'/resource_dump'}
+              value={state.url_path && state.url_path+'/resourcedump.xml'}
 
             ></input>
           </div>

@@ -25,8 +25,10 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import func, literal_column
-import requests
+from weko_search_ui.utils import get_items_by_index_tree
+from resync import Resource, ResourceList
 from .models import ResourceListIndexes
+from weko_index_tree.api import Indexes
 # from .utils import cached_index_tree_json, get_index_id_list, get_tree_json, \
 #     get_user_roles, reset_tree
 
@@ -52,6 +54,8 @@ class ResourceSync(object):
                 resource = ResourceListIndexes(**new_data)
                 db.session.add(resource)
             db.session.commit()
+            # publish index
+            Indexes.update(index_id=resource.repository, **{'public_state': True})
             return dict(**{
                 'id': resource.id,
             }, **new_data)
@@ -83,6 +87,8 @@ class ResourceSync(object):
                 resource.url_path = data.get('url_path', resource.url_path)
                 db.session.merge(resource)
             db.session.commit()
+            Indexes.update(index_id=resource.repository, **{'public_state': True})
+
             return resource
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -164,19 +170,41 @@ class ResourceSync(object):
             return
 
     @classmethod
+    def is_resync(cls, index_id=[]):
+        """
+        Update the index detail info.
+
+        :param index_id: new Resource info for update.
+        :return: Updated Resource info
+        """
+        try:
+            with db.session.begin_nested():
+                result = db.session.query(ResourceListIndexes).filter(
+                    ResourceListIndexes.status).all()
+                for re in result:
+                    if str(re.repository) in index_id:
+                        return result
+                return None
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            return None
+
+    @classmethod
     def get_content_resource_list(cls, repository=''):
         resource = cls.get_resource_by_repository(repository)
         if not resource or not resource.status:
             return None
-        from weko_search_ui.utils import get_items_by_index_tree
+
         r = get_items_by_index_tree(resource.repository)
-        from resync import Resource, ResourceList
+
         rl = ResourceList()
         for item in r:
             if item:
-                id_item = item.get('_source').get('_item_metadata').get('control_number')
-                url = request.url_root +'records/'+ str(id_item)
-                rl.add(Resource(url, lastmod=item.get('_source').get('_updated')))
+                id_item = item.get('_source').get('_item_metadata').get(
+                    'control_number')
+                url = request.url_root + 'records/' + str(id_item)
+                rl.add(Resource(url, lastmod=item.get('_source').get(
+                    '_updated')))
         return rl.as_xml()
 
     @classmethod
@@ -184,15 +212,14 @@ class ResourceSync(object):
         resource = cls.get_resource_by_repository(repository)
         if not resource or not resource.status:
             return None
-        from weko_search_ui.utils import get_items_by_index_tree
         r = get_items_by_index_tree(resource.repository)
-        from resync import Resource, ResourceList
         rl = ResourceList()
         for item in r:
             if item:
                 id_item = item.get('_source').get('_item_metadata').get(
                     'control_number')
-                url = request.url_root + 'resource/' + str(id_item)+ '/file_content.zip'
+                url = request.url_root + 'resync/' + str(id_item) + \
+                      '/file_content.zip'
                 rl.add(
                     Resource(url, lastmod=item.get('_source').get('_updated')))
         return rl.as_xml()

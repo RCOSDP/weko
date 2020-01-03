@@ -109,7 +109,7 @@ weko_admin_resource = {
     'view_class': AdminResourceSyncView,
     'kwargs': {
         'category': _('Resource Sync'),
-        'name': _('Resource Sync'),
+        'name': _('Resource List'),
         'endpoint': 'resource'
     }
 }

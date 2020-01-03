@@ -13,10 +13,12 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, render_template, jsonify, Response
+from flask import Blueprint, render_template, redirect, Response, request
 from flask_babelex import gettext as _
 from .utils import render_resource_dump_xml, render_resource_list_xml, \
     get_file_content
+
+
 blueprint = Blueprint(
     'weko_resourcesyncserver',
     __name__,
@@ -25,22 +27,26 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route("/resource/<index_id>/resource_list")
+@blueprint.route("/resync/<index_id>/resourcelist.xml")
 def resource_list(index_id):
     """Render a basic view."""
     r = render_resource_list_xml(index_id)
     return Response(r, mimetype='text/xml')
 
 
-@blueprint.route("/resource/<index_id>/resource_dump")
+@blueprint.route("/resync/<index_id>/resourcedump.xml")
 def resource_dump(index_id):
     """Render a basic view."""
     r = render_resource_dump_xml(index_id)
     return Response(r, mimetype='text/xml')
 
 
-@blueprint.route("/resource/<index_id>/file_content.zip")
+@blueprint.route("/resync/<index_id>/file_content.zip")
 def file_content(index_id):
     """Render a basic view."""
     r = get_file_content(index_id)
-    return r
+    if r:
+        return r
+    else:
+        return redirect(request.url_root)
+

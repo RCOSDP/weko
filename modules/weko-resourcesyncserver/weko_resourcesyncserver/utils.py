@@ -24,6 +24,7 @@ from flask import current_app
 from weko_items_ui.utils import export_item_custorm
 from weko_deposit.api import WekoRecord
 def to_dict(resource):
+    """Generate Resource Object to Dict"""
     return dict(**{
         'id': resource.id,
         'status': resource.status,
@@ -34,14 +35,32 @@ def to_dict(resource):
 
 
 def render_resource_list_xml(index_id):
+    """Generate Resource List Xml"""
     return ResourceSync.get_content_resource_list(index_id)
 
 
 def render_resource_dump_xml(index_id):
+    """Generate Resource Dump Xml"""
     return ResourceSync.get_content_resource_dump(index_id)
 
 
 def get_file_content(record_id):
+    """Generate File content"""
     record = WekoRecord.get_record_by_pid(record_id)
-    return export_item_custorm({'record_id': record_id})
+    list_index = get_real_path(record.get("path"))
+    if ResourceSync.is_resync(list_index):
+        return export_item_custorm({'record_id': record_id})
+    else:
+        return None
 
+
+def get_real_path(path):
+    """Generate list index id from path"""
+    result = []
+    for item in path:
+        if '/' in item:
+            fl = item.split("/")
+            result.extend(fl)
+        else:
+            result.append(item)
+    return result
