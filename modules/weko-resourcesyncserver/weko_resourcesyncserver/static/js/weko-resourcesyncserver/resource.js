@@ -3,6 +3,8 @@ const create_label = "Create"
 const edit_label = "Edit"
 const detail_label = "Detail"
 const urlCreate =  window.location.origin + '/admin/resource/create'
+const urlUpdate =  window.location.origin + '/admin/resource/update'
+const urlDelete =  window.location.origin + '/admin/resource/delete'
 const urlGetList =  window.location.origin + '/admin/resource/get_list'
 const urlGetTreeList =  window.location.origin + '/api/tree'
 const default_state = {
@@ -19,6 +21,7 @@ class MainLayout extends React.Component {
         this.state = {
           current_step: 1,
           current_tab: 'list',
+          select_item: {},
           tabs: [
             {
               tab_key: 'list',
@@ -36,11 +39,11 @@ class MainLayout extends React.Component {
               tab_name: edit_label,
               step: 2,
             },
-            {
-              tab_key: 'detail',
-              tab_name: detail_label,
-              step: 2,
-            }
+//            {
+//              tab_key: 'detail',
+//              tab_name: detail_label,
+//              step: 2,
+//            }
           ],
         }
         this.handleChangeTab = this.handleChangeTab.bind(this)
@@ -71,7 +74,7 @@ class MainLayout extends React.Component {
 
 
     render() {
-        const { tabs, current_step, current_tab } = this.state
+        const { tabs, current_step, current_tab, select_item } = this.state
         return (
             <div className="resource row">
               <ul className="nav nav-tabs">
@@ -101,14 +104,16 @@ class MainLayout extends React.Component {
               {current_tab === tabs[2].tab_key ? <div>
                 <EditResourceComponent
                   handleChangeTab={this.handleChangeTab}
+                  select_item={select_item}
                 ></EditResourceComponent>
               </div> : ''}
-
-              {current_tab === tabs[3].tab_key ? <div>
-                <DetailResourceComponent
-                  handleChangeTab={this.handleChangeTab}
-                ></DetailResourceComponent>
-              </div> : ''}
+//
+//              {current_tab === tabs[3].tab_key ? <div>
+//                <DetailResourceComponent
+//                  handleChangeTab={this.handleChangeTab}
+//                  select_item={select_item}
+//                ></DetailResourceComponent>
+//              </div> : ''}
 
             </div>
         )
@@ -122,6 +127,9 @@ class ListResourceComponent extends React.Component {
       list_resource: []
     }
     this.handleGetList = this.handleGetList.bind(this)
+    this.handleViewDetail = this.handleViewDetail.bind(this)
+    this.handleEdit = this.handleEdit.bind(this)
+    this.handleDelete = this.handleDelete.bind(this)
   }
 
   componentDidMount() {
@@ -137,12 +145,43 @@ class ListResourceComponent extends React.Component {
     })
     .then(res => res.json())
     .then(res => {
-        console.log(res)
         this.setState({
           list_resource: res
         })
     })
     .catch(() => alert('Error in get list'));
+  }
+
+  handleViewDetail(item) {
+    this.props.handleChangeTab('detail', item)
+  }
+
+  handleEdit(item) {
+    this.props.handleChangeTab('edit', item)
+
+  }
+
+  handleDelete(item) {
+    const a = confirm("Are you sure to delete it ?")
+    if (a) {
+      fetch(urlDelete+'/'+item.id, {
+        method: 'POST',
+        body: JSON.stringify(item),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      })
+      .then(res => res.json())
+      .then(res => {
+          if (res.success) {
+             this.handleGetList()
+          }
+          else {
+            alert('Error in Delete')
+          }
+      })
+      .catch(() => alert('Error in Create'));
+    }
   }
 
   render(){
@@ -157,7 +196,7 @@ class ListResourceComponent extends React.Component {
                   <th><p className="">Repository</p></th>
                   <th><p className="">Resource List Url</p></th>
                   <th><p className="">Resource Dump Url</p></th>
-                  <th><p className="">status</p></th>
+                  <th><p className="">Publish</p></th>
                 </tr>
               </thead>
               <tbody>
@@ -165,8 +204,16 @@ class ListResourceComponent extends React.Component {
                   list_resource.map((item, key) => {
                     return (
                       <tr key={key}>
-                        <td>
-                          {key + 1}
+                        <td style={{display: "flex",justifyContent: "space-around"}}>
+//                          <a className="icon" title="View Resource" onClick={() => this.handleViewDetail(item)}>
+//                            <span className="fa fa-eye glyphicon glyphicon-eye-open"></span>
+//                          </a>
+                          <a className="icon" title="Edit Resource">
+                            <span className="fa fa-pencil glyphicon glyphicon-pencil" onClick={() => this.handleEdit(item)}></span>
+                          </a>
+                          <a className="icon" title="Delete Resource">
+                            <span className="fa fa-trash glyphicon glyphicon-trash" onClick={() => this.handleDelete(item)}></span>
+                          </a>
                         </td>
                         <td>{item.repository}</td>
                         <td>
@@ -176,7 +223,7 @@ class ListResourceComponent extends React.Component {
                         <td>
                            <a href={item.url_path+'/resource_dump'}  target="_blank">{item.url_path+'/resource_dump'}</a>
                         </td>
-                        <td>{item.status}</td>
+                        <td>{item.status ? "ON": "OFF"}</td>
                       </tr>
                     )
                   })
@@ -225,7 +272,6 @@ class CreateResourceComponent extends React.Component {
   }
 
   handleSubmit(){
-    console.log(this.state)
     const new_data = {...this.state}
     delete new_data.tree_list;
     fetch(urlCreate, {
@@ -237,7 +283,6 @@ class CreateResourceComponent extends React.Component {
     })
     .then(res => res.json())
     .then(res => {
-        console.log(res)
         if (res.success) {
            this.props.handleChangeTab('list')
         }
@@ -257,7 +302,6 @@ class CreateResourceComponent extends React.Component {
     })
     .then(res => res.json())
     .then(res => {
-        console.log(res)
         let treeList = []
         res.map(item => {
           treeList = [...treeList, ...this.generateTreeList(item, '')]
@@ -288,7 +332,6 @@ class CreateResourceComponent extends React.Component {
 
   render(){
     const {state} = this
-    console.log(state)
     return(
       <div className="create-resource">
 
@@ -396,7 +439,7 @@ class CreateResourceComponent extends React.Component {
              </button>
              <button
                   className="btn btn-danger"
-                  onClick={() => { this.props.handleChangeTab('edit') }}
+                  onClick={() => { this.props.handleChangeTab('list') }}
                 >
                   Cancel
              </button>
@@ -412,14 +455,222 @@ class EditResourceComponent extends React.Component {
   constructor(props){
     super(props)
     this.state = {
+      ...props.select_item,
+      tree_list: [],
+      is_publish: false
+    }
+    this.handleChangeState = this.handleChangeState.bind(this)
+    this.handleChangeURL = this.handleChangeURL.bind(this)
+    this.handleSubmit = this.handleSubmit.bind(this)
+    this.generateTreeList = this.generateTreeList.bind(this)
+    this.getTreeList = this.getTreeList.bind(this)
+  }
 
+  handleChangeState(name, value) {
+    const {state} = this
+    this.setState({
+      ...state,
+      [name]: value
+    },() => {
+      if (name === 'repository'){
+        this.handleChangeURL()
+      }
+      if (name === 'status' && state.is_publish){
+        this.handleChangeState('is_publish', false)
+      }
+    })
+  }
+
+  handleChangeURL(){
+    const {state} = this
+    const {repository} = state
+    const url_path = window.location.origin + '/resource/'+ repository
+    this.handleChangeState('url_path',url_path)
+  }
+
+  handleSubmit(){
+    const new_data = {...this.state}
+    delete new_data.tree_list;
+    delete new_data.id;
+    fetch(urlUpdate+'/'+this.state.id, {
+      method: 'POST',
+      body: JSON.stringify(new_data),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (res.success) {
+           this.props.handleChangeTab('list')
+        }
+        else {
+          alert('Error in Edit')
+        }
+    })
+    .catch(() => alert('Error in Edit'));
+  }
+
+  getTreeList() {
+    fetch(urlGetTreeList, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+    .then(res => res.json())
+    .then(res => {
+        let treeList = []
+        res.map(item => {
+          treeList = [...treeList, ...this.generateTreeList(item, '')]
+        })
+        this.setState({
+          tree_list : treeList
+        })
+    })
+    .catch(() => alert('Error in get Tree list'));
+  }
+
+  generateTreeList(item ,path = '') {
+    const real_path = path ? (path + ' / ' + item.value) : (item.value)
+    if(!item.children.length) {
+      return [{id: item.id, value: real_path}]
+    } else {
+      let result = []
+      item.children.map(i => {
+        result = [...result, ...this.generateTreeList(i, real_path )]
+      })
+      return [{id: item.id, value: real_path}, ...result, ]
     }
   }
 
+  componentDidMount() {
+    this.getTreeList()
+    const {select_item} = this.props
+    this.setState({
+      ...select_item,
+      is_publish: select_item.status
+    })
+  }
+
   render(){
+    const {state} = this
     return(
-      <div>
-        Edit ne
+      <div className="create-resource">
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-4 text-right">
+            <label>Status</label>
+          </div>
+          <div className="col-md-8">
+            <input
+              type="checkbox"
+              onChange={(e) => {
+                const value = e.target.checked
+                this.handleChangeState('status', value)
+              }}
+              checked={state.status}
+            ></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-4 text-right">
+            <label>Repository</label>
+          </div>
+          <div className="col-md-8">
+            <select className="form-control"
+              onChange={(e) => {
+                const value = e.target.value
+                this.handleChangeState('repository', value)
+              }}
+              value={state.repository}
+              disabled={state.is_publish}
+            >
+              <option value=""></option>
+              {
+                state.tree_list.map(item => {
+                  return <option value={item.id}>{item.value}</option>
+                })
+              }
+            </select>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-4 text-right">
+            <label>Resource Dump Manifest</label>
+          </div>
+          <div className="col-md-8">
+            <input
+              type="checkbox"
+              onChange={(e) => {
+                const value = e.target.checked
+                this.handleChangeState('resource_dump_manifest', value)
+              }}
+              checked={state.resource_dump_manifest}
+                            disabled={state.is_publish}
+
+            ></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-4 text-right">
+            <label>Resource List uri</label>
+          </div>
+          <div className="col-md-8">
+            <input
+              type="text"
+              className="form-control"
+              disabled
+              value={state.url_path && state.url_path+'/resource_list'}
+            ></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-4 text-right">
+            <label>Resource Dump uri</label>
+          </div>
+          <div className="col-md-8">
+            <input
+              type="text"
+              className="form-control"
+              disabled
+              value={state.url_path && state.url_path+'/resource_dump'}
+
+            ></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-4 text-right">
+            <label>Auto start after save</label>
+          </div>
+          <div className="col-md-8">
+            <input type="checkbox"></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-4">
+          </div>
+          <div className="col-md-8">
+            <button
+                  className="btn btn-primary"
+                  onClick={() => { this.handleSubmit()}}
+                >
+                  Save
+             </button>
+             <button
+                  className="btn btn-danger"
+                  onClick={() => { this.props.handleChangeTab('list') }}
+                >
+                  Cancel
+             </button>
+          </div>
+        </div>
       </div>
     )
   }

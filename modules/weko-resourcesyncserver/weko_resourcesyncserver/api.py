@@ -103,7 +103,6 @@ class ResourceSync(object):
                 resource = cls.get_resource(resource_id)
                 if not resource:
                     return
-
                 db.session.delete(resource)
             db.session.commit()
             return resource
@@ -141,7 +140,7 @@ class ResourceSync(object):
         try:
             with db.session.begin_nested():
                 result = db.session.query(ResourceListIndexes).filter(
-                    id == resource_id).one_or_none()
+                    ResourceListIndexes.id == resource_id).one_or_none()
                 return result
         except Exception as ex:
             current_app.logger.debug(ex)

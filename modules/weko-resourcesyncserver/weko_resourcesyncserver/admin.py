@@ -73,11 +73,11 @@ class AdminResourceSyncView(BaseView):
         data = request.get_json()
         resource = ResourceSync.create(data)
         if resource:
-            return jsonify(data=resource, success=True)
+            return jsonify(data=to_dict(resource), success=True)
         else:
             return jsonify(data=None, success=False)
 
-    @expose('/get_list/<id>', methods=['POST'])
+    @expose('/update/<id>', methods=['POST'])
     def update(self, id):
         """Renders an item import view.
 
@@ -87,7 +87,20 @@ class AdminResourceSyncView(BaseView):
         data = request.get_json()
         resource = ResourceSync.update(id, data)
         if resource:
-            return jsonify(data=resource, success=True)
+            return jsonify(data=to_dict(resource), success=True)
+        else:
+            return jsonify(data=None, success=False)
+
+    @expose('/delete/<id>', methods=['POST'])
+    def delete(self, id):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        resource = ResourceSync.delete(id)
+        if resource:
+            return jsonify(data=to_dict(resource), success=True)
         else:
             return jsonify(data=None, success=False)
 
