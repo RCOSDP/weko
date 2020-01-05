@@ -317,13 +317,21 @@ function handleSharePermission(value) {
         );
       }
       $scope.searchFilemetaForm = function (title) {
-        $rootScope.recordsVM.invenioRecordsForm.forEach(RecordForm => {
-          if (RecordForm.title == title) {
-            filemeta_form = RecordForm;
+        let fileMetaForm = "";
+        $rootScope.recordsVM.invenioRecordsForm.forEach(recordForm => {
+          if (recordForm.title === title) {
+            fileMetaForm = recordForm;
+          }
+          if (recordForm.hasOwnProperty('title_i18n')) {
+            for (let item in recordForm.title_i18n) {
+              if (recordForm.title_i18n[item] === title) {
+                fileMetaForm = recordForm;
+              }
+            }
           }
         });
-        return filemeta_form;
-      }
+        return fileMetaForm;
+      };
       $scope.initFilenameList = function () {
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(filemeta_key => {
@@ -655,6 +663,80 @@ function handleSharePermission(value) {
           );
         }
       }
+
+      $scope.isExistingUserProfile = function() {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        if (Object.keys(model).length === 0 && model.constructor === Object){
+          return false;
+        } else {
+          let isExisted = false;
+          for (let key in model) {
+            if (model.hasOwnProperty(key)) {
+              let userName = model[key]['subitem_user_name'];
+              let userMail = model[key]['subitem_mail_address'];
+              if (userName || userMail) {
+                isExisted = true;
+                break;
+              }
+            }
+          }
+          return  isExisted;
+        }
+      };
+
+      $scope.autoFillProfileInfo = function () {
+        if ($scope.isExistingUserProfile()) {
+          return;
+        }
+        var user_info_html = $("#user_info_data").val();
+        var data = JSON.parse(user_info_html);
+        // Key for detecting user profile info
+        // These 2 keys is unique for User Information so use these to detect user_information obj
+        var affiliatedDivision = 'subitem_affiliated_division/department';
+        var affiliatedInstitution = 'subitem_affiliated_institution';
+        // Key for dectecting affiliated institution
+        var affiliatedInstitutionName = 'subitem_affiliated_institution_name';
+        var affiliatedInstitutionPosition = 'subitem_affiliated_institution_position';
+            Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+              ([key, value]) => {
+            var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+            if (currentInvenioRecordsSchema.properties) {
+              let containAffiliatedDivision = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedDivision);
+              let containAffiliatedInstitution = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedInstitution);
+              if (containAffiliatedDivision && containAffiliatedInstitution) {
+                $rootScope.recordsVM.invenioRecordsModel[key] = {}
+                var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel[key];
+                Object.entries(currentInvenioRecordsSchema.properties).forEach(([subKey, subValue]) => {
+                  if (currentInvenioRecordsSchema.properties[subKey].type == "array") {
+                    //Affiliated institution is an array
+                    let containInstitutionName = currentInvenioRecordsSchema.properties[subKey].items.properties.hasOwnProperty(affiliatedInstitutionName);
+                    let containInstitutionPosition = currentInvenioRecordsSchema.properties[subKey].items.properties.hasOwnProperty(affiliatedInstitutionPosition);
+                    if (containInstitutionName && containInstitutionPosition) {
+                      //init the Affiliated Institution
+                      currentInvenioRecordsModel[subKey] = [];
+                      // get arr Affiliated institution form the result data
+                      var arrAffiliatedData = data.results[subKey];
+                      if (arrAffiliatedData) {
+                        // Set value for each pair of Affiliated Institution data
+                        arrAffiliatedData.forEach((value, index) => {
+                          currentInvenioRecordsModel[subKey][index] = {};
+                          currentInvenioRecordsModel[subKey][index][affiliatedInstitutionName] = value.subitem_affiliated_institution_name
+                          currentInvenioRecordsModel[subKey][index][affiliatedInstitutionPosition] = value.subitem_affiliated_institution_position
+                        });
+                    }
+                    }
+                  } else {
+                        if (data.results[subKey]) {
+                          $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey])
+                        }
+                  }
+                      });
+                    }
+                  }
+                }
+            );
+          }
+
       $scope.renderValidationErrorList = function () {
         const activityId = $("#activity_id").text();
         $.ajax({
@@ -724,6 +806,14 @@ function handleSharePermission(value) {
         setTimeout(() => {
           $scope.autofillJournal();
         }, 3000);
+
+        setTimeout(() => {
+          var needToAutoFillProfileInfo = $("#application_item_type").val();
+          if(needToAutoFillProfileInfo == 'True')
+          {
+          $scope.autoFillProfileInfo();
+          }
+        }, 500);
       });
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
@@ -1048,6 +1138,7 @@ function handleSharePermission(value) {
         }
       }
 
+
       $scope.registerUserPermission = function () {
         // let userSelection = $('#input').val();
         let userSelection = $(".form_share_permission").css('display');
@@ -1209,7 +1300,7 @@ function handleSharePermission(value) {
             result = Object.assign(this.getItemsDictionary(subitem[i]), result);
           }
         } else if (item.key && item.key.length) {
-          title = item.title;
+          let title = item.title;
           if (item.hasOwnProperty('title_i18n')) {
             let currentLanguage = $("#current_language").val();
             title = item.title_i18n[currentLanguage];
@@ -1217,11 +1308,13 @@ function handleSharePermission(value) {
           result[item.key[item.key.length - 1]] = title;
         }
         return result;
-      }
+      };
 
-      $scope.validateInputData = function () {
+      $scope.validateInputData = function (activityId, steps, isAutoSetIndexAction) {
         if (!this.validateRequiredItem()) {
           // Check required item
+          return false;
+        }else if(!this.validatePosition()){
           return false;
         } else if ($scope.depositionForm.$invalid) {
           // Check containing control or form is invalid
@@ -1252,7 +1345,9 @@ function handleSharePermission(value) {
           $("#inputModal").html(message);
           $("#allModal").modal("show");
           return false;
-        } else {
+        } else if (!$scope.validateEmailsAndIndexAndUpdateApprovalActions(activityId, steps, isAutoSetIndexAction)) {
+          return false;
+       }else{
           // Call API to validate input data base on json schema define
           let validateURL = '/api/items/validate';
           let isValid = false;
@@ -1289,6 +1384,148 @@ function handleSharePermission(value) {
           });
           return isValid;
         }
+      }
+
+      $scope.validatePosition = function () {
+        var result = true;
+        var subItemPosition = 'subitem_position';
+        var subItemPositionOther = 'subitem_position(other)';
+        var otherChoice = "Others (Input Detail)";
+        Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+            ([key, value]) => {
+              var currentInvenioRecordsSchema=$rootScope.recordsVM.invenioRecordsSchema.properties[key];
+                if (currentInvenioRecordsSchema.properties) {
+                    let containSubItemPosition = currentInvenioRecordsSchema.properties.hasOwnProperty(subItemPosition);
+                    let containSubItemPositionOther = currentInvenioRecordsSchema.properties.hasOwnProperty(subItemPositionOther);
+                    if (containSubItemPosition && containSubItemPositionOther) {
+                        currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
+                        var subItemPositionValue = currentInvenioRecordsModel[key][subItemPosition];
+                        var subItemPositionOtherValue = currentInvenioRecordsModel[key][subItemPositionOther];
+                        if (subItemPositionValue != otherChoice && typeof subItemPositionOtherValue != "undefined" && subItemPositionOtherValue != '') {
+                            //Show error same
+                            let message = $("#err_input_other_position").val();
+                            $("#inputModal").html(message);
+                            $("#allModal").modal("show");
+                            result = false;
+                            return false;
+                        }
+                        else if (subItemPositionValue == otherChoice && subItemPositionOtherValue == '') {
+                            let message = $("#err_position_not_provided").val();
+                            $("#inputModal").html(message);
+                            $("#allModal").modal("show");
+                            result = false;
+                            return false;
+                        }
+                    }
+                }
+            }
+        );
+        return result;
+      }
+
+      // This method use to do these 3 things:
+      // -Validate input approval email
+      // -Set approval user for each action corresponding
+      // -Validate index existence(if any)
+      $scope.validateEmailsAndIndexAndUpdateApprovalActions = function (activityId, steps, isAutoSetIndexAction) {
+        let emailsToValidate = [];
+        let param = {};
+        steps.forEach(step => {
+          if (step.ActionEndpoint == 'approval_advisor') {
+            emailsToValidate.push('email_advisor')
+            let subitem_advisor_mail_address = $scope.depositionForm.subitem_advisor_mail_address
+            let mail_adress = subitem_advisor_mail_address.$modelValue
+            param['email_advisor'] = { 'mail': mail_adress, 'action_id': step.ActionId }
+          }
+          else if (step.ActionEndpoint == 'approval_guarantor') {
+            emailsToValidate.push('email_guarantor')
+            let subitem_guarantor_mail_address = $scope.depositionForm.subitem_guarantor_mail_address
+            let mail_adress = subitem_guarantor_mail_address.$modelValue
+            param['email_guarantor'] = { 'mail': mail_adress, 'action_id': step.ActionId }
+          }
+        });
+        param['activity_id'] = activityId
+        param['user_to_check'] = emailsToValidate;
+        param['auto_set_index_action'] = isAutoSetIndexAction;
+        var itemsDict = {};
+        let recordsForm = $rootScope.recordsVM.invenioRecordsForm;
+        for (let i = 0; i < recordsForm.length; i++) {
+          itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
+        }
+        return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction);
+      }
+
+      $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction) {
+        let result = true;
+        $.ajax({
+          url: '/api/items/validate_email_and_index',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: 'POST',
+          async: false,
+          data: JSON.stringify(param),
+          dataType: "json",
+          success: (data, status) => {
+            let listEmailErrors = [];
+            if (param.email_advisor && param.email_guarantor) {
+              result = this.processResponseEmailValidation(itemsDict, data.email_advisor, "subitem_advisor_mail_address", listEmailErrors) + this.processResponseEmailValidation(itemsDict, data.email_guarantor, "subitem_guarantor_mail_address", listEmailErrors);
+            }
+            else{
+              if (param.email_advisor){
+                result = this.processResponseEmailValidation(itemsDict, data.email_advisor, "subitem_advisor_mail_address", listEmailErrors)
+              }
+              if (param.email_guarantor) {
+                result = this.processResponseEmailValidation(itemsDict, data.email_guarantor, "subitem_guarantor_mail_address", listEmailErrors);
+              }
+            }
+            if (listEmailErrors.length > 0) {
+              let message = $("#validate_email_register").val() + '<br/><br/>';
+              message += listEmailErrors[0];
+              for (let k = 1; k < listEmailErrors.length; k++) {
+                let subMessage = ', ' + listEmailErrors[k];
+                message += subMessage;
+              }
+              $("#inputModal").html(message);
+              $("#allModal").modal("show");
+              result = false;
+            }
+            if (isAutoSetIndexAction && !data.index) {
+              let error_message = $("#not_existed_index_tree_err").val() + '<br/><br/>';
+              $("#inputModal").html(error_message);
+              $("#allModal").modal("show");
+              result = false;
+            }
+          },
+          error: function (data, status) {
+            $("#inputModal").html("Cannot connect to server!");
+            $("#allModal").modal("show");
+            result = false;
+          }
+        });
+        return result;
+      }
+
+      $scope.processResponseEmailValidation = function (itemsDict, emailData, subKey, errorList) {
+        let validationResult = true;
+        if (emailData) {
+          if (emailData.error && typeof emailData.validation !== 'undefined') {
+            $("#inputModal").html(emailData.error);
+            $("#allModal").modal("show");
+            validationResult = false;
+          } else if (!emailData.validation) {
+            validationResult = false;
+            let mailAddressItem = $scope.depositionForm[subKey];
+            if (mailAddressItem) {
+              let name = mailAddressItem.$name;
+              if (itemsDict.hasOwnProperty(name)) {
+                name = itemsDict[name];
+              }
+              errorList.push(name);
+            }
+          }
+        }
+        return validationResult;
       }
 
       $scope.priceValidator = function () {
@@ -1371,80 +1608,90 @@ function handleSharePermission(value) {
         return true;
       }
 
-      $scope.updateDataJson = async function () {
+      $scope.updateDataJson = async function (activityId, steps, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
             return false;
-        }else if ($scope.getFeedbackMailList().length > 0){
+        } else if (enableFeedbackMail === 'True' && $scope.getFeedbackMailList().length > 0) {
           let modalcontent = $('#invalid-email-format').val();
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
           return false;
         }
-        let isValid = this.validateInputData();
+        let isValid = this.validateInputData(activityId, steps, isAutoSetIndexAction);
         if (!isValid) {
           return false;
         } else {
           $scope.genTitleAndPubDate();
           this.mappingThumbnailInfor();
           let next_frame = $('#next-frame').val();
-          if ($scope.is_item_owner) {
-            if (!this.registerUserPermission()) {
-              // Do nothing
-            } else {
-              var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
-              var indexOfLink = str.indexOf("authorLink");
-              if (indexOfLink != -1) {
-                str = str.split(',"authorLink":[]').join('');
-              }
-              if (!$scope.saveFeedbackMailListCallback()) {
-                return;
-              }
-              $scope.saveFeedbackMailListCallback();
-              $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-              $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
-            }
+          if (enableContributor === 'True' && !this.registerUserPermission()) {
+            // Do nothing
+          } else if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
+            // Do nothing
           } else {
+            // Add advisor, guarantor mail in oder to save to db
+            let advisor_mail = '';
+            let guarantor_mail = '';
+            $.each($rootScope.recordsVM.invenioRecordsModel, function(k, v){
+              if(v != undefined){
+                if(v['subitem_advisor_mail_address'] != undefined){
+                  advisor_mail = v['subitem_advisor_mail_address']
+                }
+                if(v['subitem_guarantor_mail_address'] != undefined){
+                  guarantor_mail = v['subitem_guarantor_mail_address']
+                }
+              }
+            })
+            $rootScope.recordsVM.invenioRecordsModel['advisor_mail'] = advisor_mail;
+            $rootScope.recordsVM.invenioRecordsModel['guarantor_mail'] = guarantor_mail;
+
             var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
             var indexOfLink = str.indexOf("authorLink");
             if (indexOfLink != -1) {
               str = str.split(',"authorLink":[]').join('');
             }
-            if (!$scope.saveFeedbackMailListCallback()) {
-              return;
+            if (enableFeedbackMail === 'True') {
+              if (!$scope.saveFeedbackMailListCallback(currentActionId)) {
+                return false;
+              }
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
         }
-      }
+      };
 
-      $scope.saveDataJson = function (item_save_uri) {
+      $scope.saveDataJson = function (item_save_uri, currentActionId,enableContributor,enableFeedbackMail) {
         var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
         let permission = false;
         $scope.$broadcast('schemaFormValidate');
-        if (!invalidFlg && $scope.is_item_owner) {
-          if (!this.registerUserPermission()) {
-            // Do nothing
-          } else {
+        if (enableFeedbackMail === 'True' && enableContributor === 'True') {
+          if (!invalidFlg && $scope.is_item_owner) {
+            if (!this.registerUserPermission()) {
+              // Do nothing
+            } else {
+              permission = true;
+            }
+          }else {
             permission = true;
           }
-        }else {
-          permission = true;
-        }
-        if (permission) {
-          if ($scope.getFeedbackMailList().length > 0) {
-            let modalcontent = $('#invalid-email-format').val();
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
-            return;
+          if (permission) {
+            if ($scope.getFeedbackMailList().length > 0) {
+              let modalcontent = $('#invalid-email-format').val();
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
+              return;
+            }
+            this.saveDataJsonCallback(item_save_uri);
+            this.saveFeedbackMailListCallback(currentActionId);
           }
-          this.saveDataJsonCallback(item_save_uri);
-          this.saveFeedbackMailListCallback();
+        }else{
+            this.saveDataJsonCallback(item_save_uri);
         }
-      }
+      };
 
       $scope.saveDataJsonCallback = function (item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
@@ -1479,9 +1726,9 @@ function handleSharePermission(value) {
           }
         );
       }
-      $scope.saveFeedbackMailListCallback = function () {
+      $scope.saveFeedbackMailListCallback = function (cur_action_id) {
         const activityID = $("#activity_id").text();
-        const actionID = 3 // Item Registration's Action ID
+        const actionID = cur_action_id;// Item Registration's Action ID
         let emails = $scope.feedback_emails;
         let result = true;
         $.ajax({
@@ -1503,7 +1750,7 @@ function handleSharePermission(value) {
           }
         });
         return result;
-      }
+      };
 
       // mapping URL & Name of file
       $scope.mappingThumbnailInfor = function () {
@@ -1581,7 +1828,7 @@ function handleSharePermission(value) {
       'invenioRecords',
       'wekoRecords.controllers',
     ]);
-    
+
     angular.module('uploadThumbnail', ['schemaForm', 'invenioFiles'])
     .controller('UploadController', function ($scope, $rootScope, InvenioFilesAPI) {
         'use strict';

@@ -127,6 +127,7 @@ def helper_remove_empty_enum(data):
 
     Arguments:
         data {dict} -- schema to remove enum key
+
     """
     if "enum" in data.keys():
         if not data.get("enum"):
@@ -167,6 +168,9 @@ def add_required_subitem(data):
         for k, v in properties.items():
             if is_properties_exist_in_item(v):
                 sub_data = add_required_subitem(v)
+                if sub_data is None:
+                    sub_data = v
+                    list_required_item.append(str(k))
                 properties[k] = sub_data
             else:
                 list_required_item.append(str(k))

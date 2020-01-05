@@ -49,6 +49,7 @@ from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.config import ITEM_REGISTRATION_ACTION_ID
 from weko_workflow.models import ActionStatusPolicy, WorkFlow
+from weko_workflow.utils import get_index_id
 
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
@@ -57,9 +58,10 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     get_current_user, get_list_email, get_list_username, \
     get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    to_files_js, update_json_schema_by_activity_id, \
-    update_schema_remove_hidden_item, validate_form_input_data, \
-    validate_user
+    to_files_js, update_index_tree_for_record, \
+    update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
+    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
+    validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -307,6 +309,11 @@ def get_schema_form(item_type_id=0):
             filemeta_form_group['type'] = 'select'
             filemeta_form_group['titleMap'] = group_list
 
+        from .utils import recursive_form
+        recursive_form(schema_form)
+        # Check role for input(5 item type)
+        update_sub_items_by_user_role(item_type_id, schema_form)
+
         # hidden option
         hidden_subitem = ['subitem_thumbnail', 'subitem_system_id_rg_doi',
                           'subitem_system_date_type',
@@ -440,6 +447,20 @@ def iframe_items_index(pid_value='0'):
             ctx = {'community': comm}
 
         if request.method == 'GET':
+            cur_activity = session['itemlogin_activity']
+            # If enable auto set index feature
+            # and activity is usage application item type
+            steps = session['itemlogin_steps']
+            contain_application_endpoint = False
+            for step in steps:
+                if step.get('ActionEndpoint') == 'item_login_application':
+                    contain_application_endpoint = True
+            enable_auto_set_index = current_app.config[
+                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE']
+            if enable_auto_set_index and contain_application_endpoint:
+                index_id = get_index_id(cur_activity)
+                update_index_tree_for_record(pid_value, index_id)
+                return redirect(url_for('weko_workflow.iframe_success'))
             # Get the design for widget rendering
             from weko_theme.utils import get_design_layout
 
@@ -621,6 +642,21 @@ def get_search_data(data_type=''):
     except Exception as e:
         result['error'] = str(e)
 
+    return jsonify(result)
+
+
+@blueprint_api.route('/validate_email_and_index', methods=['POST'])
+def validate_user_email_and_index():
+    """Validate user mail and index.
+
+    :return:
+    """
+    result = {}
+    if request.headers['Content-Type'] != 'application/json':
+        result['error'] = _('Header Error')
+        return jsonify(result)
+    data = request.get_json()
+    result = validate_user_mail_and_index(data)
     return jsonify(result)
 
 

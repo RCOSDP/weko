@@ -124,7 +124,8 @@ def init_workflow_tables(tables):
             action_version='1.0.0',
             action_endpoint='begin_action',
             action_makedate=datetime.date(2018, 5, 15),
-            action_lastdate=datetime.date(2018, 5, 15)
+            action_lastdate=datetime.date(2018, 5, 15),
+            action_is_need_agree=False
         ))
         db_action.append(dict(
             action_name=current_app.config['WEKO_WORKFLOW_ACTION_END'],
@@ -132,53 +133,78 @@ def init_workflow_tables(tables):
             action_version='1.0.0',
             action_endpoint='end_action',
             action_makedate=datetime.date(2018, 5, 15),
-            action_lastdate=datetime.date(2018, 5, 15)
+            action_lastdate=datetime.date(2018, 5, 15),
+            action_is_need_agree=False
         ))
-        db_action.append(dict(
-            action_name=current_app.config[
-                'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION'],
-            action_desc='Registering items.',
-            action_version='1.0.1',
-            action_endpoint='item_login',
-            action_makedate=datetime.date(2018, 5, 22),
-            action_lastdate=datetime.date(2018, 5, 22)
-        ))
-        db_action.append(dict(
-            action_name=current_app.config['WEKO_WORKFLOW_ACTION_APPROVAL'],
-            action_desc='Approval action for approval requested items.',
-            action_version='2.0.0',
-            action_endpoint='approval',
-            action_makedate=datetime.date(2018, 2, 11),
-            action_lastdate=datetime.date(2018, 2, 11)
-        ))
+        if current_app.config[
+                'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION']:
+            db_action.append(dict(
+                action_name=current_app.config[
+                    'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION'],
+                action_desc='Registering items.',
+                action_version='1.0.1',
+                action_endpoint='item_login',
+                action_makedate=datetime.date(2018, 5, 22),
+                action_lastdate=datetime.date(2018, 5, 22),
+                action_is_need_agree=False
+            ))
+        if current_app.config['WEKO_WORKFLOW_ACTION_APPROVAL']:
+            db_action.append(dict(
+                action_name=current_app.config['WEKO_WORKFLOW_ACTION_APPROVAL'],
+                action_desc='Approval action for approval requested items.',
+                action_version='2.0.0',
+                action_endpoint='approval',
+                action_makedate=datetime.date(2018, 2, 11),
+                action_lastdate=datetime.date(2018, 2, 11),
+                action_is_need_agree=False
+            ))
         #
-        db_action.append(dict(
-            action_name=current_app.config['WEKO_WORKFLOW_ACTION_ITEM_LINK'],
-            action_desc='Plug-in for link items.',
-            action_version='1.0.1',
-            action_endpoint='item_link',
-            action_makedate=datetime.date(2018, 5, 22),
-            action_lastdate=datetime.date(2018, 5, 22)
-        ))
-        db_action.append(dict(
-            action_name=current_app.config[
-                'WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION'],
-            action_desc='Action for OA Policy confirmation.',
-            action_version='1.0.0',
-            action_endpoint='oa_policy',
-            action_makedate=datetime.date(2019, 3, 15),
-            action_lastdate=datetime.date(2019, 3, 15)
-        ))
-        # Identifier Grant
-        db_action.append(dict(
-            action_name=current_app.config[
-                'WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION'],
-            action_desc='Select DOI issuing organization and CNRI.',
-            action_version='1.0.0',
-            action_endpoint='identifier_grant',
-            action_makedate=datetime.date(2019, 3, 15),
-            action_lastdate=datetime.date(2019, 3, 15)
-        ))
+        if current_app.config['WEKO_WORKFLOW_ACTION_ITEM_LINK']:
+            db_action.append(dict(
+                action_name=current_app.config[
+                    'WEKO_WORKFLOW_ACTION_ITEM_LINK'],
+                action_desc='Plug-in for link items.',
+                action_version='1.0.1',
+                action_endpoint='item_link',
+                action_makedate=datetime.date(2018, 5, 22),
+                action_lastdate=datetime.date(2018, 5, 22),
+                action_is_need_agree=False
+            ))
+        if current_app.config['WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION']:
+            db_action.append(dict(
+                action_name=current_app.config[
+                    'WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION'],
+                action_desc='Action for OA Policy confirmation.',
+                action_version='1.0.0',
+                action_endpoint='oa_policy',
+                action_makedate=datetime.date(2019, 3, 15),
+                action_lastdate=datetime.date(2019, 3, 15),
+                action_is_need_agree=False
+            ))
+        if current_app.config['WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION']:
+            # Identifier Grant
+            db_action.append(dict(
+                action_name=current_app.config[
+                    'WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION'],
+                action_desc='Select DOI issuing organization and CNRI.',
+                action_version='1.0.0',
+                action_endpoint='identifier_grant',
+                action_makedate=datetime.date(2019, 3, 15),
+                action_lastdate=datetime.date(2019, 3, 15),
+                action_is_need_agree=False
+            ))
+        if current_app.config[
+                'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION']:
+            db_action.append(dict(
+                action_name=current_app.config[
+                    'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION'],
+                action_desc='Item Registration for Usage Application.',
+                action_version='1.0.0',
+                action_endpoint='item_login_application',
+                action_makedate=datetime.date(2019, 12, 31),
+                action_lastdate=datetime.date(2019, 12, 31),
+                action_is_need_agree=True
+            ))
         if current_app.config['WEKO_WORKFLOW_ACTION_GUARANTOR']:
             db_action.append(dict(
                 action_name=current_app.config[
@@ -186,8 +212,9 @@ def init_workflow_tables(tables):
                 action_desc='Approval action performed by Guarantor.',
                 action_version='1.0.0',
                 action_endpoint='approval_guarantor',
-                action_makedate=datetime.date(2019, 11, 13),
-                action_lastdate=datetime.date(2018, 11, 13)
+                action_makedate=datetime.date(2019, 12, 31),
+                action_lastdate=datetime.date(2019, 12, 31),
+                action_is_need_agree=False
             ))
         if current_app.config['WEKO_WORKFLOW_ACTION_ADVISOR']:
             db_action.append(dict(
@@ -195,8 +222,9 @@ def init_workflow_tables(tables):
                 action_desc='Approval action performed by Advisor.',
                 action_version='1.0.0',
                 action_endpoint='approval_advisor',
-                action_makedate=datetime.date(2019, 11, 13),
-                action_lastdate=datetime.date(2019, 11, 13)
+                action_makedate=datetime.date(2019, 12, 31),
+                action_lastdate=datetime.date(2019, 12, 31),
+                action_is_need_agree=False
             ))
         if current_app.config['WEKO_WORKFLOW_ACTION_ADMINISTRATOR']:
             db_action.append(dict(
@@ -205,8 +233,9 @@ def init_workflow_tables(tables):
                 action_desc='Approval action performed by Administrator.',
                 action_version='1.0.0',
                 action_endpoint='approval_administrator',
-                action_makedate=datetime.date(2019, 11, 13),
-                action_lastdate=datetime.date(2019, 11, 13)
+                action_makedate=datetime.date(2019, 12, 31),
+                action_lastdate=datetime.date(2019, 12, 31),
+                action_is_need_agree=False
             ))
         return db_action
 

@@ -24,6 +24,7 @@ import json
 import os
 import sys
 from collections import OrderedDict
+from datetime import datetime
 from functools import wraps
 
 import redis
@@ -47,9 +48,12 @@ from weko_deposit.api import WekoDeposit
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
-from weko_items_ui.utils import get_actionid, to_files_js
+from weko_items_ui.utils import get_actionid, is_need_to_show_agreement_page, \
+    to_files_js
 from weko_records.api import FeedbackMailList, ItemsMetadata
 from weko_records.models import ItemMetadata
+from weko_records.serializers.utils import get_item_type_name
+from weko_records_ui.models import FilePermission
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
@@ -57,12 +61,15 @@ from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
 from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     ITEM_REGISTRATION_ACTION_ID
-from .models import ActionStatusPolicy, ActivityStatusPolicy
+from .models import ActionStatusPolicy, ActivityAction, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, delete_unregister_buckets, \
-    get_activity_id_of_record_without_version, get_identifier_setting, \
-    item_metadata_validation, merge_buckets_by_records, register_cnri, \
-    saving_doi_pidstore, set_bucket_default_size
+from .utils import IdentifierHandle, check_continue, create_usage_report, \
+    delete_unregister_buckets, get_activity_id_of_record_without_version, \
+    get_application_and_approved_date, get_identifier_setting, \
+    get_term_and_condition_content, is_usage_application_item_type, \
+    item_metadata_validation, merge_buckets_by_records, \
+    process_send_notification_mail, process_send_reminder_mail, \
+    register_cnri, saving_doi_pidstore, set_bucket_default_size
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -89,6 +96,9 @@ def index():
     else:
         activities = activity.get_activity_list()
 
+    columns = current_app.config.get('WEKO_WORKFLOW_COLUMNS')
+    get_application_and_approved_date(activities, columns)
+
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
@@ -99,7 +109,9 @@ def index():
         'weko_workflow/activity_list.html',
         page=page,
         render_widgets=render_widgets,
-        activities=activities, community_id=community_id, **ctx
+        enable_show_activity=current_app.config[
+            'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'],
+        activities=activities, community_id=community_id, columns=columns, **ctx
     )
 
 
@@ -201,7 +213,7 @@ def init_activity():
         rtn = activity.init_activity(post_activity)
     if rtn is None:
         return jsonify(code=-1, msg='error')
-    if 'community' in getargs:
+    if 'community' in getargs and request.args.get('community') != 'undefined':
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         return jsonify(code=0, msg='success',
                        data={'redirect': url_for(
@@ -232,7 +244,8 @@ def list_activity():
     )
 
 
-@blueprint.route('/activity/detail/<string:activity_id>', methods=['GET'])
+@blueprint.route('/activity/detail/<string:activity_id>',
+                 methods=['GET', 'POST'])
 @login_required
 def display_activity(activity_id=0):
     """Display activity."""
@@ -318,7 +331,17 @@ def display_activity(activity_id=0):
     need_thumbnail = False
     files_thumbnail = []
     allow_multi_thumbnail = False
-    if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
+    term_and_condition_content = ''
+    is_auto_set_index_action = False
+    application_item_type = False
+    if 'item_login' == action_endpoint or \
+            'item_login_application' == action_endpoint or \
+            'file_upload' == action_endpoint:
+        if request.method == 'POST':
+            is_user_agreed = request.form.get('checked')
+            # update user agreement when user check the checkbox
+            activity.upt_activity_agreement_step(activity_id=activity_id,
+                                                 is_agree=is_user_agreed)
         activity_session = dict(
             activity_id=activity_id,
             action_id=activity_detail.action_id,
@@ -332,6 +355,17 @@ def display_activity(activity_id=0):
             item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
+        application_item_type = is_usage_application_item_type(activity_detail)
+        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']:
+            item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+            # if this is Item Registration step and the user have not agreed
+            # term and condition yet, set to that page
+            if (cur_action.action_is_need_agree
+                    and is_need_to_show_agreement_page(item_type_name)
+                    and not activity_detail.activity_confirm_term_of_use):
+                step_item_login_url = 'weko_workflow/term_and_condition.html'
+                term_and_condition_content = get_term_and_condition_content(
+                    item_type_name)
         if item:
             # Remove the unused local variable
             # _pid_identifier = PersistentIdentifier.get_by_object(
@@ -347,6 +381,11 @@ def display_activity(activity_id=0):
             and sessionstore.get(
                 'updated_json_schema_{}'.format(activity_id)):
             json_schema = (json_schema + "/{}").format(activity_id)
+    for step in steps:
+        if step.get('ActionEndpoint') == 'item_login_application' \
+                and current_app.config[
+                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE']:
+            is_auto_set_index_action = True
 
     # if 'approval' == action_endpoint:
     if item:
@@ -384,7 +423,8 @@ def display_activity(activity_id=0):
         from weko_deposit.links import base_factory
         links = base_factory(pid)
 
-    res_check = check_authority_action(str(activity_id), str(action_id))
+    res_check = check_authority_action(str(activity_id),
+                                       str(action_id), is_auto_set_index_action)
 
     getargs = request.args
     ctx = {'community': None}
@@ -394,7 +434,9 @@ def display_activity(activity_id=0):
         ctx = {'community': comm}
         community_id = comm.id
     # be use for index tree and comment page.
-    if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
+    if 'item_login' == action_endpoint or \
+            'item_login_application' == action_endpoint or \
+            'file_upload' == action_endpoint:
         session['itemlogin_id'] = activity_id
         session['itemlogin_activity'] = activity_detail
         session['itemlogin_item'] = item
@@ -407,6 +449,11 @@ def display_activity(activity_id=0):
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
 
+    user_id = current_user.id
+    user_profile = {}
+    if user_id:
+        from weko_user_profiles.views import get_user_profile_info
+        user_profile['results'] = get_user_profile_info(int(user_id))
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
@@ -447,6 +494,15 @@ def display_activity(activity_id=0):
         need_thumbnail=need_thumbnail,
         files_thumbnail=files_thumbnail,
         allow_multi_thumbnail=allow_multi_thumbnail,
+        is_auto_set_index_action=is_auto_set_index_action,
+        term_and_condition_content=term_and_condition_content,
+        enable_feedback_maillist=current_app.config[
+            'WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL'],
+        enable_contributor=current_app.config[
+            'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
+        activity_id=activity_detail.activity_id,
+        user_profile=user_profile,
+        application_item_type=application_item_type,
         **ctx
     )
 
@@ -476,7 +532,8 @@ def check_authority(func):
     return decorated_function
 
 
-def check_authority_action(activity_id='0', action_id=0):
+def check_authority_action(activity_id='0', action_id=0,
+                           contain_login_item_application=False):
     """Check authority."""
     work = WorkActivity()
     roles, users = work.get_activity_action_role(activity_id, action_id)
@@ -506,7 +563,8 @@ def check_authority_action(activity_id='0', action_id=0):
     activity = Activity.query.filter_by(
         activity_id=activity_id).first()
     # If user is the author of activity
-    if int(cur_user) == activity.activity_login_user:
+    if int(cur_user) == activity.activity_login_user and \
+            not contain_login_item_application:
         return 0
     # If user has admin role
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
@@ -531,15 +589,22 @@ def check_authority_action(activity_id='0', action_id=0):
             if activity.activity_login_user in community_user_ids:
                 return 0
             break
-
-    # Check if this activity has contributor equaling to current user
-    im = ItemMetadata.query.filter_by(id=activity.item_id)\
-        .filter(
-        cast(ItemMetadata.json['shared_user_id'], types.INT) == int(cur_user))\
-        .one_or_none()
-    if im:
-        # There is an ItemMetadata with contributor equaling to current user,
-        # allow to access
+    if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
+        # Check if this activity has contributor equaling to current user
+        im = ItemMetadata.query.filter_by(id=activity.item_id) \
+            .filter(
+            cast(ItemMetadata.json['shared_user_id'], types.INT)
+            == int(cur_user)).one_or_none()
+        if im:
+            # There is an ItemMetadata with contributor equaling to current
+            # user, allow to access
+            return 0
+    # Check current user is action handler of activity
+    activity_action_obj = ActivityAction.query.filter_by(
+        activity_id=activity_id, action_id=action_id).first()
+    if (activity_action_obj.action_handler
+            and int(activity_action_obj.action_handler) == int(cur_user)
+            and contain_login_item_application):
         return 0
 
     # Otherwise, user has no permission
@@ -575,7 +640,8 @@ def next_action(activity_id='0', action_id=0):
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
 
-    if action_endpoint == 'item_login':
+    if action_endpoint == 'item_login' or \
+            'item_login_application' == action_endpoint:
         register_cnri(activity_id)
 
     activity_detail = work_activity.get_activity_detail(activity_id)
@@ -583,6 +649,15 @@ def next_action(activity_id='0', action_id=0):
     recid = None
     record = None
     pid_without_ver = None
+
+    if current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
+        flow = Flow()
+        next_flow_action = flow.get_next_flow_action(
+            activity_detail.flow_define.flow_id, action_id)
+        next_action_endpoint = next_flow_action[0].action.action_endpoint
+        process_send_notification_mail(activity_detail,
+                                       action_endpoint, next_action_endpoint)
+
     if activity_detail and activity_detail.item_id:
         item_id = activity_detail.item_id
         current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
@@ -615,6 +690,14 @@ def next_action(activity_id='0', action_id=0):
             action_id=action_id,
             journal=post_json.get('journal')
         )
+
+    if action_endpoint == 'item_login' \
+            and is_usage_application_item_type(activity_detail):
+        # Finish and approve permission
+        status_doing = 0
+        permission = FilePermission.find_by_activity(activity_id)
+        if permission:
+            FilePermission.update_status(permission, status_doing)
 
     if 'approval' == action_endpoint:
         if item_id is not None:
@@ -788,6 +871,24 @@ def next_action(activity_id='0', action_id=0):
                         )
                         updated_item.publish(parent_record)
                 delete_unregister_buckets(new_activity_id)
+            # Set permission to Approved
+            if is_usage_application_item_type(activity_detail):
+                open_date = datetime.now()
+                permission = FilePermission.find_by_activity(activity_id)
+                if permission:
+                    status_done = 1
+                    FilePermission.update_status(permission, status_done)
+                    FilePermission.update_open_date(permission, open_date)
+
+            action_status = activity['action_status']
+            if (is_usage_application_item_type(activity_detail) and
+                    action_status == ActionStatusPolicy.ACTION_DONE):
+                # new a usage report here
+                work_activity = WorkActivity()
+                current_item_id = work_activity.get_activity_detail(
+                    activity_id).item_id
+                create_usage_report(activity_id, current_item_id)
+
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
@@ -1108,6 +1209,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
 
+
 @blueprint.route('/get_feedback_maillist/<string:activity_id>',
                  methods=['GET'])
 @login_required
@@ -1140,3 +1242,37 @@ def get_feedback_maillist(activity_id='0'):
     except (ValueError, Exception):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
+
+
+@blueprint.route('/check_approval/<string:activity_id>', methods=['GET'])
+@login_required
+def check_approval(activity_id='0'):
+    """Check approval."""
+    response = {
+        'check_handle': -1,
+        'check_continue': -1,
+        'error': 1
+    }
+    try:
+        response = check_continue(response, activity_id)
+    except (ValueError, Exception):
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        response['error'] = -1
+    return jsonify(response)
+
+
+@blueprint.route('/send_mail/<string:activity_id>/<string:mail_template>',
+                 methods=['POST'])
+@login_required
+def send_mail(activity_id='0', mail_template=''):
+    """Send mail.
+
+    :param activity_id:
+    :param mail_template:
+    :return:
+    """
+    work_activity = WorkActivity()
+    activity_detail = work_activity.get_activity_detail(activity_id)
+    if current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
+        process_send_reminder_mail(activity_detail, mail_template)
+    return jsonify(code=1, msg=_('Success'))

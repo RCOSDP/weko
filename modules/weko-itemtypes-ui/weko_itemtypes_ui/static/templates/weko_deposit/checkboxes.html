@@ -1,0 +1,21 @@
+<div sf-array="form"
+ class="form-group schema-form-checkboxes {{form.htmlClass}}"
+ ng-class="{'has-error': hasError()}">
+    <label class="control-label col-sm-3 checkbox" ng-show="showTitle()">{{form.title}}</label>
+
+    <div class="col-sm-9">
+        <div class="checkbox ng-scope">
+            <label class="checkbox col-sm-4 checkbox-input" ng-repeat="val in titleMapValues track by $index">
+                <input type="checkbox"
+                    ng-disabled="form.readonly"
+                    sf-changed="form"
+                    class="{{form.fieldHtmlClass}}"
+                    ng-model="titleMapValues[$index]"
+                    schema-vaidate="form"
+                    name="{{form.key.slice(-1)[0]}}">
+                <span ng-bind-html="form.titleMap[$index].name" style="overflow-wrap: break-word;"></span>
+            </label>
+        </div>
+    </div>
+    <div class="help-block" sf-message="form.description"></div>
+</div>

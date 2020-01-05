@@ -484,3 +484,23 @@ msgstr ""
 #~ msgid "Update flow action successfully"
 #~ msgstr ""
 
+msgid "Terms and Conditions"
+msgstr ""
+
+msgid "I have read and agreed to the Terms and Conditions"
+msgstr ""
+
+msgid "Application Date"
+msgstr ""
+
+msgid "Approved Date"
+msgstr ""
+
+msgid "Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?"
+msgstr "Use of JGSS data is considered as &quot;Continue&quot;. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?"
+
+msgid "Stop/Continue"
+msgstr ""
+
+msgid "After checking the Terms and Conditions, please check the [I have read and agreed to the Terms and Conditions] at the end of scroll."
+msgstr ""

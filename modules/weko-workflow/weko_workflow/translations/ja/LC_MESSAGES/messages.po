@@ -524,3 +524,23 @@ msgstr "閉じる"
 #~ msgid "Create WorkFlow"
 #~ msgstr "フロー作成"
 
+msgid "Terms and Conditions"
+msgstr "利用規約"
+
+msgid "I have read and agreed to the Terms and Conditions"
+msgstr "利用規約に同意する"
+
+msgid "Application Date"
+msgstr "申請日"
+
+msgid "Approved Date"
+msgstr "承認日"
+
+msgid "Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?"
+msgstr "JGSSデータの利用は「継続」とされています。承認するとこの利用報告は終了となりますがよろしいでしょうか。終了した利用報告を復活させることはできません。"
+
+msgid "Stop/Continue"
+msgstr "終了／継続"
+
+msgid "After checking the Terms and Conditions, please check the [I have read and agreed to the Terms and Conditions] at the end of scroll."
+msgstr "利用規約を確認の上、スクロール最下部にある「利用規約に同意する」にチェックを入れてください"

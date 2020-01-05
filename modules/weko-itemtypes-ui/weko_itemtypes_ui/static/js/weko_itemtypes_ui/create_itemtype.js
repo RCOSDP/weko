@@ -611,11 +611,12 @@ $(document).ready(function () {
             add: "New",
             style: {add:"btn-success"},
             items: [{
-              key: row_id+'[].interim',
-              type: tmp.input_type,         // checkboxes
+              key: row_id + '[].interim',
+              type: "template",
               notitle: true,
               titleMap: titleMap_tmp
-            }]
+            }],
+            templateUrl: "/static/templates/weko_deposit/checkboxes.html"
           });
         } else {
           // 選択式(プルダウン)
@@ -630,11 +631,12 @@ $(document).ready(function () {
           page_global.table_row_map.form.push({
             key: row_id,
             title_i18n: tmp.title_i18n,
-            type: tmp.input_type,         // checkboxes
-            titleMap: titleMap_tmp
+            type: "template",
+            titleMap: titleMap_tmp,
+            templateUrl: "/static/templates/weko_deposit/checkboxes.html",
           });
         }
-      } else if(tmp.input_type == 'radios' || tmp.input_type == 'select') {
+      } else if(tmp.input_type == 'select') {
         tmp.input_value = $("#schema_"+row_id).find(".select-value-setting").val();
         enum_tmp = []
         titleMap_tmp = []
@@ -681,6 +683,58 @@ $(document).ready(function () {
             key: row_id,
             title_i18n: tmp.title_i18n,
             type: tmp.input_type,    // radios|select
+            titleMap: titleMap_tmp
+          });
+        }
+      } else if(tmp.input_type == 'radios') {
+        tmp.input_value = $("#schema_" + row_id).find(".select-value-setting").val();
+        enum_tmp = [];
+        titleMap_tmp = [];
+        $.each(tmp.input_value.split('|'), function (i, v) {
+          enum_tmp.push(v);
+          titleMap_tmp.push({value: v, name: v});
+        });
+
+        if(tmp.option.multiple) {
+          page_global.table_row_map.schema.properties[row_id] = {
+            type: "array",
+            title: tmp.title,
+            minItems: tmp.input_minItems,
+            maxItems: tmp.input_maxItems,
+            items: {
+              type: "object",
+              properties: {
+                interim: {                  // [interim]は本当の意味を持たない
+                  type: "string",
+                  enum: enum_tmp
+                }
+              }
+            }
+          };
+          page_global.table_row_map.form.push({
+            key: row_id,
+            title_i18n: tmp.title_i18n,
+            add: "New",
+            style: {add:"btn-success"},
+            items: [{
+              key: row_id+'[].interim',
+              type: "template",
+              notitle: true,
+              templateUrl: "/static/templates/weko_deposit/radios.html",
+              titleMap: titleMap_tmp
+            }]
+          });
+        } else {
+          page_global.table_row_map.schema.properties[row_id] = {
+            type: "string",
+            title: tmp.title,
+            enum: enum_tmp
+          };
+          page_global.table_row_map.form.push({
+            key: row_id,
+            title_i18n: tmp.title_i18n,
+            type: "template",    // radios|select
+            templateUrl: "/static/templates/weko_deposit/radios.html",
             titleMap: titleMap_tmp
           });
         }
@@ -756,6 +810,7 @@ $(document).ready(function () {
   $('#btn_new_itemtype_meta').on('click', function(){
     new_meta_row('item_'+$.now());
   });
+
   function new_meta_row(row_id) {
     var row_template = '<tr id="tr_' + row_id + '">'
         + '<td><input type="text" class="form-control" id="txt_title_' + row_id + '" value="">'
@@ -1024,18 +1079,16 @@ $(document).ready(function () {
       odered = {}
       others = ''
       for (var key in data) {
-        if (key == 'defaults') continue;
-        if (data[key].name === meta_system_info.updated_date.input_type){
+        if (key === 'defaults') continue;
+        if (data[key].name === meta_system_info.updated_date.input_type) {
           meta_system_info.updated_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.created_date.input_type){
           meta_system_info.created_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type){
+        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type) {
           meta_system_info.persistent_identifier_doi.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type){
-          meta_system_info.created_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.ranking_page_url.input_type){
+        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type) {
+          meta_system_info.persistent_identifier_h.input_type = "cus_" + key;
           meta_system_info.ranking_page_url.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.belonging_index_info.input_type){
+        } else if (data[key].name === meta_system_info.belonging_index_info.input_type) {
           meta_system_info.belonging_index_info.input_type = "cus_" + key;
         }
         option = '<option value="cus_' + key + '">' + data[key].name + '</option>';

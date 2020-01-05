@@ -113,6 +113,9 @@ WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION = 'OA Policy Confirmation'
 WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT = 'Identifier Grant'
 """Identifier Grant Action"""
 
+WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION = ''
+"""Action Item Registration for Usage Application"""
+
 WEKO_WORKFLOW_ACTION_ADMINISTRATOR = ''
 """Action Approval by Administrator"""
 
@@ -133,5 +136,75 @@ WEKO_WORKFLOW_ACTIONS = [
 ]
 """Action list"""
 
+WEKO_WORKFLOW_COLUMNS = [
+    'updated',
+    'activity_id',
+    'ItemName',
+    'flows_name',
+    'action_name',
+    'StatusDesc',
+    'email'
+]
+"""Work flow activity columns"""
+
 WEKO_WORKFLOW_VALIDATION_ENABLE = False
 """Enable validation on Flow List screen"""
+
+WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL = True
+
+WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE = False
+"""Enable showing index selection for item type"""
+
+WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE = False
+"""Enable showing term of use"""
+
+WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL = True
+"""Enable showing function feed back mail"""
+
+WEKO_WORKFLOW_ENABLE_CONTRIBUTOR = True
+"""Enable Contributor"""
+
+WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_LANGUAGES = []
+"""Term and condition file language list"""
+
+WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_LOCATION = ""
+"""Term and condition file location"""
+
+WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_EXTENSION = ''
+"""Term and condition file extension"""
+
+WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY = False
+""" Show activity to tabs: Todo, Wait, All """
+
+WEKO_WORKFLOW_CONTINUE_APPROVAL = False
+
+WEKO_WORKFLOW_ENGLISH_MAIL_TEMPLATE_FOLDER_PATH = ''
+WEKO_WORKFLOW_JAPANESE_MAIL_TEMPLATE_FOLDER_PATH = ''
+"""Email template path"""
+
+WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_GENERAL_USER = ''
+"""Receiving Usage Application <Other than Perfecture Data & Location Data: General user> mail template"""
+WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR_GRADUATED_STUDENT = ''
+"""Receiving Usage Application <Other than Perfecture Data & Location Data: Graduated Student OR Student> mail template"""
+
+WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA_OF_GENERAL_USER = ''
+"""Receiving Usage Application <Other than Perfecture Data & Location Data: Graduated Student OR Student> mail template"""
+WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA_OF_STUDENT_OR_GRADUATED_STUDENT = ''
+"""Receiving Usage Application <Perfecture Data & Location Data: General user> mail template"""
+
+WEKO_WORKFLOW_REQUEST_APPROVAL_TO_ADVISOR_OF_USAGE_APP = ''
+"""Request Approval to the Advisor of Usage Application mail template"""
+WEKO_WORKFLOW_REQUEST_APPROVAL_TO_GUARANTOR_OF_USAGE_APP = ''
+"""Request Approval to the Guarantor of Usage Application mail template"""
+
+WEKO_WORKFLOW_APPROVE_USAGE_APP_BESIDE_LOCATION_DATA = ''
+"""Approve Usage Application <Other than Location> mail template"""
+WEKO_WORKFLOW_APPROVE_LOCATION_DATA = ''
+"""Approve Usage Application  <Location data> mail template"""
+
+WEKO_WORKFLOW_REMIND_SUBMIT_DATA_USAGE_REPORT_FOR_USER_BESIDE_GRADUATED_STUDENT = ''
+"""Remind to submit the Data Usage Report <Other than Graduated Student> mail template"""
+WEKO_WORKFLOW_REMIND_SUBMIT_DATA_USAGE_REPORT_FOR_GRADUATED_STUDENT = ''
+
+WEKO_WORKFLOW_USAGE_REPORT_INDEX_NAME = ''
+WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = ''

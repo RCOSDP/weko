@@ -28,11 +28,12 @@ from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from sqlalchemy import asc, desc, types
+from sqlalchemy import asc, desc, or_, types
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
+from weko_records.serializers.utils import get_item_type_name
 
 from .config import ITEM_REGISTRATION_FLOW_ID
 from .models import Action as _Action
@@ -425,6 +426,7 @@ class WorkFlow(object):
                     _workflow.flows_name = workflow.get('flows_name')
                     _workflow.itemtype_id = workflow.get('itemtype_id')
                     _workflow.flow_id = workflow.get('flow_id')
+                    _workflow.index_tree_id = workflow.get('index_tree_id')
                     db.session.merge(_workflow)
             db.session.commit()
             return _workflow
@@ -475,6 +477,14 @@ class WorkFlow(object):
                 flows_id=workflow_id)
             query.delete(synchronize_session=False)
         db.session.commit()
+
+    def find_workflow_by_name(self, workflow_name):
+        """Find workflow by name.
+
+        :param workflow_name:
+        :return:
+        """
+        return _WorkFlow.query.filter_by(flows_name=workflow_name).first()
 
 
 class Action(object):
@@ -584,6 +594,7 @@ class WorkActivity(object):
         try:
             action_id = 0
             next_action_id = 0
+            action_has_term_of_use = False
             with db.session.no_autoflush:
                 action = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
@@ -597,7 +608,18 @@ class WorkActivity(object):
                         asc(_FlowAction.action_order)).all()
                     if flow_actions and len(flow_actions) >= 2:
                         next_action_id = flow_actions[1].action_id
+                        enable_show_term_of_use = current_app.config[
+                            'WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']
+                        if enable_show_term_of_use:
+                            application_item_types = current_app.config[
+                                'WEKO_ITEMS_UI_SHOW_TERM_AND_CONDITION']
+                            item_type_name = \
+                                get_item_type_name(activity.get('itemtype_id'))
+                            if item_type_name in application_item_types:
+                                action_has_term_of_use = True
 
+            activity_confirm_term_of_use = False if\
+                action_has_term_of_use else True
             db_activity = _Activity(
                 # Dummy activity ID, the real one will be updated
                 #   after this activity is created
@@ -612,7 +634,8 @@ class WorkActivity(object):
                 activity_update_user=current_user.get_id(),
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
                 activity_start=datetime.utcnow(),
-                activity_community_id=community_id
+                activity_community_id=community_id,
+                activity_confirm_term_of_use=activity_confirm_term_of_use
             )
             db.session.add(db_activity)
         except Exception as ex:
@@ -679,12 +702,20 @@ class WorkActivity(object):
 
                 with db.session.begin_nested():
                     db.session.add(db_history)
-
+                    # set action handler for all the action except approval
+                    # actions
                     for flow_action in flow_actions:
+                        action_instance = Action()
+                        action = action_instance.get_action_detail(
+                            flow_action.action_id)
+                        action_handler = current_user.get_id() \
+                            if not action.action_endpoint.startswith(
+                            'approval_') else -1
                         db_activity_action = ActivityAction(
                             activity_id=db_activity.activity_id,
                             action_id=flow_action.action_id,
                             action_status=ActionStatusPolicy.ACTION_DONE,
+                            action_handler=action_handler
                         )
                         db.session.add(db_activity_action)
 
@@ -703,6 +734,20 @@ class WorkActivity(object):
                 db.session.commit()
 
                 return db_activity
+
+    def upt_activity_agreement_step(self, activity_id, is_agree):
+        """Update agreement step of activity.
+
+        :param activity_id:
+        :param is_agree:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            activity.activity_confirm_term_of_use = is_agree
+            db.session.merge(activity)
+        db.session.commit()
 
     def upt_activity_action(self, activity_id, action_id, action_status):
         """Update activity info.
@@ -1055,14 +1100,133 @@ class WorkActivity(object):
 
         :return:
         """
+        def get_count_done_histories_by_activity(activity_id):
+            """Get count done histories by activity.
+
+            :activity_id:
+                table: workflow_activity, column: activity_id
+            """
+            history = WorkActivityHistory()
+            histories = history.get_activity_history_list(activity_id)
+            action_done = []
+            for his in histories:
+                if ActivityStatusPolicy.ACTIVITY_FINALLY == his.action_status:
+                    action_done.append(his)
+            return len(action_done)
+
+        def get_activity_type(user_step, action_done_len, advisor_email,
+                              guarantor_email):
+            """Get activity type for this activity (Todo, Wait, All).
+
+            :user_step: register: 0, advisor: 1, guarantor: 2, administrator: 3
+            :action_done_len: 1: register doing, 2, advisor doing,
+                3: guarantor, 4: admin doing
+            """
+            """ Matrix show activities:
+             ____________________________________________________________________________________________________
+             |							|		|Register		| Guarantor		| Advisor		| Adminstrator	|
+             |Action					|Status	|Todo/Wait/All	|Todo/Wait/All	|Todo/Wait/All	|Todo/Wait/All	|
+             |==========================|=======|===============|===============|===============|===============|
+            1|Item Registration			|Doing	|●	〇	●		|〇	〇	〇		|〇	〇	〇		|〇	〇	〇		|
+            2|							|Done	|〇	●	〇		|●	〇	●		|〇	〇	〇		|〇	〇	〇		|
+            3|							|Doing	|〇	●	〇		|●	〇	●		|〇	〇	〇		|〇	〇	〇		|
+            4|Approval by Guarantor		|Done	|〇	●	〇		|〇	〇	●		|●	〇	●		|〇	〇	〇		|
+            5|							|Doing	|〇	●	〇		|〇	〇	●		|●	〇	●		|〇	〇	〇		|
+            6|Approval by Advisor		|Done	|〇	●	〇		|〇	〇	●		|〇	〇	●		|●	〇	●		|
+            7|							|Doing	|〇	●	〇		|〇	〇	●		|〇	〇	●		|●	〇	●		|
+            8|Approval by Administrator	|Done	|〇	〇	●		|〇	〇	●		|〇	〇	●		|〇	〇	●		|
+             |__________________________|_______|_______________|_______________|_______________|_______________|
+            show_activity = (
+                0 => (column 'Register' in table matrix: (row 1, 2, 4, 6, 8)),
+                1 => (column 'Guarantor' in table matrix: (row 1, 2, 4, 6, 8)),
+                2 => (column 'Advisor' in table matrix: (row 1, 2, 4, 6, 8)),
+                3 => (column 'Administrator' in table matrix: (row 1, 2, 4, 6, 8))
+            )
+            """
+            show_activity = ()
+            if guarantor_email is None and advisor_email is None:
+                show_activity = (
+                    ((1, 0, 1), (0, 1, 0), (0, 0, 1)),
+                    ((0, 0, 0), (0, 0, 0), (0, 0, 0)),
+                    ((0, 0, 0), (0, 0, 0), (0, 0, 0)),
+                    ((0, 0, 0), (1, 0, 1), (0, 0, 1))
+                )
+                if action_done_len > 3:
+                    action_done_len = 3
+            elif guarantor_email is None:
+                show_activity = (
+                    ((1, 0, 1), (0, 1, 0), (0, 1, 0), (0, 0, 1)),
+                    ((0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)),
+                    ((0, 0, 0), (1, 0, 1), (0, 0, 1), (0, 0, 1)),
+                    ((0, 0, 0), (0, 0, 0), (1, 0, 1), (0, 0, 1))
+                )
+                if action_done_len > 4:
+                    action_done_len = 4
+            elif advisor_email is None:
+                show_activity = (
+                    ((1, 0, 1), (0, 1, 0), (0, 1, 0), (0, 0, 1)),
+                    ((0, 0, 0), (1, 0, 1), (0, 0, 1), (0, 0, 1)),
+                    ((0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)),
+                    ((0, 0, 0), (0, 0, 0), (1, 0, 1), (0, 0, 1))
+                )
+            else:
+                show_activity = (
+                    ((1, 0, 1), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 0, 1)),
+                    ((0, 0, 0), (1, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)),
+                    ((0, 0, 0), (0, 0, 0), (1, 0, 1), (0, 0, 1), (0, 0, 1)),
+                    ((0, 0, 0), (0, 0, 0), (0, 0, 0), (1, 0, 1), (0, 0, 1))
+                )
+                if action_done_len > 5:
+                    action_done_len = 5
+            show_activity_tuple = show_activity[user_step][
+                action_done_len - 1]
+            activi_type = ''
+            comma = ', '
+            if show_activity_tuple[0] == 1:
+                activi_type += 'ToDo' + comma
+            if show_activity_tuple[1] == 1:
+                activi_type += 'Wait' + comma
+            if show_activity_tuple[2] == 1:
+                activi_type += 'All' + comma
+            return activi_type
+
+        def get_user_step(activity_user_id, advisor_email, guarantor_email):
+            """Get user step.
+
+            :activity_user_id: id of user who registered this activity
+                table: workflow_activity, column: activity_id
+            :advisor_email: email of user who is advisor
+                table: item_metadata, column: json, key: advisor_email
+            :guarantor_email: email of user who is guarantor
+                table: item_metadata, column: json, key: guarantor_email
+            """
+            current_user_id = int(current_user.get_id())
+            current_user_step = -1
+            if current_user_id == activity_user_id:
+                """ Current user is register """
+                current_user_step = 0
+            elif current_user.email == advisor_email:
+                """ Current user is advisor """
+                current_user_step = 1
+            elif current_user.email == guarantor_email:
+                """ Current user is guarantor """
+                current_user_step = 2
+            elif is_administrator():
+                """ Current user is administrator """
+                current_user_step = 3
+            return current_user_step
+
+        def is_administrator():
+            """Check is admin user (Super users)."""
+            supers = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            for user_role in list(current_user.roles or []):
+                if user_role.name == supers:
+                    return True
+            return False
+
         with db.session.no_autoflush:
             # Super users
-            is_admin = False
-            supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
-            for role in list(current_user.roles or []):
-                if role.name in supers:
-                    is_admin = True
-                    break
+            is_admin = is_administrator()
             # Community users
             is_community_admin = False
             community_role_name = current_app.config[
@@ -1132,9 +1296,18 @@ class WorkActivity(object):
             # current user
             # After that, do fetching all activity which matches to
             # above ItemMetadata.
-            item_metadata = ItemMetadata.query.filter(
-                cast(ItemMetadata.json['shared_user_id'], types.INT)
-                == self_user_id)
+            if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+                item_metadata = ItemMetadata.query.filter(or_(
+                    cast(ItemMetadata.json['shared_user_id'],
+                         types.INT) == self_user_id,
+                    cast(ItemMetadata.json['advisor_mail'],
+                         types.String) == '"{}"'.format(current_user.email),
+                    cast(ItemMetadata.json['guarantor_mail'],
+                         types.String) == '"{}"'.format(current_user.email)))
+            else:
+                item_metadata = ItemMetadata.query.filter(
+                    cast(ItemMetadata.json['shared_user_id'], types.INT)
+                    == self_user_id)
             item_uuids = [im.id for im in item_metadata]
             contributor_activities = _Activity.query.filter(
                 _Activity.item_id.in_(item_uuids)).all()
@@ -1146,6 +1319,7 @@ class WorkActivity(object):
             activities.sort(key=lambda a: a.activity_id)
 
             for activi in activities:
+                advisor_email = guarantor_email = ''
                 if activi.item_id is None:
                     activi.ItemName = ''
                 else:
@@ -1153,6 +1327,8 @@ class WorkActivity(object):
                         id=activi.item_id).one_or_none()
                     if item:
                         activi.ItemName = item.json.get('title')
+                        advisor_email = item.json.get('advisor_mail')
+                        guarantor_email = item.json.get('guarantor_mail')
                     else:
                         activi.ItemName = ''
                 if activi.activity_status == \
@@ -1168,6 +1344,27 @@ class WorkActivity(object):
                         ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
+
+                """ Check allow show activity to tabs: Todo, Wait, All """
+                if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+                    """ Get user step:
+                    register: 0, advisor: 1, guarantor: 2, administrator: 3 """
+                    user_step = get_user_step(activi.activity_login_user,
+                                              advisor_email, guarantor_email)
+                    """ Get count done histories:
+                    1: register doing, 2, advisor doing, 3: guarantor, 4: admin
+                    """
+                    action_done_len = get_count_done_histories_by_activity(
+                        activi.activity_id)
+                    """ Set activity type for this activity(Todo, Wait, All)"""
+                    activi.type = ''
+                    if user_step == -1:
+                        activi.type = get_activity_type(user_step,
+                                                        action_done_len,
+                                                        advisor_email,
+                                                        guarantor_email)
+                    continue
+
                 if activi.activity_status == \
                         ActivityStatusPolicy.ACTIVITY_FINALLY or \
                         activi.activity_status == \
@@ -1372,7 +1569,8 @@ class WorkActivity(object):
         step_item_login_url = None
         approval_record = []
         pid = None
-        if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
+        if ('item_login' == action_endpoint or 'item_login_application' ==
+                action_endpoint or 'file_upload' == action_endpoint):
             activity_session = dict(
                 activity_id=activity_id,
                 action_id=activity_detail.action_id,
@@ -1469,6 +1667,34 @@ class WorkActivity(object):
             current_app.logger.error(ex)
             return None
 
+    def update_activity_creater(self, activity_id, creater_id):
+        """Update activity owner."""
+        try:
+            with db.session.no_autoflush:
+                activity = _Activity.query.filter_by(
+                    activity_id=activity_id).one_or_none()
+                if activity:
+                    activity.activity_login_user = creater_id
+                    db.session.merge(activity)
+                    db.session.commit()
+        except Exception as ex:
+            current_app.logger.error(ex)
+            return None
+
+    def update_activity_action_handler(self, activity_id, action_handler_id):
+        """Update activity action handler.
+
+        :param activity_id:
+        :param action_handler_id:
+        """
+        with db.session.begin_nested():
+            # set action handler for all the action except approval actions
+            actions = ActivityAction().query.filter_by(
+                activity_id=activity_id).all()
+            for action in actions:
+                action.action_handler = action_handler_id
+                db.session.merge(action)
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity."""
@@ -1529,6 +1755,54 @@ class WorkActivityHistory(object):
                 history.CommentDesc = ActionCommentPolicy.describe(
                     history.action_comment)
             return histories
+
+    def get_application_date(self, activity_id):
+        """Get application date.
+
+        @param activity_id:
+        @return:
+        """
+        with db.session.no_autoflush:
+            actions = _Action.query.filter(
+                _Action.action_endpoint.like('item_login%')).all()
+            if actions:
+                application_item = [action.id for action in actions]
+                query = ActivityHistory.query.filter_by(
+                    activity_id=activity_id).order_by(asc(ActivityHistory.id))
+                histories = query.all()
+                for history in histories:
+                    if (history.action_status == 'F'
+                            and history.action_id in application_item):
+                        application_date = history.action_date
+                        return application_date
+
+    def get_approved_date(self, activity_id):
+        """Get final approval date.
+
+        @param activity_id:
+        @return:
+        """
+        with db.session.no_autoflush:
+            actions = _Action.query.filter(
+                _Action.action_endpoint.like('approval%')).all()
+            end_action = _Action.query.filter_by(
+                action_endpoint='end_action').first()
+            if actions and end_action:
+                actions_id = [action.id for action in actions]
+                query = ActivityHistory.query.filter_by(
+                    activity_id=activity_id).order_by(asc(ActivityHistory.id))
+                histories = query.all()
+                is_approved_date = False
+                approve_date = ""
+                for history in histories:
+                    if history.action_id in actions_id:
+                        is_approved_date = True
+                    if (history.action_status == 'F'
+                            and history.action_id == end_action.id):
+                        approve_date = history.action_date
+                if not is_approved_date:
+                    approve_date = ""
+                return approve_date
 
     def get_activity_history_detail(self, activity_id):
         """Get activity history detail info.

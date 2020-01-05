@@ -283,3 +283,9 @@ PDF_COVERPAGE_LANG_FILENAME = "/pdf_coverpage.json"
 
 WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL = 100
 """Default max width of thumbnail."""
+
+WEKO_RECORDS_UI_DOWNLOAD_DAYS = 7
+"""Default download period."""
+
+WEKO_RECORDS_UI_USAGE_APPLICATION_WORKFLOW_DICT = []
+"""Mapping from role + data type => Usage application workflow."""

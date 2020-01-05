@@ -69,6 +69,12 @@
 {%- endblock page_footer %}
 
 {%- block page_body_main %}
+<!--Approval confirm modal-->
+{% from "weko_theme/macros/modal_page.html" import approval_modal %}
+{{approval_modal('confirm_modal', 'confirm_approval_btn', _('OK'),_('JGSS'),_('Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?'))}}
+<input type="hidden" id="warning_message" name="warning_message"
+            value="{{_('Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?')}}">
+<input type="hidden" id="a" name="a" value="{{_('Stop_Continue')}}">
 <div class="row">
   {%-if community%}
     <div id="community_id" class="hide">{{community.id}}</div>
@@ -219,7 +225,9 @@
           {%- else %}
             <div class="panel-body" id="step_page">
               <div class="hide" id="hide-actionId">{{action_id}}</div>
-              {%- if 'item_login' == cur_step or 'file_upload' == cur_step %}
+               <div class="hide" id="hide-actionstep_item_login_url">{{step_item_login_url}}</div>
+               <div class="hide" id="hide-actioncur_step">{{cur_step}}</div>
+               {%- if 'item_login' == cur_step or 'item_login_application' == cur_step or 'file_upload' == cur_step %}
                 {% include step_item_login_url %}
               {%- elif 'item_link' == cur_step %}
                 {% include "weko_workflow/item_link.html" %}

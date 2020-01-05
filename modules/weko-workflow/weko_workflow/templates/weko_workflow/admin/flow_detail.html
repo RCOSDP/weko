@@ -127,7 +127,8 @@
                 <div class="form-inline">
                   <div class="hide">{{action.action_role.action_role}}</div>
                   <div class="hide">{{action.action_role.action_role_exclude}}</div>
-                  <select class="form-control td_action_role" id="td_action_role_{{action.action_id}}" data-action-id="{{action.action_id}}">
+				          <select class="form-control td_action_role" id="td_action_role_{{action.action_id}}" data-action-id="{{action.action_id}}"
+                      {% if 'Guarantor' in action.action.action_name or 'Advisor' in action.action.action_name %} disabled {% endif %}>
                     <option value="0"></option>
                     {%- for role in roles if role %}
                     <option value="{{role.id}}" {% if role.id == action.action_role.action_role%}selected{% endif %}>{{role.name}}</option>
@@ -142,7 +143,8 @@
               </td>
               <td>
                 <div class="form-inline">
-                  <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}" data-action-id="{{action.action_id}}">
+				          <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}" data-action-id="{{action.action_id}}"
+                    {% if 'Guarantor' in action.action.action_name or 'Advisor' in action.action.action_name %} disabled {% endif %}>
                     <option value="0"></option>
                     {%- for user in users if user %}
                     <option value="{{user.id}}" {% if user.id == action.action_role.action_user%}selected{% endif %}>{{user.email}}</option>
