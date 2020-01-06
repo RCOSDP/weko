@@ -685,7 +685,8 @@ function handleSharePermission(value) {
       };
 
       $scope.autoFillProfileInfo = function () {
-        if ($scope.isExistingUserProfile()) {
+        var needToAutoFillProfileInfo = $("#application_item_type").val();
+        if (needToAutoFillProfileInfo == 'False' || $scope.isExistingUserProfile()) {
           return;
         }
         var user_info_html = $("#user_info_data").val();
@@ -697,14 +698,15 @@ function handleSharePermission(value) {
         // Key for dectecting affiliated institution
         var affiliatedInstitutionName = 'subitem_affiliated_institution_name';
         var affiliatedInstitutionPosition = 'subitem_affiliated_institution_position';
-            Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-              ([key, value]) => {
+        var userInfoKey = null;
+        Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+          ([key, value]) => {
             var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
             if (currentInvenioRecordsSchema.properties) {
               let containAffiliatedDivision = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedDivision);
               let containAffiliatedInstitution = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedInstitution);
               if (containAffiliatedDivision && containAffiliatedInstitution) {
-                $rootScope.recordsVM.invenioRecordsModel[key] = {}
+                $rootScope.recordsVM.invenioRecordsModel[key] = {};
                 var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel[key];
                 Object.entries(currentInvenioRecordsSchema.properties).forEach(([subKey, subValue]) => {
                   if (currentInvenioRecordsSchema.properties[subKey].type == "array") {
@@ -720,22 +722,26 @@ function handleSharePermission(value) {
                         // Set value for each pair of Affiliated Institution data
                         arrAffiliatedData.forEach((value, index) => {
                           currentInvenioRecordsModel[subKey][index] = {};
-                          currentInvenioRecordsModel[subKey][index][affiliatedInstitutionName] = value.subitem_affiliated_institution_name
-                          currentInvenioRecordsModel[subKey][index][affiliatedInstitutionPosition] = value.subitem_affiliated_institution_position
+                          currentInvenioRecordsModel[subKey][index][affiliatedInstitutionName] = value.subitem_affiliated_institution_name;
+                          currentInvenioRecordsModel[subKey][index][affiliatedInstitutionPosition] = value.subitem_affiliated_institution_position;
                         });
-                    }
+                      }
                     }
                   } else {
-                        if (data.results[subKey]) {
-                          $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey])
-                        }
-                  }
-                      });
+                    if (data.results[subKey]) {
+                      $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey])
                     }
                   }
-                }
-            );
+                });
+              }
+            }
           }
+        );
+        if (userInfoKey != null) {
+          // Set read only for user information property
+          $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == userInfoKey)['readonly'] = true;
+        }
+      };
 
       $scope.renderValidationErrorList = function () {
         const activityId = $("#activity_id").text();
@@ -807,13 +813,9 @@ function handleSharePermission(value) {
           $scope.autofillJournal();
         }, 3000);
 
-        setTimeout(() => {
-          var needToAutoFillProfileInfo = $("#application_item_type").val();
-          if(needToAutoFillProfileInfo == 'True')
-          {
-          $scope.autoFillProfileInfo();
-          }
-        }, 500);
+        // Auto fill user profile
+        $scope.autoFillProfileInfo();
+
       });
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
@@ -1398,7 +1400,7 @@ function handleSharePermission(value) {
                     let containSubItemPosition = currentInvenioRecordsSchema.properties.hasOwnProperty(subItemPosition);
                     let containSubItemPositionOther = currentInvenioRecordsSchema.properties.hasOwnProperty(subItemPositionOther);
                     if (containSubItemPosition && containSubItemPositionOther) {
-                        currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
+                        var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
                         var subItemPositionValue = currentInvenioRecordsModel[key][subItemPosition];
                         var subItemPositionOtherValue = currentInvenioRecordsModel[key][subItemPositionOther];
                         if (subItemPositionValue != otherChoice && typeof subItemPositionOtherValue != "undefined" && subItemPositionOtherValue != '') {
