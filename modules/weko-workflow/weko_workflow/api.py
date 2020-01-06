@@ -1153,7 +1153,7 @@ class WorkActivity(object):
                 )
                 if action_done_len > 3:
                     action_done_len = 3
-            elif guarantor_email is None:
+            elif advisor_email is None:
                 show_activity = (
                     ((1, 0, 1), (0, 1, 0), (0, 1, 0), (0, 0, 1)),
                     ((0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)),
@@ -1162,13 +1162,15 @@ class WorkActivity(object):
                 )
                 if action_done_len > 4:
                     action_done_len = 4
-            elif advisor_email is None:
+            elif guarantor_email is None:
                 show_activity = (
                     ((1, 0, 1), (0, 1, 0), (0, 1, 0), (0, 0, 1)),
                     ((0, 0, 0), (1, 0, 1), (0, 0, 1), (0, 0, 1)),
                     ((0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)),
                     ((0, 0, 0), (0, 0, 0), (1, 0, 1), (0, 0, 1))
                 )
+                if action_done_len > 4:
+                    action_done_len = 4
             else:
                 show_activity = (
                     ((1, 0, 1), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 0, 1)),
@@ -1178,6 +1180,8 @@ class WorkActivity(object):
                 )
                 if action_done_len > 5:
                     action_done_len = 5
+            if action_done_len < 1:
+                action_done_len = 1
             show_activity_tuple = show_activity[user_step][
                 action_done_len - 1]
             activi_type = ''
