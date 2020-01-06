@@ -56,7 +56,6 @@ class ResourceSync(object):
                 db.session.add(resource)
             db.session.commit()
             # publish index
-            # Indexes.update(index_id=resource.repository_id, **{'public_state': True})
             return dict(**{
                 'id': resource.id,
             }, **new_data)

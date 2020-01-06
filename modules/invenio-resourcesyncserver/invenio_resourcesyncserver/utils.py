@@ -33,7 +33,7 @@ def to_dict(resource):
         'repository': resource.repository_id,
         'resource_dump_manifest': resource.resource_dump_manifest,
         'url_path': resource.url_path,
-        'repository_name': resource.index.value
+        'repository_name': resource.index.index_name or resource.index.index_name_english
     })
 
 def render_resource_list_xml(index_id):

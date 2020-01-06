@@ -39,11 +39,6 @@ class MainLayout extends React.Component {
               tab_name: edit_label,
               step: 2,
             },
-//            {
-//              tab_key: 'detail',
-//              tab_name: detail_label,
-//              step: 2,
-//            }
           ],
         }
         this.handleChangeTab = this.handleChangeTab.bind(this)
@@ -205,9 +200,6 @@ class ListResourceComponent extends React.Component {
                     return (
                       <tr key={key}>
                         <td style={{display: "flex",justifyContent: "space-around"}}>
-//                          <a className="icon" title="View Resource" onClick={() => this.handleViewDetail(item)}>
-//                            <span className="fa fa-eye glyphicon glyphicon-eye-open"></span>
-//                          </a>
                           <a className="icon" title="Edit Resource">
                             <span className="fa fa-pencil glyphicon glyphicon-pencil" onClick={() => this.handleEdit(item)}></span>
                           </a>
@@ -215,13 +207,12 @@ class ListResourceComponent extends React.Component {
                             <span className="fa fa-trash glyphicon glyphicon-trash" onClick={() => this.handleDelete(item)}></span>
                           </a>
                         </td>
-                        <td>{item.repository}</td>
+                        <td>{item.repository_name + ' <' + item.repository + '>'}</td>
                         <td>
-                          <a href={item.url_path+'/resourcelist.xml'}  target="_blank">{item.url_path+'/resourcelist.xml'}</a>
-
+                          <a href={item.url_path+'/resourcelist.xml'} target="_blank">{item.url_path+'/resourcelist.xml'}</a>
                         </td>
                         <td>
-                           <a href={item.url_path+'/resourcedump.xml'}  target="_blank">{item.url_path+'/resourcedump.xml'}</a>
+                           <a href={item.url_path+'/resourcedump.xml'} target="_blank">{item.url_path+'/resourcedump.xml'}</a>
                         </td>
                         <td>{item.status ? "ON": "OFF"}</td>
                       </tr>
