@@ -66,6 +66,7 @@ services:
       - /code/modules/invenio-communities/invenio_communities.egg-info
       - /code/modules/invenio-mail/invenio_mail.egg-info
       - /code/modules/invenio-deposit/invenio_deposit.egg-info
+      - /code/modules/invenio-resourcesyncserver/invenio_resourcesyncserver.egg-info
       - /code/modules/weko-theme/weko_theme.egg-info
       - /code/modules/weko-itemtypes-ui/weko_itemtypes_ui.egg-info
       - /code/modules/weko-items-ui/weko_items_ui.egg-info
@@ -88,7 +89,6 @@ services:
       - /code/modules/weko-bulkupdate/weko_bulkupdate.egg-info
       - /code/modules/weko-items-autofill/weko_items_autofill.egg-info
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
-      - /code/modules/weko-resourcesyncserver/weko_resourcesyncserver.egg-info
     user: invenio
     links:
       - postgresql
