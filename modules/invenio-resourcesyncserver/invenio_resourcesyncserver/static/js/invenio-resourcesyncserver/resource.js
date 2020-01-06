@@ -314,7 +314,7 @@ class CreateResourceComponent extends React.Component {
   }
 
   generateTreeList(item ,path = '') {
-    const real_path = path ? (path + ' / ' + item.value) : (item.value)
+    const real_path = path ? (path + ' / ' + item.value + '< '+ item.id + ' >') : (item.value +'< '+ item.id + ' >')
     if(!item.children.length) {
       return [{id: item.id, value: real_path}]
     } else {
@@ -336,10 +336,10 @@ class CreateResourceComponent extends React.Component {
       <div className="create-resource">
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Status</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <input type="checkbox" onChange={(e) => {
               const value = e.target.checked
               this.handleChangeState('status', value)
@@ -348,10 +348,10 @@ class CreateResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Repository</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <select className="form-control"
               onChange={(e) => {
                 const value = e.target.value
@@ -369,10 +369,10 @@ class CreateResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Resource Dump Manifest</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <input
               type="checkbox"
               onChange={(e) => {
@@ -384,10 +384,10 @@ class CreateResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Resource List uri</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <input
               type="text"
               className="form-control"
@@ -398,10 +398,10 @@ class CreateResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Resource Dump uri</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <input
               type="text"
               className="form-control"
@@ -413,18 +413,9 @@ class CreateResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
-            <label>Auto start after save</label>
+          <div className="col-md-2">
           </div>
-          <div className="col-md-8">
-            <input type="checkbox"></input>
-          </div>
-        </div>
-
-        <div className="row form-group flex-baseline">
-          <div className="col-md-4">
-          </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <button
                   className="btn btn-primary"
                   onClick={() => { this.handleSubmit()}}
@@ -532,7 +523,7 @@ class EditResourceComponent extends React.Component {
   }
 
   generateTreeList(item ,path = '') {
-    const real_path = path ? (path + ' / ' + item.value) : (item.value)
+    const real_path = path ? (path + ' / ' + item.value + '< '+ item.id + ' >') : (item.value +'< '+ item.id + ' >')
     if(!item.children.length) {
       return [{id: item.id, value: real_path}]
     } else {
@@ -559,10 +550,10 @@ class EditResourceComponent extends React.Component {
       <div className="create-resource">
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Status</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <input
               type="checkbox"
               onChange={(e) => {
@@ -575,10 +566,10 @@ class EditResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Repository</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <select className="form-control"
               onChange={(e) => {
                 const value = e.target.value
@@ -598,10 +589,10 @@ class EditResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Resource Dump Manifest</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <input
               type="checkbox"
               onChange={(e) => {
@@ -616,10 +607,10 @@ class EditResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Resource List uri</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <input
               type="text"
               className="form-control"
@@ -630,10 +621,10 @@ class EditResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
+          <div className="col-md-2 text-right">
             <label>Resource Dump uri</label>
           </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <input
               type="text"
               className="form-control"
@@ -645,18 +636,9 @@ class EditResourceComponent extends React.Component {
         </div>
 
         <div className="row form-group flex-baseline">
-          <div className="col-md-4 text-right">
-            <label>Auto start after save</label>
+          <div className="col-md-2">
           </div>
-          <div className="col-md-8">
-            <input type="checkbox"></input>
-          </div>
-        </div>
-
-        <div className="row form-group flex-baseline">
-          <div className="col-md-4">
-          </div>
-          <div className="col-md-8">
+          <div className="col-md-10">
             <button
                   className="btn btn-primary"
                   onClick={() => { this.handleSubmit()}}
