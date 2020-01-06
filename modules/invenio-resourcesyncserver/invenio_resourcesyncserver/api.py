@@ -55,7 +55,7 @@ class ResourceSync(object):
                 db.session.add(resource)
             db.session.commit()
             # publish index
-            Indexes.update(index_id=resource.repository, **{'public_state': True})
+            # Indexes.update(index_id=resource.repository_id, **{'public_state': True})
             return dict(**{
                 'id': resource.id,
             }, **new_data)
@@ -87,8 +87,7 @@ class ResourceSync(object):
                 resource.url_path = data.get('url_path', resource.url_path)
                 db.session.merge(resource)
             db.session.commit()
-            Indexes.update(index_id=resource.repository, **{'public_state': True})
-
+            # Indexes.update(index_id=resource.repository_id, **{'public_state': True})
             return resource
         except Exception as ex:
             current_app.logger.debug(ex)

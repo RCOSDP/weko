@@ -50,6 +50,7 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import ItemTypes
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.models import FlowDefine, WorkFlow
+from invenio_pidstore.errors import PIDDoesNotExistError
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_REPO_USER, WEKO_SYS_USER
@@ -612,8 +613,10 @@ def handle_check_exist_record(list_recond) -> list:
                 try:
                     item_exist = WekoRecord.get_record_by_pid(item.get('id'))
                     if item_exist:
-                        item['errors'] = ['Item already exists in the system']
+                        item['errors'] = ['Item already EXISTED in the system']
                         item['status'] = None
+                except PIDDoesNotExistError:
+                    current_app.logger.info('PID ID:{} isn\'t existed'.format(item.get('id')))
                 except BaseException:
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])

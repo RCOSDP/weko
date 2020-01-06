@@ -32,6 +32,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
+from weko_index_tree.models import Index
 
 
 class ResourceListIndexes(db.Model, Timestamp):
@@ -50,8 +51,13 @@ class ResourceListIndexes(db.Model, Timestamp):
         default=True
     )
 
-    repository = db.Column(
-        db.String(255), nullable=True, unique=True, index=True)
+    repository_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey(Index.id),
+        nullable=True,
+        unique=True,
+        index=True
+    )
 
     resource_dump_manifest = db.Column(
         db.Boolean(),
@@ -65,6 +71,10 @@ class ResourceListIndexes(db.Model, Timestamp):
     create_date = db.Column(db.DateTime, default=datetime.now)
 
     update_date = db.Column(db.DateTime, default=datetime.now)
+
+    user = db.relationship(
+        Index, backref='index', foreign_keys=[repository_id])
+    """Relation to the User making the inclusion request."""
 
 
 __all__ = ([

@@ -30,7 +30,7 @@ def to_dict(resource):
     return dict(**{
         'id': resource.id,
         'status': resource.status,
-        'repository': resource.repository,
+        'repository': resource.repository_id,
         'resource_dump_manifest': resource.resource_dump_manifest,
         'url_path': resource.url_path,
     })
