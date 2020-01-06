@@ -136,3 +136,32 @@ ng\:form {
 .detail-table tr th:nth-child(1) {
   width: 30%;
 }
+
+.spinner {
+  border: 10px solid #d4d4d4;
+  border-radius: 50%;
+  border-top: 10px solid #000000;
+  width: 30px;
+  height: 30px;
+  -webkit-animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

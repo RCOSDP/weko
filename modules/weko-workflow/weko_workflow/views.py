@@ -97,6 +97,11 @@ def index():
         activities = activity.get_activity_list()
 
     columns = current_app.config.get('WEKO_WORKFLOW_COLUMNS')
+    req_per_page = current_app.config.get('WEKO_WORKFLOW_PER_PAGE')
+    pagination_visible_pages = current_app.config.get(
+        'WEKO_WORKFOW_PAGINATION_VISIBLE_PAGES')
+    options = current_app.config.get('WEKO_WORKFLOW_SELECT_DICT')
+    item_type = current_app.config.get('WEKO_ITEMS_UI_USAGE_REPORT')
     get_application_and_approved_date(activities, columns)
 
     from weko_theme.utils import get_design_layout
@@ -111,7 +116,10 @@ def index():
         render_widgets=render_widgets,
         enable_show_activity=current_app.config[
             'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'],
-        activities=activities, community_id=community_id, columns=columns, **ctx
+        activities=activities, req_per_page=req_per_page,
+        pagination_visible_pages=pagination_visible_pages,
+        options=options, item_type=item_type,
+        community_id=community_id, columns=columns, **ctx
     )
 
 

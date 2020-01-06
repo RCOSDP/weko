@@ -45,6 +45,8 @@ from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name, get_mapping
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
+from invenio_records.models import RecordMetadata
+from weko_deposit.api import WekoDeposit
 
 from .api import WorkActivity, WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
@@ -973,11 +975,10 @@ def send_mail_reminder(mail_info):
     """
     from weko_items_ui.utils import get_user_info_by_username
     subject, body = email_pattern_reminder(mail_info.get('template'))
-    user_info = get_user_info_by_username(mail_info.get('user_name'))
 
-    if body and subject and user_info:
+    if body and subject:
         body = replace_characters(mail_info, body)
-        send_mail(subject, user_info.get('email'), body)
+        send_mail(subject, mail_info.get('update_user_mail'), body)
 
 
 def send_mail_approval_done(mail_info):
@@ -1047,14 +1048,14 @@ def email_pattern_reminder(mail_template):
     :mail_template: mail template
     """
     config = current_app.config
-    if mail_template == '11':
-        return get_mail_data(config.get(
-            "WEKO_WORKFLOW_REMIND_SUBMIT_DATA_"
-            "USAGE_REPORT_FOR_USER_BESIDE_GRADUATED_STUDENT"))
-    elif mail_template == '12':
-        return get_mail_data(config.get(
-            "WEKO_WORKFLOW_REMIND_SUBMIT_"
-            "DATA_USAGE_REPORT_FOR_GRADUATED_STUDENT"))
+    if mail_template == '0':
+        return get_mail_data(
+            config.get("WEKO_WORKFLOW_REMIND_SUBMIT_DATA_USAGE_REPORT_FOR"
+                       "_USER_BESIDE_GRADUATED_STUDENT"))
+    elif mail_template == '1':
+        return get_mail_data(
+            config.get("WEKO_WORKFLOW_REMIND_SUBMIT_DATA_USAGE_REPORT_FOR"
+                       "_GRADUATED_STUDENT"))
     return None, None
 
 
@@ -1082,21 +1083,24 @@ def email_pattern_registration_done(user_role, item_type_name):
         return None, None
     if user_role and user_role == general_role:
         if item_type_name not in group:
-            return get_mail_data(current_config.get(
-                "WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_"
-                "PERFECTURE_AND_LOCATION_DATA_OF_GENERAL_USER"))
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
+                                   "_PERFECTURE_AND_LOCATION_DATA_OF"
+                                   "_GENERAL_USER"))
         elif item_type_name in group:
-            return get_mail_data(current_config.get(
-                "WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA_OF_GENERAL_USER"))
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
+                                   "_OF_GENERAL_USER"))
     elif user_role and user_role in [graduated_student_role, student_role]:
         if item_type_name not in group:
-            return get_mail_data(current_config.get(
-                "WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_"
-                "AND_LOCATION_DATA_OF_STUDENT_OR_GRADUATED_STUDENT"))
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
+                                   "_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR"
+                                   "_GRADUATED_STUDENT"))
         elif item_type_name in group:
-            return get_mail_data(current_config.get(
-                "WEKO_WORKFLOW_PERFECTURE_OR_"
-                "LOCATION_DATA_OF_STUDENT_OR_GRADUATED_STUDENT"))
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
+                                   "_OF_STUDENT_OR_GRADUATED_STUDENT"))
     return None, None
 
 
@@ -1176,17 +1180,18 @@ def get_file_path(file_name):
 
     :file_name: file name
     """
-    """ Get template folder path """
+    import os
+    from invenio_i18n.ext import current_i18n
     config = current_app.config
     template_folder_path = None
     if current_i18n.language == 'ja':
-        template_folder_path = config.get(
-            "WEKO_WORKFLOW_JAPANESE_MAIL_TEMPLATE_FOLDER_PATH")
+        template_folder_path = \
+            config.get("WEKO_WORKFLOW_JAPANESE_MAIL_TEMPLATE_FOLDER_PATH")
     elif current_i18n.language == 'en':
-        template_folder_path = config.get(
-            "WEKO_WORKFLOW_ENGLISH_MAIL_TEMPLATE_FOLDER_PATH")
+        template_folder_path = \
+            config.get("WEKO_WORKFLOW_ENGLISH_MAIL_TEMPLATE_FOLDER_PATH")
 
-    """ Get file path (template folder path + file name) """
+    """ Get file path (template path + file name) """
     file_path = os.path.join(template_folder_path, file_name)
     return file_path
 
@@ -1233,23 +1238,10 @@ def get_register_info(activity_id):
     for activity_history in histories:
         if 'Item Registration' in activity_history.ActionName[0] and \
                 activity_history.StatusDesc == 'action_done':
-            register_user = activity_history.user.email
-            register_date = activity_history.action_date.strftime('%Y-%m-%d')
-            return register_user, register_date
+            return activity_history.user.email, \
+                    activity_history.action_date.strftime('%Y-%m-%d')
 
     return current_user.email, datetime.today().strftime('%Y-%m-%d')
-
-
-def get_info_from_item(item):
-    """Get info from item.
-
-    :item: object
-    """
-    item_info = dict()
-    for k, v in item.items():
-        if type(v) is dict:
-            item_info.update(v)
-    return item_info
 
 
 def get_approval_dates(mail_info):
@@ -1277,7 +1269,11 @@ def get_item_info(item_id):
     except Exception:
         temp = dict()
         return temp
-    return get_info_from_item(item)
+    item_info = dict()
+    for k, v in item.items():
+        if type(v) is dict:
+            item_info.update(v)
+    return item_info
 
 
 def set_mail_info(item_info, activity_detail):
@@ -1317,6 +1313,13 @@ def process_send_reminder_mail(activity_detail, mail_template):
     item_info = get_item_info(activity_detail.item_id)
     mail_info = set_mail_info(item_info, activity_detail)
 
+    from weko_items_ui.utils import get_user_information
+    update_user = get_user_information(activity_detail.activity_update_user)
+    mail_info['update_user_mail'] = update_user.get('email')
+    if not mail_info.get('user_name'):
+        mail_info['user_name'] = update_user.get('username')
+    if not mail_info.get('mail_address'):
+        mail_info['mail_address'] = update_user.get('email')
     mail_info['template'] = mail_template
     send_mail_reminder(mail_info)
 
@@ -1336,7 +1339,6 @@ def process_send_notification_mail(
     workflow_detail = workflow.get_workflow_by_id(
         activity_detail.workflow_id)
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
-
     mail_info['item_type_name'] = item_type_name
     mail_info['next_step'] = next_action_endpoint
     """ Set registration date to 'mail_info' """
@@ -1413,7 +1415,6 @@ def create_record_metadata(activity, item_id, activity_id):
                 if isinstance(attribute, list):
                     for data in attribute:
                         for key in data:
-
                             if key.startswith("subitem"):
                                 data_dict[key] = data.get(key)
 
