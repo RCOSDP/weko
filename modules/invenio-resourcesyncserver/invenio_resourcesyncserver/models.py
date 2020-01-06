@@ -72,7 +72,7 @@ class ResourceListIndexes(db.Model, Timestamp):
     update_date = db.Column(db.DateTime, default=datetime.now)
 
     index = db.relationship(
-        Index, backref='index', foreign_keys=[repository_id])
+        Index, backref='repo_id', foreign_keys=[repository_id])
     """Relation to the User making the inclusion request."""
 
 
