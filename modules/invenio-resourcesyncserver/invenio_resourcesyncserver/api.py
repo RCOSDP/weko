@@ -202,7 +202,7 @@ class ResourceSync(object):
             if item:
                 id_item = item.get('_source').get('_item_metadata').get(
                     'control_number')
-                url = '{1}records/{2}'.format(request.url_root, str(id_item))
+                url = '{}records/{}'.format(request.url_root, str(id_item))
                 rl.add(Resource(url, lastmod=item.get('_source').get(
                     '_updated')))
         return rl.as_xml()
@@ -218,7 +218,7 @@ class ResourceSync(object):
             if item:
                 id_item = item.get('_source').get('_item_metadata').get(
                     'control_number')
-                url = '{1}resync/{2}/file_content.zip'.format(
+                url = '{}resync/{}/file_content.zip'.format(
                     request.url_root,
                     str(id_item))
                 rl.add(
