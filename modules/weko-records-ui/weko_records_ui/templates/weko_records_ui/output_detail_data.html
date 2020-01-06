@@ -37,7 +37,7 @@
     {%- if record_detail_data['attribute_value_mlt'] is string or not record_detail_data['attribute_value_mlt'] -%}
       <tr>
         <th scope="row"
-            colspan="6">{{ record_detail_data['attribute_name'] }}</th>
+            colspan="6">{{ _(record_detail_data['attribute_name']) }}</th>
         <td>{{ record_detail_data['attribute_value_mlt'] }}</td>
       </tr>
     {%- else -%}
