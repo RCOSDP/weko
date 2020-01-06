@@ -56,7 +56,6 @@ class ResourceListIndexes(db.Model, Timestamp):
         db.ForeignKey(Index.id),
         nullable=True,
         unique=True,
-        index=True
     )
 
     resource_dump_manifest = db.Column(
