@@ -58,10 +58,10 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     get_current_user, get_list_email, get_list_username, \
     get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    to_files_js, update_index_tree_for_record, \
-    update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
-    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
-    validate_user_mail_and_index
+    remove_excluded_items_in_json_schema, to_files_js, \
+    update_index_tree_for_record, update_json_schema_by_activity_id, \
+    update_schema_remove_hidden_item, update_sub_items_by_user_role, \
+    validate_form_input_data, validate_user, validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -279,6 +279,10 @@ def get_json_schema(item_type_id=0, activity_id=""):
                 result = updated_json_schema
 
         json_schema = result
+
+        # Remove excluded item in json_schema
+        remove_excluded_items_in_json_schema(item_type_id, json_schema)
+
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])

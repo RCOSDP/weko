@@ -47,6 +47,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import ItemTypes
+from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_file_download_permission
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
@@ -399,6 +400,9 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     """
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
+
+    # Remove excluded item in json_schema
+    remove_excluded_items_in_json_schema(item_id, json_schema)
 
     data['$schema'] = json_schema.copy()
     validation_data = RecordBase(data)
@@ -1063,28 +1067,66 @@ def update_sub_items_by_user_role(item_type_id, schema_form):
     @param schema_form:
     @return:
     """
+    item_type_name = get_item_type_name(item_type_id)
+    excluded_sub_items = get_excluded_sub_items(item_type_name)
+    removed_forms = [
+        form for form in schema_form
+        if form.get('items') and form['items'][0]['key'].split('.')[
+            1] in excluded_sub_items
+    ]
+
+    for item in removed_forms:
+        schema_form.remove(item)
+
+
+def remove_excluded_items_in_json_schema(item_id, json_schema):
+    """Remove excluded items in json_schema.
+
+    :item_id: object
+    :json_schema: object
+    """
+    # Check role for input(5 item type)
+    item_type_name = get_item_type_name(item_id)
+    excluded_sub_items = get_excluded_sub_items(item_type_name)
+    if len(excluded_sub_items) == 0:
+        return
+    """ Check excluded sub item name which exist in json_schema """
+    """     Case exist => add sub item to array """
+    properties = json_schema.get('properties')
+    removed_json_schema = []
+    if properties:
+        for pro in properties:
+            pro_val = properties.get(pro)
+            sub_pro = pro_val.get('properties')
+            if pro_val and sub_pro:
+                for sub_item in excluded_sub_items:
+                    sub_property = sub_pro.get(sub_item)
+                    if sub_property:
+                        removed_json_schema.append(pro)
+    """ If sub item array have data, we remove sub items im json_schema """
+    if len(removed_json_schema) > 0:
+        for item in removed_json_schema:
+            if properties.get(item):
+                del properties[item]
+
+
+def get_excluded_sub_items(item_type_name):
+    """Get excluded sub items by role.
+
+    :item_type_name: object
+    """
     usage_application_item_type = current_app.config[
         'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPE']
     if (not usage_application_item_type or not isinstance(
             usage_application_item_type, dict)):
-        return
-    from weko_records.serializers.utils import get_item_type_name
-    item_type_name = get_item_type_name(item_type_id)
+        return []
     current_user_role = get_current_user_role()
     item_type_role = []
     item_type = usage_application_item_type.get(item_type_name.strip())
     if current_user_role and item_type and item_type.get(
             current_user_role.name):
         item_type_role = item_type.get(current_user_role.name)
-
-    removed_forms = [
-        form for form in schema_form
-        if form.get('items') and form['items'][0]['key'].split('.')[
-            1] in item_type_role
-    ]
-
-    for item in removed_forms:
-        schema_form.remove(item)
+    return item_type_role
 
 
 def get_current_user_role():
