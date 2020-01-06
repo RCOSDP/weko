@@ -137,6 +137,8 @@
             {%-if activity[column] %}
               {%- if column == "approved_date" or column == "application_date" or column == "updated" %}
                 <td>{{ activity[column].strftime('%Y-%m-%d') }}</td>
+              {%-elif column == "StatusDesc" %}
+                <td>{{ _(activity[column]) }}</td>
               {%- else %}
                 <td>{{ activity[column] }}</td>
               {%- endif %}
