@@ -33,13 +33,12 @@ def to_dict(resource):
         'repository': resource.repository_id,
         'resource_dump_manifest': resource.resource_dump_manifest,
         'url_path': resource.url_path,
+        'repository_name': resource.index.value
     })
-
 
 def render_resource_list_xml(index_id):
     """Generate Resource List Xml"""
     return ResourceSync.get_content_resource_list(index_id)
-
 
 def render_resource_dump_xml(index_id):
     """Generate Resource Dump Xml"""

@@ -29,6 +29,7 @@ from weko_search_ui.utils import get_items_by_index_tree
 from resync import Resource, ResourceList
 from .models import ResourceListIndexes
 from weko_index_tree.api import Indexes
+from weko_index_tree.models import Index
 # from .utils import cached_index_tree_json, get_index_id_list, get_tree_json, \
 #     get_user_roles, reset_tree
 
@@ -45,7 +46,7 @@ class ResourceSync(object):
         """
         new_data = dict(**{
             'status': data.get('status', False),
-            'repository': data.get('repository', ''),
+            'repository_id': data.get('repository', ''),
             'resource_dump_manifest': data.get('resource_dump_manifest', False),
             'url_path': data.get('url_path', ''),
         })
@@ -127,7 +128,7 @@ class ResourceSync(object):
         """
         try:
             with db.session.begin_nested():
-                list_result = db.session.query(ResourceListIndexes).all()
+                list_result = db.session.query(ResourceListIndexes).join(Index).all()
                 return list_result
         except Exception as ex:
             current_app.logger.debug(ex)
