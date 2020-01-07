@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import datetime
 from flask import current_app, json, request
 from invenio_db import db
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -243,7 +244,22 @@ class ResourceListHandler(object):
 
     @classmethod
     def get_resourcedump_manifest(cls, record):
+        rdm = ResourceDumpManifest()
         for file in record.files:  # TODO: Temporary processing
-            current_app.logger.debug("====================file")
-            current_app.logger.debug(file.info())
-        return 123
+            file_info = file.info()
+            path = '/recid_{}/{}'.format(
+                record.get('recid'),
+                file_info.get('filename'))
+            lastmod = str(datetime.datetime.utcnow().replace(
+                tzinfo=datetime.timezone.utc
+            ).isoformat())
+            rdm.add(Resource('{}record/{}/files/{}'.format(
+                request.url_root,
+                record.get('recid'),
+                file_info.get('filename')),
+                             lastmod=lastmod,
+                             sha256=file_info.get('checksum').split(':')[1],
+                             length=str(file_info.get('size')),
+                             path=path
+            ))
+        return rdm.as_xml()
