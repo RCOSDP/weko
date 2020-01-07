@@ -13,7 +13,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, redirect, Response, request
+from flask import Blueprint, redirect, Response, request, abort
 from flask_babelex import gettext as _
 from .utils import render_resource_dump_xml, render_resource_list_xml, \
     get_file_content, get_resourcedump_marnifest, public_index_checked
@@ -32,6 +32,8 @@ blueprint = Blueprint(
 def resource_list(index_id):
     """Render a basic view."""
     r = render_resource_list_xml(index_id)
+    if r is None:
+        abort(404)
     return Response(r, mimetype='text/xml')
 
 
@@ -40,6 +42,8 @@ def resource_list(index_id):
 def resource_dump(index_id):
     """Render a basic view."""
     r = render_resource_dump_xml(index_id)
+    if r is None:
+        abort(404)
     return Response(r, mimetype='text/xml')
 
 
@@ -57,6 +61,8 @@ def file_content(index_id):
 def capability():
     """Render a basic view."""
     caplist = ResourceListHandler.get_capability_list()
+    if caplist is None:
+        abort(404)
     return Response(caplist, mimetype='text/xml')
 
 
@@ -64,4 +70,6 @@ def capability():
 def resourcedump_manifest(record_id):
     """Render a basic view."""
     res_manifest = get_resourcedump_marnifest(record_id)
+    if res_manifest is None:
+        abort(404)
     return Response(res_manifest, mimetype='text/xml')

@@ -86,8 +86,8 @@ def public_index_checked(f):
     @wraps(f)
     def decorate(index_id, *args, **kwargs):
         index = Indexes.get_index(index_id)
-        if index is None or index.public_state == True:
-            abort(404, 'Bucket does not exist.')
+        if index is None or index.public_state == False:
+            abort(404, 'Current Repository isn\'t public.')
         return f(index_id, *args, **kwargs)
 
     return decorate
