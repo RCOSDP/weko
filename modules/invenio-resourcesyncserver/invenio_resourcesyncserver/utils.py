@@ -55,6 +55,18 @@ def get_file_content(record_id):
         return None
 
 
+def get_resourcedump_marnifest(record_id):
+    """Generate File content"""
+    record = WekoRecord.get_record_by_pid(record_id)
+    list_index = get_real_path(record.get("path"))
+    current_app.logger.debug('============================record')
+    current_app.logger.debug(record)
+    if ResourceListHandler.is_resync(list_index):
+        return ResourceListHandler.get_resourcedump_manifest(record)
+    else:
+        return None
+
+
 def get_real_path(path):
     """Generate list index id from path"""
     result = []

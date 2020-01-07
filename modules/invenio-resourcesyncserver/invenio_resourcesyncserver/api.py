@@ -239,3 +239,11 @@ class ResourceListHandler(object):
                 '{}/resourcedump.xml'.format(resource.url_path),
                 capability='resourcedump'.format(resource.index.index_name)))
         return caplist.as_xml()
+
+
+    @classmethod
+    def get_resourcedump_manifest(cls, record):
+        for file in record.files:  # TODO: Temporary processing
+            current_app.logger.debug("====================file")
+            current_app.logger.debug(file.info())
+        return 123
