@@ -335,8 +335,8 @@ class CreateResourceComponent extends React.Component {
 
   generateTreeList(item, path = "") {
     const real_path = path
-      ? path + " / " + item.value + "< " + item.id + " >"
-      : item.value + "< " + item.id + " >";
+      ? path + " / " + item.value + " <ID:" + item.id + ">"
+      : item.value + " <ID:" + item.id + ">";
     if (!item.children.length) {
       return [{ id: item.id, value: real_path }];
     } else {
@@ -382,6 +382,7 @@ class CreateResourceComponent extends React.Component {
                 const value = e.target.value;
                 this.handleChangeState("repository", value);
               }}
+              value={state.repository}
             >
               {state.tree_list.map(item => {
                 return <option value={item.id}>{item.value}</option>;
@@ -546,8 +547,8 @@ class EditResourceComponent extends React.Component {
 
   generateTreeList(item, path = "") {
     const real_path = path
-      ? path + " / " + item.value + "< " + item.id + " >"
-      : item.value + "< " + item.id + " >";
+      ? path + " / " + item.value + " <ID:" + item.id + ">"
+      : item.value + " <ID:" + item.id + ">";
     if (!item.children.length) {
       return [{ id: item.id, value: real_path }];
     } else {
