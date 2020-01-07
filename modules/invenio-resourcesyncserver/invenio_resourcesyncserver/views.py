@@ -34,7 +34,7 @@ def resource_list(index_id):
     r = render_resource_list_xml(index_id)
     if r is None:
         abort(404)
-    return Response(r, mimetype='text/xml')
+    return Response(r, mimetype='application/xml')
 
 
 @blueprint.route("/resync/<index_id>/resourcedump.xml")
@@ -44,7 +44,7 @@ def resource_dump(index_id):
     r = render_resource_dump_xml(index_id)
     if r is None:
         abort(404)
-    return Response(r, mimetype='text/xml')
+    return Response(r, mimetype='application/xml')
 
 
 @blueprint.route("/resync/<record_id>/file_content.zip")

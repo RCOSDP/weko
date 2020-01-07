@@ -616,7 +616,7 @@ def handle_check_exist_record(list_recond) -> list:
                         item['errors'] = ['Item already EXISTED in the system']
                         item['status'] = None
                 except PIDDoesNotExistError:
-                    current_app.logger.info('PID ID:{} isn\'t existed'.format(item.get('id')))
+                    pass
                 except BaseException:
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])

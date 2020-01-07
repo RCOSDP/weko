@@ -22,20 +22,18 @@
 import datetime
 from flask import current_app, json, request
 from invenio_db import db
+from resync import Resource, ResourceList
+from resync.capability_list import CapabilityList
+from resync.resource_dump import ResourceDump
+from resync.resource_dump_manifest import ResourceDumpManifest
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import func, literal_column
-from weko_search_ui.utils import get_items_by_index_tree
-from resync import Resource, ResourceList
-from resync.resource_dump import ResourceDump
-from resync.resource_dump_manifest import ResourceDumpManifest
-from resync.capability_list import CapabilityList
-from .models import ResourceListIndexes
-from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
-# from .utils import cached_index_tree_json, get_index_id_list, get_tree_json, \
-#     get_user_roles, reset_tree
+from weko_search_ui.utils import get_items_by_index_tree
+
+from .models import ResourceListIndexes
 
 
 class ResourceListHandler(object):
@@ -91,7 +89,6 @@ class ResourceListHandler(object):
                 resource.url_path = data.get('url_path', resource.url_path)
                 db.session.merge(resource)
             db.session.commit()
-            # Indexes.update(index_id=resource.repository_id, **{'public_state': True})
             return resource
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -201,6 +198,7 @@ class ResourceListHandler(object):
         r = get_items_by_index_tree(resource.repository_id)
 
         rl = ResourceList()
+        rl.up = '{}resync/capability.xml'.format(request.url_root)
         for item in r:
             if item:
                 id_item = item.get('_source').get('_item_metadata').get(
@@ -217,6 +215,7 @@ class ResourceListHandler(object):
             return None
         r = get_items_by_index_tree(resource.repository_id)
         rd = ResourceDump()
+        rd.up = '{}resync/capability.xml'.format(request.url_root)
         for item in r:
             if item:
                 id_item = item.get('_source').get('_item_metadata').get(
@@ -235,10 +234,10 @@ class ResourceListHandler(object):
         for resource in list_resource:
             caplist.add(Resource(
                 '{}/resourcelist.xml'.format(resource.url_path),
-                capability='resourcelist'.format(resource.index.index_name)))
+                capability='resourcelist'))
             caplist.add(Resource(
                 '{}/resourcedump.xml'.format(resource.url_path),
-                capability='resourcedump'.format(resource.index.index_name)))
+                capability='resourcedump'))
         return caplist.as_xml()
 
 
