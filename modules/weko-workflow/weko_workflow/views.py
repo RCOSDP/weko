@@ -63,13 +63,15 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityAction, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, check_continue, create_usage_report, \
-    delete_unregister_buckets, get_activity_id_of_record_without_version, \
+from .utils import IdentifierHandle, auto_fill_title, check_continue, \
+    create_usage_report, delete_unregister_buckets, \
+    get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_identifier_setting, \
-    get_term_and_condition_content, is_usage_application_item_type, \
-    item_metadata_validation, merge_buckets_by_records, \
-    process_send_notification_mail, process_send_reminder_mail, \
-    register_cnri, saving_doi_pidstore, set_bucket_default_size
+    get_term_and_condition_content, is_show_autofill_metadata, \
+    is_usage_application_item_type, item_metadata_validation, \
+    merge_buckets_by_records, process_send_notification_mail, \
+    process_send_reminder_mail, register_cnri, saving_doi_pidstore, \
+    set_bucket_default_size, is_hidden_pubdate
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -342,6 +344,9 @@ def display_activity(activity_id=0):
     term_and_condition_content = ''
     is_auto_set_index_action = False
     application_item_type = False
+    title = ""
+    show_autofill_metadata = True
+    is_hidden_pubdate_value = False
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
             'file_upload' == action_endpoint:
@@ -364,8 +369,8 @@ def display_activity(activity_id=0):
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
         application_item_type = is_usage_application_item_type(activity_detail)
+        item_type_name = get_item_type_name(workflow_detail.itemtype_id)
         if current_app.config['WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']:
-            item_type_name = get_item_type_name(workflow_detail.itemtype_id)
             # if this is Item Registration step and the user have not agreed
             # term and condition yet, set to that page
             if (cur_action.action_is_need_agree
@@ -389,6 +394,9 @@ def display_activity(activity_id=0):
             and sessionstore.get(
                 'updated_json_schema_{}'.format(activity_id)):
             json_schema = (json_schema + "/{}").format(activity_id)
+        title = auto_fill_title(item_type_name)
+        show_autofill_metadata = is_show_autofill_metadata(item_type_name)
+        is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
     for step in steps:
         if step.get('ActionEndpoint') == 'item_login_application' \
                 and current_app.config[
@@ -511,6 +519,9 @@ def display_activity(activity_id=0):
         activity_id=activity_detail.activity_id,
         user_profile=user_profile,
         application_item_type=application_item_type,
+        auto_fill_title=title,
+        is_show_autofill_metadata=show_autofill_metadata,
+        is_hidden_pubdate=is_hidden_pubdate_value,
         **ctx
     )
 

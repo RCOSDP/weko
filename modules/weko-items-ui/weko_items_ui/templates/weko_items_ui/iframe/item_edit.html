@@ -178,6 +178,7 @@
               </div>
             {%- endif %}
             <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+              {%- if show_automatic_metadata_input %}
               <div class="row">
                 <div class="col-sm-9">
                 <p class="text-center">
@@ -189,6 +190,7 @@
                 </p>
                 </div>
               </div>
+              {%- endif %}
               <!--add by ryuu. start 20180410-->
               <div ng-show="false" type="text" id="btn_id" ></div>
               <div ng-show="false" type="text" id="author_info" ></div>
@@ -319,16 +321,18 @@
     <div class="modal-content">
       <div class="modal-body">
         <div id="meta-search-body"></div>
+        <input type="hidden" id="auto_fill_title" name="auto_fill_title" value="{{auto_fill_title}}">
+        <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
         <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
         <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID.')}}">
         <input type="hidden" id="autofill_error_input_value" name="autofill_item_type_id" value="{{_('Please input value.')}}">
         <input type="hidden" id="not_existed_index_tree_err" name="not_existed_index_tree_err" value="{{_('Specified index does not exist')}}">
         <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id" value="{{_('Specified ID does not exist.')}}">
-          <input type="hidden" id="user_info_data" name="user_info_data" value='{{ user_profile | tojson }}'>
-          <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
-          {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
-          <input type="hidden" id="err_input_other_position" name="err_input_other_position" value='{{_(position_err_msg)}}'>
-          <input type="hidden" id="err_position_not_provided" name="err_position_not_provided" value='{{_("Position not provided.")}}'>
+        <input type="hidden" id="user_info_data" name="user_info_data" value='{{ user_profile | tojson }}'>
+        <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
+        {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
+        <input type="hidden" id="err_input_other_position" name="err_input_other_position" value='{{_(position_err_msg)}}'>
+        <input type="hidden" id="err_position_not_provided" name="err_position_not_provided" value='{{_("Position not provided.")}}'>
         <input type="hidden" id="autofill_header_name"
         name="autofill_header_name" value="{{_('Automatic metadata input')}}">
         <input type="hidden" id="autofill_select_meta"

@@ -743,6 +743,65 @@ function handleSharePermission(value) {
         }
       };
 
+      $scope.isExistingTitle = function () {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        if (Object.keys(model).length === 0 && model.constructor === Object) {
+          return false;
+        } else {
+          let isExisted = false;
+          for (let key in model) {
+            if (model.hasOwnProperty(key) && model[key].length > 0) {
+              let title = model[key][0]['subitem_item_title'];
+              if (title) {
+                $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly'] = true;
+                setTimeout(function () {
+                  $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
+                }, 1000);
+                isExisted = true;
+                break;
+              }
+            }
+          }
+          return isExisted;
+        }
+      };
+
+      $scope.autoSetTitle = function () {
+        if ($scope.isExistingTitle()) {
+          return;
+        }
+        if ($("#user_info_data") !== null) {
+          let titleData = $("#auto_fill_title").val();
+          if (titleData === "") {
+            return;
+          }
+          let titleKey = null;
+          let userName = JSON.parse($('#user_info_data').val()).results.subitem_user_name;
+          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+            ([key, value]) => {
+              if (value && value.type === "array" && value.items) {
+                if (value.items.properties && value.items.properties.hasOwnProperty("subitem_item_title")) {
+                  titleKey = key;
+                  let enTitle = {};
+                  enTitle['subitem_item_title'] = titleData['en'] + " - " + userName;
+                  enTitle['subitem_item_title_language'] = "en";
+                  let jaTitle = {};
+                  jaTitle['subitem_item_title'] = titleData['ja'] + " - " + userName;
+                  jaTitle['subitem_item_title_language'] = "ja";
+                  $rootScope.recordsVM.invenioRecordsModel[key] = [enTitle, jaTitle];
+                }
+              }
+            });
+          if (titleKey != null) {
+            // Set read only for title
+            $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == titleKey)['readonly'] = true;
+          }
+          setTimeout(function () {
+            $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
+          }, 500);
+        }
+      };
+
       $scope.renderValidationErrorList = function () {
         const activityId = $("#activity_id").text();
         $.ajax({
@@ -791,11 +850,13 @@ function handleSharePermission(value) {
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
+        $scope.hiddenPubdate();
         $scope.initContributorData();
         $scope.initUserGroups();
         $scope.initFilenameList();
         $scope.searchTypeKey();
         $scope.renderValidationErrorList();
+        $scope.autoSetTitle();
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
           endpoints = JSON.parse($('#hide_endpoints').text());
@@ -820,17 +881,36 @@ function handleSharePermission(value) {
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
+        $scope.hiddenPubdate();
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
         $scope.initFilenameList();
+        $scope.hiddenPubdate();
       });
 
       $scope.getItemMetadata = function () {
         // Reset error message befor open modal.
         this.resetAutoFillErrorMessage();
         $('#meta-search').modal('show');
-      }
+      };
+
+      $scope.hiddenPubdate = function () {
+        if ($("is_hidden_pubdate").val() !== "True"){
+          return;
+        }
+        let pubdate = $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == 'pubdate');
+        pubdate['condition'] = true;
+        pubdate['required'] = false;
+
+        let now = new Date();
+        let day = ("0" + now.getDate()).slice(-2);
+        let month = ("0" + (now.getMonth() + 1)).slice(-2);
+        let today = now.getFullYear() + "-" + (month) + "-" + (day);
+        if (!$rootScope.recordsVM.invenioRecordsModel["pubdate"]) {
+          $rootScope.recordsVM.invenioRecordsModel["pubdate"] = today;
+        }
+      };
 
       $scope.setValueToField = function (id, value) {
         if (!id) {
@@ -1434,19 +1514,30 @@ function handleSharePermission(value) {
         let param = {};
         steps.forEach(step => {
           if (step.ActionEndpoint == 'approval_advisor') {
-            emailsToValidate.push('email_advisor')
-            let subitem_advisor_mail_address = $scope.depositionForm.subitem_advisor_mail_address
-            let mail_adress = subitem_advisor_mail_address.$modelValue
-            param['email_advisor'] = { 'mail': mail_adress, 'action_id': step.ActionId }
-          }
-          else if (step.ActionEndpoint == 'approval_guarantor') {
-            emailsToValidate.push('email_guarantor')
-            let subitem_guarantor_mail_address = $scope.depositionForm.subitem_guarantor_mail_address
-            let mail_adress = subitem_guarantor_mail_address.$modelValue
-            param['email_guarantor'] = { 'mail': mail_adress, 'action_id': step.ActionId }
+            emailsToValidate.push('email_advisor');
+            let subitem_advisor_mail_address = $scope.depositionForm.subitem_advisor_mail_address;
+            let mail_adress = '';
+            if (subitem_advisor_mail_address) {
+              mail_adress = subitem_advisor_mail_address.$modelValue;
+            }
+            param['email_advisor'] = {
+              'mail': mail_adress,
+              'action_id': step.ActionId
+            }
+          } else if (step.ActionEndpoint == 'approval_guarantor') {
+            emailsToValidate.push('email_guarantor');
+            let subitem_guarantor_mail_address = $scope.depositionForm.subitem_guarantor_mail_address;
+            let mail_adress = '';
+            if (subitem_guarantor_mail_address) {
+              mail_adress = subitem_guarantor_mail_address.$modelValue;
+            }
+            param['email_guarantor'] = {
+              'mail': mail_adress,
+              'action_id': step.ActionId
+            }
           }
         });
-        param['activity_id'] = activityId
+        param['activity_id'] = activityId;
         param['user_to_check'] = emailsToValidate;
         param['auto_set_index_action'] = isAutoSetIndexAction;
         var itemsDict = {};
@@ -1455,7 +1546,7 @@ function handleSharePermission(value) {
           itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
         }
         return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction);
-      }
+      };
 
       $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction) {
         let result = true;
@@ -1506,7 +1597,7 @@ function handleSharePermission(value) {
           }
         });
         return result;
-      }
+      };
 
       $scope.processResponseEmailValidation = function (itemsDict, emailData, subKey, errorList) {
         let validationResult = true;
