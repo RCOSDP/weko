@@ -27,6 +27,9 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import func, literal_column
 from weko_search_ui.utils import get_items_by_index_tree
 from resync import Resource, ResourceList
+from resync.resource_dump import ResourceDump
+from resync.resource_dump_manifest import ResourceDumpManifest
+from resync.capability_list import CapabilityList
 from .models import ResourceListIndexes
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
@@ -212,7 +215,7 @@ class ResourceSync(object):
         if not resource or not resource.status:
             return None
         r = get_items_by_index_tree(resource.repository)
-        rl = ResourceList()
+        rd = ResourceDump()
         for item in r:
             if item:
                 id_item = item.get('_source').get('_item_metadata').get(
@@ -220,6 +223,19 @@ class ResourceSync(object):
                 url = '{}resync/{}/file_content.zip'.format(
                     request.url_root,
                     str(id_item))
-                rl.add(
+                rd.add(
                     Resource(url, lastmod=item.get('_source').get('_updated')))
-        return rl.as_xml()
+        return rd.as_xml()
+
+    @classmethod
+    def get_capability_list(cls):
+        list_resource = cls.get_list_resource()
+        caplist = CapabilityList()
+        for resource in list_resource:
+            caplist.add(Resource(
+                '{}/resourcelist.xml'.format(resource.url_path),
+                capability='resourcelist_{}'.format(resource.index.index_name)))
+            caplist.add(Resource(
+                '{}/resourcedump.xml'.format(resource.url_path),
+                capability='resourcedump_{}'.format(resource.index.index_name)))
+        return caplist.as_xml()
