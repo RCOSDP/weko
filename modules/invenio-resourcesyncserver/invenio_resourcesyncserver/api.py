@@ -234,8 +234,8 @@ class ResourceSync(object):
         for resource in list_resource:
             caplist.add(Resource(
                 '{}/resourcelist.xml'.format(resource.url_path),
-                capability='resourcelist_{}'.format(resource.index.index_name)))
+                capability='resourcelist'.format(resource.index.index_name)))
             caplist.add(Resource(
                 '{}/resourcedump.xml'.format(resource.url_path),
-                capability='resourcedump_{}'.format(resource.index.index_name)))
+                capability='resourcedump'.format(resource.index.index_name)))
         return caplist.as_xml()
