@@ -175,7 +175,7 @@ class ListResourceComponent extends React.Component {
             alert("Error in Delete");
           }
         })
-        .catch(() => alert("Error in Create"));
+        .catch(() => alert("Error in Delete"));
     }
   }
 

@@ -113,11 +113,11 @@ class ResourceSync(object):
                     return
                 db.session.delete(resource)
             db.session.commit()
-            return resource
+            return True
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-        return
+        return False
 
     @classmethod
     def get_list_resource(cls):

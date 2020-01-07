@@ -100,7 +100,7 @@ class AdminResourceSyncView(BaseView):
         """
         resource = ResourceSync.delete(id)
         if resource:
-            return jsonify(data=to_dict(resource), success=True)
+            return jsonify(data=None, success=True)
         else:
             return jsonify(data=None, success=False)
 
