@@ -82,8 +82,8 @@ class ResourceSync(object):
                 if not resource:
                     return
                 resource.status = data.get('status', resource.status)
-                resource.repository = data.get('repository',
-                                               resource.repository)
+                resource.repository_id = data.get('repository',
+                                               resource.repository_id)
                 resource.resource_dump_manifest = data.get(
                     'resource_dump_manifest',
                     resource.resource_dump_manifest)
@@ -165,7 +165,7 @@ class ResourceSync(object):
         try:
             with db.session.begin_nested():
                 result = db.session.query(ResourceListIndexes).filter_by(
-                    repository=index_id).one_or_none()
+                    repository_id=index_id).one_or_none()
                 return result
         except Exception as ex:
             current_app.logger.debug(ex)
