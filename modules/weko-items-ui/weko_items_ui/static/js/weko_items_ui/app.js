@@ -676,6 +676,8 @@ function handleSharePermission(value) {
               let userMail = model[key]['subitem_mail_address'];
               if (userName || userMail) {
                 isExisted = true;
+                // Set read only for user information property
+                $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly']=true;
                 break;
               }
             }
@@ -776,6 +778,7 @@ function handleSharePermission(value) {
             return;
           }
           let titleKey = null;
+          titleData = JSON.parse(titleData);
           let userName = JSON.parse($('#user_info_data').val()).results.subitem_user_name;
           Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
             ([key, value]) => {
@@ -896,7 +899,7 @@ function handleSharePermission(value) {
       };
 
       $scope.hiddenPubdate = function () {
-        if ($("is_hidden_pubdate").val() !== "True"){
+        if ($("#is_hidden_pubdate").val() !== "True"){
           return;
         }
         let pubdate = $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == 'pubdate');

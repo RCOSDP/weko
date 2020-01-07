@@ -1595,14 +1595,13 @@ def auto_fill_title(item_type_name):
 
     def _get_title(title_key, title_setting_list):
         title_value = ''
-        for title_data in title_setting_list:
-            if item_type_name == title_data:
+        if auto_fill_title_value.get(title_key):
                 title_value = auto_fill_title_value.get(title_key)
         return title_value
 
     title = ""
     current_config = current_app.config
-    autofill_title_setting = current_app.config.get(
+    autofill_title_setting = current_config.get(
         'WEKO_ITEMS_UI_AUTO_FILL_TITLE_SETTING')
     auto_fill_title_value = current_config.get(
         'WEKO_ITEMS_UI_AUTO_FILL_TITLE')
@@ -1619,11 +1618,11 @@ def auto_fill_title(item_type_name):
         usage_report_list = autofill_title_setting.get(usage_report_key, [])
         output_registration_list = autofill_title_setting.get(
             output_registration_key, [])
-        if usage_application_list:
+        if item_type_name in usage_application_list:
             title = _get_title(usage_application_key, usage_application_list)
-        if usage_report_list:
+        elif item_type_name in usage_report_list:
             title = _get_title(usage_report_key, usage_report_list)
-        if output_registration_list:
+        elif item_type_name in output_registration_list:
             title = _get_title(output_registration_key,
                                output_registration_list)
     return title

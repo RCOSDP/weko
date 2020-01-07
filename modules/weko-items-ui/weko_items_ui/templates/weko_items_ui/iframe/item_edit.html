@@ -321,7 +321,7 @@
     <div class="modal-content">
       <div class="modal-body">
         <div id="meta-search-body"></div>
-        <input type="hidden" id="auto_fill_title" name="auto_fill_title" value="{{auto_fill_title}}">
+        <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{auto_fill_title|tojson}}'>
         <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
         <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
         <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID.')}}">
