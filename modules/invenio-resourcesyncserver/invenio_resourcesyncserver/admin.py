@@ -23,7 +23,7 @@
 from flask_admin import BaseView, expose
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_babelex import gettext as _
-from .api import ResourceSync
+from .api import ResourceListHandler
 from .utils import to_dict
 
 
@@ -49,7 +49,7 @@ class AdminResourceSyncView(BaseView):
         :param
         :return: The rendered template.
         """
-        list_resource = ResourceSync.get_list_resource()
+        list_resource = ResourceListHandler.get_list_resource()
         result = list(map(lambda item: to_dict(item), list_resource))
         return jsonify(result)
 
@@ -60,7 +60,7 @@ class AdminResourceSyncView(BaseView):
         :param
         :return: The rendered template.
         """
-        resource = ResourceSync.get_resource(id)
+        resource = ResourceListHandler.get_resource(id)
         return jsonify(resource)
 
     @expose('/create', methods=['POST'])
@@ -71,7 +71,7 @@ class AdminResourceSyncView(BaseView):
         :return: The rendered template.
         """
         data = request.get_json()
-        resource = ResourceSync.create(data)
+        resource = ResourceListHandler.create(data)
         if resource:
             return jsonify(data=resource, success=True)
         else:
@@ -85,7 +85,7 @@ class AdminResourceSyncView(BaseView):
         :return: The rendered template.
         """
         data = request.get_json()
-        resource = ResourceSync.update(id, data)
+        resource = ResourceListHandler.update(id, data)
         if resource:
             return jsonify(data=to_dict(resource), success=True)
         else:
@@ -98,7 +98,7 @@ class AdminResourceSyncView(BaseView):
         :param
         :return: The rendered template.
         """
-        resource = ResourceSync.delete(id)
+        resource = ResourceListHandler.delete(id)
         if resource:
             return jsonify(data=None, success=True)
         else:

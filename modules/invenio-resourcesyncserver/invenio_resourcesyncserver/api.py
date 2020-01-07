@@ -37,7 +37,7 @@ from weko_index_tree.models import Index
 #     get_user_roles, reset_tree
 
 
-class ResourceSync(object):
+class ResourceListHandler(object):
     """Define API for ResourceListIndexes creation and update."""
 
     @classmethod
@@ -184,7 +184,7 @@ class ResourceSync(object):
                 result = db.session.query(ResourceListIndexes).filter(
                     ResourceListIndexes.status).all()
                 for re in result:
-                    if str(re.repository) in index_id:
+                    if str(re.repository_id) in index_id:
                         return result
                 return None
         except Exception as ex:

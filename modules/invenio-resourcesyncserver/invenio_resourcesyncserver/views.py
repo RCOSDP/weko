@@ -17,7 +17,7 @@ from flask import Blueprint, redirect, Response, request
 from flask_babelex import gettext as _
 from .utils import render_resource_dump_xml, render_resource_list_xml, \
     get_file_content
-from .api import ResourceSync
+from .api import ResourceListHandler
 
 blueprint = Blueprint(
     'invenio_resourcesyncserver',
@@ -54,5 +54,5 @@ def file_content(index_id):
 @blueprint.route("/resync/capability.xml")
 def capability():
     """Render a basic view."""
-    caplist = ResourceSync.get_capability_list()
+    caplist = ResourceListHandler.get_capability_list()
     return Response(caplist, mimetype='text/xml')
