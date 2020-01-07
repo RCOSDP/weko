@@ -384,6 +384,7 @@ class CreateResourceComponent extends React.Component {
               }}
               value={state.repository}
             >
+              <option value="" disabled></option>
               {state.tree_list.map(item => {
                 return <option value={item.id}>{item.value}</option>;
               })}
