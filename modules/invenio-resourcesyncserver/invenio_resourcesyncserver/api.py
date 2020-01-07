@@ -197,7 +197,7 @@ class ResourceSync(object):
         if not resource or not resource.status:
             return None
 
-        r = get_items_by_index_tree(resource.repository)
+        r = get_items_by_index_tree(resource.repository_id)
 
         rl = ResourceList()
         for item in r:
@@ -214,7 +214,7 @@ class ResourceSync(object):
         resource = cls.get_resource_by_repository(repository)
         if not resource or not resource.status:
             return None
-        r = get_items_by_index_tree(resource.repository)
+        r = get_items_by_index_tree(resource.repository_id)
         rd = ResourceDump()
         for item in r:
             if item:
