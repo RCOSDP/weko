@@ -24,17 +24,19 @@ from datetime import datetime
 import os
 import json
 import shutil
-import bagit
 import sys
 import traceback
 
-
+from functools import wraps
 from .api import ResourceListHandler
-from flask import current_app, request, send_file
+from flask import current_app, request, send_file, abort
 from weko_deposit.api import WekoRecord
 from weko_records.api import ItemTypes
 from weko_records_ui.permissions import check_file_download_permission
 from weko_items_ui.utils import make_stats_tsv, package_export_file
+from weko_index_tree.api import Indexes
+from .api import ResourceListHandler
+
 
 def to_dict(resource):
     """Generate Resource Object to Dict"""
@@ -208,3 +210,15 @@ def _export_item(record_id,
                                      tmp_path + '/' + file.obj.basename)
 
     return record, exported_item
+
+
+def public_index_checked(f):
+    """Decorator to pass community."""
+    @wraps(f)
+    def decorate(index_id, *args, **kwargs):
+        index = Indexes.get_index(index_id)
+        if index is None or index.public_state == False:
+            abort(404, 'Current Repository isn\'t public.')
+        return f(index_id, *args, **kwargs)
+
+    return decorate

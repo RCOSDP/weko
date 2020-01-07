@@ -54,7 +54,6 @@ class ResourceListIndexes(db.Model, Timestamp):
     repository_id = db.Column(
         db.BigInteger,
         db.ForeignKey(Index.id),
-        nullable=True,
         unique=True,
     )
 

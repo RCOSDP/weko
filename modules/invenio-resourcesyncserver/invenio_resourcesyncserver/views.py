@@ -13,10 +13,10 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, redirect, Response, request
+from flask import Blueprint, redirect, Response, request, abort
 from flask_babelex import gettext as _
 from .utils import render_resource_dump_xml, render_resource_list_xml, \
-    get_file_content, get_resourcedump_manifest
+    get_file_content, get_resourcedump_manifest, public_index_checked
 from .api import ResourceListHandler
 
 blueprint = Blueprint(
@@ -28,16 +28,22 @@ blueprint = Blueprint(
 
 
 @blueprint.route("/resync/<index_id>/resourcelist.xml")
+@public_index_checked
 def resource_list(index_id):
     """Render a basic view."""
     r = render_resource_list_xml(index_id)
+    if r is None:
+        abort(404)
     return Response(r, mimetype='text/xml')
 
 
 @blueprint.route("/resync/<index_id>/resourcedump.xml")
+@public_index_checked
 def resource_dump(index_id):
     """Render a basic view."""
     r = render_resource_dump_xml(index_id)
+    if r is None:
+        abort(404)
     return Response(r, mimetype='text/xml')
 
 
@@ -48,18 +54,22 @@ def file_content(record_id):
     if r:
         return r
     else:
-        return redirect(request.url_root)
+        abort(404)
 
 
 @blueprint.route("/resync/capability.xml")
 def capability():
     """Render a basic view."""
     caplist = ResourceListHandler.get_capability_list()
+    if caplist is None:
+        abort(404)
     return Response(caplist, mimetype='text/xml')
 
 
 @blueprint.route("/resync/<record_id>/resourcedump_manifest.xml")
 def resourcedump_manifest(record_id):
     """Render a basic view."""
-    res_manifest = get_resourcedump_manifest(record_id)
+    res_manifest = get_resourcedump_marnifest(record_id)
+    if res_manifest is None:
+        abort(404)
     return Response(res_manifest, mimetype='text/xml')
