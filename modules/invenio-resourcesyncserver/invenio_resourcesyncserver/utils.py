@@ -60,22 +60,22 @@ def render_resource_dump_xml(index_id):
     return ResourceListHandler.get_content_resource_dump(index_id)
 
 
-def get_file_content(record_id):
+def get_file_content(index_id, record_id):
     """Generate File content"""
     record = WekoRecord.get_record_by_pid(record_id)
     list_index = get_real_path(record.get("path"))
     if ResourceListHandler.is_resync(list_index):
-        return export_item_custorm({'record_id': record_id})
+        return export_item_custorm({'record_id': record_id, 'index_id': index_id})
     else:
         return None
 
 
-def get_resourcedump_manifest(record_id):
+def get_resourcedump_manifest(index_id, record_id):
     """Generate File content"""
     record = WekoRecord.get_record_by_pid(record_id)
     list_index = get_real_path(record.get("path"))
     if ResourceListHandler.is_resync(list_index):
-        return ResourceListHandler.get_resourcedump_manifest(record)
+        return ResourceListHandler.get_resourcedump_manifest(index_id, record)
     else:
         return None
 
@@ -99,6 +99,7 @@ def export_item_custorm(post_data):
     """
     include_contents = True
     record_id = post_data['record_id']
+    index_id = post_data['index_id']
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory()
@@ -161,7 +162,7 @@ def export_item_custorm(post_data):
         with open('{}/{}.xml'.format(export_path,
                                      'manifest'),
                   'w') as file:
-            xml_output = ResourceListHandler.get_resourcedump_manifest(record)
+            xml_output = ResourceListHandler.get_resourcedump_manifest(index_id, record)
             file.write(xml_output)
 
         # Create download file

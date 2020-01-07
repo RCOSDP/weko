@@ -47,10 +47,10 @@ def resource_dump(index_id):
     return Response(r, mimetype='application/xml')
 
 
-@blueprint.route("/resync/<record_id>/file_content.zip")
-def file_content(record_id):
+@blueprint.route("/resync/<index_id>/<record_id>/file_content.zip")
+def file_content(index_id, record_id):
     """Render a basic view."""
-    r = get_file_content(record_id)
+    r = get_file_content(index_id, record_id)
     if r:
         return r
     else:
@@ -66,10 +66,10 @@ def capability():
     return Response(caplist, mimetype='text/xml')
 
 
-@blueprint.route("/resync/<record_id>/resourcedump_manifest.xml")
-def resourcedump_manifest(record_id):
+@blueprint.route("/resync/<index_id>/<record_id>/resourcedump_manifest.xml")
+def resourcedump_manifest(index_id, record_id):
     """Render a basic view."""
-    res_manifest = get_resourcedump_marnifest(record_id)
+    res_manifest = get_resourcedump_manifest(index_id, record_id)
     if res_manifest is None:
         abort(404)
     return Response(res_manifest, mimetype='text/xml')

@@ -153,6 +153,24 @@ class ResourceListHandler(object):
             return
 
     @classmethod
+    def get_resource_by_repository_id(cls, repository_id=''):
+        """
+        Update the index detail info.
+
+        :param resource_id: Identifier of the Resource.
+        :param data: new Resource info for update.
+        :return: Updated Resource info
+        """
+        try:
+            with db.session.begin_nested():
+                result = db.session.query(ResourceListIndexes).filter_by(
+                    repository_id=repository_id).one_or_none()
+                return result
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            return
+
+    @classmethod
     def get_resource_by_repository(cls, index_id=''):
         """
         Update the index detail info.
@@ -220,11 +238,16 @@ class ResourceListHandler(object):
             if item:
                 id_item = item.get('_source').get('_item_metadata').get(
                     'control_number')
-                url = '{}resync/{}/file_content.zip'.format(
+                url = '{}resync/{}/{}/file_content.zip'.format(
                     request.url_root,
+                    resource.repository_id,
                     str(id_item))
-                rd.add(
-                    Resource(url, lastmod=item.get('_source').get('_updated')))
+                rs = Resource(url, lastmod=item.get('_source').get('_updated'), ln=[])
+                if resource.resource_dump_manifest:
+                    rs.ln.append({'rel':'contents',
+                        'href':'{}resync/{}/{}/resourcedump_manifest.xml'.format(request.url_root, resource.repository_id, str(id_item)),
+                        'type':'application/xml'})
+                rd.add(rs)
         return rd.as_xml()
 
     @classmethod
@@ -242,11 +265,15 @@ class ResourceListHandler(object):
 
 
     @classmethod
-    def get_resourcedump_manifest(cls, record):
+    def get_resourcedump_manifest(cls, index_id, record):
         rdm = ResourceDumpManifest()
+        rdm.up = '{}resync/{}/resourcedump.xml'.format(request.url_root, index_id)
+        cur_resource = cls.get_resource_by_repository_id(index_id)
+        if not cur_resource.resource_dump_manifest:
+            return None
         for file in record.files:  # TODO: Temporary processing
             file_info = file.info()
-            path = '/recid_{}/{}'.format(
+            path = 'recid_{}/{}'.format(
                 record.get('recid'),
                 file_info.get('filename'))
             lastmod = str(datetime.datetime.utcnow().replace(
