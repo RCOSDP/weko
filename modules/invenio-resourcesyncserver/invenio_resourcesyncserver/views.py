@@ -16,7 +16,7 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, redirect, Response, request
 from flask_babelex import gettext as _
 from .utils import render_resource_dump_xml, render_resource_list_xml, \
-    get_file_content, get_resourcedump_marnifest
+    get_file_content, get_resourcedump_marnifest, public_index_checked
 from .api import ResourceListHandler
 
 blueprint = Blueprint(
@@ -28,6 +28,7 @@ blueprint = Blueprint(
 
 
 @blueprint.route("/resync/<index_id>/resourcelist.xml")
+@public_index_checked
 def resource_list(index_id):
     """Render a basic view."""
     r = render_resource_list_xml(index_id)
@@ -35,6 +36,7 @@ def resource_list(index_id):
 
 
 @blueprint.route("/resync/<index_id>/resourcedump.xml")
+@public_index_checked
 def resource_dump(index_id):
     """Render a basic view."""
     r = render_resource_dump_xml(index_id)

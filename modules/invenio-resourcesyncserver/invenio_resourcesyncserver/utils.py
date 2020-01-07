@@ -19,10 +19,14 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
-from .api import ResourceListHandler
-from flask import current_app
-from weko_items_ui.utils import export_item_custorm
+from functools import wraps
+
+from flask import abort, current_app
 from weko_deposit.api import WekoRecord
+from weko_index_tree.api import Indexes
+from weko_items_ui.utils import export_item_custorm
+
+from .api import ResourceListHandler
 
 
 def to_dict(resource):
@@ -59,8 +63,6 @@ def get_resourcedump_marnifest(record_id):
     """Generate File content"""
     record = WekoRecord.get_record_by_pid(record_id)
     list_index = get_real_path(record.get("path"))
-    current_app.logger.debug('============================record')
-    current_app.logger.debug(record)
     if ResourceListHandler.is_resync(list_index):
         return ResourceListHandler.get_resourcedump_manifest(record)
     else:
@@ -77,3 +79,15 @@ def get_real_path(path):
         else:
             result.append(item)
     return result
+
+
+def public_index_checked(f):
+    """Decorator to pass community."""
+    @wraps(f)
+    def decorate(index_id, *args, **kwargs):
+        index = Indexes.get_index(index_id)
+        if index is None or index.public_state == True:
+            abort(404, 'Bucket does not exist.')
+        return f(index_id, *args, **kwargs)
+
+    return decorate
