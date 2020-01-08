@@ -1117,8 +1117,8 @@ def get_excluded_sub_items(item_type_name):
 
     :item_type_name: object
     """
-    usage_application_item_type = current_app.config[
-        'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPE']
+    usage_application_item_type = current_app.config.get(
+        'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPE')
     if (not usage_application_item_type or not isinstance(
             usage_application_item_type, dict)):
         return []

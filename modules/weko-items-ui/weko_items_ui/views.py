@@ -458,8 +458,8 @@ def iframe_items_index(pid_value='0'):
             for step in steps:
                 if step.get('ActionEndpoint') == 'item_login_application':
                     contain_application_endpoint = True
-            enable_auto_set_index = current_app.config[
-                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE']
+            enable_auto_set_index = current_app.config.get(
+                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE')
             if enable_auto_set_index and contain_application_endpoint:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
