@@ -33,7 +33,6 @@ from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
-from weko_workflow.api import WorkActivity, WorkFlow
 
 from .api import Indexes
 from .models import Index
@@ -414,6 +413,7 @@ def get_index_id(activity_id):
     :param activity_id:
     :return:
     """
+    from weko_workflow.api import WorkActivity, WorkFlow
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
     workflow = WorkFlow()
