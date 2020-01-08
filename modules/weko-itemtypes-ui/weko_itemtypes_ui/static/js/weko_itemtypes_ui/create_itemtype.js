@@ -1024,18 +1024,16 @@ $(document).ready(function () {
       odered = {}
       others = ''
       for (var key in data) {
-        if (key == 'defaults') continue;
-        if (data[key].name === meta_system_info.updated_date.input_type){
+        if (key === 'defaults') continue;
+        if (data[key].name === meta_system_info.updated_date.input_type) {
           meta_system_info.updated_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.created_date.input_type){
           meta_system_info.created_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type){
+        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type) {
           meta_system_info.persistent_identifier_doi.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type){
-          meta_system_info.created_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.ranking_page_url.input_type){
+        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type) {
+          meta_system_info.persistent_identifier_h.input_type = "cus_" + key;
           meta_system_info.ranking_page_url.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.belonging_index_info.input_type){
+        } else if (data[key].name === meta_system_info.belonging_index_info.input_type) {
           meta_system_info.belonging_index_info.input_type = "cus_" + key;
         }
         option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
