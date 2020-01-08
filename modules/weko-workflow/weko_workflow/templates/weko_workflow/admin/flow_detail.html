@@ -127,8 +127,7 @@
                 <div class="form-inline">
                   <div class="hide">{{action.action_role.action_role}}</div>
                   <div class="hide">{{action.action_role.action_role_exclude}}</div>
-				          <select class="form-control td_action_role" id="td_action_role_{{action.action_id}}" data-action-id="{{action.action_id}}"
-                      {% if 'Guarantor' in action.action.action_name or 'Advisor' in action.action.action_name %} disabled {% endif %}>
+                  <select class="form-control td_action_role" id="td_action_role_{{action.action_id}}" data-action-id="{{action.action_id}}">
                     <option value="0"></option>
                     {%- for role in roles if role %}
                     <option value="{{role.id}}" {% if role.id == action.action_role.action_role%}selected{% endif %}>{{role.name}}</option>
@@ -143,8 +142,7 @@
               </td>
               <td>
                 <div class="form-inline">
-				          <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}" data-action-id="{{action.action_id}}"
-                    {% if 'Guarantor' in action.action.action_name or 'Advisor' in action.action.action_name %} disabled {% endif %}>
+                  <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}" data-action-id="{{action.action_id}}">
                     <option value="0"></option>
                     {%- for user in users if user %}
                     <option value="{{user.id}}" {% if user.id == action.action_role.action_user%}selected{% endif %}>{{user.email}}</option>
@@ -306,25 +304,12 @@
       localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     });
 
-    function addAlert(data) {
-      let result = data.result;
-      let status = data.status;
-      if(status == true){
-        result.forEach(element => {
-          $('#alerts').append(
-          '<div class="alert alert-light" id="alert-style">' +
+    function addAlert(message) {
+        $('#alerts').append(
+            '<div class="alert alert-light" id="alert-style">' +
             '<button type="button" class="close" data-dismiss="alert">' +
-              '&times;</button>' + element.msg + '</div>');
-        });
-      }else{
-        result.forEach(element => {
-          $('#alerts').append(
-          '<div class="alert alert-light" id="alert-style" style="background: #dd4b39; border-color: #d73925;">' +
-            '<button type="button" class="close" data-dismiss="alert">' +
-              '&times;</button>' + element.msg + '</div>');
-        });
-      }
-    }
+            '&times;</button>' + message + '</div>');
+         }
 
     $('#btn_submit').on('click', function(){
       $.ajax({
@@ -335,7 +320,7 @@
         data: localStorage.getItem('apply_action_list'),
         success: function(data, status) {
           uptOrderInfo(false);
-          addAlert(data);
+          addAlert(data.msg);
         },
         error: function(jqXHR, status) {
           //alert('update failed');

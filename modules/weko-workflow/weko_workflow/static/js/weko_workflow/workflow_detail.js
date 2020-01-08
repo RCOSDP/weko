@@ -137,7 +137,7 @@ require([
     $('#' + btn_id).click();
   });
 
-  function nextAction() {
+  $('#btn-approval').on('click', function () {
     let uri_apo = $('.cur_step').data('next-uri');
     let act_ver = $('.cur_step').data('action-version');
     let post_data = {
@@ -159,34 +159,6 @@ require([
           }
         } else {
           alert(data.msg);
-        }
-      },
-      error: function (jqXHE, status) {
-        alert('server error');
-      }
-    });
-  }
-
-  $('#confirm_approval_btn').click(function () {
-    nextAction();
-  });
-
-  $('#btn-approval').on('click', function () {
-    let origin = new URL(window.location.href).origin;
-    let post_uri = origin + "/workflow/check_approval/" + $('#activity_id').html();
-    $.ajax({
-      url: post_uri,
-      method: "GET",
-      async: true,
-      success: function (data, status) {
-        if (data.error == 1) {
-          if (data.check_handle == 1 && data.check_continue == 1) {
-            $("#confirm_modal").modal("show");
-          } else
-            nextAction()
-        } else if (data.error == -1) {
-          alert('server error');
-          return false
         }
       },
       error: function (jqXHE, status) {
@@ -261,13 +233,3 @@ require([
     $('#myModal').modal('show');
   });
 })
-
-$('#checked').on('click', function () {
-  let checkButton = $("#button-check");
-  if(this.checked) {
-    checkButton.removeAttr('disabled')
-  }else{
-    checkButton.attr('disabled','disabled')
-  }
-});
-$('.pointer').css('cursor', 'pointer');

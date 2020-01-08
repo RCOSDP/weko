@@ -42,10 +42,6 @@
                                                     name="workflow_name"
                                                     placeholder="{{_('Enter the Workflow name')}}"  value="{{workflow.flows_name if workflow}}">
             <input type="hidden" id="_id" value="{{workflow.id if workflow}}">
-            <input type="hidden" id="enable_showing_index_tree_selection_value"
-                   value="{{ enable_showing_index_tree_selection }}">
-            <input type="hidden" id="special_itemtype_list"
-                   value='{{ special_itemtype_list | tojson }}' >
             {%- if workflow %}
             <div class="hide" id="post_uri">{{url_for('workflowsetting.update_workflow', workflow_id=workflow.flows_id)}}</div>
             {%- else %}
@@ -84,22 +80,6 @@
           </div>
         </div>
       </div>
-      <div class="form-group" id="index-tree" hidden>
-        <div class="col-sm-offset-2">
-          <label class="col-sm-2 control-label" for="txt_itemtype">{{_('Index Tree')}}</label>
-          <div class="col-sm-6">
-            <select class="form-control" id="txt_index">
-            {%- if index_list %}
-              {%- for index in index_list if index %}
-              <option value="{{index['id']}}" {%- if workflow.index_tree_id == index['id'] %} selected {%- endif %}>ID: {{index['id']}}  Name: {{index['index_name']}}</option>
-              {%- endfor %}
-            {%- else %}
-              <option value=""></option>
-            {%- endif %}
-            </select>
-          </div>
-        </div>
-      </div>
       <div class="form-group hide">
         <div class="col-sm-offset-2">
           <label class="col-sm-2 control-label">{{_('Next Flow')}}</label>
@@ -130,7 +110,7 @@
             </button>
             <div class="hide" id="delete_uri">{{url_for('workflowsetting.delete_workflow', workflow_id=workflow.flows_id)}}</div>
             {%- endif %}
-
+ 
           </div>
         </div>
       </div>
@@ -141,42 +121,14 @@
 
 {% block tail %}
 <script>
-  $(document).ready(function () {
-    displayIndexTreeSelection();
+  $(document).ready(function() {
 
-    function addAlert(message) {
-      $('#alerts').append(
-              '<div class="alert alert-light" id="alert-style">' +
-              '<button type="button" class="close" data-dismiss="alert">' +
-              '&times;</button>' + message + '</div>');
-    }
-
-    function check_show_indexes(selected) {
-      let show_items_lit = $("#special_itemtype_list").val();
-      if (typeof show_items_lit === "string"){
-        show_items_lit = JSON.parse(show_items_lit);
-      }
-      for (const show_items of show_items_lit) {
-        if (selected === show_items) {
-          return true;
-        }
-      }
-      return false
-    }
-
-    function displayIndexTreeSelection() {
-      let selected = $('#txt_flow_name option:selected').text();
-      let is_show_selection_index = $('#enable_showing_index_tree_selection_value').val();
-      if (is_show_selection_index === 'True' && check_show_indexes(selected)) {
-        $('#index-tree').removeAttr('hidden');
-      } else {
-        $('#index-tree').attr("hidden", true);
-      }
-    }
-
-    $('#txt_flow_name').on('change', function () {
-      displayIndexTreeSelection();
-    });
+  function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         } 
 
     $('#btn_back').on('click', function(){
       window.history.back();
@@ -199,16 +151,10 @@
     });
     $('#btn_create').on('click', function(){
       const post_uri = $('#post_uri').text();
-      let selected = $('#txt_flow_name option:selected').text();
-      let index_id = null;
-      if (check_show_indexes(selected)) {
-        index_id = $('#txt_index').val()
-      }
-      let post_data = {'id': $('#_id').val(),
+      post_data = {'id': $('#_id').val(),
                    'flows_name': $('#txt_workflow_name').val(),
                    'itemtype_id': $('#txt_itemtype').val(),
-                   'flow_id': $('#txt_flow_name').val(),
-                   'index_id': index_id
+                   'flow_id': $('#txt_flow_name').val()
                   };
       $.ajax({
         url: post_uri,

@@ -26,22 +26,6 @@ msgstr ""
 msgid "Updated flow action successfully"
 msgstr ""
 
-#: weko_workflow/admin.py:148
-msgid "Approval by Administrator action does not exist, or not in the right order."
-msgstr ""
-
-#: weko_workflow/admin.py:150
-msgid "Approval by Advisor action is not in the right order."
-msgstr ""
-
-#: weko_workflow/admin.py:152
-msgid "Approval by Guarantor action is not in the right order."
-msgstr ""
-
-#: weko_workflow/admin.py:154
-msgid "Start or End action is not in the right order."
-msgstr ""
-
 #: weko_workflow/admin.py:228 weko_workflow/admin.py:237
 msgid "WorkFlow"
 msgstr ""
@@ -433,25 +417,3 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-
-msgid "Terms and Conditions"
-msgstr ""
-
-
-msgid "I have read and agreed to the Terms and Conditions"
-msgstr ""
-
-msgid "Application Date"
-msgstr ""
-
-msgid "Approved Date"
-msgstr ""
-
-msgid "Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?"
-msgstr ""
-
-msgid "Stop/Continue"
-msgstr ""
-
-msgid "After checking the Terms and Conditions, please check the [I have read and agreed to the Terms and Conditions] at the end of scroll."
-msgstr ""

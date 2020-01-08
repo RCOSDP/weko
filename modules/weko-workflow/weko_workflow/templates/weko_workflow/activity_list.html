@@ -82,71 +82,33 @@
   <div class="col-sm-12">
     <div class="table-responsive">
     <table class="table table-striped table-bordered table-responsive">
-      <thead>
+    <thead>
       <tr>
         <th>{{ _('No.') }}</th>
-        {%- for column in columns %}
-          {%- if column == "updated" %}
-            <th>{{ _('Updated') }}</th>
-          {%- elif column == "application_date" %}
-            <th>{{ _('Application Date') }}</th>
-          {%- elif column == "approved_date" %}
-            <th>{{ _('Approved Date') }}</th>
-          {%- elif column == "activity_id" %}
-            <th>{{ _('Activity') }}</th>
-          {%- elif column == "ItemName" %}
-            <th>{{ _('Item') }}</th>
-          {%- elif column == "flows_name" %}
-            <th>{{ _('WorkFlow') }}</th>
-          {%- elif column == "action_name" %}
-            <th>{{ _('Action') }}</th>
-          {%- elif column == "StatusDesc" %}
-            <th>{{ _('Status') }}</th>
-          {%- elif column == "email" %}
-            <th>{{ _('User') }}</th>
-          {%- endif %}
-        {%- endfor %}
+        <th>{{ _('Updated') }}</th>
+        <th>{{ _('Activity') }}</th>
+        <th>{{_('Item')}}</th>
+        <th>{{_('WorkFlow')}}</th>
+        <th>{{_('Action')}}</th>
+        <th>{{_('Status')}}</th>
+        <th>{{_('User')}}</th>
       </tr>
-      </thead>
+    </thead>
     <tbody>
     {%- for activity in activities %}
-      {% if enable_show_activity %}
-      <tr class="hide {%- if 'All' in activity.type %} tb-all {%- endif %} {%- if 'ToDo' in activity.type %} tb-todo {%- endif %} {%- if 'Wait' in activity.type %} tb-wait {%- endif %}">
-      {% else %}
-      <tr class="hide tb-all {%- if 'ToDo' == activity.type %} tb-todo {%- elif 'Wait' == activity.type %} tb-wait {%- endif %}"></tr>
-      {% endif %}
-        <th scope="row">{{ loop.index }}</th>
-        {%- for column in columns %}
-          {%-if column == "flows_name" %}
-            <td>{{ activity.workflow[column] }}</td>
-          {%-elif column == "action_name" %}
-            <td>{{ activity.action[column] }}</td>
-          {%-elif column == "email" %}
-            <td>{{ activity.User[column] }}</td>
-          {%-elif column == "activity_id" %}
-            {%-if community %}
-              <td>
-                <a href="{{ url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id) }}">{{ activity.activity_id }}</a>
-              </td>
-            {%-else %}
-              <td>
-                <a href="{{ url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type) }}">{{ activity.activity_id }}</a>
-              </td>
-            {%- endif %}
-          {%-else %}
-            {%-if activity[column] %}
-              {%- if column == "approved_date" or column == "application_date" or column == "updated" %}
-                <td>{{ activity[column].strftime('%Y-%m-%d') }}</td>
-              {%-elif column == "StatusDesc" %}
-                <td>{{ _(activity[column]) }}</td>
-              {%- else %}
-                <td>{{ activity[column] }}</td>
-              {%- endif %}
-            {%-else %}
-              <td></td>
-            {%- endif %}
-          {%- endif %}
-        {%- endfor %}
+      <tr class="hide tb-all {%- if 'ToDo' == activity.type %} tb-todo {%- elif 'Wait' == activity.type %} tb-wait {%- endif %}">
+        <th scope="row">{{loop.index}}</th>
+        <td>{{activity.updated.date()}}</td>
+        {%-if community%}
+        <td><a href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id)}}">{{activity.activity_id}}</a></td>
+        {%-else%}
+        <td><a href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type)}}">{{activity.activity_id}}</a></td>
+        {%- endif%}
+        <td>{{activity.ItemName}}</td>
+        <td>{{activity.workflow.flows_name}}</td>
+        <td>{{activity.action.action_name}}</td>
+        <td>{{_(activity.StatusDesc)}}</td>
+        <td>{{activity.User.email}}</td>
       </tr>
     {%- endfor %}
     </tbody>
