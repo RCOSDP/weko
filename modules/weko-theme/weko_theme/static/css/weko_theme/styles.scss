@@ -127,6 +127,10 @@ ng\:form {
   white-space: normal !important;
 }
 
+.detail-table td.multiple-line {
+  white-space: pre-wrap !important;
+}
+
 .detail-table {
   table-layout: fixed;
   overflow-wrap: break-word;

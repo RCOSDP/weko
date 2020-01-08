@@ -94,6 +94,7 @@
       {%- endif -%}
     <th scope="row" colspan="{{ label_colspan_default - level }}"
         style="border-bottom: none">{{_(label)}}</th>
+    <td class="{%- if label == 'Research Plan' %}multiple-line{%- endif %}">{{ content }}</td>
     <td>{{ content }}</td>
   </tr>
 {% endmacro %}

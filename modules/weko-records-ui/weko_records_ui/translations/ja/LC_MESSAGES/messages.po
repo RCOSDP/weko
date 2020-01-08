@@ -647,5 +647,15 @@ msgstr "保証人所属"
 msgid "Guarantor Mail Address"
 msgstr "保証人メールアドレス"
 
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Item Title"
+msgstr "アイテムタイトル"
 
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Position(Other)"
+msgstr "役職（その他）"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliation"
+msgstr "所属"
 

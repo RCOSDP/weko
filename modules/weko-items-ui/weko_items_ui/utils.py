@@ -1070,13 +1070,14 @@ def update_sub_items_by_user_role(item_type_id, schema_form):
     """
     item_type_name = get_item_type_name(item_type_id)
     excluded_sub_items = get_excluded_sub_items(item_type_name)
-    removed_forms = [
-        form for form in schema_form
-        if form.get('items') and form['items'][0]['key'].split('.')[
-            1] in excluded_sub_items
-    ]
-
-    for item in removed_forms:
+    excluded_forms = []
+    for form in schema_form:
+        if "title_{}".format(form.get('title')).lower() in excluded_sub_items:
+            excluded_forms.append(form)
+        elif form.get('items') and \
+                form['items'][0]['key'].split('.')[1] in excluded_sub_items:
+            excluded_forms.append(form)
+    for item in excluded_forms:
         schema_form.remove(item)
 
 
@@ -1265,7 +1266,8 @@ def recursive_form(schema_form):
     for form in schema_form:
         if 'items' in form:
             recursive_form(form.get('items', []))
-        # Set value for titleMap of select in case of position and select format
+        # Set value for titleMap of select in case of position
+        # and select format
         if (form.get('title', '') == 'Position' and form.get('type', '') ==
                 'select'):
             dict_data = []

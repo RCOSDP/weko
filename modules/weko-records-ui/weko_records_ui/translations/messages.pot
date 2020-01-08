@@ -639,4 +639,18 @@ msgstr ""
 msgid "Guarantor Mail Address"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Item Title"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Position(Other)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliation"
+msgstr ""
+
+
+
 
