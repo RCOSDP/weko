@@ -7,7 +7,7 @@ const urlDelete = window.location.origin + "/admin/resource/delete";
 const urlGetList = window.location.origin + "/admin/resource/get_list";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const default_state = {
-  status: false,
+  status: null,
   repository: "",
   resource_dump_manifest: false,
   url_path: ""
@@ -198,7 +198,7 @@ class ListResourceComponent extends React.Component {
                   <p className="">Resource Dump Url</p>
                 </th>
                 <th>
-                  <p className="">Publish</p>
+                  <p className="">Status</p>
                 </th>
               </tr>
             </thead>
@@ -244,7 +244,7 @@ class ListResourceComponent extends React.Component {
                         {item.url_path + "/resourcedump.xml"}
                       </a>
                     </td>
-                    <td>{item.status ? "ON" : "OFF"}</td>
+                    <td>{item.status ? "Publish" : "Private"}</td>
                   </tr>
                 );
               })}
@@ -292,7 +292,7 @@ class CreateResourceComponent extends React.Component {
     this.handleChangeState("url_path", url_path);
   }
 
-  handleSubmit() {
+  handleSubmit(add_another) {
     const new_data = { ...this.state };
     delete new_data.tree_list;
     fetch(urlCreate, {
@@ -305,7 +305,13 @@ class CreateResourceComponent extends React.Component {
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          this.props.handleChangeTab("list");
+          if(add_another){
+            this.setState({
+              ...default_state
+            })
+          } else {
+            this.props.handleChangeTab("list");
+          }
         } else {
           alert("Error in Create");
         }
@@ -356,18 +362,41 @@ class CreateResourceComponent extends React.Component {
     const { state } = this;
     return (
       <div className="create-resource">
-        <div className="row form-group flex-baseline">
+        <div className="row form-group ">
           <div className="col-md-2 text-right">
             <label>Status</label>
           </div>
           <div className="col-md-10">
-            <input
-              type="checkbox"
-              onChange={e => {
-                const value = e.target.checked;
-                this.handleChangeState("status", value);
-              }}
-            ></input>
+            <div className="col-md-10">
+            <div className="row">
+              <div className="col-md-2">
+                <input
+                checked={state.status===true}
+                type="radio"
+                name="status"
+                value="Publish"
+                onChange={e => {
+                  const value = e.target.value;
+                  this.handleChangeState("status", value==="Publish");
+                }}
+                ></input>Publish
+              </div>
+              <div className="col-md-2">
+                <input
+                  checked={state.status===false}
+                  type="radio"
+                  name="status"
+                  value="Private"
+                  onChange={e => {
+                    const value = e.target.value;
+                    this.handleChangeState("status", value==="Publish");
+                  }}
+                  ></input>Private
+              </div>
+
+
+            </div>
+          </div>
           </div>
         </div>
 
@@ -399,6 +428,7 @@ class CreateResourceComponent extends React.Component {
           <div className="col-md-10">
             <input
               type="checkbox"
+              checked={state.resource_dump_manifest}
               onChange={e => {
                 const value = e.target.checked;
                 this.handleChangeState("resource_dump_manifest", value);
@@ -444,10 +474,13 @@ class CreateResourceComponent extends React.Component {
                 this.handleSubmit();
               }}
             >
-              Save
+              Create
             </button>
-            <button className="btn btn-default" onClick={() => {}}>
-              Save add Add Another
+            <button className="btn btn-default" onClick={() => {
+              this.handleSubmit(true);
+
+            }}>
+              Create add Add Another
             </button>
             <button
               className="btn btn-danger"
@@ -470,7 +503,6 @@ class EditResourceComponent extends React.Component {
     this.state = {
       ...props.select_item,
       tree_list: [],
-      is_publish: false
     };
     this.handleChangeState = this.handleChangeState.bind(this);
     this.handleChangeURL = this.handleChangeURL.bind(this);
@@ -486,14 +518,6 @@ class EditResourceComponent extends React.Component {
         ...state,
         [name]: value
       },
-      () => {
-        if (name === "repository") {
-          this.handleChangeURL();
-        }
-        if (name === "status" && state.is_publish) {
-          this.handleChangeState("is_publish", false);
-        }
-      }
     );
   }
 
@@ -566,7 +590,6 @@ class EditResourceComponent extends React.Component {
     const { select_item } = this.props;
     this.setState({
       ...select_item,
-      is_publish: select_item.status
     });
   }
 
@@ -574,19 +597,39 @@ class EditResourceComponent extends React.Component {
     const { state } = this;
     return (
       <div className="create-resource">
-        <div className="row form-group flex-baseline">
+        <div className="row form-group">
           <div className="col-md-2 text-right">
             <label>Status</label>
           </div>
           <div className="col-md-10">
-            <input
-              type="checkbox"
-              onChange={e => {
-                const value = e.target.checked;
-                this.handleChangeState("status", value);
-              }}
-              checked={state.status}
-            ></input>
+            <div className="row">
+              <div className="col-md-2">
+                <input
+                checked={state.status}
+                type="radio"
+                name="status"
+                value="Publish"
+                onChange={e => {
+                  const value = e.target.value;
+                  this.handleChangeState("status", value==="Publish");
+                }}
+              ></input>Publish
+              </div>
+              <div className="col-md-2">
+                <input
+                  checked={!state.status}
+                  type="radio"
+                  name="status"
+                  value="Private"
+                  onChange={e => {
+                    const value = e.target.value;
+                    this.handleChangeState("status", value==="Publish");
+                  }}
+                  ></input>Private
+              </div>
+
+
+            </div>
           </div>
         </div>
 
@@ -602,7 +645,6 @@ class EditResourceComponent extends React.Component {
                 this.handleChangeState("repository", value);
               }}
               value={state.repository}
-              disabled={state.is_publish}
             >
               {state.tree_list.map(item => {
                 return <option value={item.id}>{item.value}</option>;
@@ -623,7 +665,6 @@ class EditResourceComponent extends React.Component {
                 this.handleChangeState("resource_dump_manifest", value);
               }}
               checked={state.resource_dump_manifest}
-              disabled={state.is_publish}
             ></input>
           </div>
         </div>
