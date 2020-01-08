@@ -42,14 +42,13 @@ from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
-from weko_index_tree.utils import get_user_roles
+from weko_index_tree.utils import get_index_id, get_user_roles
 from weko_records.api import FeedbackMailList, ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.config import ITEM_REGISTRATION_ACTION_ID
 from weko_workflow.models import ActionStatusPolicy, WorkFlow
-from weko_workflow.utils import get_index_id
 
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
@@ -462,7 +461,7 @@ def iframe_items_index(pid_value='0'):
             enable_auto_set_index = current_app.config[
                 'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE']
             if enable_auto_set_index and contain_application_endpoint:
-                index_id = get_index_id(cur_activity)
+                index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
                 return redirect(url_for('weko_workflow.iframe_success'))
             # Get the design for widget rendering

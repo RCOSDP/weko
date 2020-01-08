@@ -948,31 +948,11 @@ def is_usage_application_item_type(activity_detail):
         return False
 
 
-def get_index_id(activity_detail):
-    """Get index ID base on activity.
-
-    :param activity_detail:
-    :return:
-    """
-    workflow = WorkFlow()
-    workflow_detail = workflow.get_workflow_by_id(
-        activity_detail.workflow_id)
-    index_tree_id = workflow_detail.index_tree_id
-    if index_tree_id:
-        index_result = Indexes.get_index(index_tree_id)
-        if not index_result:
-            index_tree_id = None
-    else:
-        index_tree_id = None
-    return index_tree_id
-
-
 def send_mail_reminder(mail_info):
     """Send mail reminder.
 
     :mail_info: object
     """
-    from weko_items_ui.utils import get_user_info_by_username
     subject, body = email_pattern_reminder(mail_info.get('template'))
 
     if body and subject:

@@ -46,6 +46,7 @@ from jsonschema import ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_index_tree.utils import get_index_id
 from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_file_download_permission
@@ -1227,7 +1228,6 @@ def validate_user_mail_and_index(request_data):
     :param request_data:
     :return:
     """
-    from weko_workflow.utils import get_index_id
     users = request_data.get('user_to_check', [])
     auto_set_index_action = request_data.get('auto_set_index_action', False)
     activity_id = request_data.get('activity_id')
