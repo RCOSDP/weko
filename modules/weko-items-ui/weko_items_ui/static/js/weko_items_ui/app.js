@@ -1514,27 +1514,34 @@ function handleSharePermission(value) {
       // -Validate index existence(if any)
       $scope.validateEmailsAndIndexAndUpdateApprovalActions = function (activityId, steps, isAutoSetIndexAction) {
         let emailsToValidate = [];
+        let actionEndpointKey = $("#action_endpoint_key").val();
+        let approvalMailSubKey = $("#approval_email_key").val();
+        if (actionEndpointKey === "" || approvalMailSubKey === "") {
+          return;
+        }
+        actionEndpointKey = JSON.parse(actionEndpointKey);
+        approvalMailSubKey = JSON.parse(approvalMailSubKey);
         let param = {};
         steps.forEach(step => {
-          if (step.ActionEndpoint == 'approval_advisor') {
-            emailsToValidate.push('email_advisor');
-            let subitem_advisor_mail_address = $scope.depositionForm.subitem_advisor_mail_address;
+          if (step.ActionEndpoint == actionEndpointKey.approval1 && approvalMailSubKey.approval1) {
+            emailsToValidate.push('email_approval1');
+            let subitemApprovalMailAddress = $scope.depositionForm[approvalMailSubKey.approval1];
             let mail_adress = '';
-            if (subitem_advisor_mail_address) {
-              mail_adress = subitem_advisor_mail_address.$modelValue;
+            if (subitemApprovalMailAddress) {
+              mail_adress = subitemApprovalMailAddress.$modelValue;
             }
-            param['email_advisor'] = {
+            param['email_approval1'] = {
               'mail': mail_adress,
               'action_id': step.ActionId
             }
-          } else if (step.ActionEndpoint == 'approval_guarantor') {
-            emailsToValidate.push('email_guarantor');
-            let subitem_guarantor_mail_address = $scope.depositionForm.subitem_guarantor_mail_address;
+          } else if (step.ActionEndpoint == actionEndpointKey.approval2 && approvalMailSubKey.approval2) {
+            emailsToValidate.push('email_approval2');
+            let subitemApproval2MailAddress = $scope.depositionForm[approvalMailSubKey.approval2];
             let mail_adress = '';
-            if (subitem_guarantor_mail_address) {
-              mail_adress = subitem_guarantor_mail_address.$modelValue;
+            if (subitemApproval2MailAddress) {
+              mail_adress = subitemApproval2MailAddress.$modelValue;
             }
-            param['email_guarantor'] = {
+            param['email_approval2'] = {
               'mail': mail_adress,
               'action_id': step.ActionId
             }
@@ -1548,10 +1555,10 @@ function handleSharePermission(value) {
         for (let i = 0; i < recordsForm.length; i++) {
           itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
         }
-        return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction);
+        return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction, approvalMailSubKey);
       };
 
-      $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction) {
+      $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction, approvalMailSubKey) {
         let result = true;
         $.ajax({
           url: '/api/items/validate_email_and_index',
@@ -1564,15 +1571,15 @@ function handleSharePermission(value) {
           dataType: "json",
           success: (data, status) => {
             let listEmailErrors = [];
-            if (param.email_advisor && param.email_guarantor) {
-              result = this.processResponseEmailValidation(itemsDict, data.email_advisor, "subitem_advisor_mail_address", listEmailErrors) + this.processResponseEmailValidation(itemsDict, data.email_guarantor, "subitem_guarantor_mail_address", listEmailErrors);
+            if (param.email_approval1 && param.email_approval2) {
+              result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors) + this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
             }
             else{
-              if (param.email_advisor){
-                result = this.processResponseEmailValidation(itemsDict, data.email_advisor, "subitem_advisor_mail_address", listEmailErrors)
+              if (param.email_approval1){
+                result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors)
               }
-              if (param.email_guarantor) {
-                result = this.processResponseEmailValidation(itemsDict, data.email_guarantor, "subitem_guarantor_mail_address", listEmailErrors);
+              if (param.email_approval2) {
+                result = this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval1, listEmailErrors);
               }
             }
             if (listEmailErrors.length > 0) {
@@ -1728,22 +1735,7 @@ function handleSharePermission(value) {
           } else if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
             // Do nothing
           } else {
-            // Add advisor, guarantor mail in oder to save to db
-            let advisor_mail = '';
-            let guarantor_mail = '';
-            $.each($rootScope.recordsVM.invenioRecordsModel, function(k, v){
-              if(v != undefined){
-                if(v['subitem_advisor_mail_address'] != undefined){
-                  advisor_mail = v['subitem_advisor_mail_address']
-                }
-                if(v['subitem_guarantor_mail_address'] != undefined){
-                  guarantor_mail = v['subitem_guarantor_mail_address']
-                }
-              }
-            })
-            $rootScope.recordsVM.invenioRecordsModel['advisor_mail'] = advisor_mail;
-            $rootScope.recordsVM.invenioRecordsModel['guarantor_mail'] = guarantor_mail;
-
+            $scope.addApprovalMail();
             var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
             var indexOfLink = str.indexOf("authorLink");
             if (indexOfLink != -1) {
@@ -1758,6 +1750,29 @@ function handleSharePermission(value) {
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
         }
+      };
+
+      $scope.addApprovalMail = function () {
+        let approvalMailSubKey = $("#approval_email_key").val();
+        if (approvalMailSubKey === "") {
+          return;
+        }
+        approvalMailSubKey = JSON.parse(approvalMailSubKey);
+        // Add approval1, approval2 mail in oder to save to db
+        let approval1Mail = '';
+        let approval2Mail = '';
+        $.each($rootScope.recordsVM.invenioRecordsModel, function (k, v) {
+          if (v != undefined) {
+            if (approvalMailSubKey.approval1 && v[approvalMailSubKey.approval1] != undefined) {
+              approval1Mail = v[approvalMailSubKey.approval1];
+            }
+            if (approvalMailSubKey.approval2 && v[approvalMailSubKey.approval2] != undefined) {
+              approval2Mail = v[approvalMailSubKey.approval2];
+            }
+          }
+        });
+        $rootScope.recordsVM.invenioRecordsModel['approval1'] = approval1Mail;
+        $rootScope.recordsVM.invenioRecordsModel['approval2 '] = approval2Mail;
       };
 
       $scope.saveDataJson = function (item_save_uri, currentActionId,enableContributor,enableFeedbackMail) {
