@@ -34,7 +34,6 @@ from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
 
-from .api import Indexes
 from .models import Index
 
 
@@ -421,6 +420,7 @@ def get_index_id(activity_id):
         activity_detail.workflow_id)
     index_tree_id = workflow_detail.index_tree_id
     if index_tree_id:
+        from .api import Indexes
         index_result = Indexes.get_index(index_tree_id)
         if not index_result:
             index_tree_id = None
