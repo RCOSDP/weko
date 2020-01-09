@@ -1281,3 +1281,17 @@ def recursive_form(schema_form):
                     }
                     dict_data.append(current_position)
                     form['titleMap'] = dict_data
+
+
+def set_multi_language_name(item, cur_lang):
+    """Set multi language name: Get corresponding language and set to json.
+
+    :param item: json object
+    :param cur_lang: current language
+    :return: The modified json object.
+    """
+    if 'titleMap' in item:
+        for value in item['titleMap']:
+            if 'name_i18n' in value \
+                    and len(value['name_i18n'][cur_lang]) > 0:
+                value['name'] = value['name_i18n'][cur_lang]
