@@ -496,9 +496,12 @@ var SchemaObject = React.createClass({
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this.state.propertyDels[index]) return;
-			// var itemKey = self.state.propertyItems[index];
+			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
-				var itemKey = self.createSubItemName(value.title);
+				let subKey = itemKey.split("_");
+				if (subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+					itemKey = self.createSubItemName(value.title);
+				}
 				var sub_form = {};
 				if ('text' === value.format || 'textarea' === value.format) {
 					sub_form = {
@@ -555,9 +558,12 @@ var SchemaObject = React.createClass({
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this2.state.propertyDels[index]) return;
-			// var itemKey = self.state.propertyItems[index];
+			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
-				var itemKey = self.createSubItemName(value.title);
+				let subKey = itemKey.split("_");
+				if (subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+					itemKey = self.createSubItemName(value.title);
+				}
 				if ('text' === value.format || 'textarea' === value.format || 'datetime' === value.format) {
 					properties[itemKey] = value;
 				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
