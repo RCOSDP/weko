@@ -127,12 +127,6 @@ WEKO_ITEMS_UI_APPLICATION_FOR_LOCATION_INFORMATION_ROLES = {}
 WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPE = {}
 
 WEKO_ITEMS_UI_LIST_ITEM_TYPE_NOT_NEED_AGREE = []
-""" item type name => """
-""" ライフ利用申請 """
-""" 累積利用申請 """
-""" 組合せ分析利用申請 """
-""" 都道府県利用申請 """
-""" 地点情報利用申請 """
 
 WEKO_ITEMS_UI_PERFECTURE_LOCATION_ITEM_TYPES = []
 
