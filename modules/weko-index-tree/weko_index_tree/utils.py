@@ -305,6 +305,29 @@ def get_index_id_list(indexes, id_list=None):
     return id_list
 
 
+def get_publish_index_id_list(indexes, id_list=None):
+    """Get index id list."""
+    if id_list is None:
+        id_list = []
+    if isinstance(indexes, list):
+        for index in indexes:
+            if isinstance(index, dict):
+                if index.get('id', '') == 'more':
+                    continue
+
+                parent = index.get('parent', '')
+                if index.get('public_state'):
+                    if parent is not '' and parent is not '0':
+                        id_list.append(parent + '/' + index.get('id', ''))
+                    else:
+                        id_list.append(index.get('id', ''))
+
+                children = index.get('children')
+                get_publish_index_id_list(children, id_list)
+
+    return id_list
+
+
 def reduce_index_by_more(tree, more_ids=None):
     """Reduce index by more."""
     if more_ids is None:

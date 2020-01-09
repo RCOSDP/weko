@@ -37,7 +37,7 @@ from weko_groups.api import Group
 
 from .models import Index
 from .utils import cached_index_tree_json, get_index_id_list, get_tree_json, \
-    get_user_roles, reset_tree
+    get_user_roles, reset_tree, get_publish_index_id_list
 
 
 class Indexes(object):
@@ -1195,3 +1195,10 @@ class Indexes(object):
             query = query.filter(recursive_t.c.public)
         q = query.order_by(recursive_t.c.path).all()
         return q
+
+
+    @classmethod
+    def get_list_path_publish(cls, index_id):
+        tree_path = get_publish_index_id_list(cls.get_browsing_tree(index_id),
+                                              [])
+        return tree_path

@@ -790,19 +790,18 @@ def item_path_search_factory(self, search, index_id=None):
 
 def item_path_search_factory_custom(self, search, index_id=None):
     """Parse query using Weko-Query-Parser.
-
     :param self: REST view.
     :param search: Elastic search DSL search instance.
     :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
-    def _get_index_earch_query():
-
+    def _get_index_search_query():
         query_q = {
             "_source": {
                 "excludes": ['content']
             },
-            "from": "0", "size": "1000",
+            "from": "0",
+            "size": "10000",
             "query": {
                 "bool": {
                     "must": [
@@ -849,38 +848,43 @@ def item_path_search_factory_custom(self, search, index_id=None):
             },
             "post_filter": {}
         }
-
         q = index_id
-
-        if q != '0':
-            # add item type aggs
+        if q:
             query_q['aggs']['path']['aggs']. \
                 update(get_item_type_aggs(search._index[0]))
-            if q:
-                mut = get_permission_filter(q)
+            mut = get_permission_filter(q)
+            mut = list(map(lambda x: x.to_dict(), mut))
+            post_filter = query_q['post_filter']
+            current_app.logger.debug('-'*60)
+            current_app.logger.debug(mut[0].get('bool'))
+            if mut[0].get('bool'):
+                post_filter['bool'] = mut[0]['bool']
             else:
-                mut = get_permission_filter()
-
-            if mut:
-                mut = list(map(lambda x: x.to_dict(), mut))
-                post_filter = query_q['post_filter']
-                if mut[0].get('bool'):
-                    post_filter['bool'] = mut[0]['bool']
-                else:
-                    post_filter['bool'] = {'must': mut}
-
+                post_filter['bool'] = {'must': mut}
+            if post_filter:
+                list_path = Indexes.get_list_path_publish(index_id)
+                current_app.logger.debug('-' * 60)
+                current_app.logger.debug(list_path)
+                current_app.logger.debug(type(list_path))
+                post_filter['bool']['must'] = []
+                post_filter['bool']['must'].append(
+                    {
+                        "terms": {
+                            "path": list_path
+                        }
+                    }
+                )
             # create search query
             if q:
                 try:
                     fp = Indexes.get_self_path(q)
-
                     query_q = json.dumps(query_q).replace("@index", fp.path)
                     query_q = json.loads(query_q)
                 except BaseException:
                     pass
             return query_q
     # create a index search query
-    query_q = _get_index_earch_query()
+    query_q = _get_index_search_query()
     try:
         # Aggregations.
         extr = search._extra.copy()
@@ -892,7 +896,6 @@ def item_path_search_factory_custom(self, search, index_id=None):
             "Failed parsing query: {0}".format(q),
             exc_info=True)
         raise InvalidQueryRESTError()
-
     return search
 
 

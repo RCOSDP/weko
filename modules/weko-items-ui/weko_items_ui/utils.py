@@ -1090,7 +1090,7 @@ def update_schema_remove_hidden_item(schema, render, items_name):
         key = schema[item]['key']
         if render['meta_list'].get(key):
             hidden_flg = render['meta_list'][key]['option']['hidden']
-        if render['meta_system'].get(key):
+        if render.get('meta_system') and render['meta_system'].get(key):
             hidden_flg = render['meta_system'][key]['option']['hidden']
         if hidden_flg:
             schema[item]['condition'] = 1

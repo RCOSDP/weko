@@ -35,7 +35,6 @@ from weko_records.api import ItemTypes
 from weko_records_ui.permissions import check_file_download_permission
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_index_tree.api import Indexes
-from .api import ResourceListHandler
 
 
 def to_dict(resource):
@@ -223,3 +222,5 @@ def public_index_checked(f):
         return f(index_id, *args, **kwargs)
 
     return decorate
+
+
