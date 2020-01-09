@@ -1775,7 +1775,7 @@ function handleSharePermission(value) {
           }
         });
         $rootScope.recordsVM.invenioRecordsModel['approval1'] = approval1Mail;
-        $rootScope.recordsVM.invenioRecordsModel['approval2 '] = approval2Mail;
+        $rootScope.recordsVM.invenioRecordsModel['approval2'] = approval2Mail;
       };
 
       $scope.saveDataJson = function (item_save_uri, currentActionId,enableContributor,enableFeedbackMail) {
