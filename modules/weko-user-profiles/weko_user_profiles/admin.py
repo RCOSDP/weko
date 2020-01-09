@@ -40,7 +40,7 @@ from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from .models import UserProfile
-from .views import get_role_by_position
+from .utils import get_role_by_position
 
 
 def _(x):
@@ -58,7 +58,7 @@ class UserProfileView(ModelView):
     column_list = (
         'user_id',
         '_displayname',
-        # 'full_name',
+        'fullname',
         'timezone',
         'language',
     )
@@ -71,12 +71,13 @@ class UserProfileView(ModelView):
 
     form_columns = (
         'username',
-        # 'full_name',
+        'fullname',
         'timezone',
         'language')
 
     column_labels = {
         '_displayname': __('Username'),
+        'fullname': __('Fullname'),
         'timezone': __('Timezone'),
         'language': __('Language'),
     }
@@ -145,7 +146,7 @@ class UserProfileView(ModelView):
     column_labels['university'] = __('University/Institution')
     column_labels['department'] = __('Affiliated Division/Department')
     column_labels['position'] = __('Position')
-    column_labels['otherPosition'] = ''
+    column_labels['otherPosition'] = __('Position (Others)')
     column_labels['phoneNumber'] = __('Phone number')
     column_labels['instituteName'] = __('Affiliated Institution Name')
     column_labels['institutePosition'] = \

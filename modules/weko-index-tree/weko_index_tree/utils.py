@@ -404,3 +404,26 @@ def generate_path(index_ids):
         result.append(path[str(index.cid)])
 
     return result
+
+
+def get_index_id(activity_id):
+    """Get index ID base on activity id.
+
+    :param activity_id:
+    :return:
+    """
+    from weko_workflow.api import WorkActivity, WorkFlow
+    activity = WorkActivity()
+    activity_detail = activity.get_activity_detail(activity_id)
+    workflow = WorkFlow()
+    workflow_detail = workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
+    index_tree_id = workflow_detail.index_tree_id
+    if index_tree_id:
+        from .api import Indexes
+        index_result = Indexes.get_index(index_tree_id)
+        if not index_result:
+            index_tree_id = None
+    else:
+        index_tree_id = None
+    return index_tree_id

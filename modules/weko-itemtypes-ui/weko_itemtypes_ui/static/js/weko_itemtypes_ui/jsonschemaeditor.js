@@ -157,7 +157,7 @@ var SchemaCheckboxes = React.createClass({
 		return this.propsToState(this.props);
 	},
 	propsToState: function propsToState(props) {
-		var data = props.data;
+    let data = props.data.items; //get enum for checkboxes
 		if (data.hasOwnProperty('enum') && data.enum.length > 0) {
 			data.enum = data.enum.join('|');
 		} else {
@@ -517,14 +517,31 @@ var SchemaObject = React.createClass({
 						templateUrl: "/static/templates/weko_deposit/datepicker.html",
 						title: value.title
 					};
-				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
+				} else if ('checkboxes' === value.format) {
+          sub_form = {
+            key: parentkey + itemKey,
+            type: "template",
+            templateUrl: "/static/templates/weko_deposit/checkboxes.html",
+            title: value.title,
+            titleMap: self.refs['subitem' + index].exportTitleMap()
+          };
+				}else if ('select' === value.format) {
 					sub_form = {
 						key: parentkey + itemKey,
 						type: value.format,
 						title: value.title,
 						titleMap: self.refs['subitem' + index].exportTitleMap()
 					};
-				} else if ('array' === value.format) {
+				}
+				 else if ('radios' === value.format ) {
+					sub_form = {
+						key: parentkey + itemKey,
+						type: "template",
+						title: value.title,
+						templateUrl: "/static/templates/weko_deposit/datepicker.html",
+						titleMap: self.refs['subitem' + index].exportTitleMap()
+					};
+				}  else if ('array' === value.format) {
 					sub_form = {
 						key: parentkey + itemKey,
 						add: "New",

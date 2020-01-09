@@ -353,3 +353,12 @@ msgstr ""
 
 msgid "Position is being inputted (Only input when selecting 'Others')"
 msgstr ""
+
+msgid "Fullname"
+msgstr ""
+
+msgid "Full name not provided."
+msgstr ""
+
+msgid "Position (Others)"
+msgstr ""
