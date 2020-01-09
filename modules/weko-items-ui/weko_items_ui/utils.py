@@ -23,11 +23,11 @@
 import csv
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
 import traceback
-import re
 from collections import OrderedDict
 from datetime import datetime
 from io import StringIO
@@ -837,7 +837,7 @@ def export_items(post_data):
     """
     def check_item_type_name(name):
         """Check a list of allowed characters in filenames."""
-        new_name = re.sub('[\/:*"<>|\s]', '_', name)
+        new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
         return new_name
 
     include_contents = True if \
