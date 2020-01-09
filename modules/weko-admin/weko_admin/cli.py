@@ -60,20 +60,20 @@ def language():
 @language.command('create')
 @click.argument('lang_code')
 @click.argument('lang_name')
-@click.argument('is_registered')
+@click.option('--registered', is_flag=True, default=False)
 @click.argument('sequence')
-@click.argument('is_active')
+@click.option('--active', is_flag=True, default=False)
 @with_appcontext
 def insert_lang_to_db(
         lang_code,
         lang_name,
-        is_registered,
+        registered,
         sequence,
-        is_active):
+        active):
     """Ex: ja Japanese true 12 true."""
     try:
         AdminLangSettings.create(lang_code, lang_name,
-                                 is_registered, sequence, is_active)
+                                 registered, sequence, active)
         click.secho('insert language success')
     except Exception as e:
         click.secho(str(e))
@@ -149,16 +149,16 @@ def billing():
 
 @billing.command('create')
 @click.argument('user_id')
-@click.argument('is_active')
+@click.option('--active', is_flag=True, default=False)
 @with_appcontext
-def add_billing_user(user_id, is_active):
+def add_billing_user(user_id, active):
     """Add new user can access billing file.
 
     :param user_id: User's id (default: 1)
-    :param is_active: Access state
+    :param active: Access state
     """
     try:
-        BillingPermission.create(user_id, is_active)
+        BillingPermission.create(user_id, active)
         click.secho('insert billing user success')
     except Exception as e:
         click.secho(str(e))
@@ -166,17 +166,17 @@ def add_billing_user(user_id, is_active):
 
 @billing.command('active')
 @click.argument('user_id')
-@click.argument('is_active')
+@click.option('--active', is_flag=True, default=False)
 @with_appcontext
-def toggle_active_billing_user(user_id, is_active):
+def toggle_active_billing_user(user_id, active):
     """Update access state of billing file.
 
     :param user_id: User's id (default: 1)
-    :param is_active: Access state
+    :param active: Access state
     """
     try:
-        BillingPermission.activation(user_id, is_active)
-        if is_active.lower() == 'true':
+        BillingPermission.activation(user_id, active)
+        if active:
             click.secho('active billing user success')
         else:
             click.secho('deactive billing user success')
