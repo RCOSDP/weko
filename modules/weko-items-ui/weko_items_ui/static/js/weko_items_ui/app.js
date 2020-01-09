@@ -692,6 +692,9 @@ function handleSharePermission(value) {
           return;
         }
         var user_info_html = $("#user_info_data").val();
+        if (!user_info_html) {
+          return;
+        }
         var data = JSON.parse(user_info_html);
         // Key for detecting user profile info
         // These 2 keys is unique for User Information so use these to detect user_information obj
@@ -1517,7 +1520,7 @@ function handleSharePermission(value) {
         let actionEndpointKey = $("#action_endpoint_key").val();
         let approvalMailSubKey = $("#approval_email_key").val();
         if (actionEndpointKey === "" || approvalMailSubKey === "") {
-          return;
+          return true;
         }
         actionEndpointKey = JSON.parse(actionEndpointKey);
         approvalMailSubKey = JSON.parse(approvalMailSubKey);
