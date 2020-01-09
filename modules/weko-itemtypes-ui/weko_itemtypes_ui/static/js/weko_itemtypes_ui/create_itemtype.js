@@ -416,8 +416,8 @@ $(document).ready(function () {
       }
     }
 
-    page_global.table_row_map.schema.properties["pubdate"] = {type:"string",title:"公開日",format:"datetime"}
-    page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
+    page_global.table_row_map.schema.properties["pubdate"] = {type:"string",title:"Pubdate",format:"datetime"}
+    page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"Pubdate",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
     page_global.table_row_map.schema.required.push("pubdate");
 
     if(src_mapping.hasOwnProperty('pubdate')) {
@@ -788,7 +788,7 @@ $(document).ready(function () {
     });
     //公開日
     var tmp_pubdate = {}
-    tmp_pubdate.title = "公開日";
+    tmp_pubdate.title = "Pubdate";
     tmp_pubdate.title_i18n = {}
     tmp_pubdate.title_i18n.ja = "公開日";
     tmp_pubdate.title_i18n.en = "PubDate";

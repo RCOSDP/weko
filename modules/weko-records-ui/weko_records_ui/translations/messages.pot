@@ -651,6 +651,25 @@ msgstr ""
 msgid "Affiliation"
 msgstr ""
 
+msgid "PubDate"
+msgstr ""
+
+msgid "life"
+msgstr ""
+
+msgid "accumulation"
+msgstr ""
+
+msgid "combinational_analysis"
+msgstr ""
+
+msgid "perfectures"
+msgstr ""
+
+msgid "location_information"
+msgstr ""
+
+
 
 
 
