@@ -302,7 +302,13 @@ def check_created_id(record):
     """
     is_himself = False
     users = current_app.config['WEKO_PERMISSION_ROLE_USER']
+    # Super users
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     for lst in list(current_user.roles or []):
+        # In case of supper user,it's always have permission
+        if lst.name in supers:
+            is_himself = True
+            break
         if lst.name in users:
             is_himself = True
             if lst.name == users[2]:
