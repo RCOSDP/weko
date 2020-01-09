@@ -304,6 +304,12 @@ def check_created_id(record):
     users = current_app.config['WEKO_PERMISSION_ROLE_USER']
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    user_id = current_user.get_id() \
+        if current_user and current_user.is_authenticated else None
+    created_id = record.get('_deposit', {}).get('created_by')
+    from weko_records.serializers.utils import get_item_type_name
+    item_type_id = record.get('item_type_id', '')
+    item_type_name = get_item_type_name(item_type_id)
     for lst in list(current_user.roles or []):
         # In case of supper user,it's always have permission
         if lst.name in supers:
@@ -311,11 +317,15 @@ def check_created_id(record):
             break
         if lst.name in users:
             is_himself = True
+            if item_type_name and item_type_name in current_app.config[
+                'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST']:
+                if user_id and user_id == str(created_id):
+                    is_himself = True
+                else:
+                    is_himself = False
+                break
             if lst.name == users[2]:
                 is_himself = False
-                user_id = current_user.get_id() \
-                    if current_user and current_user.is_authenticated else None
-                created_id = record.get('_deposit', {}).get('created_by')
                 shared_id = record.get('weko_shared_id')
                 if user_id and created_id and user_id == str(created_id):
                     is_himself = True
