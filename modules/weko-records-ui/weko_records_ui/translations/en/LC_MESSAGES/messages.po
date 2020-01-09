@@ -691,4 +691,20 @@ msgstr ""
 msgid "location_information"
 msgstr ""
 
+msgid "Output Type"
+msgstr ""
 
+msgid "Published Media Name"
+msgstr ""
+
+msgid "Published URL (DOI)"
+msgstr ""
+
+msgid "Published Date"
+msgstr ""
+
+msgid "Field"
+msgstr ""
+
+msgid "Member"
+msgstr ""

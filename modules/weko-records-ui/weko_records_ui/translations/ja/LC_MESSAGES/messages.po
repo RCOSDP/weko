@@ -676,3 +676,21 @@ msgstr "都道府県"
 
 msgid "location_information"
 msgstr "地点情報"
+
+msgid "Output Type"
+msgstr "成果物のタイプ"
+
+msgid "Published Media Name"
+msgstr "公表媒体名"
+
+msgid "Published URL (DOI)"
+msgstr "公表URL（DOI）"
+
+msgid "Published Date"
+msgstr "公表年月日"
+
+msgid "Field"
+msgstr "分野"
+
+msgid "Member"
+msgstr "会員"
