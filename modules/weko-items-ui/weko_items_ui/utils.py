@@ -837,7 +837,7 @@ def export_items(post_data):
     """
     def check_item_type_name(name):
         """Check a list of allowed characters in filenames."""
-        new_name = re.sub('[\/:*"<>|]', '', name)
+        new_name = re.sub('[\/:*"<>| ]', '_', name)
         return new_name
 
     include_contents = True if \
