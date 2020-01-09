@@ -1268,8 +1268,8 @@ def recursive_form(schema_form):
             recursive_form(form.get('items', []))
         # Set value for titleMap of select in case of position
         # and select format
-        if (form.get('title', '') == 'Position' and form.get('type', '') ==
-                'select'):
+        if (form.get('title', '') == 'Position' and form.get('type', '')
+                == 'select'):
             dict_data = []
             positions = current_app.config.get(
                 'WEKO_USERPROFILES_POSITION_LIST')

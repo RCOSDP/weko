@@ -737,8 +737,8 @@ def init_permission(recid):
                                                          activity_id)
         if permission:
             return make_response(
-                'File permission: ' + file_name + 'of record: ' + recid +
-                ' CREATED', 200)
+                'File permission: ' + file_name + 'of record: ' + recid
+                + ' CREATED', 200)
     except Exception as ex:
         current_app.logger.debug(ex)
         abort(500)
