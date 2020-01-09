@@ -737,7 +737,7 @@ $(document).ready(function () {
           //add by ryuu. end
           let object_form = properties_obj[tmp.input_type.substr(4)].form;
           //rename subitem
-          if (object_forms.items && object_forms.items.length > 0) {
+          if (object_form.items && object_form.items.length > 0) {
             object_form = rename_subitem(object_form);
           }
           page_global.table_row_map.form.push(JSON.parse(JSON.stringify(object_form).replace(/parentkey/gi, row_id)));
