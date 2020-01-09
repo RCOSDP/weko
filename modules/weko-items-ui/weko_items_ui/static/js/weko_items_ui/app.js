@@ -766,7 +766,6 @@ function handleSharePermission(value) {
       }
 
         $scope.translationsInstitutePosition = function (value) {
-            $("#institute_position_list").val(key);
                 return [...document.getElementById('institute_position_list').options].find(o => o.value === value).text;
             };
 
