@@ -704,14 +704,24 @@ $(document).ready(function () {
           properties_obj[tmp.input_type.substr(4)].forms.title_i18n = tmp.title_i18n;
           //add by ryuu. end
           if(Array.isArray(properties_obj[tmp.input_type.substr(4)].forms)) {
+            console.log("isArray");
             properties_obj[tmp.input_type.substr(4)].forms.forEach(function(element){
+              // rename subitem
+              if (element.items && element.items.length > 0) {
+                element = rename_subitem(element);
+              }
               page_global.table_row_map.form.push(
                 JSON.parse(JSON.stringify(element).replace(/parentkey/gi, row_id))
               );
             });
           } else {
+            let object_forms = properties_obj[tmp.input_type.substr(4)].forms;
+            // rename subitem
+            if (object_forms.items && object_forms.items.length > 0) {
+              object_forms = rename_subitem(object_forms);
+            }
             page_global.table_row_map.form.push(
-              JSON.parse(JSON.stringify(properties_obj[tmp.input_type.substr(4)].forms).replace(/parentkey/gi, row_id))
+              JSON.parse(JSON.stringify(object_forms).replace(/parentkey/gi, row_id))
             );
           }
         } else {
@@ -725,8 +735,12 @@ $(document).ready(function () {
           properties_obj[tmp.input_type.substr(4)].form.title = tmp.title;
           properties_obj[tmp.input_type.substr(4)].form.title_i18n = tmp.title_i18n;
           //add by ryuu. end
-          page_global.table_row_map.form.push(
-            JSON.parse(JSON.stringify(properties_obj[tmp.input_type.substr(4)].form).replace(/parentkey/gi, row_id)));
+          let object_form = properties_obj[tmp.input_type.substr(4)].form;
+          //rename subitem
+          if (object_form.items && object_form.items.length > 0) {
+            object_form = rename_subitem(object_form);
+          }
+          page_global.table_row_map.form.push(JSON.parse(JSON.stringify(object_form).replace(/parentkey/gi, row_id)));
         }
       }
 
@@ -747,9 +761,9 @@ $(document).ready(function () {
     tmp_pubdate.option.showlist = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_2').is(':checked') ? true : false);
     tmp_pubdate.option.crtf = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_3').is(':checked') ? true : false);
     page_global.meta_fix["pubdate"] = tmp_pubdate;
-	  page_global.meta_system = add_meta_system()
-	  page_global.table_row_map.form = page_global.table_row_map.form.concat(get_form_system())
-	  add_system_schema_property()
+    page_global.meta_system = add_meta_system()
+    page_global.table_row_map.form = page_global.table_row_map.form.concat(get_form_system())
+    add_system_schema_property()
   }
 
   // add new meta table row
@@ -997,6 +1011,55 @@ $(document).ready(function () {
     });
   }
 
+  function custom_suffix_subitem_name(suffix){
+    // Replace all space to _
+    suffix = suffix.replace(/ /g, '_');
+    // convert to lower case character
+    suffix = suffix.toLowerCase();
+    return suffix;
+  }
+
+  function process_child_subitem_name_form(org, prefix, form) {
+    //rename subitem
+    form.items.forEach(function(item) {
+      if (!item.key) {
+        return
+      }
+      let subkey = item.key.split("_");
+      let orgkey = item.key;
+      if (subkey.length > 1 && !isNaN(Number(subkey[subkey.length-1]))) {
+        subkey[subkey.length-1] = custom_suffix_subitem_name(item.title);
+        let ret = subkey.join('_');
+        item.key = prefix + ret.split(org)[1];
+      }
+      if (item.items && item.items.length > 0) {
+        item = process_child_subitem_name_form(orgkey, item.key, item);
+      }
+    });
+
+    return form;
+  }
+
+  function rename_subitem(form) {
+      //rename subitem
+      form.items.forEach(function(item) {
+        // if (!item.hasOwnProperty('key')) {
+        if (!item.key) {
+          return
+        }
+        let subkey = item.key.split("_");
+        let orgkey = item.key
+        if (subkey.length > 1 && !isNaN(Number(subkey[1]))) {
+          item.key = subkey[0] + "_" + custom_suffix_subitem_name(item.title);
+        }
+        if (item.items && item.items.length > 0) {
+          item = process_child_subitem_name_form(orgkey, item.key, item);
+        }
+      });
+
+      return form;
+  }
+
   getPropUrl = '/admin/itemtypes/properties/list?lang=' + $('#lang-code').val();
   select_option = '';
   // 作成したメタデータ項目タイプの取得
@@ -1024,18 +1087,16 @@ $(document).ready(function () {
       odered = {}
       others = ''
       for (var key in data) {
-        if (key == 'defaults') continue;
-        if (data[key].name === meta_system_info.updated_date.input_type){
+        if (key === 'defaults') continue;
+        if (data[key].name === meta_system_info.updated_date.input_type) {
           meta_system_info.updated_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.created_date.input_type){
           meta_system_info.created_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type){
+        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type) {
           meta_system_info.persistent_identifier_doi.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type){
-          meta_system_info.created_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.ranking_page_url.input_type){
+        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type) {
+          meta_system_info.persistent_identifier_h.input_type = "cus_" + key;
           meta_system_info.ranking_page_url.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.belonging_index_info.input_type){
+        } else if (data[key].name === meta_system_info.belonging_index_info.input_type) {
           meta_system_info.belonging_index_info.input_type = "cus_" + key;
         }
         option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
