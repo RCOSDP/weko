@@ -205,6 +205,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   }
   $scope.getJournalInfo();
 
+  // Get child id list to index list display.
   $scope.getChildList = function() {
     if (!$rootScope.index_id_q) {
       return;

@@ -1200,8 +1200,8 @@ class Indexes(object):
     def get_child_id_list(cls, index_id=0):
         """Get child id list without recursive."""
         child_list = []
-        q = Index.query.filter_by(parent=index_id).order_by(
-                Index.position).all()
+        q = Index.query.filter_by(parent=index_id). \
+            order_by(Index.position).all()
         for i in q:
             child_list.append(i.id)
         return child_list
