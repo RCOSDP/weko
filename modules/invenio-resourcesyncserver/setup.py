@@ -70,23 +70,31 @@ setup(
     platforms='any',
     entry_points={
         'invenio_base.apps': [
-            'invenio_resourcesyncserver = invenio_resourcesyncserver:InvenioResourceSyncServer',
+            'invenio_resourcesyncserver = '
+            'invenio_resourcesyncserver:InvenioResourceSyncServer',
         ],
         'invenio_base.blueprints': [
-            'invenio_resourcesyncserver = invenio_resourcesyncserver.views:blueprint',
+            'invenio_resourcesyncserver = '
+            'invenio_resourcesyncserver.views:blueprint',
         ],
         'invenio_i18n.translations': [
             'messages = invenio_resourcesyncserver',
         ],
         'invenio_admin.views': [
-            'invenio_admin_resource_sync = '
-            'invenio_resourcesyncserver.admin:invenio_admin_resource_sync',
+            'invenio_admin_resource_list = '
+            'invenio_resourcesyncserver.admin:invenio_admin_resource_list',
+            'invenio_admin_change_list = '
+            'invenio_resourcesyncserver.admin:invenio_admin_change_list',
         ],
         'invenio_assets.bundles': [
             'invenio_admin_resource_js = '
             'invenio_resourcesyncserver.bundles:invenio_admin_resource_js',
             'invenio_admin_resource_css = '
             'invenio_resourcesyncserver.bundles:invenio_admin_resource_css',
+            'invenio_admin_change_list_js = '
+            'invenio_resourcesyncserver.bundles:invenio_admin_change_list_js',
+            'invenio_admin_change_list_css = '
+            'invenio_resourcesyncserver.bundles:invenio_admin_change_list_css',
         ],
         'invenio_db.models': [
             'invenio_resourcesyncserver = invenio_resourcesyncserver.models',

@@ -32,3 +32,14 @@ invenio_admin_resource_css = Bundle(
     'css/invenio-resourcesyncserver/resource.css',
     output="gen/invenio_resource_css.%(version)s.css",
 )
+
+invenio_admin_change_list_js = Bundle(
+    'js/invenio-resourcesyncserver/change_list.js',
+    filters='jsmin',
+    output="gen/invenio_admin_change_list_js.%(version)s.js",
+)
+
+invenio_admin_change_list_css = Bundle(
+    'css/invenio-resourcesyncserver/change_list.css',
+    output="gen/invenio_change_list_css.%(version)s.css",
+)

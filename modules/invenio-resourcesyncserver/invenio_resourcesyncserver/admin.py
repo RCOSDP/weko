@@ -28,7 +28,7 @@ from .api import ResourceListHandler
 from .utils import to_dict
 
 
-class AdminResourceSyncView(BaseView):
+class AdminResourceListView(BaseView):
     """BaseView for Admin Resource sync."""
 
     @expose('/', methods=['GET'])
@@ -105,15 +105,104 @@ class AdminResourceSyncView(BaseView):
             return jsonify(data=None, success=False)
 
 
-invenio_admin_resource_sync = {
-    'view_class': AdminResourceSyncView,
+class AdminChangeListView(BaseView):
+    """BaseView for Admin Change list."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Renders an admin resource view.
+
+        :param
+        :return: The rendered template.
+        """
+        return self.render(
+            current_app.config['INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN'],
+        )
+
+    @expose('/get_list', methods=['GET'])
+    def get_list(self):
+        """Renders an list resource sync.
+
+        :param
+        :return: The rendered template.
+        """
+        list_resource = ResourceListHandler.get_list_resource()
+        result = list(map(lambda item: to_dict(item), list_resource))
+        return jsonify(result)
+
+    @expose('/get_resource/<id>', methods=['GET'])
+    def get_resource(self, id):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        resource = ResourceListHandler.get_resource(id)
+        return jsonify(resource)
+
+    @expose('/create', methods=['POST'])
+    def create(self):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        data = request.get_json()
+        resource = ResourceListHandler.create(data)
+        if resource:
+            return jsonify(data=resource, success=True)
+        else:
+            return jsonify(data=None, success=False)
+
+    @expose('/update/<id>', methods=['POST'])
+    def update(self, id):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        data = request.get_json()
+        resource = ResourceListHandler.update(id, data)
+        if resource:
+            return jsonify(data=to_dict(resource), success=True)
+        else:
+            return jsonify(data=None, success=False)
+
+    @expose('/delete/<id>', methods=['POST'])
+    def delete(self, id):
+        """Renders an item import view.
+
+        :param
+        :return: The rendered template.
+        """
+        resource = ResourceListHandler.delete(id)
+        if resource:
+            return jsonify(data=None, success=True)
+        else:
+            return jsonify(data=None, success=False)
+
+
+invenio_admin_resource_list = {
+    'view_class': AdminResourceListView,
     'kwargs': {
         'category': _('Resource Sync'),
         'name': _('Resource List'),
-        'endpoint': 'resource'
+        'endpoint': 'resource_list'
     }
 }
 
+
+invenio_admin_change_list = {
+    'view_class': AdminChangeListView,
+    'kwargs': {
+        'category': _('Resource Sync'),
+        'name': _('Change List'),
+        'endpoint': 'change_list'
+    }
+}
+
+
 __all__ = (
-    'invenio_admin_resource_sync'
+    'invenio_admin_resource_list',
+    'invenio_admin_change_list',
 )

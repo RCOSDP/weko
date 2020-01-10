@@ -14,8 +14,14 @@
 INVENIO_RESOURCESYNCSERVER_DEFAULT_VALUE = 'foobar'
 """Default value for the application."""
 
-INVENIO_RESOURCESYNCSERVER_BASE_TEMPLATE = 'invenio_resourcesyncserver/base.html'
+INVENIO_RESOURCESYNCSERVER_BASE_TEMPLATE = \
+    'invenio_resourcesyncserver/base.html'
 """Default base template for the demo page."""
 
-INVENIO_RESOURCESYNCSERVER_ADMIN_TEMPLATE = 'invenio_resourcesyncserver/resource.html'
+INVENIO_RESOURCESYNCSERVER_ADMIN_TEMPLATE = \
+    'invenio_resourcesyncserver/resource.html'
+"""Admin template for the demo page."""
+
+INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN = \
+    'invenio_resourcesyncserver/change_list.html'
 """Admin template for the demo page."""
