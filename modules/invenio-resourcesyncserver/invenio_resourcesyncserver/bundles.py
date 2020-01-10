@@ -22,7 +22,6 @@
 
 from flask_assets import Bundle
 
-
 invenio_admin_resource_js = Bundle(
     'js/invenio-resourcesyncserver/resource.js',
     filters='jsmin',

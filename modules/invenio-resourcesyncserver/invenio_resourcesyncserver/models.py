@@ -22,7 +22,6 @@
 
 from datetime import datetime
 
-from sqlalchemy_utils import Timestamp
 from invenio_db import db
 from sqlalchemy import Sequence, asc
 from sqlalchemy.dialects import postgresql

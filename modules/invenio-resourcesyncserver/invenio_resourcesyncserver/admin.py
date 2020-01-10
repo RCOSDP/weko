@@ -20,9 +20,10 @@
 
 """WEKO3 module docstring."""
 
-from flask_admin import BaseView, expose
 from flask import Response, abort, current_app, jsonify, make_response, request
+from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+
 from .api import ResourceListHandler
 from .utils import to_dict
 
@@ -37,7 +38,6 @@ class AdminResourceSyncView(BaseView):
         :param
         :return: The rendered template.
         """
-
         return self.render(
             current_app.config['INVENIO_RESOURCESYNCSERVER_ADMIN_TEMPLATE'],
         )

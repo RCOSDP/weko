@@ -13,11 +13,12 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, redirect, Response, request, abort
+from flask import Blueprint, Response, abort, redirect, request
 from flask_babelex import gettext as _
-from .utils import render_resource_dump_xml, render_resource_list_xml, \
-    get_file_content, get_resourcedump_manifest, public_index_checked
+
 from .api import ResourceListHandler
+from .utils import get_file_content, get_resourcedump_manifest, \
+    public_index_checked, render_resource_dump_xml, render_resource_list_xml
 
 blueprint = Blueprint(
     'invenio_resourcesyncserver',

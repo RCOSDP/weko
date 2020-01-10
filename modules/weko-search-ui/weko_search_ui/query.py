@@ -789,7 +789,9 @@ def item_path_search_factory(self, search, index_id=None):
 
 
 def item_path_search_factory_custom(self, search, index_id=None):
-    """Parse query using Weko-Query-Parser.
+    """
+    Parse query using Weko-Query-Parser.
+
     :param self: REST view.
     :param search: Elastic search DSL search instance.
     :param index_id: Index Identifier contains item's path
@@ -855,17 +857,12 @@ def item_path_search_factory_custom(self, search, index_id=None):
             mut = get_permission_filter(q)
             mut = list(map(lambda x: x.to_dict(), mut))
             post_filter = query_q['post_filter']
-            current_app.logger.debug('-'*60)
-            current_app.logger.debug(mut[0].get('bool'))
             if mut[0].get('bool'):
                 post_filter['bool'] = mut[0]['bool']
             else:
                 post_filter['bool'] = {'must': mut}
             if post_filter:
                 list_path = Indexes.get_list_path_publish(index_id)
-                current_app.logger.debug('-' * 60)
-                current_app.logger.debug(list_path)
-                current_app.logger.debug(type(list_path))
                 post_filter['bool']['must'] = []
                 post_filter['bool']['must'].append(
                     {

@@ -39,6 +39,7 @@ from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
@@ -50,7 +51,6 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import ItemTypes
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.models import FlowDefine, WorkFlow
-from invenio_pidstore.errors import PIDDoesNotExistError
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_REPO_USER, WEKO_SYS_USER

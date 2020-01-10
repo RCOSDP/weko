@@ -19,26 +19,28 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
-import tempfile
-from datetime import datetime
-import os
+
 import json
+import os
 import shutil
 import sys
+import tempfile
 import traceback
-
+from datetime import datetime
 from functools import wraps
-from .api import ResourceListHandler
-from flask import current_app, request, send_file, abort
+
+from flask import abort, current_app, request, send_file
 from weko_deposit.api import WekoRecord
+from weko_index_tree.api import Indexes
+from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records.api import ItemTypes
 from weko_records_ui.permissions import check_file_download_permission
-from weko_items_ui.utils import make_stats_tsv, package_export_file
-from weko_index_tree.api import Indexes
+
+from .api import ResourceListHandler
 
 
 def to_dict(resource):
-    """Generate Resource Object to Dict"""
+    """Generate Resource Object to Dict."""
     return dict(**{
         'id': resource.id,
         'status': resource.status,
@@ -50,17 +52,17 @@ def to_dict(resource):
 
 
 def render_resource_list_xml(index_id):
-    """Generate Resource List Xml"""
+    """Generate Resource List Xml."""
     return ResourceListHandler.get_content_resource_list(index_id)
 
 
 def render_resource_dump_xml(index_id):
-    """Generate Resource Dump Xml"""
+    """Generate Resource Dump Xml."""
     return ResourceListHandler.get_content_resource_dump(index_id)
 
 
 def get_file_content(index_id, record_id):
-    """Generate File content"""
+    """Generate File content."""
     record = WekoRecord.get_record_by_pid(record_id)
     list_index = get_real_path(record.get("path"))
     if ResourceListHandler.is_resync(list_index):
@@ -70,7 +72,7 @@ def get_file_content(index_id, record_id):
 
 
 def get_resourcedump_manifest(index_id, record_id):
-    """Generate File content"""
+    """Generate File content."""
     record = WekoRecord.get_record_by_pid(record_id)
     list_index = get_real_path(record.get("path"))
     if ResourceListHandler.is_resync(list_index):
@@ -80,7 +82,7 @@ def get_resourcedump_manifest(index_id, record_id):
 
 
 def get_real_path(path):
-    """Generate list index id from path"""
+    """Generate list index id from path."""
     result = []
     for item in path:
         if '/' in item:
@@ -217,10 +219,8 @@ def public_index_checked(f):
     @wraps(f)
     def decorate(index_id, *args, **kwargs):
         index = Indexes.get_index(index_id)
-        if index is None or index.public_state == False:
+        if index is None or not index.public_state:
             abort(404, 'Current Repository isn\'t public.')
         return f(index_id, *args, **kwargs)
 
     return decorate
-
-

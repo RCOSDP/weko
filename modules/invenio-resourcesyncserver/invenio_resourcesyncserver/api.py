@@ -19,7 +19,9 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+
 import datetime
+
 from flask import current_app, json, request
 from invenio_db import db
 from resync import Resource, ResourceList
@@ -81,8 +83,10 @@ class ResourceListHandler(object):
                 if not resource:
                     return
                 resource.status = data.get('status', resource.status)
-                resource.repository_id = data.get('repository',
-                                               resource.repository_id)
+                resource.repository_id = data.get(
+                    'repository',
+                    resource.repository_id
+                )
                 resource.resource_dump_manifest = data.get(
                     'resource_dump_manifest',
                     resource.resource_dump_manifest)
@@ -128,7 +132,9 @@ class ResourceListHandler(object):
         """
         try:
             with db.session.begin_nested():
-                list_result = db.session.query(ResourceListIndexes).join(Index).all()
+                list_result = db.session.query(ResourceListIndexes).join(
+                    Index
+                ).all()
                 return list_result
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -209,6 +215,12 @@ class ResourceListHandler(object):
 
     @classmethod
     def get_content_resource_list(cls, repository=''):
+        """
+        Get content of resource list.
+
+        :param repository: repository_id
+        :return: (xml) resource list content
+        """
         resource = cls.get_resource_by_repository(repository)
         if not resource or not resource.status:
             return None
@@ -228,6 +240,12 @@ class ResourceListHandler(object):
 
     @classmethod
     def get_content_resource_dump(cls, repository=''):
+        """
+        Get content of resource dump.
+
+        :param repository: repository_id
+        :return: (xml) resource dump content
+        """
         resource = cls.get_resource_by_repository(repository)
         if not resource or not resource.status:
             return None
@@ -242,16 +260,31 @@ class ResourceListHandler(object):
                     request.url_root,
                     resource.repository_id,
                     str(id_item))
-                rs = Resource(url, lastmod=item.get('_source').get('_updated'), ln=[])
+                rs = Resource(
+                    url,
+                    lastmod=item.get('_source').get('_updated'),
+                    ln=[]
+                )
                 if resource.resource_dump_manifest:
-                    rs.ln.append({'rel':'contents',
-                        'href':'{}resync/{}/{}/resourcedump_manifest.xml'.format(request.url_root, resource.repository_id, str(id_item)),
-                        'type':'application/xml'})
+                    href = '{}resync/{}/{}/resourcedump_manifest.xml'.format(
+                        request.url_root,
+                        resource.repository_id,
+                        str(id_item)
+                    )
+                    rs.ln.append({
+                        'rel': 'contents',
+                        'href': href,
+                        'type': 'application/xml'})
                 rd.add(rs)
         return rd.as_xml()
 
     @classmethod
     def get_capability_list(cls):
+        """
+        Get capability_list.
+
+        :return: (xml) list resource dump and resource list
+        """
         list_resource = cls.get_list_resource()
         caplist = CapabilityList()
         for resource in list_resource:
@@ -263,11 +296,20 @@ class ResourceListHandler(object):
                 capability='resourcedump'))
         return caplist.as_xml()
 
-
     @classmethod
     def get_resourcedump_manifest(cls, index_id, record):
+        """
+        Get resource dump manifest.
+
+        :param index_id: repository_id of resource.
+        :param record: record object.
+        :return: (xml) content of resourcedump
+        """
         rdm = ResourceDumpManifest()
-        rdm.up = '{}resync/{}/resourcedump.xml'.format(request.url_root, index_id)
+        rdm.up = '{}resync/{}/resourcedump.xml'.format(
+            request.url_root,
+            index_id
+        )
         cur_resource = cls.get_resource_by_repository_id(index_id)
         if not cur_resource.resource_dump_manifest:
             return None
@@ -279,13 +321,14 @@ class ResourceListHandler(object):
             lastmod = str(datetime.datetime.utcnow().replace(
                 tzinfo=datetime.timezone.utc
             ).isoformat())
-            rdm.add(Resource('{}record/{}/files/{}'.format(
-                request.url_root,
-                record.get('recid'),
-                file_info.get('filename')),
-                             lastmod=lastmod,
-                             sha256=file_info.get('checksum').split(':')[1],
-                             length=str(file_info.get('size')),
-                             path=path
+            rdm.add(Resource(
+                '{}record/{}/files/{}'.format(
+                    request.url_root,
+                    record.get('recid'),
+                    file_info.get('filename')),
+                lastmod=lastmod,
+                sha256=file_info.get('checksum').split(':')[1],
+                length=str(file_info.get('size')),
+                path=path
             ))
         return rdm.as_xml()
