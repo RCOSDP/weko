@@ -348,7 +348,7 @@ function handleSharePermission(value) {
                   }
               }
           );
-      }
+      };
 
       $scope.searchOutputApplicationIdKey = function() {
           if ($scope.outputapplication_keys.length > 0) {
@@ -365,73 +365,72 @@ function handleSharePermission(value) {
           );
       }
 
-      $scope.initCorrespondingIdList = function() {
-      $scope.searchUsageApplicationIdKey();
-
-
-      $scope.usageapplication_keys.forEach(key => {
+      $scope.initCorrespondingIdList = function () {
+        $scope.searchUsageApplicationIdKey();
+        $scope.usageapplication_keys.forEach(key => {
           schema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           form = $scope.searchFilemetaForm(schema.title);
           if (schema && form) {
-              schema.items.properties['subitem_corresponding_usage_application_id']['enum'] = [];
-              usage_application_form = form.items[0]
-              usage_application_form['titleMap'] = []
+            schema.items.properties['subitem_corresponding_usage_application_id']['enum'] = [];
+            usage_application_form = form.items[0];
+            usage_application_form['titleMap'] = []
           }
-      })
+        });
 
-      $scope.searchOutputApplicationIdKey();
-      $scope.outputapplication_keys.forEach(key => {
+        $scope.searchOutputApplicationIdKey();
+        $scope.outputapplication_keys.forEach(key => {
           output_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           output_form = $scope.searchFilemetaForm(output_schema.title);
           if (output_schema && output_form) {
-              output_schema.items.properties['subitem_corresponding_output_id']['enum'] = [];
-              output_report_form = output_form.items[0]
-              output_report_form['titleMap'] = []
+            output_schema.items.properties['subitem_corresponding_output_id']['enum'] = [];
+            output_report_form = output_form.items[0];
+            output_report_form['titleMap'] = []
           }
-      })
+        });
 
-      if ($scope.usageapplication_keys.length > 0 || $scope.outputapplication_keys.length > 0) {
-          acitivity_url = '/items/corresponding-activity'
+        if ($scope.usageapplication_keys.length > 0 || $scope.outputapplication_keys.length > 0) {
+          const acitivityUrl = '/items/corresponding-activity';
 
-          activityList = {}
+          activityList = {};
           $.ajax({
-              url: acitivity_url,
-              method: 'GET',
-              async: false,
-              success: function(data, status) {
+            url: acitivityUrl,
+            method: 'GET',
+            async: false,
+            success: function (data, status) {
 
-                  usage_activity = data['usage_application']
-                  if (usage_activity.length > 0) {
-                      usage_activity.forEach(activity => {
-                          if (typeof schema != 'undefined' && typeof usage_application_form != 'undefined' && schema && usage_application_form) {
-                              schema.items.properties['subitem_corresponding_usage_application_id']['enum'].push(activity);
-                              usage_application_form['titleMap'].push({
-                                  name: activity,
-                                  value: activity
-                              });
-                          }
-                      })
+              let usageActivity = data['usage_application'];
+              if (usageActivity.length > 0) {
+                usageActivity.forEach(activity => {
+                  if (typeof schema != 'undefined' && typeof usage_application_form != 'undefined' && schema && usage_application_form) {
+                    schema.items.properties['subitem_corresponding_usage_application_id']['enum'].push(activity);
+                    usage_application_form['titleMap'].push({
+                      name: activity,
+                      value: activity
+                    });
                   }
+                })
+              }
 
-                  output_report = data['output_report']
-                  if (output_report.length > 0) {
-                      output_report.forEach(report => {
-                          if (typeof output_schema != 'undefined' && typeof output_report_form != 'undefined' && output_schema && output_report_form) {
-                              output_schema.items.properties['subitem_corresponding_output_id']['enum'].push(report);
-                              output_report_form['titleMap'].push({
-                                  name: report,
-                                  value: report
-                              });
-                          }
-                      })
+              let outputReport = data['output_report'];
+              if (outputReport.length > 0) {
+                outputReport.forEach(report => {
+                  if (typeof output_schema != 'undefined' && typeof output_report_form != 'undefined' && output_schema && output_report_form) {
+                    output_schema.items.properties['subitem_corresponding_output_id']['enum'].push(report);
+                    output_report_form['titleMap'].push({
+                      name: report,
+                      value: report
+                    });
                   }
+                })
+              }
 
-                  $rootScope.$broadcast('schemaFormRedraw');
-              },
-              error: function(data, status) {}
+              $rootScope.$broadcast('schemaFormRedraw');
+            },
+            error: function (data, status) {
+            }
           });
-      }
-  }
+        }
+      };
 
       $scope.initFilenameList = function () {
         $scope.searchFilemetaKey();

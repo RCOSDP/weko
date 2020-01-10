@@ -341,7 +341,7 @@ def get_schema_form(item_type_id=0):
             if 'items' in elem:
                 items = elem['items']
                 for item in items:
-                    set_multi_language_name(item, cur_lang)        
+                    set_multi_language_name(item, cur_lang)
 
         if 'default' != cur_lang:
             for elem in schema_form:
@@ -1196,3 +1196,22 @@ def check_validation_error_msg(activity_id):
                        error_list=error_list)
     else:
         return jsonify(code=0)
+
+
+@blueprint.route('/', methods=['GET'])
+@blueprint.route('/corresponding-activity', methods=['GET'])
+@login_required
+@item_permission.require(http_exception=403)
+def corresponding_activity_list():
+    """Get corresponding usage & output activity list.
+
+    :return: activity list
+    """
+    result = {}
+    work_activity = WorkActivity()
+    if "get_corresponding_usage_activities" in dir(work_activity):
+        usage_application_list, output_report_list = work_activity. \
+            get_corresponding_usage_activities(current_user.get_id())
+        result = {'usage_application': usage_application_list,
+                  'output_report': output_report_list}
+    return jsonify(result)
