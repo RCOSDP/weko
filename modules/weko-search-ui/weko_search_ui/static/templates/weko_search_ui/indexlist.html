@@ -79,13 +79,12 @@
         </div>
       </div>
     </div>
+    <span ng-hide="sort_index(vm.invenioSearchResults.aggregations.path.buckets[0])"></span>
     <div id="index_tree_list">
       <ul class="list-group">
-        <span ng-repeat="child_index in child_list">
           <div class="list-group-item"
-            ng-repeat="index_path in
-            vm.invenioSearchResults.aggregations.path.buckets[0] track by $index"
-            ng-if="((typeIndexList !== 'root' && !$first)  || typeIndexList === 'root') && index_path.key.split('/').pop() == child_index"
+            ng-repeat="index_path in child_index_list track by $index"
+            ng-if="((typeIndexList !== 'root' && !$first)  || typeIndexList === 'root')"
             style="position: relative;">
             <a ng-href="/search?search_type=2&q={{ index_path.key.split('/').pop() }}{{commInfoIndex}}" style="
                   color: #333;
@@ -116,7 +115,6 @@
               </a>
             </span>
           </div>
-        </span>
       </ul>
     </div>
     <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" style="display: flex">

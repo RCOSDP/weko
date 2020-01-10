@@ -221,6 +221,19 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   }
   $scope.getChildList();
 
+  let temp = []
+  $scope.child_index_list = []
+  $scope.sort_index = function(data_list) {
+    for (var i = 0; i < $rootScope.child_list.length; i++) {
+      for (var j = 0; j < data_list.length; j++) {
+        if (temp.indexOf(data_list[j].key) == -1 && $rootScope.child_list[i] == data_list[j].key.split('/').pop()) {
+          temp.push(data_list[j].key);
+          $scope.child_index_list.push(data_list[j]);
+        }
+      }
+    }
+  }
+
   // Check all records for restricted content
   $scope.$on('invenio.search.finished', function(evt) {
     $rootScope.display_comment_jounal()
