@@ -204,6 +204,23 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     });
   }
   $scope.getJournalInfo();
+
+  $scope.getChildList = function() {
+    if (!$rootScope.index_id_q) {
+      return;
+    }
+    $http({
+      method: 'GET',
+      url: '/get_child_list/' + $rootScope.index_id_q,
+      headers: {'Content-Type': 'application/json'},
+    }).then(function successCallback(response) {
+      $rootScope.child_list = response.data;
+    }, function errorCallback(error) {
+      console.log(error);
+    });
+  }
+  $scope.getChildList();
+
   // Check all records for restricted content
   $scope.$on('invenio.search.finished', function(evt) {
     $rootScope.display_comment_jounal()

@@ -247,3 +247,7 @@ def search_feedback_mail_list():
     if data:
         result = parse_feedback_mail_data(data)
     return jsonify(result)
+
+@blueprint.route("/get_child_list/<int:index_id>", methods=['GET'])
+def get_child_list(index_id=0):
+    return jsonify(Indexes.get_child_id_list(index_id))
