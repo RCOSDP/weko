@@ -1,10 +1,10 @@
 const list_label = "List";
 const create_label = "Create";
 const edit_label = "Edit";
-const urlCreate = window.location.origin + "/admin/resource/create";
-const urlUpdate = window.location.origin + "/admin/resource/update";
-const urlDelete = window.location.origin + "/admin/resource/delete";
-const urlGetList = window.location.origin + "/admin/resource/get_list";
+const urlCreate = window.location.origin + "/admin/resource_list/create";
+const urlUpdate = window.location.origin + "/admin/resource_list/update";
+const urlDelete = window.location.origin + "/admin/resource_list/delete";
+const urlGetList = window.location.origin + "/admin/resource_list/get_list";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const default_state = {
   status: null,
@@ -369,7 +369,7 @@ class CreateResourceComponent extends React.Component {
           <div className="col-md-10">
             <div className="col-md-10">
             <div className="row">
-              <div className="col-md-2">
+              <div className="col-md-2 flex">
                 <input
                 checked={state.status===true}
                 type="radio"
@@ -379,9 +379,10 @@ class CreateResourceComponent extends React.Component {
                   const value = e.target.value;
                   this.handleChangeState("status", value==="Publish");
                 }}
-                ></input>Publish
+                ></input>
+                <div className="p-l-10">Publish</div>
               </div>
-              <div className="col-md-2">
+              <div className="col-md-2 flex">
                 <input
                   checked={state.status===false}
                   type="radio"
@@ -391,7 +392,8 @@ class CreateResourceComponent extends React.Component {
                     const value = e.target.value;
                     this.handleChangeState("status", value==="Publish");
                   }}
-                  ></input>Private
+                  ></input>
+                  <div className="p-l-10">Private</div>
               </div>
 
 
@@ -603,7 +605,7 @@ class EditResourceComponent extends React.Component {
           </div>
           <div className="col-md-10">
             <div className="row">
-              <div className="col-md-2">
+              <div className="col-md-2 flex">
                 <input
                 checked={state.status}
                 type="radio"
@@ -613,9 +615,10 @@ class EditResourceComponent extends React.Component {
                   const value = e.target.value;
                   this.handleChangeState("status", value==="Publish");
                 }}
-              ></input>Publish
+              ></input>
+              <div className="p-l-10">Publish</div>
               </div>
-              <div className="col-md-2">
+              <div className="col-md-2 flex">
                 <input
                   checked={!state.status}
                   type="radio"
@@ -625,7 +628,8 @@ class EditResourceComponent extends React.Component {
                     const value = e.target.value;
                     this.handleChangeState("status", value==="Publish");
                   }}
-                  ></input>Private
+                  ></input>
+                  <div className="p-l-10">Private</div>
               </div>
 
 

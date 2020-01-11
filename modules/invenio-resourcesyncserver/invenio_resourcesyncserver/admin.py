@@ -24,6 +24,7 @@ from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 
+from .config import INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN
 from .api import ResourceListHandler
 from .utils import to_dict
 
@@ -116,7 +117,10 @@ class AdminChangeListView(BaseView):
         :return: The rendered template.
         """
         return self.render(
-            current_app.config['INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN'],
+            current_app.config.get(
+                'INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN',
+                INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN
+            )
         )
 
     @expose('/get_list', methods=['GET'])

@@ -1,16 +1,17 @@
 const list_label = "List";
 const create_label = "Create";
 const edit_label = "Edit";
-const urlCreate = window.location.origin + "/admin/resource/create";
-const urlUpdate = window.location.origin + "/admin/resource/update";
-const urlDelete = window.location.origin + "/admin/resource/delete";
-const urlGetList = window.location.origin + "/admin/resource/get_list";
+const urlCreate = window.location.origin + "/admin/change_list/create";
+const urlUpdate = window.location.origin + "/admin/change_list/update";
+const urlDelete = window.location.origin + "/admin/change_list/delete";
+const urlGetList = window.location.origin + "/admin/change_list/get_list";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const default_state = {
   status: null,
   repository: "",
-  resource_dump_manifest: false,
-  url_path: ""
+  change_list_manifest: false,
+  url_path: "",
+  max_change_list: 10000
 };
 
 class MainLayout extends React.Component {
@@ -192,10 +193,10 @@ class ListResourceComponent extends React.Component {
                   <p className="">Repository</p>
                 </th>
                 <th>
-                  <p className="">Resource List Url</p>
+                  <p className="">Change List Url</p>
                 </th>
                 <th>
-                  <p className="">Resource Dump Url</p>
+                  <p className="">Change Dump Url</p>
                 </th>
                 <th>
                   <p className="">Status</p>
@@ -230,18 +231,18 @@ class ListResourceComponent extends React.Component {
                     </td>
                     <td>
                       <a
-                        href={item.url_path + "/resourcelist.xml"}
+                        href={item.url_path + "/changelist.xml"}
                         target="_blank"
                       >
-                        {item.url_path + "/resourcelist.xml"}
+                        {item.url_path + "/changelist.xml"}
                       </a>
                     </td>
                     <td>
                       <a
-                        href={item.url_path + "/resourcedump.xml"}
+                        href={item.url_path + "/changedump.xml"}
                         target="_blank"
                       >
-                        {item.url_path + "/resourcedump.xml"}
+                        {item.url_path + "/changedump.xml"}
                       </a>
                     </td>
                     <td>{item.status ? "Publish" : "Private"}</td>
@@ -360,6 +361,7 @@ class CreateResourceComponent extends React.Component {
 
   render() {
     const { state } = this;
+    console.log(state)
     return (
       <div className="create-resource">
         <div className="row form-group ">
@@ -369,7 +371,7 @@ class CreateResourceComponent extends React.Component {
           <div className="col-md-10">
             <div className="col-md-10">
             <div className="row">
-              <div className="col-md-2">
+              <div className="col-md-2 flex">
                 <input
                 checked={state.status===true}
                 type="radio"
@@ -379,9 +381,10 @@ class CreateResourceComponent extends React.Component {
                   const value = e.target.value;
                   this.handleChangeState("status", value==="Publish");
                 }}
-                ></input>Publish
+                ></input>
+                <div  className="p-l-10">Publish</div>
               </div>
-              <div className="col-md-2">
+              <div className="col-md-2 flex">
                 <input
                   checked={state.status===false}
                   type="radio"
@@ -391,10 +394,9 @@ class CreateResourceComponent extends React.Component {
                     const value = e.target.value;
                     this.handleChangeState("status", value==="Publish");
                   }}
-                  ></input>Private
+                  ></input>
+                  <div className="p-l-10">Private</div>
               </div>
-
-
             </div>
           </div>
           </div>
@@ -423,15 +425,15 @@ class CreateResourceComponent extends React.Component {
 
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Resource Dump Manifest</label>
+            <label>Change list manifest</label>
           </div>
           <div className="col-md-10">
             <input
               type="checkbox"
-              checked={state.resource_dump_manifest}
+              checked={state.change_list_manifest}
               onChange={e => {
                 const value = e.target.checked;
-                this.handleChangeState("resource_dump_manifest", value);
+                this.handleChangeState("change_list_manifest", value);
               }}
             ></input>
           </div>
@@ -439,28 +441,45 @@ class CreateResourceComponent extends React.Component {
 
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Resource List uri</label>
+            <label>Max change list</label>
           </div>
           <div className="col-md-10">
             <input
-              type="text"
+              type="number"
               className="form-control"
-              disabled
-              value={state.url_path && state.url_path + "/resourcelist.xml"}
+              value={state.max_change_list}
+              onChange={e => {
+                const value = e.target.checked;
+                this.handleChangeState("max_change_list", value);
+              }}
             ></input>
           </div>
         </div>
 
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Resource Dump uri</label>
+            <label>Change List uri</label>
           </div>
           <div className="col-md-10">
             <input
               type="text"
               className="form-control"
               disabled
-              value={state.url_path && state.url_path + "/resourcedump.xml"}
+              value={state.url_path && state.url_path + "/changelist.xml"}
+            ></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Change Dump uri</label>
+          </div>
+          <div className="col-md-10">
+            <input
+              type="text"
+              className="form-control"
+              disabled
+              value={state.url_path && state.url_path + "/changedump.xml"}
             ></input>
           </div>
         </div>
@@ -603,7 +622,7 @@ class EditResourceComponent extends React.Component {
           </div>
           <div className="col-md-10">
             <div className="row">
-              <div className="col-md-2">
+              <div className="col-md-2 flex">
                 <input
                 checked={state.status}
                 type="radio"
@@ -613,9 +632,10 @@ class EditResourceComponent extends React.Component {
                   const value = e.target.value;
                   this.handleChangeState("status", value==="Publish");
                 }}
-              ></input>Publish
+              ></input>
+              <div className="p-l-10">Publish</div>
               </div>
-              <div className="col-md-2">
+              <div className="col-md-2 flex">
                 <input
                   checked={!state.status}
                   type="radio"
@@ -625,7 +645,8 @@ class EditResourceComponent extends React.Component {
                     const value = e.target.value;
                     this.handleChangeState("status", value==="Publish");
                   }}
-                  ></input>Private
+                  ></input>
+                  <div className="p-l-10">Private</div>
               </div>
 
 
@@ -655,44 +676,61 @@ class EditResourceComponent extends React.Component {
 
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Resource Dump Manifest</label>
+            <label>Change Dump Manifest</label>
           </div>
           <div className="col-md-10">
             <input
               type="checkbox"
               onChange={e => {
                 const value = e.target.checked;
-                this.handleChangeState("resource_dump_manifest", value);
+                this.handleChangeState("change_list_manifest", value);
               }}
-              checked={state.resource_dump_manifest}
+              checked={state.change_list_manifest}
             ></input>
           </div>
         </div>
 
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Resource List uri</label>
+            <label>Max change list</label>
           </div>
           <div className="col-md-10">
             <input
-              type="text"
+              type="number"
               className="form-control"
-              disabled
-              value={state.url_path && state.url_path + "/resourcelist.xml"}
+              value={state.max_change_list}
+              onChange={e => {
+                const value = e.target.checked;
+                this.handleChangeState("max_change_list", value);
+              }}
             ></input>
           </div>
         </div>
 
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Resource Dump uri</label>
+            <label>Change list uri</label>
           </div>
           <div className="col-md-10">
             <input
               type="text"
               className="form-control"
               disabled
-              value={state.url_path && state.url_path + "/resourcedump.xml"}
+              value={state.url_path && state.url_path + "/changelist.xml"}
+            ></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Change dump uri</label>
+          </div>
+          <div className="col-md-10">
+            <input
+              type="text"
+              className="form-control"
+              disabled
+              value={state.url_path && state.url_path + "/changedump.xml"}
             ></input>
           </div>
         </div>
