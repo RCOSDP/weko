@@ -25,7 +25,7 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 
 from .config import INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN
-from .api import ResourceListHandler
+from .api import ResourceListHandler, ChangeListHandler
 from .utils import to_dict
 
 
@@ -123,26 +123,26 @@ class AdminChangeListView(BaseView):
             )
         )
 
-    @expose('/get_list', methods=['GET'])
+    @expose('/get_all', methods=['GET'])
     def get_list(self):
         """Renders an list resource sync.
 
         :param
         :return: The rendered template.
         """
-        list_resource = ResourceListHandler.get_list_resource()
-        result = list(map(lambda item: to_dict(item), list_resource))
-        return jsonify(result)
+        change_lists = ChangeListHandler.get_all()
+        response = [c.to_dict() for c in change_lists]
+        return jsonify(response)
 
-    @expose('/get_resource/<id>', methods=['GET'])
-    def get_resource(self, id):
+    @expose('/get_change_list/<id>', methods=['GET'])
+    def get_change_list(self, id):
         """Renders an item import view.
 
-        :param
+        :param id: Identifer of ChangeListIndexes
         :return: The rendered template.
         """
-        resource = ResourceListHandler.get_resource(id)
-        return jsonify(resource)
+        resource = ChangeListHandler.get_change_list(id)
+        return jsonify(resource.to_dict())
 
     @expose('/create', methods=['POST'])
     def create(self):
@@ -152,9 +152,10 @@ class AdminChangeListView(BaseView):
         :return: The rendered template.
         """
         data = request.get_json()
-        resource = ResourceListHandler.create(data)
-        if resource:
-            return jsonify(data=resource, success=True)
+        resource = ChangeListHandler(**data)
+        result = resource.save()
+        if result:
+            return jsonify(data=result.to_dict(), success=True)
         else:
             return jsonify(data=None, success=False)
 
@@ -162,13 +163,15 @@ class AdminChangeListView(BaseView):
     def update(self, id):
         """Renders an item import view.
 
-        :param
+        :param:
         :return: The rendered template.
         """
         data = request.get_json()
-        resource = ResourceListHandler.update(id, data)
-        if resource:
-            return jsonify(data=to_dict(resource), success=True)
+        data['id'] = id
+        resource = ChangeListHandler(data)
+        result = resource.save()
+        if result:
+            return jsonify(data=result.to_dict(), success=True)
         else:
             return jsonify(data=None, success=False)
 
@@ -179,7 +182,7 @@ class AdminChangeListView(BaseView):
         :param
         :return: The rendered template.
         """
-        resource = ResourceListHandler.delete(id)
+        resource = ChangeListHandler.delete(id)
         if resource:
             return jsonify(data=None, success=True)
         else:

@@ -28,14 +28,12 @@ from resync import Resource, ResourceList
 from resync.capability_list import CapabilityList
 from resync.resource_dump import ResourceDump
 from resync.resource_dump_manifest import ResourceDumpManifest
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import func, literal_column
+from sqlalchemy.exc import SQLAlchemyError
 from weko_index_tree.models import Index
+from weko_index_tree.api import Indexes
 from weko_search_ui.utils import get_items_by_index_tree
 
-from .models import ResourceListIndexes
+from .models import ResourceListIndexes, ChangeListIndexes
 
 
 class ResourceListHandler(object):
@@ -332,3 +330,227 @@ class ResourceListHandler(object):
                 path=path
             ))
         return rdm.as_xml()
+
+
+class ChangeListHandler(object):
+    """Define API for ResourceListIndexes creation and update."""
+    id = None
+    status = None
+    repository_id = None
+    change_dump_manifest = None
+    max_changes_size = None
+    change_tracking_state = None
+    url_path = None
+    create_date = None
+    update_date = None
+    index = None
+
+    def __init__(self, **kwargs):
+        """Add extra options."""
+        self.id = kwargs.get('id')
+        self.status = kwargs.get('status')
+        self.repository_id = kwargs.get('repository_id')
+        self.change_dump_manifest = kwargs.get('change_dump_manifest')
+        self.max_changes_size = kwargs.get('max_changes_size')
+        self.url_path = kwargs.get('url_path')
+        self.index = self.get_index()
+        if kwargs.get('change_tracking_state'):
+            if isinstance(kwargs.get('change_tracking_state'), str):
+                self.change_tracking_state = kwargs.get('change_tracking_state')
+            if isinstance(kwargs.get('change_tracking_state'), list):
+                self.change_tracking_state = '&'.join(kwargs.get(
+                    'change_tracking_state'
+                ))
+
+    @classmethod
+    def save(cls):
+        """Create the ChangeListIndexes.
+
+        :returns: The :dict:`ChangeListIndexes`.
+        """
+        if cls.id:
+            old_obj = cls.get_change_list(cls.id, 'modal')
+            if old_obj:
+                try:
+                    with db.session.begin_nested():
+                        old_obj.status = cls.status or old_obj.status
+                        old_obj.repository_id = cls.repository or \
+                            old_obj.repository_id
+                        old_obj.change_dump_manifest = \
+                            cls.change_dump_manifest or \
+                            old_obj.change_dump_manifest
+                        old_obj.max_changes_size = cls.max_changes_size or \
+                            old_obj.max_changes_size
+                        old_obj.change_tracking_state = \
+                            cls.change_tracking_state \
+                            or old_obj.change_tracking_state
+                        old_obj.url_path = cls.url_path or old_obj.url_path
+                        db.session.merge(old_obj)
+                    db.session.commit()
+                    return cls
+                except Exception as ex:
+                    current_app.logger.debug(ex)
+                    db.session.rollback()
+                    return None
+            else:
+                return None
+        else:
+            data = dict(**{
+                'status': cls.status,
+                'repository_id': cls.repository_id,
+                'change_dump_manifest': cls.change_dump_manifest,
+                'max_changes_size': cls.max_changes_size,
+                'change_tracking_state': cls.change_tracking_state,
+                'url_path': cls.url_path,
+            })
+            try:
+                with db.session.begin_nested():
+                    obj = ChangeListIndexes(**data)
+                    db.session.add(obj)
+                db.session.commit()
+                cls.id = obj.id
+                return cls.to_dict()
+            except SQLAlchemyError as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
+                return None
+
+    @classmethod
+    def delete(cls, change_list_id):
+        """
+        Delete the change_list.
+
+        :param change_list_id: identifier of change_list
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                change_list = cls.get_change_list(change_list_id, 'modal')
+                if not change_list:
+                    return
+                db.session.delete(change_list)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return False
+
+    @classmethod
+    def get_index(cls):
+        if cls.id:
+            return Indexes.get_index(cls.id)
+        else:
+            return None
+
+    @classmethod
+    def to_dict(cls):
+        change_dump_manifest = cls.change_dump_manifest  \
+            if cls.change_dump_manifest else None,
+        max_changes_size = cls.max_changes_size if cls.max_changes_size \
+            else None,
+        change_tracking_state = cls.change_tracking_state if \
+            cls.change_tracking_state else None,
+        return dict(**{
+            'id': cls.id if cls.id else None,
+            'status': cls.status if cls.status else None,
+            'repository_id': cls.repository_id if cls.repository_id else None,
+            'change_dump_manifest': change_dump_manifest,
+            'max_changes_size': max_changes_size,
+            'change_tracking_state': change_tracking_state,
+            'url_path': cls.url_path if cls.url_path else None,
+            'create_date': cls.create_date if cls.create_date else None,
+            'update_date': cls.update_date if cls.update_date else None,
+            'index': cls.index if cls.index else None,
+        })
+
+    @classmethod
+    def get_change_list(cls, changelist_id, type_result='obj'):
+        """
+        Get change list.
+
+        :param changelist_id: Identifier of changelist
+        :param type_result: result of function 'obj' or 'modal'
+        :return: Updated Change List info
+                """
+        try:
+            with db.session.begin_nested():
+                result = db.session.query(ChangeListIndexes).filter(
+                    ChangeListIndexes.id == changelist_id
+                ).join(
+                    Index
+                ).one_or_none()
+                if result:
+                    if type_result == 'modal':
+                        return result
+                    return cls.convert_modal_to_obj(result)
+                else:
+                    return None
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            return None
+
+    @classmethod
+    def get_all(cls):
+        """
+        Get change list.
+
+        :return: Updated Change List info
+                """
+        try:
+            with db.session.begin_nested():
+                result = db.session.query(ChangeListIndexes).join(
+                    Index
+                ).all()
+                if result:
+                    parse_result = [
+                        cls.convert_modal_to_obj(r) for r in result
+                    ]
+                    return parse_result
+                else:
+                    return []
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            return None
+
+    @classmethod
+    def convert_modal_to_obj(cls, model= ChangeListIndexes()):
+        data = dict(**{
+            'id': model.id,
+            'status': model.status,
+            'repository_id': model.repository_id,
+            'change_dump_manifest': model.change_dump_manifest,
+            'max_changes_size': model.max_changes_size,
+            'change_tracking_state': model.change_tracking_state,
+            'url_path': model.url_path,
+            'create_date': model.create_date,
+            'update_date': model.update_date,
+            'index': model.index,
+        })
+        return ChangeListHandler(**data)
+
+    @classmethod
+    def get_change_list_by_repo_id(cls, repo_id, type_result='obj'):
+        """
+        Get change list.
+
+        :param repo_id: Identifier of index
+        :param type_result: result of function 'obj' or 'modal'
+        :return: Updated Change List info
+                """
+        try:
+            with db.session.begin_nested():
+                result = db.session.query(ChangeListIndexes).filter(
+                    ChangeListIndexes.repository_id == repo_id
+                ).join(
+                    Index
+                ).one_or_none()
+                if result:
+                    if type_result == 'modal':
+                        return result
+                    return cls.convert_modal_to_obj(result)
+                else:
+                    return None
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            return None

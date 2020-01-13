@@ -90,7 +90,7 @@ def get_real_path(path):
             result.extend(fl)
         else:
             result.append(item)
-    return result
+    return list(set(result))
 
 
 def export_item_custorm(post_data):
@@ -218,6 +218,14 @@ def public_index_checked(f):
     """Decorator to pass community."""
     @wraps(f)
     def decorate(index_id, *args, **kwargs):
+        if args[0]:
+            record_id = args[0]
+            record = WekoRecord.get_record_by_pid(record_id)
+            if not record:
+                abort(404, 'Current Record isn\'t public.')
+            list_index = get_real_path(record.get("path"))
+            if index_id not in list_index:
+                abort(404, 'Current Repository isn\'t belong to Index.')
         index = Indexes.get_index(index_id)
         if index is None or not index.public_state:
             abort(404, 'Current Repository isn\'t public.')

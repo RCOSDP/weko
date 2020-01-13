@@ -4,15 +4,30 @@ const edit_label = "Edit";
 const urlCreate = window.location.origin + "/admin/change_list/create";
 const urlUpdate = window.location.origin + "/admin/change_list/update";
 const urlDelete = window.location.origin + "/admin/change_list/delete";
-const urlGetList = window.location.origin + "/admin/change_list/get_list";
+const urlGetList = window.location.origin + "/admin/change_list/get_all";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const default_state = {
   status: null,
   repository: "",
   change_list_manifest: false,
+  change_tracking_state: [],
   url_path: "",
   max_change_list: 10000
 };
+const tracker_state_list = [
+  {
+    value: 'create',
+    name: 'Create'
+  },
+  {
+    value: 'update',
+    name: 'Update'
+  },
+  {
+    value: 'delete',
+    name: 'Delete'
+  },
+]
 
 class MainLayout extends React.Component {
   constructor(props) {
@@ -449,10 +464,45 @@ class CreateResourceComponent extends React.Component {
               className="form-control"
               value={state.max_change_list}
               onChange={e => {
-                const value = e.target.checked;
+                const value = e.target.value;
                 this.handleChangeState("max_change_list", value);
               }}
             ></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Change tracker state</label>
+          </div>
+          <div className="col-md-10">
+            <div className="row">
+              {
+                  tracker_state_list.map((item, key) => {
+                    return(
+                      <div className="col-md-2 flex" key=key>
+                        <input
+                          type="check"
+                          className="form-control"
+                          value={state.change_tracking_state.includes(item.value)}
+                          onChange={e => {
+                            let {change_tracking_state} = state
+                            const value = e.target.checked;
+                            if(value){
+                              change_tracking_state.push(item.value)
+                            }
+                            else {
+                              change_tracking_state = change_tracking_state.filter(i => i !== item.value)
+                            }
+                            this.handleChangeState("change_tracking_state", change_tracking_state);
+                          }}
+                        ></input>
+                        <div className="p-l-10">{item.name}</div>
+                      </div>
+                    )
+                  })
+              }
+            </div>
           </div>
         </div>
 
@@ -624,16 +674,16 @@ class EditResourceComponent extends React.Component {
             <div className="row">
               <div className="col-md-2 flex">
                 <input
-                checked={state.status}
-                type="radio"
-                name="status"
-                value="Publish"
-                onChange={e => {
-                  const value = e.target.value;
-                  this.handleChangeState("status", value==="Publish");
-                }}
-              ></input>
-              <div className="p-l-10">Publish</div>
+                  checked={state.status}
+                  type="radio"
+                  name="status"
+                  value="Publish"
+                  onChange={e => {
+                    const value = e.target.value;
+                    this.handleChangeState("status", value==="Publish");
+                  }}
+                ></input>
+                <div className="p-l-10">Publish</div>
               </div>
               <div className="col-md-2 flex">
                 <input
@@ -645,8 +695,8 @@ class EditResourceComponent extends React.Component {
                     const value = e.target.value;
                     this.handleChangeState("status", value==="Publish");
                   }}
-                  ></input>
-                  <div className="p-l-10">Private</div>
+                 ></input>
+                 <div className="p-l-10">Private</div>
               </div>
 
 
@@ -700,10 +750,45 @@ class EditResourceComponent extends React.Component {
               className="form-control"
               value={state.max_change_list}
               onChange={e => {
-                const value = e.target.checked;
+                const value = e.target.value;
                 this.handleChangeState("max_change_list", value);
               }}
             ></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Change tracker state</label>
+          </div>
+          <div className="col-md-10">
+            <div className="row">
+              {
+                  tracker_state_list.map((item, key) => {
+                    return(
+                      <div className="col-md-2 flex" key=key>
+                        <input
+                          type="check"
+                          className="form-control"
+                          value={state.change_tracking_state.includes(item.value)}
+                          onChange={e => {
+                            let {change_tracking_state} = state
+                            const value = e.target.checked;
+                            if(value){
+                              change_tracking_state.push(item.value)
+                            }
+                            else {
+                              change_tracking_state = change_tracking_state.filter(i => i !== item.value)
+                            }
+                            this.handleChangeState("change_tracking_state", change_tracking_state);
+                          }}
+                        ></input>
+                        <div className="p-l-10">{item.name}</div>
+                      </div>
+                    )
+                  })
+              }
+            </div>
           </div>
         </div>
 

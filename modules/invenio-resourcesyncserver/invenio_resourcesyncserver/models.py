@@ -70,7 +70,7 @@ class ResourceListIndexes(db.Model, Timestamp):
     update_date = db.Column(db.DateTime, default=datetime.now)
 
     index = db.relationship(
-        Index, backref='repo_id', foreign_keys=[repository_id])
+        Index, backref='resource_list_id', foreign_keys=[repository_id])
     """Relation to the User making the inclusion request."""
 
 
@@ -104,21 +104,8 @@ class ChangeListIndexes(db.Model, Timestamp):
 
     max_changes_size = db.Column(db.Integer, nullable=False)
 
-    changes = json = db.Column(
-        db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
-            JSONType(),
-            'sqlite',
-        ).with_variant(
-            JSONType(),
-            'mysql',
-        ),
-        default=lambda: list(),
-        nullable=True
-    )
-    """json for author info"""
+    change_tracking_state = db.Column(
+        db.String(255), nullable=True)
 
     url_path = db.Column(
         db.String(255), nullable=True)
@@ -128,7 +115,7 @@ class ChangeListIndexes(db.Model, Timestamp):
     update_date = db.Column(db.DateTime, default=datetime.now)
 
     index = db.relationship(
-        Index, backref='repo_id', foreign_keys=[repository_id])
+        Index, backref='change_list_id', foreign_keys=[repository_id])
     """Relation to the User making the inclusion request."""
 
 

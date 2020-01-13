@@ -49,6 +49,7 @@ def resource_dump(index_id):
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/file_content.zip")
+@public_index_checked
 def file_content(index_id, record_id):
     """Render a basic view."""
     r = get_file_content(index_id, record_id)
