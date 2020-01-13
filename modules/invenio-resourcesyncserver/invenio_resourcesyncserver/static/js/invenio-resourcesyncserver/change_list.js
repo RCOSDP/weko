@@ -8,11 +8,11 @@ const urlGetList = window.location.origin + "/admin/change_list/get_all";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const default_state = {
   status: null,
-  repository: "",
-  change_list_manifest: false,
+  repository_id: "",
+  change_dump_manifest: false,
   change_tracking_state: [],
   url_path: "",
-  max_change_list: 10000
+  max_changes_size: 10000
 };
 const tracker_state_list = [
   {
@@ -242,7 +242,7 @@ class ListResourceComponent extends React.Component {
                       </a>
                     </td>
                     <td>
-                      {item.repository_name + " <ID:" + item.repository + ">"}
+                      {item.repository_name + " <ID:" + item.repository_id + ">"}
                     </td>
                     <td>
                       <a
@@ -294,7 +294,7 @@ class CreateResourceComponent extends React.Component {
         [name]: value
       },
       () => {
-        if (name === "repository") {
+        if (name === "repository_id") {
           this.handleChangeURL();
         }
       }
@@ -303,8 +303,8 @@ class CreateResourceComponent extends React.Component {
 
   handleChangeURL() {
     const { state } = this;
-    const { repository } = state;
-    const url_path = window.location.origin + "/resync/" + repository;
+    const { repository_id } = state;
+    const url_path = window.location.origin + "/resync/" + repository_id;
     this.handleChangeState("url_path", url_path);
   }
 
@@ -426,9 +426,9 @@ class CreateResourceComponent extends React.Component {
               className="form-control"
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("repository", value);
+                this.handleChangeState("repository_id", value);
               }}
-              value={state.repository}
+              value={state.repository_id}
             >
               <option value="" disabled></option>
               {state.tree_list.map(item => {
@@ -445,10 +445,10 @@ class CreateResourceComponent extends React.Component {
           <div className="col-md-10">
             <input
               type="checkbox"
-              checked={state.change_list_manifest}
+              checked={state.change_dump_manifest}
               onChange={e => {
                 const value = e.target.checked;
-                this.handleChangeState("change_list_manifest", value);
+                this.handleChangeState("change_dump_manifest", value);
               }}
             ></input>
           </div>
@@ -462,10 +462,10 @@ class CreateResourceComponent extends React.Component {
             <input
               type="number"
               className="form-control"
-              value={state.max_change_list}
+              value={state.max_changes_size}
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("max_change_list", value);
+                this.handleChangeState("max_changes_size", value);
               }}
             ></input>
           </div>
@@ -480,11 +480,11 @@ class CreateResourceComponent extends React.Component {
               {
                   tracker_state_list.map((item, key) => {
                     return(
-                      <div className="col-md-2 flex" key=key>
+                      <div className="col-md-2 flex" key={key}>
                         <input
-                          type="check"
-                          className="form-control"
-                          value={state.change_tracking_state.includes(item.value)}
+                          type="checkbox"
+//                          className="form-control"
+                          checked={state.change_tracking_state.includes(item.value)}
                           onChange={e => {
                             let {change_tracking_state} = state
                             const value = e.target.checked;
@@ -592,8 +592,8 @@ class EditResourceComponent extends React.Component {
 
   handleChangeURL() {
     const { state } = this;
-    const { repository } = state;
-    const url_path = window.location.origin + "/resync/" + repository;
+    const { repository_id } = state;
+    const url_path = window.location.origin + "/resync/" + repository_id;
     this.handleChangeState("url_path", url_path);
   }
 
@@ -713,9 +713,9 @@ class EditResourceComponent extends React.Component {
               className="form-control"
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("repository", value);
+                this.handleChangeState("repository_id", value);
               }}
-              value={state.repository}
+              value={state.repository_id}
             >
               {state.tree_list.map(item => {
                 return <option value={item.id}>{item.value}</option>;
@@ -733,9 +733,9 @@ class EditResourceComponent extends React.Component {
               type="checkbox"
               onChange={e => {
                 const value = e.target.checked;
-                this.handleChangeState("change_list_manifest", value);
+                this.handleChangeState("change_dump_manifest", value);
               }}
-              checked={state.change_list_manifest}
+              checked={state.change_dump_manifest}
             ></input>
           </div>
         </div>
@@ -748,10 +748,10 @@ class EditResourceComponent extends React.Component {
             <input
               type="number"
               className="form-control"
-              value={state.max_change_list}
+              value={state.max_changes_size}
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("max_change_list", value);
+                this.handleChangeState("max_changes_size", value);
               }}
             ></input>
           </div>
@@ -766,11 +766,11 @@ class EditResourceComponent extends React.Component {
               {
                   tracker_state_list.map((item, key) => {
                     return(
-                      <div className="col-md-2 flex" key=key>
+                      <div className="col-md-2 flex" key={key}>
                         <input
-                          type="check"
-                          className="form-control"
-                          value={state.change_tracking_state.includes(item.value)}
+                          type="checkbox"
+//                          className="form-control"
+                          checked={state.change_tracking_state.includes(item.value)}
                           onChange={e => {
                             let {change_tracking_state} = state
                             const value = e.target.checked;

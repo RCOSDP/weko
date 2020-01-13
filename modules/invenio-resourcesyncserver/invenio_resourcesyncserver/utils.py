@@ -217,9 +217,10 @@ def _export_item(record_id,
 def public_index_checked(f):
     """Decorator to pass community."""
     @wraps(f)
-    def decorate(index_id, *args, **kwargs):
-        if args[0]:
-            record_id = args[0]
+    def decorate(index_id, record_id=None, *args, **kwargs):
+        if record_id:
+            current_app.logger.debug("================")
+            current_app.logger.debug(record_id)
             record = WekoRecord.get_record_by_pid(record_id)
             if not record:
                 abort(404, 'Current Record isn\'t public.')
@@ -229,6 +230,9 @@ def public_index_checked(f):
         index = Indexes.get_index(index_id)
         if index is None or not index.public_state:
             abort(404, 'Current Repository isn\'t public.')
-        return f(index_id, *args, **kwargs)
+        if record_id:
+            return f(index_id, record_id, *args, **kwargs)
+        else:
+            return f(index_id, *args, **kwargs)
 
     return decorate

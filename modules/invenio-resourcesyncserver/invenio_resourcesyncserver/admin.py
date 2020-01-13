@@ -168,7 +168,7 @@ class AdminChangeListView(BaseView):
         """
         data = request.get_json()
         data['id'] = id
-        resource = ChangeListHandler(data)
+        resource = ChangeListHandler(**data)
         result = resource.save()
         if result:
             return jsonify(data=result.to_dict(), success=True)

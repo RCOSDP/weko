@@ -351,43 +351,44 @@ class ChangeListHandler(object):
         self.status = kwargs.get('status')
         self.repository_id = kwargs.get('repository_id')
         self.change_dump_manifest = kwargs.get('change_dump_manifest')
-        self.max_changes_size = kwargs.get('max_changes_size')
+        self.max_changes_size = int(kwargs.get('max_changes_size', 10000))
         self.url_path = kwargs.get('url_path')
-        self.index = self.get_index()
+        self.create_date = kwargs.get('create_date')
+        self.update_date = kwargs.get('update_date')
+        self.index = kwargs.get('index') or self.get_index()
         if kwargs.get('change_tracking_state'):
             if isinstance(kwargs.get('change_tracking_state'), str):
                 self.change_tracking_state = kwargs.get('change_tracking_state')
             if isinstance(kwargs.get('change_tracking_state'), list):
-                self.change_tracking_state = '&'.join(kwargs.get(
+                self.change_tracking_state = str('&'.join(kwargs.get(
                     'change_tracking_state'
-                ))
+                )))
 
-    @classmethod
-    def save(cls):
+    def save(self):
         """Create the ChangeListIndexes.
 
         :returns: The :dict:`ChangeListIndexes`.
         """
-        if cls.id:
-            old_obj = cls.get_change_list(cls.id, 'modal')
+        if self.id:
+            old_obj = self.get_change_list(self.id, 'modal')
             if old_obj:
                 try:
                     with db.session.begin_nested():
-                        old_obj.status = cls.status or old_obj.status
-                        old_obj.repository_id = cls.repository or \
+                        old_obj.status = self.status or old_obj.status
+                        old_obj.repository_id = self.repository_id or \
                             old_obj.repository_id
                         old_obj.change_dump_manifest = \
-                            cls.change_dump_manifest or \
+                            self.change_dump_manifest or \
                             old_obj.change_dump_manifest
-                        old_obj.max_changes_size = cls.max_changes_size or \
+                        old_obj.max_changes_size = self.max_changes_size or \
                             old_obj.max_changes_size
                         old_obj.change_tracking_state = \
-                            cls.change_tracking_state \
+                            self.change_tracking_state \
                             or old_obj.change_tracking_state
-                        old_obj.url_path = cls.url_path or old_obj.url_path
+                        old_obj.url_path = self.url_path or old_obj.url_path
                         db.session.merge(old_obj)
                     db.session.commit()
-                    return cls
+                    return self
                 except Exception as ex:
                     current_app.logger.debug(ex)
                     db.session.rollback()
@@ -396,20 +397,20 @@ class ChangeListHandler(object):
                 return None
         else:
             data = dict(**{
-                'status': cls.status,
-                'repository_id': cls.repository_id,
-                'change_dump_manifest': cls.change_dump_manifest,
-                'max_changes_size': cls.max_changes_size,
-                'change_tracking_state': cls.change_tracking_state,
-                'url_path': cls.url_path,
+                'status': self.status,
+                'repository_id': self.repository_id,
+                'change_dump_manifest': self.change_dump_manifest,
+                'max_changes_size': self.max_changes_size,
+                'change_tracking_state': self.change_tracking_state,
+                'url_path': self.url_path,
             })
             try:
                 with db.session.begin_nested():
                     obj = ChangeListIndexes(**data)
                     db.session.add(obj)
                 db.session.commit()
-                cls.id = obj.id
-                return cls.to_dict()
+                self.id = obj.id
+                return self
             except SQLAlchemyError as ex:
                 current_app.logger.debug(ex)
                 db.session.rollback()
@@ -436,32 +437,32 @@ class ChangeListHandler(object):
             db.session.rollback()
         return False
 
-    @classmethod
-    def get_index(cls):
-        if cls.id:
-            return Indexes.get_index(cls.id)
+    def get_index(self):
+        if self.repository_id:
+            return Indexes.get_index(self.repository_id)
         else:
             return None
 
-    @classmethod
-    def to_dict(cls):
-        change_dump_manifest = cls.change_dump_manifest  \
-            if cls.change_dump_manifest else None,
-        max_changes_size = cls.max_changes_size if cls.max_changes_size \
-            else None,
-        change_tracking_state = cls.change_tracking_state if \
-            cls.change_tracking_state else None,
+    def to_dict(self):
+        change_dump_manifest = self.change_dump_manifest  \
+            if self.change_dump_manifest else None
+        max_changes_size = self.max_changes_size if self.max_changes_size \
+            else None
+        change_tracking_state = self.change_tracking_state if \
+            self.change_tracking_state else None
+        change_tracking_state = change_tracking_state.split("&") if \
+            change_tracking_state else []
         return dict(**{
-            'id': cls.id if cls.id else None,
-            'status': cls.status if cls.status else None,
-            'repository_id': cls.repository_id if cls.repository_id else None,
+            'id': self.id if self.id else None,
+            'status': self.status if self.status else None,
+            'repository_id': self.repository_id if self.repository_id else None,
             'change_dump_manifest': change_dump_manifest,
             'max_changes_size': max_changes_size,
             'change_tracking_state': change_tracking_state,
-            'url_path': cls.url_path if cls.url_path else None,
-            'create_date': cls.create_date if cls.create_date else None,
-            'update_date': cls.update_date if cls.update_date else None,
-            'index': cls.index if cls.index else None,
+            'url_path': self.url_path if self.url_path else None,
+            'create_date': self.create_date if self.create_date else None,
+            'update_date': self.update_date if self.update_date else None,
+            'repository_name': self.index.index_name,
         })
 
     @classmethod
@@ -514,20 +515,19 @@ class ChangeListHandler(object):
             return None
 
     @classmethod
-    def convert_modal_to_obj(cls, model= ChangeListIndexes()):
-        data = dict(**{
-            'id': model.id,
-            'status': model.status,
-            'repository_id': model.repository_id,
-            'change_dump_manifest': model.change_dump_manifest,
-            'max_changes_size': model.max_changes_size,
-            'change_tracking_state': model.change_tracking_state,
-            'url_path': model.url_path,
-            'create_date': model.create_date,
-            'update_date': model.update_date,
-            'index': model.index,
-        })
-        return ChangeListHandler(**data)
+    def convert_modal_to_obj(cls, model=ChangeListIndexes()):
+        return ChangeListHandler(
+            id=model.id,
+            status=model.status,
+            repository_id=model.repository_id,
+            change_dump_manifest=model.change_dump_manifest,
+            max_changes_size=model.max_changes_size,
+            change_tracking_state=str(model.change_tracking_state).split("&"),
+            url_path=model.url_path,
+            create_date=model.create_date,
+            update_date=model.update_date,
+            index=model.index
+        )
 
     @classmethod
     def get_change_list_by_repo_id(cls, repo_id, type_result='obj'):
