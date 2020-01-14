@@ -30,7 +30,6 @@ from datetime import datetime
 from functools import wraps
 
 from flask import abort, current_app, request, send_file
-from invenio_search import RecordsSearch
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_items_ui.utils import make_stats_tsv, package_export_file
@@ -38,7 +37,6 @@ from weko_records.api import ItemTypes
 from weko_records_ui.permissions import check_file_download_permission
 
 from .api import ResourceListHandler
-from .query import item_path_search_factory
 
 
 def to_dict(resource):
@@ -221,8 +219,6 @@ def public_index_checked(f):
     @wraps(f)
     def decorate(index_id, record_id=None, *args, **kwargs):
         if record_id:
-            current_app.logger.debug("================")
-            current_app.logger.debug(record_id)
             record = WekoRecord.get_record_by_pid(record_id)
             if not record:
                 abort(404, 'Current Record isn\'t public.')
@@ -238,15 +234,3 @@ def public_index_checked(f):
             return f(index_id, *args, **kwargs)
 
     return decorate
-
-
-def get_items_by_index_tree(index_tree_id):
-    """Get tree items."""
-    records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(
-        version=False)
-    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    search_instance = item_path_search_factory(records_search, index_id=index_tree_id)
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd.get('hits').get('hits')

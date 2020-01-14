@@ -26,9 +26,23 @@ from flask import current_app, request
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
 from weko_search_ui.query import get_item_type_aggs, get_permission_filter
+from invenio_search import RecordsSearch
 
 
-def item_path_search_factory(self, search, index_id=None):
+def get_items_by_index_tree(index_tree_id):
+    """Get tree items."""
+    records_search = RecordsSearch()
+    records_search = records_search.with_preference_param().params(
+        version=False)
+    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    search_instance = item_path_search_factory(search=records_search, index_id=index_tree_id)
+    search_result = search_instance.execute()
+    rd = search_result.to_dict()
+
+    return rd.get('hits').get('hits')
+
+
+def item_path_search_factory(search, index_id=None):
     """
     Parse query using Weko-Query-Parser.
 
