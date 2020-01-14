@@ -37,7 +37,7 @@ from weko_index_tree.models import Index
 class ResourceListIndexes(db.Model, Timestamp):
     """ResourceListIndexes model.
 
-    Stores session life_time create_date for Session.
+    Stores session life_time created for Session.
     """
 
     __tablename__ = 'resourcelist_indexes'
@@ -65,10 +65,6 @@ class ResourceListIndexes(db.Model, Timestamp):
     url_path = db.Column(
         db.String(255), nullable=True)
 
-    create_date = db.Column(db.DateTime, default=datetime.now)
-
-    update_date = db.Column(db.DateTime, default=datetime.now)
-
     index = db.relationship(
         Index, backref='resource_list_id', foreign_keys=[repository_id])
     """Relation to the User making the inclusion request."""
@@ -77,7 +73,7 @@ class ResourceListIndexes(db.Model, Timestamp):
 class ChangeListIndexes(db.Model, Timestamp):
     """ResourceListIndexes model.
 
-    Stores session life_time create_date for Session.
+    Stores session life_time created for Session.
     """
 
     __tablename__ = 'changelist_indexes'
@@ -109,10 +105,6 @@ class ChangeListIndexes(db.Model, Timestamp):
 
     url_path = db.Column(
         db.String(255), nullable=True)
-
-    create_date = db.Column(db.DateTime, default=datetime.now)
-
-    update_date = db.Column(db.DateTime, default=datetime.now)
 
     index = db.relationship(
         Index, backref='change_list_id', foreign_keys=[repository_id])

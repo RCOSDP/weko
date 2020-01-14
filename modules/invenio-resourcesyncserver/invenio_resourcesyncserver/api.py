@@ -31,7 +31,7 @@ from resync.resource_dump_manifest import ResourceDumpManifest
 from sqlalchemy.exc import SQLAlchemyError
 from weko_index_tree.models import Index
 from weko_index_tree.api import Indexes
-from weko_search_ui.utils import get_items_by_index_tree
+from .utils import get_items_by_index_tree
 
 from .models import ResourceListIndexes, ChangeListIndexes
 
@@ -341,8 +341,8 @@ class ChangeListHandler(object):
     max_changes_size = None
     change_tracking_state = None
     url_path = None
-    create_date = None
-    update_date = None
+    created = None
+    updated = None
     index = None
 
     def __init__(self, **kwargs):
@@ -353,8 +353,8 @@ class ChangeListHandler(object):
         self.change_dump_manifest = kwargs.get('change_dump_manifest')
         self.max_changes_size = int(kwargs.get('max_changes_size', 10000))
         self.url_path = kwargs.get('url_path')
-        self.create_date = kwargs.get('create_date')
-        self.update_date = kwargs.get('update_date')
+        self.created = kwargs.get('created')
+        self.updated = kwargs.get('updated')
         self.index = kwargs.get('index') or self.get_index()
         if kwargs.get('change_tracking_state'):
             if isinstance(kwargs.get('change_tracking_state'), str):
@@ -460,8 +460,8 @@ class ChangeListHandler(object):
             'max_changes_size': max_changes_size,
             'change_tracking_state': change_tracking_state,
             'url_path': self.url_path if self.url_path else None,
-            'create_date': self.create_date if self.create_date else None,
-            'update_date': self.update_date if self.update_date else None,
+            'created': self.created if self.created else None,
+            'updated': self.updated if self.updated else None,
             'repository_name': self.index.index_name,
         })
 
@@ -524,8 +524,8 @@ class ChangeListHandler(object):
             max_changes_size=model.max_changes_size,
             change_tracking_state=str(model.change_tracking_state).split("&"),
             url_path=model.url_path,
-            create_date=model.create_date,
-            update_date=model.update_date,
+            created=model.created,
+            updated=model.updated,
             index=model.index
         )
 

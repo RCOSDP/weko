@@ -236,3 +236,17 @@ def public_index_checked(f):
             return f(index_id, *args, **kwargs)
 
     return decorate
+
+from invenio_search import RecordsSearch
+from .query import item_path_search_factory
+
+def get_items_by_index_tree(index_tree_id):
+    """Get tree items."""
+    records_search = RecordsSearch()
+    records_search = records_search.with_preference_param().params(
+        version=False)
+    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    search_instance = item_path_search_factory(records_search, index_id=index_tree_id)
+    search_result = search_instance.execute()
+    rd = search_result.to_dict()
+    return rd.get('hits').get('hits')
