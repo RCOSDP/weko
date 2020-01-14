@@ -30,6 +30,7 @@ from datetime import datetime
 from functools import wraps
 
 from flask import abort, current_app, request, send_file
+from invenio_search import RecordsSearch
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_items_ui.utils import make_stats_tsv, package_export_file
@@ -37,6 +38,7 @@ from weko_records.api import ItemTypes
 from weko_records_ui.permissions import check_file_download_permission
 
 from .api import ResourceListHandler
+from .query import item_path_search_factory
 
 
 def to_dict(resource):
@@ -237,8 +239,6 @@ def public_index_checked(f):
 
     return decorate
 
-from invenio_search import RecordsSearch
-from .query import item_path_search_factory
 
 def get_items_by_index_tree(index_tree_id):
     """Get tree items."""
