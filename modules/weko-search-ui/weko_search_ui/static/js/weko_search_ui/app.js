@@ -205,7 +205,8 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   }
   $scope.getJournalInfo();
 
-  // Get child id list to index list display.
+  // Get child id list.
+  let child_list = []
   $scope.getChildList = function() {
     if (!$rootScope.index_id_q) {
       return;
@@ -215,21 +216,29 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
       url: '/get_child_list/' + $rootScope.index_id_q,
       headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
-      $rootScope.child_list = response.data;
+      child_list = response.data;
     }, function errorCallback(error) {
       console.log(error);
     });
   }
   $scope.getChildList();
 
-  let temp = []
-  $scope.child_index_list = []
-  $scope.sort_index = function(data_list) {
-    for (var i = 0; i < $rootScope.child_list.length; i++) {
-      for (var j = 0; j < data_list.length; j++) {
-        if (temp.indexOf(data_list[j].key) == -1 && $rootScope.child_list[i] == data_list[j].key.split('/').pop()) {
-          temp.push(data_list[j].key);
-          $scope.child_index_list.push(data_list[j]);
+  // Sorting child id list to index list display.
+  let temp_key_list = []
+  $scope.sorted_child_list = []
+  $scope.sort_index_list = function(data_list) {
+    if (child_list.length == 0) {
+      for (var j = 1; j < data_list.length; j++) {
+        $scope.sorted_child_list.push(data_list[j]);
+      }
+    }
+    else {
+      for (var i = 0; i < child_list.length; i++) {
+        for (var j = 0; j < data_list.length; j++) {
+          if (temp_key_list.indexOf(data_list[j].key) == -1 && child_list[i] == data_list[j].key.split('/').pop()) {
+            temp_key_list.push(data_list[j].key);
+            $scope.sorted_child_list.push(data_list[j]);
+          }
         }
       }
     }
