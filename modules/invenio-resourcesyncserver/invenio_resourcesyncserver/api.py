@@ -35,6 +35,7 @@ from weko_index_tree.api import Indexes
 from .models import ResourceListIndexes, ChangeListIndexes
 from .query import get_items_by_index_tree
 
+
 class ResourceListHandler(object):
     """Define API for ResourceListIndexes creation and update."""
 

@@ -112,5 +112,6 @@ class ChangeListIndexes(db.Model, Timestamp):
 
 
 __all__ = ([
-    'ResourceListIndexes'
+    'ResourceListIndexes',
+    'ChangeListIndexes'
 ])
