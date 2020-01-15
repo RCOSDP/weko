@@ -46,9 +46,10 @@
                 </tr>
               {% else %}
                   {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' %}
+                    {%- if lst['attribute_value'] is string or lst['attribute_value'] or lst['attribute_value_mlt']|length > 0 -%}
                     <tr>
                       <th scope="row"
-                          colspan="6">{{ lst['attribute_name'] }}</th>
+                          colspan="6">{{ _(lst['attribute_name']) }}</th>
                       <td>
                         <pre class="hide">{{ lst|tojson }}</pre>
                           {% if lst['attribute_value'] is string %}
@@ -63,6 +64,7 @@
                           {%- endfor -%}
                       </td>
                     </tr>
+                    {%- endif -%}
                   {% else %}
                       {{ output_detail_data(lst) }}
                   {% endif %}
@@ -89,6 +91,7 @@
           {% endif %}
       {% endfor %}
       {% if record.relation and is_top_page %}
+        {%- if record.relation.relation_type -%}
         <tr>
           <th scope="row" colspan="6">{{ _('Link') }}</th>
           <td>
@@ -99,6 +102,7 @@
               {% endfor %}
           </td>
         </tr>
+        {%- endif -%}
       {% endif %}
       {% if record.pubdate and is_top_page and is_logged_in %}
         <tr>

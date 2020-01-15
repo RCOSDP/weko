@@ -37,19 +37,21 @@
     {%- if record_detail_data['attribute_value_mlt'] is string or not record_detail_data['attribute_value_mlt'] -%}
       <tr>
         <th scope="row"
-            colspan="6">{{ record_detail_data['attribute_name'] }}</th>
+            colspan="6">{{ _(record_detail_data['attribute_name']) }}</th>
         <td>{{ record_detail_data['attribute_value_mlt'] }}</td>
       </tr>
     {%- else -%}
         {%- for attribute_data in record_detail_data['attribute_value_mlt'] -%}
+          {%- if attribute_data -%}
           <tr>
             <th scope="row" colspan="6"
-                style="border-bottom: none">{{ record_detail_data['attribute_name'] }}</th>
+            style="border-bottom: none">{{_(record_detail_data['attribute_name'])}}</th>
             <td>
               <pre class="hidden">{{ record_detail_data|tojson }}</pre>
             </td>
           </tr>
             {{ output_attribute_value_mlt(attribute_data, 1) }}
+          {%- endif -%}
         {%- endfor -%}
     {%- endif -%}
 {% endmacro %}
@@ -93,8 +95,11 @@
           {% set content = output_creator(labels[0], content) %}
       {%- endif -%}
     <th scope="row" colspan="{{ label_colspan_default - level }}"
-        style="border-bottom: none">{{ label }}</th>
-    <td>{{ content }}</td>
+        style="border-bottom: none">{{_(label)}}</th>
+    {%- if content -%}
+      {%- set content = _(content) -%}
+    {%- endif -%}
+    <td class="{%- if label == 'Research Plan' %}multiple-line{%- endif %}">{{ content }} </td>
   </tr>
 {% endmacro %}
 

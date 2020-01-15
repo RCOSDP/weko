@@ -362,4 +362,13 @@ msgid "Phone Number format is incorrect."
 msgstr "電話番号の形式が正しくありません。"
 
 msgid "Position is being inputted (Only input when selecting 'Others')"
-msgstr "役職が入力されている（「その他」の選択のみ入力可能）"
+msgstr "役職が入力されています（「その他」選択時のみ入力可能）"
+
+msgid "Fullname"
+msgstr "氏名"
+
+msgid "Full name not provided."
+msgstr "氏名が指定されていません"
+
+msgid "Position (Others)"
+msgstr "役職（その他）"

@@ -233,3 +233,20 @@ require([
     $('#myModal').modal('show');
   });
 })
+
+/*
+  Hide preview area show photo.
+  Hide html tag <hr> which is next element of preview area show photo.
+*/
+if(Number($('#preview_count').val()) == 0){
+  if($('#main_preview_carousel_panel').length){
+    /* 'Approval' step of registed processing */
+    $('#main_preview_carousel_panel').next('hr').addClass('hide')
+    $('#main_preview_carousel_panel').addClass('hide')
+  }
+  if($('#modal_preview_carousel_panel').length) {
+    /* 'End' step of registed processing */
+    $('#modal_preview_carousel_panel').addClass('hide')
+    $('#modal_preview_carousel_panel').next().addClass('hide')
+  }
+}

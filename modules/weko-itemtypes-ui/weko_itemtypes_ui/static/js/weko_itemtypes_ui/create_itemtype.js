@@ -416,8 +416,8 @@ $(document).ready(function () {
       }
     }
 
-    page_global.table_row_map.schema.properties["pubdate"] = {type:"string",title:"公開日",format:"datetime"}
-    page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
+    page_global.table_row_map.schema.properties["pubdate"] = {type:"string",title:"Pubdate",format:"datetime"}
+    page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"Pubdate",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
     page_global.table_row_map.schema.required.push("pubdate");
 
     if(src_mapping.hasOwnProperty('pubdate')) {
@@ -611,11 +611,12 @@ $(document).ready(function () {
             add: "New",
             style: {add:"btn-success"},
             items: [{
-              key: row_id+'[].interim',
-              type: tmp.input_type,         // checkboxes
+              key: row_id + '[].interim',
+              type: "template",
               notitle: true,
               titleMap: titleMap_tmp
-            }]
+            }],
+            templateUrl: "/static/templates/weko_deposit/checkboxes.html"
           });
         } else {
           // 選択式(プルダウン)
@@ -630,11 +631,12 @@ $(document).ready(function () {
           page_global.table_row_map.form.push({
             key: row_id,
             title_i18n: tmp.title_i18n,
-            type: tmp.input_type,         // checkboxes
-            titleMap: titleMap_tmp
+            type: "template",
+            titleMap: titleMap_tmp,
+            templateUrl: "/static/templates/weko_deposit/checkboxes.html",
           });
         }
-      } else if(tmp.input_type == 'radios' || tmp.input_type == 'select') {
+      } else if(tmp.input_type == 'select') {
         tmp.input_value = $("#schema_"+row_id).find(".select-value-setting").val();
         enum_tmp = []
         titleMap_tmp = []
@@ -684,6 +686,58 @@ $(document).ready(function () {
             titleMap: titleMap_tmp
           });
         }
+      } else if(tmp.input_type == 'radios') {
+        tmp.input_value = $("#schema_" + row_id).find(".select-value-setting").val();
+        enum_tmp = [];
+        titleMap_tmp = [];
+        $.each(tmp.input_value.split('|'), function (i, v) {
+          enum_tmp.push(v);
+          titleMap_tmp.push({value: v, name: v});
+        });
+
+        if(tmp.option.multiple) {
+          page_global.table_row_map.schema.properties[row_id] = {
+            type: "array",
+            title: tmp.title,
+            minItems: tmp.input_minItems,
+            maxItems: tmp.input_maxItems,
+            items: {
+              type: "object",
+              properties: {
+                interim: {                  // [interim]は本当の意味を持たない
+                  type: "string",
+                  enum: enum_tmp
+                }
+              }
+            }
+          };
+          page_global.table_row_map.form.push({
+            key: row_id,
+            title_i18n: tmp.title_i18n,
+            add: "New",
+            style: {add:"btn-success"},
+            items: [{
+              key: row_id+'[].interim',
+              type: "template",
+              notitle: true,
+              templateUrl: "/static/templates/weko_deposit/radios.html",
+              titleMap: titleMap_tmp
+            }]
+          });
+        } else {
+          page_global.table_row_map.schema.properties[row_id] = {
+            type: "string",
+            title: tmp.title,
+            enum: enum_tmp
+          };
+          page_global.table_row_map.form.push({
+            key: row_id,
+            title_i18n: tmp.title_i18n,
+            type: "template",    // radios|select
+            templateUrl: "/static/templates/weko_deposit/radios.html",
+            titleMap: titleMap_tmp
+          });
+        }
       } else if(tmp.input_type.indexOf('cus_') != -1) {
         editor = page_json_editor['schema_'+row_id];
         page_global.schemaeditor.schema[row_id] = editor.getValue();
@@ -704,14 +758,24 @@ $(document).ready(function () {
           properties_obj[tmp.input_type.substr(4)].forms.title_i18n = tmp.title_i18n;
           //add by ryuu. end
           if(Array.isArray(properties_obj[tmp.input_type.substr(4)].forms)) {
+            console.log("isArray");
             properties_obj[tmp.input_type.substr(4)].forms.forEach(function(element){
+              // rename subitem
+              if (element.items && element.items.length > 0) {
+                element = rename_subitem(element);
+              }
               page_global.table_row_map.form.push(
                 JSON.parse(JSON.stringify(element).replace(/parentkey/gi, row_id))
               );
             });
           } else {
+            let object_forms = properties_obj[tmp.input_type.substr(4)].forms;
+            // rename subitem
+            if (object_forms.items && object_forms.items.length > 0) {
+              object_forms = rename_subitem(object_forms);
+            }
             page_global.table_row_map.form.push(
-              JSON.parse(JSON.stringify(properties_obj[tmp.input_type.substr(4)].forms).replace(/parentkey/gi, row_id))
+              JSON.parse(JSON.stringify(object_forms).replace(/parentkey/gi, row_id))
             );
           }
         } else {
@@ -725,8 +789,13 @@ $(document).ready(function () {
           properties_obj[tmp.input_type.substr(4)].form.title = tmp.title;
           properties_obj[tmp.input_type.substr(4)].form.title_i18n = tmp.title_i18n;
           //add by ryuu. end
+          let object_form = properties_obj[tmp.input_type.substr(4)].form;
+          //rename subitem
+          if (object_form.items && object_form.items.length > 0) {
+            object_form = rename_subitem(object_form);
+          }
           page_global.table_row_map.form.push(
-            JSON.parse(JSON.stringify(properties_obj[tmp.input_type.substr(4)].form).replace(/parentkey/gi, row_id)));
+            JSON.parse(JSON.stringify(object_form).replace(/parentkey/gi, row_id)));
         }
       }
 
@@ -734,7 +803,7 @@ $(document).ready(function () {
     });
     //公開日
     var tmp_pubdate = {}
-    tmp_pubdate.title = "公開日";
+    tmp_pubdate.title = "Pubdate";
     tmp_pubdate.title_i18n = {}
     tmp_pubdate.title_i18n.ja = "公開日";
     tmp_pubdate.title_i18n.en = "PubDate";
@@ -756,6 +825,7 @@ $(document).ready(function () {
   $('#btn_new_itemtype_meta').on('click', function(){
     new_meta_row('item_'+$.now());
   });
+
   function new_meta_row(row_id) {
     var row_template = '<tr id="tr_' + row_id + '">'
         + '<td><input type="text" class="form-control" id="txt_title_' + row_id + '" value="">'
@@ -997,6 +1067,55 @@ $(document).ready(function () {
     });
   }
 
+  function custom_suffix_subitem_name(suffix){
+    // Replace all space to _
+    suffix = suffix.replace(/ /g, '_');
+    // convert to lower case character
+    suffix = suffix.toLowerCase();
+    return suffix;
+  }
+
+  function process_child_subitem_name_form(org, prefix, form) {
+    //rename subitem
+    form.items.forEach(function(item) {
+      if (!item.key) {
+        return
+      }
+      let subkey = item.key.split("_");
+      let orgkey = item.key;
+      if (subkey.length > 1 && !isNaN(Number(subkey[subkey.length-1]))) {
+        subkey[subkey.length-1] = custom_suffix_subitem_name(item.title);
+        let ret = subkey.join('_');
+        item.key = prefix + ret.split(org)[1];
+      }
+      if (item.items && item.items.length > 0) {
+        item = process_child_subitem_name_form(orgkey, item.key, item);
+      }
+    });
+
+    return form;
+  }
+
+  function rename_subitem(form) {
+      //rename subitem
+      form.items.forEach(function(item) {
+        // if (!item.hasOwnProperty('key')) {
+        if (!item.key) {
+          return
+        }
+        let subkey = item.key.split("_");
+        let orgkey = item.key
+        if (subkey.length > 1 && !isNaN(Number(subkey[1]))) {
+          item.key = subkey[0] + "_" + custom_suffix_subitem_name(item.title);
+        }
+        if (item.items && item.items.length > 0) {
+          item = process_child_subitem_name_form(orgkey, item.key, item);
+        }
+      });
+
+      return form;
+  }
+
   getPropUrl = '/admin/itemtypes/properties/list?lang=' + $('#lang-code').val();
   select_option = '';
   // 作成したメタデータ項目タイプの取得
@@ -1024,18 +1143,16 @@ $(document).ready(function () {
       odered = {}
       others = ''
       for (var key in data) {
-        if (key == 'defaults') continue;
-        if (data[key].name === meta_system_info.updated_date.input_type){
+        if (key === 'defaults') continue;
+        if (data[key].name === meta_system_info.updated_date.input_type) {
           meta_system_info.updated_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.created_date.input_type){
           meta_system_info.created_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type){
+        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type) {
           meta_system_info.persistent_identifier_doi.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type){
-          meta_system_info.created_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.ranking_page_url.input_type){
+        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type) {
+          meta_system_info.persistent_identifier_h.input_type = "cus_" + key;
           meta_system_info.ranking_page_url.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.belonging_index_info.input_type){
+        } else if (data[key].name === meta_system_info.belonging_index_info.input_type) {
           meta_system_info.belonging_index_info.input_type = "cus_" + key;
         }
         option = '<option value="cus_' + key + '">' + data[key].name + '</option>';

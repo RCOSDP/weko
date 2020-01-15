@@ -42,7 +42,7 @@ from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
-from weko_index_tree.utils import get_user_roles
+from weko_index_tree.utils import get_index_id, get_user_roles
 from weko_records.api import FeedbackMailList, ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
@@ -57,9 +57,11 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     get_current_user, get_list_email, get_list_username, \
     get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    to_files_js, update_json_schema_by_activity_id, \
-    update_schema_remove_hidden_item, validate_form_input_data, \
-    validate_user
+    remove_excluded_items_in_json_schema, set_multi_language_name, \
+    to_files_js, update_index_tree_for_record, \
+    update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
+    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
+    validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -277,6 +279,10 @@ def get_json_schema(item_type_id=0, activity_id=""):
                 result = updated_json_schema
 
         json_schema = result
+
+        # Remove excluded item in json_schema
+        remove_excluded_items_in_json_schema(item_type_id, json_schema)
+
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
@@ -307,6 +313,11 @@ def get_schema_form(item_type_id=0):
             filemeta_form_group['type'] = 'select'
             filemeta_form_group['titleMap'] = group_list
 
+        from .utils import recursive_form
+        recursive_form(schema_form)
+        # Check role for input(5 item type)
+        update_sub_items_by_user_role(item_type_id, schema_form)
+
         # hidden option
         hidden_subitem = ['subitem_thumbnail', 'subitem_system_id_rg_doi',
                           'subitem_system_date_type',
@@ -324,6 +335,13 @@ def get_schema_form(item_type_id=0):
                 schema_form = update_schema_remove_hidden_item(schema_form,
                                                                result.render,
                                                                hidden_items)
+
+        for elem in schema_form:
+            set_multi_language_name(elem, cur_lang)
+            if 'items' in elem:
+                items = elem['items']
+                for item in items:
+                    set_multi_language_name(item, cur_lang)
 
         if 'default' != cur_lang:
             for elem in schema_form:
@@ -440,6 +458,20 @@ def iframe_items_index(pid_value='0'):
             ctx = {'community': comm}
 
         if request.method == 'GET':
+            cur_activity = session['itemlogin_activity']
+            # If enable auto set index feature
+            # and activity is usage application item type
+            steps = session['itemlogin_steps']
+            contain_application_endpoint = False
+            for step in steps:
+                if step.get('ActionEndpoint') == 'item_login_application':
+                    contain_application_endpoint = True
+            enable_auto_set_index = current_app.config.get(
+                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE')
+            if enable_auto_set_index and contain_application_endpoint:
+                index_id = get_index_id(cur_activity.activity_id)
+                update_index_tree_for_record(pid_value, index_id)
+                return redirect(url_for('weko_workflow.iframe_success'))
             # Get the design for widget rendering
             from weko_theme.utils import get_design_layout
 
@@ -621,6 +653,21 @@ def get_search_data(data_type=''):
     except Exception as e:
         result['error'] = str(e)
 
+    return jsonify(result)
+
+
+@blueprint_api.route('/validate_email_and_index', methods=['POST'])
+def validate_user_email_and_index():
+    """Validate user mail and index.
+
+    :return:
+    """
+    result = {}
+    if request.headers['Content-Type'] != 'application/json':
+        result['error'] = _('Header Error')
+        return jsonify(result)
+    data = request.get_json()
+    result = validate_user_mail_and_index(data)
     return jsonify(result)
 
 
@@ -1149,3 +1196,22 @@ def check_validation_error_msg(activity_id):
                        error_list=error_list)
     else:
         return jsonify(code=0)
+
+
+@blueprint.route('/', methods=['GET'])
+@blueprint.route('/corresponding-activity', methods=['GET'])
+@login_required
+@item_permission.require(http_exception=403)
+def corresponding_activity_list():
+    """Get corresponding usage & output activity list.
+
+    :return: activity list
+    """
+    result = {}
+    work_activity = WorkActivity()
+    if "get_corresponding_usage_activities" in dir(work_activity):
+        usage_application_list, output_report_list = work_activity. \
+            get_corresponding_usage_activities(current_user.get_id())
+        result = {'usage_application': usage_application_list,
+                  'output_report': output_report_list}
+    return jsonify(result)

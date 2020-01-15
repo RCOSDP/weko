@@ -29,8 +29,6 @@ from invenio_records.models import RecordMetadata
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_records.api import ItemsMetadata, ItemTypes
-from weko_records.models import ItemMetadata
-from weko_workflow.models import ActionStatusPolicy, Activity
 
 from .permissions import check_user_group_permission
 
@@ -205,3 +203,18 @@ def restore(recid):
     except Exception as ex:
         db.session.rollback()
         raise ex
+
+
+def get_registration_data_type(record):
+    """Get registration data type."""
+    attribute_value_key = 'attribute_value_mlt'
+    data_type_key = 'subitem_data_type'
+
+    for item in record:
+        values = record.get(item)
+        if isinstance(values, dict) and values.get(attribute_value_key):
+            attribute = values.get(attribute_value_key)
+            if isinstance(attribute, list):
+                for data in attribute:
+                    if data_type_key in data:
+                        return data.get(data_type_key)

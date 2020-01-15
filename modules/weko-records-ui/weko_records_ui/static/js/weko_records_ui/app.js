@@ -350,3 +350,8 @@ function handleConfirmButton() {
     $("#download_confirm_content").text("");
   });
 }
+
+/* Hide preview area show photo. */
+if(Number($('#preview_count').val()) == 0){
+  $('#preview_carousel_panel').addClass('hide')
+}

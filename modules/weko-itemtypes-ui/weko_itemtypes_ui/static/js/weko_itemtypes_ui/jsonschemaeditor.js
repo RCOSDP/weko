@@ -157,7 +157,7 @@ var SchemaCheckboxes = React.createClass({
 		return this.propsToState(this.props);
 	},
 	propsToState: function propsToState(props) {
-		var data = props.data;
+    let data = props.data.items; //get enum for checkboxes
 		if (data.hasOwnProperty('enum') && data.enum.length > 0) {
 			data.enum = data.enum.join('|');
 		} else {
@@ -496,9 +496,12 @@ var SchemaObject = React.createClass({
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this.state.propertyDels[index]) return;
-			// var itemKey = self.state.propertyItems[index];
+			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
-				var itemKey = self.createSubItemName(value.title);
+				let subKey = itemKey.split("_");
+				if (subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+					itemKey = self.createSubItemName(value.title);
+				}
 				var sub_form = {};
 				if ('text' === value.format || 'textarea' === value.format) {
 					sub_form = {
@@ -514,14 +517,31 @@ var SchemaObject = React.createClass({
 						templateUrl: "/static/templates/weko_deposit/datepicker.html",
 						title: value.title
 					};
-				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
+				} else if ('checkboxes' === value.format) {
+          sub_form = {
+            key: parentkey + itemKey,
+            type: "template",
+            templateUrl: "/static/templates/weko_deposit/checkboxes.html",
+            title: value.title,
+            titleMap: self.refs['subitem' + index].exportTitleMap()
+          };
+				}else if ('select' === value.format) {
 					sub_form = {
 						key: parentkey + itemKey,
 						type: value.format,
 						title: value.title,
 						titleMap: self.refs['subitem' + index].exportTitleMap()
 					};
-				} else if ('array' === value.format) {
+				}
+				 else if ('radios' === value.format ) {
+					sub_form = {
+						key: parentkey + itemKey,
+						type: "template",
+						title: value.title,
+						templateUrl: "/static/templates/weko_deposit/datepicker.html",
+						titleMap: self.refs['subitem' + index].exportTitleMap()
+					};
+				}  else if ('array' === value.format) {
 					sub_form = {
 						key: parentkey + itemKey,
 						add: "New",
@@ -555,9 +575,12 @@ var SchemaObject = React.createClass({
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this2.state.propertyDels[index]) return;
-			// var itemKey = self.state.propertyItems[index];
+			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
-				var itemKey = self.createSubItemName(value.title);
+				let subKey = itemKey.split("_");
+				if (subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+					itemKey = self.createSubItemName(value.title);
+				}
 				if ('text' === value.format || 'textarea' === value.format || 'datetime' === value.format) {
 					properties[itemKey] = value;
 				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {

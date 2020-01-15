@@ -12,12 +12,12 @@ class ComponentExclusionTarget extends React.Component {
     this.state = {
       listEmail: [],
       selectedId: []
-    }
+    };
     this.deleteCommand = this.deleteCommand.bind(this);
     this.searchCommand = this.searchCommand.bind(this);
     this.generateSelectedBox = this.generateSelectedBox.bind(this);
-    this.handleClick = this.handleClick.bind(this)
-    this.handleKeyPress = this.handleKeyPress.bind(this)
+    this.handleClick = this.handleClick.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
   }
 
   componentDidMount() {
@@ -566,12 +566,17 @@ class MainLayout extends React.Component {
     return (
       <div>
         <div className="row">
-          <ComponentExclusionTarget
-            bindingValueOfComponent={this.bindingValueOfComponent}
-            removeEmailFromList={this.removeEmailFromList}
-            listEmail={this.state.listEmail}
-            addEmailToList={(data) => { return this.addEmailToList(data) }}
-          />
+          {
+            this.props.enable_feedback_maillist ?
+              <ComponentExclusionTarget
+                bindingValueOfComponent={this.bindingValueOfComponent}
+                removeEmailFromList={this.removeEmailFromList}
+                listEmail={this.state.listEmail}
+                addEmailToList={(data) => {
+                  return this.addEmailToList(data)
+                }}
+              /> : null
+          }
         </div>
         <div className="row">
           <ModalComponent showModalSearch={this.state.showModalSearch} bindingValueOfComponent={this.bindingValueOfComponent} addEmailToList={this.addEmailToList} />
@@ -582,8 +587,9 @@ class MainLayout extends React.Component {
 }
 
 $(function () {
+  let enable_feedback_maillist = document.getElementById('enable_feedback_maillist').value === 'True';
   ReactDOM.render(
-    <MainLayout />,
+    <MainLayout enable_feedback_maillist = {enable_feedback_maillist} />,
     document.getElementById('react')
   )
 });

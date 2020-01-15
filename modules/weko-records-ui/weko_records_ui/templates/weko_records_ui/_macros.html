@@ -1,0 +1,134 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url) %}
+  {%- if not session['user_id'] -%}
+    {%- set href_url = url_for_security('login', next=request.path) -%}
+    {%- if is_file_name_url -%}
+      <a class="forcewrap"
+         href={{ href_url }}>{{ file.filename }}
+        ({{ file.size|filesizeformat }})</a>
+      <br>
+    {%- else -%}
+    <a class="action-anchor" href="{{href_url}}">
+                      <button class="img-rounded action-button button-sm">
+                        <i class="action-icon fa fa-download"></i>
+                        {{_('Download')}}
+                      </button>
+                    </a>
+    {%- endif -%} 
+  {%- elif not permission -%}
+    {%- set workflow_id = '' -%}
+    {%- set usage_workflow = record | get_usage_workflow -%}
+    {%- if not usage_workflow -%}
+      {%- set clickable = false -%}
+      {%- if is_file_name_url -%}
+        <a class="forcewrap">{{ file.filename }}
+          ({{ file.size|filesizeformat }})</a>
+        <br>
+    {%- else -%}
+        <a class="action-anchor">
+          <button class="img-rounded action-button button-sm">
+            <i class="action-icon fa fa-download"></i>
+            {{_('Download')}}
+          </button>
+        </a>
+     {%- endif -%} 
+    {%- elif usage_workflow -%}
+      {%- set workflow_id = usage_workflow.id -%}
+      {%- set workflow_detail = workflow_id | get_workflow_detail() -%}
+      {%- set data_item_type_id = workflow_detail.itemtype_id -%}
+      {%- set data_flow_id = workflow_detail.flow_id -%}
+      <div class="hide"
+           id="post_uri">{{ url_for('weko_workflow.init_activity') }}</div>
+      <div class="hide" id="item_type_{{ workflow_id }}"
+           data-itemtype-id={{ data_item_type_id }}></div>
+      <div class="hide" id="flow_{{ workflow_id }}"
+           data-flow-id={{ data_flow_id }}></div>
+      <div class="hide"
+           id="file_name">{{ file.filename }}</div>
+      <div id="recid" class="hide">{{ record.recid }}</div>
+
+      
+        {%- if is_file_name_url -%}
+          <a id="btn-begin-{{ workflow_id }}"
+            class="btn-start-workflow forcewrap"   
+                {%- if community -%}
+            data-community="{{ community.id }}"
+                {%- endif -%}
+            data-workflow-id={{ workflow_id }}
+                href={{ href_url }}>
+          
+        {{ file.filename }} ({{ file.size|filesizeformat }})</a>
+        {%- else -%}
+          <a class="action-anchor" href="{{href_url}}">
+              <button id="btn-begin-{{ workflow_id }}" 
+                      {%- if community -%}
+                        data-community="{{ community.id }}"
+                      {%- endif -%}
+                        data-workflow-id={{ workflow_id }} 
+                        class="btn-start-workflow img-rounded action-button button-sm">
+                <i class="action-icon fa fa-download"></i>
+                    {{_('Download')}}
+              </button>
+          </a>
+        {%- endif -%}
+    {%- endif -%}
+  {%- elif permission.status == -1 -%}
+    {%- set href_url = url_for('weko_workflow.display_activity', activity_id=permission.usage_application_activity_id) -%}
+       {%- if is_file_name_url -%}
+          <a class="forcewrap"
+             href={{ href_url }}>{{ file.filename }}
+            ({{ file.size|filesizeformat }})</a>
+          <br>
+    {%- else -%}
+          <a class="action-anchor" href="{{href_url}}">
+            <button class="img-rounded action-button button-sm">
+              <i class="action-icon fa fa-download"></i>
+                {{_('Download')}}
+            </button>
+          </a>
+     {%- endif -%} 
+
+  {%- elif permission.status == 1 -%}
+    {%- set is_permission_in_period = record | check_file_permission_period(file.info()) -%}
+
+    {%- if is_permission_in_period -%}
+      {%- set href_url = file_url -%}
+
+          {%- if is_file_name_url -%}
+            <a class="forcewrap"
+               href={{ href_url }}>{{ file.filename }}
+              ({{ file.size|filesizeformat }})
+            </a>
+            <br>
+          {%- else -%}
+              <a class="action-anchor"  href="{{href_url}}">
+                <button class="img-rounded action-button button-sm">
+                  <i class="action-icon fa fa-download"></i>
+                    {{_('Download')}}
+                </button>
+              </a>
+         {%- endif -%} 
+    {%- else -%}
+      {%- set clickable = false -%}
+    {%- endif -%}
+  {%- endif -%}
+{% endmacro %}
