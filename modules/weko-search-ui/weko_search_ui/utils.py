@@ -54,8 +54,7 @@ from weko_workflow.models import FlowDefine, WorkFlow
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_REPO_USER, WEKO_SYS_USER
-from .query import feedback_email_search_factory, item_path_search_factory, \
-    item_path_search_factory_custom
+from .query import feedback_email_search_factory, item_path_search_factory
 
 
 def get_tree_items(index_tree_id):

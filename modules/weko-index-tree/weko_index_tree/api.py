@@ -1204,6 +1204,6 @@ class Indexes(object):
         :param index_id: Identifier of the index.
         :return: the list of index_path.
         """
-        tree_path = get_publish_index_id_list(cls.get_browsing_tree(index_id),
+        tree_path = get_publish_index_id_list(cls.get_index_tree(index_id),
                                               [])
         return tree_path
