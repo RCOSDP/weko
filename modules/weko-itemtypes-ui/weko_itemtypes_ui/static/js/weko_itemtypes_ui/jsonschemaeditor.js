@@ -577,7 +577,7 @@ var SchemaObject = React.createClass({
 			if (_this2.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
-			  let subKey = itemKey.split("_");
+				let subKey = itemKey.split("_");
 				if (subKey.length > 1 && !isNaN(Number(subKey[1]))) {
 					itemKey = self.createSubItemName(value.title);
 				}

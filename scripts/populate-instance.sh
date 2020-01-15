@@ -248,31 +248,31 @@ ${INVENIO_WEB_INSTANCE} access \
 
 #### sphinxdoc-create-language-data-begin
 ${INVENIO_WEB_INSTANCE} language create \
-        "en" "English" "true" 001 "true"
+        --active --registered "en" "English" 001
 
 ${INVENIO_WEB_INSTANCE} language create \
-        "zh" "中文" "false" 000 "true"
+        --active "zh" "中文" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
-        "id" "Indonesia" "false" 000 "true"
+        --active "id" "Indonesia" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
-        "vi" "Tiếng Việt" "false" 000 "true"
+        --active "vi" "Tiếng Việt" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
-         "ms" "Bahasa Melayu" "false" 000 "true"
+         --active "ms" "Bahasa Melayu" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
-         "fil" "Filipino (Pilipinas)" "false" 000 "true"
+         --active "fil" "Filipino (Pilipinas)" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
-         "th" "ไทย" "false" 000 "true"
+         --active "th" "ไทย" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
-         "hi" "हिन्दी" "false" 000 "true"
+         --active "hi" "हिन्दी" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
-         "ja" "日本語" "true" 002 "true"
+         --active --registered "ja" "日本語" 002
 #### sphinxdoc-create-language-data-end
 
 ##### sphinxdoc-create-test-data-begin
@@ -358,7 +358,7 @@ ${INVENIO_WEB_INSTANCE} report create_target \
 # sphinxdoc-set-report-unit-and-target-end
 
 ${INVENIO_WEB_INSTANCE} billing create \
-       1 "true"
+       --active 1
 
 # create-admin-settings-begin
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \

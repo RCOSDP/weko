@@ -104,7 +104,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
   $rootScope.disable_flg = true;
   $rootScope.display_flg = true;
-  $rootScope.index_id_q = $location.search().q;
+  $rootScope.index_id_q = $location.search().q != undefined ? $location.search().q : '';
   $rootScope.journal_info = [];
   $rootScope.collapse_flg = true;
   $rootScope.journal_title = $("#journal_title_i18n").val();
@@ -204,6 +204,46 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     });
   }
   $scope.getJournalInfo();
+
+  // Get child id list.
+  let child_list = []
+  $scope.getChildList = function() {
+    if (!$rootScope.index_id_q) {
+      return;
+    }
+    $http({
+      method: 'GET',
+      url: '/get_child_list/' + $rootScope.index_id_q,
+      headers: {'Content-Type': 'application/json'},
+    }).then(function successCallback(response) {
+      child_list = response.data;
+    }, function errorCallback(error) {
+      console.log(error);
+    });
+  }
+  $scope.getChildList();
+
+  // Sorting child id list to index list display.
+  let temp_key_list = []
+  $scope.sorted_child_list = []
+  $scope.sort_index_list = function(data_list) {
+    if (child_list.length == 0) {
+      for (var j = 1; j < data_list.length; j++) {
+        $scope.sorted_child_list.push(data_list[j]);
+      }
+    }
+    else {
+      for (var i = 0; i < child_list.length; i++) {
+        for (var j = 0; j < data_list.length; j++) {
+          if (temp_key_list.indexOf(data_list[j].key) == -1 && child_list[i] == data_list[j].key.split('/').pop()) {
+            temp_key_list.push(data_list[j].key);
+            $scope.sorted_child_list.push(data_list[j]);
+          }
+        }
+      }
+    }
+  }
+
   // Check all records for restricted content
   $scope.$on('invenio.search.finished', function(evt) {
     $rootScope.display_comment_jounal()

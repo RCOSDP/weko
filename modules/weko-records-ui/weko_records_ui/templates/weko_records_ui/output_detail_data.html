@@ -42,6 +42,7 @@
       </tr>
     {%- else -%}
         {%- for attribute_data in record_detail_data['attribute_value_mlt'] -%}
+          {%- if attribute_data -%}
           <tr>
             <th scope="row" colspan="6"
             style="border-bottom: none">{{_(record_detail_data['attribute_name'])}}</th>
@@ -50,6 +51,7 @@
             </td>
           </tr>
             {{ output_attribute_value_mlt(attribute_data, 1) }}
+          {%- endif -%}
         {%- endfor -%}
     {%- endif -%}
 {% endmacro %}

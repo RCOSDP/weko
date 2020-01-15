@@ -579,9 +579,6 @@ def check_has_attribute_value(node):
                 if val:
                     if isinstance(val, str):
                         return True
-                    elif isinstance(val, dict):
-                        for v in val.values():
-                            return check_has_attribute_value(v)
                     else:
                         return check_has_attribute_value(val)
         return False
