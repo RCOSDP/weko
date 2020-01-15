@@ -981,6 +981,31 @@ function handleSharePermission(value) {
         }
       };
 
+      //Auto fill Title Data
+      $scope.autoTitleData = function () {
+        let itemTitleElement = $("#item_title");
+        if (itemTitleElement !== null) {
+          let itemTitle = itemTitleElement.val();
+          let titleKey = null;
+          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+            ([key, value]) => {
+              if (value && value.properties) {
+                if (value.properties.hasOwnProperty("subitem_title_data")) {
+                  titleKey = key;
+                  $rootScope.recordsVM.invenioRecordsModel[key] = {'subitem_title_data': itemTitle};
+                }
+              }
+            });
+          if (titleKey != null) {
+            // Set read only for title
+            $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key === titleKey)['readonly'] = true;
+          }
+          setTimeout(function () {
+            $("input[name='subitem_title_data']").attr("disabled", "disabled");
+          }, 500);
+        }
+      };
+
       $scope.renderValidationErrorList = function () {
         const activityId = $("#activity_id").text();
         $.ajax({
@@ -1037,6 +1062,7 @@ function handleSharePermission(value) {
         $scope.renderValidationErrorList();
         $scope.autoSetTitle();
         $scope.initCorrespondingIdList();
+        $scope.autoTitleData();
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
           endpoints = JSON.parse($('#hide_endpoints').text());

@@ -81,6 +81,7 @@ require([
     let post_uri = $('#post_uri').text();
     let workflow_id = $(this).data('workflow-id');
     let community = $(this).data('community');
+    let itemTitle = $(this).data('itemtitle');
     let post_data = {
       workflow_id: workflow_id,
       flow_id: $('#flow_' + workflow_id).data('flow-id'),
@@ -88,6 +89,9 @@ require([
     };
     if (typeof community !== 'undefined' && community !== "") {
       post_uri = post_uri + "?community=" + community;
+    }
+    if (typeof itemTitle !== 'undefined' && itemTitle !== "") {
+        post_uri = post_uri + "?itemtitle=" + itemTitle;
     }
 
     let record_id = $('#recid').text();
@@ -99,7 +103,8 @@ require([
       data: JSON.stringify(post_data),
       success: function (data) {
         if (0 === data.code) {
-          let activity_id = data.data.redirect.split('/').slice(-1)[0];
+          let activity_url = data.data.redirect.split('/').slice(-1)[0];
+          let activity_id = activity_url.split('?')[0];
           init_permission(record_id, file_name, activity_id);
           document.location.href = data.data.redirect;
         } else {

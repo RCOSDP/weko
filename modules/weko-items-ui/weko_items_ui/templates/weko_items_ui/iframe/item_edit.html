@@ -321,6 +321,7 @@
       <div class="modal-content">
         <div class="modal-body">
           <div id="meta-search-body"></div>
+          <input type="hidden" id="item_title" name="item_title" value='{{itemTitle}}'>
           {% set title = "" %}
           {% if auto_fill_title %}
             {% set title = auto_fill_title|tojson %}
