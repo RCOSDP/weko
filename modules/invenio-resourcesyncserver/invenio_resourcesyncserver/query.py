@@ -90,19 +90,21 @@ def item_path_search_factory(search, index_id=None):
                 "path": {
                     "terms": {
                         "field": "path.tree",
-                        "include": "@index|@index/[^/]+",
+                        "include": "@index|@index/[^/]+"
                     },
                     "aggs": {
                         "date_range": {
                             "filter": {
-                                "match": {"publish_status": "0"}
-                            },
+                                "match": {
+                                "publish_status": "0"
+                                }
+                            }
                         },
                         "no_available": {
                             "filter": {
                                 "bool": {
                                     "must_not": [
-                                        {
+                                            {
                                             "match": {
                                                 "publish_status": "0"
                                             }
@@ -114,23 +116,47 @@ def item_path_search_factory(search, index_id=None):
                     }
                 }
             },
-            "post_filter": {}
+            "post_filter": {
+                "bool": {
+                    "should": [
+                        {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "match": {
+                                        "publish_status": "0"
+                                        }
+                                    },
+                                    {
+                                        "range": {
+                                            "publish_date": {
+                                                "lte": "now/d"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "must": [
+                        {
+                            "terms": {
+                                "path": []
+                            }
+                        }
+                    ]
+                }
+            }
         }
 
         q = index_id
         if q:
             query_q['aggs']['path']['aggs']. \
                 update(get_item_type_aggs(search._index[0]))
-            mut = get_permission_filter(q)
-            mut = list(map(lambda x: x.to_dict(), mut))
             post_filter = query_q['post_filter']
-            if mut[0].get('bool'):
-                post_filter['bool'] = mut[0]['bool']
-            else:
-                post_filter['bool'] = {'must': mut}
+
             if post_filter:
                 list_path = Indexes.get_list_path_publish(index_id)
-                post_filter['bool']['must'] = []
                 post_filter['bool']['must'].append(
                     {
                         "terms": {
@@ -142,12 +168,12 @@ def item_path_search_factory(search, index_id=None):
             if q:
                 try:
                     fp = Indexes.get_self_path(q)
-                    current_app.logger.debug(query_q)
                     query_q = json.dumps(query_q).replace("@index", fp.path)
                     query_q = json.loads(query_q)
                 except BaseException:
                     pass
             return query_q
+
     # create a index search query
     query_q = _get_index_search_query()
     try:
