@@ -16,7 +16,7 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, Response, abort, redirect, request
 from flask_babelex import gettext as _
 
-from .api import ResourceListHandler
+from .api import ResourceListHandler, ChangeListHandler
 from .utils import get_file_content, get_resourcedump_manifest, \
     public_index_checked, render_resource_dump_xml, render_resource_list_xml
 
@@ -75,3 +75,35 @@ def resourcedump_manifest(index_id, record_id):
     if res_manifest is None:
         abort(404)
     return Response(res_manifest, mimetype='text/xml')
+
+
+@blueprint.route("/resync/<index_id>/changelist.xml")
+def change_list(index_id):
+    """Render a basic view."""
+    cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
+    if not cl:
+        abort(404)
+    r = cl.get_change_list_xml()
+    if r is None:
+        abort(404)
+    return Response(r, mimetype='application/xml')
+
+
+@blueprint.route("/resync/<index_id>/changedump.xml")
+def change_dump(index_id):
+    """Render a basic view."""
+    cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
+    if cl is None:
+        abort(404)
+    r = cl.get_change_dump_xml()
+    return Response(r, mimetype='application/xml')
+
+
+@blueprint.route("/resync/<index_id>/<record_id>/changedump_manifest.xml")
+def change_dump_manifest(index_id, record_id):
+    """Render a basic view."""
+    cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
+    if cl is None:
+        abort(404)
+    r = cl.get_change_dump_manifest_xml(record_id)
+    return Response(r, mimetype='application/xml')

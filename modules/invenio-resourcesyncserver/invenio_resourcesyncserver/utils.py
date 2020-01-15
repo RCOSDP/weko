@@ -163,7 +163,10 @@ def export_item_custorm(post_data):
         with open('{}/{}.xml'.format(export_path,
                                      'manifest'),
                   'w') as file:
-            xml_output = ResourceListHandler.get_resourcedump_manifest(index_id, record)
+            xml_output = ResourceListHandler.get_resourcedump_manifest(
+                index_id,
+                record
+            )
             file.write(xml_output)
 
         # Create download file
@@ -234,3 +237,6 @@ def public_index_checked(f):
             return f(index_id, *args, **kwargs)
 
     return decorate
+
+
+

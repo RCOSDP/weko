@@ -28,9 +28,13 @@ from resync import Resource, ResourceList
 from resync.capability_list import CapabilityList
 from resync.resource_dump import ResourceDump
 from resync.resource_dump_manifest import ResourceDumpManifest
+from resync.change_dump import ChangeDump
+from resync.change_list import ChangeList
+from resync.change_dump_manifest import ChangeDumpManifest
 from sqlalchemy.exc import SQLAlchemyError
 from weko_index_tree.models import Index
 from weko_index_tree.api import Indexes
+from weko_deposit.api import WekoRecord
 
 from .models import ResourceListIndexes, ChangeListIndexes
 from .query import get_items_by_index_tree
@@ -224,7 +228,8 @@ class ResourceListHandler(object):
             return None
 
         r = get_items_by_index_tree(resource.repository_id)
-
+        current_app.logger.debug("====================")
+        current_app.logger.debug(r)
         rl = ResourceList()
         rl.up = '{}resync/capability.xml'.format(request.url_root)
         for item in r:
@@ -415,6 +420,174 @@ class ChangeListHandler(object):
                 current_app.logger.debug(ex)
                 db.session.rollback()
                 return None
+
+    def get_change_list_xml(self):
+        """
+        Get change list xml.
+
+        :return: Updated Change List info
+        """
+        change_list = ChangeList()
+        from .config import DATA_FAKE
+
+        def next_change(data):
+            for d in DATA_FAKE:
+                if data.get('record_id') == d.get('record_id'):
+                    if data.get('version_id')+1 == d.get('version_id'):
+                        return d
+            return None
+
+        for data in DATA_FAKE:
+            if next_change(data):
+                loc = '{}records/{}'.format(
+                    request.url_root,
+                    '{}.{}'.format(
+                        data.get('record_id'),
+                        data.get('version_id')
+                    )
+                )
+            else:
+                loc = '{}records/{}'.format(
+                    request.url_root,
+                    data.get('record_id')
+                )
+            lastmod = str(datetime.datetime.utcnow().replace(
+                    tzinfo=datetime.timezone.utc
+                ).isoformat())
+            rc = Resource(
+                loc,
+                lastmod=lastmod,
+                change=data.get('state'),
+                md_at=str(datetime.datetime.utcnow().replace(
+                    tzinfo=datetime.timezone.utc
+                ).isoformat()),
+            )
+            change_list.add(rc)
+        return change_list.as_xml()
+
+    def get_change_dump_xml(self):
+        """
+        Get change list xml.
+
+        :return: Updated Change List info
+        """
+        from .config import DATA_FAKE
+
+        def next_change(data):
+            for d in DATA_FAKE:
+                if data.get('record_id') == d.get('record_id'):
+                    if data.get('version_id')+1 == d.get('version_id'):
+                        return d
+            return None
+
+        change_dump = ChangeDump()
+
+        for data in DATA_FAKE:
+            next_ch = next_change(data)
+            loc = '{}resync/{}/{}/changedump.zip'.format(
+                request.url_root,
+                self.repository_id,
+                '{}.{}'.format(
+                    data.get('record_id'),
+                    data.get('version_id')
+                )
+            )
+            lastmod = str(datetime.datetime.utcnow().replace(
+                    tzinfo=datetime.timezone.utc
+                ).isoformat())
+            rc = Resource(
+                loc,
+                lastmod=lastmod,
+                mime_type='application/zip',
+                md_from=data.get('updated'),
+                md_until=str(datetime.datetime.utcnow().replace(
+                    tzinfo=datetime.timezone.utc
+                ).isoformat()),
+                ln=[]
+            )
+            if next_ch and next_ch.get('updated'):
+                rc.md_until = next_ch.get('updated')
+            if self.change_dump_manifest:
+                ln = {
+                    'rel': 'contents',
+                    'href': '{}resync/{}/{}/changedump_manifest.xml'.format(
+                        request.url_root,
+                        self.repository_id,
+                        '{}.{}'.format(
+                            data.get('record_id'),
+                            data.get('version_id')
+                        )
+                    ),
+                    'type': 'application/xml'
+                }
+                rc.ln.append(ln)
+            change_dump.add(rc)
+        return change_dump.as_xml()
+
+    def get_change_dump_manifest_xml(self, record_id):
+        cdm = ChangeDumpManifest()
+        cdm.up = '{}resync/{}/changedump.xml'.format(
+            request.url_root,
+            self.repository_id
+        )
+        if self.change_dump_manifest:
+            prev_id, prev_ver_id = record_id.split(".")
+            current_record = WekoRecord.get_record_by_pid(record_id)
+            prev_record_pid = WekoRecord.get_pid(
+                '{}.{}'.format(
+                    prev_id,
+                    str(int(prev_ver_id)-1)
+                )
+            )
+            if prev_record_pid:
+                prev_record = WekoRecord.get_record(
+                    id_=prev_record_pid.object_uuid
+                )
+            else:
+                prev_record = None
+            if current_record:
+                list_file = [file for file in current_record.files]
+                current_checksum = [
+                    file.info().get('checksum') for file in current_record.files
+                ]
+                prev_checksum = []
+                if prev_record:
+                    list_file.extend([file for file in prev_record.files])
+                    prev_checksum = [
+                        file.info().get('checksum') for file in
+                        prev_record.files
+                    ]
+                for file in list_file:
+                    file_info = file.info()
+                    change = None
+                    if file_info.get('checksum') in prev_checksum:
+                        if file_info.get('checksum') in current_checksum:
+                            change = None
+                        if file_info.get('checksum') not in current_checksum:
+                            change = 'deleted'
+                    else:
+                        if file_info.get('checksum') in current_checksum:
+                            change = 'created'
+                    path = 'recid_{}/{}'.format(
+                        current_record.get('recid'),
+                        file_info.get('filename'))
+                    lastmod = str(datetime.datetime.utcnow().replace(
+                        tzinfo=datetime.timezone.utc
+                    ).isoformat())
+                    if change:
+                        re = Resource(
+                            '{}record/{}/files/{}'.format(
+                                request.url_root,
+                                current_record.get('recid'),
+                                file_info.get('filename')),
+                            lastmod=lastmod,
+                            sha256=file_info.get('checksum').split(':')[1],
+                            length=str(file_info.get('size')),
+                            path=path if change != 'delete' else '',
+                            change=change
+                        )
+                        cdm.add(re)
+        return cdm.as_xml()
 
     @classmethod
     def delete(cls, change_list_id):

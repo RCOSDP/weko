@@ -471,7 +471,7 @@ class CreateResourceComponent extends React.Component {
           </div>
         </div>
 
-        <div className="row form-group flex-baseline">
+        <div className="row form-group">
           <div className="col-md-2 text-right">
             <label>Change tracker state</label>
           </div>
@@ -757,7 +757,7 @@ class EditResourceComponent extends React.Component {
           </div>
         </div>
 
-        <div className="row form-group flex-baseline">
+        <div className="row form-group">
           <div className="col-md-2 text-right">
             <label>Change tracker state</label>
           </div>
