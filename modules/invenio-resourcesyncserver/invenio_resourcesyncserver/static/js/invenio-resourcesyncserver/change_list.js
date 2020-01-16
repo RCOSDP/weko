@@ -10,7 +10,7 @@ const default_state = {
   status: null,
   repository_id: "",
   change_dump_manifest: false,
-  change_tracking_state: [],
+  change_tracking_state: ['create', 'update','delete'],
   url_path: "",
   max_changes_size: 10000
 };
@@ -473,7 +473,7 @@ class CreateResourceComponent extends React.Component {
 
         <div className="row form-group">
           <div className="col-md-2 text-right">
-            <label>Change tracker state</label>
+            <label>Change tracking state</label>
           </div>
           <div className="col-md-10">
             <div className="row">
@@ -759,7 +759,7 @@ class EditResourceComponent extends React.Component {
 
         <div className="row form-group">
           <div className="col-md-2 text-right">
-            <label>Change tracker state</label>
+            <label>Change tracking state</label>
           </div>
           <div className="col-md-10">
             <div className="row">
