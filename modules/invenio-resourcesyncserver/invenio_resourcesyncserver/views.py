@@ -81,7 +81,7 @@ def resourcedump_manifest(index_id, record_id):
 def change_list(index_id):
     """Render a basic view."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if not cl:
+    if not cl or not cl.status:
         abort(404)
     r = cl.get_change_list_xml()
     if r is None:
@@ -93,17 +93,32 @@ def change_list(index_id):
 def change_dump(index_id):
     """Render a basic view."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if cl is None:
+    if cl is None or not cl.status:
         abort(404)
     r = cl.get_change_dump_xml()
     return Response(r, mimetype='application/xml')
 
-
+from flask import current_app
 @blueprint.route("/resync/<index_id>/<record_id>/changedump_manifest.xml")
 def change_dump_manifest(index_id, record_id):
     """Render a basic view."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if cl is None:
+    if not cl or not cl.status or not cl.is_record_in_index(record_id):
         abort(404)
     r = cl.get_change_dump_manifest_xml(record_id)
     return Response(r, mimetype='application/xml')
+
+
+@blueprint.route("/resync/<index_id>/<record_id>/change_dump_content.zip")
+def change_dump_content(index_id, record_id):
+    """Render a basic view."""
+    cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
+    current_app.logger.debug("============")
+    current_app.logger.debug(cl.is_record_in_index(record_id))
+    if cl is None or not cl.status or not cl.is_record_in_index(record_id):
+        abort(404)
+    r = cl.get_record_content_file(record_id)
+    if r:
+        return r
+    else:
+        abort(404)

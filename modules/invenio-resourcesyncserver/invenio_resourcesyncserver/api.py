@@ -21,8 +21,15 @@
 """WEKO3 module docstring."""
 
 import datetime
+import json
+import os
+import shutil
+import sys
+import tempfile
+import traceback
+from functools import wraps
 
-from flask import current_app, json, request
+from flask import current_app, json, request, send_file
 from invenio_db import db
 from resync import Resource, ResourceList
 from resync.capability_list import CapabilityList
@@ -34,7 +41,9 @@ from resync.change_dump_manifest import ChangeDumpManifest
 from sqlalchemy.exc import SQLAlchemyError
 from weko_index_tree.models import Index
 from weko_index_tree.api import Indexes
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoRecord, ItemTypes
+from weko_items_ui.utils import make_stats_tsv, package_export_file
+from weko_records_ui.permissions import check_file_download_permission
 
 from .models import ResourceListIndexes, ChangeListIndexes
 from .query import get_items_by_index_tree
@@ -42,6 +51,26 @@ from .query import get_items_by_index_tree
 
 class ResourceListHandler(object):
     """Define API for ResourceListIndexes creation and update."""
+
+    # def __init__(self, **kwargs):
+    #     """Add extra options."""
+    #     self.id = kwargs.get('id')
+    #     self.status = kwargs.get('status')
+    #     self.repository_id = kwargs.get('repository_id')
+    #     self.change_dump_manifest = kwargs.get('change_dump_manifest')
+    #     self.max_changes_size = int(kwargs.get('max_changes_size', 10000))
+    #     self.url_path = kwargs.get('url_path')
+    #     self.created = kwargs.get('created')
+    #     self.updated = kwargs.get('updated')
+    #     self.index = kwargs.get('index') or self.get_index()
+    #     self.publish_date = kwargs.get('publish_date')
+    #     if kwargs.get('change_tracking_state'):
+    #         if isinstance(kwargs.get('change_tracking_state'), str):
+    #             self.change_tracking_state = kwargs.get('change_tracking_state')
+    #         if isinstance(kwargs.get('change_tracking_state'), list):
+    #             self.change_tracking_state = str('&'.join(kwargs.get(
+    #                 'change_tracking_state'
+    #             )))
 
     @classmethod
     def create(cls, data={}):
@@ -228,8 +257,6 @@ class ResourceListHandler(object):
             return None
 
         r = get_items_by_index_tree(resource.repository_id)
-        current_app.logger.debug("====================")
-        current_app.logger.debug(r)
         rl = ResourceList()
         rl.up = '{}resync/capability.xml'.format(request.url_root)
         for item in r:
@@ -349,6 +376,7 @@ class ChangeListHandler(object):
     created = None
     updated = None
     index = None
+    publish_date = None
 
     def __init__(self, **kwargs):
         """Add extra options."""
@@ -361,6 +389,7 @@ class ChangeListHandler(object):
         self.created = kwargs.get('created')
         self.updated = kwargs.get('updated')
         self.index = kwargs.get('index') or self.get_index()
+        self.publish_date = kwargs.get('publish_date')
         if kwargs.get('change_tracking_state'):
             if isinstance(kwargs.get('change_tracking_state'), str):
                 self.change_tracking_state = kwargs.get('change_tracking_state')
@@ -391,6 +420,11 @@ class ChangeListHandler(object):
                             self.change_tracking_state \
                             or old_obj.change_tracking_state
                         old_obj.url_path = self.url_path or old_obj.url_path
+                        if not old_obj.status and self.status:
+                            old_obj.publish_date = str(
+                                datetime.datetime.utcnow().replace(
+                                    tzinfo=datetime.timezone.utc
+                                ).isoformat())
                         db.session.merge(old_obj)
                     db.session.commit()
                     return self
@@ -408,7 +442,11 @@ class ChangeListHandler(object):
                 'max_changes_size': self.max_changes_size,
                 'change_tracking_state': self.change_tracking_state,
                 'url_path': self.url_path,
+                'publish_date': str(datetime.datetime.utcnow().replace(
+                    tzinfo=datetime.timezone.utc
+                ).isoformat()) if self.status else None
             })
+
             try:
                 with db.session.begin_nested():
                     obj = ChangeListIndexes(**data)
@@ -428,6 +466,7 @@ class ChangeListHandler(object):
         :return: Updated Change List info
         """
         change_list = ChangeList()
+        change_list.up = '{}resync/capability.xml'.format(request.url_root)
         from .config import DATA_FAKE
 
         def next_change(data):
@@ -467,7 +506,7 @@ class ChangeListHandler(object):
 
     def get_change_dump_xml(self):
         """
-        Get change list xml.
+        Get change dump xml.
 
         :return: Updated Change List info
         """
@@ -481,10 +520,11 @@ class ChangeListHandler(object):
             return None
 
         change_dump = ChangeDump()
+        change_dump.up = '{}resync/capability.xml'.format(request.url_root)
 
         for data in DATA_FAKE:
             next_ch = next_change(data)
-            loc = '{}resync/{}/{}/changedump.zip'.format(
+            loc = '{}resync/{}/{}/change_dump_content.zip'.format(
                 request.url_root,
                 self.repository_id,
                 '{}.{}'.format(
@@ -525,6 +565,14 @@ class ChangeListHandler(object):
         return change_dump.as_xml()
 
     def get_change_dump_manifest_xml(self, record_id):
+        """Get change dump manifest xml.
+
+        :param record_id: Identifier of record
+        :return xml
+        """
+
+        if not self.is_record_in_index(record_id):
+            return None
         cdm = ChangeDumpManifest()
         cdm.up = '{}resync/{}/changedump.xml'.format(
             request.url_root,
@@ -611,12 +659,17 @@ class ChangeListHandler(object):
         return False
 
     def get_index(self):
+        """Get Index obj by repository_id"""
         if self.repository_id:
             return Indexes.get_index(self.repository_id)
         else:
             return None
 
     def to_dict(self):
+        """
+        Convert obj to dict.
+
+        """
         change_dump_manifest = self.change_dump_manifest  \
             if self.change_dump_manifest else None
         max_changes_size = self.max_changes_size if self.max_changes_size \
@@ -636,6 +689,7 @@ class ChangeListHandler(object):
             'created': self.created if self.created else None,
             'updated': self.updated if self.updated else None,
             'repository_name': self.index.index_name,
+            'publist_date': str(self.publish_date)
         })
 
     @classmethod
@@ -670,7 +724,7 @@ class ChangeListHandler(object):
         Get change list.
 
         :return: Updated Change List info
-                """
+        """
         try:
             with db.session.begin_nested():
                 result = db.session.query(ChangeListIndexes).join(
@@ -689,6 +743,9 @@ class ChangeListHandler(object):
 
     @classmethod
     def convert_modal_to_obj(cls, model=ChangeListIndexes()):
+        """
+        Convert nodal changelistindexes database to obj ChangeListHandler.
+        """
         return ChangeListHandler(
             id=model.id,
             status=model.status,
@@ -699,7 +756,8 @@ class ChangeListHandler(object):
             url_path=model.url_path,
             created=model.created,
             updated=model.updated,
-            index=model.index
+            index=model.index,
+            publist_date=model.publish_date
         )
 
     @classmethod
@@ -710,7 +768,7 @@ class ChangeListHandler(object):
         :param repo_id: Identifier of index
         :param type_result: result of function 'obj' or 'modal'
         :return: Updated Change List info
-                """
+        """
         try:
             with db.session.begin_nested():
                 result = db.session.query(ChangeListIndexes).filter(
@@ -727,3 +785,145 @@ class ChangeListHandler(object):
         except Exception as ex:
             current_app.logger.debug(ex)
             return None
+
+    def is_record_in_index(self, record_id):
+        """
+        Check record has register index.
+
+        :param record_id: Identifier of record
+        :return: True if record has register index_id
+        """
+        from .utils import get_real_path
+        if self.status:
+            record_pid = WekoRecord.get_pid(record_id)
+            if record_pid:
+                record = WekoRecord.get_record(record_pid.object_uuid)
+                if record and record.get("path"):
+                    list_path = get_real_path(record.get("path"))
+                    if str(self.repository_id) in list_path:
+                        return True
+        return False
+
+    def get_record_content_file(self, record_id):
+        """
+        Get content record.
+
+        :param record_id: Identifier of record
+        :return: Zip file
+        """
+        include_contents = True
+        result = {'items': []}
+        temp_path = tempfile.TemporaryDirectory()
+        item_types_data = {}
+        if not self.is_record_in_index(record_id):
+            return None
+        try:
+            # Set export folder
+            export_path = temp_path.name + '/' + datetime.datetime.utcnow()\
+                .strftime(
+                "%Y%m%d%H%M%S")
+            # Double check for limits
+            record_path = export_path + '/recid_' + str(record_id)
+            os.makedirs(record_path, exist_ok=True)
+            record, exported_item = _export_item(
+                record_id,
+                None,
+                include_contents,
+                record_path,
+            )
+
+            result['items'].append(exported_item)
+
+            item_type_id = exported_item.get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if not item_types_data.get(item_type_id):
+                item_types_data[item_type_id] = {}
+
+                item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
+                    'name': '{}({})'.format(
+                        item_type.item_type_name.name,
+                        item_type_id),
+                    'root_url': request.url_root,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
+                    'recids': [],
+                    'data': {},
+                }
+            item_types_data[item_type_id]['recids'].append(record_id)
+
+            # Create export info file
+            for item_type_id in item_types_data:
+                keys, labels, records = make_stats_tsv(
+                    item_type_id,
+                    item_types_data[item_type_id]['recids'])
+                item_types_data[item_type_id]['recids'].sort()
+                item_types_data[item_type_id]['keys'] = keys
+                item_types_data[item_type_id]['labels'] = labels
+                item_types_data[item_type_id]['data'] = records
+                item_type_data = item_types_data[item_type_id]
+
+                with open('{}/{}.tsv'.format(export_path,
+                                             item_type_data.get('name')),
+                          'w') as file:
+                    tsvs_output = package_export_file(item_type_data)
+                    file.write(tsvs_output.getvalue())
+
+            # Create bag
+            # bagit.make_bag(export_path)
+            if self.change_dump_manifest:
+                with open('{}/{}.xml'.format(export_path,
+                                             'manifest'),
+                          'w') as file:
+                    xml_output = self.get_change_dump_manifest_xml(
+                        record_id
+                    )
+                    file.write(xml_output)
+
+            # Create download file
+            shutil.make_archive(export_path, 'zip', export_path)
+        except Exception:
+            current_app.logger.error('-' * 60)
+            traceback.print_exc(file=sys.stdout)
+            current_app.logger.error('-' * 60)
+        return send_file(export_path + '.zip')
+
+
+def _export_item(record_id,
+                 export_format,
+                 include_contents,
+                 tmp_path=None,
+                 records_data=None):
+    """Exports files for record according to view permissions."""
+    exported_item = {}
+    record = WekoRecord.get_record_by_pid(record_id)
+
+    if record:
+        exported_item['record_id'] = record.id
+        exported_item['name'] = 'recid_{}'.format(record_id)
+        exported_item['files'] = []
+        exported_item['path'] = 'recid_' + str(record_id)
+        exported_item['item_type_id'] = record.get('item_type_id')
+        if not records_data:
+            records_data = record
+
+        # Create metadata file.
+        with open('{}/{}_metadata.json'.format(tmp_path,
+                                               exported_item['name']),
+                  'w',
+                  encoding='utf8') as output_file:
+            json.dump(records_data, output_file, indent=2,
+                      sort_keys=True, ensure_ascii=False)
+        # First get all of the files, checking for permissions while doing so
+        if include_contents:
+            # Get files
+            for file in record.files:  # TODO: Temporary processing
+                if check_file_download_permission(record, file.info()):
+                    exported_item['files'].append(file.info())
+                    # TODO: Then convert the item into the desired format
+                    if file:
+                        shutil.copy2(file.obj.file.uri,
+                                     tmp_path + '/' + file.obj.basename)
+
+    return record, exported_item

@@ -110,6 +110,8 @@ class ChangeListIndexes(db.Model, Timestamp):
         Index, backref='change_list_id', foreign_keys=[repository_id])
     """Relation to the User making the inclusion request."""
 
+    publish_date = db.Column(
+        db.DateTime, nullable=True, default=datetime.utcnow)
 
 __all__ = ([
     'ResourceListIndexes',
