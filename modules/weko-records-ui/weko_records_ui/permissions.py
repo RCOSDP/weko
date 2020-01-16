@@ -96,7 +96,12 @@ def check_file_download_permission(record, fjson):
         try:
             # can access
             if 'open_access' in acsrole:
-                pass
+                adt = fjson.get('accessdate')
+                if adt:
+                    pdt = dt.strptime(adt, '%Y-%m-%d')
+                    is_can = True if dt.today() >= pdt else False
+                else:
+                    is_can = True
             # access with open date
             elif 'open_date' in acsrole:
                 try:
