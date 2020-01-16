@@ -44,6 +44,7 @@ download_original_pdf_permission = Permission(
 
 def page_permission_factory(record, *args, **kwargs):
     """Page permission factory."""
+
     def can(self):
         is_ok = True
         # item publish status check
@@ -66,6 +67,7 @@ def page_permission_factory(record, *args, **kwargs):
 
 def file_permission_factory(record, *args, **kwargs):
     """File permission factory."""
+
     def can(self):
         fjson = kwargs.get('fjson')
         return check_file_download_permission(record, fjson)
@@ -236,7 +238,8 @@ def get_correct_usage_workflow(data_type):
                     if value['role'].casefold() == role.name.casefold():
                         usage_application_workflow_name = value['workflow_name']
                         workflow = WorkFlow()
-                        usage_workflow = workflow.find_workflow_by_name(usage_application_workflow_name)
+                        usage_workflow = workflow.find_workflow_by_name(
+                            usage_application_workflow_name)
                         if usage_workflow:
                             return usage_workflow
     return None
@@ -323,7 +326,7 @@ def check_created_id(record):
         if lst.name in users:
             is_himself = True
             if item_type_name and item_type_name in current_app.config[
-                'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST']:
+                    'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST']:
                 if user_id and user_id == str(created_id):
                     is_himself = True
                 else:
