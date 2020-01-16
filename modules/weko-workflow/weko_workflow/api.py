@@ -352,6 +352,15 @@ class WorkFlow(object):
             query.delete(synchronize_session=False)
         db.session.commit()
 
+    def find_workflow_by_name(self, workflow_name):
+        """Find workflow by name.
+
+        :param workflow_name:
+        :return:
+        """
+        with db.session.no_autoflush:
+            return _WorkFlow.query.filter_by(flows_name=workflow_name).first()
+
 
 class Action(object):
     """Operated on the Action."""
