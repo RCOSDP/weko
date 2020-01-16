@@ -26,6 +26,7 @@ from flask import abort, current_app
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from weko_groups.api import Group, Membership, MembershipState
+from weko_index_tree.utils import filter_index_list_by_role, get_user_roles
 from weko_records.api import ItemTypes
 
 from .ipaddr import check_site_license_permission
@@ -42,20 +43,23 @@ download_original_pdf_permission = Permission(
 def page_permission_factory(record, *args, **kwargs):
     """Page permission factory."""
     def can(self):
-        is_ok = True
-        # item publish status check
-        is_pub = check_publish_status(record)
-        # role permission
-        is_can = detail_page_permission.can()
+        is_ok = False
+
+        # get user role info
+        roles = get_user_roles()
         # person himself check
         is_himself = check_created_id(record)
-        if not is_pub:
-            if not is_can or (is_can and not is_himself):
-                is_ok = False
-        else:
-            if kwargs.get('flg'):
-                if not is_can or (is_can and not is_himself):
-                    is_ok = False
+        if roles[0] or is_himself:
+            is_ok = True
+        else:   # if not admin user and not creator
+            # item publish status check
+            is_pub = check_publish_status(record)
+            if is_pub:
+                # get the list of authorized indexes
+                index_list = filter_index_list_by_role(record.navi)
+                if len(index_list) > 0:
+                    is_ok = True
+
         return is_ok
 
     return type('DetailPagePermissionChecker', (), {'can': can})()
