@@ -38,6 +38,7 @@ from weko_records_ui.permissions import check_file_download_permission
 
 from .api import ResourceListHandler, ChangeListHandler
 from resync.capability_list import CapabilityList
+from resync import Resource
 
 
 def get_real_path(path):
@@ -60,6 +61,24 @@ def render_capability_xml():
     total_list = [*list_resource, *list_change]
     for item in total_list:
         cap.add(item)
+
+    return cap.as_xml()
+
+
+def render_well_know_resourcesync():
+    """Generate capability xml."""
+    cap = CapabilityList(
+        capability_name='description',
+        ln=[
+            {
+                'href': request.url_root,
+                'rel': 'describedby'
+            }
+        ]
+    )
+    cap.add(Resource(
+                '{}resync/capability.xml'.format(request.url_root),
+                capability='capability'))
 
     return cap.as_xml()
 

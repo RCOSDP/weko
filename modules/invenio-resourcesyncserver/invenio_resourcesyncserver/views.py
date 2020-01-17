@@ -17,7 +17,7 @@ from flask import Blueprint, Response, abort, redirect, request
 from flask_babelex import gettext as _
 
 from .api import ResourceListHandler, ChangeListHandler
-from .utils import render_capability_xml
+from .utils import render_capability_xml, render_well_know_resourcesync
 
 blueprint = Blueprint(
     'invenio_resourcesyncserver',
@@ -68,10 +68,13 @@ def capability():
     return Response(caplist, mimetype='text/xml')
 
 
-@blueprint.route("/resync/<index_id>/<record_id>/resourcedump_manifest.xml")
-def resource_dump_manifest(index_id, record_id):
+@blueprint.route("/resync/<index_id>/<record_id>/resource_dump_manifest.xml")
+def resource_dump_manifest(index_id, record_id, date):
     """Render a basic view."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
+    from flask import current_app
+    current_app.logger.debug("==================")
+    current_app.logger.debug(date)
     validate = not resource or not resource.is_validate(
         record_id) or not resource.resource_dump_manifest
     if validate:
@@ -125,3 +128,12 @@ def change_dump_content(index_id, record_id):
         return r
     else:
         abort(404)
+
+
+@blueprint.route("/well_know_resourcesync")
+def well_know_resourcesync(index_id, record_id):
+    """Render a basic view."""
+    return Response(
+        render_well_know_resourcesync(),
+        mimetype='application/xml'
+    )

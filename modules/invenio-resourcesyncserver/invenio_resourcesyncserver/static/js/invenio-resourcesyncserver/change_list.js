@@ -12,6 +12,7 @@ const default_state = {
   change_dump_manifest: false,
   change_tracking_state: ['create', 'update','delete'],
   url_path: "",
+  interval_by_date: 1,
   max_changes_size: 10000
 };
 const tracker_state_list = [
@@ -471,6 +472,23 @@ class CreateResourceComponent extends React.Component {
           </div>
         </div>
 
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Interval by date</label>
+          </div>
+          <div className="col-md-10">
+            <input
+              type="number"
+              className="form-control"
+              value={state.interval_by_date}
+              onChange={e => {
+                const value = e.target.value;
+                this.handleChangeState("interval_by_date", value);
+              }}
+            ></input>
+          </div>
+        </div>
+
         <div className="row form-group">
           <div className="col-md-2 text-right">
             <label>Change tracking state</label>
@@ -752,6 +770,23 @@ class EditResourceComponent extends React.Component {
               onChange={e => {
                 const value = e.target.value;
                 this.handleChangeState("max_changes_size", value);
+              }}
+            ></input>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Interval by date</label>
+          </div>
+          <div className="col-md-10">
+            <input
+              type="number"
+              className="form-control"
+              value={state.interval_by_date}
+              onChange={e => {
+                const value = e.target.value;
+                this.handleChangeState("interval_by_date", value);
               }}
             ></input>
           </div>

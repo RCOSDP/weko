@@ -100,6 +100,8 @@ class ChangeListIndexes(db.Model, Timestamp):
 
     max_changes_size = db.Column(db.Integer, nullable=False)
 
+    interval_by_date = db.Column(db.Integer, nullable=False)
+
     change_tracking_state = db.Column(
         db.String(255), nullable=True)
 

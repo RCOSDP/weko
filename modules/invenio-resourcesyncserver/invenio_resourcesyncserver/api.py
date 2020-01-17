@@ -491,6 +491,7 @@ class ChangeListHandler(object):
     updated = None
     index = None
     publish_date = None
+    interval_by_date = None
 
     def __init__(self, **kwargs):
         """Add extra options."""
@@ -504,6 +505,7 @@ class ChangeListHandler(object):
         self.updated = kwargs.get('updated')
         self.index = kwargs.get('index') or self.get_index()
         self.publish_date = kwargs.get('publish_date')
+        self.interval_by_date = kwargs.get('interval_by_date')
         if kwargs.get('change_tracking_state'):
             if isinstance(kwargs.get('change_tracking_state'), str):
                 self.change_tracking_state = kwargs.get('change_tracking_state')
@@ -533,6 +535,9 @@ class ChangeListHandler(object):
                         old_obj.change_tracking_state = \
                             self.change_tracking_state \
                             or old_obj.change_tracking_state
+                        old_obj.interval_by_date = \
+                            self.interval_by_date \
+                            or old_obj.interval_by_date
                         old_obj.url_path = self.url_path or old_obj.url_path
                         if not old_obj.status and self.status:
                             old_obj.publish_date = str(
@@ -556,6 +561,7 @@ class ChangeListHandler(object):
                 'max_changes_size': self.max_changes_size,
                 'change_tracking_state': self.change_tracking_state,
                 'url_path': self.url_path,
+                'interval_by_date': self.interval_by_date,
                 'publish_date': str(datetime.datetime.utcnow().replace(
                     tzinfo=datetime.timezone.utc
                 ).isoformat()) if self.status else None
@@ -803,7 +809,8 @@ class ChangeListHandler(object):
             'created': self.created if self.created else None,
             'updated': self.updated if self.updated else None,
             'repository_name': self.index.index_name,
-            'publist_date': str(self.publish_date)
+            'publist_date': str(self.publish_date),
+            'interval_by_date': self.interval_by_date
         })
 
     @classmethod
@@ -871,7 +878,8 @@ class ChangeListHandler(object):
             created=model.created,
             updated=model.updated,
             index=model.index,
-            publist_date=model.publish_date
+            publist_date=model.publish_date,
+            interval_by_date=model.interval_by_date
         )
 
     @classmethod
