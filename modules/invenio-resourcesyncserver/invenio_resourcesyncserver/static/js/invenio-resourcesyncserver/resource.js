@@ -8,7 +8,7 @@ const urlGetList = window.location.origin + "/admin/resource_list/get_list";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const default_state = {
   status: null,
-  repository: "",
+  repository_id: "",
   resource_dump_manifest: false,
   url_path: ""
 };
@@ -226,7 +226,7 @@ class ListResourceComponent extends React.Component {
                       </a>
                     </td>
                     <td>
-                      {item.repository_name + " <ID:" + item.repository + ">"}
+                      {item.repository_name + " <ID:" + item.repository_id + ">"}
                     </td>
                     <td>
                       <a
@@ -278,7 +278,7 @@ class CreateResourceComponent extends React.Component {
         [name]: value
       },
       () => {
-        if (name === "repository") {
+        if (name === "repository_id") {
           this.handleChangeURL();
         }
       }
@@ -287,8 +287,8 @@ class CreateResourceComponent extends React.Component {
 
   handleChangeURL() {
     const { state } = this;
-    const { repository } = state;
-    const url_path = window.location.origin + "/resync/" + repository;
+    const { repository_id } = state;
+    const url_path = window.location.origin + "/resync/" + repository_id;
     this.handleChangeState("url_path", url_path);
   }
 
@@ -411,9 +411,9 @@ class CreateResourceComponent extends React.Component {
               className="form-control"
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("repository", value);
+                this.handleChangeState("repository_id", value);
               }}
-              value={state.repository}
+              value={state.repository_id}
             >
               <option value="" disabled></option>
               {state.tree_list.map(item => {
@@ -525,8 +525,8 @@ class EditResourceComponent extends React.Component {
 
   handleChangeURL() {
     const { state } = this;
-    const { repository } = state;
-    const url_path = window.location.origin + "/resync/" + repository;
+    const { repository_id } = state;
+    const url_path = window.location.origin + "/resync/" + repository_id;
     this.handleChangeState("url_path", url_path);
   }
 
@@ -646,9 +646,9 @@ class EditResourceComponent extends React.Component {
               className="form-control"
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("repository", value);
+                this.handleChangeState("repository_id", value);
               }}
-              value={state.repository}
+              value={state.repository_id}
             >
               {state.tree_list.map(item => {
                 return <option value={item.id}>{item.value}</option>;

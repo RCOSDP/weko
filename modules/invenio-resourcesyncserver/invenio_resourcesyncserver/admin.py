@@ -26,7 +26,6 @@ from flask_babelex import gettext as _
 
 from .config import INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN
 from .api import ResourceListHandler, ChangeListHandler
-from .utils import to_dict
 
 
 class AdminResourceListView(BaseView):
@@ -51,18 +50,18 @@ class AdminResourceListView(BaseView):
         :return: The rendered template.
         """
         list_resource = ResourceListHandler.get_list_resource()
-        result = list(map(lambda item: to_dict(item), list_resource))
+        result = list(map(lambda item: item.to_dict(), list_resource))
         return jsonify(result)
 
-    @expose('/get_resource/<id>', methods=['GET'])
-    def get_resource(self, id):
-        """Renders an item import view.
-
-        :param
-        :return: The rendered template.
-        """
-        resource = ResourceListHandler.get_resource(id)
-        return jsonify(resource)
+    # @expose('/get_resource/<resource_id>', methods=['GET'])
+    # def get_resource(self, resource_id):
+    #     """Renders an item import view.
+    #
+    #     :param
+    #     :return: The rendered template.
+    #     """
+    #     resource = ResourceListHandler.ge
+    #     return jsonify(resource)
 
     @expose('/create', methods=['POST'])
     def create(self):
@@ -74,36 +73,39 @@ class AdminResourceListView(BaseView):
         data = request.get_json()
         resource = ResourceListHandler.create(data)
         if resource:
-            return jsonify(data=resource, success=True)
+            return jsonify(data=resource.to_dict(), success=True)
         else:
             return jsonify(data=None, success=False)
 
-    @expose('/update/<id>', methods=['POST'])
-    def update(self, id):
+    @expose('/update/<resource_id>', methods=['POST'])
+    def update(self, resource_id):
         """Renders an item import view.
 
         :param
         :return: The rendered template.
         """
         data = request.get_json()
-        resource = ResourceListHandler.update(id, data)
-        if resource:
-            return jsonify(data=to_dict(resource), success=True)
-        else:
-            return jsonify(data=None, success=False)
+        resource = ResourceListHandler.get_resource(resource_id)
 
-    @expose('/delete/<id>', methods=['POST'])
-    def delete(self, id):
+        if resource:
+            result = resource.update(data)
+            if result:
+                return jsonify(data=result.to_dict(), success=True)
+        return jsonify(data=None, success=False)
+
+    @expose('/delete/<resource_id>', methods=['POST'])
+    def delete(self, resource_id):
         """Renders an item import view.
 
         :param
         :return: The rendered template.
         """
-        resource = ResourceListHandler.delete(id)
+        resource = ResourceListHandler.get_resource(resource_id)
         if resource:
-            return jsonify(data=None, success=True)
-        else:
-            return jsonify(data=None, success=False)
+            result = resource.delete()
+            if result:
+                return jsonify(data=None, success=True)
+        return jsonify(data=None, success=False)
 
 
 class AdminChangeListView(BaseView):

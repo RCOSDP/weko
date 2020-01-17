@@ -36,49 +36,8 @@ from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records.api import ItemTypes
 from weko_records_ui.permissions import check_file_download_permission
 
-from .api import ResourceListHandler
-
-
-def to_dict(resource):
-    """Generate Resource Object to Dict."""
-    return dict(**{
-        'id': resource.id,
-        'status': resource.status,
-        'repository': resource.repository_id,
-        'resource_dump_manifest': resource.resource_dump_manifest,
-        'url_path': resource.url_path,
-        'repository_name': resource.index.index_name or resource.index.index_name_english
-    })
-
-
-def render_resource_list_xml(index_id):
-    """Generate Resource List Xml."""
-    return ResourceListHandler.get_content_resource_list(index_id)
-
-
-def render_resource_dump_xml(index_id):
-    """Generate Resource Dump Xml."""
-    return ResourceListHandler.get_content_resource_dump(index_id)
-
-
-def get_file_content(index_id, record_id):
-    """Generate File content."""
-    record = WekoRecord.get_record_by_pid(record_id)
-    list_index = get_real_path(record.get("path"))
-    if ResourceListHandler.is_resync(list_index):
-        return export_item_custorm({'record_id': record_id, 'index_id': index_id})
-    else:
-        return None
-
-
-def get_resourcedump_manifest(index_id, record_id):
-    """Generate File content."""
-    record = WekoRecord.get_record_by_pid(record_id)
-    list_index = get_real_path(record.get("path"))
-    if ResourceListHandler.is_resync(list_index):
-        return ResourceListHandler.get_resourcedump_manifest(index_id, record)
-    else:
-        return None
+from .api import ResourceListHandler, ChangeListHandler
+from resync.capability_list import CapabilityList
 
 
 def get_real_path(path):
@@ -93,150 +52,15 @@ def get_real_path(path):
     return list(set(result))
 
 
-def export_item_custorm(post_data):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
+def render_capability_xml():
+    """Generate capability xml."""
+    cap = CapabilityList()
+    list_resource = ResourceListHandler.get_capability_content()
+    list_change = ChangeListHandler.get_capability_content()
+    total_list = [*list_resource, *list_change]
+    for item in total_list:
+        cap.add(item)
 
-    :return: JSON, BIBTEX
-    """
-    include_contents = True
-    record_id = post_data['record_id']
-    index_id = post_data['index_id']
-
-    result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory()
-    item_types_data = {}
-
-    try:
-        # Set export folder
-        export_path = temp_path.name + '/' + datetime.utcnow().strftime(
-            "%Y%m%d%H%M%S")
-        # Double check for limits
-        record_path = export_path + '/recid_' + str(record_id)
-        os.makedirs(record_path, exist_ok=True)
-        record, exported_item = _export_item(
-            record_id,
-            None,
-            include_contents,
-            record_path,
-        )
-
-        result['items'].append(exported_item)
-
-        item_type_id = exported_item.get('item_type_id')
-        item_type = ItemTypes.get_by_id(item_type_id)
-        if not item_types_data.get(item_type_id):
-            item_types_data[item_type_id] = {}
-
-            item_types_data[item_type_id] = {
-                'item_type_id': item_type_id,
-                'name': '{}({})'.format(
-                    item_type.item_type_name.name,
-                    item_type_id),
-                'root_url': request.url_root,
-                'jsonschema': 'items/jsonschema/' + item_type_id,
-                'keys': [],
-                'labels': [],
-                'recids': [],
-                'data': {},
-            }
-        item_types_data[item_type_id]['recids'].append(record_id)
-
-        # Create export info file
-        for item_type_id in item_types_data:
-            keys, labels, records = make_stats_tsv(
-                item_type_id,
-                item_types_data[item_type_id]['recids'])
-            item_types_data[item_type_id]['recids'].sort()
-            item_types_data[item_type_id]['keys'] = keys
-            item_types_data[item_type_id]['labels'] = labels
-            item_types_data[item_type_id]['data'] = records
-            item_type_data = item_types_data[item_type_id]
-
-            with open('{}/{}.tsv'.format(export_path,
-                                         item_type_data.get('name')),
-                      'w') as file:
-                tsvs_output = package_export_file(item_type_data)
-                file.write(tsvs_output.getvalue())
-
-        # Create bag
-        # bagit.make_bag(export_path)
-        with open('{}/{}.xml'.format(export_path,
-                                     'manifest'),
-                  'w') as file:
-            xml_output = ResourceListHandler.get_resourcedump_manifest(
-                index_id,
-                record
-            )
-            file.write(xml_output)
-
-        # Create download file
-        shutil.make_archive(export_path, 'zip', export_path)
-    except Exception:
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
-    return send_file(export_path + '.zip')
-
-
-def _export_item(record_id,
-                 export_format,
-                 include_contents,
-                 tmp_path=None,
-                 records_data=None):
-    """Exports files for record according to view permissions."""
-    exported_item = {}
-    record = WekoRecord.get_record_by_pid(record_id)
-
-    if record:
-        exported_item['record_id'] = record.id
-        exported_item['name'] = 'recid_{}'.format(record_id)
-        exported_item['files'] = []
-        exported_item['path'] = 'recid_' + str(record_id)
-        exported_item['item_type_id'] = record.get('item_type_id')
-        if not records_data:
-            records_data = record
-
-        # Create metadata file.
-        with open('{}/{}_metadata.json'.format(tmp_path,
-                                               exported_item['name']),
-                  'w',
-                  encoding='utf8') as output_file:
-            json.dump(records_data, output_file, indent=2,
-                      sort_keys=True, ensure_ascii=False)
-        # First get all of the files, checking for permissions while doing so
-        if include_contents:
-            # Get files
-            for file in record.files:  # TODO: Temporary processing
-                if check_file_download_permission(record, file.info()):
-                    exported_item['files'].append(file.info())
-                    # TODO: Then convert the item into the desired format
-                    if file:
-                        shutil.copy2(file.obj.file.uri,
-                                     tmp_path + '/' + file.obj.basename)
-
-    return record, exported_item
-
-
-def public_index_checked(f):
-    """Decorator to pass community."""
-    @wraps(f)
-    def decorate(index_id, record_id=None, *args, **kwargs):
-        if record_id:
-            record = WekoRecord.get_record_by_pid(record_id)
-            if not record:
-                abort(404, 'Current Record isn\'t public.')
-            list_index = get_real_path(record.get("path"))
-            if index_id not in list_index:
-                abort(404, 'Current Repository isn\'t belong to Index.')
-        index = Indexes.get_index(index_id)
-        if index is None or not index.public_state:
-            abort(404, 'Current Repository isn\'t public.')
-        if record_id:
-            return f(index_id, record_id, *args, **kwargs)
-        else:
-            return f(index_id, *args, **kwargs)
-
-    return decorate
-
+    return cap.as_xml()
 
 

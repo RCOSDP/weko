@@ -32,7 +32,6 @@ from functools import wraps
 from flask import current_app, json, request, send_file
 from invenio_db import db
 from resync import Resource, ResourceList
-from resync.capability_list import CapabilityList
 from resync.resource_dump import ResourceDump
 from resync.resource_dump_manifest import ResourceDumpManifest
 from resync.change_dump import ChangeDump
@@ -52,25 +51,36 @@ from .query import get_items_by_index_tree
 class ResourceListHandler(object):
     """Define API for ResourceListIndexes creation and update."""
 
-    # def __init__(self, **kwargs):
-    #     """Add extra options."""
-    #     self.id = kwargs.get('id')
-    #     self.status = kwargs.get('status')
-    #     self.repository_id = kwargs.get('repository_id')
-    #     self.change_dump_manifest = kwargs.get('change_dump_manifest')
-    #     self.max_changes_size = int(kwargs.get('max_changes_size', 10000))
-    #     self.url_path = kwargs.get('url_path')
-    #     self.created = kwargs.get('created')
-    #     self.updated = kwargs.get('updated')
-    #     self.index = kwargs.get('index') or self.get_index()
-    #     self.publish_date = kwargs.get('publish_date')
-    #     if kwargs.get('change_tracking_state'):
-    #         if isinstance(kwargs.get('change_tracking_state'), str):
-    #             self.change_tracking_state = kwargs.get('change_tracking_state')
-    #         if isinstance(kwargs.get('change_tracking_state'), list):
-    #             self.change_tracking_state = str('&'.join(kwargs.get(
-    #                 'change_tracking_state'
-    #             )))
+    def __init__(self, **kwargs):
+        """Add extra options."""
+        self.id = kwargs.get('id')
+        self.status = kwargs.get('status')
+        self.repository_id = kwargs.get('repository_id')
+        self.resource_dump_manifest = kwargs.get('resource_dump_manifest')
+        self.url_path = kwargs.get('url_path')
+        self.created = kwargs.get('created')
+        self.updated = kwargs.get('updated')
+        self.index = kwargs.get('index') or self.get_index()
+
+    def get_index(self):
+        """Get Index obj by repository_id"""
+        if self.repository_id:
+            return Indexes.get_index(self.repository_id)
+        else:
+            return None
+
+    def to_dict(self):
+        """Generate Resource Object to Dict."""
+        repository_name = self.index.index_name or \
+            self.index.index_name_english
+        return dict(**{
+            'id': self.id,
+            'status': self.status,
+            'repository_id': self.repository_id,
+            'resource_dump_manifest': self.resource_dump_manifest,
+            'url_path': self.url_path,
+            'repository_name': repository_name
+        })
 
     @classmethod
     def create(cls, data={}):
@@ -81,7 +91,7 @@ class ResourceListHandler(object):
         """
         new_data = dict(**{
             'status': data.get('status', False),
-            'repository_id': data.get('repository', ''),
+            'repository_id': data.get('repository_id', ''),
             'resource_dump_manifest': data.get('resource_dump_manifest', False),
             'url_path': data.get('url_path', ''),
         })
@@ -90,58 +100,66 @@ class ResourceListHandler(object):
                 resource = ResourceListIndexes(**new_data)
                 db.session.add(resource)
             db.session.commit()
-            # publish index
-            return dict(**{
-                'id': resource.id,
-            }, **new_data)
+            return ResourceListHandler(
+                id=resource.id,
+                status=resource.status,
+                repository_id=resource.repository_id,
+                resource_dump_manifest=resource.resource_dump_manifest,
+                url_path=resource.url_path,
+                created=resource.created,
+                updated=resource.updated
+            )
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-            return {}
+            return None
 
-    @classmethod
-    def update(cls, resource_id='', data={}):
+    def update(self, data={}):
         """
         Update the index detail info.
 
-        :param resource_id: Identifier of the Resource.
         :param data: new Resource info for update.
         :return: Updated Resource info
         """
         try:
             with db.session.begin_nested():
-                resource = cls.get_resource(resource_id)
+                resource = self.get_resource(self.id, 'modal')
                 if not resource:
                     return
-                resource.status = data.get('status', resource.status)
+                resource.status = data.get('status', self.status)
                 resource.repository_id = data.get(
                     'repository',
-                    resource.repository_id
+                    self.repository_id
                 )
                 resource.resource_dump_manifest = data.get(
                     'resource_dump_manifest',
-                    resource.resource_dump_manifest)
-                resource.url_path = data.get('url_path', resource.url_path)
+                    self.resource_dump_manifest)
+                resource.url_path = data.get('url_path', self.url_path)
                 db.session.merge(resource)
             db.session.commit()
-            return resource
+            return ResourceListHandler(
+                id=resource.id,
+                status=resource.status,
+                repository_id=resource.repository_id,
+                resource_dump_manifest=resource.resource_dump_manifest,
+                url_path=resource.url_path,
+                created=resource.created,
+                updated=resource.updated
+            )
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-        return
+        return None
 
-    @classmethod
-    def delete(cls, resource_id=''):
+    def delete(self):
         """
         Update the index detail info.
 
-        :param resource_id: Identifier of the Resource.
-        :param data: new Resource info for update.
         :return: Updated Resource info
         """
         try:
             with db.session.begin_nested():
-                resource = cls.get_resource(resource_id)
+                resource = self.get_resource(self.id, 'modal')
                 if not resource:
                     return
                 db.session.delete(resource)
@@ -153,12 +171,37 @@ class ResourceListHandler(object):
         return False
 
     @classmethod
-    def get_list_resource(cls):
+    def get_resource(cls, resource_id,  type_result='obj'):
         """
         Update the index detail info.
 
-        :param resource_id: Identifier of the Resource.
-        :param data: new Resource info for update.
+        :return: Updated Resource info
+        """
+        try:
+            with db.session.begin_nested():
+                resource = db.session.query(ResourceListIndexes).filter(
+                    ResourceListIndexes.id == resource_id).one_or_none()
+                if type_result == 'obj':
+                    return ResourceListHandler(
+                        id=resource.id,
+                        status=resource.status,
+                        repository_id=resource.repository_id,
+                        resource_dump_manifest=resource.resource_dump_manifest,
+                        url_path=resource.url_path,
+                        created=resource.created,
+                        updated=resource.updated
+                    )
+                else:
+                    return resource
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            return
+
+    @classmethod
+    def get_list_resource(cls, type_result='obj'):
+        """
+        Update the index detail info.
+
         :return: Updated Resource info
         """
         try:
@@ -166,99 +209,90 @@ class ResourceListHandler(object):
                 list_result = db.session.query(ResourceListIndexes).join(
                     Index
                 ).all()
-                return list_result
+                if type_result == 'obj':
+                    new_list = []
+                    for resource in list_result:
+                        resource_dump_manifest = resource.resource_dump_manifest
+                        new_res = ResourceListHandler(
+                            id=resource.id,
+                            status=resource.status,
+                            repository_id=resource.repository_id,
+                            resource_dump_manifest=resource_dump_manifest,
+                            url_path=resource.url_path,
+                            created=resource.created,
+                            updated=resource.updated
+                        )
+                        new_list.append(new_res)
+                    return new_list
+                else:
+                    return list_result
         except Exception as ex:
             current_app.logger.debug(ex)
             return []
 
     @classmethod
-    def get_resource(cls, resource_id=''):
+    def get_resource_by_repository_id(cls, repository_id, type_result='obj'):
         """
         Update the index detail info.
 
-        :param resource_id: Identifier of the Resource.
-        :param data: new Resource info for update.
+        :param repository_id: Identifier of the Resource.
+        :param type_result: one of two type 'obj' or 'modal'.
         :return: Updated Resource info
         """
         try:
             with db.session.begin_nested():
-                result = db.session.query(ResourceListIndexes).filter(
-                    ResourceListIndexes.id == resource_id).one_or_none()
-                return result
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            return
-
-    @classmethod
-    def get_resource_by_repository_id(cls, repository_id=''):
-        """
-        Update the index detail info.
-
-        :param resource_id: Identifier of the Resource.
-        :param data: new Resource info for update.
-        :return: Updated Resource info
-        """
-        try:
-            with db.session.begin_nested():
-                result = db.session.query(ResourceListIndexes).filter_by(
+                resource = db.session.query(ResourceListIndexes).filter_by(
                     repository_id=repository_id).one_or_none()
-                return result
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            return
-
-    @classmethod
-    def get_resource_by_repository(cls, index_id=''):
-        """
-        Update the index detail info.
-
-        :param index_id: new Resource info for update.
-        :return: Updated Resource info
-        """
-        try:
-            with db.session.begin_nested():
-                result = db.session.query(ResourceListIndexes).filter_by(
-                    repository_id=index_id).one_or_none()
-                return result
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            return
-
-    @classmethod
-    def is_resync(cls, index_id=[]):
-        """
-        Update the index detail info.
-
-        :param index_id: new Resource info for update.
-        :return: Updated Resource info
-        """
-        try:
-            with db.session.begin_nested():
-                result = db.session.query(ResourceListIndexes).filter(
-                    ResourceListIndexes.status).all()
-                for re in result:
-                    if str(re.repository_id) in index_id:
-                        return result
+                if resource:
+                    if type_result == 'obj':
+                        resource_dump_manifest = resource.resource_dump_manifest
+                        return ResourceListHandler(
+                            id=resource.id,
+                            status=resource.status,
+                            repository_id=resource.repository_id,
+                            resource_dump_manifest=resource_dump_manifest,
+                            url_path=resource.url_path,
+                            created=resource.created,
+                            updated=resource.updated
+                        )
+                    else:
+                        return resource
                 return None
         except Exception as ex:
             current_app.logger.debug(ex)
             return None
 
-    @classmethod
-    def get_content_resource_list(cls, repository=''):
+    def is_validate(self, record_id=None):
+        """
+        Update the index detail info.
+
+        :param record_id: Identifier of record.
+        :return: Updated Resource info
+        """
+        from .utils import get_real_path
+        if self.status and self.index.public_state:
+            if record_id:
+                record = WekoRecord.get_record_by_pid(record_id)
+                if record and record.get("path"):
+                    list_path = get_real_path(record.get("path"))
+                    if str(self.repository_id) in list_path:
+                        return True
+            else:
+                return True
+        return False
+
+    def get_resource_list_xml(self):
         """
         Get content of resource list.
 
-        :param repository: repository_id
         :return: (xml) resource list content
         """
-        resource = cls.get_resource_by_repository(repository)
-        if not resource or not resource.status:
+        if not self.is_validate():
             return None
-
-        r = get_items_by_index_tree(resource.repository_id)
+        r = get_items_by_index_tree(self.repository_id)
         rl = ResourceList()
         rl.up = '{}resync/capability.xml'.format(request.url_root)
+        current_app.logger.debug(self.repository_id)
         for item in r:
             if item:
                 id_item = item.get('_source').get('_item_metadata').get(
@@ -268,18 +302,15 @@ class ResourceListHandler(object):
                     '_updated')))
         return rl.as_xml()
 
-    @classmethod
-    def get_content_resource_dump(cls, repository=''):
+    def get_resource_dump_xml(self):
         """
         Get content of resource dump.
 
-        :param repository: repository_id
         :return: (xml) resource dump content
         """
-        resource = cls.get_resource_by_repository(repository)
-        if not resource or not resource.status:
+        if not self.is_validate():
             return None
-        r = get_items_by_index_tree(resource.repository_id)
+        r = get_items_by_index_tree(self.repository_id)
         rd = ResourceDump()
         rd.up = '{}resync/capability.xml'.format(request.url_root)
         for item in r:
@@ -288,17 +319,17 @@ class ResourceListHandler(object):
                     'control_number')
                 url = '{}resync/{}/{}/file_content.zip'.format(
                     request.url_root,
-                    resource.repository_id,
+                    self.repository_id,
                     str(id_item))
                 rs = Resource(
                     url,
                     lastmod=item.get('_source').get('_updated'),
                     ln=[]
                 )
-                if resource.resource_dump_manifest:
+                if self.resource_dump_manifest:
                     href = '{}resync/{}/{}/resourcedump_manifest.xml'.format(
                         request.url_root,
-                        resource.repository_id,
+                        self.repository_id,
                         str(id_item)
                     )
                     rs.ln.append({
@@ -309,59 +340,142 @@ class ResourceListHandler(object):
         return rd.as_xml()
 
     @classmethod
-    def get_capability_list(cls):
+    def get_capability_content(cls):
         """
         Get capability_list.
 
-        :return: (xml) list resource dump and resource list
+        :return: (Resource Obj) list resource dump and resource list
         """
         list_resource = cls.get_list_resource()
-        caplist = CapabilityList()
+        caplist = []
         for resource in list_resource:
-            caplist.add(Resource(
+            caplist.append(Resource(
                 '{}/resourcelist.xml'.format(resource.url_path),
                 capability='resourcelist'))
-            caplist.add(Resource(
+            caplist.append(Resource(
                 '{}/resourcedump.xml'.format(resource.url_path),
                 capability='resourcedump'))
-        return caplist.as_xml()
+        return caplist
 
-    @classmethod
-    def get_resourcedump_manifest(cls, index_id, record):
+    def get_resource_dump_manifest(self, record_id):
         """
         Get resource dump manifest.
 
-        :param index_id: repository_id of resource.
-        :param record: record object.
-        :return: (xml) content of resourcedump
+        :param record_id: Identifier of record.
+        :return: (xml) content of resourcedumpmanifest
         """
-        rdm = ResourceDumpManifest()
-        rdm.up = '{}resync/{}/resourcedump.xml'.format(
-            request.url_root,
-            index_id
-        )
-        cur_resource = cls.get_resource_by_repository_id(index_id)
-        if not cur_resource.resource_dump_manifest:
+        is_validate = self.is_validate(record_id)
+        if self.resource_dump_manifest and is_validate:
+            rdm = ResourceDumpManifest()
+            rdm.up = '{}resync/{}/resourcedump.xml'.format(
+                request.url_root,
+                self.repository_id
+            )
+            record = WekoRecord.get_record_by_pid(record_id)
+            if record:
+                for file in record.files:  # TODO: Temporary processing
+                    file_info = file.info()
+                    path = 'recid_{}/{}'.format(
+                        record.get('recid'),
+                        file_info.get('filename'))
+                    lastmod = str(datetime.datetime.utcnow().replace(
+                        tzinfo=datetime.timezone.utc
+                    ).isoformat())
+                    rdm.add(Resource(
+                        '{}record/{}/files/{}'.format(
+                            request.url_root,
+                            record.get('recid'),
+                            file_info.get('filename')),
+                        lastmod=lastmod,
+                        sha256=file_info.get('checksum').split(':')[1],
+                        length=str(file_info.get('size')),
+                        path=path
+                    ))
+            return rdm.as_xml()
+        return None
+
+    def get_record_content_file(self, record_id):
+        """
+        Get content record.
+
+        :param record_id: Identifier of record
+        :return: Zip file
+        """
+        include_contents = True
+        result = {'items': []}
+        temp_path = tempfile.TemporaryDirectory()
+        item_types_data = {}
+        if not self.is_validate(record_id):
             return None
-        for file in record.files:  # TODO: Temporary processing
-            file_info = file.info()
-            path = 'recid_{}/{}'.format(
-                record.get('recid'),
-                file_info.get('filename'))
-            lastmod = str(datetime.datetime.utcnow().replace(
-                tzinfo=datetime.timezone.utc
-            ).isoformat())
-            rdm.add(Resource(
-                '{}record/{}/files/{}'.format(
-                    request.url_root,
-                    record.get('recid'),
-                    file_info.get('filename')),
-                lastmod=lastmod,
-                sha256=file_info.get('checksum').split(':')[1],
-                length=str(file_info.get('size')),
-                path=path
-            ))
-        return rdm.as_xml()
+        try:
+            # Set export folder
+            export_path = temp_path.name + '/' + datetime.datetime.utcnow()\
+                .strftime(
+                "%Y%m%d%H%M%S")
+            # Double check for limits
+            record_path = export_path + '/recid_' + str(record_id)
+            os.makedirs(record_path, exist_ok=True)
+            record, exported_item = _export_item(
+                record_id,
+                None,
+                include_contents,
+                record_path,
+            )
+
+            result['items'].append(exported_item)
+
+            item_type_id = exported_item.get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if not item_types_data.get(item_type_id):
+                item_types_data[item_type_id] = {}
+
+                item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
+                    'name': '{}({})'.format(
+                        item_type.item_type_name.name,
+                        item_type_id),
+                    'root_url': request.url_root,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
+                    'recids': [],
+                    'data': {},
+                }
+            item_types_data[item_type_id]['recids'].append(record_id)
+
+            # Create export info file
+            for item_type_id in item_types_data:
+                keys, labels, records = make_stats_tsv(
+                    item_type_id,
+                    item_types_data[item_type_id]['recids'])
+                item_types_data[item_type_id]['recids'].sort()
+                item_types_data[item_type_id]['keys'] = keys
+                item_types_data[item_type_id]['labels'] = labels
+                item_types_data[item_type_id]['data'] = records
+                item_type_data = item_types_data[item_type_id]
+
+                with open('{}/{}.tsv'.format(export_path,
+                                             item_type_data.get('name')),
+                          'w') as file:
+                    tsvs_output = package_export_file(item_type_data)
+                    file.write(tsvs_output.getvalue())
+
+            if self.resource_dump_manifest:
+                with open('{}/{}.xml'.format(export_path,
+                                             'manifest'),
+                          'w') as file:
+                    xml_output = self.get_resource_dump_manifest(
+                        record_id
+                    )
+                    file.write(xml_output)
+
+            # Create download file
+            shutil.make_archive(export_path, 'zip', export_path)
+        except Exception:
+            current_app.logger.error('-' * 60)
+            traceback.print_exc(file=sys.stdout)
+            current_app.logger.error('-' * 60)
+        return send_file(export_path + '.zip')
 
 
 class ChangeListHandler(object):
@@ -888,6 +1002,24 @@ class ChangeListHandler(object):
             traceback.print_exc(file=sys.stdout)
             current_app.logger.error('-' * 60)
         return send_file(export_path + '.zip')
+
+    @classmethod
+    def get_capability_content(cls):
+        """
+        Get capability_list.
+
+        :return: (Resource Obj) list resource dump and resource list
+        """
+        list_change = cls.get_all()
+        caplist = []
+        for change in list_change:
+            caplist.append(Resource(
+                '{}/changelist.xml'.format(change.url_path),
+                capability='changelist'))
+            caplist.append(Resource(
+                '{}/changedump.xml'.format(change.url_path),
+                capability='changedump'))
+        return caplist
 
 
 def _export_item(record_id,

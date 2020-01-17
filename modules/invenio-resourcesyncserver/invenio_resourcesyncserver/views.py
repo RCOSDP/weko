@@ -17,8 +17,7 @@ from flask import Blueprint, Response, abort, redirect, request
 from flask_babelex import gettext as _
 
 from .api import ResourceListHandler, ChangeListHandler
-from .utils import get_file_content, get_resourcedump_manifest, \
-    public_index_checked, render_resource_dump_xml, render_resource_list_xml
+from .utils import render_capability_xml
 
 blueprint = Blueprint(
     'invenio_resourcesyncserver',
@@ -29,52 +28,58 @@ blueprint = Blueprint(
 
 
 @blueprint.route("/resync/<index_id>/resourcelist.xml")
-@public_index_checked
 def resource_list(index_id):
     """Render a basic view."""
-    r = render_resource_list_xml(index_id)
-    if r is None:
+    resource = ResourceListHandler.get_resource_by_repository_id(index_id)
+    if not resource or not resource.status:
         abort(404)
-    return Response(r, mimetype='application/xml')
+    return Response(
+        resource.get_resource_list_xml(),
+        mimetype='application/xml')
 
 
 @blueprint.route("/resync/<index_id>/resourcedump.xml")
-@public_index_checked
 def resource_dump(index_id):
     """Render a basic view."""
-    r = render_resource_dump_xml(index_id)
-    if r is None:
+    resource = ResourceListHandler.get_resource_by_repository_id(index_id)
+    if not resource or not resource.status:
         abort(404)
-    return Response(r, mimetype='application/xml')
+    return Response(
+        resource.get_resource_dump_xml(),
+        mimetype='application/xml')
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/file_content.zip")
-@public_index_checked
 def file_content(index_id, record_id):
     """Render a basic view."""
-    r = get_file_content(index_id, record_id)
-    if r:
-        return r
-    else:
+    resource = ResourceListHandler.get_resource_by_repository_id(index_id)
+    if not resource or not resource.is_validate(record_id):
         abort(404)
+    else:
+        return resource.get_record_content_file(record_id)
 
 
 @blueprint.route("/resync/capability.xml")
 def capability():
     """Render a basic view."""
-    caplist = ResourceListHandler.get_capability_list()
+    caplist = render_capability_xml()
     if caplist is None:
         abort(404)
     return Response(caplist, mimetype='text/xml')
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/resourcedump_manifest.xml")
-def resourcedump_manifest(index_id, record_id):
+def resource_dump_manifest(index_id, record_id):
     """Render a basic view."""
-    res_manifest = get_resourcedump_manifest(index_id, record_id)
-    if res_manifest is None:
+    resource = ResourceListHandler.get_resource_by_repository_id(index_id)
+    validate = not resource or not resource.is_validate(
+        record_id) or not resource.resource_dump_manifest
+    if validate:
         abort(404)
-    return Response(res_manifest, mimetype='text/xml')
+    return Response(
+        resource.get_resource_dump_manifest(record_id),
+        mimetype='text/xml'
+    )
 
 
 @blueprint.route("/resync/<index_id>/changelist.xml")
@@ -98,7 +103,7 @@ def change_dump(index_id):
     r = cl.get_change_dump_xml()
     return Response(r, mimetype='application/xml')
 
-from flask import current_app
+
 @blueprint.route("/resync/<index_id>/<record_id>/changedump_manifest.xml")
 def change_dump_manifest(index_id, record_id):
     """Render a basic view."""
@@ -113,8 +118,6 @@ def change_dump_manifest(index_id, record_id):
 def change_dump_content(index_id, record_id):
     """Render a basic view."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    current_app.logger.debug("============")
-    current_app.logger.debug(cl.is_record_in_index(record_id))
     if cl is None or not cl.status or not cl.is_record_in_index(record_id):
         abort(404)
     r = cl.get_record_content_file(record_id)
