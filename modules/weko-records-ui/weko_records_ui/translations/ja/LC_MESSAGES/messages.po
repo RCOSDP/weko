@@ -694,3 +694,6 @@ msgstr "分野"
 
 msgid "Member"
 msgstr "会員"
+
+msgid "Dataset Usage"
+msgstr "データ名"

@@ -981,18 +981,46 @@ function handleSharePermission(value) {
         }
       };
 
+      $scope.isExistingTitleData = function () {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        if (Object.keys(model).length === 0 && model.constructor === Object) {
+          return false;
+        } else {
+          let isExisted = false;
+          for (let key in model) {
+            if (model.hasOwnProperty(key)) {
+              let title = model[key]['subitem_dataset_usage'];
+              if (title && $("#item_title").val() !== '""') {
+                if ($rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)) {
+                  $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly'] = true;
+                  setTimeout(function () {
+                    $("input[name='subitem_dataset_usage']").attr("disabled", "disabled");
+                  }, 1000);
+                }
+                isExisted = true;
+                break;
+              }
+            }
+          }
+          return isExisted;
+        }
+      };
+
       //Auto fill Title Data
       $scope.autoTitleData = function () {
+        if ($scope.isExistingTitleData()) {
+          return;
+        }
         let itemTitleElement = $("#item_title");
-        if (itemTitleElement !== null) {
-          let itemTitle = itemTitleElement.val();
+        if (itemTitleElement !== null && itemTitleElement.val()) {
+          let itemTitle = decodeURI(itemTitleElement.val());
           let titleKey = null;
           Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
             ([key, value]) => {
               if (value && value.properties) {
-                if (value.properties.hasOwnProperty("subitem_title_data")) {
+                if (value.properties.hasOwnProperty("subitem_dataset_usage")) {
                   titleKey = key;
-                  $rootScope.recordsVM.invenioRecordsModel[key] = {'subitem_title_data': itemTitle};
+                  $rootScope.recordsVM.invenioRecordsModel[key] = {'subitem_dataset_usage': itemTitle};
                 }
               }
             });
@@ -1001,7 +1029,7 @@ function handleSharePermission(value) {
             $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key === titleKey)['readonly'] = true;
           }
           setTimeout(function () {
-            $("input[name='subitem_title_data']").attr("disabled", "disabled");
+            $("input[name='subitem_dataset_usage']").attr("disabled", "disabled");
           }, 500);
         }
       };
@@ -1914,7 +1942,6 @@ function handleSharePermission(value) {
       }
 
       $scope.updateDataJson = async function (activityId, steps, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
-        $scope.updatePositionKey();
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
             $("#inputModal").html(modalcontent);
@@ -1950,6 +1977,7 @@ function handleSharePermission(value) {
               }
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+            $scope.updatePositionKey();
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
         }

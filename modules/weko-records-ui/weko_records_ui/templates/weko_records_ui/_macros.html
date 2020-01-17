@@ -29,7 +29,7 @@
     {%- else -%}
       <a class="action-anchor" href="{{ href_url }}">
         <button class="img-rounded action-button button-sm">
-          <i class="action-icon fa fa-download"/>
+          <i class="action-icon fa fa-download"></i>
           {{ _('Download') }}
         </button>
       </a>
@@ -46,7 +46,7 @@
       {%- else -%}
         <a class="action-anchor">
           <button class="img-rounded action-button button-sm">
-            <i class="action-icon fa fa-download"/>
+            <i class="action-icon fa fa-download"></i>
             {{ _('Download') }}
           </button>
         </a>
@@ -73,7 +73,7 @@
            data-community="{{ community.id }}"
                 {%- endif -%}
            data-workflow-id="{{ workflow_id }}"
-           data-itemtitle="{{ itemtitle|replace(' ', '_') }}"
+           data-itemtitle="{{ itemtitle|urlencode }}"
            href="{{ href_url }}">
           {{ file.filename }} ({{ file.size|filesizeformat }})</a>
       {%- else -%}
@@ -84,7 +84,7 @@
                   {%- endif -%}
                   data-workflow-id="{{ workflow_id }}"
                   class="btn-start-workflow img-rounded action-button button-sm">
-            <i class="action-icon fa fa-download"/>
+            <i class="action-icon fa fa-download"></i>
             {{ _('Download') }}
           </button>
         </a>
@@ -95,13 +95,13 @@
     {%- if is_file_name_url -%}
       {%- set itemtitle = record.item_title -%}
       <a class="forcewrap"
-         href="{{ href_url }}?itemtitle={{ itemtitle|replace(' ', '_') }}">{{ file.filename }}
+         href="{{ href_url }}?itemtitle={{ itemtitle|urlencode }}">{{ file.filename }}
         ({{ file.size|filesizeformat }})</a>
       <br>
     {%- else -%}
       <a class="action-anchor" href="{{ href_url }}">
         <button class="img-rounded action-button button-sm">
-          <i class="action-icon fa fa-download"/>
+          <i class="action-icon fa fa-download"></i>
           {{ _('Download') }}
         </button>
       </a>
@@ -122,7 +122,7 @@
       {%- else -%}
         <a class="action-anchor" href="{{ href_url }}">
           <button class="img-rounded action-button button-sm">
-            <i class="action-icon fa fa-download"/>
+            <i class="action-icon fa fa-download"></i>
             {{ _('Download') }}
           </button>
         </a>
