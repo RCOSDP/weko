@@ -99,7 +99,9 @@ def index():
         'weko_workflow/activity_list.html',
         page=page,
         render_widgets=render_widgets,
-        activities=activities, community_id=community_id, **ctx
+        activities=activities,
+        community_id=community_id,
+        **ctx
     )
 
 

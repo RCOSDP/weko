@@ -72,9 +72,7 @@ def capability():
 def resource_dump_manifest(index_id, record_id, date):
     """Render a basic view."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
-    from flask import current_app
-    current_app.logger.debug("==================")
-    current_app.logger.debug(date)
+
     validate = not resource or not resource.is_validate(
         record_id) or not resource.resource_dump_manifest
     if validate:

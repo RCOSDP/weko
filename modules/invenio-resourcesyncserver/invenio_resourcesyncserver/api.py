@@ -290,13 +290,13 @@ class ResourceListHandler(object):
         if not self.is_validate():
             return None
         r = get_items_by_index_tree(self.repository_id)
+
         rl = ResourceList()
         rl.up = '{}resync/capability.xml'.format(request.url_root)
-        current_app.logger.debug(self.repository_id)
+
         for item in r:
             if item:
-                id_item = item.get('_source').get('_item_metadata').get(
-                    'control_number')
+                id_item = item.get('_source').get('control_number')
                 url = '{}records/{}'.format(request.url_root, str(id_item))
                 rl.add(Resource(url, lastmod=item.get('_source').get(
                     '_updated')))
@@ -315,8 +315,7 @@ class ResourceListHandler(object):
         rd.up = '{}resync/capability.xml'.format(request.url_root)
         for item in r:
             if item:
-                id_item = item.get('_source').get('_item_metadata').get(
-                    'control_number')
+                id_item = item.get('_source').get('control_number')
                 url = '{}resync/{}/{}/file_content.zip'.format(
                     request.url_root,
                     self.repository_id,
@@ -947,7 +946,7 @@ class ChangeListHandler(object):
             # Double check for limits
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
-            record, exported_item = _export_item(
+            _record, exported_item = _export_item(
                 record_id,
                 None,
                 include_contents,

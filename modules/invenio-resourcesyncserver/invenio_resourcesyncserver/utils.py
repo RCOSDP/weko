@@ -29,16 +29,18 @@ import traceback
 from datetime import datetime
 from functools import wraps
 
-from flask import abort, current_app, request, send_file
+from flask import abort, request, send_file
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from resync import Resource
+from resync.capability_list import CapabilityList
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records.api import ItemTypes
 from weko_records_ui.permissions import check_file_download_permission
 
-from .api import ResourceListHandler, ChangeListHandler
-from resync.capability_list import CapabilityList
-from resync import Resource
+from .api import ChangeListHandler, ResourceListHandler
+from .query import get_item_changes_by_index
 
 
 def get_real_path(path):
@@ -83,3 +85,67 @@ def render_well_know_resourcesync():
     return cap.as_xml()
 
 
+def get_record_changes(repository_id):
+    """
+    Delete unregister bucket by pid.
+
+    Find all bucket have same object version but link with unregister records.
+    Arguments:
+        record_uuid     -- record uuid link to checking bucket.
+    Returns:
+        None.
+
+    """
+    record_changes = []
+    hits = get_item_changes_by_index(repository_id)
+    for hit in hits:
+        _source = hit.get("_source")
+        result = {
+            'record_id': 0,
+            'record_version': 0,
+            'status': '',
+            'created': _source.get('_created', None),
+            'updated': _source.get('_updated', None)
+        }
+
+        recids = str(_source.get('control_number')).split('.')
+        if len(recids) == 1:
+            recid = int(recids[0])
+            result['record_id'] = recid
+            result['record_version'] = '0'
+
+            pid = PersistentIdentifier.get('recid', recid)
+            is_belong = check_existing_record_in_list(recid, record_changes)
+            if pid.status == PIDStatus.DELETED and is_belong:
+                result['status'] = 'delete'
+            else:
+                continue
+        elif len(recids) > 1:
+            result['record_id'] = int(recids[0])
+            result['record_version'] = int(recids[1])
+            if recids[1] == '1':
+                result['status'] = 'create'
+            else:
+                result['status'] = 'update'
+
+        record_changes.append(result)
+
+    return record_changes
+
+
+def check_existing_record_in_list(record_id, results):
+    """
+    Delete unregister bucket by pid.
+
+    Find all bucket have same object version but link with unregister records.
+    Arguments:
+        record_uuid     -- record uuid link to checking bucket.
+    Returns:
+        None.
+
+    """
+    for result in results:
+        if result.get('record_id') == record_id:
+            return True
+
+    return False
