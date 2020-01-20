@@ -135,7 +135,7 @@ class ResourceListHandler(object):
                     return
                 resource.status = data.get('status', self.status)
                 resource.repository_id = data.get(
-                    'repository',
+                    'repository_id',
                     self.repository_id
                 )
                 resource.resource_dump_manifest = data.get(
