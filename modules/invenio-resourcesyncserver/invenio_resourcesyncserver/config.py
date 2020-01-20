@@ -25,6 +25,13 @@ INVENIO_RESOURCESYNCSERVER_ADMIN_TEMPLATE = \
 INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN = \
     'invenio_resourcesyncserver/change_list.html'
 """Admin template for the demo page."""
+
+INVENIO_DATETIME_ISOFORMAT = r"%Y-%m-%d"
+"""ISO 8601 format for Datetime."""
+
+INVENIO_DELAY_PUBLISHEDDATE = False
+"""Delay published to first change date."""
+
 DATA_FAKE = [
     {
         'record_id': 1,

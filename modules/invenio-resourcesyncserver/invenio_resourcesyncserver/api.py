@@ -48,6 +48,7 @@ from resync.list_base_with_index import ListBaseWithIndex
 
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
+from .config import INVENIO_DATETIME_ISOFORMAT, INVENIO_DELAY_PUBLISHEDDATE
 
 
 class ResourceListHandler(object):
@@ -590,7 +591,12 @@ class ChangeListHandler(object):
         from .utils import query_record_changes
         change_list = ChangeList()
         change_list.up = '{}resync/capability.xml'.format(request.url_root)
-        record_changes = self._get_record_changes(from_date)
+        change_list.index = '{}resync/{}/changelist.xml'.format(
+            request.url_root,
+            self.repository_id,
+            )
+
+        record_changes = self._get_record_changes_with_interval(from_date)
 
         for data in record_changes:
             if self._next_change(data, record_changes):
@@ -621,38 +627,98 @@ class ChangeListHandler(object):
         return change_list.as_xml()
 
     def get_change_list_index(self):
-        """Get list change list index."""
-        # if self.validate():
-        #     return None
+        """
+        Delete unregister bucket by pid.
+
+        Find all bucket have same object version but link with unregister records.
+        Arguments:
+            record_uuid     -- record uuid link to checking bucket.
+        Returns:
+            None.
+
+        """
+        if self._validation():
+            return None
         change_list = ListBaseWithIndex(
             capability_name='changelist',
         )
         change_list.up = '{}resync/capability.xml'.format(request.url_root)
-        publish_date = self.publish_date or datetime.datetime.utcnow()
-        date_i = datetime.datetime(
-            year=publish_date.year,
-            month=publish_date.month,
-            day=publish_date.day
-        )
-        date_i = date_i - timedelta(days=self.interval_by_date*30)
+        published_date = self.publish_date or datetime.datetime.utcnow()
+        change_date = published_date
         day_now = datetime.datetime.now()
-        while date_i < day_now:
-            until = date_i + timedelta(days=self.interval_by_date)
+
+        # DELAY PUBLISH DATE TO 1st CHANGED DATE
+        first_change = self._get_first_change(
+            self.repository_id,
+            self.publish_date
+        )
+        if INVENIO_DELAY_PUBLISHEDDATE and first_change:
+            first_datetime = first_change.get('updated').split('T')[0]
+            change_date = datetime.datetime.strptime(first_datetime, INVENIO_DATETIME_ISOFORMAT)
+
+        while change_date < day_now:
+            until = change_date + timedelta(days=self.interval_by_date)
             if until > day_now:
                 until = day_now
             change = Resource(
                 '{}/{}/changelist.xml'.format(
                     self.url_path,
-                    date_i.strftime("%Y%m%d")
+                    change_date.strftime(r"%Y%m%d")
                 ),
                 capability='changelist',
-                md_from=str(date_i.replace(tzinfo=datetime.timezone.utc).isoformat()),
+                md_from=str(change_date.replace(tzinfo=datetime.timezone.utc).isoformat()),
                 md_until=str(until.replace(tzinfo=datetime.timezone.utc).isoformat())
             )
             change_list.add(change)
-            date_i = until
+            change_date = until
         return change_list.as_xml()
 
+    def get_change_dump_index(self):
+        """
+        Delete unregister bucket by pid.
+
+        Find all bucket have same object version but link with unregister records.
+        Arguments:
+            record_uuid     -- record uuid link to checking bucket.
+        Returns:
+            None.
+
+        """
+        if self._validation():
+            return None
+        changedump = ListBaseWithIndex(
+            capability_name='changedump',
+        )
+        changedump.up = '{}resync/capability.xml'.format(request.url_root)
+        published_date = self.publish_date or datetime.datetime.utcnow()
+        change_date = published_date
+        day_now = datetime.datetime.now()
+
+        # DELAY PUBLISH DATE TO 1st CHANGED DATE
+        first_change = self._get_first_change(
+            self.repository_id,
+            self.publish_date
+        )
+        if INVENIO_DELAY_PUBLISHEDDATE and first_change:
+            first_datetime = first_change.get('updated').split('T')[0]
+            change_date = datetime.datetime.strptime(first_datetime, INVENIO_DATETIME_ISOFORMAT)
+
+        while change_date < day_now:
+            until = change_date + timedelta(days=self.interval_by_date)
+            if until > day_now:
+                until = day_now
+            change = Resource(
+                '{}/{}/changedump.xml'.format(
+                    self.url_path,
+                    change_date.strftime(r"%Y%m%d")
+                ),
+                capability='changedump',
+                md_from=str(change_date.replace(tzinfo=datetime.timezone.utc).isoformat()),
+                md_until=str(until.replace(tzinfo=datetime.timezone.utc).isoformat())
+            )
+            changedump.add(change)
+            change_date = until
+        return changedump.as_xml()
 
     def get_change_dump_xml(self, from_date):
         """
@@ -662,7 +728,12 @@ class ChangeListHandler(object):
         """
         change_dump = ChangeDump()
         change_dump.up = '{}resync/capability.xml'.format(request.url_root)
-        record_changes = self._get_record_changes(from_date)
+        change_dump.index = '{}resync/{}/changedump.xml'.format(
+            request.url_root,
+            self.repository_id
+        )
+
+        record_changes = self._get_record_changes_with_interval(from_date)
 
         for data in record_changes:
             next_ch = self._next_change(data, record_changes)
@@ -706,7 +777,7 @@ class ChangeListHandler(object):
             change_dump.add(rc)
         return change_dump.as_xml()
 
-    def validate(self):
+    def _validation(self):
         """Validate."""
         if not self.status or not self.index.public_state:
             return None
@@ -1044,14 +1115,14 @@ class ChangeListHandler(object):
         caplist = []
         for change in list_change:
             caplist.append(Resource(
-                '{}/changelist'.format(change.url_path),
+                '{}/changelist.xml'.format(change.url_path),
                 capability='changelist'))
             caplist.append(Resource(
                 '{}/changedump.xml'.format(change.url_path),
                 capability='changedump'))
         return caplist
 
-    def _from_date_validate(self, date_from: str):
+    def _date_validation(self, date_from: str):
             """
         Delete unregister bucket by pid.
 
@@ -1086,7 +1157,50 @@ class ChangeListHandler(object):
 
         return None
 
-    def _get_record_changes(self, from_date):
+    def _get_record_changes_with_interval(self, from_date):
+        """
+        Get change list xml.
+        
+        :param data     :
+        :param changes  :
+        :return: Updated Change List info
+        """
+        _from = self._date_validation(from_date)
+        if not _from:
+            return []
+        _util = _from + datetime.timedelta(days=self.interval_by_date)
+
+        if _util > datetime.datetime.utcnow():
+            _util = datetime.datetime.utcnow()
+
+        record_changes = self._get_record_changes(
+            self.repository_id,
+            _from.isoformat(),
+            _util.isoformat(),
+        )
+
+        return record_changes
+
+    def _get_first_change(self, repo_id, from_date):
+        """
+        Get change list xml.
+        
+        :param repo_id  :
+        :param from_date:
+        :return: Updated Change List info
+        """
+        _from = from_date.isoformat()
+        _until = datetime.datetime.utcnow().replace(
+                    tzinfo=datetime.timezone.utc
+                ).isoformat()
+        record_changes = self._get_record_changes(
+            repo_id,
+            _from,
+            _until
+        )
+        return record_changes[0]
+
+    def _get_record_changes(self, repo_id, from_date, until_date):
         """
         Get change list xml.
         
@@ -1095,21 +1209,16 @@ class ChangeListHandler(object):
         :return: Updated Change List info
         """
         from .utils import query_record_changes
-        _from = self._from_date_validate(from_date)
-        if not _from:
+
+        try:
+            return query_record_changes(
+                repo_id,
+                from_date,
+                until_date
+            )
+        except BaseException as ex:
+            current_app.logger.debug(ex)
             return []
-        _util = _from + datetime.timedelta(days=self.interval_by_date)
-
-        if _util > datetime.datetime.utcnow():
-            _util = datetime.datetime.utcnow()
-
-        record_changes = query_record_changes(
-            self.repository_id,
-            _from.isoformat(),
-            _util.isoformat(),
-        )
-
-        return record_changes
 
 
 def _export_item(record_id,
