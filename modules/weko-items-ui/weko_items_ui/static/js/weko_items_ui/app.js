@@ -1607,7 +1607,9 @@ function handleSharePermission(value) {
         if (!this.validateRequiredItem()) {
           // Check required item
           return false;
-        }else if(!this.validatePosition()){
+        }else if(!this.validatePosition()) {
+          return false;
+        } else if (!this.validateFieldMaxItems()) {
           return false;
         } else if ($scope.depositionForm.$invalid) {
           // Check containing control or form is invalid
@@ -1677,7 +1679,24 @@ function handleSharePermission(value) {
           });
           return isValid;
         }
-      }
+      };
+
+      $scope.validateFieldMaxItems = function () {
+        let isValid = true;
+        Object.entries($rootScope.recordsVM.invenioRecordsModel).forEach(
+          ([key, value]) => {
+            if (value && value.hasOwnProperty('subitem_field')
+              && Array.isArray(value['subitem_field']) && value['subitem_field'].length > 2) {
+              let errorMessage = $("#validate_maxitems_field").val();
+              $("#inputModal").html(errorMessage);
+              $("#allModal").modal("show");
+              isValid = false;
+              return isValid;
+            }
+          }
+        );
+        return isValid;
+      };
 
       $scope.validatePosition = function () {
         var result = true;
@@ -1843,6 +1862,9 @@ function handleSharePermission(value) {
         var result = true;
         $scope.filemeta_keys.forEach(filemeta_key => {
           groupsprice_record = $rootScope.recordsVM.invenioRecordsModel[filemeta_key];
+          if (!Array.isArray(groupsprice_record)){
+            return result;
+          }
           groupsprice_record.forEach(record => {
             prices = record.groupsprice;
             if (!prices) {
