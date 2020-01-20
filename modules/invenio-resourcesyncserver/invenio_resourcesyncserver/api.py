@@ -504,9 +504,9 @@ class ChangeListHandler(object):
     def __init__(self, **kwargs):
         """Add extra options."""
         self.id = kwargs.get('id')
-        self.status = kwargs.get('status')
+        self.status = kwargs.get('status', False)
         self.repository_id = kwargs.get('repository_id')
-        self.change_dump_manifest = kwargs.get('change_dump_manifest')
+        self.change_dump_manifest = kwargs.get('change_dump_manifest', False)
         self.max_changes_size = int(kwargs.get('max_changes_size', 10000))
         self.url_path = kwargs.get('url_path')
         self.created = kwargs.get('created')
@@ -536,8 +536,7 @@ class ChangeListHandler(object):
                         old_obj.repository_id = self.repository_id or \
                             old_obj.repository_id
                         old_obj.change_dump_manifest = \
-                            self.change_dump_manifest or \
-                            old_obj.change_dump_manifest
+                            self.change_dump_manifest
                         old_obj.max_changes_size = self.max_changes_size or \
                             old_obj.max_changes_size
                         old_obj.change_tracking_state = \
@@ -560,17 +559,18 @@ class ChangeListHandler(object):
             else:
                 return None
         else:
+            current_app.logger.debug("==================")
+            current_app.logger.debug(self.change_dump_manifest)
+            change_dump_manifest = False
             data = dict(**{
-                'status': self.status,
+                'status': self.status or False,
                 'repository_id': self.repository_id,
                 'change_dump_manifest': self.change_dump_manifest,
                 'max_changes_size': self.max_changes_size,
                 'change_tracking_state': self.change_tracking_state,
                 'url_path': self.url_path,
                 'interval_by_date': self.interval_by_date,
-                'publish_date': str(datetime.datetime.utcnow().replace(
-                    tzinfo=datetime.timezone.utc
-                ).isoformat()) if self.status else None
+                'publish_date': self.publish_date
             })
 
             try:
@@ -892,24 +892,16 @@ class ChangeListHandler(object):
 
     def to_dict(self):
         """Convert obj to dict."""
-        change_dump_manifest = self.change_dump_manifest  \
-            if self.change_dump_manifest else None
-        max_changes_size = self.max_changes_size if self.max_changes_size \
-            else None
-        change_tracking_state = self.change_tracking_state if \
-            self.change_tracking_state else None
-        change_tracking_state = change_tracking_state.split("&") if \
-            change_tracking_state else []
         return dict(**{
-            'id': self.id if self.id else None,
-            'status': self.status if self.status else None,
-            'repository_id': self.repository_id if self.repository_id else None,
-            'change_dump_manifest': change_dump_manifest,
-            'max_changes_size': max_changes_size,
-            'change_tracking_state': change_tracking_state,
-            'url_path': self.url_path if self.url_path else None,
-            'created': self.created if self.created else None,
-            'updated': self.updated if self.updated else None,
+            'id': self.id,
+            'status': self.status,
+            'repository_id': self.repository_id,
+            'change_dump_manifest': self.change_dump_manifest,
+            'max_changes_size': self.max_changes_size,
+            'change_tracking_state': self.change_tracking_state,
+            'url_path': self.url_path,
+            'created': self.created,
+            'updated': self.updated,
             'repository_name': self.index.index_name,
             'publish_date': str(self.publish_date),
             'interval_by_date': self.interval_by_date
