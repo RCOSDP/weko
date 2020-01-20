@@ -131,7 +131,7 @@ def change_dump_content(index_id, record_id):
 
 
 @blueprint.route("/well_know_resourcesync")
-def well_know_resourcesync(index_id, record_id):
+def well_know_resourcesync():
     """Render a basic view."""
     return Response(
         render_well_know_resourcesync(),

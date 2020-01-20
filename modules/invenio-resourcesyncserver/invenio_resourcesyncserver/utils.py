@@ -37,8 +37,8 @@ from weko_records.api import ItemTypes
 from weko_records_ui.permissions import check_file_download_permission
 
 from .api import ResourceListHandler, ChangeListHandler
-from resync.capability_list import CapabilityList
-from resync import Resource
+from resync.list_base_with_index import ListBaseWithIndex
+from resync import Resource, CapabilityList
 
 
 def get_real_path(path):
@@ -67,7 +67,7 @@ def render_capability_xml():
 
 def render_well_know_resourcesync():
     """Generate capability xml."""
-    cap = CapabilityList(
+    cap = ListBaseWithIndex(
         capability_name='description',
         ln=[
             {
