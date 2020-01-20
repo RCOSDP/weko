@@ -71,7 +71,7 @@ def render_well_know_resourcesync():
     return cap.as_xml()
 
 
-def get_record_changes(repository_id, date_from, date_until):
+def query_record_changes(repository_id, date_from, date_until):
     """
     Delete unregister bucket by pid.
 
@@ -103,16 +103,16 @@ def get_record_changes(repository_id, date_from, date_until):
             pid = PersistentIdentifier.get('recid', recid)
             is_belong = check_existing_record_in_list(recid, record_changes)
             if pid.status == PIDStatus.DELETED and is_belong:
-                result['status'] = 'delete'
+                result['status'] = 'deleted'
             else:
                 continue
         elif len(recids) > 1:
             result['record_id'] = int(recids[0])
             result['record_version'] = int(recids[1])
             if recids[1] == '1':
-                result['status'] = 'create'
+                result['status'] = 'created'
             else:
-                result['status'] = 'update'
+                result['status'] = 'updated'
 
         record_changes.append(result)
 

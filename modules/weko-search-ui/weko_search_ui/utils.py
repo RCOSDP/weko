@@ -576,9 +576,9 @@ def handle_check_exist_record(list_recond) -> list:
             item = dict(**item, **{
                 'status': 'new'
             })
-            if url_root in item.get('uri', ''):
-                try:
-                    item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+            try:
+                item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+                if url_root in item.get('uri', ''):
                     if item_exist:
                         if item_exist.pid.is_deleted():
                             item['status'] = None
@@ -592,20 +592,15 @@ def handle_check_exist_record(list_recond) -> list:
                     else:
                         item['status'] = 'new'
                         check_identifier_new(item)
-                except BaseException:
-                    current_app.logger.error('Unexpected error: ',
-                                             sys.exc_info()[0])
-            else:
-                try:
-                    item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+                else:
                     if item_exist:
                         item['errors'] = ['Item already EXISTED in the system']
                         item['status'] = None
-                except PIDDoesNotExistError:
-                    pass
-                except BaseException:
-                    current_app.logger.error('Unexpected error: ',
-                                             sys.exc_info()[0])
+            except PIDDoesNotExistError:
+                pass
+            except BaseException:
+                current_app.logger.error('Unexpected error: ',
+                                            sys.exc_info()[0])
         if item.get('status') == 'new':
             handle_remove_identifier(item)
         result.append(item)

@@ -83,18 +83,6 @@ def resource_dump_manifest(index_id, record_id, date):
     )
 
 
-@blueprint.route("/resync/<index_id>/<from_date>/changelist.xml")
-def change_list(index_id, from_date):
-    """Render a basic view."""
-    cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if not cl or not cl.status:
-        abort(404)
-    r = cl.get_change_list_content_xml(from_date)
-    if r is None:
-        abort(404)
-    return Response(r, mimetype='application/xml')
-
-
 @blueprint.route("/resync/<index_id>/changelist")
 def change_list_index(index_id):
     """Render a basic view."""
@@ -107,13 +95,27 @@ def change_list_index(index_id):
     return Response(r, mimetype='application/xml')
 
 
-@blueprint.route("/resync/<index_id>/changedump.xml")
-def change_dump(index_id):
+@blueprint.route("/resync/<index_id>/<from_date>/changelist.xml")
+def change_list(index_id, from_date):
+    """Render a basic view."""
+    cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
+    if not cl or not cl.status:
+        abort(404)
+    r = cl.get_change_list_content_xml(from_date)
+    if r is None:
+        abort(404)
+    return Response(r, mimetype='application/xml')
+
+
+@blueprint.route("/resync/<index_id>/<from_date>/changedump.xml")
+def change_dump(index_id, from_date):
     """Render a basic view."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
     if cl is None or not cl.status:
         abort(404)
-    r = cl.get_change_dump_xml()
+    r = cl.get_change_dump_xml(from_date)
+    if r is None:
+        abort(404)
     return Response(r, mimetype='application/xml')
 
 

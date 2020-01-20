@@ -587,24 +587,18 @@ class ChangeListHandler(object):
 
         :return: Updated Change List info
         """
+        from .utils import query_record_changes
         change_list = ChangeList()
         change_list.up = '{}resync/capability.xml'.format(request.url_root)
-        from .config import DATA_FAKE
+        record_changes = self._get_record_changes(from_date)
 
-        def next_change(data):
-            for d in DATA_FAKE:
-                if data.get('record_id') == d.get('record_id'):
-                    if data.get('version_id')+1 == d.get('version_id'):
-                        return d
-            return None
-
-        for data in DATA_FAKE:
-            if next_change(data):
+        for data in record_changes:
+            if self._next_change(data, record_changes):
                 loc = '{}records/{}'.format(
                     request.url_root,
                     '{}.{}'.format(
                         data.get('record_id'),
-                        data.get('version_id')
+                        data.get('record_version')
                     )
                 )
             else:
@@ -618,7 +612,7 @@ class ChangeListHandler(object):
             rc = Resource(
                 loc,
                 lastmod=lastmod,
-                change=data.get('state'),
+                change=data.get('status'),
                 md_at=str(datetime.datetime.utcnow().replace(
                     tzinfo=datetime.timezone.utc
                 ).isoformat()),
@@ -641,8 +635,6 @@ class ChangeListHandler(object):
             day=publish_date.day
         )
         date_i = date_i - timedelta(days=self.interval_by_date*30)
-        current_app.logger.debug("=======================")
-        current_app.logger.debug(date_i)
         day_now = datetime.datetime.now()
         while date_i < day_now:
             until = date_i + timedelta(days=self.interval_by_date)
@@ -662,32 +654,24 @@ class ChangeListHandler(object):
         return change_list.as_xml()
 
 
-    def get_change_dump_xml(self):
+    def get_change_dump_xml(self, from_date):
         """
         Get change dump xml.
 
         :return: Updated Change List info
         """
-        from .config import DATA_FAKE
-
-        def next_change(data):
-            for d in DATA_FAKE:
-                if data.get('record_id') == d.get('record_id'):
-                    if data.get('version_id')+1 == d.get('version_id'):
-                        return d
-            return None
-
         change_dump = ChangeDump()
         change_dump.up = '{}resync/capability.xml'.format(request.url_root)
+        record_changes = self._get_record_changes(from_date)
 
-        for data in DATA_FAKE:
-            next_ch = next_change(data)
+        for data in record_changes:
+            next_ch = self._next_change(data, record_changes)
             loc = '{}resync/{}/{}/change_dump_content.zip'.format(
                 request.url_root,
                 self.repository_id,
                 '{}.{}'.format(
                     data.get('record_id'),
-                    data.get('version_id')
+                    data.get('record_version')
                 )
             )
             lastmod = str(datetime.datetime.utcnow().replace(
@@ -713,7 +697,7 @@ class ChangeListHandler(object):
                         self.repository_id,
                         '{}.{}'.format(
                             data.get('record_id'),
-                            data.get('version_id')
+                            data.get('record_version')
                         )
                     ),
                     'type': 'application/xml'
@@ -916,7 +900,7 @@ class ChangeListHandler(object):
             created=model.created,
             updated=model.updated,
             index=model.index,
-            publist_date=model.publish_date,
+            publish_date=model.publish_date,
             interval_by_date=model.interval_by_date
         )
 
@@ -1066,6 +1050,66 @@ class ChangeListHandler(object):
                 '{}/changedump.xml'.format(change.url_path),
                 capability='changedump'))
         return caplist
+
+    def _from_date_validate(self, date_from: str):
+            """
+        Delete unregister bucket by pid.
+
+        Find all bucket have same object version but link with unregister records.
+        Arguments:
+            date_from       -- record uuid link to checking bucket.
+        Returns:
+            from_date in in isoformat or None.
+
+        """
+            try:
+                ret = datetime.datetime.strptime(date_from, r"%Y%m%d")
+
+                if ret > self.publish_date and ret < datetime.datetime.utcnow():
+                    return ret
+            except ValueError:
+                current_app.logger.debug("Incorrect data format, should be YYYYMMDD")
+            return None
+
+    def _next_change(self, data, changes):
+        """
+        Get change list xml.
+        
+        :param data     :
+        :param changes  :
+        :return: Updated Change List info
+        """
+        for change in changes:
+            if data.get('record_id') == change.get('record_id'):
+                if data.get('record_version') + 1 == change.get('record_version'):
+                    return change
+
+        return None
+
+    def _get_record_changes(self, from_date):
+        """
+        Get change list xml.
+        
+        :param data     :
+        :param changes  :
+        :return: Updated Change List info
+        """
+        from .utils import query_record_changes
+        _from = self._from_date_validate(from_date)
+        if not _from:
+            return []
+        _util = _from + datetime.timedelta(days=self.interval_by_date)
+
+        if _util > datetime.datetime.utcnow():
+            _util = datetime.datetime.utcnow()
+
+        record_changes = query_record_changes(
+            self.repository_id,
+            _from.isoformat(),
+            _util.isoformat(),
+        )
+
+        return record_changes
 
 
 def _export_item(record_id,
