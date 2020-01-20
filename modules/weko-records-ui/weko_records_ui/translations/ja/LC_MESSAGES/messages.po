@@ -697,3 +697,6 @@ msgstr "会員"
 
 msgid "Dataset Usage"
 msgstr "データ名"
+
+msgid "Stop"
+msgstr "終了"

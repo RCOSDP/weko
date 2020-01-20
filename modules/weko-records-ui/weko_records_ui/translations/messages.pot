@@ -689,3 +689,6 @@ msgstr ""
 
 msgid "Dataset Usage"
 msgstr ""
+
+msgid "Stop"
+msgstr ""
