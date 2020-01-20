@@ -13,7 +13,8 @@ const default_state = {
   change_tracking_state: ['create', 'update','delete'],
   url_path: "",
   interval_by_date: 1,
-  max_changes_size: 10000
+  max_changes_size: 10000,
+  publish_date: moment().format("DD/MM/YYYY")
 };
 const tracker_state_list = [
   {
@@ -312,6 +313,8 @@ class CreateResourceComponent extends React.Component {
   handleSubmit(add_another) {
     const new_data = { ...this.state };
     delete new_data.tree_list;
+    new_data.publish_date = moment(new_data.publish_date).utc().format()
+
     fetch(urlCreate, {
       method: "POST",
       body: JSON.stringify(new_data),
@@ -441,17 +444,19 @@ class CreateResourceComponent extends React.Component {
 
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Change list manifest</label>
+            <label>Publish date</label>
           </div>
           <div className="col-md-10">
-            <input
-              type="checkbox"
-              checked={state.change_dump_manifest}
-              onChange={e => {
-                const value = e.target.checked;
-                this.handleChangeState("change_dump_manifest", value);
-              }}
-            ></input>
+            <ComponentDatePicker
+              component_name='publish_date'
+              name="publish_date"
+              id_component="publish_date"
+              date_picker_id="publish_date_picker"
+              error_id="publish_date_error"
+              getTableHidden={this.getTableHidden}
+              onChange={this.handleChangeState}
+              value={state.publish_date}
+            />
           </div>
         </div>
 
@@ -489,6 +494,7 @@ class CreateResourceComponent extends React.Component {
           </div>
         </div>
 
+
         <div className="row form-group">
           <div className="col-md-2 text-right">
             <label>Change tracking state</label>
@@ -521,6 +527,22 @@ class CreateResourceComponent extends React.Component {
                   })
               }
             </div>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Change dump manifest</label>
+          </div>
+          <div className="col-md-10">
+            <input
+              type="checkbox"
+              checked={state.change_dump_manifest}
+              onChange={e => {
+                const value = e.target.checked;
+                this.handleChangeState("change_dump_manifest", value);
+              }}
+            ></input>
           </div>
         </div>
 
@@ -619,6 +641,7 @@ class EditResourceComponent extends React.Component {
     const new_data = { ...this.state };
     delete new_data.tree_list;
     delete new_data.id;
+    new_data.publish_date = moment(new_data.publish_date).utc().format()
     fetch(urlUpdate + "/" + this.state.id, {
       method: "POST",
       body: JSON.stringify(new_data),
@@ -744,17 +767,19 @@ class EditResourceComponent extends React.Component {
 
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Change Dump Manifest</label>
+            <label>Publish date</label>
           </div>
           <div className="col-md-10">
-            <input
-              type="checkbox"
-              onChange={e => {
-                const value = e.target.checked;
-                this.handleChangeState("change_dump_manifest", value);
-              }}
-              checked={state.change_dump_manifest}
-            ></input>
+            <ComponentDatePicker
+              component_name='publish_date'
+              name="publish_date"
+              id_component="publish_date"
+              date_picker_id="publish_date_picker"
+              error_id="publish_date_error"
+              getTableHidden={this.getTableHidden}
+              onChange={this.handleChangeState}
+              value={state.publish_date}
+            />
           </div>
         </div>
 
@@ -792,6 +817,8 @@ class EditResourceComponent extends React.Component {
           </div>
         </div>
 
+
+
         <div className="row form-group">
           <div className="col-md-2 text-right">
             <label>Change tracking state</label>
@@ -824,6 +851,22 @@ class EditResourceComponent extends React.Component {
                   })
               }
             </div>
+          </div>
+        </div>
+
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Change Dump Manifest</label>
+          </div>
+          <div className="col-md-10">
+            <input
+              type="checkbox"
+              onChange={e => {
+                const value = e.target.checked;
+                this.handleChangeState("change_dump_manifest", value);
+              }}
+              checked={state.change_dump_manifest}
+            ></input>
           </div>
         </div>
 
@@ -893,4 +936,68 @@ class DetailResourceComponent extends React.Component {
 }
 $(function() {
   ReactDOM.render(<MainLayout />, document.getElementById("root"));
+  initDatepicker()
 });
+
+class ComponentDatePicker extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      defaultClass: "controls",
+      errorMessageClass: "hidden"
+    }
+    this.styleContainer = {
+    }
+    this.styleLabel = {
+      "display": "inline",
+    }
+    this.styleDatePicker = {
+      "background-color": "#fff",
+    }
+  }
+
+  componentDidMount(){
+    const that = this
+    $("#publish_date").change(
+      function(event) {
+          const date = event.target.value;
+          if (moment(date).isValid()) {
+            if (that.props.onChange){
+            that.props.onChange(that.props.name,date)
+          }
+          }
+        }
+    )
+  }
+
+  componentWillUnmount(){
+    $("#publish_date").off('change');
+  }
+
+  render() {
+    const {props} = this
+    return (
+      <div style={this.styleContainer} className="form-group">
+        <div class={this.state.defaultClass} id={this.props.date_picker_id}>
+          <input value={props.value} className="form-control" name={this.props.component_name} id={this.props.id_component} style={this.styleDatePicker} type="text" data-provide="datepicker"/>
+          <div id={this.props.error_id} style={{color: 'red'}} className={this.state.errorMessageClass}>Format is incorrect!</div>
+        </div>
+      </div>
+    )
+  }
+}
+
+function initDatepicker() {
+  console.log($("#datepicker"))
+  $("#publish_date").datepicker({
+    format: "yyyy/mm/dd",
+    todayBtn: "linked",
+    autoclose: true,
+    forceParse: false
+  })
+  .on("changeDate", function(e) {
+    if (document.getElementById("publish_date_picker").classList.contains('has-error')) {
+      document.getElementById("publish_date_picker").classList.remove('has-error');
+    }
+  });
+}
