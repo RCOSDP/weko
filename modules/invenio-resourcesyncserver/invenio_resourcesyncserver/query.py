@@ -269,9 +269,8 @@ def item_changes_search_factory(search,
     try:
         search.update_from_dict(query_q)
     except SyntaxError:
-        current_app.logger.debug(
-                "Failed parsing query: {0}".format(query_q),
-                exc_info=True)
+        current_app.logger.debug("Failed parsing query: {0}".format(query_q),
+                                 exc_info=True)
         raise InvalidQueryRESTError()
 
     return search

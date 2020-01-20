@@ -51,7 +51,7 @@ class ResourceListIndexes(db.Model, Timestamp):
         default=True
     )
     """Status of resource list."""
- 
+
     repository_id = db.Column(
         db.BigInteger,
         db.ForeignKey(Index.id),
@@ -128,6 +128,7 @@ class ChangeListIndexes(db.Model, Timestamp):
     publish_date = db.Column(
         db.DateTime, nullable=True, default=datetime.utcnow)
     """Relation to the Index Identifier."""
+
 
 __all__ = ([
     'ResourceListIndexes',

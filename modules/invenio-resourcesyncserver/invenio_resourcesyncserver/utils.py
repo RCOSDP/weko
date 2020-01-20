@@ -65,8 +65,9 @@ def render_well_know_resourcesync():
         ]
     )
     cap.add(Resource(
-                '{}resync/capability.xml'.format(request.url_root),
-                capability='capability'))
+        '{}resync/capability.xml'.format(request.url_root),
+        capability='capability')
+    )
 
     return cap.as_xml()
 
