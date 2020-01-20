@@ -28,9 +28,8 @@ import sys
 import tempfile
 import traceback
 from datetime import timedelta
-from functools import wraps
 
-from flask import current_app, json, request, send_file
+from flask import current_app, request, send_file
 from invenio_db import db
 from resync import Resource, ResourceList
 from resync.change_dump import ChangeDump
@@ -46,8 +45,8 @@ from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
 
-from .config import INVENIO_DATETIME_ISOFORMAT, INVENIO_DELAY_PUBLISHEDDATE, \
-    INVENIO_CAPABILITY_URL
+from .config import INVENIO_CAPABILITY_URL, INVENIO_DATETIME_ISOFORMAT, \
+    INVENIO_DELAY_PUBLISHEDDATE
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
 
@@ -179,7 +178,7 @@ class ResourceListHandler(object):
         return False
 
     @classmethod
-    def get_resource(cls, resource_id,  type_result='obj'):
+    def get_resource(cls, resource_id, type_result='obj'):
         """
         Update the index detail info.
 
@@ -591,13 +590,12 @@ class ChangeListHandler(object):
 
         :return: Updated Change List info
         """
-        from .utils import query_record_changes
         change_list = ChangeList()
         change_list.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         change_list.index = '{}resync/{}/changelist.xml'.format(
             request.url_root,
             self.repository_id,
-            )
+        )
 
         record_changes = self._get_record_changes_with_interval(from_date)
 
@@ -616,8 +614,7 @@ class ChangeListHandler(object):
                     data.get('record_id')
                 )
             lastmod = str(datetime.datetime.utcnow().replace(
-                    tzinfo=datetime.timezone.utc
-                ).isoformat())
+                tzinfo=datetime.timezone.utc).isoformat())
             rc = Resource(
                 loc,
                 lastmod=lastmod,
@@ -631,7 +628,7 @@ class ChangeListHandler(object):
 
     def get_change_list_index(self):
         """
-        Get change list by report_id
+        Get change list by report_id.
 
         Arguments:
         Returns:
@@ -753,8 +750,7 @@ class ChangeListHandler(object):
                 )
             )
             lastmod = str(datetime.datetime.utcnow().replace(
-                    tzinfo=datetime.timezone.utc
-                ).isoformat())
+                tzinfo=datetime.timezone.utc).isoformat())
             rc = Resource(
                 loc,
                 lastmod=lastmod,
@@ -807,10 +803,7 @@ class ChangeListHandler(object):
             prev_id, prev_ver_id = record_id.split(".")
             current_record = WekoRecord.get_record_by_pid(record_id)
             prev_record_pid = WekoRecord.get_pid(
-                '{}.{}'.format(
-                    prev_id,
-                    str(int(prev_ver_id)-1)
-                )
+                '{}.{}'.format(prev_id, str(int(prev_ver_id) - 1))
             )
             if prev_record_pid:
                 prev_record = WekoRecord.get_record(
@@ -1191,13 +1184,8 @@ class ChangeListHandler(object):
         """
         _from = from_date.isoformat()
         _until = datetime.datetime.utcnow().replace(
-                    tzinfo=datetime.timezone.utc
-                ).isoformat()
-        record_changes = self._get_record_changes(
-            repo_id,
-            _from,
-            _until
-        )
+            tzinfo=datetime.timezone.utc).isoformat()
+        record_changes = self._get_record_changes(repo_id, _from, _until)
 
         if record_changes:
             return record_changes[0]

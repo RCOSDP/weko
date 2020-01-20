@@ -129,6 +129,7 @@ class ChangeListIndexes(db.Model, Timestamp):
         db.DateTime, nullable=True, default=datetime.utcnow)
     """Relation to the Index Identifier."""
 
+
 __all__ = ([
     'ResourceListIndexes',
     'ChangeListIndexes'
