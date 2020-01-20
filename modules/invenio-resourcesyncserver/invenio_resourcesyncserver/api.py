@@ -526,7 +526,7 @@ class ChangeListHandler(object):
             if old_obj:
                 try:
                     with db.session.begin_nested():
-                        old_obj.status = self.status or old_obj.status
+                        old_obj.status = self.status
                         old_obj.repository_id = self.repository_id or \
                             old_obj.repository_id
                         old_obj.change_dump_manifest = \
@@ -541,11 +541,9 @@ class ChangeListHandler(object):
                             self.interval_by_date \
                             or old_obj.interval_by_date
                         old_obj.url_path = self.url_path or old_obj.url_path
-                        if not old_obj.status and self.status:
-                            old_obj.publish_date = str(
-                                datetime.datetime.utcnow().replace(
-                                    tzinfo=datetime.timezone.utc
-                                ).isoformat())
+                        old_obj.publish_date = \
+                            self.publish_date \
+                            or old_obj.publish_date
                         db.session.merge(old_obj)
                     db.session.commit()
                     return self
@@ -833,7 +831,7 @@ class ChangeListHandler(object):
             'created': self.created if self.created else None,
             'updated': self.updated if self.updated else None,
             'repository_name': self.index.index_name,
-            'publist_date': str(self.publish_date),
+            'publish_date': str(self.publish_date),
             'interval_by_date': self.interval_by_date
         })
 
@@ -1074,7 +1072,7 @@ class ChangeListHandler(object):
     def _next_change(self, data, changes):
         """
         Get change list xml.
-        
+
         :param data     :
         :param changes  :
         :return: Updated Change List info
@@ -1089,7 +1087,7 @@ class ChangeListHandler(object):
     def _get_record_changes(self, from_date):
         """
         Get change list xml.
-        
+
         :param data     :
         :param changes  :
         :return: Updated Change List info
