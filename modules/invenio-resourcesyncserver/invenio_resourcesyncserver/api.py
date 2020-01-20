@@ -27,6 +27,7 @@ import shutil
 import sys
 import tempfile
 import traceback
+from datetime import timedelta
 from functools import wraps
 
 from flask import current_app, json, request, send_file
@@ -35,6 +36,7 @@ from resync import Resource, ResourceList
 from resync.change_dump import ChangeDump
 from resync.change_dump_manifest import ChangeDumpManifest
 from resync.change_list import ChangeList
+from resync.list_base_with_index import ListBaseWithIndex
 from resync.resource_dump import ResourceDump
 from resync.resource_dump_manifest import ResourceDumpManifest
 from sqlalchemy.exc import SQLAlchemyError
@@ -43,12 +45,11 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
-from datetime import timedelta
-from resync.list_base_with_index import ListBaseWithIndex
 
+from .config import INVENIO_DATETIME_ISOFORMAT, INVENIO_DELAY_PUBLISHEDDATE, \
+    INVENIO_CAPABILITY_URL
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
-from .config import INVENIO_DATETIME_ISOFORMAT, INVENIO_DELAY_PUBLISHEDDATE
 
 
 class ResourceListHandler(object):
@@ -86,12 +87,14 @@ class ResourceListHandler(object):
         })
 
     @classmethod
-    def create(cls, data={}):
+    def create(cls, data=None):
         """Create the ResourceListIndexes.
 
         :param data: the index information.
         :returns: The :class:`ResourceListIndexes`.
         """
+        if data is None:
+            data = {}
         new_data = dict(**{
             'status': data.get('status', False),
             'repository_id': data.get('repository_id', ''),
@@ -117,13 +120,15 @@ class ResourceListHandler(object):
             db.session.rollback()
             return None
 
-    def update(self, data={}):
+    def update(self, data=None):
         """
         Update the index detail info.
 
         :param data: new Resource info for update.
         :return: Updated Resource info
         """
+        if data is None:
+            data = {}
         try:
             with db.session.begin_nested():
                 resource = self.get_resource(self.id, 'modal')
@@ -295,7 +300,7 @@ class ResourceListHandler(object):
         r = get_items_by_index_tree(self.repository_id)
 
         rl = ResourceList()
-        rl.up = '{}resync/capability.xml'.format(request.url_root)
+        rl.up = INVENIO_CAPABILITY_URL.format(request.url_root)
 
         for item in r:
             if item:
@@ -315,7 +320,7 @@ class ResourceListHandler(object):
             return None
         r = get_items_by_index_tree(self.repository_id)
         rd = ResourceDump()
-        rd.up = '{}resync/capability.xml'.format(request.url_root)
+        rd.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         for item in r:
             if item:
                 id_item = item.get('_source').get('control_number')
@@ -409,11 +414,11 @@ class ResourceListHandler(object):
         item_types_data = {}
         if not self.is_validate(record_id):
             return None
+        # Set export folder
+        export_path = temp_path.name + '/' + datetime.datetime.utcnow() \
+            .strftime(
+            "%Y%m%d%H%M%S")
         try:
-            # Set export folder
-            export_path = temp_path.name + '/' + datetime.datetime.utcnow()\
-                .strftime(
-                "%Y%m%d%H%M%S")
             # Double check for limits
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
@@ -590,7 +595,7 @@ class ChangeListHandler(object):
         """
         from .utils import query_record_changes
         change_list = ChangeList()
-        change_list.up = '{}resync/capability.xml'.format(request.url_root)
+        change_list.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         change_list.index = '{}resync/{}/changelist.xml'.format(
             request.url_root,
             self.repository_id,
@@ -628,11 +633,9 @@ class ChangeListHandler(object):
 
     def get_change_list_index(self):
         """
-        Delete unregister bucket by pid.
+        Get change list by report_id
 
-        Find all bucket have same object version but link with unregister records.
         Arguments:
-            record_uuid     -- record uuid link to checking bucket.
         Returns:
             None.
 
@@ -642,7 +645,7 @@ class ChangeListHandler(object):
         change_list = ListBaseWithIndex(
             capability_name='changelist',
         )
-        change_list.up = '{}resync/capability.xml'.format(request.url_root)
+        change_list.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         published_date = self.publish_date or datetime.datetime.utcnow()
         change_date = published_date
         day_now = datetime.datetime.now()
@@ -654,7 +657,8 @@ class ChangeListHandler(object):
         )
         if INVENIO_DELAY_PUBLISHEDDATE and first_change:
             first_datetime = first_change.get('updated').split('T')[0]
-            change_date = datetime.datetime.strptime(first_datetime, INVENIO_DATETIME_ISOFORMAT)
+            change_date = datetime.datetime.strptime(first_datetime,
+                                                     INVENIO_DATETIME_ISOFORMAT)
 
         while change_date < day_now:
             until = change_date + timedelta(days=self.interval_by_date)
@@ -666,8 +670,10 @@ class ChangeListHandler(object):
                     change_date.strftime(r"%Y%m%d")
                 ),
                 capability='changelist',
-                md_from=str(change_date.replace(tzinfo=datetime.timezone.utc).isoformat()),
-                md_until=str(until.replace(tzinfo=datetime.timezone.utc).isoformat())
+                md_from=str(change_date.replace(tzinfo=datetime.timezone.utc).
+                            isoformat()),
+                md_until=str(until.replace(tzinfo=datetime.timezone.utc).
+                             isoformat())
             )
             change_list.add(change)
             change_date = until
@@ -677,9 +683,7 @@ class ChangeListHandler(object):
         """
         Delete unregister bucket by pid.
 
-        Find all bucket have same object version but link with unregister records.
         Arguments:
-            record_uuid     -- record uuid link to checking bucket.
         Returns:
             None.
 
@@ -689,7 +693,7 @@ class ChangeListHandler(object):
         changedump = ListBaseWithIndex(
             capability_name='changedump',
         )
-        changedump.up = '{}resync/capability.xml'.format(request.url_root)
+        changedump.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         published_date = self.publish_date or datetime.datetime.utcnow()
         change_date = published_date
         day_now = datetime.datetime.now()
@@ -701,7 +705,10 @@ class ChangeListHandler(object):
         )
         if INVENIO_DELAY_PUBLISHEDDATE and first_change:
             first_datetime = first_change.get('updated').split('T')[0]
-            change_date = datetime.datetime.strptime(first_datetime, INVENIO_DATETIME_ISOFORMAT)
+            change_date = datetime.datetime.strptime(
+                first_datetime,
+                INVENIO_DATETIME_ISOFORMAT
+            )
 
         while change_date < day_now:
             until = change_date + timedelta(days=self.interval_by_date)
@@ -713,8 +720,10 @@ class ChangeListHandler(object):
                     change_date.strftime(r"%Y%m%d")
                 ),
                 capability='changedump',
-                md_from=str(change_date.replace(tzinfo=datetime.timezone.utc).isoformat()),
-                md_until=str(until.replace(tzinfo=datetime.timezone.utc).isoformat())
+                md_from=str(change_date.replace(tzinfo=datetime.timezone.utc).
+                            isoformat()),
+                md_until=str(until.replace(tzinfo=datetime.timezone.utc).
+                             isoformat())
             )
             changedump.add(change)
             change_date = until
@@ -1123,44 +1132,45 @@ class ChangeListHandler(object):
         return caplist
 
     def _date_validation(self, date_from: str):
-            """
+        """
         Delete unregister bucket by pid.
 
-        Find all bucket have same object version but link with unregister records.
         Arguments:
             date_from       -- record uuid link to checking bucket.
         Returns:
             from_date in in isoformat or None.
 
         """
-            try:
-                ret = datetime.datetime.strptime(date_from, r"%Y%m%d")
+        try:
+            ret = datetime.datetime.strptime(date_from, r"%Y%m%d")
 
-                if ret > self.publish_date and ret < datetime.datetime.utcnow():
-                    return ret
-            except ValueError:
-                current_app.logger.debug("Incorrect data format, should be YYYYMMDD")
-            return None
+            if self.publish_date < ret < datetime.datetime.utcnow():
+                return ret
+        except ValueError:
+            current_app.logger.debug("Incorrect datetime format, should be "
+                                     "YYYYMMDD")
+        return None
 
     def _next_change(self, data, changes):
         """
         Get change list xml.
-        
+
         :param data     :
         :param changes  :
         :return: Updated Change List info
         """
         for change in changes:
-            if data.get('record_id') == change.get('record_id'):
-                if data.get('record_version') + 1 == change.get('record_version'):
-                    return change
+            if data.get('record_id') == change.get('record_id') and \
+                data.get('record_version') + 1 == \
+                    change.get('record_version'):
+                return change
 
         return None
 
     def _get_record_changes_with_interval(self, from_date):
         """
         Get change list xml.
-        
+
         :param data     :
         :param changes  :
         :return: Updated Change List info
@@ -1184,7 +1194,7 @@ class ChangeListHandler(object):
     def _get_first_change(self, repo_id, from_date):
         """
         Get change list xml.
-        
+
         :param repo_id  :
         :param from_date:
         :return: Updated Change List info
@@ -1198,12 +1208,16 @@ class ChangeListHandler(object):
             _from,
             _until
         )
-        return record_changes[0]
+
+        if record_changes:
+            return record_changes[0]
+        else:
+            return None
 
     def _get_record_changes(self, repo_id, from_date, until_date):
         """
         Get change list xml.
-        
+
         :param data     :
         :param changes  :
         :return: Updated Change List info

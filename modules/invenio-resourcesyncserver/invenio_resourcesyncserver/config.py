@@ -32,54 +32,5 @@ INVENIO_DATETIME_ISOFORMAT = r"%Y-%m-%d"
 INVENIO_DELAY_PUBLISHEDDATE = False
 """Delay published to first change date."""
 
-DATA_FAKE = [
-    {
-        'record_id': 1,
-        'version_id': 1,
-        'state': 'created',
-        'created': '2020-01-10T06:10:54.444843Z',
-        'updated': '2020-01-14T06:10:54.444843Z'
-    },
-    {
-        'record_id': 2,
-        'version_id': 1,
-        'state': 'created',
-        'created': '2020-01-11T06:10:54.444843Z',
-        'updated': '2020-01-14T06:10:54.444843Z'
-    },
-    {
-        'record_id': 2,
-        'version_id': 2,
-        'state': 'updated',
-        'created': '2020-01-12T06:10:54.444843Z',
-        'updated': '2020-01-14T06:10:54.444843Z'
-    },
-    {
-        'record_id': 2,
-        'version_id': 3,
-        'state': 'updated',
-        'created': '2020-01-13T06:10:54.444843Z',
-        'updated': '2020-01-14T06:10:54.444843Z'
-    },
-    {
-        'record_id': 3,
-        'version_id': 1,
-        'state': 'created',
-        'created': '2020-01-14T06:10:54.444843Z',
-        'updated': '2020-01-15T06:10:54.444843Z'
-    },
-    {
-        'record_id': 4,
-        'version_id': 1,
-        'state': 'created',
-        'created': '2020-01-15T06:10:54.444843Z',
-        'updated': '2020-01-16T06:10:54.444843Z'
-    },
-    {
-        'record_id': 4,
-        'version_id': 2,
-        'state': 'updated',
-        'created': '2020-01-17T06:10:54.444843Z',
-        'updated': '2020-01-18T06:10:54.444843Z'
-    }
-]
+INVENIO_CAPABILITY_URL = "{}resync/capability.xml"
+"""Delay published to first change date."""
