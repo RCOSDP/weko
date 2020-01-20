@@ -41,13 +41,18 @@ def get_items_by_index_tree(index_tree_id):
     return rd.get('hits').get('hits')
 
 
-def get_item_changes_by_index(index_tree_id):
+def get_item_changes_by_index(index_tree_id, date_from, date_until):
     """Get tree items."""
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(
         version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    search_instance = item_changes_search_factory(search=records_search, index_id=index_tree_id)
+    search_instance = item_changes_search_factory(
+        search=records_search,
+        index_id=index_tree_id,
+        date_from=date_from,
+        date_until=date_until
+    )
     search_result = search_instance.execute()
     rd = search_result.to_dict()
 
@@ -158,7 +163,7 @@ def item_path_search_factory(search, index_id=None):
     return search
 
 
-def item_changes_search_factory(search, index_id=None):
+def item_changes_search_factory(search, index_id=None, date_from="now/d", date_until="now/d"):
     """
     Parse query using Weko-Query-Parser.
 
@@ -166,14 +171,14 @@ def item_changes_search_factory(search, index_id=None):
     :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
-    def _get_index_search_query():
+    def _get_index_search_query(_date_from: str, _date_until: str) -> dict:
         query_q = {
             "from": "0",
             "size": "10000",
             "_source": {
                 "excludes": [
-                "content",
-                "_item_metadata"
+                    "content",
+                    "_item_metadata"
                 ]
             },
             "query": {
@@ -198,7 +203,7 @@ def item_changes_search_factory(search, index_id=None):
             },
             "sort": {
                 "_updated": {
-                "order": "asc"
+                    "order": "asc"
                 }
             },
             "post_filter": {
@@ -234,6 +239,14 @@ def item_changes_search_factory(search, index_id=None):
                         "path": list_path
                     }
                 }
+                post_filter['bool']['must'].append({
+                    "range": {
+                        "_updated": {
+                            "lte": _date_until,
+                            "gte": _date_from
+                        }
+                    }
+                })
             # create search query
             if q:
                 try:
@@ -245,7 +258,7 @@ def item_changes_search_factory(search, index_id=None):
             return query_q
 
     # create a index search query
-    query_q = _get_index_search_query()
+    query_q = _get_index_search_query(date_from, date_until)
 
     try:
         search.update_from_dict(query_q)

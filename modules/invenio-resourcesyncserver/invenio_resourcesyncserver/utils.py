@@ -85,7 +85,7 @@ def render_well_know_resourcesync():
     return cap.as_xml()
 
 
-def get_record_changes(repository_id):
+def get_record_changes(repository_id, date_from, date_until):
     """
     Delete unregister bucket by pid.
 
@@ -97,7 +97,7 @@ def get_record_changes(repository_id):
 
     """
     record_changes = []
-    hits = get_item_changes_by_index(repository_id)
+    hits = get_item_changes_by_index(repository_id, date_from, date_until)
     for hit in hits:
         _source = hit.get("_source")
         result = {
