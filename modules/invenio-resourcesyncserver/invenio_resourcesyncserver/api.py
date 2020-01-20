@@ -578,7 +578,7 @@ class ChangeListHandler(object):
                 db.session.rollback()
                 return None
 
-    def get_change_list_xml(self):
+    def get_change_list_content_xml(self, from_date):
         """
         Get change list xml.
 
@@ -622,6 +622,42 @@ class ChangeListHandler(object):
             )
             change_list.add(rc)
         return change_list.as_xml()
+
+    def get_change_list_index(self):
+        """Get list change list index."""
+        from datetime import timedelta
+        # if self.validate():
+        #     return None
+        change_list = ChangeList()
+        change_list.up = '{}resync/capability.xml'.format(request.url_root)
+        publish_date = self.publish_date or datetime.datetime.utcnow()
+        date_i = datetime.datetime(
+            year=publish_date.year,
+            month=publish_date.month,
+            day=publish_date.day
+        )
+        date_i = date_i - timedelta(days=self.interval_by_date*30)
+        current_app.logger.debug("=======================")
+        current_app.logger.debug(date_i)
+        day_now = datetime.datetime.now()
+        while date_i < day_now:
+            re = Resource(
+                '{}/{}/changelist.xml'.format(
+                    self.url_path,
+                    date_i.strftime("%Y%m%d")
+                ),
+                capability='changelist')
+            re.md_from(str(date_i.replace(
+                    tzinfo=datetime.timezone.utc
+                ).isoformat()))
+            until = date_i + timedelta(days=self.interval_by_date)
+            re.md_until(str(until.replace(
+                tzinfo=datetime.timezone.utc
+            ).isoformat()))
+            change_list.add(re)
+            date_i = until
+        return change_list.as_xml()
+
 
     def get_change_dump_xml(self):
         """
@@ -682,6 +718,12 @@ class ChangeListHandler(object):
                 rc.ln.append(ln)
             change_dump.add(rc)
         return change_dump.as_xml()
+
+    def validate(self):
+        """Validate."""
+        if not self.status or not self.index.public_state:
+            return None
+        return True
 
     def get_change_dump_manifest_xml(self, record_id):
         """Get change dump manifest xml.
@@ -1021,7 +1063,7 @@ class ChangeListHandler(object):
         caplist = []
         for change in list_change:
             caplist.append(Resource(
-                '{}/changelist.xml'.format(change.url_path),
+                '{}/changelist'.format(change.url_path),
                 capability='changelist'))
             caplist.append(Resource(
                 '{}/changedump.xml'.format(change.url_path),

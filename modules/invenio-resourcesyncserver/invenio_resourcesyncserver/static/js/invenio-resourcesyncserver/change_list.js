@@ -247,10 +247,10 @@ class ListResourceComponent extends React.Component {
                     </td>
                     <td>
                       <a
-                        href={item.url_path + "/changelist.xml"}
+                        href={item.url_path + "/changelist"}
                         target="_blank"
                       >
-                        {item.url_path + "/changelist.xml"}
+                        {item.url_path + "/changelist"}
                       </a>
                     </td>
                     <td>
@@ -533,7 +533,7 @@ class CreateResourceComponent extends React.Component {
               type="text"
               className="form-control"
               disabled
-              value={state.url_path && state.url_path + "/changelist.xml"}
+              value={state.url_path && state.url_path + "/changelist"}
             ></input>
           </div>
         </div>
