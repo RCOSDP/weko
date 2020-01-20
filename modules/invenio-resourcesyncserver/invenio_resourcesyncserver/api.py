@@ -1108,12 +1108,13 @@ class ChangeListHandler(object):
         list_change = cls.get_all()
         caplist = []
         for change in list_change:
-            caplist.append(Resource(
-                '{}/changelist.xml'.format(change.url_path),
-                capability='changelist'))
-            caplist.append(Resource(
-                '{}/changedump.xml'.format(change.url_path),
-                capability='changedump'))
+            if change._validation():
+                caplist.append(Resource(
+                    '{}/changelist.xml'.format(change.url_path),
+                    capability='changelist'))
+                caplist.append(Resource(
+                    '{}/changedump.xml'.format(change.url_path),
+                    capability='changedump'))
         return caplist
 
     def _date_validation(self, date_from: str):
