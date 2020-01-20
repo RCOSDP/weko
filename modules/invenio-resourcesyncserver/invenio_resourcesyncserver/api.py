@@ -600,7 +600,9 @@ class ChangeListHandler(object):
         record_changes = self._get_record_changes_with_interval(from_date)
 
         for data in record_changes:
-            if self._next_change(data, record_changes):
+            if self._next_change(data, record_changes) and data.get(
+                'status'
+            ) != 'deleted':
                 loc = '{}records/{}'.format(
                     request.url_root,
                     '{}.{}'.format(
