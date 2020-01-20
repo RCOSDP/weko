@@ -24,8 +24,8 @@ import json
 
 from flask import current_app, request
 from invenio_records_rest.errors import InvalidQueryRESTError
-from weko_index_tree.api import Indexes
 from invenio_search import RecordsSearch
+from weko_index_tree.api import Indexes
 
 
 def get_items_by_index_tree(index_tree_id):

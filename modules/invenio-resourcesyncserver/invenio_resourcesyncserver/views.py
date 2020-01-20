@@ -16,7 +16,7 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, Response, abort, redirect, request
 from flask_babelex import gettext as _
 
-from .api import ResourceListHandler, ChangeListHandler
+from .api import ChangeListHandler, ResourceListHandler
 from .utils import render_capability_xml, render_well_know_resourcesync
 
 blueprint = Blueprint(
