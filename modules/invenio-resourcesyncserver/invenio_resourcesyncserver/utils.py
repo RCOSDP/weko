@@ -20,26 +20,12 @@
 
 """Utilities for convert response json."""
 
-import json
-import os
-import shutil
-import sys
-import tempfile
-import traceback
-from datetime import datetime
-from functools import wraps
-
 from flask import abort, request, send_file
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from resync import Resource
-from resync.capability_list import CapabilityList
-from weko_deposit.api import WekoRecord
-from weko_index_tree.api import Indexes
-from weko_items_ui.utils import make_stats_tsv, package_export_file
-from weko_records.api import ItemTypes
-from weko_records_ui.permissions import check_file_download_permission
 
-from .api import ChangeListHandler, ResourceListHandler
+from .api import ResourceListHandler, ChangeListHandler
+from resync.list_base_with_index import ListBaseWithIndex
+from resync import Resource, CapabilityList
 from .query import get_item_changes_by_index
 
 
@@ -69,7 +55,7 @@ def render_capability_xml():
 
 def render_well_know_resourcesync():
     """Generate capability xml."""
-    cap = CapabilityList(
+    cap = ListBaseWithIndex(
         capability_name='description',
         ln=[
             {

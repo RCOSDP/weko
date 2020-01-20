@@ -83,13 +83,25 @@ def resource_dump_manifest(index_id, record_id, date):
     )
 
 
-@blueprint.route("/resync/<index_id>/changelist.xml")
-def change_list(index_id):
+@blueprint.route("/resync/<index_id>/<from_date>/changelist.xml")
+def change_list(index_id, from_date):
     """Render a basic view."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
     if not cl or not cl.status:
         abort(404)
-    r = cl.get_change_list_xml()
+    r = cl.get_change_list_content_xml(from_date)
+    if r is None:
+        abort(404)
+    return Response(r, mimetype='application/xml')
+
+
+@blueprint.route("/resync/<index_id>/changelist")
+def change_list_index(index_id):
+    """Render a basic view."""
+    cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
+    if not cl:
+        abort(404)
+    r = cl.get_change_list_index()
     if r is None:
         abort(404)
     return Response(r, mimetype='application/xml')
@@ -129,7 +141,7 @@ def change_dump_content(index_id, record_id):
 
 
 @blueprint.route("/well_know_resourcesync")
-def well_know_resourcesync(index_id, record_id):
+def well_know_resourcesync():
     """Render a basic view."""
     return Response(
         render_well_know_resourcesync(),
