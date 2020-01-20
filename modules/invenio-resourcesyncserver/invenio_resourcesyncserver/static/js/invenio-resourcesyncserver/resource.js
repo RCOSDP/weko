@@ -519,7 +519,11 @@ class EditResourceComponent extends React.Component {
       {
         ...state,
         [name]: value
-      },
+      },() => {
+        if (name === "repository_id") {
+          this.handleChangeURL();
+        }
+      }
     );
   }
 
