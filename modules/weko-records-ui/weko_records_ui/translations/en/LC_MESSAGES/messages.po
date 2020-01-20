@@ -714,3 +714,6 @@ msgstr ""
 
 msgid "Stop"
 msgstr ""
+
+msgid "Position(Others)"
+msgstr ""

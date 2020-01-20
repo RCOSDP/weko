@@ -700,3 +700,6 @@ msgstr "データ名"
 
 msgid "Stop"
 msgstr "終了"
+
+msgid "Position(Others)"
+msgstr "役職（その他）"
