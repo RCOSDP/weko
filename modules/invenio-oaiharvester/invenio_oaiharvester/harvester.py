@@ -22,7 +22,7 @@
 import re
 from collections import OrderedDict
 from functools import partial
-from flask import current_app
+from json import dumps, loads
 
 import dateutil
 import requests
@@ -32,8 +32,7 @@ from invenio_db import db
 from lxml import etree
 from weko_deposit.api import WekoDeposit
 from weko_records.models import ItemType
-from json import loads, dumps
-from collections import OrderedDict
+
 from .models import HarvestSettings
 
 DEFAULT_FIELD = [
@@ -825,59 +824,110 @@ def add_titlStmt_ddi(schema, res, list_stdyDscr):
                     add_titlStmt_ddi(schema, res, v)
 
 
-def add_title_ddi(schema, res, titl):
-    title = 'Title'
-    root_key = map_field(schema).get(title)
-    # if not root_key:
-    #     return
-    res[root_key] = []
-    # item = {}
-    title_sub = map_field(schema['properties'][root_key]['items'])[title]
-    # language = map_field(schema['properties'][root_key]['items'])['Language']
-    # for k,v in titl.items():
-    #     if k == '@xml:lang':
-    #         item[language] = v
-    #     elif k == '#text':
-    #         item[title] = v
-    item = add_medium_ddi(schema, titl, title)
-
-    res[root_key].append(item)
-    res['title'] = res[root_key][0][title_sub]
+def add_serStmt_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_serStmt_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'serStmt':
+                    for k1, v1 in v.items():
+                        if k1 == 'serName':
+                            add_relation_ddi(schema, res, k1, v1)
+                else:
+                    add_serStmt_ddi(schema, res, v)
 
 
-def add_alternative_title_ddi(schema, res, altTitl):
-    alternative_title = 'Alternative Title'
-    root_key = map_field(schema).get(alternative_title)
-    # if not root_key:
-    #     return
-    res[root_key] = []
-    # item = {}
-    # title = map_field(schema['properties'][root_key]['items'])['Alternative Title']
-    # language = map_field(schema['properties'][root_key]['items'])['Language']
-    # for k,v in altTitl.items():
-    #     if k == '@xml:lang':
-    #         item[language] = v
-    #     elif k == '#text':
-    #         item[title] = v
-    item = add_medium_ddi(schema, altTitl, alternative_title)
-    res[root_key].append(item)
+def get_relation_type_ddi(item, relation_type, key):
+    """Add RelationType to item"""
+    if key == 'serName':
+        item[relation_type] = 'isPartOf'
+    elif key == 'relPubl':
+        item[relation_type] = 'isReferencedBy'
+    elif key == 'relStdy':
+        item[relation_type] = 'isSupplementedBy'
 
 
-def add_medium_ddi(schema, altTitl, key):
-    root_key = map_field(schema).get(key)
+def add_relation_ddi(schema, res, key, value):
+    """Convert Relation to item metadata."""
+    root_key = map_field(schema).get('Relation')
     if not root_key:
         return
-    # res[root_key] = []
+    item_schema = schema['properties'][root_key]['items']
+    relation_type = map_field(item_schema)['Relation Type']
+    related_title_parent = map_field(item_schema)['Related Title']
+    related_title_child = \
+        map_field(item_schema['properties'][related_title_parent]['items'])[
+                'Related Title']
+    related_iden_parent = map_field(item_schema)['Related Identifier']
+    related_iden_child = \
+        map_field(item_schema['properties'][related_iden_parent]['items'])[
+            'Related Identifier']
     item = {}
-    title = map_field(schema['properties'][root_key]['items'])[key]
+    get_relation_type_ddi(item, relation_type, key)
+    if isinstance(value, OrderedDict):
+        for k, v in value.items():
+            if k == '@ID':
+                item[related_iden_parent] = []
+                item[related_iden_parent].append({related_iden_child: v})
+            elif k == '#text':
+                item[related_title_parent] = []
+                item[related_title_parent].append({related_title_child: v})
+    elif isinstance(value, str):
+        item[related_title_parent] = []
+        item[related_title_parent].append({related_title_child: value})
+    elif isinstance(value, list):
+        for i in value:
+            add_relation_ddi(schema, res, key, i)
+        return
+    if res.get(root_key) is None:
+        res[root_key] = []
+        res[root_key].append(item)
+    else:
+        res[root_key].append(item)
+
+
+def add_title_ddi(schema, res, value):
+    """Convert Title to item metadata."""
+    item_name = 'Title'
+    add_text_language_ddi(schema, res, value, item_name)
+
+
+def add_alternative_title_ddi(schema, res, value):
+    """Convert Alternative Title to item metadata."""
+    item_name = 'Alternative Title'
+    add_text_language_ddi(schema, res, value, item_name)
+
+
+def add_text_language_ddi(schema, res, value, item_name):
+    root_key = map_field(schema).get(item_name)
+    if not root_key:
+        return
+    text_item = map_field(schema['properties'][root_key]['items'])[item_name]
     language = map_field(schema['properties'][root_key]['items']).get(
         'Language')
-    for k, v in altTitl.items():
-        if k == '@xml:lang':
-            item[language] = v
-        elif k == '#text':
-            item[title] = v
-    return item
+    item = {}
+    if isinstance(value, OrderedDict):
+        for k, v in value.items():
+            if k == '#text':
+                item[text_item] = v
+            elif k == '@xml:lang' and language:
+                item[language] = v
+    elif isinstance(value, str):
+        item[text_item] = value
+    elif isinstance(value, list):
+        for i in value:
+            add_text_language_ddi(schema, res, i, item_name)
+        return
+    if res.get(root_key) is None:
+        res[root_key] = []
+        res[root_key].append(item)
+    else:
+        res[root_key].append(item)
+    if item_name == 'Title':
+        res['title'] = res[root_key][0][text_item]
 
 
 def add_rspStmt_ddi(schema, res, list_stdyDscr):
@@ -896,7 +946,8 @@ def add_rspStmt_ddi(schema, res, list_stdyDscr):
                     add_rspStmt_ddi(schema, res, v)
 
 
-def add_creator_ddi(schema, res, authEnty):
+def add_creator_ddi(schema, res, value):
+    """Convert Creator to item metadata."""
     root_key = map_field(schema).get('Creator')
     if not root_key:
         return
@@ -908,8 +959,8 @@ def add_creator_ddi(schema, res, authEnty):
         'Creator Name Identifier']
     creator_name_parent = map_field(item_schema)['Creator Name']
     creator_name_child = \
-    map_field(item_schema['properties'][creator_name_parent]['items'])[
-        'Creator Name']
+        map_field(item_schema['properties'][creator_name_parent]['items'])[
+            'Creator Name']
     affiliation = map_field(item_schema)['Affiliation']
     item_schema_affiliation = item_schema['properties'][affiliation]['items']
     affiliation_name_parent = map_field(item_schema_affiliation)[
@@ -917,22 +968,33 @@ def add_creator_ddi(schema, res, authEnty):
     affiliation_name_child = map_field(
         item_schema_affiliation['properties'][affiliation_name_parent][
             'items'])['Affiliation Name']
-    res[root_key] = []
     item = {}
-    for k, v in authEnty.items():
-        if k == '#text':
-            item[creator_name_parent] = {}
-            item[creator_name_parent][creator_name_child] = v
-        elif k == '@ID':
-            item[creator_name_identifier_parent] = {}
-            item[creator_name_identifier_parent][
-                creator_name_identifier_child] = v
-        elif k == '@affiliation':
-            item[affiliation] = {}
-            item[affiliation][affiliation_name_parent] = {}
-            item[affiliation][affiliation_name_parent][
-                affiliation_name_child] = v
-    res[root_key].append(item)
+    if isinstance(value, OrderedDict):
+        for k, v in value.items():
+            if k == '#text':
+                item[creator_name_parent] = []
+                item[creator_name_parent].append({creator_name_child: v})
+            elif k == '@ID':
+                item[creator_name_identifier_parent] = []
+                item[creator_name_identifier_parent].append({
+                    creator_name_identifier_child: v})
+            elif k == '@affiliation':
+                item[affiliation] = []
+                item[affiliation].append({affiliation_name_parent: []})
+                item[affiliation][0][affiliation_name_parent].append({
+                    affiliation_name_child: v})
+    elif isinstance(value, str):
+        item[creator_name_parent] = []
+        item[creator_name_parent].append({creator_name_child: value})
+    elif isinstance(value, list):
+        for i in value:
+            add_creator_ddi(schema, res, i)
+        return
+    if res.get(root_key) is None:
+        res[root_key] = []
+        res[root_key].append(item)
+    else:
+        res[root_key].append(item)
 
 
 def add_prodStmt_ddi(schema, res, list_stdyDscr):
@@ -952,22 +1014,21 @@ def add_prodStmt_ddi(schema, res, list_stdyDscr):
                         elif k1 == 'prodDate':
                             add_date_ddi(schema, res, v1)
                         elif k1 == 'fundAg':
-                            add_funderName_ddi(schema, res, v1)
+                            add_fundingReference_ddi(schema, res, v1, k1)
                         elif k1 == 'grantNo':
-                            add_awardNumber_ddi(schema, res, v1)
+                            add_fundingReference_ddi(schema, res, v1, k1)
                 else:
                     add_prodStmt_ddi(schema, res, v)
 
 
-def add_publisher_ddi(schema, res, producer):
-    publisher = 'Publisher'
-    root_key = map_field(schema).get(publisher)
-    res[root_key] = []
-    item = add_medium_ddi(schema, producer, publisher)
-    res[root_key].append(item)
+def add_publisher_ddi(schema, res, value):
+    """Convert Publisher to item metadata."""
+    item_name = 'Publisher'
+    add_text_language_ddi(schema, res, value, item_name)
 
 
-def add_rights_ddi(schema, res, rights):
+def add_rights_ddi(schema, res, value):
+    """Convert Rights to item metadata."""
     root_key = map_field(schema).get('Rights')
     if not root_key:
         return
@@ -975,56 +1036,351 @@ def add_rights_ddi(schema, res, rights):
     rights_parent = map_field(item_chema)['Rights']
     rights_child = map_field(item_chema['properties'][rights_parent]['items'])[
         'Rights']
-    res[root_key] = []
     item = {}
-    for k, v in rights.items():
-        if k == '#text':
-            item[rights_parent] = {}
-            item[rights_parent][rights_child] = v
-    res[root_key].append(item)
-
-
-def add_date_ddi(schema, res, prodDate):
-    root_key = map_field(schema).get('Date')
-    if not root_key:
+    if isinstance(value, list):
+        for right in value:
+            add_rights_ddi(schema, res, right)
         return
-    item_chema = schema['properties'][root_key]['items']
-    date = map_field(item_chema)['Date']
-    res[root_key] = []
-    item = {}
-    if prodDate:
-        item[date] = prodDate
-    res[root_key].append(item)
+    elif isinstance(value, OrderedDict):
+        for k, v in value.items():
+            if k == '#text':
+                item[rights_parent] = []
+                item[rights_parent].append({rights_child: v})
+    elif isinstance(value, str):
+        item[rights_parent] = []
+        item[rights_parent].append({rights_child: value})
+    if res.get(root_key) is None:
+        res[root_key] = []
+        res[root_key].append(item)
+    else:
+        res[root_key].append(item)
 
 
-def add_funderName_ddi(schema, res, fundAg):
+def add_date_ddi(schema, res, value):
+    """Convert Date to item metadata."""
+    item_name = 'Date'
+    add_text_language_ddi(schema, res, value, item_name)
+
+
+def add_fundingReference_ddi(schema, res, value, key):
+    """Convert Funding Reference to item metadata."""
     root_key = map_field(schema).get('Funding Reference')
     if not root_key:
         return
     item_schema_funder = schema['properties'][root_key]['items']
     funder_name_parent = map_field(item_schema_funder)['Funder Name']
     funder_name_child = \
-    map_field(item_schema_funder['properties'][funder_name_parent]['items'])[
-        'Funder Name']
+        map_field(item_schema_funder['properties'][funder_name_parent][
+            'items'])['Funder Name']
     funder_identifier_parent = map_field(item_schema_funder)[
         'Funder Identifier']
     funder_identifier_child = map_field(
         item_schema_funder['properties'][funder_identifier_parent]['items'])[
         'Funder Identifier']
-    res[root_key] = []
+    award_number_parent = map_field(item_schema_funder)['Award Number']
+    award_number_child = \
+        map_field(item_schema_funder['properties'][award_number_parent][
+            'items'])['Award Number']
     item = {}
-    for k, v in fundAg.items():
-        if k == '#text':
-            item[funder_name_parent] = {}
-            item[funder_name_parent][funder_name_child] = v
-        if k == '@ID':
-            item[funder_identifier_parent] = {}
-            item[funder_identifier_parent][funder_identifier_child] = v
-    res[root_key].append(item)
+    if key == 'fundAg':
+        if isinstance(value, OrderedDict):
+            for k, v in value.items():
+                if k == '#text':
+                    item[funder_name_parent] = []
+                    item[funder_name_parent].append({funder_name_child: v})
+                if k == '@ID':
+                    item[funder_identifier_parent] = []
+                    item[funder_identifier_parent].append(
+                        {funder_identifier_child: v})
+        elif isinstance(value, str):
+            item[funder_name_parent] = []
+            item[funder_name_parent].append({funder_name_child: value})
+        elif isinstance(value, list):
+            for i in value:
+                add_fundingReference_ddi(schema, res, i, key)
+            return
+        if res.get(root_key) is None:
+            res[root_key] = []
+            res[root_key].append(item)
+        else:
+            res[root_key].append(item)
+    elif key == 'grantNo':
+        if isinstance(value, OrderedDict):
+            for k, v in value.items():
+                if k == '#text':
+                    item[award_number_parent] = []
+                    item[award_number_parent].append({award_number_child: v})
+        elif isinstance(value, str):
+            item[award_number_parent] = []
+            item[award_number_parent].append({award_number_child: value})
+        elif isinstance(value, list):
+            for i in value:
+                add_fundingReference_ddi(schema, res, i, key)
+            return
+        if res.get(root_key) is None:
+            res[root_key] = []
+            res[root_key].append(item)
+        else:
+            if len(res[root_key]):
+                for i in range(len(res[root_key])):
+                    if res[root_key][i].get(award_number_parent) is None\
+                            and item.get(award_number_parent):
+                        res[root_key][i].update(item)
+                        break
 
 
-def add_awardNumber_ddi(schema, res, grantNo):
-    pass
+def add_setAvail_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_setAvail_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'setAvail':
+                    for k1, v1 in v.items():
+                        if k1 == 'accsPlac':
+                            add_file_ddi(schema, res, v1)
+                else:
+                    add_setAvail_ddi(schema, res, v)
+
+
+def add_file_ddi(schema, res, value):
+    """Convert File to item metadata."""
+    root_key = map_field(schema).get('File')
+    item_schema_file = schema['properties'][root_key]['items']
+    uri_parent = map_field(item_schema_file)['URI']
+    uri_child = map_field(item_schema_file['properties'][uri_parent]['items'])[
+        'URI']
+    item = {}
+    if isinstance(value, OrderedDict):
+        for k, v in value.items():
+            if k == '#text':
+                item[uri_parent] = []
+                item[uri_parent].append({uri_child: v})
+    elif isinstance(value, str):
+        item[uri_parent] = []
+        item[uri_parent].append({uri_child: value})
+    elif isinstance(value, list):
+        for i in value:
+            add_file_ddi(schema, res, i)
+        return
+    if res.get(root_key) is None:
+        res[root_key] = []
+        res[root_key].append(item)
+    else:
+        res[root_key].append(item)
+
+
+def add_othrStdyMat_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_othrStdyMat_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'othrStdyMat':
+                    for k1, v1 in v.items():
+                        if k1 == ('relPubl' or 'relStdy'):
+                            add_relation_ddi(schema, res, k1, v1)
+                else:
+                    add_othrStdyMat_ddi(schema, res, v)
+
+
+def add_disStmt_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_disStmt_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'distStmt':
+                    for k1, v1 in v.items():
+                        if k1 == 'distrbtr':
+                            add_contributor_ddi(schema, res, k1, v1)
+                        elif k1 == 'depositr':
+                            add_contributor_ddi(schema, res, k1, v1)
+                else:
+                    add_disStmt_ddi(schema, res, v)
+
+
+def get_contributor_type_ddi(item, con_type, key):
+    """Add ContributorType to item"""
+    if key == 'distrbtr':
+        item[con_type] = 'Distributor'
+    elif key == 'depositr':
+        item[con_type] = 'Other'
+    elif key == 'dataCollector':
+        item[con_type] = 'DataCollector'
+
+
+def add_contributor_ddi(schema, res, key, value):
+    """Convert Contributor to item metadata."""
+    root_key = map_field(schema).get('Contributor')
+    if not root_key:
+        return
+    item_schema = schema['properties'][root_key]['items']
+    con_type = map_field(item_schema)['Contributor Type']
+    con_name_iden_parent = map_field(item_schema)['Contributor Name Identifier']
+    con_name_iden_child = \
+        map_field(item_schema['properties'][con_name_iden_parent]['items'])[
+            'Contributor Name Identifier']
+    con_name_parent = map_field(item_schema)['Contributor Name']
+    con_name_child = \
+        map_field(item_schema['properties'][con_name_parent]['items'])[
+            'Contributor Name']
+    affiliation = map_field(item_schema)['Affiliation']
+    item_schema_affiliation = item_schema['properties'][affiliation]['items']
+    affiliation_name_parent = map_field(item_schema_affiliation)[
+        'Affiliation Name']
+    affiliation_name_child = map_field(
+        item_schema_affiliation['properties'][affiliation_name_parent][
+            'items'])['Affiliation Name']
+    item = {}
+    get_contributor_type_ddi(item, con_type, key)
+    if isinstance(value, OrderedDict):
+        for k, v in value.items():
+            if k == '#text':
+                item[con_name_parent] = []
+                item[con_name_parent].append({con_name_child: v})
+            if k == '@ID':
+                item[con_name_iden_parent] = []
+                item[con_name_iden_parent].append({con_name_iden_child: v})
+            if k == '@affiliation':
+                item[affiliation] = []
+                item[affiliation].append({affiliation_name_parent: []})
+                item[affiliation][0][affiliation_name_parent].append(
+                    {affiliation_name_child: v})
+    elif isinstance(value, str):
+        item[con_name_parent] = []
+        item[con_name_parent].append({con_name_child: value})
+    elif isinstance(value, list):
+        for i in value:
+            add_contributor_ddi(schema, res, key, i)
+        return
+    if res.get(root_key) is None:
+        res[root_key] = []
+        res[root_key].append(item)
+    else:
+        res[root_key].append(item)
+
+
+def add_dataColl_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_dataColl_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'dataColl':
+                    for k1, v1 in v.items():
+                        if k1 == 'dataCollector':
+                            add_contributor_ddi(schema, res, k1, v1)
+                else:
+                    add_dataColl_ddi(schema, res, v)
+
+
+def add_subject_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_subject_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'subject':
+                    for k1, v1 in v.items():
+                        if k1 == 'topcClas':
+                            add_topClass_ddi(schema, res, v1)
+                else:
+                    add_subject_ddi(schema, res, v)
+
+
+def add_topClass_ddi(schema, res, value):
+    """Convert Subject to item metadata."""
+    item_name = 'Subject'
+    add_text_language_ddi(schema, res, value, item_name)
+
+
+def add_stdyInfo_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_stdyInfo_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'stdyInfo':
+                    for k1, v1 in v.items():
+                        if k1 == 'abstract':
+                            add_description_ddi(schema, res, v1)
+                else:
+                    add_stdyInfo_ddi(schema, res, v)
+
+
+def add_description_ddi(schema, res, value):
+    """Convert Description to item metadata."""
+    item_name = 'Description'
+    add_text_language_ddi(schema, res, value, item_name)
+
+
+def add_sumDscr_ddi(schema, res, list_stdyDscr):
+    if isinstance(list_stdyDscr, list):
+        for i in list_stdyDscr:
+            if isinstance(i, OrderedDict):
+                add_sumDscr_ddi(schema, res, i)
+    elif isinstance(list_stdyDscr, OrderedDict):
+        for k, v in list_stdyDscr.items():
+            if isinstance(v, OrderedDict):
+                if k == 'sumDscr':
+                    for k1, v1 in v.items():
+                        if k1 == 'timePrd':
+                            add_temporal_ddi(schema, res, v1)
+                        elif k1 == 'geogCover':
+                            add_geo_location_ddi(schema, res, v1)
+                else:
+                    add_sumDscr_ddi(schema, res, v)
+
+
+def add_geo_location_ddi(schema, res, value):
+    """Convert Geo Location to item metadata."""
+    root_key = map_field(schema).get('Geo Location')
+    if not root_key:
+        return
+    item_schema = schema['properties'][root_key]['items']
+    geo_location_place_parent = map_field(item_schema)['Geo Location Place']
+    geo_location_place_child = \
+        map_field(item_schema['properties'][geo_location_place_parent]
+                  ['items'])['Geo Location Place']
+    item = {}
+    if isinstance(value, OrderedDict):
+        for k, v in value.items():
+            if k == '#text':
+                item[geo_location_place_parent] = []
+                item[geo_location_place_parent].append(
+                    {geo_location_place_child: v})
+    elif isinstance(value, str):
+        item[geo_location_place_parent] = []
+        item[geo_location_place_parent].append(
+            {geo_location_place_child: value})
+    elif isinstance(value, list):
+        for i in value:
+            add_geo_location_ddi(schema, res, i)
+        return
+    if res.get(root_key) is None:
+        res[root_key] = []
+        res[root_key].append(item)
+    else:
+        res[root_key].append(item)
+
+
+def add_temporal_ddi(schema, res, value):
+    """Convert Temporal to item metadata."""
+    item_name = 'Temporal'
+    add_text_language_ddi(schema, res, value, item_name)
 
 
 def add_stdyDscr_ddi(schema, res, list_stdyDscr):
@@ -1033,39 +1389,21 @@ def add_stdyDscr_ddi(schema, res, list_stdyDscr):
     add_titlStmt_ddi(schema, res, list_stdyDscr)
     add_rspStmt_ddi(schema, res, list_stdyDscr)
     add_prodStmt_ddi(schema, res, list_stdyDscr)
-    add_topic_ddi(schema, res, list_stdyDscr)
+    add_setAvail_ddi(schema, res, list_stdyDscr)
+    add_othrStdyMat_ddi(schema, res, list_stdyDscr)
+    add_disStmt_ddi(schema, res, list_stdyDscr)
+    add_dataColl_ddi(schema, res, list_stdyDscr)
+    add_subject_ddi(schema, res, list_stdyDscr)
+    add_stdyInfo_ddi(schema, res, list_stdyDscr)
+    add_sumDscr_ddi(schema, res, list_stdyDscr)
+    add_serStmt_ddi(schema, res, list_stdyDscr)
     add_version_ddi(schema, res, list_stdyDscr)
-    add_summary_ddi(schema, res, list_stdyDscr)
-    add_time_period_ddi(schema, res, list_stdyDscr)
     add_uri_ddi(schema, res, list_stdyDscr)
-    add_geographic_ddi(schema, res, list_stdyDscr)
 
 
-# function by Viet Huynh
 def to_dict(input_ordered_dict):
     """Convert OrderDict to Dict."""
     return loads(dumps(input_ordered_dict))
-
-
-def add_topic_ddi(schema, res, list_stdy_dscr):
-    """Convert Topic to item metadata."""
-    if isinstance(list_stdy_dscr, list):
-        for i in list_stdy_dscr:
-            if isinstance(i, OrderedDict):
-                add_topic_ddi(schema, res, i)
-    elif isinstance(list_stdy_dscr, OrderedDict):
-        for k, v in list_stdy_dscr.items():
-            if isinstance(v, OrderedDict):
-                if k == 'stdyInfo':
-                    for k1, v1 in v.items():
-                        if k1 == 'subject':
-                            for k2, v2 in v1.items():
-                                if k2 == 'topcClas':
-                                    subject = 'Subject'
-                                    root_key = map_field(schema).get(subject)
-                                    res[root_key] = []
-                                    item = add_medium_ddi(schema, v2, subject)
-                                    res[root_key].append(item)
 
 
 def add_version_ddi(schema, res, list_stdy_dscr):
@@ -1092,50 +1430,6 @@ def add_version_ddi(schema, res, list_stdy_dscr):
                     res[root_key].append(item)
 
 
-def add_summary_ddi(schema, res, list_stdy_dscr):
-    """Convert Description to item metadata."""
-    if isinstance(list_stdy_dscr, list):
-        for i in list_stdy_dscr:
-            if isinstance(i, OrderedDict):
-                add_summary_ddi(schema, res, i)
-    elif isinstance(list_stdy_dscr, OrderedDict):
-        data = to_dict(list_stdy_dscr)
-        if data.get("stdyInfo"):
-            stdy_info = data.get("stdyInfo")
-            if stdy_info.get("abstract"):
-                abstract = stdy_info.get("abstract")
-                if abstract:
-                    summary = 'Description'
-                    root_key = map_field(schema).get(summary)
-                    res[root_key] = []
-                    item = add_medium_ddi(schema, abstract, summary)
-                    res[root_key].append(item)
-
-
-def add_time_period_ddi(schema, res, list_stdy_dscr):
-    """Convert Temporal to item metadata."""
-    if isinstance(list_stdy_dscr, list):
-        for i in list_stdy_dscr:
-            if isinstance(i, OrderedDict):
-                add_time_period_ddi(schema, res, i)
-    elif isinstance(list_stdy_dscr, OrderedDict):
-        data = to_dict(list_stdy_dscr)
-        if data.get("stdyInfo"):
-            stdy_info = data.get("stdyInfo")
-            if stdy_info.get("sumDscr"):
-                sum_dscr = stdy_info.get("sumDscr")
-                if sum_dscr.get('timePrd'):
-                    temporal_value = sum_dscr.get('timePrd')
-                    temporal = 'Temporal'
-                    root_key = map_field(schema).get(temporal)
-                    res[root_key] = []
-                    term = dict(**{
-                        "#text": temporal_value
-                    })
-                    item = add_medium_ddi(schema, term, temporal)
-                    res[root_key].append(item)
-
-
 def add_uri_ddi(schema, res, list_stdy_dscr):
     """Convert Identifier to item metadata."""
     if isinstance(list_stdy_dscr, list):
@@ -1156,41 +1450,6 @@ def add_uri_ddi(schema, res, list_stdy_dscr):
                     identifier)
                 item[title] = holdings
                 res[root_key].append(item)
-
-
-def add_geographic_ddi(schema, res, list_stdy_dscr):
-    """Convert Geo Location Place to item metadata."""
-    if isinstance(list_stdy_dscr, list):
-        for i in list_stdy_dscr:
-            if isinstance(i, OrderedDict):
-                add_geographic_ddi(schema, res, i)
-    elif isinstance(list_stdy_dscr, OrderedDict):
-        data = to_dict(list_stdy_dscr)
-        if data.get("stdyInfo"):
-            stdy_info = data.get("stdyInfo")
-            if stdy_info.get("sumDscr"):
-                sum_dscr = stdy_info.get("sumDscr")
-                if sum_dscr.get("geogCover"):
-                    geo_grap = sum_dscr.get("geogCover")
-                    geo_location = 'Geo Location'
-                    geo_location_place = 'Geo Location Place'
-                    root_key = map_field(schema).get(geo_location)
-                    res[root_key] = []
-                    nested_key_1 = map_field(schema['properties'][root_key][
-                        'items']).get(geo_location_place)
-                    nested_key_2 = map_field(schema['properties'][root_key][
-                        'items']['properties'][nested_key_1]['items']).get(
-                        geo_location_place
-                    )
-                    item = dict(**{
-                        nested_key_1: [
-                            {
-                                nested_key_2: geo_grap
-                            }
-                        ]
-                    })
-                    res[root_key].append(item)
-# function by Viet Huynh
 
 
 RESOURCE_TYPE_MAP = {
@@ -1329,10 +1588,12 @@ class DCMapper(BaseMapper):
             'language': [], 'relation': [], 'coverage': []}
         add_funcs = {
             'creator': partial(add_creator_dc, self.itemtype.schema, res),
-            'contributor': partial(add_contributor_dc, self.itemtype.schema, res),
+            'contributor': partial(add_contributor_dc, self.itemtype.schema,
+                                   res),
             'title': partial(add_title_dc, self.itemtype.schema, res),
             'subject': partial(add_subject_dc, self.itemtype.schema, res),
-            'description': partial(add_description_dc, self.itemtype.schema, res),
+            'description': partial(add_description_dc, self.itemtype.schema,
+                                   res),
             'publisher': partial(add_publisher_dc, self.itemtype.schema, res),
             'date': partial(add_date_dc, self.itemtype.schema, res),
             'identifier': partial(add_identifier_dc, self.itemtype.schema, res),
@@ -1364,35 +1625,50 @@ class JPCOARMapper(BaseMapper):
                'pubdate': str(self.datestamp())}
         add_funcs = {
             'dc:title': partial(add_title, self.itemtype.schema, res),
-            'dcterms:alternative': partial(add_alternative, self.itemtype.schema, res),
-            'jpcoar:creator': partial(add_creator_jpcoar, self.itemtype.schema, res),
-            'jpcoar:contributor': partial(add_contributor_jpcoar, self.itemtype.schema, res),
-            'dcterms:accessRights': partial(add_access_rights, self.itemtype.schema, res),
+            'dcterms:alternative': partial(add_alternative,
+                                           self.itemtype.schema, res),
+            'jpcoar:creator': partial(add_creator_jpcoar, self.itemtype.schema,
+                                      res),
+            'jpcoar:contributor': partial(add_contributor_jpcoar,
+                                          self.itemtype.schema, res),
+            'dcterms:accessRights': partial(add_access_rights,
+                                            self.itemtype.schema, res),
             'rioxxterms:apc': partial(add_apc, self.itemtype.schema, res),
             'dc:rights': partial(add_rights, self.itemtype.schema, res),
             #            'jpcoar:rightsHolder' : ,
             'jpcoar:subject': partial(add_subject, self.itemtype.schema, res),
-            'datacite:description': partial(add_description, self.itemtype.schema, res),
+            'datacite:description': partial(add_description,
+                                            self.itemtype.schema, res),
             'dc:publisher': partial(add_publisher, self.itemtype.schema, res),
             'datacite:date': partial(add_date, self.itemtype.schema, res),
             'dc:language': partial(add_language, self.itemtype.schema, res),
             'datacite:version': partial(add_version, self.itemtype.schema, res),
-            'oaire:version': partial(add_version_type, self.itemtype.schema, res),
-            'jpcoar:identifier': partial(add_identifier, self.itemtype.schema, res),
-            'jpcoar:identifierRegistration': partial(add_identifier_registration, self.itemtype.schema, res),
+            'oaire:version': partial(add_version_type, self.itemtype.schema,
+                                     res),
+            'jpcoar:identifier': partial(add_identifier, self.itemtype.schema,
+                                         res),
+            'jpcoar:identifierRegistration': partial(
+                add_identifier_registration, self.itemtype.schema, res),
             #            'jpcoar:relation' : ,
-            'dcterms:temporal': partial(add_temporal, self.itemtype.schema, res),
+            'dcterms:temporal': partial(add_temporal, self.itemtype.schema,
+                                        res),
             #            'datacite:geoLocation' : ,
             #            'jpcoar:fundingReference' : ,
-            'jpcoar:sourceIdentifier': partial(add_source_identifier, self.itemtype.schema, res),
-            'jpcoar:sourceTitle': partial(add_source_title, self.itemtype.schema, res),
+            'jpcoar:sourceIdentifier': partial(add_source_identifier,
+                                               self.itemtype.schema, res),
+            'jpcoar:sourceTitle': partial(add_source_title,
+                                          self.itemtype.schema, res),
             'jpcoar:volume': partial(add_volume, self.itemtype.schema, res),
             'jpcoar:issue': partial(add_issue, self.itemtype.schema, res),
-            'jpcoar:numPages': partial(add_num_pages, self.itemtype.schema, res),
-            'jpcoar:pageStart': partial(add_page_start, self.itemtype.schema, res),
+            'jpcoar:numPages': partial(add_num_pages, self.itemtype.schema,
+                                       res),
+            'jpcoar:pageStart': partial(add_page_start, self.itemtype.schema,
+                                        res),
             'jpcoar:pageEnd': partial(add_page_end, self.itemtype.schema, res),
-            'dcndl:dissertationNumber': partial(add_dissertation_number, self.itemtype.schema, res),
-            'dcndl:dateGranted': partial(add_date_granted, self.itemtype.schema, res),
+            'dcndl:dissertationNumber': partial(add_dissertation_number,
+                                                self.itemtype.schema, res),
+            'dcndl:dateGranted': partial(add_date_granted, self.itemtype.schema,
+                                         res),
             #            'jpcoar:degreeGrantor' : ,
             #            'jpcoar:conference' : ,
             'jpcoar:file': partial(add_file, self.itemtype.schema, res),
@@ -1401,16 +1677,18 @@ class JPCOARMapper(BaseMapper):
             if tag in add_funcs:
                 add_funcs[tag](
                     self.json['record']['metadata']['jpcoar:jpcoar'][tag])
-
         return res
 
 
 class DDIMapper(BaseMapper):
+    """DDIMapper."""
+
     def __init__(self, xml):
         """Init."""
         super().__init__(xml)
 
     def map(self):
+        """Get map."""
         if self.is_deleted():
             return {}
         self.map_itemtype('codeBook')
@@ -1424,7 +1702,4 @@ class DDIMapper(BaseMapper):
             if tag in add_funcs:
                 add_funcs[tag](
                     self.json['record']['metadata']['codeBook'][tag])
-        current_app.logger.info("***************************************")
-        current_app.logger.info(res)
-        current_app.logger.info("***************************************")
         return res
