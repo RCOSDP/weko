@@ -140,4 +140,83 @@ class InstitutionName(db.Model):
         """ Record UI models """
 
 
+class FilePermission(db.Model):
+    """File download permission."""
+
+    __tablename__ = 'file_permission'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    """Id."""
+
+    user_id = db.Column(db.Integer, nullable=False)
+    """User Id."""
+
+    record_id = db.Column(db.Integer, nullable=False)
+    """Record id."""
+
+    file_name = db.Column(db.String(255), nullable=False)
+    """File name."""
+
+    usage_application_activity_id = db.Column(db.String(255), nullable=False)
+    """Usage Application Activity id."""
+
+    status = db.Column(db.Integer, nullable=False)
+    """Status of the permission."""
+    """-1 : Initialized, 0 : Processing, 1: Approved."""
+
+    open_date = db.Column(db.DateTime, nullable=False, default=datetime.now())
+
+    def __init__(self, user_id, record_id, file_name,
+                 usage_application_activity_id, status):
+        """Init."""
+        self.user_id = user_id
+        self.record_id = record_id
+        self.file_name = file_name
+        self.usage_application_activity_id = usage_application_activity_id
+        self.status = status
+
+    @classmethod
+    def find(cls, user_id, record_id, file_name):
+        """Find user 's permission by user_id, record_id, file_name."""
+        permission = db.session.query(cls).filter_by(user_id=user_id,
+                                                     record_id=record_id,
+                                                     file_name=file_name)\
+            .first()
+        return permission
+
+    @classmethod
+    def init_file_permission(cls, user_id, record_id, file_name, activity_id):
+        """Init a file permission with status = Doing."""
+        status_initialized = -1
+        file_permission = FilePermission(user_id, record_id, file_name,
+                                         activity_id, status_initialized)
+        db.session.add(file_permission)
+        db.session.commit()
+        return cls
+
+    @classmethod
+    def update_status(cls, permission, status):
+        """Update a permission 's status."""
+        permission.status = status
+        db.session.merge(permission)
+        db.session.commit()
+        return permission
+
+    @classmethod
+    def update_open_date(cls, permission, open_date):
+        """Update a permission 's open date."""
+        permission.open_date = open_date
+        db.session.merge(permission)
+        db.session.commit()
+        return permission
+
+    @classmethod
+    def find_by_activity(cls, activity_id):
+        """Find user 's permission activity id."""
+        permission = db.session.query(cls).filter_by(
+            usage_application_activity_id=activity_id) \
+            .first()
+        return permission
+
+
 __all__ = ('PDFCoverPageSettings')

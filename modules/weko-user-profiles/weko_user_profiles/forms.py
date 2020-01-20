@@ -104,11 +104,6 @@ class ProfileForm(FlaskForm):
         validators=[DataRequired(message=_('Username not provided.'))],
         filters=[strip_filter], )
 
-    # full_name = StringField(
-    #     # NOTE: Form label
-    #     _('Full name'),
-    #     filters=[strip_filter], )
-
     timezone = SelectField(
         # NOTE: Form label
         _('Timezone'),
@@ -148,6 +143,15 @@ class ProfileForm(FlaskForm):
         ]
     )
 
+    fullname = StringField(
+        # NOTE: Form label
+        _('Fullname'),
+        validators=[
+            DataRequired(message=_('Full name not provided.')),
+            check_length_100_characters
+        ],
+        filters=[strip_filter])
+
     # University / Institution
     university = StringField(
         _('University/Institution'),
@@ -181,7 +185,7 @@ class ProfileForm(FlaskForm):
 
     # Other Position
     otherPosition = StringField(
-        '',
+        _('Position (Others)'),
         validators=[
             check_other_position
         ],

@@ -570,3 +570,109 @@ msgstr "新しいバージョン"
 #: weko_records_ui/templates/weko_records_ui/box/head.html:6
 msgid "of this record available."
 msgstr "があります。"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "User Name"
+msgstr "ユーザ名"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Corresponding Usage Application ID"
+msgstr "対応する利用申請のID"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Annual Report"
+msgstr "年次報告"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Corresponding Output ID"
+msgstr "対応する成果物のID"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Data Type"
+msgstr "データタイプ"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Content File"
+msgstr "コンテンツファイル"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliated Institution"
+msgstr "所属学会"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "User Information"
+msgstr "登録者の情報"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "FullName"
+msgstr "氏名"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Usage location"
+msgstr "利用場所"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Name"
+msgstr "指導教員氏名"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Affiliation"
+msgstr "指導教員所属"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Mail Address"
+msgstr "指導教員メールアドレス"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Phone Number"
+msgstr "指導教員電話番号"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Research Title"
+msgstr "研究題目"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Research Plan"
+msgstr "研究計画"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Name"
+msgstr "保証人氏名"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Affiliation"
+msgstr "保証人所属"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Mail Address"
+msgstr "保証人メールアドレス"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Item Title"
+msgstr "アイテムタイトル"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Position(Other)"
+msgstr "役職（その他）"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliation"
+msgstr "所属"
+
+msgid "PubDate"
+msgstr "公開日"
+
+msgid "life"
+msgstr "ライフ"
+
+msgid "accumulation"
+msgstr "累積"
+
+msgid "combinational_analysis"
+msgstr "組合せ分析"
+
+msgid "perfectures"
+msgstr "都道府県"
+
+msgid "location_information"
+msgstr "地点情報"

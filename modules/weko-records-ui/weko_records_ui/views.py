@@ -30,7 +30,6 @@ from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
-from invenio_files_rest.views import check_permission
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -46,16 +45,20 @@ from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
+from weko_workflow.api import WorkFlow
 
 from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings
 
 from .ipaddr import check_site_license_permission
-from .models import PDFCoverPageSettings
-from .permissions import check_created_id, check_file_download_permission, \
-    check_original_pdf_download_permission
+from .models import FilePermission, PDFCoverPageSettings
+from .permissions import check_content_clickable, check_created_id, \
+    check_file_download_permission, check_original_pdf_download_permission, \
+    check_permission_period, get_correct_usage_workflow, get_permission, \
+    is_open_restricted
 from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_min_price_billing_file_download, get_record_permalink
+    get_min_price_billing_file_download, get_record_permalink, \
+    get_registration_data_type
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -286,6 +289,64 @@ def check_file_permission(record, fjson):
     return check_file_download_permission(record, fjson)
 
 
+@blueprint.app_template_filter('check_file_permission_period')
+def check_file_permission_period(record, fjson):
+    """Check File Download Permission.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    return check_permission_period(get_permission(record, fjson))
+
+
+@blueprint.app_template_filter('get_permission')
+def get_file_permission(record, fjson):
+    """Get File Download Permission.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    return get_permission(record, fjson)
+
+
+@blueprint.app_template_filter('check_content_file_clickable')
+def check_content_file_clickable(record, fjson):
+    """Check If content file is clickable.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    return check_content_clickable(record, fjson)
+
+
+@blueprint.app_template_filter('get_usage_workflow')
+def get_usage_workflow(record):
+    """Get correct usage workflow to redirect user.
+
+    :param record
+    :return: result
+    """
+    data_type = get_registration_data_type(record)
+    return get_correct_usage_workflow(data_type)
+
+
+@blueprint.app_template_filter('get_workflow_detail')
+def get_workflow_detail(workflow_id):
+    """Get workflow detail.
+
+    :param
+    :return: result
+    """
+    workflow_detail = WorkFlow().get_workflow_by_id(workflow_id)
+    if workflow_detail:
+        return workflow_detail
+    else:
+        abort(404)
+
+
 def _get_google_scholar_meta(record):
     target_map = {
         'dc:title': 'citation_title',
@@ -465,7 +526,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             filter_by(is_thumbnail=True).all()
     files = []
     for f in record.files:
-        if check_file_permission(record, f.data):
+        if check_file_permission(record, f.data) or is_open_restricted(f.data):
             files.append(f)
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
@@ -666,4 +727,25 @@ def restore(recid):
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
     except Exception as ex:
         print(str(ex))
+        abort(500)
+
+
+@blueprint.route("/records/permission/<recid>", methods=['POST'])
+@login_required
+def init_permission(recid):
+    """Create file permission in database."""
+    user_id = current_user.get_id()
+    data = request.get_json()
+    file_name = data.get('file_name')
+    activity_id = data.get('activity_id')
+    try:
+        permission = FilePermission.init_file_permission(user_id, recid,
+                                                         file_name,
+                                                         activity_id)
+        if permission:
+            return make_response(
+                'File permission: ' + file_name + 'of record: ' + recid
+                + ' CREATED', 200)
+    except Exception as ex:
+        current_app.logger.debug(ex)
         abort(500)

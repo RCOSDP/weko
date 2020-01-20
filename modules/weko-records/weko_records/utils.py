@@ -619,6 +619,9 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
                             result.append({key: val})
+                        elif isinstance(val, list) and len(
+                                val) > 0 and isinstance(val[0], str):
+                            result.append({key: val})
                         else:
                             if check_has_attribute_value(val):
                                 res = to_sort_dict(val, klst)
@@ -644,6 +647,10 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
                     if val and (isinstance(val, str)
                                 or (key == 'nameIdentifier')):
                         # the last children level
+                        d[item_name] = val
+                    elif isinstance(val, list) and len(val) > 0 and isinstance(
+                            val[0], str):
+                        val = ', '.join(val)
                         d[item_name] = val
                     else:
                         # parents level

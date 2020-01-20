@@ -49,7 +49,7 @@
                     {%- if lst['attribute_value'] is string or lst['attribute_value'] or lst['attribute_value_mlt']|length > 0 -%}
                     <tr>
                       <th scope="row"
-                          colspan="6">{{ lst['attribute_name'] }}</th>
+                          colspan="6">{{ _(lst['attribute_name']) }}</th>
                       <td>
                         <pre class="hide">{{ lst|tojson }}</pre>
                           {% if lst['attribute_value'] is string %}

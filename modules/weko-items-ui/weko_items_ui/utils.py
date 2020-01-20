@@ -23,20 +23,19 @@
 import csv
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
 import traceback
-from collections import OrderedDict
 from datetime import datetime
 from io import StringIO
 
 import bagit
-import numpy
 import redis
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, flash, redirect, request, send_file, \
-    session, url_for
+    url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
@@ -47,8 +46,10 @@ from invenio_search import RecordsSearch
 from jsonschema import ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_index_tree.utils import get_index_id
 from weko_records.api import ItemTypes
+from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_file_download_permission
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
@@ -401,6 +402,9 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     """
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
+
+    # Remove excluded item in json_schema
+    remove_excluded_items_in_json_schema(item_id, json_schema)
 
     data['$schema'] = json_schema.copy()
     validation_data = RecordBase(data)
@@ -834,6 +838,11 @@ def export_items(post_data):
 
     :return: JSON, BIBTEX
     """
+    def check_item_type_name(name):
+        """Check a list of allowed characters in filenames."""
+        new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
+        return new_name
+
     include_contents = True if \
         post_data['export_file_contents_radio'] == 'True' else False
     export_format = post_data['export_format_radio']
@@ -870,12 +879,12 @@ def export_items(post_data):
             item_type_id = exported_item.get('item_type_id')
             item_type = ItemTypes.get_by_id(item_type_id)
             if not item_types_data.get(item_type_id):
-                item_types_data[item_type_id] = {}
-
+                item_type_name = check_item_type_name(
+                    item_type.item_type_name.name)
                 item_types_data[item_type_id] = {
                     'item_type_id': item_type_id,
                     'name': '{}({})'.format(
-                        item_type.item_type_name.name,
+                        item_type_name,
                         item_type_id),
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
@@ -1044,11 +1053,13 @@ def _export_item(record_id,
             # Get files
             for file in record.files:  # TODO: Temporary processing
                 if check_file_download_permission(record, file.info()):
-                    exported_item['files'].append(file.info())
-                    # TODO: Then convert the item into the desired format
-                    if file:
-                        shutil.copy2(file.obj.file.uri,
-                                     tmp_path + '/' + file.obj.basename)
+                    if ('accessrole' in file.info() and file.info()[
+                            'accessrole'] != 'open_restricted'):
+                        exported_item['files'].append(file.info())
+                        # TODO: Then convert the item into the desired format
+                        if file:
+                            shutil.copy2(file.obj.file.uri,
+                                         tmp_path + '/' + file.obj.basename)
 
     return exported_item
 
@@ -1129,3 +1140,225 @@ def to_files_js(record):
             })
 
     return res
+
+
+def update_sub_items_by_user_role(item_type_id, schema_form):
+    """Update sub item by user role.
+
+    @param item_type_id:
+    @param schema_form:
+    @return:
+    """
+    item_type_name = get_item_type_name(item_type_id)
+    excluded_sub_items = get_excluded_sub_items(item_type_name)
+    excluded_forms = []
+    for form in schema_form:
+        if "title_{}".format(form.get('title')).lower() in excluded_sub_items:
+            excluded_forms.append(form)
+        elif form.get('items') and \
+                form['items'][0]['key'].split('.')[1] in excluded_sub_items:
+            excluded_forms.append(form)
+    for item in excluded_forms:
+        schema_form.remove(item)
+
+
+def remove_excluded_items_in_json_schema(item_id, json_schema):
+    """Remove excluded items in json_schema.
+
+    :item_id: object
+    :json_schema: object
+    """
+    # Check role for input(5 item type)
+    item_type_name = get_item_type_name(item_id)
+    excluded_sub_items = get_excluded_sub_items(item_type_name)
+    if len(excluded_sub_items) == 0:
+        return
+    """ Check excluded sub item name which exist in json_schema """
+    """     Case exist => add sub item to array """
+    properties = json_schema.get('properties')
+    removed_json_schema = []
+    if properties:
+        for pro in properties:
+            pro_val = properties.get(pro)
+            sub_pro = pro_val.get('properties')
+            if pro_val and sub_pro:
+                for sub_item in excluded_sub_items:
+                    sub_property = sub_pro.get(sub_item)
+                    if sub_property:
+                        removed_json_schema.append(pro)
+    """ If sub item array have data, we remove sub items im json_schema """
+    if len(removed_json_schema) > 0:
+        for item in removed_json_schema:
+            if properties.get(item):
+                del properties[item]
+
+
+def get_excluded_sub_items(item_type_name):
+    """Get excluded sub items by role.
+
+    :item_type_name: object
+    """
+    usage_application_item_type = current_app.config.get(
+        'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPE')
+    if (not usage_application_item_type or not isinstance(
+            usage_application_item_type, dict)):
+        return []
+    current_user_role = get_current_user_role()
+    item_type_role = []
+    item_type = usage_application_item_type.get(item_type_name.strip())
+    if current_user_role and item_type and item_type.get(
+            current_user_role.name):
+        item_type_role = item_type.get(current_user_role.name)
+    return item_type_role
+
+
+def get_current_user_role():
+    """Get current user roles."""
+    current_user_role = ''
+    for role in current_user.roles:
+        if role in current_app.config['WEKO_USERPROFILES_ROLES']:
+            current_user_role = role
+            break
+    return current_user_role
+
+
+def is_need_to_show_agreement_page(item_type_name):
+    """Check need to show Terms and Conditions or not."""
+    current_user_role = get_current_user_role()
+    general_role = current_app.config['WEKO_USERPROFILES_GENERAL_ROLE']
+    item_type_list = current_app.config[
+        'WEKO_ITEMS_UI_LIST_ITEM_TYPE_NOT_NEED_AGREE']
+    if (current_user_role == general_role
+            and item_type_name in item_type_list):
+        return False
+    return True
+
+
+def update_index_tree_for_record(pid_value, index_tree_id):
+    """Update index tree for record.
+
+    :param index_tree_id:
+    :param pid_value: pid value to get record and WekoDeposit
+    :return:True set successfully otherwise False
+    """
+    list_index = []
+    list_index.append(index_tree_id)
+    data = {"index": list_index}
+    record = WekoRecord.get_record_by_pid(pid_value)
+    deposit = WekoDeposit(record, record.model)
+    # deposit.clear()
+    deposit.update(data)
+    deposit.commit()
+    db.session.commit()
+
+
+def validate_user_mail(email):
+    """Validate user mail.
+
+    @param email:
+    @return:
+    """
+    result = {}
+    try:
+        if email != '':
+            result = {'results': '',
+                      'validation': '',
+                      'error': ''
+                      }
+            user_info = get_user_info_by_email(
+                email)
+            if user_info and user_info.get(
+                    'user_id') is not None:
+                if int(user_info.get('user_id')) == int(current_user.get_id()):
+                    result['validation'] = False
+                    result['error'] = _(
+                        "You cannot specify "
+                        "yourself in approval lists setting.")
+                else:
+                    result['results'] = user_info
+                    result['validation'] = True
+            else:
+                result['validation'] = False
+    except Exception as ex:
+        result['error'] = str(ex)
+
+    return result
+
+
+def update_action_handler(activity_id, action_id, user_id):
+    """Update action handler for each action of activity.
+
+    :param activity_id:
+    :param action_id:
+    :param user_id:
+    :return:
+    """
+    from weko_workflow.models import ActivityAction
+    with db.session.begin_nested():
+        activity_action = ActivityAction.query.filter_by(
+            activity_id=activity_id,
+            action_id=action_id, ).one_or_none()
+        if activity_action:
+            activity_action.action_handler = user_id
+            db.session.merge(activity_action)
+    db.session.commit()
+
+
+def validate_user_mail_and_index(request_data):
+    """Validate user's mail,index tree.
+
+    :param request_data:
+    :return:
+    """
+    users = request_data.get('user_to_check', [])
+    auto_set_index_action = request_data.get('auto_set_index_action', False)
+    activity_id = request_data.get('activity_id')
+    result = {
+        "index": True
+    }
+    try:
+        for user in users:
+            user_obj = request_data.get(user)
+            email = user_obj.get('mail')
+            validation_result = validate_user_mail(email)
+            if validation_result.get('validation') is True:
+                update_action_handler(activity_id, user_obj.get('action_id'),
+                                      validation_result.get('results').get(
+                                          'user_id'))
+            result[user] = validation_result
+        if auto_set_index_action is True:
+            is_existed_valid_index_tree_id = True if \
+                get_index_id(activity_id) else False
+            result['index'] = is_existed_valid_index_tree_id
+    except Exception as ex:
+        import traceback
+        traceback.print_exc()
+        result['error'] = str(ex)
+    return result
+
+
+def recursive_form(schema_form):
+    """
+    Recur the all the child form to set value for specific property.
+
+    :param schema_form:
+    :return: from result
+    """
+    for form in schema_form:
+        if 'items' in form:
+            recursive_form(form.get('items', []))
+        # Set value for titleMap of select in case of position
+        # and select format
+        if (form.get('title', '') == 'Position' and form.get('type', '')
+                == 'select'):
+            dict_data = []
+            positions = current_app.config.get(
+                'WEKO_USERPROFILES_POSITION_LIST')
+            for val in positions:
+                if val[0]:
+                    current_position = {
+                        "value": val[0],
+                        "name": str(val[1])
+                    }
+                    dict_data.append(current_position)
+                    form['titleMap'] = dict_data

@@ -18,23 +18,20 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""VIews for weko-user-profiles."""
+"""Views for weko-user-profiles."""
 
-import json
-
-from flask import Blueprint, current_app, flash, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
-from flask_security.confirmable import send_confirmation_instructions
-from invenio_accounts.models import Role
-from invenio_db import db
 
 from .api import current_userprofile
 from .forms import EmailProfileForm, ProfileForm, VerificationForm, \
     confirm_register_form_factory, register_form_factory
 from .models import UserProfile
+from .utils import get_user_profile_info, handle_profile_form, \
+    handle_verification_form
 
 blueprint = Blueprint(
     'weko_user_profiles',
@@ -87,6 +84,29 @@ def userprofile(value):
     return UserProfile.get_by_userid(int(value))
 
 
+@blueprint_api_init.route('/get_profile_info/', methods=['GET'])
+def get_profile_info():
+    """Get user profile.
+
+    @return:
+    """
+    result = {
+        'positions': '',
+        'results': '',
+        'error': '',
+    }
+
+    try:
+        user_id = current_user.id
+        if user_id is not None:
+            result['results'] = get_user_profile_info(user_id)
+            result['positions'] = current_app.config[
+                'WEKO_USERPROFILES_POSITION_LIST']
+    except Exception as e:
+        result['error'] = str(e)
+    return jsonify(result)
+
+
 @blueprint.route('/', methods=['GET', 'POST'])
 @login_required
 @register_menu(
@@ -122,6 +142,7 @@ def profile_form_factory():
         form = EmailProfileForm(
             formdata=None,
             username=current_userprofile.username,
+            fullname=current_userprofile.fullname,
             timezone=current_userprofile.timezone,
             language=current_userprofile.language,
             email=current_user.email,
@@ -149,102 +170,3 @@ def profile_form_factory():
             obj=current_userprofile,
             prefix='profile', )
         return form
-
-
-def handle_verification_form(form):
-    """Handle email sending verification form."""
-    form.process(formdata=request.form)
-
-    if form.validate_on_submit():
-        send_confirmation_instructions(current_user)
-        # NOTE: Flash message.
-        flash(_("Verification email sent."), category="success")
-
-
-def handle_profile_form(form):
-    """Handle profile update form."""
-    form.process(formdata=request.form)
-
-    if form.validate_on_submit():
-        email_changed = False
-        with db.session.begin_nested():
-            # Update profile.
-            for key in form.__dict__:
-                if getattr(form, key) and hasattr(current_userprofile, key):
-                    form_data = getattr(form, key).data
-                    setattr(current_userprofile, key, form_data)
-            # Mapping role
-            current_config = current_app.config
-            if (current_config['WEKO_USERPROFILES_ROLE_MAPPING_ENABLED']
-                    and current_userprofile.position):
-                role_name = get_role_by_position(current_userprofile.position)
-                roles1 = db.session.query(Role).filter_by(
-                    name=role_name).all()
-                admin_role = current_config.get(
-                    "WEKO_USERPROFILES_ADMINISTRATOR_ROLE")
-                userprofile_roles = current_config.get(
-                    "WEKO_USERPROFILES_ROLES")
-                roles2 = [
-                    role for role in current_user.roles
-                    if role not in userprofile_roles or role == admin_role
-                ]
-                roles = roles1 + roles2
-                if roles:
-                    current_user.roles = roles
-            db.session.add(current_userprofile)
-
-            # Update email
-            if current_app.config['USERPROFILES_EMAIL_ENABLED'] and \
-               form.email.data != current_user.email:
-                current_user.email = form.email.data
-                current_user.confirmed_at = None
-                db.session.add(current_user)
-                email_changed = True
-        db.session.commit()
-
-        if email_changed:
-            send_confirmation_instructions(current_user)
-            # NOTE: Flash message after successful update of profile.
-            flash(_('Profile was updated. We have sent a verification '
-                    'email to %(email)s. Please check it.',
-                    email=current_user.email),
-                  category='success')
-        else:
-            # NOTE: Flash message after successful update of profile.
-            flash(_('Profile was updated.'), category='success')
-
-
-def get_role_by_position(position):
-    """Get role by position.
-
-    :param position:
-    :return:
-    """
-    current_config = current_app.config
-    role_setting = current_config.get('WEKO_USERPROFILES_ROLE_MAPPING')
-    enable_mapping = current_config.get(
-        'WEKO_USERPROFILES_ROLE_MAPPING_ENABLED')
-    if isinstance(role_setting, dict) and enable_mapping:
-        position_list = current_config.get("WEKO_USERPROFILES_POSITION_LIST")
-        if not isinstance(position_list, list):
-            return
-        for item in position_list:
-            if position == item[0]:
-                if item in \
-                    current_config.get(
-                        "WEKO_USERPROFILES_POSITION_LIST_GENERAL"):
-                    key = role_setting.get(
-                        'WEKO_USERPROFILES_POSITION_LIST_GENERAL')
-                    return current_config.get(key)
-                elif item in \
-                    current_config.get(
-                        "WEKO_USERPROFILES_POSITION_LIST_GRADUATED_STUDENT"):
-                    key = role_setting.get(
-                        'WEKO_USERPROFILES_POSITION_LIST_GRADUATED_STUDENT')
-                    return current_config.get(key)
-                elif item in \
-                    current_config.get(
-                        "WEKO_USERPROFILES_POSITION_LIST_STUDENT"):
-                    key = role_setting.get(
-                        'WEKO_USERPROFILES_POSITION_LIST_STUDENT')
-                    return current_config.get(key)
