@@ -44,6 +44,7 @@ from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
 from datetime import timedelta
+from resync.list_base_with_index import ListBaseWithIndex
 
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
@@ -629,7 +630,9 @@ class ChangeListHandler(object):
         """Get list change list index."""
         # if self.validate():
         #     return None
-        change_list = ChangeList()
+        change_list = ListBaseWithIndex(
+            capability_name='changelist',
+        )
         change_list.up = '{}resync/capability.xml'.format(request.url_root)
         publish_date = self.publish_date or datetime.datetime.utcnow()
         date_i = datetime.datetime(
@@ -643,6 +646,8 @@ class ChangeListHandler(object):
         day_now = datetime.datetime.now()
         while date_i < day_now:
             until = date_i + timedelta(days=self.interval_by_date)
+            if until > day_now:
+                until = day_now
             change = Resource(
                 '{}/{}/changelist.xml'.format(
                     self.url_path,
