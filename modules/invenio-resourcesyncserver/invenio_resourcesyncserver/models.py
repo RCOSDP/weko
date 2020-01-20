@@ -51,7 +51,7 @@ class ResourceListIndexes(db.Model, Timestamp):
         default=True
     )
     """Status of resource list."""
- 
+
     repository_id = db.Column(
         db.BigInteger,
         db.ForeignKey(Index.id),
@@ -102,7 +102,7 @@ class ChangeListIndexes(db.Model, Timestamp):
 
     change_dump_manifest = db.Column(
         db.Boolean(),
-        nullable=False,
+        nullable=True,
         default=True
     )
     """Manifest output of change list."""

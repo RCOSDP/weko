@@ -14,7 +14,7 @@ const default_state = {
   url_path: "",
   interval_by_date: 1,
   max_changes_size: 10000,
-  publish_date: moment().format("DD/MM/YYYY")
+  publish_date: moment().format("MM/DD/YYYY")
 };
 const tracker_state_list = [
   {
@@ -248,10 +248,10 @@ class ListResourceComponent extends React.Component {
                     </td>
                     <td>
                       <a
-                        href={item.url_path + "/changelist"}
+                        href={item.url_path + "/changelist.xml"}
                         target="_blank"
                       >
-                        {item.url_path + "/changelist"}
+                        {item.url_path + "/changelist.xml"}
                       </a>
                     </td>
                     <td>
@@ -313,7 +313,7 @@ class CreateResourceComponent extends React.Component {
   handleSubmit(add_another) {
     const new_data = { ...this.state };
     delete new_data.tree_list;
-    new_data.publish_date = moment(new_data.publish_date).utc().format()
+    new_data.publish_date = moment(new_data.publish_date, 'MM/DD/YYYY').format("YYYY-MM-DDT00:00:00")
 
     fetch(urlCreate, {
       method: "POST",
@@ -555,7 +555,7 @@ class CreateResourceComponent extends React.Component {
               type="text"
               className="form-control"
               disabled
-              value={state.url_path && state.url_path + "/changelist"}
+              value={state.url_path && state.url_path + "/changelist.xml"}
             ></input>
           </div>
         </div>
@@ -641,7 +641,8 @@ class EditResourceComponent extends React.Component {
     const new_data = { ...this.state };
     delete new_data.tree_list;
     delete new_data.id;
-    new_data.publish_date = moment(new_data.publish_date).utc().format()
+    console.log(new_data.publish_date)
+    new_data.publish_date = moment(new_data.publish_date, "MM/DD/YYYY").format("YYYY-MM-DDT00:00:00")
     fetch(urlUpdate + "/" + this.state.id, {
       method: "POST",
       body: JSON.stringify(new_data),
@@ -700,6 +701,7 @@ class EditResourceComponent extends React.Component {
     const { select_item } = this.props;
     this.setState({
       ...select_item,
+      publish_date: moment(select_item.publish_date).format("MM/DD/YYYY")
     });
   }
 
@@ -960,10 +962,10 @@ class ComponentDatePicker extends React.Component {
     const that = this
     $("#publish_date").change(
       function(event) {
-          const date = event.target.value;
-          if (moment(date).isValid()) {
+          const value = event.target.value;
+          if (moment(value,'MM/DD/YYYY').isValid()) {
             if (that.props.onChange){
-            that.props.onChange(that.props.name,date)
+            that.props.onChange(that.props.name,value)
           }
           }
         }
@@ -988,14 +990,14 @@ class ComponentDatePicker extends React.Component {
 }
 
 function initDatepicker() {
-  console.log($("#datepicker"))
   $("#publish_date").datepicker({
-    format: "yyyy/mm/dd",
+    format: "dd/mm/yyyy",
     todayBtn: "linked",
     autoclose: true,
     forceParse: false
   })
   .on("changeDate", function(e) {
+    console.log("changeDate",e.target.value)
     if (document.getElementById("publish_date_picker").classList.contains('has-error')) {
       document.getElementById("publish_date_picker").classList.remove('has-error');
     }
