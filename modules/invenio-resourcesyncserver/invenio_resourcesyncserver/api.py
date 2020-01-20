@@ -635,7 +635,7 @@ class ChangeListHandler(object):
             None.
 
         """
-        if self._validation():
+        if not self._validation():
             return None
         change_list = ListBaseWithIndex(
             capability_name='changelist',
@@ -683,7 +683,7 @@ class ChangeListHandler(object):
             None.
 
         """
-        if self._validation():
+        if not self._validation():
             return None
         changedump = ListBaseWithIndex(
             capability_name='changedump',
@@ -783,7 +783,7 @@ class ChangeListHandler(object):
     def _validation(self):
         """Validate."""
         if not self.status or not self.index.public_state:
-            return None
+            return False
         return True
 
     def get_change_dump_manifest_xml(self, record_id):
