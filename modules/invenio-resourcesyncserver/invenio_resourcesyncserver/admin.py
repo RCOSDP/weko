@@ -24,16 +24,16 @@ from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 
+from .api import ChangeListHandler, ResourceListHandler
 from .config import INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN
-from .api import ResourceListHandler, ChangeListHandler
 
 
 class AdminResourceListView(BaseView):
-    """BaseView for Admin Resource sync."""
+    """BaseView for Admin Resource List."""
 
     @expose('/', methods=['GET'])
     def index(self):
-        """Renders an admin resource view.
+        """Renders an admin resource list view.
 
         :param
         :return: The rendered template.
@@ -44,7 +44,7 @@ class AdminResourceListView(BaseView):
 
     @expose('/get_list', methods=['GET'])
     def get_list(self):
-        """Renders an list resource sync.
+        """Renders an list resource list.
 
         :param
         :return: The rendered template.
@@ -53,16 +53,6 @@ class AdminResourceListView(BaseView):
         result = list(map(lambda item: item.to_dict(), list_resource))
         return jsonify(result)
 
-    # @expose('/get_resource/<resource_id>', methods=['GET'])
-    # def get_resource(self, resource_id):
-    #     """Renders an item import view.
-    #
-    #     :param
-    #     :return: The rendered template.
-    #     """
-    #     resource = ResourceListHandler.ge
-    #     return jsonify(resource)
-
     @expose('/create', methods=['POST'])
     def create(self):
         """Renders an item import view.
@@ -70,8 +60,7 @@ class AdminResourceListView(BaseView):
         :param
         :return: The rendered template.
         """
-        data = request.get_json()
-        resource = ResourceListHandler.create(data)
+        resource = ResourceListHandler.create(request.get_json())
         if resource:
             return jsonify(data=resource.to_dict(), success=True)
         else:
@@ -84,11 +73,10 @@ class AdminResourceListView(BaseView):
         :param
         :return: The rendered template.
         """
-        data = request.get_json()
         resource = ResourceListHandler.get_resource(resource_id)
 
         if resource:
-            result = resource.update(data)
+            result = resource.update(request.get_json())
             if result:
                 return jsonify(data=result.to_dict(), success=True)
         return jsonify(data=None, success=False)
@@ -136,14 +124,14 @@ class AdminChangeListView(BaseView):
         response = [c.to_dict() for c in change_lists]
         return jsonify(response)
 
-    @expose('/get_change_list/<id>', methods=['GET'])
-    def get_change_list(self, id):
+    @expose('/get_change_list/<repo_id>', methods=['GET'])
+    def get_change_list(self, repo_id):
         """Renders an item import view.
 
-        :param id: Identifer of ChangeListIndexes
+        :param index_id: Identifer of ChangeListIndexes
         :return: The rendered template.
         """
-        resource = ChangeListHandler.get_change_list(id)
+        resource = ChangeListHandler.get_change_list(repo_id)
         return jsonify(resource.to_dict())
 
     @expose('/create', methods=['POST'])
@@ -161,15 +149,15 @@ class AdminChangeListView(BaseView):
         else:
             return jsonify(data=None, success=False)
 
-    @expose('/update/<id>', methods=['POST'])
-    def update(self, id):
+    @expose('/update/<repo_id>', methods=['POST'])
+    def update(self, repo_id):
         """Renders an item import view.
 
         :param:
         :return: The rendered template.
         """
         data = request.get_json()
-        data['id'] = id
+        data['id'] = repo_id
         resource = ChangeListHandler(**data)
         result = resource.save()
         if result:
@@ -177,14 +165,14 @@ class AdminChangeListView(BaseView):
         else:
             return jsonify(data=None, success=False)
 
-    @expose('/delete/<id>', methods=['POST'])
-    def delete(self, id):
+    @expose('/delete/<repo_id>', methods=['POST'])
+    def delete(self, repo_id):
         """Renders an item import view.
 
         :param
         :return: The rendered template.
         """
-        resource = ChangeListHandler.delete(id)
+        resource = ChangeListHandler.delete(repo_id)
         if resource:
             return jsonify(data=None, success=True)
         else:

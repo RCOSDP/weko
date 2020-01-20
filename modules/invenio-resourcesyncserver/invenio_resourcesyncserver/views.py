@@ -16,7 +16,7 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, Response, abort, redirect, request
 from flask_babelex import gettext as _
 
-from .api import ResourceListHandler, ChangeListHandler
+from .api import ChangeListHandler, ResourceListHandler
 from .utils import render_capability_xml, render_well_know_resourcesync
 
 blueprint = Blueprint(
@@ -72,9 +72,7 @@ def capability():
 def resource_dump_manifest(index_id, record_id, date):
     """Render a basic view."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
-    from flask import current_app
-    current_app.logger.debug("==================")
-    current_app.logger.debug(date)
+
     validate = not resource or not resource.is_validate(
         record_id) or not resource.resource_dump_manifest
     if validate:

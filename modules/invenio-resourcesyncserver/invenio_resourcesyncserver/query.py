@@ -24,9 +24,8 @@ import json
 
 from flask import current_app, request
 from invenio_records_rest.errors import InvalidQueryRESTError
-from weko_index_tree.api import Indexes
-from weko_search_ui.query import get_item_type_aggs, get_permission_filter
 from invenio_search import RecordsSearch
+from weko_index_tree.api import Indexes
 
 
 def get_items_by_index_tree(index_tree_id):
@@ -65,11 +64,14 @@ def item_path_search_factory(search, index_id=None):
     """
     def _get_index_search_query():
         query_q = {
-            "_source": {
-                "excludes": ['content']
-            },
             "from": "0",
             "size": "10000",
+            "_source": {
+                "excludes": [
+                    "content",
+                    "_item_metadata"
+                ]
+            },
             "query": {
                 "bool": {
                     "must": [
@@ -84,36 +86,6 @@ def item_path_search_factory(search, index_id=None):
                             }
                         }
                     ]
-                }
-            },
-            "aggs": {
-                "path": {
-                    "terms": {
-                        "field": "path.tree",
-                        "include": "@index|@index/[^/]+"
-                    },
-                    "aggs": {
-                        "date_range": {
-                            "filter": {
-                                "match": {
-                                "publish_status": "0"
-                                }
-                            }
-                        },
-                        "no_available": {
-                            "filter": {
-                                "bool": {
-                                    "must_not": [
-                                            {
-                                            "match": {
-                                                "publish_status": "0"
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
                 }
             },
             "post_filter": {
@@ -151,8 +123,6 @@ def item_path_search_factory(search, index_id=None):
 
         q = index_id
         if q:
-            query_q['aggs']['path']['aggs']. \
-                update(get_item_type_aggs(search._index[0]))
             post_filter = query_q['post_filter']
 
             if post_filter:
@@ -198,73 +168,68 @@ def item_changes_search_factory(search, index_id=None):
     """
     def _get_index_search_query():
         query_q = {
-            "_source": {
-                "excludes": ['content']
-            },
             "from": "0",
             "size": "10000",
+            "_source": {
+                "excludes": [
+                "content",
+                "_item_metadata"
+                ]
+            },
             "query": {
                 "bool": {
-                    "must": [
+                    "should": [
                         {
                             "match": {
                                 "path.tree": "@index"
                             }
                         },
                         {
-                            "match": {
-                                "relation_version_is_last": "true"
+                            "bool": {
+                                "must_not": {
+                                    "exists": {
+                                        "field": "path.tree"
+                                    }
+                                }
                             }
                         }
                     ]
                 }
             },
-            "aggs": {
-                "path": {
-                    "terms": {
-                        "field": "path.tree",
-                        "include": "@index|@index/[^/]+",
-                    },
-                    "aggs": {
-                        "date_range": {
-                            "filter": {
-                                "match": {"publish_status": "0"}
-                            },
-                        },
-                        "no_available": {
-                            "filter": {
-                                "bool": {
-                                    "must_not": [
-                                        {
-                                            "match": {
-                                                "publish_status": "0"
-                                            }
-                                        }
-                                    ]
+            "sort": {
+                "_updated": {
+                "order": "asc"
+                }
+            },
+            "post_filter": {
+                "bool": {
+                    "must": [
+                        {
+                            "range": {
+                                "publish_date": {
+                                    "lte": "now/d"
                                 }
                             }
                         }
-                    }
+                    ],
+                    "should": [
+                        {
+                            "terms": {
+                                "path": []
+                            }
+                        }
+                    ]
                 }
-            },
-            "post_filter": {}
+            }
         }
 
         q = index_id
         if q:
-            query_q['aggs']['path']['aggs']. \
-                update(get_item_type_aggs(search._index[0]))
-            mut = get_permission_filter(q)
-            mut = list(map(lambda x: x.to_dict(), mut))
             post_filter = query_q['post_filter']
-            if mut[0].get('bool'):
-                post_filter['bool'] = mut[0]['bool']
-            else:
-                post_filter['bool'] = {'must': mut}
+
             if post_filter:
                 list_path = Indexes.get_list_path_publish(index_id)
-                post_filter['bool']['must'] = []
-                post_filter['bool']['must'] = {
+                post_filter['bool']['should'] = {
                     "terms": {
                         "path": list_path
                     }
@@ -278,17 +243,16 @@ def item_changes_search_factory(search, index_id=None):
                 except BaseException:
                     pass
             return query_q
+
     # create a index search query
     query_q = _get_index_search_query()
+
     try:
-        # Aggregations.
-        extr = search._extra.copy()
         search.update_from_dict(query_q)
-        search._extra.update(extr)
     except SyntaxError:
-        q = request.values.get('q', '') if index_id is None else index_id
         current_app.logger.debug(
-            "Failed parsing query: {0}".format(q),
-            exc_info=True)
+                "Failed parsing query: {0}".format(query_q),
+                exc_info=True)
         raise InvalidQueryRESTError()
+
     return search

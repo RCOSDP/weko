@@ -32,19 +32,19 @@ from functools import wraps
 from flask import current_app, json, request, send_file
 from invenio_db import db
 from resync import Resource, ResourceList
+from resync.change_dump import ChangeDump
+from resync.change_dump_manifest import ChangeDumpManifest
+from resync.change_list import ChangeList
 from resync.resource_dump import ResourceDump
 from resync.resource_dump_manifest import ResourceDumpManifest
-from resync.change_dump import ChangeDump
-from resync.change_list import ChangeList
-from resync.change_dump_manifest import ChangeDumpManifest
 from sqlalchemy.exc import SQLAlchemyError
-from weko_index_tree.models import Index
+from weko_deposit.api import ItemTypes, WekoRecord
 from weko_index_tree.api import Indexes
-from weko_deposit.api import WekoRecord, ItemTypes
+from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
 
-from .models import ResourceListIndexes, ChangeListIndexes
+from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
 
 
@@ -290,13 +290,13 @@ class ResourceListHandler(object):
         if not self.is_validate():
             return None
         r = get_items_by_index_tree(self.repository_id)
+
         rl = ResourceList()
         rl.up = '{}resync/capability.xml'.format(request.url_root)
-        current_app.logger.debug(self.repository_id)
+
         for item in r:
             if item:
-                id_item = item.get('_source').get('_item_metadata').get(
-                    'control_number')
+                id_item = item.get('_source').get('control_number')
                 url = '{}records/{}'.format(request.url_root, str(id_item))
                 rl.add(Resource(url, lastmod=item.get('_source').get(
                     '_updated')))
@@ -315,8 +315,7 @@ class ResourceListHandler(object):
         rd.up = '{}resync/capability.xml'.format(request.url_root)
         for item in r:
             if item:
-                id_item = item.get('_source').get('_item_metadata').get(
-                    'control_number')
+                id_item = item.get('_source').get('control_number')
                 url = '{}resync/{}/{}/file_content.zip'.format(
                     request.url_root,
                     self.repository_id,
@@ -947,7 +946,7 @@ class ChangeListHandler(object):
             # Double check for limits
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
-            record, exported_item = _export_item(
+            _record, exported_item = _export_item(
                 record_id,
                 None,
                 include_contents,
