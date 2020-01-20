@@ -43,6 +43,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
+from datetime import timedelta
 
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
@@ -63,7 +64,7 @@ class ResourceListHandler(object):
         self.index = kwargs.get('index') or self.get_index()
 
     def get_index(self):
-        """Get Index obj by repository_id"""
+        """Get Index obj relate to repository_id."""
         if self.repository_id:
             return Indexes.get_index(self.repository_id)
         else:
@@ -479,6 +480,7 @@ class ResourceListHandler(object):
 
 class ChangeListHandler(object):
     """Define API for ResourceListIndexes creation and update."""
+
     id = None
     status = None
     repository_id = None
@@ -625,7 +627,6 @@ class ChangeListHandler(object):
 
     def get_change_list_index(self):
         """Get list change list index."""
-        from datetime import timedelta
         # if self.validate():
         #     return None
         change_list = ChangeList()
@@ -641,20 +642,17 @@ class ChangeListHandler(object):
         current_app.logger.debug(date_i)
         day_now = datetime.datetime.now()
         while date_i < day_now:
-            re = Resource(
+            until = date_i + timedelta(days=self.interval_by_date)
+            change = Resource(
                 '{}/{}/changelist.xml'.format(
                     self.url_path,
                     date_i.strftime("%Y%m%d")
                 ),
-                capability='changelist')
-            re.md_from(str(date_i.replace(
-                    tzinfo=datetime.timezone.utc
-                ).isoformat()))
-            until = date_i + timedelta(days=self.interval_by_date)
-            re.md_until(str(until.replace(
-                tzinfo=datetime.timezone.utc
-            ).isoformat()))
-            change_list.add(re)
+                capability='changelist',
+                md_from=str(date_i.replace(tzinfo=datetime.timezone.utc).isoformat()),
+                md_until=str(until.replace(tzinfo=datetime.timezone.utc).isoformat())
+            )
+            change_list.add(change)
             date_i = until
         return change_list.as_xml()
 
@@ -731,7 +729,6 @@ class ChangeListHandler(object):
         :param record_id: Identifier of record
         :return xml
         """
-
         if not self.is_record_in_index(record_id):
             return None
         cdm = ChangeDumpManifest()
@@ -820,17 +817,14 @@ class ChangeListHandler(object):
         return False
 
     def get_index(self):
-        """Get Index obj by repository_id"""
+        """Get Index obj by repository_id."""
         if self.repository_id:
             return Indexes.get_index(self.repository_id)
         else:
             return None
 
     def to_dict(self):
-        """
-        Convert obj to dict.
-
-        """
+        """Convert obj to dict."""
         change_dump_manifest = self.change_dump_manifest  \
             if self.change_dump_manifest else None
         max_changes_size = self.max_changes_size if self.max_changes_size \
@@ -862,7 +856,7 @@ class ChangeListHandler(object):
         :param changelist_id: Identifier of changelist
         :param type_result: result of function 'obj' or 'modal'
         :return: Updated Change List info
-                """
+        """
         try:
             with db.session.begin_nested():
                 result = db.session.query(ChangeListIndexes).filter(
@@ -905,9 +899,7 @@ class ChangeListHandler(object):
 
     @classmethod
     def convert_modal_to_obj(cls, model=ChangeListIndexes()):
-        """
-        Convert nodal changelistindexes database to obj ChangeListHandler.
-        """
+        """Convert nodal changelistindexes database to obj ChangeListHandler."""
         return ChangeListHandler(
             id=model.id,
             status=model.status,

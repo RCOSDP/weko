@@ -22,10 +22,10 @@
 
 from flask import abort, request, send_file
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-
-from .api import ResourceListHandler, ChangeListHandler
+from resync import CapabilityList, Resource
 from resync.list_base_with_index import ListBaseWithIndex
-from resync import Resource, CapabilityList
+
+from .api import ChangeListHandler, ResourceListHandler
 from .query import get_item_changes_by_index
 
 

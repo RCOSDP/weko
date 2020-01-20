@@ -34,7 +34,10 @@ def get_items_by_index_tree(index_tree_id):
     records_search = records_search.with_preference_param().params(
         version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    search_instance = item_path_search_factory(search=records_search, index_id=index_tree_id)
+    search_instance = item_path_search_factory(
+        search=records_search,
+        index_id=index_tree_id
+    )
     search_result = search_instance.execute()
     rd = search_result.to_dict()
 
@@ -101,7 +104,7 @@ def item_path_search_factory(search, index_id=None):
                                 "must": [
                                     {
                                         "match": {
-                                        "publish_status": "0"
+                                            "publish_status": "0"
                                         }
                                     },
                                     {
@@ -163,7 +166,10 @@ def item_path_search_factory(search, index_id=None):
     return search
 
 
-def item_changes_search_factory(search, index_id=None, date_from="now/d", date_until="now/d"):
+def item_changes_search_factory(search,
+                                index_id=None,
+                                date_from="now/d",
+                                date_until="now/d"):
     """
     Parse query using Weko-Query-Parser.
 
