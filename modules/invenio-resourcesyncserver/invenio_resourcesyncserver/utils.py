@@ -99,7 +99,7 @@ def query_record_changes(repository_id, date_from, date_until):
         if len(recids) == 1:
             recid = int(recids[0])
             result['record_id'] = recid
-            result['record_version'] = '0'
+            result['record_version'] = 0
 
             pid = PersistentIdentifier.get('recid', recid)
             is_belong = check_existing_record_in_list(recid, record_changes)
