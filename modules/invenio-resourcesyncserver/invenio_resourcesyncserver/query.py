@@ -38,10 +38,9 @@ def get_items_by_index_tree(index_tree_id):
         search=records_search,
         index_id=index_tree_id
     )
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
+    search_result = search_instance.execute().to_dict()
 
-    return rd.get('hits').get('hits')
+    return search_result.get('hits').get('hits')
 
 
 def get_item_changes_by_index(index_tree_id, date_from, date_until):
@@ -56,10 +55,9 @@ def get_item_changes_by_index(index_tree_id, date_from, date_until):
         date_from=date_from,
         date_until=date_until
     )
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
+    search_result = search_instance.execute().to_dict()
 
-    return rd.get('hits').get('hits')
+    return search_result.get('hits').get('hits')
 
 
 def item_path_search_factory(search, index_id=None):
@@ -98,30 +96,22 @@ def item_path_search_factory(search, index_id=None):
             },
             "post_filter": {
                 "bool": {
-                    "should": [
-                        {
-                            "bool": {
-                                "must": [
-                                    {
-                                        "match": {
-                                            "publish_status": "0"
-                                        }
-                                    },
-                                    {
-                                        "range": {
-                                            "publish_date": {
-                                                "lte": "now/d"
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    ],
                     "must": [
                         {
                             "terms": {
                                 "path": []
+                            }
+                        },
+                        {
+                            "match": {
+                                "publish_status": "0"
+                            }
+                        },
+                        {
+                            "range": {
+                                "publish_date": {
+                                    "lte": "now/d"
+                                }
                             }
                         }
                     ]
