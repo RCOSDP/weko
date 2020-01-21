@@ -599,8 +599,10 @@ def handle_check_exist_record(list_recond) -> list:
             except PIDDoesNotExistError:
                 pass
             except BaseException:
-                current_app.logger.error('Unexpected error: ',
-                                            sys.exc_info()[0])
+                current_app.logger.error(
+                    'Unexpected error: ',
+                    sys.exc_info()[0]
+                )
         if item.get('status') == 'new':
             handle_remove_identifier(item)
         result.append(item)

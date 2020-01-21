@@ -20,7 +20,7 @@
 
 """Weko Deposit API."""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 import redis
 from dictdiffer import patch
@@ -216,7 +216,11 @@ class WekoIndexer(RecordIndexer):
         """Update path."""
         self.get_es_index()
         path = 'path'
-        body = {'doc': {path: record.get(path)}}
+        body = {
+                'doc': {
+                    path: record.get(path),
+                    '_updated': datetime.utcnow().replace(tzinfo=timezone.utc).isoformat()
+                }}
         if update_revision:
             return self.client.update(
                 index=self.es_index,
