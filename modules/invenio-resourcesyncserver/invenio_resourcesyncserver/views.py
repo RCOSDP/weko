@@ -154,7 +154,7 @@ def change_dump_content(index_id, record_id):
     abort(404)
 
 
-@blueprint.route("/.well_know/resourcesync")
+@blueprint.route("/.well-known/resourcesync")
 def well_know_resourcesync():
     """Render well know resourcesync."""
     return Response(
