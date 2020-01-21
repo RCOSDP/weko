@@ -298,10 +298,12 @@ function handleSharePermission(value) {
       $scope.bibliographic_key = '';
       $scope.bibliographic_title_key = '';
       $scope.bibliographic_title_lang_key = '';
+      $scope.usage_report_activity_id = '';
       $scope.is_item_owner = false;
       $scope.feedback_emails = []
       $scope.render_requirements = false;
       $scope.error_list = [];
+      $scope.usageapplication_keys = [];
       $scope.outputapplication_keys = [];
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
@@ -334,6 +336,21 @@ function handleSharePermission(value) {
         return fileMetaForm;
       };
 
+      $scope.searchUsageApplicationIdKey = function() {
+          if ($scope.usageapplication_keys.length > 0) {
+              return $scope.usageapplication_keys;
+          }
+          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+              ([key, value]) => {
+                  if (value.type == 'array') {
+                      if (value.items.properties.hasOwnProperty('subitem_corresponding_usage_application_id')) {
+                        $scope.usageapplication_keys.push(key)
+                      }
+                  }
+              }
+          );
+      };
+
       $scope.searchOutputApplicationIdKey = function() {
           if ($scope.outputapplication_keys.length > 0) {
               return $scope.outputapplication_keys;
@@ -350,6 +367,17 @@ function handleSharePermission(value) {
       }
 
       $scope.initCorrespondingIdList = function () {
+        $scope.searchUsageApplicationIdKey();
+        $scope.usageapplication_keys.forEach(key => {
+          schema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          form = $scope.searchFilemetaForm(schema.title);
+          if (schema && form) {
+            schema.items.properties['subitem_corresponding_usage_application_id']['enum'] = [];
+            usage_application_form = form.items[0];
+            usage_application_form['titleMap'] = []
+          }
+        });
+
         $scope.searchOutputApplicationIdKey();
         $scope.outputapplication_keys.forEach(key => {
           output_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
@@ -361,7 +389,7 @@ function handleSharePermission(value) {
           }
         });
 
-          if ($scope.outputapplication_keys.length > 0) {
+        if ($scope.usageapplication_keys.length > 0 || $scope.outputapplication_keys.length > 0) {
           const acitivityUrl = '/items/corresponding-activity';
 
           activityList = {};
@@ -370,6 +398,24 @@ function handleSharePermission(value) {
             method: 'GET',
             async: false,
             success: function (data, status) {
+              let usageActivity;
+              if ($scope.usage_report_activity_id != ''){
+                usageActivity = [$scope.usage_report_activity_id];
+              } else {
+                usageActivity = data['usage_application'];
+              }
+              if (usageActivity.length > 0) {
+                usageActivity.forEach(activity => {
+                  if (typeof schema != 'undefined' && typeof usage_application_form != 'undefined' && schema && usage_application_form) {
+                    schema.items.properties['subitem_corresponding_usage_application_id']['enum'].push(activity);
+                    usage_application_form['titleMap'].push({
+                      name: activity,
+                      value: activity
+                    });
+                  }
+                })
+              }
+
               let outputReport = data['output_report'];
               if (outputReport.length > 0) {
                 outputReport.forEach(report => {
@@ -889,7 +935,13 @@ function handleSharePermission(value) {
           for (let key in model) {
             if (model.hasOwnProperty(key) && model[key].length > 0) {
               let title = model[key][0]['subitem_item_title'];
-                if (title && $("#auto_fill_title").val() !== '""') {
+              if (title){
+                var activity_id= title.match(/A-[0-9]{8}-[0-9]{5}/g);
+                if (activity_id){
+                  $scope.usage_report_activity_id = activity_id[0];
+                }
+              }
+              if (title && $("#auto_fill_title").val() !== '""') {
                 $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly'] = true;
                 setTimeout(function () {
                   $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
@@ -994,20 +1046,19 @@ function handleSharePermission(value) {
       };
 
       $scope.autoSetCorrespondingUsageAppId = function () {
-        var title = $("#lnk_item_detail").text();
-        var activity_id= title.match(/A-[0-9]{8}-[0-9]{5}/g);
-        if (activity_id){
+        if ($scope.usage_report_activity_id != ''){
           Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
             ([key, value]) => {
-              if (value && value.properties) {
-                if (value.properties.hasOwnProperty("subitem_corresponding_usage_application_id")) {
-                  $rootScope.recordsVM.invenioRecordsModel[key] = {'subitem_corresponding_usage_application_id': activity_id[0]};
+              if (value && value.items) {
+                if (value.items.properties.hasOwnProperty("subitem_corresponding_usage_application_id")) {
+                  $rootScope.recordsVM.invenioRecordsModel[key] = []
+                  $rootScope.recordsVM.invenioRecordsModel[key].push({'subitem_corresponding_usage_application_id': $scope.usage_report_activity_id})
                 }
               }
             });
           setTimeout(function () {
-            $("input[name='subitem_corresponding_usage_application_id']").attr("disabled", "disabled");
-          }, 500);
+            $("[name='subitem_corresponding_usage_application_id']").attr("disabled", 'disabled');
+          }, 1000);
         }
       };
 
@@ -1068,7 +1119,6 @@ function handleSharePermission(value) {
         $scope.autoSetTitle();
         $scope.initCorrespondingIdList();
         $scope.autoTitleData();
-        $scope.autoSetCorrespondingUsageAppId();
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
           endpoints = JSON.parse($('#hide_endpoints').text());
@@ -1088,7 +1138,7 @@ function handleSharePermission(value) {
 
         // Auto fill user profile
         $scope.autoFillProfileInfo();
-
+        $scope.autoSetCorrespondingUsageAppId();
       });
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
