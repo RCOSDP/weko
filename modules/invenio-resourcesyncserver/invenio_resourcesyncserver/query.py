@@ -70,8 +70,8 @@ def item_path_search_factory(search, index_id=None):
     """
     def _get_index_search_query():
         query_q = {
-            "from": "0",
-            "size": "10000",
+            "from": 0,
+            "size": 10000,
             "_source": {
                 "excludes": [
                     "content",
@@ -164,8 +164,8 @@ def item_changes_search_factory(search,
     """
     def _get_index_search_query(_date_from: str, _date_until: str) -> dict:
         query_q = {
-            "from": "0",
-            "size": "10000",
+            "from": 0,
+            "size": 10000,
             "_source": {
                 "excludes": [
                     "content",

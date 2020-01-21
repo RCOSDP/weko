@@ -71,8 +71,8 @@ def render_well_know_resourcesync():
 
     return cap.as_xml()
 
-
-def query_record_changes(repository_id, date_from, date_until):
+from flask import current_app
+def query_record_changes(repository_id, date_from, date_until, max_changes_size=None, change_tracking_state=None):
     """
     Delete unregister bucket by pid.
 
@@ -84,7 +84,11 @@ def query_record_changes(repository_id, date_from, date_until):
 
     """
     record_changes = []
-    hits = get_item_changes_by_index(repository_id, date_from, date_until)
+    hits = get_item_changes_by_index(repository_id,
+                                     date_from,
+                                     date_until)
+    states = change_tracking_state.split('&')
+
     for hit in hits:
         _source = hit.get("_source")
         result = {
@@ -103,20 +107,25 @@ def query_record_changes(repository_id, date_from, date_until):
 
             pid = PersistentIdentifier.get('recid', recid)
             is_belong = check_existing_record_in_list(recid, record_changes)
-            if pid.status == PIDStatus.DELETED and is_belong:
+            if pid.status == PIDStatus.DELETED and is_belong and 'delete' in states:
                 result['status'] = 'deleted'
             else:
                 continue
         elif len(recids) > 1:
             result['record_id'] = int(recids[0])
             result['record_version'] = int(recids[1])
-            if recids[1] == '1':
+            if recids[1] == '1' and 'create' in states:
                 result['status'] = 'created'
-            else:
+            elif 'update' in states:
                 result['status'] = 'updated'
+            else:
+                continue
 
+        current_app.logger.debug(result)
         record_changes.append(result)
 
+    if record_changes:
+        return record_changes[max_changes_size*-1:]
     return record_changes
 
 
