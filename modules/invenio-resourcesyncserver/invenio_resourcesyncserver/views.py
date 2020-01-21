@@ -71,10 +71,10 @@ def capability():
     cap_list = render_capability_xml()
     if not cap_list:
         abort(404)
-    return Response(cap_list, mimetype='text/xml')
+    return Response(cap_list, mimetype='application/xml')
 
 
-@blueprint.route("/resync/<index_id>/<record_id>/resource_dump_manifest.xml")
+@blueprint.route("/resync/<index_id>/<record_id>/resourcedump_manifest.xml")
 def resource_dump_manifest(index_id, record_id):
     """Render resource dump manifest."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
@@ -83,7 +83,7 @@ def resource_dump_manifest(index_id, record_id):
         if result:
             return Response(
                 result,
-                mimetype='text/xml'
+                mimetype='application/xml'
             )
     abort(404)
 
