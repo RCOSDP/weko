@@ -926,7 +926,7 @@ function handleSharePermission(value) {
                   let jaTitle = {};
                   jaTitle['subitem_item_title'] = titleData['ja'] + " - " + userName;
                   jaTitle['subitem_item_title_language'] = "ja";
-                  $rootScope.recordsVM.invenioRecordsModel[key] = [enTitle, jaTitle];
+                  $rootScope.recordsVM.invenioRecordsModel[key] = [jaTitle, enTitle];
                 }
               }
             });
@@ -1806,7 +1806,7 @@ function handleSharePermission(value) {
                 result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors)
               }
               if (param.email_approval2) {
-                result = this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval1, listEmailErrors);
+                result = this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
               }
             }
             if (listEmailErrors.length > 0) {
