@@ -470,7 +470,7 @@ class CreateResourceComponent extends React.Component {
               className="form-control"
               value={state.max_changes_size}
               onChange={e => {
-                const value = e.target.value;
+                let value = e.target.value;
                 value = value <= 10000 ? value : 10000
                 this.handleChangeState("max_changes_size", parseInt(value));
               }}
@@ -801,7 +801,7 @@ class EditResourceComponent extends React.Component {
               className="form-control"
               value={state.max_changes_size}
               onChange={e => {
-                const value = e.target.value;
+                let value = e.target.value;
                 value = value <= 10000 ? value : 10000
                 this.handleChangeState("max_changes_size", parseInt(value));
               }}
