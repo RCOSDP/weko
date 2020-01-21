@@ -26,11 +26,11 @@ INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN = \
     'invenio_resourcesyncserver/change_list.html'
 """Admin template for the demo page."""
 
-INVENIO_DATETIME_ISOFORMAT = r"%Y-%m-%d"
-"""ISO 8601 format for Datetime."""
-
-INVENIO_DELAY_PUBLISHEDDATE = False
+INVENIO_CAPABILITY_URL = "{}resync/capability.xml"
 """Delay published to first change date."""
 
-INVENIO_CAPABILITY_URL = "{}resync/capability.xml"
+WEKO_RECORD_FIRST_VERSION = '1'
+"""Delay published to first change date."""
+
+WEKO_RECORD_ORIGIN_VERSION = '0'
 """Delay published to first change date."""

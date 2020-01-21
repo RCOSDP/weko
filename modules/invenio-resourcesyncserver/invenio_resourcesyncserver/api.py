@@ -45,8 +45,7 @@ from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
 
-from .config import INVENIO_CAPABILITY_URL, INVENIO_DATETIME_ISOFORMAT, \
-    INVENIO_DELAY_PUBLISHEDDATE
+from .config import INVENIO_CAPABILITY_URL
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
 
@@ -422,7 +421,7 @@ class ResourceListHandler(object):
             # Double check for limits
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
-            record, exported_item = _export_item(
+            _record, exported_item = _export_item(
                 record_id,
                 None,
                 include_contents,
@@ -482,6 +481,7 @@ class ResourceListHandler(object):
             current_app.logger.error('-' * 60)
             traceback.print_exc(file=sys.stdout)
             current_app.logger.error('-' * 60)
+
         return send_file(export_path + '.zip')
 
 
@@ -596,28 +596,35 @@ class ChangeListHandler(object):
         record_changes = self._get_record_changes_with_interval(from_date)
 
         for data in record_changes:
-            if self._next_change(data, record_changes) and data.get(
-                'status'
-            ) != 'deleted':
-                loc = '{}records/{}'.format(
-                    request.url_root,
-                    '{}.{}'.format(
-                        data.get('record_id'),
-                        data.get('record_version')
+            try:
+                if self._next_change(data, record_changes) and data.get(
+                    'status'
+                ) != 'deleted':
+                    loc = '{}records/{}'.format(
+                        request.url_root,
+                        '{}.{}'.format(
+                            data.get('record_id'),
+                            data.get('record_version')
+                        )
                     )
+                else:
+                    loc = '{}records/{}'.format(
+                        request.url_root,
+                        data.get('record_id')
+                    )
+                rc = Resource(
+                    loc,
+                    lastmod=data.get("updated"),
+                    change=data.get('status'),
+                    md_at=data.get("updated"),
                 )
-            else:
-                loc = '{}records/{}'.format(
-                    request.url_root,
-                    data.get('record_id')
-                )
-            rc = Resource(
-                loc,
-                lastmod=data.get("updated"),
-                change=data.get('status'),
-                md_at=data.get("updated"),
-            )
-            change_list.add(rc)
+                change_list.add(rc)
+            except Exception:
+                current_app.logger.error('-' * 60)
+                traceback.print_exc(file=sys.stdout)
+                current_app.logger.error('-' * 60)
+                continue
+
         return change_list.as_xml()
 
     def get_change_list_index(self):
@@ -638,16 +645,6 @@ class ChangeListHandler(object):
         published_date = self.publish_date or datetime.datetime.utcnow()
         change_date = published_date
         day_now = datetime.datetime.now()
-
-        # DELAY PUBLISH DATE TO 1st CHANGED DATE
-        first_change = self._get_first_change(
-            self.repository_id,
-            self.publish_date
-        )
-        if INVENIO_DELAY_PUBLISHEDDATE and first_change:
-            first_datetime = first_change.get('updated').split('T')[0]
-            change_date = datetime.datetime.strptime(first_datetime,
-                                                     INVENIO_DATETIME_ISOFORMAT)
 
         while change_date < day_now:
             until = change_date + timedelta(days=self.interval_by_date)
@@ -687,18 +684,6 @@ class ChangeListHandler(object):
         change_date = published_date
         day_now = datetime.datetime.now()
 
-        # DELAY PUBLISH DATE TO 1st CHANGED DATE
-        first_change = self._get_first_change(
-            self.repository_id,
-            self.publish_date
-        )
-        if INVENIO_DELAY_PUBLISHEDDATE and first_change:
-            first_datetime = first_change.get('updated').split('T')[0]
-            change_date = datetime.datetime.strptime(
-                first_datetime,
-                INVENIO_DATETIME_ISOFORMAT
-            )
-
         while change_date < day_now:
             until = change_date + timedelta(days=self.interval_by_date)
             if until > day_now:
@@ -736,42 +721,50 @@ class ChangeListHandler(object):
         record_changes = self._get_record_changes_with_interval(from_date)
 
         for data in record_changes:
-            next_ch = self._next_change(data, record_changes)
-            loc = '{}resync/{}/{}/change_dump_content.zip'.format(
-                request.url_root,
-                self.repository_id,
-                '{}.{}'.format(
-                    data.get('record_id'),
-                    data.get('record_version')
+            try:
+                next_ch = self._next_change(data, record_changes)
+                loc = '{}resync/{}/{}/change_dump_content.zip'.format(
+                    request.url_root,
+                    self.repository_id,
+                    '{}.{}'.format(
+                        data.get('record_id'),
+                        data.get('record_version')
+                    )
                 )
-            )
-            rc = Resource(
-                loc,
-                lastmod=data.get("updated"),
-                mime_type='application/zip',
-                md_from=data.get('updated'),
-                md_until=str(datetime.datetime.utcnow().replace(
-                    tzinfo=datetime.timezone.utc
-                ).isoformat()),
-                ln=[]
-            )
-            if next_ch and next_ch.get('updated'):
-                rc.md_until = next_ch.get('updated')
-            if self.change_dump_manifest:
-                ln = {
-                    'rel': 'contents',
-                    'href': '{}resync/{}/{}/changedump_manifest.xml'.format(
-                        request.url_root,
-                        self.repository_id,
-                        '{}.{}'.format(
-                            data.get('record_id'),
-                            data.get('record_version')
-                        )
-                    ),
-                    'type': 'application/xml'
-                }
-                rc.ln.append(ln)
-            change_dump.add(rc)
+
+                rc = Resource(
+                    loc,
+                    lastmod=data.get("updated"),
+                    mime_type='application/zip',
+                    md_from=data.get('updated'),
+                    md_until=datetime.datetime.utcnow().replace(
+                        tzinfo=datetime.timezone.utc
+                    ).isoformat(),
+                    ln=[]
+                )
+                if next_ch and next_ch.get('updated'):
+                    rc.md_until = next_ch.get('updated')
+                if self.change_dump_manifest:
+                    ln = {
+                        'rel': 'contents',
+                        'href': '{}resync/{}/{}/changedump_manifest.xml'.format(
+                            request.url_root,
+                            self.repository_id,
+                            '{}.{}'.format(
+                                data.get('record_id'),
+                                data.get('record_version')
+                            )
+                        ),
+                        'type': 'application/xml'
+                    }
+                    rc.ln.append(ln)
+                change_dump.add(rc)
+            except Exception:
+                current_app.logger.error('-' * 60)
+                traceback.print_exc(file=sys.stdout)
+                current_app.logger.error('-' * 60)
+                continue
+
         return change_dump.as_xml()
 
     def _validation(self):
@@ -786,7 +779,7 @@ class ChangeListHandler(object):
         :param record_id: Identifier of record
         :return xml
         """
-        if not self._is_record_in_index(record_id) or self._validation():
+        if not self._is_record_in_index(record_id) or not self._validation():
             return None
         cdm = ChangeDumpManifest()
         cdm.up = '{}resync/{}/changedump.xml'.format(
@@ -1072,7 +1065,6 @@ class ChangeListHandler(object):
                     file.write(tsvs_output.getvalue())
 
             # Create bag
-            # bagit.make_bag(export_path)
             if self.change_dump_manifest:
                 with open('{}/{}.xml'.format(export_path,
                                              'manifest'),
@@ -1088,6 +1080,7 @@ class ChangeListHandler(object):
             current_app.logger.error('-' * 60)
             traceback.print_exc(file=sys.stdout)
             current_app.logger.error('-' * 60)
+            return None
         return send_file(export_path + '.zip')
 
     @classmethod
@@ -1164,7 +1157,7 @@ class ChangeListHandler(object):
         record_changes = self._get_record_changes(
             self.repository_id,
             _from.isoformat(),
-            _util.isoformat(),
+            _util.isoformat()
         )
 
         return record_changes
@@ -1201,7 +1194,9 @@ class ChangeListHandler(object):
             return query_record_changes(
                 repo_id,
                 from_date,
-                until_date
+                until_date,
+                self.max_changes_size,
+                self.change_tracking_state
             )
         except BaseException as ex:
             current_app.logger.debug(ex)
