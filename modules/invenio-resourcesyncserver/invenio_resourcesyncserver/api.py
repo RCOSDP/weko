@@ -104,19 +104,25 @@ class ResourceListHandler(object):
                 resource = ResourceListIndexes(**new_data)
                 db.session.add(resource)
             db.session.commit()
-            return ResourceListHandler(
-                id=resource.id,
-                status=resource.status,
-                repository_id=resource.repository_id,
-                resource_dump_manifest=resource.resource_dump_manifest,
-                url_path=resource.url_path,
-                created=resource.created,
-                updated=resource.updated
-            )
+            return {
+                'success': True,
+                'data': ResourceListHandler(
+                    id=resource.id,
+                    status=resource.status,
+                    repository_id=resource.repository_id,
+                    resource_dump_manifest=resource.resource_dump_manifest,
+                    url_path=resource.url_path,
+                    created=resource.created,
+                    updated=resource.updated
+                )
+            }
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-            return None
+            return {
+                'success': False,
+                'message': str(ex)
+            }
 
     def update(self, data=None):
         """
@@ -131,7 +137,10 @@ class ResourceListHandler(object):
             with db.session.begin_nested():
                 resource = self.get_resource(self.id, 'modal')
                 if not resource:
-                    return
+                    return {
+                        'success': False,
+                        'message': ''
+                    }
                 resource.status = data.get('status', self.status)
                 resource.repository_id = data.get(
                     'repository_id',
@@ -143,19 +152,25 @@ class ResourceListHandler(object):
                 resource.url_path = data.get('url_path', self.url_path)
                 db.session.merge(resource)
             db.session.commit()
-            return ResourceListHandler(
-                id=resource.id,
-                status=resource.status,
-                repository_id=resource.repository_id,
-                resource_dump_manifest=resource.resource_dump_manifest,
-                url_path=resource.url_path,
-                created=resource.created,
-                updated=resource.updated
-            )
+            return {
+                'success': False,
+                'data': ResourceListHandler(
+                    id=resource.id,
+                    status=resource.status,
+                    repository_id=resource.repository_id,
+                    resource_dump_manifest=resource.resource_dump_manifest,
+                    url_path=resource.url_path,
+                    created=resource.created,
+                    updated=resource.updated
+                )
+            }
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-        return None
+            return {
+                    'success': False,
+                    'message': str(ex)
+                }
 
     def delete(self):
         """
@@ -547,11 +562,17 @@ class ChangeListHandler(object):
                             self.publish_date
                         db.session.merge(old_obj)
                     db.session.commit()
-                    return self
+                    return {
+                        'success': True,
+                        'data': self
+                    }
                 except Exception as ex:
                     current_app.logger.debug(ex)
                     db.session.rollback()
-                    return None
+                    return {
+                        'success': False,
+                        'data': str(ex)
+                    }
             else:
                 return None
         else:
@@ -572,11 +593,17 @@ class ChangeListHandler(object):
                     db.session.add(obj)
                 db.session.commit()
                 self.id = obj.id
-                return self
+                return {
+                        'success': True,
+                        'data': self
+                    }
             except SQLAlchemyError as ex:
                 current_app.logger.debug(ex)
                 db.session.rollback()
-                return None
+                return {
+                        'success': False,
+                        'data': str(ex)
+                    }
 
     def get_change_list_content_xml(self, from_date):
         """

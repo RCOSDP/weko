@@ -61,10 +61,10 @@ class AdminResourceListView(BaseView):
         :return: The rendered template.
         """
         resource = ResourceListHandler.create(request.get_json())
-        if resource:
-            return jsonify(data=resource.to_dict(), success=True)
+        if resource.get('success'):
+            return jsonify(data=resource.get('data').to_dict(), success=True)
         else:
-            return jsonify(data=None, success=False)
+            return jsonify(message=resource.get('message'), success=False)
 
     @expose('/update/<resource_id>', methods=['POST'])
     def update(self, resource_id):
@@ -77,9 +77,9 @@ class AdminResourceListView(BaseView):
 
         if resource:
             result = resource.update(request.get_json())
-            if result:
-                return jsonify(data=result.to_dict(), success=True)
-        return jsonify(data=None, success=False)
+            if result.get('success'):
+                return jsonify(data=result.get('data').to_dict(), success=True)
+        return jsonify(message=result.get('message'), success=False)
 
     @expose('/delete/<resource_id>', methods=['POST'])
     def delete(self, resource_id):
@@ -144,10 +144,10 @@ class AdminChangeListView(BaseView):
         data = request.get_json()
         resource = ChangeListHandler(**data)
         result = resource.save()
-        if result:
-            return jsonify(data=result.to_dict(), success=True)
+        if result.get('success'):
+            return jsonify(data=result.get('data').to_dict(), success=True)
         else:
-            return jsonify(data=None, success=False)
+            return jsonify(message=result.get('message'), success=False)
 
     @expose('/update/<repo_id>', methods=['POST'])
     def update(self, repo_id):
@@ -160,10 +160,10 @@ class AdminChangeListView(BaseView):
         data['id'] = repo_id
         resource = ChangeListHandler(**data)
         result = resource.save()
-        if result:
-            return jsonify(data=result.to_dict(), success=True)
+        if result.get('success'):
+            return jsonify(data=result.get('data').to_dict(), success=True)
         else:
-            return jsonify(data=None, success=False)
+            return jsonify(message=result.get('message'), success=False)
 
     @expose('/delete/<repo_id>', methods=['POST'])
     def delete(self, repo_id):

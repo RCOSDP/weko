@@ -333,7 +333,7 @@ class CreateResourceComponent extends React.Component {
             this.props.handleChangeTab("list");
           }
         } else {
-          alert("Error in Create");
+          alert(res.message);
         }
       })
       .catch(() => alert("Error in Create"));
@@ -660,7 +660,7 @@ class EditResourceComponent extends React.Component {
         if (res.success) {
           this.props.handleChangeTab("list");
         } else {
-          alert("Error in Edit");
+          alert(res.message);
         }
       })
       .catch(() => alert("Error in Edit"));
