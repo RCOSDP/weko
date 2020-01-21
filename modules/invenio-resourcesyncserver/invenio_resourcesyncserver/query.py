@@ -98,11 +98,6 @@ def item_path_search_factory(search, index_id=None):
                 "bool": {
                     "must": [
                         {
-                            "terms": {
-                                "path": []
-                            }
-                        },
-                        {
                             "match": {
                                 "publish_status": "0"
                             }
@@ -125,11 +120,11 @@ def item_path_search_factory(search, index_id=None):
 
             if post_filter:
                 list_path = Indexes.get_list_path_publish(index_id)
-                post_filter['bool']['must'] = {
+                post_filter['bool']['must'].append({
                     "terms": {
                         "path": list_path
                     }
-                }
+                })
             # create search query
             if q:
                 try:
