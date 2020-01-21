@@ -32,7 +32,6 @@ from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
 from weko_index_tree.models import Index
-from sqlalchemy.orm import backref
 
 
 class ResourceListIndexes(db.Model, Timestamp):

@@ -45,7 +45,7 @@ from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
 
-from .config import INVENIO_CAPABILITY_URL
+from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
 
@@ -99,24 +99,40 @@ class ResourceListHandler(object):
             'resource_dump_manifest': data.get('resource_dump_manifest', False),
             'url_path': data.get('url_path', ''),
         })
+        if ResourceListHandler.get_resource_by_repository_id(
+            new_data.get('repository_id')
+        ):
+            return {
+                'success': False,
+                'message': current_app.config.get(
+                    'VALIDATE_MESSAGE',
+                    VALIDATE_MESSAGE
+                )
+            }
         try:
             with db.session.begin_nested():
                 resource = ResourceListIndexes(**new_data)
                 db.session.add(resource)
             db.session.commit()
-            return ResourceListHandler(
-                id=resource.id,
-                status=resource.status,
-                repository_id=resource.repository_id,
-                resource_dump_manifest=resource.resource_dump_manifest,
-                url_path=resource.url_path,
-                created=resource.created,
-                updated=resource.updated
-            )
+            return {
+                'success': True,
+                'data': ResourceListHandler(
+                    id=resource.id,
+                    status=resource.status,
+                    repository_id=resource.repository_id,
+                    resource_dump_manifest=resource.resource_dump_manifest,
+                    url_path=resource.url_path,
+                    created=resource.created,
+                    updated=resource.updated
+                )
+            }
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-            return None
+            return {
+                'success': False,
+                'message': str(ex)
+            }
 
     def update(self, data=None):
         """
@@ -127,11 +143,25 @@ class ResourceListHandler(object):
         """
         if data is None:
             data = {}
+        resource = ResourceListHandler.get_resource_by_repository_id(
+            data.get('repository_id')
+        )
+        if resource and str(resource.id) != str(self.id):
+            return {
+                'success': False,
+                'message': current_app.config.get(
+                    'VALIDATE_MESSAGE',
+                    VALIDATE_MESSAGE
+                )
+            }
         try:
             with db.session.begin_nested():
                 resource = self.get_resource(self.id, 'modal')
                 if not resource:
-                    return
+                    return {
+                        'success': False,
+                        'message': ''
+                    }
                 resource.status = data.get('status', self.status)
                 resource.repository_id = data.get(
                     'repository_id',
@@ -143,19 +173,25 @@ class ResourceListHandler(object):
                 resource.url_path = data.get('url_path', self.url_path)
                 db.session.merge(resource)
             db.session.commit()
-            return ResourceListHandler(
-                id=resource.id,
-                status=resource.status,
-                repository_id=resource.repository_id,
-                resource_dump_manifest=resource.resource_dump_manifest,
-                url_path=resource.url_path,
-                created=resource.created,
-                updated=resource.updated
-            )
+            return {
+                'success': False,
+                'data': ResourceListHandler(
+                    id=resource.id,
+                    status=resource.status,
+                    repository_id=resource.repository_id,
+                    resource_dump_manifest=resource.resource_dump_manifest,
+                    url_path=resource.url_path,
+                    created=resource.created,
+                    updated=resource.updated
+                )
+            }
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-        return None
+            return {
+                    'success': False,
+                    'message': str(ex)
+                }
 
     def delete(self):
         """
@@ -528,6 +564,17 @@ class ChangeListHandler(object):
         :returns: The :dict:`ChangeListIndexes`.
         """
         if self.id:
+            cl = ChangeListHandler.get_change_list_by_repo_id(
+                self.repository_id
+            )
+            if cl and str(cl.id) != str(self.id):
+                return {
+                    'success': False,
+                    'message': current_app.config.get(
+                        'VALIDATE_MESSAGE',
+                        VALIDATE_MESSAGE
+                    )
+                }
             old_obj = self.get_change_list(self.id, 'modal')
             if old_obj:
                 try:
@@ -547,11 +594,17 @@ class ChangeListHandler(object):
                             self.publish_date
                         db.session.merge(old_obj)
                     db.session.commit()
-                    return self
+                    return {
+                        'success': True,
+                        'data': self
+                    }
                 except Exception as ex:
                     current_app.logger.debug(ex)
                     db.session.rollback()
-                    return None
+                    return {
+                        'success': False,
+                        'data': str(ex)
+                    }
             else:
                 return None
         else:
@@ -565,18 +618,34 @@ class ChangeListHandler(object):
                 'interval_by_date': self.interval_by_date,
                 'publish_date': self.publish_date
             })
-
+            cl = ChangeListHandler.get_change_list_by_repo_id(
+                self.repository_id
+            )
+            if cl:
+                return {
+                    'success': False,
+                    'message': current_app.config.get(
+                        'VALIDATE_MESSAGE',
+                        VALIDATE_MESSAGE
+                    )
+                }
             try:
                 with db.session.begin_nested():
                     obj = ChangeListIndexes(**data)
                     db.session.add(obj)
                 db.session.commit()
                 self.id = obj.id
-                return self
+                return {
+                        'success': True,
+                        'data': self
+                    }
             except SQLAlchemyError as ex:
                 current_app.logger.debug(ex)
                 db.session.rollback()
-                return None
+                return {
+                        'success': False,
+                        'data': str(ex)
+                    }
 
     def get_change_list_content_xml(self, from_date):
         """
@@ -723,6 +792,8 @@ class ChangeListHandler(object):
         for data in record_changes:
             try:
                 next_ch = self._next_change(data, record_changes)
+                if data.get('status') == 'deleted':
+                    continue
                 loc = '{}resync/{}/{}/change_dump_content.zip'.format(
                     request.url_root,
                     self.repository_id,
@@ -1161,24 +1232,6 @@ class ChangeListHandler(object):
         )
 
         return record_changes
-
-    def _get_first_change(self, repo_id, from_date):
-        """
-        Get change list xml.
-
-        :param repo_id  :
-        :param from_date:
-        :return: Updated Change List info
-        """
-        _from = from_date.isoformat()
-        _until = datetime.datetime.utcnow().replace(
-            tzinfo=datetime.timezone.utc).isoformat()
-        record_changes = self._get_record_changes(repo_id, _from, _until)
-
-        if record_changes:
-            return record_changes[0]
-        else:
-            return None
 
     def _get_record_changes(self, repo_id, from_date, until_date):
         """

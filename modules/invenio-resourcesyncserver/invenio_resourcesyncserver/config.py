@@ -33,4 +33,7 @@ WEKO_RECORD_FIRST_VERSION = '1'
 """Delay published to first change date."""
 
 WEKO_RECORD_ORIGIN_VERSION = '0'
-"""Delay published to first change date."""
+
+VALIDATE_MESSAGE = 'Selected repository has been registered already. ' \
+    'Please select another repository.'
+"""Validate message."""

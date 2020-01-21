@@ -217,11 +217,12 @@ class WekoIndexer(RecordIndexer):
         self.get_es_index()
         path = 'path'
         body = {
-                'doc': {
-                    path: record.get(path),
-                    '_updated': datetime.utcnow().replace(
-                        tzinfo=timezone.utc).isoformat()
-                }}
+            'doc': {
+                path: record.get(path),
+                '_updated': datetime.utcnow().replace(
+                    tzinfo=timezone.utc).isoformat()
+            }
+        }
         if update_revision:
             return self.client.update(
                 index=self.es_index,
