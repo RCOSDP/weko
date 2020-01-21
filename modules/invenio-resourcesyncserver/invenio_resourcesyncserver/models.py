@@ -32,6 +32,7 @@ from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
 from weko_index_tree.models import Index
+from sqlalchemy.orm import backref
 
 
 class ResourceListIndexes(db.Model, Timestamp):
@@ -56,6 +57,7 @@ class ResourceListIndexes(db.Model, Timestamp):
         db.BigInteger,
         db.ForeignKey(Index.id),
         unique=True,
+        nullable=True
     )
     """Index Identifier relation to resource list."""
 
@@ -71,7 +73,12 @@ class ResourceListIndexes(db.Model, Timestamp):
     """Root url of resource list."""
 
     index = db.relationship(
-        Index, backref='resource_list_id', foreign_keys=[repository_id])
+        Index,
+        backref=backref(
+            'resource_list_id',
+            cascade='all,delete'
+        ),
+        foreign_keys=[repository_id])
     """Relation to the Index Identifier."""
 
 

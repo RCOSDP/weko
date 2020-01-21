@@ -38,3 +38,9 @@ a.icon {
     color: black;
     cursor: pointer;
 }
+.main-header{
+  z-index: 9;
+}
+.main-sidebar{
+  z-index: 8;
+}
