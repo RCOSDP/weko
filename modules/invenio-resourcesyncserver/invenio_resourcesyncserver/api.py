@@ -414,12 +414,14 @@ class ResourceListHandler(object):
                 self.repository_id
             )
             record = WekoRecord.get_record_by_pid(record_id)
+            current_app.logger.debug('*' * 60)
             if record:
-                for file in record.files:  # TODO: Temporary processing
+                for file in record.files:
+                    current_app.logger.debug(file.info())
                     file_info = file.info()
                     path = 'recid_{}/{}'.format(
                         record.get('recid'),
-                        file_info.get('filename'))
+                        file_info.get('key'))
                     lastmod = str(datetime.datetime.utcnow().replace(
                         tzinfo=datetime.timezone.utc
                     ).isoformat())
@@ -427,7 +429,7 @@ class ResourceListHandler(object):
                         '{}record/{}/files/{}'.format(
                             request.url_root,
                             record.get('recid'),
-                            file_info.get('filename')),
+                            file_info.get('key')),
                         lastmod=lastmod,
                         sha256=file_info.get('checksum').split(':')[1],
                         length=str(file_info.get('size')),
@@ -894,7 +896,7 @@ class ChangeListHandler(object):
                             change = 'created'
                     path = 'recid_{}/{}'.format(
                         current_record.get('recid'),
-                        file_info.get('filename'))
+                        file_info.get('key'))
                     lastmod = str(datetime.datetime.utcnow().replace(
                         tzinfo=datetime.timezone.utc
                     ).isoformat())
@@ -903,7 +905,7 @@ class ChangeListHandler(object):
                             '{}record/{}/files/{}'.format(
                                 request.url_root,
                                 current_record.get('recid'),
-                                file_info.get('filename')),
+                                file_info.get('key')),
                             lastmod=lastmod,
                             sha256=file_info.get('checksum').split(':')[1],
                             length=str(file_info.get('size')),
