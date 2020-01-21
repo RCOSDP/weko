@@ -10,7 +10,7 @@ const default_state = {
   status: null,
   repository_id: "",
   change_dump_manifest: false,
-  change_tracking_state: ['create', 'update','delete'],
+  change_tracking_state: ['created', 'updated','deleted'],
   url_path: "",
   interval_by_date: 1,
   max_changes_size: 10000,
@@ -18,16 +18,16 @@ const default_state = {
 };
 const tracker_state_list = [
   {
-    value: 'create',
-    name: 'Create'
+    value: 'created',
+    name: 'Created'
   },
   {
-    value: 'update',
-    name: 'Update'
+    value: 'updated',
+    name: 'Updated'
   },
   {
-    value: 'delete',
-    name: 'Delete'
+    value: 'deleted',
+    name: 'Deleted'
   },
 ]
 
