@@ -471,7 +471,8 @@ class CreateResourceComponent extends React.Component {
               value={state.max_changes_size}
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("max_changes_size", value);
+                value = value <= 10000 ? value : 10000
+                this.handleChangeState("max_changes_size", parseInt(value));
               }}
             ></input>
           </div>
@@ -488,7 +489,7 @@ class CreateResourceComponent extends React.Component {
               value={state.interval_by_date}
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("interval_by_date", value);
+                this.handleChangeState("interval_by_date", parseInt(value));
               }}
             ></input>
           </div>
@@ -801,7 +802,8 @@ class EditResourceComponent extends React.Component {
               value={state.max_changes_size}
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("max_changes_size", value);
+                value = value <= 10000 ? value : 10000
+                this.handleChangeState("max_changes_size", parseInt(value));
               }}
             ></input>
           </div>
@@ -818,7 +820,7 @@ class EditResourceComponent extends React.Component {
               value={state.interval_by_date}
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("interval_by_date", value);
+                this.handleChangeState("interval_by_date", parseInt(value));
               }}
             ></input>
           </div>
