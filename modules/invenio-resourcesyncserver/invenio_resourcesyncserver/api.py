@@ -45,7 +45,7 @@ from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
 
-from .config import INVENIO_CAPABILITY_URL
+from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
 
@@ -99,6 +99,16 @@ class ResourceListHandler(object):
             'resource_dump_manifest': data.get('resource_dump_manifest', False),
             'url_path': data.get('url_path', ''),
         })
+        if ResourceListHandler.get_resource_by_repository_id(
+            new_data.get('repository_id')
+        ):
+            return {
+                'success': False,
+                'message': current_app.config.get(
+                    'VALIDATE_MESSAGE',
+                    VALIDATE_MESSAGE
+                )
+            }
         try:
             with db.session.begin_nested():
                 resource = ResourceListIndexes(**new_data)
@@ -133,6 +143,17 @@ class ResourceListHandler(object):
         """
         if data is None:
             data = {}
+        resource = ResourceListHandler.get_resource_by_repository_id(
+            data.get('repository_id')
+        )
+        if resource and resource.id != self.id:
+            return {
+                'success': False,
+                'message': current_app.config.get(
+                    'VALIDATE_MESSAGE',
+                    VALIDATE_MESSAGE
+                )
+            }
         try:
             with db.session.begin_nested():
                 resource = self.get_resource(self.id, 'modal')
@@ -543,6 +564,17 @@ class ChangeListHandler(object):
         :returns: The :dict:`ChangeListIndexes`.
         """
         if self.id:
+            cl = ChangeListHandler.get_change_list_by_repo_id(
+                self.repository_id
+            )
+            if cl and cl.id != self.id:
+                return {
+                    'success': False,
+                    'message': current_app.config.get(
+                        'VALIDATE_MESSAGE',
+                        VALIDATE_MESSAGE
+                    )
+                }
             old_obj = self.get_change_list(self.id, 'modal')
             if old_obj:
                 try:
@@ -586,7 +618,17 @@ class ChangeListHandler(object):
                 'interval_by_date': self.interval_by_date,
                 'publish_date': self.publish_date
             })
-
+            cl = ChangeListHandler.get_change_list_by_repo_id(
+                self.repository_id
+            )
+            if cl:
+                return {
+                    'success': False,
+                    'message': current_app.config.get(
+                        'VALIDATE_MESSAGE',
+                        VALIDATE_MESSAGE
+                    )
+                }
             try:
                 with db.session.begin_nested():
                     obj = ChangeListIndexes(**data)
