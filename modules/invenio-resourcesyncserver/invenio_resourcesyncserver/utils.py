@@ -20,7 +20,7 @@
 
 """Utilities for convert response json."""
 
-from flask import abort, request, send_file
+from flask import request
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from resync import CapabilityList, Resource
 from resync.list_base_with_index import ListBaseWithIndex
@@ -71,8 +71,12 @@ def render_well_know_resourcesync():
 
     return cap.as_xml()
 
-from flask import current_app
-def query_record_changes(repository_id, date_from, date_until, max_changes_size=None, change_tracking_state=None):
+
+def query_record_changes(repository_id,
+                         date_from,
+                         date_until,
+                         max_changes_size=None,
+                         change_tracking_state=None):
     """
     Delete unregister bucket by pid.
 
@@ -107,7 +111,8 @@ def query_record_changes(repository_id, date_from, date_until, max_changes_size=
 
             pid = PersistentIdentifier.get('recid', recid)
             is_belong = check_existing_record_in_list(recid, record_changes)
-            if pid.status == PIDStatus.DELETED and is_belong and 'delete' in states:
+            if pid.status == PIDStatus.DELETED and is_belong \
+                    and 'delete' in states:
                 result['status'] = 'deleted'
             else:
                 continue
@@ -121,11 +126,10 @@ def query_record_changes(repository_id, date_from, date_until, max_changes_size=
             else:
                 continue
 
-        current_app.logger.debug(result)
         record_changes.append(result)
 
     if record_changes:
-        return record_changes[max_changes_size*-1:]
+        return record_changes[max_changes_size * -1:]
     return record_changes
 
 
