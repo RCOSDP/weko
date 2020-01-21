@@ -55,7 +55,8 @@ class ResourceListIndexes(db.Model, Timestamp):
 
     repository_id = db.Column(
         db.BigInteger,
-        db.ForeignKey(Index.id),
+        db.ForeignKey(Index.id,
+                      ondelete='CASCADE'),
         unique=True,
         nullable=True
     )
@@ -73,12 +74,7 @@ class ResourceListIndexes(db.Model, Timestamp):
     """Root url of resource list."""
 
     index = db.relationship(
-        Index,
-        backref=backref(
-            'resource_list_id',
-            cascade='all,delete'
-        ),
-        foreign_keys=[repository_id])
+        Index, backref='resource_list_id', foreign_keys=[repository_id])
     """Relation to the Index Identifier."""
 
 
@@ -102,7 +98,8 @@ class ChangeListIndexes(db.Model, Timestamp):
 
     repository_id = db.Column(
         db.BigInteger,
-        db.ForeignKey(Index.id),
+        db.ForeignKey(Index.id,
+                      ondelete='CASCADE'),
         unique=True,
     )
     """Index Identifier relation to change list."""
