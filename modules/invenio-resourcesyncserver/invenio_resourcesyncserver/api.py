@@ -74,8 +74,8 @@ class ResourceListHandler(object):
 
     def to_dict(self):
         """Generate Resource Object to Dict."""
-        repository_name = self.index.index_name or \
-            self.index.index_name_english
+        repository_name = self.index.index_name_english
+
         return dict(**{
             'id': self.id,
             'status': self.status,
@@ -897,7 +897,7 @@ class ChangeListHandler(object):
             'url_path': self.url_path,
             'created': self.created,
             'updated': self.updated,
-            'repository_name': self.index.index_name,
+            'repository_name': self.index.index_name_english,
             'publish_date': str(self.publish_date),
             'interval_by_date': self.interval_by_date
         })
