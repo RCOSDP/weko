@@ -1189,24 +1189,6 @@ class ChangeListHandler(object):
 
         return record_changes
 
-    def _get_first_change(self, repo_id, from_date):
-        """
-        Get change list xml.
-
-        :param repo_id  :
-        :param from_date:
-        :return: Updated Change List info
-        """
-        _from = from_date.isoformat()
-        _until = datetime.datetime.utcnow().replace(
-            tzinfo=datetime.timezone.utc).isoformat()
-        record_changes = self._get_record_changes(repo_id, _from, _until)
-
-        if record_changes:
-            return record_changes[0]
-        else:
-            return None
-
     def _get_record_changes(self, repo_id, from_date, until_date):
         """
         Get change list xml.

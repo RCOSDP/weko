@@ -112,16 +112,16 @@ def query_record_changes(repository_id,
             pid = PersistentIdentifier.get('recid', recid)
             is_belong = check_existing_record_in_list(recid, record_changes)
             if pid.status == PIDStatus.DELETED and is_belong \
-                    and 'delete' in states:
+                    and 'deleted' in states:
                 result['status'] = 'deleted'
             else:
                 continue
         elif len(recids) > 1:
             result['record_id'] = int(recids[0])
             result['record_version'] = int(recids[1])
-            if recids[1] == '1' and 'create' in states:
+            if recids[1] == '1' and 'created' in states:
                 result['status'] = 'created'
-            elif 'update' in states:
+            elif 'updated' in states:
                 result['status'] = 'updated'
             else:
                 continue
