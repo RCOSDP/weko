@@ -705,7 +705,8 @@ class EditResourceComponent extends React.Component {
     const { select_item } = this.props;
     this.setState({
       ...select_item,
-      publish_date: moment(select_item.publish_date).format("MM/DD/YYYY")
+      publish_date: moment(select_item.publish_date).format("MM/DD/YYYY"),
+      change_tracking_state: select_item.change_tracking_state.split("&")
     });
   }
 
