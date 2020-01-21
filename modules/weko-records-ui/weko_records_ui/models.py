@@ -27,6 +27,7 @@ from flask import current_app, json
 from flask_babelex import lazy_gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
+from sqlalchemy import desc
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
@@ -183,6 +184,16 @@ class FilePermission(db.Model):
                                                      file_name=file_name)\
             .first()
         return permission
+
+    @classmethod
+    def find_list_permission_by_date(cls, user_id, record_id, file_name,
+                                     duration):
+        list_permission = db.session.query(cls).filter(
+            cls.open_date >= duration).filter_by(user_id=user_id,
+                                                 record_id=record_id,
+                                                 file_name=file_name).order_by(
+            desc(cls.id)).all()
+        return list_permission
 
     @classmethod
     def init_file_permission(cls, user_id, record_id, file_name, activity_id):

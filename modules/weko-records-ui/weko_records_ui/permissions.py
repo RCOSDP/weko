@@ -28,7 +28,7 @@ from flask_security import current_user
 from invenio_access import Permission, action_factory
 from weko_groups.api import Group, Membership, MembershipState
 from weko_records.api import ItemTypes
-from weko_workflow.api import WorkFlow
+from weko_workflow.api import WorkActivity, WorkFlow
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission
@@ -150,8 +150,13 @@ def check_open_restricted_permission(record, fjson):
     user_id = current_user.get_id()
     record_id = record.get('recid')
     file_name = fjson.get('filename')
-    permission = FilePermission.find(user_id, record_id, file_name)
-    if permission:
+    current_time = dt.now()
+    duration = current_time - \
+        timedelta(days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
+    list_permission = FilePermission.find_list_permission_by_date(
+        user_id, record_id, file_name, duration)
+    if list_permission:
+        permission = list_permission[0]
         return check_permission_period(permission)
     else:
         return False
@@ -178,29 +183,26 @@ def check_content_clickable(record, fjson):
     user_id = current_user.get_id()
     record_id = record.get('recid')
     file_name = fjson.get('filename')
-    permission = FilePermission.find(user_id, record_id, file_name)
+    current_time = dt.now()
+    duration = current_time - timedelta(
+        days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
+    list_permission = FilePermission.find_list_permission_by_date(
+        user_id, record_id, file_name, duration)
     # can click if user have not log in
-    if not permission:
-        return True
-    elif permission.status == 0:
-        return False
-    elif permission.status == -1:
-        return True
+    if list_permission:
+        permission = list_permission[0]
+        if permission.status == 0:
+            return False
+        else:
+            return True
     else:
-        return check_permission_period(permission)
+        return True
 
 
 def check_permission_period(permission):
     """Check download permission."""
     if permission.status == 1:
-        open_date = permission.open_date
-        current_time = dt.now()
-        available_time = open_date + timedelta(
-            days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
-        if available_time > current_time:
-            return True
-        else:
-            return False
+        return True
     else:
         return False
 
@@ -215,15 +217,34 @@ def get_permission(record, fjson):
     user_id = current_user.get_id()
     record_id = record.get('recid')
     file_name = fjson.get('filename')
-    permission = FilePermission.find(user_id, record_id, file_name)
-    return permission
+    current_time = dt.now()
+    duration = current_time - \
+        timedelta(days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
+    list_permission = FilePermission.find_list_permission_by_date(
+        user_id, record_id, file_name, duration)
+    if list_permission:
+        permission = list_permission[0]
+        if permission.status == 1:
+            return permission
+        else:
+            activity_id = permission.usage_application_activity_id
+            activity = WorkActivity()
+            steps = activity.get_activity_steps(activity_id)
+            if steps:
+                for step in steps:
+                    if step and step['Status'] == 'action_canceled':
+                        return None
+            return permission
+    else:
+        return None
 
 
 def get_correct_usage_workflow(data_type):
     """Get usage workflow from user_role and data_type."""
     user_role = current_user.roles
     for role in user_role:
-        for role_workflow_data in current_app.config['WEKO_RECORDS_UI_USAGE_APPLICATION_WORKFLOW_DICT']:
+        for role_workflow_data in current_app.config[
+                'WEKO_RECORDS_UI_USAGE_APPLICATION_WORKFLOW_DICT']:
             if data_type in role_workflow_data:
                 data = role_workflow_data[data_type]
                 current_app.logger.debug(data)
@@ -231,7 +252,8 @@ def get_correct_usage_workflow(data_type):
                     if value['role'].casefold() == role.name.casefold():
                         usage_application_workflow_name = value['workflow_name']
                         workflow = WorkFlow()
-                        usage_workflow = workflow.find_workflow_by_name(usage_application_workflow_name)
+                        usage_workflow = workflow.find_workflow_by_name(
+                            usage_application_workflow_name)
                         if usage_workflow:
                             return usage_workflow
     return None
@@ -246,7 +268,8 @@ def check_original_pdf_download_permission(record):
     is_can = download_original_pdf_permission.can()
     # person himself check
     is_himself = check_created_id(record)
-    # Only allow to download original pdf if one of the following condition is matched
+    # Only allow to download original pdf if one of
+    # the following condition is matched
     # - is_himself
     # - record is published and user (not is_himself) has the permission
     if not is_himself:
@@ -318,7 +341,7 @@ def check_created_id(record):
         if lst.name in users:
             is_himself = True
             if item_type_name and item_type_name in current_app.config[
-                'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST']:
+                    'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST']:
                 if user_id and user_id == str(created_id):
                     is_himself = True
                 else:
