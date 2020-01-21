@@ -269,7 +269,7 @@ class ResourceListHandler(object):
             current_app.logger.debug(ex)
             return None
 
-    def is_validate(self, record_id=None):
+    def _validation(self, record_id=None):
         """
         Update the index detail info.
 
@@ -294,7 +294,7 @@ class ResourceListHandler(object):
 
         :return: (xml) resource list content
         """
-        if not self.is_validate():
+        if not self._validation():
             return None
         r = get_items_by_index_tree(self.repository_id)
 
@@ -315,7 +315,7 @@ class ResourceListHandler(object):
 
         :return: (xml) resource dump content
         """
-        if not self.is_validate():
+        if not self._validation():
             return None
         r = get_items_by_index_tree(self.repository_id)
         rd = ResourceDump()
@@ -355,12 +355,13 @@ class ResourceListHandler(object):
         list_resource = cls.get_list_resource()
         caplist = []
         for resource in list_resource:
-            caplist.append(Resource(
-                '{}/resourcelist.xml'.format(resource.url_path),
-                capability='resourcelist'))
-            caplist.append(Resource(
-                '{}/resourcedump.xml'.format(resource.url_path),
-                capability='resourcedump'))
+            if resource._validation():
+                caplist.append(Resource(
+                    '{}/resourcelist.xml'.format(resource.url_path),
+                    capability='resourcelist'))
+                caplist.append(Resource(
+                    '{}/resourcedump.xml'.format(resource.url_path),
+                    capability='resourcedump'))
         return caplist
 
     def get_resource_dump_manifest(self, record_id):
@@ -370,8 +371,8 @@ class ResourceListHandler(object):
         :param record_id: Identifier of record.
         :return: (xml) content of resourcedumpmanifest
         """
-        is_validate = self.is_validate(record_id)
-        if self.resource_dump_manifest and is_validate:
+        _validation = self._validation(record_id)
+        if self.resource_dump_manifest and _validation:
             rdm = ResourceDumpManifest()
             rdm.up = '{}resync/{}/resourcedump.xml'.format(
                 request.url_root,
@@ -411,7 +412,7 @@ class ResourceListHandler(object):
         result = {'items': []}
         temp_path = tempfile.TemporaryDirectory()
         item_types_data = {}
-        if not self.is_validate(record_id):
+        if not self._validation(record_id):
             return None
         # Set export folder
         export_path = temp_path.name + '/' + datetime.datetime.utcnow() \
@@ -536,18 +537,14 @@ class ChangeListHandler(object):
                             old_obj.repository_id
                         old_obj.change_dump_manifest = \
                             self.change_dump_manifest
-                        old_obj.max_changes_size = self.max_changes_size or \
-                            old_obj.max_changes_size
+                        old_obj.max_changes_size = self.max_changes_size
                         old_obj.change_tracking_state = \
-                            self.change_tracking_state \
-                            or old_obj.change_tracking_state
+                            self.change_tracking_state
                         old_obj.interval_by_date = \
-                            self.interval_by_date \
-                            or old_obj.interval_by_date
-                        old_obj.url_path = self.url_path or old_obj.url_path
+                            self.interval_by_date
+                        old_obj.url_path = self.url_path
                         old_obj.publish_date = \
-                            self.publish_date \
-                            or old_obj.publish_date
+                            self.publish_date
                         db.session.merge(old_obj)
                     db.session.commit()
                     return self
@@ -558,9 +555,6 @@ class ChangeListHandler(object):
             else:
                 return None
         else:
-            current_app.logger.debug("==================")
-            current_app.logger.debug(self.change_dump_manifest)
-            change_dump_manifest = False
             data = dict(**{
                 'status': self.status or False,
                 'repository_id': self.repository_id,
@@ -590,6 +584,8 @@ class ChangeListHandler(object):
 
         :return: Updated Change List info
         """
+        if not self._validation():
+            return None
         change_list = ChangeList()
         change_list.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         change_list.index = '{}resync/{}/changelist.xml'.format(
@@ -732,6 +728,8 @@ class ChangeListHandler(object):
 
         :return: Updated Change List info
         """
+        if not self._validation():
+            return None
         change_dump = ChangeDump()
         change_dump.up = '{}resync/capability.xml'.format(request.url_root)
         change_dump.index = '{}resync/{}/changedump.xml'.format(
@@ -794,7 +792,7 @@ class ChangeListHandler(object):
         :param record_id: Identifier of record
         :return xml
         """
-        if not self.is_record_in_index(record_id):
+        if not self._is_record_in_index(record_id) or self._validation():
             return None
         cdm = ChangeDumpManifest()
         cdm.up = '{}resync/{}/changedump.xml'.format(
@@ -995,7 +993,7 @@ class ChangeListHandler(object):
             current_app.logger.debug(ex)
             return None
 
-    def is_record_in_index(self, record_id):
+    def _is_record_in_index(self, record_id):
         """
         Check record has register index.
 
@@ -1024,7 +1022,7 @@ class ChangeListHandler(object):
         result = {'items': []}
         temp_path = tempfile.TemporaryDirectory()
         item_types_data = {}
-        if not self.is_record_in_index(record_id):
+        if not self._is_record_in_index(record_id):
             return None
         try:
             # Set export folder
@@ -1101,7 +1099,7 @@ class ChangeListHandler(object):
     @classmethod
     def get_capability_content(cls):
         """
-        Get capability_list.
+        Get capability list content.
 
         :return: (Resource Obj) list resource dump and resource list
         """

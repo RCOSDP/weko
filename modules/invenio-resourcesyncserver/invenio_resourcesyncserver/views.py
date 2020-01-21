@@ -13,8 +13,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, Response, abort, redirect, request
-from flask_babelex import gettext as _
+from flask import Blueprint, Response, abort
 
 from .api import ChangeListHandler, ResourceListHandler
 from .utils import render_capability_xml, render_well_know_resourcesync
@@ -29,7 +28,7 @@ blueprint = Blueprint(
 
 @blueprint.route("/resync/<index_id>/resourcelist.xml")
 def resource_list(index_id):
-    """Render a basic view."""
+    """Render resource list."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
     if not resource or not resource.status:
         abort(404)
@@ -43,7 +42,7 @@ def resource_list(index_id):
 
 @blueprint.route("/resync/<index_id>/resourcedump.xml")
 def resource_dump(index_id):
-    """Render a basic view."""
+    """Render resource dump."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
     if not resource or not resource.status:
         abort(404)
@@ -57,112 +56,107 @@ def resource_dump(index_id):
 
 @blueprint.route("/resync/<index_id>/<record_id>/file_content.zip")
 def file_content(index_id, record_id):
-    """Render a basic view."""
+    """Download file content."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
-    if not resource or not resource.is_validate(record_id):
-        abort(404)
-    else:
-        return resource.get_record_content_file(record_id)
+    if resource:
+        result = resource.get_record_content_file(record_id)
+        if result:
+            return result
+    abort(404)
 
 
 @blueprint.route("/resync/capability.xml")
 def capability():
-    """Render a basic view."""
-    caplist = render_capability_xml()
-    if caplist is None:
+    """Render capability list xml."""
+    cap_list = render_capability_xml()
+    if not cap_list:
         abort(404)
-    return Response(caplist, mimetype='text/xml')
+    return Response(cap_list, mimetype='text/xml')
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/resource_dump_manifest.xml")
-def resource_dump_manifest(index_id, record_id, date):
-    """Render a basic view."""
+def resource_dump_manifest(index_id, record_id):
+    """Render resource dump manifest."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
-
-    validate = not resource or not resource.is_validate(
-        record_id) or not resource.resource_dump_manifest
-    if validate:
-        abort(404)
-    return Response(
-        resource.get_resource_dump_manifest(record_id),
-        mimetype='text/xml'
-    )
+    if resource:
+        result = resource.get_resource_dump_manifest(record_id)
+        if result:
+            return Response(
+                result,
+                mimetype='text/xml'
+            )
+    abort(404)
 
 
 @blueprint.route("/resync/<index_id>/changelist.xml")
 def change_list_index(index_id):
-    """Render a basic view."""
+    """Render change list index."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if not cl:
-        abort(404)
-    r = cl.get_change_list_index()
-    if r is None:
-        abort(404)
-    return Response(r, mimetype='application/xml')
+    if cl:
+        r = cl.get_change_list_index()
+        if r:
+            return Response(r, mimetype='application/xml')
+    abort(404)
 
 
 @blueprint.route("/resync/<index_id>/<from_date>/changelist.xml")
 def change_list(index_id, from_date):
-    """Render a basic view."""
+    """Render change list."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if not cl or not cl.status:
-        abort(404)
-    r = cl.get_change_list_content_xml(from_date)
-    if r is None:
-        abort(404)
-    return Response(r, mimetype='application/xml')
+    if cl:
+        r = cl.get_change_list_content_xml(from_date)
+        if r:
+            return Response(r, mimetype='application/xml')
+    abort(404)
 
 
 @blueprint.route("/resync/<index_id>/changedump.xml")
 def change_dump_index(index_id):
-    """Render a basic view."""
+    """Render change dump index."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if not cl:
-        abort(404)
-    r = cl.get_change_dump_index()
-    if r is None:
-        abort(404)
-    return Response(r, mimetype='application/xml')
+    if cl:
+        r = cl.get_change_dump_index()
+        if r:
+            return Response(r, mimetype='application/xml')
+    abort(404)
 
 
 @blueprint.route("/resync/<index_id>/<from_date>/changedump.xml")
 def change_dump(index_id, from_date):
-    """Render a basic view."""
+    """Render change dump."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if cl is None or not cl.status:
-        abort(404)
-    r = cl.get_change_dump_xml(from_date)
-    if r is None:
-        abort(404)
-    return Response(r, mimetype='application/xml')
+    if cl:
+        r = cl.get_change_dump_xml(from_date)
+        if r:
+            return Response(r, mimetype='application/xml')
+    abort(404)
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/changedump_manifest.xml")
 def change_dump_manifest(index_id, record_id):
-    """Render a basic view."""
+    """Render change dump manifest."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if not cl or not cl.status or not cl.is_record_in_index(record_id):
-        abort(404)
-    r = cl.get_change_dump_manifest_xml(record_id)
-    return Response(r, mimetype='application/xml')
+    if cl:
+        r = cl.get_change_dump_manifest_xml(record_id)
+        if r:
+            return Response(r, mimetype='application/xml')
+    abort(404)
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/change_dump_content.zip")
 def change_dump_content(index_id, record_id):
-    """Render a basic view."""
+    """Render change dump content."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
-    if cl is None or not cl.status or not cl.is_record_in_index(record_id):
-        abort(404)
-    r = cl.get_record_content_file(record_id)
-    if r:
-        return r
-    else:
-        abort(404)
+    if cl:
+        r = cl.get_record_content_file(record_id)
+        if r:
+            return r
+    abort(404)
 
 
 @blueprint.route("/.well_know/resourcesync")
 def well_know_resourcesync():
-    """Render a basic view."""
+    """Render well know resourcesync."""
     return Response(
         render_well_know_resourcesync(),
         mimetype='application/xml'
