@@ -146,7 +146,7 @@ class ResourceListHandler(object):
         resource = ResourceListHandler.get_resource_by_repository_id(
             data.get('repository_id')
         )
-        if resource and resource.id != self.id:
+        if resource and str(resource.id) != str(self.id):
             return {
                 'success': False,
                 'message': current_app.config.get(
@@ -567,7 +567,7 @@ class ChangeListHandler(object):
             cl = ChangeListHandler.get_change_list_by_repo_id(
                 self.repository_id
             )
-            if cl and cl.id != self.id:
+            if cl and str(cl.id) != str(self.id):
                 return {
                     'success': False,
                     'message': current_app.config.get(
@@ -792,6 +792,8 @@ class ChangeListHandler(object):
         for data in record_changes:
             try:
                 next_ch = self._next_change(data, record_changes)
+                if data.get('status') == 'deleted':
+                    continue
                 loc = '{}resync/{}/{}/change_dump_content.zip'.format(
                     request.url_root,
                     self.repository_id,
