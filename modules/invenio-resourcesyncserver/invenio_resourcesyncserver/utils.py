@@ -26,6 +26,7 @@ from resync import CapabilityList, Resource
 from resync.list_base_with_index import ListBaseWithIndex
 
 from .api import ChangeListHandler, ResourceListHandler
+from .config import INVENIO_SOURCE_DESC_URL
 from .query import get_item_changes_by_index
 
 
@@ -44,6 +45,8 @@ def get_real_path(path):
 def render_capability_xml():
     """Generate capability xml."""
     cap = CapabilityList()
+    cap.up = INVENIO_SOURCE_DESC_URL.format(request.url_root)
+
     list_resource = ResourceListHandler.get_capability_content()
     list_change = ChangeListHandler.get_capability_content()
     total_list = [*list_resource, *list_change]
@@ -54,7 +57,7 @@ def render_capability_xml():
 
 
 def render_well_know_resourcesync():
-    """Generate capability xml."""
+    """Generate source description xml."""
     cap = ListBaseWithIndex(
         capability_name='description',
         ln=[

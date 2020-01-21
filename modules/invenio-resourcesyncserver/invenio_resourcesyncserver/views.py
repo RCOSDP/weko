@@ -161,3 +161,12 @@ def well_know_resourcesync():
         render_well_know_resourcesync(),
         mimetype='application/xml'
     )
+
+
+@blueprint.route("/resync/source.xml")
+def source_description():
+    """Render well know resourcesync."""
+    return Response(
+        render_well_know_resourcesync(),
+        mimetype='application/xml'
+    )

@@ -189,9 +189,9 @@ class ResourceListHandler(object):
             current_app.logger.debug(ex)
             db.session.rollback()
             return {
-                    'success': False,
-                    'message': str(ex)
-                }
+                'success': False,
+                'message': str(ex)
+            }
 
     def delete(self):
         """
@@ -638,16 +638,16 @@ class ChangeListHandler(object):
                 db.session.commit()
                 self.id = obj.id
                 return {
-                        'success': True,
-                        'data': self
-                    }
+                    'success': True,
+                    'data': self
+                }
             except SQLAlchemyError as ex:
                 current_app.logger.debug(ex)
                 db.session.rollback()
                 return {
-                        'success': False,
-                        'data': str(ex)
-                    }
+                    'success': False,
+                    'data': str(ex)
+                }
 
     def get_change_list_content_xml(self, from_date):
         """
