@@ -33,8 +33,11 @@ def resource_list(index_id):
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
     if not resource or not resource.status:
         abort(404)
+    output_xml = resource.get_resource_list_xml()
+    if not output_xml:
+        abort(404)
     return Response(
-        resource.get_resource_list_xml(),
+        output_xml,
         mimetype='application/xml')
 
 
@@ -44,8 +47,11 @@ def resource_dump(index_id):
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
     if not resource or not resource.status:
         abort(404)
+    output_xml = resource.get_resource_dump_xml()
+    if not output_xml:
+        abort(404)
     return Response(
-        resource.get_resource_dump_xml(),
+        output_xml,
         mimetype='application/xml')
 
 
@@ -154,7 +160,7 @@ def change_dump_content(index_id, record_id):
         abort(404)
 
 
-@blueprint.route("/well_know_resourcesync")
+@blueprint.route("/.well_know/resourcesync")
 def well_know_resourcesync():
     """Render a basic view."""
     return Response(

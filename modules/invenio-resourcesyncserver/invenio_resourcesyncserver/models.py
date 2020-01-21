@@ -102,7 +102,7 @@ class ChangeListIndexes(db.Model, Timestamp):
 
     change_dump_manifest = db.Column(
         db.Boolean(),
-        nullable=False,
+        nullable=True,
         default=True
     )
     """Manifest output of change list."""
