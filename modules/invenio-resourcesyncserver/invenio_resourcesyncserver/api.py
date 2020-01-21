@@ -611,15 +611,11 @@ class ChangeListHandler(object):
                     request.url_root,
                     data.get('record_id')
                 )
-            lastmod = str(datetime.datetime.utcnow().replace(
-                tzinfo=datetime.timezone.utc).isoformat())
             rc = Resource(
                 loc,
-                lastmod=lastmod,
+                lastmod=data.get("updated"),
                 change=data.get('status'),
-                md_at=str(datetime.datetime.utcnow().replace(
-                    tzinfo=datetime.timezone.utc
-                ).isoformat()),
+                md_at=data.get("updated"),
             )
             change_list.add(rc)
         return change_list.as_xml()
@@ -749,11 +745,9 @@ class ChangeListHandler(object):
                     data.get('record_version')
                 )
             )
-            lastmod = str(datetime.datetime.utcnow().replace(
-                tzinfo=datetime.timezone.utc).isoformat())
             rc = Resource(
                 loc,
-                lastmod=lastmod,
+                lastmod=data.get("updated"),
                 mime_type='application/zip',
                 md_from=data.get('updated'),
                 md_until=str(datetime.datetime.utcnow().replace(
