@@ -806,13 +806,14 @@ def add_publisher_dc(schema, res, publisher, lang=''):
         {publisher_item_name: publisher, language_item_name: lang})
 
 
-def add_titlStmt_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_titl_stmt_ddi(schema, res, list_stdy_dscr):
+    """Add titlStmt."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_titlStmt_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_titl_stmt_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'titlStmt':
                     for k1, v1 in v.items():
@@ -821,27 +822,28 @@ def add_titlStmt_ddi(schema, res, list_stdyDscr):
                         elif k1 == 'altTitl':
                             add_alternative_title_ddi(schema, res, v1)
                 else:
-                    add_titlStmt_ddi(schema, res, v)
+                    add_titl_stmt_ddi(schema, res, v)
 
 
-def add_serStmt_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_ser_stmt_ddi(schema, res, list_stdy_dscr):
+    """Add serStmt."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_serStmt_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_ser_stmt_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'serStmt':
                     for k1, v1 in v.items():
                         if k1 == 'serName':
                             add_relation_ddi(schema, res, k1, v1)
                 else:
-                    add_serStmt_ddi(schema, res, v)
+                    add_ser_stmt_ddi(schema, res, v)
 
 
 def get_relation_type_ddi(item, relation_type, key):
-    """Add RelationType to item"""
+    """Add RelationType to item."""
     if key == 'serName':
         item[relation_type] = 'isPartOf'
     elif key == 'relPubl':
@@ -902,6 +904,7 @@ def add_alternative_title_ddi(schema, res, value):
 
 
 def add_text_language_ddi(schema, res, value, item_name):
+    """Add item just have text and language."""
     root_key = map_field(schema).get(item_name)
     if not root_key:
         return
@@ -930,20 +933,21 @@ def add_text_language_ddi(schema, res, value, item_name):
         res['title'] = res[root_key][0][text_item]
 
 
-def add_rspStmt_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_rsp_stmt_ddi(schema, res, list_stdy_dscr):
+    """Add rspStmt."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_rspStmt_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_rsp_stmt_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'rspStmt':
                     for k1, v1 in v.items():
                         if k1 == 'AuthEnty':
                             add_creator_ddi(schema, res, v1)
                 else:
-                    add_rspStmt_ddi(schema, res, v)
+                    add_rsp_stmt_ddi(schema, res, v)
 
 
 def add_creator_ddi(schema, res, value):
@@ -997,13 +1001,14 @@ def add_creator_ddi(schema, res, value):
         res[root_key].append(item)
 
 
-def add_prodStmt_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_prod_stmt_ddi(schema, res, list_stdy_dscr):
+    """Add prodStmt."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_prodStmt_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_prod_stmt_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'prodStmt':
                     for k1, v1 in v.items():
@@ -1013,12 +1018,10 @@ def add_prodStmt_ddi(schema, res, list_stdyDscr):
                             add_rights_ddi(schema, res, v1)
                         elif k1 == 'prodDate':
                             add_date_ddi(schema, res, v1)
-                        elif k1 == 'fundAg':
-                            add_fundingReference_ddi(schema, res, v1, k1)
-                        elif k1 == 'grantNo':
-                            add_fundingReference_ddi(schema, res, v1, k1)
+                        elif k1 == 'fundAg' or k1 == 'grantNo':
+                            add_funding_reference_ddi(schema, res, v1, k1)
                 else:
-                    add_prodStmt_ddi(schema, res, v)
+                    add_prod_stmt_ddi(schema, res, v)
 
 
 def add_publisher_ddi(schema, res, value):
@@ -1062,7 +1065,7 @@ def add_date_ddi(schema, res, value):
     add_text_language_ddi(schema, res, value, item_name)
 
 
-def add_fundingReference_ddi(schema, res, value, key):
+def add_funding_reference_ddi(schema, res, value, key):
     """Convert Funding Reference to item metadata."""
     root_key = map_field(schema).get('Funding Reference')
     if not root_key:
@@ -1097,7 +1100,7 @@ def add_fundingReference_ddi(schema, res, value, key):
             item[funder_name_parent].append({funder_name_child: value})
         elif isinstance(value, list):
             for i in value:
-                add_fundingReference_ddi(schema, res, i, key)
+                add_funding_reference_ddi(schema, res, i, key)
             return
         if res.get(root_key) is None:
             res[root_key] = []
@@ -1115,7 +1118,7 @@ def add_fundingReference_ddi(schema, res, value, key):
             item[award_number_parent].append({award_number_child: value})
         elif isinstance(value, list):
             for i in value:
-                add_fundingReference_ddi(schema, res, i, key)
+                add_funding_reference_ddi(schema, res, i, key)
             return
         if res.get(root_key) is None:
             res[root_key] = []
@@ -1129,20 +1132,21 @@ def add_fundingReference_ddi(schema, res, value, key):
                         break
 
 
-def add_setAvail_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_set_avail_ddi(schema, res, list_stdy_dscr):
+    """Add setAvail."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_setAvail_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_set_avail_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'setAvail':
                     for k1, v1 in v.items():
                         if k1 == 'accsPlac':
                             add_file_ddi(schema, res, v1)
                 else:
-                    add_setAvail_ddi(schema, res, v)
+                    add_set_avail_ddi(schema, res, v)
 
 
 def add_file_ddi(schema, res, value):
@@ -1172,42 +1176,42 @@ def add_file_ddi(schema, res, value):
         res[root_key].append(item)
 
 
-def add_othrStdyMat_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_othr_stdy_mat_ddi(schema, res, list_stdy_dscr):
+    """Add othrStdyMat."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_othrStdyMat_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_othr_stdy_mat_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'othrStdyMat':
                     for k1, v1 in v.items():
-                        if k1 == ('relPubl' or 'relStdy'):
+                        if k1 == 'relPubl' or k1 == 'relStdy':
                             add_relation_ddi(schema, res, k1, v1)
                 else:
-                    add_othrStdyMat_ddi(schema, res, v)
+                    add_othr_stdy_mat_ddi(schema, res, v)
 
 
-def add_disStmt_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_dis_stmt_ddi(schema, res, list_stdy_dscr):
+    """Add disStmt."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_disStmt_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_dis_stmt_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'distStmt':
                     for k1, v1 in v.items():
-                        if k1 == 'distrbtr':
-                            add_contributor_ddi(schema, res, k1, v1)
-                        elif k1 == 'depositr':
+                        if k1 == 'distrbtr' or k1 == 'depositr':
                             add_contributor_ddi(schema, res, k1, v1)
                 else:
-                    add_disStmt_ddi(schema, res, v)
+                    add_dis_stmt_ddi(schema, res, v)
 
 
 def get_contributor_type_ddi(item, con_type, key):
-    """Add ContributorType to item"""
+    """Add ContributorType to item."""
     if key == 'distrbtr':
         item[con_type] = 'Distributor'
     elif key == 'depositr':
@@ -1267,58 +1271,61 @@ def add_contributor_ddi(schema, res, key, value):
         res[root_key].append(item)
 
 
-def add_dataColl_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_data_coll_ddi(schema, res, list_stdy_dscr):
+    """Add dataColl."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_dataColl_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_data_coll_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'dataColl':
                     for k1, v1 in v.items():
                         if k1 == 'dataCollector':
                             add_contributor_ddi(schema, res, k1, v1)
                 else:
-                    add_dataColl_ddi(schema, res, v)
+                    add_data_coll_ddi(schema, res, v)
 
 
-def add_subject_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_subject_ddi(schema, res, list_stdy_dscr):
+    """Add subject."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
                 add_subject_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'subject':
                     for k1, v1 in v.items():
                         if k1 == 'topcClas':
-                            add_topClass_ddi(schema, res, v1)
+                            add_topclass_ddi(schema, res, v1)
                 else:
                     add_subject_ddi(schema, res, v)
 
 
-def add_topClass_ddi(schema, res, value):
+def add_topclass_ddi(schema, res, value):
     """Convert Subject to item metadata."""
     item_name = 'Subject'
     add_text_language_ddi(schema, res, value, item_name)
 
 
-def add_stdyInfo_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_stdy_info_ddi(schema, res, list_stdy_dscr):
+    """Add stdyInfo."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_stdyInfo_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_stdy_info_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'stdyInfo':
                     for k1, v1 in v.items():
                         if k1 == 'abstract':
                             add_description_ddi(schema, res, v1)
                 else:
-                    add_stdyInfo_ddi(schema, res, v)
+                    add_stdy_info_ddi(schema, res, v)
 
 
 def add_description_ddi(schema, res, value):
@@ -1327,13 +1334,14 @@ def add_description_ddi(schema, res, value):
     add_text_language_ddi(schema, res, value, item_name)
 
 
-def add_sumDscr_ddi(schema, res, list_stdyDscr):
-    if isinstance(list_stdyDscr, list):
-        for i in list_stdyDscr:
+def add_sum_dscr_ddi(schema, res, list_stdy_dscr):
+    """Add sumDscr."""
+    if isinstance(list_stdy_dscr, list):
+        for i in list_stdy_dscr:
             if isinstance(i, OrderedDict):
-                add_sumDscr_ddi(schema, res, i)
-    elif isinstance(list_stdyDscr, OrderedDict):
-        for k, v in list_stdyDscr.items():
+                add_sum_dscr_ddi(schema, res, i)
+    elif isinstance(list_stdy_dscr, OrderedDict):
+        for k, v in list_stdy_dscr.items():
             if isinstance(v, OrderedDict):
                 if k == 'sumDscr':
                     for k1, v1 in v.items():
@@ -1342,7 +1350,7 @@ def add_sumDscr_ddi(schema, res, list_stdyDscr):
                         elif k1 == 'geogCover':
                             add_geo_location_ddi(schema, res, v1)
                 else:
-                    add_sumDscr_ddi(schema, res, v)
+                    add_sum_dscr_ddi(schema, res, v)
 
 
 def add_geo_location_ddi(schema, res, value):
@@ -1383,22 +1391,23 @@ def add_temporal_ddi(schema, res, value):
     add_text_language_ddi(schema, res, value, item_name)
 
 
-def add_stdyDscr_ddi(schema, res, list_stdyDscr):
-    if not isinstance(list_stdyDscr, list):
-        list_stdyDscr = [list_stdyDscr]
-    add_titlStmt_ddi(schema, res, list_stdyDscr)
-    add_rspStmt_ddi(schema, res, list_stdyDscr)
-    add_prodStmt_ddi(schema, res, list_stdyDscr)
-    add_setAvail_ddi(schema, res, list_stdyDscr)
-    add_othrStdyMat_ddi(schema, res, list_stdyDscr)
-    add_disStmt_ddi(schema, res, list_stdyDscr)
-    add_dataColl_ddi(schema, res, list_stdyDscr)
-    add_subject_ddi(schema, res, list_stdyDscr)
-    add_stdyInfo_ddi(schema, res, list_stdyDscr)
-    add_sumDscr_ddi(schema, res, list_stdyDscr)
-    add_serStmt_ddi(schema, res, list_stdyDscr)
-    add_version_ddi(schema, res, list_stdyDscr)
-    add_uri_ddi(schema, res, list_stdyDscr)
+def add_stdy_dscr_ddi(schema, res, list_stdy_dscr):
+    """Add stdyDscr."""
+    if not isinstance(list_stdy_dscr, list):
+        list_stdy_dscr = [list_stdy_dscr]
+    add_titl_stmt_ddi(schema, res, list_stdy_dscr)
+    add_rsp_stmt_ddi(schema, res, list_stdy_dscr)
+    add_prod_stmt_ddi(schema, res, list_stdy_dscr)
+    add_set_avail_ddi(schema, res, list_stdy_dscr)
+    add_othr_stdy_mat_ddi(schema, res, list_stdy_dscr)
+    add_dis_stmt_ddi(schema, res, list_stdy_dscr)
+    add_data_coll_ddi(schema, res, list_stdy_dscr)
+    add_subject_ddi(schema, res, list_stdy_dscr)
+    add_stdy_info_ddi(schema, res, list_stdy_dscr)
+    add_sum_dscr_ddi(schema, res, list_stdy_dscr)
+    add_ser_stmt_ddi(schema, res, list_stdy_dscr)
+    add_version_ddi(schema, res, list_stdy_dscr)
+    add_uri_ddi(schema, res, list_stdy_dscr)
 
 
 def to_dict(input_ordered_dict):
@@ -1695,7 +1704,7 @@ class DDIMapper(BaseMapper):
         res = {'$schema': self.itemtype.id,
                'pubdate': str(self.datestamp())}
         add_funcs = {
-            'stdyDscr': partial(add_stdyDscr_ddi, self.itemtype.schema, res)
+            'stdyDscr': partial(add_stdy_dscr_ddi, self.itemtype.schema, res)
         }
 
         for tag in self.json['record']['metadata']['codeBook']:
