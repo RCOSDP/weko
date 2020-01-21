@@ -1758,46 +1758,44 @@ function handleSharePermission(value) {
         var subItemGuarantorPositionOther = 'subitem_guarantor_position(other)';
         var otherChoice = "Others (Input Detail)";
         Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-            ([key, value]) => {
-              if(result){
-              var currentInvenioRecordsSchema=$rootScope.recordsVM.invenioRecordsSchema.properties[key];
-                if (currentInvenioRecordsSchema.properties) {
-                  let containSubItemPosition = false;
-                  if(currentInvenioRecordsSchema.properties.hasOwnProperty(subItemAdvisorPosition) &&
-                    currentInvenioRecordsSchema.properties.hasOwnProperty(subItemAdvisorPositionOther))
-                  {
-                    subItemPosition = subItemAdvisorPosition;
-                    subItemPositionOther = subItemAdvisorPositionOther;
-                    containSubItemPosition = true;
-                  }else if(currentInvenioRecordsSchema.properties.hasOwnProperty(subItemGuarantorPosition) &&
-                    currentInvenioRecordsSchema.properties.hasOwnProperty(subItemGuarantorPositionOther)){
-                    subItemPosition = subItemGuarantorPosition;
-                    subItemPositionOther = subItemGuarantorPositionOther;
-                    containSubItemPosition = true;
-                  }
-                  if (containSubItemPosition) {
-                        var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
-                        var subItemPositionValue = currentInvenioRecordsModel[key][subItemPosition];
-                        var subItemPositionOtherValue = currentInvenioRecordsModel[key][subItemPositionOther];
-                        if (subItemPositionValue != otherChoice && typeof subItemPositionOtherValue != "undefined" && subItemPositionOtherValue != '') {
-                            //Show error same
-                            let message = $("#err_input_other_position").val();
-                            $("#inputModal").html(message);
-                            $("#allModal").modal("show");
-                            result = false;
-                            return false;
-                        }
-                      else if (subItemPositionValue == otherChoice && (subItemPositionOtherValue == '' || subItemPositionOtherValue == undefined)) {
-                            let message = $("#err_position_not_provided").val();
-                            $("#inputModal").html(message);
-                            $("#allModal").modal("show");
-                            result = false;
-                            return false;
-                        }
-                    }
+          ([key, value]) => {
+            if (result) {
+              var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+              if (currentInvenioRecordsSchema.properties) {
+                let containSubItemPosition = false;
+                if (currentInvenioRecordsSchema.properties.hasOwnProperty(subItemAdvisorPosition) &&
+                  currentInvenioRecordsSchema.properties.hasOwnProperty(subItemAdvisorPositionOther)) {
+                  subItemPosition = subItemAdvisorPosition;
+                  subItemPositionOther = subItemAdvisorPositionOther;
+                  containSubItemPosition = true;
+                } else if (currentInvenioRecordsSchema.properties.hasOwnProperty(subItemGuarantorPosition) &&
+                  currentInvenioRecordsSchema.properties.hasOwnProperty(subItemGuarantorPositionOther)) {
+                  subItemPosition = subItemGuarantorPosition;
+                  subItemPositionOther = subItemGuarantorPositionOther;
+                  containSubItemPosition = true;
                 }
+                if (containSubItemPosition) {
+                  var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
+                  var subItemPositionValue = currentInvenioRecordsModel[key][subItemPosition];
+                  var subItemPositionOtherValue = currentInvenioRecordsModel[key][subItemPositionOther];
+                  if (subItemPositionValue != otherChoice && typeof subItemPositionOtherValue != "undefined" && subItemPositionOtherValue != '') {
+                    //Show error same
+                    let message = $("#err_input_other_position").val();
+                    $("#inputModal").html(message);
+                    $("#allModal").modal("show");
+                    result = false;
+                    return false;
+                  } else if (subItemPositionValue == otherChoice && (subItemPositionOtherValue == '' || subItemPositionOtherValue == undefined)) {
+                    let message = $("#err_position_not_provided").val();
+                    $("#inputModal").html(message);
+                    $("#allModal").modal("show");
+                    result = false;
+                    return false;
+                  }
+                }
+              }
             }
-        );
+          });
         return result;
       }
 
