@@ -27,12 +27,16 @@ INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN = \
 """Admin template for the demo page."""
 
 INVENIO_CAPABILITY_URL = "{}resync/capability.xml"
-"""Delay published to first change date."""
+"""Temp for capability url."""
+
+INVENIO_SOURCE_DESC_URL = "{}resync/source.xml"
+"""Temp for source description url."""
 
 WEKO_RECORD_FIRST_VERSION = '1'
-"""Delay published to first change date."""
+"""Record version of unver record."""
 
 WEKO_RECORD_ORIGIN_VERSION = '0'
+"""Record version of original record."""
 
 VALIDATE_MESSAGE = 'Selected repository has been registered already. ' \
     'Please select another repository.'
