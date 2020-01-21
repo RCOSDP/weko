@@ -215,13 +215,39 @@ def check_roles(user_role, roles):
 
 def check_groups(user_group, groups):
     """Check groups."""
-    is_can = True
+    is_can = False
     if current_user.is_authenticated:
         group = [x for x in user_group if str(x) in (groups or [])]
-        if not group:
-            is_can = False
+        if group:
+            is_can = True
 
     return is_can
+
+
+def filter_index_list_by_role(index_list):
+    """Filter index list by role."""
+    def _check(index_data, roles, groups):
+        """Check index data by role."""
+        can_view = False
+        if roles[0]:
+            can_view = True
+        else:
+            if check_roles(roles, index_data.browsing_role) \
+                    or check_groups(groups, index_data.browsing_group):
+                if index_data.public_state \
+                        and (index_data.public_date is None
+                             or (isinstance(index_data.public_date, datetime)
+                                 and date.today() >= index_data.public_date.date())):
+                    can_view = True
+        return can_view
+
+    result_list = []
+    roles = get_user_roles()
+    groups = get_user_groups()
+    for i in index_list:
+        if _check(i, roles, groups):
+            result_list.append(i)
+    return result_list
 
 
 def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):

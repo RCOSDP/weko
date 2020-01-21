@@ -57,10 +57,11 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     get_current_user, get_list_email, get_list_username, \
     get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    remove_excluded_items_in_json_schema, to_files_js, \
-    update_index_tree_for_record, update_json_schema_by_activity_id, \
-    update_schema_remove_hidden_item, update_sub_items_by_user_role, \
-    validate_form_input_data, validate_user, validate_user_mail_and_index
+    remove_excluded_items_in_json_schema, set_multi_language_name, \
+    to_files_js, update_index_tree_for_record, \
+    update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
+    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
+    validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -334,6 +335,13 @@ def get_schema_form(item_type_id=0):
                 schema_form = update_schema_remove_hidden_item(schema_form,
                                                                result.render,
                                                                hidden_items)
+
+        for elem in schema_form:
+            set_multi_language_name(elem, cur_lang)
+            if 'items' in elem:
+                items = elem['items']
+                for item in items:
+                    set_multi_language_name(item, cur_lang)
 
         if 'default' != cur_lang:
             for elem in schema_form:
@@ -1188,3 +1196,22 @@ def check_validation_error_msg(activity_id):
                        error_list=error_list)
     else:
         return jsonify(code=0)
+
+
+@blueprint.route('/', methods=['GET'])
+@blueprint.route('/corresponding-activity', methods=['GET'])
+@login_required
+@item_permission.require(http_exception=403)
+def corresponding_activity_list():
+    """Get corresponding usage & output activity list.
+
+    :return: activity list
+    """
+    result = {}
+    work_activity = WorkActivity()
+    if "get_corresponding_usage_activities" in dir(work_activity):
+        usage_application_list, output_report_list = work_activity. \
+            get_corresponding_usage_activities(current_user.get_id())
+        result = {'usage_application': usage_application_list,
+                  'output_report': output_report_list}
+    return jsonify(result)

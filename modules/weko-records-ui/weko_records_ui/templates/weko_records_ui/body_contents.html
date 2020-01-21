@@ -62,7 +62,12 @@
               </tr>
             </thead>
             <tbody>
+            {%- set preview_count = {'value': 0} -%}
             {%- for file in files|sort(attribute='key') -%}
+              {%- if file.displaytype == 'preview' -%}
+                {% if preview_count.update({'value': preview_count.value + 1}) %}
+                {% endif %}
+              {%- endif -%}
               {%- if file.filename -%}
                 {%- set img = file.mimetype | get_image_src -%}
                 {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
@@ -194,7 +199,8 @@
                         {{_('Information')}}
                       </button>
                     </a>
-                    <a class="action-anchor preview-button" href="#preview_carousel" data-slide-to="{{ loop.index0 }}">
+                    <a class="action-anchor preview-button {% if not file.displaytype == 'preview' %} hidden {% endif %}"
+                        href="#preview_carousel" data-slide-to="{{ loop.index0 }}">
                       <button class="img-rounded action-button button-sm">
                         <i class="action-icon fa fa-play-circle fa-lg"></i>
                         {{_('Preview')}}
@@ -205,6 +211,7 @@
               </label>
               {%- endif -%}
             {%- endfor -%}
+            <input type='hidden' id='preview_count' value='{{preview_count.value}}' />
             </tbody>
           </table>
 

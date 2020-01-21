@@ -27,6 +27,7 @@ from flask import abort, current_app
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from weko_groups.api import Group, Membership, MembershipState
+from weko_index_tree.utils import filter_index_list_by_role, get_user_roles
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 
@@ -45,20 +46,23 @@ download_original_pdf_permission = Permission(
 def page_permission_factory(record, *args, **kwargs):
     """Page permission factory."""
     def can(self):
-        is_ok = True
-        # item publish status check
-        is_pub = check_publish_status(record)
-        # role permission
-        is_can = detail_page_permission.can()
+        is_ok = False
+
+        # get user role info
+        roles = get_user_roles()
         # person himself check
         is_himself = check_created_id(record)
-        if not is_pub:
-            if not is_can or (is_can and not is_himself):
-                is_ok = False
-        else:
-            if kwargs.get('flg'):
-                if not is_can or (is_can and not is_himself):
-                    is_ok = False
+        if roles[0] or is_himself:
+            is_ok = True
+        else:   # if not admin user and not creator
+            # item publish status check
+            is_pub = check_publish_status(record)
+            if is_pub:
+                # get the list of authorized indexes
+                index_list = filter_index_list_by_role(record.navi)
+                if len(index_list) > 0:
+                    is_ok = True
+
         return is_ok
 
     return type('DetailPagePermissionChecker', (), {'can': can})()
@@ -96,7 +100,12 @@ def check_file_download_permission(record, fjson):
         try:
             # can access
             if 'open_access' in acsrole:
-                pass
+                adt = fjson.get('accessdate')
+                if adt:
+                    pdt = dt.strptime(adt, '%Y-%m-%d')
+                    is_can = True if dt.today() >= pdt else False
+                else:
+                    is_can = True
             # access with open date
             elif 'open_date' in acsrole:
                 try:
@@ -231,7 +240,8 @@ def get_correct_usage_workflow(data_type):
                     if value['role'].casefold() == role.name.casefold():
                         usage_application_workflow_name = value['workflow_name']
                         workflow = WorkFlow()
-                        usage_workflow = workflow.find_workflow_by_name(usage_application_workflow_name)
+                        usage_workflow = workflow.find_workflow_by_name(
+                            usage_application_workflow_name)
                         if usage_workflow:
                             return usage_workflow
     return None
@@ -302,14 +312,30 @@ def check_created_id(record):
     """
     is_himself = False
     users = current_app.config['WEKO_PERMISSION_ROLE_USER']
+    # Super users
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    user_id = current_user.get_id() \
+        if current_user and current_user.is_authenticated else None
+    created_id = record.get('_deposit', {}).get('created_by')
+    from weko_records.serializers.utils import get_item_type_name
+    item_type_id = record.get('item_type_id', '')
+    item_type_name = get_item_type_name(item_type_id)
     for lst in list(current_user.roles or []):
+        # In case of supper user,it's always have permission
+        if lst.name in supers:
+            is_himself = True
+            break
         if lst.name in users:
             is_himself = True
+            if item_type_name and item_type_name in current_app.config[
+                    'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST']:
+                if user_id and user_id == str(created_id):
+                    is_himself = True
+                else:
+                    is_himself = False
+                break
             if lst.name == users[2]:
                 is_himself = False
-                user_id = current_user.get_id() \
-                    if current_user and current_user.is_authenticated else None
-                created_id = record.get('_deposit', {}).get('created_by')
                 shared_id = record.get('weko_shared_id')
                 if user_id and created_id and user_id == str(created_id):
                     is_himself = True

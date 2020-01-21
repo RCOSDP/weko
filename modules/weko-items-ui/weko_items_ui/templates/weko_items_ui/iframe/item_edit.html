@@ -321,6 +321,7 @@
       <div class="modal-content">
         <div class="modal-body">
           <div id="meta-search-body"></div>
+          <input type="hidden" id="item_title" name="item_title" value='{{itemTitle}}'>
           {% set title = "" %}
           {% if auto_fill_title %}
             {% set title = auto_fill_title|tojson %}
@@ -337,7 +338,7 @@
           {% if user_profile %}
             {% set user_profile_data = user_profile|tojson %}
           {% endif %}
-          <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{auto_fill_title}}'>
+          <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{title}}'>
           <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
           <input type="hidden" id="action_endpoint_key" name="action_endpoint_key" value='{{endpoint_key}}'>
           <input type="hidden" id="approval_email_key" name="approval_email_key" value='{{approval_email}}'>

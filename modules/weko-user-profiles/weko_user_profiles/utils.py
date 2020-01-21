@@ -39,6 +39,7 @@ def get_user_profile_info(user_id):
     result = {
         'subitem_user_name': '',
         'subitem_mail_address': '',
+        'subitem_displayname': '',
         'subitem_university/institution': '',
         'subitem_affiliated_division/department': '',
         'subitem_position': '',
@@ -50,6 +51,7 @@ def get_user_profile_info(user_id):
     user_info = UserProfile.get_by_userid(int(user_id))
     if user_info is not None:
         result['subitem_fullname'] = user_info.fullname
+        result['subitem_displayname'] = user_info._displayname
         result['subitem_user_name'] = user_info.get_username
         result['subitem_university/institution'] = user_info.university
         result['subitem_affiliated_division/department'] = user_info.department

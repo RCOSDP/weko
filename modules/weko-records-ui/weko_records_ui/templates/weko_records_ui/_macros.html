@@ -27,13 +27,13 @@
         ({{ file.size|filesizeformat }})</a>
       <br>
     {%- else -%}
-    <a class="action-anchor" href="{{href_url}}">
-                      <button class="img-rounded action-button button-sm">
-                        <i class="action-icon fa fa-download"></i>
-                        {{_('Download')}}
-                      </button>
-                    </a>
-    {%- endif -%} 
+      <a class="action-anchor" href="{{ href_url }}">
+        <button class="img-rounded action-button button-sm">
+          <i class="action-icon fa fa-download"></i>
+          {{ _('Download') }}
+        </button>
+      </a>
+    {%- endif -%}
   {%- elif not permission -%}
     {%- set workflow_id = '' -%}
     {%- set usage_workflow = record | get_usage_workflow -%}
@@ -43,14 +43,14 @@
         <a class="forcewrap">{{ file.filename }}
           ({{ file.size|filesizeformat }})</a>
         <br>
-    {%- else -%}
+      {%- else -%}
         <a class="action-anchor">
           <button class="img-rounded action-button button-sm">
             <i class="action-icon fa fa-download"></i>
-            {{_('Download')}}
+            {{ _('Download') }}
           </button>
         </a>
-     {%- endif -%} 
+      {%- endif -%}
     {%- elif usage_workflow -%}
       {%- set workflow_id = usage_workflow.id -%}
       {%- set workflow_detail = workflow_id | get_workflow_detail() -%}
@@ -65,47 +65,47 @@
       <div class="hide"
            id="file_name">{{ file.filename }}</div>
       <div id="recid" class="hide">{{ record.recid }}</div>
-
-      
-        {%- if is_file_name_url -%}
-          <a id="btn-begin-{{ workflow_id }}"
-            class="btn-start-workflow forcewrap"   
+      {%- if is_file_name_url -%}
+        {%- set itemtitle = record.item_title -%}
+        <a id="btn-begin-{{ workflow_id }}"
+           class="btn-start-workflow forcewrap"
                 {%- if community -%}
-            data-community="{{ community.id }}"
+           data-community="{{ community.id }}"
                 {%- endif -%}
-            data-workflow-id={{ workflow_id }}
-                href={{ href_url }}>
-          
-        {{ file.filename }} ({{ file.size|filesizeformat }})</a>
-        {%- else -%}
-          <a class="action-anchor" href="{{href_url}}">
-              <button id="btn-begin-{{ workflow_id }}" 
-                      {%- if community -%}
-                        data-community="{{ community.id }}"
-                      {%- endif -%}
-                        data-workflow-id={{ workflow_id }} 
-                        class="btn-start-workflow img-rounded action-button button-sm">
-                <i class="action-icon fa fa-download"></i>
-                    {{_('Download')}}
-              </button>
-          </a>
-        {%- endif -%}
+           data-workflow-id="{{ workflow_id }}"
+           data-itemtitle="{{ itemtitle|urlencode }}"
+           href="{{ href_url }}">
+          {{ file.filename }} ({{ file.size|filesizeformat }})</a>
+      {%- else -%}
+        <a class="action-anchor" href="{{ href_url }}">
+          <button id="btn-begin-{{ workflow_id }}"
+                  {%- if community -%}
+                  data-community="{{ community.id }}"
+                  {%- endif -%}
+                  data-workflow-id="{{ workflow_id }}"
+                  class="btn-start-workflow img-rounded action-button button-sm">
+            <i class="action-icon fa fa-download"></i>
+            {{ _('Download') }}
+          </button>
+        </a>
+      {%- endif -%}
     {%- endif -%}
   {%- elif permission.status == -1 -%}
     {%- set href_url = url_for('weko_workflow.display_activity', activity_id=permission.usage_application_activity_id) -%}
-       {%- if is_file_name_url -%}
-          <a class="forcewrap"
-             href={{ href_url }}>{{ file.filename }}
-            ({{ file.size|filesizeformat }})</a>
-          <br>
+    {%- if is_file_name_url -%}
+      {%- set itemtitle = record.item_title -%}
+      <a class="forcewrap"
+         href="{{ href_url }}?itemtitle={{ itemtitle|urlencode }}">{{ file.filename }}
+        ({{ file.size|filesizeformat }})</a>
+      <br>
     {%- else -%}
-          <a class="action-anchor" href="{{href_url}}">
-            <button class="img-rounded action-button button-sm">
-              <i class="action-icon fa fa-download"></i>
-                {{_('Download')}}
-            </button>
-          </a>
-     {%- endif -%} 
+      <a class="action-anchor" href="{{ href_url }}">
+        <button class="img-rounded action-button button-sm">
+          <i class="action-icon fa fa-download"></i>
+          {{ _('Download') }}
+        </button>
+      </a>
+    {%- endif -%}
 
   {%- elif permission.status == 1 -%}
     {%- set is_permission_in_period = record | check_file_permission_period(file.info()) -%}
@@ -113,20 +113,20 @@
     {%- if is_permission_in_period -%}
       {%- set href_url = file_url -%}
 
-          {%- if is_file_name_url -%}
-            <a class="forcewrap"
-               href={{ href_url }}>{{ file.filename }}
-              ({{ file.size|filesizeformat }})
-            </a>
-            <br>
-          {%- else -%}
-              <a class="action-anchor"  href="{{href_url}}">
-                <button class="img-rounded action-button button-sm">
-                  <i class="action-icon fa fa-download"></i>
-                    {{_('Download')}}
-                </button>
-              </a>
-         {%- endif -%} 
+      {%- if is_file_name_url -%}
+        <a class="forcewrap"
+           href={{ href_url }}>{{ file.filename }}
+          ({{ file.size|filesizeformat }})
+        </a>
+        <br>
+      {%- else -%}
+        <a class="action-anchor" href="{{ href_url }}">
+          <button class="img-rounded action-button button-sm">
+            <i class="action-icon fa fa-download"></i>
+            {{ _('Download') }}
+          </button>
+        </a>
+      {%- endif -%}
     {%- else -%}
       {%- set clickable = false -%}
     {%- endif -%}

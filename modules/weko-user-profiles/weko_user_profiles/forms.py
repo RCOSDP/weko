@@ -206,8 +206,6 @@ class ProfileForm(FlaskForm):
     instituteName = StringField(
         _('Affiliated Institution Name'),
         validators=[
-            DataRequired(
-                message=_('Affiliated Institution Name not provided.')),
             check_length_100_characters
         ],
         filters=[strip_filter]
@@ -216,10 +214,6 @@ class ProfileForm(FlaskForm):
     # Affiliation institute position (n)
     institutePosition = SelectField(
         _('Affiliated Institution Position'),
-        validators=[
-            DataRequired(
-                message=_('Affiliated Institution Position not provided.'))
-        ],
         filters=[strip_filter],
         choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     )
@@ -229,8 +223,6 @@ class ProfileForm(FlaskForm):
     instituteName2 = StringField(
         _('Affiliated Institution Name'),
         validators=[
-            # DataRequired(
-            #     message=_('Affiliated Institution Name not provided.')),
             check_length_100_characters
         ],
         filters=[strip_filter]
