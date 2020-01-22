@@ -41,7 +41,7 @@ from weko_records.models import ItemMetadata
 from weko_records_ui.utils import soft_delete
 
 from .api import get_records, list_records, send_run_status_mail
-from .harvester import DCMapper, JPCOARMapper
+from .harvester import DCMapper, JPCOARMapper, DDIMapper
 from .harvester import list_records as harvester_list_records
 from .harvester import list_sets, map_sets
 from .models import HarvestLogs, HarvestSettings
@@ -157,6 +157,8 @@ def process_item(record, harvesting, counter):
         mapper = DCMapper(xml)
     elif harvesting.metadata_prefix == 'jpcoar':
         mapper = JPCOARMapper(xml)
+    elif harvesting.metadata_prefix == 'ddi':
+        mapper = DDIMapper(xml)
     else:
         return
     hvstid = PersistentIdentifier.query.filter_by(
