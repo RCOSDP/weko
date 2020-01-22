@@ -174,7 +174,7 @@ class ResourceListHandler(object):
                 db.session.merge(resource)
             db.session.commit()
             return {
-                'success': False,
+                'success': True,
                 'data': ResourceListHandler(
                     id=resource.id,
                     status=resource.status,
