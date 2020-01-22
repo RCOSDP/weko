@@ -1,4 +1,28 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+
+"""WEKO3 pytest docstring."""
+
+
 import os
+from functools import wraps
 
 import pytest
 from invenio_accounts.models import User
@@ -10,14 +34,13 @@ from send_mail_helpers import insert_action_data_to_db, \
     login_user_via_session
 from weko_user_profiles.config import WEKO_USERPROFILES_ADMINISTRATOR_ROLE, \
     WEKO_USERPROFILES_GENERAL_ROLE, WEKO_USERPROFILES_GRADUATED_STUDENT_ROLE
-
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import Activity
 from weko_workflow.views import process_send_notification_mail
-from functools import wraps
 
 
 def test_send_reminder_mail(app, database, client, mailbox, es_clear):
+    """Test_send_reminder_mail."""
     # # enable when run function alone
     insert_user_to_db(database)
     login_user_via_session(client, 1)
@@ -37,20 +60,25 @@ def test_send_reminder_mail(app, database, client, mailbox, es_clear):
     )
     with mock.patch("weko_workflow.utils.current_user", current_user), \
         mock.patch(
-            "weko_items_ui.utils.get_user_information", return_value=user_info):
+            "weko_items_ui.utils.get_user_information",
+            return_value=user_info):
+
         # Test fail 1: wrong template: 1, 3
-        client.post('/workflow/send_mail/A-20191218-00007/email_pattern_20.tpl')
+        client.post(
+            '/workflow/send_mail/A-20191218-00007/email_pattern_20.tpl')
         assert len(mailbox) == 0
 
         # Test fail 2: sender not found: 2
-        client.post('/workflow/send_mail/A-20191218-00007/email_pattern_11.tpl')
+        client.post(
+            '/workflow/send_mail/A-20191218-00007/email_pattern_11.tpl')
         assert len(mailbox) == 0
 
     with mock.patch("weko_workflow.utils.current_user", current_user), \
         mock.patch("weko_items_ui.utils.get_user_information",
                    return_value=wrong_user_info):
         # Test fail 3: user doesn't have email: 4
-        client.post('/workflow/send_mail/A-20191218-00007/email_pattern_11.tpl')
+        client.post(
+            '/workflow/send_mail/A-20191218-00007/email_pattern_11.tpl')
         assert len(mailbox) == 0
 
     from invenio_mail.admin import _load_mail_cfg_from_db, _save_mail_cfg_to_db
@@ -61,11 +89,13 @@ def test_send_reminder_mail(app, database, client, mailbox, es_clear):
     with mock.patch("weko_workflow.utils.current_user", current_user), \
         mock.patch("weko_items_ui.utils.get_user_information",
                    return_value=user_info):
-        client.post('/workflow/send_mail/A-20191218-00007/email_pattern_11.tpl')
+        client.post(
+            '/workflow/send_mail/A-20191218-00007/email_pattern_11.tpl')
         assert len(mailbox) == 1
 
 
 def test_index(app, database, client, es_clear):
+    """Test_index."""
     insert_action_data_to_db(database)
     insert_history_doing_data_to_db(database)
     # insert_user_to_db(database)
@@ -86,40 +116,9 @@ def test_index(app, database, client, es_clear):
     insert_history_done_data_to_db(database)
     req_test_index(activities, user, client)
 
-# def test_next_action(app, database, client, es_clear):
-#     from flask import current_app
-#     from undecorated import undecorated 
-#     from weko_workflow.views import next_action
-#     from weko_workflow import views
-#     import json
-#     user = mock.MagicMock()
-#     user.roles = WEKO_USERPROFILES_GRADUATED_STUDENT_ROLE
-#     admin = User.query.filter_by(email='admin@invenio.org').one_or_none()
-#     roles = {
-#         'allow': [1],
-#         'deny': []
-#     }
-#     users = {
-#         'allow': [1],
-#         'deny': []
-#     }
-#     post_json = dict(
-#         action_version=1
-#     )
-#     with mock.patch("weko_workflow.views.current_user", admin), \
-#         mock.patch("weko_workflow.api.WorkActivity.get_activity_action_role", return_value=(roles, users)), \
-#         mock.patch("weko_workflow.api.Flow.get_next_flow_action", return_value=(roles, users)), \
-#         mock.patch("weko_workflow.utils.get_current_user_role",
-#                    return_value=user.roles):
-#         res = client.post('/workflow/activity/action/A-20191218-00007/12', json={"action_version": "1"})
-#         assert res.status_code == 200
-
-# mock.patch("weko_workflow.views.request.get_json", return_value=post_json), \
-# def test_display_activity(app, database, client, es_clear):
-#     res = client.post('/workflow/activity/detail/A-20191218-00007')
-#     assert res.status_code == 200
 
 def test_send_mail(app, database, client, mailbox, es_clear):
+    """Test_send_mail."""
     assert len(mailbox) == 0
     user = mock.MagicMock()
     user.roles = WEKO_USERPROFILES_GRADUATED_STUDENT_ROLE
@@ -261,9 +260,11 @@ def test_send_mail(app, database, client, mailbox, es_clear):
         assert len(mailbox) == 15
 
 
-def send_mail(user, activity_id, workflow_id, item_id, current_step, next_step,
-              item_type_name):
+def send_mail(user, activity_id, workflow_id, item_id, current_step,
+              next_step, item_type_name):
+    """Send_mail."""
     from weko_workflow.views import process_send_notification_mail
+
     with mock.patch("weko_workflow.utils.current_user", user), \
         mock.patch("weko_workflow.utils.get_current_user_role",
                    return_value=user.roles), \
@@ -273,13 +274,16 @@ def send_mail(user, activity_id, workflow_id, item_id, current_step, next_step,
         activity_detail.workflow_id = workflow_id
         activity_detail.item_id = item_id
         activity_detail.activity_id = activity_id
-        process_send_notification_mail(activity_detail, current_step, next_step)
+        process_send_notification_mail(activity_detail,
+                                       current_step,
+                                       next_step)
 
 
 def req_test_index(activities, user, client):
+    """Req_test_index."""
     with mock.patch("weko_workflow.api.WorkActivity.get_activity_list",
-                    return_value=activities), \
-         mock.patch("weko_workflow.views.current_user", user):
+                    return_value=activities),\
+            mock.patch("weko_workflow.views.current_user", user):
         res = client.get('/workflow/')
         expect_activity_id = b'A-20191218-00007'
         assert expect_activity_id in res.data
