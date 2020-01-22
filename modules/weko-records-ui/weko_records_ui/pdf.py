@@ -193,7 +193,14 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         item_metadata_json['lang'] = 'English'
     elif item_metadata_json['lang'] == 'ja':
         item_metadata_json['lang'] = 'Japanese'
-
+    try:
+        lang_field = item_map['language.@value'].split('.')
+        if item_metadata_json[lang_field[0]][lang_field[1]] == 'eng':
+            item_metadata_json['lang'] = 'English'
+        elif item_metadata_json[lang_field[0]][lang_field[1]] == 'jpn':
+            item_metadata_json['lang'] = 'Japanese'
+    except:
+        pass
     try:
         lang = item_metadata_json.get('lang')
     except (KeyError, IndexError):
@@ -281,7 +288,6 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     for key in metadata_dict:
         if metadata_dict[key] is None:
             metadata_dict[key] = ''
-
     metadata_list = [
         "{}: {}".format(lang_data["Metadata"]["LANG"], metadata_dict["lang"]),
         "{}: {}".format(
