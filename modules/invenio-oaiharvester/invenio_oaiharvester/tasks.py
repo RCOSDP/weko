@@ -41,7 +41,7 @@ from weko_records.models import ItemMetadata
 from weko_records_ui.utils import soft_delete
 
 from .api import get_records, list_records, send_run_status_mail
-from .harvester import DCMapper, JPCOARMapper, DDIMapper
+from .harvester import DCMapper, DDIMapper, JPCOARMapper
 from .harvester import list_records as harvester_list_records
 from .harvester import list_sets, map_sets
 from .models import HarvestLogs, HarvestSettings

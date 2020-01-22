@@ -860,9 +860,8 @@ def add_relation_ddi(schema, res, key, value):
     item_schema = schema['properties'][root_key]['items']
     relation_type = map_field(item_schema)['Relation Type']
     related_title_parent = map_field(item_schema)['Related Title']
-    related_title_child = \
-        map_field(item_schema['properties'][related_title_parent]['items'])[
-                'Related Title']
+    related_title_child = map_field(item_schema[
+        'properties'][related_title_parent]['items'])['Related Title']
     related_iden_parent = map_field(item_schema)['Related Identifier']
     related_iden_child = \
         map_field(item_schema['properties'][related_iden_parent]['items'])[
@@ -1227,7 +1226,8 @@ def add_contributor_ddi(schema, res, key, value):
         return
     item_schema = schema['properties'][root_key]['items']
     con_type = map_field(item_schema)['Contributor Type']
-    con_name_iden_parent = map_field(item_schema)['Contributor Name Identifier']
+    con_name_iden_parent = map_field(item_schema)[
+        'Contributor Name Identifier']
     con_name_iden_child = \
         map_field(item_schema['properties'][con_name_iden_parent]['items'])[
             'Contributor Name Identifier']
@@ -1636,8 +1636,11 @@ class JPCOARMapper(BaseMapper):
             'dc:title': partial(add_title, self.itemtype.schema, res),
             'dcterms:alternative': partial(add_alternative,
                                            self.itemtype.schema, res),
-            'jpcoar:creator': partial(add_creator_jpcoar, self.itemtype.schema,
-                                      res),
+            'jpcoar:creator': partial(
+                add_creator_jpcoar,
+                self.itemtype.schema,
+                res
+            ),
             'jpcoar:contributor': partial(add_contributor_jpcoar,
                                           self.itemtype.schema, res),
             'dcterms:accessRights': partial(add_access_rights,
@@ -1651,7 +1654,11 @@ class JPCOARMapper(BaseMapper):
             'dc:publisher': partial(add_publisher, self.itemtype.schema, res),
             'datacite:date': partial(add_date, self.itemtype.schema, res),
             'dc:language': partial(add_language, self.itemtype.schema, res),
-            'datacite:version': partial(add_version, self.itemtype.schema, res),
+            'datacite:version': partial(
+                add_version,
+                self.itemtype.schema,
+                res
+            ),
             'oaire:version': partial(add_version_type, self.itemtype.schema,
                                      res),
             'jpcoar:identifier': partial(add_identifier, self.itemtype.schema,
@@ -1669,15 +1676,31 @@ class JPCOARMapper(BaseMapper):
                                           self.itemtype.schema, res),
             'jpcoar:volume': partial(add_volume, self.itemtype.schema, res),
             'jpcoar:issue': partial(add_issue, self.itemtype.schema, res),
-            'jpcoar:numPages': partial(add_num_pages, self.itemtype.schema,
-                                       res),
-            'jpcoar:pageStart': partial(add_page_start, self.itemtype.schema,
-                                        res),
-            'jpcoar:pageEnd': partial(add_page_end, self.itemtype.schema, res),
-            'dcndl:dissertationNumber': partial(add_dissertation_number,
-                                                self.itemtype.schema, res),
-            'dcndl:dateGranted': partial(add_date_granted, self.itemtype.schema,
-                                         res),
+            'jpcoar:numPages': partial(
+                add_num_pages,
+                self.itemtype.schema,
+                res
+            ),
+            'jpcoar:pageStart': partial(
+                add_page_start,
+                self.itemtype.schema,
+                res
+            ),
+            'jpcoar:pageEnd': partial(
+                add_page_end,
+                self.itemtype.schema,
+                res
+            ),
+            'dcndl:dissertationNumber': partial(
+                add_dissertation_number,
+                self.itemtype.schema,
+                res
+            ),
+            'dcndl:dateGranted': partial(
+                add_date_granted,
+                self.itemtype.schema,
+                res
+            ),
             #            'jpcoar:degreeGrantor' : ,
             #            'jpcoar:conference' : ,
             'jpcoar:file': partial(add_file, self.itemtype.schema, res),

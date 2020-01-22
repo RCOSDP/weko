@@ -296,10 +296,11 @@ class SchemaTree:
                             lambda x: get_attr(x) in _need_to_nested,
                             attr.keys())) if attr else []
                     if attr and alst:
-                        return list(map(partial(create_json, get_attr(alst[0])),
-                                        list_reduce(
-                                            [attr.get(alst[0])]),
-                                        list(list_reduce(val))))
+                        return list(map(partial(
+                            create_json, get_attr(alst[0])),
+                            list_reduce([attr.get(alst[0])]),
+                            list(list_reduce(val)))
+                        )
 
                     return list(list_reduce(val))
                 else:
@@ -463,7 +464,7 @@ class SchemaTree:
                                     return attr[type_item]
 
             def get_item_by_type(temporary, type_item):
-                """Get Contributor and Relation by Type"""
+                """Get Contributor and Relation by Type."""
                 key_level_1 = None
                 key_level_2 = None
                 key_level_3 = None
@@ -494,28 +495,28 @@ class SchemaTree:
                     if key_level_3:
                         for k, v in temporary.items():
                             if k == key_level_1:
-                                value_of_stdyDscr = {k: v}
+                                value_of_stdydscr = {k: v}
                                 if key_level_3 in \
-                                    value_of_stdyDscr[key_level_1][
+                                    value_of_stdydscr[key_level_1][
                                         key_level_2].keys():
-                                    value_of_stdyDscr[key_level_1][
+                                    value_of_stdydscr[key_level_1][
                                         key_level_2] = {
                                         key_level_3:
-                                            value_of_stdyDscr[key_level_1][
+                                            value_of_stdydscr[key_level_1][
                                                 key_level_2][key_level_3]}
-                                    temporary = value_of_stdyDscr
+                                    temporary = value_of_stdydscr
                                     return temporary
                     else:
                         for k, v in temporary.items():
                             if k == key_level_1:
-                                value_of_stdyDscr = {k: v}
-                                if key_level_2 in value_of_stdyDscr[
-                                    key_level_1].keys():
-                                    value_of_stdyDscr[key_level_1] = {
+                                value_of_stdydscr = {k: v}
+                                if key_level_2 in value_of_stdydscr[
+                                        key_level_1].keys():
+                                    value_of_stdydscr[key_level_1] = {
                                         key_level_2:
-                                            value_of_stdyDscr[key_level_1][
+                                            value_of_stdydscr[key_level_1][
                                                 key_level_2]}
-                                    temporary = value_of_stdyDscr
+                                    temporary = value_of_stdydscr
                                     return temporary
 
             def handle_type_ddi(atr_name, list_type, vlst):
@@ -595,15 +596,16 @@ class SchemaTree:
                 if remove_empty:
                     remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
-            if isinstance(atr_vm, dict) and isinstance(vlst,
-                                                       list) and 'stdyDscr' in \
-                vlst[0].keys():
+            if isinstance(atr_vm, dict) and isinstance(vlst, list) and \
+                    'stdyDscr' in vlst[0].keys():
                 if atr_name == 'Contributor':
                     list_contributor_type = ['Distributor', 'Other',
                                              'DataCollector']
-                    vlst[0]['stdyDscr'] = handle_type_ddi(atr_name,
-                                                          list_contributor_type,
-                                                          vlst)
+                    vlst[0]['stdyDscr'] = handle_type_ddi(
+                        atr_name,
+                        list_contributor_type,
+                        vlst
+                    )
                 elif atr_name == 'Relation':
                     list_relation_type = ['isReferencedBy', 'isSupplementedBy',
                                           'isPartOf']
@@ -748,14 +750,15 @@ class SchemaTree:
                                      and isinstance(n.get(self._atr), dict)
                                      for attr in n.get(self._atr).values()])
                                 if int(multi) > 1:
-                                    multi_nodes = [copy.deepcopy(node) for j in
+                                    multi_nodes = [copy.deepcopy(node) for _ in
                                                    range(int(multi))]
                                     for idx, item in enumerate(multi_nodes):
                                         for nd in item.values():
                                             nd[self._v] = [nd[self._v][idx]]
                                             for key in nd.get(self._atr):
                                                 nd.get(self._atr)[key] = [
-                                                    nd.get(self._atr)[key][idx]]
+                                                    nd.get(self._atr)[key][
+                                                        idx]]
                                     nodes = multi_nodes
                             for val in nodes:
                                 child = etree.Element(kname, None, ns)
