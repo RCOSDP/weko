@@ -24,7 +24,9 @@ import copy
 
 import six
 from flask import current_app, request
+
 from .config import RECORDS_REST_DEFAULT_SORT
+
 
 def geolocation_sort(field_name, argument, unit, mode=None,
                      distance_type=None):
