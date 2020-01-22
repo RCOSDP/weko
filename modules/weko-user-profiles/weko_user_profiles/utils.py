@@ -39,7 +39,7 @@ def get_user_profile_info(user_id):
     result = {
         'subitem_user_name': '',
         'subitem_mail_address': '',
-        'subitem_displayname':'',
+        'subitem_displayname': '',
         'subitem_university/institution': '',
         'subitem_affiliated_division/department': '',
         'subitem_position': '',
