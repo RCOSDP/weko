@@ -148,10 +148,8 @@ def has_update_version_role(user):
     """
     if user is not None and user.is_authenticated:
         roles_user = []
-        roles_env = [
-            'INVENIO_ROLE_SYSTEM',
-            'INVENIO_ROLE_REPOSITORY',
-            'INVENIO_ROLE_COMMUNITY']
+        from flask import current_app
+        roles_env = current_app.config.get('FILES_REST_ROLES_ENV', [])
         for role_env in roles_env:
             if role_env in os.environ:
                 roles_user.append(os.environ.get(role_env))

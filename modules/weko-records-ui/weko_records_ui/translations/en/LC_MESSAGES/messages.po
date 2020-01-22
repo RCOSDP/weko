@@ -711,3 +711,9 @@ msgstr ""
 
 msgid "Dataset Usage"
 msgstr ""
+
+msgid "Stop"
+msgstr ""
+
+msgid "Position(Others)"
+msgstr ""

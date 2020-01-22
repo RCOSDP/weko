@@ -99,7 +99,7 @@
     {%- if content -%}
       {%- set content = _(content) -%}
     {%- endif -%}
-    <td class="{%- if label == 'Research Plan' %}multiple-line{%- endif %}">{{ content }} </td>
+    <td class="{%- if label == 'Research Plan' or label == 'Summary' or label == 'Annual Report' %}multiple-line{%- endif %}">{{ content }} </td>
   </tr>
 {% endmacro %}
 

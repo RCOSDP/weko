@@ -132,3 +132,10 @@ FILES_REST_DEFAULT_PDF_TTL = 1 * 60 * 60  # 1 hour
 
 FILES_REST_FILE_TAGS_HEADER = 'X-Invenio-File-Tags'
 """Header for updating file tags."""
+
+FILES_REST_ROLES_ENV = [
+    'INVENIO_ROLE_SYSTEM',
+    'INVENIO_ROLE_REPOSITORY',
+    'INVENIO_ROLE_COMMUNITY'
+]
+"""The version update roles."""

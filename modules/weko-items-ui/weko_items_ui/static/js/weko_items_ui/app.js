@@ -298,6 +298,7 @@ function handleSharePermission(value) {
       $scope.bibliographic_key = '';
       $scope.bibliographic_title_key = '';
       $scope.bibliographic_title_lang_key = '';
+      $scope.usage_report_activity_id = '';
       $scope.is_item_owner = false;
       $scope.feedback_emails = []
       $scope.render_requirements = false;
@@ -343,7 +344,7 @@ function handleSharePermission(value) {
               ([key, value]) => {
                   if (value.type == 'array') {
                       if (value.items.properties.hasOwnProperty('subitem_corresponding_usage_application_id')) {
-                          $scope.usageapplication_keys.push(key)
+                        $scope.usageapplication_keys.push(key)
                       }
                   }
               }
@@ -397,8 +398,12 @@ function handleSharePermission(value) {
             method: 'GET',
             async: false,
             success: function (data, status) {
-
-              let usageActivity = data['usage_application'];
+              let usageActivity;
+              if ($scope.usage_report_activity_id != ''){
+                usageActivity = [$scope.usage_report_activity_id];
+              } else {
+                usageActivity = data['usage_application'];
+              }
               if (usageActivity.length > 0) {
                 usageActivity.forEach(activity => {
                   if (typeof schema != 'undefined' && typeof usage_application_form != 'undefined' && schema && usage_application_form) {
@@ -930,7 +935,13 @@ function handleSharePermission(value) {
           for (let key in model) {
             if (model.hasOwnProperty(key) && model[key].length > 0) {
               let title = model[key][0]['subitem_item_title'];
-                if (title && $("#auto_fill_title").val() !== '""') {
+              if (title){
+                var activity_id= title.match(/A-[0-9]{8}-[0-9]{5}/g);
+                if (activity_id){
+                  $scope.usage_report_activity_id = activity_id[0];
+                }
+              }
+              if (title && $("#auto_fill_title").val() !== '""') {
                 $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly'] = true;
                 setTimeout(function () {
                   $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
@@ -967,7 +978,7 @@ function handleSharePermission(value) {
                   let jaTitle = {};
                   jaTitle['subitem_item_title'] = titleData['ja'] + " - " + userName;
                   jaTitle['subitem_item_title_language'] = "ja";
-                  $rootScope.recordsVM.invenioRecordsModel[key] = [enTitle, jaTitle];
+                  $rootScope.recordsVM.invenioRecordsModel[key] = [jaTitle, enTitle];
                 }
               }
             });
@@ -1031,6 +1042,23 @@ function handleSharePermission(value) {
           setTimeout(function () {
             $("input[name='subitem_dataset_usage']").attr("disabled", "disabled");
           }, 500);
+        }
+      };
+
+      $scope.autoSetCorrespondingUsageAppId = function () {
+        if ($scope.usage_report_activity_id != ''){
+          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+            ([key, value]) => {
+              if (value && value.items) {
+                if (value.items.properties.hasOwnProperty("subitem_corresponding_usage_application_id")) {
+                  $rootScope.recordsVM.invenioRecordsModel[key] = []
+                  $rootScope.recordsVM.invenioRecordsModel[key].push({'subitem_corresponding_usage_application_id': $scope.usage_report_activity_id})
+                }
+              }
+            });
+          setTimeout(function () {
+            $("[name='subitem_corresponding_usage_application_id']").attr("disabled", 'disabled');
+          }, 1000);
         }
       };
 
@@ -1110,7 +1138,7 @@ function handleSharePermission(value) {
 
         // Auto fill user profile
         $scope.autoFillProfileInfo();
-
+        $scope.autoSetCorrespondingUsageAppId();
       });
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
@@ -1629,7 +1657,9 @@ function handleSharePermission(value) {
         if (!this.validateRequiredItem()) {
           // Check required item
           return false;
-        }else if(!this.validatePosition()){
+        }else if(!this.validatePosition()) {
+          return false;
+        } else if (!this.validateFieldMaxItems()) {
           return false;
         } else if ($scope.depositionForm.$invalid) {
           // Check containing control or form is invalid
@@ -1699,42 +1729,73 @@ function handleSharePermission(value) {
           });
           return isValid;
         }
-      }
+      };
+
+      $scope.validateFieldMaxItems = function () {
+        let isValid = true;
+        Object.entries($rootScope.recordsVM.invenioRecordsModel).forEach(
+          ([key, value]) => {
+            if (value && value.hasOwnProperty('subitem_field')
+              && Array.isArray(value['subitem_field']) && value['subitem_field'].length > 2) {
+              let errorMessage = $("#validate_maxitems_field").val();
+              $("#inputModal").html(errorMessage);
+              $("#allModal").modal("show");
+              isValid = false;
+              return isValid;
+            }
+          }
+        );
+        return isValid;
+      };
 
       $scope.validatePosition = function () {
         var result = true;
-        var subItemPosition = 'subitem_position';
-        var subItemPositionOther = 'subitem_position(other)';
+        var subItemPosition = '';
+        var subItemPositionOther = '';
+        var subItemAdvisorPosition = 'subitem_advisor_position';
+        var subItemAdvisorPositionOther = 'subitem_advisor_position(other)';
+        var subItemGuarantorPosition = 'subitem_guarantor_position';
+        var subItemGuarantorPositionOther = 'subitem_guarantor_position(other)';
         var otherChoice = "Others (Input Detail)";
         Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-            ([key, value]) => {
-              var currentInvenioRecordsSchema=$rootScope.recordsVM.invenioRecordsSchema.properties[key];
-                if (currentInvenioRecordsSchema.properties) {
-                    let containSubItemPosition = currentInvenioRecordsSchema.properties.hasOwnProperty(subItemPosition);
-                    let containSubItemPositionOther = currentInvenioRecordsSchema.properties.hasOwnProperty(subItemPositionOther);
-                    if (containSubItemPosition && containSubItemPositionOther) {
-                        var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
-                        var subItemPositionValue = currentInvenioRecordsModel[key][subItemPosition];
-                        var subItemPositionOtherValue = currentInvenioRecordsModel[key][subItemPositionOther];
-                        if (subItemPositionValue != otherChoice && typeof subItemPositionOtherValue != "undefined" && subItemPositionOtherValue != '') {
-                            //Show error same
-                            let message = $("#err_input_other_position").val();
-                            $("#inputModal").html(message);
-                            $("#allModal").modal("show");
-                            result = false;
-                            return false;
-                        }
-                        else if (subItemPositionValue == otherChoice && subItemPositionOtherValue == '') {
-                            let message = $("#err_position_not_provided").val();
-                            $("#inputModal").html(message);
-                            $("#allModal").modal("show");
-                            result = false;
-                            return false;
-                        }
-                    }
+          ([key, value]) => {
+            if (result) {
+              var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+              if (currentInvenioRecordsSchema.properties) {
+                let containSubItemPosition = false;
+                if (currentInvenioRecordsSchema.properties.hasOwnProperty(subItemAdvisorPosition) &&
+                  currentInvenioRecordsSchema.properties.hasOwnProperty(subItemAdvisorPositionOther)) {
+                  subItemPosition = subItemAdvisorPosition;
+                  subItemPositionOther = subItemAdvisorPositionOther;
+                  containSubItemPosition = true;
+                } else if (currentInvenioRecordsSchema.properties.hasOwnProperty(subItemGuarantorPosition) &&
+                  currentInvenioRecordsSchema.properties.hasOwnProperty(subItemGuarantorPositionOther)) {
+                  subItemPosition = subItemGuarantorPosition;
+                  subItemPositionOther = subItemGuarantorPositionOther;
+                  containSubItemPosition = true;
                 }
+                if (containSubItemPosition) {
+                  var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
+                  var subItemPositionValue = currentInvenioRecordsModel[key][subItemPosition];
+                  var subItemPositionOtherValue = currentInvenioRecordsModel[key][subItemPositionOther];
+                  if (subItemPositionValue != otherChoice && typeof subItemPositionOtherValue != "undefined" && subItemPositionOtherValue != '') {
+                    //Show error same
+                    let message = $("#err_input_other_position").val();
+                    $("#inputModal").html(message);
+                    $("#allModal").modal("show");
+                    result = false;
+                    return false;
+                  } else if (subItemPositionValue == otherChoice && (subItemPositionOtherValue == '' || subItemPositionOtherValue == undefined)) {
+                    let message = $("#err_position_not_provided").val();
+                    $("#inputModal").html(message);
+                    $("#allModal").modal("show");
+                    result = false;
+                    return false;
+                  }
+                }
+              }
             }
-        );
+          });
         return result;
       }
 
@@ -1809,7 +1870,7 @@ function handleSharePermission(value) {
                 result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors)
               }
               if (param.email_approval2) {
-                result = this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval1, listEmailErrors);
+                result = this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
               }
             }
             if (listEmailErrors.length > 0) {
@@ -1865,6 +1926,9 @@ function handleSharePermission(value) {
         var result = true;
         $scope.filemeta_keys.forEach(filemeta_key => {
           groupsprice_record = $rootScope.recordsVM.invenioRecordsModel[filemeta_key];
+          if (!Array.isArray(groupsprice_record)){
+            return result;
+          }
           groupsprice_record.forEach(record => {
             prices = record.groupsprice;
             if (!prices) {
