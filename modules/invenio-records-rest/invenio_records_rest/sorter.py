@@ -25,6 +25,8 @@ import copy
 import six
 from flask import current_app, request
 
+from .config import RECORDS_REST_DEFAULT_SORT
+
 
 def geolocation_sort(field_name, argument, unit, mode=None,
                      distance_type=None):
@@ -123,9 +125,12 @@ def default_sorter_factory(search, index):
     if not urlfield:
         # cast to six.text_type to handle unicodes in Python 2
         has_query = request.values.get('q', type=six.text_type)
-        urlfield = current_app.config['RECORDS_REST_DEFAULT_SORT'].get(
-            index, {}).get('query' if has_query else 'noquery', '')
-
+        if current_app.config.get('RECORDS_REST_DEFAULT_SORT'):
+            urlfield = current_app.config['RECORDS_REST_DEFAULT_SORT'].get(
+                index, {}).get('query' if has_query else 'noquery', '')
+        else:
+            urlfield = RECORDS_REST_DEFAULT_SORT.get(
+                index, {}).get('query' if has_query else 'noquery', '')
     # Parse sort argument
     key, asc = parse_sort_field(urlfield)
 

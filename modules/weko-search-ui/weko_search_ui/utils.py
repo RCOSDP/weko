@@ -39,6 +39,7 @@ from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
@@ -575,9 +576,9 @@ def handle_check_exist_record(list_recond) -> list:
             item = dict(**item, **{
                 'status': 'new'
             })
-            if url_root in item.get('uri', ''):
-                try:
-                    item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+            try:
+                item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+                if url_root in item.get('uri', ''):
                     if item_exist:
                         if item_exist.pid.is_deleted():
                             item['status'] = None
@@ -591,18 +592,17 @@ def handle_check_exist_record(list_recond) -> list:
                     else:
                         item['status'] = 'new'
                         check_identifier_new(item)
-                except BaseException:
-                    current_app.logger.error('Unexpected error: ',
-                                             sys.exc_info()[0])
-            else:
-                try:
-                    item_exist = WekoRecord.get_record_by_pid(item.get('id'))
+                else:
                     if item_exist:
-                        item['errors'] = ['Item already exists in the system']
+                        item['errors'] = ['Item already EXISTED in the system']
                         item['status'] = None
-                except BaseException:
-                    current_app.logger.error('Unexpected error: ',
-                                             sys.exc_info()[0])
+            except PIDDoesNotExistError:
+                pass
+            except BaseException:
+                current_app.logger.error(
+                    'Unexpected error: ',
+                    sys.exc_info()[0]
+                )
         if item.get('status') == 'new':
             handle_remove_identifier(item)
         result.append(item)

@@ -925,6 +925,81 @@ def export_items(post_data):
     return send_file(export_path + '.zip')
 
 
+def export_item_custorm(post_data):
+    """Gather all the item data and export and return as a JSON or BIBTEX.
+
+    :return: JSON, BIBTEX
+    """
+    include_contents = True
+    record_id = post_data['record_id']
+
+    result = {'items': []}
+    temp_path = tempfile.TemporaryDirectory()
+    item_types_data = {}
+
+    try:
+        # Set export folder
+        export_path = temp_path.name + '/' + datetime.utcnow().strftime(
+            "%Y%m%d%H%M%S")
+        # Double check for limits
+        record_path = export_path + '/recid_' + str(record_id)
+        os.makedirs(record_path, exist_ok=True)
+        exported_item = _export_item(
+            record_id,
+            None,
+            include_contents,
+            record_path,
+        )
+
+        result['items'].append(exported_item)
+
+        item_type_id = exported_item.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        if not item_types_data.get(item_type_id):
+            item_types_data[item_type_id] = {}
+
+            item_types_data[item_type_id] = {
+                'item_type_id': item_type_id,
+                'name': '{}({})'.format(
+                    item_type.item_type_name.name,
+                    item_type_id),
+                'root_url': request.url_root,
+                'jsonschema': 'items/jsonschema/' + item_type_id,
+                'keys': [],
+                'labels': [],
+                'recids': [],
+                'data': {},
+            }
+        item_types_data[item_type_id]['recids'].append(record_id)
+
+        # Create export info file
+        for item_type_id in item_types_data:
+            keys, labels, records = make_stats_tsv(
+                item_type_id,
+                item_types_data[item_type_id]['recids'])
+            item_types_data[item_type_id]['recids'].sort()
+            item_types_data[item_type_id]['keys'] = keys
+            item_types_data[item_type_id]['labels'] = labels
+            item_types_data[item_type_id]['data'] = records
+            item_type_data = item_types_data[item_type_id]
+
+            with open('{}/{}.tsv'.format(export_path,
+                                         item_type_data.get('name')),
+                      'w') as file:
+                tsvs_output = package_export_file(item_type_data)
+                file.write(tsvs_output.getvalue())
+
+        # Create bag
+        bagit.make_bag(export_path)
+        # Create download file
+        shutil.make_archive(export_path, 'zip', export_path)
+    except Exception:
+        current_app.logger.error('-' * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-' * 60)
+    return send_file(export_path + '.zip')
+
+
 def _get_max_export_items():
     """Get max amount of items to export."""
     max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
@@ -1026,7 +1101,7 @@ def update_schema_remove_hidden_item(schema, render, items_name):
         key = schema[item]['key']
         if render['meta_list'].get(key):
             hidden_flg = render['meta_list'][key]['option']['hidden']
-        if render['meta_system'].get(key):
+        if render.get('meta_system') and render['meta_system'].get(key):
             hidden_flg = render['meta_system'][key]['option']['hidden']
         if hidden_flg:
             schema[item]['condition'] = 1

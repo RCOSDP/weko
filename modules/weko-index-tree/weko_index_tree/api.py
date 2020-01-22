@@ -37,7 +37,8 @@ from weko_groups.api import Group
 
 from .models import Index
 from .utils import cached_index_tree_json, filter_index_list_by_role, \
-    get_index_id_list, get_tree_json, get_user_roles, reset_tree
+    get_index_id_list, get_publish_index_id_list, get_tree_json, \
+    get_user_roles, reset_tree
 
 
 class Indexes(object):
@@ -1211,3 +1212,15 @@ class Indexes(object):
         q = Index.query.filter_by(parent=index_id). \
             order_by(Index.position).all()
         return [x.id for x in filter_index_list_by_role(q)]
+
+    @classmethod
+    def get_list_path_publish(cls, index_id):
+        """
+        Get list index path of index publish.
+
+        :param index_id: Identifier of the index.
+        :return: the list of index_path.
+        """
+        tree_path = get_publish_index_id_list(cls.get_index_tree(index_id),
+                                              [])
+        return tree_path
