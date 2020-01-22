@@ -199,7 +199,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
             item_metadata_json['lang'] = 'English'
         elif item_metadata_json[lang_field[0]][lang_field[1]] == 'jpn':
             item_metadata_json['lang'] = 'Japanese'
-    except:
+    except BaseException:
         pass
     try:
         lang = item_metadata_json.get('lang')
