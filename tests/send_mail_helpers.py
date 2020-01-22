@@ -1,3 +1,26 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+
+"""WEKO3 pytest docstring."""
+
+
 def login_user_via_session(client, user_id):
     """Login a user via the session."""
     with client.session_transaction() as sess:
@@ -6,7 +29,9 @@ def login_user_via_session(client, user_id):
 
 
 def insert_user_to_db(database):
+    """Insert_user_to_db."""
     from invenio_accounts.models import User, Role
+
     admin_role = Role(id=1, name='System Administrator')
     database.session.add(admin_role)
     admin = User(email='admin@invenio.org', password='123456', active=True,
@@ -19,8 +44,10 @@ def insert_user_to_db(database):
 
 
 def insert_activity_data_to_db(database):
+    """Insert_activity_data_to_db."""
     from weko_records.models import ItemType, ItemTypeName
     from weko_workflow.models import Activity, FlowDefine, WorkFlow, FlowAction
+
     flow_define = FlowDefine(id=20,
                              flow_id="07091c20-f99a-424d-ab1d-5eea6e67f361",
                              flow_name="Flow2", flow_status="F")
@@ -34,8 +61,9 @@ def insert_activity_data_to_db(database):
         activity_update_user=1,
         flow_define=flow_define
     )
-    
-    work_flow = WorkFlow(id=13, flows_id="07091c20-f99a-424d-ab1d-5eea6e67f361",
+
+    work_flow = WorkFlow(id=13,
+                         flows_id="07091c20-f99a-424d-ab1d-5eea6e67f361",
                          flows_name="WorkFLow2", itemtype_id=9, flow_id=20)
     item_type = ItemType(id=9, name_id=1, tag=2)
     item_type_name = ItemTypeName(id=1, name='利用報告')  #
@@ -49,7 +77,9 @@ def insert_activity_data_to_db(database):
 
 
 def insert_metadata_to_db(database):
+    """Insert_metadata_to_db."""
     from weko_records.models import ItemMetadata
+
     json_str = {"lang": "en", "owner": "1", "title": "info",
                 "$schema": "/items/jsonschema/9", "pubdate": "2020-01-02",
                 "advisor_user_id": 4, "guarantor_user_id": 5,
@@ -90,6 +120,7 @@ def insert_metadata_to_db(database):
 
 
 def insert_action_data_to_db(database):
+    """Insert_action_data_to_db."""
     from weko_workflow.models import Action, ActionStatus, FlowAction
 
     action_status = ActionStatus(id=20, action_status_id='M',
@@ -103,9 +134,14 @@ def insert_action_data_to_db(database):
     action3 = Action(id=12, action_name='Approval', action_endpoint='approval')
     action4 = Action(id=13, action_name='End', action_endpoint='end_action')
 
-    flow_action = FlowAction(status='N', created='2020-01-08 08:19:33', updated='2020-01-08 08:19:33',
-                            id=10, flow_id="07091c20-f99a-424d-ab1d-5eea6e67f361", action_id=11,
-                            action_order=1, action_status='A', action_date='2020-01-08 08:19:33')
+    flow_action = FlowAction(status='N',
+                             created='2020-01-08 08:19:33',
+                             updated='2020-01-08 08:19:33',
+                             id=10,
+                             flow_id="07091c20-f99a-424d-ab1d-5eea6e67f361",
+                             action_id=11,
+                             action_order=1, action_status='A',
+                             action_date='2020-01-08 08:19:33')
 
     database.session.add(action_status)
     database.session.add(action_status2)
@@ -119,7 +155,9 @@ def insert_action_data_to_db(database):
 
 
 def insert_history_doing_data_to_db(database):
+    """Insert_history_doing_data_to_db."""
     from weko_workflow.models import ActivityHistory
+
     activity_history = ActivityHistory(id=50, activity_id='A-20191218-00006',
                                        action_id=11, action_status='F',
                                        action_user=1)
@@ -132,7 +170,9 @@ def insert_history_doing_data_to_db(database):
 
 
 def insert_history_done_data_to_db(database):
+    """Insert_history_done_data_to_db."""
     from weko_workflow.models import ActivityHistory
+
     activity_history = ActivityHistory(id=52, activity_id='A-20191218-00007',
                                        action_id=11, action_status='F',
                                        action_user=1)
