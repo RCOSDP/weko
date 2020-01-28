@@ -224,9 +224,9 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $scope.getChildList();
 
   // Sorting child id list to index list display.
-  let temp_key_list = []
-  $scope.sorted_child_list = []
   $scope.sort_index_list = function(data_list) {
+    let temp_key_list = []
+    $scope.sorted_child_list = []
     if (child_list.length == 0) {
       for (var j = 1; j < data_list.length; j++) {
         $scope.sorted_child_list.push(data_list[j]);
