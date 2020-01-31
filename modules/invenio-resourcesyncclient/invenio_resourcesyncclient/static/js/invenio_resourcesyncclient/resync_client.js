@@ -1,16 +1,26 @@
 const list_label = "List";
 const create_label = "Create";
 const edit_label = "Edit";
+const detail_label = "Detail";
 const urlCreate = window.location.origin + "/admin/resource_list/create";
 const urlUpdate = window.location.origin + "/admin/resource_list/update";
 const urlDelete = window.location.origin + "/admin/resource_list/delete";
 const urlGetList = window.location.origin + "/admin/resource_list/get_list";
 const urlGetTreeList = window.location.origin + "/api/tree";
+const status = JSON.parse($("#status").text())
+const resync_mode = JSON.parse($("#resync_mode").text())
+const saving_format = JSON.parse($("#saving_format").text())
 const default_state = {
-  status: null,
-  repository_id: "",
-  resource_dump_manifest: false,
-  url_path: ""
+  status: status.automatic,
+  repository_name: "",
+  index_id: "",
+  base_url: "",
+  from_date: "",
+  to_date: "",
+  interval_by_day: 1,
+  resync_save_dir: "",
+  resync_mode: resync_mode.baseline,
+  saving_format: saving_format.jpcoar,
 };
 
 class MainLayout extends React.Component {
@@ -34,6 +44,11 @@ class MainLayout extends React.Component {
         {
           tab_key: "edit",
           tab_name: edit_label,
+          step: 2
+        },
+        {
+          tab_key: "detail",
+          tab_name: detail_label,
           step: 2
         }
       ]
@@ -103,10 +118,22 @@ class MainLayout extends React.Component {
 
         {current_tab === tabs[2].tab_key ? (
           <div>
-            <EditResourceComponent
+            <CreateResyncComponent
               handleChangeTab={this.handleChangeTab}
               select_item={select_item}
-            ></EditResourceComponent>
+            ></CreateResyncComponent>
+            {/* </div> : ''} */}
+          </div>
+        ) : (
+          ""
+        )}
+
+        {current_tab === tabs[3].tab_key ? (
+          <div>
+            <DetailResourceComponent
+              handleChangeTab={this.handleChangeTab}
+              select_item={select_item}
+            ></DetailResourceComponent>
             {/* </div> : ''} */}
           </div>
         ) : (
@@ -147,6 +174,37 @@ class ListResyncComponent extends React.Component {
 //        });
 //      })
 //      .catch(() => alert("Error in get list"));
+    this.setState({
+      list_resource: [
+        {
+          repository_name: "Local",
+          status: status.automatic,
+          index_id: "123456789",
+          index_name: "INVENIO",
+          base_url: "http://localhost/",
+          resync_mode: resync_mode.incremential,
+          saving_format: saving_format.jpcoar
+        },
+        {
+          repository_name: "SERVER 18",
+          status: status.automatic,
+          index_id: "123456789",
+          index_name: "WEKO",
+          base_url: "http://18.182.214.241:8018/",
+          resync_mode: resync_mode.audit,
+          saving_format: saving_format.json
+        },
+        {
+          repository_name: "SERVER 21",
+          status: status.manual,
+          index_id: "123456789",
+          index_name: "DAISHODAI",
+          base_url: "http://18.182.214.241:8021/",
+          resync_mode: resync_mode.baseline,
+          saving_format: saving_format.jpcoar
+        }
+      ]
+    });
   }
 
   handleViewDetail(item) {
@@ -189,16 +247,22 @@ class ListResyncComponent extends React.Component {
               <tr>
                 <th></th>
                 <th>
-                  <p className="">Repository</p>
+                  <p className="">Repository name</p>
                 </th>
                 <th>
-                  <p className="">Resource List Url</p>
+                  <p className="">Target Index</p>
                 </th>
                 <th>
-                  <p className="">Resource Dump Url</p>
+                  <p className="">Base url</p>
                 </th>
                 <th>
                   <p className="">Status</p>
+                </th>
+                <th>
+                  <p className="">Resync mode</p>
+                </th>
+                <th>
+                  <p className="">Saving format</p>
                 </th>
               </tr>
             </thead>
@@ -212,13 +276,19 @@ class ListResyncComponent extends React.Component {
                         justifyContent: "space-around"
                       }}
                     >
-                      <a className="icon" title="Edit Resource">
+                      <a className="icon" title="View Detail Resync">
+                        <span
+                          className="fa fa-eye glyphicon glyphicon-eye-open"
+                          onClick={() => this.handleViewDetail(item)}
+                        ></span>
+                      </a>
+                      <a className="icon" title="Edit Resync">
                         <span
                           className="fa fa-pencil glyphicon glyphicon-pencil"
                           onClick={() => this.handleEdit(item)}
                         ></span>
                       </a>
-                      <a className="icon" title="Delete Resource">
+                      <a className="icon" title="Delete Resync">
                         <span
                           className="fa fa-trash glyphicon glyphicon-trash"
                           onClick={() => this.handleDelete(item)}
@@ -226,25 +296,28 @@ class ListResyncComponent extends React.Component {
                       </a>
                     </td>
                     <td>
-                      {item.repository_name + " <ID:" + item.repository_id + ">"}
+                      {item.repository_name}
+                    </td>
+                    <td>
+                      {item.index_name + " <ID:" + item.index_id + ">"}
                     </td>
                     <td>
                       <a
-                        href={item.url_path + "/resourcelist.xml"}
+                        href={item.base_url}
                         target="_blank"
                       >
-                        {item.url_path + "/resourcelist.xml"}
+                        {item.base_url}
                       </a>
                     </td>
                     <td>
-                      <a
-                        href={item.url_path + "/resourcedump.xml"}
-                        target="_blank"
-                      >
-                        {item.url_path + "/resourcedump.xml"}
-                      </a>
+                      {item.status}
                     </td>
-                    <td>{item.status ? "Publish" : "Private"}</td>
+                    <td>
+                      {item.resync_mode}
+                    </td>
+                    <td>
+                      {item.saving_format}
+                    </td>
                   </tr>
                 );
               })}
@@ -293,8 +366,9 @@ class CreateResyncComponent extends React.Component {
   }
 
   handleSubmit(add_another) {
-//    const new_data = { ...this.state };
-//    delete new_data.tree_list;
+    const new_data = { ...this.state };
+    delete new_data.tree_list;
+    console.log(new_data)
 //    fetch(urlCreate, {
 //      method: "POST",
 //      body: JSON.stringify(new_data),
@@ -362,58 +436,37 @@ class CreateResyncComponent extends React.Component {
     const { state } = this;
     return (
       <div className="create-resource">
-        <div className="row form-group ">
-          <div className="col-md-2 text-right">
-            <label>Status</label>
-          </div>
-          <div className="col-md-10">
-            <div className="col-md-10">
-            <div className="row">
-              <div className="col-md-2 flex">
-                <input
-                checked={state.status===true}
-                type="radio"
-                name="status"
-                value="Publish"
-                onChange={e => {
-                  const value = e.target.value;
-                  this.handleChangeState("status", value==="Publish");
-                }}
-                ></input>
-                <div className="p-l-10">Publish</div>
-              </div>
-              <div className="col-md-2 flex">
-                <input
-                  checked={state.status===false}
-                  type="radio"
-                  name="status"
-                  value="Private"
-                  onChange={e => {
-                    const value = e.target.value;
-                    this.handleChangeState("status", value==="Publish");
-                  }}
-                  ></input>
-                  <div className="p-l-10">Private</div>
-              </div>
-
-
-            </div>
-          </div>
-          </div>
-        </div>
-
+//repository_name
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Repository</label>
+            <label>Repository name</label>
+          </div>
+          <div className="col-md-10">
+            <input
+              type="text"
+              className="form-control"
+              value={state.repository_name}
+              name="repository_name"
+              onChange={e => {
+                      const value = e.target.value;
+                      this.handleChangeState("repository_name", value);
+                    }}
+            ></input>
+          </div>
+        </div>
+//index_id
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Target Index</label>
           </div>
           <div className="col-md-10">
             <select
               className="form-control"
               onChange={e => {
                 const value = e.target.value;
-                this.handleChangeState("repository_id", value);
+                this.handleChangeState("index_id", value);
               }}
-              value={state.repository_id}
+              value={state.index_id}
             >
               <option value="" disabled></option>
               {state.tree_list.map(item => {
@@ -422,48 +475,157 @@ class CreateResyncComponent extends React.Component {
             </select>
           </div>
         </div>
-
+//base_url
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Resource Dump Manifest</label>
+            <label>Repository name</label>
           </div>
           <div className="col-md-10">
             <input
-              type="checkbox"
-              checked={state.resource_dump_manifest}
+              type="text"
+              className="form-control"
+              value={state.base_url}
+              name="base_url"
               onChange={e => {
-                const value = e.target.checked;
-                this.handleChangeState("resource_dump_manifest", value);
+                      const value = e.target.value;
+                      this.handleChangeState("base_url", value);
+                    }}
+            ></input>
+          </div>
+        </div>
+//status
+        <div className="row form-group ">
+          <div className="col-md-2 text-right">
+            <label>Status</label>
+          </div>
+          <div className="col-md-10">
+            <div className="col-md-10">
+            <div className="row">
+            {
+              Object.keys(status).map((item, key) => {
+                return(
+                  <div className="col-md-2 flex">
+                    <input
+                    checked={state.status===status[item]}
+                    type="radio"
+                    name="status"
+                    value={status[item]}
+                    onChange={e => {
+                      const value = e.target.value;
+                      this.handleChangeState("status", value);
+                    }}
+                    ></input>
+                    <div className="p-l-10">{status[item]}</div>
+                  </div>
+                )
+              })
+            }
+            </div>
+          </div>
+          </div>
+        </div>
+        {
+          status.automatic === state.status && (
+//interval_by_day
+            <div className="row form-group flex-baseline">
+              <div className="col-md-2 text-right">
+                <label>Interval by date</label>
+              </div>
+              <div className="col-md-10">
+                <input
+                  type="number"
+                  className="form-control"
+                  value={state.interval_by_day}
+                  name="interval_by_day"
+                  onChange={e => {
+                    const value = e.target.value;
+                    this.handleChangeState("interval_by_day", parseInt(value));
+                  }}
+                ></input>
+              </div>
+            </div>
+          )
+        }
+        {
+          status.manual === state.status && (
+            <div>
+//from_date
+              <div className="row form-group flex-baseline">
+                <div className="col-md-2 text-right">
+                  <label>From date</label>
+                </div>
+                <div className="col-md-10">
+                  <ComponentDatePicker
+                    component_name='from_date'
+                    name="from_date"
+                    id_component="from_date"
+                    date_picker_id="from_date_picker"
+                    error_id="from_date_error"
+                    onChange={this.handleChangeState}
+                    value={state.from_date}
+                  />
+                </div>
+              </div>
+//to_date
+              <div className="row form-group flex-baseline">
+                <div className="col-md-2 text-right">
+                  <label>To date</label>
+                </div>
+                <div className="col-md-10">
+                  <ComponentDatePicker
+                    component_name='to_date'
+                    name="to_date"
+                    id_component="to_date"
+                    date_picker_id="to_date_picker"
+                    error_id="to_date_error"
+                    onChange={this.handleChangeState}
+                    value={state.to_date}
+                  />
+                </div>
+              </div>
+            </div>
+          )
+        }
+//resync_mode
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Target Index</label>
+          </div>
+          <div className="col-md-10">
+            <select
+              className="form-control"
+              name="resync_mode"
+              onChange={e => {
+                const value = e.target.value;
+                this.handleChangeState("resync_mode", value);
               }}
-            ></input>
+              value={state.resync_mode}
+            >
+              {Object.keys(resync_mode).map(item => {
+                return <option value={resync_mode[item]}>{resync_mode[item]}</option>;
+              })}
+            </select>
           </div>
         </div>
-
+//saving_format
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Resource List uri</label>
+            <label>Target Index</label>
           </div>
           <div className="col-md-10">
-            <input
-              type="text"
+            <select
               className="form-control"
-              disabled
-              value={state.url_path && state.url_path + "/resourcelist.xml"}
-            ></input>
-          </div>
-        </div>
-
-        <div className="row form-group flex-baseline">
-          <div className="col-md-2 text-right">
-            <label>Resource Dump uri</label>
-          </div>
-          <div className="col-md-10">
-            <input
-              type="text"
-              className="form-control"
-              disabled
-              value={state.url_path && state.url_path + "/resourcedump.xml"}
-            ></input>
+              name="saving_format"
+              onChange={e => {
+                const value = e.target.value;
+                this.handleChangeState("saving_format", value);
+              }}
+              value={state.saving_format}
+            >
+              {Object.keys(saving_format).map(item => {
+                return <option value={saving_format[item]}>{saving_format[item]}</option>;
+              })}
+            </select>
           </div>
         </div>
 
@@ -509,6 +671,89 @@ class DetailResourceComponent extends React.Component {
     return <div>Deatil ne</div>;
   }
 }
+
 $(function() {
   ReactDOM.render(<MainLayout />, document.getElementById("root"));
+  initDatepicker()
 });
+
+class ComponentDatePicker extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      defaultClass: "controls",
+      errorMessageClass: "hidden"
+    }
+    this.styleContainer = {
+    }
+    this.styleLabel = {
+      "display": "inline",
+    }
+    this.styleDatePicker = {
+      "background-color": "#fff",
+    }
+  }
+
+  componentDidMount(){
+    const that = this
+    const {props} = this
+    $("#"+props.id_component).change(
+      function(event) {
+          const value = event.target.value;
+          if (moment(value,'MM/DD/YYYY').isValid()) {
+            if (that.props.onChange){
+            that.props.onChange(that.props.name,value)
+          }
+          }
+        }
+    )
+  }
+
+  componentWillUnmount(){
+    const {props} = this
+    $("#"+props.id_component).off('change');
+  }
+
+  render() {
+    const {props} = this
+    return (
+      <div style={this.styleContainer} className="form-group">
+        <div class={this.state.defaultClass}>
+          <input
+            value={props.value}
+            className="form-control"
+            name={props.component_name}
+            id={props.id_component}
+            style={this.styleDatePicker}
+            type="text"
+            data-provide="datepicker"
+            />
+          <div
+            id={props.error_id}
+            style={{color: 'red'}}
+            className={this.state.errorMessageClass}
+            >Format is incorrect!</div>
+        </div>
+      </div>
+    )
+  }
+}
+
+function initDatepicker() {
+  $("#from_date").datepicker({
+    format: "dd/mm/yyyy",
+    todayBtn: "linked",
+    autoclose: true,
+    forceParse: false
+  })
+  .on("changeDate", function(e) {
+  });
+  $("#to_date").datepicker({
+    format: "dd/mm/yyyy",
+    todayBtn: "linked",
+    autoclose: true,
+    forceParse: false
+  })
+  .on("changeDate", function(e) {
+  });
+}

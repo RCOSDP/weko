@@ -19,10 +19,12 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import json
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-
+from .config import INVENIO_RESYNC_INDEXES_STATUS, INVENIO_RESYNC_INDEXES_MODE,\
+    INVENIO_RESYNC_INDEXES_SAVING_FORMAT
 
 class AdminResyncClient(BaseView):
     """BaseView for Admin Resource List."""
@@ -36,6 +38,19 @@ class AdminResyncClient(BaseView):
         """
         return self.render(
             current_app.config['INVENIO_RESOURCESYNCCLIENT_ADMIN_TEMPLATE'],
+            status=json.dumps(current_app.config.get(
+                'INVENIO_RESYNC_INDEXES_STATUS',
+                INVENIO_RESYNC_INDEXES_STATUS
+            )),
+            resync_mode=json.dumps(current_app.config.get(
+                'INVENIO_RESYNC_INDEXES_MODE',
+                INVENIO_RESYNC_INDEXES_MODE
+            )),
+            saving_format=json.dumps(current_app.config.get(
+                'INVENIO_RESYNC_INDEXES_SAVING_FORMAT',
+                INVENIO_RESYNC_INDEXES_SAVING_FORMAT
+            )),
+
         )
 
 
