@@ -131,7 +131,7 @@ class ResyncLogs(db.Model, Timestamp):
         unique=True,
         nullable=True
     )
-    start_time = db.Column(db.DateTime, default=datetime.datetime.now())
+    start_time = db.Column(db.DateTime, default=datetime.now())
 
     end_time = db.Column(db.DateTime, nullable=True)
 
