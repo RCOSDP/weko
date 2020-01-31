@@ -587,7 +587,8 @@ def handle_check_exist_record(list_recond) -> list:
                             result.append(item)
                             continue
                         else:
-                            exist_url = request.url_root + 'records/' + item_exist.get('recid')
+                            exist_url = request.url_root + \
+                                'records/' + item_exist.get('recid')
                             if item.get('uri') == exist_url:
                                 item['status'] = 'update'
                             else:
@@ -757,7 +758,7 @@ def create_deposit(item_id):
 
     """
     try:
-        if item_id != None:
+        if item_id is not None:
             dep = WekoDeposit.create({}, recid=int(item_id))
             db.session.commit()
         else:
