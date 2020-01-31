@@ -14,5 +14,29 @@
 INVENIO_RESOURCESYNCCLIENT_DEFAULT_VALUE = 'foobar'
 """Default value for the application."""
 
-INVENIO_RESOURCESYNCCLIENT_BASE_TEMPLATE = 'invenio_resourcesyncclient/base.html'
+INVENIO_RESOURCESYNCCLIENT_BASE_TEMPLATE = \
+    'invenio_resourcesyncclient/base.html'
 """Default base template for the demo page."""
+
+INVENIO_RESOURCESYNCCLIENT_ADMIN_TEMPLATE = \
+    'invenio_resourcesyncclient/resync_client.html'
+"""Default base template for the demo page."""
+
+INVENIO_RESYNC_INDEXES_STATUS = {
+    'automatic': 'Automatic',
+    'manual': 'Manual'
+}
+"""Value of resync_indexes_status."""
+
+INVENIO_RESYNC_INDEXES_MODE = {
+    'baseline': 'Baseline',
+    'incremential': 'Incremential',
+    'audit': 'Audit'
+}
+"""Value of resync_indexes_mode."""
+
+INVENIO_RESYNC_INDEXES_SAVING_FORMAT = {
+    'jpcoar': 'JPCOAR-XML',
+    'json': 'JSON',
+}
+"""Value of resync_indexes_mode."""

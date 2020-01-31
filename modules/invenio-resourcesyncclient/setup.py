@@ -70,13 +70,31 @@ setup(
     platforms='any',
     entry_points={
         'invenio_base.apps': [
-            'invenio_resourcesyncclient = invenio_resourcesyncclient:INVENIOResourceSyncClient',
+            'invenio_resourcesyncclient = '
+            'invenio_resourcesyncclient:INVENIOResourceSyncClient',
         ],
         'invenio_base.blueprints': [
-            'invenio_resourcesyncclient = invenio_resourcesyncclient.views:blueprint',
+            'invenio_resourcesyncclient = '
+            'invenio_resourcesyncclient.views:blueprint',
         ],
         'invenio_i18n.translations': [
             'messages = invenio_resourcesyncclient',
+        ],
+        'invenio_admin.views': [
+            'invenio_admin_resync_client = '
+            'invenio_resourcesyncclient.admin:invenio_admin_resync_client',
+        ],
+        'invenio_assets.bundles': [
+            'invenio_admin_resync_client_js = '
+            'invenio_resourcesyncclient.bundles:invenio_admin_resync_client_js',
+            'invenio_admin_resync_client_css = '
+            'invenio_resourcesyncclient.bundles:invenio_admin_resync_client_css',
+        ],
+        'invenio_db.models': [
+            'invenio_resourcesyncclient = invenio_resourcesyncclient.models',
+        ],
+        'invenio_celery.tasks': [
+            'invenio_resourcesyncclient = invenio_resourcesyncclient.tasks'
         ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
