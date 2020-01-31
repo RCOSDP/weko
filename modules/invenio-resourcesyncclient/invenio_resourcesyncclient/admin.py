@@ -35,7 +35,7 @@ class AdminResyncClient(BaseView):
         :return: The rendered template.
         """
         return self.render(
-            current_app.config['INVENIO_RESOURCESYNC_CLIENT_ADMIN_TEMPLATE'],
+            current_app.config['INVENIO_RESOURCESYNCCLIENT_ADMIN_TEMPLATE'],
         )
 
 
