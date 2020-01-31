@@ -476,9 +476,7 @@ def handle_validate_item_import(list_recond, schema) -> list:
     for record in list_recond:
         errors = []
         record_id = record.get("id")
-        if not (
-            record_id and represents_int(record_id)
-        ):
+        if record_id and (not represents_int(record_id)):
             errors.append("Incorrect Item id")
         if record.get('metadata'):
             if v2:
