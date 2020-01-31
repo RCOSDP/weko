@@ -570,15 +570,15 @@ def handle_check_exist_record(list_recond) -> list:
 
     """
     result = []
-    url_root = request.url_root
     for item in list_recond:
         if not item.get('errors'):
             item = dict(**item, **{
                 'status': 'new'
             })
             try:
-                item_exist = WekoRecord.get_record_by_pid(item.get('id'))
-                if url_root in item.get('uri', ''):
+                item_id = item.get('id')
+                if item_id:
+                    item_exist = WekoRecord.get_record_by_pid(item_id)
                     if item_exist:
                         if item_exist.pid.is_deleted():
                             item['status'] = None
@@ -587,14 +587,19 @@ def handle_check_exist_record(list_recond) -> list:
                             result.append(item)
                             continue
                         else:
-                            item['status'] = 'update'
-                            compare_identifier(item, item_exist)
+                            exist_url = request.url_root + 'records/' + item_exist.get('recid')
+                            if item.get('uri') == exist_url:
+                                item['status'] = 'update'
+                            else:
+                                item['errors'] = ['URI of items are not match']
+                                item['status'] = None
                     else:
-                        item['status'] = 'new'
-                        check_identifier_new(item)
+                        item['errors'] = ['Target id is not in the system']
+                        item['status'] = None
                 else:
-                    if item_exist:
-                        item['errors'] = ['Item already EXISTED in the system']
+                    item['id'] = None
+                    if item.get('uri'):
+                        item['errors'] = ['Item has no ID but non-empty URI']
                         item['status'] = None
             except PIDDoesNotExistError:
                 pass
@@ -685,6 +690,8 @@ def compare_identifier(item, item_exist):
                 ]))
         elif len(item_iden) < len(item_exist_iden):
             item['metadata'][item.get('Identifier key')] = item_exist_iden
+    if item.get('uri'):
+        pass
     return item
 
 
@@ -750,8 +757,13 @@ def create_deposit(item_id):
 
     """
     try:
-        WekoDeposit.create({}, recid=int(item_id))
-        db.session.commit()
+        if item_id != None:
+            dep = WekoDeposit.create({}, recid=int(item_id))
+            db.session.commit()
+        else:
+            dep = WekoDeposit.create({})
+            db.session.commit()
+        return dep['recid']
     except Exception:
         db.session.rollback()
 
@@ -952,8 +964,9 @@ def import_items_to_system(item: dict):
         return None
     else:
         root_path = item.get('root_path', '')
-        if item.get('status') == 'new' and item.get('id'):
-            create_deposit(item.get('id'))
+        if item.get('status') == 'new':
+            item_id = create_deposit(item.get('id'))
+            item['id'] = item_id
         up_load_file_content(item, root_path)
         response = register_item_metadata(item)
 
