@@ -44,7 +44,7 @@ invenio_admin_resync_client = {
     'kwargs': {
         'category': _('Resource Sync'),
         'name': _('Resync'),
-        'endpoint': 'client'
+        'endpoint': 'resync'
     }
 }
 
