@@ -577,30 +577,27 @@ def handle_check_exist_record(list_recond) -> list:
                 item_id = item.get('id')
                 if item_id:
                     item_exist = WekoRecord.get_record_by_pid(item_id)
-                    if item_exist:
-                        if item_exist.pid.is_deleted():
-                            item['status'] = None
-                            item['errors'] = [_('Item already DELETED'
-                                                ' in the system')]
-                            result.append(item)
-                            continue
-                        else:
-                            exist_url = request.url_root + 'records/' + item_exist.get('recid')
-                            if item.get('uri') == exist_url:
-                                item['status'] = 'update'
-                            else:
-                                item['errors'] = ['URI of items are not match']
-                                item['status'] = None
-                    else:
-                        item['errors'] = ['Target id is not in the system']
+                    if item_exist.pid.is_deleted():
                         item['status'] = None
+                        item['errors'] = [_('Item already DELETED'
+                                            ' in the system')]
+                        result.append(item)
+                        continue
+                    else:
+                        exist_url = request.url_root + 'records/' + item_exist.get('recid')
+                        if item.get('uri') == exist_url:
+                            item['status'] = 'update'
+                        else:
+                            item['errors'] = ['URI of items are not match']
+                            item['status'] = None
                 else:
                     item['id'] = None
                     if item.get('uri'):
                         item['errors'] = ['Item has no ID but non-empty URI']
                         item['status'] = None
             except PIDDoesNotExistError:
-                pass
+                item['errors'] = ['Target id is not in the system']
+                item['status'] = None
             except BaseException:
                 current_app.logger.error(
                     'Unexpected error: ',
