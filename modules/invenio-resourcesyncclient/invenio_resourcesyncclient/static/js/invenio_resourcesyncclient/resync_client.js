@@ -23,6 +23,19 @@ const default_state = {
   saving_format: saving_format.jpcoar,
 };
 
+const default_label = {
+          repository_name: "Repository Name",
+          status: 'Status',
+          index_id: "Index Id",
+          index_name: "Index Name",
+          base_url: "Base Url",
+          resync_mode: "Mode",
+          saving_format: "Saving Format",
+          from_date:"From Date",
+          to_date: "To Date",
+          interval_by_day: "Interval by Day"
+        }
+
 class MainLayout extends React.Component {
   constructor(props) {
     super(props);
@@ -110,6 +123,7 @@ class MainLayout extends React.Component {
           <div>
             <CreateResyncComponent
               handleChangeTab={this.handleChangeTab}
+              mode="create"
             ></CreateResyncComponent>
           </div>
         ) : (
@@ -121,6 +135,7 @@ class MainLayout extends React.Component {
             <CreateResyncComponent
               handleChangeTab={this.handleChangeTab}
               select_item={select_item}
+              mode="edit"
             ></CreateResyncComponent>
             {/* </div> : ''} */}
           </div>
@@ -434,6 +449,7 @@ class CreateResyncComponent extends React.Component {
 
   render() {
     const { state } = this;
+    const {mode} = this.props
     return (
       <div className="create-resource">
 //repository_name
@@ -478,7 +494,7 @@ class CreateResyncComponent extends React.Component {
 //base_url
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Repository name</label>
+            <label>Base Url</label>
           </div>
           <div className="col-md-10">
             <input
@@ -589,7 +605,7 @@ class CreateResyncComponent extends React.Component {
 //resync_mode
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Target Index</label>
+            <label>Resync Mode</label>
           </div>
           <div className="col-md-10">
             <select
@@ -610,7 +626,7 @@ class CreateResyncComponent extends React.Component {
 //saving_format
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Target Index</label>
+            <label>Saving format</label>
           </div>
           <div className="col-md-10">
             <select
@@ -632,20 +648,33 @@ class CreateResyncComponent extends React.Component {
         <div className="row form-group flex-baseline">
           <div className="col-md-2"></div>
           <div className="col-md-10">
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                this.handleSubmit();
-              }}
-            >
-              Create
-            </button>
-            <button className="btn btn-default" onClick={() => {
-              this.handleSubmit(true);
+          {
+            mode === 'create' ? <span>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  this.handleSubmit();
+                }}
+              >
+                Create
+              </button>
+              <button className="btn btn-default" onClick={() => {
+                this.handleSubmit(true);
 
-            }}>
-              Create add Add Another
-            </button>
+              }}>
+                Create add Add Another
+              </button>
+            </span> : <span>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  this.handleSubmit();
+                }}
+              >
+                Edit
+              </button>
+            </span>
+          }
             <button
               className="btn btn-danger"
               onClick={() => {
@@ -664,11 +693,84 @@ class CreateResyncComponent extends React.Component {
 class DetailResourceComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      repository_name: "Repository Name",
+      status: status.manual,
+      index_id: "123456789",
+      index_name: "Index Name",
+      base_url: "http://18.182.214.241:8018/",
+      resync_mode: resync_mode.baseline,
+      saving_format: saving_format.jpcoar,
+      from_date:"2020-01-20",
+      to_date: "2020-05-20",
+      interval_by_day: "1",
+      is_running: true
+    }
   }
 
   render() {
-    return <div>Deatil ne</div>;
+    return (
+      <div className="content_div">
+        <div className="content_table">
+          <table className="table table-hover table-bordered searchable">
+            <tbody>
+              {
+                Object.keys(this.state).map((item, key) => {
+                  if (Object.keys(default_label).includes(item)) {
+                    return (
+                      <tr key={key}>
+                        <td><b>{default_label[item]}</b></td>
+                        <td>{this.state[item]}</td>
+                      </tr>
+                    )
+                  }
+
+                })
+              }
+              {
+                this.state.status === 'Automatic' ? (
+                  <tr>
+                    <td><b>Running</b></td>
+                    <td><button className={`btn ${this.state.is_running ? "btn-success": "btn-danger"}`}>{this.state.is_running === true ? "ON" : "OFF"}</button></td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <td><b>Action</b></td>
+                    <td>
+                      <button className="btn btn-primary">Sync</button>
+                      <button className="btn btn-primary">Import</button>
+                    </td>
+                  </tr>
+                )
+              }
+
+            </tbody>
+          </table>
+          <h3>Running logs</h3>
+            <div className="content_table">
+              <table className="table table-hover table-bordered searchable">
+                <thead>
+                 <tr>
+                    <th>#</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Status</th>
+                    <th>Processed Items</th>
+                    <th>Created Items</th>
+                    <th>Updated Items</th>
+                    <th>Deleted Items</th>
+                    <th>Error Items</th>
+                    <th>Error Message, Url</th>
+                 </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+              </table>
+            </div>
+        </div>
+      </div>
+    );
   }
 }
 
@@ -717,7 +819,7 @@ class ComponentDatePicker extends React.Component {
   render() {
     const {props} = this
     return (
-      <div style={this.styleContainer} className="form-group">
+      <div style={this.styleContainer}>
         <div class={this.state.defaultClass}>
           <input
             value={props.value}

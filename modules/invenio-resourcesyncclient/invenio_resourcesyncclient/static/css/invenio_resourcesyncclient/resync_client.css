@@ -38,3 +38,9 @@ a.icon {
 .p-l-10{
   padding-left: 10px;
 }
+.content_div{
+  padding: 10px 0px;
+}
+.content_table button {
+  margin-right: 10px
+}
