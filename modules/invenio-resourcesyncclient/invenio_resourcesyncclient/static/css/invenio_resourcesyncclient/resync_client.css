@@ -44,3 +44,9 @@ a.icon {
 .content_table button {
   margin-right: 10px
 }
+.required{
+  color: red;
+  font-weight: 700;
+  margin: 0px 3px;
+  position: absolute;
+}

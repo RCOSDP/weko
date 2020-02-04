@@ -25,7 +25,7 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from .config import INVENIO_RESYNC_INDEXES_STATUS, INVENIO_RESYNC_INDEXES_MODE,\
     INVENIO_RESYNC_INDEXES_SAVING_FORMAT
-
+from .api import ResyncHandler
 class AdminResyncClient(BaseView):
     """BaseView for Admin Resource List."""
 
@@ -52,6 +52,88 @@ class AdminResyncClient(BaseView):
             )),
 
         )
+
+    @expose('/get_list', methods=['GET'])
+    def get_list(self):
+        """Renders an admin resource list view.
+
+        :param
+        :return: The rendered template.
+        """
+        result = ResyncHandler.get_list_resync()
+        result = list(map(lambda item: item.to_dict(), result))
+        return jsonify(data=result)
+
+    @expose('/create', methods=['POST'])
+    def create_resync(self):
+        """Renders an admin resource list view.
+
+        :param
+        :return: The rendered template.
+        """
+        resync = ResyncHandler(**request.get_json())
+        result = resync.create()
+        if result.get('success'):
+            return jsonify(
+                success=result.get('success'),
+                data=result.get("data")
+            )
+        else:
+            return jsonify(
+                success=result.get('success'),
+                errmsg=result.get("errmsg")
+            )
+
+    @expose('/update/<resync_id>', methods=['POST'])
+    def update_resync(self, resync_id):
+        """Renders an admin resource list view.
+
+        :param
+        :return: The rendered template.
+        """
+        resync = ResyncHandler.get_resync(resync_id)
+        if resync:
+            result = resync.update(request.get_json())
+            if result.get('success'):
+                return jsonify(
+                    success=result.get('success'),
+                    data=result.get("data")
+                )
+            else:
+                return jsonify(
+                    success=result.get('success'),
+                    errmsg=result.get("errmsg")
+                )
+        else:
+            return jsonify(
+                success=False,
+                errmsg=["Resync is not exist"]
+            )
+
+    @expose('/delete/<resync_id>', methods=['POST'])
+    def delete_resync(self, resync_id):
+        """Renders an admin resource list view.
+
+        :param
+        :return: The rendered template.
+        """
+        resync = ResyncHandler.get_resync(resync_id)
+        if not resync:
+            return jsonify(
+                success=False,
+                errmsg=["Resync is not exist"]
+            )
+        result = resync.update(request.get_json())
+        if result.get('success'):
+            return jsonify(
+                success=result.get('success'),
+                data=result.get("data")
+            )
+        else:
+            return jsonify(
+                success=result.get('success'),
+                errmsg=result.get("errmsg")
+            )
 
 
 invenio_admin_resync_client = {

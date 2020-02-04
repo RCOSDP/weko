@@ -107,7 +107,11 @@ class ResyncIndexes(db.Model, Timestamp):
         db.String(255), nullable=False)
     """base url of resync."""
 
-    interval_by_date = db.Column(db.Integer, nullable=False)
+    is_running = db.Column(
+        db.Boolean(), default=True)
+    """is running."""
+
+    interval_by_day = db.Column(db.Integer, nullable=False)
     """Time cycle for each change list."""
 
     task_id = db.Column(db.String(40), default=None)

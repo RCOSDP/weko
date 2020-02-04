@@ -2,10 +2,10 @@ const list_label = "List";
 const create_label = "Create";
 const edit_label = "Edit";
 const detail_label = "Detail";
-const urlCreate = window.location.origin + "/admin/resource_list/create";
-const urlUpdate = window.location.origin + "/admin/resource_list/update";
-const urlDelete = window.location.origin + "/admin/resource_list/delete";
-const urlGetList = window.location.origin + "/admin/resource_list/get_list";
+const urlCreate = window.location.origin + "/admin/resync/create";
+const urlUpdate = window.location.origin + "/admin/resync/update";
+const urlDelete = window.location.origin + "/admin/resync/delete";
+const urlGetList = window.location.origin + "/admin/resync/get_list";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const status = JSON.parse($("#status").text())
 const resync_mode = JSON.parse($("#resync_mode").text())
@@ -176,50 +176,20 @@ class ListResyncComponent extends React.Component {
   }
 
   handleGetList() {
-//    fetch(urlGetList, {
-//      method: "GET",
-//      headers: {
-//        "Content-Type": "application/json"
-//      }
-//    })
-//      .then(res => res.json())
-//      .then(res => {
-//        this.setState({
-//          list_resource: res
-//        });
-//      })
-//      .catch(() => alert("Error in get list"));
-    this.setState({
-      list_resource: [
-        {
-          repository_name: "Local",
-          status: status.automatic,
-          index_id: "123456789",
-          index_name: "INVENIO",
-          base_url: "http://localhost/",
-          resync_mode: resync_mode.incremential,
-          saving_format: saving_format.jpcoar
-        },
-        {
-          repository_name: "SERVER 18",
-          status: status.automatic,
-          index_id: "123456789",
-          index_name: "WEKO",
-          base_url: "http://18.182.214.241:8018/",
-          resync_mode: resync_mode.audit,
-          saving_format: saving_format.json
-        },
-        {
-          repository_name: "SERVER 21",
-          status: status.manual,
-          index_id: "123456789",
-          index_name: "DAISHODAI",
-          base_url: "http://18.182.214.241:8021/",
-          resync_mode: resync_mode.baseline,
-          saving_format: saving_format.jpcoar
-        }
-      ]
-    });
+    fetch(urlGetList, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+      .then(res => res.json())
+      .then(res => {
+        console.log(res)
+        this.setState({
+          list_resource: res.data
+        });
+      })
+      .catch(() => alert("Error in get list"));
   }
 
   handleViewDetail(item) {
@@ -231,25 +201,25 @@ class ListResyncComponent extends React.Component {
   }
 
   handleDelete(item) {
-//    const a = confirm("Are you sure to delete it ?");
-//    if (a) {
-//      fetch(urlDelete + "/" + item.id, {
-//        method: "POST",
-//        body: JSON.stringify(item),
-//        headers: {
-//          "Content-Type": "application/json"
-//        }
-//      })
-//        .then(res => res.json())
-//        .then(res => {
-//          if (res.success) {
-//            this.handleGetList();
-//          } else {
-//            alert("Error in Delete");
-//          }
-//        })
-//        .catch(() => alert("Error in Delete"));
-//    }
+    const a = confirm("Are you sure to delete it ?");
+    if (a) {
+      fetch(urlDelete + "/" + item.id, {
+        method: "POST",
+        body: JSON.stringify(item),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+        .then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            this.handleGetList();
+          } else {
+            alert("Error in Delete");
+          }
+        })
+        .catch(() => alert("Error in Delete"));
+    }
   }
 
   render() {
@@ -384,28 +354,30 @@ class CreateResyncComponent extends React.Component {
     const new_data = { ...this.state };
     delete new_data.tree_list;
     console.log(new_data)
-//    fetch(urlCreate, {
-//      method: "POST",
-//      body: JSON.stringify(new_data),
-//      headers: {
-//        "Content-Type": "application/json"
-//      }
-//    })
-//      .then(res => res.json())
-//      .then(res => {
-//        if (res.success) {
-//          if(add_another){
-//            this.setState({
-//              ...default_state
-//            })
-//          } else {
-//            this.props.handleChangeTab("list");
-//          }
-//        } else {
-//          alert(res.message);
-//        }
-//      })
-//      .catch(() => alert("Error in Create"));
+    const {mode} = this.props
+    const url = mode ==="edit" ? urlUpdate+"/"+new_data.id : urlCreate
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify(new_data),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          if(add_another){
+            this.setState({
+              ...default_state
+            })
+          } else {
+            this.props.handleChangeTab("list");
+          }
+        } else {
+          alert(res.errmsg.join("\n"));
+        }
+      })
+      .catch(() => alert("Error in Create"));
   }
 
   getTreeList() {
@@ -455,7 +427,7 @@ class CreateResyncComponent extends React.Component {
 //repository_name
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Repository name</label>
+            <label>Repository name</label><span className="required">*</span>
           </div>
           <div className="col-md-10">
             <input
@@ -473,7 +445,7 @@ class CreateResyncComponent extends React.Component {
 //index_id
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Target Index</label>
+            <label>Target Index</label><span className="required">*</span>
           </div>
           <div className="col-md-10">
             <select
@@ -494,7 +466,7 @@ class CreateResyncComponent extends React.Component {
 //base_url
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
-            <label>Base Url</label>
+            <label>Base Url</label><span className="required">*</span>
           </div>
           <div className="col-md-10">
             <input
@@ -540,9 +512,10 @@ class CreateResyncComponent extends React.Component {
           </div>
           </div>
         </div>
+//interval_by_day
         {
           status.automatic === state.status && (
-//interval_by_day
+
             <div className="row form-group flex-baseline">
               <div className="col-md-2 text-right">
                 <label>Interval by date</label>
@@ -695,7 +668,7 @@ class DetailResourceComponent extends React.Component {
     super(props);
     this.state = {
       repository_name: "Repository Name",
-      status: status.manual,
+      status: status.automatic,
       index_id: "123456789",
       index_name: "Index Name",
       base_url: "http://18.182.214.241:8018/",
