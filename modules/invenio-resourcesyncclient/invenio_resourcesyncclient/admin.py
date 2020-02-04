@@ -123,11 +123,10 @@ class AdminResyncClient(BaseView):
                 success=False,
                 errmsg=["Resync is not exist"]
             )
-        result = resync.update(request.get_json())
+        result = resync.delete()
         if result.get('success'):
             return jsonify(
                 success=result.get('success'),
-                data=result.get("data")
             )
         else:
             return jsonify(

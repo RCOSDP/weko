@@ -251,14 +251,22 @@ class ResyncHandler(object):
             with db.session.begin_nested():
                 resync = self.get_resync(self.id, 'modal')
                 if not resync:
-                    return False
+                    return {
+                        'success': False,
+                        'errmsg': ['Resync is not exist']
+                    }
                 db.session.delete(resync)
             db.session.commit()
-            return True
+            return {
+                'success': True
+            }
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-        return False
+            return {
+                'success': False,
+                'errmsg': [str(ex)]
+            }
 
     @classmethod
     def get_resync(cls, resync_id, type_result='obj'):
@@ -271,6 +279,7 @@ class ResyncHandler(object):
             with db.session.begin_nested():
                 resync = db.session.query(ResyncIndexes).filter(
                     ResyncIndexes.id == resync_id).one_or_none()
+
                 if type_result == 'obj':
                     return ResyncHandler.from_modal(resync)
                 else:
