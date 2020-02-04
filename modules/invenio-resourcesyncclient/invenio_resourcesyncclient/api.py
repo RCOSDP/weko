@@ -98,7 +98,11 @@ class ResyncHandler(object):
             }
         try:
             with db.session.begin_nested():
-                resync = ResyncIndexes(**self.to_dict())
+                new_data = self.to_dict()
+                new_data.pop('index_name')
+                new_data.pop('created')
+                new_data.pop('updated')
+                resync = ResyncIndexes()
                 db.session.add(resync)
             db.session.commit()
             return {
