@@ -81,8 +81,9 @@ class MainLayout extends React.Component {
       this.setState({
         current_tab: item.tab_key,
         current_step: item.step
+
       });
-      if (select_item) {
+      if (select_item  && item.step === 1) {
         this.setState({
           select_item: select_item
         });
@@ -673,17 +674,8 @@ class DetailResourceComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      repository_name: "Repository Name",
-      status: status.automatic,
-      index_id: "123456789",
-      index_name: "Index Name",
-      base_url: "http://18.182.214.241:8018/",
-      resync_mode: resync_mode.baseline,
-      saving_format: saving_format.jpcoar,
-      from_date:"2020-01-20",
-      to_date: "2020-05-20",
-      interval_by_day: "1",
-      is_running: true
+      ...default_state,
+      ...props.select_item
     }
   }
 
