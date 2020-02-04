@@ -71,7 +71,7 @@ class MainLayout extends React.Component {
 
   componentDidMount() {}
 
-  handleChangeTab(select_tab, select_item = {}) {
+  handleChangeTab(select_tab, select_item = null) {
     const { tabs } = this.state;
     const a = tabs.filter(item => {
       return item.tab_key === select_tab;
@@ -83,7 +83,7 @@ class MainLayout extends React.Component {
         current_step: item.step
 
       });
-      if (select_item  && item.step === 1) {
+      if (select_item) {
         this.setState({
           select_item: select_item
         });
