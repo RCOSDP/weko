@@ -26,7 +26,6 @@ import shutil
 import sys
 import tempfile
 import traceback
-from datetime import timedelta
 from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -50,7 +49,7 @@ class ResyncHandler(object):
         self.from_date = kwargs.get('from_date')
         self.to_date = kwargs.get('to_date')
         self.updated = kwargs.get('updated')
-        self.resync_save_dir = kwargs.get('resync_save_dir')
+        self.resync_save_dir = kwargs.get('resync_save_dir', 'test')
         self.resync_mode = kwargs.get('resync_mode')
         self.saving_format = kwargs.get('saving_format')
         self.interval_by_day = kwargs.get('interval_by_day')
@@ -180,6 +179,10 @@ class ResyncHandler(object):
                 resync.is_running = data.get(
                     "is_running",
                     resync.is_running
+                )
+                resync.resync_save_dir = data.get(
+                    "resync_save_dir",
+                    resync.resync_save_dir
                 )
 
                 db.session.merge(resync)
