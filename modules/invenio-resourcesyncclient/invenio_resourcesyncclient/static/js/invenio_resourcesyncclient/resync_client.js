@@ -417,6 +417,12 @@ class CreateResyncComponent extends React.Component {
 
   componentDidMount() {
     this.getTreeList();
+    const {mode} = this.props
+    if (mode ==='edit'){
+      this.setState({
+        ...this.props.select_item
+      })
+    }
   }
 
   render() {
