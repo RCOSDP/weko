@@ -102,7 +102,7 @@ class ResyncHandler(object):
                 new_data.pop('index_name')
                 new_data.pop('created')
                 new_data.pop('updated')
-                resync = ResyncIndexes()
+                resync = ResyncIndexes(new_data)
                 db.session.add(resync)
             db.session.commit()
             return {
