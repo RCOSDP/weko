@@ -713,7 +713,7 @@ class DetailResourceComponent extends React.Component {
               </tr>
               <tr >
                 <td><b>Target Index</b></td>
-                <td>{`${this.state[index_name]} <${${this.state[index_id]}}>`}</td>
+                <td>{`${this.state[index_name]} < ${this.state[index_id]}>`}</td>
               </tr>
               <tr >
                 <td><b>Mode</b></td>
