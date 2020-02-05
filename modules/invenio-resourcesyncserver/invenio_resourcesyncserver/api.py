@@ -249,9 +249,7 @@ class ResourceListHandler(object):
         """
         try:
             with db.session.begin_nested():
-                list_result = db.session.query(ResourceListIndexes).join(
-                    Index
-                ).all()
+                list_result = db.session.query(ResourceListIndexes).all()
                 if type_result == 'obj':
                     new_list = []
                     for resource in list_result:
@@ -1004,9 +1002,7 @@ class ChangeListHandler(object):
         """
         try:
             with db.session.begin_nested():
-                result = db.session.query(ChangeListIndexes).join(
-                    Index
-                ).all()
+                result = db.session.query(ChangeListIndexes).all()
                 if result:
                     parse_result = [
                         cls.convert_modal_to_obj(r) for r in result
@@ -1048,8 +1044,6 @@ class ChangeListHandler(object):
             with db.session.begin_nested():
                 result = db.session.query(ChangeListIndexes).filter(
                     ChangeListIndexes.repository_id == repo_id
-                ).join(
-                    Index
                 ).one_or_none()
                 if result:
                     if type_result == 'modal':
