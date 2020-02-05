@@ -449,27 +449,6 @@ class CreateResyncComponent extends React.Component {
             ></input>
           </div>
         </div>
-//index_id
-        <div className="row form-group flex-baseline">
-          <div className="col-md-2 text-right">
-            <label>Target Index</label><span className="required">*</span>
-          </div>
-          <div className="col-md-10">
-            <select
-              className="form-control"
-              onChange={e => {
-                const value = e.target.value;
-                this.handleChangeState("index_id", value);
-              }}
-              value={state.index_id}
-            >
-              <option value="" disabled></option>
-              {state.tree_list.map(item => {
-                return <option value={item.id}>{item.value}</option>;
-              })}
-            </select>
-          </div>
-        </div>
 //base_url
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
@@ -488,6 +467,7 @@ class CreateResyncComponent extends React.Component {
             ></input>
           </div>
         </div>
+
 //status
         <div className="row form-group ">
           <div className="col-md-2 text-right">
@@ -525,7 +505,7 @@ class CreateResyncComponent extends React.Component {
 
             <div className="row form-group flex-baseline">
               <div className="col-md-2 text-right">
-                <label>Interval by date</label>
+                <label>Interval By Day</label>
               </div>
               <div className="col-md-10">
                 <input
@@ -548,7 +528,7 @@ class CreateResyncComponent extends React.Component {
 //from_date
               <div className="row form-group flex-baseline">
                 <div className="col-md-2 text-right">
-                  <label>From date</label>
+                  <label>From Date</label>
                 </div>
                 <div className="col-md-10">
                   <ComponentDatePicker
@@ -565,7 +545,7 @@ class CreateResyncComponent extends React.Component {
 //to_date
               <div className="row form-group flex-baseline">
                 <div className="col-md-2 text-right">
-                  <label>To date</label>
+                  <label>Until Date</label>
                 </div>
                 <div className="col-md-10">
                   <ComponentDatePicker
@@ -582,6 +562,27 @@ class CreateResyncComponent extends React.Component {
             </div>
           )
         }
+//index_id
+        <div className="row form-group flex-baseline">
+          <div className="col-md-2 text-right">
+            <label>Target Index</label><span className="required">*</span>
+          </div>
+          <div className="col-md-10">
+            <select
+              className="form-control"
+              onChange={e => {
+                const value = e.target.value;
+                this.handleChangeState("index_id", value);
+              }}
+              value={state.index_id}
+            >
+              <option value="" disabled></option>
+              {state.tree_list.map(item => {
+                return <option value={item.id}>{item.value}</option>;
+              })}
+            </select>
+          </div>
+        </div>
 //resync_mode
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
@@ -685,19 +686,43 @@ class DetailResourceComponent extends React.Component {
         <div className="content_table">
           <table className="table table-hover table-bordered searchable">
             <tbody>
-              {
-                Object.keys(this.state).map((item, key) => {
-                  if (Object.keys(default_label).includes(item)) {
-                    return (
-                      <tr key={key}>
-                        <td><b>{default_label[item]}</b></td>
-                        <td>{this.state[item]}</td>
-                      </tr>
-                    )
-                  }
+              <tr >
+                <td><b>Repository Name</b></td>
+                <td>{this.state[repository_name]}</td>
+              </tr>
+              <tr >
+                <td><b>Base Url</b></td>
+                <td>{this.state[base_url]}</td>
+              </tr>
+              <tr >
+                <td><b>Status</b></td>
+                <td>{this.state[status]}</td>
+              </tr>
+              <tr >
+                <td><b>Interval by Day</b></td>
+                <td>{this.state[interval_by_day]}</td>
+              </tr>
+              <tr >
+                <td><b>From Date</b></td>
+                <td>{this.state[from_date]}</td>
+              </tr>
 
-                })
-              }
+              <tr >
+                <td><b>Until Date</b></td>
+                <td>{this.state[to_date]}</td>
+              </tr>
+              <tr >
+                <td><b>Target Index</b></td>
+                <td>{`${this.state[index_name]} <${${this.state[index_id]}}>`}</td>
+              </tr>
+              <tr >
+                <td><b>Mode</b></td>
+                <td>{this.state[resync_mode]}</td>
+              </tr>
+              <tr >
+                <td><b>Saving Format</b></td>
+                <td>{this.state[saving_format]}</td>
+              </tr>
               {
                 this.state.status === 'Automatic' ? (
                   <tr>
