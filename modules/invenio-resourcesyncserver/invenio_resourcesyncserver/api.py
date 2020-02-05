@@ -339,7 +339,8 @@ class ResourceListHandler(object):
         for item in r:
             if item:
                 id_item = item.get('_source').get('control_number')
-                url = '{}records/{}'.format(request.url_root, str(id_item))
+                # url = '{}records/{}'.format(request.url_root, str(id_item))
+                url = '{}resync/{}/records/{}'.format(request.url_root, str(self.index.id), str(id_item))
                 rl.add(Resource(url, lastmod=item.get('_source').get(
                     '_updated')))
         return rl.as_xml()
@@ -671,16 +672,19 @@ class ChangeListHandler(object):
                 if self._next_change(data, record_changes) and data.get(
                     'status'
                 ) != 'deleted':
-                    loc = '{}records/{}'.format(
+                # url = '{}resync/{}/records/{}'.format(request.url_root, str(self.index.id), str(id_item))
+                    loc = '{}resync/{}/records/{}'.format(
                         request.url_root,
+                        self.index.id,
                         '{}.{}'.format(
                             data.get('record_id'),
                             data.get('record_version')
                         )
                     )
                 else:
-                    loc = '{}records/{}'.format(
+                    loc = '{}resync/{}/records/{}'.format(
                         request.url_root,
+                        self.index.id,
                         data.get('record_id')
                     )
                 rc = Resource(

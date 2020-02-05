@@ -306,3 +306,8 @@ class ResyncHandler(object):
             current_app.logger.debug(ex)
             return False
 
+    @classmethod
+    def get_resource_sync_by_id(cls, resync_id):
+        """Get resync record from id"""
+        with db.session.begin_nested():
+            return db.session.query(ResyncIndexes).filter_by(id=resync_id)

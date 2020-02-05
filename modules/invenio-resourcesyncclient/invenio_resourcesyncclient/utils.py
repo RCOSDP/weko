@@ -19,3 +19,60 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+from resync.client import Client
+from resync.client_utils import url_or_file_open, init_logging
+from resync.mapper import MapperError
+from resync.resource_list_builder import ResourceListBuilder
+from resync.sitemap import Sitemap
+
+
+def read_capability(url):
+    """Read capability of an url"""
+    s = Sitemap()
+    capability = None
+    try:
+        document = s.parse_xml(url_or_file_open(url))
+    except IOError as e:
+        raise e
+    if 'capability' in document.md:
+        capability = document.md['capability']
+    return capability
+
+
+def sync_baseline(map, base_url, dryrun=False):
+    """Run resync baseline"""
+    client = Client()
+    init_logging(verbose=True)
+    try:
+        # set sitemap_name to specify the only url to sync
+        # set mappings to specify the url will
+        # be used to validate subitem in resync library
+        client.sitemap_name = base_url
+        client.dryrun = dryrun
+        client.set_mappings(map)
+        client.baseline_or_audit()
+        return True
+    except MapperError:
+        # if mapper error then remove one element in url and retry
+        paths = map[0].rsplit('/', 1)
+        map[0] = paths[0]
+        return False
+    except Exception as e:
+        raise e
+
+
+def sync_audit(map):
+    """Run resync audit"""
+    client = Client()
+    client.set_mappings(map)
+    init_logging(verbose=True)
+    src_resource_list = client.find_resource_list()
+    rlb = ResourceListBuilder(mapper=client.mapper)
+    dst_resource_list = rlb.from_disk()
+    # Compare these resource lists respecting any comparison options
+    (same, updated, deleted, created) = dst_resource_list.compare(
+        src_resource_list)
+    return dict(
+        same=len(same),updated=len(updated),deleted=len(deleted),created=len(created)
+    )
+

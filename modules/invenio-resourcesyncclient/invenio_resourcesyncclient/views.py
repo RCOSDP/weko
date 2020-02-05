@@ -13,8 +13,15 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, current_app, jsonify, \
+    make_response
 from flask_babelex import gettext as _
+from .utils import read_capability, sync_baseline, sync_audit
+
+try:  # python3
+    from urllib.parse import urlsplit, urlunsplit
+except ImportError:  # pragma: no cover  python2
+    from urlparse import urlsplit, urlunsplit
 
 blueprint = Blueprint(
     'invenio_resourcesyncclient',
@@ -30,3 +37,56 @@ def index():
     return render_template(
         "invenio_resourcesyncclient/index.html",
         module_name=_('INVENIO-ResourceSyncClient'))
+
+
+@blueprint.route("/resync/sync/<resync_id>")
+def sync(resync_id):
+    """Sync a resource sync. Save data to local"""
+    resync_index = ResyncHandler.get_resource_sync_by_id(resync_id)
+    if not resync_index:
+        raise 404
+    # Validate base_url
+    base_url = resync_index.base_url
+    capability = read_capability(base_url)
+    print(capability)
+
+    mode = resync_index.resync_mode
+    save_dir = resync_index.resync_save_dir
+    map = [base_url]
+    if save_dir:
+        map.append(save_dir)
+
+    parts = urlsplit(map[0])
+    uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
+
+    # map = [base_url, save_dir]
+    # if mode == current_app.config.get[
+    #         'INVENIO_RESYNC_INDEXES_MODE'
+    #     ].get('baseline'):
+    if mode == 'Baseline':
+        if not capability or (
+                capability != 'resourcelist' and capability != 'resourcedump'):
+            raise ValueError('Bad URL')
+        result = False
+        while map[0] != uri_host and not result:
+            result = sync_baseline(map=map, base_url=base_url, dryrun=False)
+        return make_response('OK', 200)
+    # elif mode == current_app.config.get[
+    #     'INVENIO_RESYNC_INDEXES_MODE'
+    # ].get('audit'):
+    elif mode == 'Audit':
+        if not capability or (
+                capability != 'resourcelist' and capability != 'changelist'):
+            raise ValueError('Bad URL')
+        # do the same logic with Baseline
+        # to make sure right url is used
+        result = False
+        while map[0] != uri_host and not result:
+            result = sync_baseline(map=map, base_url=base_url, dryrun=True)
+        return jsonify(sync_audit(map))
+
+
+@blueprint.route("/resync/import")
+def import_resync_data():
+    """Import local data to weko system"""
+    return None
