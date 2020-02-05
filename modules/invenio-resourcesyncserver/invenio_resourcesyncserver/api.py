@@ -847,9 +847,13 @@ class ChangeListHandler(object):
 
     def _validation(self):
         """Validate."""
-        if not self.status or not self.index.public_state:
-            return False
-        return True
+        if self.status:
+            if self.repository_id:
+                if self.index.public_state:
+                    return True
+            else:
+                return True
+        return False
 
     def get_change_dump_manifest_xml(self, record_id):
         """Get change dump manifest xml.
@@ -980,8 +984,6 @@ class ChangeListHandler(object):
             with db.session.begin_nested():
                 result = db.session.query(ChangeListIndexes).filter(
                     ChangeListIndexes.id == changelist_id
-                ).join(
-                    Index
                 ).one_or_none()
                 if result:
                     if type_result == 'modal':
@@ -1029,7 +1031,6 @@ class ChangeListHandler(object):
             url_path=model.url_path,
             created=model.created,
             updated=model.updated,
-            index=model.index if model.repository_id else None,
             publish_date=model.publish_date,
             interval_by_date=model.interval_by_date
         )

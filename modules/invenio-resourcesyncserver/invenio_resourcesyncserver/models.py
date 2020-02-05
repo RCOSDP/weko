@@ -54,8 +54,6 @@ class ResourceListIndexes(db.Model, Timestamp):
 
     repository_id = db.Column(
         db.BigInteger,
-        db.ForeignKey(Index.id,
-                      ondelete='CASCADE'),
         unique=True,
         nullable=True
     )
@@ -71,10 +69,6 @@ class ResourceListIndexes(db.Model, Timestamp):
     url_path = db.Column(
         db.String(255), nullable=True)
     """Root url of resource list."""
-
-    index = db.relationship(
-        Index, backref='resource_list_id', foreign_keys=[repository_id])
-    """Relation to the Index Identifier."""
 
 
 class ChangeListIndexes(db.Model, Timestamp):
@@ -97,8 +91,6 @@ class ChangeListIndexes(db.Model, Timestamp):
 
     repository_id = db.Column(
         db.BigInteger,
-        db.ForeignKey(Index.id,
-                      ondelete='CASCADE'),
         unique=True,
     )
     """Index Identifier relation to change list."""
@@ -123,10 +115,6 @@ class ChangeListIndexes(db.Model, Timestamp):
     url_path = db.Column(
         db.String(255), nullable=True)
     """Root url of change list."""
-
-    index = db.relationship(
-        Index, backref='change_list_id', foreign_keys=[repository_id])
-    """Relation to the Index Identifier."""
 
     publish_date = db.Column(
         db.DateTime, nullable=True, default=datetime.utcnow)
