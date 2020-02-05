@@ -364,11 +364,13 @@ class ItemTypeMappingView(BaseView):
             table_rows = ['pubdate']
             render_table_row = item_type.render.get('table_row')
 
-            meta_system_items = ['updated_date', 'created_date',
-                                 'persistent_identifier_doi',
-                                 'persistent_identifier_h',
-                                 'ranking_page_url', 'belonging_index_info']
+            meta_system_items = ['system_identifier_doi',
+                                 'system_identifier_hdl',
+                                 'system_identifier_uri',
+                                 'system_file']
 
+            # current_app.logger.debug('*'*60)
+            # current_app.logger.debug(meta_system)
             for key in meta_system_items:
                 if isinstance(meta_system, dict) and \
                         isinstance(meta_system[key], dict):
@@ -455,8 +457,8 @@ class ItemTypeMappingView(BaseView):
                 is_system_admin=is_admin,
                 lang_code=session.get('selected_language', 'en')  # Set default
             )
-        except BaseException as e:
-            current_app.logger.error('Unexpected error: ', e)
+        except BaseException:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 
     @expose('', methods=['POST'])

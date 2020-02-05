@@ -319,13 +319,11 @@ def get_schema_form(item_type_id=0):
         update_sub_items_by_user_role(item_type_id, schema_form)
 
         # hidden option
-        hidden_subitem = ['subitem_thumbnail', 'subitem_system_id_rg_doi',
-                          'subitem_system_date_type',
-                          'subitem_system_date',
-                          'subitem_system_identifier_type',
-                          'subitem_system_identifier',
-                          'subitem_system_text'
+        hidden_subitem = ['subitem_thumbnail',
+                          'subitem_identifier',
+                          'subitem_date'
                           ]
+
         for i in hidden_subitem:
             hidden_items = [
                 schema_form.index(form) for form in schema_form
