@@ -372,8 +372,8 @@ class ItemTypeMappingView(BaseView):
             # current_app.logger.debug('*'*60)
             # current_app.logger.debug(meta_system)
             for key in meta_system_items:
-                if isinstance(meta_system, dict) and \
-                        isinstance(meta_system[key], dict):
+                if isinstance(meta_system, dict) and meta_system.get(key) \
+                        and isinstance(meta_system[key], dict):
                     if meta_system[key]['title_i18n'] and cur_lang in \
                         meta_system[key]['title_i18n'] and \
                         meta_system[key]['title_i18n'][cur_lang] and \

@@ -1033,7 +1033,7 @@ $(document).ready(function () {
   function update_mapping_list(exsubitem, subitem) {
     if (page_global.table_row_map.mapping) {
       let tmp_mapping = JSON.stringify(page_global.table_row_map.mapping);
-      console.log('Mapping replacement: subitem_'+exsubitem + ' : ' + 'subitem_'+subitem);
+      console.log('Mapping replacement: subitem_'+ exsubitem + ' : ' + 'subitem_'+ subitem);
       page_global.table_row_map.mapping = JSON.parse(tmp_mapping.replace('subitem_'+exsubitem, 'subitem_'+subitem))
     }
   }
