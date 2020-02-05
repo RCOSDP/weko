@@ -950,6 +950,8 @@ class ChangeListHandler(object):
 
     def to_dict(self):
         """Convert obj to dict."""
+        repository_name = self.index.index_name_english if self.repository_id \
+            else "Root Index",
         return dict(**{
             'id': self.id,
             'status': self.status,
@@ -960,7 +962,7 @@ class ChangeListHandler(object):
             'url_path': self.url_path,
             'created': self.created,
             'updated': self.updated,
-            'repository_name': self.index.index_name_english,
+            'repository_name': repository_name,
             'publish_date': str(self.publish_date),
             'interval_by_date': self.interval_by_date
         })
@@ -1027,7 +1029,7 @@ class ChangeListHandler(object):
             url_path=model.url_path,
             created=model.created,
             updated=model.updated,
-            index=model.index,
+            index=model.index if model.repository_id else None,
             publish_date=model.publish_date,
             interval_by_date=model.interval_by_date
         )
@@ -1066,6 +1068,8 @@ class ChangeListHandler(object):
         :return: True if record has register index_id
         """
         from .utils import get_real_path
+        if self.repository_id == 0:
+            return True
         if self.status:
             record_pid = WekoRecord.get_pid(record_id)
             if record_pid:

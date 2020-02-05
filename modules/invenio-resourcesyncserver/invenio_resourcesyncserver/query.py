@@ -271,7 +271,6 @@ def item_changes_search_factory(search,
                     pass
         else:
             post_filter = query_q['post_filter']
-
             if post_filter:
                 post_filter['bool']['must'].append({
                     "range": {
@@ -282,13 +281,28 @@ def item_changes_search_factory(search,
                     }
                 })
             # create search query
-            if q:
-                try:
-                    fp = Indexes.get_self_path(q)
-                    query_q = json.dumps(query_q).replace("@index", fp.path)
-                    query_q = json.loads(query_q)
-                except BaseException:
-                    pass
+            wild_card = []
+            child_list = Indexes.get_child_list(q)
+            if child_list:
+                for item in child_list:
+                    wc = {
+                        "wildcard": {
+                            "path.tree": item.cid
+                        }
+                    }
+                    wild_card.append(wc)
+                query_q['query']['bool']['should'] = [
+                    {
+                        "bool": {
+                            "should": wild_card
+                        }
+                    },
+                    {
+                        "match": {
+                            "relation_version_is_last": "true"
+                        }
+                    }
+                ]
         return query_q
 
     # create a index search query
