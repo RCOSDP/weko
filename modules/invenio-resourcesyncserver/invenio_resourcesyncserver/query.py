@@ -60,7 +60,7 @@ def get_item_changes_by_index(index_tree_id, date_from, date_until):
     return search_result.get('hits').get('hits')
 
 
-def item_path_search_factory(search, index_id=None):
+def item_path_search_factory(search, index_id="0"):
     """
     Parse query using Weko-Query-Parser.
 
@@ -133,7 +133,30 @@ def item_path_search_factory(search, index_id=None):
                     query_q = json.loads(query_q)
                 except BaseException:
                     pass
-            return query_q
+        else:
+            wild_card = []
+            child_list = Indexes.get_child_list(q)
+            if child_list:
+                for item in child_list:
+                    wc = {
+                        "wildcard": {
+                            "path.tree": item.cid
+                        }
+                    }
+                    wild_card.append(wc)
+                query_q['query']['bool']['must'] = [
+                    {
+                        "bool": {
+                            "should": wild_card
+                        }
+                    },
+                    {
+                        "match": {
+                            "relation_version_is_last": "true"
+                        }
+                    }
+                ]
+        return query_q
 
     # create a index search query
     query_q = _get_index_search_query()
@@ -143,7 +166,7 @@ def item_path_search_factory(search, index_id=None):
         search.update_from_dict(query_q)
         search._extra.update(extr)
     except SyntaxError:
-        q = request.values.get('q', '') if index_id is None else index_id
+        q = request.values.get('q', '0') if index_id is None else index_id
         current_app.logger.debug(
             "Failed parsing query: {0}".format(q),
             exc_info=True)
@@ -152,7 +175,7 @@ def item_path_search_factory(search, index_id=None):
 
 
 def item_changes_search_factory(search,
-                                index_id=None,
+                                index_id=0,
                                 date_from="now/d",
                                 date_until="now/d"):
     """
@@ -246,7 +269,27 @@ def item_changes_search_factory(search,
                     query_q = json.loads(query_q)
                 except BaseException:
                     pass
-            return query_q
+        else:
+            post_filter = query_q['post_filter']
+
+            if post_filter:
+                post_filter['bool']['must'].append({
+                    "range": {
+                        "_updated": {
+                            "lte": _date_until,
+                            "gte": _date_from
+                        }
+                    }
+                })
+            # create search query
+            if q:
+                try:
+                    fp = Indexes.get_self_path(q)
+                    query_q = json.dumps(query_q).replace("@index", fp.path)
+                    query_q = json.loads(query_q)
+                except BaseException:
+                    pass
+        return query_q
 
     # create a index search query
     query_q = _get_index_search_query(date_from, date_until)

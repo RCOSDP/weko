@@ -73,7 +73,8 @@ class ResourceListHandler(object):
 
     def to_dict(self):
         """Generate Resource Object to Dict."""
-        repository_name = self.index.index_name_english
+        repository_name = self.index.index_name_english if self.repository_id\
+            else 'Root Index'
 
         return dict(**{
             'id': self.id,
@@ -312,12 +313,16 @@ class ResourceListHandler(object):
         :return: Updated Resource info
         """
         from .utils import get_real_path
-        if self.status and self.index.public_state:
-            if record_id:
-                record = WekoRecord.get_record_by_pid(record_id)
-                if record and record.get("path"):
-                    list_path = get_real_path(record.get("path"))
-                    if str(self.repository_id) in list_path:
+        if self.status:
+            if self.repository_id != 0:
+                if self.index.public_state:
+                    if record_id:
+                        record = WekoRecord.get_record_by_pid(record_id)
+                        if record and record.get("path"):
+                            list_path = get_real_path(record.get("path"))
+                            if str(self.repository_id) in list_path:
+                                return True
+                    else:
                         return True
             else:
                 return True
