@@ -688,40 +688,40 @@ class DetailResourceComponent extends React.Component {
             <tbody>
               <tr >
                 <td><b>Repository Name</b></td>
-                <td>{this.state[repository_name]}</td>
+                <td>{this.state.repository_name}</td>
               </tr>
               <tr >
                 <td><b>Base Url</b></td>
-                <td>{this.state[base_url]}</td>
+                <td>{this.state.base_url}</td>
               </tr>
               <tr >
                 <td><b>Status</b></td>
-                <td>{this.state[status]}</td>
+                <td>{this.state.status}</td>
               </tr>
               <tr >
                 <td><b>Interval by Day</b></td>
-                <td>{this.state[interval_by_day]}</td>
+                <td>{this.state.interval_by_day}</td>
               </tr>
               <tr >
                 <td><b>From Date</b></td>
-                <td>{this.state[from_date]}</td>
+                <td>{this.state.from_date}</td>
               </tr>
 
               <tr >
                 <td><b>Until Date</b></td>
-                <td>{this.state[to_date]}</td>
+                <td>{this.state.to_date}</td>
               </tr>
               <tr >
                 <td><b>Target Index</b></td>
-                <td>{`${this.state[index_name]} < ${this.state[index_id]}>`}</td>
+                <td>{`${this.state.index_name} < ${this.state.index_id}>`}</td>
               </tr>
               <tr >
                 <td><b>Mode</b></td>
-                <td>{this.state[resync_mode]}</td>
+                <td>{this.state.resync_mode}</td>
               </tr>
               <tr >
                 <td><b>Saving Format</b></td>
-                <td>{this.state[saving_format]}</td>
+                <td>{this.state.saving_format}</td>
               </tr>
               {
                 this.state.status === 'Automatic' ? (
