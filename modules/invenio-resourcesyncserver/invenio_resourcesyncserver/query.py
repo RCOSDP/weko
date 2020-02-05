@@ -117,7 +117,7 @@ def item_path_search_factory(search, index_id="0"):
         }
 
         q = index_id
-        if q:
+        if q != '0':
             post_filter = query_q['post_filter']
 
             if post_filter:
@@ -128,7 +128,7 @@ def item_path_search_factory(search, index_id="0"):
                     }
                 })
             # create search query
-            if q:
+            if q != '0':
                 try:
                     fp = Indexes.get_self_path(q)
                     query_q = json.dumps(query_q).replace("@index", fp.path)
@@ -246,7 +246,7 @@ def item_changes_search_factory(search,
         }
 
         q = index_id
-        if q:
+        if q != '0':
             post_filter = query_q['post_filter']
 
             if post_filter:
@@ -265,7 +265,7 @@ def item_changes_search_factory(search,
                     }
                 })
             # create search query
-            if q:
+            if q != '0':
                 try:
                     fp = Indexes.get_self_path(q)
                     query_q = json.dumps(query_q).replace("@index", fp.path)
