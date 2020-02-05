@@ -68,6 +68,8 @@ def item_path_search_factory(search, index_id="0"):
     :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
+    index_id = str(index_id)
+
     def _get_index_search_query():
         query_q = {
             "from": 0,
@@ -185,6 +187,7 @@ def item_changes_search_factory(search,
     :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
+    index_id = str(index_id)
     def _get_index_search_query(_date_from: str, _date_until: str) -> dict:
         query_q = {
             "from": 0,
