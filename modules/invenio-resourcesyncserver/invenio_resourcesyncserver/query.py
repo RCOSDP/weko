@@ -136,6 +136,15 @@ def item_path_search_factory(search, index_id="0"):
                 except BaseException:
                     pass
         else:
+            post_filter = query_q['post_filter']
+
+            if post_filter:
+                list_path = Indexes.get_child_list(index_id)
+                post_filter['bool']['must'].append({
+                    "terms": {
+                        "path": list_path
+                    }
+                })
             wild_card = []
             child_list = Indexes.get_child_list(q)
             if child_list:
@@ -250,7 +259,7 @@ def item_changes_search_factory(search,
             post_filter = query_q['post_filter']
 
             if post_filter:
-                list_path = Indexes.get_list_path_publish(index_id)
+                list_path = Indexes.get_child_list(q)
                 post_filter['bool']['should'] = {
                     "terms": {
                         "path": list_path
