@@ -283,11 +283,11 @@ def item_changes_search_factory(search,
             post_filter = query_q['post_filter']
             if post_filter:
                 list_path = Indexes.get_list_path_publish(index_id)
-                post_filter['bool']['must'] = {
+                post_filter['bool']['must'].append({
                     "terms": {
                         "path": list_path
                     }
-                }
+                })
                 post_filter['bool']['must'].append({
                     "range": {
                         "_updated": {
