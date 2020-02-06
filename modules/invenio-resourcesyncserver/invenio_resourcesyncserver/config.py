@@ -38,6 +38,9 @@ WEKO_RECORD_FIRST_VERSION = '1'
 WEKO_RECORD_ORIGIN_VERSION = '0'
 """Record version of original record."""
 
+WEKO_ROOT_INDEX = 0
+"""Root index id."""
+
 VALIDATE_MESSAGE = 'Selected repository has been registered already. ' \
     'Please select another repository.'
 """Validate message."""
