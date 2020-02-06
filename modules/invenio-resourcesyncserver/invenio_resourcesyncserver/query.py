@@ -68,7 +68,6 @@ def item_path_search_factory(search, index_id="0"):
     :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
-    index_id = str(index_id)
 
     def _get_index_search_query():
         query_q = {
@@ -116,7 +115,7 @@ def item_path_search_factory(search, index_id="0"):
             }
         }
 
-        q = index_id
+        q = str(index_id)
         if q != '0':
             post_filter = query_q['post_filter']
 
@@ -139,7 +138,7 @@ def item_path_search_factory(search, index_id="0"):
             post_filter = query_q['post_filter']
 
             if post_filter:
-                list_path = Indexes.get_list_path_publish(q)
+                list_path = Indexes.get_list_path_publish(index_id)
                 post_filter['bool']['must'].append({
                     "terms": {
                         "path": list_path
@@ -196,7 +195,6 @@ def item_changes_search_factory(search,
     :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
-    index_id = str(index_id)
     def _get_index_search_query(_date_from: str, _date_until: str) -> dict:
         query_q = {
             "from": 0,
@@ -254,7 +252,7 @@ def item_changes_search_factory(search,
             }
         }
 
-        q = index_id
+        q = str(index_id)
         if q != '0':
             post_filter = query_q['post_filter']
 
@@ -284,7 +282,7 @@ def item_changes_search_factory(search,
         else:
             post_filter = query_q['post_filter']
             if post_filter:
-                list_path = Indexes.get_list_path_publish(q)
+                list_path = Indexes.get_list_path_publish(index_id)
                 post_filter['bool']['should'] = {
                     "terms": {
                         "path": list_path
