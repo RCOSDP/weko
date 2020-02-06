@@ -177,11 +177,10 @@ def item_path_search_factory(search, index_id="0"):
         search.update_from_dict(query_q)
         search._extra.update(extr)
     except SyntaxError:
-        q = request.values.get('q', '0') if index_id is None else index_id
-        current_app.logger.debug(
-            "Failed parsing query: {0}".format(q),
-            exc_info=True)
+        current_app.logger.debug("Failed parsing query: {0}".format(query_q),
+                                 exc_info=True)
         raise InvalidQueryRESTError()
+
     return search
 
 
