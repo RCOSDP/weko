@@ -84,7 +84,7 @@ class ResyncIndexes(db.Model, Timestamp):
     """Path directory save."""
 
     resync_mode = db.Column(
-        db.String(10),
+        db.String(20),
         nullable=False,
         default = lambda: current_app.config[
             'INVENIO_RESYNC_INDEXES_MODE'
