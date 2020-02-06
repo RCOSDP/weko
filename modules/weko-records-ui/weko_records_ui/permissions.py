@@ -349,11 +349,12 @@ def check_created_id(record):
             break
         if lst.name in users:
             is_himself = True
-            data_registration = current_app.config[
-                'WEKO_ITEMS_UI_DATA_REGISTRATION']
-            application_item_type_list = current_app.config[
-                'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST']
-            if item_type_name and (
+            data_registration = current_app.config.get(
+                'WEKO_ITEMS_UI_DATA_REGISTRATION')
+            application_item_type_list = current_app.config.get(
+                'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST')
+            if item_type_name and data_registration \
+                    and application_item_type_list and (
                     item_type_name == data_registration
                     or item_type_name in application_item_type_list):
                 if user_id and user_id == str(created_id):

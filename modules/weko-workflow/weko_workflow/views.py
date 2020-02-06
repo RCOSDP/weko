@@ -50,6 +50,7 @@ from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid, to_files_js
 from weko_records.api import FeedbackMailList, ItemsMetadata
 from weko_records.models import ItemMetadata
+from weko_records.serializers.utils import get_item_type_name
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
@@ -61,8 +62,9 @@ from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_unregister_buckets, \
     get_activity_id_of_record_without_version, get_identifier_setting, \
-    item_metadata_validation, merge_buckets_by_records, register_cnri, \
-    saving_doi_pidstore, set_bucket_default_size
+    is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
+    merge_buckets_by_records, register_cnri, saving_doi_pidstore, \
+    set_bucket_default_size
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -320,6 +322,9 @@ def display_activity(activity_id=0):
     need_thumbnail = False
     files_thumbnail = []
     allow_multi_thumbnail = False
+    show_autofill_metadata = True
+    is_hidden_pubdate_value = False
+    item_type_name = get_item_type_name(workflow_detail.itemtype_id)
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -328,6 +333,8 @@ def display_activity(activity_id=0):
             action_status=ActionStatusPolicy.ACTION_DOING,
             commond=''
         )
+        show_autofill_metadata = is_show_autofill_metadata(item_type_name)
+        is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
         session['activity_info'] = activity_session
         # get item edit page info.
         step_item_login_url, need_file, record, json_schema, schema_form,\
@@ -449,6 +456,12 @@ def display_activity(activity_id=0):
         need_thumbnail=need_thumbnail,
         files_thumbnail=files_thumbnail,
         allow_multi_thumbnail=allow_multi_thumbnail,
+        enable_feedback_maillist=current_app.config[
+            'WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL'],
+        enable_contributor=current_app.config[
+            'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
+        show_automatic_metadata_input=show_autofill_metadata,
+        is_hidden_pubdate=is_hidden_pubdate_value,
         **ctx
     )
 
