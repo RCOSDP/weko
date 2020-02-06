@@ -369,8 +369,6 @@ class ItemTypeMappingView(BaseView):
                                  'system_identifier_uri',
                                  'system_file']
 
-            # current_app.logger.debug('*'*60)
-            # current_app.logger.debug(meta_system)
             for key in meta_system_items:
                 if isinstance(meta_system, dict) and meta_system.get(key) \
                         and isinstance(meta_system[key], dict):

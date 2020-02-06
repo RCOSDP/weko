@@ -493,13 +493,14 @@ var SchemaObject = React.createClass({
 		var parentkey = parent_Key;
 		var form = [];
 		var forms = [];
+		var rename_subitem_config = false;
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
 				let subKey = itemKey.split("_");
-				if (subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+				if (rename_subitem_config && subKey.length > 1 && !isNaN(Number(subKey[1]))) {
 					itemKey = self.createSubItemName(value.title);
 				}
 				var sub_form = {};
@@ -572,13 +573,14 @@ var SchemaObject = React.createClass({
 
 		var self = this;
 		var properties = {};
+		var rename_subitem_config = false;
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this2.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
 				let subKey = itemKey.split("_");
-				if (subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+				if (rename_subitem_config && subKey.length > 1 && !isNaN(Number(subKey[1]))) {
 					itemKey = self.createSubItemName(value.title);
 				}
 				if ('text' === value.format || 'textarea' === value.format || 'datetime' === value.format) {

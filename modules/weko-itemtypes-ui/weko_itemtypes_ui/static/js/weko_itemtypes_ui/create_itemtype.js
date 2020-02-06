@@ -17,7 +17,7 @@ $(document).ready(function () {
   select_option = '';
   page_json_editor = {}   //   一時的editorオブジェクトの保存
   url_update_schema = '/admin/itemtypes/register';
-  rename_subitem_config = true;
+  rename_subitem_config = false;
   // デフォルトマッピングのテンプレート
   mapping_value = {
     "display_lang_type": "",
@@ -392,8 +392,20 @@ $(document).ready(function () {
       }
     }
 
-    page_global.table_row_map.schema.properties["pubdate"] = { type: "string", title: "PubDate", format: "datetime" }
-    page_global.table_row_map.form.push({ key: "pubdate", type: "template", title: "PubDate", title_i18n: { ja: "公開日", en: "PubDate" }, required: true, format: "yyyy-MM-dd", templateUrl: "/static/templates/weko_deposit/datepicker.html" });
+    page_global.table_row_map.schema.properties["pubdate"] = {
+      type: "string",
+      title: "PubDate",
+      format: "datetime"
+    };
+    page_global.table_row_map.form.push({
+      key: "pubdate",
+      type: "template",
+      title: "PubDate",
+      title_i18n: { ja: "公開日", en: "PubDate" },
+      required: true,
+      format: "yyyy-MM-dd",
+      templateUrl: "/static/templates/weko_deposit/datepicker.html"
+    });
     page_global.table_row_map.schema.required.push("pubdate");
 
     if(src_mapping.hasOwnProperty('pubdate')) {
@@ -403,18 +415,18 @@ $(document).ready(function () {
     }
 
     // System mapping
-    // if(src_mapping.hasOwnProperty('system_identifier_doi')) {
-    //   page_global.table_row_map.mapping['system_identifier_doi'] = src_mapping['system_identifier_doi'];
-    // }
-    // if(src_mapping.hasOwnProperty('system_identifier_hdl')) {
-    //   page_global.table_row_map.mapping['system_identifier_hdl'] = src_mapping['system_identifier_hdl'];
-    // }
-    // if(src_mapping.hasOwnProperty('system_identifier_uri')) {
-    //   page_global.table_row_map.mapping['system_identifier_uri'] = src_mapping['system_identifier_uri'];
-    // }
-    // if(src_mapping.hasOwnProperty('system_file')) {
-    //   page_global.table_row_map.mapping['system_file'] = src_mapping['system_file'];
-    // }
+    if(src_mapping.hasOwnProperty('system_identifier_doi')) {
+      page_global.table_row_map.mapping['system_identifier_doi'] = src_mapping['system_identifier_doi'];
+    }
+    if(src_mapping.hasOwnProperty('system_identifier_hdl')) {
+      page_global.table_row_map.mapping['system_identifier_hdl'] = src_mapping['system_identifier_hdl'];
+    }
+    if(src_mapping.hasOwnProperty('system_identifier_uri')) {
+      page_global.table_row_map.mapping['system_identifier_uri'] = src_mapping['system_identifier_uri'];
+    }
+    if(src_mapping.hasOwnProperty('system_file')) {
+      page_global.table_row_map.mapping['system_file'] = src_mapping['system_file'];
+    }
     // End system mapping
 
     // テーブルの行をトラバースし、マップに追加する
@@ -724,7 +736,7 @@ $(document).ready(function () {
           if(Array.isArray(properties_obj[tmp.input_type.substr(4)].forms)) {
             properties_obj[tmp.input_type.substr(4)].forms.forEach(function(element){
               // rename subitem
-              if (element.items && element.items.length > 0) {
+              if (rename_subitem_config && element.items && element.items.length > 0) {
                 element = rename_subitem(element);
               }
               page_global.table_row_map.form.push(
@@ -734,7 +746,7 @@ $(document).ready(function () {
           } else {
             let object_forms = properties_obj[tmp.input_type.substr(4)].forms;
             // rename subitem
-            if (object_forms.items && object_forms.items.length > 0) {
+            if (rename_subitem_config && object_forms.items && object_forms.items.length > 0) {
               object_forms = rename_subitem(object_forms);
             }
             page_global.table_row_map.form.push(
@@ -754,7 +766,7 @@ $(document).ready(function () {
           //add by ryuu. end
           let object_form = properties_obj[tmp.input_type.substr(4)].form;
           //rename subitem
-          if (object_form.items && object_form.items.length > 0) {
+          if (rename_subitem_config && object_form.items && object_form.items.length > 0) {
             object_form = rename_subitem(object_form);
           }
           page_global.table_row_map.form.push(
@@ -1033,8 +1045,8 @@ $(document).ready(function () {
   function update_mapping_list(exsubitem, subitem) {
     if (page_global.table_row_map.mapping) {
       let tmp_mapping = JSON.stringify(page_global.table_row_map.mapping);
-      console.log('Mapping replacement: subitem_'+ exsubitem + ' : ' + 'subitem_'+ subitem);
-      page_global.table_row_map.mapping = JSON.parse(tmp_mapping.replace('subitem_'+exsubitem, 'subitem_'+subitem))
+      console.log('Mapping replacement: subitem_' + exsubitem + ' : ' + 'subitem_' + subitem);
+      page_global.table_row_map.mapping = JSON.parse(tmp_mapping.replace('subitem_' + exsubitem, 'subitem_' + subitem))
     }
   }
 
