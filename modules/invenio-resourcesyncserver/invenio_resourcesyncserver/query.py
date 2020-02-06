@@ -283,7 +283,7 @@ def item_changes_search_factory(search,
             post_filter = query_q['post_filter']
             if post_filter:
                 list_path = Indexes.get_list_path_publish(index_id)
-                post_filter['bool']['should'] = {
+                post_filter['bool']['nust'] = {
                     "terms": {
                         "path": list_path
                     }
