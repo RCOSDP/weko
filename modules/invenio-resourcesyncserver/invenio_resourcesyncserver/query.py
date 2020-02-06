@@ -27,6 +27,8 @@ from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from weko_index_tree.api import Indexes
 
+from .config import WEKO_ROOT_INDEX
+
 
 def get_items_by_index_tree(index_tree_id):
     """Get tree items."""
@@ -116,7 +118,7 @@ def item_path_search_factory(search, index_id="0"):
         }
 
         q = str(index_id)
-        if q != '0':
+        if q != str(current_app.config.get("WEKO_ROOT_INDEX", WEKO_ROOT_INDEX)):
             post_filter = query_q['post_filter']
 
             if post_filter:
@@ -127,13 +129,12 @@ def item_path_search_factory(search, index_id="0"):
                     }
                 })
             # create search query
-            if q != '0':
-                try:
-                    fp = Indexes.get_self_path(q)
-                    query_q = json.dumps(query_q).replace("@index", fp.path)
-                    query_q = json.loads(query_q)
-                except BaseException:
-                    pass
+            try:
+                fp = Indexes.get_self_path(q)
+                query_q = json.dumps(query_q).replace("@index", fp.path)
+                query_q = json.loads(query_q)
+            except BaseException:
+                pass
         else:
             post_filter = query_q['post_filter']
 
@@ -253,7 +254,7 @@ def item_changes_search_factory(search,
         }
 
         q = str(index_id)
-        if q != '0':
+        if q != str(current_app.config.get("WEKO_ROOT_INDEX", WEKO_ROOT_INDEX)):
             post_filter = query_q['post_filter']
 
             if post_filter:
@@ -272,13 +273,12 @@ def item_changes_search_factory(search,
                     }
                 })
             # create search query
-            if q != '0':
-                try:
-                    fp = Indexes.get_self_path(q)
-                    query_q = json.dumps(query_q).replace("@index", fp.path)
-                    query_q = json.loads(query_q)
-                except BaseException:
-                    pass
+            try:
+                fp = Indexes.get_self_path(q)
+                query_q = json.dumps(query_q).replace("@index", fp.path)
+                query_q = json.loads(query_q)
+            except BaseException:
+                pass
         else:
             post_filter = query_q['post_filter']
             if post_filter:
