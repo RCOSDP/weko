@@ -586,7 +586,7 @@ def make_stats_tsv(item_type_id, recids):
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             list_attr = item_attrs.split('.')
-            max_length = None
+            max_length = 0
             if len(list_attr) == 1:
                 return self.attr_data[item_attrs]['max_size']
             elif len(list_attr) == 2:
