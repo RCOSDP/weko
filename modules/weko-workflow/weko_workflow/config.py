@@ -91,3 +91,9 @@ WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
 
 WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS = False
 """Toggle display harvesting items in Workflow list."""
+
+WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL = True
+"""Enable showing function feed back mail"""
+
+WEKO_WORKFLOW_ENABLE_CONTRIBUTOR = True
+"""Enable Contributor"""
