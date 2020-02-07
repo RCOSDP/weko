@@ -26,6 +26,10 @@ from flask_babelex import gettext as _
 from .config import INVENIO_RESYNC_INDEXES_STATUS, INVENIO_RESYNC_INDEXES_MODE,\
     INVENIO_RESYNC_INDEXES_SAVING_FORMAT
 from .api import ResyncHandler
+from .tasks import run_sync_import
+from datetime import datetime
+
+
 class AdminResyncClient(BaseView):
     """BaseView for Admin Resource List."""
 
@@ -133,6 +137,18 @@ class AdminResyncClient(BaseView):
                 success=result.get('success'),
                 errmsg=result.get("errmsg")
             )
+
+    @expose('/run/<resync_id>', methods=['GET'])
+    def run(self, resync_id):
+        """Run harvesting."""
+        run_sync_import.apply_async(args=(
+            resync_id,
+            datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
+            ),
+        )
+        return jsonify(
+            success=True
+        )
 
 
 invenio_admin_resync_client = {
