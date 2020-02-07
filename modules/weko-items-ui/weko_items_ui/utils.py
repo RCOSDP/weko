@@ -411,7 +411,7 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     try:
         validation_data.validate()
     except ValidationError as error:
-        current_app.logger.error(errror)
+        current_app.logger.error(error)
         result["is_valid"] = False
         if 'required' == error.validator:
             result['error'] = _('Please input all required item.')
