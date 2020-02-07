@@ -37,6 +37,11 @@ from invenio_records.models import RecordMetadata
 from lxml import etree
 from weko_deposit.api import WekoDeposit
 from weko_records_ui.utils import soft_delete
+try:  # python3
+    from urllib.parse import urlsplit, urlunsplit
+except ImportError:  # pragma: no cover  python2
+    from urlparse import urlsplit, urlunsplit
+
 
 def read_capability(url):
     """Read capability of an url"""
@@ -54,6 +59,8 @@ def read_capability(url):
 def sync_baseline(map, base_url, dryrun=False):
     """Run resync baseline"""
     client = Client()
+    # ignore fail to continue running, log later
+    client.ignore_failures = True
     init_logging(verbose=True)
     try:
         # set sitemap_name to specify the only url to sync
@@ -76,6 +83,8 @@ def sync_baseline(map, base_url, dryrun=False):
 def sync_audit(map):
     """Run resync audit"""
     client = Client()
+    # ignore fail to continue running, log later
+    client.ignore_failures = True
     client.set_mappings(map)
     init_logging(verbose=True)
     src_resource_list = client.find_resource_list()
@@ -85,7 +94,10 @@ def sync_audit(map):
     (same, updated, deleted, created) = dst_resource_list.compare(
         src_resource_list)
     return dict(
-        same=len(same),updated=len(updated),deleted=len(deleted),created=len(created)
+        same=len(same),
+        updated=len(updated),
+        deleted=len(deleted),
+        created=len(created)
     )
 
 
@@ -170,3 +182,55 @@ def process_item(record, resync, counter):
     elif event == ItemEvents.DELETE:
         event_counter('deleted_items', counter)
 
+
+def sync_incremental(map, base_url, from_date):
+    """Run resync incremental"""
+    init_logging(verbose=True)
+    client = Client()
+    client.ignore_failures = True
+    try:
+        single_sync_incremental(map, base_url, from_date)
+        return True
+    except MapperError as e:
+        print(e)
+        paths= map[0].rsplit('/', 1)
+        map[0] = paths[0]
+    except Exception as e:
+        # maybe url contain a list of changelist, instead of changelist
+        print(e)
+        s = Sitemap()
+        try:
+            docs = s.parse_xml(url_or_file_open(base_url))
+        except IOError as ioerror:
+            raise ioerror
+        if docs:
+            for doc in docs:
+                # make sure sub url is a changelist/ changedump
+                capability = read_capability(doc.uri)
+                if capability is None or (capability != 'changelist' and
+                                          capability != 'changedump'):
+                    raise('Bad URL, not a changelist/changedump,'
+                          ' cannot sync incremental')
+
+                single_sync_incremental(map, doc.uri, from_date)
+            return True
+        raise e
+
+
+def single_sync_incremental(map, url, from_date):
+    """Run resync incremental for 1 changelist url only"""
+    client = Client()
+    client.ignore_failures = True
+    parts = urlsplit(map[0])
+    uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
+    sync_result = False
+    while map[0] != uri_host and not sync_result:
+        try:
+            client.set_mappings(map)
+            client.incremental(change_list_uri=url,
+                               from_datetime=from_date)
+            sync_result = True
+        except MapperError as e:
+            # if error then remove one element in url and retry
+            paths = map[0].rsplit('/', 1)
+            map[0] = paths[0]

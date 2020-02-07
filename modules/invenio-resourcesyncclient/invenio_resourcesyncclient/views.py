@@ -13,10 +13,11 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, render_template, current_app, jsonify, \
+from flask import Blueprint, render_template, jsonify, \
     make_response
 from flask_babelex import gettext as _
-from .utils import read_capability, sync_baseline, sync_audit
+from .utils import read_capability, sync_baseline, sync_audit, sync_incremental
+from .api import ResyncHandler
 
 try:  # python3
     from urllib.parse import urlsplit, urlunsplit
@@ -44,7 +45,7 @@ def sync(resync_id):
     """Sync a resource sync. Save data to local"""
     resync_index = ResyncHandler.get_resource_sync_by_id(resync_id)
     if not resync_index:
-        raise 404
+        raise ValueError('No Resync Index found')
     # Validate base_url
     base_url = resync_index.base_url
     capability = read_capability(base_url)
@@ -84,6 +85,17 @@ def sync(resync_id):
         while map[0] != uri_host and not result:
             result = sync_baseline(map=map, base_url=base_url, dryrun=True)
         return jsonify(sync_audit(map))
+    elif mode == 'Incremental':
+        if not capability or (
+                capability != 'changelist' and capability != 'changedump'):
+            raise (
+                'Bad URL, not a changelist/changedump, cannot sync incremental')
+        result = False
+        while map[0] != uri_host and not result:
+            # TODO : handle from date here
+            resync_index.from_date = '2020-23-01'
+            result = sync_incremental(map, base_url, resync_index.from_date)
+            return jsonify({'result': result})
 
 
 @blueprint.route("/resync/import")
