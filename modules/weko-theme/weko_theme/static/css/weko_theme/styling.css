@@ -4,13 +4,37 @@
 }
 
 /* CSS  */
-.testimonial-group > .row {
-  overflow-x: auto;
-  white-space: nowrap;
+.testimonial-group>.row {
+    overflow-x: auto;
+    white-space: normal;
 }
-.testimonial-group > .row > .col-xs-4 {
-      display: inline-block;
-        float: none;
+
+.testimonial-group>.row>.col-xs-4 {
+    display: inline-block;
+    float: none;
+}
+
+.testimonial-group .col-sm-3:nth-child(4n+1) {
+    clear: both;
+}
+
+@media (min-width: 768px) {
+    .testimonial-group {
+        max-width: 750px;
+        width: 100%;
+    }
+}
+
+@media (min-width: 992px) {
+    .testimonial-group {
+        max-width: 970px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .testimonial-group {
+        max-width: 1170px;
+    }
 }
 /* END  */
 

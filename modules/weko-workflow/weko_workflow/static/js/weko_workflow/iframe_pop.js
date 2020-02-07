@@ -29,11 +29,16 @@ require([
             parent.document.location.href=redirectUrl;
           }
         } else {
-          parent.alert(data.msg);
+          $('#action_quit_confirmation').modal('show');
+          $('.modal-body').html(data.msg);
+          $("#btn_cancel").attr('style', 'display: none;');
         }
       },
       error: function(jqXHE, status) {
-        parent.alert('server error');
+        $('#action_quit_confirmation').modal('show');
+        $('.modal-body').html('Server error.');
+        $("#btn_cancel").attr('style', 'display: none;');
+        parent.document.location.href="/workflow/activity/detail/" + $("#activity_id").text().trim();
       }
     });
   });
@@ -59,11 +64,16 @@ require([
             parent.document.location.href=redirectUrl;
           }
         } else {
-          parent.alert(data.msg);
+          $('#action_quit_confirmation').modal('show');
+          $('.modal-body').html(data.msg);
+          $("#btn_cancel").attr('style', 'display: none;');
         }
       },
       error: function(jqXHE, status) {
-        parent.alert('server error');
+        $('#action_quit_confirmation').modal('show');
+        $('.modal-body').html('Server error.');
+        $("#btn_cancel").attr('style', 'display: none;');
+        parent.document.location.href="/workflow/activity/detail/" + $("#activity_id").text().trim();
       }
     });
   });
