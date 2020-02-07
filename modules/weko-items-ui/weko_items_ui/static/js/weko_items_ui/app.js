@@ -1114,7 +1114,6 @@ function handleSharePermission(value) {
         $scope.hiddenPubdate();
         $scope.initContributorData();
         $scope.initUserGroups();
-        $scope.initFilenameList();
         $scope.searchTypeKey();
         $scope.renderValidationErrorList();
         $scope.autoSetTitle();
@@ -1130,6 +1129,7 @@ function handleSharePermission(value) {
           $rootScope.filesVM.files = bu_files;
           $rootScope.filesVM.invenioFilesEndpoints = bu_endpoints;
         }
+        $scope.initFilenameList();
 
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
