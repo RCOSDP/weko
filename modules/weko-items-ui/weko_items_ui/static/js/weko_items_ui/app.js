@@ -292,6 +292,7 @@ function handleSharePermission(value) {
   // Bootstrap it!
   angular.element(document).ready(function () {
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
+      $scope.current_url = '';
       $scope.resourceTypeKey = "";
       $scope.groups = [];
       $scope.filemeta_keys = [];
@@ -1119,9 +1120,21 @@ function handleSharePermission(value) {
         $scope.autoSetTitle();
         $scope.initCorrespondingIdList();
         $scope.autoTitleData();
+        //When switch language, Getting file uploaded.
+        bu_files = JSON.parse(sessionStorage.getItem('files'));
+        bu_endpoints = JSON.parse(sessionStorage.getItem('endpoints'));
+        bu_url = sessionStorage.getItem('url');
+        bu_endpoints.html = ''
+        $scope.current_url = window.location.pathname+window.location.search;
+        if (bu_files && $scope.current_url == bu_url){
+          $rootScope.filesVM.files = bu_files;
+          $rootScope.filesVM.invenioFilesEndpoints = bu_endpoints;
+        }
+
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
           endpoints = JSON.parse($('#hide_endpoints').text());
+          endpoints.html = ''
           if (endpoints.hasOwnProperty('bucket')) {
             $rootScope.$broadcast(
               'invenio.records.endpoints.updated', endpoints
@@ -1144,6 +1157,11 @@ function handleSharePermission(value) {
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
         $scope.hiddenPubdate();
+        //Add file uploaded to sessionStorage when uploaded processing done
+        window.history.pushState("", "", $scope.current_url);
+        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
+        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
+        sessionStorage.setItem('url', $scope.current_url);
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
