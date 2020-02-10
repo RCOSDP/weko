@@ -28,6 +28,8 @@ from resync.list_base_with_index import ListBaseWithIndex
 from .api import ChangeListHandler, ResourceListHandler
 from .config import INVENIO_SOURCE_DESC_URL
 from .query import get_item_changes_by_index
+from datetime import datetime
+from dateutil.tz import tzoffset
 
 
 def get_real_path(path):
@@ -153,3 +155,53 @@ def check_existing_record_in_list(record_id, results):
             return True
 
     return False
+
+
+def parse_date(date):
+    """Parse a string to datetime format"""
+    # try format without timezone:
+    formats = ["%Y-%m-%d", "%Y%m%d"]
+    for date_format in formats:
+        try:
+            # use UTC timezone if no offset
+            return datetime.strptime(date, date_format).replace(
+                tzinfo=tzoffset(None, 0))
+        except ValueError as e:
+            print(str(e))
+            pass
+    (date, offset) = get_timezone(date)
+    iso_formats = "%Y-%m-%dT%H:%M:%S.%f"
+    try:
+        return datetime.strptime(date, iso_formats).replace(
+            tzinfo=tzoffset(None, offset))
+    except ValueError as e:
+        print(str(e))
+        pass
+
+
+def get_timezone(date):
+    """Get timezone of a date, then return date & timezone"""
+    print(date)
+    parts = date.rsplit('+',1)
+    offset = 0
+    if len(parts) > 1:
+        date = parts[0]
+        tz = parts[1]
+        tz_parts = tz.split(':')
+        tz_hour = tz_parts[0]
+        tz_min = tz_parts[1]
+        offset = int(tz_hour)*60*60 + int(tz_min)*60
+        return date, offset
+    else:
+        parts = date.rsplit('-',1)
+        if len(parts) > 1:
+            date = parts[0]
+            tz = parts[1]
+            print(tz)
+            tz_parts = tz.split(':')
+            if len(tz_parts > 1):
+                tz_hour = tz_parts[0]
+                tz_min = tz_parts[1]
+                offset = -(int(tz_hour)*60*60 + int(tz_min)*60)
+                return date, offset
+    return date, offset

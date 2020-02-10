@@ -38,6 +38,7 @@ from resync.change_list import ChangeList
 from resync.list_base_with_index import ListBaseWithIndex
 from resync.resource_dump import ResourceDump
 from resync.resource_dump_manifest import ResourceDumpManifest
+from resync.w3c_datetime import str_to_datetime
 from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import ItemTypes, WekoRecord
 from weko_index_tree.api import Indexes
@@ -323,7 +324,7 @@ class ResourceListHandler(object):
                 return True
         return False
 
-    def get_resource_list_xml(self):
+    def get_resource_list_xml(self, from_date, to_date):
         """
         Get content of resource list.
 
@@ -338,6 +339,12 @@ class ResourceListHandler(object):
 
         for item in r:
             if item:
+                resource_date = str_to_datetime(item.get('_source').get(
+                    '_updated'))
+                if from_date and str_to_datetime(from_date) > resource_date:
+                    continue
+                if to_date and str_to_datetime(to_date) < resource_date:
+                    continue
                 id_item = item.get('_source').get('control_number')
                 # url = '{}records/{}'.format(request.url_root, str(id_item))
                 url = '{}resync/{}/records/{}'.format(request.url_root, str(self.index.id), str(id_item))
@@ -345,7 +352,7 @@ class ResourceListHandler(object):
                     '_updated')))
         return rl.as_xml()
 
-    def get_resource_dump_xml(self):
+    def get_resource_dump_xml(self, from_date, to_date):
         """
         Get content of resource dump.
 
@@ -353,11 +360,24 @@ class ResourceListHandler(object):
         """
         if not self._validation():
             return None
+
+        from .utils import parse_date
+        if from_date:
+            from_date = parse_date(from_date)
+        if to_date:
+            to_date = parse_date(to_date)
+
         r = get_items_by_index_tree(self.repository_id)
         rd = ResourceDump()
         rd.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         for item in r:
             if item:
+                resource_date = parse_date(item.get('_source').get(
+                    '_updated'))
+                if from_date and from_date > resource_date:
+                    continue
+                if to_date and to_date < resource_date:
+                    continue
                 id_item = item.get('_source').get('control_number')
                 url = '{}resync/{}/{}/file_content.zip'.format(
                     request.url_root,
@@ -650,7 +670,8 @@ class ChangeListHandler(object):
                     'data': str(ex)
                 }
 
-    def get_change_list_content_xml(self, from_date):
+    def get_change_list_content_xml(self, from_date,
+                                    from_date_args, to_date_args):
         """
         Get change list xml.
 
@@ -658,6 +679,13 @@ class ChangeListHandler(object):
         """
         if not self._validation():
             return None
+
+        from .utils import parse_date
+        if from_date_args:
+            from_date_args = parse_date(from_date_args)
+        if to_date_args:
+            to_date_args = parse_date(to_date_args)
+
         change_list = ChangeList()
         change_list.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         change_list.index = '{}resync/{}/changelist.xml'.format(
@@ -669,10 +697,15 @@ class ChangeListHandler(object):
 
         for data in record_changes:
             try:
+                if from_date_args and from_date_args > parse_date(
+                        data.get("updated")):
+                    continue
+                if to_date_args and to_date_args < parse_date(
+                        data.get("updated")):
+                    continue
                 if self._next_change(data, record_changes) and data.get(
                     'status'
                 ) != 'deleted':
-                # url = '{}resync/{}/records/{}'.format(request.url_root, str(self.index.id), str(id_item))
                     loc = '{}resync/{}/records/{}'.format(
                         request.url_root,
                         self.index.id,

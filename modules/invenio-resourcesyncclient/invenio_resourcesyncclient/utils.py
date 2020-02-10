@@ -24,11 +24,7 @@ from resync.client_utils import url_or_file_open, init_logging
 from resync.mapper import MapperError
 from resync.resource_list_builder import ResourceListBuilder
 from resync.sitemap import Sitemap
-
-try:  # python3
-    from urllib.parse import urlsplit, urlunsplit
-except ImportError:  # pragma: no cover  python2
-    from urlparse import urlsplit, urlunsplit
+from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
 
 
 def read_capability(url):
@@ -44,13 +40,17 @@ def read_capability(url):
     return capability
 
 
-def sync_baseline(map, base_url, dryrun=False):
+def sync_baseline(map, base_url, dryrun=False, from_date=None, to_date=None):
     """Run resync baseline"""
     client = Client()
     # ignore fail to continue running, log later
     client.ignore_failures = True
     init_logging(verbose=True)
     try:
+        if from_date:
+            base_url = set_query_parameter(base_url, 'from_date', from_date)
+        if to_date:
+            base_url = set_query_parameter(base_url, 'to_date', to_date)
         # set sitemap_name to specify the only url to sync
         # set mappings to specify the url will
         # be used to validate subitem in resync library
@@ -89,17 +89,17 @@ def sync_audit(map):
     )
 
 
-def sync_incremental(map, base_url, from_date):
+def sync_incremental(map, base_url, from_date, to_date):
     """Run resync incremental"""
     init_logging(verbose=True)
     client = Client()
     client.ignore_failures = True
     try:
-        single_sync_incremental(map, base_url, from_date)
+        single_sync_incremental(map, base_url, from_date, to_date)
         return True
     except MapperError as e:
         print(e)
-        paths= map[0].rsplit('/', 1)
+        paths = map[0].rsplit('/', 1)
         map[0] = paths[0]
     except Exception as e:
         # maybe url contain a list of changelist, instead of changelist
@@ -118,13 +118,17 @@ def sync_incremental(map, base_url, from_date):
                     raise('Bad URL, not a changelist/changedump,'
                           ' cannot sync incremental')
 
-                single_sync_incremental(map, doc.uri, from_date)
+                single_sync_incremental(map, doc.uri, from_date, to_date)
             return True
         raise e
 
 
-def single_sync_incremental(map, url, from_date):
+def single_sync_incremental(map, url, from_date, to_date):
     """Run resync incremental for 1 changelist url only"""
+    if from_date:
+        url = set_query_parameter(url, 'from_date', from_date)
+    if to_date:
+        url = set_query_parameter(url, 'to_date', to_date)
     client = Client()
     client.ignore_failures = True
     parts = urlsplit(map[0])
@@ -140,3 +144,16 @@ def single_sync_incremental(map, url, from_date):
             # if error then remove one element in url and retry
             paths = map[0].rsplit('/', 1)
             map[0] = paths[0]
+
+
+def set_query_parameter(url, param_name, param_value):
+    """Given a URL, set or replace a query parameter and return the
+    modified URL.
+    """
+    scheme, netloc, path, query_string, fragment = urlsplit(url)
+    query_params = parse_qs(query_string)
+
+    query_params[param_name] = [param_value]
+    new_query_string = urlencode(query_params, doseq=True)
+
+    return urlunsplit((scheme, netloc, path, new_query_string, fragment))
