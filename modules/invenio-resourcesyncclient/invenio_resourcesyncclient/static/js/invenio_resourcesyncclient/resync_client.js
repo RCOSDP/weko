@@ -843,7 +843,7 @@ class DetailResourceComponent extends React.Component {
                 </thead>
                 <tbody>
                     {
-                      this.props.logs.map((item,key) => {
+                      this.state.logs.map((item,key) => {
                         return (
                           <tr>
                             <td>{item.id}</td>
