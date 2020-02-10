@@ -40,3 +40,7 @@ INVENIO_RESYNC_INDEXES_SAVING_FORMAT = {
     'json': 'JSON',
 }
 """Value of resync_indexes_mode."""
+
+
+INVENIO_RESYNC_WEKO_DEFAULT_DIR = '/records/'
+"""Value of WEKO default dir for records."""

@@ -38,6 +38,7 @@ from lxml import etree
 from weko_deposit.api import WekoDeposit
 from weko_records_ui.utils import soft_delete
 from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
+import os
 
 
 def read_capability(url):
@@ -171,6 +172,7 @@ def set_query_parameter(url, param_name, param_value):
 
     return urlunsplit((scheme, netloc, path, new_query_string, fragment))
 
+
 def get_list_records():
     return ['1', '2', '3', '4', '5']
 
@@ -230,3 +232,17 @@ def process_item(record, resync, counter):
         event_counter('updated_items', counter)
     elif event == ItemEvents.DELETE:
         event_counter('deleted_items', counter)
+
+
+def get_records_list(dir):
+    result = list()
+    try:
+        list = os.listdir(dir)
+        if current_app.config.get('INVENIO_RESYNC_WEKO_DEFAULT_DIR') in list:
+            # modify to make sure correct path is used
+            dir = dir.rstrip('/')
+            dir = dir + '/' +\
+                current_app.config.get('INVENIO_RESYNC_WEKO_DEFAULT_DIR')
+            return os.listdir(dir)
+    except FileNotFoundError:
+        return result
