@@ -30,7 +30,7 @@ from .tasks import run_sync_import
 from datetime import datetime
 from urllib.parse import urlsplit, urlunsplit
 from .utils import read_capability, sync_baseline, sync_audit,\
-    sync_incremental, get_records_list
+    sync_incremental
 
 
 class AdminResyncClient(BaseView):
