@@ -21,7 +21,9 @@
 """WEKO3 module docstring."""
 from datetime import datetime
 import signal
-
+import requests
+from lxml import etree
+from urllib.parse import urlparse
 from celery import current_task, shared_task
 from celery.task.control import inspect
 from celery.utils.log import get_task_logger
@@ -32,7 +34,7 @@ from invenio_oaiharvester.tasks import event_counter
 from flask import current_app
 
 from .models import ResyncIndexes, ResyncLogs
-from .utils import get_record, get_list_records, process_item
+from .utils import get_list_records, process_item
 logger = get_task_logger(__name__)
 
 
@@ -87,26 +89,31 @@ def run_sync_import(id, start_time):
             records = get_list_records()
             current_app.logger.info('[{0}] [{1}]'.format(
                                     0, 'Processing records'))
-            for record_id in records:
-                try:
+            # for record_id in records:
+            try:
+                hostname = urlparse(resync.base_url)
+                for i in get_list_records():
                     record = get_record(
-                        url='{}/oai2d?'.format(resync.base_url.split("/")[0]),
-                        record_id=record_id,
+                        url='{}://{}/oai2d'.format(
+                            hostname.scheme,
+                            hostname.netloc
+                        ),
+                        record_id=i,
                         metadata_prefix='jpcoar',
                     )
-                    process_item(record, resync, counter)
-                except Exception as ex:
-                    current_app.logger.error(
-                        'Error occurred while processing harvesting item\n' + str(ex))
-                    db.session.rollback()
-                    event_counter('error_items', counter)
+                    process_item(record[0], resync, counter)
+            except Exception as ex:
+                current_app.logger.error(
+                    'Error occurred while processing harvesting item\n' + str(ex))
+                db.session.rollback()
+                event_counter('error_items', counter)
             db.session.commit()
             resync_log.status = 'Successful'
+            break
     except Exception as ex:
         resync_log.status = 'Failed'
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
-        resync_log.requrl = resync.base_url
     finally:
         resync.task_id = None
         end_time = datetime.utcnow()
@@ -120,5 +127,28 @@ def run_sync_import(id, start_time):
                  'execution_time': str(end_time - start_time),
                  'task_name': 'resync',
                  'repository_name': 'weko',  # TODO: Set and Grab from config
-                 'task_id': run_sync_import.request.id},
+                 'task_id': run_sync_import.request.id
+                 },
                 )
+
+
+def get_record(
+        url,
+        record_id=None,
+        metadata_prefix=None,
+        encoding='utf-8'):
+    """Get records by record_id."""
+    # Avoid SSLError - dh key too small
+    requests.packages.urllib3.disable_warnings()
+    requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
+    payload = {
+        'verb': 'GetRecord',
+        'metadataPrefix': metadata_prefix,
+        'identifier': 'oai:invenio:recid/{}'.format(record_id)
+    }
+    records = None
+    response = requests.get(url, params=payload)
+    et = etree.XML(response.text.encode(encoding))
+    current_app.logger.debug(et)
+    records = et.findall('./GetRecord/record', namespaces=et.nsmap)
+    return records

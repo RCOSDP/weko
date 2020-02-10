@@ -101,30 +101,11 @@ def sync_audit(map):
     )
 
 
-def get_record(
-        url,
-        record_id=None,
-        metadata_prefix=None,
-        encoding='utf-8'):
-    """Get records by record_id."""
-    # Avoid SSLError - dh key too small
-    requests.packages.urllib3.disable_warnings()
-    requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
 
-    payload = {
-        'verb': 'GetRecord',
-        'metadataPrefix': metadata_prefix,
-        'identifier': 'oai:invenio:recid/{}'.format(record_id)
-    }
-    records = []
-    response = requests.get(url, params=payload)
-    et = etree.XML(response.text.encode(encoding))
-    records = records + et.findall('./GetRecord/record', namespaces=et.nsmap)
-    return records
 
 
 def get_list_records():
-    return ['1', '2', '3.1', '3.2']
+    return ['1', '2', '3', '4', '5']
 
 
 def process_item(record, resync, counter):
@@ -133,8 +114,9 @@ def process_item(record, resync, counter):
     event = ItemEvents.INIT
     xml = etree.tostring(record, encoding='utf-8').decode()
     mapper = JPCOARMapper(xml)
+
     resyncid = PersistentIdentifier.query.filter_by(
-        pid_type='resyncid', pid_value=mapper.identifier()).first()
+        pid_type='syncid', pid_value=mapper.identifier()).first()
     if resyncid:
         r = RecordMetadata.query.filter_by(id=resyncid.object_uuid).first()
         recid = PersistentIdentifier.query.filter_by(
@@ -149,7 +131,7 @@ def process_item(record, resync, counter):
         return
     else:
         dep = WekoDeposit.create({})
-        PersistentIdentifier.create(pid_type='resyncid',
+        PersistentIdentifier.create(pid_type='syncid',
                                     pid_value=mapper.identifier(),
                                     object_type=dep.pid.object_type,
                                     object_uuid=dep.pid.object_uuid)

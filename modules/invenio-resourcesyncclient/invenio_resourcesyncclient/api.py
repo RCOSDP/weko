@@ -32,7 +32,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_index_tree.api import Indexes
 
 from flask import current_app, request, send_file
-from .models import ResyncIndexes
+from .models import ResyncIndexes, ResyncLogs
 
 
 class ResyncHandler(object):
@@ -312,3 +312,26 @@ class ResyncHandler(object):
         """Get resync record from id"""
         with db.session.begin_nested():
             return db.session.query(ResyncIndexes).filter_by(id=resync_id)
+
+    def get_logs(self):
+        """Get logs"""
+        try:
+            with db.session.begin_nested():
+                resync_logs = db.session.query(ResyncLogs).filter(
+                    ResyncLogs.resync_indexes_id == self.id).all()
+                result = [dict(**{
+                    "id": logs.id,
+                    "start_time": datetime.datetime(logs.start_time).strftime(
+                        '%Y-%m-%dT%H:%M:%S%z'
+                    ),
+                    "end_time": datetime.datetime(logs.end_time).strftime(
+                        '%Y-%m-%dT%H:%M:%S%z'
+                    ),
+                    "status": logs.status,
+                    "errmsg": logs.errmsg,
+                    "counter": logs.counter,
+                }) for logs in resync_logs]
+                return result
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            return False
