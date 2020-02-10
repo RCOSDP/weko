@@ -169,7 +169,7 @@ class AdminResyncClient(BaseView):
     @expose("/sync/<resync_id>", methods=['GET'])
     def sync(self, resync_id):
         """Sync a resource sync. Save data to local"""
-        resync_index = ResyncHandler.get_resource_sync_by_id(resync_id)
+        resync_index = ResyncHandler.get_resync(resync_id)
         if not resync_index:
             raise ValueError('No Resync Index found')
         # Validate base_url
