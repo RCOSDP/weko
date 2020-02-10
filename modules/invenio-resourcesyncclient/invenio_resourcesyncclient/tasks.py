@@ -93,7 +93,6 @@ def run_sync_import(id, start_time):
             try:
                 hostname = urlparse(resync.base_url)
                 records_id = get_list_records(resync.resync_save_dir)
-                current_app.logger.debug(records_id)
                 for i in records_id:
                     record = get_record(
                         url='{}://{}/oai2d'.format(
