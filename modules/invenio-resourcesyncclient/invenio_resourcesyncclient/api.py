@@ -318,7 +318,7 @@ class ResyncHandler(object):
         try:
             with db.session.begin_nested():
                 resync_logs = db.session.query(ResyncLogs).filter_by(
-                    resync_indexes_id=self.id
+                    resync_indexes_id=int(self.id)
                 ).all()
                 result = [dict(**{
                     "id": logs.id,
