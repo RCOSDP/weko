@@ -102,13 +102,11 @@ class ResyncHandler(object):
                 new_data.pop('created')
                 new_data.pop('updated')
                 resync = ResyncIndexes(**new_data)
-                resync.resync_save_dir = '/tmp/resync/{}'.format(resync.id)
                 db.session.add(resync)
             db.session.commit()
-            return {
-                'success': True,
-                'data': ResyncHandler.from_modal(resync).to_dict()
-            }
+            return ResyncHandler.from_modal(resync).update({
+                'resync_save_dir': '/tmp/resync/{}'.format(resync.id)
+            })
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()

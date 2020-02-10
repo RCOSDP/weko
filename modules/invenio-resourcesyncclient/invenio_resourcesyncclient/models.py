@@ -54,7 +54,6 @@ class ResyncIndexes(db.Model, Timestamp):
         db.BigInteger,
         db.ForeignKey(Index.id,
                       ondelete='CASCADE'),
-        unique=True,
         nullable=True
     )
     """Index Identifier relation to resync indexes."""
@@ -135,7 +134,7 @@ class ResyncLogs(db.Model, Timestamp):
         nullable=True
     )
     log_type = db.Column(db.String(10))
-    
+
     start_time = db.Column(db.DateTime, default=datetime.now())
 
     end_time = db.Column(db.DateTime, nullable=True)
