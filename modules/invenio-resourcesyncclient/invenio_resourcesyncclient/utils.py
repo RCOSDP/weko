@@ -39,7 +39,7 @@ from weko_deposit.api import WekoDeposit
 from weko_records_ui.utils import soft_delete
 from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
 import os
-
+from .config import INVENIO_RESYNC_WEKO_DEFAULT_DIR
 
 def read_capability(url):
     """Read capability of an url"""
@@ -175,14 +175,18 @@ def set_query_parameter(url, param_name, param_value):
 
 def get_list_records(dir):
     """Get list records in local dir."""
-    result = list()
+    result = []
     try:
         list = os.listdir(dir)
-        if current_app.config.get('INVENIO_RESYNC_WEKO_DEFAULT_DIR') in list:
+        if current_app.config.get(
+            'INVENIO_RESYNC_WEKO_DEFAULT_DIR',
+            INVENIO_RESYNC_WEKO_DEFAULT_DIR
+        ) in list:
             # modify to make sure correct path is used
-            dir = dir.rstrip('/')
-            dir = dir + '/' + \
-                  current_app.config.get('INVENIO_RESYNC_WEKO_DEFAULT_DIR')
+            dir = dir + current_app.config.get(
+                'INVENIO_RESYNC_WEKO_DEFAULT_DIR',
+                INVENIO_RESYNC_WEKO_DEFAULT_DIR
+            )
             return os.listdir(dir)
     except FileNotFoundError:
         return result

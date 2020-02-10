@@ -141,8 +141,8 @@ class AdminResyncClient(BaseView):
                 errmsg=result.get("errmsg")
             )
 
-    @expose('/run/<resync_id>', methods=['GET'])
-    def run(self, resync_id):
+    @expose('/run_import/<resync_id>', methods=['GET'])
+    def run_import(self, resync_id):
         """Run harvesting."""
         run_sync_import.apply_async(args=(resync_id,
             datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
@@ -166,8 +166,8 @@ class AdminResyncClient(BaseView):
                 success=False
             )
 
-    @expose("/sync/<resync_id>", methods=['GET'])
-    def sync(self, resync_id):
+    @expose("/run_sync/<resync_id>", methods=['GET'])
+    def run_sync(self, resync_id):
         """Sync a resource sync. Save data to local"""
         resync_index = ResyncHandler.get_resync(resync_id)
         if not resync_index:
