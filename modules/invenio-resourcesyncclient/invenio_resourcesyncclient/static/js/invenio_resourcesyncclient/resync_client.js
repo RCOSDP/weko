@@ -8,6 +8,7 @@ const urlDelete = window.location.origin + "/admin/resync/delete";
 const urlGetList = window.location.origin + "/admin/resync/get_list";
 const urlRunResync = window.location.origin + "/admin/resync/run";
 const urlGetLogs = window.location.origin + "/admin/resync/get_logs";
+const urlSync = window.location.origin + "/admin/resync/sync";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const status = JSON.parse($("#status").text())
 const resync_mode = JSON.parse($("#resync_mode").text())
@@ -684,33 +685,19 @@ class DetailResourceComponent extends React.Component {
   }
 
   handleSync() {
-//    const new_data = { ...this.state };
-//    delete new_data.tree_list;
-//    console.log(new_data)
-//    const {mode} = this.props
-//    const url = mode ==="edit" ? urlUpdate+"/"+new_data.id : urlCreate
-//    fetch(url, {
-//      method: "POST",
-//      body: JSON.stringify(new_data),
-//      headers: {
-//        "Content-Type": "application/json"
-//      }
-//    })
-//      .then(res => res.json())
-//      .then(res => {
-//        if (res.success) {
-//          if(add_another){
-//            this.setState({
-//              ...default_state
-//            })
-//          } else {
-//            this.props.handleChangeTab("list");
-//          }
-//        } else {
-//          alert(res.errmsg.join("\n"));
-//        }
-//      })
-//      .catch(() => alert("Error in Create"));
+    const {id} = this.props.select_item
+    const url = urlSync + "/" + id
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+      .then(res => res.json())
+      .then(res => {
+        console.log(res)
+      })
+      .catch(() => alert("Error in Create"));
   }
 
   handleImport() {

@@ -30,7 +30,7 @@ INVENIO_RESYNC_INDEXES_STATUS = {
 
 INVENIO_RESYNC_INDEXES_MODE = {
     'baseline': 'Baseline',
-    'incremential': 'Incremental',
+    'Incremental': 'Incremental',
     'audit': 'Audit'
 }
 """Value of resync_indexes_mode."""

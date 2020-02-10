@@ -166,7 +166,7 @@ class AdminResyncClient(BaseView):
                 success=False
             )
 
-    @expose("/resync/sync/<resync_id>", methods=['GET'])
+    @expose("/sync/<resync_id>", methods=['GET'])
     def sync(self, resync_id):
         """Sync a resource sync. Save data to local"""
         resync_index = ResyncHandler.get_resource_sync_by_id(resync_id)
@@ -187,11 +187,12 @@ class AdminResyncClient(BaseView):
         to_date = request.args.get('to_date')
 
         # map = [base_url, save_dir]
-        # if mode == current_app.config.get[
-        #         'INVENIO_RESYNC_INDEXES_MODE'
-        #     ].get('baseline'):
+
         try:
-            if mode == 'Baseline':
+            if mode == current_app.config.get(
+                'INVENIO_RESYNC_INDEXES_MODE',
+                INVENIO_RESYNC_INDEXES_MODE
+            ).get('baseline'):
                 if not capability or (
                     capability != 'resourcelist' and
                         capability != 'resourcedump'):
@@ -204,10 +205,10 @@ class AdminResyncClient(BaseView):
                                            from_date=from_date,
                                            to_date=to_date)
                 return make_response('OK', 200)
-            # elif mode == current_app.config.get[
-            #     'INVENIO_RESYNC_INDEXES_MODE'
-            # ].get('audit'):
-            elif mode == 'Audit':
+            elif mode == current_app.config.get(
+                'INVENIO_RESYNC_INDEXES_MODE',
+                INVENIO_RESYNC_INDEXES_MODE
+            ).get('audit'):
                 if not capability or (
                         capability != 'resourcelist' and
                         capability != 'changelist'):
@@ -219,7 +220,10 @@ class AdminResyncClient(BaseView):
                     result = sync_baseline(map=map, base_url=base_url,
                                            dryrun=True)
                 return jsonify(sync_audit(map))
-            elif mode == 'Incremental':
+            elif mode == current_app.config.get(
+                'INVENIO_RESYNC_INDEXES_MODE',
+                INVENIO_RESYNC_INDEXES_MODE
+            ).get('Incremental'):
                 if not capability or (
                         capability != 'changelist' and
                         capability != 'changedump'):
