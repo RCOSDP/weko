@@ -745,10 +745,11 @@ class DetailResourceComponent extends React.Component {
         this.setState({
           logs: res.logs
         })
+        setTimeout(function(){ this.handleGetLogs() }, 3000);
       }
 
     })
-    .catch(() => alert("Error in Create"));
+    .catch(() => alert("Error in get logs"));
   }
 
   componentDidMount(){
