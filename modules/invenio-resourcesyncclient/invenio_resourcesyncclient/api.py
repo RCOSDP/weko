@@ -324,10 +324,10 @@ class ResyncHandler(object):
                     "id": logs.id,
                     "start_time": logs.start_time.strftime(
                         '%Y-%m-%dT%H:%M:%S%z'
-                    ),
+                    ) if logs.start_time else '',
                     "end_time": logs.end_time.strftime(
                         '%Y-%m-%dT%H:%M:%S%z'
-                    ),
+                    ) if logs.end_time else '',
                     "status": logs.status,
                     "errmsg": logs.errmsg,
                     "counter": logs.counter,
