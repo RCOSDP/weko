@@ -134,6 +134,8 @@ class ResyncLogs(db.Model, Timestamp):
                       ondelete='CASCADE'),
         nullable=True
     )
+    log_type = db.Column(db.String(10))
+    
     start_time = db.Column(db.DateTime, default=datetime.now())
 
     end_time = db.Column(db.DateTime, nullable=True)

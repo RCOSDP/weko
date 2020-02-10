@@ -57,7 +57,7 @@ def run_sync_import(id, start_time):
         return ({'task_state': 'SUCCESS',
                  'task_id': run_sync_import.request.id})
 
-    current_app.logger.info('[{0}] [{1}] START'.format(0, 'Resync'))
+    current_app.logger.info('[{0}] [{1}] START'.format(0, 'Resync Import'))
     # For registering runtime stats
     start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')
 
@@ -72,6 +72,7 @@ def run_sync_import(id, start_time):
     resync_log = ResyncLogs(
         resync_indexes_id=id,
         status='Running',
+        log_type='Import',
         start_time=datetime.utcnow(),
         counter=counter
     )
@@ -119,13 +120,14 @@ def run_sync_import(id, start_time):
         end_time = datetime.utcnow()
         resync_log.end_time = end_time
         resync_log.counter = counter
-        current_app.logger.info('[{0}] [{1}] END'.format(0, 'Resync'))
+        current_app.logger.info('[{0}] [{1}] END'.format(0, 'Resync Import'))
         db.session.commit()
         return ({'task_state': 'SUCCESS',
                  'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                  'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                  'execution_time': str(end_time - start_time),
-                 'task_name': 'resync',
+                 'task_name': 'import',
+                 'task_type': 'import',
                  'repository_name': 'weko',  # TODO: Set and Grab from config
                  'task_id': run_sync_import.request.id
                  },

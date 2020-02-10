@@ -836,6 +836,7 @@ class DetailResourceComponent extends React.Component {
                     <th>Start Time</th>
                     <th>End Time</th>
                     <th>Status</th>
+                    <th>Log Type</th>
                     <th>Processed Items</th>
                     <th>Created Items</th>
                     <th>Updated Items</th>
@@ -853,6 +854,7 @@ class DetailResourceComponent extends React.Component {
                             <td>{item.start_time}</td>
                             <td>{item.end_time}</td>
                             <td>{item.status}</td>
+                            <td>{item.log_type}</td>
                             <td>{item.counter.processed_items}</td>
                             <td>{item.counter.created_items}</td>
                             <td>{item.counter.updated_items}</td>
