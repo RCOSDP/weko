@@ -132,7 +132,6 @@ class ResyncLogs(db.Model, Timestamp):
         db.Integer,
         db.ForeignKey(ResyncIndexes.id,
                       ondelete='CASCADE'),
-        unique=True,
         nullable=True
     )
     start_time = db.Column(db.DateTime, default=datetime.now())

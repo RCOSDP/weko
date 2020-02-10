@@ -6,6 +6,8 @@ const urlCreate = window.location.origin + "/admin/resync/create";
 const urlUpdate = window.location.origin + "/admin/resync/update";
 const urlDelete = window.location.origin + "/admin/resync/delete";
 const urlGetList = window.location.origin + "/admin/resync/get_list";
+const urlRunResync = window.location.origin + "/admin/resync/run";
+const urlGetLogs = window.location.origin + "/admin/resync/get_logs";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const status = JSON.parse($("#status").text())
 const resync_mode = JSON.parse($("#resync_mode").text())
@@ -676,8 +678,81 @@ class DetailResourceComponent extends React.Component {
     super(props);
     this.state = {
       ...default_state,
-      ...props.select_item
+      ...props.select_item,
+      logs: []
     }
+  }
+
+  handleSync() {
+//    const new_data = { ...this.state };
+//    delete new_data.tree_list;
+//    console.log(new_data)
+//    const {mode} = this.props
+//    const url = mode ==="edit" ? urlUpdate+"/"+new_data.id : urlCreate
+//    fetch(url, {
+//      method: "POST",
+//      body: JSON.stringify(new_data),
+//      headers: {
+//        "Content-Type": "application/json"
+//      }
+//    })
+//      .then(res => res.json())
+//      .then(res => {
+//        if (res.success) {
+//          if(add_another){
+//            this.setState({
+//              ...default_state
+//            })
+//          } else {
+//            this.props.handleChangeTab("list");
+//          }
+//        } else {
+//          alert(res.errmsg.join("\n"));
+//        }
+//      })
+//      .catch(() => alert("Error in Create"));
+  }
+
+  handleImport() {
+    const {id} = this.props.select_item
+    const url = urlRunResync+"/"+id
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+      .then(res => res.json())
+      .then(res => {
+        console.log(res)
+      })
+      .catch(() => alert("Error in Create"));
+  }
+
+  handleGetLogs() {
+    const {id} = this.props.select_item
+    const url = urlGetLogs+"/"+id
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+  })
+    .then(res => res.json())
+    .then(res => {
+      console.log(res)
+      if (res.success){
+        this.setState({
+          logs: res.logs
+        })
+      }
+
+    })
+    .catch(() => alert("Error in Create"));
+  }
+
+  componentDidMount(){
+    this.handleGetLogs()
   }
 
   render() {
@@ -733,8 +808,14 @@ class DetailResourceComponent extends React.Component {
                   <tr>
                     <td><b>Action</b></td>
                     <td>
-                      <button className="btn btn-primary">Sync</button>
-                      <button className="btn btn-primary">Import</button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={()=>this.handleSync()}
+                      >Sync</button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={()=>this.handleImport()}
+                       >Import</button>
                     </td>
                   </tr>
                 )
@@ -760,7 +841,24 @@ class DetailResourceComponent extends React.Component {
                  </tr>
                 </thead>
                 <tbody>
-
+                    {
+                      this.props.logs.map((item,key) => {
+                        return (
+                          <tr>
+                            <td>{item.id}</td>
+                            <td>{item.start_time}</td>
+                            <td>{item.end_time}</td>
+                            <td>{item.status}</td>
+                            <td>{item.counter.processed_items}</td>
+                            <td>{item.counter.created_items}</td>
+                            <td>{item.counter.updated_items}</td>
+                            <td>{item.counter.deleted_items}</td>
+                            <td>{item.counter.error_items}</td>
+                            <td>{item.errmsg}</td>
+                         </tr>
+                        )
+                      })
+                    }
                 </tbody>
               </table>
             </div>

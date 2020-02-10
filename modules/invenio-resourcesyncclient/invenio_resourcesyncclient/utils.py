@@ -24,6 +24,19 @@ from resync.client_utils import url_or_file_open, init_logging
 from resync.mapper import MapperError
 from resync.resource_list_builder import ResourceListBuilder
 from resync.sitemap import Sitemap
+from flask import current_app
+import requests
+from invenio_oaiharvester.utils import ItemEvents
+from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
+from invenio_oaiharvester.tasks import map_indexes, event_counter
+import dateutil
+from invenio_db import db
+
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records.models import RecordMetadata
+from lxml import etree
+from weko_deposit.api import WekoDeposit
+from weko_records_ui.utils import soft_delete
 from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
 
 
@@ -157,3 +170,63 @@ def set_query_parameter(url, param_name, param_value):
     new_query_string = urlencode(query_params, doseq=True)
 
     return urlunsplit((scheme, netloc, path, new_query_string, fragment))
+
+def get_list_records():
+    return ['1', '2', '3', '4', '5']
+
+
+def process_item(record, resync, counter):
+    """Process item."""
+    event_counter('processed_items', counter)
+    event = ItemEvents.INIT
+    xml = etree.tostring(record, encoding='utf-8').decode()
+    mapper = JPCOARMapper(xml)
+
+    resyncid = PersistentIdentifier.query.filter_by(
+        pid_type='syncid', pid_value=mapper.identifier()).first()
+    if resyncid:
+        r = RecordMetadata.query.filter_by(id=resyncid.object_uuid).first()
+        recid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', object_uuid=resyncid.object_uuid).first()
+        recid.status = PIDStatus.REGISTERED
+        pubdate = dateutil.parser.parse(
+            r.json['pubdate']['attribute_value']).date()
+        dep = WekoDeposit(r.json, r)
+        indexes = dep['path'].copy()
+        event = ItemEvents.UPDATE
+    elif mapper.is_deleted():
+        return
+    else:
+        dep = WekoDeposit.create({})
+        PersistentIdentifier.create(pid_type='syncid',
+                                    pid_value=mapper.identifier(),
+                                    object_type=dep.pid.object_type,
+                                    object_uuid=dep.pid.object_uuid)
+        indexes = []
+        event = ItemEvents.CREATE
+    indexes.append(str(resync.index_id)) if str(
+        resync.index_id) not in indexes else None
+
+    if mapper.is_deleted():
+        soft_delete(recid.pid_value)
+        event = ItemEvents.DELETE
+    else:
+        json = mapper.map()
+        json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
+        dep['_deposit']['status'] = 'draft'
+        dep.update({'actions': 'publish', 'index': indexes}, json)
+        dep.commit()
+        dep.publish()
+        # add item versioning
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=dep.pid.pid_value).first()
+        with current_app.test_request_context() as ctx:
+            first_ver = dep.newversion(pid)
+            first_ver.publish()
+    db.session.commit()
+    if event == ItemEvents.CREATE:
+        event_counter('created_items', counter)
+    elif event == ItemEvents.UPDATE:
+        event_counter('updated_items', counter)
+    elif event == ItemEvents.DELETE:
+        event_counter('deleted_items', counter)
