@@ -317,8 +317,9 @@ class ResyncHandler(object):
         """Get logs"""
         try:
             with db.session.begin_nested():
-                resync_logs = db.session.query(ResyncLogs).filter(
-                    ResyncLogs.resync_indexes_id == self.id).all()
+                resync_logs = db.session.query(ResyncLogs).filter_by(
+                    resync_indexes_id=self.id
+                ).all()
                 result = [dict(**{
                     "id": logs.id,
                     "start_time": datetime.datetime(logs.start_time).strftime(
