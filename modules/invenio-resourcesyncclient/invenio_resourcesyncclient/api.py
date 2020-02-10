@@ -317,19 +317,21 @@ class ResyncHandler(object):
         """Get logs"""
         try:
             with db.session.begin_nested():
-                resync_logs = db.session.query(ResyncLogs).filter(
-                    ResyncLogs.resync_indexes_id == self.id).all()
+                resync_logs = db.session.query(ResyncLogs).filter_by(
+                    resync_indexes_id=int(self.id)
+                ).all()
                 result = [dict(**{
                     "id": logs.id,
-                    "start_time": datetime.datetime(logs.start_time).strftime(
+                    "start_time": logs.start_time.strftime(
                         '%Y-%m-%dT%H:%M:%S%z'
-                    ),
-                    "end_time": datetime.datetime(logs.end_time).strftime(
+                    ) if logs.start_time else '',
+                    "end_time": logs.end_time.strftime(
                         '%Y-%m-%dT%H:%M:%S%z'
-                    ),
+                    ) if logs.end_time else '',
                     "status": logs.status,
                     "errmsg": logs.errmsg,
                     "counter": logs.counter,
+                    "log_type": logs.log_type,
                 }) for logs in resync_logs]
                 return result
         except Exception as ex:

@@ -743,12 +743,16 @@ class DetailResourceComponent extends React.Component {
       console.log(res)
       if (res.success){
         this.setState({
-          logs: res.logs
+          logs: res.logs || []
         })
+        const that = this
+        setTimeout(function(){
+          that.handleGetLogs()
+        }, 3000);
       }
 
     })
-    .catch(() => alert("Error in Create"));
+    .catch(() => alert("Error in get logs"));
   }
 
   componentDidMount(){
@@ -832,6 +836,7 @@ class DetailResourceComponent extends React.Component {
                     <th>Start Time</th>
                     <th>End Time</th>
                     <th>Status</th>
+                    <th>Log Type</th>
                     <th>Processed Items</th>
                     <th>Created Items</th>
                     <th>Updated Items</th>
@@ -842,13 +847,14 @@ class DetailResourceComponent extends React.Component {
                 </thead>
                 <tbody>
                     {
-                      this.props.logs.map((item,key) => {
+                      this.state.logs.map((item,key) => {
                         return (
                           <tr>
                             <td>{item.id}</td>
                             <td>{item.start_time}</td>
                             <td>{item.end_time}</td>
                             <td>{item.status}</td>
+                            <td>{item.log_type}</td>
                             <td>{item.counter.processed_items}</td>
                             <td>{item.counter.created_items}</td>
                             <td>{item.counter.updated_items}</td>

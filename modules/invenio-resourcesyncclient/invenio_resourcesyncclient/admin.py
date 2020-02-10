@@ -152,7 +152,7 @@ class AdminResyncClient(BaseView):
         )
 
     @expose('/get_logs/<resync_id>', methods=['GET'])
-    def run(self, resync_id):
+    def get_logs(self, resync_id):
         """Run harvesting."""
         resync = ResyncHandler.get_resync(resync_id)
         logs = resync.get_logs()
