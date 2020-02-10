@@ -204,7 +204,7 @@ class AdminResyncClient(BaseView):
                                            dryrun=False,
                                            from_date=from_date,
                                            to_date=to_date)
-                return make_response('OK', 200)
+                return jsonify(success=True)
             elif mode == current_app.config.get(
                 'INVENIO_RESYNC_INDEXES_MODE',
                 INVENIO_RESYNC_INDEXES_MODE

@@ -696,8 +696,11 @@ class DetailResourceComponent extends React.Component {
       .then(res => res.json())
       .then(res => {
         console.log(res)
+        if (res.success){
+          alert("Sync Success")
+        }
       })
-      .catch(() => alert("Error in Create"));
+      .catch(() => alert("Error in Sync"));
   }
 
   handleImport() {
@@ -713,7 +716,7 @@ class DetailResourceComponent extends React.Component {
       .then(res => {
         console.log(res)
       })
-      .catch(() => alert("Error in Create"));
+      .catch(() => alert("Error in Import"));
   }
 
   handleGetLogs() {
