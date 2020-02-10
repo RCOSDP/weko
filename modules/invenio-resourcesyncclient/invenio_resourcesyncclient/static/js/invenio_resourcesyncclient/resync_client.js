@@ -743,7 +743,7 @@ class DetailResourceComponent extends React.Component {
       console.log(res)
       if (res.success){
         this.setState({
-          logs: res.logs
+          logs: res.logs || []
         })
         setTimeout(function(){ this.handleGetLogs() }, 3000);
       }
