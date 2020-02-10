@@ -183,7 +183,7 @@ def get_list_records(dir):
             INVENIO_RESYNC_WEKO_DEFAULT_DIR
         ) in list:
             # modify to make sure correct path is used
-            dir = dir + current_app.config.get(
+            dir = dir + '/' + current_app.config.get(
                 'INVENIO_RESYNC_WEKO_DEFAULT_DIR',
                 INVENIO_RESYNC_WEKO_DEFAULT_DIR
             )

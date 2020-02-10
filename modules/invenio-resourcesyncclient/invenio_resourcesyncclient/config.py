@@ -42,5 +42,5 @@ INVENIO_RESYNC_INDEXES_SAVING_FORMAT = {
 """Value of resync_indexes_mode."""
 
 
-INVENIO_RESYNC_WEKO_DEFAULT_DIR = '/records/'
+INVENIO_RESYNC_WEKO_DEFAULT_DIR = 'records'
 """Value of WEKO default dir for records."""
