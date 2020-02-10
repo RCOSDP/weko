@@ -322,10 +322,10 @@ class ResyncHandler(object):
                 ).all()
                 result = [dict(**{
                     "id": logs.id,
-                    "start_time": datetime.datetime(logs.start_time).strftime(
+                    "start_time": logs.start_time.strftime(
                         '%Y-%m-%dT%H:%M:%S%z'
                     ),
-                    "end_time": datetime.datetime(logs.end_time).strftime(
+                    "end_time": logs.end_time.strftime(
                         '%Y-%m-%dT%H:%M:%S%z'
                     ),
                     "status": logs.status,
