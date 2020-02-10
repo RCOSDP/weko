@@ -87,7 +87,6 @@ def run_sync_import(id, start_time):
             pause = True
         signal.signal(signal.SIGTERM, sigterm_handler)
         while True:
-            records = get_list_records()
             current_app.logger.info('[{0}] [{1}]'.format(
                                     0, 'Processing records'))
             # for record_id in records:
