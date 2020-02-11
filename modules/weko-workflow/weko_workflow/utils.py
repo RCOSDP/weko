@@ -883,3 +883,35 @@ def set_bucket_default_size(record_uuid):
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))
+
+
+def is_show_autofill_metadata(item_type_name):
+    """Check show auto fill metadata.
+
+    @param item_type_name:
+    @return:
+    """
+    result = True
+    hidden_autofill_metadata_list = current_app.config.get(
+        'WEKO_ITEMS_UI_HIDE_AUTO_FILL_METADATA')
+    if item_type_name is not None and isinstance(hidden_autofill_metadata_list,
+                                                 list):
+        for item_type in hidden_autofill_metadata_list:
+            if item_type_name == item_type:
+                result = False
+    return result
+
+
+def is_hidden_pubdate(item_type_name):
+    """Check hidden pubdate.
+
+    @param item_type_name:
+    @return:
+    """
+    hidden_pubdate_list = current_app.config.get(
+        'WEKO_ITEMS_UI_HIDE_PUBLICATION_DATE')
+    is_hidden = False
+    if (item_type_name and isinstance(hidden_pubdate_list, list)
+            and item_type_name in hidden_pubdate_list):
+        is_hidden = True
+    return is_hidden

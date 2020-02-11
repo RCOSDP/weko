@@ -45,7 +45,7 @@ from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
 
-from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE
+from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE, WEKO_ROOT_INDEX
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
 
@@ -73,7 +73,8 @@ class ResourceListHandler(object):
 
     def to_dict(self):
         """Generate Resource Object to Dict."""
-        repository_name = self.index.index_name_english
+        repository_name = self.index.index_name_english if self.repository_id\
+            else 'Root Index'
 
         return dict(**{
             'id': self.id,
@@ -248,9 +249,7 @@ class ResourceListHandler(object):
         """
         try:
             with db.session.begin_nested():
-                list_result = db.session.query(ResourceListIndexes).join(
-                    Index
-                ).all()
+                list_result = db.session.query(ResourceListIndexes).all()
                 if type_result == 'obj':
                     new_list = []
                     for resource in list_result:
@@ -312,15 +311,21 @@ class ResourceListHandler(object):
         :return: Updated Resource info
         """
         from .utils import get_real_path
-        if self.status and self.index.public_state:
-            if record_id:
-                record = WekoRecord.get_record_by_pid(record_id)
-                if record and record.get("path"):
-                    list_path = get_real_path(record.get("path"))
-                    if str(self.repository_id) in list_path:
-                        return True
-            else:
+        if self.status:
+            if self.repository_id == current_app.config.get(
+                "WEKO_ROOT_INDEX",
+                WEKO_ROOT_INDEX
+            ):
                 return True
+            if self.index.public_state:
+                if record_id:
+                    record = WekoRecord.get_record_by_pid(record_id)
+                    if record and record.get("path"):
+                        list_path = get_real_path(record.get("path"))
+                        if str(self.repository_id) in list_path:
+                            return True
+                else:
+                    return True
         return False
 
     def get_resource_list_xml(self):
@@ -842,9 +847,13 @@ class ChangeListHandler(object):
 
     def _validation(self):
         """Validate."""
-        if not self.status or not self.index.public_state:
-            return False
-        return True
+        if self.status:
+            if self.repository_id:
+                if self.index.public_state:
+                    return True
+            else:
+                return True
+        return False
 
     def get_change_dump_manifest_xml(self, record_id):
         """Get change dump manifest xml.
@@ -945,6 +954,8 @@ class ChangeListHandler(object):
 
     def to_dict(self):
         """Convert obj to dict."""
+        repository_name = self.index.index_name_english if self.repository_id \
+            else "Root Index",
         return dict(**{
             'id': self.id,
             'status': self.status,
@@ -955,7 +966,7 @@ class ChangeListHandler(object):
             'url_path': self.url_path,
             'created': self.created,
             'updated': self.updated,
-            'repository_name': self.index.index_name_english,
+            'repository_name': repository_name,
             'publish_date': str(self.publish_date),
             'interval_by_date': self.interval_by_date
         })
@@ -973,8 +984,6 @@ class ChangeListHandler(object):
             with db.session.begin_nested():
                 result = db.session.query(ChangeListIndexes).filter(
                     ChangeListIndexes.id == changelist_id
-                ).join(
-                    Index
                 ).one_or_none()
                 if result:
                     if type_result == 'modal':
@@ -995,9 +1004,7 @@ class ChangeListHandler(object):
         """
         try:
             with db.session.begin_nested():
-                result = db.session.query(ChangeListIndexes).join(
-                    Index
-                ).all()
+                result = db.session.query(ChangeListIndexes).all()
                 if result:
                     parse_result = [
                         cls.convert_modal_to_obj(r) for r in result
@@ -1022,7 +1029,6 @@ class ChangeListHandler(object):
             url_path=model.url_path,
             created=model.created,
             updated=model.updated,
-            index=model.index,
             publish_date=model.publish_date,
             interval_by_date=model.interval_by_date
         )
@@ -1040,8 +1046,6 @@ class ChangeListHandler(object):
             with db.session.begin_nested():
                 result = db.session.query(ChangeListIndexes).filter(
                     ChangeListIndexes.repository_id == repo_id
-                ).join(
-                    Index
                 ).one_or_none()
                 if result:
                     if type_result == 'modal':
@@ -1061,6 +1065,11 @@ class ChangeListHandler(object):
         :return: True if record has register index_id
         """
         from .utils import get_real_path
+        if self.repository_id == current_app.config.get(
+            "WEKO_ROOT_INDEX",
+            WEKO_ROOT_INDEX
+        ):
+            return True
         if self.status:
             record_pid = WekoRecord.get_pid(record_id)
             if record_pid:

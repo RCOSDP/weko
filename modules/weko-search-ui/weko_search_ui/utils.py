@@ -476,9 +476,7 @@ def handle_validate_item_import(list_recond, schema) -> list:
     for record in list_recond:
         errors = []
         record_id = record.get("id")
-        if not (
-            record_id and represents_int(record_id)
-        ):
+        if record_id and (not represents_int(record_id)):
             errors.append("Incorrect Item id")
         if record.get('metadata'):
             if v2:
@@ -596,14 +594,14 @@ def handle_check_exist_record(list_recond) -> list:
                                 item['status'] = None
                     else:
                         item['errors'] = ['Target id is not in the system']
-                        item['status'] = None
                 else:
                     item['id'] = None
                     if item.get('uri'):
                         item['errors'] = ['Item has no ID but non-empty URI']
                         item['status'] = None
             except PIDDoesNotExistError:
-                pass
+                item['errors'] = ['Target id is not in the system']
+                item['status'] = None
             except BaseException:
                 current_app.logger.error(
                     'Unexpected error: ',
