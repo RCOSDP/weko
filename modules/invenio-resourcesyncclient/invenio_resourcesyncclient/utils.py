@@ -24,8 +24,7 @@ from resync.client_utils import url_or_file_open, init_logging
 from resync.mapper import MapperError
 from resync.resource_list_builder import ResourceListBuilder
 from resync.sitemap import Sitemap
-from flask import current_app
-import requests
+from flask import current_app, jsonify
 from invenio_oaiharvester.utils import ItemEvents
 from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
 from invenio_oaiharvester.tasks import map_indexes, event_counter
@@ -39,7 +38,9 @@ from weko_deposit.api import WekoDeposit
 from weko_records_ui.utils import soft_delete
 from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
 import os
-from .config import INVENIO_RESYNC_WEKO_DEFAULT_DIR
+from .config import INVENIO_RESYNC_WEKO_DEFAULT_DIR, INVENIO_RESYNC_INDEXES_MODE
+from .api import ResyncHandler
+
 
 def read_capability(url):
     """Read capability of an url"""
@@ -248,3 +249,66 @@ def process_item(record, resync, counter):
     elif event == ItemEvents.DELETE:
         event_counter('deleted_items', counter)
 
+
+def process_sync(resync_id, from_date, to_date ):
+    resync_index = ResyncHandler.get_resync(resync_id)
+    if not resync_index:
+        raise ValueError('No Resync Index found')
+    base_url = resync_index.base_url
+    capability = read_capability(base_url)
+    mode = resync_index.resync_mode
+    save_dir = resync_index.resync_save_dir
+    map = [base_url]
+    if save_dir:
+        map.append(save_dir)
+    parts = urlsplit(map[0])
+    uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
+
+    try:
+        if mode == current_app.config.get(
+            'INVENIO_RESYNC_INDEXES_MODE',
+            INVENIO_RESYNC_INDEXES_MODE
+        ).get('baseline'):
+            if not capability or (
+                capability != 'resourcelist' and
+                    capability != 'resourcedump'):
+                raise ValueError('Bad URL')
+            result = False
+            while map[0] != uri_host and not result:
+                result = sync_baseline(map=map,
+                                       base_url=base_url,
+                                       dryrun=False,
+                                       from_date=from_date,
+                                       to_date=to_date)
+            return jsonify(success=True)
+        elif mode == current_app.config.get(
+            'INVENIO_RESYNC_INDEXES_MODE',
+            INVENIO_RESYNC_INDEXES_MODE
+        ).get('audit'):
+            if not capability or (
+                capability != 'resourcelist' and
+                    capability != 'changelist'):
+                raise ValueError('Bad URL')
+            # do the same logic with Baseline
+            # to make sure right url is used
+            result = False
+            while map[0] != uri_host and not result:
+                result = sync_baseline(map=map, base_url=base_url,
+                                       dryrun=True)
+            return jsonify(sync_audit(map))
+        elif mode == current_app.config.get(
+            'INVENIO_RESYNC_INDEXES_MODE',
+            INVENIO_RESYNC_INDEXES_MODE
+        ).get('Incremental'):
+            if not capability or (
+                capability != 'changelist' and
+                    capability != 'changedump'):
+                raise (
+                    'Bad URL, not a changelist/changedump,'
+                    ' cannot sync incremental')
+            result = False
+            while map[0] != uri_host and not result:
+                result = sync_incremental(map, base_url, from_date, to_date)
+                return jsonify({'result': result})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
