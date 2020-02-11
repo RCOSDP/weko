@@ -35,7 +35,6 @@ from flask import current_app
 
 from .models import ResyncIndexes, ResyncLogs
 from .utils import get_list_records, process_item, process_sync
-
 logger = get_task_logger(__name__)
 
 
@@ -99,7 +98,7 @@ def run_sync_import(id):
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
     finally:
-        finish_log(resync, resync_log, start_time, log_type='import')
+        finish_log(resync, resync_log, start_time, run_sync_import.request.id, log_type='import')
 
 
 def get_record(
@@ -125,13 +124,13 @@ def get_record(
 
 
 @shared_task()
-def run_sync(id, from_date, to_date):
+def resync_sync(id, from_date, to_date):
     if is_harvest_running(id, run_sync_import.request.id):
         return ({'task_state': 'SUCCESS',
                  'task_id': run_sync_import.request.id})
     start_time = datetime.strptime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
     resync = ResyncIndexes.query.filter_by(id=id).first()
-    resync_log = prepare_log(resync, run_sync_import.request.id, log_type='sync')
+    resync_log = prepare_log(resync, resync_sync.request.id, log_type='sync')
 
     try:
         pause = False
@@ -154,7 +153,7 @@ def run_sync(id, from_date, to_date):
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
     finally:
-        finish_log(resync, resync_log, start_time, log_type='sync')
+        finish_log(resync, resync_log, start_time, resync_sync.request.id, log_type='sync')
 
 
 def prepare_log(resync, request_id, log_type):
@@ -181,7 +180,7 @@ def prepare_log(resync, request_id, log_type):
     return resync_log
 
 
-def finish_log(resync, resync_log, start_time, log_type):
+def finish_log(resync, resync_log, start_time, request_id, log_type):
     resync.task_id = None
     end_time = datetime.now()
     resync_log.end_time = end_time
@@ -194,6 +193,6 @@ def finish_log(resync, resync_log, start_time, log_type):
              'task_name': log_type,
              'task_type': log_type,
              'repository_name': 'weko',  # TODO: Set and Grab from config
-             'task_id': run_sync_import.request.id
+             'task_id': request_id
              },
             )

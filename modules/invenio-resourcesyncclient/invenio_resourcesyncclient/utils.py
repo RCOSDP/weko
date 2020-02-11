@@ -39,7 +39,7 @@ from weko_records_ui.utils import soft_delete
 from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
 import os
 from .config import INVENIO_RESYNC_WEKO_DEFAULT_DIR, INVENIO_RESYNC_INDEXES_MODE
-from .api import ResyncHandler
+
 
 
 def read_capability(url):
@@ -250,7 +250,8 @@ def process_item(record, resync, counter):
         event_counter('deleted_items', counter)
 
 
-def process_sync(resync_id, from_date, to_date ):
+def process_sync(resync_id):
+    from .api import ResyncHandler
     resync_index = ResyncHandler.get_resync(resync_id)
     if not resync_index:
         raise ValueError('No Resync Index found')
@@ -263,6 +264,8 @@ def process_sync(resync_id, from_date, to_date ):
         map.append(save_dir)
     parts = urlsplit(map[0])
     uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
+    from_date = resync_index.from_date
+    to_date = resync_index.to_date
 
     try:
         if mode == current_app.config.get(

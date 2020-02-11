@@ -20,17 +20,14 @@
 
 """WEKO3 module docstring."""
 import json
-from flask import Response, abort, current_app, jsonify, make_response, request
+from flask import current_app, jsonify, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from .config import INVENIO_RESYNC_INDEXES_STATUS, INVENIO_RESYNC_INDEXES_MODE, \
+from .config import INVENIO_RESYNC_INDEXES_STATUS, \
+    INVENIO_RESYNC_INDEXES_MODE, \
     INVENIO_RESYNC_INDEXES_SAVING_FORMAT
 from .api import ResyncHandler
-from .tasks import run_sync_import, run_sync
-from datetime import datetime
-from urllib.parse import urlsplit, urlunsplit
-from .utils import read_capability, sync_baseline, sync_audit, \
-    sync_incremental
+from .tasks import run_sync_import, resync_sync
 
 
 class AdminResyncClient(BaseView):
@@ -144,7 +141,7 @@ class AdminResyncClient(BaseView):
     @expose('/run_import/<resync_id>', methods=['GET'])
     def run_import(self, resync_id):
         """Run harvesting."""
-        run_sync_import.apply_async(args=(resync_id,
+        run_sync_import.apply_async(args=(resync_id
                                           ))
         return jsonify(
             success=True
@@ -170,7 +167,7 @@ class AdminResyncClient(BaseView):
         """Sync a resource sync. Save data to local"""
         from_date = request.args.get('from_date')
         to_date = request.args.get('to_date')
-        run_sync.apply_async(args=(resync_id, from_date, to_date
+        resync_sync.apply_async(args=(resync_id, from_date, to_date
                                    ))
         return jsonify(
             success=True
