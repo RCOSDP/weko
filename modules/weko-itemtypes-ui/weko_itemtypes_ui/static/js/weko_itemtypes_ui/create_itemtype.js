@@ -166,15 +166,17 @@ $(document).ready(function () {
   function create_itemtype_schema(){
     page_global.table_row_map['name'] = $('#itemtype_name').val();
     page_global.table_row_map['action'] = $('[name=radio_versionup]:checked').val();
+
+    // manual mapping for system properties
     page_global.table_row_map['mapping'] = {
       system_identifier_doi: {
         "display_lang_type": "",
         "oai_dc_mapping": "",
         "jpcoar_mapping": {
           "system_identifier": {
-            "@value": "subitem_identifier",
+            "@value": "subitem_systemidt_identifier",
             "@attributes": {
-              "identifierType": "subitem_identifier_type"
+              "identifierType": "subitem_systemidt_identifier_type"
             }
           }
         },
@@ -188,9 +190,9 @@ $(document).ready(function () {
         "oai_dc_mapping": "",
         "jpcoar_mapping": {
           "system_identifier": {
-            "@value": "subitem_identifier",
+            "@value": "subitem_systemidt_identifier",
             "@attributes": {
-              "identifierType": "subitem_identifier_type"
+              "identifierType": "subitem_systemidt_identifier_type"
             }
           }
         },
@@ -204,9 +206,9 @@ $(document).ready(function () {
         "oai_dc_mapping": "",
         "jpcoar_mapping": {
           "system_identifier": {
-            "@value": "subitem_identifier",
+            "@value": "subitem_systemidt_identifier",
             "@attributes": {
-              "identifierType": "subitem_identifier_type"
+              "identifierType": "subitem_systemidt_identifier_type"
             }
           }
         },
@@ -221,26 +223,26 @@ $(document).ready(function () {
         "jpcoar_mapping": {
           "system_file": {
             "URI": {
-              "@value": "subitem_uri",
+              "@value": "subitem_systemfile_filename_uri",
               "@attributes": {
-                "label": "subitem_label",
-                "objectType": "subitem_type"
+                "label": "subitem_systemfile_filename_label",
+                "objectType": "subitem_systemfile_filename_type"
               }
             },
             "date": {
-              "@value": "subitem_datetime",
+              "@value": "subitem_systemfile_datetime_date",
               "@attributes": {
-                "dateType": "subitem_type"
+                "dateType": "subitem_systemfile_datetime_type"
               }
             },
             "extent": {
-              "@value": "subitem_size"
+              "@value": "subitem_systemfile_size"
             },
             "version": {
-              "@value": "subitem_version"
+              "@value": "subitem_systemfile_version"
             },
             "mimeType": {
-              "@value": "subitem_mimetype"
+              "@value": "subitem_systemfile_mimetype"
             }
           }
         },
@@ -250,6 +252,8 @@ $(document).ready(function () {
         "spase_mapping": ""
       }
     };
+    //
+
     page_global.table_row_map['form'] = [];
     page_global.table_row_map['schema'] = {
       $schema: "http://json-schema.org/draft-04/schema#",
@@ -413,8 +417,7 @@ $(document).ready(function () {
     } else {
       page_global.table_row_map.mapping['pubdate'] = mapping_value;
     }
-
-    // System mapping
+    // Used last mapping of system properties
     if(src_mapping.hasOwnProperty('system_identifier_doi')) {
       page_global.table_row_map.mapping['system_identifier_doi'] = src_mapping['system_identifier_doi'];
     }
@@ -428,7 +431,6 @@ $(document).ready(function () {
       page_global.table_row_map.mapping['system_file'] = src_mapping['system_file'];
     }
     // End system mapping
-
     // テーブルの行をトラバースし、マップに追加する
     err_input_id = []
 
