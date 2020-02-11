@@ -141,7 +141,7 @@ class AdminResyncClient(BaseView):
     @expose('/run_import/<resync_id>', methods=['GET'])
     def run_import(self, resync_id):
         """Run harvesting."""
-        run_sync_import.apply_async(args=(resync_id
+        run_sync_import.apply_async(args=(resync_id,
                                           ))
         return jsonify(
             success=True
@@ -165,14 +165,11 @@ class AdminResyncClient(BaseView):
     @expose("/run_sync/<resync_id>", methods=['GET'])
     def run_sync(self, resync_id):
         """Sync a resource sync. Save data to local"""
-        from_date = request.args.get('from_date')
-        to_date = request.args.get('to_date')
-        resync_sync.apply_async(args=(resync_id, from_date, to_date
+        resync_sync.apply_async(args=(resync_id,
                                    ))
         return jsonify(
             success=True
         )
-
 
 invenio_admin_resync_client = {
     'view_class': AdminResyncClient,

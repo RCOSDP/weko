@@ -35,17 +35,20 @@ from flask import current_app
 
 from .models import ResyncIndexes, ResyncLogs
 from .utils import get_list_records, process_item, process_sync
+
 logger = get_task_logger(__name__)
 
 
 def is_harvest_running(id, task_id):
     """Check harvest running."""
     actives = inspect().active()
-    for worker in actives:
-        for task in actives[worker]:
-            if task['name'] == 'invenio_resourcesyncclient.tasks.' \
-                               'run_harvesting':
-                if eval(task['args'])[0] == str(id) and task['id'] != task_id:
+    if actives:
+        for worker in actives:
+            for task in actives[worker]:
+                if task['name'] == 'invenio_resourcesyncclient.tasks.' \
+                                   'run_harvesting' and \
+                    eval(task['args'])[0] == str(id) and \
+                        task['id'] != task_id:
                     return True
     return False
 
@@ -56,9 +59,12 @@ def run_sync_import(id):
     if is_harvest_running(id, run_sync_import.request.id):
         return ({'task_state': 'SUCCESS',
                  'task_id': run_sync_import.request.id})
-    start_time = datetime.strptime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+    start_time = datetime.now()
     resync = ResyncIndexes.query.filter_by(id=id).first()
-    resync_log = prepare_log(resync, run_sync_import.request.id,
+    counter = {'processed_items': 0,
+               'created_items': 0, 'updated_items': 0,
+               'deleted_items': 0, 'error_items': 0}
+    resync_log = prepare_log(resync, id, counter, run_sync_import.request.id,
                              log_type='import')
     try:
         DCMapper.update_itemtype_map()
@@ -67,10 +73,11 @@ def run_sync_import(id):
         def sigterm_handler(*args):
             nonlocal pause
             pause = True
+
         signal.signal(signal.SIGTERM, sigterm_handler)
         while True:
             current_app.logger.info('[{0}] [{1}]'.format(
-                                    0, 'Processing records'))
+                0, 'Processing records'))
             # for record_id in records:
             try:
                 hostname = urlparse(resync.base_url)
@@ -84,12 +91,13 @@ def run_sync_import(id):
                         record_id=i,
                         metadata_prefix='jpcoar',
                     )
-                    process_item(record[0], resync, resync_log.counter)
+                    process_item(record[0], resync, counter)
             except Exception as ex:
                 current_app.logger.error(
-                    'Error occurred while processing harvesting item\n' + str(ex))
+                    'Error occurred while processing harvesting item\n' + str(
+                        ex))
                 db.session.rollback()
-                event_counter('error_items', resync_log.counter)
+                event_counter('error_items', counter)
             db.session.commit()
             resync_log.status = 'Successful'
             break
@@ -98,14 +106,15 @@ def run_sync_import(id):
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
     finally:
-        finish_log(resync, resync_log, start_time, run_sync_import.request.id, log_type='import')
+        finish(resync, resync_log, counter, start_time,
+                   run_sync_import.request.id, log_type='import')
 
 
 def get_record(
-        url,
-        record_id=None,
-        metadata_prefix=None,
-        encoding='utf-8'):
+    url,
+    record_id=None,
+    metadata_prefix=None,
+    encoding='utf-8'):
     """Get records by record_id."""
     # Avoid SSLError - dh key too small
     requests.packages.urllib3.disable_warnings()
@@ -124,13 +133,15 @@ def get_record(
 
 
 @shared_task()
-def resync_sync(id, from_date, to_date):
-    if is_harvest_running(id, run_sync_import.request.id):
-        return ({'task_state': 'SUCCESS',
-                 'task_id': run_sync_import.request.id})
-    start_time = datetime.strptime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+def resync_sync(id):
+    """Run resource sync"""
+    start_time = datetime.now()
     resync = ResyncIndexes.query.filter_by(id=id).first()
-    resync_log = prepare_log(resync, resync_sync.request.id, log_type='sync')
+    counter = {'processed_items': 0,
+               'created_items': 0, 'updated_items': 0,
+               'deleted_items': 0, 'error_items': 0}
+    resync_log = prepare_log(resync, id, counter, resync_sync.request.id,
+                             log_type='sync')
 
     try:
         pause = False
@@ -143,7 +154,8 @@ def resync_sync(id, from_date, to_date):
         current_app.logger.info('[{0}] [{1}]'.format(
             0, 'Processing records'))
         try:
-            process_sync(id, from_date, to_date)
+            process_sync(id)
+
         except Exception as e:
             print(str(e))
         resync_log.status = 'Successful'
@@ -153,10 +165,12 @@ def resync_sync(id, from_date, to_date):
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
     finally:
-        finish_log(resync, resync_log, start_time, resync_sync.request.id, log_type='sync')
+        finish(resync, resync_log, counter, start_time,
+                   resync_sync.request.id, log_type='sync')
 
 
-def prepare_log(resync, request_id, log_type):
+def prepare_log(resync, id, counter, request_id, log_type):
+    """Prepare log for resource sync"""
     if is_harvest_running(id, request_id):
         return ({'task_state': 'SUCCESS',
                  'task_id': request_id})
@@ -165,9 +179,6 @@ def prepare_log(resync, request_id, log_type):
     # For registering runtime stats
 
     resync.task_id = current_task.request.id
-    counter = {'processed_items': 0,
-               'created_items': 0, 'updated_items': 0,
-               'deleted_items': 0, 'error_items': 0}
     resync_log = ResyncLogs(
         resync_indexes_id=id,
         status='Running',
@@ -180,15 +191,17 @@ def prepare_log(resync, request_id, log_type):
     return resync_log
 
 
-def finish_log(resync, resync_log, start_time, request_id, log_type):
+def finish(resync, resync_log, counter, start_time, request_id, log_type):
+    """Finish resource sync by logging and save to db"""
     resync.task_id = None
     end_time = datetime.now()
     resync_log.end_time = end_time
+    resync_log.counter = counter
     current_app.logger.info('[{0}] [{1}] END'.format(0, 'Resync ' + log_type))
     db.session.commit()
     return ({'task_state': 'SUCCESS',
-             'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%S%'),
-             'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%S%'),
+             'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%S'),
+             'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%S'),
              'execution_time': str(end_time - start_time),
              'task_name': log_type,
              'task_type': log_type,
