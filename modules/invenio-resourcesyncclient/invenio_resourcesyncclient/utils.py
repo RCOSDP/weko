@@ -278,11 +278,12 @@ def process_sync(resync_id):
                 raise ValueError('Bad URL')
             result = False
             while map[0] != uri_host and not result:
-                result = sync_baseline(map=map,
-                                       base_url=base_url,
-                                       dryrun=False,
-                                       from_date=from_date,
-                                       to_date=to_date)
+                result = sync_baseline(
+                    map=map,
+                    base_url=base_url,
+                    dryrun=False,
+                    from_date=from_date,
+                    to_date=to_date)
             return jsonify(success=True)
         elif mode == current_app.config.get(
             'INVENIO_RESYNC_INDEXES_MODE',
