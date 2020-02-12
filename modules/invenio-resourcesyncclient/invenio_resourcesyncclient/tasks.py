@@ -272,6 +272,7 @@ def init_counter():
 @shared_task
 def run_sync_auto():
     """Run sync auto."""
+    current_app.logger.debug("[0] START RUN SYNC AUTO")
     list_resync = ResyncHandler.get_list_resync()
     for resync in list_resync:
         if resync.status == current_app.config.get(
@@ -283,4 +284,12 @@ def run_sync_auto():
                     resync.id
                 )
             )
+    current_app.logger.debug("[0] END RUN SYNC AUTO")
+    return (
+        {
+            'task_state': 'SUCCESS',
+            'repository_name': 'weko',  # TODO: Set and Grab from config
+            'task_id': run_sync_auto.request.id
+        },
+    )
 
