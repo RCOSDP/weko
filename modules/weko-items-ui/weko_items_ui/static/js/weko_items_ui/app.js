@@ -1123,9 +1123,9 @@ function handleSharePermission(value) {
         let bucketFiles = JSON.parse(sessionStorage.getItem('files'));
         let bucketEndpoints = JSON.parse(sessionStorage.getItem('endpoints'));
         let bucketUrl = sessionStorage.getItem('url');
-        bucketEndpoints.html = '';
-        $scope.currentUrl = window.location.pathname+window.location.search;
-        if (bucketFiles && $scope.currentUrl == bucketUrl){
+        $scope.currentUrl = window.location.pathname + window.location.search;
+        if (bucketFiles && bucketEndpoints && $scope.currentUrl == bucketUrl){
+          bucketEndpoints.html = '';
           $rootScope.filesVM.files = bucketFiles;
           $rootScope.filesVM.invenioFilesEndpoints = bucketEndpoints;
           if (bucketEndpoints.hasOwnProperty('bucket')) {
