@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit API."""
+import copy
 import uuid
 from datetime import datetime, timezone
 
@@ -1031,14 +1032,15 @@ class WekoRecord(Record):
                     if nval['attribute_name'] == 'Reference' \
                             or nval['attribute_type'] == 'file':
                         nval['attribute_value_mlt'] = \
-                            get_all_items(mlt, solst, True)
+                            get_all_items(copy.deepcopy(mlt),
+                                          copy.deepcopy(solst), True)
                     else:
                         is_author = nval['attribute_type'] == 'creator'
                         if is_author:
-                            mlt = get_name_iddentifier_uri(mlt)
+                            mlt = get_name_iddentifier_uri(copy.deepcopy(mlt))
                         nval['attribute_value_mlt'] = \
-                            get_attribute_value_all_items(mlt,
-                                                          solst,
+                            get_attribute_value_all_items(copy.deepcopy(mlt),
+                                                          copy.deepcopy(solst),
                                                           is_author)
                     items.append(nval)
                 else:
