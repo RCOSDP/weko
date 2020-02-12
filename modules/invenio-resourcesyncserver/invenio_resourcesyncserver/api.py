@@ -327,7 +327,7 @@ class ResourceListHandler(object):
                 return True
         return False
 
-    def get_resource_list_xml(self, from_date, to_date):
+    def get_resource_list_xml(self, from_date=None, to_date=None):
         """
         Get content of resource list.
 
@@ -355,7 +355,7 @@ class ResourceListHandler(object):
                     '_updated')))
         return rl.as_xml()
 
-    def get_resource_dump_xml(self, from_date, to_date):
+    def get_resource_dump_xml(self, from_date=None, to_date=None):
         """
         Get content of resource dump.
 
@@ -674,7 +674,7 @@ class ChangeListHandler(object):
                 }
 
     def get_change_list_content_xml(self, from_date,
-                                    from_date_args, to_date_args):
+                                    from_date_args=None, to_date_args=None):
         """
         Get change list xml.
 
