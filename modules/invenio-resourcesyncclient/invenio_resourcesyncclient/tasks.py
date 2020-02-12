@@ -281,7 +281,7 @@ def run_sync_auto():
         ).get("automatic"):
             resync_sync.apply_async(
                 args=(
-                    resync.id
+                    resync.id,
                 )
             )
     current_app.logger.debug("[0] END RUN SYNC AUTO")

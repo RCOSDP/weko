@@ -167,7 +167,7 @@ class AdminResyncClient(BaseView):
         """Sync a resource sync. Save data to local"""
         resync_sync.apply_async(
             args=(
-                resync_id
+                resync_id,
             )
         )
         return jsonify(
