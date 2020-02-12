@@ -76,7 +76,9 @@ class ResourceListHandler(object):
 
     def to_dict(self):
         """Generate Resource Object to Dict."""
-        repository_name = self.index.index_name_english if self.repository_id\
+        repository_name = self.index.index_name_english if str(
+            self.repository_id
+        ) != "0"\
             else 'Root Index'
 
         return dict(**{
@@ -354,7 +356,11 @@ class ResourceListHandler(object):
                     continue
                 id_item = item.get('_source').get('control_number')
                 # url = '{}records/{}'.format(request.url_root, str(id_item))
-                url = '{}resync/{}/records/{}'.format(request.url_root, str(self.index.id), str(id_item))
+                url = '{}resync/{}/records/{}'.format(
+                    request.url_root,
+                    str(self.repository_id),
+                    str(id_item)
+                )
                 rl.add(Resource(url, lastmod=item.get('_source').get(
                     '_updated')))
         return rl.as_xml()
@@ -1000,7 +1006,9 @@ class ChangeListHandler(object):
 
     def to_dict(self):
         """Convert obj to dict."""
-        repository_name = self.index.index_name_english if self.repository_id \
+        repository_name = self.index.index_name_english if str(
+            self.repository_id
+        ) != "0" \
             else "Root Index",
         return dict(**{
             'id': self.id,
