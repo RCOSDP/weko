@@ -721,9 +721,11 @@ class ChangeListHandler(object):
                     data.get('record_id')
                 )
                 latest_pid = PIDVersioning(child=pid_object).last_child
-                current_app.logger.debug("="*60)
-                current_app.logger.debug(latest_pid)
-                if self._next_change(data, record_changes) and data.get(
+                is_latest = str(latest_pid.pid_value) == "{}.{}".format(
+                    data.get('record_id'),
+                    data.get('record_version')
+                )
+                if not is_latest and data.get(
                     'status'
                 ) != 'deleted':
                     loc = '{}resync/{}/records/{}'.format(
