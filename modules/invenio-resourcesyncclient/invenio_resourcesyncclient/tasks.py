@@ -168,6 +168,8 @@ def resync_sync(id):
     )
 
     try:
+        pause = False
+
         def sigterm_handler(*args):
             nonlocal pause
             pause = True
