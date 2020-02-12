@@ -41,7 +41,6 @@ import os
 from .config import INVENIO_RESYNC_WEKO_DEFAULT_DIR, INVENIO_RESYNC_INDEXES_MODE
 
 
-
 def read_capability(url):
     """Read capability of an url"""
     s = Sitemap()
