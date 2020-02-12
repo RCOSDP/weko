@@ -51,10 +51,3 @@ INVENIO_RESYNC_LOGS_STATUS = {
     'running': 'Running',
     'failed': 'Failed'
 }
-
-CELERYBEAT_SCHEDULE = {
-    'indexer': {
-        'task': 'invenio_resourcesyncclient.tasks.run_sync_auto',
-        'schedule': timedelta(minutes=5),
-    },
-}
