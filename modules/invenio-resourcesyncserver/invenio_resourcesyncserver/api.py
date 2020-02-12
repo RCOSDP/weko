@@ -45,6 +45,8 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.models import PersistentIdentifier
 
 from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE
 from .models import ChangeListIndexes, ResourceListIndexes
@@ -706,6 +708,13 @@ class ChangeListHandler(object):
                 if to_date_args and to_date_args < parse_date(
                         data.get("updated")):
                     continue
+                pid_object = PersistentIdentifier.get(
+                    'recid',
+                    data.get('record_id')
+                )
+                latest_pid = PIDVersioning(child=pid_object).last_child
+                current_app.logger.debug("="*60)
+                current_app.logger.debug(latest_pid)
                 if self._next_change(data, record_changes) and data.get(
                     'status'
                 ) != 'deleted':
