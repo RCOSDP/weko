@@ -1128,9 +1128,14 @@ function handleSharePermission(value) {
         if (bucketFiles && $scope.currentUrl == bucketUrl){
           $rootScope.filesVM.files = bucketFiles;
           $rootScope.filesVM.invenioFilesEndpoints = bucketEndpoints;
+          if (bucketEndpoints.hasOwnProperty('bucket')) {
+            $rootScope.$broadcast(
+              'invenio.records.endpoints.updated', bucketEndpoints
+            );
+          }
         }
         $scope.initFilenameList();
-
+        //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
           endpoints = JSON.parse($('#hide_endpoints').text());
