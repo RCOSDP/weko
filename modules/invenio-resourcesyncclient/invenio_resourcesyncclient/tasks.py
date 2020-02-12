@@ -24,8 +24,7 @@ import signal
 import requests
 from lxml import etree
 from urllib.parse import urlparse
-from celery import current_task, shared_task
-from celery.task.control import inspect
+from celery import shared_task
 from celery.utils.log import get_task_logger
 from invenio_db import db
 from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
@@ -178,7 +177,7 @@ def resync_sync(id):
         current_app.logger.info('[{0}] [{1}]'.format(
             0, 'Processing records'))
         try:
-            process_sync(id)
+            process_sync(id, counter)
 
         except Exception as e:
             print(str(e))

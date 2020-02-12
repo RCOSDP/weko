@@ -41,6 +41,7 @@ import os
 from .config import INVENIO_RESYNC_WEKO_DEFAULT_DIR, INVENIO_RESYNC_INDEXES_MODE
 
 
+
 def read_capability(url):
     """Read capability of an url"""
     s = Sitemap()
@@ -54,12 +55,12 @@ def read_capability(url):
     return capability
 
 
-def sync_baseline(map, base_url, dryrun=False, from_date=None, to_date=None):
+def sync_baseline(map, base_url, counter, dryrun=False, from_date=None, to_date=None):
     """Run resync baseline"""
     client = Client()
     # ignore fail to continue running, log later
     client.ignore_failures = True
-    init_logging(verbose=True)
+    # init_logging(verbose=True)
     try:
         if from_date:
             base_url = set_query_parameter(base_url, 'from_date', from_date)
@@ -71,6 +72,7 @@ def sync_baseline(map, base_url, dryrun=False, from_date=None, to_date=None):
         client.sitemap_name = base_url
         client.dryrun = dryrun
         client.set_mappings(map)
+        result = sync_audit(map)
         client.baseline_or_audit()
         return True
     except MapperError:
@@ -78,8 +80,15 @@ def sync_baseline(map, base_url, dryrun=False, from_date=None, to_date=None):
         paths = map[0].rsplit('/', 1)
         map[0] = paths[0]
         return False
+    except PermissionError:
+        # error when create client state, does not matter, return true here
+        counter.update({'created_items' : result.get('created')})
+        counter.update({'updated_items' : result.get('updated')})
+        counter.update({'deleted_items' : result.get('deleted')})
+        return True
+
     except Exception as e:
-        raise e
+        current_app.logger.error('Error when Sync :' + str(e))
 
 
 def sync_audit(map):
@@ -88,7 +97,7 @@ def sync_audit(map):
     # ignore fail to continue running, log later
     client.ignore_failures = True
     client.set_mappings(map)
-    init_logging(verbose=True)
+    # init_logging(verbose=True)
     src_resource_list = client.find_resource_list()
     rlb = ResourceListBuilder(mapper=client.mapper)
     dst_resource_list = rlb.from_disk()
@@ -105,19 +114,19 @@ def sync_audit(map):
 
 def sync_incremental(map, base_url, from_date, to_date):
     """Run resync incremental"""
-    init_logging(verbose=True)
+    # init_logging(verbose=True)
     client = Client()
     client.ignore_failures = True
     try:
         single_sync_incremental(map, base_url, from_date, to_date)
         return True
     except MapperError as e:
-        print(e)
+        current_app.logger.info(e)
         paths = map[0].rsplit('/', 1)
         map[0] = paths[0]
     except Exception as e:
         # maybe url contain a list of changelist, instead of changelist
-        print(e)
+        current_app.logger.info(e)
         s = Sitemap()
         try:
             docs = s.parse_xml(url_or_file_open(base_url))
@@ -249,7 +258,7 @@ def process_item(record, resync, counter):
         event_counter('deleted_items', counter)
 
 
-def process_sync(resync_id):
+def process_sync(resync_id, counter):
     from .api import ResyncHandler
     resync_index = ResyncHandler.get_resync(resync_id)
     if not resync_index:
@@ -265,7 +274,6 @@ def process_sync(resync_id):
     uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
     from_date = resync_index.from_date
     to_date = resync_index.to_date
-
     try:
         if mode == current_app.config.get(
             'INVENIO_RESYNC_INDEXES_MODE',
@@ -277,12 +285,12 @@ def process_sync(resync_id):
                 raise ValueError('Bad URL')
             result = False
             while map[0] != uri_host and not result:
-                result = sync_baseline(
-                    map=map,
-                    base_url=base_url,
-                    dryrun=False,
-                    from_date=from_date,
-                    to_date=to_date)
+                result = sync_baseline(map=map,
+                                       base_url=base_url,
+                                       counter=counter,
+                                       dryrun=False,
+                                       from_date=from_date,
+                                       to_date=to_date)
             return jsonify(success=True)
         elif mode == current_app.config.get(
             'INVENIO_RESYNC_INDEXES_MODE',
