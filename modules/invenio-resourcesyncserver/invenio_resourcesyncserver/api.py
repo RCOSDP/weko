@@ -728,7 +728,7 @@ class ChangeListHandler(object):
                 ) != 'deleted':
                     loc = '{}resync/{}/records/{}'.format(
                         request.url_root,
-                        self.index.id,
+                        self.repository_id,
                         '{}.{}'.format(
                             data.get('record_id'),
                             data.get('record_version')
@@ -737,7 +737,7 @@ class ChangeListHandler(object):
                 else:
                     loc = '{}resync/{}/records/{}'.format(
                         request.url_root,
-                        self.index.id,
+                        self.repository_id,
                         data.get('record_id')
                     )
                 rc = Resource(
