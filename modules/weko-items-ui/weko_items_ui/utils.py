@@ -43,7 +43,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
-from jsonschema import ValidationError
+from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -411,6 +411,7 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     try:
         validation_data.validate()
     except ValidationError as error:
+        current_app.logger.error(error)
         result["is_valid"] = False
         if 'required' == error.validator:
             result['error'] = _('Please input all required item.')
@@ -418,6 +419,14 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
             result['error'] = _('Please input the correct data.')
         else:
             result['error'] = _(error.message)
+    except SchemaError as error:
+        current_app.logger.error(error)
+        result["is_valid"] = False
+        result['error'] = 'Schema Error:<br/><br/>' + _(error.message)
+    except Exception as ex:
+        current_app.logger.error(ex)
+        result["is_valid"] = False
+        result['error'] = _(error.message)
 
 
 def update_json_schema_by_activity_id(json_data, activity_id):
@@ -577,7 +586,7 @@ def make_stats_tsv(item_type_id, recids):
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             list_attr = item_attrs.split('.')
-            max_length = None
+            max_length = 0
             if len(list_attr) == 1:
                 return self.attr_data[item_attrs]['max_size']
             elif len(list_attr) == 2:

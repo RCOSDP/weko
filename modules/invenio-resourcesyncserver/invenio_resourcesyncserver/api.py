@@ -48,7 +48,7 @@ from weko_records_ui.permissions import check_file_download_permission
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 
-from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE
+from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE, WEKO_ROOT_INDEX
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
 
@@ -315,18 +315,20 @@ class ResourceListHandler(object):
         """
         from .utils import get_real_path
         if self.status:
-            if self.repository_id != 0:
-                if self.index.public_state:
-                    if record_id:
-                        record = WekoRecord.get_record_by_pid(record_id)
-                        if record and record.get("path"):
-                            list_path = get_real_path(record.get("path"))
-                            if str(self.repository_id) in list_path:
-                                return True
-                    else:
-                        return True
-            else:
+            if self.repository_id == current_app.config.get(
+                "WEKO_ROOT_INDEX",
+                WEKO_ROOT_INDEX
+            ):
                 return True
+            if self.index.public_state:
+                if record_id:
+                    record = WekoRecord.get_record_by_pid(record_id)
+                    if record and record.get("path"):
+                        list_path = get_real_path(record.get("path"))
+                        if str(self.repository_id) in list_path:
+                            return True
+                else:
+                    return True
         return False
 
     def get_resource_list_xml(self, from_date=None, to_date=None):
@@ -1109,7 +1111,10 @@ class ChangeListHandler(object):
         :return: True if record has register index_id
         """
         from .utils import get_real_path
-        if self.repository_id == 0:
+        if self.repository_id == current_app.config.get(
+            "WEKO_ROOT_INDEX",
+            WEKO_ROOT_INDEX
+        ):
             return True
         if self.status:
             record_pid = WekoRecord.get_pid(record_id)

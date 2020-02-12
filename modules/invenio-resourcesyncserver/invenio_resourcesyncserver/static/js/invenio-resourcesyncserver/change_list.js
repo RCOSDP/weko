@@ -435,7 +435,7 @@ class CreateResourceComponent extends React.Component {
               value={state.repository_id}
             >
               <option value="" disabled></option>
-              <option value="0" >Root Index</option>
+              <option value="0">Root Index</option>
               {state.tree_list.map(item => {
                 return <option value={item.id}>{item.value}</option>;
               })}
@@ -767,7 +767,7 @@ class EditResourceComponent extends React.Component {
               }}
               value={state.repository_id}
             >
-              <option value="0" >Root Index</option>
+              <option value="0">Root Index</option>
               {state.tree_list.map(item => {
                 return <option value={item.id}>{item.value}</option>;
               })}
