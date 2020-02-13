@@ -193,13 +193,11 @@ def get_list_records(index_id, base_url, dir):
         ) in list:
             # modify to make sure correct path is used
             record_list = get_items_by_index_tree(index_id)
-            dir = dir + '/' + current_app.config.get(
+            target_dir = dir + '/' + current_app.config.get(
                 'INVENIO_RESYNC_WEKO_DEFAULT_DIR',
                 INVENIO_RESYNC_WEKO_DEFAULT_DIR
             )
-            current_app.logger.info('===================')
-            current_app.logger.info(dir)
-            result = os.listdir(dir)
+            result = os.listdir(target_dir)
             if record_list:
                 # not an empty index
                 # remove 'same' records out of list
@@ -369,7 +367,7 @@ def remove_same_resource_of_list(base_url, save_dir, records_id):
         src_resource_list.compare(remote_resource_list)
     for item in same:
         uri = item.uri
-        record_id = uri.rsplit('/', 1)
+        record_id = uri.rsplit('/', 1)[1]
         if record_id in records_id:
             records_id.remove(record_id)
     return records_id
