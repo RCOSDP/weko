@@ -703,3 +703,59 @@ msgstr "終了"
 
 msgid "Position(Others)"
 msgstr "役職（その他）"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "write your own license"
+msgstr "自由入力"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0: Attribution"
+msgstr "Creative Commons 3.0: 表示"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0: Attribution - ShareAlike"
+msgstr "Creative Commons 3.0: 表示 - 継承"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0: Attribution - NoDerivatives"
+msgstr "Creative Commons 3.0: 表示 - 改変禁止"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0: Attribution - NonCommercial"
+msgstr "Creative Commons 3.0: 表示 - 非営利"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0: Attribution - NonCommercial - ShareAlike"
+msgstr "Creative Commons 3.0: 表示 - 非営利 - 継承"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0: Attribution - NonCommercial - NoDerivatives"
+msgstr "Creative Commons 3.0: 表示 - 非営利 - 改変禁止"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0: Attribution"
+msgstr "Creative Commons 4.0: 表示"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0: Attribution - ShareAlike"
+msgstr "Creative Commons 4.0: 表示 - 継承"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0: Attribution - NoDerivatives"
+msgstr "Creative Commons 4.0: 表示 - 改変禁止"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0: Attribution - NonCommercial"
+msgstr "Creative Commons 4.0: 表示 - 非営利"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0: Attribution - NonCommercial - ShareAlike"
+msgstr "Creative Commons 4.0: 表示 - 非営利 - 継承"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0: Attribution - NonCommercial - NoDerivatives"
+msgstr "Creative Commons 4.0: 表示 - 非営利 - 改変禁止"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons: Public Domain Dedication"
+msgstr "Creative Commons: パブリック・ドメイン提供"
