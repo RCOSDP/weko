@@ -148,8 +148,7 @@ class ItemManagementBulkUpdate(BaseView):
             current_app.config['WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE'],
             fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS'][
                 'fields'],
-            licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS'][
-                'licences'],
+            licences=current_app.config['WEKO_RECORDS_UI_LICENSE_DICT'],
             management_type='update',
             detail_condition=detail_condition)
 

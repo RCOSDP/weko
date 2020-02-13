@@ -1045,6 +1045,42 @@ function handleSharePermission(value) {
         }
       };
 
+      $scope.setDataForLicenseType = function () {
+        var list_license = $("#list_license_data").val();
+        if (!list_license) {
+          return;
+        }
+        var listLicenseObj = JSON.parse(list_license);
+        var licenseTypeName = 'licensetype';
+        var schema = $rootScope.recordsVM.invenioRecordsSchema;
+        var listLicenseTypeKey = [];
+        Object.entries(schema.properties).forEach(
+          ([key, value]) => {
+            // Find form that contains license type obj
+            if (value.items && value.items.properties && value.items.properties.hasOwnProperty(licenseTypeName)) {
+              listLicenseEnum = []
+              // Collect list license
+              $.each(listLicenseObj, function (ind, val) {
+                listLicenseEnum.push(val['value']);
+              });
+              //set enum of license type form as list license above
+              value.items.properties[licenseTypeName]['enum'] = listLicenseEnum;
+              listLicenseTypeKey.push(key);
+            }
+          });
+        if (listLicenseTypeKey.length > 0) {
+          $.each(listLicenseTypeKey, function (ind, val) {
+            containLicenseTypeForm = $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == val);
+            // The index of license type is always "3", correspond to its property
+            if (containLicenseTypeForm && containLicenseTypeForm.items && containLicenseTypeForm.items.length >= 2) {
+              licenseTypeForm = containLicenseTypeForm.items[2];
+              // Set title map by listLicenseObj above
+              licenseTypeForm['titleMap'] = listLicenseObj;
+            }
+          });
+        }
+      }
+
       $scope.autoSetCorrespondingUsageAppId = function () {
         if ($scope.usage_report_activity_id != ''){
           Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
@@ -1115,6 +1151,7 @@ function handleSharePermission(value) {
         $scope.initUserGroups();
         $scope.initFilenameList();
         $scope.searchTypeKey();
+        $scope.setDataForLicenseType();
         $scope.renderValidationErrorList();
         $scope.autoSetTitle();
         $scope.initCorrespondingIdList();

@@ -338,6 +338,9 @@
           {% if user_profile %}
             {% set user_profile_data = user_profile|tojson %}
           {% endif %}
+          {% if list_license %}
+            {% set list_license_data = list_license|tojson %}
+          {% endif %}
           <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{title}}'>
           <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
           <input type="hidden" id="action_endpoint_key" name="action_endpoint_key" value='{{endpoint_key}}'>
@@ -348,6 +351,7 @@
           <input type="hidden" id="not_existed_index_tree_err" name="not_existed_index_tree_err" value="{{_('Specified index does not exist')}}">
           <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id" value="{{_('Specified ID does not exist.')}}">
           <input type="hidden" id="user_info_data" name="user_info_data" value='{{ user_profile_data }}'>
+          <input type="hidden" id="list_license_data" name="list_license_data" value='{{ list_license_data }}'>
           <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
           <input type="hidden" id="enable_feedback_maillist" name="enable_feedback_maillist" value='{{enable_feedback_maillist}}'>
           {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
