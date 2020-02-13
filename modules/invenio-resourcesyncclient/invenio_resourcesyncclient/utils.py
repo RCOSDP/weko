@@ -54,7 +54,8 @@ def read_capability(url):
     return capability
 
 
-def sync_baseline(map, base_url, counter, dryrun=False, from_date=None, to_date=None):
+def sync_baseline(map, base_url, counter, dryrun=False,
+                  from_date=None, to_date=None):
     """Run resync baseline"""
     client = Client()
     # ignore fail to continue running, log later
@@ -73,6 +74,7 @@ def sync_baseline(map, base_url, counter, dryrun=False, from_date=None, to_date=
         client.set_mappings(map)
         result = sync_audit(map)
         client.baseline_or_audit()
+        update_counter(counter, result)
         return True
     except MapperError:
         # if mapper error then remove one element in url and retry
@@ -81,9 +83,7 @@ def sync_baseline(map, base_url, counter, dryrun=False, from_date=None, to_date=
         return False
     except PermissionError:
         # error when create client state, does not matter, return true here
-        counter.update({'created_items' : result.get('created')})
-        counter.update({'updated_items' : result.get('updated')})
-        counter.update({'deleted_items' : result.get('deleted')})
+        update_counter(counter, result)
         return True
 
     except Exception as e:
@@ -181,8 +181,9 @@ def set_query_parameter(url, param_name, param_value):
     return urlunsplit((scheme, netloc, path, new_query_string, fragment))
 
 
-def get_list_records(dir):
-    """Get list records in local dir."""
+def get_list_records(index_id, base_url, dir):
+    """Get list records in local dir. Only get updated"""
+    from invenio_resourcesyncserver.query import get_items_by_index_tree
     result = []
     try:
         list = os.listdir(dir)
@@ -191,13 +192,25 @@ def get_list_records(dir):
             INVENIO_RESYNC_WEKO_DEFAULT_DIR
         ) in list:
             # modify to make sure correct path is used
+            record_list = get_items_by_index_tree(index_id)
             dir = dir + '/' + current_app.config.get(
                 'INVENIO_RESYNC_WEKO_DEFAULT_DIR',
                 INVENIO_RESYNC_WEKO_DEFAULT_DIR
             )
-            return os.listdir(dir)
+            current_app.logger.info('===================')
+            current_app.logger.info(dir)
+            result = os.listdir(dir)
+            if record_list:
+                # not an empty index
+                # remove 'same' records out of list
+                remove_same_resource_of_list(base_url, dir, result)
+                return result
+            else:
+                return result
     except FileNotFoundError:
         return result
+    except Exception as e:
+        raise e
 
 
 def process_item(record, resync, counter):
@@ -309,7 +322,7 @@ def process_sync(resync_id, counter):
         elif mode == current_app.config.get(
             'INVENIO_RESYNC_INDEXES_MODE',
             INVENIO_RESYNC_INDEXES_MODE
-        ).get('Incremental'):
+        ).get('incremental'):
             if not capability or (
                 capability != 'changelist' and
                     capability != 'changedump'):
@@ -322,3 +335,41 @@ def process_sync(resync_id, counter):
                 return jsonify({'result': result})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
+
+
+def update_counter(counter, result):
+    """Update sync result to counter"""
+    counter.update({'created_items': result.get('created')})
+    counter.update({'updated_items': result.get('updated')})
+    counter.update({'deleted_items': result.get('deleted')})
+
+
+def remove_same_resource_of_list(base_url, save_dir, records_id):
+    """Remove 'same' record id out of list records"""
+    from .tasks import init_counter
+    counter = init_counter()
+    map = [base_url]
+    if save_dir:
+        map.append(save_dir)
+    parts = urlsplit(map[0])
+    uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
+    result = False
+    while map[0] != uri_host and not result:
+        result = sync_baseline(map=map,
+                               counter=counter,
+                               base_url=base_url,
+                               dryrun=True)
+    client = Client()
+    client.ignore_failures = True
+    client.set_mappings(map)
+    remote_resource_list = client.find_resource_list()
+    rlb = ResourceListBuilder(set_hashes=client.hashes, mapper=client.mapper)
+    src_resource_list = rlb.from_disk()
+    (same, updated, deleted, created) = \
+        src_resource_list.compare(remote_resource_list)
+    for item in same:
+        uri = item.uri
+        record_id = uri.rsplit('/', 1)
+        if record_id in records_id:
+            records_id.remove(record_id)
+    return records_id
