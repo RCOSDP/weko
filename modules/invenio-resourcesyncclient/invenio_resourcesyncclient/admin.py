@@ -174,6 +174,38 @@ class AdminResyncClient(BaseView):
             success=True
         )
 
+    @expose("/toggle_auto/<resync_id>", methods=['POST'])
+    def toggle_auto(self, resync_id):
+        """Sync a resource sync. Save data to local"""
+        resync = ResyncHandler.get_resync(resync_id)
+        if resync and resync.status == current_app.config.get(
+            "INVENIO_RESYNC_INDEXES_STATUS",
+            INVENIO_RESYNC_INDEXES_STATUS
+        ).get('automatic'):
+            result = resync.update(request.get_json())
+            if result.get('success'):
+                new_resync = result.get("data")
+                if new_resync.get('is_running'):
+                    resync_sync.apply_async(
+                        args=(
+                            resync_id,
+                        )
+                    )
+                return jsonify(
+                    success=result.get('success'),
+                    data=result.get("data")
+                )
+            else:
+                return jsonify(
+                    success=False,
+                    errmsg=result.get("message")
+                )
+        else:
+            return jsonify(
+                success=False,
+                errmsg=["Resync is not automatic"]
+            )
+
 
 invenio_admin_resync_client = {
     'view_class': AdminResyncClient,

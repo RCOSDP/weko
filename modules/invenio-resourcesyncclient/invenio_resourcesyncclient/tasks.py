@@ -35,7 +35,8 @@ from flask import current_app
 from .api import ResyncHandler
 from .models import ResyncIndexes, ResyncLogs
 from .utils import get_list_records, process_item, process_sync
-from .config import INVENIO_RESYNC_LOGS_STATUS, INVENIO_RESYNC_INDEXES_STATUS
+from .config import INVENIO_RESYNC_LOGS_STATUS, INVENIO_RESYNC_INDEXES_STATUS, \
+    INVENIO_RESYNC_INDEXES_MODE
 
 logger = get_task_logger(__name__)
 
@@ -115,7 +116,7 @@ def run_sync_import(id):
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
     finally:
-        finish(
+        return finish(
             resync,
             resync_log,
             counter,
@@ -194,7 +195,7 @@ def resync_sync(id):
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
     finally:
-        finish(
+        return finish(
             resync,
             resync_log,
             counter,
@@ -235,9 +236,13 @@ def finish(resync, resync_log, counter, start_time, request_id, log_type):
     current_app.logger.info('[{0}] [{1}] END'.format(0, 'Resync ' + log_type))
     db.session.commit()
     if resync.status == current_app.config.get(
-            "INVENIO_RESYNC_INDEXES_STATUS",
-            INVENIO_RESYNC_INDEXES_STATUS
-        ).get("automatic") and resync_log.log_type == 'sync':
+        "INVENIO_RESYNC_INDEXES_STATUS",
+        INVENIO_RESYNC_INDEXES_STATUS
+    ).get("automatic") and resync_log.log_type == 'sync' and  \
+        resync.resync_mode != current_app.config.get(
+            "INVENIO_RESYNC_INDEXES_MODE",
+            INVENIO_RESYNC_INDEXES_MODE
+    ).get("audit"):
         run_sync_import.apply_async(
             args=(
                 resync.id,
@@ -278,7 +283,7 @@ def run_sync_auto():
         if resync.status == current_app.config.get(
             "INVENIO_RESYNC_INDEXES_STATUS",
             INVENIO_RESYNC_INDEXES_STATUS
-        ).get("automatic"):
+        ).get("automatic") and resync.is_running:
             resync_sync.apply_async(
                 args=(
                     resync.id,

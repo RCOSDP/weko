@@ -9,6 +9,7 @@ const urlGetList = window.location.origin + "/admin/resync/get_list";
 const urlRunResync = window.location.origin + "/admin/resync/run_import";
 const urlGetLogs = window.location.origin + "/admin/resync/get_logs";
 const urlSync = window.location.origin + "/admin/resync/run_sync";
+const urltoggleRunning = window.location.origin + "/admin/resync/toggle_auto";
 const urlGetTreeList = window.location.origin + "/api/tree";
 const status = JSON.parse($("#status").text())
 const resync_mode = JSON.parse($("#resync_mode").text())
@@ -424,7 +425,9 @@ class CreateResyncComponent extends React.Component {
     const {mode} = this.props
     if (mode ==='edit'){
       this.setState({
-        ...this.props.select_item
+        ...this.props.select_item,
+        from_date: this.props.select_item.from_date ? moment(this.props.select_item.from_date).format("MM/DD/YYYY") : "",
+        to_date: this.props.select_item.to_date ? moment(this.props.select_item.to_date).format("MM/DD/YYYY"): ""
       })
     }
   }
@@ -698,6 +701,7 @@ class DetailResourceComponent extends React.Component {
         console.log(res)
         if (res.success){
           alert("Sync Success")
+          this.handleGetLogs()
         }
       })
       .catch(() => alert("Error in Sync"));
@@ -714,7 +718,8 @@ class DetailResourceComponent extends React.Component {
     })
       .then(res => res.json())
       .then(res => {
-        console.log(res)
+        alert("Import Success")
+        this.handleGetLogs()
       })
       .catch(() => alert("Error in Import"));
   }
@@ -736,13 +741,40 @@ class DetailResourceComponent extends React.Component {
           logs: res.logs || []
         })
         const that = this
-        setTimeout(function(){
-          that.handleGetLogs()
-        }, 3000);
+        if (res.logs.filter(item => !item.end_time).length) {
+          setTimeout(function(){
+            that.handleGetLogs()
+          }, 3000);
+        }
       }
 
     })
     .catch(() => alert("Error in get logs"));
+  }
+
+  toggleRunning() {
+  console.log("asdfadsf")
+    const {id} = this.state;
+    const {is_running} = this.state;
+    const url =urltoggleRunning+"/"+id
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify({is_running: !is_running}),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          this.setState({
+            ...res.data
+          })
+        } else {
+          alert(res.errmsg.join("\n"));
+        }
+      })
+      .catch(() => alert("Error in Create"));
   }
 
   componentDidMount(){
@@ -796,7 +828,10 @@ class DetailResourceComponent extends React.Component {
                 this.state.status === 'Automatic' ? (
                   <tr>
                     <td><b>Running</b></td>
-                    <td><button className={`btn ${this.state.is_running ? "btn-success": "btn-danger"}`}>{this.state.is_running === true ? "ON" : "OFF"}</button></td>
+                    <td><button
+                      className={`btn ${this.state.is_running ? "btn-success": "btn-danger"}`}
+                      onClick={()=>{this.toggleRunning()}}
+                      >{this.state.is_running === true ? "ON" : "OFF"}</button></td>
                   </tr>
                 ) : (
                   <tr>
@@ -806,10 +841,13 @@ class DetailResourceComponent extends React.Component {
                         className="btn btn-primary"
                         onClick={()=>this.handleSync()}
                       >Sync</button>
-                      <button
+                      {
+                        this.state.resync_mode !== resync_mode.audit && <button
                         className="btn btn-primary"
                         onClick={()=>this.handleImport()}
                        >Import</button>
+                      }
+
                     </td>
                   </tr>
                 )
