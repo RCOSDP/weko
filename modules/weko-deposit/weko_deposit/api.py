@@ -37,7 +37,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.serializers.utils import serialize_relations
-from invenio_pidstore.errors import PIDInvalidAction
+from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
@@ -1047,6 +1047,17 @@ class WekoRecord(Record):
             return items
         except BaseException:
             abort(500)
+
+    @property
+    def doi(self):
+        """Get pid_value of doi identifier."""
+        parent_pid = self.pid.pid_value.split('.')[0]
+        try:
+            doi = PersistentIdentifier.get('doi', parent_pid)
+        except PIDDoesNotExistError:
+            return None
+
+        return doi.pid_value
 
     @classmethod
     def get_record_by_pid(cls, pid):
