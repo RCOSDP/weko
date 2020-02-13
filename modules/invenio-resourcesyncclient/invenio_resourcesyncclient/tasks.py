@@ -85,7 +85,9 @@ def run_sync_import(id):
             # for record_id in records:
             try:
                 hostname = urlparse(resync.base_url)
-                records_id = get_list_records(resync.resync_save_dir)
+                records_id = get_list_records(resync.index_id,
+                                              resync.base_url,
+                                              resync.resync_save_dir)
                 for i in records_id:
                     record = get_record(
                         url='{}://{}/oai2d'.format(

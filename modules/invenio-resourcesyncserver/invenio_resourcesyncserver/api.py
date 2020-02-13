@@ -1253,7 +1253,7 @@ class ChangeListHandler(object):
         try:
             ret = datetime.datetime.strptime(date_from, r"%Y%m%d")
 
-            if self.publish_date < ret < datetime.datetime.utcnow():
+            if self.publish_date <= ret < datetime.datetime.utcnow():
                 return ret
         except ValueError:
             current_app.logger.debug("Incorrect datetime format, should be "
