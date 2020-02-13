@@ -650,8 +650,7 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
                         d[item_name] = val
                     elif isinstance(val, list) and len(val) > 0 and isinstance(
                             val[0], str):
-                        val = ', '.join(val)
-                        d[item_name] = val
+                        d[item_name] = ', '.join(val)
                     else:
                         # parents level
                         # check if have any child

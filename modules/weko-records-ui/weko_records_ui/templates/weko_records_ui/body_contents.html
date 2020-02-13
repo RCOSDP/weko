@@ -28,6 +28,8 @@
   {% assets "weko_records_ui_file_action_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
+{%- set items_show_list = record.items_show_list -%}
+
 {% from "weko_records_ui/item_detail.html" import output_item_detail %}
 {% from "weko_records_ui/_macros.html" import check_download_file %}
 <div class="panel-group">
@@ -227,7 +229,7 @@
           {%- endif %}
 
           <div class="table-responsive" style="display: inline-block; _display: inline;">
-              {{ output_item_detail(record, files_thumbnail, pid, true, is_logged_in) }}
+              {{ output_item_detail(record, files_thumbnail, pid, items_show_list, true, is_logged_in) }}
           </div>
           {%- if 'main_entry_personal_name' in record %}
           <p class="record_authors">

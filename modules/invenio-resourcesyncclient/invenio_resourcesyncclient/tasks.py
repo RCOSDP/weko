@@ -35,7 +35,7 @@ from flask import current_app
 from .api import ResyncHandler
 from .models import ResyncIndexes, ResyncLogs
 from .utils import get_list_records, process_item, process_sync
-from .config import INVENIO_RESYNC_LOGS_STATUS
+from .config import INVENIO_RESYNC_LOGS_STATUS, INVENIO_RESYNC_INDEXES_STATUS
 
 logger = get_task_logger(__name__)
 
@@ -234,6 +234,16 @@ def finish(resync, resync_log, counter, start_time, request_id, log_type):
     resync_log.counter = counter
     current_app.logger.info('[{0}] [{1}] END'.format(0, 'Resync ' + log_type))
     db.session.commit()
+    if resync.status == current_app.config.get(
+            "INVENIO_RESYNC_INDEXES_STATUS",
+            INVENIO_RESYNC_INDEXES_STATUS
+        ).get("automatic") and resync_log.log_type == 'sync':
+        run_sync_import.apply_async(
+            args=(
+                resync.id,
+            )
+        )
+
     return (
         {
             'task_state': 'SUCCESS',
@@ -257,3 +267,29 @@ def init_counter():
         'deleted_items': 0,
         'error_items': 0
     }
+
+
+@shared_task
+def run_sync_auto():
+    """Run sync auto."""
+    current_app.logger.debug("[0] START RUN SYNC AUTO")
+    list_resync = ResyncHandler.get_list_resync()
+    for resync in list_resync:
+        if resync.status == current_app.config.get(
+            "INVENIO_RESYNC_INDEXES_STATUS",
+            INVENIO_RESYNC_INDEXES_STATUS
+        ).get("automatic"):
+            resync_sync.apply_async(
+                args=(
+                    resync.id,
+                )
+            )
+    current_app.logger.debug("[0] END RUN SYNC AUTO")
+    return (
+        {
+            'task_state': 'SUCCESS',
+            'repository_name': 'weko',  # TODO: Set and Grab from config
+            'task_id': run_sync_auto.request.id
+        },
+    )
+

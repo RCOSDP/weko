@@ -165,11 +165,15 @@ class AdminResyncClient(BaseView):
     @expose("/run_sync/<resync_id>", methods=['GET'])
     def run_sync(self, resync_id):
         """Sync a resource sync. Save data to local"""
-        resync_sync.apply_async(args=(resync_id,
-                                   ))
+        resync_sync.apply_async(
+            args=(
+                resync_id,
+            )
+        )
         return jsonify(
             success=True
         )
+
 
 invenio_admin_resync_client = {
     'view_class': AdminResyncClient,

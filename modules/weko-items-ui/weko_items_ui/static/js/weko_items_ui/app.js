@@ -2005,7 +2005,8 @@ function handleSharePermission(value) {
         return true;
       }
 
-      $scope.updateDataJson = async function (activityId, steps, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+      $scope.updateDataJson = async function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+        $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
             $("#inputModal").html(modalcontent);
@@ -2127,8 +2128,12 @@ function handleSharePermission(value) {
           function error(response) {
             //alert(response);
             var modalcontent = response;
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+            if (response.status == 400) {
+              window.location.reload();
+            } else {
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
+            }
           }
         );
       }
@@ -2137,6 +2142,7 @@ function handleSharePermission(value) {
         const actionID = cur_action_id;// Item Registration's Action ID
         let emails = $scope.feedback_emails;
         let result = true;
+        if (!emails.length) return true
         $.ajax({
           url: '/workflow/save_feedback_maillist/'+ activityID+ '/'+ actionID,
           headers: {

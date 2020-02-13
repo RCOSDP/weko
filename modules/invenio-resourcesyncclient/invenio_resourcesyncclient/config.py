@@ -10,6 +10,7 @@
 
 # TODO: This is an example file. Remove it if your package does not use any
 # extra configuration variables.
+from datetime import timedelta
 
 INVENIO_RESOURCESYNCCLIENT_DEFAULT_VALUE = 'foobar'
 """Default value for the application."""
