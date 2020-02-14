@@ -37,7 +37,6 @@ from lxml import etree
 from weko_deposit.api import WekoDeposit
 from weko_records_ui.utils import soft_delete
 from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
-import os
 from .config import INVENIO_RESYNC_WEKO_DEFAULT_DIR, INVENIO_RESYNC_INDEXES_MODE
 import json
 
@@ -63,7 +62,6 @@ def sync_baseline(map, base_url, counter, dryrun=False,
     # ignore fail to continue running, log later
     client.ignore_failures = True
     init_logging(verbose=True)
-    current_app.logger.info('sync_baseline')
     try:
         if from_date:
             base_url = set_query_parameter(base_url, 'from_date', from_date)
@@ -330,41 +328,14 @@ def update_counter(counter, result):
     counter.update({'created_items': len(result.get('created'))})
     counter.update({'updated_items': len(result.get('updated'))})
     counter.update({'deleted_items': len(result.get('deleted'))})
-    for item in result.get('created_items'):
-        process_items.append(item)
-    for item in result.get('updated_items'):
-        process_items.append(item)
-    for item in result.get('deleted_items'):
-        process_items.append(item)
+    if result.get('created_items'):
+        for item in result.get('created_items'):
+            process_items.append(item)
+    if result.get('updated_items'):
+        for item in result.get('updated_items'):
+            process_items.append(item)
+    if result.get('deleted_items'):
+        for item in result.get('deleted_items'):
+            process_items.append(item)
     counter.update({'processed_items': process_items})
 
-
-def remove_same_resource_of_list(base_url, save_dir, records_id):
-    """Remove 'same' record id out of list records"""
-    from .tasks import init_counter
-    counter = init_counter()
-    map = [base_url]
-    if save_dir:
-        map.append(save_dir)
-    parts = urlsplit(map[0])
-    uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
-    result = False
-    while map[0] != uri_host and not result:
-        result = sync_baseline(map=map,
-                               counter=counter,
-                               base_url=base_url,
-                               dryrun=True)
-    client = Client()
-    client.ignore_failures = True
-    client.set_mappings(map)
-    remote_resource_list = client.find_resource_list()
-    rlb = ResourceListBuilder(set_hashes=client.hashes, mapper=client.mapper)
-    src_resource_list = rlb.from_disk()
-    (same, updated, deleted, created) = \
-        src_resource_list.compare(remote_resource_list)
-    for item in same:
-        uri = item.uri
-        record_id = uri.rsplit('/', 1)[1]
-        if record_id in records_id:
-            records_id.remove(record_id)
-    return records_id
