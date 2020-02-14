@@ -88,20 +88,27 @@ def run_sync_import(id):
             try:
                 hostname = urlparse(resync.base_url)
                 records_id = get_list_records(resync.id)
-                for i in records_id:
-                    record = get_record(
-                        url='{}://{}/oai2d'.format(
-                            hostname.scheme,
-                            hostname.netloc
-                        ),
-                        record_id=i,
-                        metadata_prefix='jpcoar',
-                    )
-                    process_item(record[0], resync, counter)
-                    records_id.remove(i)
-                resync_index.update({
-                    'result': json.dumps(counter.get('list_item'))
-                })
+                try:
+                    for i in records_id:
+                        record = get_record(
+                            url='{}://{}/oai2d'.format(
+                                hostname.scheme,
+                                hostname.netloc
+                            ),
+                            record_id=i,
+                            metadata_prefix='jpcoar',
+                        )
+                        process_item(record[0], resync, counter)
+                        records_id.remove(i)
+                    resync_index.update({
+                        'result': json.dumps(records_id)
+                    })
+                except Exception as ex:
+                    current_app.logger.error(
+                        'Error occurred while importing item\n' + str(
+                            ex))
+                    current_app.logger.info('Continue importing')
+                    continue
             except Exception as ex:
                 current_app.logger.error(
                     'Error occurred while processing harvesting item\n' + str(
