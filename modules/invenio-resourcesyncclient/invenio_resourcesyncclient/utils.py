@@ -185,14 +185,7 @@ def get_list_records(resync_id):
 
     if not resync_index.result:
         return records
-    result = json.loads(resync_index.result)
-    for item in result.get('created_items'):
-        records.append(item)
-    for item in result.get('updated_items'):
-        records.append(item)
-    for item in result.get('deleted_items'):
-        records.append(item)
-    return records
+    return json.loads(resync_index.result)
 
 
 def process_item(record, resync, counter):
