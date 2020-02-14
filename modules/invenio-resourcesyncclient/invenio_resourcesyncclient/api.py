@@ -55,6 +55,7 @@ class ResyncHandler(object):
         self.interval_by_day = kwargs.get('interval_by_day')
         self.task_id = kwargs.get('task_id')
         self.is_running = kwargs.get('is_running')
+        self.result = kwargs.get('result')
         self.index = kwargs.get('index') or self.get_index()
 
     def get_index(self):
@@ -85,6 +86,7 @@ class ResyncHandler(object):
             'resync_mode': self.resync_mode,
             'saving_format': self.saving_format,
             'interval_by_day': self.interval_by_day,
+            'result': self.result,
             'task_id': self.task_id,
             'is_running': self.is_running,
         })
@@ -179,6 +181,10 @@ class ResyncHandler(object):
                     "is_running",
                     resync.is_running
                 )
+                resync.result = data.get(
+                    "result",
+                    resync.result
+                )
                 resync.resync_save_dir = data.get(
                     "resync_save_dir",
                     resync.resync_save_dir
@@ -237,6 +243,7 @@ class ResyncHandler(object):
             saving_format=resync.saving_format,
             interval_by_day=resync.interval_by_day,
             task_id=resync.task_id,
+            result=resync.result,
             is_running=resync.is_running,
         )
 
@@ -304,12 +311,6 @@ class ResyncHandler(object):
         except Exception as ex:
             current_app.logger.debug(ex)
             return False
-
-    @classmethod
-    def get_resync_by_id(cls, resync_id):
-        """Get resync record from id"""
-        with db.session.begin_nested():
-            return db.session.query(ResyncIndexes).filter_by(id=resync_id)
 
     def get_logs(self):
         """Get logs"""

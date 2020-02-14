@@ -182,7 +182,7 @@ def set_query_parameter(url, param_name, param_value):
 def get_list_records(resync_id):
     """Get list records in local dir. Only get updated"""
     from .api import ResyncHandler
-    resync_index = ResyncHandler.get_resync_by_id(resync_id)
+    resync_index = ResyncHandler.get_resync(resync_id)
     records = []
 
     if not resync_index.result:
@@ -256,7 +256,7 @@ def process_item(record, resync, counter):
 
 def process_sync(resync_id, counter):
     from .api import ResyncHandler
-    resync_index = ResyncHandler.get_resync_by_id(resync_id)
+    resync_index = ResyncHandler.get_resync(resync_id)
     if not resync_index:
         raise ValueError('No Resync Index found')
     base_url = resync_index.base_url
@@ -287,9 +287,9 @@ def process_sync(resync_id, counter):
                                        dryrun=False,
                                        from_date=from_date,
                                        to_date=to_date)
-            resync_index.result = json.dumps(counter)
-            db.session.merge(resync_index)
-            db.session.commit()
+            resync_index.update({
+                'result': json.dumps(counter)
+            })
             return jsonify(success=True)
         elif mode == current_app.config.get(
             'INVENIO_RESYNC_INDEXES_MODE',
