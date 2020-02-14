@@ -328,14 +328,14 @@ def update_counter(counter, result):
     counter.update({'created_items': len(result.get('created'))})
     counter.update({'updated_items': len(result.get('updated'))})
     counter.update({'deleted_items': len(result.get('deleted'))})
-    if result.get('created_items'):
-        for item in result.get('created_items'):
+    if result.get('created'):
+        for item in result.get('created'):
             process_items.append(item)
-    if result.get('updated_items'):
-        for item in result.get('updated_items'):
+    if result.get('updated'):
+        for item in result.get('updated'):
             process_items.append(item)
-    if result.get('deleted_items'):
-        for item in result.get('deleted_items'):
+    if result.get('deleted'):
+        for item in result.get('deleted'):
             process_items.append(item)
     counter.update({'processed_items': process_items})
 
