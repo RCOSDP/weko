@@ -279,7 +279,7 @@ def process_sync(resync_id, counter):
                                        from_date=from_date,
                                        to_date=to_date)
             resync_index.update({
-                'result': json.dumps(counter.get('list_item'))
+                'result': json.dumps(counter.get('list'))
             })
             return jsonify(success=True)
         elif mode == current_app.config.get(
