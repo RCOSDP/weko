@@ -152,7 +152,7 @@ class FilePermission(db.Model):
     user_id = db.Column(db.Integer, nullable=False)
     """User Id."""
 
-    record_id = db.Column(db.Integer, nullable=False)
+    record_id = db.Column(db.String(255), nullable=False)
     """Record id."""
 
     file_name = db.Column(db.String(255), nullable=False)
