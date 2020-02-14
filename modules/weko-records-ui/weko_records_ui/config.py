@@ -279,13 +279,10 @@ WEKO_RECORDS_UI_DOWNLOAD_DAYS = 7
 WEKO_RECORDS_UI_USAGE_APPLICATION_WORKFLOW_DICT = []
 """Mapping from role + data type => Usage application workflow."""
 
-WEKO_RECORDS_UI_LICENSE_ICON_LOCATION = \
-    "/code/modules/weko-records-ui/weko_records_ui/static/images/default"
+WEKO_RECORDS_UI_LICENSE_ICON_LOCATION = "static/images/default"
 """Location of list license's icons."""
 
-WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION = \
-    "/code/modules/weko-records-ui/weko_records_ui/" \
-    "static/images/creative_commons"
+WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION = "static/images/creative_commons"
 """Location of list license's icons for PDF."""
 
 WEKO_RECORDS_UI_LICENSE_DICT = [
