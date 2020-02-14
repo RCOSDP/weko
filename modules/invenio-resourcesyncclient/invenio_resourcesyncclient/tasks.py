@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import json
 from datetime import datetime
 import signal
 import requests
@@ -63,6 +64,7 @@ def run_sync_import(id):
     start_time = datetime.now()
     resync = ResyncIndexes.query.filter_by(id=id).first()
     counter = init_counter()
+    resync_index = ResyncHandler.get_resync(id)
     resync_log = prepare_log(
         resync,
         id,
@@ -96,6 +98,10 @@ def run_sync_import(id):
                         metadata_prefix='jpcoar',
                     )
                     process_item(record[0], resync, counter)
+                    records_id.remove(i)
+                resync_index.update({
+                    'result': json.dumps(counter.get('list_item'))
+                })
             except Exception as ex:
                 current_app.logger.error(
                     'Error occurred while processing harvesting item\n' + str(
