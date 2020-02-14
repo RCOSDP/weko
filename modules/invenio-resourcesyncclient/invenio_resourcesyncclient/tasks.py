@@ -270,7 +270,8 @@ def init_counter():
         'created_items': 0,
         'updated_items': 0,
         'deleted_items': 0,
-        'error_items': 0
+        'error_items': 0,
+        'list': []
     }
 
 

@@ -279,7 +279,7 @@ def process_sync(resync_id, counter):
                                        from_date=from_date,
                                        to_date=to_date)
             resync_index.update({
-                'result': json.dumps(counter.get('processed_items'))
+                'result': json.dumps(counter.get('list_item'))
             })
             return jsonify(success=True)
         elif mode == current_app.config.get(
@@ -317,18 +317,18 @@ def process_sync(resync_id, counter):
 
 def update_counter(counter, result):
     """Update sync result to counter"""
-    process_items = []
+    list_item = []
     counter.update({'created_items': len(result.get('created'))})
     counter.update({'updated_items': len(result.get('updated'))})
     counter.update({'deleted_items': len(result.get('deleted'))})
     if result.get('created'):
         for item in result.get('created'):
-            process_items.append(item)
+            list_item.append(item)
     if result.get('updated'):
         for item in result.get('updated'):
-            process_items.append(item)
+            list_item.append(item)
     if result.get('deleted'):
         for item in result.get('deleted'):
-            process_items.append(item)
-    counter.update({'processed_items': process_items})
+            list_item.append(item)
+    counter.update({'list': list_item})
 
