@@ -520,7 +520,8 @@ class CreateResyncComponent extends React.Component {
                   value={state.interval_by_day}
                   name="interval_by_day"
                   onChange={e => {
-                    const value = e.target.value;
+                    let value = e.target.value;
+                    value  = value >=1 ? value : 1
                     this.handleChangeState("interval_by_day", parseInt(value));
                   }}
                 ></input>

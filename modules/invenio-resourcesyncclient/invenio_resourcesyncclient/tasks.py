@@ -286,11 +286,15 @@ def run_sync_auto():
             "INVENIO_RESYNC_INDEXES_STATUS",
             INVENIO_RESYNC_INDEXES_STATUS
         ).get("automatic") and resync.is_running:
-            resync_sync.apply_async(
-                args=(
-                    resync.id,
+            delta_time = datetime.now() - resync.updated
+            if not delta_time.days % resync.interval_by_day:
+                current_app.logger.debug(
+                    "[0] START RUN SYNC {}".format(resync.id))
+                resync_sync.apply_async(
+                    args=(
+                        resync.id,
+                    )
                 )
-            )
     current_app.logger.debug("[0] END RUN SYNC AUTO")
     return (
         {

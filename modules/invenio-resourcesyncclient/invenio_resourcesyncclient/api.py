@@ -167,12 +167,10 @@ class ResyncHandler(object):
                 )
                 resync.from_date = data.get(
                     "from_date",
-                    resync.from_date
-                )
+                ) or resync.from_date
                 resync.to_date = data.get(
                     "to_date",
-                    resync.to_date
-                )
+                ) or resync.to_date
                 resync.task_id = data.get(
                     "task_id",
                     resync.task_id
