@@ -39,6 +39,7 @@ from weko_records_ui.utils import soft_delete
 from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
 import os
 from .config import INVENIO_RESYNC_WEKO_DEFAULT_DIR, INVENIO_RESYNC_INDEXES_MODE
+import json
 
 
 def read_capability(url):
@@ -57,10 +58,12 @@ def read_capability(url):
 def sync_baseline(map, base_url, counter, dryrun=False,
                   from_date=None, to_date=None):
     """Run resync baseline"""
-    client = Client()
+    from .resync import ResourceSyncClient
+    client = ResourceSyncClient()
     # ignore fail to continue running, log later
     client.ignore_failures = True
-    # init_logging(verbose=True)
+    init_logging(verbose=True)
+    current_app.logger.info('sync_baseline')
     try:
         if from_date:
             base_url = set_query_parameter(base_url, 'from_date', from_date)
@@ -72,20 +75,15 @@ def sync_baseline(map, base_url, counter, dryrun=False,
         client.sitemap_name = base_url
         client.dryrun = dryrun
         client.set_mappings(map)
-        result = sync_audit(map)
-        client.baseline_or_audit()
+        result = client.baseline_or_audit()
         update_counter(counter, result)
         return True
     except MapperError:
         # if mapper error then remove one element in url and retry
+        current_app.logger.info('MapperError')
         paths = map[0].rsplit('/', 1)
         map[0] = paths[0]
         return False
-    except PermissionError:
-        # error when create client state, does not matter, return true here
-        update_counter(counter, result)
-        return True
-
     except Exception as e:
         current_app.logger.error('Error when Sync :' + str(e))
 
@@ -181,34 +179,22 @@ def set_query_parameter(url, param_name, param_value):
     return urlunsplit((scheme, netloc, path, new_query_string, fragment))
 
 
-def get_list_records(index_id, base_url, dir):
+def get_list_records(resync_id):
     """Get list records in local dir. Only get updated"""
-    from invenio_resourcesyncserver.query import get_items_by_index_tree
-    result = []
-    try:
-        list = os.listdir(dir)
-        if current_app.config.get(
-            'INVENIO_RESYNC_WEKO_DEFAULT_DIR',
-            INVENIO_RESYNC_WEKO_DEFAULT_DIR
-        ) in list:
-            # modify to make sure correct path is used
-            record_list = get_items_by_index_tree(index_id)
-            target_dir = dir + '/' + current_app.config.get(
-                'INVENIO_RESYNC_WEKO_DEFAULT_DIR',
-                INVENIO_RESYNC_WEKO_DEFAULT_DIR
-            )
-            result = os.listdir(target_dir)
-            if record_list:
-                # not an empty index
-                # remove 'same' records out of list
-                remove_same_resource_of_list(base_url, dir, result)
-                return result
-            else:
-                return result
-    except FileNotFoundError:
-        return result
-    except Exception as e:
-        raise e
+    from .api import ResyncHandler
+    resync_index = ResyncHandler.get_resync_by_id(resync_id)
+    records = []
+
+    if not resync_index.result:
+        return records
+    result = json.loads(resync_index.result)
+    for item in result.get('created_items'):
+        records.append(item)
+    for item in result.get('updated_items'):
+        records.append(item)
+    for item in result.get('deleted_items'):
+        records.append(item)
+    return records
 
 
 def process_item(record, resync, counter):
@@ -270,7 +256,7 @@ def process_item(record, resync, counter):
 
 def process_sync(resync_id, counter):
     from .api import ResyncHandler
-    resync_index = ResyncHandler.get_resync(resync_id)
+    resync_index = ResyncHandler.get_resync_by_id(resync_id)
     if not resync_index:
         raise ValueError('No Resync Index found')
     base_url = resync_index.base_url
@@ -301,6 +287,9 @@ def process_sync(resync_id, counter):
                                        dryrun=False,
                                        from_date=from_date,
                                        to_date=to_date)
+            resync_index.result = json.dumps(counter)
+            db.session.merge(resync_index)
+            db.session.commit()
             return jsonify(success=True)
         elif mode == current_app.config.get(
             'INVENIO_RESYNC_INDEXES_MODE',

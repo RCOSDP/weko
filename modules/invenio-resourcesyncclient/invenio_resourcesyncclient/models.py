@@ -115,6 +115,21 @@ class ResyncIndexes(db.Model, Timestamp):
 
     task_id = db.Column(db.String(40), default=None)
 
+    result = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
     index = db.relationship(
         Index, backref='resync_index_id', foreign_keys=[index_id])
     """Relation to the Index Identifier."""

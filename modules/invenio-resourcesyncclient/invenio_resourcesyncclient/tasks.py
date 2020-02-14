@@ -85,9 +85,7 @@ def run_sync_import(id):
             # for record_id in records:
             try:
                 hostname = urlparse(resync.base_url)
-                records_id = get_list_records(resync.index_id,
-                                              resync.base_url,
-                                              resync.resync_save_dir)
+                records_id = get_list_records(resync.id)
                 for i in records_id:
                     record = get_record(
                         url='{}://{}/oai2d'.format(
@@ -156,7 +154,7 @@ def resync_sync(id):
     if is_running_task(id):
         return ({
             'task_state': 'SUCCESS',
-            'task_id': run_sync_import.request.id
+            'task_id': resync_sync.request.id
         })
     start_time = datetime.now()
     resync = ResyncIndexes.query.filter_by(id=id).first()
@@ -183,7 +181,7 @@ def resync_sync(id):
             process_sync(id, counter)
 
         except Exception as e:
-            print(str(e))
+            current_app.logger.info(e)
         resync_log.status = current_app.config.get(
             "INVENIO_RESYNC_LOGS_STATUS",
             INVENIO_RESYNC_LOGS_STATUS
