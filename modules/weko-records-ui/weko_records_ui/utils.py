@@ -249,13 +249,15 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
     @return:
     """
     from .views import blueprint
+    license_icon_pdf_location = \
+        current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
     if license == 'license_free':
         txt = item_metadata_json[file_item_id][0].get('licensefree')
         if txt is None:
             txt = ''
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
     else:
-        src = blueprint.root_path + item['src_pdf']
+        src = blueprint.root_path + license_icon_pdf_location + item['src_pdf']
         txt = item['txt']
         lnk = item['href_pdf']
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)

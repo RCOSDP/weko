@@ -212,7 +212,11 @@ def get_license_icon(type):
     :return:
     """
     list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
-
+    license_icon_location = \
+        current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_LOCATION']
+    src = ''
+    lic = ''
+    href = '#'
     for item in list_license_dict:
         if item['value'] != "license_free":
             if item['value'] in type:
@@ -220,11 +224,7 @@ def get_license_icon(type):
                 lic = item['name']
                 href = item['href']
                 break
-            else:
-                src = ''
-                lic = ''
-                href = '#'
-    src = '/static/images/default/' + src if len(src) > 0 else ''
+    src = license_icon_location + src if len(src) > 0 else ''
     lst = (src, lic, href)
 
     return lst

@@ -279,6 +279,15 @@ WEKO_RECORDS_UI_DOWNLOAD_DAYS = 7
 WEKO_RECORDS_UI_USAGE_APPLICATION_WORKFLOW_DICT = []
 """Mapping from role + data type => Usage application workflow."""
 
+WEKO_RECORDS_UI_LICENSE_ICON_LOCATION = \
+    "/code/modules/weko-records-ui/weko_records_ui/static/images/default"
+"""Location of list license's icons."""
+
+WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION = \
+    "/code/modules/weko-records-ui/weko_records_ui/" \
+    "static/images/creative_commons"
+"""Location of list license's icons for PDF."""
+
 WEKO_RECORDS_UI_LICENSE_DICT = [
     {
         'name': _('write your own license'),
@@ -290,7 +299,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'href': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
         'value': 'license_0',
         'src': '88x31(1).png',
-        'src_pdf': '/static/images/creative_commons/by.png',
+        'src_pdf': 'by.png',
         'href_pdf': 'http://creativecommons.org/licenses/by/4.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
                ' 4.0 International License.'
@@ -300,7 +309,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'href': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
         'value': 'license_1',
         'src': '88x31(2).png',
-        'src_pdf': '/static/images/creative_commons/by-sa.png',
+        'src_pdf': 'by-sa.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-sa/4.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
                '-ShareAlike 4.0 International License.'
@@ -310,7 +319,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'href': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
         'value': 'license_2',
         'src': '88x31(3).png',
-        'src_pdf': '/static/images/creative_commons/by-nd.png',
+        'src_pdf': 'by-nd.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-nd/4.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
                '-NoDerivatives 4.0 International License.'
@@ -320,7 +329,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'href': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
         'value': 'license_3',
         'src': '88x31(4).png',
-        'src_pdf': '/static/images/creative_commons/by-nc.png',
+        'src_pdf': 'by-nc.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-nc/4.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
                '-NonCommercial 4.0 International License.'
@@ -331,7 +340,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'href': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
         'value': 'license_4',
         'src': '88x31(5).png',
-        'src_pdf': '/static/images/creative_commons/by-nc-sa.png',
+        'src_pdf': 'by-nc-sa.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-nc-sa/4.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
                '-NonCommercial-ShareAlike 4.0 International License.'
@@ -342,9 +351,10 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'href': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
         'value': 'license_5',
         'src': '88x31(6).png',
-        'src_pdf': '/static/images/creative_commons/by-nc-nd.png',
+        'src_pdf': 'by-nc-nd.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-nc-nd/4.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
                '-NonCommercial-ShareAlike 4.0 International License.'
     },
 ]
+"""Define of list license will be used."""
