@@ -288,7 +288,7 @@ def process_sync(resync_id, counter):
                                        from_date=from_date,
                                        to_date=to_date)
             resync_index.update({
-                'result': json.dumps(counter)
+                'result': json.dumps(counter.get('processed_items'))
             })
             return jsonify(success=True)
         elif mode == current_app.config.get(
@@ -326,9 +326,17 @@ def process_sync(resync_id, counter):
 
 def update_counter(counter, result):
     """Update sync result to counter"""
-    counter.update({'created_items': result.get('created')})
-    counter.update({'updated_items': result.get('updated')})
-    counter.update({'deleted_items': result.get('deleted')})
+    process_items = []
+    counter.update({'created_items': len(result.get('created'))})
+    counter.update({'updated_items': len(result.get('updated'))})
+    counter.update({'deleted_items': len(result.get('deleted'))})
+    for item in result.get('created_items'):
+        process_items.append(item)
+    for item in result.get('updated_items'):
+        process_items.append(item)
+    for item in result.get('deleted_items'):
+        process_items.append(item)
+    counter.update({'processed_items': process_items})
 
 
 def remove_same_resource_of_list(base_url, save_dir, records_id):
