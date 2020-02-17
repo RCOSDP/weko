@@ -417,7 +417,7 @@ function handleSharePermission(value) {
               }
 
               let outputReport = data['output_report'];
-              if (outputReport.length > 0) {
+              if (outputReport && outputReport.length > 0) {
                 outputReport.forEach(report => {
                   if (typeof output_schema != 'undefined' && typeof output_report_form != 'undefined' && output_schema && output_report_form) {
                     output_schema.items.properties['subitem_corresponding_output_id']['enum'].push(report);
@@ -813,7 +813,10 @@ function handleSharePermission(value) {
                                 }
                                 isExisted = true;
                                 // Set read only for user information property
-                                $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly'] = true;
+                                let userInfo = $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key);
+                                if (userInfo) {
+                                  userInfo['readonly'] = true;
+                                }
                                 break;
                             }
                         }
@@ -847,7 +850,10 @@ function handleSharePermission(value) {
                   }
                 isExisted = true;
                 // Set read only for user information property
-                $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly']=true;
+                let userInfo = $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key);
+                if (userInfo) {
+                  userInfo['readonly']=true;
+                }
                 break;
               }
             }
@@ -907,14 +913,14 @@ function handleSharePermission(value) {
                     }
                   } else {
                     if (data.results[subKey]) {
-                if (subKey==='subitem_position') {
-                    let position = $scope.translationsPosition(data.results[subKey]);
-                    $rootScope.recordsVM.invenioRecordsModel[key][subKey] = position;
-                } else {
-                      $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey])
+                      if (subKey === 'subitem_position') {
+                        let position = $scope.translationsPosition(data.results[subKey]);
+                        $rootScope.recordsVM.invenioRecordsModel[key][subKey] = position;
+                      } else {
+                        $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey])
+                      }
                     }
                   }
-        }
                 });
               }
             }
@@ -942,12 +948,15 @@ function handleSharePermission(value) {
                 }
               }
               if (title && $("#auto_fill_title").val() !== '""') {
-                $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly'] = true;
-                setTimeout(function () {
-                  $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
-                }, 1000);
-                isExisted = true;
-                break;
+                let titleItem = $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key);
+                if (titleItem) {
+                  titleItem['readonly'] = true;
+                  setTimeout(function () {
+                    $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
+                  }, 1000);
+                  isExisted = true;
+                  break;
+                }
               }
             }
           }

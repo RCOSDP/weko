@@ -97,3 +97,83 @@ WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL = True
 
 WEKO_WORKFLOW_ENABLE_CONTRIBUTOR = True
 """Enable Contributor"""
+
+WEKO_WORKFLOW_UI_ENDPOINTS = {
+    'index': {
+        'route': '/',
+        'view_imp': 'weko_workflow.views.index',
+    },
+    'iframe_success': {
+        'route': '/iframe/success',
+        'view_imp': 'weko_workflow.views.iframe_success',
+        "methods": ['GET'],
+    },
+    'new_activity': {
+        'route': '/activity/new',
+        'view_imp': 'weko_workflow.views.new_activity',
+        "methods": ['GET'],
+    },
+    'init_activity': {
+        'route': '/activity/init',
+        'view_imp': 'weko_workflow.views.init_activity',
+        "methods": ['POST'],
+    },
+    'list_activity': {
+        'route': '/activity/list',
+        'view_imp': 'weko_workflow.views.list_activity',
+        "methods": ['GET'],
+    },
+    'display_activity': {
+        'route': '/activity/detail/<string:activity_id>',
+        'view_imp': 'weko_workflow.views.display_activity',
+        "methods": ['GET'],
+    },
+    'next_action': {
+        'route': '/activity/action/<string:activity_id>/<int:action_id>',
+        'view_imp': 'weko_workflow.views.next_action',
+        "methods": ['POST'],
+    },
+    'previous_action': {
+        'route': '/activity/action/<string:activity_id>/<int:action_id>'
+                 '/rejectOrReturn/<int:req>',
+        'view_imp': 'weko_workflow.views.previous_action',
+        "methods": ['POST'],
+    },
+    'get_journals': {
+        'route': '/journal/list',
+        'view_imp': 'weko_workflow.views.get_journals',
+        "methods": ['GET'],
+    },
+    'get_journal': {
+        'route': '/journal/<string:method>/<string:value>',
+        'view_imp': 'weko_workflow.views.get_journal',
+        "methods": ['GET'],
+    },
+    'cancel_action': {
+        'route': '/activity/action/<string:activity_id>/<int:action_id>/cancel',
+        'view_imp': 'weko_workflow.views.cancel_action',
+        "methods": ['POST'],
+    },
+    'withdraw_confirm': {
+        'route': '/activity/detail/<string:activity_id>/<int:action_id>'
+                 '/withdraw',
+        'view_imp': 'weko_workflow.views.withdraw_confirm',
+        "methods": ['POST'],
+    },
+    'check_existed_doi': {
+        'route': '/findDOI',
+        'view_imp': 'weko_workflow.views.check_existed_doi',
+        "methods": ['POST'],
+    },
+    'save_feedback_maillist': {
+        'route': '/save_feedback_maillist/<string:activity_id>/<int:action_id>',
+        'view_imp': 'weko_workflow.views.save_feedback_maillist',
+        "methods": ['POST'],
+    },
+    'get_feedback_maillist': {
+        'route': '/get_feedback_maillist/<string:activity_id>',
+        'view_imp': 'weko_workflow.views.get_feedback_maillist',
+        "methods": ['GET'],
+    },
+}
+"""Basic Weko WorkFlow endpoints configuration."""

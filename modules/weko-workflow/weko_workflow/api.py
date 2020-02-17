@@ -301,6 +301,7 @@ class WorkFlow(object):
                     _workflow.flows_name = workflow.get('flows_name')
                     _workflow.itemtype_id = workflow.get('itemtype_id')
                     _workflow.flow_id = workflow.get('flow_id')
+                    _workflow.index_tree_id = workflow.get('index_tree_id')
                     db.session.merge(_workflow)
             db.session.commit()
             return _workflow
@@ -1257,7 +1258,8 @@ class WorkActivity(object):
         step_item_login_url = None
         approval_record = []
         pid = None
-        if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
+        if ('item_login' == action_endpoint or 'item_login_application'
+                == action_endpoint or 'file_upload' == action_endpoint):
             activity_session = dict(
                 activity_id=activity_id,
                 action_id=activity_detail.action_id,

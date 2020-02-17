@@ -75,7 +75,6 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route('/')
 @login_required
 def index():
     """Render a basic view."""
@@ -107,7 +106,6 @@ def index():
     )
 
 
-@blueprint.route('/iframe/success', methods=['GET'])
 def iframe_success():
     """Renders an item register view.
 
@@ -164,7 +162,6 @@ def iframe_success():
                            **ctx)
 
 
-@blueprint.route('/activity/new', methods=['GET'])
 @login_required
 def new_activity():
     """New activity."""
@@ -191,7 +188,6 @@ def new_activity():
     )
 
 
-@blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
     """Init activity."""
@@ -217,7 +213,6 @@ def init_activity():
                        activity_id=rtn.activity_id)})
 
 
-@blueprint.route('/activity/list', methods=['GET'])
 @login_required
 def list_activity():
     """List activity."""
@@ -236,7 +231,6 @@ def list_activity():
     )
 
 
-@blueprint.route('/activity/detail/<string:activity_id>', methods=['GET'])
 @login_required
 def display_activity(activity_id=0):
     """Display activity."""
@@ -561,9 +555,6 @@ def check_authority_action(activity_id='0', action_id=0):
     return 1
 
 
-@blueprint.route(
-    '/activity/action/<string:activity_id>/<int:action_id>',
-    methods=['POST'])
 @login_required
 @check_authority
 def next_action(activity_id='0', action_id=0):
@@ -817,10 +808,6 @@ def next_action(activity_id='0', action_id=0):
     return jsonify(code=0, msg=_('success'))
 
 
-@blueprint.route(
-    '/activity/action/<string:activity_id>/<int:action_id>'
-    '/rejectOrReturn/<int:req>',
-    methods=['POST'])
 @login_required
 @check_authority
 def previous_action(activity_id='0', action_id=0, req=0):
@@ -884,7 +871,6 @@ def previous_action(activity_id='0', action_id=0, req=0):
     return jsonify(code=0, msg=_('success'))
 
 
-@blueprint.route('/journal/list', methods=['GET'])
 def get_journals():
     """Get journals."""
     key = request.values.get('key')
@@ -916,7 +902,6 @@ def get_journals():
     return jsonify(multiple_result)
 
 
-@blueprint.route('/journal/<string:method>/<string:value>', methods=['GET'])
 def get_journal(method, value):
     """Get journal."""
     if not method or not value:
@@ -939,10 +924,6 @@ def get_journal(method, value):
     return jsonify(result)
 
 
-@blueprint.route(
-    '/activity/action/<string:activity_id>/<int:action_id>'
-    '/cancel',
-    methods=['POST'])
 @login_required
 @check_authority
 def cancel_action(activity_id='0', action_id=0):
@@ -999,10 +980,6 @@ def cancel_action(activity_id='0', action_id=0):
                        activity_id=activity_id)})
 
 
-@blueprint.route(
-    '/activity/detail/<string:activity_id>/<int:action_id>'
-    '/withdraw',
-    methods=['POST'])
 @login_required
 @check_authority
 def withdraw_confirm(activity_id='0', action_id='0'):
@@ -1065,8 +1042,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         current_app.logger.error('Unexpected error: {}', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error!'))
 
-# noinspection PyDictCreation
-@blueprint.route('/findDOI', methods=['POST'])
+
 @login_required
 def check_existed_doi():
     """Next action."""
@@ -1095,9 +1071,6 @@ def check_existed_doi():
     return jsonify(respon)
 
 
-@blueprint.route(
-    '/save_feedback_maillist/<string:activity_id>/<int:action_id>',
-    methods=['POST'])
 @login_required
 @check_authority
 def save_feedback_maillist(activity_id='0', action_id='0'):
@@ -1123,8 +1096,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
 
-@blueprint.route('/get_feedback_maillist/<string:activity_id>',
-                 methods=['GET'])
+
 @login_required
 def get_feedback_maillist(activity_id='0'):
     """Get feedback_mail's list base on Activity Identifier.

@@ -915,3 +915,40 @@ def is_hidden_pubdate(item_type_name):
             and item_type_name in hidden_pubdate_list):
         is_hidden = True
     return is_hidden
+
+
+def create_blueprint(endpoints):
+    """Create Weko-WorkFlow blueprint.
+
+    See: :data:`weko_workflow.config.DEPOSIT_RECORDS_UI_ENDPOINTS`.
+
+    :param endpoints: List of endpoints configuration.
+    :returns: The configured blueprint.
+    """
+    from .views import blueprint
+    for endpoint, options in (endpoints or {}).items():
+        blueprint.add_url_rule(**create_url_rule(endpoint, **options))
+    return blueprint
+
+
+def create_url_rule(endpoint, route, view_imp, methods=None):
+    """Create Werkzeug URL rule for a specific endpoint.
+
+    The method takes care of creating a persistent identifier resolver
+    for the given persistent identifier type.
+
+    :param endpoint: Name of endpoint.
+    :param route: URL route (must include ``<pid_value>`` pattern).
+    :param view_imp: Import path to view function. (Default: ``None``)
+    :param methods: Method allowed for the endpoint.
+    :returns: A dictionary that can be passed as keywords arguments to
+            ``Blueprint.add_url_rule``.
+    """
+    from werkzeug.utils import import_string
+    view_func = import_string(view_imp)
+    return dict(
+        endpoint=endpoint,
+        rule=route,
+        view_func=view_func,
+        methods=methods,
+    )
