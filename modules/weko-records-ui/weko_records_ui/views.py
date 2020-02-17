@@ -30,6 +30,7 @@ from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
+from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -56,11 +57,11 @@ from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, get_correct_usage_workflow, get_permission, \
     is_open_restricted
-from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_min_price_billing_file_download, get_record_permalink, \
-    get_registration_data_type
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
+from .utils import get_billing_file_download_permission, get_groups_price, \
+    get_min_price_billing_file_download, get_registration_data_type, \
+    get_record_permalink
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -488,7 +489,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     else:
         record['permalink_uri'] = permalink
 
-    from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
 
     datastore = RedisStore(redis.StrictRedis.from_url(
@@ -661,7 +661,6 @@ def set_pdfcoverpage_header():
 def file_version_update():
     """Bulk delete items and index trees."""
     # Only allow authorised users to update object version
-    from invenio_files_rest.permissions import has_update_version_role
     if has_update_version_role(current_user):
 
         bucket_id = request.values.get('bucket_id')
@@ -705,7 +704,6 @@ def citation(record, pid, style=None, ln=None):
 def soft_delete(recid):
     """Soft delete item."""
     try:
-        from invenio_files_rest.permissions import has_update_version_role
         if not has_update_version_role(current_user):
             abort(403)
         soft_delete_imp(recid)
@@ -720,7 +718,6 @@ def soft_delete(recid):
 def restore(recid):
     """Restore item."""
     try:
-        from invenio_files_rest.permissions import has_update_version_role
         if not has_update_version_role(current_user):
             abort(403)
         restore_imp(recid)

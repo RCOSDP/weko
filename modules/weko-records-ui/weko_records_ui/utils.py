@@ -61,7 +61,7 @@ def get_groups_price(record: dict) -> list:
     :return: The prices of Billing files set in each group.
     """
     groups_price = list()
-    for key, value in record.items():
+    for _, value in record.items():
         if isinstance(value, dict):
             attr_value = value.get('attribute_value_mlt')
             if attr_value and isinstance(attr_value, list):

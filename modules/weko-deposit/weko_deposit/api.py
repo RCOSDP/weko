@@ -963,6 +963,13 @@ class WekoRecord(Record):
         return obj
 
     @property
+    def recid(self):
+        """Return an instance of record PID."""
+        pid = self.record_fetcher(self.id, self)
+        obj = PersistentIdentifier.get('recid', pid.pid_value)
+        return obj
+
+    @property
     def navi(self):
         """Return the path name."""
         navs = Indexes.get_path_name(self.get('path', []))
@@ -1050,14 +1057,21 @@ class WekoRecord(Record):
 
     @property
     def doi(self):
-        """Get pid_value of doi identifier."""
-        parent_pid = self.pid.pid_value.split('.')[0]
+        """Return pid_value of doi identifier."""
         try:
-            doi = PersistentIdentifier.get('doi', parent_pid)
-        except PIDDoesNotExistError:
-            return None
+            return PersistentIdentifier.query.filter_by(
+                pid_type='doi',
+                object_uuid=self.parent_pid.object_uuid,
+                status=PIDStatus.REGISTERED).one_or_none()
+        except PIDDoesNotExistError as pid_not_exist:
+            current_app.logger.error(pid_not_exist)
+        return None
 
-        return doi.pid_value
+    @property
+    def parent_pid(self):
+        """Return pid_value of doi identifier."""
+        pid_ver = PIDVersioning(child=self.recid)
+        return pid_ver.parents.one_or_none() if pid_ver else None
 
     @classmethod
     def get_record_by_pid(cls, pid):
