@@ -1081,16 +1081,3 @@ class WekoRecord(Record):
         if path:
             coverpage_state = Indexes.get_coverpage_state(path)
         return coverpage_state
-
-    @classmethod
-    def get_pid(cls, pid):
-        """Get record by pid."""
-        try:
-            pid = PersistentIdentifier.get('depid', pid)
-            if pid:
-                return pid
-            else:
-                return None
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            return None

@@ -20,7 +20,7 @@
 
 """Utilities for convert response json."""
 
-from flask import request
+from flask import request, current_app
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from resync import CapabilityList, Resource
 from resync.list_base_with_index import ListBaseWithIndex
@@ -205,3 +205,16 @@ def get_timezone(date):
                 offset = -(int(tz_hour)*60*60 + int(tz_min)*60)
                 return date, offset
     return date, offset
+
+
+def get_pid(cls, pid):
+    """Get record by pid."""
+    try:
+        pid = PersistentIdentifier.get('depid', pid)
+        if pid:
+            return pid
+        else:
+            return None
+    except Exception as ex:
+        current_app.logger.debug(ex)
+        return None

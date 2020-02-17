@@ -51,6 +51,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE, WEKO_ROOT_INDEX
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
+from .utils import get_pid
 
 
 class ResourceListHandler(object):
@@ -925,7 +926,7 @@ class ChangeListHandler(object):
         if self.change_dump_manifest:
             prev_id, prev_ver_id = record_id.split(".")
             current_record = WekoRecord.get_record_by_pid(record_id)
-            prev_record_pid = WekoRecord.get_pid(
+            prev_record_pid = get_pid(
                 '{}.{}'.format(prev_id, str(int(prev_ver_id) - 1))
             )
             if prev_record_pid:
@@ -1127,7 +1128,7 @@ class ChangeListHandler(object):
         ):
             return True
         if self.status:
-            record_pid = WekoRecord.get_pid(record_id)
+            record_pid = get_pid(record_id)
             if record_pid:
                 record = WekoRecord.get_record(record_pid.object_uuid)
                 if record and record.get("path"):
