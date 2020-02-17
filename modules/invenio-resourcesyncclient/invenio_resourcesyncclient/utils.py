@@ -87,7 +87,7 @@ def sync_baseline(map, base_url, counter, dryrun=False,
         current_app.logger.error('Error when Sync :' + str(e))
 
 
-def sync_audit(map):
+def sync_audit(map, counter):
     """Run resync audit"""
     client = Client()
     # ignore fail to continue running, log later
@@ -100,6 +100,21 @@ def sync_audit(map):
     # Compare these resource lists respecting any comparison options
     (same, updated, deleted, created) = dst_resource_list.compare(
         src_resource_list)
+    result = dict(
+        created=[],
+        updated=[],
+        deleted=[]
+    )
+    for item in created:
+        record_id = item.uri.rsplit('/', 1)[1]
+        result['created'].append(record_id)
+    for item in updated:
+        record_id = item.uri.rsplit('/', 1)[1]
+        result['updated'].append(record_id)
+    for item in deleted:
+        record_id = item.uri.rsplit('/', 1)[1]
+        result['deleted'].append(record_id)
+    update_counter(counter, result)
     return dict(
         same=len(same),
         updated=len(updated),
@@ -302,9 +317,15 @@ def process_sync(resync_id, counter):
             # to make sure right url is used
             result = False
             while map[0] != uri_host and not result:
-                result = sync_baseline(map=map, base_url=base_url,
+                result = sync_baseline(map=map,
+                                       base_url=base_url,
+                                       counter=counter,
                                        dryrun=True)
-            return jsonify(sync_audit(map))
+            audit_result = sync_audit(map, counter)
+            resync_index.update({
+                'result': json.dumps(counter.get('list'))
+            })
+            return jsonify(audit_result)
         elif mode == current_app.config.get(
             'INVENIO_RESYNC_INDEXES_MODE',
             INVENIO_RESYNC_INDEXES_MODE

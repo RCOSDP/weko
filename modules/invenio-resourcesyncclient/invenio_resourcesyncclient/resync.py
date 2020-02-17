@@ -47,7 +47,7 @@ class ResourceSyncClient(Client):
         current_app.logger.info(self.result)
         self.result.update({'created': current_create})
         self.result.update({'updated': current_update})
-        return (num_updated)
+        return num_updated
 
     def delete_resource(self, resource, filename, change=None):
         num_deleted = super(ResourceSyncClient, self).delete_resource(resource,
