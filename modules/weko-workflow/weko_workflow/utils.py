@@ -816,7 +816,7 @@ def get_parent_pid_with_type(pid_type, object_uuid):
         with db.session.no_autoflush:
             pid_object =  PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
-                object_uuid=record.parent_pid.object_uuid
+                object_uuid=record.pid_parent.object_uuid
             ).one_or_none()
             return pid_object
     except PIDDoesNotExistError as pid_not_exist:

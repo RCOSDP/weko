@@ -40,16 +40,25 @@ def check_items_settings():
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
 
 
-def get_record_permalink(object_uuid):
+def get_record_permalink(record):
     """
-    Get identifier value from ItemsMetadata.
+    Get identifier of record.
 
-    :param: index_name_english
+    :param record: index_name_english
     :return: dict of item type info
     """
-    meta = ItemsMetadata.get_record(object_uuid)
-    if meta:
-        return meta.get('permalink')
+    pid_doi = record.pid_doi
+    pid_cnri = record.pid_cnri
+
+    if pid_doi and pid_cnri:
+        if pid_doi.updated > pid_cnri.updated:
+            return record.pid_doi.pid_value
+        else:
+            return record.pid_cnri.pid_value
+    elif record.pid_doi:
+        return record.pid_doi.pid_value
+    elif record.pid_cnri:
+        return record.pid_cnri.pid_value
     else:
         return None
 

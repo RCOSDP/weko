@@ -29,70 +29,70 @@ $(document).ready(function () {
     "spase_mapping": ""
   }
   meta_system_info = {
-      system_identifier_doi : {
-        input_type: "S_Identifier",
-        title: "Persistent Identifier(DOI)",
-        title_i18n: {ja: "永続識別子（DOI）", en: "Persistent Identifier(DOI)"},
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
-      },
-      system_identifier_hdl : {
-        input_type: "S_Identifier",
-        title: "Persistent Identifier(HDL)",
-        title_i18n: {ja: "永続識別子（HDL）", en: "Persistent Identifier(HDL)"},
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
-      },
-      system_identifier_uri : {
-        input_type: "S_Identifier",
-        title: "Persistent Identifier(URI)",
-        title_i18n: {ja: "永続識別子（URI）", en: "Persistent Identifier(URI)"},
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
-      },
-      system_file : {
-        input_type: "S_File",
-        title: "File Information",
-        title_i18n: {ja: "ファイル情報", en: "File Information"},
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
+    system_identifier_doi: {
+      input_type: "S_Identifier",
+      title: "Persistent Identifier(DOI)",
+      title_i18n: { ja: "永続識別子（DOI）", en: "Persistent Identifier(DOI)" },
+      option: {
+        required: false,
+        multiple: false,
+        hidden: true,
+        showlist: false,
+        crtf: false
       }
-    };
-    meta_fix = {
-      pubdate : {
-        input_type: "Date",
-        title: "Publish Date",
-        title_i18n: {ja: "公開日", en: "Publish Date"},
-        option: {
-          required : true,
-          multiple : false,
-          hidden : false,
-          showlist : false,
-          crtf : false
-        }
-      },
+    },
+    system_identifier_hdl: {
+      input_type: "S_Identifier",
+      title: "Persistent Identifier(HDL)",
+      title_i18n: { ja: "永続識別子（HDL）", en: "Persistent Identifier(HDL)" },
+      option: {
+        required: false,
+        multiple: false,
+        hidden: true,
+        showlist: false,
+        crtf: false
+      }
+    },
+    system_identifier_uri: {
+      input_type: "S_Identifier",
+      title: "Persistent Identifier(URI)",
+      title_i18n: { ja: "永続識別子（URI）", en: "Persistent Identifier(URI)" },
+      option: {
+        required: false,
+        multiple: false,
+        hidden: true,
+        showlist: false,
+        crtf: false
+      }
+    },
+    system_file: {
+      input_type: "S_File",
+      title: "File Information",
+      title_i18n: { ja: "ファイル情報", en: "File Information" },
+      option: {
+        required: false,
+        multiple: false,
+        hidden: true,
+        showlist: false,
+        crtf: false
+      }
     }
-    property_default = {}
+  };
+  meta_fix = {
+    pubdate: {
+      input_type: "Date",
+      title: "Publish Date",
+      title_i18n: { ja: "公開日", en: "Publish Date" },
+      option: {
+        required: true,
+        multiple: false,
+        hidden: false,
+        showlist: false,
+        crtf: false
+      }
+    }
+  };
+  property_default = {};
 
   $('#myModal').modal({
     show: false

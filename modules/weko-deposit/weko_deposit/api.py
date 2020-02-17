@@ -1056,19 +1056,17 @@ class WekoRecord(Record):
             abort(500)
 
     @property
-    def doi(self):
+    def pid_doi(self):
         """Return pid_value of doi identifier."""
-        try:
-            return PersistentIdentifier.query.filter_by(
-                pid_type='doi',
-                object_uuid=self.parent_pid.object_uuid,
-                status=PIDStatus.REGISTERED).one_or_none()
-        except PIDDoesNotExistError as pid_not_exist:
-            current_app.logger.error(pid_not_exist)
-        return None
+        return self._get_pid('doi')
 
     @property
-    def parent_pid(self):
+    def pid_cnri(self):
+        """Return pid_value of doi identifier."""
+        return self._get_pid('cnri')
+
+    @property
+    def pid_parent(self):
         """Return pid_value of doi identifier."""
         pid_ver = PIDVersioning(child=self.recid)
         return pid_ver.parents.one_or_none() if pid_ver else None
@@ -1101,15 +1099,13 @@ class WekoRecord(Record):
             coverpage_state = Indexes.get_coverpage_state(path)
         return coverpage_state
 
-    @classmethod
-    def get_pid(cls, pid):
-        """Get record by pid."""
+    def _get_pid(self, pid_type):
+        """Return pid_value from persistent identifier."""
         try:
-            pid = PersistentIdentifier.get('depid', pid)
-            if pid:
-                return pid
-            else:
-                return None
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            return None
+            return PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                object_uuid=self.pid_parent.object_uuid,
+                status=PIDStatus.REGISTERED).one_or_none()
+        except PIDDoesNotExistError as pid_not_exist:
+            current_app.logger.error(pid_not_exist)
+        return None
