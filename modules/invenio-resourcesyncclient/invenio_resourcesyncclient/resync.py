@@ -66,3 +66,13 @@ class ResourceSyncClient(Client):
         except PermissionError:
             return self.result
         return self.result
+
+    def incremental(self, allow_deletion=False,
+                    change_list_uri=None, from_datetime=None):
+        try:
+            super(ResourceSyncClient, self).incremental(allow_deletion,
+                                                        change_list_uri,
+                                                        from_datetime)
+        except PermissionError:
+            return self.result
+        return self.result

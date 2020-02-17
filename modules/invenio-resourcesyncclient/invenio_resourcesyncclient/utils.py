@@ -37,8 +37,9 @@ from lxml import etree
 from weko_deposit.api import WekoDeposit
 from weko_records_ui.utils import soft_delete
 from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
-from .config import INVENIO_RESYNC_WEKO_DEFAULT_DIR, INVENIO_RESYNC_INDEXES_MODE
+from .config import INVENIO_RESYNC_INDEXES_MODE
 import json
+from datetime import datetime as dt
 
 
 def read_capability(url):
@@ -107,13 +108,14 @@ def sync_audit(map):
     )
 
 
-def sync_incremental(map, base_url, from_date, to_date):
+def sync_incremental(map, counter, base_url, from_date, to_date):
     """Run resync incremental"""
     # init_logging(verbose=True)
-    client = Client()
+    from .resync import ResourceSyncClient
+    client = ResourceSyncClient()
     client.ignore_failures = True
     try:
-        single_sync_incremental(map, base_url, from_date, to_date)
+        single_sync_incremental(map, counter, base_url, from_date, to_date)
         return True
     except MapperError as e:
         current_app.logger.info(e)
@@ -136,18 +138,22 @@ def sync_incremental(map, base_url, from_date, to_date):
                     raise('Bad URL, not a changelist/changedump,'
                           ' cannot sync incremental')
 
-                single_sync_incremental(map, doc.uri, from_date, to_date)
+                single_sync_incremental(map, counter,
+                                        doc.uri, from_date, to_date)
             return True
         raise e
 
 
-def single_sync_incremental(map, url, from_date, to_date):
+def single_sync_incremental(map, counter, url, from_date, to_date):
     """Run resync incremental for 1 changelist url only"""
+    from .resync import ResourceSyncClient
     if from_date:
         url = set_query_parameter(url, 'from_date', from_date)
+    else:
+        from_date = get_from_date_from_url(url)
     if to_date:
         url = set_query_parameter(url, 'to_date', to_date)
-    client = Client()
+    client = ResourceSyncClient()
     client.ignore_failures = True
     parts = urlsplit(map[0])
     uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
@@ -155,11 +161,13 @@ def single_sync_incremental(map, url, from_date, to_date):
     while map[0] != uri_host and not sync_result:
         try:
             client.set_mappings(map)
-            client.incremental(change_list_uri=url,
+            result = client.incremental(change_list_uri=url,
                                from_datetime=from_date)
+            update_counter(counter, result)
             sync_result = True
         except MapperError as e:
             # if error then remove one element in url and retry
+            current_app.logger.info('MapperError')
             paths = map[0].rsplit('/', 1)
             map[0] = paths[0]
 
@@ -309,7 +317,11 @@ def process_sync(resync_id, counter):
                     ' cannot sync incremental')
             result = False
             while map[0] != uri_host and not result:
-                result = sync_incremental(map, base_url, from_date, to_date)
+                result = sync_incremental(map, counter,
+                                          base_url, from_date, to_date)
+                resync_index.update({
+                    'result': json.dumps(counter.get('list'))
+                })
                 return jsonify({'result': result})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
@@ -332,3 +344,18 @@ def update_counter(counter, result):
             list_item.append(item)
     counter.update({'list': list_item})
 
+
+def get_from_date_from_url(url):
+    """Get smallest timestamp from url and parse to string"""
+    s = Sitemap()
+    try:
+        document = s.parse_xml(url_or_file_open(url))
+    except IOError as e:
+        raise e
+    date_list = []
+    for item in document.resources:
+        if item.timestamp:
+            date_list.append(item.timestamp)
+    if len(date_list) > 0:
+        from_date = dt.fromtimestamp(min(date_list))
+        return from_date.strftime("%Y-%m-%d")
