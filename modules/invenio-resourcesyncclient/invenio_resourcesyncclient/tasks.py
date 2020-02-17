@@ -88,6 +88,7 @@ def run_sync_import(id):
             try:
                 hostname = urlparse(resync.base_url)
                 records_id = get_list_records(resync.id)
+                successful = []
                 try:
                     for i in records_id:
                         record = get_record(
@@ -99,7 +100,9 @@ def run_sync_import(id):
                             metadata_prefix='jpcoar',
                         )
                         process_item(record[0], resync, counter)
-                        records_id.remove(i)
+                        successful.append(i)
+                    for item in successful:
+                        records_id.remove(item)
                     resync_index.update({
                         'result': json.dumps(records_id)
                     })
