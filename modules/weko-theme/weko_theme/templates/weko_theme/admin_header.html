@@ -23,7 +23,7 @@
 
 {% block headerbox %}
 <header class="main-header">
-  <a href="/" class="navbar-brand logo">
+  <a href="{{ config.THEME_URL_LOGO_ADMIN }}" class="navbar-brand logo">
     <img src="{{ url_for('static', filename=config.THEME_LOGO_ADMIN) }}" alt="{{ config.ADMIN_APPNAME }}" />
   </a>
   <nav class="navbar navbar-static-top" role="navigation">
