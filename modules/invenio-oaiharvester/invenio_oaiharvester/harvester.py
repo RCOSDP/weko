@@ -1528,6 +1528,7 @@ class BaseMapper:
     """BaseMapper."""
 
     itemtype_map = {}
+    identifiers = []
 
     @classmethod
     def update_itemtype_map(cls):
@@ -1630,6 +1631,7 @@ class JPCOARMapper(BaseMapper):
         if self.is_deleted():
             return {}
         self.map_itemtype('jpcoar:jpcoar')
+        self.identifiers = []
         res = {'$schema': self.itemtype.id,
                'pubdate': str(self.datestamp())}
         add_funcs = {
@@ -1661,8 +1663,9 @@ class JPCOARMapper(BaseMapper):
             ),
             'oaire:version': partial(add_version_type, self.itemtype.schema,
                                      res),
-            'jpcoar:identifier': partial(add_identifier, self.itemtype.schema,
-                                         res),
+            'jpcoar:identifier': partial(add_identifier,
+                                         self.itemtype.schema,
+                                         self.identifiers),
             'jpcoar:identifierRegistration': partial(
                 add_identifier_registration, self.itemtype.schema, res),
             #            'jpcoar:relation' : ,
