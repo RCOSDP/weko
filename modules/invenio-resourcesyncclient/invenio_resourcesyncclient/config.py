@@ -38,7 +38,7 @@ INVENIO_RESYNC_INDEXES_MODE = {
 
 INVENIO_RESYNC_INDEXES_SAVING_FORMAT = {
     'jpcoar': 'JPCOAR-XML',
-    'json': 'JSON',
+    # 'json': 'JSON',
 }
 """Value of resync_indexes_mode."""
 
