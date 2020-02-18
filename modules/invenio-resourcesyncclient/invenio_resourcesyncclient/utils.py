@@ -308,7 +308,9 @@ def process_sync(resync_id, counter):
                                        dryrun=False,
                                        from_date=from_date,
                                        to_date=to_date)
-            new_result = list(set(get_list_records(id) + counter.get('list')))
+            new_result = list(set(
+                get_list_records(resync_id) + counter.get('list')
+            ))
             resync_index.update({
                 'result': json.dumps(new_result)
             })
@@ -330,7 +332,9 @@ def process_sync(resync_id, counter):
                                        counter=counter,
                                        dryrun=True)
             audit_result = sync_audit(map, counter)
-            new_result = list(set(get_list_records(id)+counter.get('list')))
+            new_result = list(set(
+                get_list_records(resync_id) + counter.get('list')
+            ))
             resync_index.update({
                 'result': json.dumps(new_result)
             })
@@ -352,7 +356,7 @@ def process_sync(resync_id, counter):
                 result = sync_incremental(map, counter,
                                           base_url, from_date, to_date)
             new_result = list(
-                set(get_list_records(id) + counter.get('list')))
+                set(get_list_records(resync_id) + counter.get('list')))
             resync_index.update({
                 'result': json.dumps(new_result)
             })
