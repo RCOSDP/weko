@@ -529,46 +529,42 @@ class CreateResyncComponent extends React.Component {
             </div>
           )
         }
-        {
-          status.manual === state.status && (
-            <div>
+        <div>
 //from_date
-              <div className="row form-group flex-baseline">
-                <div className="col-md-2 text-right">
-                  <label>From Date</label>
-                </div>
-                <div className="col-md-10">
-                  <ComponentDatePicker
-                    component_name='from_date'
-                    name="from_date"
-                    id_component="from_date"
-                    date_picker_id="from_date_picker"
-                    error_id="from_date_error"
-                    onChange={this.handleChangeState}
-                    value={state.from_date}
-                  />
-                </div>
-              </div>
-//to_date
-              <div className="row form-group flex-baseline">
-                <div className="col-md-2 text-right">
-                  <label>Until Date</label>
-                </div>
-                <div className="col-md-10">
-                  <ComponentDatePicker
-                    component_name='to_date'
-                    name="to_date"
-                    id_component="to_date"
-                    date_picker_id="to_date_picker"
-                    error_id="to_date_error"
-                    onChange={this.handleChangeState}
-                    value={state.to_date}
-                  />
-                </div>
-              </div>
+          <div className="row form-group flex-baseline">
+            <div className="col-md-2 text-right">
+              <label>From Date</label>
             </div>
-          )
-        }
+            <div className="col-md-10">
+              <ComponentDatePicker
+                component_name='from_date'
+                name="from_date"
+                id_component="from_date"
+                date_picker_id="from_date_picker"
+                error_id="from_date_error"
+                onChange={this.handleChangeState}
+                value={state.from_date}
+              />
+            </div>
+          </div>
+//to_date
+          <div className="row form-group flex-baseline">
+            <div className="col-md-2 text-right">
+              <label>Until Date</label>
+            </div>
+            <div className="col-md-10">
+              <ComponentDatePicker
+                component_name='to_date'
+                name="to_date"
+                id_component="to_date"
+                date_picker_id="to_date_picker"
+                error_id="to_date_error"
+                onChange={this.handleChangeState}
+                value={state.to_date}
+              />
+            </div>
+          </div>
+        </div>
 //index_id
         <div className="row form-group flex-baseline">
           <div className="col-md-2 text-right">
