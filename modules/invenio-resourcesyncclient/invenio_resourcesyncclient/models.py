@@ -88,7 +88,6 @@ class ResyncIndexes(db.Model, Timestamp):
         default=lambda: current_app.config[
             'INVENIO_RESYNC_INDEXES_MODE'
         ].get('baseline')
-
     )
     """Resync mode."""
 
@@ -98,7 +97,6 @@ class ResyncIndexes(db.Model, Timestamp):
         default=lambda: current_app.config[
             'INVENIO_RESYNC_INDEXES_SAVING_FORMAT'
         ].get('jpcoar')
-
     )
     """Saving format."""
 

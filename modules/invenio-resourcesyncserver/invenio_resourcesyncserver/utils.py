@@ -182,7 +182,6 @@ def parse_date(date):
 
 def get_timezone(date):
     """Get timezone of a date, then return date & timezone."""
-    print(date)
     parts = date.rsplit('+', 1)
     offset = 0
     if len(parts) > 1:
@@ -198,7 +197,6 @@ def get_timezone(date):
         if len(parts) > 1:
             date = parts[0]
             tz = parts[1]
-            print(tz)
             tz_parts = tz.split(':')
             if len(tz_parts > 1):
                 tz_hour = tz_parts[0]

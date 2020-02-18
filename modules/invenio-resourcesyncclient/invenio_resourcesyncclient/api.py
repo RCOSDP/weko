@@ -305,7 +305,9 @@ class ResyncHandler(object):
         """
         try:
             with db.session.begin_nested():
-                resyncs = db.session.query(ResyncIndexes).filter().all()
+                resyncs = db.session.query(ResyncIndexes).filter().order_by(
+                    db.asc(ResyncIndexes.id)
+                ).all()
                 if type_result == 'obj':
                     return [ResyncHandler.from_modal(res) for res in resyncs]
                 else:
@@ -320,7 +322,7 @@ class ResyncHandler(object):
             with db.session.begin_nested():
                 resync_logs = db.session.query(ResyncLogs).filter_by(
                     resync_indexes_id=int(self.id)
-                ).all()
+                ).order_by(db.desc(ResyncLogs.id)).all()
                 result = [dict(**{
                     "id": logs.id,
                     "start_time": logs.start_time.strftime(
@@ -334,7 +336,7 @@ class ResyncHandler(object):
                     "counter": logs.counter,
                     "log_type": logs.log_type,
                 }) for logs in resync_logs]
-                return sorted(result, key=lambda item: item.get("id"))
+                return result
         except Exception as ex:
             current_app.logger.debug(ex)
             return False

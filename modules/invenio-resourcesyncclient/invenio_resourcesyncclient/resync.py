@@ -69,7 +69,7 @@ class ResourceSyncClient(Client):
             super(ResourceSyncClient, self).baseline_or_audit(allow_deletion,
                                                               audit_only)
         except PermissionError:
-            return self.result
+            pass
         return self.result
 
     def incremental(self, allow_deletion=False,
@@ -80,5 +80,5 @@ class ResourceSyncClient(Client):
                                                         change_list_uri,
                                                         from_datetime)
         except PermissionError:
-            return self.result
+            pass
         return self.result

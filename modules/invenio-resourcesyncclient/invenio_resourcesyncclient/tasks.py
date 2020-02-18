@@ -62,7 +62,7 @@ def run_sync_import(id):
             }
         )
     start_time = datetime.now()
-    resync = ResyncIndexes.query.filter_by(id=id).first()
+    resync = db.session.query(ResyncIndexes).filter_by(id=id).first()
     counter = init_counter()
     resync_index = ResyncHandler.get_resync(id)
     resync_log = prepare_log(

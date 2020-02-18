@@ -137,7 +137,7 @@ install_requires = [
     'invenio-csl-rest>=1.0.0a1',
     'fpdf>=1.7.2',
     'Pillow>=5.4.1',
-    'resync'
+    'resync==1.0.9'
 ]
 
 packages = find_packages()
