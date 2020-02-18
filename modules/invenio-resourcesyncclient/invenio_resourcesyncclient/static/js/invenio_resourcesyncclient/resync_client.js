@@ -878,8 +878,8 @@ class DetailResourceComponent extends React.Component {
                     {
                       this.state.logs.map((item,key) => {
                         return (
-                          <tr>
-                            <td>{item.id}</td>
+                          <tr key={key}>
+                            <td>{key+1}</td>
                             <td>{item.start_time}</td>
                             <td>{item.end_time}</td>
                             <td>{item.status}</td>
