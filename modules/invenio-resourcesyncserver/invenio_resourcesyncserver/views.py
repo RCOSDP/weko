@@ -14,6 +14,7 @@
 from __future__ import absolute_import, print_function
 
 from flask import Blueprint, Response, abort, redirect, url_for
+
 from .api import ChangeListHandler, ResourceListHandler
 from .utils import render_capability_xml, render_well_know_resourcesync
 

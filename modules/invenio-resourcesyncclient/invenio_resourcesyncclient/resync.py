@@ -19,13 +19,15 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-from resync.client import Client
 from flask import current_app
+from resync.client import Client
 
 
 class ResourceSyncClient(Client):
+    """Class ResourceSyncClient base on Client."""
 
     def __init__(self, hashes=None, verbose=False, dryrun=False):
+        """Overwrite Init."""
         super(ResourceSyncClient, self).__init__(hashes, verbose, dryrun)
         self.result = dict(
             created=[],
@@ -34,6 +36,7 @@ class ResourceSyncClient(Client):
         )
 
     def update_resource(self, resource, filename, change=None):
+        """Update Resource."""
         num_updated = super(ResourceSyncClient, self).update_resource(resource,
                                                                       filename,
                                                                       change)
@@ -50,6 +53,7 @@ class ResourceSyncClient(Client):
         return num_updated
 
     def delete_resource(self, resource, filename, change=None):
+        """Delete Resource."""
         num_deleted = super(ResourceSyncClient, self).delete_resource(resource,
                                                                       filename,
                                                                       change)
@@ -60,6 +64,7 @@ class ResourceSyncClient(Client):
         return num_deleted
 
     def baseline_or_audit(self, allow_deletion=False, audit_only=False):
+        """Overwrite Sync baseline or audit."""
         try:
             super(ResourceSyncClient, self).baseline_or_audit(allow_deletion,
                                                               audit_only)
@@ -69,6 +74,7 @@ class ResourceSyncClient(Client):
 
     def incremental(self, allow_deletion=False,
                     change_list_uri=None, from_datetime=None):
+        """Overwrite Sync incrementail."""
         try:
             super(ResourceSyncClient, self).incremental(allow_deletion,
                                                         change_list_uri,

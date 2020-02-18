@@ -22,12 +22,12 @@
 
 from datetime import datetime
 
-from invenio_db import db
 from flask import current_app
+from invenio_db import db
+from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
 from weko_index_tree.models import Index
-from sqlalchemy.dialects import postgresql
 
 
 class ResyncIndexes(db.Model, Timestamp):
@@ -85,7 +85,7 @@ class ResyncIndexes(db.Model, Timestamp):
     resync_mode = db.Column(
         db.String(20),
         nullable=False,
-        default = lambda: current_app.config[
+        default=lambda: current_app.config[
             'INVENIO_RESYNC_INDEXES_MODE'
         ].get('baseline')
 

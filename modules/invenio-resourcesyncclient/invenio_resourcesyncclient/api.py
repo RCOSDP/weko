@@ -26,12 +26,12 @@ import shutil
 import sys
 import tempfile
 import traceback
-from invenio_db import db
-from sqlalchemy.exc import SQLAlchemyError
-
-from weko_index_tree.api import Indexes
 
 from flask import current_app, request, send_file
+from invenio_db import db
+from sqlalchemy.exc import SQLAlchemyError
+from weko_index_tree.api import Indexes
+
 from .models import ResyncIndexes, ResyncLogs
 
 
@@ -78,9 +78,11 @@ class ResyncHandler(object):
             'index_name': index_name,
             'created': self.created,
             'from_date': self.from_date.strftime(
-                        '%Y-%m-%dT%H:%M:%S%z') if self.from_date else None,
+                '%Y-%m-%dT%H:%M:%S%z'
+            ) if self.from_date else None,
             'to_date': self.to_date.strftime(
-                        '%Y-%m-%dT%H:%M:%S%z') if self.to_date else None,
+                '%Y-%m-%dT%H:%M:%S%z'
+            ) if self.to_date else None,
             'updated': self.updated,
             'resync_save_dir': self.resync_save_dir,
             'resync_mode': self.resync_mode,
@@ -313,7 +315,7 @@ class ResyncHandler(object):
             return False
 
     def get_logs(self):
-        """Get logs"""
+        """Get logs."""
         try:
             with db.session.begin_nested():
                 resync_logs = db.session.query(ResyncLogs).filter_by(

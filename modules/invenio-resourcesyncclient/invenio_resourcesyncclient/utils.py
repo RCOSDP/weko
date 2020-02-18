@@ -19,31 +19,32 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-from resync.client import Client
-from resync.client_utils import url_or_file_open, init_logging
-from resync.mapper import MapperError
-from resync.resource_list_builder import ResourceListBuilder
-from resync.sitemap import Sitemap
-from flask import current_app, jsonify
-from invenio_oaiharvester.utils import ItemEvents
-from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
-from invenio_oaiharvester.tasks import map_indexes, event_counter
-import dateutil
-from invenio_db import db
+import json
+from datetime import datetime as dt
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
+import dateutil
+from flask import current_app, jsonify
+from invenio_db import db
+from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
+from invenio_oaiharvester.tasks import event_counter, map_indexes
+from invenio_oaiharvester.utils import ItemEvents
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
+from resync.client import Client
+from resync.client_utils import init_logging, url_or_file_open
+from resync.mapper import MapperError
+from resync.resource_list_builder import ResourceListBuilder
+from resync.sitemap import Sitemap
 from weko_deposit.api import WekoDeposit
 from weko_records_ui.utils import soft_delete
-from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qs
+
 from .config import INVENIO_RESYNC_INDEXES_MODE
-import json
-from datetime import datetime as dt
 
 
 def read_capability(url):
-    """Read capability of an url"""
+    """Read capability of an url."""
     s = Sitemap()
     capability = None
     try:
@@ -57,7 +58,7 @@ def read_capability(url):
 
 def sync_baseline(map, base_url, counter, dryrun=False,
                   from_date=None, to_date=None):
-    """Run resync baseline"""
+    """Run resync baseline."""
     from .resync import ResourceSyncClient
     client = ResourceSyncClient()
     # ignore fail to continue running, log later
@@ -85,10 +86,11 @@ def sync_baseline(map, base_url, counter, dryrun=False,
         return False
     except Exception as e:
         current_app.logger.error('Error when Sync :' + str(e))
+        return False
 
 
 def sync_audit(map, counter):
-    """Run resync audit"""
+    """Run resync audit."""
     client = Client()
     # ignore fail to continue running, log later
     client.ignore_failures = True
@@ -124,7 +126,7 @@ def sync_audit(map, counter):
 
 
 def sync_incremental(map, counter, base_url, from_date, to_date):
-    """Run resync incremental"""
+    """Run resync incremental."""
     # init_logging(verbose=True)
     from .resync import ResourceSyncClient
     client = ResourceSyncClient()
@@ -148,11 +150,12 @@ def sync_incremental(map, counter, base_url, from_date, to_date):
             for doc in docs:
                 # make sure sub url is a changelist/ changedump
                 capability = read_capability(doc.uri)
-                if capability is None or (capability != 'changelist' and
-                                          capability != 'changedump'):
+                if capability is None:
                     raise('Bad URL, not a changelist/changedump,'
                           ' cannot sync incremental')
-
+                if capability != 'changelist' and capability != 'changedump':
+                    raise ('Bad URL, not a changelist/changedump,'
+                           ' cannot sync incremental')
                 single_sync_incremental(map, counter,
                                         doc.uri, from_date, to_date)
             return True
@@ -160,7 +163,7 @@ def sync_incremental(map, counter, base_url, from_date, to_date):
 
 
 def single_sync_incremental(map, counter, url, from_date, to_date):
-    """Run resync incremental for 1 changelist url only"""
+    """Run resync incremental for 1 changelist url only."""
     from .resync import ResourceSyncClient
     if from_date:
         url = set_query_parameter(url, 'from_date', from_date)
@@ -176,8 +179,10 @@ def single_sync_incremental(map, counter, url, from_date, to_date):
     while map[0] != uri_host and not sync_result:
         try:
             client.set_mappings(map)
-            result = client.incremental(change_list_uri=url,
-                               from_datetime=from_date)
+            result = client.incremental(
+                change_list_uri=url,
+                from_datetime=from_date
+            )
             update_counter(counter, result)
             sync_result = True
         except MapperError as e:
@@ -188,8 +193,9 @@ def single_sync_incremental(map, counter, url, from_date, to_date):
 
 
 def set_query_parameter(url, param_name, param_value):
-    """Given a URL, set or replace a query parameter and return the
-    modified URL.
+    """Given a URL.
+
+    set or replace a query parameter and return the modified URL.
     """
     scheme, netloc, path, query_string, fragment = urlsplit(url)
     query_params = parse_qs(query_string)
@@ -201,7 +207,7 @@ def set_query_parameter(url, param_name, param_value):
 
 
 def get_list_records(resync_id):
-    """Get list records in local dir. Only get updated"""
+    """Get list records in local dir. Only get updated."""
     from .api import ResyncHandler
     resync_index = ResyncHandler.get_resync(resync_id)
     records = []
@@ -269,6 +275,7 @@ def process_item(record, resync, counter):
 
 
 def process_sync(resync_id, counter):
+    """Process sync."""
     from .api import ResyncHandler
     resync_index = ResyncHandler.get_resync(resync_id)
     if not resync_index:
@@ -289,9 +296,9 @@ def process_sync(resync_id, counter):
             'INVENIO_RESYNC_INDEXES_MODE',
             INVENIO_RESYNC_INDEXES_MODE
         ).get('baseline'):
-            if not capability or (
-                capability != 'resourcelist' and
-                    capability != 'resourcedump'):
+            if not capability:
+                raise ValueError('Bad URL')
+            if capability != 'resourcelist' and capability != 'resourcedump':
                 raise ValueError('Bad URL')
             result = False
             while map[0] != uri_host and not result:
@@ -309,9 +316,9 @@ def process_sync(resync_id, counter):
             'INVENIO_RESYNC_INDEXES_MODE',
             INVENIO_RESYNC_INDEXES_MODE
         ).get('audit'):
-            if not capability or (
-                capability != 'resourcelist' and
-                    capability != 'changelist'):
+            if not capability:
+                raise ValueError('Bad URL')
+            if capability != 'resourcelist' and capability != 'changelist':
                 raise ValueError('Bad URL')
             # do the same logic with Baseline
             # to make sure right url is used
@@ -330,9 +337,11 @@ def process_sync(resync_id, counter):
             'INVENIO_RESYNC_INDEXES_MODE',
             INVENIO_RESYNC_INDEXES_MODE
         ).get('incremental'):
-            if not capability or (
-                capability != 'changelist' and
-                    capability != 'changedump'):
+            if not capability:
+                raise (
+                    'Bad URL, not a changelist/changedump,'
+                    ' cannot sync incremental')
+            if capability != 'changelist' and capability != 'changedump':
                 raise (
                     'Bad URL, not a changelist/changedump,'
                     ' cannot sync incremental')
@@ -349,7 +358,7 @@ def process_sync(resync_id, counter):
 
 
 def update_counter(counter, result):
-    """Update sync result to counter"""
+    """Update sync result to counter."""
     list_item = []
     counter.update({'created_items': len(result.get('created'))})
     counter.update({'updated_items': len(result.get('updated'))})
@@ -367,7 +376,7 @@ def update_counter(counter, result):
 
 
 def get_from_date_from_url(url):
-    """Get smallest timestamp from url and parse to string"""
+    """Get smallest timestamp from url and parse to string."""
     s = Sitemap()
     try:
         document = s.parse_xml(url_or_file_open(url))

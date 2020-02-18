@@ -20,14 +20,15 @@
 
 """WEKO3 module docstring."""
 import json
+
 from flask import current_app, jsonify, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from .config import INVENIO_RESYNC_INDEXES_STATUS, \
-    INVENIO_RESYNC_INDEXES_MODE, \
-    INVENIO_RESYNC_INDEXES_SAVING_FORMAT
+
 from .api import ResyncHandler
-from .tasks import run_sync_import, resync_sync
+from .config import INVENIO_RESYNC_INDEXES_MODE, \
+    INVENIO_RESYNC_INDEXES_SAVING_FORMAT, INVENIO_RESYNC_INDEXES_STATUS
+from .tasks import resync_sync, run_sync_import
 
 
 class AdminResyncClient(BaseView):
@@ -59,22 +60,14 @@ class AdminResyncClient(BaseView):
 
     @expose('/get_list', methods=['GET'])
     def get_list(self):
-        """Renders an admin resource list view.
-
-        :param
-        :return: The rendered template.
-        """
+        """Get list."""
         result = ResyncHandler.get_list_resync()
         result = list(map(lambda item: item.to_dict(), result))
         return jsonify(data=result)
 
     @expose('/create', methods=['POST'])
     def create_resync(self):
-        """Renders an admin resource list view.
-
-        :param
-        :return: The rendered template.
-        """
+        """Create Resync."""
         resync = ResyncHandler(**request.get_json())
         result = resync.create()
         if result.get('success'):
@@ -90,11 +83,7 @@ class AdminResyncClient(BaseView):
 
     @expose('/update/<resync_id>', methods=['POST'])
     def update_resync(self, resync_id):
-        """Renders an admin resource list view.
-
-        :param
-        :return: The rendered template.
-        """
+        """Update Resync."""
         resync = ResyncHandler.get_resync(resync_id)
         if resync:
             result = resync.update(request.get_json())
@@ -116,11 +105,7 @@ class AdminResyncClient(BaseView):
 
     @expose('/delete/<resync_id>', methods=['POST'])
     def delete_resync(self, resync_id):
-        """Renders an admin resource list view.
-
-        :param
-        :return: The rendered template.
-        """
+        """Delete resync."""
         resync = ResyncHandler.get_resync(resync_id)
         if not resync:
             return jsonify(
@@ -140,7 +125,7 @@ class AdminResyncClient(BaseView):
 
     @expose('/run_import/<resync_id>', methods=['GET'])
     def run_import(self, resync_id):
-        """Run harvesting."""
+        """Run Import."""
         run_sync_import.apply_async(args=(resync_id,
                                           ))
         return jsonify(
@@ -149,7 +134,7 @@ class AdminResyncClient(BaseView):
 
     @expose('/get_logs/<resync_id>', methods=['GET'])
     def get_logs(self, resync_id):
-        """Run harvesting."""
+        """Get Logs."""
         resync = ResyncHandler.get_resync(resync_id)
         logs = resync.get_logs()
         if logs:
@@ -164,7 +149,7 @@ class AdminResyncClient(BaseView):
 
     @expose("/run_sync/<resync_id>", methods=['GET'])
     def run_sync(self, resync_id):
-        """Sync a resource sync. Save data to local"""
+        """Run Sync."""
         resync_sync.apply_async(
             args=(
                 resync_id,
@@ -176,7 +161,7 @@ class AdminResyncClient(BaseView):
 
     @expose("/toggle_auto/<resync_id>", methods=['POST'])
     def toggle_auto(self, resync_id):
-        """Sync a resource sync. Save data to local"""
+        """Change is_running."""
         resync = ResyncHandler.get_resync(resync_id)
         if resync and resync.status == current_app.config.get(
             "INVENIO_RESYNC_INDEXES_STATUS",

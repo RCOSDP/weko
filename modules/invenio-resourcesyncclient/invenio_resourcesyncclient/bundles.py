@@ -32,4 +32,3 @@ invenio_admin_resync_client_css = Bundle(
     'css/invenio_resourcesyncclient/resync_client.css',
     output="gen/invenio_resourcesyncclient_css.%(version)s.css",
 )
-

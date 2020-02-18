@@ -20,24 +20,24 @@
 
 """WEKO3 module docstring."""
 import json
-from datetime import datetime
 import signal
-import requests
-from lxml import etree
+from datetime import datetime
 from urllib.parse import urlparse
+
+import requests
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from flask import current_app
 from invenio_db import db
 from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
 from invenio_oaiharvester.tasks import event_counter
-
-from flask import current_app
+from lxml import etree
 
 from .api import ResyncHandler
+from .config import INVENIO_RESYNC_INDEXES_MODE, \
+    INVENIO_RESYNC_INDEXES_STATUS, INVENIO_RESYNC_LOGS_STATUS
 from .models import ResyncIndexes, ResyncLogs
 from .utils import get_list_records, process_item, process_sync
-from .config import INVENIO_RESYNC_LOGS_STATUS, INVENIO_RESYNC_INDEXES_STATUS, \
-    INVENIO_RESYNC_INDEXES_MODE
 
 logger = get_task_logger(__name__)
 
@@ -58,7 +58,7 @@ def run_sync_import(id):
         return (
             {
                 'task_state': 'SUCCESS',
-                 'task_id': run_sync_import.request.id
+                'task_id': run_sync_import.request.id
             }
         )
     start_time = datetime.now()
@@ -166,7 +166,7 @@ def get_record(
 
 @shared_task()
 def resync_sync(id):
-    """Run resource sync"""
+    """Run resource sync."""
     if is_running_task(id):
         return ({
             'task_state': 'SUCCESS',
@@ -222,7 +222,7 @@ def resync_sync(id):
 
 
 def prepare_log(resync, id, counter, task_id, log_type):
-    """Prepare log for resource sync"""
+    """Prepare log for resource sync."""
     current_app.logger.info('[{0}] [{1}] START'.format(0, 'Resync ' + log_type))
     # For registering runtime stats
 
@@ -244,7 +244,7 @@ def prepare_log(resync, id, counter, task_id, log_type):
 
 
 def finish(resync, resync_log, counter, start_time, request_id, log_type):
-    """Finish resource sync by logging and save to db"""
+    """Finish resource sync by logging and save to db."""
     resync.task_id = None
     end_time = datetime.now()
     resync_log.end_time = end_time
@@ -318,4 +318,3 @@ def run_sync_auto():
             'task_id': run_sync_auto.request.id
         },
     )
-
