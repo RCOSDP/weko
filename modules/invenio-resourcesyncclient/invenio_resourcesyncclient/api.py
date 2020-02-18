@@ -334,7 +334,7 @@ class ResyncHandler(object):
                     "counter": logs.counter,
                     "log_type": logs.log_type,
                 }) for logs in resync_logs]
-                return result
+                return sorted(result, key=lambda item: item.get("id"))
         except Exception as ex:
             current_app.logger.debug(ex)
             return False
