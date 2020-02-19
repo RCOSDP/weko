@@ -1054,30 +1054,38 @@ function handleSharePermission(value) {
         var licenseTypeName = 'licensetype';
         var schema = $rootScope.recordsVM.invenioRecordsSchema;
         var listLicenseTypeKey = [];
-        Object.entries(schema.properties).forEach(
-          ([key, value]) => {
+
+        for (let key in schema.properties) {
+            let value = schema.properties[key];
             // Find form that contains license type obj
             if (value.items && value.items.properties && value.items.properties.hasOwnProperty(licenseTypeName)) {
-              listLicenseEnum = []
+              let listLicenseEnum = [];
               // Collect list license
-              $.each(listLicenseObj, function (ind, val) {
-                listLicenseEnum.push(val['value']);
-              });
+              for (let ind in listLicenseObj) {
+                listLicenseEnum.push(listLicenseObj[ind]['value']);
               //set enum of license type form as list license above
               value.items.properties[licenseTypeName]['enum'] = listLicenseEnum;
               listLicenseTypeKey.push(key);
             }
-          });
+          }
+      }
         if (listLicenseTypeKey.length > 0) {
-          $.each(listLicenseTypeKey, function (ind, val) {
-            containLicenseTypeForm = $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == val);
+          let containLicenseTypeForm = null;
+            for(let ind in listLicenseTypeKey){
+              for(let key in $rootScope.recordsVM.invenioRecordsForm)
+              {
+                if($rootScope.recordsVM.invenioRecordsForm[key].key == listLicenseTypeKey[ind]){
+                  containLicenseTypeForm = $rootScope.recordsVM.invenioRecordsForm[key];
+                }
+              }
+            }
+
             // The index of license type is always "3", correspond to its property
             if (containLicenseTypeForm && containLicenseTypeForm.items && containLicenseTypeForm.items.length >= 2) {
               licenseTypeForm = containLicenseTypeForm.items[2];
               // Set title map by listLicenseObj above
               licenseTypeForm['titleMap'] = listLicenseObj;
             }
-          });
         }
       }
 

@@ -18,6 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
+
 {% macro output_attribute_value(attribute_value_mlt) %}
     {%- if attribute_value_mlt is mapping -%}
         {%- for k, v in attribute_value_mlt.items() -%}
@@ -36,6 +37,7 @@
         {%- endfor -%}
     {%- endif -%}
 {% endmacro %}
+
 {% macro output_detail_data(record_detail_data) %}
     {%- if record_detail_data['attribute_value_mlt'] is string or not record_detail_data['attribute_value_mlt'] -%}
       <tr>
@@ -58,6 +60,7 @@
         {%- endfor -%}
     {%- endif -%}
 {% endmacro %}
+
 {% macro output_attribute_value_mlt(attribute_value_mlt, level, parrent_name) %}
     {%- for attribute_data in attribute_value_mlt -%}
         {%- set displayflag = True -%}
@@ -86,6 +89,7 @@
         {%- endif -%}
     {%- endfor -%}
 {% endmacro %}
+
 {% macro child_data(label, content, level) %}
     {%- set label_colspan_default = 6 -%}
   <tr>
@@ -103,6 +107,7 @@
     <td class="{%- if label == 'Research Plan' or label == 'Summary' or label == 'Annual Report' %}multiple-line{%- endif %}">{{ content }} </td>
   </tr>
 {% endmacro %}
+
 {% macro out_table_th(parrent_length) %}
     {%- if parrent_length > 0 -%}
       <th scope="row"
@@ -110,6 +115,7 @@
         {{ out_table_th(parrent_length - 1) }}
     {%- endif -%}
 {% endmacro %}
+
 {% macro output_creator(creator_key, creator_data) %}
     {%- if creator_key == 'creatorMail' -%}
       <a href="{{ 'mailto:' + creator_data }}">{{ creator_data }}</a>

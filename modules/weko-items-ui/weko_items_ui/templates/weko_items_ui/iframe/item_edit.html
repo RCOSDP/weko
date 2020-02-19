@@ -338,9 +338,7 @@
           {% if user_profile %}
             {% set user_profile_data = user_profile|tojson %}
           {% endif %}
-          {% if list_license %}
-            {% set list_license_data = list_license|tojson %}
-          {% endif %}
+          {% set list_license_data = list_license|tojson %}
           <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{title}}'>
           <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
           <input type="hidden" id="action_endpoint_key" name="action_endpoint_key" value='{{endpoint_key}}'>
