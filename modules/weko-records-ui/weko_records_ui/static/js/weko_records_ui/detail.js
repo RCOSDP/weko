@@ -55,11 +55,8 @@ require([
           let uri = res.data.redirect.replace('api/', '')
           document.location.href = uri;
         } else {
-          if (res.code = -13) {
-            $('[role="alert"]').css('display','inline-block');
-          } else {
-            alert(res.msg);
-          }
+          $('[role="alert"]').css('display','inline-block');
+          $('[role="alert"]').text(res.msg);
         }
       },
       error: function (jqXHE, status) { }
