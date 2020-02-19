@@ -214,6 +214,11 @@ def get_license_icon(type):
     list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
     license_icon_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_LOCATION']
+    from invenio_i18n.ext import current_i18n
+    current_lang = current_i18n.language
+    # In case of current lang is not bot JA and EN, set to default EN
+    if current_lang != 'ja' and current_lang != 'en':
+        current_lang = 'en'
     src = ''
     lic = ''
     href = '#'
@@ -221,7 +226,7 @@ def get_license_icon(type):
         if item['value'] != "license_free" and item['value'] in type:
             src = item['src']
             lic = item['name']
-            href = item['href']
+            href = item['href_'+current_lang]
             break
     src = license_icon_location + src if len(src) > 0 else ''
     lst = (src, lic, href)

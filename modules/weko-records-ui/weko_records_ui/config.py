@@ -293,7 +293,8 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
     # version 4.0
     {
         'name': _('Creative Commons 4.0: Attribution'),
-        'href': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
+        'href_ja': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by/4.0/deed.en',
         'value': 'license_0',
         'src': '88x31(1).png',
         'src_pdf': 'by.png',
@@ -303,7 +304,8 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
     },
     {
         'name': _('Creative Commons 4.0: Attribution - ShareAlike'),
-        'href': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
+        'href_ja': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-sa/4.0/deed.en',
         'value': 'license_1',
         'src': '88x31(2).png',
         'src_pdf': 'by-sa.png',
@@ -313,7 +315,8 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
     },
     {
         'name': _('Creative Commons 4.0: Attribution - NoDerivatives'),
-        'href': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
+        'href_ja': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-nd/4.0/deed.en',
         'value': 'license_2',
         'src': '88x31(3).png',
         'src_pdf': 'by-nd.png',
@@ -323,7 +326,8 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
     },
     {
         'name': _('Creative Commons 4.0: Attribution - NonCommercial'),
-        'href': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
+        'href_ja': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-nc/4.0/deed.en',
         'value': 'license_3',
         'src': '88x31(4).png',
         'src_pdf': 'by-nc.png',
@@ -334,7 +338,8 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
     {
         'name': _('Creative Commons 4.0: Attribution - NonCommercial - '
                   'ShareAlike'),
-        'href': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
+        'href_ja': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en',
         'value': 'license_4',
         'src': '88x31(5).png',
         'src_pdf': 'by-nc-sa.png',
@@ -345,7 +350,8 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
     {
         'name': _('Creative Commons 4.0: Attribution - NonCommercial - '
                   'NoDerivatives'),
-        'href': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
+        'href_ja': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.en',
         'value': 'license_5',
         'src': '88x31(6).png',
         'src_pdf': 'by-nc-nd.png',

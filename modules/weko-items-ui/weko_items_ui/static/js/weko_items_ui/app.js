@@ -1079,7 +1079,6 @@ function handleSharePermission(value) {
                 }
               }
             }
-
             // The index of license type is always "3", correspond to its property
             if (containLicenseTypeForm && containLicenseTypeForm.items && containLicenseTypeForm.items.length >= 2) {
               licenseTypeForm = containLicenseTypeForm.items[2];
@@ -1087,7 +1086,7 @@ function handleSharePermission(value) {
               licenseTypeForm['titleMap'] = listLicenseObj;
             }
         }
-      }
+    }
 
       $scope.autoSetCorrespondingUsageAppId = function () {
         if ($scope.usage_report_activity_id != ''){
