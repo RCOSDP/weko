@@ -1075,7 +1075,10 @@ class WekoRecord(Record):
     def pid_parent(self):
         """Return pid_value of doi identifier."""
         pid_ver = PIDVersioning(child=self.recid)
-        return pid_ver.parents.one_or_none() if pid_ver else None
+        if pid_ver:
+            return pid_ver.parents.one_or_none()
+        else:
+            return None
 
     @classmethod
     def get_record_by_pid(cls, pid):

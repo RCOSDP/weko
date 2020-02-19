@@ -119,7 +119,6 @@ def register_cnri(activity_id):
     item_uuid = activity.item_id
     record = WekoRecord.get_record(item_uuid)
 
-    deposit_id = int(record.get('_deposit')['id'])
     if record.pid_cnri:
         current_app.logger.info('This record was registered CNRI!')
         return
