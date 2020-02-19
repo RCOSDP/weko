@@ -52,6 +52,9 @@ THEME_LOGO = 'images/weko-logo.png'
 THEME_LOGO_ADMIN = 'images/weko-logo.png'
 """The logo to be used on the admin views header."""
 
+THEME_URL_LOGO_ADMIN = '/'
+"""The url of admin logo"""
+
 THEME_FOOTER_TEMPLATE = 'weko_theme/footer.html'
 """Footer template which is normally included in :data:`BASE_TEMPLATE`."""
 

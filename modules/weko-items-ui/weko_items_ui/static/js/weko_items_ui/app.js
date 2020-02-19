@@ -292,6 +292,7 @@ function handleSharePermission(value) {
   // Bootstrap it!
   angular.element(document).ready(function () {
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
+      $scope.currentUrl = '';
       $scope.resourceTypeKey = "";
       $scope.groups = [];
       $scope.filemeta_keys = [];
@@ -1113,15 +1114,32 @@ function handleSharePermission(value) {
         $scope.hiddenPubdate();
         $scope.initContributorData();
         $scope.initUserGroups();
-        $scope.initFilenameList();
         $scope.searchTypeKey();
         $scope.renderValidationErrorList();
         $scope.autoSetTitle();
         $scope.initCorrespondingIdList();
         $scope.autoTitleData();
+        //When switch language, Getting files uploaded.
+        let bucketFiles = JSON.parse(sessionStorage.getItem('files'));
+        let bucketEndpoints = JSON.parse(sessionStorage.getItem('endpoints'));
+        let bucketUrl = sessionStorage.getItem('url');
+        $scope.currentUrl = window.location.pathname + window.location.search;
+        if (bucketFiles && bucketEndpoints && $scope.currentUrl == bucketUrl){
+          bucketEndpoints.html = '';
+          $rootScope.filesVM.files = bucketFiles;
+          $rootScope.filesVM.invenioFilesEndpoints = bucketEndpoints;
+          if (bucketEndpoints.hasOwnProperty('bucket')) {
+            $rootScope.$broadcast(
+              'invenio.records.endpoints.updated', bucketEndpoints
+            );
+          }
+        }
+        $scope.initFilenameList();
+        //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
           endpoints = JSON.parse($('#hide_endpoints').text());
+          endpoints.html = '';
           if (endpoints.hasOwnProperty('bucket')) {
             $rootScope.$broadcast(
               'invenio.records.endpoints.updated', endpoints
@@ -1144,6 +1162,11 @@ function handleSharePermission(value) {
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
         $scope.hiddenPubdate();
+        //Add file uploaded to sessionStorage when uploaded processing done
+        window.history.pushState("", "", $scope.currentUrl);
+        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
+        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
+        sessionStorage.setItem('url', $scope.currentUrl);
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
