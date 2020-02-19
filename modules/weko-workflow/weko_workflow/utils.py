@@ -119,7 +119,13 @@ def register_cnri(activity_id):
     item_uuid = activity.item_id
     record = WekoRecord.get_record(item_uuid)
 
-    deposit_id = record.get('_deposit')['id']
+    deposit_id = int(record.get('_deposit')['id'])
+    if record.get_cnri:
+        current_app.logger.info('This record was registered CNRI!')
+        return
+    else:
+        deposit_id = record.pid_parent.pid_value.split('parent:')[1]
+
     record_url = request.url.split('/workflow/')[0] \
         + '/records/' + str(deposit_id)
 
@@ -131,7 +137,7 @@ def register_cnri(activity_id):
         identifier = IdentifierHandle(item_uuid)
         identifier.register_pidstore('cnri', handle)
     else:
-        current_app.logger.error('Cannot connect Handle server!')
+        current_app.logger.info('Cannot connect Handle server!')
 
 
 def item_metadata_validation(item_id, identifier_type):
