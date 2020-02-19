@@ -420,7 +420,7 @@ def check_correct_jpcoar_mapping(object_uuid):
     if current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
         for key in current_app.config\
                 .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
-            if current_app.config\
+            if key in item_map and current_app.config\
                 .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING')[key]\
                     not in item_map[key]:
                 return False
