@@ -213,7 +213,7 @@ class WidgetItem(db.Model):
         widget = cls.get_by_id(widget_id)
         if not widget:
             return
-        setattr(widget, 'is_deleted', 'True')
+        setattr(widget, 'is_deleted', True)
         session.merge(widget)
         return widget
 
@@ -329,7 +329,7 @@ class WidgetMultiLangData(db.Model):
         if not multi_data:
             return False
         for data in multi_data:
-            setattr(data, 'is_deleted', 'True')
+            setattr(data, 'is_deleted', True)
         return True
 
 

@@ -94,8 +94,11 @@
           {% set label = labels[1] %}
           {% set content = output_creator(labels[0], content) %}
       {%- endif -%}
-    <th scope="row" colspan="{{ label_colspan_default - level }}"
-        style="border-bottom: none">{{_(label)}}</th>
+      {% set label_text = label %}
+      {%- if label -%}
+        {% set label_text = _(label) %}
+      {%- endif -%}
+      <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label_text }}</th>
     {%- if content -%}
       {%- set content = _(content) -%}
     {%- endif -%}

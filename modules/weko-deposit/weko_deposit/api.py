@@ -499,17 +499,20 @@ class WekoDeposit(Deposit):
         super(WekoDeposit, self).update(dc)
 #        if 'pid' in self['_deposit']:
 #            self['_deposit']['pid']['revision_id'] += 1
-        if has_request_context():
-            if current_user:
-                user_id = current_user.get_id()
-            else:
-                user_id = -1
-            item_created.send(
-                current_app._get_current_object(),
-                user_id=user_id,
-                item_id=self.pid,
-                item_title=self.data['title']
-            )
+        try:
+            if has_request_context():
+                if current_user:
+                    user_id = current_user.get_id()
+                else:
+                    user_id = -1
+                item_created.send(
+                    current_app._get_current_object(),
+                    user_id=user_id,
+                    item_id=self.pid,
+                    item_title=self.data['title']
+                )
+        except BaseException:
+            abort(500, 'MAPPING_ERROR')
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
@@ -776,13 +779,16 @@ class WekoDeposit(Deposit):
             index_lst.append(lst.path)
 
         # convert item meta data
-        dc, jrc, is_edit = json_loader(data, self.pid)
-        dc['publish_date'] = data.get('pubdate')
-        dc['title'] = [data.get('title')]
-        dc['relation_version_is_last'] = True
-        self.data = data
-        self.jrc = jrc
-        self.is_edit = is_edit
+        try:
+            dc, jrc, is_edit = json_loader(data, self.pid)
+            dc['publish_date'] = data.get('pubdate')
+            dc['title'] = [data.get('title')]
+            dc['relation_version_is_last'] = True
+            self.data = data
+            self.jrc = jrc
+            self.is_edit = is_edit
+        except BaseException:
+            abort(500, 'MAPPING_ERROR')
 
         # Save Index Path on ES
         jrc.update(dict(path=index_lst))
