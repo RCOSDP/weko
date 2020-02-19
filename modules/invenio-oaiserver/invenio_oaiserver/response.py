@@ -307,7 +307,7 @@ def getrecord(**kwargs):
 
     root = record_dumper(pid, {'_source': record})
 
-    if is_correct_jpcoar_mapping(pid.object_uuid):
+    if check_correct_jpcoar_mapping(pid.object_uuid):
         if record.pid_doi is not None:
             root = create_identifier_index(root,
                                            pid_type=record.pid_doi.pid_type,
@@ -404,7 +404,7 @@ def create_identifier_index(root, **kwargs):
     return root
 
 
-def is_correct_jpcoar_mapping(object_uuid):
+def check_correct_jpcoar_mapping(object_uuid):
     """Validate and return if jpcoar mapping is correct.
 
     Correct mapping mean item map have the 2 field same with config
@@ -418,10 +418,12 @@ def is_correct_jpcoar_mapping(object_uuid):
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
 
     if current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
-        for key in current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
-            if item_map[key] != current_app.config\
-                        .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
+        for key in current_app.config\
+                .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
+            if current_app.config\
+                .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING')[key]\
+                    in item_map[key]:
                 return False
-                # break
-
+    else:
+        return False
     return True

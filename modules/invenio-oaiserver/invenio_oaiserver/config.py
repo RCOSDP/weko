@@ -192,26 +192,8 @@ repository
 
 OAISERVER_SYSTEM_IDENTIFIER_MAPPING = {
     "system_identifier.@value":
-        "system_identifier_doi.subitem_systemidt_identifier",
+        "subitem_systemidt_identifier",
     "system_identifier.@attributes.identifierType":
-        "system_identifier_doi.subitem_systemidt_identifier_type",
+        "subitem_systemidt_identifier_type",
 }
 """Config used to specify system identifier mapping of jpcoar"""
-
-
-OAISERVER_SYSTEM_IDENTIFIER_MAPPING_HDL = {
-    "system_identifier.@value":
-        "system_identifier_hdl.subitem_systemidt_identifier",
-    "system_identifier.@attributes.identifierType":
-        "system_identifier_hdl.subitem_systemidt_identifier_type",
-}
-"""Config used to specify HDL system identifier mapping of jpcoar"""
-
-
-OAISERVER_SYSTEM_IDENTIFIER_MAPPING_URI = {
-    "system_identifier.@value":
-        "system_identifier_uri.subitem_systemidt_identifier",
-    "system_identifier.@attributes.identifierType":
-        "system_identifier_uri.subitem_systemidt_identifier_type",
-}
-"""Config used to specify URI system identifier mapping of jpcoar"""
