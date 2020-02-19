@@ -37,7 +37,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.serializers.utils import serialize_relations
-from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
+from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record

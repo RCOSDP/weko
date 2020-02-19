@@ -57,11 +57,11 @@ from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, get_correct_usage_workflow, get_permission, \
     is_open_restricted
+from .utils import get_billing_file_download_permission, get_groups_price, \
+    get_min_price_billing_file_download, get_record_permalink, \
+    get_registration_data_type
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
-from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_min_price_billing_file_download, get_registration_data_type, \
-    get_record_permalink
 
 blueprint = Blueprint(
     'weko_records_ui',

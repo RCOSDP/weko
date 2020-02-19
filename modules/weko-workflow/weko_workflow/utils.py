@@ -20,15 +20,12 @@
 
 """Module of weko-workflow utils."""
 
-import sys
-import traceback
 from copy import deepcopy
 
 from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
-from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
 from invenio_records.models import RecordMetadata
@@ -105,7 +102,7 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
             if reg:
                 identifier = IdentifierHandle(item_id)
                 identifier.update_idt_registration_metadata(doi_register_val,
-                                                         doi_register_typ)
+                                                            doi_register_typ)
             current_app.logger.info(_('DOI successfully registered!'))
     except Exception as ex:
         current_app.logger.exception(str(ex))
@@ -132,7 +129,7 @@ def register_cnri(activity_id):
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
-        reg = identifier.register_pidstore('cnri', handle)
+        identifier.register_pidstore('cnri', handle)
     else:
         current_app.logger.error('Cannot connect Handle server!')
 
@@ -644,7 +641,7 @@ class IdentifierHandle(object):
                 rec = RecordMetadata.query.filter_by(id=self.item_uuid).first()
                 deposit = WekoDeposit(rec.json, rec)
                 index = {'index': deposit.get('path', []),
-                        'actions': deposit.get('publish_status')}
+                         'actions': deposit.get('publish_status')}
                 deposit.update(index, self.item_metadata)
                 deposit.commit()
         except SQLAlchemyError as ex:
@@ -814,7 +811,7 @@ def get_parent_pid_with_type(pid_type, object_uuid):
     try:
         record = WekoRecord.get_record(object_uuid)
         with db.session.no_autoflush:
-            pid_object =  PersistentIdentifier.query.filter_by(
+            pid_object = PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
                 object_uuid=record.pid_parent.object_uuid
             ).one_or_none()

@@ -387,12 +387,12 @@ def create_identifier_index(root, **kwargs):
         e_identifier = SubElement(e_jpcoar,
                                   etree.QName(NS_JPCOAR, 'identifier'),
                                   attrib={
-                                    'identifierType':
-                                    kwargs['pid_type'].upper()})
+                                      'identifierType':
+                                      kwargs['pid_type'].upper()})
         e_identifier.text = kwargs['pid_value']
         e_identifier_registration = root.find(
-                                            'jpcoar:identifierRegistration',
-                                            namespaces=root.nsmap)
+            'jpcoar:identifierRegistration',
+            namespaces=root.nsmap)
         if e_identifier_registration is not None:
             e_identifier_registration.addprevious(e_identifier)
         else:
