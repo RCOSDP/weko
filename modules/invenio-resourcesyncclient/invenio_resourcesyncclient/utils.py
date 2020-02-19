@@ -248,6 +248,7 @@ def process_item(record, resync, counter):
                                         resync,
                                         mapper.identifier()
                                     ),
+                                    status=PIDStatus.REGISTERED,
                                     object_type=dep.pid.object_type,
                                     object_uuid=dep.pid.object_uuid)
         indexes = []
