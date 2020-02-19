@@ -1076,14 +1076,18 @@ function handleSharePermission(value) {
               {
                 if($rootScope.recordsVM.invenioRecordsForm[key].key == listLicenseTypeKey[ind]){
                   containLicenseTypeForm = $rootScope.recordsVM.invenioRecordsForm[key];
+                  // The index of license type is always "3", correspond to its property
+                  if (containLicenseTypeForm && containLicenseTypeForm.items && containLicenseTypeForm.items.length >= 2) {
+                    licenseTypeForm = containLicenseTypeForm.items[2];
+                    // Set title map by listLicenseObj above
+                    licenseTypeForm['titleMap'] = listLicenseObj;
+                  }
+                  break;
                 }
               }
-            }
-            // The index of license type is always "3", correspond to its property
-            if (containLicenseTypeForm && containLicenseTypeForm.items && containLicenseTypeForm.items.length >= 2) {
-              licenseTypeForm = containLicenseTypeForm.items[2];
-              // Set title map by listLicenseObj above
-              licenseTypeForm['titleMap'] = listLicenseObj;
+              if(containLicenseTypeForm){
+                break;
+              }
             }
         }
     }

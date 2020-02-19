@@ -757,5 +757,5 @@ msgid "Creative Commons 4.0 : Attribution - NonCommercial - NoDerivatives"
 msgstr "Creative Commons 4.0 : 表示 - 非営利 - 改変禁止"
 
 # WEKO_RECORDS_UI_LICENSE_DICT
-msgid "Creative Commons: Public Domain Dedication"
+msgid "Creative Commons : Public Domain Dedication"
 msgstr "Creative Commons : パブリック・ドメイン提供"
