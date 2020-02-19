@@ -21,7 +21,7 @@
 """WEKO3 module docstring."""
 import json
 from datetime import datetime as dt
-from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit, urlparse
 
 import dateutil
 from flask import current_app, jsonify
@@ -225,7 +225,10 @@ def process_item(record, resync, counter):
     mapper = JPCOARMapper(xml)
 
     resyncid = PersistentIdentifier.query.filter_by(
-        pid_type='syncid', pid_value=mapper.identifier()).first()
+        pid_type='syncid', pid_value=gen_resync_pid_value(
+            resync,
+            mapper.identifier()
+        )).first()
     if resyncid:
         r = RecordMetadata.query.filter_by(id=resyncid.object_uuid).first()
         recid = PersistentIdentifier.query.filter_by(
@@ -241,7 +244,10 @@ def process_item(record, resync, counter):
     else:
         dep = WekoDeposit.create({})
         PersistentIdentifier.create(pid_type='syncid',
-                                    pid_value=mapper.identifier(),
+                                    pid_value=gen_resync_pid_value(
+                                        resync,
+                                        mapper.identifier()
+                                    ),
                                     object_type=dep.pid.object_type,
                                     object_uuid=dep.pid.object_uuid)
         indexes = []
@@ -397,3 +403,13 @@ def get_from_date_from_url(url):
     if len(date_list) > 0:
         from_date = dt.fromtimestamp(min(date_list))
         return from_date.strftime("%Y-%m-%d")
+
+
+def gen_resync_pid_value(resync, pid):
+    hostname = urlparse(resync.base_url)
+    result = '{}://{}-{}'.format(
+        hostname.scheme,
+        hostname.netloc,
+        pid
+    )
+    return result
