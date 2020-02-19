@@ -28,7 +28,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
-from weko_records.api import ItemsMetadata, ItemTypes
+from weko_records.api import ItemTypes
 
 from .permissions import check_user_group_permission
 
