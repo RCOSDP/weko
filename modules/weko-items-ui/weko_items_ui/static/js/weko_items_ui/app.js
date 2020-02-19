@@ -2101,6 +2101,7 @@ function handleSharePermission(value) {
       };
 
       $scope.saveDataJsonCallback = function (item_save_uri) {
+        $scope.unattachedSystemProperties();
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
           this.mappingThumbnailInfor();
@@ -2211,6 +2212,14 @@ function handleSharePermission(value) {
           }
         });
         return thumbnail_attrs;
+      }
+
+      $scope.unattachedSystemProperties = function () {
+        // Remove system file properties from metadata
+        delete $rootScope.recordsVM.invenioRecordsModel.system_file;
+        delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_doi;
+        delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_hdl;
+        delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_uri;
       }
     }
     // Inject depedencies

@@ -321,6 +321,7 @@ def get_schema_form(item_type_id=0):
         # hidden option
         hidden_subitem = ['subitem_thumbnail',
                           'subitem_systemidt_identifier',
+                          'subitem_systemfile_datetime',
                           'subitem_systemfile_filename'
                           ]
 

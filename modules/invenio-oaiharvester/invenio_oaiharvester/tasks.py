@@ -207,6 +207,21 @@ def process_item(record, harvesting, counter):
         # add item versioning
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=dep.pid.pid_value).first()
+
+        idt_list = mapper.identifiers
+        from weko_workflow.utils import IdentifierHandle
+
+        idt = IdentifierHandle(pid.object_uuid)
+        for it in idt_list:
+            if not it.get('type'):
+                continue
+            pid_type = it['type'].lower()
+            if pid_type == 'hdl':
+                pid_type = 'cnri'
+            pid_obj = idt.get_pidstore(pid_type)
+            if not pid_obj:
+                idt.register_pidstore(pid_type, it['identifier'])
+
         with current_app.test_request_context() as ctx:
             first_ver = dep.newversion(pid)
             first_ver.publish()

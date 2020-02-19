@@ -377,21 +377,18 @@ def add_identifier(schema, res, identifier_list):
     """Add identfier."""
     if not isinstance(identifier_list, list):
         identifier_list = [identifier_list]
-    root_key = map_field(schema).get('Identifier')
-    res[root_key] = []
-    identifier = map_field(
-        schema['properties'][root_key]['items'])['Identifier']
-    identifier_type = map_field(
-        schema['properties'][root_key]['items'])['Identifier Type']
     for it in identifier_list:
-        item = {}
+        item = dict(
+            identifier=None,
+            type=None
+        )
         if isinstance(it, str):
-            item[identifier] = it
+            item['identifier'] = it
         elif isinstance(it, OrderedDict):
-            item[identifier] = it.get('#text')
+            item['identifier'] = it.get('#text')
             if it.get('@identifierType'):
-                item[identifier_type] = it.get('@identifierType')
-        res[root_key].append(item)
+                item['type'] = it.get('@identifierType')
+        res.append(item)
 
 
 def add_identifier_registration(schema, res, identifierRegistration):
@@ -1664,7 +1661,7 @@ class JPCOARMapper(BaseMapper):
             'oaire:version': partial(add_version_type, self.itemtype.schema,
                                      res),
             'jpcoar:identifier': partial(add_identifier,
-                                         self.itemtype.schema,
+                                         None,
                                          self.identifiers),
             'jpcoar:identifierRegistration': partial(
                 add_identifier_registration, self.itemtype.schema, res),
