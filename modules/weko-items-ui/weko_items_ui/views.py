@@ -799,6 +799,19 @@ def prepare_edit_item():
         msg: meassage result,
         data: url redirect
     """
+    def _get_workflow_by_item_type_id(item_type_name_id, item_type_id):
+        """Get workflow settings by item type id"""
+        workflow = WorkFlow.query.filter_by(
+            itemtype_id=item_type_id).first()
+        if not workflow:
+            item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
+            id_list = [x.id for x in item_type_list]
+            workflow = (WorkFlow.query
+                          .filter(WorkFlow.itemtype_id.in_(id_list))
+                          .order_by(WorkFlow.itemtype_id.desc())
+                          .order_by(WorkFlow.flow_id.asc()).first())
+        return workflow
+
     if request.headers['Content-Type'] != 'application/json':
         """Check header of request"""
         return jsonify(code=-1, msg=_('Header Error'))
@@ -859,8 +872,7 @@ def prepare_edit_item():
                 post_activity['workflow_id'] = workflow_activity.workflow_id
                 post_activity['flow_id'] = workflow_activity.flow_id
             else:
-                workflow = WorkFlow.query.filter_by(
-                    itemtype_id=item_type_id).first()
+                workflow = _get_workflow_by_item_type_id(item_type.name_id, item_type_id)
                 if not workflow:
                     return jsonify(code=-1,
                                    msg=_('Workflow setting does not exist.'))
