@@ -411,7 +411,6 @@ def is_correct_jpcoar_mapping(object_uuid):
     """
     from weko_records.api import ItemsMetadata, Mapping
     from weko_records.serializers.utils import get_mapping
-    from .config import OAISERVER_SYSTEM_IDENTIFIER_MAPPING
 
     item_type = ItemsMetadata.get_by_object_id(object_uuid)
     item_type_id = item_type.item_type_id
@@ -419,8 +418,9 @@ def is_correct_jpcoar_mapping(object_uuid):
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
     result = True
 
-    for key in OAISERVER_SYSTEM_IDENTIFIER_MAPPING:
-        if item_map[key] != OAISERVER_SYSTEM_IDENTIFIER_MAPPING[key]:
+    for key in current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
+        if item_map[key] != current_app.config\
+                    .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
             result = False
             break
     return result
