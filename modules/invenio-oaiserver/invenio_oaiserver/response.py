@@ -416,11 +416,12 @@ def is_correct_jpcoar_mapping(object_uuid):
     item_type_id = item_type.item_type_id
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
-    result = True
 
-    for key in current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
-        if item_map[key] != current_app.config\
-                    .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
-            result = False
-            break
-    return result
+    if current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
+        for key in current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
+            if item_map[key] != current_app.config\
+                        .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
+                return False
+                # break
+
+    return True
