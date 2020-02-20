@@ -737,7 +737,7 @@ msgid "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.
 msgstr ""
 
 # WEKO_RECORDS_UI_LICENSE_DICT
-msgid "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
+msgid "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)"
 msgstr ""
 
 # WEKO_RECORDS_UI_LICENSE_DICT

@@ -329,9 +329,8 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
                '-NoDerivatives 4.0 International License.'
     },
     {
-        'name': _(
-            'Creative Commons Attribution-NonCommercial-ShareAlike 4.0'
-            ' International (CC BY-NC-SA 4.0)'),
+        'name': _('Creative Commons Attribution-NonCommercial 4.0 International'
+                  ' (CC BY-NC 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
         'href_en': 'https://creativecommons.org/licenses/by-nc/4.0/deed.en',
         'value': 'license_3',
