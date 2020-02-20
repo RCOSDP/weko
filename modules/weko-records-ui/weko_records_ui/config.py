@@ -292,7 +292,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
     },
     # version 4.0
     {
-        'name': _('Creative Commons 4.0: Attribution'),
+        'name': _('Creative Commons Attribution 4.0 International (CC BY 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
         'href_en': 'https://creativecommons.org/licenses/by/4.0/deed.en',
         'value': 'license_0',
@@ -303,7 +303,9 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
                ' 4.0 International License.'
     },
     {
-        'name': _('Creative Commons 4.0: Attribution - ShareAlike'),
+        'name': _(
+            'Creative Commons Attribution-ShareAlike 4.0 '
+            'International (CC BY-SA 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
         'href_en': 'https://creativecommons.org/licenses/by-sa/4.0/deed.en',
         'value': 'license_1',
@@ -314,7 +316,9 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
                '-ShareAlike 4.0 International License.'
     },
     {
-        'name': _('Creative Commons 4.0: Attribution - NoDerivatives'),
+        'name': _(
+            'Creative Commons Attribution-NoDerivatives 4.0 International '
+            '(CC BY-ND 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
         'href_en': 'https://creativecommons.org/licenses/by-nd/4.0/deed.en',
         'value': 'license_2',
@@ -325,7 +329,9 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
                '-NoDerivatives 4.0 International License.'
     },
     {
-        'name': _('Creative Commons 4.0: Attribution - NonCommercial'),
+        'name': _(
+            'Creative Commons Attribution-NonCommercial-ShareAlike 4.0'
+            ' International (CC BY-NC-SA 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
         'href_en': 'https://creativecommons.org/licenses/by-nc/4.0/deed.en',
         'value': 'license_3',
@@ -336,8 +342,9 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
                '-NonCommercial 4.0 International License.'
     },
     {
-        'name': _('Creative Commons 4.0: Attribution - NonCommercial - '
-                  'ShareAlike'),
+        'name': _(
+            'Creative Commons Attribution-NonCommercial-ShareAlike 4.0'
+            ' International (CC BY-NC-SA 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
         'href_en': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en',
         'value': 'license_4',
@@ -348,8 +355,9 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
                '-NonCommercial-ShareAlike 4.0 International License.'
     },
     {
-        'name': _('Creative Commons 4.0: Attribution - NonCommercial - '
-                  'NoDerivatives'),
+        'name': _(
+            'Attribution-NonCommercial-NoDerivatives 4.0 International'
+            ' (CC BY-NC-ND 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
         'href_en': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.en',
         'value': 'license_5',
