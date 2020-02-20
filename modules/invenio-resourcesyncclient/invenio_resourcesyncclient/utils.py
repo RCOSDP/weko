@@ -21,7 +21,7 @@
 """WEKO3 module docstring."""
 import json
 from datetime import datetime as dt
-from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 import dateutil
 from flask import current_app, jsonify
@@ -407,6 +407,7 @@ def get_from_date_from_url(url):
 
 
 def gen_resync_pid_value(resync, pid):
+    """Get resync pid value."""
     hostname = urlparse(resync.base_url)
     result = '{}://{}-{}'.format(
         hostname.scheme,
