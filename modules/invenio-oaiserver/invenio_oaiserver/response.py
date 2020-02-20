@@ -314,7 +314,7 @@ def getrecord(**kwargs):
                                            pid_value=record.pid_doi.pid_value)
         if record.pid_cnri:
             root = create_identifier_index(root,
-                                           pid_type=record.pid_doi.pid_type,
+                                           pid_type=record.pid_cnri.pid_type,
                                            pid_value=record.pid_cnri.pid_value)
 
     e_metadata.append(root)
