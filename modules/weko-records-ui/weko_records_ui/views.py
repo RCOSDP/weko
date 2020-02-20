@@ -227,7 +227,7 @@ def get_license_icon(type):
         if item['value'] != "license_free" and item['value'] in type:
             src = item['src']
             lic = item['name']
-            href = item['href_'+current_lang]
+            href = item['href_' + current_lang]
             break
     src = license_icon_location + src if len(src) > 0 else ''
     lst = (src, lic, href)
@@ -392,9 +392,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
                         or [])
     try:
-        if WekoRecord.get_record(id_=active_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+        if WekoRecord.get_record(
+                id_=active_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
             active_versions.pop()
-        if WekoRecord.get_record(id_=all_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+        if WekoRecord.get_record(
+                id_=all_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
             all_versions.pop()
     except Exception:
         pass
