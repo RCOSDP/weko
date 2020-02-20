@@ -355,7 +355,8 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
     },
     {
         'name': _(
-            'Attribution-NonCommercial-NoDerivatives 4.0 International'
+            'Creative Commons Attribution-NonCommercial-NoDerivatives'
+            ' 4.0 International'
             ' (CC BY-NC-ND 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
         'href_en': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.en',
