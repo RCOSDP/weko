@@ -216,8 +216,6 @@ def process_item(record, harvesting, counter):
             if not it.get('type'):
                 continue
             pid_type = it['type'].lower()
-            if pid_type == 'hdl':
-                pid_type = 'cnri'
             pid_obj = idt.get_pidstore(pid_type)
             if not pid_obj:
                 idt.register_pidstore(pid_type, it['identifier'])

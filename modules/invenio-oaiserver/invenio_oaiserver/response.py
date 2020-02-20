@@ -312,9 +312,9 @@ def getrecord(**kwargs):
             root = create_identifier_index(root,
                                            pid_type=record.pid_doi.pid_type,
                                            pid_value=record.pid_doi.pid_value)
-        elif record.pid_cnri:
+        if record.pid_cnri:
             root = create_identifier_index(root,
-                                           pid_type='HDL',
+                                           pid_type=record.pid_doi.pid_type,
                                            pid_value=record.pid_cnri.pid_value)
 
     e_metadata.append(root)

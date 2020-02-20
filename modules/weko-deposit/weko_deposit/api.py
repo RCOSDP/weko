@@ -1069,7 +1069,7 @@ class WekoRecord(Record):
     @property
     def pid_cnri(self):
         """Return pid_value of doi identifier."""
-        return self._get_pid('cnri')
+        return self._get_pid('hdl')
 
     @property
     def pid_parent(self):

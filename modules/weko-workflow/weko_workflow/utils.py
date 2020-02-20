@@ -108,19 +108,19 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         current_app.logger.exception(str(ex))
 
 
-def register_cnri(activity_id):
+def register_hdl(activity_id):
     """
-    Register CNRI with Persistent Identifiers.
+    Register HDL into Persistent Identifiers.
 
     :param activity_id: Workflow Activity Identifier
-    :return cnri_pidstore: CNRI pidstore object or None
+    :return cnri_pidstore: HDL pidstore object or None
     """
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
     record = WekoRecord.get_record(item_uuid)
 
     if record.pid_cnri:
-        current_app.logger.info('This record was registered CNRI!')
+        current_app.logger.info('This record was registered HDL!')
         return
     else:
         deposit_id = record.pid_parent.pid_value.split('parent:')[1]
@@ -134,7 +134,7 @@ def register_cnri(activity_id):
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
-        identifier.register_pidstore('cnri', handle)
+        identifier.register_pidstore('hdl', handle)
     else:
         current_app.logger.info('Cannot connect Handle server!')
 
@@ -510,7 +510,7 @@ class IdentifierHandle(object):
         """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
-            pid_type     -- {string} 'doi' (default) or 'cnri'
+            pid_type     -- {string} 'doi' (default) or 'hdl'
             object_uuid  -- {uuid} assigned object's uuid
 
         Returns:
@@ -525,7 +525,7 @@ class IdentifierHandle(object):
         """Get check whether PIDStore object exist.
 
         Arguments:
-            pid_type     -- {string} 'doi' (default) or 'cnri'
+            pid_type     -- {string} 'doi' (default) or 'hdl'
             chk_value    -- {string} object_uuid or pid_value
 
         Returns:
@@ -549,7 +549,7 @@ class IdentifierHandle(object):
         """Register Persistent Identifier Object.
 
         Arguments:
-            pid_type     -- {string} 'doi' (default) or 'cnri'
+            pid_type     -- {string} 'doi' (default) or 'hdl'
             reg_value    -- {string} pid_value
 
         Returns:
@@ -806,7 +806,7 @@ def get_parent_pid_with_type(pid_type, object_uuid):
     """Get Persistent Identifier Object by pid_value or item_uuid.
 
     Arguments:
-        pid_type     -- {string} 'doi' (default) or 'cnri'
+        pid_type     -- {string} 'doi' (default) or 'hdl'
         object_uuid  -- {uuid} assigned object's uuid
 
     Returns:
