@@ -749,5 +749,5 @@ msgid "Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.
 msgstr ""
 
 # WEKO_RECORDS_UI_LICENSE_DICT
-msgid Creative Commons CC0 1.0 Universal Public Domain Designation
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
 msgstr ""
