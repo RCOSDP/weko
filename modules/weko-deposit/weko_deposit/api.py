@@ -1109,3 +1109,14 @@ class WekoRecord(Record):
         if path:
             coverpage_state = Indexes.get_coverpage_state(path)
         return coverpage_state
+
+    def _get_pid(self, pid_type):
+        """Return pid_value from persistent identifier."""
+        try:
+            return PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                object_uuid=self.pid_parent.object_uuid,
+                status=PIDStatus.REGISTERED).one_or_none()
+        except PIDDoesNotExistError as pid_not_exist:
+            current_app.logger.error(pid_not_exist)
+        return None
