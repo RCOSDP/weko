@@ -227,7 +227,7 @@ def get_license_icon(type):
         if item['value'] != "license_free" and item['value'] in type:
             src = item['src']
             lic = item['name']
-            href = item['href_'+current_lang]
+            href = item['href_' + current_lang]
             break
     src = license_icon_location + src if len(src) > 0 else ''
     lst = (src, lic, href)

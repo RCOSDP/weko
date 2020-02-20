@@ -332,7 +332,7 @@ def check_import_items(file_content: str):
     """Validation importing zip file.
 
     :argument
-        file_content     -- 
+        file_content -- contetn file's name.
     :return
         return       -- PID object if exist.
 
