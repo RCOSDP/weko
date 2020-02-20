@@ -308,13 +308,13 @@ def getrecord(**kwargs):
     root = record_dumper(pid, {'_source': record})
 
     if check_correct_jpcoar_mapping(pid.object_uuid):
-        if record.pid_doi is not None:
+        if record.pid_doi:
             root = create_identifier_index(root,
                                            pid_type=record.pid_doi.pid_type,
                                            pid_value=record.pid_doi.pid_value)
-        elif record.pid_cnri is not None:
+        elif record.pid_cnri:
             root = create_identifier_index(root,
-                                           pid_type=record.pid_cnri.pid_type,
+                                           pid_type='HDL',
                                            pid_value=record.pid_cnri.pid_value)
 
     e_metadata.append(root)
