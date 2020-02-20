@@ -51,6 +51,7 @@ from weko_items_ui.utils import get_actionid, to_files_js
 from weko_records.api import FeedbackMailList, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
+from weko_records_ui.utils import get_list_licence
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
@@ -130,18 +131,6 @@ def iframe_success():
     if community_id:
         comm = GetCommunity.get_community_by_id(community_id)
         ctx = {'community': comm}
-
-    # delete session value
-    del session['itemlogin_id']
-    del session['itemlogin_activity']
-    del session['itemlogin_item']
-    del session['itemlogin_steps']
-    del session['itemlogin_action_id']
-    del session['itemlogin_cur_step']
-    del session['itemlogin_record']
-    del session['itemlogin_res_check']
-    del session['itemlogin_pid']
-    del session['itemlogin_community_id']
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
@@ -420,7 +409,7 @@ def display_activity(activity_id=0):
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-
+    list_license = get_list_licence()
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
@@ -462,6 +451,7 @@ def display_activity(activity_id=0):
             'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
         show_automatic_metadata_input=show_autofill_metadata,
         is_hidden_pubdate=is_hidden_pubdate_value,
+        list_license=list_license,
         **ctx
     )
 
@@ -814,6 +804,18 @@ def next_action(activity_id='0', action_id=0):
             work_activity.upt_activity_action(
                 activity_id=activity_id, action_id=next_action_id,
                 action_status=ActionStatusPolicy.ACTION_DOING)
+    # delete session value
+    if session.get('itemlogin_id'):
+        del session['itemlogin_id']
+        del session['itemlogin_activity']
+        del session['itemlogin_item']
+        del session['itemlogin_steps']
+        del session['itemlogin_action_id']
+        del session['itemlogin_cur_step']
+        del session['itemlogin_record']
+        del session['itemlogin_res_check']
+        del session['itemlogin_pid']
+        del session['itemlogin_community_id']
     return jsonify(code=0, msg=_('success'))
 
 

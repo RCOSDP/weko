@@ -63,8 +63,7 @@ def get_item_changes_by_index(index_tree_id, date_from, date_until):
 
 
 def item_path_search_factory(search, index_id="0"):
-    """
-    Parse query using Weko-Query-Parser.
+    """Parse query using Weko-Query-Parser.
 
     :param search: Elastic search DSL search instance.
     :param index_id: Index Identifier contains item's path

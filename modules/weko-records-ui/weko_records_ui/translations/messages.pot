@@ -695,3 +695,59 @@ msgstr ""
 
 msgid "Position(Others)"
 msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "write your own license"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0 : Attribution"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0 : Attribution - ShareAlike"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0 : Attribution - NoDerivatives"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0 : Attribution - NonCommercial"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0 : Attribution - NonCommercial - ShareAlike"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 3.0 : Attribution - NonCommercial - NoDerivatives"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0 : Attribution"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0 : Attribution - ShareAlike"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0 : Attribution - NoDerivatives"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0 : Attribution - NonCommercial"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0 : Attribution - NonCommercial - ShareAlike"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons 4.0 : Attribution - NonCommercial - NoDerivatives"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons : Public Domain Dedication"
+msgstr ""

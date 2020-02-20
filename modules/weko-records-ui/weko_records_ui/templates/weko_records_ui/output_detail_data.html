@@ -23,7 +23,12 @@
     {%- if attribute_value_mlt is mapping -%}
         {%- for k, v in attribute_value_mlt.items() -%}
             {%- if '.name' not in k -%}
-                {{ v }}<br>
+                {%- if 'licensetype' in k -%}
+                    {% set att_val  = v | get_license_icon %}
+                    {{ att_val [1] }}<br />
+                {%- else -%}
+                    {{ v }}<br>
+                {%- endif -%}
             {%- endif -%}
         {%- endfor -%}
     {%- elif attribute_value_mlt is iterable and attribute_value_mlt is not string -%}

@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit API."""
+import copy
 import uuid
 from datetime import datetime, timezone
 
@@ -1044,14 +1045,15 @@ class WekoRecord(Record):
                     if nval['attribute_name'] == 'Reference' \
                             or nval['attribute_type'] == 'file':
                         nval['attribute_value_mlt'] = \
-                            get_all_items(mlt, solst, True)
+                            get_all_items(copy.deepcopy(mlt),
+                                          copy.deepcopy(solst), True)
                     else:
                         is_author = nval['attribute_type'] == 'creator'
                         if is_author:
-                            mlt = get_name_iddentifier_uri(mlt)
+                            mlt = get_name_iddentifier_uri(copy.deepcopy(mlt))
                         nval['attribute_value_mlt'] = \
-                            get_attribute_value_all_items(mlt,
-                                                          solst,
+                            get_attribute_value_all_items(copy.deepcopy(mlt),
+                                                          copy.deepcopy(solst),
                                                           is_author)
                     items.append(nval)
                 else:
@@ -1107,14 +1109,3 @@ class WekoRecord(Record):
         if path:
             coverpage_state = Indexes.get_coverpage_state(path)
         return coverpage_state
-
-    def _get_pid(self, pid_type):
-        """Return pid_value from persistent identifier."""
-        try:
-            return PersistentIdentifier.query.filter_by(
-                pid_type=pid_type,
-                object_uuid=self.pid_parent.object_uuid,
-                status=PIDStatus.REGISTERED).one_or_none()
-        except PIDDoesNotExistError as pid_not_exist:
-            current_app.logger.error(pid_not_exist)
-        return None

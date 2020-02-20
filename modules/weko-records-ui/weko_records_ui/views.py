@@ -212,58 +212,24 @@ def get_license_icon(type):
     :param type:
     :return:
     """
-    lic_dict = {
-        'license_0': _('Creative Commons : Attribution'),
-        'license_1': _('Creative Commons : Attribution - ShareAlike'),
-        'license_2': _('Creative Commons : Attribution - NoDerivatives'),
-        'license_3': _('Creative Commons : Attribution - NonCommercial'),
-        'license_4': _('Creative Commons : Attribution - NonCommercial - '
-                       'ShareAlike'),
-        'license_5': _('Creative Commons : Attribution - NonCommercial - '
-                       'NoDerivatives'),
-    }
-
-    href_dict = {
-        'license_0': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
-        'license_1': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
-        'license_2': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
-        'license_3': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
-        'license_4': 'https://creativecommons.org/'
-                     'licenses/by-nc-sa/4.0/deed.ja',
-        'license_5': 'https://creativecommons.org/'
-                     'licenses/by-nc-nd/4.0/deed.ja',
-    }
-
-    if 'license_0' in type:
-        src = '88x31(1).png'
-        lic = lic_dict.get('license_0')
-        href = href_dict.get('license_0')
-    elif 'license_1' in type:
-        src = '88x31(2).png'
-        lic = lic_dict.get('license_1')
-        href = href_dict.get('license_1')
-    elif 'license_2' in type:
-        src = '88x31(3).png'
-        lic = lic_dict.get('license_2')
-        href = href_dict.get('license_2')
-    elif 'license_3' in type:
-        src = '88x31(4).png'
-        lic = lic_dict.get('license_3')
-        href = href_dict.get('license_3')
-    elif 'license_4' in type:
-        src = '88x31(5).png'
-        lic = lic_dict.get('license_4')
-        href = href_dict.get('license_4')
-    elif 'license_5' in type:
-        src = '88x31(6).png'
-        lic = lic_dict.get('license_5')
-        href = href_dict.get('license_5')
-    else:
-        src = ''
-        lic = ''
-        href = '#'
-
-    src = '/static/images/default/' + src if len(src) > 0 else ''
+    list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+    license_icon_location = \
+        current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_LOCATION']
+    from invenio_i18n.ext import current_i18n
+    current_lang = current_i18n.language
+    # In case of current lang is not bot JA and EN, set to default EN
+    if current_lang != 'ja' and current_lang != 'en':
+        current_lang = 'en'
+    src = ''
+    lic = ''
+    href = '#'
+    for item in list_license_dict:
+        if item['value'] != "license_free" and item['value'] in type:
+            src = item['src']
+            lic = item['name']
+            href = item['href_'+current_lang]
+            break
+    src = license_icon_location + src if len(src) > 0 else ''
     lst = (src, lic, href)
 
     return lst

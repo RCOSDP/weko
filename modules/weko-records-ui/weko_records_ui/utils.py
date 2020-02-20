@@ -214,6 +214,20 @@ def restore(recid):
         raise ex
 
 
+def get_list_licence():
+    """Get list license.
+
+    @return:
+    """
+    list_license_result = []
+    list_license_from_config = \
+        current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+    for license_obj in list_license_from_config:
+        list_license_result.append({'value': license_obj.get('value', ''),
+                                    'name': license_obj.get('name', '')})
+    return list_license_result
+
+
 def get_registration_data_type(record):
     """Get registration data type."""
     attribute_value_key = 'attribute_value_mlt'
@@ -227,3 +241,41 @@ def get_registration_data_type(record):
                 for data in attribute:
                     if data_type_key in data:
                         return data.get(data_type_key)
+
+
+def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
+                    footer_h, cc_logo_xposition, item):
+    """Get license pdf.
+
+    @param license:
+    @param item_metadata_json:
+    @param pdf:
+    @param file_item_id:
+    @param footer_w:
+    @param footer_h:
+    @param cc_logo_xposition:
+    @param item:
+    @return:
+    """
+    from .views import blueprint
+    license_icon_pdf_location = \
+        current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
+    if license == 'license_free':
+        txt = item_metadata_json[file_item_id][0].get('licensefree')
+        if txt is None:
+            txt = ''
+        pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
+    else:
+        src = blueprint.root_path + license_icon_pdf_location + item['src_pdf']
+        txt = item['txt']
+        lnk = item['href_pdf']
+        pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
+        pdf.ln(h=2)
+        pdf.image(
+            src,
+            x=cc_logo_xposition,
+            y=None,
+            w=0,
+            h=0,
+            type='',
+            link=lnk)
