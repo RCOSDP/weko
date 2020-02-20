@@ -1046,6 +1046,53 @@ function handleSharePermission(value) {
         }
       };
 
+      $scope.setDataForLicenseType = function () {
+        var list_license = $("#list_license_data").val();
+        if (!list_license) {
+          return;
+        }
+        var listLicenseObj = JSON.parse(list_license);
+        var licenseTypeName = 'licensetype';
+        var schema = $rootScope.recordsVM.invenioRecordsSchema;
+        var listLicenseTypeKey = [];
+
+        for (let key in schema.properties) {
+            let value = schema.properties[key];
+            // Find form that contains license type obj
+            if (value.items && value.items.properties && value.items.properties.hasOwnProperty(licenseTypeName)) {
+              let listLicenseEnum = [];
+              // Collect list license
+              for (let ind in listLicenseObj) {
+                listLicenseEnum.push(listLicenseObj[ind]['value']);
+              //set enum of license type form as list license above
+              value.items.properties[licenseTypeName]['enum'] = listLicenseEnum;
+              listLicenseTypeKey.push(key);
+            }
+          }
+      }
+        if (listLicenseTypeKey.length > 0) {
+          let containLicenseTypeForm = null;
+            for(let ind in listLicenseTypeKey){
+              for(let key in $rootScope.recordsVM.invenioRecordsForm)
+              {
+                if($rootScope.recordsVM.invenioRecordsForm[key].key == listLicenseTypeKey[ind]){
+                  containLicenseTypeForm = $rootScope.recordsVM.invenioRecordsForm[key];
+                  // The index of license type is always "3", correspond to its property
+                  if (containLicenseTypeForm && containLicenseTypeForm.items && containLicenseTypeForm.items.length >= 2) {
+                    licenseTypeForm = containLicenseTypeForm.items[2];
+                    // Set title map by listLicenseObj above
+                    licenseTypeForm['titleMap'] = listLicenseObj;
+                  }
+                  break;
+                }
+              }
+              if(containLicenseTypeForm){
+                break;
+              }
+            }
+        }
+    }
+
       $scope.autoSetCorrespondingUsageAppId = function () {
         if ($scope.usage_report_activity_id != ''){
           Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
@@ -1115,6 +1162,7 @@ function handleSharePermission(value) {
         $scope.initContributorData();
         $scope.initUserGroups();
         $scope.searchTypeKey();
+        $scope.setDataForLicenseType();
         $scope.renderValidationErrorList();
         $scope.autoSetTitle();
         $scope.initCorrespondingIdList();

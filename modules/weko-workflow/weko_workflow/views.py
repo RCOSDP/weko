@@ -51,6 +51,7 @@ from weko_items_ui.utils import get_actionid, to_files_js
 from weko_records.api import FeedbackMailList, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
+from weko_records_ui.utils import get_list_licence
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
@@ -408,7 +409,7 @@ def display_activity(activity_id=0):
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-
+    list_license = get_list_licence()
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
@@ -450,6 +451,7 @@ def display_activity(activity_id=0):
             'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
         show_automatic_metadata_input=show_autofill_metadata,
         is_hidden_pubdate=is_hidden_pubdate_value,
+        list_license=list_license,
         **ctx
     )
 
