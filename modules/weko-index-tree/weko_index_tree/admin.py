@@ -21,17 +21,22 @@
 """WEKO3 module docstring."""
 
 import os
+import json
 import sys
+import redis
 
 from flask import abort, current_app, flash, jsonify, request, session, url_for
 from flask_admin import BaseView, expose
+from flask_login import current_user
 from flask_babelex import gettext as _
 from invenio_db import db
+from simplekv.memory.redisstore import RedisStore
 
 from .api import Indexes
 from .models import IndexStyle
 from .permissions import index_tree_permission
 from .utils import get_admin_coverpage_setting
+from .config import WEKO_INDEX_TREE_STATE_PREFIX
 
 
 class IndexSettingView(BaseView):
@@ -79,6 +84,39 @@ class IndexSettingView(BaseView):
         except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
+
+    @expose('/set_expand', methods=['POST'])
+    def set_expand(self):
+        """Set expand list index tree id."""
+        data = request.get_json(force=True)
+        index_id = data.get("index_id")
+        current_app.logger.debug(request.get_json())
+        sessionstore = RedisStore(redis.StrictRedis.from_url(
+            'redis://{host}:{port}/1'.format(
+                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+        key = "{}{}".format(
+            current_app.config.get(
+                "WEKO_INDEX_TREE_STATE_PREFIX",
+                WEKO_INDEX_TREE_STATE_PREFIX
+            ),
+            current_user.get_id()
+        )
+        if sessionstore.redis.exists(key) and sessionstore.get(key):
+            session_data = sessionstore.get(key)
+            if index_id in session_data:
+                session_data.remove(index_id)
+            else:
+                session_data.push(index_id)
+        else:
+            session_data = [index_id]
+
+        current_app.logger.debug(session_data)
+        sessionstore.delete(key)
+
+        sessionstore.put(key, json.dumps(session_data))
+
+        return jsonify(success=True)
 
 
 class IndexLinkSettingView(BaseView):
