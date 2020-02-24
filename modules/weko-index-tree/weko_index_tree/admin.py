@@ -117,15 +117,21 @@ class IndexSettingView(BaseView):
                 session_data.append(index_id)
         else:
             session_data = [index_id]
-        lifetime = get_lifetime() * current_app.config.get(
-            "WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS",
-            WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS
-        )
-        sessionstore.put(
-            key,
-            bytes(json.dumps(session_data).encode('utf-8')),
-            ttl_secs=lifetime
-        )
+        if get_lifetime():
+            lifetime = get_lifetime() * current_app.config.get(
+                "WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS",
+                WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS
+            )
+            sessionstore.put(
+                key,
+                bytes(json.dumps(session_data).encode('utf-8')),
+                ttl_secs=lifetime
+            )
+        else:
+            sessionstore.put(
+                key,
+                bytes(json.dumps(session_data).encode('utf-8')),
+            )
 
         return jsonify(success=True)
 
