@@ -31,8 +31,8 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from simplekv.memory.redisstore import RedisStore
-
 from weko_admin.utils import get_lifetime
+
 from .api import Indexes
 from .config import WEKO_INDEX_TREE_STATE_PREFIX, \
     WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS
@@ -64,12 +64,16 @@ class IndexSettingView(BaseView):
 
                     if style:
                         IndexStyle.update(
-                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'][
+                                'id'
+                            ],
                             width=width,
                             height=height)
                     else:
                         IndexStyle.create(
-                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'][
+                                'id'
+                            ],
                             width=width,
                             height=height)
 
@@ -79,7 +83,9 @@ class IndexSettingView(BaseView):
 
             return self.render(
                 current_app.config['WEKO_INDEX_TREE_ADMIN_TEMPLATE'],
-                widths=current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
+                widths=current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'][
+                    'widths'
+                ],
                 width_selected=width,
                 height=height)
 
@@ -112,9 +118,9 @@ class IndexSettingView(BaseView):
         else:
             session_data = [index_id]
         lifetime = get_lifetime() * current_app.config.get(
-                "WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS",
-                WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS
-            )
+            "WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS",
+            WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS
+        )
         sessionstore.put(
             key,
             bytes(json.dumps(session_data).encode('utf-8')),

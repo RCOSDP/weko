@@ -47,7 +47,8 @@ from weko_records.api import ItemsMetadata
 from . import config
 from .models import AdminLangSettings, ApiCertificate, FeedbackMailFailed, \
     FeedbackMailHistory, FeedbackMailSetting, SearchManagement, \
-    StatisticTarget, StatisticUnit, SessionLifetime
+    SessionLifetime, StatisticTarget, StatisticUnit
+
 
 def get_response_json(result_list, n_lst):
     """Get a response json.

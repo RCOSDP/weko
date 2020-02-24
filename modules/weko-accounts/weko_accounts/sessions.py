@@ -21,7 +21,6 @@
 """Setting of weko sessions."""
 
 from flask import after_this_request, current_app, session
-
 from weko_index_tree.utils import remove_state_expand
 
 from .utils import get_remote_addr
