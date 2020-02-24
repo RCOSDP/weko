@@ -515,3 +515,20 @@ def get_index_id(activity_id):
     else:
         index_tree_id = None
     return index_tree_id
+
+
+def remove_state_expand(user_id):
+    """Remove expand state after logout."""
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    key = "{}{}".format(
+        current_app.config.get(
+            "WEKO_INDEX_TREE_STATE_PREFIX",
+            WEKO_INDEX_TREE_STATE_PREFIX
+        ),
+        user_id
+    )
+    if sessionstore.redis.exists(key) and sessionstore.get(key):
+        sessionstore.delete(key)

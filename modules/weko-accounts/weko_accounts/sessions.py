@@ -22,6 +22,8 @@
 
 from flask import after_this_request, current_app, session
 
+from weko_index_tree.utils import remove_state_expand
+
 from .utils import get_remote_addr
 
 
@@ -60,6 +62,7 @@ def logout_listener(app, user):
             `flask_kvsession.KVSession.regenerate`.
         """
         user_id, login_date = user.id, user.current_login_at
+        remove_state_expand(user_id)
         logout_ip = get_remote_addr()
 
         return response

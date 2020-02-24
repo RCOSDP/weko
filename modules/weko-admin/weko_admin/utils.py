@@ -21,6 +21,7 @@
 """Utilities for convert response json."""
 import csv
 import os
+import sys
 import zipfile
 from datetime import datetime
 from io import BytesIO, StringIO
@@ -46,8 +47,7 @@ from weko_records.api import ItemsMetadata
 from . import config
 from .models import AdminLangSettings, ApiCertificate, FeedbackMailFailed, \
     FeedbackMailHistory, FeedbackMailSetting, SearchManagement, \
-    StatisticTarget, StatisticUnit
-
+    StatisticTarget, StatisticUnit, SessionLifetime
 
 def get_response_json(result_list, n_lst):
     """Get a response json.
@@ -1595,3 +1595,16 @@ def get_notify_for_current_language(notify):
         return ''
     else:
         return ''
+
+
+def get_lifetime():
+    """Get Lifetime."""
+    try:
+        db_lifetime = SessionLifetime.get_validtime()
+        if db_lifetime is None:
+            return None
+        else:
+            return db_lifetime.lifetime
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        return None

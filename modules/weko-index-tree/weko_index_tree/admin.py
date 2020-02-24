@@ -32,9 +32,10 @@ from flask_login import current_user
 from invenio_db import db
 from simplekv.memory.redisstore import RedisStore
 
+from weko_admin.utils import get_lifetime
 from .api import Indexes
 from .config import WEKO_INDEX_TREE_STATE_PREFIX, \
-    WEKO_INDEX_TREE_STATE_TIME_LIFE
+    WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS
 from .models import IndexStyle
 from .permissions import index_tree_permission
 from .utils import get_admin_coverpage_setting
@@ -91,7 +92,6 @@ class IndexSettingView(BaseView):
         """Set expand list index tree id."""
         data = request.get_json(force=True)
         index_id = data.get("index_id")
-        current_app.logger.debug(index_id)
         sessionstore = RedisStore(redis.StrictRedis.from_url(
             'redis://{host}:{port}/1'.format(
                 host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
@@ -111,15 +111,14 @@ class IndexSettingView(BaseView):
                 session_data.append(index_id)
         else:
             session_data = [index_id]
-
-        current_app.logger.debug(session_data)
+        lifetime = get_lifetime() * current_app.config.get(
+                "WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS",
+                WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS
+            )
         sessionstore.put(
             key,
             bytes(json.dumps(session_data).encode('utf-8')),
-            ttl_secs=current_app.config.get(
-                "WEKO_INDEX_TREE_STATE_TIME_LIFE",
-                WEKO_INDEX_TREE_STATE_TIME_LIFE
-            )
+            ttl_secs=lifetime
         )
 
         return jsonify(success=True)
