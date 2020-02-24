@@ -20,23 +20,24 @@
 
 """WEKO3 module docstring."""
 
-import os
 import json
+import os
 import sys
-import redis
 
+import redis
 from flask import abort, current_app, flash, jsonify, request, session, url_for
 from flask_admin import BaseView, expose
-from flask_login import current_user
 from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_db import db
 from simplekv.memory.redisstore import RedisStore
 
 from .api import Indexes
+from .config import WEKO_INDEX_TREE_STATE_PREFIX, \
+    WEKO_INDEX_TREE_STATE_TIME_LIFE
 from .models import IndexStyle
 from .permissions import index_tree_permission
 from .utils import get_admin_coverpage_setting
-from .config import WEKO_INDEX_TREE_STATE_PREFIX, WEKO_INDEX_TREE_STATE_TIME_LIFE
 
 
 class IndexSettingView(BaseView):

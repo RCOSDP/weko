@@ -19,14 +19,13 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
-import os
-import redis
 import json
-
+import os
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
 
+import redis
 from elasticsearch.exceptions import NotFoundError
 from flask import current_app
 from flask_login import current_user
@@ -34,12 +33,13 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
-from simplekv.memory.redisstore import RedisStore
 
-from .models import Index
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
+from .models import Index
+
 
 def get_index_link_list(lang='en'):
     """Get index link list."""
@@ -124,8 +124,6 @@ def get_tree_json(index_list, root_id):
 
     def get_user_list_expand():
         """Get list index expand."""
-        current_app.logger.debug("*"*60)
-        current_app.logger.debug(current_user.get_id())
         if not current_user.get_id():
             return []
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -141,8 +139,6 @@ def get_tree_json(index_list, root_id):
         )
         if sessionstore.redis.exists(key) and sessionstore.get(key):
             list_index_id = sessionstore.get(key)
-            current_app.logger.debug("*" * 60)
-            current_app.logger.debug(list_index_id)
             return json.loads(list_index_id.decode("utf-8"))
         return []
 
