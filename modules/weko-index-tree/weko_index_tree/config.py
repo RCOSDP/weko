@@ -89,3 +89,6 @@ WEKO_INDEX_TREE_RSS_COUNT_LIMIT = 100
 
 WEKO_INDEX_TREE_STATE_PREFIX = "index_tree_state_user_id_"
 """Default number of count upper limit in RSS."""
+
+WEKO_INDEX_TREE_STATE_TIME_LIFE = 60 * 60 * 24 * 7
+"""Default index tree state time life."""

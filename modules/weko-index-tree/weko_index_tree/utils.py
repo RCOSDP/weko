@@ -21,6 +21,7 @@
 """Module of weko-index-tree utils."""
 import os
 import redis
+import json
 
 from datetime import date, datetime
 from functools import wraps
@@ -122,6 +123,7 @@ def get_tree_json(index_list, root_id):
         index_position[index_element.cid] = position
 
     def get_user_list_expand():
+        """Get list index expand."""
         current_app.logger.debug("*"*60)
         current_app.logger.debug(current_user.get_id())
         if not current_user.get_id():
@@ -138,7 +140,10 @@ def get_tree_json(index_list, root_id):
             current_user.get_id()
         )
         if sessionstore.redis.exists(key) and sessionstore.get(key):
-            return sessionstore.get(key)
+            list_index_id = sessionstore.get(key)
+            current_app.logger.debug("*" * 60)
+            current_app.logger.debug(list_index_id)
+            return json.loads(list_index_id.decode("utf-8"))
         return []
 
     def generate_index_dict(index_element, is_root):

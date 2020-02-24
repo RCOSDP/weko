@@ -36,7 +36,7 @@ from .api import Indexes
 from .models import IndexStyle
 from .permissions import index_tree_permission
 from .utils import get_admin_coverpage_setting
-from .config import WEKO_INDEX_TREE_STATE_PREFIX
+from .config import WEKO_INDEX_TREE_STATE_PREFIX, WEKO_INDEX_TREE_STATE_TIME_LIFE
 
 
 class IndexSettingView(BaseView):
@@ -90,7 +90,7 @@ class IndexSettingView(BaseView):
         """Set expand list index tree id."""
         data = request.get_json(force=True)
         index_id = data.get("index_id")
-        current_app.logger.debug(request.get_json())
+        current_app.logger.debug(index_id)
         sessionstore = RedisStore(redis.StrictRedis.from_url(
             'redis://{host}:{port}/1'.format(
                 host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
@@ -103,18 +103,23 @@ class IndexSettingView(BaseView):
             current_user.get_id()
         )
         if sessionstore.redis.exists(key) and sessionstore.get(key):
-            session_data = sessionstore.get(key)
+            session_data = json.loads(sessionstore.get(key).decode("utf-8"))
             if index_id in session_data:
                 session_data.remove(index_id)
             else:
-                session_data.push(index_id)
+                session_data.append(index_id)
         else:
             session_data = [index_id]
 
         current_app.logger.debug(session_data)
-        sessionstore.delete(key)
-
-        sessionstore.put(key, json.dumps(session_data))
+        sessionstore.put(
+            key,
+            bytes(json.dumps(session_data).encode('utf-8')),
+            ttl_secs=current_app.config.get(
+                "WEKO_INDEX_TREE_STATE_TIME_LIFE",
+                WEKO_INDEX_TREE_STATE_TIME_LIFE
+            )
+        )
 
         return jsonify(success=True)
 
