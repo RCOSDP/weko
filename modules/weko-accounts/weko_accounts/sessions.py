@@ -42,6 +42,7 @@ def login_listener(app, user):
         """
         user_id, sid_s = user.id, session.sid_s
         login_ip = get_remote_addr()
+        remove_state_expand(user_id)
 
         return response
 
@@ -61,7 +62,6 @@ def logout_listener(app, user):
             `flask_kvsession.KVSession.regenerate`.
         """
         user_id, login_date = user.id, user.current_login_at
-        remove_state_expand(user_id)
         logout_ip = get_remote_addr()
 
         return response

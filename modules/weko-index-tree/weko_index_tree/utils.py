@@ -517,4 +517,5 @@ def remove_state_expand(user_id):
         ),
         user_id
     )
-    session.pop(key)
+    if session.get(key):
+        session.pop(key)
