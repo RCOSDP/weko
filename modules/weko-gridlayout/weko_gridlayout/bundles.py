@@ -105,6 +105,7 @@ trumbowyg_js_plugin = Bundle(
     'trumbowyg.fontfamily.min.js',
     'js/weko_gridlayout/trumbowyg_plugin/specialchars/'
     'trumbowyg.specialchars.min.js',
+    'js/weko_gridlayout/trumbowyg_plugin/fontsize/trumbowyg.fontsize.min.js',
     output="gen/trumbowyg_js_plugin.%(version)s.js",
 )
 

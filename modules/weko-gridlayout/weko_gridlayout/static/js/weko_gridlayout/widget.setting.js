@@ -660,10 +660,9 @@ const ComponentFieldEditor = function (props) {
     ["viewHTML"],
     ["undo", "redo"], // Only supported in Blink browsers
     ["formatting"],
-    ['fontfamily'],
+    ['fontfamily', 'fontsize'],
     ['specialChars'],
-    ["strong", "em", "del"],
-    ["superscript", "subscript"],
+    ["strong", "em", "del", 'underline', "superscript", "subscript"],
     ["link"],
     ["image"],
     ["justifyLeft", "justifyCenter", "justifyRight", "justifyFull"],
