@@ -19,21 +19,18 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
-import json
 import os
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
 
-import redis
 from elasticsearch.exceptions import NotFoundError
-from flask import current_app
+from flask import current_app, session
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
-from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
 
@@ -126,10 +123,7 @@ def get_tree_json(index_list, root_id):
         """Get list index expand."""
         if not current_user.get_id():
             return []
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
         key = "{}{}".format(
             current_app.config.get(
                 "WEKO_INDEX_TREE_STATE_PREFIX",
@@ -137,10 +131,7 @@ def get_tree_json(index_list, root_id):
             ),
             current_user.get_id()
         )
-        if sessionstore.redis.exists(key) and sessionstore.get(key):
-            list_index_id = sessionstore.get(key)
-            return json.loads(list_index_id.decode("utf-8"))
-        return []
+        return session.get(key, [])
 
     def generate_index_dict(index_element, is_root):
         """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
@@ -519,10 +510,6 @@ def get_index_id(activity_id):
 
 def remove_state_expand(user_id):
     """Remove expand state after logout."""
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
     key = "{}{}".format(
         current_app.config.get(
             "WEKO_INDEX_TREE_STATE_PREFIX",
@@ -530,5 +517,4 @@ def remove_state_expand(user_id):
         ),
         user_id
     )
-    if sessionstore.redis.exists(key) and sessionstore.get(key):
-        sessionstore.delete(key)
+    session.pop(key)

@@ -20,22 +20,17 @@
 
 """WEKO3 module docstring."""
 
-import json
 import os
 import sys
 
-import redis
 from flask import abort, current_app, flash, jsonify, request, session, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
-from simplekv.memory.redisstore import RedisStore
-from weko_admin.utils import get_lifetime
 
 from .api import Indexes
-from .config import WEKO_INDEX_TREE_STATE_PREFIX, \
-    WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS
+from .config import WEKO_INDEX_TREE_STATE_PREFIX
 from .models import IndexStyle
 from .permissions import index_tree_permission
 from .utils import get_admin_coverpage_setting
@@ -98,10 +93,6 @@ class IndexSettingView(BaseView):
         """Set expand list index tree id."""
         data = request.get_json(force=True)
         index_id = data.get("index_id")
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
         key = "{}{}".format(
             current_app.config.get(
                 "WEKO_INDEX_TREE_STATE_PREFIX",
@@ -109,30 +100,15 @@ class IndexSettingView(BaseView):
             ),
             current_user.get_id()
         )
-        if sessionstore.redis.exists(key) and sessionstore.get(key):
-            session_data = json.loads(sessionstore.get(key).decode("utf-8"))
+        if session.get(key):
+            session_data = session.get(key)
             if index_id in session_data:
                 session_data.remove(index_id)
             else:
                 session_data.append(index_id)
         else:
             session_data = [index_id]
-        if get_lifetime():
-            lifetime = get_lifetime() * current_app.config.get(
-                "WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS",
-                WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS
-            )
-            sessionstore.put(
-                key,
-                bytes(json.dumps(session_data).encode('utf-8')),
-                ttl_secs=lifetime
-            )
-        else:
-            sessionstore.put(
-                key,
-                bytes(json.dumps(session_data).encode('utf-8')),
-            )
-
+        session[key] = session_data
         return jsonify(success=True)
 
 
