@@ -1,6 +1,6 @@
 const { useState, useEffect  } = React;
+const Trumbowyg = window['react-trumbowyg'];
 
-const MAIN_CONTENT_TYPE = "Main contents";
 const FREE_DESCRIPTION_TYPE = "Free description";
 const NOTICE_TYPE = "Notice";
 const NEW_ARRIVALS = "New arrivals";
@@ -620,145 +620,97 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 }
 
-class ComponentFieldEditor extends React.Component {
-    constructor(props) {
-        super(props);
-        this.quillRef = null;
-        this.reactQuillRef = null;
-        this.state = {
-            editorHtml: this.props.data_load,
-            modules: {
-                toolbar: [
-                    [{ 'font': [] }, { size: [] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': ["#000000", "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff", "#ffffff", "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff", "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff", "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2", "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466", 'custom-color'] }, { 'background': ["#000000", "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff", "#ffffff", "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff", "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff", "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2", "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466", 'custom-color'] }],
-                    [{ 'script': 'sub' }, { 'script': 'super' }],
-                    [{ 'header': '1' }, { 'header': '2' }, 'blockquote', 'code-block'],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' },
-                    { 'indent': '-1' }, { 'indent': '+1' }],
-                    ['direction', 'align'],
-                    ['link', 'image', 'video', 'formula'],
-                    ['clean'],
-                    ['html']
-                ],
-                clipboard: {
-                    // toggle to add extra line breaks when pasting HTML:
-                    matchVisual: false,
-                }
-            },
-            formats: [
-                'font', 'size',
-                'bold', 'italic', 'underline', 'strike', 'color', 'background',
-                'script', 'script', 'header', 'blockquote', 'code-block',
-                'list', 'bullet', 'indent', 'direction', 'align',
-                'link', 'image', 'video', 'formula', 'clean'
-            ]
-        };
-        this.handleChange = this.handleChange.bind(this);
-        this.attachQuillRefs = this.attachQuillRefs.bind(this);
-    }
-    componentDidMount() {
-        this.attachQuillRefs();
-    }
+const TrumbowygWrapper = props => {
+  const [value, setValue] = useState();
 
-    componentDidUpdate() {
-        this.attachQuillRefs();
+  useEffect(() => {
+    if (props.value != $("#" + props.id)[0].innerHTML) {
+      setValue(props.value);
     }
+  }, [props.value]);
 
-    attachQuillRefs() {
-        // Ensure React-Quill reference is available:
-        if (typeof this.reactQuillRef.getEditor !== 'function') {
-            return false;
-        }
-        // Skip if Quill reference is defined:
-        if (this.quillRef != null) {
-            return false;
-        }
+  function handleChange(e) {
+    props.onChange(e.target.innerHTML);
+  }
 
-        const quillRef = this.reactQuillRef.getEditor();
-        if (quillRef != null) this.quillRef = quillRef;
+  return (
+    <React.Fragment>
+      <Trumbowyg.default
+        autogrow
+        id={props.id}
+        onChange={handleChange}
+        data={value}
+        buttons={props.buttons}
+        btnsDef={props.btnsDef}
+        plugins={props.plugins}
+      />
+    </React.Fragment>
+  );
+};
 
-        var txtArea = document.createElement('textarea');
-        txtArea.style.cssText = "width: 100%;margin: 0px;background: rgb(29, 29, 29);box-sizing: border-box;color: rgb(204, 204, 204);font-size: 15px;outline: none;padding: 20px;line-height: 24px;font-family: Consolas, Menlo, Monaco, &quot;Courier New&quot;, monospace;position: absolute;top: 0;bottom: 0;border: none;display:none";
-        txtArea.value = '';
-        var htmlEditor = this.quillRef.addContainer('ql-custom');
-        htmlEditor.appendChild(txtArea);
-        var qlEditor = document.querySelector('.ql-editor');
-        var htmlButton = document.querySelector('.ql-html');
-        htmlButton.innerHTML = '<b>HTML</b>';
-        htmlButton.addEventListener('click', function() {
-          if (txtArea.style.display === '') {
-            quillRef.pasteHTML(txtArea.value);
-        } else {
-            var text = qlEditor.innerHTML.replace(/\<\/p\>/g, '</p>\n');
-            text = text.replace(/\<\/blockquote\>/g, '</blockquote>\n');
-            text = text.replace(/\<\/h1\>/g, '</h1>\n');
-            text = text.replace(/\<\/h2\>/g, '</h2>\n');
-            text = text.replace(/\<ul\>/g, '<ul>\n');
-            text = text.replace(/\<\/ul\>/g, '</ul>\n');
-            text = text.replace(/\<ol\>/g, '<ol>\n');
-            text = text.replace(/\<\/ol\>/g, '</ol>\n');
-            text = text.replace(/\<\/li\>/g, '</li>\n');
-            txtArea.value = text
-        }
-            txtArea.style.display = txtArea.style.display === 'none' ? '' : 'none';
-        });
+const ComponentFieldEditor = function (props) {
+  const [value, setValue] = useState(props.data_load || "");
+  const btnsDef = {
+    image: {
+      dropdown: ["insertImage", "base64"],
+      ico: "insertImage"
     }
-    componentWillReceiveProps(props) {
-        if (props.data_change) {
-            let setting = props.data_load;
-            this.setState({
-                editorHtml: setting
-            });
-            this.props.getValueOfField("language", false);
-        }
-    }
+  };
+  const buttons = [
+    ["viewHTML"],
+    ["undo", "redo"], // Only supported in Blink browsers
+    ["formatting"],
+    ['fontfamily'],
+    ['specialChars'],
+    ["strong", "em", "del"],
+    ["superscript", "subscript"],
+    ["link"],
+    ["image"],
+    ["justifyLeft", "justifyCenter", "justifyRight", "justifyFull"],
+    ["unorderedList", "orderedList"],
+    ["horizontalRule"],
+    ["removeformat"],
+    ["fullscreen"]
+  ];
 
-    handleChange(html) {
-        if (this.quillRef == null) {
-            return false;
-        }
-        let contents = this.quillRef.getContents();
-        let isResetHTML = true;
-        if(contents && Array.isArray(contents.ops)){
-            contents.ops.forEach(function (content) {
-                let data = content['insert'];
-                if (typeof data != "string"){
-                    isResetHTML = false;
-                }
-                else{
-                    if(data.trim() !== ""){
-                        isResetHTML = false;
-                    }
-                }
-            })
-        }
-        let dataSending= html;
-        if(isResetHTML){
-            dataSending = "";
-        }
-        this.setState({ editorHtml: html });
-        this.props.handleChange(this.props.key_binding, dataSending);
-    }
+  const plugins = {
+    resizimg: {
+      minSize: 64,
+      step: 16
+    },
+  };
 
-    render() {
-        return (
-            <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                <div className="controls col-xs-9 my-editor">
-                    <ReactQuill
-                        ref={(el) => { this.reactQuillRef = el }}
-                        onChange={this.handleChange}
-                        value={this.state.editorHtml || ''}
-                        modules={this.state.modules}
-                        formats={this.state.formats}
-                        bounds={'.app'}
-                    />
-                </div>
-            </div>
-        )
+  useEffect(() => {
+    if (props.data_change) {
+      setValue(props.data_load);
+      props.getValueOfField("language", false);
     }
-}
+  }, [props.data_change]);
+
+  const handleChange = data => {
+    setValue(data);
+    props.handleChange(props.key_binding, data);
+  };
+
+  return (
+    <div className="form-group row">
+      <label htmlFor="input_type" className="control-label col-xs-2 text-right">
+        {props.name}
+      </label>
+      <div className="controls col-xs-9">
+        <TrumbowygWrapper
+          key={props.language}
+          id={props.key_binding}
+          onChange={handleChange}
+          value={value}
+          buttons={buttons}
+          btnsDef={btnsDef}
+          plugins={plugins}
+        />
+      </div>
+    </div>
+  );
+};
 
 class ExtendComponent extends React.Component {
     constructor(props) {
@@ -977,14 +929,14 @@ class ExtendComponent extends React.Component {
         if (this.state.type === FREE_DESCRIPTION_TYPE) {
             return (
                 <div>
-                    <ComponentFieldEditor key={this.state.type} handleChange={this.handleChange} name="Free description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                    <ComponentFieldEditor key={this.state.type + this.props.language} language={this.props.language} handleChange={this.handleChange} name="Free description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
         else if (this.state.type === HEADER_TYPE || this.state.type === FOOTER_TYPE){
             return (
                 <div>
-                    <ComponentFieldEditor key={this.state.type} handleChange={this.handleChange} name={this.state.type === HEADER_TYPE ? "Header setting" : "Footer setting"} key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                    <ComponentFieldEditor key={this.state.type + this.props.language} language={this.props.language} handleChange={this.handleChange} name={this.state.type === HEADER_TYPE ? "Header setting" : "Footer setting"} key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
@@ -993,7 +945,7 @@ class ExtendComponent extends React.Component {
                 return (
                     <div>
                         <div>
-                            <ComponentFieldEditor handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                            <ComponentFieldEditor key={this.state.type + this.props.language + "description"} language={this.props.language} handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                         </div>
                         <div className="row">
                             <div className="controls col-xs-offset-2 col-xs-10">
@@ -1008,7 +960,7 @@ class ExtendComponent extends React.Component {
                 return (
                     <div>
                         <div>
-                            <ComponentFieldEditor handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                            <ComponentFieldEditor key={this.state.type + this.props.language + "description"} language={this.props.language} handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                         </div>
                         <div className="row">
                             <div className="controls col-xs-offset-2 col-xs-10">
@@ -1024,7 +976,7 @@ class ExtendComponent extends React.Component {
                             </div>
                         </div>
                         <div>
-                            <ComponentFieldEditor handleChange={this.handleChange} name="" key_binding="more_description" data_load={this.state.settings.more_description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                            <ComponentFieldEditor key={this.state.type + this.props.language + "more_description"} language={this.props.language} handleChange={this.handleChange} name="" key_binding="more_description" data_load={this.state.settings.more_description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                         </div>
                         <div className="row">
                             <div className="controls col-xs-offset-2 col-xs-10">

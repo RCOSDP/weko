@@ -519,7 +519,7 @@ let WidgetTheme = function () {
         let labelTextColor = (widget_settings.label_text_color) ? widget_settings.label_text_color : '';
         let labelColor = (widget_settings.label_color) ? widget_settings.label_color : '';
         let borderColor = (widget_settings.frame_border_color) ? widget_settings.frame_border_color : '';
-        let panelClasses = "panel-body no-padding-side ql-editor";
+        let panelClasses = "panel-body no-padding-side trumbowyg-editor";
         let overFlowBody = "";
         if (template === this.TEMPLATE_SIDE_LINE) {
             template.border['border-left-style'] = (widget_settings.border_style) ? widget_settings.border_style : 'groove';
