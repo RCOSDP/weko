@@ -69,6 +69,8 @@ katex_min_css = Bundle(
 trumbowyg_css_plugin = Bundle(
     'css/weko_gridlayout/trumbowyg_plugin/specialchars/'
     'trumbowyg.specialchars.min.css',
+    'css/weko_gridlayout/trumbowyg_plugin/colors/'
+    'trumbowyg.colors.min.css',
     output="gen/trumbowyg_css_plugin.min.%(version)s.css",
 )
 
@@ -106,6 +108,7 @@ trumbowyg_js_plugin = Bundle(
     'js/weko_gridlayout/trumbowyg_plugin/specialchars/'
     'trumbowyg.specialchars.min.js',
     'js/weko_gridlayout/trumbowyg_plugin/fontsize/trumbowyg.fontsize.min.js',
+    'js/weko_gridlayout/trumbowyg_plugin/colors/trumbowyg.colors.min.js',
     output="gen/trumbowyg_js_plugin.%(version)s.js",
 )
 
