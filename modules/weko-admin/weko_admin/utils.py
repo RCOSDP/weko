@@ -47,7 +47,7 @@ from weko_records.api import ItemsMetadata
 from . import config
 from .models import AdminLangSettings, ApiCertificate, FeedbackMailFailed, \
     FeedbackMailHistory, FeedbackMailSetting, SearchManagement, \
-    SessionLifetime, StatisticTarget, StatisticUnit
+    StatisticTarget, StatisticUnit
 
 
 def get_response_json(result_list, n_lst):
@@ -1596,16 +1596,3 @@ def get_notify_for_current_language(notify):
         return ''
     else:
         return ''
-
-
-def get_lifetime():
-    """Get Lifetime."""
-    try:
-        db_lifetime = SessionLifetime.get_validtime()
-        if db_lifetime is None:
-            return None
-        else:
-            return db_lifetime.lifetime
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-        return None
