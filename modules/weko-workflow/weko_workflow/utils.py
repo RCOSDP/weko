@@ -26,12 +26,13 @@ from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
-from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
+from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
+from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import Identifier
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -66,7 +67,6 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
     """
     flag_del_pidstore = False
     identifier_val = ''
-    identifier_typ = ''
     doi_register_val = ''
     doi_register_typ = ''
 
@@ -75,7 +75,6 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         jalcdoi_link = data.get('identifier_grant_jalc_doi_link')
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_link
-        identifier_typ = 'DOI'
         doi_register_val = '/'.join(jalcdoi_tail[1:])
         doi_register_typ = 'JaLC'
     elif doi_select == IDENTIFIER_GRANT_LIST[2][0] and data.get(
@@ -83,7 +82,6 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         jalcdoi_cr_link = data.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_cr_link
-        identifier_typ = 'DOI'
         doi_register_val = '/'.join(jalcdoi_cr_tail[1:])
         doi_register_typ = 'Crossref'
     elif doi_select == IDENTIFIER_GRANT_LIST[3][0] and data.get(
@@ -91,7 +89,6 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         jalcdoi_dc_link = data.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_dc_link
-        identifier_typ = 'DOI'
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'DataCite'
     else:
@@ -104,26 +101,30 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
 
             if reg:
                 identifier = IdentifierHandle(item_id)
-                identifier.update_identifier_data(identifier_val,
-                                                  identifier_typ)
-                identifier.update_identifier_regist_data(doi_register_val,
-                                                         doi_register_typ)
+                identifier.update_idt_registration_metadata(doi_register_val,
+                                                            doi_register_typ)
+            current_app.logger.info(_('DOI successfully registered!'))
     except Exception as ex:
         current_app.logger.exception(str(ex))
 
 
-def register_cnri(activity_id):
+def register_hdl(activity_id):
     """
-    Register CNRI with Persistent Identifiers.
+    Register HDL into Persistent Identifiers.
 
     :param activity_id: Workflow Activity Identifier
-    :return cnri_pidstore: CNRI pidstore object or None
+    :return cnri_pidstore: HDL pidstore object or None
     """
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
     record = WekoRecord.get_record(item_uuid)
 
-    deposit_id = record.get('_deposit')['id']
+    if record.pid_cnri:
+        current_app.logger.info('This record was registered HDL!')
+        return
+    else:
+        deposit_id = record.pid_parent.pid_value.split('parent:')[1]
+
     record_url = request.url.split('/workflow/')[0] \
         + '/records/' + str(deposit_id)
 
@@ -133,12 +134,9 @@ def register_cnri(activity_id):
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
-        reg = identifier.register_pidstore('cnri', handle)
-
-        if reg:
-            identifier.update_identifier_data(handle, 'HDL')
+        identifier.register_pidstore('hdl', handle)
     else:
-        current_app.logger.error('Cannot connect Handle server!')
+        current_app.logger.info('Cannot connect Handle server!')
 
 
 def item_metadata_validation(item_id, identifier_type):
@@ -512,7 +510,7 @@ class IdentifierHandle(object):
         """Get Persistent Identifier Object by pid_value or item_uuid.
 
         Arguments:
-            pid_type     -- {string} 'doi' (default) or 'cnri'
+            pid_type     -- {string} 'doi' (default) or 'hdl'
             object_uuid  -- {uuid} assigned object's uuid
 
         Returns:
@@ -521,36 +519,13 @@ class IdentifierHandle(object):
         """
         if not object_uuid:
             object_uuid = self.item_uuid
-        with db.session.no_autoflush:
-            pid_object = PersistentIdentifier.query.filter_by(
-                pid_type=pid_type,
-                object_uuid=object_uuid,
-                status=PIDStatus.REGISTERED).all()
-            if not pid_object:
-                current_pid = PersistentIdentifier.get_by_object(
-                    pid_type='recid',
-                    object_type='rec',
-                    object_uuid=object_uuid
-                )
-                current_pv = PIDVersioning(child=current_pid)
-                if current_pv and current_pv.parent:
-                    if current_pv.previous:
-                        pid_object = self.get_pidstore(
-                            pid_type,
-                            current_pv.previous.object_uuid)
-                    else:
-                        return None
-
-            if pid_type == 'doi' and pid_object \
-                    and isinstance(pid_object, list):
-                pid_object = pid_object[0]
-            return pid_object
+        return get_parent_pid_with_type(pid_type, object_uuid)
 
     def check_pidstore_exist(self, pid_type, chk_value=None):
         """Get check whether PIDStore object exist.
 
         Arguments:
-            pid_type     -- {string} 'doi' (default) or 'cnri'
+            pid_type     -- {string} 'doi' (default) or 'hdl'
             chk_value    -- {string} object_uuid or pid_value
 
         Returns:
@@ -574,7 +549,7 @@ class IdentifierHandle(object):
         """Register Persistent Identifier Object.
 
         Arguments:
-            pid_type     -- {string} 'doi' (default) or 'cnri'
+            pid_type     -- {string} 'doi' (default) or 'hdl'
             reg_value    -- {string} pid_value
 
         Returns:
@@ -591,13 +566,11 @@ class IdentifierHandle(object):
                     object_uuid=self.item_uuid,
                     status=PIDStatus.REGISTERED
                 )
-            else:
-                return False
         except Exception as ex:
             current_app.logger.error(ex)
-            return False
+        return False
 
-    def delete_doi_pidstore_status(self, pid_value=None):
+    def delete_pidstore_doi(self, pid_value=None):
         """Change Persistent Identifier Object status to DELETE.
 
         Arguments:
@@ -614,57 +587,16 @@ class IdentifierHandle(object):
 
             if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
                 doi_pidstore.delete()
-
-                permalink_uri = ''
-                cnri_datas = self.get_pidstore('cnri')
-                if cnri_datas:
-                    permalink_uri = cnri_datas[-1].pid_value
-                metadata_data = {
-                    'permalink': permalink_uri
-                }
-                with db.session.begin_nested():
-                    self.item_metadata.update(metadata_data)
-                    self.item_metadata.commit()
-                db.session.commit()
                 return doi_pidstore.status == PIDStatus.DELETED
-            return False
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
             return False
         except Exception as ex:
             current_app.logger.error(ex)
-            return False
+        return False
 
-    def update_identifier_data(self, input_value, input_type):
-        """Update Identifier of WekoDeposit and ItemMetadata.
-
-        Arguments:
-            input_value -- {string} Identifier input
-            input_type  -- {string} Identifier type
-
-        Returns:
-            None
-
-        """
-        _, key_value = self.metadata_mapping.get_data_by_property(
-            "identifier.@value")
-        _, key_type = self.metadata_mapping.get_data_by_property(
-            "identifier.@attributes.identifierType")
-
-        try:
-            self.commit(key_id=key_value.split('.')[0],
-                        key_val=key_value.split('.')[1],
-                        key_typ=key_type.split('.')[1],
-                        atr_nam='Identifier',
-                        atr_val=input_value,
-                        atr_typ=input_type
-                        )
-        except Exception as pidNotEx:
-            current_app.logger.error(pidNotEx)
-            db.session.rollback()
-
-    def update_identifier_regist_data(self, input_value, input_type):
-        """Update Identifier Registration of WekoDeposit and ItemMetadata.
+    def update_idt_registration_metadata(self, input_value, input_type):
+        """Update Identifier Registration in Record Metadata.
 
         Arguments:
             input_value -- {string} Identifier input
@@ -679,17 +611,13 @@ class IdentifierHandle(object):
         _, key_type = self.metadata_mapping.get_data_by_property(
             "identifierRegistration.@attributes.identifierType")
 
-        try:
-            self.commit(key_id=key_value.split('.')[0],
-                        key_val=key_value.split('.')[1],
-                        key_typ=key_type.split('.')[1],
-                        atr_nam='Identifier Registration',
-                        atr_val=input_value,
-                        atr_typ=input_type
-                        )
-        except Exception as pidNotEx:
-            current_app.logger.error(pidNotEx)
-            db.session.rollback()
+        self.commit(key_id=key_value.split('.')[0],
+                    key_val=key_value.split('.')[1],
+                    key_typ=key_type.split('.')[1],
+                    atr_nam='Identifier Registration',
+                    atr_val=input_value,
+                    atr_typ=input_type
+                    )
 
     def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
         """Commit update.
@@ -706,67 +634,24 @@ class IdentifierHandle(object):
             None
 
         """
-        item_type_obj = ItemTypes.get_by_id(self.item_type_id)
-        option = item_type_obj.render.get('meta_list', {})\
-            .get(key_id, {}).get('option')
-
-        multi_option = None
-        if option:
-            multi_option = option.get('multiple')
-
-        data = self.item_record.get(key_id)
-
-        if not data:
-            record_data = {
-                key_id: {
-                    "attribute_name": atr_nam,
-                    "attribute_value_mlt": [
-                        {
-                            key_val: atr_val,
-                            key_typ: atr_typ
-                        }
-                    ]
-                }
-            }
-        else:
-            if multi_option:
-                data['attribute_value_mlt'].append({
-                    key_val: atr_val,
-                    key_typ: atr_typ
-                })
-            else:
-                data['attribute_value_mlt'] = [{
-                    key_val: atr_val,
-                    key_typ: atr_typ
-                }]
-            record_data = {
-                key_id: data
-            }
-
         metadata_data = self.item_metadata.get(key_id, [])
-        if atr_nam == 'Identifier':
-            metadata_data.append({
+        if atr_nam == 'Identifier Registration':
+            metadata_data = {
                 key_val: atr_val,
                 key_typ: atr_typ
-            })
-            metadata_data = {
-                key_id: metadata_data,
-                'permalink': atr_val
             }
-        elif atr_nam == 'Identifier Registration':
-            metadata_data = {
-                key_id: {
-                    key_val: atr_val,
-                    key_typ: atr_typ
-                }
-            }
-
-        with db.session.begin_nested():
-            self.item_metadata.update(metadata_data)
-            self.item_metadata.commit()
-            self.item_record.update(record_data)
-            self.item_record.commit()
-        db.session.commit()
+        self.item_metadata[key_id] = metadata_data
+        try:
+            with db.session.begin_nested():
+                rec = RecordMetadata.query.filter_by(id=self.item_uuid).first()
+                deposit = WekoDeposit(rec.json, rec)
+                index = {'index': deposit.get('path', []),
+                         'actions': deposit.get('publish_status')}
+                deposit.update(index, self.item_metadata)
+                deposit.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
 
 
 def delete_bucket(bucket_id):
@@ -915,3 +800,27 @@ def is_hidden_pubdate(item_type_name):
             and item_type_name in hidden_pubdate_list):
         is_hidden = True
     return is_hidden
+
+
+def get_parent_pid_with_type(pid_type, object_uuid):
+    """Get Persistent Identifier Object by pid_value or item_uuid.
+
+    Arguments:
+        pid_type     -- {string} 'doi' (default) or 'hdl'
+        object_uuid  -- {uuid} assigned object's uuid
+
+    Returns:
+        pid_object   -- PID object or None
+
+    """
+    try:
+        record = WekoRecord.get_record(object_uuid)
+        with db.session.no_autoflush:
+            pid_object = PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                object_uuid=record.pid_parent.object_uuid
+            ).one_or_none()
+            return pid_object
+    except PIDDoesNotExistError as pid_not_exist:
+        current_app.logger.error(pid_not_exist)
+        return None

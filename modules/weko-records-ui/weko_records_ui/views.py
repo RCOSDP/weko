@@ -30,6 +30,7 @@ from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
+from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -391,9 +392,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
                         or [])
     try:
-        if WekoRecord.get_record(id_=active_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+        if WekoRecord.get_record(
+                id_=active_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
             active_versions.pop()
-        if WekoRecord.get_record(id_=all_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+        if WekoRecord.get_record(
+                id_=all_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
             all_versions.pop()
     except Exception:
         pass
@@ -448,13 +451,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     # Get item meta data
     record['permalink_uri'] = None
-    permalink = get_record_permalink(pid.object_uuid)
+    permalink = get_record_permalink(record)
     if not permalink:
         record['permalink_uri'] = request.url
     else:
         record['permalink_uri'] = permalink
 
-    from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
 
     datastore = RedisStore(redis.StrictRedis.from_url(
@@ -627,7 +629,6 @@ def set_pdfcoverpage_header():
 def file_version_update():
     """Bulk delete items and index trees."""
     # Only allow authorised users to update object version
-    from invenio_files_rest.permissions import has_update_version_role
     if has_update_version_role(current_user):
 
         bucket_id = request.values.get('bucket_id')
@@ -671,7 +672,6 @@ def citation(record, pid, style=None, ln=None):
 def soft_delete(recid):
     """Soft delete item."""
     try:
-        from invenio_files_rest.permissions import has_update_version_role
         if not has_update_version_role(current_user):
             abort(403)
         soft_delete_imp(recid)
@@ -686,7 +686,6 @@ def soft_delete(recid):
 def restore(recid):
     """Restore item."""
     try:
-        from invenio_files_rest.permissions import has_update_version_role
         if not has_update_version_role(current_user):
             abort(403)
         restore_imp(recid)

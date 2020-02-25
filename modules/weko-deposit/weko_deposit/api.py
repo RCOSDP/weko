@@ -38,7 +38,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.serializers.utils import serialize_relations
-from invenio_pidstore.errors import PIDInvalidAction
+from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
@@ -970,6 +970,13 @@ class WekoRecord(Record):
         return obj
 
     @property
+    def recid(self):
+        """Return an instance of record PID."""
+        pid = self.record_fetcher(self.id, self)
+        obj = PersistentIdentifier.get('recid', pid.pid_value)
+        return obj
+
+    @property
     def navi(self):
         """Return the path name."""
         navs = Indexes.get_path_name(self.get('path', []))
@@ -1056,6 +1063,25 @@ class WekoRecord(Record):
         except BaseException:
             abort(500)
 
+    @property
+    def pid_doi(self):
+        """Return pid_value of doi identifier."""
+        return self._get_pid('doi')
+
+    @property
+    def pid_cnri(self):
+        """Return pid_value of doi identifier."""
+        return self._get_pid('hdl')
+
+    @property
+    def pid_parent(self):
+        """Return pid_value of doi identifier."""
+        pid_ver = PIDVersioning(child=self.recid)
+        if pid_ver:
+            return pid_ver.parents.one_or_none()
+        else:
+            return None
+
     @classmethod
     def get_record_by_pid(cls, pid):
         """Get record by pid."""
@@ -1083,3 +1109,14 @@ class WekoRecord(Record):
         if path:
             coverpage_state = Indexes.get_coverpage_state(path)
         return coverpage_state
+
+    def _get_pid(self, pid_type):
+        """Return pid_value from persistent identifier."""
+        try:
+            return PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                object_uuid=self.pid_parent.object_uuid,
+                status=PIDStatus.REGISTERED).one_or_none()
+        except PIDDoesNotExistError as pid_not_exist:
+            current_app.logger.error(pid_not_exist)
+        return None

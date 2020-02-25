@@ -2142,7 +2142,7 @@ function handleSharePermission(value) {
         $rootScope.recordsVM.invenioRecordsModel['approval2'] = approval2Mail;
       };
 
-      $scope.saveDataJson = function (item_save_uri, currentActionId,enableContributor,enableFeedbackMail) {
+      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail) {
         var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
         let permission = false;
         $scope.$broadcast('schemaFormValidate');
@@ -2172,6 +2172,7 @@ function handleSharePermission(value) {
       };
 
       $scope.saveDataJsonCallback = function (item_save_uri) {
+        $scope.unattachedSystemProperties();
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
           this.mappingThumbnailInfor();
@@ -2214,6 +2215,7 @@ function handleSharePermission(value) {
         let emails = $scope.feedback_emails;
         let result = true;
         if (!emails.length) return true
+
         $.ajax({
           url: '/workflow/save_feedback_maillist/'+ activityID+ '/'+ actionID,
           headers: {
@@ -2279,6 +2281,14 @@ function handleSharePermission(value) {
           }
         });
         return thumbnail_attrs;
+      }
+
+      $scope.unattachedSystemProperties = function () {
+        // Remove system file properties from metadata
+        delete $rootScope.recordsVM.invenioRecordsModel.system_file;
+        delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_doi;
+        delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_hdl;
+        delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_uri;
       }
     }
     // Inject depedencies

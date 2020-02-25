@@ -448,7 +448,6 @@ class ResourceListHandler(object):
                 self.repository_id
             )
             record = WekoRecord.get_record_by_pid(record_id)
-            current_app.logger.debug('*' * 60)
             if record:
                 for file in record.files:
                     current_app.logger.debug(file.info())

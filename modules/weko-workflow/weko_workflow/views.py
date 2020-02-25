@@ -64,7 +64,7 @@ from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_unregister_buckets, \
     get_activity_id_of_record_without_version, get_identifier_setting, \
     is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
-    merge_buckets_by_records, register_cnri, saving_doi_pidstore, \
+    merge_buckets_by_records, register_hdl, saving_doi_pidstore, \
     set_bucket_default_size
 
 blueprint = Blueprint(
@@ -581,7 +581,7 @@ def next_action(activity_id='0', action_id=0):
         return jsonify(code=0, msg=_('success'))
 
     if action_endpoint == 'item_login':
-        register_cnri(activity_id)
+        register_hdl(activity_id)
 
     activity_detail = work_activity.get_activity_detail(activity_id)
     item_id = None
@@ -1027,7 +1027,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                 identifier_actionid)
             identifier_handle = IdentifierHandle(item_id)
 
-            if identifier_handle.delete_doi_pidstore_status():
+            if identifier_handle.delete_pidstore_doi():
                 identifier['action_identifier_select'] = \
                     IDENTIFIER_GRANT_IS_WITHDRAWING
                 if identifier:
@@ -1067,7 +1067,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         current_app.logger.error('Unexpected error: {}', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error!'))
 
-# noinspection PyDictCreation
+
 @blueprint.route('/findDOI', methods=['POST'])
 @login_required
 def check_existed_doi():

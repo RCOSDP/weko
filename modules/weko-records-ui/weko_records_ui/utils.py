@@ -28,7 +28,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
-from weko_records.api import ItemsMetadata, ItemTypes
+from weko_records.api import ItemTypes
 
 from .permissions import check_user_group_permission
 
@@ -40,16 +40,25 @@ def check_items_settings():
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
 
 
-def get_record_permalink(object_uuid):
+def get_record_permalink(record):
     """
-    Get identifier value from ItemsMetadata.
+    Get identifier of record.
 
-    :param: index_name_english
+    :param record: index_name_english
     :return: dict of item type info
     """
-    meta = ItemsMetadata.get_record(object_uuid)
-    if meta:
-        return meta.get('permalink')
+    pid_doi = record.pid_doi
+    pid_cnri = record.pid_cnri
+
+    if pid_doi and pid_cnri:
+        if pid_doi.updated > pid_cnri.updated:
+            return record.pid_doi.pid_value
+        else:
+            return record.pid_cnri.pid_value
+    elif record.pid_doi:
+        return record.pid_doi.pid_value
+    elif record.pid_cnri:
+        return record.pid_cnri.pid_value
     else:
         return None
 
@@ -61,7 +70,7 @@ def get_groups_price(record: dict) -> list:
     :return: The prices of Billing files set in each group.
     """
     groups_price = list()
-    for key, value in record.items():
+    for _, value in record.items():
         if isinstance(value, dict):
             attr_value = value.get('attribute_value_mlt')
             if attr_value and isinstance(attr_value, list):

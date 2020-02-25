@@ -17,6 +17,7 @@ $(document).ready(function () {
   select_option = '';
   page_json_editor = {}   //   一時的editorオブジェクトの保存
   url_update_schema = '/admin/itemtypes/register';
+  rename_subitem_config = false;
   // デフォルトマッピングのテンプレート
   mapping_value = {
     "display_lang_type": "",
@@ -28,94 +29,70 @@ $(document).ready(function () {
     "spase_mapping": ""
   }
   meta_system_info = {
-      updated_date : {
-        title : "Updated Date",
-        title_i18n: {ja: "更新日時", en: "Updated Date"},
-        input_type: "S_Date",
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
-      },
-      created_date : {
-        title: "Created Date",
-        title_i18n: {ja: "作成日時", en: "Created Date"},
-        input_type: "S_Date",
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
-      },
-      persistent_identifier_doi : {
-        input_type: "S_Persistent Identifier(DOI)",
-        title: "Persistent Identifier(DOI)",
-        title_i18n: {ja: "永続識別子（DOI）", en: "Persistent Identifier(DOI)"},
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
-      },
-      persistent_identifier_h : {
-        input_type: "S_Identifier",
-        title: "Persistent Identifier(Handle)",
-        title_i18n: {ja: "永続識別子（ハンドル）", en: "Persistent Identifier(Handle)"},
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
-      },
-      ranking_page_url : {
-        input_type: "S_Identifier",
-        title: "Landing Page URL",
-        title_i18n: {ja: "ランディングページのURL", en: "Landing Page URL"},
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
-      },
-      belonging_index_info : {
-        input_type: "S_Text",
-        title: "Belonging Index Info",
-        title_i18n: {ja: "所属インデックスの情報", en: "Belonging Index Info"},
-        option: {
-          required : false,
-          multiple : false,
-          hidden : true,
-          showlist : false,
-          crtf : false
-        }
-      },
-    };
-    meta_fix = {
-      pubdate : {
-        input_type: "Date",
-        title: "Publish Date",
-        title_i18n: {ja: "公開日", en: "Publish Date"},
-        option: {
-          required : true,
-          multiple : false,
-          hidden : false,
-          showlist : false,
-          crtf : false
-        }
-      },
+    system_identifier_doi: {
+      input_type: "S_Identifier",
+      title: "Persistent Identifier(DOI)",
+      title_i18n: { ja: "永続識別子（DOI）", en: "Persistent Identifier(DOI)" },
+      option: {
+        required: false,
+        multiple: false,
+        hidden: true,
+        showlist: false,
+        crtf: false
+      }
+    },
+    system_identifier_hdl: {
+      input_type: "S_Identifier",
+      title: "Persistent Identifier(HDL)",
+      title_i18n: { ja: "永続識別子（HDL）", en: "Persistent Identifier(HDL)" },
+      option: {
+        required: false,
+        multiple: false,
+        hidden: true,
+        showlist: false,
+        crtf: false
+      }
+    },
+    system_identifier_uri: {
+      input_type: "S_Identifier",
+      title: "Persistent Identifier(URI)",
+      title_i18n: { ja: "永続識別子（URI）", en: "Persistent Identifier(URI)" },
+      option: {
+        required: false,
+        multiple: false,
+        hidden: true,
+        showlist: false,
+        crtf: false
+      }
+    },
+    system_file: {
+      input_type: "S_File",
+      title: "File Information",
+      title_i18n: { ja: "ファイル情報", en: "File Information" },
+      option: {
+        required: false,
+        multiple: false,
+        hidden: true,
+        showlist: false,
+        crtf: false
+      }
     }
-    property_default = {}
+  };
+  meta_fix = {
+    pubdate: {
+      input_type: "Date",
+      title: "Publish Date",
+      title_i18n: { ja: "公開日", en: "Publish Date" },
+      option: {
+        required: true,
+        multiple: false,
+        hidden: false,
+        showlist: false,
+        crtf: false
+      }
+    }
+  };
+  property_default = {};
 
   $('#myModal').modal({
     show: false
@@ -189,91 +166,94 @@ $(document).ready(function () {
   function create_itemtype_schema(){
     page_global.table_row_map['name'] = $('#itemtype_name').val();
     page_global.table_row_map['action'] = $('[name=radio_versionup]:checked').val();
+
+    // manual mapping for system properties
     page_global.table_row_map['mapping'] = {
-        updated_date : {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
+      system_identifier_doi: {
+        "display_lang_type": "",
+        "oai_dc_mapping": "",
+        "jpcoar_mapping": {
+          "system_identifier": {
+            "@value": "subitem_systemidt_identifier",
+            "@attributes": {
+              "identifierType": "subitem_systemidt_identifier_type"
+            }
+          }
+        },
+        "junii2_mapping": "",
+        "lido_mapping": "",
+        "lom_mapping": "",
+        "spase_mapping": ""
+      },
+      system_identifier_hdl: {
+        "display_lang_type": "",
+        "oai_dc_mapping": "",
+        "jpcoar_mapping": {
+          "system_identifier": {
+            "@value": "subitem_systemidt_identifier",
+            "@attributes": {
+              "identifierType": "subitem_systemidt_identifier_type"
+            }
+          }
+        },
+        "junii2_mapping": "",
+        "lido_mapping": "",
+        "lom_mapping": "",
+        "spase_mapping": ""
+      },
+      system_identifier_uri: {
+        "display_lang_type": "",
+        "oai_dc_mapping": "",
+        "jpcoar_mapping": {
+          "system_identifier": {
+            "@value": "subitem_systemidt_identifier",
+            "@attributes": {
+              "identifierType": "subitem_systemidt_identifier_type"
+            }
+          }
+        },
+        "junii2_mapping": "",
+        "lido_mapping": "",
+        "lom_mapping": "",
+        "spase_mapping": ""
+      },
+      system_file: {
+        "display_lang_type": "",
+        "oai_dc_mapping": "",
+        "jpcoar_mapping": {
+          "system_file": {
+            "URI": {
+              "@value": "subitem_systemfile_filename_uri",
+              "@attributes": {
+                "label": "subitem_systemfile_filename_label",
+                "objectType": "subitem_systemfile_filename_type"
+              }
+            },
             "date": {
-              "@attributes": {"dateType": "subitem_system_date_type"},
-              "@value": "subitem_system_date"
+              "@value": "subitem_systemfile_datetime_date",
+              "@attributes": {
+                "dateType": "subitem_systemfile_datetime_type"
+              }
             },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
+            "extent": {
+              "@value": "subitem_systemfile_size"
+            },
+            "version": {
+              "@value": "subitem_systemfile_version"
+            },
+            "mimeType": {
+              "@value": "subitem_systemfile_mimetype"
+            }
+          }
         },
-        created_date :{
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
-            "date": {
-              "@attributes": {"dateType": "subitem_system_date_type"},
-              "@value": "subitem_system_date",
-            },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        },
-        persistent_identifier_doi: {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
-            "identifier": {
-              "@attributes": {"identifierType": "subitem_system_identifier_doi_type"},
-              "@value": "subitem_system_identifier_doi",
-            },
-            "identifierRegistration": {
-              "@attributes": {"identifierType": "subitem_system_id_rg_doi_type"},
-              "@value": "subitem_system_id_rg_doi",
-            },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        },
-        persistent_identifier_h: {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
-            "identifier": {
-              "@attributes": {"identifierType": "subitem_system_identifier_type"},
-              "@value": "subitem_system_identifier",
-            },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        },
-        ranking_page_url: {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": {
-            "identifier": {
-              "@attributes": {"identifierType": "subitem_system_identifier_type"},
-              "@value": "subitem_system_identifier",
-            },
-          },
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        },
-        belonging_index_info: {
-          "display_lang_type": "",
-          "oai_dc_mapping": "",
-          "jpcoar_mapping": "",
-          "junii2_mapping": "",
-          "lido_mapping": "",
-          "lom_mapping": "",
-          "spase_mapping": ""
-        }
-      };
+        "junii2_mapping": "",
+        "lido_mapping": "",
+        "lom_mapping": "",
+        "spase_mapping": ""
+      }
+    };
+    //
+
     page_global.table_row_map['form'] = [];
     page_global.table_row_map['schema'] = {
       $schema: "http://json-schema.org/draft-04/schema#",
@@ -416,8 +396,20 @@ $(document).ready(function () {
       }
     }
 
-    page_global.table_row_map.schema.properties["pubdate"] = { type: "string", title: "PubDate", format: "datetime" }
-    page_global.table_row_map.form.push({ key: "pubdate", type: "template", title: "PubDate", title_i18n: { ja: "公開日", en: "PubDate" }, required: true, format: "yyyy-MM-dd", templateUrl: "/static/templates/weko_deposit/datepicker.html" });
+    page_global.table_row_map.schema.properties["pubdate"] = {
+      type: "string",
+      title: "PubDate",
+      format: "datetime"
+    };
+    page_global.table_row_map.form.push({
+      key: "pubdate",
+      type: "template",
+      title: "PubDate",
+      title_i18n: { ja: "公開日", en: "PubDate" },
+      required: true,
+      format: "yyyy-MM-dd",
+      templateUrl: "/static/templates/weko_deposit/datepicker.html"
+    });
     page_global.table_row_map.schema.required.push("pubdate");
 
     if(src_mapping.hasOwnProperty('pubdate')) {
@@ -425,34 +417,20 @@ $(document).ready(function () {
     } else {
       page_global.table_row_map.mapping['pubdate'] = mapping_value;
     }
-
-//    System mapping
-
-    if(src_mapping.hasOwnProperty('updated_date')) {
-      page_global.table_row_map.mapping['updated_date'] = src_mapping['updated_date'];
+    // Used last mapping of system properties
+    if(src_mapping.hasOwnProperty('system_identifier_doi')) {
+      page_global.table_row_map.mapping['system_identifier_doi'] = src_mapping['system_identifier_doi'];
     }
-
-    if(src_mapping.hasOwnProperty('created_date')) {
-      page_global.table_row_map.mapping['created_date'] = src_mapping['created_date'];
+    if(src_mapping.hasOwnProperty('system_identifier_hdl')) {
+      page_global.table_row_map.mapping['system_identifier_hdl'] = src_mapping['system_identifier_hdl'];
     }
-
-    if(src_mapping.hasOwnProperty('persistent_identifier_doi')) {
-      page_global.table_row_map.mapping['persistent_identifier_doi'] = src_mapping['persistent_identifier_doi'];
+    if(src_mapping.hasOwnProperty('system_identifier_uri')) {
+      page_global.table_row_map.mapping['system_identifier_uri'] = src_mapping['system_identifier_uri'];
     }
-
-    if(src_mapping.hasOwnProperty('persistent_identifier_h')) {
-      page_global.table_row_map.mapping['persistent_identifier_h'] = src_mapping['persistent_identifier_h'];
+    if(src_mapping.hasOwnProperty('system_file')) {
+      page_global.table_row_map.mapping['system_file'] = src_mapping['system_file'];
     }
-
-    if(src_mapping.hasOwnProperty('ranking_page_url')) {
-      page_global.table_row_map.mapping['ranking_page_url'] = src_mapping['ranking_page_url'];
-    }
-
-    if(src_mapping.hasOwnProperty('belonging_index_info')) {
-      page_global.table_row_map.mapping['belonging_index_info'] = src_mapping['belonging_index_info'];
-    }
-
-//    End system mapping
+    // End system mapping
     // テーブルの行をトラバースし、マップに追加する
     err_input_id = []
 
@@ -758,10 +736,9 @@ $(document).ready(function () {
           properties_obj[tmp.input_type.substr(4)].forms.title_i18n = tmp.title_i18n;
           //add by ryuu. end
           if(Array.isArray(properties_obj[tmp.input_type.substr(4)].forms)) {
-            console.log("isArray");
             properties_obj[tmp.input_type.substr(4)].forms.forEach(function(element){
               // rename subitem
-              if (element.items && element.items.length > 0) {
+              if (rename_subitem_config && element.items && element.items.length > 0) {
                 element = rename_subitem(element);
               }
               page_global.table_row_map.form.push(
@@ -771,7 +748,7 @@ $(document).ready(function () {
           } else {
             let object_forms = properties_obj[tmp.input_type.substr(4)].forms;
             // rename subitem
-            if (object_forms.items && object_forms.items.length > 0) {
+            if (rename_subitem_config && object_forms.items && object_forms.items.length > 0) {
               object_forms = rename_subitem(object_forms);
             }
             page_global.table_row_map.form.push(
@@ -791,7 +768,7 @@ $(document).ready(function () {
           //add by ryuu. end
           let object_form = properties_obj[tmp.input_type.substr(4)].form;
           //rename subitem
-          if (object_form.items && object_form.items.length > 0) {
+          if (rename_subitem_config && object_form.items && object_form.items.length > 0) {
             object_form = rename_subitem(object_form);
           }
           page_global.table_row_map.form.push(
@@ -1067,6 +1044,14 @@ $(document).ready(function () {
     });
   }
 
+  function update_mapping_list(exsubitem, subitem) {
+    if (page_global.table_row_map.mapping) {
+      let tmp_mapping = JSON.stringify(page_global.table_row_map.mapping);
+      console.log('Mapping replacement: subitem_' + exsubitem + ' : ' + 'subitem_' + subitem);
+      page_global.table_row_map.mapping = JSON.parse(tmp_mapping.replace('subitem_' + exsubitem, 'subitem_' + subitem))
+    }
+  }
+
   function custom_suffix_subitem_name(suffix){
     // Replace all space to _
     suffix = suffix.replace(/ /g, '_');
@@ -1083,10 +1068,13 @@ $(document).ready(function () {
       }
       let subkey = item.key.split("_");
       let orgkey = item.key;
-      if (subkey.length > 1 && !isNaN(Number(subkey[subkey.length-1]))) {
+      if (rename_subitem_config && subkey.length > 1 && !isNaN(Number(subkey[subkey.length-1]))) {
+        let old_subkey = subkey[subkey.length-1];
         subkey[subkey.length-1] = custom_suffix_subitem_name(item.title);
-        let ret = subkey.join('_');
-        item.key = prefix + ret.split(org)[1];
+        // let ret = subkey.join('_');
+        // item.key = prefix + ret.split(org)[1];
+        update_mapping_list(old_subkey, custom_suffix_subitem_name(item.title));
+        item.key = prefix + subkey.join('_').split(org)[1];
       }
       if (item.items && item.items.length > 0) {
         item = process_child_subitem_name_form(orgkey, item.key, item);
@@ -1105,8 +1093,9 @@ $(document).ready(function () {
         }
         let subkey = item.key.split("_");
         let orgkey = item.key
-        if (subkey.length > 1 && !isNaN(Number(subkey[1]))) {
+        if (rename_subitem_config && subkey.length > 1 && !isNaN(Number(subkey[1]))) {
           item.key = subkey[0] + "_" + custom_suffix_subitem_name(item.title);
+          update_mapping_list(subkey[1], custom_suffix_subitem_name(item.title));
         }
         if (item.items && item.items.length > 0) {
           item = process_child_subitem_name_form(orgkey, item.key, item);
@@ -1144,17 +1133,20 @@ $(document).ready(function () {
       others = ''
       for (var key in data) {
         if (key === 'defaults') continue;
-        if (data[key].name === meta_system_info.updated_date.input_type) {
-          meta_system_info.updated_date.input_type = "cus_" + key;
-          meta_system_info.created_date.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_doi.input_type) {
-          meta_system_info.persistent_identifier_doi.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.persistent_identifier_h.input_type) {
-          meta_system_info.persistent_identifier_h.input_type = "cus_" + key;
-          meta_system_info.ranking_page_url.input_type = "cus_" + key;
-        } else if (data[key].name === meta_system_info.belonging_index_info.input_type) {
-          meta_system_info.belonging_index_info.input_type = "cus_" + key;
+
+        if (data[key].name === meta_system_info.system_identifier_doi.input_type) {
+          meta_system_info.system_identifier_doi.input_type = "cus_" + key;
         }
+        if (data[key].name === meta_system_info.system_identifier_hdl.input_type) {
+          meta_system_info.system_identifier_hdl.input_type = "cus_" + key;
+        }
+        if (data[key].name === meta_system_info.system_identifier_uri.input_type) {
+          meta_system_info.system_identifier_uri.input_type = "cus_" + key;
+        }
+        if (data[key].name === meta_system_info.system_file.input_type) {
+          meta_system_info.system_file.input_type = "cus_" + key;
+        }
+
         option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
         if (data[key].sort != null) {
           odered[data[key].sort] = option;
