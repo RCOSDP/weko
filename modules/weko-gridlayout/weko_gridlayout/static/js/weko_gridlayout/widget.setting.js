@@ -663,6 +663,7 @@ const ComponentFieldEditor = function (props) {
     ['fontfamily', 'fontsize'],
     ['specialChars'],
     ["strong", "em", "del", 'underline', "superscript", "subscript"],
+    ['foreColor', 'backColor'],
     ["link"],
     ["image"],
     ["justifyLeft", "justifyCenter", "justifyRight", "justifyFull"],
