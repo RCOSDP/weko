@@ -16,17 +16,18 @@ require([
   });
 });
 
-/*Custom bs-datepicker.
-  Default bs-datepicker: just support one pattern for input.
-  Custom bs-datepicker: support validate three pattern.
-  Used way:
-    templateUrl: /static/templates/weko_deposit/datepicker_multi_format.html
-    customFormat: enter your pattern.
-      if it none, pattern are yyyy-MM-dd, yyyy-MM, yyyy.
+/**
+ * Custom bs-datepicker.
+ * Default bs-datepicker: just support one pattern for input.
+ * Custom bs-datepicker: support validate three pattern.
+ * Used way:
+ *  templateUrl: /static/templates/weko_deposit/datepicker_multi_format.html
+ *  customFormat: enter your pattern.
+ *    if it none, pattern are yyyy-MM-dd, yyyy-MM, yyyy.
 */
 var Pattern = {
   yyyy: '\\d{4}',
-  MM: '(((0)[0-9])|((1)[0-2]))',
+  MM: '(((0)[1-9])|((1)[0-2]))',
   dd: '([0-2][0-9]|(3)[0-1])',
   sep: '(-)'
 }
@@ -42,58 +43,104 @@ var CustomBSDatePicker = {
     defaultFormat: Format.yyyyMMdd + '|' + Format.yyyyMM + '|' + Format.yyyy,
     cls: 'multi_date_format'
   },
+  /**
+   * Clear validate status for this element.
+  */
   init: function(){
-    //Clear validate status for this element.
     let $element = $(CustomBSDatePicker.option.element);
     let $this_parent = $element.parent().parent();
     $element.removeClass('ng-invalid ng-invalid-date ng-invalid-parse');
     $element.next().next().addClass('hide');
     $this_parent.removeClass('has-error');
   },
+  /**
+   * Get format from defined user on form schema.
+   * If user don't defined, this pattern get default pattern.
+   * Default pattern: option.defaultFormat.
+   * @return {String} return pattern.
+  */
   getPattern: function(){
-    //Get format from defined user on form schema.
-    //If user don't defined, this pattern get default pattern.
-    //Default pattern: option.defaultFormat.
     let def_pattern = CustomBSDatePicker.option.defaultFormat;
     let $element = $(CustomBSDatePicker.option.element);
     let pattern = $element.data('custom-format');
     return (pattern.length == 0) ? def_pattern : pattern;
   },
+  /**
+   * Check data input valid with defined pattern.
+   * @return {Boolean} return true if value matched
+  */
   isMatchRegex: function(){
-    //Check data input valid with defined pattern.
-    //If is valid => return true.
     let $element = $(CustomBSDatePicker.option.element);
     let val = $element.val();
     let pattern = CustomBSDatePicker.getPattern();
     let reg = new RegExp(pattern);
     return reg.test(val);
   },
+  /**
+   * Check input required.
+   * @return {Boolean} return true if input required
+  */
   isRequired: function(){
-    //Check input required.
-    //Required input  => return true.
     let $lement = $(CustomBSDatePicker.option.element);
     let $this_parent = $lement.parent().parent();
     let label = $this_parent.find('label');
     return label.hasClass('field-required');
   },
+  /**
+  * Get the number of days in any particular month
+  * @param  {integer} m The month (valid: 0-11)
+  * @param  {integer} y The year
+  * @return {integer}   The number of days in the month
+  */
+  daysInMonth: function (m, y) {
+    switch (m) {
+        case 1 :
+            return (y % 4 == 0 && y % 100) || y % 400 == 0 ? 29 : 28;
+        case 8 : case 3 : case 5 : case 10 :
+            return 30;
+        default :
+            return 31
+    }
+  },
+  /**
+  * Check if a date is valid
+  * @param  {[type]}  d The day
+  * @param  {[type]}  m The month
+  * @param  {[type]}  y The year
+  * @return {Boolean}   Returns true if valid
+  */
+  isValidDate: function (d, m, y) {
+    month = parseInt(m, 10) - 1;
+    check_min_month = m >= 0;
+    check_max_month = m < 12;
+    check_min_day = d > 0
+    check_max_day = d <= CustomBSDatePicker.daysInMonth(m, y);
+    return check_min_month && check_max_month && check_min_day && check_max_day;
+  },
+  /**
+   * Check all validate for this.
+   * All validation valid => return true.
+   * @return {Boolean} Returns true if valid
+  */
   isValidate: function(){
-    //Check all validate for this.
-    //All validation valid => return true.
     let $element = $(CustomBSDatePicker.option.element);
     let val = $element.val();
     if(val.length == 0){
       //Required input invalid.
-      if(CustomBSDatePicker.isRequired()){
-        return false;
-      }
-    }else if(!CustomBSDatePicker.isMatchRegex()){
+      if(CustomBSDatePicker.isRequired()) return false;
+    }else{
       //Data input is not match with defined pattern.
-      return false;
+      if(!CustomBSDatePicker.isMatchRegex()) return false;
+      //Check day by month and year.
+      let arr = val.split('-');
+      if(arr.length == 3 && !CustomBSDatePicker.isValidDate(arr[2], arr[1], arr[0])) return false;
     }
     return true;
   },
+  /**
+   * Check validate and apply css for this field.
+  */
   validate: function(){
-    //Check validate and apply for this field.
     let $element = $(CustomBSDatePicker.option.element);
     let $this_parent = $element.parent().parent();
     if(!CustomBSDatePicker.isValidate()){
@@ -101,15 +148,22 @@ var CustomBSDatePicker = {
       $this_parent.addClass('has-error');
     }
   },
+  /**
+   * This is mean function in order to validate.
+   * @param {[type]} element date field
+  */
   process: function(element){
-    //This is mean function in order to validate.
     CustomBSDatePicker.option.element = element;
     CustomBSDatePicker.init();
     CustomBSDatePicker.validate();
   },
+  /**
+  * Excute this function before 'Save' and 'Next' processing
+  * Get data from fields in order to fill to model.
+  * @param  {[type]}  model
+  * @param  {[Boolean]}  reverse
+  */
   setDataFromFieldToModel: function(model, reverse){
-    //Excute this function before 'Save' and 'Next' processing
-    //Get data from fields in order to fill to model.
     let cls = CustomBSDatePicker.option.cls;
     let element_arr = $('.' + cls);
     $.each(element_arr, function(ind, val){
@@ -138,7 +192,11 @@ var CustomBSDatePicker = {
       }
     });
   },
-  getInvalidFieldName: function(){
+  /**
+   * Get date fields name which invalid.
+   * @return {array} Returns name list.
+  */
+  getInvalidFieldNameList: function(){
     let cls = CustomBSDatePicker.option.cls;
     let element_arr = $('.' + cls);
     let result = [];
@@ -1869,7 +1927,7 @@ function handleSharePermission(value) {
       $scope.validateInputData = function (activityId, steps, isAutoSetIndexAction) {
         let schemaForm = $scope.depositionForm.$error.schemaForm;
         //Get error of custom bs-datepicker fields.
-        let listCusItemErrors = CustomBSDatePicker.getInvalidFieldName();
+        let listCusItemErrors = CustomBSDatePicker.getInvalidFieldNameList();
         if (!this.validateRequiredItem()) {
           // Check required item
           return false;
