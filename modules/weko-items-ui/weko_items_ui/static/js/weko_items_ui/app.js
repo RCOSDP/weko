@@ -110,11 +110,11 @@ var CustomBSDatePicker = {
   * @return {Boolean}   Returns true if valid
   */
   isValidDate: function (d, m, y) {
-    month = parseInt(m, 10) - 1;
-    check_min_month = m >= 0;
-    check_max_month = m < 12;
-    check_min_day = d > 0
-    check_max_day = d <= CustomBSDatePicker.daysInMonth(month, y);
+    let month = parseInt(m, 10) - 1;
+    let check_min_month = m >= 0;
+    let check_max_month = m < 12;
+    let check_min_day = d > 0;
+    let check_max_day = d <= CustomBSDatePicker.daysInMonth(month, y);
     return check_min_month && check_max_month && check_min_day && check_max_day;
   },
   /**
