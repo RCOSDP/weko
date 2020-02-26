@@ -114,7 +114,7 @@ var CustomBSDatePicker = {
     check_min_month = m >= 0;
     check_max_month = m < 12;
     check_min_day = d > 0
-    check_max_day = d <= CustomBSDatePicker.daysInMonth(m, y);
+    check_max_day = d <= CustomBSDatePicker.daysInMonth(month, y);
     return check_min_month && check_max_month && check_min_day && check_max_day;
   },
   /**
@@ -170,6 +170,11 @@ var CustomBSDatePicker = {
       let ng_model = $(val).attr('ng-model').replace(/']/g, '');
       // let ng_model_arr = ng_model.split("['");
       let arr = ng_model.split("['");
+      //Init attribute of model object if them undefine.
+      if(arr.length >= 3 && !model[arr[1]]) model[arr[1]] = {};
+      if(arr.length >= 4 && !model[arr[1]][arr[2]]) model[arr[1]][arr[2]] = {};
+      if(arr.length >= 5 && !model[arr[1]][arr[2]][arr[3]]) model[arr[1]][arr[2]][arr[3]] = {};
+      if(arr.length >= 6 && !model[arr[1]][arr[2]][arr[3]][arr[4]]) model[arr[1]][arr[2]][arr[3]][arr[4]] = {};
       if(reverse){
         //Fill data from model to fields
         if(arr.length === 2) $(val).val(model[arr[1]]);
@@ -178,11 +183,6 @@ var CustomBSDatePicker = {
         if(arr.length === 5) $(val).val(model[arr[1]][arr[2]][arr[3]][arr[4]]);
         if(arr.length === 6) $(val).val(model[arr[1]][arr[2]][arr[3]][arr[4]][arr[5]]);
       }else{
-        //Init attribute of model object if them undefine.
-        // if(arr.length >= 3 && !model[arr[1]]) model[arr[1]] = {};
-        // if(arr.length >= 4 && !model[arr[1]][arr[2]]) model[arr[1]][arr[2]] = {};
-        // if(arr.length >= 5 && !model[arr[1]][arr[2]][arr[3]]) model[arr[1]][arr[2]][arr[3]] = {};
-        // if(arr.length >= 6 && !model[arr[1]][arr[2]][arr[3]][arr[4]]) model[arr[1]][arr[2]][arr[3]][arr[4]] = {};
         //Fill data from fields to model
         if(arr.length === 2) model[arr[1]] = $(val).val();
         if(arr.length === 3) model[arr[1]][arr[2]] = $(val).val();
