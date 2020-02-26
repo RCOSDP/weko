@@ -665,6 +665,7 @@ const ComponentFieldEditor = function (props) {
     ['foreColor', 'backColor'],
     ["link"],
     ["image"],
+    ['table'],
     ["justifyLeft", "justifyCenter", "justifyRight", "justifyFull"],
     ["unorderedList", "orderedList"],
     ["horizontalRule"],
