@@ -175,20 +175,15 @@ var CustomBSDatePicker = {
       if(arr.length >= 4 && !model[arr[1]][arr[2]]) model[arr[1]][arr[2]] = {};
       if(arr.length >= 5 && !model[arr[1]][arr[2]][arr[3]]) model[arr[1]][arr[2]][arr[3]] = {};
       if(arr.length >= 6 && !model[arr[1]][arr[2]][arr[3]][arr[4]]) model[arr[1]][arr[2]][arr[3]][arr[4]] = {};
+      let str_code = '';
       if(reverse){
         //Fill data from model to fields
-        if(arr.length === 2) $(val).val(model[arr[1]]);
-        if(arr.length === 3) $(val).val(model[arr[1]][arr[2]]);
-        if(arr.length === 4) $(val).val(model[arr[1]][arr[2]][arr[3]]);
-        if(arr.length === 5) $(val).val(model[arr[1]][arr[2]][arr[3]][arr[4]]);
-        if(arr.length === 6) $(val).val(model[arr[1]][arr[2]][arr[3]][arr[4]][arr[5]]);
+        str_code = "$(val).val("+$(val).attr('ng-model')+")";
+        eval(str_code);
       }else{
         //Fill data from fields to model
-        if(arr.length === 2) model[arr[1]] = $(val).val();
-        if(arr.length === 3) model[arr[1]][arr[2]] = $(val).val();
-        if(arr.length === 4) model[arr[1]][arr[2]][arr[3]] = $(val).val();
-        if(arr.length === 5) model[arr[1]][arr[2]][arr[3]][arr[4]] = $(val).val();
-        if(arr.length === 6) model[arr[1]][arr[2]][arr[3]][arr[4]][arr[5]] = $(val).val();
+        str_code = $(val).attr('ng-model') + '=$(val).val()';
+        eval(str_code);
       }
     });
   },
