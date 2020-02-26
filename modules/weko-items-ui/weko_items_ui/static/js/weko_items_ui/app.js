@@ -22,7 +22,7 @@ require([
   Used way:
     templateUrl: /static/templates/weko_deposit/datepicker_multi_format.html
     customFormat: enter your pattern.
-      if it none, pattern are yyyyMMdd, yyyyMM, yyyy.
+      if it none, pattern are yyyy-MM-dd, yyyy-MM, yyyy.
 */
 var Pattern = {
   yyyy: '\\d{4}',
@@ -136,85 +136,6 @@ var CustomBSDatePicker = {
         if(arr.length === 5) model[arr[1]][arr[2]][arr[3]][arr[4]] = $(val).val();
         if(arr.length === 6) model[arr[1]][arr[2]][arr[3]][arr[4]][arr[5]] = $(val).val();
       }
-
-      // if(arr.length === 2) {
-      //   if(reverse){
-      //     $(val).val(model[arr[1]]);
-      //   }else{
-      //     model[arr[1]] = $(val).val();
-      //   }
-      // }else if(arr.length === 3) {
-      //   if(reverse){
-      //     $(val).val(model[arr[1]][arr[2]]);
-      //   }else{
-      //     if(!model[arr[1]]){
-      //       model[arr[1]] = {};
-      //     }
-      //     model[arr[1]][arr[2]] = $(val).val();
-      //   }
-      // }else if(arr.length === 4) {
-      //   if(reverse){
-      //     $(val).val(model[arr[1]][arr[2]][arr[3]]);
-      //   }else{
-      //     if(!model[arr[1]]){
-      //       model[arr[1]] = {};
-      //     }
-      //     if(!model[arr[1]][arr[2]]){
-      //       model[arr[1]][arr[2]] = {};
-      //     }
-      //     model[arr[1]][arr[2]][arr[3]] = $(val).val();
-      //   }
-      // }else if(arr.length === 5) {
-      //   if(reverse){
-      //     $(val).val(model[arr[1]][arr[2]][arr[3]][arr[4]]);
-      //   }else{
-      //     if(!model[arr[1]]){
-      //       model[arr[1]] = {};
-      //     }
-      //     if(!model[arr[1]][arr[2]]){
-      //       model[arr[1]][arr[2]] = {};
-      //     }
-      //     if(!model[arr[1]][arr[2]][arr[3]]){
-      //       model[arr[1]][arr[2]][arr[3]] = {};
-      //     }
-      //     model[arr[1]][arr[2]][arr[3]][arr[4]] = $(val).val();
-      //   }
-      // }else if(arr.length === 6) {
-      //   if(reverse){
-      //     $(val).val(model[arr[1]][arr[2]][arr[3]][arr[4]][arr[5]]);
-      //   }else{
-      //     if(!model[arr[1]]){
-      //       model[arr[1]] = {};
-      //     }
-      //     if(!model[arr[1]][arr[2]]){
-      //       model[arr[1]][arr[2]] = {};
-      //     }
-      //     if(!model[arr[1]][arr[2]][arr[3]]){
-      //       model[arr[1]][arr[2]][arr[3]] = {};
-      //     }
-      //     if(!model[arr[1]][arr[2]][arr[3]]){
-      //       model[arr[1]][arr[2]][arr[3]] = {};
-      //     }
-      //     model[arr[1]][arr[2]][arr[3]][arr[4]][arr[5]] = $(val).val();
-      //   }
-      // }
-
-      // if(ng_model_arr.length === 2) {
-      //   if(reverse){//From model to field
-      //     $(val).val(model[ng_model_arr[1]]);
-      //   }else{//From field to model
-      //     model[ng_model_arr[1]] = $(val).val();
-      //   }
-      // }else if(ng_model_arr.length === 3) {
-      //   if(reverse){//From model to field
-      //     $(val).val(model[ng_model_arr[1]][ng_model_arr[2]]);
-      //   }else{//From field to model
-      //     if(!model[ng_model_arr[1]]){
-      //       model[ng_model_arr[1]] = {};
-      //     }
-      //     model[ng_model_arr[1]][ng_model_arr[2]] = $(val).val();
-      //   }
-      // }
     });
   },
   getInvalidFieldName: function(){
