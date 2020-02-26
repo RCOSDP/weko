@@ -661,7 +661,6 @@ const ComponentFieldEditor = function (props) {
     ["undo", "redo"], // Only supported in Blink browsers
     ["formatting"],
     ['fontfamily', 'fontsize'],
-    ['specialChars'],
     ["strong", "em", "del", 'underline', "superscript", "subscript"],
     ['foreColor', 'backColor'],
     ["link"],
