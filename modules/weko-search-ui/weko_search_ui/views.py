@@ -23,6 +23,7 @@
 import json
 import os
 import sys
+import time
 from xml.etree import ElementTree
 
 from blinker import Namespace
@@ -96,7 +97,8 @@ def search():
 
     # add at 1206 for search management
     sort_options, display_number = SearchSetting.get_results_setting()
-    disply_setting = dict(size=display_number)
+    ts = time.time()
+    disply_setting = dict(size=display_number,timestamp=ts)
 
     detail_condition = get_search_detail_keyword('')
 
@@ -158,7 +160,7 @@ def search():
                 if index_info:
                     index_display_format = index_info.display_format
                     if index_display_format == '2':
-                        disply_setting = dict(size=100)
+                        disply_setting = dict(size=100, timestamp=ts)
 
         if hasattr(current_i18n, 'language'):
             index_link_list = get_index_link_list(current_i18n.language)

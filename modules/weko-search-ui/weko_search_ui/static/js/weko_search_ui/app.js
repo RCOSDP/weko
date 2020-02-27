@@ -112,23 +112,22 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.collapse_flg = true;
   $rootScope.journal_title = $("#journal_title_i18n").val();
   $rootScope.journal_details = $("#journal_details_i18n").val();
-  $rootScope.typeIndexList = (function(){
+  $rootScope.typeIndexList = function() {
     var url = new URL(window.location.href );
     var q = url.searchParams.get("q");
-    let result = 'item'
+        let result = 'item';
     if (q === "0") {
         return 'root'
     }
     return result
-  })()
+  }
 
-
-  $rootScope.isCommunityRootIndex = (function(){
+  $rootScope.isCommunityRootIndex = function() {
     let url = new URL(window.location.href );
     let community = url.searchParams.get("community");
     let rootIndexTree = url.searchParams.get("root_index");
     return !!community && !!rootIndexTree;
-  })();
+  };
 
   $rootScope.display_comment = function(comment) {
 
@@ -155,7 +154,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $scope.itemManagementSave= function(){
     var data = $scope.vm.invenioSearchResults.hits.hits
     var custom_sort_list =[]
-    for(var x of data){
+    for (var x in data) {
       var sub = {"id":"", "custom_sort":""}
       sub.id= x.id;
       sub.custom_sort=x.metadata.custom_sort;
@@ -210,13 +209,14 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
   // Get child id list.
   let child_list = []
+  const currentTime = new Date().getTime();
   $scope.getChildList = function() {
     if (!$rootScope.index_id_q) {
       return;
     }
     $http({
       method: 'GET',
-      url: '/get_child_list/' + $rootScope.index_id_q,
+            url: '/get_child_list/' + $rootScope.index_id_q + '?time' + currentTime,
       headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       child_list = response.data;
@@ -313,7 +313,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       records_metadata = $scope.getExportItemsMetadata();
       $('#record_ids').val(JSON.stringify($rootScope.item_export_checkboxes));
       let export_metadata = {}
-      $rootScope.item_export_checkboxes.map((recid)=>{
+      $rootScope.item_export_checkboxes.map(function(recid) {
         $.each(records_metadata, function (index, value) {
           if (value.id == recid) {
             export_metadata[recid] = value;
@@ -330,11 +330,11 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     let cur_url = new URL(window.location.href);
     let q = cur_url.searchParams.get("q");
     let search_type = cur_url.searchParams.get("search_type");
-
+    const currentTime = new Date().getTime();
     let request_url = '';
 
     if (search_type == "2") {
-      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
+            request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
     } else {
       if (search_type === null) {
         search_type = "0";
@@ -342,7 +342,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       if (q === null) {
         q = "";
       }
-      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
+            request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
     }
 
     let search_results = []
@@ -360,7 +360,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
         console.log(error);
       }
     });
-    
+
     return search_results;
   }
 

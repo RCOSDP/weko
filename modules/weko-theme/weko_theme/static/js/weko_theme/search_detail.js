@@ -68,18 +68,18 @@
                     key_value: {}
                 }
                 var flg = 0
-                for (var sub_detail of $scope.detail_search_key) {
+                    for (var sub_detail in $scope.detail_search_key) {
                     flg = 0
-                    for (var sub_condition of $scope.condition_data) {
-                        if (sub_detail.id == sub_condition.selected_key) {
+                        for (var sub_condition in $scope.condition_data) {
+                            if ($scope.detail_search_key[sub_detail].id == $scope.condition_data[sub_condition].selected_key) {
                             flg = 1
                             break;
                         }
                     }
                     if (flg == 0) {
-                        obj_of_condition.selected_key = sub_detail.id;
+                        obj_of_condition.selected_key = $scope.detail_search_key[sub_detail].id;
                         obj_of_condition.key_options = $scope.detail_search_key;
-                        obj_of_condition.key_value = angular.copy(db_data[sub_detail.inx]);
+                        obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_detail].inx]);
                         $scope.condition_data.push(obj_of_condition)
                         break;
                     }
@@ -139,7 +139,8 @@
                     }
                 });
                 sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
-                var url = '/search?page=1' + query_str
+                var url = '/search?page=1' + query_str;
+                const currentTime = new Date().getTime();
                 if (angular.element('#item_management_bulk_update').length != 0) {
                   url = '/admin/items' + url + '&item_management=update';
                 } else if(angular.element('#item_management_bulk_delete').length != 0) {
@@ -154,20 +155,21 @@
                 sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
             }
             // set search options
+
             $scope.update_disabled_flg = function () {
                 var update_flg = 0;
-                for (var sub_default_key of $scope.detail_search_key) {
+                    for (var sub_default_key in $scope.detail_search_key) {
                     update_flg = 0;
-                    for (var sub_condition of $scope.condition_data) {
-                        if (sub_default_key.id == sub_condition.selected_key) {
+                        for (var sub_condition in $scope.condition_data) {
+                            if ($scope.detail_search_key[sub_default_key].id == $scope.condition_data[sub_condition].selected_key) {
                             update_flg = 1;
                             break;
                         }
                     }
                     if (update_flg == 1) {
-                        sub_default_key.disabled_flg = true;
+                            $scope.detail_search_key[sub_default_key].disabled_flg = true;
                     } else {
-                        sub_default_key.disabled_flg = false;
+                            $scope.detail_search_key[sub_default_key].disabled_flg = false;
                     }
                 }
 
@@ -175,8 +177,8 @@
             //restart
             $scope.reset_data = function () {
                 $scope.condition_data = [];
-                for (var sub_default_key of $scope.detail_search_key) {
-                    sub_default_key.disabled_flg = false;
+                for (var sub_default_key in $scope.detail_search_key) {
+                    $scope.detail_search_key[sub_default_key].disabled_flg = false;
                 }
                 angular.forEach($scope.default_search_key, function (item, index, array) {
                     var obj_of_condition = {
@@ -199,11 +201,11 @@
                     key_options: [],
                     key_value: {}
                 }
-                for (var sub_default_key of $scope.detail_search_key) {
-                    if (sub_default_key.id == search_key) {
+                for (var sub_default_key in $scope.detail_search_key) {
+                    if ($scope.detail_search_key[sub_default_key].id == search_key) {
                         obj_of_condition.selected_key = search_key;
                         obj_of_condition.key_options = $scope.detail_search_key;
-                        obj_of_condition.key_value = angular.copy(db_data[sub_default_key.inx]);
+                        obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_default_key].inx]);
                         break;
                     }
                 }
@@ -232,4 +234,3 @@
             document.getElementById('search_detail'), ['searchDetailModule']);
     });
 })(angular);
-

@@ -204,8 +204,7 @@ class TableUserEmailComponent extends React.Component {
     $("#sltBoxListEmail > a").each(function () {
       listUser.push(this.value);
     });
-    let isExist = listUser.includes(pk_id);
-    if (!isExist) {
+    if (listUser.indexOf(pk_id) == -1) {
       event.target.disabled = true;
       let data = {
         "author_id": pk_id,
@@ -251,17 +250,19 @@ class SearchComponent extends React.Component {
       searchKey: this.state.searchKey,
       pageNumber: 1,
     }
-    fetch("/api/admin/search_email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    })
-      .then(res => res.json())
-      .then((result) => {
+    $.ajax({
+      context: this,
+      url: "/api/admin/search_email",
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(request),
+      success: function (result) {
         this.props.getListUser(result.hits.hits, result.hits.total);
-      });
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
   }
   handleChange(event) {
     this.setState({ searchKey: event.target.value });
@@ -350,17 +351,19 @@ class Pagination extends React.Component {
       searchKey: this.props.searchKey,
       pageNumber: pageNumber,
     }
-    fetch("/api/admin/search_email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    })
-      .then(res => res.json())
-      .then((result) => {
+    $.ajax({
+      context: this,
+      url: "/api/admin/search_email",
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(request),
+      success: function (result) {
         this.props.getListUser(result.hits.hits, result.hits.total);
-      });
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
   }
   generatePagination() {
     let listPage = [];
