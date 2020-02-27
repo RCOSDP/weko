@@ -88,9 +88,9 @@ var CustomBSDatePicker = {
   },
   /**
   * Get the number of days in any particular month
-  * @param  {integer} m The month (valid: 0-11)
-  * @param  {integer} y The year
-  * @return {integer}   The number of days in the month
+  * @param  {number} m The month (valid: 0-11)
+  * @param  {number} y The year
+  * @return {number}   The number of days in the month
   */
   daysInMonth: function (m, y) {
     switch (m) {
@@ -104,9 +104,9 @@ var CustomBSDatePicker = {
   },
   /**
   * Check if a date is valid
-  * @param  {[type]}  d The day
-  * @param  {[type]}  m The month
-  * @param  {[type]}  y The year
+  * @param  {number}  d The day
+  * @param  {number}  m The month
+  * @param  {number}  y The year
   * @return {Boolean}   Returns true if valid
   */
   isValidDate: function (d, m, y) {
@@ -168,7 +168,6 @@ var CustomBSDatePicker = {
     let element_arr = $('.' + cls);
     $.each(element_arr, function (ind, val) {
       let ng_model = $(val).attr('ng-model').replace(/']/g, '');
-      // let ng_model_arr = ng_model.split("['");
       let arr = ng_model.split("['");
       //Init attribute of model object if them undefine.
       let str_code = '';
@@ -204,7 +203,7 @@ var CustomBSDatePicker = {
       let $parent = $element.parent().parent();
       if ($parent.hasClass('has-error')) {
         let name = $element.attr('name');
-        let label = $(`label[for="${name}"]`).text().trim();
+        let label = $("label[for=" + name + "]").text().trim();
         result.push(label);
       }
     });
