@@ -643,6 +643,7 @@ const TrumbowygWrapper = props => {
         buttons={props.buttons}
         btnsDef={props.btnsDef}
         plugins={props.plugins}
+        semantic={props.semantic}
       />
     </React.Fragment>
   );
@@ -672,6 +673,10 @@ const ComponentFieldEditor = function (props) {
     ["removeformat"],
     ["fullscreen"]
   ];
+
+  const semantic = {
+    'div': 'div'
+  }
 
   const plugins = {
     resizimg: {
@@ -706,6 +711,7 @@ const ComponentFieldEditor = function (props) {
           buttons={buttons}
           btnsDef={btnsDef}
           plugins={plugins}
+          semantic={semantic}
         />
       </div>
     </div>
