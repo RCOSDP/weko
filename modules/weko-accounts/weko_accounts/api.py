@@ -62,7 +62,7 @@ class ShibUser(object):
                 self.shib_attr['shib_eppn']) > 0:
             shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
-        if shib_user is None:
+        if not shib_user:
             """First login for Weko"""
             return None
             # check email info on account_user
@@ -73,8 +73,7 @@ class ShibUser(object):
             #     return 'chk'
             # new shibboleth user login
             # shib_user = self.new_relation_info()
-
-        if shib_user is not None:
+        else:
             self.shib_user = shib_user
             if self.user is None:
                 self.user = shib_user.weko_user
@@ -154,6 +153,46 @@ class ShibUser(object):
         session['user_id'] = self.user.id
         session['user_src'] = 'Shib'
         user_logged_in.send(current_app._get_current_object(), user=self.user)
+
+    def _set_weko_user_role(self, role_name):
+        """
+        Assign role for weko3 user.
+
+        :param shib_role_auth:
+        :return:
+
+        """
+        ret = True
+        try:
+            user_role = Role.query.filter_by(name=role_name).first()
+            if user_role in self.user.roles:
+                current_app.logger.debug('{} had been assigned to this User!', role_name)
+                return ret
+            with db.session.begin_nested():
+                ret = _datastore.add_role_to_user(self.user, user_role)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.debug("ERROR! when added roles to user: {}", ex)
+            db.session.rollback()
+            ret = False
+        return ret
+
+    def assign_user_role(self, shib_role_auth):
+        """
+        Check and set relation role for Weko3 user base on wekoSocietyAffiliation.
+
+        :param shib_role_auth:
+        :return:
+
+        """
+        if True: # TODO: check GakuNin User
+            return self._set_weko_user_role(current_app.config['WEKO_GENERAL_ROLE'])
+
+        shib_role_config = current_app.config['SHIB_ACCOUNTS_ROLE_RELATION']
+        if shib_role_auth in shib_role_config.keys():
+            return self._set_weko_user_role(shib_role_config[shib_role_auth])
+        else:
+            return False
 
     @classmethod
     def shib_user_logout(cls):

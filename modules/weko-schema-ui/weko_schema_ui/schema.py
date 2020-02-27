@@ -818,10 +818,6 @@ class SchemaTree:
         # Create sub element
         for lst in node_tree:
             for k, v in lst.items():
-                if k == 'custom:system_file':
-                    k = 'jpcoar:file'
-                elif k == 'custom:system_identifier':
-                    k = 'jpcoar:identifier'
                 k = get_prefix(k)
                 set_children(k, v, root)
         return root

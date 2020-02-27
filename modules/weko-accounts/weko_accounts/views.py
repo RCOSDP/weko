@@ -39,7 +39,7 @@ from werkzeug.local import LocalProxy
 
 from . import config
 from .api import ShibUser
-from .utils import generate_random_str
+from .utils import generate_random_str, parse_attributes
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -216,12 +216,13 @@ def shib_sp_login():
 
 @blueprint.route('/shib/sp/login', methods=['GET'])
 def shib_stub_login():
-    """Shibboleth sp test page.
+    """Shibboleth SP login redirect.
 
     :return:
     """
     if not current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
         return abort(403)
+
     session['next'] = request.args.get('next', '/')
     return redirect(config.SHIB_IDP_LOGIN_URL)
 
@@ -234,18 +235,3 @@ def shib_logout():
     """
     ShibUser.shib_user_logout()
     return 'logout success'
-
-
-def parse_attributes():
-    """Parse arguments from environment variables."""
-    attrs = {}
-    error = False
-    for header, attr in current_app.config['SSO_ATTRIBUTE_MAP'].items():
-        required, name = attr
-        value = request.form.get(header, '') if request.method == 'POST' \
-            else request.args.get(header, '')
-        current_app.logger.debug('Shib    {0}: {1}'.format(name, value))
-        attrs[name] = value
-        if (not value or value == '') and required:
-            error = True
-    return attrs, error

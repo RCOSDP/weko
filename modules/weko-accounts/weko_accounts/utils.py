@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Utils for weko-accounts."""
-from flask import request
+from flask import request, current_app
 
 
 def get_remote_addr():
@@ -47,3 +47,18 @@ def generate_random_str(length=128):
         rng.choice(string.ascii_letters + string.digits)
         for dummy in range(0, length)
     )
+
+
+def parse_attributes():
+    """Parse arguments from environment variables."""
+    attrs = {}
+    error = False
+    for header, attr in current_app.config['SSO_ATTRIBUTE_MAP'].items():
+        required, name = attr
+        value = request.form.get(header, '') if request.method == 'POST' \
+            else request.args.get(header, '')
+        current_app.logger.debug('Shib    {0}: {1}'.format(name, value))
+        attrs[name] = value
+        if not value and required:
+            error = True
+    return attrs, error
