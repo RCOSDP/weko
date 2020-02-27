@@ -1377,7 +1377,7 @@ function toObject(arr) {
                 const CREATOR_NAMES = "creatorNames";
 
                 data.result.forEach(function(item) {
-                    if (THREE_FLOOR_ITEM.includes(item.key)) {
+                    if (THREE_FLOOR_ITEM.indexOf(item.key) > -1) {
                         let keys = Object.keys(item);
                         keys.forEach(function(itemKey) {
                             if (itemKey != 'key') {
