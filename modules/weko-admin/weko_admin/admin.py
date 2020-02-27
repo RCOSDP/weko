@@ -940,7 +940,7 @@ class IdentifierSettingView(ModelView):
             for i in id_data:
                 id_list.append(i.repository)
             query_data = Community.query.filter(
-                    Community.id.notin_(id_list)).all()
+                Community.id.notin_(id_list)).all()
             if 'Root Index' not in id_list:
                 query_data.insert(0, Community(id='Root Index'))
         except Exception as ex:
