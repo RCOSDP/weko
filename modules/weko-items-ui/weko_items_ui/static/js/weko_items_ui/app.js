@@ -171,11 +171,15 @@ var CustomBSDatePicker = {
       // let ng_model_arr = ng_model.split("['");
       let arr = ng_model.split("['");
       //Init attribute of model object if them undefine.
-      if(arr.length >= 3 && !model[arr[1]]) model[arr[1]] = {};
-      if(arr.length >= 4 && !model[arr[1]][arr[2]]) model[arr[1]][arr[2]] = {};
-      if(arr.length >= 5 && !model[arr[1]][arr[2]][arr[3]]) model[arr[1]][arr[2]][arr[3]] = {};
-      if(arr.length >= 6 && !model[arr[1]][arr[2]][arr[3]][arr[4]]) model[arr[1]][arr[2]][arr[3]][arr[4]] = {};
       let str_code = '';
+      $.each(arr, function(ind_01, val_02){
+        str_code += (ind_01 == 0) ? val_02 : "['"+val_02+"']";
+        let chk_str_code = '';
+        if(ind_01 != arr.length - 1){
+          chk_str_code = "if(!"+str_code+") "+str_code+"={};";
+        }
+        eval(chk_str_code);
+      });
       if(reverse){
         //Fill data from model to fields
         str_code = "$(val).val("+$(val).attr('ng-model')+")";
