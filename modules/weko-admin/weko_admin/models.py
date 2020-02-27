@@ -1633,7 +1633,7 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """ Identifier of the index """
 
-    repository = db.Column(db.String(100), nullable=False)
+    repository = db.Column(db.String(100), nullable=False, unique=True)
     """ Repository of the community """
 
     jalc_flag = db.Column(db.Boolean, default=True)
