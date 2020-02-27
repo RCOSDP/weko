@@ -773,3 +773,7 @@ msgstr ""
 # WEKO_RECORDS_UI_LICENSE_DICT
 msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
 msgstr ""
+
+# WEKO_RECORDS_UI_ITEM_DETAIL
+msgid "Date (ISO-8601)"
+msgstr ""
