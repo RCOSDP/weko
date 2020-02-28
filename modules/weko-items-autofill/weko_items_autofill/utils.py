@@ -888,18 +888,43 @@ def get_autofill_key_path(schema_form, parent_key, child_key):
             if item.get("key") == parent_key:
                 items_list = item.get("items")
                 for item_data in items_list:
-                    if child_key in item_data.get("key"):
-                        key_result = item_data.get("key")
-                    elif item_data.get("items"):
-                        item_data_child_list = item_data.get("items")
-                        for item_data_child in item_data_child_list:
-                            if child_key in item_data_child.get("key"):
-                                key_result = item_data_child.get("key")
+                    if key_result:
+                        break
+                    key_result = get_specific_key_path(
+                        child_key.split('.'), item_data)
         result['key'] = key_result
     except Exception as e:
         result['key'] = None
         result['error'] = str(e)
 
+    return result
+
+
+def get_specific_key_path(des_key, form):
+    """Get specific path of des_key on form.
+
+    @param des_key:
+    @param form:
+    @return:
+    """
+    result = False
+    if isinstance(form, dict):
+        list_keys = form.get("key", None)
+        if list_keys:
+            list_keys = list_keys.replace('[]', '').split('.')
+            # Always remove the first element because it is parents key
+            list_keys.pop(0)
+            if set(list_keys) == set(des_key):
+                result = True
+        if result:
+            return form.get("key")
+        elif not result and form.get("items"):
+            return get_specific_key_path(des_key, form.get("items"))
+    elif isinstance(form, list):
+        for child_form in form:
+            if result:
+                break
+            result = get_specific_key_path(des_key, child_form)
     return result
 
 
@@ -995,7 +1020,7 @@ def build_record(data, value, child_data, sub_child_data):
             if child_key_list and len(child_key_list) == 3:
                 sub_key = child_key_list[2].replace("[]", "")
                 sub_child_data[sub_key] = convert_html_escape(v)
-
+s
 
 def get_workflow_journal(activity_id):
     """Get workflow journal data.

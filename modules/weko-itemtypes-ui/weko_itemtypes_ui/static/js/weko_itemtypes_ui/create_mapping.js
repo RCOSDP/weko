@@ -667,7 +667,13 @@ $(document).ready(function () {
                 });
               }
             } else {
-              sub_sub_itemtype = sub_itemtypes.split('.').pop();
+              // sub_sub_itemtype = sub_itemtypes.split('.').pop();
+              if(sub_itemtypes.indexOf('.') != -1){
+                let index = sub_itemtypes.indexOf('.') + 1;
+                sub_sub_itemtype = sub_itemtypes.slice(index);
+              }else{
+                sub_sub_itemtype = sub_itemtypes;
+              }
             }
             if(sub_jpcoar_arr[idx].startsWith('@')) {
               if(typeof cur_obj[sub_jpcoar_arr[idx-1]] == 'object') {
