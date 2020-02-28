@@ -23,6 +23,7 @@
 from datetime import datetime
 
 from flask import current_app, session
+from flask_babelex import gettext as _
 from flask_login import current_user, user_logged_in, user_logged_out
 from flask_security.utils import hash_password, verify_password
 from invenio_accounts.models import Role, User
@@ -50,33 +51,48 @@ class ShibUser(object):
         self.shib_user = None
         """The :class:`.models.ShibbolethUser` instance."""
 
+    def _set_weko_user_role(self, role_name):
+        """
+        Assign role for weko3 user.
+
+        :param shib_role_auth:
+        :return:
+
+        """
+        ret = True
+        try:
+            user_role = Role.query.filter_by(name=role_name).first()
+            if user_role in self.user.roles:
+                current_app.logger.debug('{} had been assigned to this User!',
+                                         role_name)
+                return ret
+            with db.session.begin_nested():
+                ret = _datastore.add_role_to_user(self.user, user_role)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.debug("An error occurred when trying to add "
+                                     "Role: {} to this User!", ex)
+            db.session.rollback()
+            ret = False
+        return ret
+
     def get_relation_info(self):
         """
-        Get weko user info by shibboleth user info.
+        Get weko user info by Shibboleth user info.
 
         :return: ShibbolethUser if exists relation else None
 
         """
         shib_user = None
-        if self.shib_attr['shib_eppn'] is not None and len(
-                self.shib_attr['shib_eppn']) > 0:
+        if self.shib_attr['shib_eppn']:
             shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
-        if not shib_user:
-            """First login for Weko"""
-            return None
-            # check email info on account_user
-            # weko_user = User.query.filter_by(
-            #     email=self.shib_attr['shib_mail']).one_or_none()
-            # if weko_user is not None:
-            #     # need check weko user info for the same email address
-            #     return 'chk'
-            # new shibboleth user login
-            # shib_user = self.new_relation_info()
-        else:
+
+        if shib_user:
             self.shib_user = shib_user
-            if self.user is None:
+            if not self.user:
                 self.user = shib_user.weko_user
+
         return shib_user
 
     def check_weko_user(self, account, pwd):
@@ -154,45 +170,33 @@ class ShibUser(object):
         session['user_src'] = 'Shib'
         user_logged_in.send(current_app._get_current_object(), user=self.user)
 
-    def _set_weko_user_role(self, role_name):
+    def assign_user_role(self):
         """
-        Assign role for weko3 user.
+        Check and set relation role for Weko3 user by wekoSocietyAffiliation.
 
-        :param shib_role_auth:
+        :param shib_role_auth: Shibboleth role authority name
         :return:
 
         """
-        ret = True
-        try:
-            user_role = Role.query.filter_by(name=role_name).first()
-            if user_role in self.user.roles:
-                current_app.logger.debug('{} had been assigned to this User!', role_name)
-                return ret
-            with db.session.begin_nested():
-                ret = _datastore.add_role_to_user(self.user, user_role)
-            db.session.commit()
-        except Exception as ex:
-            current_app.logger.debug("ERROR! when added roles to user: {}", ex)
-            db.session.rollback()
-            ret = False
-        return ret
+        error = ''
 
-    def assign_user_role(self, shib_role_auth):
-        """
-        Check and set relation role for Weko3 user base on wekoSocietyAffiliation.
+        # TODO: check GakuNin User
+        if self.shib_user:
+            return self._set_weko_user_role(current_app.config[
+                                            'WEKO_GENERAL_ROLE'])
 
-        :param shib_role_auth:
-        :return:
-
-        """
-        if True: # TODO: check GakuNin User
-            return self._set_weko_user_role(current_app.config['WEKO_GENERAL_ROLE'])
+        shib_role_auth = self.shib_attr.get('wekoSocietyAffiliation', None)
+        if not shib_role_auth:
+            error = _('Failed to get attribute.')
+            return False, error
 
         shib_role_config = current_app.config['SHIB_ACCOUNTS_ROLE_RELATION']
         if shib_role_auth in shib_role_config.keys():
             return self._set_weko_user_role(shib_role_config[shib_role_auth])
         else:
-            return False
+            error = _('Invalid attribute.')
+
+        return False, error
 
     @classmethod
     def shib_user_logout(cls):

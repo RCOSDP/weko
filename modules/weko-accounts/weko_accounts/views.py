@@ -95,8 +95,17 @@ def shib_auto_login():
             shib_user.get_relation_info()
         else:
             shib_user.new_relation_info()
-        if shib_user.shib_user is not None:
+
+        user_role, error = shib_user.assign_user_role()
+        if not user_role:
+            ShibUser.shib_user_logout()
+            datastore.delete(cache_key)
+            current_app.logger.error(error)
+            return redirect(url_for_security('login'))
+
+        if shib_user.shib_user:
             shib_user.shib_user_login()
+
         datastore.delete(cache_key)
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:

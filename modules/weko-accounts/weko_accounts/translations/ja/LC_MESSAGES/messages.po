@@ -105,6 +105,14 @@ msgstr "シボレスユーザーを拒否する"
 msgid "Save"
 msgstr "保存"
 
+#: weko_accounts/api.py:190
+msgid "属性値の取得に失敗しました。"
+msgstr ""
+
+#: weko_accounts/api.py:197
+msgid "Invalid attribute."
+msgstr "属性値が不正です。"
+
 #~ msgid "%(module_name)s"
 #~ msgstr ""
 
