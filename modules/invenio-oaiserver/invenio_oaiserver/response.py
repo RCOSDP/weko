@@ -32,6 +32,7 @@ NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
 NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
 NS_OAIDC = 'http://www.openarchives.org/OAI/2.0/oai_dc/'
 NS_DC = "http://purl.org/dc/elements/1.1/"
+NS_JPCOAR = "https://irdb.nii.ac.jp/schema/jpcoar/1.0/"
 
 NSMAP = {
     None: NS_OAIPMH,
@@ -303,8 +304,20 @@ def getrecord(**kwargs):
     )
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
-    e_metadata.append(record_dumper(pid, {'_source': record}))
 
+    root = record_dumper(pid, {'_source': record})
+
+    if check_correct_jpcoar_mapping(pid.object_uuid):
+        if record.pid_doi:
+            root = create_identifier_index(root,
+                                           pid_type=record.pid_doi.pid_type,
+                                           pid_value=record.pid_doi.pid_value)
+        if record.pid_cnri:
+            root = create_identifier_index(root,
+                                           pid_type=record.pid_cnri.pid_type,
+                                           pid_value=record.pid_cnri.pid_value)
+
+    e_metadata.append(root)
     return e_tree
 
 
@@ -365,3 +378,52 @@ def get_error_code_msg(code='noRecordsMatch'):
         msg = 'There is no metadata format available.'
 
     return [(code, msg)]
+
+
+def create_identifier_index(root, **kwargs):
+    """Create indentifier index in xml tree."""
+    try:
+        e_jpcoar = Element(etree.QName(NS_OAIPMH, 'metadata'))
+        e_identifier = SubElement(e_jpcoar,
+                                  etree.QName(NS_JPCOAR, 'identifier'),
+                                  attrib={
+                                      'identifierType':
+                                      kwargs['pid_type'].upper()})
+        e_identifier.text = kwargs['pid_value']
+        e_identifier_registration = root.find(
+            'jpcoar:identifierRegistration',
+            namespaces=root.nsmap)
+        if e_identifier_registration is not None:
+            e_identifier_registration.addprevious(e_identifier)
+        else:
+            root.append(e_identifier)
+
+    except Exception as e:
+        current_app.logger.error(str(e))
+        pass
+    return root
+
+
+def check_correct_jpcoar_mapping(object_uuid):
+    """Validate and return if jpcoar mapping is correct.
+
+    Correct mapping mean item map have the 2 field same with config
+    """
+    from weko_records.api import ItemsMetadata, Mapping
+    from weko_records.serializers.utils import get_mapping
+
+    item_type = ItemsMetadata.get_by_object_id(object_uuid)
+    item_type_id = item_type.item_type_id
+    type_mapping = Mapping.get_record(item_type_id)
+    item_map = get_mapping(type_mapping, "jpcoar_mapping")
+
+    if current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
+        for key in current_app.config\
+                .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
+            if key in item_map and current_app.config\
+                .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING')[key]\
+                    not in item_map[key]:
+                return False
+    else:
+        return False
+    return True

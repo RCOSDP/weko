@@ -70,7 +70,10 @@ require([
     showJournalInfo();
     let urlVars = getUrlVars();
     if (urlVars !== {} && urlVars.hasOwnProperty("q") && urlVars.hasOwnProperty("search_type") && urlVars["search_type"] !== "2") {
-      document.getElementById("q").value = url.parse(urlVars["q"], true);
+      let q = url.parse(urlVars["q"], true);
+      if (q) {
+        document.getElementById("q").value = url.parse(urlVars["q"], true);
+      }
     } else {
       document.getElementById("q").value = "";
     }

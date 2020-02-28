@@ -489,7 +489,8 @@ class CreateResourceComponent extends React.Component {
               className="form-control"
               value={state.interval_by_date}
               onChange={e => {
-                const value = e.target.value;
+                let value = e.target.value;
+                value  = value >=1 ? value : 1
                 this.handleChangeState("interval_by_date", parseInt(value));
               }}
             ></input>
@@ -821,7 +822,8 @@ class EditResourceComponent extends React.Component {
               className="form-control"
               value={state.interval_by_date}
               onChange={e => {
-                const value = e.target.value;
+                let value = e.target.value;
+                value  = value >=1 ? value : 1
                 this.handleChangeState("interval_by_date", parseInt(value));
               }}
             ></input>

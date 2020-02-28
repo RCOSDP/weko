@@ -190,7 +190,7 @@ class ItemManagementBulkSearch(BaseView):
                 fields=current_app.config[
                     'WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
                 licences=current_app.config[
-                    'WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
+                    'WEKO_RECORDS_UI_LICENSE_DICT'],
                 has_items=has_items,
                 has_child_trees=has_child_trees,
                 detail_condition=detail_condition,

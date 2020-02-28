@@ -332,7 +332,7 @@ def check_import_items(file_content: str):
     """Validation importing zip file.
 
     :argument
-        file_content     -- {string} 'doi' (default) or 'cnri'.
+        file_content -- contetn file's name.
     :return
         return       -- PID object if exist.
 
@@ -383,7 +383,7 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     """Getting record data from TSV file.
 
     :argument
-        file_content     -- {string} 'doi' (default) or 'cnri'.
+        file_content -- Content files.
     :return
         return       -- PID object if exist.
 
@@ -400,7 +400,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     """Read importing TSV file.
 
     :argument
-        file_content     -- {string} 'doi' (default) or 'cnri'.
+        tsv_file_path -- tsv file's url.
     :return
         return       -- PID object if exist.
 
@@ -954,9 +954,9 @@ def import_items_to_system(item: dict):
     """Validation importing zip file.
 
     :argument
-        file_content     -- {string} 'doi' (default) or 'cnri'.
+        item        -- Items Metadata.
     :return
-        return       -- PID object if exist.
+        return      -- PID object if exist.
 
     """
     if not item:

@@ -38,10 +38,12 @@
         <div class="col-md-9">
           <!-- Licence -->
           <div class="field-content licence-select" hidden>
+          <p>{{value}}</p>
             <select class="form-control" name="licence_sel">
               <option value="unselected" selected></option>
               {%- for licence in licences if licences %}
-              <option value="{{licence.id}}">{{licence.name}}</option>
+                  <option value="{{licence.value}}">{{licence.name}}</option>
+              <!--<option value="{{licence.value}}">{{licence.name}}</option>-->
               {%- endfor %}
             </select>
             <!-- Licence Description -->

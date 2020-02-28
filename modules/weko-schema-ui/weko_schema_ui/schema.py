@@ -709,7 +709,8 @@ class SchemaTree:
                                 atrt = get_atr_list(altt)
                             for i in range(len(val[index])):
                                 chld = etree.Element(kname, None, ns)
-                                chld.text = val[index][i]
+                                # chld.text = val[index][i]
+                                chld.text = str(val[index][i])
                                 if len(atrt) > i:
                                     for k2, v2 in atrt[i].items():
                                         chld.set(get_prefix(k2), v2)
@@ -817,6 +818,10 @@ class SchemaTree:
         # Create sub element
         for lst in node_tree:
             for k, v in lst.items():
+                if k == 'custom:system_file':
+                    k = 'jpcoar:file'
+                elif k == 'custom:system_identifier':
+                    k = 'jpcoar:identifier'
                 k = get_prefix(k)
                 set_children(k, v, root)
         return root

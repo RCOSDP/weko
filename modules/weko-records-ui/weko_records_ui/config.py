@@ -21,7 +21,7 @@
 """Configuration for weko-records-ui."""
 import os
 
-from flask_babelex import gettext as _
+from flask_babelex import lazy_gettext as _
 from invenio_records_rest.utils import allow_all
 
 from .views import blueprint
@@ -46,20 +46,7 @@ WEKO_PERMISSION_ROLE_GENERAL = 'General'
 
 WEKO_RECORDS_UI_BULK_UPDATE_FIELDS = {
     'fields': [{'id': '1', 'name': 'Access Type'},
-               {'id': '2', 'name': 'Licence'}],
-
-    'licences': [{'id': 'license_free', 'name': _('write your own license')},
-                 {'id': 'license_0', 'name': _(
-                     'Creative Commons : Attribution')},
-                 {'id': 'license_1', 'name': _(
-                     'Creative Commons : Attribution - ShareAlike')},
-                 {'id': 'license_2', 'name': _(
-                     'Creative Commons : Attribution - NoDerivatives')},
-                 {'id': 'license_3', 'name': _(
-                     'Creative Commons : Attribution - NonCommercial')},
-                 {'id': 'license_4', 'name': _(
-                     'Creative Commons : Attribution - NonCommercial - ShareAlike')},
-                 {'id': 'license_5', 'name': _('Creative Commons : Attribution - NonCommercial - NoDerivatives')}]
+               {'id': '2', 'name': 'Licence'}]
 }
 
 ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
@@ -69,7 +56,8 @@ ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
 WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE = 'weko_records_ui/admin/pdfcoverpage.html'
 # pdfcoverpage templates
 
-INSTITUTION_NAME_SETTING_TEMPLATE = 'weko_records_ui/admin/institution_name_setting.html'
+INSTITUTION_NAME_SETTING_TEMPLATE = 'weko_records_ui/admin/' \
+                                    'institution_name_setting.html'
 # institution name setting page template
 
 ITEM_SEARCH_FLG = 'name'
@@ -257,7 +245,8 @@ OAISERVER_METADATA_FORMATS = {
             }
         ),
         'namespace': 'ddi:codebook:2_5',
-        'schema': 'https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd',
+        'schema': 'https://ddialliance.org/Specification'
+                  '/DDI-Codebook/2.5/XMLSchema/codebook.xsd',
     },
 }
 
@@ -289,3 +278,94 @@ WEKO_RECORDS_UI_DOWNLOAD_DAYS = 7
 
 WEKO_RECORDS_UI_USAGE_APPLICATION_WORKFLOW_DICT = []
 """Mapping from role + data type => Usage application workflow."""
+
+WEKO_RECORDS_UI_LICENSE_ICON_LOCATION = "static/images/default"
+"""Location of list license's icons."""
+
+WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION = "static/images/creative_commons"
+"""Location of list license's icons for PDF."""
+
+WEKO_RECORDS_UI_LICENSE_DICT = [
+    {
+        'name': _('write your own license'),
+        'value': 'license_free',
+    },
+    # version 4.0
+    {
+        'name': _('Creative Commons Attribution 4.0 International (CC BY 4.0)'),
+        'href_ja': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by/4.0/deed.en',
+        'value': 'license_0',
+        'src': '88x31(1).png',
+        'src_pdf': 'by.png',
+        'href_pdf': 'http://creativecommons.org/licenses/by/4.0/',
+        'txt': 'This work is licensed under a Creative Commons Attribution'
+               ' 4.0 International License.'
+    },
+    {
+        'name': _(
+            'Creative Commons Attribution-ShareAlike 4.0 '
+            'International (CC BY-SA 4.0)'),
+        'href_ja': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-sa/4.0/deed.en',
+        'value': 'license_1',
+        'src': '88x31(2).png',
+        'src_pdf': 'by-sa.png',
+        'href_pdf': 'http://creativecommons.org/licenses/by-sa/4.0/',
+        'txt': 'This work is licensed under a Creative Commons Attribution'
+               '-ShareAlike 4.0 International License.'
+    },
+    {
+        'name': _(
+            'Creative Commons Attribution-NoDerivatives 4.0 International '
+            '(CC BY-ND 4.0)'),
+        'href_ja': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-nd/4.0/deed.en',
+        'value': 'license_2',
+        'src': '88x31(3).png',
+        'src_pdf': 'by-nd.png',
+        'href_pdf': 'http://creativecommons.org/licenses/by-nd/4.0/',
+        'txt': 'This work is licensed under a Creative Commons Attribution'
+               '-NoDerivatives 4.0 International License.'
+    },
+    {
+        'name': _('Creative Commons Attribution-NonCommercial 4.0 International'
+                  ' (CC BY-NC 4.0)'),
+        'href_ja': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-nc/4.0/deed.en',
+        'value': 'license_3',
+        'src': '88x31(4).png',
+        'src_pdf': 'by-nc.png',
+        'href_pdf': 'http://creativecommons.org/licenses/by-nc/4.0/',
+        'txt': 'This work is licensed under a Creative Commons Attribution'
+               '-NonCommercial 4.0 International License.'
+    },
+    {
+        'name': _(
+            'Creative Commons Attribution-NonCommercial-ShareAlike 4.0'
+            ' International (CC BY-NC-SA 4.0)'),
+        'href_ja': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en',
+        'value': 'license_4',
+        'src': '88x31(5).png',
+        'src_pdf': 'by-nc-sa.png',
+        'href_pdf': 'http://creativecommons.org/licenses/by-nc-sa/4.0/',
+        'txt': 'This work is licensed under a Creative Commons Attribution'
+               '-NonCommercial-ShareAlike 4.0 International License.'
+    },
+    {
+        'name': _(
+            'Creative Commons Attribution-NonCommercial-NoDerivatives'
+            ' 4.0 International'
+            ' (CC BY-NC-ND 4.0)'),
+        'href_ja': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
+        'href_en': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.en',
+        'value': 'license_5',
+        'src': '88x31(6).png',
+        'src_pdf': 'by-nc-nd.png',
+        'href_pdf': 'http://creativecommons.org/licenses/by-nc-nd/4.0/',
+        'txt': 'This work is licensed under a Creative Commons Attribution'
+               '-NonCommercial-ShareAlike 4.0 International License.'
+    },
+]
+"""Define of list license will be used."""

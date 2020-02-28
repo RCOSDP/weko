@@ -695,3 +695,59 @@ msgstr ""
 
 msgid "Position(Others)"
 msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "write your own license"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-NC-ND 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+msgstr ""

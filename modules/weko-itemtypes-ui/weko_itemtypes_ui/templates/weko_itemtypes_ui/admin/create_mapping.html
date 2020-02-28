@@ -106,7 +106,7 @@
         <table class="table">
           <tbody>
 
-          {%- for key in ['updated_date', 'created_date', 'persistent_identifier_doi', 'persistent_identifier_h', 'ranking_page_url', 'belonging_index_info'] -%}
+          {%- for key in ['system_identifier_doi', 'system_identifier_hdl', 'system_identifier_uri', 'system_file'] -%}
           {%- if key in meta_system.keys() -%}
           <tr>
             <td class="col-sm-6">
