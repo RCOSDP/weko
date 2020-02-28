@@ -85,3 +85,6 @@ celeryd.pid
 # demo data
 weko-demodata/
 
+# nginx
+nginx/keys/
+scripts/backup

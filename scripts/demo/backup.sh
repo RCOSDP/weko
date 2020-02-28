@@ -81,8 +81,8 @@ docker-compose exec elasticsearch \
     -H 'Content-Type: application/json' \
     -d '{
         "indices": "*",
-        "ignore_unavailable": "true",
-        "include_global_state": false
+        "ignore_unavailable": true,
+        "include_global_state": true
     }'
 echo ""
 echo "elasticsearch-backup(4/4)"
@@ -90,6 +90,6 @@ docker cp $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/backups
 # elasticsearch-restore-end
 
 # contents-backup-begin
-#chown -R 1000:1000 ${BACKUPDIR}/contents
+chown -R 1000:1000 ${BACKUPDIR}/contents
 docker cp $(docker-compose ps -q web):/var/tmp ${BACKUPDIR}/contents/
 # contents-restore-end

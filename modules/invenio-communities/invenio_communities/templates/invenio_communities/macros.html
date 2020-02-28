@@ -30,8 +30,11 @@
         <div class="col-md-12">
           <h1>
             {%- if link %}
+	    <a href="{{url_for('invenio_communities.view', community_id=community.id, view='weko')}}" style="color: #ffffff;">{{community.title}}</a>
+	    <!--
             <a href="{{ url_for('invenio_communities.detail', community_id=community.id) }}" style="color: #ffffff;">{{community.title}}</a>
-            {% else %}
+	    -->
+	    {% else %}
             {{community.title}}
             {%- endif %}
             {%- if subtitle %}

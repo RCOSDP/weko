@@ -49,14 +49,14 @@ docker-compose exec postgresql psql -U invenio -d invenio -f weko.sql
 # postgresql-restore-end
 
 # elasticsearch-restore-begin
+echo "elasticsearch-restore(1/4)"
+docker-compose exec web invenio index destroy --force --yes-i-know
+docker-compose exec web invenio index delete '*' --force --yes-i-know
+echo ""
 docker-compose stop
 docker-compose start elasticsearch
 sleep 20
-echo "elasticsearch-restore(1/5)"
-docker-compose exec elasticsearch \
-    curl -XDELETE http://localhost:9200/*
-echo ""
-echo "elasticsearch-restore(2/5)"
+echo "elasticsearch-restore(2/4)"
 docker-compose exec elasticsearch \
     curl -XPUT \
     http://localhost:9200/_snapshot/weko_backup \
@@ -70,39 +70,19 @@ docker-compose exec elasticsearch \
         }'
 docker cp ${BACKUPDIR}/elasticsearch/backups $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/
 echo ""
-echo "elasticsearch-restore(3/5)"
+echo "elasticsearch-restore(3/4)"
 docker-compose exec elasticsearch chown -R elasticsearch:elasticsearch ./backups
 echo ""
-echo "elasticsearch-restore(4/5)"
+echo "elasticsearch-restore(4/4)"
 docker-compose exec elasticsearch \
     curl -XPOST \
-    http://localhost:9200/_snapshot/weko_backup/snapshot_all/_restore?wait_for_completion=true
-echo ""
-echo "elasticsearch-restore(5/5)"
-docker-compose exec elasticsearch \
-    curl -XPUT \
-    http://localhost:9200/_ingest/pipeline/item-file-pipeline \
-    -H 'Content-Type: application/json' \
-    -d '{
-            "description" : "Index contents of each file.",
-            "processors" : [
-                {
-                    "foreach": {
-                        "field": "content",
-                        "processor": {
-                            "attachment": {
-                                "indexed_chars" : -1,
-                                "target_field": "_ingest._value.attachment",
-                                "field": "_ingest._value.file",
-                                "properties": [
-                                    "content"
-                                ]
-                            }
-                        }
-                    }
-                }
-             ]
-         }'
+    http://localhost:9200/_snapshot/weko_backup/snapshot_all/_restore?wait_for_completion=true \
+    -H 'content-type: application/json' \
+    -d '{ 
+            "indices": "*", 
+            "ignore_unavailable": true,
+            "include_global_state": true
+        }'
 echo ""
 docker-compose start
 # elasticsearch-restore-end
@@ -110,6 +90,7 @@ docker-compose start
 # contents-restore-begin
 if [ -d "${BACKUPDIR}/contents" ]; then
     sudo chown -R 1000:1000 ${BACKUPDIR}/contents
-    docker cp ${BACKUPDIR}/contents/tmp $(docker-compose ps -q web):/var/
+    docker-compose exec web rm -fr /var/tmp/*
+    docker cp ${BACKUPDIR}/contents/tmp/. $(docker-compose ps -q web):/var/tmp
 fi
 # contents-restore-end
