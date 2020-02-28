@@ -13,7 +13,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, Response, abort
+from flask import Blueprint, Response, abort, redirect, url_for
 
 from .api import ChangeListHandler, ResourceListHandler
 from .utils import render_capability_xml, render_well_know_resourcesync
@@ -170,3 +170,11 @@ def source_description():
         render_well_know_resourcesync(),
         mimetype='application/xml'
     )
+
+
+@blueprint.route("/resync/<index_id>/records/<record_id>")
+def record_detail_in_index(index_id, record_id):
+    """Alternate route for record detail."""
+    return redirect(
+        url_for('invenio_records_ui.recid',
+                pid_value=record_id))

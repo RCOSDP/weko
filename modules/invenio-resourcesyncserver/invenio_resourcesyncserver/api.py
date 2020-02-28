@@ -31,6 +31,8 @@ from datetime import timedelta
 
 from flask import current_app, request, send_file
 from invenio_db import db
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.models import PersistentIdentifier
 from resync import Resource, ResourceList
 from resync.change_dump import ChangeDump
 from resync.change_dump_manifest import ChangeDumpManifest
@@ -38,6 +40,7 @@ from resync.change_list import ChangeList
 from resync.list_base_with_index import ListBaseWithIndex
 from resync.resource_dump import ResourceDump
 from resync.resource_dump_manifest import ResourceDumpManifest
+from resync.w3c_datetime import str_to_datetime
 from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import ItemTypes, WekoRecord
 from weko_index_tree.api import Indexes
@@ -73,7 +76,9 @@ class ResourceListHandler(object):
 
     def to_dict(self):
         """Generate Resource Object to Dict."""
-        repository_name = self.index.index_name_english if self.repository_id\
+        repository_name = self.index.index_name_english if str(
+            self.repository_id
+        ) != "0"\
             else 'Root Index'
 
         return dict(**{
@@ -328,7 +333,7 @@ class ResourceListHandler(object):
                     return True
         return False
 
-    def get_resource_list_xml(self):
+    def get_resource_list_xml(self, from_date=None, to_date=None):
         """
         Get content of resource list.
 
@@ -343,13 +348,24 @@ class ResourceListHandler(object):
 
         for item in r:
             if item:
+                resource_date = str_to_datetime(item.get('_source').get(
+                    '_updated'))
+                if from_date and str_to_datetime(from_date) > resource_date:
+                    continue
+                if to_date and str_to_datetime(to_date) < resource_date:
+                    continue
                 id_item = item.get('_source').get('control_number')
-                url = '{}records/{}'.format(request.url_root, str(id_item))
+                # url = '{}records/{}'.format(request.url_root, str(id_item))
+                url = '{}resync/{}/records/{}'.format(
+                    request.url_root,
+                    str(self.repository_id),
+                    str(id_item)
+                )
                 rl.add(Resource(url, lastmod=item.get('_source').get(
                     '_updated')))
         return rl.as_xml()
 
-    def get_resource_dump_xml(self):
+    def get_resource_dump_xml(self, from_date=None, to_date=None):
         """
         Get content of resource dump.
 
@@ -357,11 +373,24 @@ class ResourceListHandler(object):
         """
         if not self._validation():
             return None
+
+        from .utils import parse_date
+        if from_date:
+            from_date = parse_date(from_date)
+        if to_date:
+            to_date = parse_date(to_date)
+
         r = get_items_by_index_tree(self.repository_id)
         rd = ResourceDump()
         rd.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         for item in r:
             if item:
+                resource_date = parse_date(item.get('_source').get(
+                    '_updated'))
+                if from_date and from_date > resource_date:
+                    continue
+                if to_date and to_date < resource_date:
+                    continue
                 id_item = item.get('_source').get('control_number')
                 url = '{}resync/{}/{}/file_content.zip'.format(
                     request.url_root,
@@ -419,7 +448,6 @@ class ResourceListHandler(object):
                 self.repository_id
             )
             record = WekoRecord.get_record_by_pid(record_id)
-            current_app.logger.debug('*' * 60)
             if record:
                 for file in record.files:
                     current_app.logger.debug(file.info())
@@ -654,7 +682,8 @@ class ChangeListHandler(object):
                     'data': str(ex)
                 }
 
-    def get_change_list_content_xml(self, from_date):
+    def get_change_list_content_xml(self, from_date,
+                                    from_date_args=None, to_date_args=None):
         """
         Get change list xml.
 
@@ -662,6 +691,13 @@ class ChangeListHandler(object):
         """
         if not self._validation():
             return None
+
+        from .utils import parse_date
+        if from_date_args:
+            from_date_args = parse_date(from_date_args)
+        if to_date_args:
+            to_date_args = parse_date(to_date_args)
+
         change_list = ChangeList()
         change_list.up = INVENIO_CAPABILITY_URL.format(request.url_root)
         change_list.index = '{}resync/{}/changelist.xml'.format(
@@ -673,19 +709,36 @@ class ChangeListHandler(object):
 
         for data in record_changes:
             try:
-                if self._next_change(data, record_changes) and data.get(
+                if from_date_args and from_date_args > parse_date(
+                        data.get("updated")):
+                    continue
+                if to_date_args and to_date_args < parse_date(
+                        data.get("updated")):
+                    continue
+                pid_object = PersistentIdentifier.get(
+                    'recid',
+                    data.get('record_id')
+                )
+                latest_pid = PIDVersioning(child=pid_object).last_child
+                is_latest = str(latest_pid.pid_value) == "{}.{}".format(
+                    data.get('record_id'),
+                    data.get('record_version')
+                )
+                if not is_latest and data.get(
                     'status'
                 ) != 'deleted':
-                    loc = '{}records/{}'.format(
+                    loc = '{}resync/{}/records/{}'.format(
                         request.url_root,
+                        self.repository_id,
                         '{}.{}'.format(
                             data.get('record_id'),
                             data.get('record_version')
                         )
                     )
                 else:
-                    loc = '{}records/{}'.format(
+                    loc = '{}resync/{}/records/{}'.format(
                         request.url_root,
+                        self.repository_id,
                         data.get('record_id')
                     )
                 rc = Resource(
@@ -871,7 +924,8 @@ class ChangeListHandler(object):
         if self.change_dump_manifest:
             prev_id, prev_ver_id = record_id.split(".")
             current_record = WekoRecord.get_record_by_pid(record_id)
-            prev_record_pid = WekoRecord.get_pid(
+            from .utils import get_pid
+            prev_record_pid = get_pid(
                 '{}.{}'.format(prev_id, str(int(prev_ver_id) - 1))
             )
             if prev_record_pid:
@@ -954,7 +1008,9 @@ class ChangeListHandler(object):
 
     def to_dict(self):
         """Convert obj to dict."""
-        repository_name = self.index.index_name_english if self.repository_id \
+        repository_name = self.index.index_name_english if str(
+            self.repository_id
+        ) != "0" \
             else "Root Index",
         return dict(**{
             'id': self.id,
@@ -1064,14 +1120,15 @@ class ChangeListHandler(object):
         :param record_id: Identifier of record
         :return: True if record has register index_id
         """
-        from .utils import get_real_path
+        from .utils import get_real_path, get_pid
         if self.repository_id == current_app.config.get(
             "WEKO_ROOT_INDEX",
             WEKO_ROOT_INDEX
         ):
             return True
         if self.status:
-            record_pid = WekoRecord.get_pid(record_id)
+
+            record_pid = get_pid(record_id)
             if record_pid:
                 record = WekoRecord.get_record(record_pid.object_uuid)
                 if record and record.get("path"):
@@ -1197,7 +1254,7 @@ class ChangeListHandler(object):
         try:
             ret = datetime.datetime.strptime(date_from, r"%Y%m%d")
 
-            if self.publish_date < ret < datetime.datetime.utcnow():
+            if self.publish_date <= ret < datetime.datetime.utcnow():
                 return ret
         except ValueError:
             current_app.logger.debug("Incorrect datetime format, should be "

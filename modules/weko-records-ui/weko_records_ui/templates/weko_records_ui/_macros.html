@@ -56,6 +56,7 @@
       {%- set workflow_detail = workflow_id | get_workflow_detail() -%}
       {%- set data_item_type_id = workflow_detail.itemtype_id -%}
       {%- set data_flow_id = workflow_detail.flow_id -%}
+      {%- set itemtitle = record.item_title -%}
       <div class="hide"
            id="post_uri">{{ url_for('weko_workflow.init_activity') }}</div>
       <div class="hide" id="item_type_{{ workflow_id }}"
@@ -66,40 +67,40 @@
            id="file_name">{{ file.filename }}</div>
       <div id="recid" class="hide">{{ record.recid }}</div>
       {%- if is_file_name_url -%}
-        {%- set itemtitle = record.item_title -%}
         <a id="btn-begin-{{ workflow_id }}"
            class="btn-start-workflow forcewrap"
                 {%- if community -%}
            data-community="{{ community.id }}"
                 {%- endif -%}
            data-workflow-id="{{ workflow_id }}"
-           data-itemtitle="{{ itemtitle|urlencode }}"
            href="{{ href_url }}">
           {{ file.filename }} ({{ file.size|filesizeformat }})</a>
       {%- else -%}
         <a class="action-anchor" href="{{ href_url }}">
           <button id="btn-begin-{{ workflow_id }}"
-                  {%- if community -%}
-                  data-community="{{ community.id }}"
-                  {%- endif -%}
-                  data-workflow-id="{{ workflow_id }}"
-                  class="btn-start-workflow img-rounded action-button button-sm">
-            <i class="action-icon fa fa-download"></i>
-            {{ _('Download') }}
+            {%- if community -%}
+            data-community="{{ community.id }}"
+            {%- endif -%}
+            data-workflow-id="{{ workflow_id }}"
+            data-itemtitle="{{ itemtitle|urlencode }}"
+            class="btn-start-workflow img-rounded action-button button-sm">
+              <i class="action-icon fa fa-download"></i>
+              {{ _('Download') }}
           </button>
         </a>
       {%- endif -%}
     {%- endif -%}
   {%- elif permission.status == -1 -%}
     {%- set href_url = url_for('weko_workflow.display_activity', activity_id=permission.usage_application_activity_id) -%}
+    {%- set itemtitle = record.item_title -%}
+    {%- set href_url_item_title = href_url + "?itemtitle=" + itemtitle|urlencode -%}
     {%- if is_file_name_url -%}
-      {%- set itemtitle = record.item_title -%}
       <a class="forcewrap"
-         href="{{ href_url }}?itemtitle={{ itemtitle|urlencode }}">{{ file.filename }}
+         href="{{ href_url_item_title }}">{{ file.filename }}
         ({{ file.size|filesizeformat }})</a>
       <br>
     {%- else -%}
-      <a class="action-anchor" href="{{ href_url }}">
+      <a class="action-anchor" href="{{ href_url_item_title }}">
         <button class="img-rounded action-button button-sm">
           <i class="action-icon fa fa-download"></i>
           {{ _('Download') }}
