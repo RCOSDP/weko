@@ -134,35 +134,26 @@ def get_title_pubdate_path(item_type_id):
         'pubDate': ''
     }
     item_type_mapping = Mapping.get_record(item_type_id)
-    title = list()
-    pub_date = list()
+    title = dict()
     for k, v in item_type_mapping.items():
         jpcoar = v.get("jpcoar_mapping")
         if isinstance(jpcoar, dict):
             if 'title' in jpcoar.keys():
                 try:
                     if str(k).index('item') is not None:
-                        title.append(k)
+                        title['title_parent_key'] = k
                         title_value = jpcoar['title']
                         if '@value' in title_value.keys():
-                            title.append(title_value['@value'])
+                            title['title_value_lst_key'] = title_value[
+                                '@value'].split('.')
                         if '@attributes' in title_value.keys():
                             title_lang = title_value['@attributes']
                             if 'xml:lang' in title_lang.keys():
-                                title.append(title_lang['xml:lang'])
-                except Exception:
-                    pass
-            elif 'date' in jpcoar.keys():
-                try:
-                    if str(k).index('item') is not None:
-                        pub_date.append(k)
-                        title_value = jpcoar['date']
-                        if '@value' in title_value.keys():
-                            pub_date.append(title_value['@value'])
+                                title['title_lang_lst_key'] = title_lang[
+                                    'xml:lang'].split('.')
                 except Exception:
                     pass
     result['title'] = title
-    result['pubDate'] = pub_date
     return result
 
 
@@ -1020,7 +1011,7 @@ def build_record(data, value, child_data, sub_child_data):
             if child_key_list and len(child_key_list) == 3:
                 sub_key = child_key_list[2].replace("[]", "")
                 sub_child_data[sub_key] = convert_html_escape(v)
-s
+
 
 def get_workflow_journal(activity_id):
     """Get workflow journal data.

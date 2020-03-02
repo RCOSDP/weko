@@ -1645,31 +1645,42 @@ function handleSharePermission(value) {
           success: (data, status) => {
             let title = "";
             let lang = "en";
-            let titleID = data.title;
-            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])) {
-              let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
-              if (Array.isArray(titleField)) {
-                if (titleField[0].hasOwnProperty(titleID[1])) {
-                  titleField = titleField[0];
-                }
+            let titleData = data.title;
+            if (titleData['title_parent_key'] && $rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleData['title_parent_key'])) {
+              tempRecord = $rootScope.recordsVM.invenioRecordsModel[titleData['title_parent_key']];
+              // Get title
+              if (titleData['title_value_lst_key']) {
+                titleData['title_value_lst_key'].forEach(function (val) {
+                  if (Array.isArray(tempRecord) && tempRecord[0].hasOwnProperty(val)) {
+                    tempRecord = tempRecord[0][val];
+                  }
+                  else if (tempRecord.hasOwnProperty(val)) {
+                    tempRecord = tempRecord[val];
+                  }
+                  title = tempRecord;
+                });
               }
-              if (titleField && titleField[0]) {
-                titleField = titleField[0];
+              if (titleData['title_lang_lst_key']) {
+                tempRecord = $rootScope.recordsVM.invenioRecordsModel[titleData['title_parent_key']];
+                // Get pubDate
+                titleData['title_lang_lst_key'].forEach(function (val) {
+                  if (Array.isArray(tempRecord) && tempRecord[0].hasOwnProperty(val)) {
+                    tempRecord = tempRecord[0][val];
+                  }
+                  else if (tempRecord.hasOwnProperty(val)) {
+                    tempRecord = tempRecord[val];
+                  }
+                  lang = tempRecord;
+                });
               }
-              if (titleField.hasOwnProperty(titleID[1])) {
-                title = titleField[titleID[1]];
-                if (titleField.hasOwnProperty(titleID[2]) && titleField[titleID[2]]) {
-                  lang = titleField[titleID[2]];
-                }
-              }
-            }
-            if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
-              $rootScope.recordsVM.invenioRecordsModel['title'] = title;
-              $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
-            } else {
-              if (title != "") {
+              if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
                 $rootScope.recordsVM.invenioRecordsModel['title'] = title;
                 $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+              } else {
+                if (title != "") {
+                  $rootScope.recordsVM.invenioRecordsModel['title'] = title;
+                  $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+                }
               }
             }
           },
