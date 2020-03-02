@@ -47,7 +47,7 @@ services:
       - INVENIO_ROLE_REPOSITORY=Repository Administrator
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
-      - FLASK_DEBUG=1
+      - FLASK_DEBUG=0
       - SEARCH_INDEX_PREFIX=tenant1
     volumes:
       - weko3_data:/var/tmp
@@ -97,7 +97,7 @@ services:
       - elasticsearch
       - rabbitmq
     ports:
-      - "5026:5000"
+      - "5001:5000"
 
   postgresql:
     restart: "always"
@@ -106,66 +106,70 @@ services:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
       - POSTGRES_PASSWORD=dbpass123
+    volumes:
+      - pgsql-data:/var/lib/postgresql/data
     ports:
-      - "25426:5432"
+      - "25401:5432"
 
   redis:
     restart: "always"
     image: redis
     ports:
-      - "26326:6379"
+      - "26301:6379"
 
   elasticsearch:
     restart: "always"
     build:
       context: .
       dockerfile: ./elasticsearch/Dockerfile
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
     environment:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
-      - "29226:9200"
-      - "29326:9300"
+      - "29201:9200"
+      - "29301:9300"
 
   rabbitmq:
     restart: "always"
     image: rabbitmq
     ports:
-      - "24326:4369"
-      - "45626:25672"
+      - "24301:4369"
+      - "45601:25672"
 
   nginx:
     restart: "always"
     build: ./nginx
     ports:
-      - "8026:80"
-      - "4426:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
     links:
       - web
 
-  # flower:
-  #   restart: "always"
-  #   image: mher/flower
-  #   command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
-  #   ports:
-  #     - "5526:5555"
-  #   links:
-  #     - rabbitmq
+  flower:
+    restart: "always"
+    image: mher/flower
+    command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
+    ports:
+      - "5501:5555"
+    links:
+      - rabbitmq
 
-  # kibana:
-  #   build:
-  #     context: .
-  #     dockerfile: ./kibana/Dockerfile
-  #   restart: "always"
-  #   command: kibana
-  #   ports:
-  #     - "5626:5601"
-  #   environment:
-  #     - "ELASTICSEARCH_URL=http://elasticsearch:9200"
-  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-  #   links:
-  #     - elasticsearch
+  kibana:
+    build:
+      context: .
+      dockerfile: ./kibana/Dockerfile
+    restart: "always"
+    command: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    links:
+      - elasticsearch
 
 volumes:
   weko3_data:
