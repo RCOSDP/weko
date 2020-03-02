@@ -64,8 +64,8 @@ from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_unregister_buckets, \
     get_activity_id_of_record_without_version, get_identifier_setting, \
     is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
-    merge_buckets_by_records, register_hdl, saving_doi_pidstore, \
-    set_bucket_default_size
+    merge_buckets_by_records, register_cnri, saving_doi_pidstore, \
+    set_bucket_default_size, filter_condition
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -82,25 +82,47 @@ def index():
     """Render a basic view."""
     activity = WorkActivity()
     getargs = request.args
+
+    conditions = {}
+    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab', 'size', 'pages']
+    for args in getargs:
+        for key in list_key_condition:
+            if key in args:
+                filter_condition(conditions, key, request.args.get(args))
+
     ctx = {'community': None}
     community_id = ""
-    if 'community' in getargs:
-        activities = activity.get_activity_list(request.args.get('community'))
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        ctx = {'community': comm}
-        community_id = comm.id
-    else:
-        activities = activity.get_activity_list()
-
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         request.args.get('community') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
+    size = request.args.get('size')
+    tab = request.args.get('tab')
+    if size is None:
+        size = 20
+    if tab is None:
+        tab = 'todo'
+    if 'community' in getargs:
+        activities, count = activity.get_activity_list(request.args.get('community'), conditions=conditions)
+        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        ctx = {'community': comm}
+        community_id = comm.id
+    else:
+        activities, count = activity.get_activity_list(conditions=conditions)
+    import math
+    maxpage = math.ceil(count/int(size))
+    pages = request.args.get('pages')
+    if pages is None:
+        pages = 1
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
+        pages=pages,
+        size=size,
+        tab=tab,
+        maxpage=maxpage,
         render_widgets=render_widgets,
         activities=activities,
         community_id=community_id,
@@ -131,6 +153,18 @@ def iframe_success():
     if community_id:
         comm = GetCommunity.get_community_by_id(community_id)
         ctx = {'community': comm}
+
+    # delete session value
+    del session['itemlogin_id']
+    del session['itemlogin_activity']
+    del session['itemlogin_item']
+    del session['itemlogin_steps']
+    del session['itemlogin_action_id']
+    del session['itemlogin_cur_step']
+    del session['itemlogin_record']
+    del session['itemlogin_res_check']
+    del session['itemlogin_pid']
+    del session['itemlogin_community_id']
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
@@ -217,11 +251,26 @@ def list_activity():
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    size = request.args.get('size')
+    tab = request.args.get('tab')
+    if size is None:
+        size = 20
+    if tab is None:
+        tab = 'todo'
+    import math
+    maxpage = math.ceil((int(len(activities))/int(size)))
+    pages = request.args.get('pages')
+    if pages is None:
+        pages = 1
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
+        pages=pages,
+        size=size,
+        tab=tab,
+        maxpage=maxpage,
         render_widgets=render_widgets,
-        activities=activities
+        activities=activities[int(size)*(int(pages)-1):int(size)*(int(pages)-1)+int(size)]
     )
 
 
@@ -581,7 +630,7 @@ def next_action(activity_id='0', action_id=0):
         return jsonify(code=0, msg=_('success'))
 
     if action_endpoint == 'item_login':
-        register_hdl(activity_id)
+        register_cnri(activity_id)
 
     activity_detail = work_activity.get_activity_detail(activity_id)
     item_id = None
@@ -804,18 +853,6 @@ def next_action(activity_id='0', action_id=0):
             work_activity.upt_activity_action(
                 activity_id=activity_id, action_id=next_action_id,
                 action_status=ActionStatusPolicy.ACTION_DOING)
-    # delete session value
-    if session.get('itemlogin_id'):
-        del session['itemlogin_id']
-        del session['itemlogin_activity']
-        del session['itemlogin_item']
-        del session['itemlogin_steps']
-        del session['itemlogin_action_id']
-        del session['itemlogin_cur_step']
-        del session['itemlogin_record']
-        del session['itemlogin_res_check']
-        del session['itemlogin_pid']
-        del session['itemlogin_community_id']
     return jsonify(code=0, msg=_('success'))
 
 
@@ -1027,7 +1064,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                 identifier_actionid)
             identifier_handle = IdentifierHandle(item_id)
 
-            if identifier_handle.delete_pidstore_doi():
+            if identifier_handle.delete_doi_pidstore_status():
                 identifier['action_identifier_select'] = \
                     IDENTIFIER_GRANT_IS_WITHDRAWING
                 if identifier:
@@ -1067,7 +1104,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         current_app.logger.error('Unexpected error: {}', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error!'))
 
-
+# noinspection PyDictCreation
 @blueprint.route('/findDOI', methods=['POST'])
 @login_required
 def check_existed_doi():

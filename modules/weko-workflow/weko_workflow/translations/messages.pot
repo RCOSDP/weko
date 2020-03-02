@@ -76,7 +76,7 @@ msgstr ""
 
 #: weko_workflow/models.py:85
 msgid "action_canceled"
-msgstr ""
+msgstr "Action Cancel"
 
 #: weko_workflow/models.py:136
 msgid "activity_active"
@@ -417,3 +417,8 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
+msgid "Add Filter"
+msgstr ""
+
+msgid "Doing"
+msgstr ""

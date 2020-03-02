@@ -292,7 +292,6 @@ function handleSharePermission(value) {
   // Bootstrap it!
   angular.element(document).ready(function () {
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
-      $scope.currentUrl = '';
       $scope.resourceTypeKey = "";
       $scope.groups = [];
       $scope.filemeta_keys = [];
@@ -1055,43 +1054,32 @@ function handleSharePermission(value) {
         var licenseTypeName = 'licensetype';
         var schema = $rootScope.recordsVM.invenioRecordsSchema;
         var listLicenseTypeKey = [];
-
-        for (let key in schema.properties) {
-            let value = schema.properties[key];
+        Object.entries(schema.properties).forEach(
+          ([key, value]) => {
             // Find form that contains license type obj
             if (value.items && value.items.properties && value.items.properties.hasOwnProperty(licenseTypeName)) {
-              let listLicenseEnum = [];
+              listLicenseEnum = []
               // Collect list license
-              for (let ind in listLicenseObj) {
-                listLicenseEnum.push(listLicenseObj[ind]['value']);
+              $.each(listLicenseObj, function (ind, val) {
+                listLicenseEnum.push(val['value']);
+              });
               //set enum of license type form as list license above
               value.items.properties[licenseTypeName]['enum'] = listLicenseEnum;
               listLicenseTypeKey.push(key);
             }
-          }
-      }
+          });
         if (listLicenseTypeKey.length > 0) {
-          let containLicenseTypeForm = null;
-            for(let ind in listLicenseTypeKey){
-              for(let key in $rootScope.recordsVM.invenioRecordsForm)
-              {
-                if($rootScope.recordsVM.invenioRecordsForm[key].key == listLicenseTypeKey[ind]){
-                  containLicenseTypeForm = $rootScope.recordsVM.invenioRecordsForm[key];
-                  // The index of license type is always "3", correspond to its property
-                  if (containLicenseTypeForm && containLicenseTypeForm.items && containLicenseTypeForm.items.length >= 2) {
-                    licenseTypeForm = containLicenseTypeForm.items[2];
-                    // Set title map by listLicenseObj above
-                    licenseTypeForm['titleMap'] = listLicenseObj;
-                  }
-                  break;
-                }
-              }
-              if(containLicenseTypeForm){
-                break;
-              }
+          $.each(listLicenseTypeKey, function (ind, val) {
+            containLicenseTypeForm = $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == val);
+            // The index of license type is always "3", correspond to its property
+            if (containLicenseTypeForm && containLicenseTypeForm.items && containLicenseTypeForm.items.length >= 2) {
+              licenseTypeForm = containLicenseTypeForm.items[2];
+              // Set title map by listLicenseObj above
+              licenseTypeForm['titleMap'] = listLicenseObj;
             }
+          });
         }
-    }
+      }
 
       $scope.autoSetCorrespondingUsageAppId = function () {
         if ($scope.usage_report_activity_id != ''){
@@ -1161,33 +1149,16 @@ function handleSharePermission(value) {
         $scope.hiddenPubdate();
         $scope.initContributorData();
         $scope.initUserGroups();
+        $scope.initFilenameList();
         $scope.searchTypeKey();
         $scope.setDataForLicenseType();
         $scope.renderValidationErrorList();
         $scope.autoSetTitle();
         $scope.initCorrespondingIdList();
         $scope.autoTitleData();
-        //When switch language, Getting files uploaded.
-        let bucketFiles = JSON.parse(sessionStorage.getItem('files'));
-        let bucketEndpoints = JSON.parse(sessionStorage.getItem('endpoints'));
-        let bucketUrl = sessionStorage.getItem('url');
-        $scope.currentUrl = window.location.pathname + window.location.search;
-        if (bucketFiles && bucketEndpoints && $scope.currentUrl == bucketUrl){
-          bucketEndpoints.html = '';
-          $rootScope.filesVM.files = bucketFiles;
-          $rootScope.filesVM.invenioFilesEndpoints = bucketEndpoints;
-          if (bucketEndpoints.hasOwnProperty('bucket')) {
-            $rootScope.$broadcast(
-              'invenio.records.endpoints.updated', bucketEndpoints
-            );
-          }
-        }
-        $scope.initFilenameList();
-        //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
           endpoints = JSON.parse($('#hide_endpoints').text());
-          endpoints.html = '';
           if (endpoints.hasOwnProperty('bucket')) {
             $rootScope.$broadcast(
               'invenio.records.endpoints.updated', endpoints
@@ -1210,11 +1181,6 @@ function handleSharePermission(value) {
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
         $scope.hiddenPubdate();
-        //Add file uploaded to sessionStorage when uploaded processing done
-        window.history.pushState("", "", $scope.currentUrl);
-        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
-        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
-        sessionStorage.setItem('url', $scope.currentUrl);
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
@@ -2113,11 +2079,35 @@ function handleSharePermission(value) {
               }
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+            let title = $rootScope.recordsVM.invenioRecordsModel['title'];
+            let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
+            $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
         }
       };
+
+      $scope.saveTilteAndShareUserID = function(title, shareUserID) {
+        let activityID = $('#activity_id').text();
+        let data = {
+          'title': title,
+          'shared_user_id': shareUserID,
+          'activity_id': activityID
+        }
+        $.ajax({
+          url: '/api/items/save_title_and_share_user_id',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(data),
+          dataType: 'json',
+          success: function(response){
+
+          }
+        });
+      }
 
       $scope.addApprovalMail = function () {
         let approvalMailSubKey = $("#approval_email_key").val();
@@ -2142,7 +2132,7 @@ function handleSharePermission(value) {
         $rootScope.recordsVM.invenioRecordsModel['approval2'] = approval2Mail;
       };
 
-      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail) {
+      $scope.saveDataJson = function (item_save_uri, currentActionId,enableContributor,enableFeedbackMail) {
         var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
         let permission = false;
         $scope.$broadcast('schemaFormValidate');
@@ -2172,7 +2162,6 @@ function handleSharePermission(value) {
       };
 
       $scope.saveDataJsonCallback = function (item_save_uri) {
-        $scope.unattachedSystemProperties();
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
           this.mappingThumbnailInfor();
@@ -2214,8 +2203,6 @@ function handleSharePermission(value) {
         const actionID = cur_action_id;// Item Registration's Action ID
         let emails = $scope.feedback_emails;
         let result = true;
-        if (!emails.length) return true
-
         $.ajax({
           url: '/workflow/save_feedback_maillist/'+ activityID+ '/'+ actionID,
           headers: {
@@ -2281,14 +2268,6 @@ function handleSharePermission(value) {
           }
         });
         return thumbnail_attrs;
-      }
-
-      $scope.unattachedSystemProperties = function () {
-        // Remove system file properties from metadata
-        delete $rootScope.recordsVM.invenioRecordsModel.system_file;
-        delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_doi;
-        delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_hdl;
-        delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_uri;
       }
     }
     // Inject depedencies
