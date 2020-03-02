@@ -217,9 +217,9 @@ def get_license_icon(type):
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_LOCATION']
     from invenio_i18n.ext import current_i18n
     current_lang = current_i18n.language
-    # In case of current lang is not bot JA and EN, set to default EN
-    if current_lang != 'ja' and current_lang != 'en':
-        current_lang = 'en'
+    # In case of current lang is not JA, set to default
+    if current_lang != 'ja':
+        current_lang = 'default'
     src = ''
     lic = ''
     href = '#'
