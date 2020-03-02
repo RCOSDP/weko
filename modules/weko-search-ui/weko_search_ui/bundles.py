@@ -70,6 +70,18 @@ weko_admin_item_import_css = Bundle(
     output="gen/import.%(version)s.css"
 )
 
+weko_facet_search_js = Bundle(
+    'js/weko_search_ui/facet_search.js',
+    # filters='requirejs',
+    output="gen/facet_search.js"
+)
+
+weko_facet_search_css = Bundle(
+    'css/weko_search_ui/facet_search.less',
+    filters='cleancss',
+    output="gen/facet_search.%(version)s.css"
+)
+
 
 def catalog(domain):
     """Return glob matching path to tranlated messages for a given domain."""

@@ -28,6 +28,8 @@ from invenio_records_rest.utils import allow_all
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
+from flask_babelex import gettext as _
+
 WEKO_SEARCH_UI_SEARCH_INDEX_API = '/api/index/'
 
 WEKO_SEARCH_UI_BASE_TEMPLATE = 'weko_search_ui/base.html'
@@ -382,3 +384,51 @@ WEKO_IMPORT_LIST_NAME = [
     'No', 'Start Date', 'End Date', 'Item Id', 'Action', 'Work Flow Status'
 ]
 WEKO_ADMIN_LIFETIME_DEFAULT = 1800
+
+WEKO_FACET_SEARCH_DICT_JSON = {
+    "0": {
+        "key": "data_type",
+        "name": _("Data Type"),
+        "child": {
+            "0": {
+                "key": "quantatitive_research",
+                "name": _("Quantatitive research")
+            },
+            "1": {
+                "key": "official_statistics",
+                "name": _("Official statistics")
+            },
+            "2": {
+                "key": "qualitative_research",
+                "name": _("Qualitative research")
+            },
+            "3": {
+                "key": "historical_materials",
+                "name": _("Historical materials")
+            },
+        }
+    },
+    "1": {
+        "key": "access",
+        "name": _("Access"),
+        "child": {
+            "0": {
+                "key": "open_access",
+                "name": _("Open access")
+            },
+            "1": {
+                "key": "restricted_access",
+                "name": _("Restricted access")
+            },
+            "2": {
+                "key": "metadata_only_access",
+                "name": _("Metadata only access")
+            },
+            "3": {
+                "key": "embargoed_access",
+                "name": _("Embargoed access")
+            },
+        }
+    },
+
+}

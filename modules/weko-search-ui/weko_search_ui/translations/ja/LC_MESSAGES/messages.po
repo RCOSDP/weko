@@ -302,5 +302,46 @@ msgstr "作業済"
 msgid "To Do"
 msgstr ""
 
+#: weko_search_ui/config.py:
+msgid "Access"
+msgstr "アクセス制限"
 
+#: weko_search_ui/config.py:
+msgid "Open access"
+msgstr "オープンアクセス"
 
+#: weko_search_ui/config.py:
+msgid "Restricted access"
+msgstr "制約付きアクセス"
+
+#: weko_search_ui/config.py:
+msgid "Metadata only access"
+msgstr "メタデータのみ"
+
+#: weko_search_ui/config.py:
+msgid "Embargoed access"
+msgstr "エンバーゴ期間中"
+
+#: weko_search_ui/config.py:
+msgid "Data Type"
+msgstr "データタイプ"
+
+#: weko_search_ui/config.py:
+msgid "Quantatitive research"
+msgstr "量的調査"
+
+#: weko_search_ui/config.py:
+msgid "Official statistics"
+msgstr "政府統計"
+
+#: weko_search_ui/config.py:
+msgid ""
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid ""
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Historical materials"
+msgstr "歴史資料"

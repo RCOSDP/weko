@@ -303,3 +303,47 @@ msgstr ""
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Next"
 msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Open access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Restricted access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Metadata only access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Embargoed access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Data Type"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Quantatitive research"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Official statistics"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid ""
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid ""
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Historical materials"
+msgstr ""
