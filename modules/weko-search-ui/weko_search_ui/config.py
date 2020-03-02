@@ -107,29 +107,58 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
 
 RECORDS_REST_ENDPOINTS['recid']['record_class'] = 'weko_records.api:WekoRecord'
 RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
-    'application/vnd.citationstyles.csl+json': ('weko_records.serializers:csl_v1_response'),
+    'application/vnd.citationstyles.csl+json': (
+        'weko_records.serializers:csl_v1_response'),
     'text/x-bibliography': ('weko_records.serializers:citeproc_v1_response')
 }
 
 # RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all
 
-INDEXER_DEFAULT_INDEX = '{}-weko-item-v1.0.0'.format(index_prefix)  # Use direct index
+INDEXER_DEFAULT_INDEX = '{}-weko-item-v1.0.0'.format(
+    index_prefix)  # Use direct index
 INDEXER_DEFAULT_DOCTYPE = 'item-v1.0.0'
 INDEXER_DEFAULT_DOC_TYPE = 'item-v1.0.0'
 INDEXER_FILE_DOC_TYPE = 'content'
 
 SEARCH_UI_SEARCH_INDEX = '{}-weko'.format(index_prefix)
 
-
 # set item type aggs
 RECORDS_REST_FACETS = dict()
 RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
     aggs=dict(
-        itemtypes=dict(terms=dict(
-            field='item_type_id')),
+        accessRights=dict(terms=dict(
+            field='accessRights')),
+        language=dict(terms=dict(
+            field='language')),
+        distributor=dict(
+            filter=dict(
+                term={"contributor.@attributes.contributorType": "Distributor"}
+            ),
+            aggs=dict(
+                distributorName=dict(
+                    terms=dict(
+                        field='contributor.contributorName'))
+            )
+        ),
+
+        dataType=dict(
+            filter=dict(
+                term={"description.descriptionType": "Other"}
+            ),
+            aggs=dict(
+                dataType=dict(
+                    terms=dict(
+                        field='description.value'))
+            )
+        )
+    ),
+    post_filters=dict(
+        accessRights=terms_filter('accessRights'),
+        language=terms_filter('language'),
+        distributor=terms_filter('contributor.contributorName'),
+        dataType=terms_filter('description.value'),
     )
 )
-
 
 RECORDS_REST_SORT_OPTIONS = dict()
 RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
@@ -199,7 +228,6 @@ RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
     # add 20181121 end
 )
 
-
 WEKO_SEARCH_REST_ENDPOINTS = dict(
     recid=dict(
         pid_type='recid',
@@ -244,7 +272,8 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         }}),
         "id": ("", {
             "id_attr": {
-                "identifier": ("relation.relatedIdentifier", "identifierType=*"),
+                "identifier": (
+                    "relation.relatedIdentifier", "identifierType=*"),
                 "URI": ("identifier", "identifierType=*"),
                 "fullTextURL": ("file.URI", "objectType=*"),
                 "selfDOI": ("identifierRegistration", "identifierType=*"),
@@ -257,7 +286,8 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                 "pmid": ("relation.relatedIdentifier", "identifierType=PMID"),
                 "doi": ("relation.relatedIdentifier", "identifierType=DOI"),
                 "NAID": ("relation.relatedIdentifier", "identifierType=NAID"),
-                "ichushi": ("relation.relatedIdentifier", "identifierType=ICHUSHI")
+                "ichushi": (
+                    "relation.relatedIdentifier", "identifierType=ICHUSHI")
             }})
     },
     "string": {
