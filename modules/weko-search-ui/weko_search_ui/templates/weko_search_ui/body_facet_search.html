@@ -18,15 +18,14 @@
 # MA 02111-1307, USA.
 #}
 {%- block css %}
-  {{ super() }}
   {% assets "weko_facet_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
-  {{ super() }}
   {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_facet_search_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+
+  {% assets "weko_facet_search_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 <div id="app-facet-search"></div>
