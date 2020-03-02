@@ -27,7 +27,7 @@ let PageBodyGrid = function () {
             width: 12,
             float: true,
             verticalMargin: 4,
-            cellHeight: 100,
+            cellHeight: 10,
             acceptWidgets: '.grid-stack-item'
         };
         let widget = $('#page_body');
@@ -39,6 +39,18 @@ let PageBodyGrid = function () {
         this.grid.addWidget($(this.widgetTemplate(node, index)), node.x, node.y, node.width, node.height);
         return false;
     }.bind(this);
+
+    this.resizeWidget = function (widget, width, height) {
+      this.grid.resize(widget, width, height);
+    };
+
+    this.getCellHeight = function () {
+      return this.grid.cellHeight();
+    };
+
+    this.getVerticalMargin = function () {
+      return this.grid.opts.verticalMargin;
+    };
 
     this.updateMainContent = function (node) {
         let mainContents = $("#main_contents");
@@ -158,7 +170,7 @@ let PageBodyGrid = function () {
                 headerNav.css({"background-color": node.background_color});
             }
             if (node.multiLangSetting && node.multiLangSetting.description) {
-                headerContent.css({"width": "calc(100vw - 490px)", "height": "100px", "overflow": "hidden"});
+                headerContent.css({"width": "calc(100vw - 490px)"});
                 headerContent.html(node.multiLangSetting.description.description);
             }
             this.grid.update(headerElement, node.x, node.y, node.width, node.height);
@@ -565,9 +577,9 @@ let WidgetTheme = function () {
             setClass = "grid-stack-item-content panel header-footer-type";
         }
         let result = '<div class="grid-stack-item widget-resize">' +
-            '    <div class="' +setClass +'" style="' + borderStyle + '">' +
+            '    <div class="' + setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + ' " style="padding-top: 30px; overflow-y: hidden !important; padding-bottom: 0!important;' + this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
@@ -604,9 +616,55 @@ let WidgetTheme = function () {
     }
 };
 
+function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
+  if (otherElement) {
+    let scrollHeight = otherElement.prop("scrollHeight");
+    let clientHeight = otherElement.prop("clientHeight");
+    if (scrollHeight > clientHeight) {
+      let cellHeight = pageBodyGrid.getCellHeight();
+      let verticalMargin = pageBodyGrid.getVerticalMargin();
+      let newHeight = Math.ceil(
+        (scrollHeight + verticalMargin) / (cellHeight + verticalMargin)
+      );
+      let parent = otherElement.closest(".grid-stack-item");
+      let width = parent.data("gsWidth");
+      let isUpdated = otherElement.data("isUpdated");
+      if (isUpdated) {
+        let currentClientHeight = newHeight * (cellHeight + verticalMargin);
+        if (currentClientHeight > scrollHeight) {
+          pageBodyGrid.resizeWidget(parent, width, newHeight - 1);
+        } else {
+          pageBodyGrid.resizeWidget(parent, width, newHeight);
+        }
+      } else {
+        pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
+        otherElement.data("isUpdated", true);
+      }
+    }
+  } else {
+    let scrollHeight = widgetElement.prop("scrollHeight");
+    let clientHeight = widgetElement.prop("clientHeight");
+    let currentHeight = widgetElement.data("gsHeight");
+    if (scrollHeight > clientHeight) {
+      let cellHeight = pageBodyGrid.getCellHeight();
+      let verticalMargin = pageBodyGrid.getVerticalMargin();
+      let newHeight = Math.ceil(
+        (scrollHeight + verticalMargin) / (cellHeight + verticalMargin)
+      );
+      let width = widgetElement.data("gsWidth");
+      if (newHeight > currentHeight) {
+        pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
+      } else if (newHeight === currentHeight) {
+        pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
+      }
+    }
+  }
+}
+
 function getWidgetDesignSetting() {
     let community_id = $("#community-id").text();
     let current_language = $("#current_language").val();
+    let ldsSpinner = $(".lds-ring-background");
     let url;
     if (!community_id) {
         community_id = DEFAULT_REPOSITORY;
@@ -644,19 +702,21 @@ function getWidgetDesignSetting() {
         }
     }
 
+    ldsSpinner.removeClass("hidden");
     $.ajax({
         ...request_param,
         success: function (data) {  // TODO: If no settings default to main layout
             if (data.error) {
                 console.log(data.error);
                 toggleWidgetUI();
+                ldsSpinner.addClass("hidden");
                 return;
             } else {
                 let widgetList = data['widget-settings'];
                 if (Array.isArray(widgetList) && widgetList.length) {
                     $("#page_body").removeClass("hidden");
                     $("#main_contents").addClass("grid-stack-item");
-                    $("#header").css("height", "100px");
+                    $("#header").addClass("grid-stack-item no-scroll-bar");
                     $("#footer").addClass("grid-stack-item no-scroll-bar");
                     let pageBodyGrid = new PageBodyGrid();
                     pageBodyGrid.init();
@@ -665,9 +725,26 @@ function getWidgetDesignSetting() {
                         $('.widget-resize').each(function () {
                             let headerElementHeight = $(this).find('.panel-heading').height();
                             $(this).find('.panel-body').css("padding-top", String(headerElementHeight + 11) + "px");
-                            $(this).find('.panel-body').css("bottom", "10px");
                         });
                     });
+
+                    new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
+                      $('.grid-stack-item-content > .panel-body').each(function () {
+                        let _this = $(this);
+                        autoAdjustWidgetHeight("", pageBodyGrid, _this)
+                      });
+                    });
+
+                    new ResizeSensor($('#main_contents'), function () {
+                      let mainContent = $('#main_contents');
+                      autoAdjustWidgetHeight(mainContent, pageBodyGrid);
+                    });
+
+                  new ResizeSensor($('#header_content'), function () {
+                    let headerContent = $('#header_content').closest(".grid-stack-item");
+                    autoAdjustWidgetHeight(headerContent, pageBodyGrid);
+                  });
+
                 }
                 else {  // Pages are able to not have main content, so hide if widget is not present
                     if(is_page){
@@ -681,6 +758,7 @@ function getWidgetDesignSetting() {
                 }
             }
             toggleWidgetUI();
+            ldsSpinner.addClass("hidden");
         }
     });
 }
