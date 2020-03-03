@@ -21,14 +21,14 @@
 """WEKO3 module docstring."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from sqlalchemy import asc, desc, types, or_, not_
+from sqlalchemy import asc, desc, not_, or_, types
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
@@ -935,60 +935,99 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             return None
 
-    def filter_by_date(self, created, query_action_activities, key):
-        date_created = None
-        date_created_from = created[0]
-        if len(date_created_from) == 8 and date_created_from.isnumeric():
-            year = int((date_created_from[0:4]))
-            month = int((date_created_from[4:6]))
-            day = int((date_created_from[6:8]))
-            date_created = datetime(year, month, day).date()
-            if key == 'created_from':
-                return query_action_activities.filter(
-                    _Activity.created >= date_created)
+    def filter_by_date(self, created_from, created_to, query_action_activities):
+        """
+        Filter date created.
+
+        :param created_from:
+        :param created_to:
+        :param query_action_activities:
+        :return:
+        """
+        def validate_date_to_filter(created):
+            created_date = created[0]
+            if len(created_date) == 8 and created_date.isnumeric():
+                year = created_date[0:4]
+                month = created_date[4:6]
+                day = created_date[6:8]
+                date_to_parse = "{0}-{1}-{2}".format(year, month, day)
+                try:
+                    date_after_parse = datetime.strptime(date_to_parse,
+                                                         '%Y-%m-%d')
+                    return date_after_parse
+                except ValueError:
+                    return None
             else:
-                return query_action_activities.filter(
-                    _Activity.created <= date_created)
+                return None
+
+        date_created_from = None
+        date_created_to = None
+
+        if created_from:
+            date_created_from = validate_date_to_filter(created_from)
+
+        if created_to:
+            date_created_to = validate_date_to_filter(created_to)
+
+        if date_created_from and date_created_to:
+            return query_action_activities.filter(
+                _Activity.created.between(date_created_from,
+                                          date_created_to + timedelta(hours=23,
+                                                                      minutes=59,
+                                                                      seconds=59)))
+        elif date_created_from:
+            return query_action_activities.filter(
+                _Activity.created >= date_created_from)
+        elif date_created_to:
+            return query_action_activities.filter(
+                _Activity.created <= date_created_to + timedelta(hours=23,
+                                                                 minutes=59,
+                                                                 seconds=59))
+        else:
+            return query_action_activities
 
     def filter_conditions(self, conditions, query_action_activities):
-        print('conditions =======', conditions)
-        title = conditions.get('item')
-        status = conditions.get('status')
-        workflow = conditions.get('workflow')
-        user = conditions.get('user')
-        created_from = conditions.get('createdfrom')
-        created_to = conditions.get('createdto')
+        """
+        Filter based on conditions.
 
-        if title:
-            query_action_activities = query_action_activities.filter(
-                _Activity.title.in_(title))
-        if user:
-            query_action_activities = query_action_activities.join(
-                User, User.id == _Activity.activity_login_user).filter(
-                User.email.in_(user))
-        if status:
-            list_status = []
-            for i in status:
-                if i == 'doing':
-                    list_status.append('M')
-                elif i == 'done':
-                    list_status.append('F')
-                elif i == 'actioncancel':
-                    list_status.append('C')
-            query_action_activities = query_action_activities.filter(
-                _Activity.activity_status.in_(list_status))
-        if workflow:
-            query_action_activities = query_action_activities.join(
-                _WorkFlow, _WorkFlow.id == _Activity.workflow_id).filter(
-                or_(_WorkFlow.flows_name.like(i + '%') for i in workflow))
-        if created_from:
-            query_action_activities = self.filter_by_date(created_from,
-                                                          query_action_activities,
-                                                          'created_from')
-        if created_to:
-            query_action_activities = self.filter_by_date(created_to,
-                                                          query_action_activities,
-                                                          'created_to')
+        :param conditions:
+        :param query_action_activities:
+        :return:
+        """
+        if conditions:
+            title = conditions.get('item')
+            status = conditions.get('status')
+            workflow = conditions.get('workflow')
+            user = conditions.get('user')
+            created_from = conditions.get('createdfrom')
+            created_to = conditions.get('createdto')
+
+            if title:
+                query_action_activities = query_action_activities.filter(
+                    _Activity.title.in_(title))
+            if user:
+                query_action_activities = query_action_activities.join(
+                    User, User.id == _Activity.activity_login_user).filter(
+                    User.email.in_(user))
+            if status:
+                list_status = []
+                for i in status:
+                    if i == 'doing':
+                        list_status.append('M')
+                    elif i == 'done':
+                        list_status.append('F')
+                    elif i == 'actioncancel':
+                        list_status.append('C')
+                query_action_activities = query_action_activities.filter(
+                    _Activity.activity_status.in_(list_status))
+            if workflow:
+                query_action_activities = query_action_activities.join(
+                    _WorkFlow, _WorkFlow.id == _Activity.workflow_id).filter(
+                    or_(_WorkFlow.flows_name.like(i + '%') for i in workflow))
+            if created_from or created_to:
+                query_action_activities = self.filter_by_date(created_from,
+                                                              created_to,
+                                                              query_action_activities)
         return query_action_activities
 
     def get_activity_list(self, community_id=None, conditions=None):
@@ -1018,6 +1057,7 @@ class WorkActivity(object):
             tab_list = conditions.get('tab')
             page_list = conditions.get('pages')
             size_list = conditions.get('size')
+
             # Get tab of page
             tab = 'todo'
             if tab_list:
@@ -1032,6 +1072,7 @@ class WorkActivity(object):
             page = 1
             if page_list:
                 page = int(page_list[0])
+            offset = (size * page) - (size)
 
             activities = []
             community_users = User.query.outerjoin(userrole).outerjoin(
@@ -1048,7 +1089,6 @@ class WorkActivity(object):
                 .outerjoin(_FlowAction).outerjoin(_FlowActionRole)
 
             # where
-
             if tab == 'wait':  # wait
                 if not is_admin and not is_community_admin:
                     query_action_activities = query_action_activities \
@@ -1060,10 +1100,16 @@ class WorkActivity(object):
                      & (_FlowActionRole.action_user_exclude == '0'))
                     | (_FlowActionRole.action_role.notin_(self_group_ids)
                        & (_FlowActionRole.action_role_exclude == '0'))
+                ) \
+                    .filter(
+                    (
+                            _Activity.activity_status == ActivityStatusPolicy.ACTIVITY_BEGIN)
+                    | (
+                            _Activity.activity_status == ActivityStatusPolicy.ACTIVITY_MAKING)
                 )
             else:  # todoall
                 if is_community_admin:
-                    query_action_activities = query_action_activities \
+                    all_activities = query_action_activities \
                         .filter(
                         _Activity.activity_login_user.in_(community_user_ids))
 
@@ -1073,20 +1119,27 @@ class WorkActivity(object):
                                 | (_Activity.shared_user_id == self_user_id))
                 if tab == 'todo':
                     query_action_activities = query_action_activities \
-                        .filter(_FlowAction.action_id == _Activity.action_id) \
-                        .filter(_FlowActionRole.id == None) \
                         .filter(
                         (
                                 _Activity.activity_status == ActivityStatusPolicy.ACTIVITY_BEGIN)
                         | (
                                 _Activity.activity_status == ActivityStatusPolicy.ACTIVITY_MAKING)
                     )
+                    if not is_admin and not is_community_admin:
+                        query_action_activities = query_action_activities \
+                            .filter(
+                            _FlowAction.action_id == _Activity.action_id) \
+                            .filter(_FlowActionRole.id == None)
 
+            print(query_action_activities, 'action_activities')
             query_action_activities = self.filter_conditions(
                 conditions, query_action_activities)
+
             count = query_action_activities.distinct(_Activity.id).count()
-            action_activities = query_action_activities.limit(size).distinct(
-                _Activity.id).offset((size * page) - (size)).all()
+
+            action_activities = query_action_activities \
+                .distinct(_Activity.id).order_by(asc(_Activity.id)).limit(
+                size).offset(offset).all()
 
             # Append to do and action activities into the master list
             activities.extend(action_activities)
@@ -1383,6 +1436,14 @@ class WorkActivity(object):
 
     def update_title_and_shared_user_id(self, activity_id, title,
                                         shared_user_id):
+        """
+        Update title and shared user id to activity.
+
+        :param activity_id:
+        :param title:
+        :param shared_user_id:
+        :return:
+        """
         try:
             with db.session.begin_nested():
                 activity = self.get_activity_detail(activity_id)

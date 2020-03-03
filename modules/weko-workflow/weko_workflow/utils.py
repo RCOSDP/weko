@@ -918,6 +918,14 @@ def is_hidden_pubdate(item_type_name):
 
 
 def filter_condition(json, name, condition):
+    """
+    Add conditions to json object.
+
+    :param json:
+    :param name:
+    :param condition:
+    :return:
+    """
     if json.get(name):
         json[name].append(condition)
     else:

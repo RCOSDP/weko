@@ -62,10 +62,10 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_unregister_buckets, \
-    get_activity_id_of_record_without_version, get_identifier_setting, \
-    is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
-    merge_buckets_by_records, register_cnri, saving_doi_pidstore, \
-    set_bucket_default_size, filter_condition
+    filter_condition, get_activity_id_of_record_without_version, \
+    get_identifier_setting, is_hidden_pubdate, is_show_autofill_metadata, \
+    item_metadata_validation, merge_buckets_by_records, register_cnri, \
+    saving_doi_pidstore, set_bucket_default_size
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -84,7 +84,8 @@ def index():
     getargs = request.args
 
     conditions = {}
-    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab', 'size', 'pages']
+    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
+                          'item', 'status', 'tab', 'size', 'pages']
     for args in getargs:
         for key in list_key_condition:
             if key in args:
@@ -100,12 +101,13 @@ def index():
 
     size = request.args.get('size')
     tab = request.args.get('tab')
-    if size is None:
-        size = 20
-    if tab is None:
-        tab = 'todo'
+    pages = request.args.get('pages')
+    size = 20 if not size else size
+    tab = 'todo' if not tab else tab
+    pages = 1 if not pages else pages
     if 'community' in getargs:
-        activities, count = activity.get_activity_list(request.args.get('community'), conditions=conditions)
+        activities, count = activity.get_activity_list(
+            request.args.get('community'), conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
@@ -113,9 +115,6 @@ def index():
         activities, count = activity.get_activity_list(conditions=conditions)
     import math
     maxpage = math.ceil(count/int(size))
-    pages = request.args.get('pages')
-    if pages is None:
-        pages = 1
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
@@ -245,7 +244,16 @@ def init_activity():
 def list_activity():
     """List activity."""
     activity = WorkActivity()
-    activities = activity.get_activity_list()
+    getargs = request.args
+    conditions = {}
+    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
+                          'item', 'status', 'tab', 'size', 'pages']
+    for args in getargs:
+        for key in list_key_condition:
+            if key in args:
+                filter_condition(conditions, key, request.args.get(args))
+
+    activities, count = activity.get_activity_list(conditions=conditions)
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
@@ -253,15 +261,12 @@ def list_activity():
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
     size = request.args.get('size')
     tab = request.args.get('tab')
-    if size is None:
-        size = 20
-    if tab is None:
-        tab = 'todo'
-    import math
-    maxpage = math.ceil((int(len(activities))/int(size)))
     pages = request.args.get('pages')
-    if pages is None:
-        pages = 1
+    size = 20 if not size else size
+    tab = 'todo' if not tab else tab
+    pages = 1 if not pages else pages
+    import math
+    maxpage = math.ceil(count/int(size))
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
@@ -270,7 +275,7 @@ def list_activity():
         tab=tab,
         maxpage=maxpage,
         render_widgets=render_widgets,
-        activities=activities[int(size)*(int(pages)-1):int(size)*(int(pages)-1)+int(size)]
+        activities=activities
     )
 
 

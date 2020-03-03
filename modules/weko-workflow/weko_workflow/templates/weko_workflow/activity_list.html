@@ -165,6 +165,7 @@
     <thead>
       <tr>
         <th>{{ _('No.') }}</th>
+        <th>{{ _('Created') }}</th>
         <th>{{ _('Updated') }}</th>
         <th>{{ _('Activity') }}</th>
         <th>{{_('Item')}}</th>
@@ -179,6 +180,7 @@
       <tr class="">
         <th scope="row">{{loop.index}}</th>
         <td>{{activity.updated.date()}}</td>
+        <td>{{activity.created.date()}}</td>
         {%-if community%}
         <td><a href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id)}}">{{activity.activity_id}}</a></td>
         {%-else%}
@@ -199,7 +201,7 @@
     </table>
     </div>
     <div class="row">
-      <div align="center">
+      <div class="text-center">
           <ul class="pagination">
             {%-if pages|int == 1 %}
             <li class="disabled">
