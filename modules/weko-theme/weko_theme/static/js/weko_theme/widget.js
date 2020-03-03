@@ -399,7 +399,7 @@ let PageBodyGrid = function () {
                 widgetId = Number(node.widget_id);
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
-            setInterval(function() { this.setAccessCounterValue(); }, INTERVAL_TIME);
+            setInterval(function() { return this.setAccessCounterValue(); }, INTERVAL_TIME);
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
@@ -471,8 +471,9 @@ let PageBodyGrid = function () {
         if (!current_language) {
             current_language = "en";
         }
+        var currentTime = new Date().getTime();
         $.ajax({
-            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language,
+            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language +'?time=' + currentTime,
             method: 'GET',
             async: false,
             success: function(response) {
@@ -632,7 +633,8 @@ function getWidgetDesignSetting() {
         var data = {
             repository_id: community_id
         };
-        url = '/api/admin/load_widget_design_setting/' + current_language;
+        var currentTime = new Date().getTime();
+        url = '/api/admin/load_widget_design_setting/' + current_language +'?time=' + currentTime;
         request_param = {
             url: url,
             type: "POST",
@@ -646,7 +648,7 @@ function getWidgetDesignSetting() {
 
     $.ajax({
         url: url,
-        type: "POST",
+        type: "GET",
         contentType: "application/json",
         headers: {
             "Content-Type": "application/json"

@@ -115,7 +115,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.typeIndexList = function() {
     var url = new URL(window.location.href );
     var q = url.searchParams.get("q");
-        let result = 'item';
+    let result = 'item';
     if (q === "0") {
         return 'root'
     }
@@ -216,7 +216,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
     $http({
       method: 'GET',
-            url: '/get_child_list/' + $rootScope.index_id_q + '?time' + currentTime,
+      url: '/get_child_list/' + $rootScope.index_id_q + '?time=' + currentTime,
       headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       child_list = response.data;
@@ -334,7 +334,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     let request_url = '';
 
     if (search_type == "2") {
-            request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
+      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
     } else {
       if (search_type === null) {
         search_type = "0";
@@ -342,7 +342,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       if (q === null) {
         q = "";
       }
-            request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
+      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
     }
 
     let search_results = []

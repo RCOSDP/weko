@@ -513,8 +513,9 @@ function toObject(arr) {
           return $scope.filemeta_keys;
         }
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
-          if ($rootScope.recordsVM.invenioRecordsSchema.properties[key].type == 'array') {
-            if ($rootScope.recordsVM.invenioRecordsSchema.properties[key].items.properties.hasOwnProperty('filename')) {
+          var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          if (value.type == 'array') {
+            if (value.items.properties.hasOwnProperty('filename')) {
               $scope.filemeta_keys.push(key);
               break;
             }
@@ -542,9 +543,10 @@ function toObject(arr) {
         if ($scope.usageapplication_keys.length > 0) {
           return $scope.usageapplication_keys;
         }
-        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
-          if ($rootScope.recordsVM.invenioRecordsSchema.properties[key].type == 'array') {
-            if ($rootScope.recordsVM.invenioRecordsSchema.properties[key].items.properties.hasOwnProperty('subitem_corresponding_usage_application_id')) {
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {\
+          var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          if (value.type == 'array') {
+            if (value.items.properties.hasOwnProperty('subitem_corresponding_usage_application_id')) {
               $scope.usageapplication_keys.push(key);
               break;
             }
@@ -920,7 +922,7 @@ function toObject(arr) {
           if (value.properties && value.properties.hasOwnProperty('bibliographic_title')) {
             $scope.bibliographic_key = key;
             const titleProperties = value.properties.bibliographic_title.items.properties;
-            for (subkey in titleProperties) {
+            for (var subkey in titleProperties) {
               let subValue = titleProperties[subkey];
               if (subValue.format == "text") {
                 $scope.bibliographic_title_key = subKey;
@@ -969,19 +971,19 @@ function toObject(arr) {
       }
 
       $scope.translationsInstitutePosition = function (value) {
-          return document.getElementById('institute_position_list').options.find(function(o) { o.value === value }).text;
+          return document.getElementById('institute_position_list').options.find(function(o) { return o.value === value }).text;
       };
 
       $scope.translationsInstitutePositionByText = function (text) {
-          return document.getElementById('institute_position_list').options.find(function(o) { o.text === text }).value;
+          return document.getElementById('institute_position_list').options.find(function(o) { return o.text === text }).value;
       };
 
       $scope.translationsPosition = function (value) {
-          return document.getElementById('institute_position_list').options.find(function(o) { o.text === text }).value;
+          return document.getElementById('institute_position_list').options.find(function(o) { return o.text === text }).value;
       };
 
       $scope.translationsPositionByText = function (text) {
-          return document.getElementById('position_list').options.find(function(o) { o.text === text }).value;
+          return document.getElementById('position_list').options.find(function(o) { return o.text === text }).value;
       };
 
       $scope.updatePositionKey = function() {
@@ -1013,7 +1015,7 @@ function toObject(arr) {
                                 }
                                 isExisted = true;
                                 // Set read only for user information property
-                                $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { subItem.key == key })['readonly'] = true;
+                                $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })['readonly'] = true;
                                 break;
                             }
                         }
@@ -1048,7 +1050,7 @@ function toObject(arr) {
                 }
                 isExisted = true;
                 // Set read only for user information property
-                $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { subItem.key == key })['readonly'] = true;
+                $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })['readonly'] = true;
                 break;
               }
             }
@@ -1121,7 +1123,7 @@ function toObject(arr) {
         }
         if (userInfoKey != null) {
           // Set read only for user information property
-          $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { subItem.key == userInfoKey })['readonly'] = true;
+          $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == userInfoKey })['readonly'] = true;
         }
       };
 
@@ -1141,7 +1143,7 @@ function toObject(arr) {
                 }
               }
               if (title && $("#auto_fill_title").val() !== '""') {
-                $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { subItem.key == key })['readonly'] = true;
+                $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })['readonly'] = true;
                 setTimeout(function () {
                   $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
                 }, 1000);
@@ -1184,7 +1186,7 @@ function toObject(arr) {
           }
           if (titleKey != null) {
             // Set read only for title
-            $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { subItem.key == titleKey })['readonly'] = true;
+            $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == titleKey })['readonly'] = true;
           }
           setTimeout(function () {
             $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
@@ -1202,8 +1204,8 @@ function toObject(arr) {
             if (model.hasOwnProperty(key)) {
               let title = model[key]['subitem_dataset_usage'];
               if (title && $("#item_title").val() !== '""') {
-                if ($rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { subItem.key == key })) {
-                  $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { subItem.key == key })['readonly'] = true;
+                if ($rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })) {
+                  $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })['readonly'] = true;
                   setTimeout(function () {
                     $("input[name='subitem_dataset_usage']").attr("disabled", "disabled");
                   }, 1000);
@@ -1238,7 +1240,7 @@ function toObject(arr) {
           }
           if (titleKey != null) {
             // Set read only for title
-            $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { subItem.key === titleKey })['readonly'] = true;
+            $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key === titleKey })['readonly'] = true;
           }
           setTimeout(function () {
             $("input[name='subitem_dataset_usage']").attr("disabled", "disabled");
@@ -1436,7 +1438,7 @@ function toObject(arr) {
         if ($("#is_hidden_pubdate").val() !== "True"){
           return;
         }
-        let pubdate = $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { subItem.key == 'pubdate' });
+        let pubdate = $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == 'pubdate' });
         pubdate['condition'] = true;
         pubdate['required'] = false;
         if (!$rootScope.recordsVM.invenioRecordsModel["pubdate"]) {

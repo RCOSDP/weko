@@ -140,7 +140,6 @@
                 });
                 sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
                 var url = '/search?page=1' + query_str;
-                const currentTime = new Date().getTime();
                 if (angular.element('#item_management_bulk_update').length != 0) {
                   url = '/admin/items' + url + '&item_management=update';
                 } else if(angular.element('#item_management_bulk_delete').length != 0) {
@@ -155,7 +154,6 @@
                 sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
             }
             // set search options
-
             $scope.update_disabled_flg = function () {
                 var update_flg = 0;
                     for (var sub_default_key in $scope.detail_search_key) {
