@@ -76,6 +76,16 @@ class ShibUser(object):
             ret = False
         return ret
 
+    def _get_site_license(self):
+        """
+        Assign role for weko3 user.
+
+        :param shib_role_auth:
+        :return:
+
+        """
+        return self.shib_attr.get('wekoSiteUserWithinIpRange', False)
+
     def get_relation_info(self):
         """
         Get weko user info by Shibboleth user info.
@@ -180,6 +190,9 @@ class ShibUser(object):
         """
         error = ''
 
+        if not self.user:
+            error = _('Can\'t get relation Weko User.')
+            return False, error
         # TODO: check GakuNin User
         if self.shib_user:
             return self._set_weko_user_role(current_app.config[
@@ -197,6 +210,37 @@ class ShibUser(object):
             error = _('Invalid attribute.')
 
         return False, error
+
+    def valid_site_license(self):
+        """
+        Check and set relation role for Weko3 user by wekoSocietyAffiliation.
+
+        :param shib_role_auth: Shibboleth role authority name
+        :return:
+
+        """
+        if self._get_site_license():
+            return True, ''
+        else:
+            return False, _('Invalid Site License.')
+
+    def check_in(self):
+        """
+        Get and check-in Shibboleth attr data before login to system.
+
+        :param shib_role_auth: Shibboleth role authority name
+        :return:
+
+        """
+        check_role, error = self.assign_user_role()
+        if not check_role:
+            return error
+
+        check_license, error = self.valid_site_license()
+        if not check_license:
+            return error
+
+        return True
 
     @classmethod
     def shib_user_logout(cls):

@@ -75,20 +75,24 @@ def shib_auto_login():
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
-        if shib_session_id is None:
+        if not shib_session_id:
             shib_session_id = session['shib_session_id']
             is_auto_bind = True
+
         if shib_session_id is None or len(shib_session_id) == 0:
             return redirect(url_for_security('login'))
+
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
         cache_key = config.SHIB_CACHE_PREFIX + shib_session_id
         if not datastore.redis.exists(cache_key):
             return redirect(url_for_security('login'))
+
         cache_val = datastore.get(cache_key)
-        if cache_val is None:
+        if not cache_val:
             datastore.delete(cache_key)
             return redirect(url_for_security('login'))
+
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
         if not is_auto_bind:
@@ -96,8 +100,9 @@ def shib_auto_login():
         else:
             shib_user.new_relation_info()
 
-        user_role, error = shib_user.assign_user_role()
-        if not user_role:
+        error = shib_user.check_in()
+
+        if error:
             ShibUser.shib_user_logout()
             datastore.delete(cache_key)
             current_app.logger.error(error)
@@ -160,21 +165,27 @@ def shib_login():
     """
     try:
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+
         if shib_session_id is None or len(shib_session_id) == 0:
             return redirect(url_for_security('login'))
+
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
         cache_key = config.SHIB_CACHE_PREFIX + shib_session_id
+
         if not datastore.redis.exists(cache_key):
             return redirect(url_for_security('login'))
         cache_val = datastore.get(cache_key)
-        if cache_val is None:
+
+        if not cache_val:
             datastore.delete(cache_key)
             return redirect(url_for_security('login'))
+
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         session['shib_session_id'] = shib_session_id
         csrf_random = generate_random_str(length=64)
         session['csrf_random'] = csrf_random
+
         return render_template(
             config.WEKO_ACCOUNTS_CONFIRM_USER_TEMPLATE,
             csrf_random=csrf_random,
@@ -182,6 +193,7 @@ def shib_login():
                 cache_val['shib_mail']) > 0 else '')
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+
     return abort(400)
 
 
