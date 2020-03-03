@@ -19,13 +19,13 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
-
+import os
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
-from flask import current_app
+from flask import current_app, session
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
@@ -34,6 +34,7 @@ from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
 
+from .config import WEKO_INDEX_TREE_STATE_PREFIX
 from .models import Index
 
 
@@ -118,9 +119,24 @@ def get_tree_json(index_list, root_id):
         index_relation[index_element.pid].append(index_element.cid)
         index_position[index_element.cid] = position
 
+    def get_user_list_expand():
+        """Get list index expand."""
+        if not current_user.get_id():
+            return []
+
+        key = "{}{}".format(
+            current_app.config.get(
+                "WEKO_INDEX_TREE_STATE_PREFIX",
+                WEKO_INDEX_TREE_STATE_PREFIX
+            ),
+            current_user.get_id()
+        )
+        return session.get(key, [])
+
     def generate_index_dict(index_element, is_root):
         """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
         index_dict = index_element._asdict()
+
         if not is_root:
             pid = str(index_element.pid)
             parent = index_list[index_position[index_element.pid]]
@@ -128,16 +144,30 @@ def get_tree_json(index_list, root_id):
                 pid = '{}/{}'.format(parent.pid, pid)
                 parent = index_list[index_position[parent.pid]]
             index_dict.update({'parent': pid})
+
+        list_index_expand = get_user_list_expand()
+        is_collapsed_on_init = str(index_element.cid) in list_index_expand
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_element.name,
             'position': index_element.position,
             'emitLoadNextLevel': False,
-            'settings': {'isCollapsedOnInit': True, 'checked': False}
+            'settings': {
+                'isCollapsedOnInit': not is_collapsed_on_init,
+                'checked': False
+            }
         })
-        for attr in ['public_state', 'public_date', 'browsing_role', 'contribute_role',
-                     'browsing_group', 'contribute_group', 'more_check', 'display_no',
-                     'coverpage_state']:
+        for attr in [
+            'public_state',
+            'public_date',
+            'browsing_role',
+            'contribute_role',
+            'browsing_group',
+            'contribute_group',
+            'more_check',
+            'display_no',
+            'coverpage_state'
+        ]:
             if hasattr(index_element, attr):
                 index_dict.update({attr: getattr(index_element, attr)})
         return index_dict
@@ -476,3 +506,16 @@ def get_index_id(activity_id):
     else:
         index_tree_id = None
     return index_tree_id
+
+
+def remove_state_expand(user_id):
+    """Remove expand state after logout."""
+    key = "{}{}".format(
+        current_app.config.get(
+            "WEKO_INDEX_TREE_STATE_PREFIX",
+            WEKO_INDEX_TREE_STATE_PREFIX
+        ),
+        user_id
+    )
+    if session.get(key):
+        session.pop(key)

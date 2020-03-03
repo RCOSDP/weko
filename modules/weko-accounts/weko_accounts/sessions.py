@@ -21,6 +21,7 @@
 """Setting of weko sessions."""
 
 from flask import after_this_request, current_app, session
+from weko_index_tree.utils import remove_state_expand
 
 from .utils import get_remote_addr
 
@@ -41,6 +42,7 @@ def login_listener(app, user):
         """
         user_id, sid_s = user.id, session.sid_s
         login_ip = get_remote_addr()
+        remove_state_expand(user_id)
 
         return response
 

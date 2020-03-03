@@ -22,13 +22,14 @@
 
 from datetime import date, timedelta
 
-from flask import Blueprint, request
+from flask import Blueprint, current_app, jsonify, request, session
+from flask_login import current_user
 
 from .api import Indexes
 from .config import WEKO_INDEX_TREE_RSS_COUNT_LIMIT, \
     WEKO_INDEX_TREE_RSS_DEFAULT_COUNT, WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID, \
     WEKO_INDEX_TREE_RSS_DEFAULT_LANG, WEKO_INDEX_TREE_RSS_DEFAULT_PAGE, \
-    WEKO_INDEX_TREE_RSS_DEFAULT_TERM
+    WEKO_INDEX_TREE_RSS_DEFAULT_TERM, WEKO_INDEX_TREE_STATE_PREFIX
 from .utils import generate_path, get_elasticsearch_records_data_by_indexes
 
 blueprint = Blueprint(
@@ -90,3 +91,29 @@ def get_rss_data():
                          count=count,
                          term=term,
                          lang=lang)
+
+
+@blueprint_api.route('/indextree/set_expand', methods=['POST'])
+def set_expand():
+    """Set expand list index tree id."""
+    if current_user.get_id():
+        data = request.get_json(force=True)
+        index_id = data.get("index_id")
+        key = "{}{}".format(
+            current_app.config.get(
+                "WEKO_INDEX_TREE_STATE_PREFIX",
+                WEKO_INDEX_TREE_STATE_PREFIX
+            ),
+            current_user.get_id()
+        )
+        if session.get(key):
+            session_data = session.get(key)
+            if index_id in session_data:
+                session_data.remove(index_id)
+            else:
+                session_data.append(index_id)
+        else:
+            session_data = [index_id]
+        session[key] = session_data
+
+    return jsonify(success=True)
