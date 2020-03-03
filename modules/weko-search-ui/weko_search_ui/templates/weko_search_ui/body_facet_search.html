@@ -27,5 +27,21 @@
 
   {% assets "weko_facet_search_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
+<input id="accessRights" type="hidden" value="{{_('Access')}}" />
+<input id="open access" type="hidden" value="{{_('Open access')}}" />
+<input id="restricted access" type="hidden" value="{{_('Restricted access')}}" />
+<input id="metadata only access" type="hidden" value="{{_('Metadata only access')}}" />
+<input id="embargoed access" type="hidden" value="{{_('Embargoed access')}}" />
+<input id="language" type="hidden" value="{{_('Data Language')}}" />
+<input id="distributor" type="hidden" value="{{_('Distributor')}}" />
+<input id="dataType" type="hidden" value="{{_('Data Type')}}" />
+<input id="zho" type="hidden" value="{{_('Chinese')}}" />
+<input id="cmn" type="hidden" value="{{_('Mandarin Chinese')}}" />
+<input id="eng" type="hidden" value="{{_('English')}}" />
+<input id="fra" type="hidden" value="{{_('French')}}" />
+<input id="deu" type="hidden" value="{{_('German')}}" />
+<input id="jpn" type="hidden" value="{{_('Japanese')}}" />
+<input id="kor" type="hidden" value="{{_('Korean')}}" />
+<input id="rus" type="hidden" value="{{_('Russian')}}" />
 
 <div id="app-facet-search"></div>

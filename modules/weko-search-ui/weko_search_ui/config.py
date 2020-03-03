@@ -137,7 +137,7 @@ RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
                 term={"contributor.@attributes.contributorType": "Distributor"}
             ),
             aggs=dict(
-                distributorName=dict(
+                distributor=dict(
                     terms=dict(
                         field='contributor.contributorName'))
             )

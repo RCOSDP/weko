@@ -304,6 +304,7 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
+
 #: weko_search_ui/config.py:
 msgid "Access"
 msgstr ""
@@ -325,25 +326,47 @@ msgid "Embargoed access"
 msgstr ""
 
 #: weko_search_ui/config.py:
+msgid "Data Language"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Distributor"
+msgstr ""
+
+#: weko_search_ui/config.py:
 msgid "Data Type"
 msgstr ""
 
 #: weko_search_ui/config.py:
-msgid "Quantatitive research"
+msgid "Chinese"
 msgstr ""
 
 #: weko_search_ui/config.py:
-msgid "Official statistics"
+msgid "Mandarin Chinese"
 msgstr ""
 
 #: weko_search_ui/config.py:
-msgid ""
+msgid "English"
 msgstr ""
 
 #: weko_search_ui/config.py:
-msgid ""
+msgid "French"
 msgstr ""
 
 #: weko_search_ui/config.py:
-msgid "Historical materials"
+msgid "German"
 msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Japanese"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Korean"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Russian"
+msgstr ""
+
+

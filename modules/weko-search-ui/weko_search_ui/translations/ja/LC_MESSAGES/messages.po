@@ -323,25 +323,48 @@ msgid "Embargoed access"
 msgstr "エンバーゴ期間中"
 
 #: weko_search_ui/config.py:
+msgid "Data Language"
+msgstr "データの言語"
+
+#: weko_search_ui/config.py:
+msgid "Distributor"
+msgstr "配布者"
+
+#: weko_search_ui/config.py:
 msgid "Data Type"
 msgstr "データタイプ"
 
 #: weko_search_ui/config.py:
-msgid "Quantatitive research"
-msgstr "量的調査"
+msgid "Chinese"
+msgstr "中国語"
 
 #: weko_search_ui/config.py:
-msgid "Official statistics"
-msgstr "政府統計"
+msgid "Mandarin Chinese"
+msgstr "北京語"
 
 #: weko_search_ui/config.py:
-msgid ""
-msgstr ""
+msgid "English"
+msgstr "英語"
 
 #: weko_search_ui/config.py:
-msgid ""
-msgstr ""
+msgid "French"
+msgstr "フランス語"
 
 #: weko_search_ui/config.py:
-msgid "Historical materials"
-msgstr "歴史資料"
+msgid "German"
+msgstr "ドイツ語"
+
+#: weko_search_ui/config.py:
+msgid "Japanese"
+msgstr "日本語"
+
+#: weko_search_ui/config.py:
+msgid "Korean"
+msgstr "韓国語"
+
+#: weko_search_ui/config.py:
+msgid "Russian"
+msgstr "ロシア語"
+
+
+
