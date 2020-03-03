@@ -42,7 +42,6 @@ class MainLayout extends React.Component {
         .then(res => res.json())
         .then(res => {
           this.convertData(res && res.aggregations ? res.aggregations : {})
-          console.log(res)
        })
        .catch(() => alert("Error in get list"));
   }
@@ -56,7 +55,6 @@ class MainLayout extends React.Component {
       }
       new_data[name] = item
     })
-    console.log("convert",new_data)
     this.setState({
       list_facet: new_data
     })
@@ -117,7 +115,6 @@ class MainLayout extends React.Component {
 }
 
 $(function () {
-  console.log("hello")
   ReactDOM.render(
     <MainLayout />,
     document.getElementById('app-facet-search')

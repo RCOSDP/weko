@@ -189,7 +189,6 @@ class ListResyncComponent extends React.Component {
     })
       .then(res => res.json())
       .then(res => {
-        console.log(res)
         this.setState({
           list_resource: res.data
         });
@@ -358,7 +357,6 @@ class CreateResyncComponent extends React.Component {
   handleSubmit(add_another) {
     const new_data = { ...this.state };
     delete new_data.tree_list;
-    console.log(new_data)
     const {mode} = this.props
     const url = mode ==="edit" ? urlUpdate+"/"+new_data.id : urlCreate
     fetch(url, {
@@ -695,7 +693,6 @@ class DetailResourceComponent extends React.Component {
     })
       .then(res => res.json())
       .then(res => {
-        console.log(res)
         if (res.success){
           alert("Sync Success")
           this.handleGetLogs()
@@ -732,7 +729,6 @@ class DetailResourceComponent extends React.Component {
   })
     .then(res => res.json())
     .then(res => {
-      console.log(res)
       if (res.success){
         this.setState({
           logs: res.logs || []
@@ -750,7 +746,6 @@ class DetailResourceComponent extends React.Component {
   }
 
   toggleRunning() {
-  console.log("asdfadsf")
     const {id} = this.state;
     const {is_running} = this.state;
     const url =urltoggleRunning+"/"+id
