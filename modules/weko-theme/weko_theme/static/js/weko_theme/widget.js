@@ -257,9 +257,9 @@ let PageBodyGrid = function () {
             headers: {
                 'Content-Type': 'application/json'
             },
-            success: (response) => {
-                let result = response.data;
-                let rssHtml = '';
+            success: function(response) {
+                var result = response.data;
+                var rssHtml = '';
                 if (term == 'Today') {
                     term = 0;
                 }
@@ -286,11 +286,11 @@ let PageBodyGrid = function () {
             headers: {
                 'Content-Type': 'application/json'
             },
-            success: (response) => {
-                let endpoints = response.endpoints;
-                let repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
-                let navbarID = 'widgetNav_' + widgetID;  // Re-use to build unique class ids
-                let navbarClass = settings.menu_orientation === 'vertical' ?
+            success: function(response) {
+                var endpoints = response.endpoints;
+                var repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
+                var navbarID = 'widgetNav_' + widgetID; // Re-use to build unique class ids
+                var navbarClass = settings.menu_orientation === 'vertical' ?
                     'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
                 let mainLayoutTitle = "";
                 let childNavBar = "";
@@ -399,7 +399,7 @@ let PageBodyGrid = function () {
                 widgetId = Number(node.widget_id);
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
-            setInterval(() => { this.setAccessCounterValue(); }, INTERVAL_TIME);
+            setInterval(function() { this.setAccessCounterValue(); }, INTERVAL_TIME);
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
@@ -408,8 +408,8 @@ let PageBodyGrid = function () {
           let innerID = 'widget_pages_menu_' + node.widget_id + '_' + index;  // Allow multiple menus
           id = 'id="' + innerID + '"';
           // Extract only the settings we want:
-          let menuSettings = {};
-          Object.keys(node).forEach((k) => {if (k.startsWith('menu_')) menuSettings[k] = node[k]});
+          var menuSettings = {};
+          Object.keys(node).forEach(function(k) { if (k.startsWith('menu_')) menuSettings[k] = node[k] });
           this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
         } else if (node.type === HEADER_TYPE) {
             $("#community_header").attr("hidden", true);
@@ -475,7 +475,7 @@ let PageBodyGrid = function () {
             url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language,
             method: 'GET',
             async: false,
-            success: (response) => {
+            success: function(response) {
                 data = response;
             }
         });
@@ -593,10 +593,10 @@ let WidgetTheme = function () {
     };
 
     this.buildBorderCss = function (borderSettings, borderColor) {
-        let borderStyle = '';
-        for (let [key, value] of Object.entries(borderSettings)) {
-            if (key && value) {
-                borderStyle += key + ': ' + value + '; ';
+        var borderStyle = '';
+        for (var key in borderSettings) {
+            if (key && borderSettings[key]) {
+                borderStyle += key + ': ' + borderSettings[key] + '; ';
             }
         }
         borderStyle += 'border-color:' + borderColor + '; ';
@@ -629,7 +629,7 @@ function getWidgetDesignSetting() {
         }
     }
     else {
-        let data = {
+        var data = {
             repository_id: community_id
         };
         url = '/api/admin/load_widget_design_setting/' + current_language;
@@ -645,7 +645,13 @@ function getWidgetDesignSetting() {
     }
 
     $.ajax({
-        ...request_param,
+        url: url,
+        type: "POST",
+        contentType: "application/json",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        data: JSON.stringify(data),
         success: function (data) {  // TODO: If no settings default to main layout
             if (data.error) {
                 console.log(data.error);
