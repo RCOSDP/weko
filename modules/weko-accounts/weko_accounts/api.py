@@ -184,7 +184,6 @@ class ShibUser(object):
         """
         Check and set relation role for Weko3 user by wekoSocietyAffiliation.
 
-        :param shib_role_auth: Shibboleth role authority name
         :return:
 
         """
@@ -215,7 +214,6 @@ class ShibUser(object):
         """
         Check and set relation role for Weko3 user by wekoSocietyAffiliation.
 
-        :param shib_role_auth: Shibboleth role authority name
         :return:
 
         """
@@ -228,7 +226,6 @@ class ShibUser(object):
         """
         Get and check-in Shibboleth attr data before login to system.
 
-        :param shib_role_auth: Shibboleth role authority name
         :return:
 
         """
