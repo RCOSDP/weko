@@ -45,7 +45,7 @@ from weko_theme.utils import get_design_layout
 from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
-from .config import WEKO_SEARCH_TYPE_DICT, WEKO_FACET_SEARCH_DICT_JSON
+from .config import WEKO_SEARCH_TYPE_DICT
 from .query import item_path_search_factory
 from .utils import check_permission, get_feedback_mail_list, \
     get_journal_info, parse_feedback_mail_data
@@ -253,12 +253,3 @@ def search_feedback_mail_list():
 def get_child_list(index_id=0):
     """Get child id list to index list display."""
     return jsonify(Indexes.get_child_id_list(index_id))
-
-
-@blueprint_api.route("/search/get_list_facet", methods=['GET'])
-def get_list_facet():
-    """Get child id list to index list display."""
-    return jsonify(current_app.config.get(
-        "WEKO_FACET_SEARCH_DICT_JSON",
-        WEKO_FACET_SEARCH_DICT_JSON
-    ))

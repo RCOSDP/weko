@@ -70,10 +70,10 @@ require([
     showJournalInfo();
     let urlVars = getUrlVars();
     if (urlVars !== {} && urlVars.hasOwnProperty("q") && urlVars.hasOwnProperty("search_type") && urlVars["search_type"] !== "2") {
-      let q = url.parse(urlVars["q"], true);
-      if (q) {
-        document.getElementById("q").value = url.parse(urlVars["q"], true);
-      }
+      let q = urlVars["q"];
+        if (q) {
+          document.getElementById("q").value = urlVars["q"];
+        }
     } else {
       document.getElementById("q").value = "";
     }
@@ -138,7 +138,10 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.is_login = $("#is_login").val() === 'True' ? true : false
 
   $rootScope.display_comment_jounal= function(){
-    $('#index_comment').append(format_comment($rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0].comment))
+    if ($rootScope.vm.invenioSearchResults.aggregations.path) {
+        $('#index_comment').append(format_comment($rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0].comment))
+
+    }
   }
 
 
@@ -360,7 +363,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
         console.log(error);
       }
     });
-    
+
     return search_results;
   }
 
