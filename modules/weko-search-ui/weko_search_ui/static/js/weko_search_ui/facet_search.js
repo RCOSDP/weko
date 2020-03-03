@@ -9,6 +9,7 @@ class MainLayout extends React.Component {
       list_facet: []
     }
     this.get_facet_search_list = this.get_facet_search_list.bind(this)
+    this.handleCheck = this.handleCheck.bind(this)
   }
 
   get_facet_search_list() {
@@ -32,6 +33,14 @@ class MainLayout extends React.Component {
     this. get_facet_search_list()
   }
 
+  handleCheck(params, value) {
+    let url = new URL(window.location.href)
+    url.searchParams.append(params, value)
+    let new_url = new URL(window.location.origin+ "/search")
+    new_url.search = url.search;
+    window.location.href = new_url.href
+  }
+
   render() {
     const {is_enable, list_facet} = this.state
     const url = new URL(window.location.href)
@@ -50,9 +59,9 @@ class MainLayout extends React.Component {
                   {
                     Object.keys(item.child).map((subname, k) => {
                       const subitem = item.child[subname]
-                      const value = url.searchParams.get(item.key) === subitem.key ? "true": "false"
+                      const value = url.searchParams.getAll(item.key).includes(subitem.key) ? true: false
                       return (
-                        <label><input type="checkbox" value={value}></input>{subitem.name}</label>
+                        <label><input type="checkbox" defaultChecked={value} onChange={() => {this.handleCheck(item.key, subitem.key)}}></input>{subitem.name}</label>
                       )
                     })
                   }
