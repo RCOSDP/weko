@@ -28,7 +28,6 @@ from invenio_records_rest.utils import allow_all
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
-from flask_babelex import gettext as _
 
 WEKO_SEARCH_UI_SEARCH_INDEX_API = '/api/index/'
 
