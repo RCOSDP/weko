@@ -647,8 +647,8 @@ function getWidgetDesignSetting() {
     }
 
     $.ajax({
-        url: url,
-        type: "GET",
+        url: request_param.url,
+        type: request_param.type,
         contentType: "application/json",
         headers: {
             "Content-Type": "application/json"

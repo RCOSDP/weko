@@ -543,7 +543,7 @@ function toObject(arr) {
         if ($scope.usageapplication_keys.length > 0) {
           return $scope.usageapplication_keys;
         }
-        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {\
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (value.type == 'array') {
             if (value.items.properties.hasOwnProperty('subitem_corresponding_usage_application_id')) {
@@ -970,20 +970,37 @@ function toObject(arr) {
         }
       }
 
+      $scope.findTextByElementId = function (elementId, value){
+        var options = document.getElementById(elementId).options;
+        for (i=0; i< options.length; i++){
+          if (options[i].value === value){
+            return options[i].text
+          }
+        }
+      }
+
+      $scope.findValueByElementId = function (elementId, text){
+        var options = document.getElementById(elementId).options;
+        for (i=0; i< options.length; i++){
+          if (options[i].text === text){
+            return options[i].value
+          }
+        }
+      }
       $scope.translationsInstitutePosition = function (value) {
-          return document.getElementById('institute_position_list').options.find(function(o) { return o.value === value }).text;
+          return $scope.findTextByElementId('institute_position_list', value)
       };
 
       $scope.translationsInstitutePositionByText = function (text) {
-          return document.getElementById('institute_position_list').options.find(function(o) { return o.text === text }).value;
+          return $scope.findValueByElementId('institute_position_list', text)
       };
 
       $scope.translationsPosition = function (value) {
-          return document.getElementById('institute_position_list').options.find(function(o) { return o.text === text }).value;
+          return $scope.findTextByElementId('position_list', value)
       };
 
       $scope.translationsPositionByText = function (text) {
-          return document.getElementById('position_list').options.find(function(o) { return o.text === text }).value;
+          return $scope.findValueByElementId('position_list', text)
       };
 
       $scope.updatePositionKey = function() {
@@ -2130,6 +2147,7 @@ function toObject(arr) {
       $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction, approvalMailSubKey) {
         let result = true;
         $.ajax({
+          context: this,
           url: '/api/items/validate_email_and_index',
           headers: {
             'Content-Type': 'application/json'
@@ -2504,6 +2522,12 @@ function toObject(arr) {
         delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_doi;
         delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_hdl;
         delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_uri;
+        delete $rootScope.recordsVM.invenioRecordsModel.updated_date;
+        delete $rootScope.recordsVM.invenioRecordsModel.created_date;
+        delete $rootScope.recordsVM.invenioRecordsModel.persistent_identifier_doi;
+        delete $rootScope.recordsVM.invenioRecordsModel.persistent_identifier_h;
+        delete $rootScope.recordsVM.invenioRecordsModel.ranking_page_url;
+        delete $rootScope.recordsVM.invenioRecordsModel.belonging_index_info;
       }
     }
     // Inject depedencies
