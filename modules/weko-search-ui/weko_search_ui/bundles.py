@@ -54,13 +54,11 @@ js = Bundle(
 
 weko_admin_item_import_js = Bundle(
     'js/weko_search_ui/import.js',
-    # filters='requirejs',
     output="gen/import.js"
 )
 
 weko_moment_js = Bundle(
     'js/weko_search_ui/moment.min.js',
-    # filters='requirejs',
     output="gen/moment.min.js"
 )
 
@@ -72,7 +70,6 @@ weko_admin_item_import_css = Bundle(
 
 weko_facet_search_js = Bundle(
     'js/weko_search_ui/facet_search.js',
-    # filters='requirejs',
     output="gen/facet_search.js"
 )
 

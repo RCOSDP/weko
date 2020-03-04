@@ -106,14 +106,14 @@ def set_expand():
             ),
             current_user.get_id()
         )
-        if session.get(key):
-            session_data = session.get(key)
+        session_data = session.get(key) or []
+        if session_data:
             if index_id in session_data:
                 session_data.remove(index_id)
             else:
                 session_data.append(index_id)
         else:
-            session_data = [index_id]
+            session_data.append(index_id)
         session[key] = session_data
 
     return jsonify(success=True)

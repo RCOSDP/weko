@@ -28,7 +28,6 @@ from invenio_records_rest.utils import allow_all
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
-
 WEKO_SEARCH_UI_SEARCH_INDEX_API = '/api/index/'
 
 WEKO_SEARCH_UI_BASE_TEMPLATE = 'weko_search_ui/base.html'
@@ -127,10 +126,10 @@ SEARCH_UI_SEARCH_INDEX = '{}-weko'.format(index_prefix)
 RECORDS_REST_FACETS = dict()
 
 WEKO_FACETED_SEARCH_MAPPING = {
-  'accessRights': 'accessRights',
-  'language': 'language',
-  'distributor': 'contributor.contributorName',
-  'dataType': 'description.value'
+    'accessRights': 'accessRights',
+    'language': 'language',
+    'distributor': 'contributor.contributorName',
+    'dataType': 'description.value'
 }
 
 RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(

@@ -19,7 +19,6 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
-import os
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
