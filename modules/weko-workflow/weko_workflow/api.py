@@ -28,7 +28,7 @@ from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from sqlalchemy import asc, desc, not_, or_, types
+from sqlalchemy import asc, desc, or_, types
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
@@ -1010,8 +1010,8 @@ class WorkActivity(object):
             created_to = conditions.get('createdto')
 
             if title:
-                query = query.filter(
-                    _Activity.title.in_(title))
+                query = query.filter(or_(
+                    _Activity.title.like(i + '%') for i in title))
             if user:
                 query = query.join(
                     User, User.id == _Activity.activity_login_user).filter(
@@ -1050,19 +1050,18 @@ class WorkActivity(object):
         """
         self_user_id = int(current_user.get_id())
         self_group_ids = [role.id for role in current_user.roles]
-        if not is_admin and not is_community_admin:
-            query = query \
-                .filter(_Activity.activity_login_user == self_user_id)
         query = query \
+            .filter(_Activity.activity_login_user == self_user_id) \
             .filter(_FlowAction.action_id == _Activity.action_id) \
             .filter(((_FlowActionRole.action_user != self_user_id)
                      & (_FlowActionRole.action_user_exclude == '0'))
                     | (_FlowActionRole.action_role.notin_(self_group_ids)
                        & (_FlowActionRole.action_role_exclude == '0'))) \
             .filter((_Activity.activity_status ==
-                    ActivityStatusPolicy.ACTIVITY_BEGIN)
+                     ActivityStatusPolicy.ACTIVITY_BEGIN)
                     | (_Activity.activity_status ==
-                    ActivityStatusPolicy.ACTIVITY_MAKING))
+                       ActivityStatusPolicy.ACTIVITY_MAKING))
+
         return query
 
     def query_activites_by_tab_is_all(self, query, is_admin, is_community_admin,
