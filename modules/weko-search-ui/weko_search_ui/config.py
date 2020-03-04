@@ -125,12 +125,20 @@ SEARCH_UI_SEARCH_INDEX = '{}-weko'.format(index_prefix)
 
 # set item type aggs
 RECORDS_REST_FACETS = dict()
+
+WEKO_FACETED_SEARCH_MAPPING = {
+  'accessRights': 'accessRights',
+  'language': 'language',
+  'distributor': 'contributor.contributorName',
+  'dataType': 'description.value'
+}
+
 RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
     aggs=dict(
         accessRights=dict(terms=dict(
-            field='accessRights')),
+            field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])),
         language=dict(terms=dict(
-            field='language')),
+            field=WEKO_FACETED_SEARCH_MAPPING['language'])),
         distributor=dict(
             filter=dict(
                 term={"contributor.@attributes.contributorType": "Distributor"}
@@ -138,10 +146,9 @@ RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
             aggs=dict(
                 distributor=dict(
                     terms=dict(
-                        field='contributor.contributorName'))
+                        field=WEKO_FACETED_SEARCH_MAPPING['distributor']))
             )
         ),
-
         dataType=dict(
             filter=dict(
                 term={"description.descriptionType": "Other"}
@@ -149,15 +156,15 @@ RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
             aggs=dict(
                 dataType=dict(
                     terms=dict(
-                        field='description.value'))
+                        field=WEKO_FACETED_SEARCH_MAPPING['dataType']))
             )
         )
     ),
     post_filters=dict(
-        accessRights=terms_filter('accessRights'),
-        language=terms_filter('language'),
-        distributor=terms_filter('contributor.contributorName'),
-        dataType=terms_filter('description.value'),
+        accessRights=terms_filter(WEKO_FACETED_SEARCH_MAPPING['accessRights']),
+        language=terms_filter(WEKO_FACETED_SEARCH_MAPPING['language']),
+        distributor=terms_filter(WEKO_FACETED_SEARCH_MAPPING['distributor']),
+        dataType=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType']),
     )
 )
 

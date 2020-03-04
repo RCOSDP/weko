@@ -181,6 +181,20 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         size = request.values.get('size', 20, type=int)
         community_id = request.values.get('community')
 
+        params = {}
+        if current_app.config['RECORDS_REST_FACETS'] and\
+            current_app.config['SEARCH_UI_SEARCH_INDEX'] and\
+                'post_filters' in current_app.config['RECORDS_REST_FACETS'][
+                        current_app.config['SEARCH_UI_SEARCH_INDEX']]:
+            post_filters = current_app.config['RECORDS_REST_FACETS'][
+                        current_app.config['SEARCH_UI_SEARCH_INDEX']][
+                'post_filters']
+
+            for param in post_filters:
+                value = request.args.getlist(param)
+                if value:
+                    params[param] = value
+
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
         urlkwargs = dict()
@@ -194,6 +208,12 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             urlkwargs['q'] = query
 
         # Execute search
+
+        for param in params:
+            from .config import WEKO_FACETED_SEARCH_MAPPING
+            query_key = WEKO_FACETED_SEARCH_MAPPING[param]
+            search = search.post_filter({'terms': {query_key: params[param]}})
+
         search_result = search.execute()
 
         # Generate links for prev/next
@@ -293,7 +313,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 cn = hit['_source']['control_number']
                 if index_info.item_custom_sort.get(cn):
                     hit['_source']['custom_sort'] = {
-                        str(index_info.id): str(index_info.item_custom_sort.get(cn))}
+                        str(index_info.id):
+                            str(index_info.item_custom_sort.get(cn))}
             except Exception:
                 pass
 
