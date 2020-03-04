@@ -105,12 +105,16 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
-#: weko_accounts/api.py:190
+#: weko_accounts/api.py:202
 msgid "Failed to get attribute."
 msgstr ""
 
-#: weko_accounts/api.py:197
+#: weko_accounts/api.py:209
 msgid "Invalid attribute."
+msgstr ""
+
+#: weko_accounts/api.py:223
+msgid "Failed to login."
 msgstr ""
 
 #~ msgid "%(module_name)s"

@@ -190,23 +190,20 @@ class ShibUser(object):
         error = ''
 
         if not self.user:
-            error = _('Can\'t get relation Weko User.')
+            error = _(r"Can't get relation Weko User.")
             return False, error
-        # TODO: check GakuNin User
-        if self.shib_user:
+
+        shib_role_auth = self.shib_attr.get('wekoSocietyAffiliation', '')
+        if not shib_role_auth:
+            current_app.logger.debug(_("Failed to get attribute."))
             return self._set_weko_user_role(current_app.config[
                                             'WEKO_GENERAL_ROLE'])
-
-        shib_role_auth = self.shib_attr.get('wekoSocietyAffiliation', None)
-        if not shib_role_auth:
-            error = _('Failed to get attribute.')
-            return False, error
 
         shib_role_config = current_app.config['SHIB_ACCOUNTS_ROLE_RELATION']
         if shib_role_auth in shib_role_config.keys():
             return self._set_weko_user_role(shib_role_config[shib_role_auth])
         else:
-            error = _('Invalid attribute.')
+            error = _("Invalid attribute.")
 
         return False, error
 
@@ -220,7 +217,7 @@ class ShibUser(object):
         if self._get_site_license():
             return True, ''
         else:
-            return False, _('Invalid Site License.')
+            return False, _('Failed to login.')
 
     def check_in(self):
         """
@@ -229,6 +226,7 @@ class ShibUser(object):
         :return:
 
         """
+        error = ''
         check_role, error = self.assign_user_role()
         if not check_role:
             return error
