@@ -38,8 +38,8 @@ from .models import WidgetDesignPage, WidgetDesignPageMultiLangData, \
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
     convert_data_to_design_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
-    get_elasticsearch_result_by_date, update_general_item, \
-    validate_main_widget_insertion
+    delete_widget_cache, get_elasticsearch_result_by_date, \
+    update_general_item, validate_main_widget_insertion
 
 
 class WidgetItemServices:
@@ -586,7 +586,8 @@ class WidgetDesignServices:
         page_id = data.get('page_id')  # Save design to page rather than layout
         setting_data = data.get('settings')
         try:
-            json_data = json.loads(setting_data) if isinstance(setting_data, str) else setting_data
+            json_data = json.loads(setting_data) \
+                if isinstance(setting_data, str) else setting_data
             if isinstance(json_data, list):
                 for item in json_data:
                     widget_item = \
@@ -607,6 +608,8 @@ class WidgetDesignServices:
                 result["result"] = WidgetDesignPage.update_settings(
                     page_id, setting_data)
             elif repository_id and setting_data and valid:  # Main design
+                # Delete cache
+                delete_widget_cache(repository_id)
                 if WidgetDesignSetting.select_by_repository_id(repository_id):
                     result["result"] = WidgetDesignSetting.update(
                         repository_id, setting_data)

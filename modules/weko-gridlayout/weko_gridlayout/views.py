@@ -27,7 +27,7 @@ from .models import WidgetDesignPage
 from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
-    get_system_language, get_widget_type_list
+    get_system_language, get_widget_type_list, get_widget_design_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -113,8 +113,8 @@ def load_widget_design_setting(current_language=''):
     """
     data = request.get_json()
     repository_id = data.get('repository_id')
-    return jsonify(WidgetDesignServices.get_widget_design_setting(
-        repository_id, current_language or get_default_language()))
+    response = get_widget_design_setting(repository_id, current_language)
+    return response
 
 
 @blueprint_api.route(
