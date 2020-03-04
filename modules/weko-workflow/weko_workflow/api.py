@@ -1127,7 +1127,7 @@ class WorkActivity(object):
         if not is_admin and not is_community_admin:
             query = query.filter(
                     _FlowAction.action_id == _Activity.action_id) \
-                            .filter(_FlowActionRole.id is None)
+                            .filter(_FlowActionRole.id.is_(None))
         return query
 
     def get_activity_list(self, community_id=None, conditions=None):
@@ -1663,7 +1663,6 @@ class UpdateItem(object):
 
         indexer = WekoIndexer()
         indexer.update_relation_info(record, relation_data)
-
 
 class GetCommunity(object):
     """Get Community Info."""
