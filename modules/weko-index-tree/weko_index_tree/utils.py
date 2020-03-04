@@ -121,15 +121,9 @@ def get_tree_json(index_list, root_id):
 
     def get_user_list_expand():
         """Get list index expand."""
-        if not current_user.get_id():
-            return []
-
-        key = "{}{}".format(
-            current_app.config.get(
-                "WEKO_INDEX_TREE_STATE_PREFIX",
-                WEKO_INDEX_TREE_STATE_PREFIX
-            ),
-            current_user.get_id()
+        key = current_app.config.get(
+            "WEKO_INDEX_TREE_STATE_PREFIX",
+            WEKO_INDEX_TREE_STATE_PREFIX
         )
         return session.get(key, [])
 
@@ -506,16 +500,3 @@ def get_index_id(activity_id):
     else:
         index_tree_id = None
     return index_tree_id
-
-
-def remove_state_expand(user_id):
-    """Remove expand state after logout."""
-    key = "{}{}".format(
-        current_app.config.get(
-            "WEKO_INDEX_TREE_STATE_PREFIX",
-            WEKO_INDEX_TREE_STATE_PREFIX
-        ),
-        user_id
-    )
-    if session.get(key):
-        session.pop(key)
