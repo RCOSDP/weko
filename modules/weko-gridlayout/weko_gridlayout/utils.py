@@ -339,7 +339,7 @@ def _build_new_arrivals_setting_data(result, setting):
         setting.get('new_dates')) or config.WEKO_GRIDLAYOUT_DEFAULT_NEW_DATE
     result['display_result'] = Markup.escape(setting.get(
         'display_result')) or config.WEKO_GRIDLAYOUT_DEFAULT_DISPLAY_RESULT
-    result['rss_feed'] = Markup.escape(setting.get('rss_feed')) or False
+    result['rss_feed'] = setting.get('rss_feed') or False
 
 
 def _build_notice_setting_data(result, setting):

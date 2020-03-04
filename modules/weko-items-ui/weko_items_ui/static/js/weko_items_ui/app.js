@@ -16,6 +16,201 @@ require([
   });
 });
 
+/**
+ * Custom bs-datepicker.
+ * Default bs-datepicker: just support one pattern for input.
+ * Custom bs-datepicker: support validate three pattern.
+ * Used way:
+ *  templateUrl: /static/templates/weko_deposit/datepicker_multi_format.html
+ *  customFormat: enter your pattern.
+ *    if it none, pattern are yyyy-MM-dd, yyyy-MM, yyyy.
+*/
+var Pattern = {
+  yyyy: '\\d{4}',
+  MM: '(((0)[1-9])|((1)[0-2]))',
+  dd: '([0-2][0-9]|(3)[0-1])',
+  sep: '(-)'
+}
+var Format = {
+  yyyyMMdd: '^(' + Pattern.yyyy + Pattern.sep +
+    Pattern.MM + Pattern.sep + Pattern.dd + ')$',
+  yyyyMM: '^(' + Pattern.yyyy + Pattern.sep + Pattern.MM + ')$',
+  yyyy: '^(' + Pattern.yyyy + ')$',
+}
+var CustomBSDatePicker = {
+  option: {
+    element: undefined,
+    defaultFormat: Format.yyyyMMdd + '|' + Format.yyyyMM + '|' + Format.yyyy,
+    cls: 'multi_date_format'
+  },
+  /**
+   * Clear validate status for this element.
+  */
+  init: function () {
+    let $element = $(CustomBSDatePicker.option.element);
+    let $this_parent = $element.parent().parent();
+    $element.removeClass('ng-invalid ng-invalid-date ng-invalid-parse');
+    $element.next().next().addClass('hide');
+    $this_parent.removeClass('has-error');
+  },
+  /**
+   * Get format from defined user on form schema.
+   * If user don't defined, this pattern get default pattern.
+   * Default pattern: option.defaultFormat.
+   * @return {String} return pattern.
+  */
+  getPattern: function () {
+    let def_pattern = CustomBSDatePicker.option.defaultFormat;
+    let $element = $(CustomBSDatePicker.option.element);
+    let pattern = $element.data('custom-format');
+    return (pattern.length == 0) ? def_pattern : pattern;
+  },
+  /**
+   * Check data input valid with defined pattern.
+   * @return {Boolean} return true if value matched
+  */
+  isMatchRegex: function () {
+    let $element = $(CustomBSDatePicker.option.element);
+    let val = $element.val();
+    let pattern = CustomBSDatePicker.getPattern();
+    let reg = new RegExp(pattern);
+    return reg.test(val);
+  },
+  /**
+   * Check input required.
+   * @return {Boolean} return true if input required
+  */
+  isRequired: function () {
+    let $lement = $(CustomBSDatePicker.option.element);
+    let $this_parent = $lement.parent().parent();
+    let label = $this_parent.find('label');
+    return label.hasClass('field-required');
+  },
+  /**
+  * Get the number of days in any particular month
+  * @param  {number} m The month (valid: 0-11)
+  * @param  {number} y The year
+  * @return {number}   The number of days in the month
+  */
+  daysInMonth: function (m, y) {
+    switch (m) {
+      case 1:
+        return (y % 4 == 0 && y % 100) || y % 400 == 0 ? 29 : 28;
+      case 8: case 3: case 5: case 10:
+        return 30;
+      default:
+        return 31
+    }
+  },
+  /**
+  * Check if a date is valid
+  * @param  {number}  d The day
+  * @param  {number}  m The month
+  * @param  {number}  y The year
+  * @return {Boolean}   Returns true if valid
+  */
+  isValidDate: function (d, m, y) {
+    let month = parseInt(m, 10) - 1;
+    let check_min_month = m >= 0;
+    let check_max_month = m < 12;
+    let check_min_day = d > 0;
+    let check_max_day = d <= CustomBSDatePicker.daysInMonth(month, y);
+    return check_min_month && check_max_month && check_min_day && check_max_day;
+  },
+  /**
+   * Check all validate for this.
+   * All validation valid => return true.
+   * @return {Boolean} Returns true if valid
+  */
+  isValidate: function () {
+    let $element = $(CustomBSDatePicker.option.element);
+    let val = $element.val();
+    if (val.length == 0) {
+      //Required input invalid.
+      if (CustomBSDatePicker.isRequired()) return false;
+    } else {
+      //Data input is not match with defined pattern.
+      if (!CustomBSDatePicker.isMatchRegex()) return false;
+      //Check day by month and year.
+      let arr = val.split('-');
+      if (arr.length == 3 && !CustomBSDatePicker.isValidDate(arr[2], arr[1], arr[0])) return false;
+    }
+    return true;
+  },
+  /**
+   * Check validate and apply css for this field.
+  */
+  validate: function () {
+    let $element = $(CustomBSDatePicker.option.element);
+    let $this_parent = $element.parent().parent();
+    if (!CustomBSDatePicker.isValidate()) {
+      $element.next().next().removeClass('hide');
+      $this_parent.addClass('has-error');
+    }
+  },
+  /**
+   * This is mean function in order to validate.
+   * @param {[type]} element date field
+  */
+  process: function (element) {
+    CustomBSDatePicker.option.element = element;
+    CustomBSDatePicker.init();
+    CustomBSDatePicker.validate();
+  },
+  /**
+  * Excute this function before 'Save' and 'Next' processing
+  * Get data from fields in order to fill to model.
+  * @param  {[type]}  model
+  * @param  {[Boolean]}  reverse
+  */
+  setDataFromFieldToModel: function (model, reverse) {
+    let cls = CustomBSDatePicker.option.cls;
+    let element_arr = $('.' + cls);
+    $.each(element_arr, function (ind, val) {
+      let ng_model = $(val).attr('ng-model').replace(/']/g, '');
+      let arr = ng_model.split("['");
+      //Init attribute of model object if them undefine.
+      let str_code = '';
+      $.each(arr, function (ind_01, val_02) {
+        str_code += (ind_01 == 0) ? val_02 : "['" + val_02 + "']";
+        let chk_str_code = '';
+        if (ind_01 != arr.length - 1) {
+          chk_str_code = "if(!" + str_code + ") " + str_code + "={};";
+        }
+        eval(chk_str_code);
+      });
+      if (reverse) {
+        //Fill data from model to fields
+        str_code = "$(val).val(" + $(val).attr('ng-model') + ")";
+        eval(str_code);
+      } else {
+        //Fill data from fields to model
+        str_code = $(val).attr('ng-model') + '=$(val).val()';
+        eval(str_code);
+      }
+    });
+  },
+  /**
+   * Get date fields name which invalid.
+   * @return {array} Returns name list.
+  */
+  getInvalidFieldNameList: function () {
+    let cls = CustomBSDatePicker.option.cls;
+    let element_arr = $('.' + cls);
+    let result = [];
+    $.each(element_arr, function (ind, val) {
+      let $element = $(val);
+      let $parent = $element.parent().parent();
+      if ($parent.hasClass('has-error')) {
+        let name = $element.attr('name');
+        let label = $("label[for=" + name + "]").text().trim();
+        result.push(label);
+      }
+    });
+    return result;
+  }
+}
+
 // script for Contributor
 var username_arr = [];
 var email_arr = [];
@@ -1200,6 +1395,9 @@ function handleSharePermission(value) {
         // Delay 3s after page render
         setTimeout(() => {
           $scope.autofillJournal();
+          //Case edit: fill data to fields when page loaded.
+          let model = $rootScope.recordsVM.invenioRecordsModel;
+          CustomBSDatePicker.setDataFromFieldToModel(model, true);
         }, 3000);
 
         // Auto fill user profile
@@ -1736,6 +1934,9 @@ function handleSharePermission(value) {
       };
 
       $scope.validateInputData = function (activityId, steps, isAutoSetIndexAction) {
+        let schemaForm = $scope.depositionForm.$error.schemaForm;
+        //Get error of custom bs-datepicker fields.
+        let listCusItemErrors = CustomBSDatePicker.getInvalidFieldNameList();
         if (!this.validateRequiredItem()) {
           // Check required item
           return false;
@@ -1743,7 +1944,7 @@ function handleSharePermission(value) {
           return false;
         } else if (!this.validateFieldMaxItems()) {
           return false;
-        } else if ($scope.depositionForm.$invalid) {
+        } else if (($scope.depositionForm.$invalid && schemaForm) || listCusItemErrors.length > 0) {
           // Check containing control or form is invalid
 
           let recordsForm = $rootScope.recordsVM.invenioRecordsForm;
@@ -1751,24 +1952,22 @@ function handleSharePermission(value) {
           for (let i = 0; i < recordsForm.length; i++) {
             itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
           }
-
-          let schemaForm = $scope.depositionForm.$error.schemaForm;
+          //Get error from schemaForm
           let listItemErrors = [];
-          for (let i = 0; i < schemaForm.length; i++) {
-            let name = schemaForm[i].$name;
-            if (itemsDict.hasOwnProperty(name)) {
-              name = itemsDict[name];
+          if(schemaForm){
+            for (let i = 0; i < schemaForm.length; i++) {
+              let name = schemaForm[i].$name;
+              if (itemsDict.hasOwnProperty(name)) {
+                name = itemsDict[name];
+              }
+              listItemErrors.push(name);
             }
-            listItemErrors.push(name);
           }
-
+          //Merge two array error to one array error.
+          listItemErrors = listItemErrors.concat(listCusItemErrors);
           // Generate error message and show modal
           let message = $("#validate_error").val() + '<br/><br/>';
-          message += listItemErrors[0];
-          for (let k = 1; k < listItemErrors.length; k++) {
-            let subMessage = ', ' + listItemErrors[k];
-            message += subMessage;
-          }
+          message += listItemErrors.join(', ');
           $("#inputModal").html(message);
           $("#allModal").modal("show");
           return false;
@@ -2154,6 +2353,11 @@ function handleSharePermission(value) {
       };
 
       $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail) {
+        //When press 'Next' or 'Save' button, setting data for model.
+        //This function is called in updataDataJson function.
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        CustomBSDatePicker.setDataFromFieldToModel(model, false);
+
         var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
         let permission = false;
         $scope.$broadcast('schemaFormValidate');
@@ -2206,6 +2410,9 @@ function handleSharePermission(value) {
         };
         InvenioRecordsAPI.request(request).then(
           function success(response) {
+            //When save: date fields data is lost, so this will fill data.
+            let model = $rootScope.recordsVM.invenioRecordsModel;
+            CustomBSDatePicker.setDataFromFieldToModel(model, true);
             addAlert(response.data.msg);
           },
           function error(response) {
