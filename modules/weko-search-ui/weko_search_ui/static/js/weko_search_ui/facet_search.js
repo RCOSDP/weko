@@ -33,20 +33,20 @@ class MainLayout extends React.Component {
   }
 
   get_facet_search_list() {
-      fetch(urlGetDataFacet, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        }
+    fetch(urlGetDataFacet, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+      .then(res => res.json())
+      .then(res => {
+        this.convertData(res && res.aggregations ? res.aggregations : {})
       })
-        .then(res => res.json())
-        .then(res => {
-          this.convertData(res && res.aggregations ? res.aggregations : {})
-       })
-       .catch(() => alert("Error in get list"));
+      .catch(() => alert("Error in get list"));
   }
 
-  convertData(data){
+  convertData(data) {
     let new_data = {}
     Object.keys(data).map((name, k) => {
       let item = data[name]
@@ -60,26 +60,26 @@ class MainLayout extends React.Component {
     })
   }
 
-  componentDidMount(){
-    this. get_facet_search_list()
+  componentDidMount() {
+    this.get_facet_search_list()
   }
 
   handleCheck(params, value) {
     let url = new URL(window.location.href)
     if (url.searchParams.has(params) && url.searchParams.getAll(params).includes(value)) {
-        let new_value = url.searchParams.getAll(params).filter( i => i!==value)
-        url.searchParams.delete(params)
-        new_value.map(v => {url.searchParams.append(params, v)})
+      let new_value = url.searchParams.getAll(params).filter(i => i !== value)
+      url.searchParams.delete(params)
+      new_value.map(v => { url.searchParams.append(params, v) })
     } else {
-        url.searchParams.append(params, value)
+      url.searchParams.append(params, value)
     }
-    let new_url = new URL(window.location.origin+ "/search")
+    let new_url = new URL(window.location.origin + "/search")
     new_url.search = url.search;
     window.location.href = new_url.href
   }
 
   render() {
-    const {is_enable, list_facet} = this.state
+    const { is_enable, list_facet } = this.state
     const url = new URL(window.location.href)
     return (
       <div>
@@ -87,23 +87,23 @@ class MainLayout extends React.Component {
           {
             Object.keys(list_facet).map((name, key) => {
               const item = list_facet[name]
-              return(
+              return (
                 <div className="panel panel-default" key={key}>
                   <div className="panel-heading clearfix">
                     <h3 className="panel-title">{label[name]}</h3>
                   </div>
                   <div className="panel-body index-body">
                     {
-                      item.buckets && item.buckets.map((subitem,k) => {
-                        const value = url.searchParams.getAll(name).includes(subitem.key) ? true: false
+                      item.buckets && item.buckets.map((subitem, k) => {
+                        const value = url.searchParams.getAll(name).includes(subitem.key) ? true : false
                         return (
                           <label>
                             <input
                               type="checkbox"
                               defaultChecked={value}
-                              onChange={() => {this.handleCheck(name, subitem.key)}}
+                              onChange={() => { this.handleCheck(name, subitem.key) }}
                             ></input>
-                              {label[subitem.key] || subitem.key}({subitem.doc_count})
+                            {label[subitem.key] || subitem.key}({subitem.doc_count})
                           </label>
                         )
                       })
