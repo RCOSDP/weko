@@ -224,7 +224,7 @@ let PageBodyGrid = function () {
             let hideRest = (languageDescription.hide_the_rest) ? languageDescription.hide_the_rest : HIDE_REST_DEFAULT;
             let readMore = (languageDescription.read_more) ? languageDescription.read_more : READ_MORE_DEFAULT;
             templateWriteMoreNotice = '</br>' +
-                '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
+                '<div id="' + moreDescriptionID + '" class="hidden">' + moreDescription + '</div>' +
                 '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
                 linkID + '\',\'' + escapeHtml(readMore) + '\', \'' + escapeHtml(hideRest) + '\')">' + readMore +
                 '</a>';
@@ -664,7 +664,6 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
 function getWidgetDesignSetting() {
     let community_id = $("#community-id").text();
     let current_language = $("#current_language").val();
-    let ldsSpinner = $(".lds-ring-background");
     let url;
     if (!community_id) {
         community_id = DEFAULT_REPOSITORY;
@@ -702,14 +701,13 @@ function getWidgetDesignSetting() {
         }
     }
 
-    ldsSpinner.removeClass("hidden");
+    $(".lds-ring-background").removeClass("hidden");
     $.ajax({
         ...request_param,
         success: function (data) {  // TODO: If no settings default to main layout
             if (data.error) {
                 console.log(data.error);
                 toggleWidgetUI();
-                ldsSpinner.addClass("hidden");
                 return;
             } else {
                 let widgetList = data['widget-settings'];
@@ -728,22 +726,28 @@ function getWidgetDesignSetting() {
                         });
                     });
 
-                    new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
+                    let ortherSensor  = new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
                       $('.grid-stack-item-content > .panel-body').each(function () {
                         let _this = $(this);
-                        autoAdjustWidgetHeight("", pageBodyGrid, _this)
+                        autoAdjustWidgetHeight("", pageBodyGrid, _this);
                       });
                     });
 
-                    new ResizeSensor($('#main_contents'), function () {
+                    let mainContentSensor = new ResizeSensor($('#main_contents'), function () {
                       let mainContent = $('#main_contents');
                       autoAdjustWidgetHeight(mainContent, pageBodyGrid);
                     });
 
-                  new ResizeSensor($('#header_content'), function () {
-                    let headerContent = $('#header_content').closest(".grid-stack-item");
-                    autoAdjustWidgetHeight(headerContent, pageBodyGrid);
-                  });
+
+
+                    let headerSensor = new ResizeSensor($('#header_content'), function () {
+                        let headerContent = $('#header_content').closest(".grid-stack-item");
+                        autoAdjustWidgetHeight(headerContent, pageBodyGrid);
+                    });
+
+                    removeSensorListener(ortherSensor);
+                    removeSensorListener(mainContentSensor);
+                    removeSensorListener(headerSensor);
 
                 }
                 else {  // Pages are able to not have main content, so hide if widget is not present
@@ -758,9 +762,14 @@ function getWidgetDesignSetting() {
                 }
             }
             toggleWidgetUI();
-            ldsSpinner.addClass("hidden");
         }
     });
+}
+
+function removeSensorListener(sensor) {
+    setTimeout(function(){
+        sensor.detach();
+    }, 5000);
 }
 
 function toggleWidgetUI() {
@@ -769,17 +778,26 @@ function toggleWidgetUI() {
     });
     $('footer#footer').css("display", "block");
     $('footer-fix#footer').remove();
+    setTimeout(function(){
+        $(".lds-ring-background").addClass("hidden");
+    }, 1000);
+
 }
 
 function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
     let moreDes = $("#" + moreDescriptionID);
+    let textLink = $("#" + linkID);
     if (moreDes) {
-        if (moreDes.is(":hidden")) {
-            moreDes.show();
-            $("#" + linkID).text(hideRest);
+        let parrentElement = moreDes.parent();
+        if (moreDes.hasClass("hidden")) {
+            moreDes.removeClass("hidden");
+            textLink.text(hideRest);
+            parrentElement.css('overflow-y', 'auto');
         } else {
-            moreDes.hide();
-            $("#" + linkID).text(readMore);
+            moreDes.addClass("hidden");
+            parrentElement.css('overflow-y', 'hidden');
+            parrentElement.css('padding-top', '30px');
+            textLink.text(readMore);
         }
     }
 }
