@@ -66,7 +66,13 @@ class MainLayout extends React.Component {
 
   handleCheck(params, value) {
     let url = new URL(window.location.href)
-    url.searchParams.append(params, value)
+    if (url.searchParams.has(params) && url.searchParams.getAll(params).includes(value)) {
+        let new_value = url.searchParams.getAll(params).filter( i => i!==value)
+        url.searchParams.delete(params)
+        new_value.map(v => {url.searchParams.append(params, v)})
+    } else {
+        url.searchParams.append(params, value)
+    }
     let new_url = new URL(window.location.origin+ "/search")
     new_url.search = url.search;
     window.location.href = new_url.href
