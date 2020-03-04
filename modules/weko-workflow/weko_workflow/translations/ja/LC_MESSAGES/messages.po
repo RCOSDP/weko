@@ -79,7 +79,7 @@ msgstr "エラー"
 
 #: weko_workflow/models.py:85
 msgid "action_canceled"
-msgstr "取り消し"
+msgstr "中止"
 
 #: weko_workflow/models.py:136
 msgid "activity_active"
