@@ -60,7 +60,8 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
     to_files_js, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
-    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
+    update_sub_items_by_user_role, validate_form_input_data, \
+    validate_save_title_and_share_user_id, validate_user, \
     validate_user_mail_and_index
 
 blueprint = Blueprint(
@@ -1226,4 +1227,20 @@ def corresponding_activity_list():
             get_corresponding_usage_activities(current_user.get_id())
         result = {'usage_application': usage_application_list,
                   'output_report': output_report_list}
+    return jsonify(result)
+
+
+@blueprint_api.route('/save_title_and_share_user_id', methods=['POST'])
+@login_required
+def save_title_and_share_user_id():
+    """Validate input title and shared user id for activity.
+
+    :return:
+    """
+    result = {
+        "is_valid": True,
+        "error": ""
+    }
+    data = request.get_json()
+    validate_save_title_and_share_user_id(result, data)
     return jsonify(result)

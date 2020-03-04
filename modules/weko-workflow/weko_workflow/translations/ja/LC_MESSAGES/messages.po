@@ -78,7 +78,6 @@ msgid "action_error"
 msgstr "エラー"
 
 #: weko_workflow/models.py:85
-#, fuzzy
 msgid "action_canceled"
 msgstr "取り消し"
 
@@ -507,4 +506,8 @@ msgstr "閉じる"
 
 #~ msgid "Create WorkFlow"
 #~ msgstr "フロー作成"
+
+msgid "Add Filter"
+msgstr "フィルターを追加"
+
 
