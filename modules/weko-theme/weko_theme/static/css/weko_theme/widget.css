@@ -171,7 +171,8 @@
   height: 100vh;
   z-index: 1000;
   background-color: white;
-  opacity: 0.5;
+  opacity: 1;
+  position: absolute;
 }
 
 .lds-ring {
@@ -197,4 +198,8 @@
     opacity: 1;
     transform: rotate(359deg);
   }
+}
+
+.panel-body.without-after-element:after {
+  content: none;
 }

@@ -726,29 +726,7 @@ function getWidgetDesignSetting() {
                         });
                     });
 
-                    let ortherSensor  = new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
-                      $('.grid-stack-item-content > .panel-body').each(function () {
-                        let _this = $(this);
-                        autoAdjustWidgetHeight("", pageBodyGrid, _this);
-                      });
-                    });
-
-                    let mainContentSensor = new ResizeSensor($('#main_contents'), function () {
-                      let mainContent = $('#main_contents');
-                      autoAdjustWidgetHeight(mainContent, pageBodyGrid);
-                    });
-
-
-
-                    let headerSensor = new ResizeSensor($('#header_content'), function () {
-                        let headerContent = $('#header_content').closest(".grid-stack-item");
-                        autoAdjustWidgetHeight(headerContent, pageBodyGrid);
-                    });
-
-                    removeSensorListener(ortherSensor);
-                    removeSensorListener(mainContentSensor);
-                    removeSensorListener(headerSensor);
-
+                    handleAutoAdjustWidget(pageBodyGrid);
                 }
                 else {  // Pages are able to not have main content, so hide if widget is not present
                     if(is_page){
@@ -766,10 +744,36 @@ function getWidgetDesignSetting() {
     });
 }
 
-function removeSensorListener(sensor) {
-    setTimeout(function(){
-        sensor.detach();
-    }, 5000);
+function handleAutoAdjustWidget(pageBodyGrid) {
+  let ortherSensor = new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
+    $('.grid-stack-item-content > .panel-body').each(function () {
+      let _this = $(this);
+      autoAdjustWidgetHeight("", pageBodyGrid, _this);
+    });
+  });
+
+  let mainContentSensor = new ResizeSensor($('#main_contents'), function () {
+    let mainContent = $('#main_contents');
+    autoAdjustWidgetHeight(mainContent, pageBodyGrid);
+  });
+
+  let headerSensor = new ResizeSensor($('#header_content'), function () {
+    let headerContent = $('#header_content').closest(".grid-stack-item");
+    autoAdjustWidgetHeight(headerContent, pageBodyGrid);
+  });
+
+  removeSensorListener(ortherSensor);
+  removeSensorListener(mainContentSensor);
+  removeSensorListener(headerSensor);
+}
+
+function removeSensorListener(sensor, timeout) {
+  if (!timeout) {
+    timeout = 5000;
+  }
+  setTimeout(function() {
+    sensor.detach();
+  }, timeout);
 }
 
 function toggleWidgetUI() {
@@ -793,10 +797,11 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
             moreDes.removeClass("hidden");
             textLink.text(hideRest);
             parrentElement.css('overflow-y', 'auto');
+            parrentElement.removeClass('without-after-element');
         } else {
             moreDes.addClass("hidden");
             parrentElement.css('overflow-y', 'hidden');
-            parrentElement.css('padding-top', '30px');
+            parrentElement.addClass('without-after-element');
             textLink.text(readMore);
         }
     }
