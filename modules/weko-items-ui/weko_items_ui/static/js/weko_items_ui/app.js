@@ -2338,11 +2338,35 @@ function toObject(arr) {
               }
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+            let title = $rootScope.recordsVM.invenioRecordsModel['title'];
+            let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
+            $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
         }
       };
+
+      $scope.saveTilteAndShareUserID = function(title, shareUserID) {
+        let activityID = $('#activity_id').text();
+        let data = {
+          'title': title,
+          'shared_user_id': shareUserID,
+          'activity_id': activityID
+        }
+        $.ajax({
+          url: '/api/items/save_title_and_share_user_id',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(data),
+          dataType: 'json',
+          success: function(response){
+
+          }
+        });
+      }
 
       $scope.addApprovalMail = function () {
         let approvalMailSubKey = $("#approval_email_key").val();

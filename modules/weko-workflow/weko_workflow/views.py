@@ -58,14 +58,14 @@ from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    ITEM_REGISTRATION_ACTION_ID
+    ITEM_REGISTRATION_ACTION_ID, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_unregister_buckets, \
-    get_activity_id_of_record_without_version, get_identifier_setting, \
-    is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
-    merge_buckets_by_records, register_hdl, saving_doi_pidstore, \
-    set_bucket_default_size
+    filter_condition, get_activity_id_of_record_without_version, \
+    get_identifier_setting, is_hidden_pubdate, is_show_autofill_metadata, \
+    item_metadata_validation, merge_buckets_by_records, register_hdl, \
+    saving_doi_pidstore, set_bucket_default_size
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -82,25 +82,45 @@ def index():
     """Render a basic view."""
     activity = WorkActivity()
     getargs = request.args
+
+    conditions = {}
+    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
+                          'item', 'status', 'tab', 'sizewait', 'sizetodo',
+                          'sizeall',
+                          'pagesall', 'pagestodo', 'pageswait']
+    for args in getargs:
+        for key in list_key_condition:
+            if key in args:
+                filter_condition(conditions, key, request.args.get(args))
+
     ctx = {'community': None}
     community_id = ""
-    if 'community' in getargs:
-        activities = activity.get_activity_list(request.args.get('community'))
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        ctx = {'community': comm}
-        community_id = comm.id
-    else:
-        activities = activity.get_activity_list()
-
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         request.args.get('community') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
+    tab = request.args.get('tab')
+    tab = WEKO_WORKFLOW_TODO_TAB if not tab else tab
+    if 'community' in getargs:
+        activities, count, size, pages = activity.get_activity_list(
+            request.args.get('community'), conditions=conditions)
+        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        ctx = {'community': comm}
+        community_id = comm.id
+    else:
+        activities, count, size, pages = activity.get_activity_list(
+            conditions=conditions)
+    import math
+    maxpage = math.ceil(count/int(size))
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
+        pages=pages,
+        size=size,
+        tab=tab,
+        maxpage=maxpage,
         render_widgets=render_widgets,
         activities=activities,
         community_id=community_id,
@@ -211,15 +231,35 @@ def init_activity():
 def list_activity():
     """List activity."""
     activity = WorkActivity()
-    activities = activity.get_activity_list()
+    getargs = request.args
+    conditions = {}
+    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
+                          'item', 'status', 'tab', 'sizewait', 'sizetodo',
+                          'sizeall',
+                          'pagesall', 'pagestodo', 'pageswait']
+    for args in getargs:
+        for key in list_key_condition:
+            if key in args:
+                filter_condition(conditions, key, request.args.get(args))
+
+    activities, count, size, pages = activity.get_activity_list(
+        conditions=conditions)
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    tab = request.args.get('tab')
+    tab = 'todo' if not tab else tab
+    import math
+    maxpage = math.ceil(count/int(size))
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
+        pages=pages,
+        size=size,
+        tab=tab,
+        maxpage=maxpage,
         render_widgets=render_widgets,
         activities=activities
     )
