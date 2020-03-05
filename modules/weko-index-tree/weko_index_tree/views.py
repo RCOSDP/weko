@@ -96,24 +96,20 @@ def get_rss_data():
 @blueprint_api.route('/indextree/set_expand', methods=['POST'])
 def set_expand():
     """Set expand list index tree id."""
-    if current_user.get_id():
-        data = request.get_json(force=True)
-        index_id = data.get("index_id")
-        key = "{}{}".format(
-            current_app.config.get(
-                "WEKO_INDEX_TREE_STATE_PREFIX",
-                WEKO_INDEX_TREE_STATE_PREFIX
-            ),
-            current_user.get_id()
-        )
-        session_data = session.get(key, [])
-        if session_data:
-            if index_id in session_data:
-                session_data.remove(index_id)
-            else:
-                session_data.append(index_id)
+    data = request.get_json(force=True)
+    index_id = data.get("index_id")
+    key = current_app.config.get(
+        "WEKO_INDEX_TREE_STATE_PREFIX",
+        WEKO_INDEX_TREE_STATE_PREFIX
+    )
+    session_data = session.get(key, [])
+    if session_data:
+        if index_id in session_data:
+            session_data.remove(index_id)
         else:
             session_data.append(index_id)
-        session[key] = session_data
+    else:
+        session_data.append(index_id)
+    session[key] = session_data
 
     return jsonify(success=True)
