@@ -49,19 +49,28 @@ class MainLayout extends React.Component {
     })
       .then(res => res.json())
       .then(res => {
-        this.convertData(res && res.aggregations ? res.aggregations : {})
+        if (url.searchParams.has('search_type') && String(url.searchParams.get('search_type')) === "2") {
+          this.convertData(res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ?  : {})
+        }
+        else {
+          this.convertData(res && res.aggregations ? res.aggregations : {})
+        }
+
       })
       .catch(() => alert("Error in get list"));
   }
 
   convertData(data) {
+    const list_name_facet = ["accessRights", "dataType", "distributor", "language"]
     let new_data = {}
     Object.keys(data).map((name, k) => {
-      let item = data[name]
-      if (item[name]) {
-        item = item[name]
+      if (list_name_facet.includes(name)) {
+        let item = data[name]
+        if (item[name]) {
+          item = item[name]
+        }
+        new_data[name] = item
       }
-      new_data[name] = item
     })
     this.setState({
       list_facet: new_data
