@@ -366,5 +366,25 @@ msgstr "韓国語"
 msgid "Russian"
 msgstr "ロシア語"
 
+#: weko_search_ui/config.py:
+msgid "Center for Social Research and Data Archives, Institute of Social Science, University of Tokyo"
+msgstr "東京大学 社会科学研究所附属社会調査・データアーカイブ研究センター"
+
+#: weko_search_ui/config.py:
+msgid "Institute of Economic Research, Hitotsubashi University"
+msgstr "一橋大学 経済研究所"
+
+#: weko_search_ui/config.py:
+msgid "Panel Data Research Center at Keio University"
+msgstr "慶應義塾大学 経済学部附属経済研究所パネルデータ設計・解析センター"
+
+#: weko_search_ui/config.py:
+msgid "Japanese General Social Surveys, Osaka University of Commerce"
+msgstr "大阪商業大学 ＪＧＳＳ研究センター"
+
+#: weko_search_ui/config.py:
+msgid "Historiographical Institute The University of Tokyo"
+msgstr "東京大学 史料編纂所"
+
 
 

@@ -369,4 +369,22 @@ msgstr ""
 msgid "Russian"
 msgstr ""
 
+#: weko_search_ui/config.py:
+msgid "Center for Social Research and Data Archives, Institute of Social Science, University of Tokyo"
+msgstr ""
 
+#: weko_search_ui/config.py:
+msgid "Institute of Economic Research, Hitotsubashi University"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Panel Data Research Center at Keio University"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Japanese General Social Surveys, Osaka University of Commerce"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Historiographical Institute The University of Tokyo"
+msgstr ""
