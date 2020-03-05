@@ -57,12 +57,16 @@ class IndexSettingView(BaseView):
 
                     if style:
                         IndexStyle.update(
-                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'][
+                                'id'
+                            ],
                             width=width,
                             height=height)
                     else:
                         IndexStyle.create(
-                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'][
+                                'id'
+                            ],
                             width=width,
                             height=height)
 
@@ -72,7 +76,9 @@ class IndexSettingView(BaseView):
 
             return self.render(
                 current_app.config['WEKO_INDEX_TREE_ADMIN_TEMPLATE'],
-                widths=current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
+                widths=current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'][
+                    'widths'
+                ],
                 width_selected=width,
                 height=height)
 
