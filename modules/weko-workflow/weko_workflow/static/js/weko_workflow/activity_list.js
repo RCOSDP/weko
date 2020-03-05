@@ -13,15 +13,15 @@ require([
   });
 
   $("#page_count").change(function () {
-    window.location.href = creatURL(createParamArray($(this).val(), 'size'));
+    window.location.href = creatURL(createParamArray($(this).val(), getSizeAndPagesName('size')));
   });
 
   $(".get-pages").click(function () {
-    window.location.href = creatURL(createParamArray($(this).data('pages'), 'pages'));
+    window.location.href = creatURL(createParamArray($(this).data('pages'), getSizeAndPagesName('pages')));
   });
 
   $(".activity_tab").click(function () {
-    window.location.href = creatURL(resetPagesSize(createParamArray($(this).data('tab'), 'tab')));
+    window.location.href = creatURL(createParamArray($(this).data('tab'), 'tab'));
   });
 
   $('.filter_option').on('click', function () {
@@ -29,9 +29,36 @@ require([
   });
 
   $("#filter_form").on("click", ".remove_row", function (event) {
-    $(this).parent().parent().remove();
+    $(this).parent().parent().parent().remove();
   });
-
+  function getSizeAndPagesName(type) {
+    let checkExists = false;
+    let result = '';
+    if (window.location.search != '') {
+      let locationParam = window.location.search.split('?')[1].split('&');
+      for (let key in locationParam) {
+        let name = locationParam[key].split('=')[0];
+        if (name === 'tab') {
+          if (locationParam[key].split('=')[1] === 'todo') {
+            checkExists = true;
+            result = type + 'todo';
+          }
+          else if (locationParam[key].split('=')[1] === 'wait') {
+            checkExists = true;
+            result = type + 'wait';
+          }
+          else if(locationParam[key].split('=')[1] === 'all'){
+            checkExists = true;
+            result = type + 'all';
+          }
+        }
+      }
+    }
+    if (!checkExists) {
+      result = type + 'todo';
+    }
+    return result;
+  }
   function submitFilterSearch() {
     let params = $('#filter_form').serializeArray();
     let paramsAfterFilter = [];
@@ -43,13 +70,15 @@ require([
     });
     if (window.location.search != '') {
       let locationParam = window.location.search.split('?')[1].split('&');
+      let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
       for (let key in locationParam) {
-        if (locationParam[key].split('=')[0] == 'tab') {
-          let param = {};
-          param.name = locationParam[key].split('=')[0];
-          param.value = locationParam[key].split('=')[1];
-          paramsAfterFilter.push(param);
-        }
+        let paramName = locationParam[key].split('=')[0];
+          if (listParamName.indexOf(paramName) >= 0) {
+            let param = {};
+            param.name = paramName;
+            param.value = locationParam[key].split('=')[1];
+            paramsAfterFilter.push(param);
+          }
       }
     }
     window.location.href = creatURL(paramsAfterFilter);
@@ -108,18 +137,6 @@ require([
     }
     return result;
   }
-  function resetPagesSize(data) {
-    for (let key in data) {
-      if (data[key].name == 'size') {
-        data[key].value = '20';
-      } else {
-        if (data[key].name == 'pages') {
-          data[key].value = '1';
-        }
-      }
-    }
-    return data;
-  }
 
   function autoFilterSearch() {
     if (window.location.search != '') {
@@ -130,7 +147,7 @@ require([
         param = locationParam[key].split('=');
         if (param[0].split('_')[1] >= 0) {
           let paramName = param[0].split('_')[0];
-          if (listParamName.indexOf(paramName >= 0)) {
+          if (listParamName.indexOf(paramName) >= 0) {
             let paramValue = decodeURIComponent(param[1].replace(/\+/g, ' '));
             if (paramName == 'createdfrom' || paramName == 'createdto') {
               $("#" + paramName).val(paramValue);
@@ -153,7 +170,7 @@ require([
   function addFilterRow(filter, name, valueParam) {
     let newRow;
     let cols = "";
-    cols += '<label class="control-label col-sm-2  align-left"  for="' + name + '">' + filter + '</label>';
+    cols += '<label class="col-sm-2"  for="' + name + '">' + filter + '</label>';
     if (name == 'status') {
       if ($('#status_id').length == 1) return;
       newRow = $('<div id="status_id" class="form-group">');
@@ -166,7 +183,7 @@ require([
       newRow = $('<div class="form-group">');
       cols += '<div class="col-sm-7"><input type="text" name="' + name + '" class="form-control" value= "' + valueParam + '"></div>';
     }
-    cols += '<div class="col-sm-2"><button type="button" class="btn btn-danger btn-sm remove_row pull-right"><span class="glyphicon glyphicon-remove"></span></button></div>';
+    cols += '<div class="col-sm-2"><div class="col-sm-8"><button type="button" class="btn btn-danger btn-sm remove_row"><span class="glyphicon glyphicon-remove"></span></button></div></div>';
     newRow.append(cols);
     $("#" + name + '_group').append(newRow);
   }

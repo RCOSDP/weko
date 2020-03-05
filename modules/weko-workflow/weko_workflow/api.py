@@ -1140,18 +1140,11 @@ class WorkActivity(object):
             community_role_name = current_app.config[
                 'WEKO_PERMISSION_ROLE_COMMUNITY']
             tab_list = conditions.get('tab')
-            page_list = conditions.get('pages')
-            size_list = conditions.get('size')
 
             # Get tab of page
             tab = WEKO_WORKFLOW_TODO_TAB if not tab_list else tab_list[0]
-
-            # Get size of page
-            size = 20 if not size_list else int(size_list[0])
-
-            # Get number of page
-            page = 1 if not page_list else int(page_list[0])
-            offset = size * (page - 1)
+            size = 20
+            page = 1
 
             activities = []
             community_users = User.query.outerjoin(userrole).outerjoin(
@@ -1169,15 +1162,33 @@ class WorkActivity(object):
 
             # query activities by tab is wait
             if tab == WEKO_WORKFLOW_WAIT_TAB:
+                page_wait = conditions.get('pageswait')
+                size_wait = conditions.get('sizewait')
+                if page_wait and page_wait[0].isnumeric():
+                    page = page_wait[0]
+                if size_wait and size_wait[0].isnumeric():
+                    size = size_wait[0]
                 query_action_activities = self.query_activites_by_tab_is_wait(
                     query_action_activities, is_admin, is_community_admin)
             # query activities by tab is all
             elif tab == WEKO_WORKFLOW_ALL_TAB:
+                page_all = conditions.get('pagesall')
+                size_all = conditions.get('sizeall')
+                if page_all and page_all[0].isnumeric():
+                    page = page_all[0]
+                if size_all and size_all[0].isnumeric():
+                    size = size_all[0]
                 query_action_activities = self.query_activites_by_tab_is_all(
                     query_action_activities, is_admin, is_community_admin,
                     community_user_ids)
             # query activities by tab is todo
             elif tab == WEKO_WORKFLOW_TODO_TAB:
+                page_todo = conditions.get('pagestodo')
+                size_todo = conditions.get('sizetodo')
+                if page_todo and page_todo[0].isnumeric():
+                    page = page_todo[0]
+                if size_todo and size_todo[0].isnumeric():
+                    size = size_todo[0]
                 query_action_activities = self.query_activites_by_tab_is_all(
                     query_action_activities, is_admin, is_community_admin,
                     community_user_ids)
@@ -1192,6 +1203,7 @@ class WorkActivity(object):
             # Count all result
             count = query_action_activities.distinct(_Activity.id).count()
 
+            offset = int(size) * (int(page) - 1)
             action_activities = query_action_activities \
                 .distinct(_Activity.id).order_by(asc(_Activity.id)).limit(
                         size).offset(offset).all()
@@ -1215,7 +1227,7 @@ class WorkActivity(object):
                         ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
-            return activities, count
+            return activities, count, size, page
 
     def get_all_activity_list(self, community_id=None):
         """Get all activity list info.

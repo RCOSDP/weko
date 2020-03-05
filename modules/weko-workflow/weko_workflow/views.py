@@ -58,7 +58,7 @@ from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    ITEM_REGISTRATION_ACTION_ID
+    ITEM_REGISTRATION_ACTION_ID, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_unregister_buckets, \
@@ -85,7 +85,9 @@ def index():
 
     conditions = {}
     list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
-                          'item', 'status', 'tab', 'size', 'pages']
+                          'item', 'status', 'tab', 'sizewait', 'sizetodo',
+                          'sizeall',
+                          'pagesall', 'pagestodo', 'pageswait']
     for args in getargs:
         for key in list_key_condition:
             if key in args:
@@ -99,20 +101,17 @@ def index():
         request.args.get('community') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    size = request.args.get('size')
     tab = request.args.get('tab')
-    pages = request.args.get('pages')
-    size = 20 if not size else size
-    tab = 'todo' if not tab else tab
-    pages = 1 if not pages else pages
+    tab = WEKO_WORKFLOW_TODO_TAB if not tab else tab
     if 'community' in getargs:
-        activities, count = activity.get_activity_list(
+        activities, count, size, pages = activity.get_activity_list(
             request.args.get('community'), conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
     else:
-        activities, count = activity.get_activity_list(conditions=conditions)
+        activities, count, size, pages = activity.get_activity_list(
+            conditions=conditions)
     import math
     maxpage = math.ceil(count/int(size))
     return render_template(
@@ -235,24 +234,23 @@ def list_activity():
     getargs = request.args
     conditions = {}
     list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
-                          'item', 'status', 'tab', 'size', 'pages']
+                          'item', 'status', 'tab', 'sizewait', 'sizetodo',
+                          'sizeall',
+                          'pagesall', 'pagestodo', 'pageswait']
     for args in getargs:
         for key in list_key_condition:
             if key in args:
                 filter_condition(conditions, key, request.args.get(args))
 
-    activities, count = activity.get_activity_list(conditions=conditions)
+    activities, count, size, pages = activity.get_activity_list(
+        conditions=conditions)
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-    size = request.args.get('size')
     tab = request.args.get('tab')
-    pages = request.args.get('pages')
-    size = 20 if not size else size
     tab = 'todo' if not tab else tab
-    pages = 1 if not pages else pages
     import math
     maxpage = math.ceil(count/int(size))
     return render_template(
