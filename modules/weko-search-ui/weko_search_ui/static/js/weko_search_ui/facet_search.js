@@ -54,7 +54,9 @@ class MainLayout extends React.Component {
       .then(res => {
         if (url.searchParams.has('search_type') && String(url.searchParams.get('search_type')) === "2") {
 //          Index faceted search
-          this.convertData(res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ? res.aggregations.path.buckets[0] : {})
+          const data = res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ? res.aggregations.path.buckets[0] : {}
+          this.convertData(
+          data && data[0] ? data[0] : {})
         }
         else {
 //          default faceted search
