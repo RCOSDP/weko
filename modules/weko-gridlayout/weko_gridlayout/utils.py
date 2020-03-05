@@ -867,10 +867,9 @@ def get_widget_design_setting(repository_id, current_language):
             repository_id, current_language or get_default_language())
         return jsonify(widget_setting_data)
 
-    if validate_response():
+    if validate_response() and current_language:
         key = (config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY
-               + repository_id + "_"
-               + (current_language or get_default_language()))
+               + repository_id + "_" + current_language)
         if current_cache.get(key) is None:
             data = compress_widget_response(get_widget_response())
             current_cache.set(key, data)
