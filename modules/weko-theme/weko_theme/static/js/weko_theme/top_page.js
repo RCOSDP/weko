@@ -153,22 +153,39 @@ require([
             sessionStorage.setItem('search_type', '1');
         }
         $('#search-form').submit(function (event) {
-            var query = '';
+            var url = new URL(window.location.href)
+             url.searchParams.set("page", 1)
             $('#search_type :input:checked').each(function () {
-                query += $(this).serialize() + '&';
+               var list_params = $(this).serializeArray();
+               list_params.map(item => {
+                  url.searchParams.set(item.name, item.value)
+               })
             });
-            query += $('#q').serialize().replace(/\+/g, ' ') + '&';
+            $('#q').serializeArray().map(item => {
+              url.searchParams.set(item.name, item.value.replace(/\+/g, ' '))
+            })
             if ($('#community').val()) {
-                query += $('#community').serialize().replace(/\+/g, ' ') + '&';
+                $('#community').serializeArray().map(item => {
+                  url.searchParams.set(item.name, item.value.replace(/\+/g, ' '))
+                })
             }
             // var btn = sessionStorage.getItem('btn', '');
             if ($("#item_management_bulk_update").length != 0) {
-              window.location.href = ('/admin/items/search?page=1&item_management=update&' + query).slice(0, -1);
+              var new_url = new URL(window.location.origin + "/admin/items/search")
+                url.searchParams.set("item_management","update")
+               new_url.search = url.search;
+              window.location.href = new_url.href;
             } else if($("#item_management_bulk_delete").length != 0) {
-              window.location.href = ('/admin/items/search?page=1&item_management=delete&' + query).slice(0, -1);
+            var new_url = new URL(window.location.origin + "/admin/items/search")
+                url.searchParams.set("item_management","delete")
+                new_url.search = url.search;
+              window.location.href = new_url.href;
             } else {
-              window.location.href = ('/search?page=1&' + query).slice(0, -1);
+              var new_url = new URL(window.location.origin + "/search")
+                new_url.search = url.search;
+              window.location.href = new_url.href;
             }
+
             // stop the form from submitting the normal way and refreshing the page
             event.preventDefault();
         })
