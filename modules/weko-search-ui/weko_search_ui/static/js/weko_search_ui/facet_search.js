@@ -41,6 +41,9 @@ class MainLayout extends React.Component {
   get_facet_search_list() {
     let url = new URL(window.location.href)
     url.pathname = '/api/records/'
+    if (url.searchParams.has('search_type') && String(url.searchParams.get('search_type')) === "2") {
+      url.pathname = '/api/index/'
+    }
     fetch(url.href, {
       method: "GET",
       headers: {
