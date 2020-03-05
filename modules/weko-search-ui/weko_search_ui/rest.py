@@ -215,8 +215,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         # Execute search
 
         for param in params:
-            from .config import WEKO_FACETED_SEARCH_MAPPING
-            query_key = WEKO_FACETED_SEARCH_MAPPING[param]
+            query_key = current_app.config[
+                'WEKO_FACETED_SEARCH_MAPPING'][param]
             search = search.post_filter({'terms': {query_key: params[param]}})
 
         search_result = search.execute()
