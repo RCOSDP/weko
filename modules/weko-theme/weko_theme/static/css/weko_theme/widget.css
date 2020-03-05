@@ -14,6 +14,7 @@
   left: 15px !important;
   right: 15px !important;
   margin-top: 5px !important;
+  overflow: hidden !important;
 }
 
 .widget-header {
@@ -150,4 +151,8 @@
   padding-top: 20px !important;
   padding-bottom: 20px !important;
   line-height: 20px !important;
+}
+
+.trumbowyg-editor {
+  height: 100%;
 }

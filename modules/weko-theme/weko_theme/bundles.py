@@ -71,6 +71,7 @@ css_buttons = Bundle(
 css_widget = Bundle(
     'css/weko_theme/gridstack.min.css',
     'css/weko_theme/widget.css',
+    'css/weko_gridlayout/trumbowyg.min.css',
     output='gen/weko_theme_widget.%(version)s.css',
 )
 """Widget CSS."""

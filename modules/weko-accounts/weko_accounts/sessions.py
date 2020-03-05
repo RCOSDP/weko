@@ -41,7 +41,6 @@ def login_listener(app, user):
         """
         user_id, sid_s = user.id, session.sid_s
         login_ip = get_remote_addr()
-
         return response
 
 

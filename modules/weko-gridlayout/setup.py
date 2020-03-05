@@ -118,6 +118,9 @@ setup(
             'weko_gridlayout.bundles:prop_types_js',
             'weko_gridlayout_react_quill_js = '
             'weko_gridlayout.bundles:react_quill_js',
+            'widget_trumbowyg_css = weko_gridlayout.bundles:trumbowyg_css',
+            'widget_react_trumbowyg_js = '
+            'weko_gridlayout.bundles:react_trumbowyg_js',
         ],
         # 'invenio_base.api_apps': [],
         # 'invenio_base.blueprints': [],
