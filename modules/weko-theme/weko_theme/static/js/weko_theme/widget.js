@@ -27,7 +27,7 @@ let PageBodyGrid = function () {
             width: 12,
             float: true,
             verticalMargin: 4,
-            cellHeight: 100,
+            cellHeight: 10,
             acceptWidgets: '.grid-stack-item'
         };
         let widget = $('#page_body');
@@ -39,6 +39,18 @@ let PageBodyGrid = function () {
         this.grid.addWidget($(this.widgetTemplate(node, index)), node.x, node.y, node.width, node.height);
         return false;
     }.bind(this);
+
+    this.resizeWidget = function (widget, width, height) {
+      this.grid.resize(widget, width, height);
+    };
+
+    this.getCellHeight = function () {
+      return this.grid.cellHeight();
+    };
+
+    this.getVerticalMargin = function () {
+      return this.grid.opts.verticalMargin;
+    };
 
     this.updateMainContent = function (node) {
         let mainContents = $("#main_contents");
@@ -158,7 +170,7 @@ let PageBodyGrid = function () {
                 headerNav.css({"background-color": node.background_color});
             }
             if (node.multiLangSetting && node.multiLangSetting.description) {
-                headerContent.css({"width": "calc(100vw - 490px)", "height": "100px", "overflow": "hidden"});
+                headerContent.css({"width": "calc(100vw - 490px)"});
                 headerContent.html(node.multiLangSetting.description.description);
             }
             this.grid.update(headerElement, node.x, node.y, node.width, node.height);
@@ -212,7 +224,7 @@ let PageBodyGrid = function () {
             let hideRest = (languageDescription.hide_the_rest) ? languageDescription.hide_the_rest : HIDE_REST_DEFAULT;
             let readMore = (languageDescription.read_more) ? languageDescription.read_more : READ_MORE_DEFAULT;
             templateWriteMoreNotice = '</br>' +
-                '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
+                '<div id="' + moreDescriptionID + '" class="hidden">' + moreDescription + '</div>' +
                 '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
                 linkID + '\',\'' + escapeHtml(readMore) + '\', \'' + escapeHtml(hideRest) + '\')">' + readMore +
                 '</a>';
@@ -566,9 +578,9 @@ let WidgetTheme = function () {
             setClass = "grid-stack-item-content panel header-footer-type";
         }
         let result = '<div class="grid-stack-item widget-resize">' +
-            '    <div class="' +setClass +'" style="' + borderStyle + '">' +
+            '    <div class="' + setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + ' " style="padding-top: 30px; overflow-y: hidden !important; padding-bottom: 0!important;' + this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
@@ -604,6 +616,51 @@ let WidgetTheme = function () {
         return borderStyle;
     }
 };
+
+function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
+  if (otherElement) {
+    let scrollHeight = otherElement.prop("scrollHeight");
+    let clientHeight = otherElement.prop("clientHeight");
+    if (scrollHeight > clientHeight) {
+      let cellHeight = pageBodyGrid.getCellHeight();
+      let verticalMargin = pageBodyGrid.getVerticalMargin();
+      let newHeight = Math.ceil(
+        (scrollHeight + verticalMargin) / (cellHeight + verticalMargin)
+      );
+      let parent = otherElement.closest(".grid-stack-item");
+      let width = parent.data("gsWidth");
+      let isUpdated = otherElement.data("isUpdated");
+      if (isUpdated) {
+        let currentClientHeight = newHeight * (cellHeight + verticalMargin);
+        if (currentClientHeight > scrollHeight) {
+          pageBodyGrid.resizeWidget(parent, width, newHeight - 1);
+        } else {
+          pageBodyGrid.resizeWidget(parent, width, newHeight);
+        }
+      } else {
+        pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
+        otherElement.data("isUpdated", true);
+      }
+    }
+  } else {
+    let scrollHeight = widgetElement.prop("scrollHeight");
+    let clientHeight = widgetElement.prop("clientHeight");
+    let currentHeight = widgetElement.data("gsHeight");
+    if (scrollHeight > clientHeight) {
+      let cellHeight = pageBodyGrid.getCellHeight();
+      let verticalMargin = pageBodyGrid.getVerticalMargin();
+      let newHeight = Math.ceil(
+        (scrollHeight + verticalMargin) / (cellHeight + verticalMargin)
+      );
+      let width = widgetElement.data("gsWidth");
+      if (newHeight > currentHeight) {
+        pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
+      } else if (newHeight === currentHeight) {
+        pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
+      }
+    }
+  }
+}
 
 function getWidgetDesignSetting() {
     let community_id = $("#community-id").text();
@@ -646,6 +703,7 @@ function getWidgetDesignSetting() {
         }
     }
 
+    $(".lds-ring-background").removeClass("hidden");
     $.ajax({
         url: request_param.url,
         type: request_param.type,
@@ -664,7 +722,7 @@ function getWidgetDesignSetting() {
                 if (Array.isArray(widgetList) && widgetList.length) {
                     $("#page_body").removeClass("hidden");
                     $("#main_contents").addClass("grid-stack-item");
-                    $("#header").css("height", "100px");
+                    $("#header").addClass("grid-stack-item no-scroll-bar");
                     $("#footer").addClass("grid-stack-item no-scroll-bar");
                     let pageBodyGrid = new PageBodyGrid();
                     pageBodyGrid.init();
@@ -673,9 +731,10 @@ function getWidgetDesignSetting() {
                         $('.widget-resize').each(function () {
                             let headerElementHeight = $(this).find('.panel-heading').height();
                             $(this).find('.panel-body').css("padding-top", String(headerElementHeight + 11) + "px");
-                            $(this).find('.panel-body').css("bottom", "10px");
                         });
                     });
+
+                    handleAutoAdjustWidget(pageBodyGrid);
                 }
                 else {  // Pages are able to not have main content, so hide if widget is not present
                     if(is_page){
@@ -693,23 +752,65 @@ function getWidgetDesignSetting() {
     });
 }
 
+function handleAutoAdjustWidget(pageBodyGrid) {
+  let ortherSensor = new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
+    $('.grid-stack-item-content > .panel-body').each(function () {
+      let _this = $(this);
+      autoAdjustWidgetHeight("", pageBodyGrid, _this);
+    });
+  });
+
+  let mainContentSensor = new ResizeSensor($('#main_contents'), function () {
+    let mainContent = $('#main_contents');
+    autoAdjustWidgetHeight(mainContent, pageBodyGrid);
+  });
+
+  let headerSensor = new ResizeSensor($('#header_content'), function () {
+    let headerContent = $('#header_content').closest(".grid-stack-item");
+    autoAdjustWidgetHeight(headerContent, pageBodyGrid);
+  });
+
+  removeSensorListener(ortherSensor);
+  removeSensorListener(mainContentSensor);
+  removeSensorListener(headerSensor);
+}
+
+function removeSensorListener(sensor, timeout) {
+  if (!timeout) {
+    timeout = 5000;
+  }
+  setTimeout(function() {
+    sensor.detach();
+  }, timeout);
+}
+
 function toggleWidgetUI() {
     $("div#page_body").each(function () {
         $(this).css("display", "block");
     });
     $('footer#footer').css("display", "block");
     $('footer-fix#footer').remove();
+    setTimeout(function(){
+        $(".lds-ring-background").addClass("hidden");
+    }, 1000);
+
 }
 
 function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
     let moreDes = $("#" + moreDescriptionID);
+    let textLink = $("#" + linkID);
     if (moreDes) {
-        if (moreDes.is(":hidden")) {
-            moreDes.show();
-            $("#" + linkID).text(hideRest);
+        let parrentElement = moreDes.parent();
+        if (moreDes.hasClass("hidden")) {
+            moreDes.removeClass("hidden");
+            textLink.text(hideRest);
+            parrentElement.css('overflow-y', 'auto');
+            parrentElement.removeClass('without-after-element');
         } else {
-            moreDes.hide();
-            $("#" + linkID).text(readMore);
+            moreDes.addClass("hidden");
+            parrentElement.css('overflow-y', 'hidden');
+            parrentElement.addClass('without-after-element');
+            textLink.text(readMore);
         }
     }
 }
