@@ -418,7 +418,8 @@ def convert_widget_multi_lang_to_dict(multi_lang_data):
     """
     result = dict()
     description = json.loads(multi_lang_data.description_data) \
-        if isinstance(multi_lang_data.description_data, str) else multi_lang_data.description_data
+        if isinstance(multi_lang_data.description_data, str) \
+        else multi_lang_data.description_data
 
     result['id'] = multi_lang_data.id
     result['widget_id'] = multi_lang_data.widget_id
@@ -781,8 +782,9 @@ def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
     # Check if main design has main widget
     main_design = \
         WidgetDesignSetting.select_by_repository_id(repository_id or '')
-    main_has_main = has_main_contents_widget(
-        json.loads(main_design.get('settings', '[]')) if isinstance(main_design.get('settings', '[]'), str) else main_design.get('settings')) if main_design else False
+    settings = json.loads(main_design.get('settings', '[]')) if isinstance(
+        main_design.get('settings', '[]'), str) else main_design.get('settings')
+    main_has_main = has_main_contents_widget(settings) if main_design else False
 
     # Get page which has main
     page_with_main = get_widget_design_page_with_main(repository_id)
@@ -807,7 +809,8 @@ def get_widget_design_page_with_main(repository_id):
     if repository_id:
         for page in WidgetDesignPage.get_by_repository_id(repository_id):
             if page.settings and has_main_contents_widget(
-                    json.loads(page.settings) if isinstance(page.settings, str) else page.settings):
+                    json.loads(page.settings)
+                    if isinstance(page.settings, str) else page.settings):
                 return page
     return None
 
@@ -816,8 +819,10 @@ def main_design_has_main_widget(repository_id):
     """Check if main design has main widget."""
     main_design = WidgetDesignSetting.select_by_repository_id(repository_id)
     if main_design:
-        return has_main_contents_widget(
-            json.loads(main_design.get('settings', '[]')) if isinstance(main_design.get('settings', '[]'), str) else main_design.get('settings'))
+        settings = json.loads(main_design.get('settings', '[]')) \
+            if isinstance(main_design.get('settings', '[]'), str) \
+            else main_design.get('settings')
+        return has_main_contents_widget(settings)
     return False
 
 
