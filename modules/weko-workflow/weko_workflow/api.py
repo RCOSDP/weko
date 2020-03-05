@@ -927,7 +927,7 @@ class WorkActivity(object):
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
                         action_comment=ActionCommentPolicy.
-                            FINALLY_ACTION_COMMENT)
+                        FINALLY_ACTION_COMMENT)
                     db.session.add(db_history)
             db.session.commit()
             return True
@@ -1020,12 +1020,14 @@ class WorkActivity(object):
                 list_status = []
                 for i in status:
                     if i == 'doing':
-                        list_status.append(ActivityStatusPolicy.ACTIVITY_MAKING)
+                        list_status.append(
+                            ActivityStatusPolicy.ACTIVITY_MAKING)
                     elif i == 'done':
                         list_status.append(
                             ActivityStatusPolicy.ACTIVITY_FINALLY)
                     elif i == 'actioncancel':
-                        list_status.append(ActivityStatusPolicy.ACTIVITY_CANCEL)
+                        list_status.append(
+                            ActivityStatusPolicy.ACTIVITY_CANCEL)
                 query = query.filter(
                     _Activity.activity_status.in_(list_status))
             if workflow:
@@ -1057,10 +1059,10 @@ class WorkActivity(object):
                      & (_FlowActionRole.action_user_exclude == '0'))
                     | (_FlowActionRole.action_role.notin_(self_group_ids)
                        & (_FlowActionRole.action_role_exclude == '0'))) \
-            .filter((_Activity.activity_status ==
-                     ActivityStatusPolicy.ACTIVITY_BEGIN)
-                    | (_Activity.activity_status ==
-                       ActivityStatusPolicy.ACTIVITY_MAKING))
+            .filter((_Activity.activity_status
+                     == ActivityStatusPolicy.ACTIVITY_BEGIN)
+                    | (_Activity.activity_status
+                       == ActivityStatusPolicy.ACTIVITY_MAKING))
 
         return query
 
@@ -1119,14 +1121,14 @@ class WorkActivity(object):
         :return:
         """
         query = query \
-            .filter((_Activity.activity_status ==
-                    ActivityStatusPolicy.ACTIVITY_BEGIN)
-                    | (_Activity.activity_status ==
-                    ActivityStatusPolicy.ACTIVITY_MAKING))
+            .filter((_Activity.activity_status
+                     == ActivityStatusPolicy.ACTIVITY_BEGIN)
+                    | (_Activity.activity_status
+                       == ActivityStatusPolicy.ACTIVITY_MAKING))
         if not is_admin and not is_community_admin:
             query = query.filter(
-                    _FlowAction.action_id == _Activity.action_id) \
-                            .filter(_FlowActionRole.id.is_(None))
+                _FlowAction.action_id == _Activity.action_id) \
+                .filter(_FlowActionRole.id.is_(None))
         return query
 
     def get_activity_list(self, community_id=None, conditions=None):
@@ -1206,7 +1208,7 @@ class WorkActivity(object):
             offset = int(size) * (int(page) - 1)
             action_activities = query_action_activities \
                 .distinct(_Activity.id).order_by(asc(_Activity.id)).limit(
-                        size).offset(offset).all()
+                    size).offset(offset).all()
 
             # Append to do and action activities into the master list
             activities.extend(action_activities)
@@ -1674,6 +1676,7 @@ class UpdateItem(object):
 
         indexer = WekoIndexer()
         indexer.update_relation_info(record, relation_data)
+
 
 class GetCommunity(object):
     """Get Community Info."""

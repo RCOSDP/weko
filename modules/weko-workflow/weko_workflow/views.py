@@ -113,7 +113,7 @@ def index():
         activities, count, size, pages = activity.get_activity_list(
             conditions=conditions)
     import math
-    maxpage = math.ceil(count/int(size))
+    maxpage = math.ceil(count / int(size))
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
@@ -252,7 +252,7 @@ def list_activity():
     tab = request.args.get('tab')
     tab = 'todo' if not tab else tab
     import math
-    maxpage = math.ceil(count/int(size))
+    maxpage = math.ceil(count / int(size))
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
