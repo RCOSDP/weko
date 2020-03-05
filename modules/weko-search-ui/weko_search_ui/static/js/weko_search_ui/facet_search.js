@@ -39,7 +39,9 @@ class MainLayout extends React.Component {
   }
 
   get_facet_search_list() {
-    fetch(urlGetDataFacet, {
+    let url = new URL(window.location.href)
+    url.pathname = '/api/records/'
+    fetch(url.href, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
