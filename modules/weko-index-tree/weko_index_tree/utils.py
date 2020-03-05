@@ -139,14 +139,14 @@ def get_tree_json(index_list, root_id):
             index_dict.update({'parent': pid})
 
         list_index_expand = get_user_list_expand()
-        is_collapsed_on_init = str(index_element.cid) in list_index_expand
+        is_expand_on_init = str(index_element.cid) in list_index_expand
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_element.name,
             'position': index_element.position,
             'emitLoadNextLevel': False,
             'settings': {
-                'isCollapsedOnInit': not is_collapsed_on_init,
+                'isCollapsedOnInit': not is_expand_on_init,
                 'checked': False
             }
         })

@@ -106,7 +106,7 @@ def set_expand():
             ),
             current_user.get_id()
         )
-        session_data = session.get(key) or []
+        session_data = session.get(key, [])
         if session_data:
             if index_id in session_data:
                 session_data.remove(index_id)

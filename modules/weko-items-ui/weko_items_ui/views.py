@@ -805,8 +805,9 @@ def prepare_edit_item():
         if not workflow:
             item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
             id_list = [x.id for x in item_type_list]
-            workflow = (WorkFlow.query.filter(
-                WorkFlow.itemtype_id.in_(id_list))
+            workflow = (
+                WorkFlow.query
+                .filter(WorkFlow.itemtype_id.in_(id_list))
                 .order_by(WorkFlow.itemtype_id.desc())
                 .order_by(WorkFlow.flow_id.asc()).first())
         return workflow
