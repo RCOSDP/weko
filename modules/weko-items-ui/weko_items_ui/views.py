@@ -322,7 +322,13 @@ def get_schema_form(item_type_id=0):
         hidden_subitem = ['subitem_thumbnail',
                           'subitem_systemidt_identifier',
                           'subitem_systemfile_datetime',
-                          'subitem_systemfile_filename'
+                          'subitem_systemfile_filename',
+                          'subitem_system_id_rg_doi',
+                          'subitem_system_date_type',
+                          'subitem_system_date',
+                          'subitem_system_identifier_type',
+                          'subitem_system_identifier',
+                          'subitem_system_text'
                           ]
 
         for i in hidden_subitem:

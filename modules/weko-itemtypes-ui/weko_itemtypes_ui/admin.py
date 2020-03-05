@@ -367,7 +367,11 @@ class ItemTypeMappingView(BaseView):
             meta_system_items = ['system_identifier_doi',
                                  'system_identifier_hdl',
                                  'system_identifier_uri',
-                                 'system_file']
+                                 'system_file',
+                                 'updated_date', 'created_date',
+                                 'persistent_identifier_doi',
+                                 'persistent_identifier_h',
+                                 'ranking_page_url', 'belonging_index_info']
 
             for key in meta_system_items:
                 if isinstance(meta_system, dict) and meta_system.get(key) \
