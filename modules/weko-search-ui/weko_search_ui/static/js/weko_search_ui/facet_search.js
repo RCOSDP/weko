@@ -36,48 +36,65 @@ class MainLayout extends React.Component {
     this.get_facet_search_list = this.get_facet_search_list.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
     this.convertData = this.convertData.bind(this)
+    this.getUrlVars = this.getUrlVars.bind(this)
   }
 
   get_facet_search_list() {
-    let url = new URL(window.location.href)
-    url.pathname = '/api/records/'
-    if (url.searchParams.has('search_type') && String(url.searchParams.get('search_type')) === "2") {
-      url.pathname = '/api/index/'
+    url = '/api/records/'
+    let params = getUrlVars()
+    if (params.search_type && String(params.search_type) === "2") {
+      url = '/api/index/'
     }
-    fetch(url.href, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
-      .then(res => res.json())
-      .then(res => {
-        if (url.searchParams.has('search_type') && String(url.searchParams.get('search_type')) === "2") {
-//          Index faceted search
-          const data = res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ? res.aggregations.path.buckets[0] : {}
-          this.convertData(
-          data && data[0] ? data[0] : {})
+    $.ajax({
+        context: this,
+        url: url,
+        type: 'GET',
+        contentType: 'application/json; charset=UTF-8',
+        success: function (res) {
+            if (params.search_type && String(params.search_type) === "2") {
+    //          Index faceted search
+              const data = res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ? res.aggregations.path.buckets[0] : {}
+              this.convertData(data && data[0] ? data[0] : {})
+            }
+            else {
+    //          default faceted search
+              this.convertData(res && res.aggregations ? res.aggregations : {})
+            }
+        },
+        error: function() {
+          alert("Error in get list")
         }
-        else {
-//          default faceted search
-          this.convertData(res && res.aggregations ? res.aggregations : {})
-        }
-      })
-      .catch(() => alert("Error in get list"));
+    });
   }
+
+  getUrlVars() {
+    var vars = {};
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+        vars[key] = value;
+    });
+    return vars;
+}
 
   convertData(data) {
     const list_name_facet = ["accessRights", "dataType", "distributor", "language"]
-    let new_data = {}
-    Object.keys(data).map((name, k) => {
-      if (list_name_facet.includes(name)) {
-        let item = data[name]
-        if (item[name]) {
-          item = item[name]
-        }
-        new_data[name] = item
+    let new_data = {
+        accessRights : {},
+        dataType : {},
+        distributor : {},
+        language : {}
       }
-    })
+    if (data) {
+      Object.keys(data).map(function (name, k)  {
+        if (list_name_facet.indexOf(name)>=0) {
+          let item = data[name]
+          if (item[name]) {
+            item = item[name]
+          }
+          new_data[name] = item
+        }
+      })
+    }
+
     this.setState({
       list_facet: new_data
     })
@@ -88,27 +105,27 @@ class MainLayout extends React.Component {
   }
 
   handleCheck(params, value) {
-    let url = new URL(window.location.href)
-    if (url.searchParams.has(params) && url.searchParams.getAll(params).includes(value)) {
-      let new_value = url.searchParams.getAll(params).filter(i => i !== value)
-      url.searchParams.delete(params)
-      new_value.map(v => { url.searchParams.append(params, v) })
+    let list_params = this.getUrlVars()
+    let search = window.location.search
+    let pattern = search.indexOf(encodeURIComponent(params) + "=" + encodeURIComponent(value))
+    if (list_params[params] && search.indexOf(encodeURIComponent(params) + "=" + encodeURIComponent(value))>=0) {
+      search.replace("&"+ pattern ,"")
+      search.replace(pattern ,"")
     } else {
-      url.searchParams.append(params, value)
+      search+= "&"+pattern
     }
-    let new_url = new URL(window.location.origin + "/search")
-    new_url.search = url.search;
-    window.location.href = new_url.href
+    window.location.href = "/search"+ search
   }
 
   render() {
     const { is_enable, list_facet } = this.state
-    const url = new URL(window.location.href)
+    const search = window.location.search
+    const that = this
     return (
       <div>
         {is_enable && <div className="facet-search">
           {
-            Object.keys(list_facet).map((name, key) => {
+            Object.keys(list_facet).map(function(name, key) {
               const item = list_facet[name]
               return (
                 <div className="panel panel-default" key={key}>
@@ -117,14 +134,15 @@ class MainLayout extends React.Component {
                   </div>
                   <div className="panel-body index-body">
                     {
-                      item.buckets && item.buckets.map((subitem, k) => {
-                        const value = url.searchParams.getAll(name).includes(subitem.key) ? true : false
+                      item.buckets && item.buckets.map(function(subitem, k) {
+                        const pattern = encodeURIComponent(name) + "=" + encodeURIComponent(subitem.key)
+                        const value = search.indexOf(pattern) >=0 ? true : false
                         return (
                           <label>
                             <input
                               type="checkbox"
                               defaultChecked={value}
-                              onChange={() => { this.handleCheck(name, subitem.key) }}
+                              onChange={function() { that.handleCheck(name, subitem.key) }}
                             ></input>
                             {label[subitem.key] || subitem.key}({subitem.doc_count})
                           </label>
