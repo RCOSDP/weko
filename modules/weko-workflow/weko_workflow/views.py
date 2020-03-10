@@ -104,20 +104,20 @@ def index():
     tab = request.args.get('tab')
     tab = WEKO_WORKFLOW_TODO_TAB if not tab else tab
     if 'community' in getargs:
-        activities, count, size, pages = activity.get_activity_list(
-            request.args.get('community'), conditions=conditions)
+        activities, maxpage, size, pages, name_param = activity \
+            .get_activity_list(request.args.get('community'),
+                               conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
     else:
-        activities, count, size, pages = activity.get_activity_list(
-            conditions=conditions)
-    import math
-    maxpage = math.ceil(count/int(size))
+        activities, maxpage, size, pages, name_param = activity \
+            .get_activity_list(conditions=conditions)
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
         pages=pages,
+        name_param=name_param,
         size=size,
         tab=tab,
         maxpage=maxpage,
@@ -242,7 +242,7 @@ def list_activity():
             if key in args:
                 filter_condition(conditions, key, request.args.get(args))
 
-    activities, count, size, pages = activity.get_activity_list(
+    activities, maxpage, size, pages, name_param = activity.get_activity_list(
         conditions=conditions)
 
     from weko_theme.utils import get_design_layout
@@ -251,12 +251,11 @@ def list_activity():
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
     tab = request.args.get('tab')
     tab = 'todo' if not tab else tab
-    import math
-    maxpage = math.ceil(count/int(size))
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
         pages=pages,
+        name_param=name_param,
         size=size,
         tab=tab,
         maxpage=maxpage,
