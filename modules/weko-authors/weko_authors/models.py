@@ -138,6 +138,7 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         onupdate=datetime.utcnow)
     """ Updated date."""
 
+
     @classmethod
     def create(cls, name, scheme, url):
         """Create settings."""
@@ -154,6 +155,7 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
             current_app.logger.error(ex)
             raise
         return cls
+
 
     @classmethod
     def update(cls, id, name, scheme, url):
@@ -172,6 +174,7 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
             raise
         return cls
 
+
     @classmethod
     def delete(cls, id):
         """Delete settings."""
@@ -185,17 +188,5 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
             raise
         return cls
 
-    @classmethod
-    def find(cls):
-        """find existed scheme settings."""
-        return None
-        # try:
-        #     item = cls.query.filter_by(scheme=scheme).one_or_none()
-        #     if not item:
-        #         return None
-        #     json_data = json.loads(item.json)
-        #     return json_data
-        # except Exception:
-        #     return None
 
 __all__ = ('Authors', 'AuthorsPrefixSettings', )

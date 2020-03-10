@@ -23,7 +23,6 @@ from invenio_db import db
 from flask import current_app
 from .models import AuthorsPrefixSettings
 
-
 def get_author_setting_obj(scheme):
     """ Check item Scheme exist in DB """
     try:

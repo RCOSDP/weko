@@ -49,5 +49,3 @@ WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix)
 
 WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0"
 """Elasticsearch document type for author."""
-
-
