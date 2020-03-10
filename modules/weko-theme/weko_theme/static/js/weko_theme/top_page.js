@@ -157,7 +157,7 @@ require([
             search = insertParam(search, "page", 1)
             $('#search_type :input:checked').each(function () {
                var list_params = $(this).serializeArray();
-               list_params.map(item => {
+               list_params.map(function (item) {
                   search = insertParam(search, item.name, item.value)
                })
             });
