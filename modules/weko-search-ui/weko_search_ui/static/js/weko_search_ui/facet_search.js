@@ -40,7 +40,7 @@ class MainLayout extends React.Component {
   }
 
   get_facet_search_list() {
-    url = '/api/records/'
+    let url = '/api/records/'
     let params = getUrlVars()
     if (params.search_type && String(params.search_type) === "2") {
       url = '/api/index/'
@@ -105,14 +105,13 @@ class MainLayout extends React.Component {
   }
 
   handleCheck(params, value) {
-    let list_params = this.getUrlVars()
     let search = window.location.search
-    let pattern = search.indexOf(encodeURIComponent(params) + "=" + encodeURIComponent(value))
-    if (list_params[params] && search.indexOf(encodeURIComponent(params) + "=" + encodeURIComponent(value))>=0) {
-      search.replace("&"+ pattern ,"")
-      search.replace(pattern ,"")
+    let pattern = encodeURIComponent(params) + "=" + encodeURIComponent(value)
+    if (search.indexOf(pattern) >= 0) {
+      search = search.replace("&"+ pattern ,"")
+      search = search.replace(pattern ,"")
     } else {
-      search+= "&"+pattern
+      search+= "&" + pattern
     }
     window.location.href = "/search"+ search
   }
