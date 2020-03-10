@@ -22,6 +22,12 @@
 
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
+WEKO_AUTHORS_LIST_SCHEME = ['e-Rad','NRID','ORCID','ISNI','VIAF','AID','Kakenhi','Ringgolf','GRID','Other']
+""" List of scheme """
+
+WEKO_AUTHORS_INDEX_ITEM_OTHER = 9
+""" Item other index """
+
 WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'
 """Default base template for the author page."""
 
@@ -42,3 +48,5 @@ WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix)
 
 WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0"
 """Elasticsearch document type for author."""
+
+

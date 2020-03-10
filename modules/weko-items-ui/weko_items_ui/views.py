@@ -26,8 +26,8 @@ import sys
 from datetime import date, timedelta
 
 import redis
-from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
-    render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, json, jsonify, \
+    redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user

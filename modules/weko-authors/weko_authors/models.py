@@ -122,6 +122,9 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
     name = db.Column(db.Text, nullable=False)
     """ The name of prefix organization."""
 
+    scheme = db.Column(db.Text, nullable=True, default='abc', unique=True)
+    """ The scheme of prefix organization."""
+
     url = db.Column(db.Text, nullable=True)
     """ The url of prefix organization."""
 
@@ -136,13 +139,14 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
     """ Updated date."""
 
     @classmethod
-    def create(cls, name, url):
+    def create(cls, name, scheme, url):
         """Create settings."""
         try:
             data = AuthorsPrefixSettings()
             with db.session.begin_nested():
                 data.name = name
                 data.url = url
+                data.scheme = scheme
                 db.session.add(data)
             db.session.commit()
         except BaseException as ex:
@@ -152,13 +156,14 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         return cls
 
     @classmethod
-    def update(cls, id, name, url):
+    def update(cls, id, name, scheme, url):
         """Update settings."""
         try:
             with db.session.begin_nested():
                 data = cls.query.filter_by(id=id).first()
                 data.name = name
                 data.url = url
+                data.scheme = scheme
                 db.session.merge(data)
             db.session.commit()
         except BaseException as ex:
@@ -180,5 +185,17 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
             raise
         return cls
 
+    @classmethod
+    def find(cls):
+        """find existed scheme settings."""
+        return None
+        # try:
+        #     item = cls.query.filter_by(scheme=scheme).one_or_none()
+        #     if not item:
+        #         return None
+        #     json_data = json.loads(item.json)
+        #     return json_data
+        # except Exception:
+        #     return None
 
 __all__ = ('Authors', 'AuthorsPrefixSettings', )
