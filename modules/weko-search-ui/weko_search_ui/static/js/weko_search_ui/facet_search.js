@@ -40,6 +40,7 @@ class MainLayout extends React.Component {
   }
 
   get_facet_search_list() {
+    let search = window.location.search
     let url = '/api/records/'
     let params = getUrlVars()
     if (params.search_type && String(params.search_type) === "2") {
@@ -47,7 +48,7 @@ class MainLayout extends React.Component {
     }
     $.ajax({
         context: this,
-        url: url,
+        url: url+ search,
         type: 'GET',
         contentType: 'application/json; charset=UTF-8',
         success: function (res) {
@@ -105,7 +106,7 @@ class MainLayout extends React.Component {
   }
 
   handleCheck(params, value) {
-    let search = window.location.search
+    let search = window.location.search || "?"
     let pattern = encodeURIComponent(params) + "=" + encodeURIComponent(value)
     if (search.indexOf(pattern) >= 0) {
       search = search.replace("&"+ pattern ,"")
