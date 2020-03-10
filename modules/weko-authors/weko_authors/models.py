@@ -110,6 +110,7 @@ class Authors(db.Model, Timestamp):
         except Exception:
             return None
 
+
 class AuthorsPrefixSettings(db.Model, Timestamp):
     """Represent an author prefix setting."""
 
@@ -183,5 +184,6 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
             current_app.logger.error(ex)
             raise
         return cls
+
 
 __all__ = ('Authors', 'AuthorsPrefixSettings', )
