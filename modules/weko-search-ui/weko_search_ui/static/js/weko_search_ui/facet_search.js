@@ -42,7 +42,7 @@ class MainLayout extends React.Component {
   get_facet_search_list() {
     let search = window.location.search
     let url = '/api/records/'
-    let params = getUrlVars()
+    let params = this.getUrlVars()
     if (params.search_type && String(params.search_type) === "2") {
       url = '/api/index/'
     }
