@@ -31,7 +31,6 @@ from .models import Authors, AuthorsPrefixSettings
 from .permissions import author_permission
 from .utils import get_author_setting_obj
 
-
 blueprint = Blueprint(
     'weko_authors',
     __name__,

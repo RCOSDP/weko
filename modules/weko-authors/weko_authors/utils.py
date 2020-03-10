@@ -19,8 +19,9 @@
 # MA 02111-1307, USA.
 
 """Utils for weko-authors."""
-from invenio_db import db
 from flask import current_app
+from invenio_db import db
+
 from .models import AuthorsPrefixSettings
 
 
