@@ -178,7 +178,7 @@ require([
             let paramValue = decodeURIComponent(param[1].replace(/\+/g, ' '));
             if (paramName == 'createdfrom' || paramName == 'createdto') {
               if (paramValue.length === 10) {
-                date = new Date(paramValue);
+                let date = new Date(paramValue);
                 if (date != 'Invalid Date') {
                   date.setFullYear(date.getFullYear())
                   $("#" + paramName).datepicker('setDate', date);
