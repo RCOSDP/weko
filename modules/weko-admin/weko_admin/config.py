@@ -298,6 +298,16 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
             {'id': 'custom_sort_asc', 'contents': 'Custom(asc/desc)'}
         ]
     },
+    'display_control': {
+        'display_index_tree': {
+            'id': 'display_index_tree',
+            'status': True
+        },
+        'display_facet_search': {
+            'id': 'display_facet_search',
+            'status': True
+        }
+    },
     'detail_condition': [
         {'id': 'title',
          'contents': 'Title',
