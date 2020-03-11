@@ -774,8 +774,7 @@ class PreviewWidget extends React.Component {
     constructor(props) {
         super(props);
         this.style = {
-            "border": "1px solid #eee",
-            "min-height": "300px",
+            "border": "1px solid #eee"
         };
     }
 
@@ -920,6 +919,8 @@ var PreviewGrid = new function () {
             width: 12,
             float: true,
             removeTimeout: 100,
+            cellHeight: 6,
+            verticalMargin: 10,
             acceptWidgets: '.grid-stack-item'
         };
 
@@ -1072,7 +1073,7 @@ function addWidget() {
                 x: 0,
                 y: 0,
                 width: 2,
-                height: 1,
+                height: 6,
                 auto_position: true,
                 name: widgetName,
                 id: widgetId,

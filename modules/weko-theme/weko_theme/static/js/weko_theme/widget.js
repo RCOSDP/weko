@@ -20,7 +20,7 @@ const INTERVAL_TIME = 60000; //one minute
     getWidgetDesignSetting();
     window.lodash = _.noConflict();
 }());
-
+let widgetList;
 let PageBodyGrid = function () {
     this.init = function () {
         let options = {
@@ -204,7 +204,7 @@ let PageBodyGrid = function () {
             let community_id = $("#community-id").text();
             if (node.type === HEADER_TYPE && community_id) {
               this.addNewWidget(node, i);
-            } else if (![MAIN_CONTENT_TYPE, HEADER_TYPE].includes(node.type)) {
+            } else if ([MAIN_CONTENT_TYPE, HEADER_TYPE].indexOf(node.type) == -1) {
               this.addNewWidget(node, i);
             }
         }
@@ -322,7 +322,7 @@ let PageBodyGrid = function () {
                   }
                 }
 
-                if (mainLayoutTitle === "" && Array.isArray(settings.menu_show_pages) && settings.menu_show_pages.includes("0")) {
+                if (mainLayoutTitle === "" && Array.isArray(settings.menu_show_pages) && settings.menu_show_pages.indexOf("0") > -1) {
                     mainLayoutTitle = "Main Layout";
                 }
 
@@ -411,7 +411,8 @@ let PageBodyGrid = function () {
                 widgetId = Number(node.widget_id);
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
-            setInterval(function() { return this.setAccessCounterValue(); }, INTERVAL_TIME);
+            let _this = this
+            setInterval(function() { return _this.setAccessCounterValue(); }, INTERVAL_TIME);
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
@@ -675,24 +676,28 @@ function getWidgetDesignSetting() {
 
     // If the current page is a widget page get
     let is_page = false;
-    let request_param = {};
     let widgetPageId = $('#widget-page-id');
+    let currentTime = new Date().getTime();
+    let request;
     if(widgetPageId.length) {
         let page_id = widgetPageId.text();
         url = '/api/admin/load_widget_design_page_setting/' + page_id + '/' + current_language;
         is_page = true;
-        request_param = {
-            type: 'GET',
-            url: url
-        }
+        request = $.ajax({
+            url: url,
+            type: "GET",
+            contentType: "application/json",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
     }
     else {
-        var data = {
+        let data = {
             repository_id: community_id
         };
-        var currentTime = new Date().getTime();
         url = '/api/admin/load_widget_design_setting/' + current_language +'?time=' + currentTime;
-        request_param = {
+        request = $.ajax({
             url: url,
             type: "POST",
             contentType: "application/json",
@@ -700,56 +705,68 @@ function getWidgetDesignSetting() {
                 "Content-Type": "application/json"
             },
             data: JSON.stringify(data)
-        }
+        });
     }
 
     $(".lds-ring-background").removeClass("hidden");
-    $.ajax({
-        url: request_param.url,
-        type: request_param.type,
-        contentType: "application/json",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        data: JSON.stringify(data),
-        success: function (data) {  // TODO: If no settings default to main layout
-            if (data.error) {
-                console.log(data.error);
-                toggleWidgetUI();
-                return;
-            } else {
-                let widgetList = data['widget-settings'];
-                if (Array.isArray(widgetList) && widgetList.length) {
-                    $("#page_body").removeClass("hidden");
-                    $("#main_contents").addClass("grid-stack-item");
-                    $("#header").addClass("grid-stack-item no-scroll-bar");
-                    $("#footer").addClass("grid-stack-item no-scroll-bar");
-                    let pageBodyGrid = new PageBodyGrid();
-                    pageBodyGrid.init();
-                    pageBodyGrid.loadGrid(widgetList);
-                    new ResizeSensor($('.widget-resize'), function () {
-                        $('.widget-resize').each(function () {
-                            let headerElementHeight = $(this).find('.panel-heading').height();
-                            $(this).find('.panel-body').css("padding-top", String(headerElementHeight + 11) + "px");
-                        });
-                    });
 
-                    handleAutoAdjustWidget(pageBodyGrid);
-                }
-                else {  // Pages are able to not have main content, so hide if widget is not present
-                    if(is_page){
-                        $("#main_contents").hide();
-                    }
-                    if (community_id !== DEFAULT_REPOSITORY) {
-                        $("#community_header").removeAttr("hidden");
-                        $("footer > #community_footer").removeAttr("hidden");
-                        $("#page_body").removeClass("hidden");
-                    }
-                }
+    request
+      .done(function(data) {
+        if (data.error) {
+          console.log(data.error);
+          toggleWidgetUI();
+          return;
+        } else {
+          widgetList = data["widget-settings"];
+          if (Array.isArray(widgetList) && widgetList.length) {
+            $("#page_body").removeClass("hidden");
+            $("#main_contents").addClass("grid-stack-item");
+            $("#header").addClass("grid-stack-item no-scroll-bar");
+            $("#footer").addClass("grid-stack-item no-scroll-bar");
+            if (!document.hidden) {
+              buildWidget();
+            } else {
+              window.addEventListener("focus", buildWidget);
             }
-            toggleWidgetUI();
+          } else {
+            // Pages are able to not have main content, so hide if widget is not present
+            if (is_page) {
+              $("#main_contents").hide();
+            }
+            if (community_id !== DEFAULT_REPOSITORY) {
+              $("#community_header").removeAttr("hidden");
+              $("footer > #community_footer").removeAttr("hidden");
+              $("#page_body").removeClass("hidden");
+            }
+          }
         }
+        if (!document.hidden) {
+          toggleWidgetUI();
+        } else {
+          window.addEventListener("focus", toggleWidgetUI);
+        }
+      })
+      .fail(function() {
+        console.log(data.error);
+        toggleWidgetUI();
+      });
+}
+
+function buildWidget() {
+  if (Array.isArray(widgetList) && widgetList.length) {
+    let pageBodyGrid = new PageBodyGrid();
+    pageBodyGrid.init();
+    pageBodyGrid.loadGrid(widgetList);
+    new ResizeSensor($(".widget-resize"), function () {
+      $(".widget-resize").each(function () {
+        let headerElementHeight = $(this).find(".panel-heading").height();
+        $(this).find(".panel-body").css("padding-top", String(headerElementHeight + 11) + "px");
+      });
     });
+
+    handleAutoAdjustWidget(pageBodyGrid);
+    window.removeEventListener('focus', buildWidget);
+  }
 }
 
 function handleAutoAdjustWidget(pageBodyGrid) {
@@ -792,8 +809,8 @@ function toggleWidgetUI() {
     $('footer-fix#footer').remove();
     setTimeout(function(){
         $(".lds-ring-background").addClass("hidden");
-    }, 1000);
-
+    }, 500);
+    window.removeEventListener("focus", toggleWidgetUI);
 }
 
 function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
