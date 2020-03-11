@@ -153,42 +153,53 @@ require([
             sessionStorage.setItem('search_type', '1');
         }
         $('#search-form').submit(function (event) {
-            var url = new URL(window.location.href)
-             url.searchParams.set("page", 1)
+            var search = window.location.search
+            search = insertParam(search, "page", 1)
             $('#search_type :input:checked').each(function () {
                var list_params = $(this).serializeArray();
-               list_params.map(item => {
-                  url.searchParams.set(item.name, item.value)
+               list_params.map(function (item) {
+                  search = insertParam(search, item.name, item.value)
                })
             });
-            $('#q').serializeArray().map(item => {
-              url.searchParams.set(item.name, item.value.replace(/\+/g, ' '))
+            $('#q').serializeArray().map(function (item) {
+              search = insertParam(search, item.name, item.value.replace(/\+/g, ' '))
             })
             if ($('#community').val()) {
-                $('#community').serializeArray().map(item => {
-                  url.searchParams.set(item.name, item.value.replace(/\+/g, ' '))
+                $('#community').serializeArray().map(function (item) {
+                  search = insertParam(search, item.name, item.value.replace(/\+/g, ' '))
                 })
             }
             // var btn = sessionStorage.getItem('btn', '');
             if ($("#item_management_bulk_update").length != 0) {
-              var new_url = new URL(window.location.origin + "/admin/items/search")
-                url.searchParams.set("item_management","update")
-               new_url.search = url.search;
-              window.location.href = new_url.href;
+              search = insertParam(search, "item_management", "update")
+              window.location.href = "/admin/items/search"+ search
             } else if($("#item_management_bulk_delete").length != 0) {
-            var new_url = new URL(window.location.origin + "/admin/items/search")
-                url.searchParams.set("item_management","delete")
-                new_url.search = url.search;
-              window.location.href = new_url.href;
+              search = insertParam(search, "item_management", "delete")
+              window.location.href = "/admin/items/search"+ search
             } else {
-              var new_url = new URL(window.location.origin + "/search")
-                new_url.search = url.search;
-              window.location.href = new_url.href;
+              window.location.href = "/search"+ search
             }
 
             // stop the form from submitting the normal way and refreshing the page
             event.preventDefault();
         })
+    }
+
+    function insertParam(search, key, value)
+    {
+        key = encodeURIComponent(key); value = encodeURIComponent(value);
+
+        var s = search;
+        var kvp = key+"="+value;
+
+        var r = new RegExp("(&|\\?)"+key+"=[^\&]*");
+
+        s = s.replace(r,"$1"+kvp);
+
+        if(!RegExp.$1) {s += (s.length>0 ? '&' : '?') + kvp;};
+
+        //again, do what you will here
+        return s
     }
 
     $(document).ready(function () {
