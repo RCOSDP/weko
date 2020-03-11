@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Models for weko-index-tree."""
+
 import json
 from datetime import datetime
 
