@@ -194,14 +194,14 @@
               "properties": {
                 "nameIdentifier": {
                   "type": "keyword",
-              "index": true,
+                  "index": true,
                   "copy_to": [
                     "search_identifier"
                   ]
                 },
                 "affiliationName": {
                   "type": "keyword",
-              "index": true,
+                  "index": true,
                   "copy_to": [
                     "search_other"
                   ]
@@ -213,6 +213,14 @@
         "contributor": {
           "type": "object",
           "properties": {
+            "@attributes": {
+              "type": "object",
+              "properties": {
+                "contributorType": {
+                  "type": "keyword"
+                }
+              }
+            },
             "nameIdentifier": {
               "type": "keyword",
               "index": true,
@@ -253,14 +261,14 @@
               "properties": {
                 "nameIdentifier": {
                   "type": "keyword",
-              "index": true,
+                  "index": true,
                   "copy_to": [
                     "search_identifier"
                   ]
                 },
                 "affiliationName": {
                   "type": "keyword",
-              "index": true,
+                  "index": true,
                   "copy_to": [
                     "search_other"
                   ]
@@ -270,7 +278,7 @@
           }
         },
         "accessRights": {
-          "type": "text",
+          "type": "keyword",
           "index": true,
           "copy_to": [
             "search_other"
@@ -327,10 +335,18 @@
           }
         },
         "description": {
-          "type": "text",
-          "copy_to": [
-            "search_des"
-          ]
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "keyword",
+              "copy_to": [
+                "search_des"
+              ]
+            },
+            "descriptionType": {
+              "type": "keyword"
+            }
+          }
         },
         "publisher": {
           "type": "text",
@@ -355,7 +371,7 @@
           }
         },
         "language": {
-          "type": "text",
+          "type": "keyword",
           "copy_to": [
             "search_other"
           ]
@@ -423,7 +439,7 @@
                 },
                 "identifierType": {
                   "type": "keyword",
-              "index": true,
+                  "index": true,
                   "copy_to": [
                     "search_attr"
                   ]
@@ -446,11 +462,11 @@
                 },
                 "item_links": {
                   "type": "keyword",
-              "index": true
+                  "index": true
                 },
                 "item_title": {
                   "type": "keyword",
-              "index": true
+                  "index": true
                 }
               }
             }
@@ -671,7 +687,7 @@
                 },
                 "objectType": {
                   "type": "keyword",
-              "index": true
+                  "index": true
                 }
               }
             },
@@ -688,7 +704,7 @@
               "properties": {
                 "dateType": {
                   "type": "keyword",
-              "index": true
+                  "index": true
                 },
                 "value": {
                   "type": "date",

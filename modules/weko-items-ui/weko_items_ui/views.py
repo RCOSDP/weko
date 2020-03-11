@@ -323,7 +323,13 @@ def get_schema_form(item_type_id=0):
         hidden_subitem = ['subitem_thumbnail',
                           'subitem_systemidt_identifier',
                           'subitem_systemfile_datetime',
-                          'subitem_systemfile_filename'
+                          'subitem_systemfile_filename',
+                          'subitem_system_id_rg_doi',
+                          'subitem_system_date_type',
+                          'subitem_system_date',
+                          'subitem_system_identifier_type',
+                          'subitem_system_identifier',
+                          'subitem_system_text'
                           ]
 
         for i in hidden_subitem:
@@ -806,10 +812,11 @@ def prepare_edit_item():
         if not workflow:
             item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
             id_list = [x.id for x in item_type_list]
-            workflow = (WorkFlow.query
-                        .filter(WorkFlow.itemtype_id.in_(id_list))
-                        .order_by(WorkFlow.itemtype_id.desc())
-                        .order_by(WorkFlow.flow_id.asc()).first())
+            workflow = (
+                WorkFlow.query
+                .filter(WorkFlow.itemtype_id.in_(id_list))
+                .order_by(WorkFlow.itemtype_id.desc())
+                .order_by(WorkFlow.flow_id.asc()).first())
         return workflow
 
     if request.headers['Content-Type'] != 'application/json':

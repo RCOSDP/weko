@@ -73,6 +73,7 @@
            data-community="{{ community.id }}"
                 {%- endif -%}
            data-workflow-id="{{ workflow_id }}"
+           data-itemtitle="{{ itemtitle|urlencode }}"
            href="{{ href_url }}">
           {{ file.filename }} ({{ file.size|filesizeformat }})</a>
       {%- else -%}

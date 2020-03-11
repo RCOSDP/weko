@@ -61,7 +61,12 @@ dl dd {
 
 .break-word {
     word-wrap: break-word;
-    word-break: break-word;
+    word-break: break-all;
+}
+
+.table-bordered th,
+.table-bordered td {
+    word-break: break-all;
 }
 
 .panel_bread .breadcrumb {
