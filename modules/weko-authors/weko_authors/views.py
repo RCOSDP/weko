@@ -412,7 +412,7 @@ def get_prefix_list():
     return jsonify(data)
 
 
-@blueprint_api.route("/list_controlledvocabularies", methods=['get'])
+@blueprint_api.route("/list_vocabulary", methods=['get'])
 @login_required
 @author_permission.require(http_exception=403)
 def get_list_schema():
@@ -434,11 +434,11 @@ def update_prefix():
         check = get_author_setting_obj(data['scheme'])
         if check is None or check.id == data['id']:
             AuthorsPrefixSettings.update(**data)
-            return jsonify(msg=_('Success'))
+            return jsonify({'code': 200, 'msg': 'Success'})
         else:
             return jsonify({'code': 400, 'msg': '"Scheme" must be unique'})
-    except Exception as ex:
-        return jsonify({'code': 204, 'msg': 'Faild'})
+    except Exception:
+        return jsonify({'code': 204, 'msg': 'Failed'})
 
 
 @blueprint_api.route("/delete_prefix/<id>", methods=['delete'])
@@ -460,8 +460,8 @@ def create_prefix():
         check = get_author_setting_obj(data['scheme'])
         if check is None:
             AuthorsPrefixSettings.create(**data)
-            return jsonify(msg=_('Success'))
+            return jsonify({'code': 200, 'msg': 'Success'})
         else:
             return jsonify({'code': 400, 'msg': '"Scheme" must be unique'})
-    except Exception as ex:
-        return jsonify({'code': 204, 'msg': 'Faild'})
+    except Exception:
+        return jsonify({'code': 204, 'msg': 'Failed'})

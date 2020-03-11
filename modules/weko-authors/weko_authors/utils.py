@@ -17,7 +17,6 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-
 """Utils for weko-authors."""
 from flask import current_app
 from invenio_db import db
@@ -28,9 +27,8 @@ from .models import AuthorsPrefixSettings
 def get_author_setting_obj(scheme):
     """Check item Scheme exist in DB."""
     try:
-        with db.session.begin_nested():
-            return db.session.query(AuthorsPrefixSettings).filter(
-                AuthorsPrefixSettings.scheme == scheme).one_or_none()
+        return db.session.query(AuthorsPrefixSettings).filter(
+             AuthorsPrefixSettings.scheme == scheme).one_or_none()
     except Exception as ex:
         current_app.logger.debug(ex)
     return None
