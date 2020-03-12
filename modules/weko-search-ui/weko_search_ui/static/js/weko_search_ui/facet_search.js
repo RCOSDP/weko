@@ -49,10 +49,11 @@ class MainLayout extends React.Component {
         contentType: 'application/json; charset=UTF-8',
         success: function (res) {
             if (res) {
-               if (res.display_facet_search) {
-                  this.setState({is_enable: res.display_facet_search.status})
+               const data = JSON.parse(res)
+               if (data.display_facet_search) {
+                  this.setState({is_enable: data.display_facet_search.status})
                }
-               if (res.display_index_tree && !res.display_index_tree.status) {
+               if (data.display_index_tree && !data.display_index_tree.status) {
                   $("#body_index").hide()
                }
             }
