@@ -105,6 +105,9 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
+#~ msgid "%(module_name)s"
+#~ msgstr ""
+
 #: weko_accounts/api.py:202
 msgid "Failed to get attribute."
 msgstr ""
@@ -125,9 +128,9 @@ msgstr ""
 msgid "login_gakunin_description_footer"
 msgstr "Users who belongs to institution outside Japan, please choose your institution's location."
 
-#: weko_accounts/templates/weko_accounts/login_shibuser_2.html:29
-msgid "login_pattern_2_description_header"
-msgstr "WEKO3を利用するため、所属機関で認証する必要があります。所属機関を選択してください。<br>※このページを表示して時間が経過している場合は、再読み込みしてから所属機関を選択してください。<br>正しいページに戻れ$
+#: weko_accounts/templates/weko_accounts/login_shibuser_2.html
+msgid "Select Institution"
+msgstr ""
 
-#~ msgid "%(module_name)s"
-#~ msgstr ""
+msgid "login_pattern_2_description_header"
+msgstr ""

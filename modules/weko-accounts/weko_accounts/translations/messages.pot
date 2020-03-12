@@ -124,6 +124,9 @@ msgstr ""
 msgid "login_gakunin_description_footer"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/login_shibuser_2.html:29
+#: weko_accounts/templates/weko_accounts/login_shibuser_2.html
+msgid "Select Institution"
+msgstr ""
+
 msgid "login_pattern_2_description_header"
 msgstr ""

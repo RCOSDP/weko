@@ -33,6 +33,11 @@ embedded_ds_js = Bundle(
     output="gen/weko_accounts_embedded_ds.%(version)s.js",
 )
 
+embedded_ds_js_2 = Bundle(
+    'js/weko_accounts/embedded_ds_2.js',
+    output="gen/weko_accounts_embedded_ds_2.%(version)s.js",
+)
+
 change_translation_embedded_js = Bundle(
     'js/weko_accounts/change_translation_embedded.js',
     output="gen/weko_accounts_change_translation_embedded.%(version)s.js",
