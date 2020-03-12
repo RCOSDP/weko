@@ -22,10 +22,11 @@
 
 import calendar
 import sys
+import json
 from datetime import timedelta
 
 from flask import Blueprint, Response, abort, current_app, flash, jsonify, \
-    render_template, request
+    render_template, request, make_response
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -541,4 +542,10 @@ def display_control_function():
 
     display_control = get_search_setting().get("display_control")
 
-    return jsonify(display_control)
+    r = make_response(json.dumps(display_control))
+
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+
+    return r
