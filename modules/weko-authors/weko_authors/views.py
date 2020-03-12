@@ -436,7 +436,7 @@ def update_prefix():
             AuthorsPrefixSettings.update(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
         else:
-            return jsonify({'code': 400, 'msg': '"Scheme" must be unique'})
+            return jsonify({'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
 
@@ -462,6 +462,6 @@ def create_prefix():
             AuthorsPrefixSettings.create(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
         else:
-            return jsonify({'code': 400, 'msg': '"Scheme" must be unique'})
+            return jsonify({'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
