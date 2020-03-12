@@ -30,7 +30,7 @@ def get_author_setting_obj(scheme):
     """Check item Scheme exist in DB."""
     try:
         return db.session.query(AuthorsPrefixSettings).filter(
-             AuthorsPrefixSettings.scheme == scheme).one_or_none()
+            AuthorsPrefixSettings.scheme == scheme).one_or_none()
     except Exception as ex:
         current_app.logger.debug(ex)
     return None
