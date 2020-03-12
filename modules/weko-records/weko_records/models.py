@@ -25,7 +25,9 @@ from datetime import datetime
 
 from invenio_accounts.models import User
 from invenio_db import db
+from invenio_records.models import RecordMetadata
 from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import desc
 from sqlalchemy.types import LargeBinary
 from sqlalchemy_utils.types import JSONType, UUIDType
@@ -662,6 +664,83 @@ class FeedbackMailList(db.Model, Timestamp):
     """List of feedback mail in json format."""
 
 
+class ItemReference(db.Model, Timestamp):
+    """Model of item reference relations."""
+
+    __tablename__ = 'item_reference'
+
+    src_item_pid = db.Column(
+        db.Integer(),
+        nullable=True,
+        primary_key=True
+    )
+    """PID of source item."""
+
+    # src_item_uuid = db.Column(
+    #     UUIDType,
+    #     db.ForeignKey(RecordMetadata.id, ondelete="CASCADE"),
+    #     nullable=True,
+    # )
+    # """Object UUID of source item."""
+
+    dst_item_pid = db.Column(
+        db.Integer(),
+        nullable=True,
+        primary_key=True
+    )
+    """PID for destination item."""
+
+    # dst_item_uuid = db.Column(
+    #     UUIDType,
+    #     db.ForeignKey(RecordMetadata.id, ondelete="CASCADE"),
+    #     nullable=True,
+    # )
+    # """Object UUID of destination item."""
+
+    reference_type = db.Column(
+        db.String(50),
+        nullable=False
+    )
+    """参照元と参照先のアイテム間の関連内容。"""
+
+    def __repr__(self):
+        """Text representation of a ItemReference relation."""
+        return "<ItemReference Relation: (records/{r.src_item_pid}) -> " \
+               "(records/{r.dst_item_pid}) " \
+               "(Type: {r.reference_type})>".format(r=self)
+
+    @classmethod
+    def get_src_references(cls, pid):
+        """Get all relations where given PID is a src."""
+        return cls.query.filter((cls.src_item_pid == pid))
+
+    @classmethod
+    def get_dst_references(cls, pid):
+        """Get all relations where given PID is a dst."""
+        return cls.query.filter((cls.dst_item_pid == pid))
+
+    @classmethod
+    def create(cls, src_pid, dst_pid, reference_type):
+        """Create a PID relation for given parent and child."""
+        try:
+            with db.session.begin_nested():
+                obj = cls(src_item_pid=src_pid,
+                          dst_item_pid=dst_pid,
+                          reference_type=reference_type)
+                db.session.add(obj)
+        except IntegrityError:
+            raise Exception("Item Link already exists.")
+        return obj
+
+    @classmethod
+    def relation_exists(self, src_pid, dst_pid, reference_type):
+        """Determine if given relation already exists."""
+        return ItemReference.query.filter_by(
+            src_item_pid=src_pid,
+            dst_item_pid=dst_pid,
+            reference_type=reference_type).count() > 0
+
+
 __all__ = (
     'Timestamp',
     'ItemType',
@@ -674,4 +753,5 @@ __all__ = (
     'SiteLicenseInfo',
     'SiteLicenseIpAddress',
     'FeedbackMailList',
+    'ItemReference'
 )
