@@ -74,7 +74,7 @@ class WekoAccounts(object):
             app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
                 config.SECURITY_LOGIN_USER_TEMPLATE
         # Handle redirect to the screen of corresponding pattern
-        if config.config['SHIB_ACCOUNTS_LOGIN_PATTERN_2_ENABLED']:
+        if config.SHIB_ACCOUNTS_LOGIN_PATTERN_2_ENABLED:
             app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
                 config.SECURITY_LOGIN_SHIB_USER_TEMPLATE_2
         app.config['SHIB_ACCOUNTS_LOGIN_CACHE_TTL'] = \

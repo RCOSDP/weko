@@ -1,8 +1,31 @@
-{# # This file is part of WEKO3. # Copyright (C) 2017 National Institute of Informatics. # # WEKO3 is free software; you can redistribute it # and/or modify it under the terms of the GNU General Public License as # published by the Free Software Foundation;
-either version 2 of the # License, or (at your option) any later version. # # WEKO3 is distributed in the hope that it will be # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU # General Public License for more details. # # You should have received a copy of the GNU General Public License # along with WEKO3; if not, write to the # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, # MA 02111-1307,
-USA. #} {%- extends config.ACCOUNTS_COVER_TEMPLATE %} {%- block css %} {{ super() }} {% assets "weko_accounts_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %} {%- endblock css %} {% from "invenio_accounts/_macros.html" import render_field, form_errors %} {% block panel %}
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+{%- extends config.ACCOUNTS_COVER_TEMPLATE %}
+
+{% from "invenio_accounts/_macros.html" import render_field, form_errors %}
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_accounts_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{% block panel %}
 <div class="col-md-6 col-md-offset-3">
     <div class="panel panel-default">
         <div class="panel-body shiboleth-wrap">
@@ -11,8 +34,9 @@ USA. #} {%- extends config.ACCOUNTS_COVER_TEMPLATE %} {%- block css %} {{ super(
                 <!--        <br>-->
                 <!--        <span>{{_('login_pattern_2_description_header')}}</span>-->
             </div>
-            {% assets "weko_accounts_embedded_ds_js_2" %}
-            <script src="{{ ASSET_URL }}"></script>{% endassets %}
+            {%- block javascript %}
+              {% assets "weko_accounts_embedded_ds_js_2" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+            {%- endblock javascript %}
         </div>
     </div>
 </div>
