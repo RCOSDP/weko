@@ -944,13 +944,9 @@ class WorkActivity(object):
         :return:
         """
         created_date = created[0]
-        if len(created_date) == 8 and created_date.isnumeric():
-            year = created_date[0:4]
-            month = created_date[4:6]
-            day = created_date[6:8]
-            date_to_parse = "{0}-{1}-{2}".format(year, month, day)
+        if len(created_date) == 10:
             try:
-                date_after_parse = datetime.strptime(date_to_parse,
+                date_after_parse = datetime.strptime(created_date,
                                                      '%Y-%m-%d')
                 return date_after_parse
             except ValueError:
@@ -1120,15 +1116,20 @@ class WorkActivity(object):
         :param is_community_admin:
         :return:
         """
+        self_user_id = int(current_user.get_id())
+        self_group_ids = [role.id for role in current_user.roles]
         query = query \
-            .filter((_Activity.activity_status
-                     == ActivityStatusPolicy.ACTIVITY_BEGIN)
-                    | (_Activity.activity_status
-                       == ActivityStatusPolicy.ACTIVITY_MAKING))
-        if not is_admin and not is_community_admin:
-            query = query.filter(
-                _FlowAction.action_id == _Activity.action_id) \
-                .filter(_FlowActionRole.id.is_(None))
+            .filter((_Activity.activity_status ==
+                    ActivityStatusPolicy.ACTIVITY_BEGIN)
+                    | (_Activity.activity_status ==
+                    ActivityStatusPolicy.ACTIVITY_MAKING)) \
+            .filter(
+                    ((_FlowActionRole.action_user == self_user_id)
+                     & (_FlowActionRole.action_user_exclude == '0'))
+                    | (_FlowActionRole.action_role.in_(self_group_ids)
+                       & (_FlowActionRole.action_role_exclude == '0'))
+                    | _FlowActionRole.id.is_(None))\
+            .filter(_FlowAction.action_id == _Activity.action_id)
         return query
 
     def get_activity_list(self, community_id=None, conditions=None):
@@ -1204,7 +1205,12 @@ class WorkActivity(object):
 
             # Count all result
             count = query_action_activities.distinct(_Activity.id).count()
-
+            import math
+            maxpage = math.ceil(count/int(size))
+            name_param = ''
+            if int(page) > maxpage:
+                page = 1
+                name_param = 'pages' + tab
             offset = int(size) * (int(page) - 1)
             action_activities = query_action_activities \
                 .distinct(_Activity.id).order_by(asc(_Activity.id)).limit(
@@ -1229,7 +1235,7 @@ class WorkActivity(object):
                         ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
-            return activities, count, size, page
+            return activities, maxpage, size, page, name_param
 
     def get_all_activity_list(self, community_id=None):
         """Get all activity list info.
