@@ -529,3 +529,16 @@ def get_avatar():
     b = io.BytesIO(favicon)
     w = FileWrapper(b)
     return Response(b, mimetype="image/x-icon", direct_passthrough=True)
+
+
+@blueprint_api.route('/search_control/display_control', methods=['GET'])
+def display_control_function():
+    """Get display control.
+
+    :return: display_control.
+    """
+    from .utils import get_search_setting
+
+    display_control = get_search_setting().get("display_control")
+
+    return jsonify(display_control)

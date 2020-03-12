@@ -1040,3 +1040,15 @@ msgstr ""
 #: weko_admin/template/weko_admin/admin/site_info.html:61
 msgid "Maximum length of instruction is 200 characters. "
 msgstr ""
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Index Tree/Facet Display Setting"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Index Tree"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Facet"
+msgstr ""
