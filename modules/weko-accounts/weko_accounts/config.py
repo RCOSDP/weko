@@ -35,6 +35,12 @@ SHIB_CACHE_PREFIX = 'Shib-Session-'
 SECURITY_LOGIN_USER_TEMPLATE = 'weko_accounts/login_user.html'
 """Default template for login."""
 
+SECURITY_LOGIN_SHIB_USER_TEMPLATE = 'weko_accounts/login_shibuser.html'
+"""Shibboleth template for login."""
+
+SECURITY_LOGIN_SHIB_USER_TEMPLATE_2 = 'weko_accounts/login_shibuser_2.html'
+"""Shibboleth template 2 for login."""
+
 WEKO_ACCOUNTS_CONFIRM_USER_TEMPLATE = 'weko_accounts/confirm_user.html'
 """ Default template for login."""
 

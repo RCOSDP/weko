@@ -43,6 +43,9 @@ class ShibSettingView(BaseView):
             if current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
                 shib_flg = '1'
 
+            if current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
+                return self.render(current_app.config.get('SECURITY_LOGIN_GAKUNIN_USER_TEMPLATE'))
+
             if request.method == 'POST':
                 # Process forms
                 form = request.form.get('submit', None)

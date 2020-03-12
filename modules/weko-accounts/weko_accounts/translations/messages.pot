@@ -115,3 +115,15 @@ msgstr ""
 #: weko_accounts/api.py:223
 msgid "Failed to login."
 msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_shibuser.html:29
+msgid "Institutional Login for institutions in Japan."
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_shibuser.html:36
+msgid "login_gakunin_description_footer"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_2.html:29
+msgid "login_pattern_2_description_header"
+msgstr ""
