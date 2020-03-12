@@ -791,7 +791,7 @@ msgstr "作成者識別子URI"
 msgid "Creator Name"
 msgstr "作成者姓名"
 
-msgid "Name"
+msgid "Name_"
 msgstr "姓名"
 
 msgid "Creator Family Name"
@@ -932,7 +932,7 @@ msgstr "寄与者識別子Scheme"
 msgid "Contributor Name Identifier URI"
 msgstr "寄与者識別子URI"
 
-msgid "Contributor Name"
+msgid "Contributor_Name"
 msgstr "寄与者姓名"
 
 msgid "Contributor Family Name"
@@ -985,3 +985,9 @@ msgstr "図書名"
 
 msgid "Date Reported"
 msgstr "報告年度"
+
+msgid "Name Identifier"
+msgstr "学位授与機関識別子"
+
+msgid "Name Identifier Scheme"
+msgstr "学位授与機関識別子Scheme"

@@ -783,7 +783,7 @@ msgstr ""
 msgid "Creator Name"
 msgstr ""
 
-msgid "Name"
+msgid "Name_"
 msgstr ""
 
 msgid "Creator Family Name"
@@ -927,7 +927,7 @@ msgstr ""
 msgid "Contributor Name Identifier URI"
 msgstr ""
 
-msgid "Contributor Name"
+msgid "Contributor_Name"
 msgstr ""
 
 msgid "Contributor Family Name"
@@ -979,4 +979,10 @@ msgid "Book Name"
 msgstr ""
 
 msgid "Date Reported"
+msgstr ""
+
+msgid "Name Identifier"
+msgstr ""
+
+msgid "Name Identifier Scheme"
 msgstr ""
