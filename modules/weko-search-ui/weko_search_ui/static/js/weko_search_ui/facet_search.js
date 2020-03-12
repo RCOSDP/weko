@@ -129,7 +129,7 @@ class MainLayout extends React.Component {
 
   componentDidMount() {
       this.get_display_control()
-    this.get_facet_search_list()
+      this.get_facet_search_list()
   }
 
   handleCheck(params, value) {
