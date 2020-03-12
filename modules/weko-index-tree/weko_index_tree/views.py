@@ -102,14 +102,14 @@ def set_expand():
         "WEKO_INDEX_TREE_STATE_PREFIX",
         WEKO_INDEX_TREE_STATE_PREFIX
     )
-    if session.get(key):
-        session_data = session.get(key)
+    session_data = session.get(key, [])
+    if session_data:
         if index_id in session_data:
             session_data.remove(index_id)
         else:
             session_data.append(index_id)
     else:
-        session_data = [index_id]
+        session_data.append(index_id)
     session[key] = session_data
 
     return jsonify(success=True)

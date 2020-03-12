@@ -20,14 +20,14 @@ const INTERVAL_TIME = 60000; //one minute
     getWidgetDesignSetting();
     window.lodash = _.noConflict();
 }());
-
+let widgetList;
 let PageBodyGrid = function () {
     this.init = function () {
         let options = {
             width: 12,
             float: true,
             verticalMargin: 4,
-            cellHeight: 100,
+            cellHeight: 10,
             acceptWidgets: '.grid-stack-item'
         };
         let widget = $('#page_body');
@@ -39,6 +39,18 @@ let PageBodyGrid = function () {
         this.grid.addWidget($(this.widgetTemplate(node, index)), node.x, node.y, node.width, node.height);
         return false;
     }.bind(this);
+
+    this.resizeWidget = function (widget, width, height) {
+      this.grid.resize(widget, width, height);
+    };
+
+    this.getCellHeight = function () {
+      return this.grid.cellHeight();
+    };
+
+    this.getVerticalMargin = function () {
+      return this.grid.opts.verticalMargin;
+    };
 
     this.updateMainContent = function (node) {
         let mainContents = $("#main_contents");
@@ -158,7 +170,7 @@ let PageBodyGrid = function () {
                 headerNav.css({"background-color": node.background_color});
             }
             if (node.multiLangSetting && node.multiLangSetting.description) {
-                headerContent.css({"width": "calc(100vw - 490px)", "height": "100px", "overflow": "hidden"});
+                headerContent.css({"width": "calc(100vw - 490px)"});
                 headerContent.html(node.multiLangSetting.description.description);
             }
             this.grid.update(headerElement, node.x, node.y, node.width, node.height);
@@ -192,7 +204,7 @@ let PageBodyGrid = function () {
             let community_id = $("#community-id").text();
             if (node.type === HEADER_TYPE && community_id) {
               this.addNewWidget(node, i);
-            } else if (![MAIN_CONTENT_TYPE, HEADER_TYPE].includes(node.type)) {
+            } else if ([MAIN_CONTENT_TYPE, HEADER_TYPE].indexOf(node.type) == -1) {
               this.addNewWidget(node, i);
             }
         }
@@ -212,7 +224,7 @@ let PageBodyGrid = function () {
             let hideRest = (languageDescription.hide_the_rest) ? languageDescription.hide_the_rest : HIDE_REST_DEFAULT;
             let readMore = (languageDescription.read_more) ? languageDescription.read_more : READ_MORE_DEFAULT;
             templateWriteMoreNotice = '</br>' +
-                '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
+                '<div id="' + moreDescriptionID + '" class="hidden">' + moreDescription + '</div>' +
                 '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
                 linkID + '\',\'' + escapeHtml(readMore) + '\', \'' + escapeHtml(hideRest) + '\')">' + readMore +
                 '</a>';
@@ -257,9 +269,9 @@ let PageBodyGrid = function () {
             headers: {
                 'Content-Type': 'application/json'
             },
-            success: (response) => {
-                let result = response.data;
-                let rssHtml = '';
+            success: function(response) {
+                var result = response.data;
+                var rssHtml = '';
                 if (term == 'Today') {
                     term = 0;
                 }
@@ -286,11 +298,11 @@ let PageBodyGrid = function () {
             headers: {
                 'Content-Type': 'application/json'
             },
-            success: (response) => {
-                let endpoints = response.endpoints;
-                let repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
-                let navbarID = 'widgetNav_' + widgetID;  // Re-use to build unique class ids
-                let navbarClass = settings.menu_orientation === 'vertical' ?
+            success: function(response) {
+                var endpoints = response.endpoints;
+                var repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
+                var navbarID = 'widgetNav_' + widgetID; // Re-use to build unique class ids
+                var navbarClass = settings.menu_orientation === 'vertical' ?
                     'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
                 let mainLayoutTitle = "";
                 let childNavBar = "";
@@ -310,7 +322,7 @@ let PageBodyGrid = function () {
                   }
                 }
 
-                if (mainLayoutTitle === "" && Array.isArray(settings.menu_show_pages) && settings.menu_show_pages.includes("0")) {
+                if (mainLayoutTitle === "" && Array.isArray(settings.menu_show_pages) && settings.menu_show_pages.indexOf("0") > -1) {
                     mainLayoutTitle = "Main Layout";
                 }
 
@@ -399,7 +411,8 @@ let PageBodyGrid = function () {
                 widgetId = Number(node.widget_id);
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
-            setInterval(() => { this.setAccessCounterValue(); }, INTERVAL_TIME);
+            let _this = this
+            setInterval(function() { return _this.setAccessCounterValue(); }, INTERVAL_TIME);
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
@@ -408,8 +421,8 @@ let PageBodyGrid = function () {
           let innerID = 'widget_pages_menu_' + node.widget_id + '_' + index;  // Allow multiple menus
           id = 'id="' + innerID + '"';
           // Extract only the settings we want:
-          let menuSettings = {};
-          Object.keys(node).forEach((k) => {if (k.startsWith('menu_')) menuSettings[k] = node[k]});
+          var menuSettings = {};
+          Object.keys(node).forEach(function(k) { if (k.startsWith('menu_')) menuSettings[k] = node[k] });
           this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
         } else if (node.type === HEADER_TYPE) {
             $("#community_header").attr("hidden", true);
@@ -471,11 +484,12 @@ let PageBodyGrid = function () {
         if (!current_language) {
             current_language = "en";
         }
+        var currentTime = new Date().getTime();
         $.ajax({
-            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language,
+            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language +'?time=' + currentTime,
             method: 'GET',
             async: false,
-            success: (response) => {
+            success: function(response) {
                 data = response;
             }
         });
@@ -565,9 +579,9 @@ let WidgetTheme = function () {
             setClass = "grid-stack-item-content panel header-footer-type";
         }
         let result = '<div class="grid-stack-item widget-resize">' +
-            '    <div class="' +setClass +'" style="' + borderStyle + '">' +
+            '    <div class="' + setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; '+ this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + ' " style="padding-top: 30px; overflow-y: hidden !important; padding-bottom: 0!important;' + this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
@@ -593,16 +607,61 @@ let WidgetTheme = function () {
     };
 
     this.buildBorderCss = function (borderSettings, borderColor) {
-        let borderStyle = '';
-        for (let [key, value] of Object.entries(borderSettings)) {
-            if (key && value) {
-                borderStyle += key + ': ' + value + '; ';
+        var borderStyle = '';
+        for (var key in borderSettings) {
+            if (key && borderSettings[key]) {
+                borderStyle += key + ': ' + borderSettings[key] + '; ';
             }
         }
         borderStyle += 'border-color:' + borderColor + '; ';
         return borderStyle;
     }
 };
+
+function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
+  if (otherElement) {
+    let scrollHeight = otherElement.prop("scrollHeight");
+    let clientHeight = otherElement.prop("clientHeight");
+    if (scrollHeight > clientHeight) {
+      let cellHeight = pageBodyGrid.getCellHeight();
+      let verticalMargin = pageBodyGrid.getVerticalMargin();
+      let newHeight = Math.ceil(
+        (scrollHeight + verticalMargin) / (cellHeight + verticalMargin)
+      );
+      let parent = otherElement.closest(".grid-stack-item");
+      let width = parent.data("gsWidth");
+      let isUpdated = otherElement.data("isUpdated");
+      if (isUpdated) {
+        let currentClientHeight = newHeight * (cellHeight + verticalMargin);
+        if (currentClientHeight > scrollHeight) {
+          pageBodyGrid.resizeWidget(parent, width, newHeight - 1);
+        } else {
+          pageBodyGrid.resizeWidget(parent, width, newHeight);
+        }
+      } else {
+        pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
+        otherElement.data("isUpdated", true);
+      }
+    }
+  } else {
+    let scrollHeight = widgetElement.prop("scrollHeight");
+    let clientHeight = widgetElement.prop("clientHeight");
+    let currentHeight = widgetElement.data("gsHeight");
+    if (scrollHeight > clientHeight) {
+      let cellHeight = pageBodyGrid.getCellHeight();
+      let verticalMargin = pageBodyGrid.getVerticalMargin();
+      let newHeight = Math.ceil(
+        (scrollHeight + verticalMargin) / (cellHeight + verticalMargin)
+      );
+      let width = widgetElement.data("gsWidth");
+      if (newHeight > currentHeight) {
+        pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
+      } else if (newHeight === currentHeight) {
+        pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
+      }
+    }
+  }
+}
 
 function getWidgetDesignSetting() {
     let community_id = $("#community-id").text();
@@ -617,23 +676,28 @@ function getWidgetDesignSetting() {
 
     // If the current page is a widget page get
     let is_page = false;
-    let request_param = {};
     let widgetPageId = $('#widget-page-id');
+    let currentTime = new Date().getTime();
+    let request;
     if(widgetPageId.length) {
         let page_id = widgetPageId.text();
         url = '/api/admin/load_widget_design_page_setting/' + page_id + '/' + current_language;
         is_page = true;
-        request_param = {
-            type: 'GET',
-            url: url
-        }
+        request = $.ajax({
+            url: url,
+            type: "GET",
+            contentType: "application/json",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
     }
     else {
         let data = {
             repository_id: community_id
         };
-        url = '/api/admin/load_widget_design_setting/' + current_language;
-        request_param = {
+        url = '/api/admin/load_widget_design_setting/' + current_language +'?time=' + currentTime;
+        request = $.ajax({
             url: url,
             type: "POST",
             contentType: "application/json",
@@ -641,48 +705,100 @@ function getWidgetDesignSetting() {
                 "Content-Type": "application/json"
             },
             data: JSON.stringify(data)
-        }
+        });
     }
 
-    $.ajax({
-        ...request_param,
-        success: function (data) {  // TODO: If no settings default to main layout
-            if (data.error) {
-                console.log(data.error);
-                toggleWidgetUI();
-                return;
+    $(".lds-ring-background").removeClass("hidden");
+
+    request
+      .done(function(data) {
+        if (data.error) {
+          console.log(data.error);
+          toggleWidgetUI();
+          return;
+        } else {
+          widgetList = data["widget-settings"];
+          if (Array.isArray(widgetList) && widgetList.length) {
+            $("#page_body").removeClass("hidden");
+            $("#main_contents").addClass("grid-stack-item");
+            $("#header").addClass("grid-stack-item no-scroll-bar");
+            $("#footer").addClass("grid-stack-item no-scroll-bar");
+            if (!document.hidden) {
+              buildWidget();
             } else {
-                let widgetList = data['widget-settings'];
-                if (Array.isArray(widgetList) && widgetList.length) {
-                    $("#page_body").removeClass("hidden");
-                    $("#main_contents").addClass("grid-stack-item");
-                    $("#header").css("height", "100px");
-                    $("#footer").addClass("grid-stack-item no-scroll-bar");
-                    let pageBodyGrid = new PageBodyGrid();
-                    pageBodyGrid.init();
-                    pageBodyGrid.loadGrid(widgetList);
-                    new ResizeSensor($('.widget-resize'), function () {
-                        $('.widget-resize').each(function () {
-                            let headerElementHeight = $(this).find('.panel-heading').height();
-                            $(this).find('.panel-body').css("padding-top", String(headerElementHeight + 11) + "px");
-                            $(this).find('.panel-body').css("bottom", "10px");
-                        });
-                    });
-                }
-                else {  // Pages are able to not have main content, so hide if widget is not present
-                    if(is_page){
-                        $("#main_contents").hide();
-                    }
-                    if (community_id !== DEFAULT_REPOSITORY) {
-                        $("#community_header").removeAttr("hidden");
-                        $("footer > #community_footer").removeAttr("hidden");
-                        $("#page_body").removeClass("hidden");
-                    }
-                }
+              window.addEventListener("focus", buildWidget);
             }
-            toggleWidgetUI();
+          } else {
+            // Pages are able to not have main content, so hide if widget is not present
+            if (is_page) {
+              $("#main_contents").hide();
+            }
+            if (community_id !== DEFAULT_REPOSITORY) {
+              $("#community_header").removeAttr("hidden");
+              $("footer > #community_footer").removeAttr("hidden");
+              $("#page_body").removeClass("hidden");
+            }
+          }
         }
+        if (!document.hidden) {
+          toggleWidgetUI();
+        } else {
+          window.addEventListener("focus", toggleWidgetUI);
+        }
+      })
+      .fail(function() {
+        console.log(data.error);
+        toggleWidgetUI();
+      });
+}
+
+function buildWidget() {
+  if (Array.isArray(widgetList) && widgetList.length) {
+    let pageBodyGrid = new PageBodyGrid();
+    pageBodyGrid.init();
+    pageBodyGrid.loadGrid(widgetList);
+    new ResizeSensor($(".widget-resize"), function () {
+      $(".widget-resize").each(function () {
+        let headerElementHeight = $(this).find(".panel-heading").height();
+        $(this).find(".panel-body").css("padding-top", String(headerElementHeight + 11) + "px");
+      });
     });
+
+    handleAutoAdjustWidget(pageBodyGrid);
+    window.removeEventListener('focus', buildWidget);
+  }
+}
+
+function handleAutoAdjustWidget(pageBodyGrid) {
+  let ortherSensor = new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
+    $('.grid-stack-item-content > .panel-body').each(function () {
+      let _this = $(this);
+      autoAdjustWidgetHeight("", pageBodyGrid, _this);
+    });
+  });
+
+  let mainContentSensor = new ResizeSensor($('#main_contents'), function () {
+    let mainContent = $('#main_contents');
+    autoAdjustWidgetHeight(mainContent, pageBodyGrid);
+  });
+
+  let headerSensor = new ResizeSensor($('#header_content'), function () {
+    let headerContent = $('#header_content').closest(".grid-stack-item");
+    autoAdjustWidgetHeight(headerContent, pageBodyGrid);
+  });
+
+  removeSensorListener(ortherSensor);
+  removeSensorListener(mainContentSensor);
+  removeSensorListener(headerSensor);
+}
+
+function removeSensorListener(sensor, timeout) {
+  if (!timeout) {
+    timeout = 5000;
+  }
+  setTimeout(function() {
+    sensor.detach();
+  }, timeout);
 }
 
 function toggleWidgetUI() {
@@ -691,17 +807,27 @@ function toggleWidgetUI() {
     });
     $('footer#footer').css("display", "block");
     $('footer-fix#footer').remove();
+    setTimeout(function(){
+        $(".lds-ring-background").addClass("hidden");
+    }, 500);
+    window.removeEventListener("focus", toggleWidgetUI);
 }
 
 function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
     let moreDes = $("#" + moreDescriptionID);
+    let textLink = $("#" + linkID);
     if (moreDes) {
-        if (moreDes.is(":hidden")) {
-            moreDes.show();
-            $("#" + linkID).text(hideRest);
+        let parrentElement = moreDes.parent();
+        if (moreDes.hasClass("hidden")) {
+            moreDes.removeClass("hidden");
+            textLink.text(hideRest);
+            parrentElement.css('overflow-y', 'auto');
+            parrentElement.removeClass('without-after-element');
         } else {
-            moreDes.hide();
-            $("#" + linkID).text(readMore);
+            moreDes.addClass("hidden");
+            parrentElement.css('overflow-y', 'hidden');
+            parrentElement.addClass('without-after-element');
+            textLink.text(readMore);
         }
     }
 }

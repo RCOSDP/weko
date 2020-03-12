@@ -153,25 +153,53 @@ require([
             sessionStorage.setItem('search_type', '1');
         }
         $('#search-form').submit(function (event) {
-            var query = '';
+            var search = window.location.search
+            search = insertParam(search, "page", 1)
             $('#search_type :input:checked').each(function () {
-                query += $(this).serialize() + '&';
+               var list_params = $(this).serializeArray();
+               list_params.map(function (item) {
+                  search = insertParam(search, item.name, item.value)
+               })
             });
-            query += $('#q').serialize().replace(/\+/g, ' ') + '&';
+            $('#q').serializeArray().map(function (item) {
+              search = insertParam(search, item.name, item.value.replace(/\+/g, ' '))
+            })
             if ($('#community').val()) {
-                query += $('#community').serialize().replace(/\+/g, ' ') + '&';
+                $('#community').serializeArray().map(function (item) {
+                  search = insertParam(search, item.name, item.value.replace(/\+/g, ' '))
+                })
             }
             // var btn = sessionStorage.getItem('btn', '');
             if ($("#item_management_bulk_update").length != 0) {
-              window.location.href = ('/admin/items/search?page=1&item_management=update&' + query).slice(0, -1);
+              search = insertParam(search, "item_management", "update")
+              window.location.href = "/admin/items/search"+ search
             } else if($("#item_management_bulk_delete").length != 0) {
-              window.location.href = ('/admin/items/search?page=1&item_management=delete&' + query).slice(0, -1);
+              search = insertParam(search, "item_management", "delete")
+              window.location.href = "/admin/items/search"+ search
             } else {
-              window.location.href = ('/search?page=1&' + query).slice(0, -1);
+              window.location.href = "/search"+ search
             }
+
             // stop the form from submitting the normal way and refreshing the page
             event.preventDefault();
         })
+    }
+
+    function insertParam(search, key, value)
+    {
+        key = encodeURIComponent(key); value = encodeURIComponent(value);
+
+        var s = search;
+        var kvp = key+"="+value;
+
+        var r = new RegExp("(&|\\?)"+key+"=[^\&]*");
+
+        s = s.replace(r,"$1"+kvp);
+
+        if(!RegExp.$1) {s += (s.length>0 ? '&' : '?') + kvp;};
+
+        //again, do what you will here
+        return s
     }
 
     $(document).ready(function () {

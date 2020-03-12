@@ -739,6 +739,10 @@ class Activity(db.Model, TimestampMixin):
     activity_confirm_term_of_use = db.Column(db.Boolean, nullable=True,
                                              default=True)
 
+    title = db.Column(db.Text, nullable=True)
+
+    shared_user_id = db.Column(db.Integer(), nullable=True)
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""

@@ -37,7 +37,8 @@ class WekoGridLayout(object):
 
         # For widget pages
         app.register_error_handler(404, lambda error:
-                                   handle_not_found(error, current_handler=current_handler))
+                                   handle_not_found(
+                                       error, current_handler=current_handler))
 
     def init_config(self, app):
         """Initialize configuration."""
