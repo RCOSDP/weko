@@ -21,12 +21,12 @@
 """Views for weko-admin."""
 
 import calendar
-import sys
 import json
+import sys
 from datetime import timedelta
 
 from flask import Blueprint, Response, abort, current_app, flash, jsonify, \
-    render_template, request, make_response
+    make_response, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
