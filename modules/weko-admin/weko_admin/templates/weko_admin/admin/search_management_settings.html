@@ -224,9 +224,12 @@
                             <div class="col-sm-3 col-md-3 col-md-3">
                               <label>{{_('Index Tree')}}:</label>
                             </div>
-                            <div class="col-sm-9 col-md-9 col-md-9">
+                            <div class="col-sm-9 col-md-9 col-md-9" style="display: flex;">
                               <input type="checkbox" id="display_control_index_tree" value="dataJson.display_control.display_index_tree.id" ng-model="dataJson.display_control.display_index_tree.status" class="ng-pristine ng-valid ng-touched">
-                              <label for="display_control_index_tree">{{_('Display')}}:</label>
+                              <label for="display_control_index_tree" style="
+                                  font-weight: normal;
+                                  margin: 0 5px;
+                              ">{{_('Display')}}</label>
                             </div>
                           </div>
                       </form>
@@ -241,9 +244,12 @@
                             <div class="col-sm-3 col-md-3 col-md-3">
                               <label>{{_('Facet')}}:</label>
                             </div>
-                            <div class="col-sm-9 col-md-9 col-md-9">
+                            <div class="col-sm-9 col-md-9 col-md-9"  style="display: flex;">
                               <input type="checkbox" id="display_control_facet_search" value="dataJson.display_control.display_facet_search.id" ng-model="dataJson.display_control.display_facet_search.status" class="ng-pristine ng-valid ng-touched">
-                              <label for="display_control_index_tree">{{_('Display')}}:</label>
+                              <label for="display_control_facet_search" style="
+                                  font-weight: normal;
+                                  margin: 0 5px;
+                              ">{{_('Display')}}</label>
                             </div>
                         </div>
                     </form>
