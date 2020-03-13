@@ -11,10 +11,10 @@
 // var wayf_return_url;
 // var wayf_sp_handlerURL;
 var wayf_URL = "https://ds.gakunin.nii.ac.jp/WAYF";
-var sp_domain = "http://18.182.214.241:8016";
-var wayf_sp_entityID = sp_domain + "/shib/login";
-var wayf_sp_handlerURL = sp_domain + "/shib/login";
-var wayf_return_url = sp_domain + "/shib/login";
+var sp_domain = "https://register-ci.nii.ac.jp";
+var wayf_sp_entityID = sp_domain + "/shibboleth-sp";
+var wayf_sp_handlerURL = sp_domain + "/Shibboleth.sso";
+var wayf_return_url = sp_domain + "/auth/action/shibLogin?contentsServer=CINII&targetUrl=";
 
 var wayf_use_discovery_service;
 var wayf_use_small_logo = true;

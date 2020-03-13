@@ -29,8 +29,8 @@ WEKO_ACCOUNTS_BASE_TEMPLATE = 'weko_accounts/base.html'
 SHIB_ACCOUNTS_LOGIN_ENABLED = True
 """ Enable Shibboleth user login system"""
 
-SHIB_ACCOUNTS_LOGIN_PATTERN_2_ENABLED = True
-""" Enable Gakunin user login system"""
+SHIB_ACCOUNTS_LOGIN_PATTERN_2_ENABLED = False
+""" Enable Shibboleth user login system pattern 2"""
 
 SHIB_CACHE_PREFIX = 'Shib-Session-'
 """Shibboleth cache prefix info"""

@@ -12,8 +12,8 @@ $(document).ready(function() {
                 if (selectedLang != 'ja') {
                     $('input#wayf_submit_button').val('Login');
                     $('label#wayf_remember_checkbox_label').text('Remember selection for this web browser session');
-                    $('label#inc_type_label').text('Type');
-                    $('label#inc_categories_label').text('Category');
+                    $('label#inc_type_label').text('Type list:');
+                    $('label#inc_categories_label').text('Category:');
                     $('span#wayf_type_name_0').text('All');
                     $('span#wayf_type_name_1').text('Hokkaido');
                     $('span#wayf_type_name_2').text('Tohoku');

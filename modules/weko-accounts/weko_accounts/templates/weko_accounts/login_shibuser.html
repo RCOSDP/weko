@@ -33,10 +33,7 @@
                 <label style="margin-bottom: 15px;">{{_('Institutional Login for institutions in Japan.')}}</label>
                 <img src="https://www.gakunin.jp/themes/custom/gakunin/logo.svg" width="100px" style="vertical-align: sub;">
             </div>
-            {%- block javascript %}
-              {% assets "weko_accounts_embedded_ds_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-            {%- endblock javascript %}
-
+            {% assets "weko_accounts_embedded_ds_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
             <div class="wayf-text-des text-left">
                 <br>
                 <span>{{_('login_gakunin_description_footer')}}</span>

@@ -11,10 +11,10 @@
 // var wayf_return_url;
 // var wayf_sp_handlerURL;
 var wayf_URL = "https://ds.gakunin.nii.ac.jp/WAYF";
-var sp_domain = "http://18.182.214.241:8016";
-var wayf_sp_entityID = sp_domain + "/shib/login";
-var wayf_sp_handlerURL = sp_domain + "/shib/login";
-var wayf_return_url = sp_domain + "/shib/login";
+var sp_domain = "https://register-ci.nii.ac.jp";
+var wayf_sp_entityID = sp_domain + "/shibboleth-sp";
+var wayf_sp_handlerURL = sp_domain + "/Shibboleth.sso";
+var wayf_return_url = sp_domain + "/auth/action/shibLogin?contentsServer=CINII&targetUrl=";
 
 var wayf_use_discovery_service;
 var wayf_use_small_logo = true;
@@ -1484,7 +1484,7 @@ var inc_search_list = [];
 // Customize pattern 2
 var inc_search_list_clone = [];
 var discofeed_flg = false;
-var inc_type_list = [];
+var inc_type_list = ['All', 'Hokkaido', 'Tohoku', 'Kanto', 'Chubu', 'Kinki', 'Chugoku', 'Shikoku', 'Kyushu', 'Others'];
 var inc_type_label = '地方区分:';
 var inc_type_list_label = ['全て', '北海道', '東北', '関東', '中部', '近畿', '中国', '四国', '九州', 'その他'];
 // Type list - 地方区分
@@ -1630,7 +1630,10 @@ function writeHTML(a) {
 function filterTypeSearch(radio) {
     var nameType = radio.value;
     if (nameType != 'All') {
-        inc_search_list = inc_search_list_clone.filter(data => data[1] == nameType).slice();
+        // inc_search_list = inc_search_list_clone.filter(data => data[1] == nameType).slice();
+        inc_search_list = inc_search_list_clone.filter(function(data) {
+            return data[1] == nameType;
+        }).slice();
     } else {
         inc_search_list = inc_search_list_clone.slice();
     }
@@ -5297,16 +5300,28 @@ function decodeBase64(input) {
 
         }
         // generate Radio checkbox type_list
-        writeHTML('<div id="div_type_name"><label class="radio_box_intro" id="inc_type_label">' + inc_type_label + ':</label>');
+        writeHTML('<div id="div_type_name"><label class="radio_box_intro" id="inc_type_label">' + inc_type_label + '</label>');
         writeHTML('<div class="radio_box">');
         inc_search_list_clone = inc_search_list;
-        inc_type_list = new Set(inc_search_list.map(e => e[1]));
-        inc_type_list = [...inc_type_list];
-        inc_type_list.unshift('All');
+        // inc_type_list = new Set(inc_search_list.map(function(e) {
+        //      return e[1];
+        // }));
+        // inc_type_list = [...inc_type_list];
+        // inc_type_list = Array.from(new Set(inc_search_list.map(function(e) {
+        //     return e[1];
+        // })));
+        // inc_type_list = [...new Set(inc_search_list.map(function(e) {
+        //      return e[1];
+        // }))];
+        // Convert Set to Array
+        // inc_type_list = _toConsumableArray(inc_type_list);
+        // inc_type_list = [].concat(inc_type_list);
+        // inc_type_list.unshift('All');
         for (let i = 0; i < inc_type_list.length; i++) {
             var text = inc_type_list_label[i];
             var value = inc_type_list[i];
-            writeHTML('<label class="wayf-radio-inline"><input type="radio" value="' + value + '" name="wayf_type_name" onclick="filterTypeSearch(this);"><span id="wayf_type_name_' + i + '">' + text + '</span></label>');
+            if (i == 0) writeHTML('<label class="wayf-radio-inline"><input type="radio" value="' + value + '" name="wayf_type_name" onclick="filterTypeSearch(this);" checked><span id="wayf_type_name_' + i + '">' + text + '</span></label>');
+            else writeHTML('<label class="wayf-radio-inline"><input type="radio" value="' + value + '" name="wayf_type_name" onclick="filterTypeSearch(this);"><span id="wayf_type_name_' + i + '">' + text + '</span></label>');
         }
         // inc_type_list.forEach(element => {
         //     writeHTML('<label class="wayf-radio-inline"><input type="radio" value="' + element + '" name="wayf_type_name" onclick="filterTypeSearch(this);">' + element + '</input></label>');
@@ -5315,12 +5330,13 @@ function decodeBase64(input) {
         writeHTML('</div>');
 
         // generate Radio checkbox categories_list
-        writeHTML('<div id="div_categories"><label class="radio_box_intro"  id="inc_categories_label">' + inc_categories_label + ':</label>');
+        writeHTML('<div id="div_categories"><label class="radio_box_intro"  id="inc_categories_label">' + inc_categories_label + '</label>');
         writeHTML('<div class="radio_box">');
         for (let i = 0; i < inc_categories_list.length; i++) {
             var cate_text = inc_categories_list_label[i];
             var cate_value = inc_categories_list[i];
-            writeHTML('<label class="wayf-radio-inline"><input type="radio" value="' + cate_value + '" name="wayf_categories_name"><span id="wayf_categories_name_' + i + '">' + cate_text + '</span></label>');
+            if (i == 0) writeHTML('<label class="wayf-radio-inline"><input type="radio" value="' + cate_value + '" name="wayf_categories_name" checked><span id="wayf_categories_name_' + i + '">' + cate_text + '</span></label>');
+            else writeHTML('<label class="wayf-radio-inline"><input type="radio" value="' + cate_value + '" name="wayf_categories_name"><span id="wayf_categories_name_' + i + '">' + cate_text + '</span></label>');
         }
         // inc_categories_list.forEach(element => {
         //     writeHTML('<label class="wayf-radio-inline"><input type="radio" value="' + element + '" name="wayf_categories_name">' + element + '</input></label>');

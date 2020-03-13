@@ -54,7 +54,7 @@ jQuery(document).ready(function($) {
             "clear_a", // element id of clear
             initdisp, // Initial display of input area
             dispDefault, // Select IdP display of input area
-            dropdown_down, // URL of deropdown down image 
+            dropdown_down, // URL of deropdown down image
             dropdown_up, // URL of deropdown up image
             favorite_idp_group, // favorite idp list group
             hint_idp_group, // hint idp list group
@@ -270,7 +270,9 @@ jQuery(document).ready(function($) {
             } else if (element.id == this.clearElm.id) {
                 // Reset all search
                 $("input[name='wayf_categories_name']").attr("checked", false);
+                $("input[name='wayf_categories_name'][value='']").attr("checked", true);
                 $("input[name='wayf_type_name']").attr("checked", false);
+                $("input[name='wayf_type_name'][value='All']").attr("checked", true);
                 this.candidateList = inc_search_list;
                 this.setInputText('');
                 this.execSearch();
