@@ -1154,3 +1154,7 @@ msgstr "インデックスツリー"
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Facet"
 msgstr "ファセット"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Display"
+msgstr "表示する"

@@ -1052,3 +1052,7 @@ msgstr ""
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Facet"
 msgstr ""
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Display"
+msgstr ""
