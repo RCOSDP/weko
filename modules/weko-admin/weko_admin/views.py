@@ -38,12 +38,14 @@ from weko_records.models import SiteLicenseInfo
 from werkzeug.local import LocalProxy
 
 from .api import send_site_license_mail
+from .config import WEKO_HEADER_NO_CACHE
 from .models import SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
     get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_initial_stats_report, \
     get_selected_language, get_unit_stats_report, save_api_certification, \
-    update_admin_lang_setting, validate_certification, validation_site_info
+    update_admin_lang_setting, validate_certification, validation_site_info, \
+    get_search_setting
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -538,14 +540,20 @@ def display_control_function():
 
     :return: display_control.
     """
-    from .utils import get_search_setting
-
     display_control = get_search_setting().get("display_control")
-
     r = make_response(json.dumps(display_control))
 
-    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    r.headers["Pragma"] = "no-cache"
-    r.headers["Expires"] = "0"
+    r.headers["Cache-Control"] = current_app.config.get(
+        "WEKO_HEADER_NO_CACHE",
+        WEKO_HEADER_NO_CACHE
+    ).get("Cache-Control")
+    r.headers["Pragma"] = current_app.config.get(
+        "WEKO_HEADER_NO_CACHE",
+        WEKO_HEADER_NO_CACHE
+    ).get("Pragma")
+    r.headers["Expires"] = current_app.config.get(
+        "WEKO_HEADER_NO_CACHE",
+        WEKO_HEADER_NO_CACHE
+    ).get("Expires")
 
     return r

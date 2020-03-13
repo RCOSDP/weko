@@ -677,3 +677,11 @@ WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR = 'weko_records_ui/admin/pidstore_ident
 
 WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS = False
 """ Enable Login Instructions """
+
+
+WEKO_HEADER_NO_CACHE = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+""" Header no cache property """
