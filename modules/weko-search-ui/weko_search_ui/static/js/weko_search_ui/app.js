@@ -82,15 +82,16 @@ require([
       $("#collapsed_details").collapse('toggle');
       $(".icon-down").toggle(50);
     });
+    function getUrlVars() {
+      let vars = {};
+      let parts = decodeURI(window.location.href).replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) { vars[key] = value; });
+      return vars;
+    }
   });
 });
 
 
-function getUrlVars() {
-  let vars = {};
-  let parts = decodeURI(window.location.href).replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) { vars[key] = value; });
-  return vars;
-}
+
 
 //add controller to invenioSearch
 // add by ryuu. at 20181129 start

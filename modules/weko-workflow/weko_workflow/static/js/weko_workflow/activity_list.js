@@ -4,13 +4,40 @@ require([
 ], function () {
 
   $(document).ready(function () {
-    autoFilterSearch();
     setDatePickerFormSearch();
+    autoFilterSearch();
+    changeParamPages();
   });
 
   $('#filter_form_submit').on('click', function () {
     submitFilterSearch();
   });
+  function changeParamPages() {
+    if ($('#change_page_param').length == 1) {
+      let result = [];
+      if (window.location.search != '') {
+        let locationParam = window.location.search.split('?')[1].split('&');
+        for (let key in locationParam) {
+          let param = {};
+          param.name = locationParam[key].split('=')[0];
+          if (param.name == $("#change_page_param").val()) {
+            param.value = 1;
+          }
+          else {
+            param.value = locationParam[key].split('=')[1];
+          }
+          result.push(param);
+        }
+      }
+      let urlEncodedDataPairs = [];
+      for (let key in result) {
+        result[key].name = decodeURIComponent(result[key].name.replace(/\+/g, ' '));
+        result[key].value = decodeURIComponent(result[key].value.toString().replace(/\+/g, ' '));
+        urlEncodedDataPairs.push(encodeURIComponent(result[key].name) + '=' + encodeURIComponent(result[key].value));
+      }
+      window.history.pushState("", "", '?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+'));
+    }
+  }
 
   $("#page_count").change(function () {
     window.location.href = creatURL(createParamArray($(this).val(), getSizeAndPagesName('size')));
@@ -47,7 +74,7 @@ require([
             checkExists = true;
             result = type + 'wait';
           }
-          else if(locationParam[key].split('=')[1] === 'all'){
+          else if (locationParam[key].split('=')[1] === 'all') {
             checkExists = true;
             result = type + 'all';
           }
@@ -73,12 +100,12 @@ require([
       let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
       for (let key in locationParam) {
         let paramName = locationParam[key].split('=')[0];
-          if (listParamName.indexOf(paramName) >= 0) {
-            let param = {};
-            param.name = paramName;
-            param.value = locationParam[key].split('=')[1];
-            paramsAfterFilter.push(param);
-          }
+        if (listParamName.indexOf(paramName) >= 0) {
+          let param = {};
+          param.name = paramName;
+          param.value = locationParam[key].split('=')[1];
+          paramsAfterFilter.push(param);
+        }
       }
     }
     window.location.href = creatURL(paramsAfterFilter);
@@ -96,14 +123,14 @@ require([
 
   function setDatePickerFormSearch() {
     $("#createdfrom").datepicker({
-      format: "yyyymmdd",
+      format: "yyyy-mm-dd",
       autoclose: true,
     });
     $("#createdto").datepicker({
-      format: "yyyymmdd",
+      format: "yyyy-mm-dd",
       autoclose: true,
     });
-    if ($("#createdfrom").val()=== '') {
+    if ($("#createdfrom").val() === '') {
       let now = new Date();
       now.setFullYear(now.getFullYear() - 1);
       $("#createdfrom").datepicker("setDate", now);
@@ -150,7 +177,13 @@ require([
           if (listParamName.indexOf(paramName) >= 0) {
             let paramValue = decodeURIComponent(param[1].replace(/\+/g, ' '));
             if (paramName == 'createdfrom' || paramName == 'createdto') {
-              $("#" + paramName).val(paramValue);
+              if (paramValue.length === 10) {
+                let date = new Date(paramValue);
+                if (date != 'Invalid Date') {
+                  date.setFullYear(date.getFullYear())
+                  $("#" + paramName).datepicker('setDate', date);
+                }
+              }
             } else {
               if (paramName == 'status') {
                 if ($('#status_id').length != 1) {
