@@ -991,3 +991,6 @@ msgstr "学位授与機関識別子"
 
 msgid "Name Identifier Scheme"
 msgstr "学位授与機関識別子Scheme"
+
+msgid "Description_"
+msgstr "内容記述"

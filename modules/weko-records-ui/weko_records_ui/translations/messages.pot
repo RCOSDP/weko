@@ -986,3 +986,6 @@ msgstr ""
 
 msgid "Name Identifier Scheme"
 msgstr ""
+
+msgid "Description_"
+msgstr ""
