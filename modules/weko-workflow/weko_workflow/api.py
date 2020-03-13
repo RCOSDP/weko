@@ -1119,9 +1119,14 @@ class WorkActivity(object):
         self_user_id = int(current_user.get_id())
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
-            .filter((_Activity.activity_status ==
-                    ActivityStatusPolicy.ACTIVITY_BEGIN)
-                    | (_Activity.activity_status ==
+            .filter(
+                (
+                    _Activity.activity_status ==
+                    ActivityStatusPolicy.ACTIVITY_BEGIN
+                )
+                |
+                (
+                    _Activity.activity_status ==
                     ActivityStatusPolicy.ACTIVITY_MAKING)) \
             .filter(
                     ((_FlowActionRole.action_user == self_user_id)
@@ -1206,7 +1211,7 @@ class WorkActivity(object):
             # Count all result
             count = query_action_activities.distinct(_Activity.id).count()
             import math
-            maxpage = math.ceil(count/int(size))
+            maxpage = math.ceil(count / int(size))
             name_param = ''
             if int(page) > maxpage:
                 page = 1

@@ -43,9 +43,9 @@ from .models import SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
     get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_initial_stats_report, \
-    get_selected_language, get_unit_stats_report, save_api_certification, \
-    update_admin_lang_setting, validate_certification, validation_site_info, \
-    get_search_setting
+    get_search_setting, get_selected_language, get_unit_stats_report, \
+    save_api_certification, update_admin_lang_setting, \
+    validate_certification, validation_site_info
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
