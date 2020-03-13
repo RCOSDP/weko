@@ -156,7 +156,7 @@
 
 .trumbowyg-editor {
   height: 100%;
-  min-height: unset !important;
+  min-height: 0 !important;
   margin: unset !important;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -187,6 +187,10 @@
   border-radius: 100%;
   animation: rotation 1.5s infinite linear 0.25s;
   opacity: 1;
+}
+
+.widgetIE{
+  height: auto !important;
 }
 
 @keyframes rotation {

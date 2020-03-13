@@ -622,6 +622,11 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
   if (otherElement) {
     let scrollHeight = otherElement.prop("scrollHeight");
     let clientHeight = otherElement.prop("clientHeight");
+    var isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
+    if(isIE11){
+      scrollHeight = scrollHeight + 20;
+      $('.header-footer-type').parent().addClass('widgetIE');
+    }
     if (scrollHeight > clientHeight) {
       let cellHeight = pageBodyGrid.getCellHeight();
       let verticalMargin = pageBodyGrid.getVerticalMargin();
@@ -794,10 +799,11 @@ function handleAutoAdjustWidget(pageBodyGrid) {
 
 function removeSensorListener(sensor, timeout) {
   if (!timeout) {
-    timeout = 5000;
+    timeout = 2000;
   }
   setTimeout(function() {
     sensor.detach();
+    $('.header-footer-type').parent().removeClass('widgetIE');
   }, timeout);
 }
 
