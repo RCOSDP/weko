@@ -622,10 +622,8 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
   if (otherElement) {
     let scrollHeight = otherElement.prop("scrollHeight");
     let clientHeight = otherElement.prop("clientHeight");
-    var isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
-    if(isIE11){
+    if(isIE11()){
       scrollHeight = scrollHeight + 20;
-      $('.header-footer-type').parent().addClass('widgetIE');
     }
     if (scrollHeight > clientHeight) {
       let cellHeight = pageBodyGrid.getCellHeight();
@@ -774,9 +772,16 @@ function buildWidget() {
   }
 }
 
+function isIE11(){
+    return !!window.MSInputMethodContext && !!document.documentMode;
+}
+
 function handleAutoAdjustWidget(pageBodyGrid) {
-  let ortherSensor = new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
-    $('.grid-stack-item-content > .panel-body').each(function () {
+  if (isIE11()){
+    $('.header-footer-type').parent().addClass('widgetIE');
+  }
+  let ortherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+    $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
       autoAdjustWidgetHeight("", pageBodyGrid, _this);
     });
