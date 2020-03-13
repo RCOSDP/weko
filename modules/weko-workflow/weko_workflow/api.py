@@ -1120,11 +1120,9 @@ class WorkActivity(object):
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
             .filter((_Activity.activity_status
-                     ==
-                     ActivityStatusPolicy.ACTIVITY_BEGIN)
+                    == ActivityStatusPolicy.ACTIVITY_BEGIN)
                     | (_Activity.activity_status
-                       ==
-                       ActivityStatusPolicy.ACTIVITY_MAKING)) \
+                    == ActivityStatusPolicy.ACTIVITY_MAKING)) \
             .filter(
                 ((_FlowActionRole.action_user == self_user_id)
                  & (_FlowActionRole.action_user_exclude == '0'))
