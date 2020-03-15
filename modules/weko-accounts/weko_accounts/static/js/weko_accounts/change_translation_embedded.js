@@ -1,6 +1,5 @@
 $(document).ready(function() {
-    const currentTime = new Date().getTime();
-    const urlLoad = '/api/admin/get_selected_lang?' + currentTime;
+    const urlLoad = '/api/admin/get_selected_lang';
     $.ajax({
         url: urlLoad,
         type: 'GET',
