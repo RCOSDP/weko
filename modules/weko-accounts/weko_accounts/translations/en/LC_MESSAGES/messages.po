@@ -120,15 +120,15 @@ msgstr ""
 msgid "Failed to login."
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/login_shibuser.html:29
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html:29
 msgid "Institutional Login for institutions in Japan."
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/login_shibuser.html:36
-msgid "login_gakunin_description_footer"
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html:36
+msgid "Users who belongs to institution outside Japan, please choose your institution's location."
 msgstr "Users who belongs to institution outside Japan, please choose your institution's location."
 
-#: weko_accounts/templates/weko_accounts/login_shibuser_2.html
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html
 msgid "Select Institution"
 msgstr ""
 

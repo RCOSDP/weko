@@ -21,43 +21,43 @@
 """Base configuration for weko-accounts."""
 
 WEKO_ACCOUNTS_LOGGER_ENABLED = True
-""" Enable logger login activity tracking. """
+"""Enable logger login activity tracking."""
 
 WEKO_ACCOUNTS_BASE_TEMPLATE = 'weko_accounts/base.html'
-""" Default base template for the demo page."""
+"""Default base template for the demo page."""
 
 SHIB_ACCOUNTS_LOGIN_ENABLED = True
-""" Enable Shibboleth user login system"""
+"""Enable Shibboleth user login system."""
 
-SHIB_ACCOUNTS_LOGIN_PATTERN_2_ENABLED = False
-""" Enable Shibboleth user login system pattern 2"""
+SHIB_INST_LOGIN_DIRECTLY_ENABLED = False
+"""Enable Shibboleth login system using IdP selection only."""
 
 SHIB_CACHE_PREFIX = 'Shib-Session-'
-"""Shibboleth cache prefix info"""
+"""Shibboleth cache prefix info."""
 
 SECURITY_LOGIN_USER_TEMPLATE = 'weko_accounts/login_user.html'
 """Default template for login."""
 
-SECURITY_LOGIN_SHIB_USER_TEMPLATE = 'weko_accounts/login_shibuser.html'
+SECURITY_LOGIN_SHIB_USER_TEMPLATE = 'weko_accounts/login_shibuser_pattern_1.html'
 """Shibboleth template for login."""
 
-SECURITY_LOGIN_SHIB_USER_TEMPLATE_2 = 'weko_accounts/login_shibuser_2.html'
+SECURITY_LOGIN_SHIB_INST_TEMPLATE = 'weko_accounts/login_shibuser_pattern_2.html'
 """Shibboleth template 2 for login."""
 
 WEKO_ACCOUNTS_CONFIRM_USER_TEMPLATE = 'weko_accounts/confirm_user.html'
-""" Default template for login."""
+"""Default template for login."""
 
 WEKO_ACCOUNTS_SET_SHIB_TEMPLATE = 'weko_accounts/setting/shibuser.html'
-""" Control shibboleth user."""
+"""Control shibboleth user."""
 
 WEKO_ACCOUNTS_STUB_USER_TEMPLATE = 'weko_accounts/shib_user.html'
-""" Test page for shibboleth user login."""
+"""Test page for shibboleth user login."""
 
 SHIB_ACCOUNTS_LOGIN_CACHE_TTL = 180
-""" Cache default timeout 3 minute"""
+"""Cache default timeout 3 minute"""
 
 SHIB_IDP_LOGIN_URL = 'https://www.we50hitdev.com/secure/login.php'
-""" IdP属性情報は. """
+"""IdP属性情報は. """
 
 SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_EPPN': (True, 'shib_eppn'),
@@ -70,14 +70,14 @@ SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_MAIL': (False, 'shib_mail'),
     'SHIB_ATTR_USER_NAME': (False, 'shib_user_name')
 }
-""" IdP属性情報は. """
+"""IdP属性情報は."""
 
 SHIB_ACCOUNTS_ROLE_RELATION = {
     '管理者': 'System Administrator',
     '図書館員': 'Repository Administrator',
     '教員': 'Contributor'
 }
-""" IdP属性値に対するロール割り当て. """
+"""IdP属性値に対するロール割り当て."""
 
 WEKO_GENERAL_ROLE = 'Contributor'
-""" デフォルトロール. """
+"""デフォルトロール."""

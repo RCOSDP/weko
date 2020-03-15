@@ -55,7 +55,7 @@ class ShibUser(object):
         """
         Assign role for weko3 user.
 
-        :param shib_role_auth:
+        :param role_name:
         :return:
 
         """

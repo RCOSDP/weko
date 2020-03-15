@@ -73,13 +73,13 @@ class WekoAccounts(object):
         if config.SHIB_ACCOUNTS_LOGIN_ENABLED:
             app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
                 config.SECURITY_LOGIN_USER_TEMPLATE
-        # Handle redirect to the screen of corresponding pattern
-        if config.SHIB_ACCOUNTS_LOGIN_PATTERN_2_ENABLED:
-            app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
-                config.SECURITY_LOGIN_SHIB_USER_TEMPLATE_2
-        app.config['SHIB_ACCOUNTS_LOGIN_CACHE_TTL'] = \
-            config.SHIB_ACCOUNTS_LOGIN_CACHE_TTL
-        app.config['SSO_ATTRIBUTE_MAP'] = config.SSO_ATTRIBUTE_MAP
+            # Handle redirect to the screen of corresponding pattern
+            if config.SHIB_INST_LOGIN_DIRECTLY_ENABLED:
+                app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
+                    config.SECURITY_LOGIN_SHIB_INST_TEMPLATE
+            app.config['SHIB_ACCOUNTS_LOGIN_CACHE_TTL'] = \
+                config.SHIB_ACCOUNTS_LOGIN_CACHE_TTL
+            app.config['SSO_ATTRIBUTE_MAP'] = config.SSO_ATTRIBUTE_MAP
 
         for k in dir(config):
             if k.startswith('WEKO_ACCOUNTS_'):

@@ -6,10 +6,6 @@
 // ############################################################################
 
 // Declare all variables
-// var wayf_sp_entityID;
-// var wayf_URL;
-// var wayf_return_url;
-// var wayf_sp_handlerURL;
 var wayf_URL = "https://ds.gakunin.nii.ac.jp/WAYF";
 var sp_domain = "https://register-ci.nii.ac.jp";
 var wayf_sp_entityID = sp_domain + "/shibboleth-sp";
@@ -1780,8 +1776,7 @@ function decodeBase64(input) {
     return output;
 }
 
-(function() {
-
+(function () {
     var config_ok = true;
 
     // First lets make sure properties are available

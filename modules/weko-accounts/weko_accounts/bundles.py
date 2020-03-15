@@ -28,19 +28,19 @@ embedded_wayf_custom = Bundle(
     output="gen/weko_accounts_wayf_custom.%(version)s.css",
 )
 
-embedded_ds_js = Bundle(
+embedded_ds_P1_js = Bundle(
     'js/weko_accounts/embedded_ds.js',
-    output="gen/weko_accounts_embedded_ds.%(version)s.js",
+    output="gen/weko_accounts_embedded_ds_1.%(version)s.js",
 )
 
-embedded_ds_js_2 = Bundle(
+embedded_ds_P2_js = Bundle(
     'js/weko_accounts/embedded_ds_2.js',
     output="gen/weko_accounts_embedded_ds_2.%(version)s.js",
 )
 
-change_translation_embedded_js = Bundle(
+embedded_ds_multi_language_js = Bundle(
     'js/weko_accounts/change_translation_embedded.js',
-    output="gen/weko_accounts_change_translation_embedded.%(version)s.js",
+    output="gen/weko_accounts_embedded_ds_multi_language.%(version)s.js",
 )
 
 suggest_js = NpmBundle(
