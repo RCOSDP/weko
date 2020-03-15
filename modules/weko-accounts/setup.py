@@ -99,7 +99,7 @@ setup(
         ],
         'invenio_assets.bundles': [
             'weko_accounts_embedded_ds_P1_js = weko_accounts.bundles:embedded_ds_P1_js',
-            'weko_accounts_embedded_ds_P2_js = weko_accounts.bundles:embedded_ds_P1_js',
+            'weko_accounts_embedded_ds_P2_js = weko_accounts.bundles:embedded_ds_P2_js',
             'weko_accounts_embedded_ds_multi_lang_js = weko_accounts.bundles:embedded_ds_multi_language_js',
             'weko_accounts_css = weko_accounts.bundles:embedded_wayf_custom',
             'weko_accounts_suggest_js = weko_accounts.bundles:suggest_js',
