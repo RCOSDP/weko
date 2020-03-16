@@ -36,7 +36,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
-from weko_deposit.api import WekoRecord
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
@@ -1753,6 +1752,8 @@ class ItemLink(object):
         :param pid: PID object.
         :return: The rendered template.
         """
+        from weko_deposit.api import WekoRecord
+
         dst_relations = ItemReference.get_src_references(pid).all()
         ret = dict(relation_type=[])
 
