@@ -1755,7 +1755,7 @@ class ItemLink(object):
         :param pid: PID object.
         :return: The rendered template.
         """
-        dst_relations = ItemReference.get_src_references(self.recid).all()
+        dst_relations = ItemReference.get_src_references(self.org_item_id).all()
         dst_ids = [dst_item.dst_item_pid for dst_item in dst_relations]
         updated = []
         created = []
