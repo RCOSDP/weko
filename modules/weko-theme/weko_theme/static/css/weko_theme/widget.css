@@ -193,6 +193,17 @@
   height: auto !important;
 }
 
+.ie .counter-container {
+  word-wrap: break-word;
+  margin-top: 0px;
+  padding: 15px 0;
+}
+
+.ie .trumbowyg-editor {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
 @keyframes rotation {
   from {
     opacity: 1;

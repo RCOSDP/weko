@@ -1300,11 +1300,11 @@ function saveWidgetDesignSetting(widgetDesignData) {
                     let d = new Date();
                     let date = d.getFullYear() + '-' + (d.getMonth() > 8 ? '' : '0') + (d.getMonth() + 1)
                       + '-' + (d.getDate() > 9 ? '' : '0') + d.getDate();
-                    elements.forEach(function (el) {
-                        if (!el.getAttribute('data-created_date')) {
-                            el.setAttribute('data-created_date', date);
+                    for (var index = 0; index < elements.length; index++) {
+                        if (!elements[index].getAttribute('data-created_date')) {
+                            elements[index].setAttribute('data-created_date', date);
                         }
-                    });
+                    }
                 }
             },
             error: function (error) {

@@ -244,7 +244,7 @@ let PageBodyGrid = function () {
           let widget = data[widgetId][created_date];
             let initNum = widget.access_counter ? Number(widget.access_counter) : 0;
             result = widget.all.count ? Number(widget.all.count) : 0;
-            if (!Number.isNaN(initNum)) {
+            if (typeof(initNum) == 'number') {
                 result = result + initNum;
             }
         }
@@ -262,13 +262,13 @@ let PageBodyGrid = function () {
                 + '</div>';
     };
 
+    const currentTime = new Date().getTime();
+
     this.buildNewArrivals = function (widgetID, term, rss, id, count) {
         $.ajax({
             method: 'GET',
-            url: '/api/admin/get_new_arrivals/' + widgetID,
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            url: '/api/admin/get_new_arrivals/' + widgetID + '?time=' + currentTime,
+            contentType: 'application/json',
             success: function(response) {
                 var result = response.data;
                 var rssHtml = '';
@@ -407,8 +407,8 @@ let PageBodyGrid = function () {
         } else if (node.type === ACCESS_COUNTER) {
             let widgetId = 0;
             if (node.access_counter &&
-                !Number.isNaN(Number(node.widget_id))) {
-                widgetId = Number(node.widget_id);
+                typeof(node.widget_id) == 'number') {
+                widgetId = node.widget_id;
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
             let _this = this
@@ -422,7 +422,7 @@ let PageBodyGrid = function () {
           id = 'id="' + innerID + '"';
           // Extract only the settings we want:
           var menuSettings = {};
-          Object.keys(node).forEach(function(k) { if (k.startsWith('menu_')) menuSettings[k] = node[k] });
+          Object.keys(node).forEach(function(k) { if (k.indexOf('menu_') == 0) menuSettings[k] = node[k] });
           this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
         } else if (node.type === HEADER_TYPE) {
             $("#community_header").attr("hidden", true);
@@ -809,6 +809,9 @@ function removeSensorListener(sensor, timeout) {
   setTimeout(function() {
     sensor.detach();
     $('.header-footer-type').parent().removeClass('widgetIE');
+    if(isIE11()){
+        $('#page_body').addClass('ie');
+    }
   }, timeout);
 }
 
