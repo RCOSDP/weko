@@ -123,7 +123,7 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
     name = db.Column(db.Text, nullable=False)
     """ The name of prefix organization."""
 
-    scheme = db.Column(db.Text, nullable=True, unique=True)
+    scheme = db.Column(db.Text, nullable=False, unique=True)
     """ The scheme of prefix organization."""
 
     url = db.Column(db.Text, nullable=True)
