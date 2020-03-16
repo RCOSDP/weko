@@ -1755,13 +1755,13 @@ class ItemLink(object):
         from weko_deposit.api import WekoRecord
 
         dst_relations = ItemReference.get_src_references(pid).all()
-        ret = dict(relation_type=[])
+        ret = []
 
         for relation in dst_relations:
             record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
-            ret['relation_type'].append(dict(
+            ret.append(dict(
                 item_links=relation.dst_item_pid,
-                item_title=record.get('item_type_id'),
+                item_title=record.get('item_title'),
                 value=relation.reference_type
             ))
 

@@ -91,18 +91,16 @@
           {% endif %}
       {% endfor %}
       {% if record.relation and is_top_page %}
-        {%- if record.relation.relation_type -%}
         <tr>
           <th scope="row" colspan="6">{{ _('Link') }}</th>
           <td>
-              {%- for sub_record in record.relation.relation_type %}
+              {%- for sub_record in record.relation %}
                 <a target="_self"
                    href="{{ sub_record.item_links }}">{{ sub_record.item_title }}</a>
                 <br>
               {% endfor %}
           </td>
         </tr>
-        {%- endif -%}
       {% endif %}
       {% if record.pubdate and is_top_page and is_logged_in %}
         <tr>
