@@ -36,6 +36,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
+from weko_deposit.api import WekoRecord
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
@@ -1741,12 +1742,31 @@ class ItemLink(object):
 
     org_item_id = 0
 
-    def __init__(self, recid):
+    def __init__(self, pid):
         """Constructor."""
-        self.org_item_id = int(recid)
+        self.org_item_id = int(pid)
 
     @classmethod
-    def update(cls, items):
+    def get_item_link_info(cls, pid):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        dst_relations = ItemReference.get_src_references(pid).all()
+        ret = dict(relation_type=[])
+
+        for relation in dst_relations:
+            record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
+            ret['relation_type'].append(dict(
+                item_links=relation.dst_item_pid,
+                item_title=record.get('item_type_id'),
+                value=relation.reference_type
+            ))
+
+        return ret
+
+    def update(self, items):
         """Record publish  status change view.
 
         Change record publish status with given status and renders record
@@ -1755,7 +1775,7 @@ class ItemLink(object):
         :param pid: PID object.
         :return: The rendered template.
         """
-        dst_relations = ItemReference.get_src_references(cls.org_item_id).all()
+        dst_relations = ItemReference.get_src_references(self.org_item_id).all()
         dst_ids = [dst_item.dst_item_pid for dst_item in dst_relations]
         updated = []
         created = []
@@ -1770,20 +1790,19 @@ class ItemLink(object):
 
         deleted = dst_ids 
         if created:
-            cls.bulk_create(created)
+            self.bulk_create(created)
         if updated:
-            cls.bulk_update(updated)
+            self.bulk_update(updated)
         if deleted:
-            cls.bulk_delete(deleted)
+            self.bulk_delete(deleted)
 
-    @classmethod
-    def bulk_create(cls, dst_items):
+    def bulk_create(self, dst_items):
         """Record publish  status change view.
 
         :param pid: PID object.
         :return: The rendered template.
         """
-        objects = [ItemReference(src_item_pid=cls.org_item_id,
+        objects = [ItemReference(src_item_pid=self.org_item_id,
                                  dst_item_pid=cr['item_data']['id'],
                                  reference_type=cr['sele_id']) for cr in dst_items]
         try:
@@ -1794,14 +1813,13 @@ class ItemLink(object):
             current_app.logger.debug(e)
             db.session.rollback()
 
-    @classmethod
-    def bulk_update(cls, dst_items):
+    def bulk_update(self, dst_items):
         """Record publish  status change view.
 
         :param pid: PID object.
         :return: The rendered template.
         """
-        objects = [ItemReference(src_item_pid=cls.org_item_id,
+        objects = [ItemReference(src_item_pid=self.org_item_id,
                                  dst_item_pid=cr['item_data']['id'],
                                  reference_type=cr['sele_id']) for cr in dst_items]
         try:
@@ -1813,8 +1831,7 @@ class ItemLink(object):
             current_app.logger.debug(e)
             db.session.rollback()
 
-    @classmethod
-    def bulk_delete(cls, dst_item_ids):
+    def bulk_delete(self, dst_item_ids):
         """Record publish  status change view.
 
         :param pid: PID object.
@@ -1822,7 +1839,7 @@ class ItemLink(object):
         """
         try:
             with db.session.begin_nested():
-                db.session.query(ItemReference).filter(ItemReference.dst_item_pid == cls.org_item_id,
+                db.session.query(ItemReference).filter(ItemReference.dst_item_pid == self.org_item_id,
                                 ItemReference.dst_item_pid.in_(dst_item_ids)).delete(synchronize_session='fetch')
             db.session.commit()
         except SQLAlchemyError as e:

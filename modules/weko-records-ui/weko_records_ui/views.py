@@ -45,6 +45,7 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.serializers import citeproc_v1
+from weko_records.api import ItemLink
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
@@ -435,9 +436,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     detail_condition = get_search_detail_keyword('')
 
     # Add Item Reference data to Record Metadata
-    weko_indexer = WekoIndexer()
-    res = weko_indexer.get_item_link_info(pid=record.get("control_number"))
-    if res is not None:
+    res = ItemLink.get_item_link_info(record.get("control_number"))
+    if res:
         record["relation"] = res
     else:
         record["relation"] = {}

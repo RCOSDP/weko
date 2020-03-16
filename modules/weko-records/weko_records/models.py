@@ -706,19 +706,6 @@ class ItemReference(db.Model, Timestamp):
         return cls.query.filter(cls.dst_item_pid == pid)
 
     @classmethod
-    def create(cls, src_pid, dst_pid, reference_type):
-        """Create a PID relation for given parent and child."""
-        try:
-            with db.session.begin_nested():
-                obj = cls(src_item_pid=src_pid,
-                          dst_item_pid=dst_pid,
-                          reference_type=reference_type)
-                db.session.add(obj)
-        except IntegrityError:
-            raise Exception("Item Link already exists.")
-        return obj
-
-    @classmethod
     def relation_exists(self, src_pid, dst_pid, reference_type):
         """Determine if given relation already exists."""
         return ItemReference.query.filter_by(
