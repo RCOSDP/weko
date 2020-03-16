@@ -1763,13 +1763,50 @@ class ItemLink(object):
         for item in items:
             item_id = item['item_data']['id']
             if item_id in dst_ids:
-                updated.append(item_id)
+                updated.append(item)
             else:
-                created.append(item_id)
+                created.append(item)
 
-        deleted = list(set(dst_ids) - set([*created, *updated]))
-
+        # deleted = list(set(dst_ids) - set([*created, *updated]))
+        if created:
+            self.bulk_create(created)
+        if updated:
+            self.bulk_update(updated)
 
     @classmethod
-    def register(self, items):
-        pass
+    def bulk_create(self, items):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        objects = [ItemReference(src_item_pid=self.org_item_id,
+                                 dst_item_pid=cr['item_data']['id'],
+                                 reference_type=cr['sele_id']) for cr in items]
+        try:
+            with db.session.begin_nested():
+                db.session.bulk_save_objects(objects)
+            db.session.commit()
+        except SQLAlchemyError as e:
+            current_app.logger.debug(e)
+            db.session.rollback()
+
+    @classmethod
+    def bulk_update(self, items):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        objects = [ItemReference(src_item_pid=self.org_item_id,
+                                 dst_item_pid=cr['item_data']['id'],
+                                 reference_type=cr['sele_id']) for cr in items]
+        try:
+            with db.session.begin_nested():
+                for obj in objects:
+                    db.session.merge(obj)
+            db.session.commit()
+        except SQLAlchemyError as e:
+            current_app.logger.debug(e)
+            db.session.rollback()
+
