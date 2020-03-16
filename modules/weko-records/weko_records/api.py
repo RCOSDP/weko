@@ -1746,7 +1746,7 @@ class ItemLink(object):
         self.org_item_id = int(recid)
 
     @classmethod
-    def update(self, items):
+    def update(cls, items):
         """Record publish  status change view.
 
         Change record publish status with given status and renders record
@@ -1755,7 +1755,7 @@ class ItemLink(object):
         :param pid: PID object.
         :return: The rendered template.
         """
-        dst_relations = ItemReference.get_src_references(self.org_item_id).all()
+        dst_relations = ItemReference.get_src_references(cls.org_item_id).all()
         dst_ids = [dst_item.dst_item_pid for dst_item in dst_relations]
         updated = []
         created = []
@@ -1763,26 +1763,29 @@ class ItemLink(object):
         for item in items:
             item_id = item['item_data']['id']
             if item_id in dst_ids:
-                updated.append(item)
+                updated.extend(item for dst_item in dst_relations if dst_item.reference_type != item['sele_id'])
+                dst_ids.remove(item_id)
             else:
                 created.append(item)
 
-        # deleted = list(set(dst_ids) - set([*created, *updated]))
+        deleted = dst_ids 
         if created:
-            self.bulk_create(created)
+            cls.bulk_create(created)
         if updated:
-            self.bulk_update(updated)
+            cls.bulk_update(updated)
+        if deleted:
+            cls.bulk_delete(deleted)
 
     @classmethod
-    def bulk_create(self, items):
+    def bulk_create(cls, dst_items):
         """Record publish  status change view.
 
         :param pid: PID object.
         :return: The rendered template.
         """
-        objects = [ItemReference(src_item_pid=self.org_item_id,
+        objects = [ItemReference(src_item_pid=cls.org_item_id,
                                  dst_item_pid=cr['item_data']['id'],
-                                 reference_type=cr['sele_id']) for cr in items]
+                                 reference_type=cr['sele_id']) for cr in dst_items]
         try:
             with db.session.begin_nested():
                 db.session.bulk_save_objects(objects)
@@ -1792,15 +1795,15 @@ class ItemLink(object):
             db.session.rollback()
 
     @classmethod
-    def bulk_update(self, items):
+    def bulk_update(cls, dst_items):
         """Record publish  status change view.
 
         :param pid: PID object.
         :return: The rendered template.
         """
-        objects = [ItemReference(src_item_pid=self.org_item_id,
+        objects = [ItemReference(src_item_pid=cls.org_item_id,
                                  dst_item_pid=cr['item_data']['id'],
-                                 reference_type=cr['sele_id']) for cr in items]
+                                 reference_type=cr['sele_id']) for cr in dst_items]
         try:
             with db.session.begin_nested():
                 for obj in objects:
@@ -1810,3 +1813,18 @@ class ItemLink(object):
             current_app.logger.debug(e)
             db.session.rollback()
 
+    @classmethod
+    def bulk_delete(cls, dst_item_ids):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        try:
+            with db.session.begin_nested():
+                db.session.query(ItemReference).filter(ItemReference.dst_item_pid == cls.org_item_id,
+                                ItemReference.dst_item_pid.in_(dst_item_ids)).delete(synchronize_session='fetch')
+            db.session.commit()
+        except SQLAlchemyError as e:
+            current_app.logger.debug(e)
+            db.session.rollback()
