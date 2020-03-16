@@ -83,7 +83,7 @@ def get_metadata_from_map(item_data, item_id):
             for prop in props:
                 for k, v in prop.items():
                     if isinstance(v, list) or isinstance(v, dict):
-                        value.update(get_sub_item_data(v, key))
+                        value.update(get_sub_item_data(v, key + '.' + k))
                     else:
                         sub_key = key + '.' + k if key else k
                         if sub_key in value:
@@ -97,7 +97,7 @@ def get_metadata_from_map(item_data, item_id):
         else:
             for k, v in props.items():
                 if isinstance(v, list) or isinstance(v, dict):
-                    value.update(get_sub_item_data(v, key))
+                    value.update(get_sub_item_data(v, key + '.' + k))
                 else:
                     sub_key = key + '.' + k if key else k
                     if sub_key in value:

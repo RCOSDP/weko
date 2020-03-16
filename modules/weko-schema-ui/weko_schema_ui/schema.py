@@ -603,7 +603,7 @@ class SchemaTree:
                                 node_result, k)
                             if nlst:
                                 # [['Update PDF 3']]
-                                node_result[self._v] = nlstnlst
+                                node_result[self._v] = nlst
                             else:
                                 continue
                         else:
@@ -810,8 +810,8 @@ class SchemaTree:
                                 chld = etree.Element(kname, None, ns)
                                 tree.append(chld)
                                 for k2, v2 in obj.items():
-                                    # if v2 is None:
-                                    #     continue
+                                    if v2 is None:
+                                        continue
                                     chld.set(get_prefix(k2), v2)
 
                                 for k1, v1 in node.items():
