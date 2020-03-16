@@ -39,7 +39,7 @@ from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
-from .models import FileMetadata, ItemMetadata, ItemType
+from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
 from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
     SiteLicenseInfo, SiteLicenseIpAddress
@@ -1734,3 +1734,42 @@ class FeedbackMailList(object):
             db.session.rollback()
             return False
         return True
+
+
+class ItemLink(object):
+    """Get Community Info."""
+
+    org_item_id = 0
+
+    def __init__(self, recid):
+        """Constructor."""
+        self.org_item_id = int(recid)
+
+    @classmethod
+    def update(self, items):
+        """Record publish  status change view.
+
+        Change record publish status with given status and renders record
+        export template.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        dst_relations = ItemReference.get_src_references(self.recid).all()
+        dst_ids = [dst_item.dst_item_pid for dst_item in dst_relations]
+        updated = []
+        created = []
+        deleted = []
+        for item in items:
+            item_id = item['item_data']['id']
+            if item_id in dst_ids:
+                updated.append(item_id)
+            else:
+                created.append(item_id)
+
+        deleted = list(set(dst_ids) - set([*created, *updated]))
+
+
+    @classmethod
+    def register(self, items):
+        pass

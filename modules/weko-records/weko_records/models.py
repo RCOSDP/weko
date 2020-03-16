@@ -676,26 +676,12 @@ class ItemReference(db.Model, Timestamp):
     )
     """PID of source item."""
 
-    # src_item_uuid = db.Column(
-    #     UUIDType,
-    #     db.ForeignKey(RecordMetadata.id, ondelete="CASCADE"),
-    #     nullable=True,
-    # )
-    # """Object UUID of source item."""
-
     dst_item_pid = db.Column(
         db.Integer(),
         nullable=True,
         primary_key=True
     )
     """PID for destination item."""
-
-    # dst_item_uuid = db.Column(
-    #     UUIDType,
-    #     db.ForeignKey(RecordMetadata.id, ondelete="CASCADE"),
-    #     nullable=True,
-    # )
-    # """Object UUID of destination item."""
 
     reference_type = db.Column(
         db.String(50),
@@ -712,12 +698,12 @@ class ItemReference(db.Model, Timestamp):
     @classmethod
     def get_src_references(cls, pid):
         """Get all relations where given PID is a src."""
-        return cls.query.filter((cls.src_item_pid == pid))
+        return cls.query.filter(cls.src_item_pid == pid)
 
     @classmethod
     def get_dst_references(cls, pid):
         """Get all relations where given PID is a dst."""
-        return cls.query.filter((cls.dst_item_pid == pid))
+        return cls.query.filter(cls.dst_item_pid == pid)
 
     @classmethod
     def create(cls, src_pid, dst_pid, reference_type):

@@ -48,7 +48,7 @@ from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid, to_files_js
-from weko_records.api import FeedbackMailList, ItemsMetadata
+from weko_records.api import FeedbackMailList, ItemsMetadata, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.utils import get_list_licence
@@ -612,10 +612,10 @@ def next_action(activity_id='0', action_id=0):
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
 
-    if 'begin_action' == action_endpoint:
+    if action_endpoint == 'begin_action':
         return jsonify(code=0, msg=_('success'))
 
-    if 'end_action' == action_endpoint:
+    if action_endpoint == 'end_action':
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
 
@@ -660,7 +660,7 @@ def next_action(activity_id='0', action_id=0):
             journal=post_json.get('journal')
         )
 
-    if 'approval' == action_endpoint:
+    if action_endpoint == 'approval':
         if item_id is not None:
             item = ItemsMetadata.get_record(id_=item_id)
             pid_identifier = PersistentIdentifier.get_by_object(
@@ -690,17 +690,11 @@ def next_action(activity_id='0', action_id=0):
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 
-    if 'item_link' == action_endpoint:
-        relation_data = post_json.get('link_data'),
-        item = ItemsMetadata.get_record(id_=item_id)
-        pid_identifier = PersistentIdentifier.get_by_object(
-            pid_type='depid', object_type='rec', object_uuid=item.id)
-        record_class = import_string('weko_deposit.api:WekoRecord')
-        resolver = Resolver(pid_type='recid', object_type='rec',
-                            getter=record_class.get_record)
-        _pid, item_record = resolver.resolve(pid_identifier.pid_value)
-        updated_item = UpdateItem()
-        updated_item.set_item_relation(relation_data, item_record)
+    if action_endpoint == 'item_link' and recid:
+        item_link = ItemLink(recid)
+        relation_data = post_json.get('link_data')
+        if relation_data:
+            item_link.update(relation_data[0])
 
     # save pidstore_identifier to ItemsMetadata
     identifier_select = post_json.get('identifier_grant')

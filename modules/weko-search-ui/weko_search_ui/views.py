@@ -108,8 +108,9 @@ def search():
 
     height = style.height if style else None
     if 'item_link' in get_args:
-        activity_id = request.args.get('item_link')
         from weko_workflow.api import WorkActivity
+
+        activity_id = request.args.get('item_link')
         workflow_activity = WorkActivity()
         activity_detail, item, steps, action_id, cur_step, temporary_comment,\
             approval_record, step_item_login_url, histories, res_check, pid, \

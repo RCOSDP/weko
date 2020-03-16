@@ -434,6 +434,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     detail_condition = get_search_detail_keyword('')
 
+    # Add Item Reference data to Record Metadata
     weko_indexer = WekoIndexer()
     res = weko_indexer.get_item_link_info(pid=record.get("control_number"))
     if res is not None:
