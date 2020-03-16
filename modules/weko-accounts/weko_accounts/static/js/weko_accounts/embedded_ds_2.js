@@ -29,7 +29,7 @@ var wayf_show_categories;
 var wayf_hide_categories;
 var wayf_hide_idps;
 var wayf_unhide_idps;
-var wayf_show_remember_checkbox;
+var wayf_show_remember_checkbox = false;
 var wayf_force_remember_for_session;
 var wayf_additional_idps;
 var wayf_discofeed_url;

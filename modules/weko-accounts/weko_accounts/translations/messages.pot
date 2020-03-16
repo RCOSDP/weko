@@ -130,3 +130,6 @@ msgstr ""
 
 msgid "login_pattern_2_description_header"
 msgstr ""
+
+msgid "Back to Top Page"
+msgstr ""
