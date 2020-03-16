@@ -970,7 +970,7 @@ class WekoRecord(Record):
         return obj
 
     @property
-    def recid(self):
+    def pid_recid(self):
         """Return an instance of record PID."""
         pid = self.record_fetcher(self.id, self)
         obj = PersistentIdentifier.get('recid', pid.pid_value)
@@ -1076,7 +1076,7 @@ class WekoRecord(Record):
     @property
     def pid_parent(self):
         """Return pid_value of doi identifier."""
-        pid_ver = PIDVersioning(child=self.recid)
+        pid_ver = PIDVersioning(child=self.pid_recid)
         if pid_ver:
             return pid_ver.parents.one_or_none()
         else:

@@ -269,7 +269,7 @@ class SchemaTree:
     def __converter(self, node):
 
         _need_to_nested = ('subjectScheme', 'dateType', 'identifierType',
-                           'objectType',)
+                           'objectType', 'descriptionType')
 
         def list_reduce(olst):
             if isinstance(olst, list):
@@ -304,8 +304,6 @@ class SchemaTree:
 
                     return list(list_reduce(val))
                 else:
-                    if attr:
-                        node.pop(self._atr)
                     for k, v in node.items():
                         if k != self._atr:
                             node[k] = json_reduce(v)

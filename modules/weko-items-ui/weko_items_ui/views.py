@@ -60,7 +60,8 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
     to_files_js, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
-    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
+    update_sub_items_by_user_role, validate_form_input_data, \
+    validate_save_title_and_share_user_id, validate_user, \
     validate_user_mail_and_index
 
 blueprint = Blueprint(
@@ -322,7 +323,13 @@ def get_schema_form(item_type_id=0):
         hidden_subitem = ['subitem_thumbnail',
                           'subitem_systemidt_identifier',
                           'subitem_systemfile_datetime',
-                          'subitem_systemfile_filename'
+                          'subitem_systemfile_filename',
+                          'subitem_system_id_rg_doi',
+                          'subitem_system_date_type',
+                          'subitem_system_date',
+                          'subitem_system_identifier_type',
+                          'subitem_system_identifier',
+                          'subitem_system_text'
                           ]
 
         for i in hidden_subitem:
@@ -805,8 +812,9 @@ def prepare_edit_item():
         if not workflow:
             item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
             id_list = [x.id for x in item_type_list]
-            workflow = (WorkFlow.query.filter(
-                WorkFlow.itemtype_id.in_(id_list))
+            workflow = (
+                WorkFlow.query
+                .filter(WorkFlow.itemtype_id.in_(id_list))
                 .order_by(WorkFlow.itemtype_id.desc())
                 .order_by(WorkFlow.flow_id.asc()).first())
         return workflow
@@ -1226,4 +1234,20 @@ def corresponding_activity_list():
             get_corresponding_usage_activities(current_user.get_id())
         result = {'usage_application': usage_application_list,
                   'output_report': output_report_list}
+    return jsonify(result)
+
+
+@blueprint_api.route('/save_title_and_share_user_id', methods=['POST'])
+@login_required
+def save_title_and_share_user_id():
+    """Validate input title and shared user id for activity.
+
+    :return:
+    """
+    result = {
+        "is_valid": True,
+        "error": ""
+    }
+    data = request.get_json()
+    validate_save_title_and_share_user_id(result, data)
     return jsonify(result)

@@ -38,7 +38,7 @@ class ComponentTableResult extends React.Component {
     this.setState({
       selectedPage: selectedPage
     });
-    
+
     // Get data for new page
     let startDate = document.getElementById("start_date").value;
     let endDate = document.getElementById("end_date").value;
@@ -75,15 +75,15 @@ class ComponentTableResult extends React.Component {
       let frontPage = Number(selectedPage) - 1;
       let nextPage = Number(selectedPage) + 1;
       let innerHTML = [];
-      let frontInnerHTML = 
+      let frontInnerHTML =
       <li>
         <a data-num-page={frontPage} onClick={this.handleClickEvent}>{frontPage}</a>
       </li>;
-      let nextInnerHTML = 
+      let nextInnerHTML =
       <li>
         <a data-num-page={nextPage} onClick={this.handleClickEvent}>{nextPage}</a>
       </li>;
-      let selectedInnerHTML = 
+      let selectedInnerHTML =
       <li className="active">
         <a data-num-page={selectedPage} onClick={this.handleClickEvent}>{selectedPage}</a>
       </li>;
@@ -405,7 +405,6 @@ class ComponentCombobox extends React.Component {
         .then(res => res.json())
         .then((result) => {
           if (result.data.length == 0) {
-            console.log("asdasd");
             if (document.getElementById('no_data').classList.contains('hidden')) {
               document.getElementById('no_data').classList.remove('hidden')
             }
@@ -464,7 +463,7 @@ class ComponentDatePicker extends React.Component {
       "border-radius": "3%",
       "background-color": "#fff",
     }
-    
+
     this.handleChangeEvent = this.handleChangeEvent.bind(this)
   }
 
@@ -568,9 +567,9 @@ class MainLayout extends React.Component {
               error_id="start_error" getTableHidden={this.getTableHidden}/>
             <ComponentDatePicker component_name='end_date' name="End Date" id_component="end_date" date_picker_id="end_date_picker"
               error_id="end_error" getTableHidden={this.getTableHidden}/>
-            <ComponentCombobox name="Target Report" getValueOfField={this.getValueOfField} getTableHidden={this.getTableHidden} 
+            <ComponentCombobox name="Target Report" getValueOfField={this.getValueOfField} getTableHidden={this.getTableHidden}
               id_component="target" getUnitStatus={this.getUnitStatus} />
-            <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit" 
+            <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit"
               disable={this.state.unitStatus} getTableHidden={this.getTableHidden} target={this.state.target} getNumPage={this.getNumPage}/>
             <ComponentTableResult name="Result" data={this.state.result} hidden={this.state.tableHidden} numPage={this.state.numPage}/>
           </div>

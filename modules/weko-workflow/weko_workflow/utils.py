@@ -855,3 +855,18 @@ def get_parent_pid_with_type(pid_type, object_uuid):
     except PIDDoesNotExistError as pid_not_exist:
         current_app.logger.error(pid_not_exist)
         return None
+
+
+def filter_condition(json, name, condition):
+    """
+    Add conditions to json object.
+
+    :param json:
+    :param name:
+    :param condition:
+    :return:
+    """
+    if json.get(name):
+        json[name].append(condition)
+    else:
+        json[name] = [condition]

@@ -592,16 +592,13 @@ def handle_check_exist_record(list_recond) -> list:
                             else:
                                 item['errors'] = ['URI of items are not match']
                                 item['status'] = None
-                    else:
-                        item['errors'] = ['Target id is not in the system']
                 else:
                     item['id'] = None
                     if item.get('uri'):
                         item['errors'] = ['Item has no ID but non-empty URI']
                         item['status'] = None
             except PIDDoesNotExistError:
-                item['errors'] = ['Target id is not in the system']
-                item['status'] = None
+                pass
             except BaseException:
                 current_app.logger.error(
                     'Unexpected error: ',
