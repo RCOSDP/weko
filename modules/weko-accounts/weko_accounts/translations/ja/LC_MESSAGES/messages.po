@@ -117,12 +117,12 @@ msgstr "属性値が不正です。"
 msgid "Invalid attribute."
 msgstr "ログインに失敗しました。"
 
-#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html:29
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
 msgid "Institutional Login for institutions in Japan."
 msgstr "所属機関の学内認証システムでログインする方"
 
-#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html:36
-msgid "Users who belongs to institution outside Japan, please choose your institution\'s location."
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
+msgid "login_pattern_1_description_footer"
 msgstr "海外機関所属で、機関の学内認証システムでログインする方は下から地域を選択してください。"
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html
