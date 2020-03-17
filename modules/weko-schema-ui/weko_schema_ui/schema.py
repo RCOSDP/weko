@@ -373,13 +373,13 @@ class SchemaTree:
                 key = list_key.pop(0)
                 if isinstance(atr_vm, dict) and atr_vm.get(key):
                     for a, b in get_value_from_content_by_mapping_key(
-                        atr_vm.get(key), list_key):
+                            atr_vm.get(key), list_key):
                         yield a, b
                 elif isinstance(atr_vm, list):
                     for i in atr_vm:
                         if i.get(key):
                             for a, b in get_value_from_content_by_mapping_key(
-                                i.get(key), list_key):
+                                    i.get(key), list_key):
                                 yield a, b
             elif isinstance(list_key, list) and len(list_key) == 1:
                 key = list_key[0]
@@ -442,7 +442,8 @@ class SchemaTree:
                 list_subitem_key = key.split('.')
             else:
                 list_subitem_key.append(key)
-            for value, identify in get_value_from_content_by_mapping_key(atr_vm.copy(), list_subitem_key):
+            for value, identify in get_value_from_content_by_mapping_key(
+                        atr_vm.copy(), list_subitem_key):
                 if parent_id != identify and parent_id != 0:
                     klst.append(blst)
                     blst = []
@@ -571,7 +572,24 @@ class SchemaTree:
                 clean = {}
                 for k, v in dct.items():
                     if isinstance(v, dict):
-                        if '@value' in v and v.get('@value')[0][0]:
+                        # check if @value has value
+                        if '@value' in v and v.get('@value')[0] and (
+                                v.get('@value')[0].count(None) == 0 or (
+                                v.get('@value')[0].count(None) > 0 and
+                                v.get('@value')[0].count(None) != len(
+                                v.get('@value')[0]))):
+                            # get index of None value
+                            lst_none_idx = [idx for idx, val in
+                                            enumerate(v.get('@value')[0]) if
+                                            val is None or val == '']
+                            if len(lst_none_idx) > 0:
+                                # delete all None element in @value
+                                for i in lst_none_idx:
+                                    del v.get('@value')[0][i]
+                                # delete all None element in all @attributes
+                                for key, val in v.get('@attributes').items():
+                                    for i in lst_none_idx:
+                                        del val[0][i]
                             clean[k] = v
                         else:
                             nested = clean_none_value(v)
@@ -583,7 +601,6 @@ class SchemaTree:
             for ky, vl in mpdic.items():
                 vlc = copy.deepcopy(vl)
                 for node_result, node_result_key in get_key_value(vlc):
-                    print('value of remain_keys', remain_keys)
                     if node_result_key == self._atr:
                         get_atr_value_lst(node_result, atr_vm, remain_keys)
                     else:
@@ -689,7 +706,8 @@ class SchemaTree:
                 # Dict
                 # get value of the combination between record and mapping data that is inited at __init__ function
                 mpdic = value_item_parent.get(
-                    self._schema_name) if self._schema_name in value_item_parent else ''
+                    self._schema_name) if self._schema_name \
+                                          in value_item_parent else ''
                 if isinstance(mpdic, str) and len(mpdic) == 0:
                     continue
                 # List or string
