@@ -703,7 +703,8 @@ def next_action(activity_id='0', action_id=0):
         item_link = ItemLink(pid_without_ver.pid_value)
         relation_data = post_json.get('link_data')
         if relation_data:
-            item_link.update(relation_data)
+            errors = item_link.update(relation_data)
+            if errors: return jsonify(code=-1, msg=_(errors))
 
     # save pidstore_identifier to ItemsMetadata
     identifier_select = post_json.get('identifier_grant')

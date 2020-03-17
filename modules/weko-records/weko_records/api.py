@@ -1791,11 +1791,16 @@ class ItemLink(object):
 
         deleted = dst_ids 
         if created:
-            self.bulk_create(created)
+            errors = self.bulk_create(created)
+            if errors: return errors
         if updated:
-            self.bulk_update(updated)
+            errors = self.bulk_update(updated)
+            if errors: return errors
         if deleted:
-            self.bulk_delete(deleted)
+            errors = self.bulk_delete(deleted)
+            if errors: return errors
+
+        return None
 
     def bulk_create(self, dst_items):
         """Record publish  status change view.
@@ -1810,9 +1815,10 @@ class ItemLink(object):
             with db.session.begin_nested():
                 db.session.bulk_save_objects(objects)
             db.session.commit()
-        except SQLAlchemyError as e:
-            current_app.logger.debug(e)
+        except SQLAlchemyError as ex:
             db.session.rollback()
+            return ex
+        return None
 
     def bulk_update(self, dst_items):
         """Record publish  status change view.
@@ -1828,9 +1834,10 @@ class ItemLink(object):
                 for obj in objects:
                     db.session.merge(obj)
             db.session.commit()
-        except SQLAlchemyError as e:
-            current_app.logger.debug(e)
+        except SQLAlchemyError as ex:
             db.session.rollback()
+            return ex
+        return None
 
     def bulk_delete(self, dst_item_ids):
         """Record publish  status change view.
@@ -1844,6 +1851,7 @@ class ItemLink(object):
                     db.session.query(ItemReference).filter(ItemReference.dst_item_pid == self.org_item_id,
                                                            ItemReference.dst_item_pid == dst_item_id).delete(synchronize_session='fetch')
             db.session.commit()
-        except SQLAlchemyError as e:
-            current_app.logger.debug(e)
+        except SQLAlchemyError as ex:
             db.session.rollback()
+            return ex
+        return None
