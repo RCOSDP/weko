@@ -406,7 +406,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     getListOption(id) {
         let options = document.getElementById(id).options;
         let result = [];
-        for (let option in options) {
+        for (let option = 0; option< options.length; option++) {
             if (options[option].value) {
                 let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
                 result.push(innerhtml);
@@ -435,9 +435,10 @@ class ComponentFieldContainSelectMultiple extends React.Component {
       if (array === undefined) {
         return isExisted;
       }
-      if (array.length > 0) {
-        for (let prop in array) {
-          if (array[prop].props.value === item) {
+      let length = array.length
+      if (length > 0) {
+        for (let index=0; index< length; index++) {
+          if (array[index].props.value === item) {
               isExisted = true;
               break;
           }
@@ -461,7 +462,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         let options = document.getElementById(this.props.authorSelect).options;
         let selectedOptions = this.getListOption(this.props.unauthorSelect);
         let nonSelectOptions = [];
-        for (let option in options) {
+        for (let option = 0; option < options.length; option++) {
             if (options[option].selected) {
                 let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
                 if (!this.isValueExist(options[option].value, selectedOptions) && options[option].value) {
@@ -485,7 +486,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         let options = document.getElementById(this.props.unauthorSelect).options;
         let authorizedOptions = this.getListOption(this.props.authorSelect);
         let remainOption = [];
-        for (let key in options) {
+        for (let key = 0; key < options.length; key++) {
             let option = options[key];
             if (!option.value) {
                 continue;
@@ -511,7 +512,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         event.preventDefault();
         let options = document.getElementById(this.props.authorSelect).options;
         let reOrderedOptions = this.getListOption(this.props.authorSelect);
-        for (let option in options) {
+        for (let option = 0; option < options.length; option++) {
             if(options[option].value) {
                 if (options[option].selected && option > 0) {
                     let prevOption = reOrderedOptions.splice((option - 1), 1)[0];
@@ -541,30 +542,30 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     getSelectedOption(options) {
-      let data = [];
-      for (let key in options) {
-        let option = options[key];
-        if (option.value && option.selected) {
-          data.push(option.value);
+        let data = [];
+        for (let key = 0; key < options.length; key++) {
+            let option = options[key];
+            if (option.value && option.selected) {
+                data.push(option.value);
+            }
         }
-      }
-      return data;
+        return data;
     }
 
     onLeftSelectChange(event) {
-      let options = event.target.options;
-      let data = this.getSelectedOption(options);
-      this.setState({
-        leftSelected: data
-      })
+        let options = event.target.options;
+        let data = this.getSelectedOption(options);
+        this.setState({
+            leftSelected: data
+        })
     }
 
     onRightSelectChange(event) {
-      let options = event.target.options;
-      let data = this.getSelectedOption(options);
-      this.setState({
-        rightSelected: data
-      })
+        let options = event.target.options;
+        let data = this.getSelectedOption(options);
+        this.setState({
+            rightSelected: data
+        })
     }
 
     render() {
