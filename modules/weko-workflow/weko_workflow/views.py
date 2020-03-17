@@ -353,6 +353,7 @@ def display_activity(activity_id=0):
     show_autofill_metadata = True
     is_hidden_pubdate_value = False
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -449,6 +450,12 @@ def display_activity(activity_id=0):
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
     list_license = get_list_licence()
+
+    if item and item.get('pid'):
+        pid_without_ver = item['pid']['value'].split('.')[0]
+        item_link = ItemLink.get_item_link_info(pid_without_ver)
+        ctx['item_link'] = item_link
+
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,

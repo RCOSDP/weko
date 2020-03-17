@@ -1798,6 +1798,7 @@ class ItemLink(object):
             if deleted:
                 self.bulk_delete(deleted)
         except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
             db.session.rollback()
             return ex
         return None
