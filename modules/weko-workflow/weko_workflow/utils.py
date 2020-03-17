@@ -311,7 +311,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if idt_key:
             creator_name_identifier = get_sub_item_value(
                 creators.get("attribute_value_mlt"), idt_key.split('.')[-1])
-            if creator_data:
+            if creator_name_identifier:
                 for value in creator_name_identifier:
                     idt_data.append(value)
 
