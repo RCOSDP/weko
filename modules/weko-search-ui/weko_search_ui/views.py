@@ -29,6 +29,7 @@ from xml.etree import ElementTree
 from blinker import Namespace
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     redirect, render_template, request, url_for
+from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -71,6 +72,7 @@ blueprint_api = Blueprint(
 
 
 @blueprint.route("/search/index")
+@login_required
 def search():
     """Index Search page ui."""
     search_type = request.args.get('search_type', WEKO_SEARCH_TYPE_DICT[
@@ -119,7 +121,7 @@ def search():
                 activity_id=activity_id)
 
         # Get ex-Item Links
-        recid = item['pid']['id'] if item.get('pid') else None
+        recid = item['pid'].get('value') if item.get('pid') else None
         if recid:
             item_link = ItemLink.get_item_link_info(recid)
             ctx['item_link'] = item_link

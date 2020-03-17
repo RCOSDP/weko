@@ -1782,7 +1782,7 @@ class ItemLink(object):
         created = []
         deleted = []
         for item in items:
-            item_id = item['item_data']['id']
+            item_id = item['item_id']
             if item_id in dst_ids:
                 updated.extend(item for dst_item in dst_relations if dst_item.reference_type != item['sele_id'])
                 dst_ids.remove(item_id)
@@ -1804,7 +1804,7 @@ class ItemLink(object):
         :return: The rendered template.
         """
         objects = [ItemReference(src_item_pid=self.org_item_id,
-                                 dst_item_pid=cr['item_data']['id'],
+                                 dst_item_pid=cr['item_id'],
                                  reference_type=cr['sele_id']) for cr in dst_items]
         try:
             with db.session.begin_nested():
@@ -1821,7 +1821,7 @@ class ItemLink(object):
         :return: The rendered template.
         """
         objects = [ItemReference(src_item_pid=self.org_item_id,
-                                 dst_item_pid=cr['item_data']['id'],
+                                 dst_item_pid=cr['item_id'],
                                  reference_type=cr['sele_id']) for cr in dst_items]
         try:
             with db.session.begin_nested():

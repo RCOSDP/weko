@@ -84,7 +84,7 @@ require([
       }
     } else {
       let elem = document.getElementById("q");
-      if (typeof elem !== null && elem !== "undefined") {
+      if (elem !== null && typeof elem !== "undefined") {
         document.getElementById("q").value = "";
       }
     }
@@ -101,8 +101,6 @@ require([
     }
   });
 });
-
-
 
 
 //add controller to invenioSearch
