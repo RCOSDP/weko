@@ -1840,8 +1840,9 @@ class ItemLink(object):
         """
         try:
             with db.session.begin_nested():
-                db.session.query(ItemReference).filter(ItemReference.dst_item_pid == self.org_item_id,
-                                ItemReference.dst_item_pid.in_(dst_item_ids)).delete(synchronize_session='fetch')
+                for dst_item_id in dst_item_ids:
+                    db.session.query(ItemReference).filter(ItemReference.dst_item_pid == self.org_item_id,
+                                                           ItemReference.dst_item_pid == dst_item_id).delete(synchronize_session='fetch')
             db.session.commit()
         except SQLAlchemyError as e:
             current_app.logger.debug(e)

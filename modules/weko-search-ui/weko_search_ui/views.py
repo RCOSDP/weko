@@ -123,7 +123,8 @@ def search():
         # Get ex-Item Links
         recid = item['pid'].get('value') if item.get('pid') else None
         if recid:
-            item_link = ItemLink.get_item_link_info(recid)
+            pid_without_ver = recid.split('.')[0]
+            item_link = ItemLink.get_item_link_info(pid_without_ver)
             ctx['item_link'] = item_link
 
         return render_template(
