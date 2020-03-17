@@ -40,6 +40,7 @@ from weko_gridlayout.utils import get_widget_design_page_with_main, \
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
+from weko_records.api import ItemLink
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_theme.utils import get_design_layout
 
@@ -116,6 +117,13 @@ def search():
             approval_record, step_item_login_url, histories, res_check, pid, \
             community_id, ctx = workflow_activity.get_activity_index_search(
                 activity_id=activity_id)
+
+        # Get ex-Item Links
+        recid = item['pid']['id'] if item.get('pid') else None
+        if recid:
+            item_link = ItemLink.get_item_link_info(recid)
+            ctx['item_link'] = item_link
+
         return render_template(
             'weko_workflow/activity_detail.html',
             page=page,

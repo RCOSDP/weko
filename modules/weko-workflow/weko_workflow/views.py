@@ -301,7 +301,7 @@ def display_activity(activity_id=0):
 
     # display_activity of Identifier grant
     identifier_setting = None
-    if 'identifier_grant' == action_endpoint and item:
+    if action_endpoint == 'identifier_grant' and item:
         community_id = request.args.get('community', None)
         if not community_id:
             community_id = 'Root Index'

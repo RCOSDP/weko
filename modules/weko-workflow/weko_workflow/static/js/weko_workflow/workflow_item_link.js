@@ -2,6 +2,7 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
+
   $('.btn-begin').on('click', function () {
       let post_uri = $('#post_uri').text();
       let workflow_id = $(this).data('workflow-id');
@@ -30,6 +31,7 @@ require([
           error: function (jqXHE, status) {}
       });
   });
+
   $('#btn-finish').on('click', function(){
     let post_uri = $('.cur_step').data('next-uri');
     let post_data = {
@@ -60,6 +62,7 @@ require([
       }
     });
   });
+
   $('#btn-draft').on('click', function(){
     let post_uri = $('.cur_step').data('next-uri');
     let post_data = {
@@ -90,11 +93,13 @@ require([
       }
     });
   });
+
   $('#btn-approval-req').on('click', function () {
       action_id = $('#hide-actionId').text();
       btn_id = "action_" + action_id;
       $('#' + btn_id).click();
   });
+
   $('#btn-approval').on('click', function () {
       let uri_apo = $('.cur_step').data('next-uri');
       let act_ver = $('.cur_step').data('action-version');
@@ -124,6 +129,7 @@ require([
           }
       });
   });
+
   $('#btn-reject').on('click', function () {
       let uri_apo = $('.cur_step').data('next-uri');
       let act_ver = $('.cur_step').data('action-version');
@@ -154,6 +160,7 @@ require([
           }
       });
   });
+
   $('#btn-return').on('click', function () {
       let uri_apo = $('.cur_step').data('next-uri');
       let act_ver = $('.cur_step').data('action-version');
@@ -184,9 +191,14 @@ require([
           }
       });
   });
+
   $('#lnk_item_detail').on('click', function () {
     $('#myModal').modal('show');
   })
+
+  $(document).ready(function () {
+    console.log('PARSING EX-ITEM LINKS');
+  });
 })
 
 //Item Link
@@ -214,14 +226,19 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
                        ];
    $scope.comment_data="";
 //   add button
-   $rootScope.add_link=function(data, index){
-    var sub_data={seleOption:[],sele_id:'',item_data:"",item_title:""};
-    sub_data.seleOption = angular.copy($scope.sele_options);
-    sub_data.sele_id = 'relateTo';
-    sub_data.item_data = data;
-    sub_data.item_title = data.metadata.title[0];
-    $scope.link_item_list.push(sub_data);
-   }
+   $rootScope.add_link = function(data, index) {
+     var sub_data = {
+       seleOption: [],
+       sele_id: "",
+       item_data: "",
+       item_title: ""
+     };
+     sub_data.seleOption = angular.copy($scope.sele_options);
+     sub_data.sele_id = "relateTo";
+     sub_data.item_data = data;
+     sub_data.item_title = data.metadata.title[0];
+     $scope.link_item_list.push(sub_data);
+   };
 //   delete button
    $scope.del_link=function(index){
     $scope.link_item_list.splice(index,1);

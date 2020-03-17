@@ -46,6 +46,7 @@ require([
       return str;
     }
   });
+
   function showJournalInfo() {
     var check = setInterval(show, 500);
     function show() {
@@ -66,17 +67,28 @@ require([
       }
     }
   }
+
   $(document).ready(function () {
     showJournalInfo();
+
     let urlVars = getUrlVars();
-    if (urlVars !== {} && urlVars.hasOwnProperty("q") && urlVars.hasOwnProperty("search_type") && urlVars["search_type"] !== "2") {
+    if (
+      urlVars !== {} &&
+      urlVars.hasOwnProperty("q") &&
+      urlVars.hasOwnProperty("search_type") &&
+      urlVars["search_type"] !== "2"
+    ) {
       let q = urlVars["q"];
       if (q) {
         document.getElementById("q").value = urlVars["q"];
       }
     } else {
-      document.getElementById("q").value = "";
+      let elem = document.getElementById("q");
+      if (typeof elem !== null && elem !== "undefined") {
+        document.getElementById("q").value = "";
+      }
     }
+
     $("#display_details").click(function () {
       $(".icon-right").toggle(50);
       $("#collapsed_details").collapse('toggle');
