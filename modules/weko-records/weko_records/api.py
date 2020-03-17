@@ -1789,17 +1789,17 @@ class ItemLink(object):
             else:
                 created.append(item)
 
-        deleted = dst_ids 
-        if created:
-            errors = self.bulk_create(created)
-            if errors: return errors
-        if updated:
-            errors = self.bulk_update(updated)
-            if errors: return errors
-        if deleted:
-            errors = self.bulk_delete(deleted)
-            if errors: return errors
-
+        deleted = dst_ids
+        try:
+            if created:
+                self.bulk_create(created)
+            if updated:
+                self.bulk_update(updated)
+            if deleted:
+                self.bulk_delete(deleted)
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            return ex
         return None
 
     def bulk_create(self, dst_items):
@@ -1811,14 +1811,9 @@ class ItemLink(object):
         objects = [ItemReference(src_item_pid=self.org_item_id,
                                  dst_item_pid=cr['item_id'],
                                  reference_type=cr['sele_id']) for cr in dst_items]
-        try:
-            with db.session.begin_nested():
-                db.session.bulk_save_objects(objects)
-            db.session.commit()
-        except SQLAlchemyError as ex:
-            db.session.rollback()
-            return ex
-        return None
+        with db.session.begin_nested():
+            db.session.bulk_save_objects(objects)
+        db.session.commit()
 
     def bulk_update(self, dst_items):
         """Record publish  status change view.
@@ -1829,15 +1824,11 @@ class ItemLink(object):
         objects = [ItemReference(src_item_pid=self.org_item_id,
                                  dst_item_pid=cr['item_id'],
                                  reference_type=cr['sele_id']) for cr in dst_items]
-        try:
-            with db.session.begin_nested():
-                for obj in objects:
-                    db.session.merge(obj)
-            db.session.commit()
-        except SQLAlchemyError as ex:
-            db.session.rollback()
-            return ex
-        return None
+        with db.session.begin_nested():
+            for obj in objects:
+                db.session.merge(obj)
+        db.session.commit()
+
 
     def bulk_delete(self, dst_item_ids):
         """Record publish  status change view.
@@ -1845,13 +1836,8 @@ class ItemLink(object):
         :param pid: PID object.
         :return: The rendered template.
         """
-        try:
-            with db.session.begin_nested():
-                for dst_item_id in dst_item_ids:
-                    db.session.query(ItemReference).filter(ItemReference.dst_item_pid == self.org_item_id,
-                                                           ItemReference.dst_item_pid == dst_item_id).delete(synchronize_session='fetch')
-            db.session.commit()
-        except SQLAlchemyError as ex:
-            db.session.rollback()
-            return ex
-        return None
+        with db.session.begin_nested():
+            for dst_item_id in dst_item_ids:
+                db.session.query(ItemReference).filter(ItemReference.dst_item_pid == self.org_item_id,
+                                                        ItemReference.dst_item_pid == dst_item_id).delete(synchronize_session='fetch')
+        db.session.commit()
