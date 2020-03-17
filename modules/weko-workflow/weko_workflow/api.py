@@ -35,7 +35,8 @@ from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    ITEM_REGISTRATION_FLOW_ID, WEKO_WORKFLOW_ALL_TAB
+    ITEM_REGISTRATION_FLOW_ID, WEKO_WORKFLOW_ALL_TAB, \
+    WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
 from .models import ActionCommentPolicy, ActionFeedbackMail, \
     ActionIdentifier, ActionJournal, ActionStatusPolicy
@@ -46,7 +47,6 @@ from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
 from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
-from .utils import get_identifier_setting
 
 
 class Flow(object):
@@ -1381,6 +1381,7 @@ class WorkActivity(object):
         from werkzeug.utils import import_string
         from invenio_pidstore.resolver import Resolver
         from .views import check_authority_action
+        from .utils import get_identifier_setting
         activity = WorkActivity()
         activity_detail = activity.get_activity_detail(activity_id)
         item = None
