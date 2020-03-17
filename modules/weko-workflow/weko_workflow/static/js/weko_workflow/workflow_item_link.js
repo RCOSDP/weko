@@ -224,15 +224,16 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 
 //   add button
   $rootScope.add_link = function(data, index) {
-    var sub_data = {
+    let sub_data = {
       seleOption: [],
-      item_id: "",
+      item_id: 0,
       item_title: "",
       sele_id: ""
     };
+
     sub_data.seleOption = angular.copy($scope.sele_options);
     sub_data.sele_id = "relateTo";
-    sub_data.item_id = data.metadata.id;
+    sub_data.item_id = data.metadata.control_number;
     sub_data.item_title = data.metadata.title[0];
     $scope.link_item_list.push(sub_data);
   };
@@ -245,6 +246,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       item_title: "",
       sele_id: ""
     };
+
     item_data.seleOption = angular.copy($scope.sele_options);
     item_data.sele_id = data.value;
     item_data.item_id = data.item_links;
@@ -289,7 +291,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         commond: $scope.comment_data,
         action_version: $('.cur_step').data('action-version'),
         temporary_save: 0,
-        link_data:$scope.link_item_list
+        link_data: $scope.link_item_list
       };
 
       $http({
@@ -312,12 +314,12 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 
 // init ex-item links
   $(document).ready(function() {
-    let ex_item_links = $("#ex_item_link_infasdaso").val();
+    let ex_item_links = $("#ex_item_links").val();
 
     if (ex_item_links !== "" && typeof ex_item_links !== "undefined") {
       json = JSON.parse(ex_item_links);
 
-      json.forEach(function (key) {
+      json.forEach(function(key) {
         $scope.add_ex_link(key);
       });
     }

@@ -690,13 +690,17 @@ def next_action(activity_id='0', action_id=0):
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 
-    if action_endpoint == 'item_link' and item_id:
+    if action_endpoint == 'item_link' and record:
         current_pid = PersistentIdentifier.get_by_object(
             pid_type='recid',
             object_type='rec',
             object_uuid=item_id
         )
-        item_link = ItemLink(current_pid.pid_value)
+
+        if record:
+            pid_without_ver = get_record_without_version(current_pid)
+
+        item_link = ItemLink(pid_without_ver.pid_value)
         relation_data = post_json.get('link_data')
         if relation_data:
             item_link.update(relation_data)
