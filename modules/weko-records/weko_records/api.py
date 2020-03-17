@@ -1837,5 +1837,5 @@ class ItemLink(object):
         :return: The rendered template.
         """
         for dst_item_id in dst_item_ids:
-            db.session.query(ItemReference).filter(ItemReference.dst_item_pid == self.org_item_id,
-                                                    ItemReference.dst_item_pid == dst_item_id).delete()
+            db.session.query(ItemReference).filter(ItemReference.src_item_pid == self.org_item_id,
+                                                    ItemReference.dst_item_pid == dst_item_id).delete(synchronize_session='fetch')
