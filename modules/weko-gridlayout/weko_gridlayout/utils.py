@@ -38,6 +38,7 @@ from weko_admin.models import AdminLangSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_records_ui.utils import get_pair_value
 from weko_search_ui.query import item_search_factory
 from weko_theme import config as theme_config
 
@@ -715,14 +716,15 @@ def find_rss_value(data, keyword):
             desc_val = item_map.get('description.@value')
             # desc_dat = source.get('_item_metadata').get(desc_typ.split('.')[0])
             desc_typ = desc_typ.split('.')
-            desc_dat = source.get('_item_metadata').get(desc_typ.pop(0))
+            desc_dat = source.get('_item_metadata').get(desc_typ.get(0))
             if desc_dat and desc_dat.get('attribute_value_mlt'):
-                for desc in desc_dat.get('attribute_value_mlt'):
-                    desc_typ_value = get_value_by_key(desc,desc_typ)
-                    if desc_typ_value and desc_typ_value == 'Abstract':
-                        desc_val = desc_val.split('.')
-                        desc_val.pop(0)
-                        return get_value_by_key(desc_dat.get('attribute_value_mlt'),desc_val)
+                list_des_data = get_pair_value(desc_val.split('.')[1:],
+                                               desc_typ.split('.')[1:],
+                                               desc_dat.get(
+                                                   'attribute_value_mlt'))
+                for des_text, des_type in list_des_data:
+                    if des_type == 'Abstract':
+                        return des_text
         else:
             return ''
     elif keyword == '_updated':
@@ -730,31 +732,6 @@ def find_rss_value(data, keyword):
     else:
         return ''
 
-def get_value_by_key(data, keys):
-    """Get data by key or a list of keys.
-    @param data:
-    @param keys:
-    @return:
-    """
-    result = None
-    if isinstance(keys, list):
-        if len(keys) > 1:
-            key = keys.pop(0)
-            if isinstance(data, dict) and data.get(key):
-                result = get_value_by_key(data.get(key), keys)
-            elif isinstance(data, list):
-                for sub_item in data:
-                    if sub_item.get(key):
-                        result = get_value_by_key(sub_item.get(key), keys)
-        elif len(keys) == 1:
-            key = keys[0]
-            if isinstance(data, dict):
-                result = data.get(key, None)
-            elif isinstance(data, list):
-                for sub_item in data:
-                    result = sub_item.get(key, None)
-
-    return result
 
 def get_rss_data_source(source, keyword):
     """Get data from source tree.
