@@ -204,6 +204,11 @@
   word-wrap: break-word;
 }
 
+.ie .scroll_x.trumbowyg-editor{
+  overflow-x: auto;
+  margin: 0 !important;
+}
+
 @keyframes rotation {
   from {
     opacity: 1;

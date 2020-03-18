@@ -810,7 +810,14 @@ function removeSensorListener(sensor, timeout) {
     sensor.detach();
     $('.header-footer-type').parent().removeClass('widgetIE');
     if(isIE11()){
+        // Add class fix css IE11
         $('#page_body').addClass('ie');
+        // scroll-x when content > div
+        $(".trumbowyg-editor").each(function(){
+            if($(this).find('img').length !== 0){
+                $(this).addClass("scroll_x");
+            }
+        })
     }
   }, timeout);
 }
