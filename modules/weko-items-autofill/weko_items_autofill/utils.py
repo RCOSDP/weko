@@ -720,11 +720,9 @@ def get_crossref_source_data(data):
     :return:
     """
     result = list()
-    if data is None:
-        return pack_single_value_as_dict(None)
-    for issn in data:
+    if data:
         new_data = dict()
-        new_data['@value'] = issn
+        new_data['@value'] = data
         new_data['@type'] = 'ISSN'
         result.append(new_data)
     return result
@@ -1117,17 +1115,13 @@ def format_to_json(api_data):
                         and elem.attrib['media_type'] == "print":
                     data.update({etree.QName(elem).localname: elem.text})
             elif etree.QName(elem).localname == "issn":
-                if "issn" in data:
-                    data["issn"].append(elem.text)
-                else:
-                    data.update({"issn": [elem.text]})
-                data.update({etree.QName(elem).localname: [elem.text]})
+                if 'type' in elem.attrib \
+                        and elem.attrib['type'] == "print":
+                    data.update({etree.QName(elem).localname: elem.text})
             elif etree.QName(elem).localname == "isbn":
-                if "isbn" in data:
-                    data["isbn"].append(elem.text)
-                else:
-                    data.update({"isbn": [elem.text]})
-                data.update({etree.QName(elem).localname: [elem.text]})
+                if 'type' in elem.attrib \
+                        and elem.attrib['type'] == "print":
+                    data.update({etree.QName(elem).localname: elem.text})
             else:
                 data.update({etree.QName(elem).localname: elem.text})
     return data

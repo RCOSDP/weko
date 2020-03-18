@@ -1605,6 +1605,7 @@ function toObject(arr) {
                           $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey][0]['creatorName'] = subData.creatorNames;
                         } else {
                           if ((item.key === 'creator' || item.key === 'contributor') && subData[subKey].length > 1) {
+                            if (Array.isArray($rootScope.recordsVM.invenioRecordsModel[itemKey])) {
                             creatorModelData = $rootScope.recordsVM.invenioRecordsModel[itemKey][0];
                             if ($rootScope.recordsVM.invenioRecordsModel[itemKey].length > subData[subKey].length) {
                               $rootScope.recordsVM.invenioRecordsModel[itemKey] = [creatorModelData];
@@ -1618,6 +1619,10 @@ function toObject(arr) {
                                 $rootScope.recordsVM.invenioRecordsModel[itemKey][key][subKey] = [subData[subKey][key]];
                               }
                             }
+                            } else {
+                              $rootScope.recordsVM.invenioRecordsModel[itemKey][subKey][0] = subData[subKey][0];
+                            }
+
                           }
                           else {
                             if ($rootScope.recordsVM.invenioRecordsModel[itemKey].length > subData[subKey].length && (item.key === 'creator' || item.key === 'contributor')) {
@@ -1627,7 +1632,11 @@ function toObject(arr) {
                           $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey] = subData[subKey];
                         }
                             else {
-                              $rootScope.recordsVM.invenioRecordsModel[itemKey][subKey] = subData[subKey][0]
+                              if (Array.isArray($rootScope.recordsVM.invenioRecordsModel[itemKey][subKey])) {
+                                $rootScope.recordsVM.invenioRecordsModel[itemKey][subKey] = subData[subKey];
+                              } else {
+                                $rootScope.recordsVM.invenioRecordsModel[itemKey][subKey] = subData[subKey][0];
+                              }
                             }
                           }
                         }
@@ -1654,6 +1663,7 @@ function toObject(arr) {
             });
           }
         });
+        CustomBSDatePicker.setDataFromFieldToModel($rootScope.recordsVM.invenioRecordsModel, true);
         $('#meta-search').modal('toggle');
       }
       $scope.searchSource = function (model_id, arrayFlg, form) {
