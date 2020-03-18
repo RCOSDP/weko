@@ -554,9 +554,8 @@ function toObject(arr) {
           }
         }
       };
-      // ================================================
+
       $scope.getValueAuthor = function () {
-        // fix đang bị undefine lần đầu
         var sub_item_scheme = ['subitem_creator_name_identifier_02_scheme', 'subitem_contributor_name_identifier_02_scheme', 'subitem_01_right_holder_identifier_01_scheme']
         sub_item_scheme.map(function(item) {
            var valueOption = $("select[name='"+item+"']").val()
