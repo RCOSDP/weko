@@ -1106,7 +1106,8 @@ class ComponentButtonLayout extends React.Component {
             delete multiLangData[currentLanguage];
         }
         if ((data['widget_type'] + "") === ACCESS_COUNTER) {
-            for (let [key, value] of Object.entries(multiLangData)) {
+            for(let key in multiLangData){
+                let value = multiLangData[key]
                 value.description['access_counter'] = data.accessInitValue
             }
         }
@@ -1162,7 +1163,7 @@ class ComponentButtonLayout extends React.Component {
     validateFieldIsValid(widget_type){
         if(widget_type === ACCESS_COUNTER){
             let access_val = $('#Access_counter').val() || "0";
-            if (Number.isNaN(Number(access_val)) || Number(access_val) < 0){
+            if (isNaN(Number(access_val)) || Number(access_val) < 0){
                 return {
                     status : false,
                     error: "Please enter half-width numbers."
