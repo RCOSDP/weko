@@ -952,7 +952,8 @@ def get_specific_key_path(des_key, form):
     @param form:
     @return:
     """
-    result = False
+    existed = False
+    path_result = None
     if isinstance(form, dict):
         list_keys = form.get("key", None)
         if list_keys:
@@ -960,17 +961,17 @@ def get_specific_key_path(des_key, form):
             # Always remove the first element because it is parents key
             list_keys.pop(0)
             if set(list_keys) == set(des_key):
-                result = True
-        if result:
-            return form.get("key")
-        elif not result and form.get("items"):
+                existed = True
+        if existed:
+            return existed, form.get("key")
+        elif not existed and form.get("items"):
             return get_specific_key_path(des_key, form.get("items"))
     elif isinstance(form, list):
         for child_form in form:
-            if result:
+            if existed:
                 break
-            result = get_specific_key_path(des_key, child_form)
-    return result
+            existed, path_result = get_specific_key_path(des_key, child_form)
+    return existed, path_result
 
 
 def build_record_model(item_autofill_key, api_data):
