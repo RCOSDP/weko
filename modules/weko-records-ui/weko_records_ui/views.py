@@ -44,8 +44,8 @@ from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_records.serializers import citeproc_v1
 from weko_records.api import ItemLink
+from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
