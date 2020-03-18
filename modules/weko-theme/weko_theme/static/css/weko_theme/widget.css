@@ -163,7 +163,7 @@
 }
 
 .trumbowyg-editor img {
-  max-width: unset !important;;
+  max-width: none !important;
 }
 
 .lds-ring-background {

@@ -225,7 +225,7 @@ let PageBodyGrid = function () {
             let readMore = (languageDescription.read_more) ? languageDescription.read_more : READ_MORE_DEFAULT;
             templateWriteMoreNotice = '</br>' +
                 '<div id="' + moreDescriptionID + '" class="hidden">' + moreDescription + '</div>' +
-                '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
+                '<a style="padding-bottom:35px;" id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
                 linkID + '\',\'' + escapeHtml(readMore) + '\', \'' + escapeHtml(hideRest) + '\')">' + readMore +
                 '</a>';
         }
@@ -623,7 +623,7 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
     let scrollHeight = otherElement.prop("scrollHeight");
     let clientHeight = otherElement.prop("clientHeight");
     if(isIE11()){
-      scrollHeight = scrollHeight + 20;
+      scrollHeight = scrollHeight + 21;
     }
     if (scrollHeight > clientHeight) {
       let cellHeight = pageBodyGrid.getCellHeight();
@@ -763,7 +763,11 @@ function buildWidget() {
     new ResizeSensor($(".widget-resize"), function () {
       $(".widget-resize").each(function () {
         let headerElementHeight = $(this).find(".panel-heading").height();
-        $(this).find(".panel-body").css("padding-top", String(headerElementHeight + 11) + "px");
+        let plusHeight = 11;
+        if (isIE11()){
+            plusHeight = 21;
+          }
+        $(this).find(".panel-body").css("padding-top", String(headerElementHeight + plusHeight) + "px");
       });
     });
 
