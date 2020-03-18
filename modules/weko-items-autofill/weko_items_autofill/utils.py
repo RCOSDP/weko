@@ -172,6 +172,7 @@ def get_crossref_record_data(pid, doi, item_type_id):
     api_response = CrossRefOpenURL(pid, doi).get_data()
     if api_response["error"]:
         return result
+    api_response = format_to_json(api_response)
     api_data = get_crossref_data_by_key(api_response, 'all')
     with db.session.no_autoflush:
         items = ItemTypes.get_by_id(item_type_id)
