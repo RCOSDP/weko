@@ -31,7 +31,7 @@ class CrossRefOpenURL:
     JSON_FORMAT = 'json'
     XML_FORMAT = 'xml'
     # Set default value
-    _response_format = JSON_FORMAT
+    _response_format = XML_FORMAT
     _timeout = config.WEKO_ITEMS_AUTOFILL_REQUEST_TIMEOUT
     _proxy = {
         'http': config.WEKO_ITEMS_AUTOFILL_SYS_HTTP_PROXY,
@@ -105,7 +105,7 @@ class CrossRefOpenURL:
         try:
             result = self._do_http_request()
             if result.status_code == 200:
-                response['response'] = result.json()
+                response['response'] = result.text
         except Exception as e:
             response['error'] = str(e)
         return response

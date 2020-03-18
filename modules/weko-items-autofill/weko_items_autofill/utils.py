@@ -24,9 +24,11 @@ from functools import wraps
 from flask import current_app
 from invenio_cache import current_cache
 from invenio_db import db
+from lxml import etree
 from weko_records.api import ItemTypes, Mapping
 from weko_workflow.models import ActionJournal
 
+from . import config
 from .api import CiNiiURL, CrossRefOpenURL
 
 
@@ -568,6 +570,31 @@ def get_crossref_creator_data(data):
     return result
 
 
+def get_crossref_contributor_data(data):
+    """Get creator name from CrossRef data.
+
+    Arguments:
+        data -- CrossRef data
+    """
+    result = list()
+    default_language = 'en'
+    for creator in data:
+        family_name = creator.get('family')
+        given_name = creator.get('given')
+        full_name = ''
+        if given_name and family_name:
+            full_name = family_name + " " + given_name
+        elif given_name:
+            full_name = given_name
+        elif family_name:
+            full_name = family_name
+        new_data = dict()
+        new_data['@value'] = full_name
+        new_data['@language'] = default_language
+        result.append(new_data)
+    return result
+
+
 def get_crossref_numpage_data(data):
     """Get number of page from CrossRef data.
 
@@ -590,38 +617,22 @@ def get_crossref_numpage_data(data):
             return pack_single_value_as_dict(None)
 
 
-def get_start_and_end_page(data, index):
-    """Get start data and end date from CrossRef data.
+def get_start_and_end_page(data):
+    """Get start page and end page data.
 
-    Arguments:
-        data -- page data
-        index -- Index in page array. 0 for start and 1 for end
+    Get page info and pack it:
+    {
+        '@value': number
+    }
 
-    Returns:
-        Start/End date is packed
-
+    :param: data: No of page
+    :return: packed data
     """
-    num_pages = data.split('-')
-    if len(num_pages) == 1:
-        try:
-            start_page = int(data)
-            new_data = dict()
-            new_data['@value'] = str(start_page)
-            return new_data
-        except Exception:
-            new_data = dict()
-            new_data['@value'] = None
-            return new_data
-    else:
-        try:
-            new_data = dict()
-            end_page = int(num_pages[index])
-            new_data['@value'] = str(end_page)
-            return new_data
-        except Exception:
-            new_data = dict()
-            new_data['@value'] = None
-            return new_data
+    try:
+        result = int(data)
+        return pack_single_value_as_dict(str(result))
+    except Exception:
+        return pack_single_value_as_dict(None)
 
 
 def get_crossref_issue_date(data):
@@ -635,15 +646,30 @@ def get_crossref_issue_date(data):
 
     """
     result = dict()
-    date = data.get('date-parts')
-    if isinstance(date, list) and len(date) == 3:
-        issued_date = '-'.join(str(e) for e in date)
-        result['@value'] = issued_date
-        result['@type'] = "Issued"
+    if data:
+        result['@value'] = data
+        result['@type'] = 'Issued'
     else:
         result['@value'] = None
         result['@type'] = None
     return result
+
+
+def get_crossref_source_title_data(data):
+    """Get source title information.
+
+    Arguments:
+        data -- created data
+
+    Returns:
+        Source title  data
+
+    """
+    new_data = dict()
+    default_language = 'en'
+    new_data['@value'] = data
+    new_data['@language'] = default_language
+    return new_data
 
 
 def get_crossref_publisher_data(data):
@@ -663,8 +689,31 @@ def get_crossref_publisher_data(data):
     return new_data
 
 
-def get_crossref_relation_data(data):
+def get_crossref_relation_data(isbn, doi):
     """Get CrossRef relation data.
+
+    :param isbn, isbn_type, doi, doi_type:
+    :return:
+    """
+    result = list()
+    if doi:
+        new_data = dict()
+        new_data['@value'] = doi
+        new_data['@type'] = "DOI"
+        result.append(new_data)
+    if isbn and len(result) == 0:
+        for element in isbn:
+            new_data = dict()
+            new_data['@value'] = element
+            new_data['@type'] = "ISBN"
+            result.append(new_data)
+    if len(result) == 0:
+        return pack_single_value_as_dict(None)
+    return result
+
+
+def get_crossref_source_data(data):
+    """Get CrossRef source data.
 
     :param data:
     :return:
@@ -672,10 +721,10 @@ def get_crossref_relation_data(data):
     result = list()
     if data is None:
         return pack_single_value_as_dict(None)
-    for isbn in data:
+    for issn in data:
         new_data = dict()
-        new_data['@value'] = isbn
-        new_data['@type'] = 'ISBN'
+        new_data['@value'] = issn
+        new_data['@type'] = 'ISSN'
         result.append(new_data)
     return result
 
@@ -696,30 +745,34 @@ def get_crossref_data_by_key(api, keyword):
 
     data = api['response']
     result = dict()
-
-    created = data.get('created')
-    if created is None:
-        return None
-    page = data.get('page')
-
-    if keyword == 'title' and created.get('title'):
-        result[keyword] = get_crossref_title_data(created.get('title'))
-    elif keyword == 'language':
-        result[keyword] = pack_single_value_as_dict('eng')
+    if keyword == 'title' and data.get('article_title'):
+        result[keyword] = get_crossref_title_data(data.get('article_title'))
     elif keyword == 'creator' and data.get('author'):
         result[keyword] = get_crossref_creator_data(data.get('author'))
-    elif keyword == 'numPages' and page:
-        result[keyword] = get_crossref_numpage_data(page)
-    elif keyword == 'pageStart' and page:
-        result[keyword] = get_start_and_end_page(page, 0)
-    elif keyword == 'pageEnd' and page:
-        result[keyword] = get_start_and_end_page(page, 1)
-    elif keyword == 'date' and data.get('issued'):
-        result[keyword] = get_crossref_issue_date(data.get('issued'))
-    elif keyword == 'publisher' and created.get('publisher'):
-        result[keyword] = get_crossref_publisher_data(created.get('publisher'))
-    elif keyword == 'relation' and created.get('ISBN'):
-        result[keyword] = get_crossref_relation_data(created.get('ISBN'))
+    elif keyword == 'contributor' and data.get('contributor'):
+        result[keyword] = get_crossref_contributor_data(data.get('contributor'))
+    elif keyword == 'sourceTitle' and data.get('journal_title'):
+        result[keyword] = get_crossref_source_title_data(
+            data.get('journal_title')
+        )
+    elif keyword == 'volume' and data.get('volume'):
+        result[keyword] = pack_single_value_as_dict(data.get('volume'))
+    elif keyword == 'issue' and data.get('issue'):
+        print(data.get('issue'))
+        result[keyword] = pack_single_value_as_dict(data.get('issue'))
+    elif keyword == 'pageStart' and data.get('first_page'):
+        result[keyword] = get_start_and_end_page(data.get('first_page'))
+    elif keyword == 'pageEnd' and data.get('first_page'):
+        result[keyword] = get_start_and_end_page(data.get('first_page'))
+    elif keyword == 'date' and data.get('year'):
+        result[keyword] = get_crossref_issue_date(data.get('year'))
+    elif keyword == 'relation':
+        result[keyword] = get_crossref_relation_data(
+            data.get('isbn'),
+            data.get('doi')
+        )
+    elif keyword == 'sourceIdentifier':
+        result[keyword] = get_crossref_source_data(data.get('issn'))
     elif keyword == 'all':
         for key in current_app.config[
                 'WEKO_ITEMS_AUTOFILL_CROSSREF_REQUIRED_ITEM']:
@@ -1026,3 +1079,54 @@ def get_workflow_journal(activity_id):
         if journal:
             journal_data = journal.action_journal
     return journal_data
+
+
+def format_to_json(api_data):
+    """Format api data to json
+    :param api_data:
+    :return:
+    """
+    data = {}
+    result = api_data.split('\n')[1]
+    root = etree.fromstring(result)
+    list_cross_ref = config.WEKO_ITEMS_CROSSREF_REQUIRED_ITEM
+    list_contributor = config.WEKO_ITEMS_CROSSREF_CONTRIBUTOR
+    for elem in root.getiterator():
+        if etree.QName(elem).localname in list_cross_ref:
+            if etree.QName(elem).localname == "contributor" or etree.QName(
+                    elem).localname == "organization":
+                temp = {}
+                for element in elem.getiterator():
+                    if etree.QName(element).localname == 'given_name':
+                        temp.update({"given": element.text})
+                    if etree.QName(element).localname == 'surname':
+                        temp.update({"family": element.text})
+                if elem.attrib['contributor_role'] in list_contributor:
+                    if "contributor" in data:
+                        data["contributor"].append(temp)
+                    else:
+                        data.update({"contributor": [temp]})
+                else:
+                    if "author" in data:
+                        data["author"].append(temp)
+                    else:
+                        data.update({"author": [temp]})
+            elif etree.QName(elem).localname == "year" :
+                if 'media_type' in elem.attrib \
+                        and elem.attrib['media_type'] == "print":
+                    data.update({etree.QName(elem).localname: elem.text})
+            elif etree.QName(elem).localname == "issn":
+                if "issn" in data:
+                    data["issn"].append(elem.text)
+                else:
+                    data.update({"issn": [elem.text]})
+                data.update({etree.QName(elem).localname: [elem.text]})
+            elif etree.QName(elem).localname == "isbn":
+                if "isbn" in data:
+                    data["isbn"].append(elem.text)
+                else:
+                    data.update({"isbn": [elem.text]})
+                data.update({etree.QName(elem).localname: [elem.text]})
+            else:
+                data.update({etree.QName(elem).localname: elem.text})
+    return data

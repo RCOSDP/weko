@@ -42,16 +42,39 @@ WEKO_ITEMS_AUTOFILL_SELECT_OPTION = [
 
 WEKO_ITEMS_AUTOFILL_CROSSREF_REQUIRED_ITEM = [
     "title",
-    "language",
     "creator",
+    "contributor",
+    "sourceTitle",
+    "sourceIdentifier",
+    "volume",
+    "issue",
     "pageStart",
     "pageEnd",
-    "numPages",
     "date",
-    "publisher",
     "relation"
 ]
 """CrossRef required item"""
+WEKO_ITEMS_CROSSREF_REQUIRED_ITEM = [
+    "article_title",
+    "author",
+    "contributor",
+    "organization",
+    "journal_title",
+    "volume",
+    "issue",
+    "first_page",
+    "last_page",
+    "year",
+    "issn",
+    "isbn",
+    "doi",
+]
+
+WEKO_ITEMS_CROSSREF_CONTRIBUTOR = [
+    "editor",
+    "chair",
+    "translator"
+]
 
 WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM = [
     "title",

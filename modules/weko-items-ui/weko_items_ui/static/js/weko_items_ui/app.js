@@ -1528,16 +1528,20 @@ function toObject(arr) {
           return item;
         }
         if (Array.isArray(item)) {
-          let subItem = item[0];
+          for (let i in item) {
+            let subItem = item[i];
           this.clearAllFieldCallBack(subItem);
+          }
         } else {
           for (let subItem in item) {
             if ($.isEmptyObject(item[subItem])) {
               continue;
             } else if (Array.isArray(item[subItem])) {
-              let childItem = item[subItem][0];
               let result = [];
+              for (let i in item[subItem]) {
+                let childItem = item[subItem][i];
               result.push(this.clearAllFieldCallBack(childItem));
+              }
               item[subItem] = result;
             } else {
               if (typeof item[subItem] === 'string' || item[subItem] instanceof String) {
@@ -1600,7 +1604,32 @@ function toObject(arr) {
                         if (subData.hasOwnProperty(CREATOR_NAMES)) {
                           $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey][0]['creatorName'] = subData.creatorNames;
                         } else {
+                          if ((item.key === 'creator' || item.key === 'contributor') && subData[subKey].length > 1) {
+                            creatorModelData = $rootScope.recordsVM.invenioRecordsModel[itemKey][0];
+                            if ($rootScope.recordsVM.invenioRecordsModel[itemKey].length > subData[subKey].length) {
+                              $rootScope.recordsVM.invenioRecordsModel[itemKey] = [creatorModelData];
+                            }
+                            for (let key in subData[subKey]) {
+                              if ($rootScope.recordsVM.invenioRecordsModel[itemKey][key]) {
+                                $rootScope.recordsVM.invenioRecordsModel[itemKey][key][subKey] = [subData[subKey][key]];
+                              }
+                              else {
+                                $rootScope.recordsVM.invenioRecordsModel[itemKey].push(JSON.parse(JSON.stringify(creatorModelData)));
+                                $rootScope.recordsVM.invenioRecordsModel[itemKey][key][subKey] = [subData[subKey][key]];
+                              }
+                            }
+                          }
+                          else {
+                            if ($rootScope.recordsVM.invenioRecordsModel[itemKey].length > subData[subKey].length && (item.key === 'creator' || item.key === 'contributor')) {
+                              $rootScope.recordsVM.invenioRecordsModel[itemKey] = [$rootScope.recordsVM.invenioRecordsModel[itemKey][0]];
+                            }
+                            if (Array.isArray($rootScope.recordsVM.invenioRecordsModel[itemKey])) {
                           $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey] = subData[subKey];
+                        }
+                            else {
+                              $rootScope.recordsVM.invenioRecordsModel[itemKey][subKey] = subData[subKey][0]
+                            }
+                          }
                         }
                       }
                     });
