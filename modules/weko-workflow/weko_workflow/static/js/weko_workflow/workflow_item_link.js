@@ -239,7 +239,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
   };
 
 //   add ex_item_link
-  $scope.add_ex_link = function(data) {
+  $scope.add_ex_link = function (data) {
     let item_data = {
       seleOption: [],
       item_id: "",
@@ -255,16 +255,44 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
   };
 
 //   delete button
-   $scope.del_link = function(index){
+  $scope.del_link = function(index){
     $scope.link_item_list.splice(index, 1);
-   };
+  };
+
 //   save button
-  $scope.btn_save=function(){
+  $scope.btn_save = function () {
     var post_url = $('.cur_step').data('next-uri');
     var post_data = {
       commond: $scope.comment_data,
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 1
+    };
+
+    $http({
+      method: 'POST',
+      url: post_url,
+      data: post_data,
+      headers: { 'Content-Type': 'application/json' },
+    }).then(function successCallback(response) {
+      if (0 == response.data.code) {
+        if (response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
+          document.location.href = response.data.data.redirect;
+        } else {
+          document.location.reload(true);
+        }
+      }
+    }, function errorCallback(response) {
+      alert(response.data.msg)
+    });
+  };
+//   run button
+  $scope.btn_run=function(){
+    var post_url = $('.cur_step').data('next-uri');
+    var post_data = {
+      commond: $scope.comment_data,
+      action_version: $('.cur_step').data('action-version'),
+      temporary_save: 0,
+      link_data: $scope.link_item_list
     };
 
     $http({
@@ -279,47 +307,20 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         } else {
           document.location.reload(true);
         }
-       }
+      }
     }, function errorCallback(response) {
-      alert(response.data.msg)
+        alert(response.data.msg)
     });
-  }
-//   run button
-    $scope.btn_run=function(){
-      var post_url = $('.cur_step').data('next-uri');
-      var post_data = {
-        commond: $scope.comment_data,
-        action_version: $('.cur_step').data('action-version'),
-        temporary_save: 0,
-        link_data: $scope.link_item_list
-      };
-
-      $http({
-          method: 'POST',
-          url: post_url,
-          data: post_data,
-          headers: {'Content-Type': 'application/json'},
-      }).then(function successCallback(response) {
-        if(0 == response.data.code) {
-          if(response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
-            document.location.href=response.data.data.redirect;
-          } else {
-            document.location.reload(true);
-          }
-        }
-      }, function errorCallback(response) {
-         alert(response.data.msg)
-      });
-    };
+  };
 
 // init ex-item links
-  $(document).ready(function() {
+  $(document).ready(function () {
     let ex_item_links = $("#ex_item_links").val();
 
     if (ex_item_links !== "" && typeof ex_item_links !== "undefined") {
       json = JSON.parse(ex_item_links);
 
-      json.forEach(function(key) {
+      json.forEach(function (key) {
         $scope.add_ex_link(key);
       });
     }

@@ -25,9 +25,7 @@ from datetime import datetime
 
 from invenio_accounts.models import User
 from invenio_db import db
-from invenio_records.models import RecordMetadata
 from sqlalchemy.dialects import mysql, postgresql
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import desc
 from sqlalchemy.types import LargeBinary
 from sqlalchemy_utils.types import JSONType, UUIDType
@@ -706,7 +704,7 @@ class ItemReference(db.Model, Timestamp):
         return cls.query.filter(cls.dst_item_pid == pid)
 
     @classmethod
-    def relation_exists(self, src_pid, dst_pid, reference_type):
+    def relation_exists(cls, src_pid, dst_pid, reference_type):
         """Determine if given relation already exists."""
         return ItemReference.query.filter_by(
             src_item_pid=src_pid,

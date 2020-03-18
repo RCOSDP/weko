@@ -393,11 +393,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
                         or [])
     try:
-        if WekoRecord.get_record(
-                id_=active_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+        if WekoRecord.get_record(id_=active_versions[-1].object_uuid)[
+                '_deposit']['status'] == 'draft':
             active_versions.pop()
-        if WekoRecord.get_record(
-                id_=all_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+        if WekoRecord.get_record(id_=all_versions[-1].object_uuid)[
+                '_deposit']['status'] == 'draft':
             all_versions.pop()
     except Exception:
         pass
@@ -436,7 +436,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     detail_condition = get_search_detail_keyword('')
 
     # Add Item Reference data to Record Metadata
-    res = ItemLink.get_item_link_info(record.get("control_number"))
+    pid_without_ver = record.get("control_number").split('.')[0]
+    res = ItemLink.get_item_link_info(pid_without_ver)
     if res:
         record["relation"] = res
     else:

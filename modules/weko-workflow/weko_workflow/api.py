@@ -35,8 +35,8 @@ from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    ITEM_REGISTRATION_FLOW_ID, WEKO_WORKFLOW_ALL_TAB, \
-    WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
+    ITEM_REGISTRATION_FLOW_ID, WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, \
+    WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
 from .models import ActionCommentPolicy, ActionFeedbackMail, \
     ActionIdentifier, ActionJournal, ActionStatusPolicy
@@ -1063,7 +1063,10 @@ class WorkActivity(object):
 
         return query
 
-    def query_activites_by_tab_is_all(self, query, is_admin, is_community_admin,
+    def query_activites_by_tab_is_all(self,
+                                      query,
+                                      is_admin,
+                                      is_community_admin,
                                       community_user_ids):
         """
         Query activites by tab is all.
@@ -1453,8 +1456,8 @@ class WorkActivity(object):
             community_id = comm.id
 
         # display_activity of Identifier grant
-        identifier_setting = None
         if action_endpoint == 'identifier_grant' and item:
+            text_empty = '<Empty>'
             community_id = request.args.get('community', None)
             if not community_id:
                 community_id = 'Root Index'
@@ -1463,28 +1466,28 @@ class WorkActivity(object):
             # valid date pidstore_identifier data
             if identifier_setting:
                 if not identifier_setting.jalc_doi:
-                    identifier_setting.jalc_doi = '<Empty>'
+                    identifier_setting.jalc_doi = text_empty
                 if not identifier_setting.jalc_crossref_doi:
-                    identifier_setting.jalc_crossref_doi = '<Empty>'
+                    identifier_setting.jalc_crossref_doi = text_empty
                 if not identifier_setting.jalc_datacite_doi:
-                    identifier_setting.jalc_datacite_doi = '<Empty>'
+                    identifier_setting.jalc_datacite_doi = text_empty
 
-            temporary_identifier_select = 0
-            temporary_identifier_inputs = []
-            last_identifier_setting = activity.get_action_identifier_grant(
+            temporary_idt_select = 0
+            temporary_idt_inputs = []
+            last_idt_setting = activity.get_action_identifier_grant(
                 activity_id=activity_id, action_id=action_id)
-            if last_identifier_setting:
-                temporary_identifier_select = last_identifier_setting.get(
+            if last_idt_setting:
+                temporary_idt_select = last_idt_setting.get(
                     'action_identifier_select')
-                temporary_identifier_inputs.append(
-                    last_identifier_setting.get('action_identifier_jalc_doi'))
-                temporary_identifier_inputs.append(
-                    last_identifier_setting.get('action_identifier_jalc_cr_doi'))
-                temporary_identifier_inputs.append(
-                    last_identifier_setting.get('action_identifier_jalc_dc_doi'))
+                temporary_idt_inputs.append(
+                    last_idt_setting.get('action_identifier_jalc_doi'))
+                temporary_idt_inputs.append(
+                    last_idt_setting.get('action_identifier_jalc_cr_doi'))
+                temporary_idt_inputs.append(
+                    last_idt_setting.get('action_identifier_jalc_dc_doi'))
 
-            ctx['temporary_idf_grant'] = temporary_identifier_select
-            ctx['temporary_idf_grant_suffix'] = temporary_identifier_inputs
+            ctx['temporary_idf_grant'] = temporary_idt_select
+            ctx['temporary_idf_grant_suffix'] = temporary_idt_inputs
             ctx['idf_grant_data'] = identifier_setting
             ctx['idf_grant_input'] = IDENTIFIER_GRANT_LIST
             ctx['idf_grant_method'] = IDENTIFIER_GRANT_SUFFIX_METHOD

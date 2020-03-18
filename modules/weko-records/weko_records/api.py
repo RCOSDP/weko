@@ -1773,18 +1773,19 @@ class ItemLink(object):
         Change record publish status with given status and renders record
         export template.
 
-        :param pid: PID object.
+        :param items: PID object.
         :return: The rendered template.
         """
-        dst_relations = ItemReference.get_src_references(self.org_item_id).all()
+        dst_relations = ItemReference.get_src_references(
+            self.org_item_id).all()
         dst_ids = [dst_item.dst_item_pid for dst_item in dst_relations]
         updated = []
         created = []
-        deleted = []
         for item in items:
             item_id = item['item_id']
             if item_id in dst_ids:
-                updated.extend(item for dst_item in dst_relations if dst_item.reference_type != item['sele_id'])
+                updated.extend(item for dst_item in dst_relations if
+                               dst_item.reference_type != item['sele_id'])
                 dst_ids.remove(item_id)
             else:
                 created.append(item)
@@ -1811,24 +1812,24 @@ class ItemLink(object):
         :param pid: PID object.
         :return: The rendered template.
         """
-        objects = [ItemReference(src_item_pid=self.org_item_id,
-                                 dst_item_pid=cr['item_id'],
-                                 reference_type=cr['sele_id']) for cr in dst_items]
+        objects = [ItemReference(
+            src_item_pid=self.org_item_id,
+            dst_item_pid=cr['item_id'],
+            reference_type=cr['sele_id']) for cr in dst_items]
         db.session.bulk_save_objects(objects)
 
     def bulk_update(self, dst_items):
         """Record publish  status change view.
 
-        :param pid: PID object.
+        :param dst_items: PID object.
         :return: The rendered template.
         """
-        objects = [ItemReference(src_item_pid=self.org_item_id,
-                                 dst_item_pid=cr['item_id'],
-                                 reference_type=cr['sele_id']) for cr in dst_items]
+        objects = [ItemReference(
+            src_item_pid=self.org_item_id,
+            dst_item_pid=cr['item_id'],
+            reference_type=cr['sele_id']) for cr in dst_items]
         for obj in objects:
             db.session.merge(obj)
-        
-
 
     def bulk_delete(self, dst_item_ids):
         """Record publish  status change view.
@@ -1837,5 +1838,7 @@ class ItemLink(object):
         :return: The rendered template.
         """
         for dst_item_id in dst_item_ids:
-            db.session.query(ItemReference).filter(ItemReference.src_item_pid == self.org_item_id,
-                                                    ItemReference.dst_item_pid == dst_item_id).delete(synchronize_session='fetch')
+            db.session.query(ItemReference).filter(
+                ItemReference.src_item_pid == self.org_item_id,
+                ItemReference.dst_item_pid == dst_item_id
+            ).delete(synchronize_session='fetch')
