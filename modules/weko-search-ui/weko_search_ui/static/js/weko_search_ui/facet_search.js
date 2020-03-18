@@ -37,6 +37,32 @@ class MainLayout extends React.Component {
     this.handleCheck = this.handleCheck.bind(this)
     this.convertData = this.convertData.bind(this)
     this.getUrlVars = this.getUrlVars.bind(this)
+    this.get_display_control = this.get_display_control.bind(this)
+  }
+
+  get_display_control() {
+    let url = '/api/admin/search_control/display_control'
+    $.ajax({
+        context: this,
+        url: url,
+        type: 'GET',
+        contentType: 'application/json; charset=UTF-8',
+        success: function (res) {
+            if (res) {
+               const data = JSON.parse(res)
+               if (data.display_facet_search) {
+                  this.setState({is_enable: data.display_facet_search.status})
+               }
+               if (data.display_index_tree && !data.display_index_tree.status) {
+                  $("#body_index").hide()
+               }
+            }
+
+        },
+        error: function() {
+          alert("Error in get list")
+        }
+    });
   }
 
   get_facet_search_list() {
@@ -102,7 +128,8 @@ class MainLayout extends React.Component {
   }
 
   componentDidMount() {
-    this.get_facet_search_list()
+      this.get_display_control()
+      this.get_facet_search_list()
   }
 
   handleCheck(params, value) {

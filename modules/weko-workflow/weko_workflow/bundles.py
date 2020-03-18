@@ -31,7 +31,7 @@ js_workflow = Bundle(
 js_item_link = Bundle(
     'js/weko_workflow/workflow_item_link.js',
     filters='requirejs',
-    output="gen/workflow_item_link.js"
+    output="gen/workflow_item_link.%(version)s.js"
 )
 
 js_activity_list = Bundle(

@@ -37,7 +37,7 @@ require([
         var btn = sessionStorage.getItem('btn');
         var SearchType = GetUrlParam('search_type');
         var input = '';
-        var IsRec = window.location.pathname.includes('records');
+        var IsRec = window.location.pathname.indexOf('records') > -1;
 
         //      $('#search_detail_metadata :input:not(:checkbox), #q, #search_type :input').each(function(){
         $('#search_detail_metadata :input:not(:checkbox), #q, #search_type :input').each(function () {

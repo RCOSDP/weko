@@ -26,8 +26,8 @@ import sys
 from datetime import date, timedelta
 
 import redis
-from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
-    render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, json, jsonify, \
+    redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -1011,7 +1011,8 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'value': 'desc'})
         rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, list_name='all',
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all',
                                   title_key='record_name',
                                   count_key='total_all', pid_key='pid_value')
 
@@ -1025,7 +1026,8 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, list_name='data', title_key='col2',
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
 
     # created_most_items_user
@@ -1038,9 +1040,9 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['created_most_items_user'] = \
-            parse_ranking_results(result, list_name='data',
-                                  title_key='username', count_key='count',
-                                  pid_key='')
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data',
+                                  title_key='user_id', count_key='count')
 
     # most_searched_keywords
     if settings.rankings['most_searched_keywords']:
@@ -1051,9 +1053,9 @@ def ranking():
             agg_sort={'value': 'desc'}
         )
         rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, list_name='all',
-                                  title_key='search_key', count_key='count',
-                                  pid_key='')
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all',
+                                  title_key='search_key', count_key='count')
 
     # new_items
     if settings.rankings['new_items']:

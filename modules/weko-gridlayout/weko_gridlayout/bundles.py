@@ -97,10 +97,6 @@ trumbowyg_js_plugin = Bundle(
     'js/weko_gridlayout/trumbowyg_plugin/base64/trumbowyg.base64.min.js',
     'js/weko_gridlayout/trumbowyg_plugin/pasteimage/'
     'trumbowyg.pasteimage.min.js',
-    'js/weko_gridlayout/trumbowyg_plugin/resizimg/'
-    'resizable-resolveconflict.min.js',
-    'js/weko_gridlayout/trumbowyg_plugin/resizimg/jquery-resizable.min.js',
-    'js/weko_gridlayout/trumbowyg_plugin/resizimg/trumbowyg.resizimg.min.js',
     'js/weko_gridlayout/trumbowyg_plugin/fontfamily/'
     'trumbowyg.fontfamily.min.js',
     'js/weko_gridlayout/trumbowyg_plugin/fontsize/trumbowyg.fontsize.min.js',

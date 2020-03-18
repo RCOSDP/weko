@@ -46,10 +46,12 @@ const ComponentSelectField = function(props){
     useEffect(() => {
         let options = [];
         if(props.url_request){
-            fetch(props.url_request)
-            .then(res => res.json())
-            .then(
-                (result) => {
+            $.ajax({
+                url: props.url_request,
+                method: 'GET',
+                // contentType: 'application/json',
+                dataType: 'json',
+                success: function(result){
                     if (result.options) {
                         options = result.options.map((option) => {
                             return (
@@ -65,11 +67,10 @@ const ComponentSelectField = function(props){
                     }
                     setSelectOptions(options);
                 },
-
-                (error) => {
+                error: function(error){
                     console.log(error);
                 }
-            )
+            })
         }
         else{
             if (props.key_binding === "border_style"){
@@ -241,7 +242,7 @@ const ComponentSelectColorFiled = (props) => {
 
     useEffect(() => {
         if (props.key_binding === "background_color") {
-            if (!(props.is_edit) && [HEADER_TYPE, FOOTER_TYPE].includes(props.type)) {
+            if (!(props.is_edit) && [HEADER_TYPE, FOOTER_TYPE].indexOf(props.type) >-1) {
                 setValue(DEFAULT_BG_HEADER_FOOTER_COLOR);
                 props.getValueOfField(props.key_binding, DEFAULT_BG_HEADER_FOOTER_COLOR);
             }
@@ -327,15 +328,14 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         let data = {
           repository_id: repositoryId
         };
-        fetch(url, {
+        $.ajax({
+            url: url,
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data)})
-            .then(res => res.json())
-            .then(
-                (result) => {
+            contentType: 'application/json',
+            dataType: 'json',
+            context: this,
+            data: JSON.stringify(data),
+            success: function(result){
                     let unOptions = [];
                     let orderedOptions = [];
                     let choseOptions = [];
@@ -363,7 +363,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                           hasMainLayout = true;
                         }
                         if (this.props.is_edit === true) {
-                            if (!currentSelectionString.includes(option.id.toString())) {
+                        if (currentSelectionString.indexOf(option.id.toString()) == -1) {
                                 let innerhtml = <option key={option.id} value={option.id}>{option.name}</option>;
                                 unOptions.push(innerhtml);
                             }
@@ -378,7 +378,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                     options = options.filter((option)=> typeof option !== "undefined");
                     if (this.props.is_edit === true) {  // Only add ordered options if editing
                       options = orderedOptions.concat(options);
-                      if (currentSelectionString.includes("0") && !hasMainLayout) {
+                    if (currentSelectionString.indexOf("0") > -1 && !hasMainLayout) {
                         options.unshift(<option key={0} value={0}>Main Layout</option>);
                         choseOptions.push("0");
                       } else if (!hasMainLayout) {
@@ -396,17 +396,15 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         this.props.getValueOfField(this.props.key_binding, choseOptions);
                     }
                 },
-                (error) => {
-                    console.log(error);
-                }
-            )
+            }
+        )
 
     }
 
     getListOption(id) {
         let options = document.getElementById(id).options;
         let result = [];
-        for (let option in options) {
+        for (let option = 0; option< options.length; option++) {
             if (options[option].value) {
                 let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
                 result.push(innerhtml);
@@ -435,9 +433,10 @@ class ComponentFieldContainSelectMultiple extends React.Component {
       if (array === undefined) {
         return isExisted;
       }
-      if (array.length > 0) {
-        for (let prop in array) {
-          if (array[prop].props.value === item) {
+      let length = array.length
+      if (length > 0) {
+        for (let index=0; index< length; index++) {
+          if (array[index].props.value === item) {
               isExisted = true;
               break;
           }
@@ -461,7 +460,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         let options = document.getElementById(this.props.authorSelect).options;
         let selectedOptions = this.getListOption(this.props.unauthorSelect);
         let nonSelectOptions = [];
-        for (let option in options) {
+        for (let option = 0; option < options.length; option++) {
             if (options[option].selected) {
                 let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
                 if (!this.isValueExist(options[option].value, selectedOptions) && options[option].value) {
@@ -485,7 +484,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         let options = document.getElementById(this.props.unauthorSelect).options;
         let authorizedOptions = this.getListOption(this.props.authorSelect);
         let remainOption = [];
-        for (let key in options) {
+        for (let key = 0; key < options.length; key++) {
             let option = options[key];
             if (!option.value) {
                 continue;
@@ -511,7 +510,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         event.preventDefault();
         let options = document.getElementById(this.props.authorSelect).options;
         let reOrderedOptions = this.getListOption(this.props.authorSelect);
-        for (let option in options) {
+        for (let option = 0; option < options.length; option++) {
             if(options[option].value) {
                 if (options[option].selected && option > 0) {
                     let prevOption = reOrderedOptions.splice((option - 1), 1)[0];
@@ -541,30 +540,30 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     getSelectedOption(options) {
-      let data = [];
-      for (let key in options) {
-        let option = options[key];
-        if (option.value && option.selected) {
-          data.push(option.value);
+        let data = [];
+        for (let key = 0; key < options.length; key++) {
+            let option = options[key];
+            if (option.value && option.selected) {
+                data.push(option.value);
+            }
         }
-      }
-      return data;
+        return data;
     }
 
     onLeftSelectChange(event) {
-      let options = event.target.options;
-      let data = this.getSelectedOption(options);
-      this.setState({
-        leftSelected: data
-      })
+        let options = event.target.options;
+        let data = this.getSelectedOption(options);
+        this.setState({
+            leftSelected: data
+        })
     }
 
     onRightSelectChange(event) {
-      let options = event.target.options;
-      let data = this.getSelectedOption(options);
-      this.setState({
-        rightSelected: data
-      })
+        let options = event.target.options;
+        let data = this.getSelectedOption(options);
+        this.setState({
+            rightSelected: data
+        })
     }
 
     render() {
@@ -634,10 +633,10 @@ const TrumbowygWrapper = props => {
   }
 
   return (
-    <React.Fragment>
+    <div>
       <Trumbowyg.default
-        autogrow
         id={props.id}
+        autogrow={true}
         onChange={handleChange}
         data={value}
         buttons={props.buttons}
@@ -645,7 +644,7 @@ const TrumbowygWrapper = props => {
         plugins={props.plugins}
         semantic={props.semantic}
       />
-    </React.Fragment>
+    </div>
   );
 };
 
@@ -679,10 +678,6 @@ const ComponentFieldEditor = function (props) {
   }
 
   const plugins = {
-    resizimg: {
-      minSize: 64,
-      step: 16
-    },
   };
 
   useEffect(() => {
@@ -1103,7 +1098,7 @@ class ComponentButtonLayout extends React.Component {
             let currentLangData = {
                 label: currentLabel,
             };
-            if([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].includes(data['widget_type'])){
+            if([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].indexOf(data['widget_type']) > -1){
                 currentLangData["description"] = currentDescription;
             }
             multiLangData[currentLanguage] = currentLangData;
@@ -1111,7 +1106,8 @@ class ComponentButtonLayout extends React.Component {
             delete multiLangData[currentLanguage];
         }
         if ((data['widget_type'] + "") === ACCESS_COUNTER) {
-            for (let [key, value] of Object.entries(multiLangData)) {
+            for(let key in multiLangData){
+                let value = multiLangData[key]
                 value.description['access_counter'] = data.accessInitValue
             }
         }
@@ -1140,22 +1136,22 @@ class ComponentButtonLayout extends React.Component {
             let errorMessage = data_validate.error;
             this.showErrorMessage(errorMessage);
         }else {
-            return fetch(this.props.url_request, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(request),
-            })
-                .then(res => res.json())
-                .then((result) => {
+            return $.ajax({
+                context: this,
+                url: this.props.url_request,
+                method: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify(request),
+                success: function (result){
                     if (result.success) {
                         addAlert(result.message);
                     } else {
                         let errorMessage = result.message;
                         this.showErrorMessage(errorMessage);
                     }
-                });
+                }
+            })
         }
     }
 
@@ -1167,7 +1163,7 @@ class ComponentButtonLayout extends React.Component {
     validateFieldIsValid(widget_type){
         if(widget_type === ACCESS_COUNTER){
             let access_val = $('#Access_counter').val() || "0";
-            if (Number.isNaN(Number(access_val)) || Number(access_val) < 0){
+            if (isNaN(Number(access_val)) || Number(access_val) < 0){
                 return {
                     status : false,
                     error: "Please enter half-width numbers."
@@ -1234,15 +1230,14 @@ class ComponentButtonLayout extends React.Component {
             data_id: this.props.data_id
         };
         if (confirm("Are you sure to delete this widget Item ?")) {
-            return fetch('/api/admin/delete_widget_item', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(request),
-            })
-                .then(res => res.json())
-                .then((result) => {
+            return $.ajax({
+                context: this,
+                url: '/api/admin/delete_widget_item',
+                method: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify(request),
+                success: function(result){
                     if (result.success) {
                         addAlert(result.message);
                         window.location = this.props.return_url;
@@ -1251,7 +1246,8 @@ class ComponentButtonLayout extends React.Component {
                         let errorMessage = result.message;
                         this.showErrorMessage(errorMessage);
                     }
-                });
+                }
+            })
         }
     }
 
@@ -1325,9 +1321,14 @@ class ComponentLanguage extends React.Component {
         let langName = {};
         let systemRegisteredLang = [];
         let registeredLang = [];
-        fetch('/api/admin/get_system_lang')
-            .then(res => res.json())
-            .then((result) => {
+        $.ajax({
+            context: this,
+            url: '/api/admin/get_system_lang',
+            type: 'GET',
+            contentType: 'application/json',
+            dataType: 'json',
+            async: false,
+            success: function(result){
                 if (result.error) {
                     let modalcontent = "Can't get system language! \nDetail: " + result.error;
                     $("#inputModal").html(modalcontent);
@@ -1386,7 +1387,8 @@ class ComponentLanguage extends React.Component {
                         defaultLanguage: defaultLang
                     });
                 }
-            });
+            }
+        });
     }
 
     componentDidMount() {
@@ -1593,7 +1595,7 @@ class MainLayout extends React.Component {
             accessInitValue = multiLangData.description.access_counter
         }
         if (multiLangData) {
-            if([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].includes(this.state.widget_type)){
+            if([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].indexOf(this.state.widget_type) > -1){
                 this.setState({
                     multiLanguageChange: true,
                     label: multiLangData['label'],
@@ -1631,7 +1633,7 @@ class MainLayout extends React.Component {
             label: this.state.label,
         };
 
-        if([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].includes(this.state.widget_type)){
+        if([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].indexOf(this.state.widget_type) > -1){
             setting["description"] = this.state.settings;
         }
         let accessInitValue = this.state.accessInitValue;
@@ -1661,7 +1663,7 @@ class MainLayout extends React.Component {
             currentSetting = this.state.multiLangSetting[newLanguage]['description'];
 
         }
-        if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].includes(this.state.widget_type)) {
+        if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].indexOf(this.state.widget_type) >-1) {
             this.setState({
                 label: currentLabel,
                 settings: currentSetting,
@@ -1680,7 +1682,7 @@ class MainLayout extends React.Component {
         this.setState({
             multiLangSetting: storage
         });
-        if ([NEW_ARRIVALS, MENU_TYPE].includes(this.state.widget_type)) {
+        if ([NEW_ARRIVALS, MENU_TYPE].indexOf(this.state.widget_type) > -1) {
           result = this.state.label !== '';
         }
         return result;
