@@ -1257,14 +1257,18 @@ def save_title_and_share_user_id():
 @blueprint_api.route('/get_data_authors_ps', methods=['GET'])
 def get_authors_prefix_settings():
     """get_all_authors_prefix_settings."""
-    author_prefixs = get_data_authors_prefix_settings();
-    results = []
-    for prefix in author_prefixs:
-        scheme = prefix.scheme
-        url = prefix.url
-        result = dict(
-            scheme=scheme,
-            url=url
-        )
-        results.append(result)
-    return jsonify(results);
+
+    author_prefix = get_data_authors_prefix_settings();
+    if author_prefix is not None:
+        results = []
+        for prefix in author_prefix:
+            scheme = prefix.scheme
+            url = prefix.url
+            result = dict(
+                scheme=scheme,
+                url=url
+            )
+            results.append(result)
+        return jsonify(results);
+    else:
+        return abort(403)

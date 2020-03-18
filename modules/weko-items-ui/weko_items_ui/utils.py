@@ -1414,5 +1414,8 @@ def get_data_authors_prefix_settings():
     """Query database to get all table authors_prefix_settings"""
 
     from weko_authors.models import AuthorsPrefixSettings
-    records = db.session.query(AuthorsPrefixSettings).all()
-    return records
+    try:
+        records = db.session.query(AuthorsPrefixSettings).all()
+        return records
+    except Exception:
+        return None
