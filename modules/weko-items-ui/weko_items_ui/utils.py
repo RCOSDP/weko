@@ -356,7 +356,7 @@ def parse_ranking_results(results,
                 else:
                     t['date'] = new_date
                     date = new_date
-            title = item[title_key]
+            title = item.get(title_key)
             if title_key == 'user_id':
                 user_info = UserProfile.get_by_userid(title)
                 if user_info:
