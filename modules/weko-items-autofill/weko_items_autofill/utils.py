@@ -926,14 +926,15 @@ def get_autofill_key_path(schema_form, parent_key, child_key):
     """
     result = dict()
     key_result = ''
+    existed = False
     try:
         for item in schema_form:
             if item.get("key") == parent_key:
                 items_list = item.get("items")
                 for item_data in items_list:
-                    if key_result:
+                    if existed:
                         break
-                    key_result = get_specific_key_path(
+                    existed, key_result = get_specific_key_path(
                         child_key.split('.'), item_data)
         result['key'] = key_result
     except Exception as e:
