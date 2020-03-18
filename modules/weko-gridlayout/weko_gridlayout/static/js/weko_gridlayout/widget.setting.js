@@ -396,10 +396,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                         this.props.getValueOfField(this.props.key_binding, choseOptions);
                     }
                 },
-                (error) => {
-                    console.log(error);
-                }
-            )
+            }
+        )
 
     }
 
@@ -635,7 +633,7 @@ const TrumbowygWrapper = props => {
   }
 
   return (
-    <React.Fragment>
+    <div>
       <Trumbowyg.default
         id={props.id}
         autogrow={true}
@@ -646,7 +644,7 @@ const TrumbowygWrapper = props => {
         plugins={props.plugins}
         semantic={props.semantic}
       />
-    </React.Fragment>
+    </div>
   );
 };
 
@@ -680,10 +678,10 @@ const ComponentFieldEditor = function (props) {
   }
 
   const plugins = {
-    resizimg: {
-      minSize: 64,
-      step: 16
-    },
+    // resizimg: {
+    //   minSize: 64,
+    //   step: 16
+    // },
   };
 
   useEffect(() => {
