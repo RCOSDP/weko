@@ -732,31 +732,6 @@ def find_rss_value(data, keyword):
     else:
         return ''
 
-def get_value_by_key(data, keys):
-    """Get data by key or a list of keys.
-    @param data:
-    @param keys:
-    @return:
-    """
-    result = None
-    if isinstance(keys, list):
-        if len(keys) > 1:
-            key = keys.pop(0)
-            if isinstance(data, dict) and data.get(key):
-                result = get_value_by_key(data.get(key), keys)
-            elif isinstance(data, list):
-                for sub_item in data:
-                    if sub_item.get(key):
-                        result = get_value_by_key(sub_item.get(key), keys)
-        elif len(keys) == 1:
-            key = keys[0]
-            if isinstance(data, dict):
-                result = data.get(key, None)
-            elif isinstance(data, list):
-                for sub_item in data:
-                    result = sub_item.get(key, None)
-
-    return result
 
 def get_rss_data_source(source, keyword):
     """Get data from source tree.
