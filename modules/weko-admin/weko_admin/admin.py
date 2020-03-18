@@ -477,7 +477,8 @@ class RankingSettingsView(BaseView):
                 form = request.form.get('submit', None)
                 if form == 'save_ranking_settings':
                     settings = RankingSettings()
-                    settings.is_show = request.form.get('is_show', False)
+                    settings.is_show = request.form.get('is_show',
+                                                        False) == 'True'
                     new_item_period = int(request.form.get('new_item_period',
                                                            14))
                     if new_item_period < 1 or new_item_period > 30:
