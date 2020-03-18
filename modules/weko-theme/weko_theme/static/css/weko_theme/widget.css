@@ -209,6 +209,10 @@
   margin: 0 !important;
 }
 
+@-ms-viewport{
+  width:auto!important;
+}
+
 @keyframes rotation {
   from {
     opacity: 1;

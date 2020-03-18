@@ -678,10 +678,6 @@ const ComponentFieldEditor = function (props) {
   }
 
   const plugins = {
-    // resizimg: {
-    //   minSize: 64,
-    //   step: 16
-    // },
   };
 
   useEffect(() => {

@@ -920,8 +920,8 @@ var PreviewGrid = new function () {
             width: 12,
             float: true,
             removeTimeout: 100,
-            // cellHeight: 6,
-            // verticalMargin: 10,
+            cellHeight: 6,
+            verticalMargin: 10,
             acceptWidgets: '.grid-stack-item'
         };
 
@@ -1074,7 +1074,7 @@ function addWidget() {
                 x: 0,
                 y: 0,
                 width: 2,
-                height: 1,
+                height: 6,
                 auto_position: true,
                 name: widgetName,
                 id: widgetId,
