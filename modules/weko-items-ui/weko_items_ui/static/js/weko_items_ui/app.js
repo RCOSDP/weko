@@ -622,7 +622,7 @@ function toObject(arr) {
           }
         });
         $.ajax({
-          url: '/api/items/get_data_authors_ps',
+          url: '/api/items/author_prefix_settings',
           method: 'GET',
           async: false,
           success: function (data, status) {

@@ -1409,13 +1409,11 @@ def validate_save_title_and_share_user_id(result, data):
     return result
 
 
-# get all authors (from authors_prefix_settings)
 def get_data_authors_prefix_settings():
-    """Query database to get all table authors_prefix_settings"""
-
+    """Get all authors prefix settings"""
     from weko_authors.models import AuthorsPrefixSettings
     try:
-        records = db.session.query(AuthorsPrefixSettings).all()
-        return records
-    except Exception:
+        return db.session.query(AuthorsPrefixSettings).all()
+    except Exception as e:
+        current_app.logger.error(e)
         return None

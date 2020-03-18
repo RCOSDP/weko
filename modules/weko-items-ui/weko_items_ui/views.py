@@ -1253,15 +1253,13 @@ def save_title_and_share_user_id():
     return jsonify(result)
 
 
-# get all authors (from authors_prefix_settings)
-@blueprint_api.route('/get_data_authors_ps', methods=['GET'])
+@blueprint_api.route('/author_prefix_settings', methods=['GET'])
 def get_authors_prefix_settings():
-    """get_all_authors_prefix_settings."""
-
-    author_prefix = get_data_authors_prefix_settings();
-    if author_prefix is not None:
+    """Get all author prefix settings."""
+    author_prefix_settings = get_data_authors_prefix_settings()
+    if author_prefix_settings is not None:
         results = []
-        for prefix in author_prefix:
+        for prefix in author_prefix_settings:
             scheme = prefix.scheme
             url = prefix.url
             result = dict(
@@ -1269,6 +1267,6 @@ def get_authors_prefix_settings():
                 url=url
             )
             results.append(result)
-        return jsonify(results);
+        return jsonify(results)
     else:
         return abort(403)
