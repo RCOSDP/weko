@@ -62,7 +62,7 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
-    validate_user_mail_and_index
+    validate_user_mail_and_index, get_data_authors_prefix_settings
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -1253,3 +1253,22 @@ def save_title_and_share_user_id():
     data = request.get_json()
     validate_save_title_and_share_user_id(result, data)
     return jsonify(result)
+
+
+@blueprint_api.route('/author_prefix_settings', methods=['GET'])
+def get_authors_prefix_settings():
+    """Get all author prefix settings."""
+    author_prefix_settings = get_data_authors_prefix_settings()
+    if author_prefix_settings is not None:
+        results = []
+        for prefix in author_prefix_settings:
+            scheme = prefix.scheme
+            url = prefix.url
+            result = dict(
+                scheme=scheme,
+                url=url
+            )
+            results.append(result)
+        return jsonify(results)
+    else:
+        return abort(403)
