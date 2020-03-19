@@ -220,7 +220,7 @@ def authors_prefix():
 def create_default_settings(name, url):
     """Create default settings."""
     try:
-        AuthorsPrefixSettings.create(name=name, url=url)
+        AuthorsPrefixSettings.create(name, None, url)
         click.secho('insert setting success')
     except Exception as ex:
         click.secho(str(ex))

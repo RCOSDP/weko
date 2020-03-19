@@ -147,7 +147,8 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
             with db.session.begin_nested():
                 data.name = name
                 data.url = url
-                data.scheme = scheme.strip()
+                if scheme:
+                    data.scheme = scheme.strip()
                 db.session.add(data)
             db.session.commit()
         except BaseException as ex:
