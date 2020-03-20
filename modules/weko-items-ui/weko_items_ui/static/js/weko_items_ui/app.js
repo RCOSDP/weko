@@ -1470,7 +1470,7 @@ function toObject(arr) {
       $scope.setValueToField = function (id, value) {
         if (!id) {
           return;
-        } else if (!$scope.depositionForm[id]) {
+        } else if (!$scope.depositionForm[id] || typeof $scope.depositionForm[id] != "object") {
           return;
         }
 
@@ -1521,6 +1521,9 @@ function toObject(arr) {
         for (let item in $rootScope.recordsVM.invenioRecordsModel) {
           this.clearAllFieldCallBack($rootScope.recordsVM.invenioRecordsModel[item]);
         }
+        for(let key in $scope.depositionForm){
+          $scope.setValueToField($scope.depositionForm[key]);
+        }
       }
 
       $scope.clearAllFieldCallBack = function (item) {
@@ -1540,7 +1543,7 @@ function toObject(arr) {
               let result = [];
               for (let i in item[subItem]) {
                 let childItem = item[subItem][i];
-              result.push(this.clearAllFieldCallBack(childItem));
+                result.push(this.clearAllFieldCallBack(childItem));
               }
               item[subItem] = result;
             } else {
@@ -1583,89 +1586,49 @@ function toObject(arr) {
       }
 
       $scope.setRecordDataCallBack = function (data) {
-        const THREE_FLOOR_ITEM = [
-          "creator",
-          "relation",
-          "contributor"
-        ];
-        const CREATOR_NAMES = "creatorNames";
 
         data.result.forEach(function (item) {
-          if (THREE_FLOOR_ITEM.indexOf(item.key) > -1) {
-            let keys = Object.keys(item);
-            keys.forEach(function (itemKey) {
-              if (itemKey != 'key') {
-                let listSubData = item[itemKey];
-                if (!$.isEmptyObject(listSubData)) {
-                  if (Array.isArray(listSubData)) {
-                    listSubData.forEach(function (subData) {
-                      let subKey = Object.keys(subData)[0];
-                      if (!$.isEmptyObject(subData[subKey])) {
-                        if (subData.hasOwnProperty(CREATOR_NAMES)) {
-                          $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey][0]['creatorName'] = subData.creatorNames;
-                        } else {
-                          if ((item.key === 'creator' || item.key === 'contributor') && subData[subKey].length > 1) {
-                            if (Array.isArray($rootScope.recordsVM.invenioRecordsModel[itemKey])) {
-                            creatorModelData = $rootScope.recordsVM.invenioRecordsModel[itemKey][0];
-                            if ($rootScope.recordsVM.invenioRecordsModel[itemKey].length > subData[subKey].length) {
-                              $rootScope.recordsVM.invenioRecordsModel[itemKey] = [creatorModelData];
-                            }
-                            for (let key in subData[subKey]) {
-                              if ($rootScope.recordsVM.invenioRecordsModel[itemKey][key]) {
-                                $rootScope.recordsVM.invenioRecordsModel[itemKey][key][subKey] = [subData[subKey][key]];
-                              }
-                              else {
-                                $rootScope.recordsVM.invenioRecordsModel[itemKey].push(JSON.parse(JSON.stringify(creatorModelData)));
-                                $rootScope.recordsVM.invenioRecordsModel[itemKey][key][subKey] = [subData[subKey][key]];
-                              }
-                            }
-                            } else {
-                              $rootScope.recordsVM.invenioRecordsModel[itemKey][subKey][0] = subData[subKey][0];
-                            }
-
-                          }
-                          else {
-                            if ($rootScope.recordsVM.invenioRecordsModel[itemKey].length > subData[subKey].length && (item.key === 'creator' || item.key === 'contributor')) {
-                              $rootScope.recordsVM.invenioRecordsModel[itemKey] = [$rootScope.recordsVM.invenioRecordsModel[itemKey][0]];
-                            }
-                            if (Array.isArray($rootScope.recordsVM.invenioRecordsModel[itemKey])) {
-                          $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey] = subData[subKey];
-                        }
-                            else {
-                              if (Array.isArray($rootScope.recordsVM.invenioRecordsModel[itemKey][subKey])) {
-                                $rootScope.recordsVM.invenioRecordsModel[itemKey][subKey] = subData[subKey];
-                              } else {
-                                $rootScope.recordsVM.invenioRecordsModel[itemKey][subKey] = subData[subKey][0];
-                              }
-                            }
-                          }
-                        }
-                      }
-                    });
-                  } else if (typeof listSubData === 'object') {
-                    if (listSubData.hasOwnProperty(CREATOR_NAMES) &&
-                      $rootScope.recordsVM.invenioRecordsModel[itemKey].hasOwnProperty(CREATOR_NAMES)) {
-                      $rootScope.recordsVM.invenioRecordsModel[itemKey][CREATOR_NAMES][0]['creatorName'] = listSubData.creatorNames;
-                    }
-                  }
-                }
-              }
-            });
-          } else {
-            let keys = Object.keys(item)
-            keys.forEach(function (itemKey) {
-              if (itemKey != 'key') {
-                let itemData = item[itemKey];
-                if (!$.isEmptyObject(itemData)) {
-                  $rootScope.recordsVM.invenioRecordsModel[itemKey] = itemData;
-                }
-              }
-            });
-          }
+            let model = $rootScope.recordsVM.invenioRecordsModel;
+            $scope.setRecordData(model, item);
         });
         CustomBSDatePicker.setDataFromFieldToModel($rootScope.recordsVM.invenioRecordsModel, true);
         $('#meta-search').modal('toggle');
-      }
+      };
+
+      $scope.setRecordData = function (model, itemData) {
+        if (Array.isArray(itemData)) {
+          if (itemData.length === 1) {
+            $scope.setRecordData(model[0], itemData[0]);
+          } else {
+            let cloneData = model[0];
+            for (let key in itemData) {
+              if (model[key]) {
+                $scope.setRecordData(model[key], itemData[key]);
+              } else {
+                model.push(JSON.parse(JSON.stringify(cloneData)));
+                $scope.setRecordData(model[key], itemData[key]);
+              }
+            }
+          }
+        } else if (typeof (itemData) === "object") {
+          let keys = Object.keys(itemData);
+          keys.forEach(function (itemKey) {
+            let data = itemData[itemKey];
+            if (typeof data === "string") {
+              model[itemKey] = data
+            } else {
+              if (model) {
+                if (model[itemKey]) {
+                  $scope.setRecordData(model[itemKey], itemData[itemKey]);
+                } else {
+                  model[itemKey] = itemData[itemKey];
+                }
+              }
+            }
+          });
+        }
+      };
+
       $scope.searchSource = function (model_id, arrayFlg, form) {
         // alert(form.key[1]);
         var modalcontent = form.key[1];

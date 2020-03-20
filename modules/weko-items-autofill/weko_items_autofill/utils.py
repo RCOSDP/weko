@@ -79,7 +79,6 @@ def get_item_id(item_type_id):
     try:
         for k, v in item_type_mapping.items():
             jpcoar = v.get("jpcoar_mapping")
-            first_index = True
             if isinstance(jpcoar, dict):
                 for u, s in jpcoar.items():
                     if results.get(u) is not None:
@@ -93,9 +92,7 @@ def get_item_id(item_type_id):
                         results[u] = data
                     else:
                         results[u] = s
-                        if first_index and isinstance(results[u], dict):
-                            results[u]['model_id'] = k
-                            first_index = False
+                        results[u]['model_id'] = k
     except Exception as e:
         results['error'] = str(e)
 
@@ -757,12 +754,11 @@ def get_crossref_data_by_key(api, keyword):
     elif keyword == 'volume' and data.get('volume'):
         result[keyword] = pack_single_value_as_dict(data.get('volume'))
     elif keyword == 'issue' and data.get('issue'):
-        print(data.get('issue'))
         result[keyword] = pack_single_value_as_dict(data.get('issue'))
     elif keyword == 'pageStart' and data.get('first_page'):
         result[keyword] = get_start_and_end_page(data.get('first_page'))
-    elif keyword == 'pageEnd' and data.get('first_page'):
-        result[keyword] = get_start_and_end_page(data.get('first_page'))
+    elif keyword == 'pageEnd' and data.get('last_page'):
+        result[keyword] = get_start_and_end_page(data.get('last_page'))
     elif keyword == 'date' and data.get('year'):
         result[keyword] = get_crossref_issue_date(data.get('year'))
     elif keyword == 'relation':
@@ -849,9 +845,11 @@ def get_autofill_key_tree(schema_form, item):
                     date_object = date.get("date")
                     if date_object.get("@value") and \
                             date_object.get("@attributes"):
+                        parent_key = date.get("model_id",
+                                              date_object.get("model_id"))
                         key_data = get_key_value(
                             schema_form, date_object,
-                            date.get("model_id"))
+                            parent_key)
             if key_data:
                 result[key] = key_data
     return result
@@ -974,97 +972,174 @@ def get_specific_key_path(des_key, form):
 
 
 def build_record_model(item_autofill_key, api_data):
-    """Build record model.
+    """Build record record_model.
 
-    :param item_autofill_key:  Item auto fill key
+    :param item_autofill_key:  Item auto fill k
     :param api_data: Api data
     :return:
     """
-    record_model = list()
+    record_model_lst = list()
     if not api_data or not item_autofill_key:
-        return record_model
-    for key, value in item_autofill_key.items():
-        data = api_data.get(key)
-        if data is None:
+        return record_model_lst
+    for k, v in item_autofill_key.items():
+        data_model = {}
+        api_autofill_data = api_data.get(k)
+        if not api_autofill_data:
             continue
-        model = dict()
-        child_data = None
-        sub_child_data = dict()
-        multi_data = list()
-        parent_key = ""
-        child_key = ""
-        is_list = False
-        if value.get("@value"):
-            key_list = value.get("@value").split(".")
-            if key_list:
-                if "[]" in key_list[0]:
-                    is_list = True
-                parent_key = key_list[0].replace("[]", "")
-                if not isinstance(model.get(parent_key), list):
-                    model[parent_key] = list()
-                if len(key_list) == 2:
-                    child_data = dict()
-                elif len(key_list) == 3:
-                    child_data = list()
-                    child_key = key_list[1].replace("[]", "")
-        else:
-            continue
+        build_form_model(data_model, v)
+        record_model = {}
+        for key, value in data_model.items():
+            merge(record_model, value)
+        is_multiple_data = is_multiple(record_model, api_autofill_data)
+        fill_data(record_model, api_autofill_data, is_multiple_data)
+        if record_model:
+            record_model_lst.append(record_model)
 
-        if isinstance(data, list):
-            for data_object in data:
-                build_record(
-                    data_object, value, child_data, sub_child_data)
-                if child_data:
-                    multi_data.append(child_data.copy())
-                elif sub_child_data:
-                    multi_data.append(sub_child_data.copy())
-        else:
-            build_record(data, value, child_data, sub_child_data)
-        if model:
-            model["key"] = key
-            if sub_child_data:
-                if multi_data:
-                    child_data = multi_data
-                elif sub_child_data:
-                    child_data.append(sub_child_data)
-                model[parent_key].append({child_key: child_data})
-            else:
-                if multi_data:
-                    if is_list:
-                        model[parent_key] = multi_data
-                    else:
-                        model[parent_key] = multi_data[0]
-                elif child_data:
-                    if is_list:
-                        model[parent_key].append(child_data)
-                    else:
-                        model[parent_key] = child_data
-            record_model.append(model)
-
-    return record_model
+    return record_model_lst
 
 
-def build_record(data, value, child_data, sub_child_data):
-    """Build record.
+def build_model(form_model, form_key):
+    """Build model.
 
-    :param data: API data
-    :param value: Model key value
-    :param child_data: Child data
-    :param sub_child_data: Sub child data
+    @param form_model:
+    @param form_key:
     """
-    for k, v in data.items():
-        if not value.get(k) or not v:
-            continue
-        if isinstance(child_data, dict):
-            child_key_list = value.get(k).split(".")
-            if child_key_list and len(child_key_list) == 2:
-                sub_key = child_key_list[1].replace("[]", "")
-                child_data[sub_key] = convert_html_escape(v)
-        elif isinstance(child_data, list):
-            child_key_list = value.get(k).split(".")
-            if child_key_list and len(child_key_list) == 3:
-                sub_key = child_key_list[2].replace("[]", "")
-                sub_child_data[sub_key] = convert_html_escape(v)
+    child_model = {}
+    if '[]' in form_key:
+        form_key = form_key.replace("[]", "")
+        child_model = []
+    if isinstance(form_model, dict):
+        form_model[form_key] = child_model
+    else:
+        form_model.append({form_key: child_model})
+
+
+def build_form_model(form_model, form_key, autofill_key=None):
+    """Build form model.
+
+    @param form_model:
+    @param form_key:
+    @param autofill_key:
+    """
+    if isinstance(form_key, dict):
+        for k, v in form_key.items():
+            if isinstance(v, str) and v:
+                arr = v.split('.')
+                form_model[k] = {}
+                build_form_model(form_model[k], arr, k)
+    elif isinstance(form_key, list):
+        if len(form_key) > 1:
+            key = form_key.pop(0)
+            build_model(form_model, key)
+            key = key.replace("[]", "")
+            if isinstance(form_model, dict):
+                build_form_model(form_model[key], form_key,
+                                 autofill_key)
+            else:
+                build_form_model(form_model[0].get(key), form_key,
+                                 autofill_key)
+        elif len(form_key) == 1:
+            key = form_key.pop(0)
+            if isinstance(form_model, list):
+                form_model.append({key: autofill_key})
+            elif isinstance(form_model, dict):
+                form_model[key] = autofill_key
+
+
+def merge(dict_1, dict_2):
+    """Merge dictionary.
+
+    @param dict_1:
+    @param dict_2:
+    """
+    if isinstance(dict_1, list) and isinstance(dict_2, list):
+        for data in dict_2:
+            for data_1 in dict_1:
+                merge(data_1, data)
+    elif isinstance(dict_1, dict) and isinstance(dict_2, dict):
+        for key in dict_2:
+            if key in dict_1:
+                if isinstance(dict_1[key], (dict, list)) and isinstance(
+                        dict_2[key], (dict, list)):
+                    merge(dict_1[key], dict_2[key])
+                elif dict_1[key] == dict_2[key]:
+                    pass
+                else:
+                    raise Exception('Conflict at %s' % key)
+            else:
+                dict_1[key] = dict_2[key]
+
+
+def deepcopy(original_object, new_object):
+    """Copy dictionary object.
+
+    @param original_object:
+    @param new_object:
+    @return:
+    """
+    import copy
+    if isinstance(original_object, dict):
+        for k, v in original_object.items():
+            if not isinstance(new_object, (dict, list)):
+                new_object = {}
+                deepcopy(copy.deepcopy(v), new_object[k])
+            else:
+                new_object[k] = copy.deepcopy(v)
+    elif isinstance(original_object, list):
+        for original_data in original_object:
+            if isinstance(original_data, (dict, list)):
+                deepcopy(copy.deepcopy(original_data), new_object)
+    else:
+        return
+
+
+def fill_data(form_model, autofill_data, is_multiple_data=False):
+    """Fill data to form model.
+
+    @param form_model:
+    @param autofill_data:
+    @param is_multiple_data:
+    @return:
+    """
+    if isinstance(autofill_data, list):
+        if is_multiple_data:
+            key = list(form_model.keys())[0]
+            model_clone = {}
+            deepcopy(form_model[key][0], model_clone)
+            form_model[key] = []
+            for data in autofill_data:
+                model = {}
+                deepcopy(model_clone, model)
+                fill_data(model, data)
+                form_model[key].append(model.copy())
+        else:
+            fill_data(form_model, autofill_data[0])
+    elif isinstance(autofill_data, dict):
+        if isinstance(form_model, dict):
+            for k, v in form_model.items():
+                if isinstance(v, str):
+                    form_model[k] = autofill_data.get(v, '')
+                else:
+                    fill_data(v, autofill_data)
+        elif isinstance(form_model, list):
+            for v in form_model:
+                fill_data(v, autofill_data)
+    else:
+        return
+
+
+def is_multiple(form_model, autofill_data):
+    """Check form model.
+
+    @param form_model:
+    @param autofill_data:
+    @return:
+    """
+    if isinstance(autofill_data, list) and len(autofill_data) > 1:
+        for key in form_model:
+            return isinstance(form_model[key], list)
+    else:
+        return False
 
 
 def get_workflow_journal(activity_id):
@@ -1112,15 +1187,11 @@ def format_to_json(api_data):
                         data["author"].append(temp)
                     else:
                         data.update({"author": [temp]})
-            elif etree.QName(elem).localname == "year" :
+            elif etree.QName(elem).localname == "year":
                 if 'media_type' in elem.attrib \
                         and elem.attrib['media_type'] == "print":
                     data.update({etree.QName(elem).localname: elem.text})
-            elif etree.QName(elem).localname == "issn":
-                if 'type' in elem.attrib \
-                        and elem.attrib['type'] == "print":
-                    data.update({etree.QName(elem).localname: elem.text})
-            elif etree.QName(elem).localname == "isbn":
+            elif etree.QName(elem).localname in ["issn", "isbn"]:
                 if 'type' in elem.attrib \
                         and elem.attrib['type'] == "print":
                     data.update({etree.QName(elem).localname: elem.text})
