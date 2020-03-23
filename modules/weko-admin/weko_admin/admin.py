@@ -477,7 +477,8 @@ class RankingSettingsView(BaseView):
                 form = request.form.get('submit', None)
                 if form == 'save_ranking_settings':
                     settings = RankingSettings()
-                    settings.is_show = request.form.get('is_show', False)
+                    settings.is_show = request.form.get('is_show',
+                                                        False) == 'True'
                     new_item_period = int(request.form.get('new_item_period',
                                                            14))
                     if new_item_period < 1 or new_item_period > 30:
@@ -924,13 +925,18 @@ class IdentifierSettingView(ModelView):
 
         :param obj: input object
         """
-        return self._use_append_repository(
+        return self._use_append_repository_edit(
             super(IdentifierSettingView, self).edit_form(obj)
         )
 
     def _use_append_repository(self, form):
         form.repository.query_factory = self._get_community_list
         form.repo_selected.data = 'Root Index'
+        return form
+
+    def _use_append_repository_edit(self, form):
+        form.repository.query_factory = self._get_community_list_edit
+        form.repository.render_kw = {'disabled': True}
         return form
 
     def _get_community_list(self):
@@ -945,7 +951,14 @@ class IdentifierSettingView(ModelView):
                 query_data.insert(0, Community(id='Root Index'))
         except Exception as ex:
             current_app.logger.debug(ex)
+        return query_data
 
+    def _get_community_list_edit(self):
+        try:
+            query_data = Community.query.all()
+            query_data.insert(0, Community(id='Root Index'))
+        except Exception as ex:
+            current_app.logger.debug(ex)
         return query_data
 
 

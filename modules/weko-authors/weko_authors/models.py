@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Models for weko-index-tree."""
+
 import json
 from datetime import datetime
 
@@ -122,6 +123,9 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
     name = db.Column(db.Text, nullable=False)
     """ The name of prefix organization."""
 
+    scheme = db.Column(db.Text, nullable=True, unique=True)
+    """ The scheme of prefix organization."""
+
     url = db.Column(db.Text, nullable=True)
     """ The url of prefix organization."""
 
@@ -136,13 +140,14 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
     """ Updated date."""
 
     @classmethod
-    def create(cls, name, url):
+    def create(cls, name, scheme, url):
         """Create settings."""
         try:
             data = AuthorsPrefixSettings()
             with db.session.begin_nested():
                 data.name = name
                 data.url = url
+                data.scheme = scheme.strip()
                 db.session.add(data)
             db.session.commit()
         except BaseException as ex:
@@ -152,13 +157,14 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         return cls
 
     @classmethod
-    def update(cls, id, name, url):
+    def update(cls, id, name, scheme, url):
         """Update settings."""
         try:
             with db.session.begin_nested():
                 data = cls.query.filter_by(id=id).first()
                 data.name = name
                 data.url = url
+                data.scheme = scheme.strip()
                 db.session.merge(data)
             db.session.commit()
         except BaseException as ex:

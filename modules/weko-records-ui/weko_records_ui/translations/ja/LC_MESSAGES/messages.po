@@ -872,6 +872,9 @@ msgstr "関連タイプ"
 msgid "Related Identifier"
 msgstr "関連識別子"
 
+msgid "Related Identifier Type"
+msgstr "関連識別子タイプ"
+
 msgid "Identifier Type"
 msgstr "識別子タイプ"
 
@@ -882,7 +885,7 @@ msgid "Rights"
 msgstr "権利情報"
 
 msgid "Resource"
-msgstr "権利情報Resource"
+msgstr "URI"
 
 msgid "Fileinfo"
 msgstr "ファイル情報"
@@ -994,3 +997,105 @@ msgstr "学位授与機関識別子Scheme"
 
 msgid "Description_"
 msgstr "内容記述"
+
+msgid "Rights Resource"
+msgstr "権利情報Resource"
+
+msgid "Rights Holder"
+msgstr "権利者情報"
+
+msgid "Rights Holder Name Identifier"
+msgstr "権利者識別子"
+
+msgid "Rights Holder Name Identifier Scheme"
+msgstr "権利者識別子Scheme"
+
+msgid "Rights Holder Name Identifier URI"
+msgstr "権利者識別子URI"
+
+msgid "Rights Holder Name"
+msgstr "権利者名"
+
+msgid "Resource Type"
+msgstr "資源タイプ"
+
+msgid "Temporal"
+msgstr "時間的範囲"
+
+msgid "Geo Location"
+msgstr "位置情報"
+
+msgid "Geo Location Point"
+msgstr "位置情報（点）"
+
+msgid "Point Longitude"
+msgstr "経度"
+
+msgid "Point Latitude"
+msgstr "緯度"
+
+msgid "Geo Location Box"
+msgstr "位置情報（空間）"
+
+msgid "West Bound Longitude"
+msgstr "西部経度"
+
+msgid "East Bound Longitude"
+msgstr "東部経度"
+
+msgid "South Bound Latitude"
+msgstr "南部緯度"
+
+msgid "North Bound Latitude"
+msgstr "北部緯度"
+
+msgid "Geo Location Place"
+msgstr "位置情報（自由記述）"
+
+msgid "Funder Identifier"
+msgstr "助成機関識別子"
+
+msgid "Funder Identifier Type"
+msgstr "助成機関識別子タイプ"
+
+msgid "Award Number URI"
+msgstr "研究課題番号URI"
+
+msgid "Award Title"
+msgstr "研究課題名"
+
+msgid "Source Title"
+msgstr "収録物名"
+
+msgid "Number of Pages"
+msgstr "ページ数"
+
+msgid "Degree Grantor Name Identifier Scheme"
+msgstr "学位授与機関識別子Scheme"
+
+msgid "Conference"
+msgstr "会議記述"
+
+msgid "Conference Name"
+msgstr "会議名"
+
+msgid "Conference Sequence"
+msgstr "回次"
+
+msgid "Conference Place"
+msgstr "開催地"
+
+msgid "Conference Country"
+msgstr "開催国"
+
+msgid "URI Object Type"
+msgstr "オブジェクトタイプ"
+
+msgid "URI Label"
+msgstr "ラベル"
+
+msgid "Format"
+msgstr "フォーマット"
+
+msgid "Extent"
+msgstr "サイズ"

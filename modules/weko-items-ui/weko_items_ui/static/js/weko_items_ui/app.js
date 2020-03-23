@@ -925,9 +925,9 @@ function toObject(arr) {
             for (var subkey in titleProperties) {
               let subValue = titleProperties[subkey];
               if (subValue.format == "text") {
-                $scope.bibliographic_title_key = subKey;
+                $scope.bibliographic_title_key = subkey;
               } else if (subValue.format == "select") {
-                $scope.bibliographic_title_lang_key = subKey;
+                $scope.bibliographic_title_lang_key = subkey;
               }
             }
           }

@@ -889,6 +889,9 @@ msgstr ""
 msgid "Related Identifier"
 msgstr ""
 
+msgid "Related Identifier Type"
+msgstr ""
+
 msgid "Identifier Type"
 msgstr ""
 
@@ -1011,3 +1014,105 @@ msgstr ""
 
 msgid "Description_"
 msgstr "Description"
+
+msgid "Rights Resource"
+msgstr ""
+
+msgid "Rights Holder"
+msgstr ""
+
+msgid "Rights Holder Name Identifier"
+msgstr ""
+
+msgid "Rights Holder Name Identifier Scheme"
+msgstr ""
+
+msgid "Rights Holder Name Identifier URI"
+msgstr ""
+
+msgid "Rights Holder Name"
+msgstr ""
+
+msgid "Resource Type"
+msgstr ""
+
+msgid "Temporal"
+msgstr ""
+
+msgid "Geo Location"
+msgstr ""
+
+msgid "Geo Location Point"
+msgstr ""
+
+msgid "Point Longitude"
+msgstr ""
+
+msgid "Point Latitude"
+msgstr ""
+
+msgid "Geo Location Box"
+msgstr ""
+
+msgid "West Bound Longitude"
+msgstr ""
+
+msgid "East Bound Longitude"
+msgstr ""
+
+msgid "South Bound Latitude"
+msgstr ""
+
+msgid "North Bound Latitude"
+msgstr ""
+
+msgid "Geo Location Place"
+msgstr ""
+
+msgid "Funder Identifier"
+msgstr ""
+
+msgid "Funder Identifier Type"
+msgstr ""
+
+msgid "Award Number URI"
+msgstr ""
+
+msgid "Award Title"
+msgstr ""
+
+msgid "Source Title"
+msgstr ""
+
+msgid "Number of Pages"
+msgstr ""
+
+msgid "Degree Grantor Name Identifier Scheme"
+msgstr ""
+
+msgid "Conference"
+msgstr ""
+
+msgid "Conference Name"
+msgstr ""
+
+msgid "Conference Sequence"
+msgstr ""
+
+msgid "Conference Place"
+msgstr ""
+
+msgid "Conference Country"
+msgstr ""
+
+msgid "URI Object Type"
+msgstr ""
+
+msgid "URI Label"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Extent"
+msgstr ""
