@@ -55,6 +55,7 @@ class ItemSettingView(BaseView):
             check_items_settings()
             email_display_flg = '0'
             search_author_flg = 'name'
+            release_date_display_flg = '0'
             if current_app.config['EMAIL_DISPLAY_FLG']:
                 email_display_flg = '1'
             if 'ITEM_SEARCH_FLG' in current_app.config:
