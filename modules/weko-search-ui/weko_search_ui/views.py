@@ -65,7 +65,6 @@ blueprint_api = Blueprint(
 
 
 @blueprint.route("/search/index")
-@login_required
 def search():
     """Index Search page ui."""
     search_type = request.args.get('search_type', WEKO_SEARCH_TYPE_DICT[
