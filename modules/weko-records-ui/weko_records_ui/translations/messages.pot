@@ -494,6 +494,15 @@ msgstr ""
 msgid "Display Email"
 msgstr ""
 
+msgid "Release Date"
+msgstr ""
+
+msgid "Display Release Date"
+msgstr ""
+
+msgid "Hide Release Date"
+msgstr ""
+
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:70
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:79
 msgid "Hide Email"

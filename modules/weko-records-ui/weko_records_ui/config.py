@@ -66,6 +66,9 @@ ITEM_SEARCH_FLG = 'name'
 EMAIL_DISPLAY_FLG = True
 # setting the email of author if display
 
+RELEASE_DATE_DISPLAY_FLG = True
+# setting the release date if display
+
 # CSL Citation Formatter
 # ======================
 #: Styles Endpoint for CSL

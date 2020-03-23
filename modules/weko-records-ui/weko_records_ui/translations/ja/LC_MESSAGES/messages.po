@@ -496,6 +496,15 @@ msgstr "著者名IDで検索"
 msgid "Display Email"
 msgstr "メールを表示"
 
+msgid "Release Date"
+msgstr "ファイル公開日"
+
+msgid "Display Release Date"
+msgstr "表示"
+
+msgid "Hide Release Date"
+msgstr "非表示"
+
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:70
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:79
 msgid "Hide Email"

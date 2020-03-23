@@ -38,6 +38,7 @@ def check_items_settings():
     settings = AdminSettings.get('items_display_settings')
     current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+    current_app.config['RELEASE_DATE_DISPLAY_FLG'] = settings.release_date_display_flg
 
 
 def get_record_permalink(record):
