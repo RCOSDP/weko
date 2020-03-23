@@ -563,7 +563,7 @@ function toObject(arr) {
         }
       });
       $scope.getValueAuthor = function () {
-        var sub_item_scheme = ['subitem_creator_name_identifier_02_scheme', 'subitem_contributor_name_identifier_02_scheme', 'subitem_01_right_holder_identifier_01_scheme']
+        var sub_item_scheme = ['nameIdentifierScheme', 'nameIdentifierScheme', 'subitem_01_right_holder_identifier_01_scheme']
         sub_item_scheme.map(function(item) {
            var valueOption = $("select[name='"+item+"']").val()
             if (valueOption) {
@@ -590,9 +590,9 @@ function toObject(arr) {
       $scope.getDataAuthors = function () {
         var numberTitleMap = 0;
         var author_schema;
-        var sub_item_keys = ['subitem_01_creator_name_identifier', 'subitem_02_contributor_name_identifier', 'subitem_01_right_holder_identifier'];
-        var sub_item_scheme = ['subitem_creator_name_identifier_02_scheme', 'subitem_contributor_name_identifier_02_scheme', 'subitem_01_right_holder_identifier_01_scheme']
-        var sub_item_uri = ['subitem_creator_name_identifier_03_uri', 'subitem_contributor_name_identifier_03_uri', 'subitem_01_right_holder_identifier_02_uri']
+        var sub_item_keys = ['creatorNames', 'nameIdentifiers'];
+        var sub_item_scheme = ['nameIdentifierScheme', 'nameIdentifierScheme']
+        var sub_item_uri = ['nameIdentifierURI', 'nameIdentifierURI']
 
         sub_item_keys.map(function(key) {
           $scope.searchKey(key);
@@ -616,7 +616,7 @@ function toObject(arr) {
                   sub_item_scheme.map(function (item) {
                     if (author_schema.properties[item]) {
                       author_schema.properties[item]['enum'] = [];
-                      const sub_item_scheme = ['subitem_creator_name_identifier_02_scheme', 'subitem_contributor_name_identifier_02_scheme', 'subitem_01_right_holder_identifier_01_scheme']
+                      const sub_item_scheme = ['nameIdentifierScheme', 'nameIdentifierScheme', ]
                       $scope.data_author.forEach(function (value_scheme) {
                         sub_item_scheme.map(function (key) {
                           if (author_schema.properties[key]) {
@@ -1506,17 +1506,13 @@ function toObject(arr) {
         $scope.autoTitleData();
         $scope.getDataAuthors();
         $scope.map_sub_item = {
-          'subitem_01_creator_name_identifier': {
-            scheme: "subitem_creator_name_identifier_02_scheme",
-            uri: "subitem_creator_name_identifier_03_uri"
+          'creatorNames': {
+            scheme: "nameIdentifierScheme",
+            uri: "nameIdentifierURI"
           },
-          'subitem_02_contributor_name_identifier': {
-            scheme: "subitem_contributor_name_identifier_02_scheme",
-            uri: "subitem_contributor_name_identifier_03_uri"
-          },
-          'subitem_01_right_holder_identifier': {
-            scheme: "subitem_01_right_holder_identifier_01_scheme",
-            uri: "subitem_01_right_holder_identifier_02_uri"
+          'nameIdentifiers': {
+            scheme: "nameIdentifierScheme",
+            uri: "nameIdentifierURI"
           }
         }
         //When switch language, Getting files uploaded.
