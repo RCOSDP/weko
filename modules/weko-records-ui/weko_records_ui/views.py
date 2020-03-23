@@ -501,6 +501,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
+    release_day_display_flg = current_app.config['RELEASE_DATE_DISPLAY_FLG']
+
     return render_template(
         template,
         pid=pid,
@@ -527,6 +529,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         billing_files_prices=billing_files_prices,
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
+        release_day_display_flg=release_day_display_flg,
         **ctx,
         **kwargs
     )

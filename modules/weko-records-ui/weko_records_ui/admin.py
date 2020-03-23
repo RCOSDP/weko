@@ -78,9 +78,9 @@ class ItemSettingView(BaseView):
                         settings.items_display_email = False
                     release_date_display_flg = request.form.get('releaseDisplayRadios', '0')
                     if release_date_display_flg == '1':
-                        settings.release_date_display_flg = True
+                        settings.item_display_release_date = True
                     else:
-                        settings.release_date_display_flg = False
+                        settings.item_display_release_date = False
                     AdminSettings.update('items_display_settings',
                                          settings.__dict__)                    
                     flash(_('Author flag was updated.'), category='success')
