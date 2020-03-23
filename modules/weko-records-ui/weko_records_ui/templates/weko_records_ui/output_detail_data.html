@@ -19,13 +19,17 @@
 #}
 
 
-{% macro output_attribute_value(attribute_value_mlt) %}
+{% macro output_attribute_value(attribute_value_mlt, is_logged_in=false, release_day_display_flg=false) %}
     {%- if attribute_value_mlt is mapping -%}
         {%- for k, v in attribute_value_mlt.items() -%}
             {%- if '.name' not in k -%}
                 {%- if 'licensetype' in k -%}
                     {% set att_val  = v | get_license_icon %}
                     {{ att_val [1] }}<br />
+                {%- elif 'accessrole' in k or 'accessdate' in k -%}
+                    {%- if is_logged_in or release_day_display_flg -%}
+                        {{ v }}<br>                        
+                    {%- endif -%}
                 {%- else -%}
                     {{ v }}<br>
                 {%- endif -%}
@@ -33,7 +37,7 @@
         {%- endfor -%}
     {%- elif attribute_value_mlt is iterable and attribute_value_mlt is not string -%}
         {%- for attribute_value in attribute_value_mlt -%}
-            {{ output_attribute_value(attribute_value) }}
+            {{ output_attribute_value(attribute_value, is_logged_in, release_day_display_flg) }}
         {%- endfor -%}
     {%- endif -%}
 {% endmacro %}

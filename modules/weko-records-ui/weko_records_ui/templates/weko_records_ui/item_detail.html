@@ -19,7 +19,7 @@
  #}
 
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
-{% macro output_item_detail(record, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false) %}
+{% macro output_item_detail(record, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, release_day_display_flg=false) %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info %}
         <tr>
@@ -60,7 +60,7 @@
                               {% endfor %}
                           {% endif %}
                           {%- for l in lst['attribute_value_mlt'] -%}
-                              {{ output_attribute_value(l) }}
+                              {{ output_attribute_value(l, is_logged_in, release_day_display_flg) }}
                           {%- endfor -%}
                       </td>
                     </tr>
