@@ -82,7 +82,7 @@ class ItemSettingView(BaseView):
                     else:
                         settings.item_display_release_date = False
                     AdminSettings.update('items_display_settings',
-                                         settings.__dict__)                    
+                                         settings.__dict__)
                     flash(_('Author flag was updated.'), category='success')
 
             return self.render(config.ADMIN_SET_ITEM_TEMPLATE,
