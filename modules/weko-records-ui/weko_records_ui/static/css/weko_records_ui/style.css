@@ -76,12 +76,12 @@
 .action-button {
   margin-top: 5px;
   margin-bottom: 5px;
-  display: block;
+//  display: block;
   margin-right: auto;
   margin-left: auto;
   font-size: 13px;
   line-height: 12px;
-  background-color: #D3D3D3;
+//  background-color: #D3D3D3;
   height: 27px;
 }
 
