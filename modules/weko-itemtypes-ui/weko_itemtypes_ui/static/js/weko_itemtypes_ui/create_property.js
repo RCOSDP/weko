@@ -28,7 +28,7 @@ $(document).ready(function () {
     $('#property_name').parent().removeClass('has-error');
     let data = {
       name: $('#property_name').val(),
-      schema: editor.getValue(),
+      schema: JSON.parse($('#schema_json').val()),
       form1: JSON.parse($('#form1_json').val()),
       form2: JSON.parse($('#form2_json').val())
     }
