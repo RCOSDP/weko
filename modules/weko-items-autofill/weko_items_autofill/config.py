@@ -54,7 +54,8 @@ WEKO_ITEMS_AUTOFILL_CROSSREF_REQUIRED_ITEM = [
     "relation"
 ]
 """CrossRef required item"""
-WEKO_ITEMS_CROSSREF_REQUIRED_ITEM = [
+
+WEKO_ITEMS_AUTOFILL_CROSSREF_XML_DATA_KEYS = [
     "article_title",
     "author",
     "contributor",
@@ -69,12 +70,14 @@ WEKO_ITEMS_CROSSREF_REQUIRED_ITEM = [
     "isbn",
     "doi",
 ]
+"""CrossRef XML data keys"""
 
-WEKO_ITEMS_CROSSREF_CONTRIBUTOR = [
+WEKO_ITEMS_AUTOFILL_CROSSREF_CONTRIBUTOR = [
     "editor",
     "chair",
     "translator"
 ]
+"""CrossRef Contributor role"""
 
 WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM = [
     "title",
