@@ -705,6 +705,9 @@ class WorkActivity(object):
                 action_identifier.action_identifier_jalc_dc_doi =\
                     identifier.get(
                         'action_identifier_jalc_dc_doi')
+                action_identifier.action_identifier_ndl_jalc_doi =\
+                    identifier.get(
+                        'action_identifier_ndl_jalc_doi')
                 db.session.merge(action_identifier)
             else:
                 new_action_identifier = ActionIdentifier(
@@ -717,7 +720,9 @@ class WorkActivity(object):
                     action_identifier_jalc_cr_doi=identifier.get(
                         'action_identifier_jalc_cr_doi'),
                     action_identifier_jalc_dc_doi=identifier.get(
-                        'action_identifier_jalc_dc_doi')
+                        'action_identifier_jalc_dc_doi'),
+                    action_identifier_ndl_jalc_doi=identifier.get(
+                        'action_identifier_ndl_jalc_doi')
                 )
                 db.session.add(new_action_identifier)
 
@@ -776,7 +781,9 @@ class WorkActivity(object):
         identifier = {'action_identifier_select': '',
                       'action_identifier_jalc_doi': '',
                       'action_identifier_jalc_cr_doi': '',
-                      'action_identifier_jalc_dc_doi': ''}
+                      'action_identifier_jalc_dc_doi': '',
+                      'action_identifier_ndl_jalc_doi': ''
+                      }
         with db.session.no_autoflush:
             action_identifier = ActionIdentifier.query.filter_by(
                 activity_id=activity_id,
@@ -790,6 +797,8 @@ class WorkActivity(object):
                     action_identifier.action_identifier_jalc_cr_doi
                 identifier['action_identifier_jalc_dc_doi'] =\
                     action_identifier.action_identifier_jalc_dc_doi
+                identifier['action_identifier_ndl_jalc_doi'] =\
+                    action_identifier.action_identifier_ndl_jalc_doi
             else:
                 identifier = action_identifier
         return identifier
