@@ -67,6 +67,8 @@ EMAIL_DISPLAY_FLG = True
 # setting the email of author if display
 
 RELEASE_DATE_DISPLAY_FLG = True
+RELEASE_DATE_DISPLAY_VALUE = '1'
+RELEASE_DATE_HIDE_VALUE = '0'
 # setting the release date if display
 
 # CSL Citation Formatter

@@ -501,7 +501,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
-    release_day_display_flg = current_app.config['RELEASE_DATE_DISPLAY_FLG']
+    release_day_display_flg = current_app.config.get('RELEASE_DATE_DISPLAY_FLG')
 
     return render_template(
         template,

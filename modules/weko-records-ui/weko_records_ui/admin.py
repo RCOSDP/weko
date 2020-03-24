@@ -55,13 +55,13 @@ class ItemSettingView(BaseView):
             check_items_settings()
             email_display_flg = '0'
             search_author_flg = 'name'
-            release_date_display_flg = '0'
+            release_date_display_flg = current_app.config.get('RELEASE_DATE_HIDE_VALUE')
             if current_app.config['EMAIL_DISPLAY_FLG']:
                 email_display_flg = '1'
             if 'ITEM_SEARCH_FLG' in current_app.config:
                 search_author_flg = current_app.config['ITEM_SEARCH_FLG']
-            if current_app.config['RELEASE_DATE_DISPLAY_FLG']:
-                release_date_display_flg = '1'
+            if current_app.config.get('RELEASE_DATE_DISPLAY_FLG'):
+                release_date_display_flg = current_app.config.get('RELEASE_DATE_DISPLAY_VALUE')
 
             if request.method == 'POST':
                 # Process forms
