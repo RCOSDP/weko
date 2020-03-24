@@ -1428,6 +1428,12 @@ function toObject(arr) {
         // Auto fill user profile
         $scope.autoFillProfileInfo();
         $scope.autoSetCorrespondingUsageAppId();
+        //Set collapsed to form.
+        //If required form, setting "collapsed" is true else false.
+        let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
+        $.each($rootScope.recordsVM.invenioRecordsForm, function(ind, val){
+           val["collapsed"] = requiredList.indexOf(val.key) == -1;
+        });
       });
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
