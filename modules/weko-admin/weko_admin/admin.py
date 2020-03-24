@@ -783,17 +783,21 @@ class IdentifierSettingView(ModelView):
 
     column_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'ndl_jalc_doi',
         'suffix',
         'jalc_flag',
         'jalc_crossref_flag',
-        'jalc_datacite_flag')
+        'jalc_datacite_flag',
+        'ndl_jalc_flag')
 
     column_searchable_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'ndl_jalc_doi',
         'suffix')
 
     column_details_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'ndl_jalc_doi',
         'suffix', 'created_userId', 'created_date', 'updated_userId',
         'updated_date')
 
@@ -806,12 +810,14 @@ class IdentifierSettingView(ModelView):
                          'jalc_doi',
                          'jalc_crossref_doi',
                          'jalc_datacite_doi',
+                         'ndl_jalc_doi',
                          rules.Header(_('Suffix')),
                          'suffix',
                          rules.Header(_('Enable/Disable')),
                          'jalc_flag',
                          'jalc_crossref_flag',
                          'jalc_datacite_flag',
+                         'ndl_jalc_flag',
                          'repo_selected',
                          ]
 
@@ -820,6 +826,7 @@ class IdentifierSettingView(ModelView):
     column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
                          jalc_crossref_doi=_('JaLC CrossRef DOI'),
                          jalc_datacite_doi=_('JaLC DataCite DOI'),
+                         ndl_jalc_doi='NDL JaLC DOI',
                          suffix=_('Semi-automatic Suffix')
                          )
 
@@ -852,6 +859,9 @@ class IdentifierSettingView(ModelView):
         'jalc_datacite_doi': {
             'validators': [_validator_halfwidth_input]
         },
+        'ndl_jalc_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
         'suffix': {
             'validators': [_validator_halfwidth_input]
         }
@@ -867,6 +877,10 @@ class IdentifierSettingView(ModelView):
             'readonly': True,
         },
         'jalc_datacite_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'ndl_jalc_doi': {
             'maxlength': 100,
             'readonly': True,
         },
