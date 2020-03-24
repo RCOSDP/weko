@@ -157,7 +157,7 @@ var SchemaCheckboxes = React.createClass({
 		return this.propsToState(this.props);
 	},
 	propsToState: function propsToState(props) {
-    let data = props.data.items; //get enum for checkboxes
+        var data = props.data; //get enum for checkboxes
 		if (data.hasOwnProperty('enum') && data.enum.length > 0) {
 			data.enum = data.enum.join('|');
 		} else {
