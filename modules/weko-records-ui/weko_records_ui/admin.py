@@ -55,13 +55,13 @@ class ItemSettingView(BaseView):
             check_items_settings()
             email_display_flg = '0'
             search_author_flg = 'name'
-            release_date_display_flg = current_app.config.get('RELEASE_DATE_HIDE_VALUE')
+            open_date_display_flg = current_app.config.get('OPEN_DATE_HIDE_VALUE')
             if current_app.config['EMAIL_DISPLAY_FLG']:
                 email_display_flg = '1'
             if 'ITEM_SEARCH_FLG' in current_app.config:
                 search_author_flg = current_app.config['ITEM_SEARCH_FLG']
-            if current_app.config.get('RELEASE_DATE_DISPLAY_FLG'):
-                release_date_display_flg = current_app.config.get('RELEASE_DATE_DISPLAY_VALUE')
+            if current_app.config.get('OPEN_DATE_DISPLAY_FLG'):
+                open_date_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_VALUE')
 
             if request.method == 'POST':
                 # Process forms
@@ -76,11 +76,11 @@ class ItemSettingView(BaseView):
                         settings.items_display_email = True
                     else:
                         settings.items_display_email = False
-                    release_date_display_flg = request.form.get('releaseDisplayRadios', '0')
-                    if release_date_display_flg == '1':
-                        settings.item_display_release_date = True
+                    open_date_display_flg = request.form.get('openDateDisplayRadios', '0')
+                    if open_date_display_flg == '1':
+                        settings.item_display_open_date = True
                     else:
-                        settings.item_display_release_date = False
+                        settings.item_display_open_date = False
                     AdminSettings.update('items_display_settings',
                                          settings.__dict__)
                     flash(_('Author flag was updated.'), category='success')
@@ -88,7 +88,7 @@ class ItemSettingView(BaseView):
             return self.render(config.ADMIN_SET_ITEM_TEMPLATE,
                                search_author_flg=search_author_flg,
                                email_display_flg=email_display_flg,
-                               release_date_display_flg=release_date_display_flg)
+                               open_date_display_flg=open_date_display_flg)
         except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)

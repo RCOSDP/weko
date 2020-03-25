@@ -507,12 +507,12 @@ msgstr "ファイル公開日"
 
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:92
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:101
-msgid "Display Release Date"
+msgid "Display"
 msgstr "表示"
 
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:96
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:105
-msgid "Hide Release Date"
+msgid "Hide Open Date"
 msgstr "非表示"
 
 #: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:137

@@ -83,26 +83,26 @@
   </div>
   <div class="row">
     <div class="col-sm-2 text-right">
-      <label>{{_('Release Date')}}</label>
+      <label>{{_('Open Date')}}</label>
     </div>
     <div class="col-sm-8">
-      {%- if release_date_display_flg == '1' %}
+      {%- if open_date_display_flg == '1' %}
         <label class="radio-inline">
-          <input type="radio" name="releaseDisplayRadios" id="releaseDisplayRadios1" value="1" checked>
-          {{_("Display Release Date")}}
+          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios1" value="1" checked>
+          {{_("Display")}}
         </label>
         <label class="radio-inline">
-          <input type="radio" name="releaseDisplayRadios" id="releaseDisplayRadios0" value="0">
-          {{_("Hide Release Date")}}
+          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios0" value="0">
+          {{_("Hide Open Date")}}
         </label>
       {%- else %}
         <label class="radio-inline">
-          <input type="radio" name="releaseDisplayRadios" id="releaseDisplayRadios1" value="1">
-          {{_("Display Release Date")}}
+          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios1" value="1">
+          {{_("Display")}}
         </label>
         <label class="radio-inline">
-          <input type="radio" name="releaseDisplayRadios" id="releaseDisplayRadios0" value="0" checked>
-          {{_("Hide Release Date")}}
+          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios0" value="0" checked>
+          {{_("Hide Open Date")}}
         </label>
       {%- endif %}
     </div>
