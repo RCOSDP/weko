@@ -1376,6 +1376,38 @@ function toObject(arr) {
         }
       }
 
+      /**
+      * Set required and collapsed for all sub item.
+      * If form required, setting "required" is true and "collapsed" is false.
+      * If root panel collapse, sub panel will collapse.
+      * @param {Boolean} isCollapsed.
+      * @param {object} forms is item of form.
+      */
+      $scope.recursiveSetCollapsedForForm = function (isCollapsed, forms) {
+        angular.forEach(forms, function(val, key){
+          val["collapsed"] = isCollapsed;
+          val["required"] = !isCollapsed;
+          if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
+            $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
+          }
+        });
+      }
+      /**
+      * Set required and collapsed for all root item.
+      */
+      $scope.setCollapsedAndRequiredForForm = function(){
+        let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
+        let forms = $rootScope.recordsVM.invenioRecordsForm;
+        let isCollapsed;
+        angular.forEach(forms, function(val, key){
+          isCollapsed = requiredList.indexOf(val.key) == -1;
+          val["collapsed"] = isCollapsed;
+          if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
+            $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
+          }
+        });
+      }
+
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.hiddenPubdate();
         $scope.initContributorData();
@@ -1416,7 +1448,6 @@ function toObject(arr) {
         }
 
         $scope.showError();
-
         // Delay 3s after page render
         setTimeout(function () {
           $scope.autofillJournal();
@@ -1424,17 +1455,14 @@ function toObject(arr) {
           let model = $rootScope.recordsVM.invenioRecordsModel;
           CustomBSDatePicker.setDataFromFieldToModel(model, true);
         }, 3000);
-
         // Auto fill user profile
         $scope.autoFillProfileInfo();
         $scope.autoSetCorrespondingUsageAppId();
-        //Set collapsed to form.
-        //If required form, setting "collapsed" is true else false.
-        let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
-        $.each($rootScope.recordsVM.invenioRecordsForm, function(ind, val){
-           val["collapsed"] = requiredList.indexOf(val.key) == -1;
-        });
+        //Set required and collapsed for all root and sub item.
+        $scope.setCollapsedAndRequiredForForm();
       });
+
+
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();

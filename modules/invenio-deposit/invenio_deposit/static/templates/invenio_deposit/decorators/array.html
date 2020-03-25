@@ -1,3 +1,4 @@
+<div class="hide thanh_test">{{form}}</div>
 <fieldset ng-disabled="form.readonly"
           class="schema-form-fieldset {{ form.htmlClass }}"
           ng-init="collapsed = form.collapsed">
@@ -11,7 +12,7 @@
                     class="glyphicon glyphicon-chevron-down"></i></span>
                 </a>
             <span class="text-muted pull-right"
-                  style="padding-right: 10px;">{{ form.required == true ? 'Required' : "Optional" }}</span>
+                  style="padding-right: 10px;">{{ form.required == true ? "Required" : "Optional" }}</span>
             <div class="help-block" ng-if="form.description"
                  ng-bind-html="form.description"></div>
         </div>
