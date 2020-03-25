@@ -2376,7 +2376,8 @@ function toObject(arr) {
             // Do nothing
           } else {
             $scope.addApprovalMail();
-            var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
+            var jsonObj = $scope.cleanJsonObject($rootScope.recordsVM.invenioRecordsModel);
+            var str = JSON.stringify(jsonObj);
             var indexOfLink = str.indexOf("authorLink");
             if (indexOfLink != -1) {
               str = str.split(',"authorLink":[]').join('');
@@ -2398,6 +2399,41 @@ function toObject(arr) {
           }
         }
       };
+
+      /* Delete all empty and null Nodes in a JSON Object tree */
+      $scope.cleanJsonObject = function(obj) {
+        obj = JSON.parse(JSON.stringify(obj, function (k, v) {
+          /* Filter empty and null value */
+          return !v ? void 0 : v;
+        }));
+        while (!$scope.isJsonCleaned(obj)) {
+          obj = JSON.parse(JSON.stringify(obj, function (k, v) {
+            /* Filter empty Object */
+            return JSON.stringify(v) === JSON.stringify({}) ? void 0 : v;
+          }));
+          obj = JSON.parse(JSON.stringify(obj, function (k, v) {
+            /* Filter null Array */
+            return JSON.stringify(v) === JSON.stringify([null]) ? void 0 : v;
+          }));
+        }
+        return obj;
+      }
+
+      /* Check if the JSON Object tree contains empty object by recursive method */
+      $scope.isJsonCleaned = function(obj) {
+        if (typeof obj === 'object') {
+          if (jQuery.isEmptyObject(obj)) {
+            return false;
+          } else {
+            for (var key in obj) {
+              if (!$scope.isJsonCleaned(obj[key])) {
+                 return false;
+               }
+            }
+          }
+        }
+        return true;
+      }
 
       $scope.saveTilteAndShareUserID = function(title, shareUserID) {
         let activityID = $('#activity_id').text();
