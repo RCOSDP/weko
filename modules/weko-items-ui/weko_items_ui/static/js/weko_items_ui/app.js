@@ -551,7 +551,6 @@ function toObject(arr) {
               break
               }
              $scope.authors_keys.push(key);
-//             break;
           }
         }
       };
@@ -586,8 +585,8 @@ function toObject(arr) {
         var numberTitleMap = 0;
         var author_schema;
         var sub_item_keys = ['nameIdentifiers'];
-        var sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme']
-        var sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI']
+        var sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
+        var sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
 
         sub_item_keys.map(function(key) {
           $scope.searchKey(key);
