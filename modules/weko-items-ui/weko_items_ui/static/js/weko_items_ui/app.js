@@ -208,6 +208,21 @@ var CustomBSDatePicker = {
       }
     });
     return result;
+  },
+  /**
+   * If input empty, this attribute delete.
+   * Fix bug: not enter data for date field.
+  */
+  removeLastAttr: function(model){
+    let cls = CustomBSDatePicker.option.cls;
+    let element_arr = $('.' + cls);
+    $.each(element_arr, function (ind, val) {
+      let ng_model = $(val).attr('ng-model');
+      let last_index = ng_model.lastIndexOf('[');
+      let previous_attr = ng_model.substring(0, last_index);
+      let str_code = "if("+ng_model+"==''){"+previous_attr+"={}}";
+      eval(str_code);
+    });
   }
 }
 
@@ -2372,6 +2387,9 @@ function toObject(arr) {
               }
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+            //If CustomBSDatePicker empty => remove attr.
+            CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
+            
             let title = $rootScope.recordsVM.invenioRecordsModel['title'];
             let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
             $scope.saveTilteAndShareUserID(title, shareUserID);
