@@ -85,7 +85,8 @@ provision_web_common_ubuntu14 () {
          libxslt-dev \
          nodejs \
          python-dev \
-         python-pip
+         python-pip \
+         libmagickwand-dev
     # sphinxdoc-install-web-common-ubuntu14-end
 }
 
@@ -129,7 +130,8 @@ provision_web_common_centos7 () {
          openssl-devel \
          policycoreutils-python \
          python-devel \
-         python-pip
+         python-pip \
+         ImageMagick-devel
     $sudo yum install -y --disablerepo=epel \
          nodejs
     # sphinxdoc-install-web-common-centos7-end
