@@ -49,7 +49,7 @@ require([
     let identifier_grant_jalc_dc_doi_suffix = getVal($("input[name='idf_grant_input_3']"));
     let identifier_grant_jalc_dc_doi_link = $("span[name='idf_grant_link_3']").text() + getVal($("input[name='idf_grant_input_3']"));
     let identifier_grant_ndl_jalc_doi_suffix = getVal($("input[name='idf_grant_input_4']"));
-    let identifier_grant_ndl_jalc_doi_link = $("span[name='idf_grant_link_4']").text() + getVal($("input[name='idf_grant_input_5']"));
+    let identifier_grant_ndl_jalc_doi_link = $("span[name='idf_grant_link_4']").text() + getVal($("input[name='idf_grant_input_4']"));
     let identifier_grant_crni_link = $("span[name='idf_grant_link_5']").text();
 
     data_global.post_data = {
