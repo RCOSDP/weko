@@ -547,8 +547,11 @@ function toObject(arr) {
           var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           var properties = value.properties ? value.properties : (value.items ? value.items.properties : [])
           if (Object.keys(properties).indexOf(item) >= 0) {
+              if ($scope.authors_keys.indexOf(key) >=0) {
+              break
+              }
              $scope.authors_keys.push(key);
-             break;
+//             break;
           }
         }
       };
@@ -563,36 +566,28 @@ function toObject(arr) {
         }
       });
       $scope.getValueAuthor = function () {
-        var sub_item_scheme = ['nameIdentifierScheme', 'nameIdentifierScheme', 'subitem_01_right_holder_identifier_01_scheme']
-        sub_item_scheme.map(function(item) {
-           var valueOption = $("select[name='"+item+"']").val()
-            if (valueOption) {
-              var sliceValue = valueOption.split("string:").pop();
-              Object.keys($scope.map_sub_item).map(function (key){
-                if ($scope.map_sub_item[key].scheme === item) {
-                  $scope.data_author.map(function (i) {
-                    if (i.scheme === sliceValue) {
-                      var uri_value = i.url
-                      Object.keys($rootScope.recordsVM.invenioRecordsModel).map(function (k) {
-                        if(Object.keys($rootScope.recordsVM.invenioRecordsModel[k]).indexOf(key) >= 0) {
-                          $rootScope.recordsVM.invenioRecordsModel[k][key][0][$scope.map_sub_item[key].uri] = uri_value
-                        }
-                      })
-                    }
-                  })
-
-                }
-              })
-            }
-        })
-        }
+          var data_author ={}
+          $scope.data_author.map(item => {
+            data_author[item.scheme] = item.url
+          })
+          $scope.authors_keys.map(key =>{
+            let list_nameIdentifiers = []
+            $rootScope.recordsVM.invenioRecordsModel[key].nameIdentifiers.map(item => {
+              if (item.nameIdentifierScheme) {
+                item.nameIdentifierURI = data_author[item.nameIdentifierScheme]
+              }
+              list_nameIdentifiers.push(item)
+            })
+            $rootScope.recordsVM.invenioRecordsModel[key].nameIdentifiers = list_nameIdentifiers
+          })
+       }
 
       $scope.getDataAuthors = function () {
         var numberTitleMap = 0;
         var author_schema;
-        var sub_item_keys = ['creatorNames', 'nameIdentifiers'];
-        var sub_item_scheme = ['nameIdentifierScheme', 'nameIdentifierScheme']
-        var sub_item_uri = ['nameIdentifierURI', 'nameIdentifierURI']
+        var sub_item_keys = ['nameIdentifiers'];
+        var sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme']
+        var sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI']
 
         sub_item_keys.map(function(key) {
           $scope.searchKey(key);
@@ -616,7 +611,7 @@ function toObject(arr) {
                   sub_item_scheme.map(function (item) {
                     if (author_schema.properties[item]) {
                       author_schema.properties[item]['enum'] = [];
-                      const sub_item_scheme = ['nameIdentifierScheme', 'nameIdentifierScheme', ]
+                      const sub_item_scheme = ['nameIdentifierScheme', ]
                       $scope.data_author.forEach(function (value_scheme) {
                         sub_item_scheme.map(function (key) {
                           if (author_schema.properties[key]) {
@@ -1506,10 +1501,6 @@ function toObject(arr) {
         $scope.autoTitleData();
         $scope.getDataAuthors();
         $scope.map_sub_item = {
-          'creatorNames': {
-            scheme: "nameIdentifierScheme",
-            uri: "nameIdentifierURI"
-          },
           'nameIdentifiers': {
             scheme: "nameIdentifierScheme",
             uri: "nameIdentifierURI"
