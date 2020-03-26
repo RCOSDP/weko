@@ -573,21 +573,22 @@ class SchemaTree:
                 for k, v in dct.items():
                     if isinstance(v, dict):
                         # check if @value has value
-                        if '@value' in v and v.get('@value')[0] and (
-                                v.get('@value')[0].count(None) == 0 or (
-                                v.get('@value')[0].count(None) > 0 and
-                                v.get('@value')[0].count(None) != len(
-                                v.get('@value')[0]))):
+                        node_val = v.get('@value', None)
+                        if isinstance(node_val, list) and node_val[0] and (
+                                node_val[0].count(None) == 0 or (
+                                node_val[0].count(None) > 0 and
+                                node_val[0].count(None) != len(
+                                node_val[0]))):
                             # get index of None value
                             lst_none_idx = [idx for idx, val in
-                                            enumerate(v.get('@value')[0]) if
+                                            enumerate(node_val[0]) if
                                             val is None or val == '']
                             if len(lst_none_idx) > 0:
                                 # delete all None element in @value
                                 for i in lst_none_idx:
-                                    del v.get('@value')[0][i]
+                                    del node_val[0][i]
                                 # delete all None element in all @attributes
-                                for key, val in v.get('@attributes').items():
+                                for key, val in v.get(self._atr).items():
                                     for i in lst_none_idx:
                                         del val[0][i]
                             clean[k] = v

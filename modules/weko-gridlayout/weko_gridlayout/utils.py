@@ -714,9 +714,7 @@ def find_rss_value(data, keyword):
             item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
             desc_typ = item_map.get('description.@attributes.descriptionType')
             desc_val = item_map.get('description.@value')
-            # desc_dat = source.get('_item_metadata').get(desc_typ.split('.')[0])
-            desc_typ = desc_typ.split('.')
-            desc_dat = source.get('_item_metadata').get(desc_typ.get(0))
+            desc_dat = source.get('_item_metadata').get(desc_typ.split('.')[0])
             if desc_dat and desc_dat.get('attribute_value_mlt'):
                 list_des_data = get_pair_value(desc_val.split('.')[1:],
                                                desc_typ.split('.')[1:],
