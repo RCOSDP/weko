@@ -80,3 +80,15 @@ WEKO_SCHEMA_DDI_VERSION = "2.5"
 
 WEKO_SCHEMA_DDI_SCHEMA_NAME = "ddi_mapping"
 """DDI schema name"""
+
+WEKO_SCHEMA_CREATORNAME_INDENTIFIOR_VOCABULARIES = [
+    'E-RAD',
+    'NRID',
+    'ORCID',
+    'ISNI',
+    'VIAF',
+    'AID',
+    'KAKENHI',
+    'RINGGOLD',
+    'GRID',
+]

@@ -820,6 +820,25 @@ class SchemaTree:
                     k = 'jpcoar:file'
                 elif k == 'custom:system_identifier':
                     k = 'jpcoar:identifier'
+
+                # Remove items that are not set as controlled vocabulary
+                elif k == 'jpcoar:creator' or k == 'jpcoar:contributor' or k == 'jpcoar:rightsHolder':
+                    if '@attributes' in v['jpcoar:nameIdentifier']:
+                        lst_nameIdentifierScheme = v['jpcoar:nameIdentifier']['@attributes']['nameIdentifierScheme'][0]
+                        lst_value = v['jpcoar:nameIdentifier']['@value'][0]
+                        lst_nameIdentifierURI = v['jpcoar:nameIdentifier']['@attributes']['nameIdentifierURI'][0]
+                        index_remove_items = []
+
+                        for identifior_item in lst_nameIdentifierScheme:
+                            if identifior_item.upper() not in current_app.config[
+                                'WEKO_SCHEMA_CREATORNAME_INDENTIFIOR_VOCABULARIES']:
+                                index_remove_items.extend([lst_nameIdentifierScheme.index(identifior_item)])
+
+                        for index in index_remove_items[::-1]:
+                            lst_nameIdentifierScheme.pop(index)
+                            lst_value.pop(index)
+                            lst_nameIdentifierURI.pop(index)
+
                 k = get_prefix(k)
                 set_children(k, v, root)
         return root
