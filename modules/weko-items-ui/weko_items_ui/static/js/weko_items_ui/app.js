@@ -566,12 +566,12 @@ function toObject(arr) {
       });
       $scope.getValueAuthor = function () {
           var data_author ={}
-          $scope.data_author.map(item => {
+          $scope.data_author.map(function (item) {
             data_author[item.scheme] = item.url
           })
-          $scope.authors_keys.map(key =>{
+          $scope.authors_keys.map(function (key){
             let list_nameIdentifiers = []
-            $rootScope.recordsVM.invenioRecordsModel[key].nameIdentifiers.map(item => {
+            $rootScope.recordsVM.invenioRecordsModel[key].nameIdentifiers.map(function(item) {
               if (item.nameIdentifierScheme) {
                 item.nameIdentifierURI = data_author[item.nameIdentifierScheme]
               }
@@ -757,7 +757,7 @@ function toObject(arr) {
             filemeta_filename_form = get_subitem(filemeta_form.items, 'filename');
             if (filemeta_filename_form) {
               filemeta_filename_form['titleMap'] = [];
-              $rootScope.filesVM.files.forEach(file => {
+              $rootScope.filesVM.files.forEach(function(file) {
                 if (file.completed && !file.is_thumbnail) {
                   filemeta_schema.items.properties['filename']['enum'].push(file.key);
                   filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
@@ -1499,12 +1499,6 @@ function toObject(arr) {
         $scope.initCorrespondingIdList();
         $scope.autoTitleData();
         $scope.getDataAuthors();
-        $scope.map_sub_item = {
-          'nameIdentifiers': {
-            scheme: "nameIdentifierScheme",
-            uri: "nameIdentifierURI"
-          }
-        }
         //When switch language, Getting files uploaded.
         let bucketFiles = JSON.parse(sessionStorage.getItem('files'));
         let bucketEndpoints = JSON.parse(sessionStorage.getItem('endpoints'));
