@@ -295,7 +295,7 @@ def get_pair_value(name_keys, lang_keys, datas):
                 for name, lang in get_pair_value(name_keys, lang_keys, data):
                     yield name, lang
         elif isinstance(datas, dict) and (
-             name_keys[0] in datas or lang_keys[0] in datas):
+                name_keys[0] in datas or lang_keys[0] in datas):
             yield datas.get(name_keys[0], ''), datas.get(lang_keys[0], '')
     else:
         if isinstance(datas, list):
