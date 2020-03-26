@@ -565,21 +565,34 @@ function toObject(arr) {
         }
       });
       $scope.getValueAuthor = function () {
-          var data_author ={}
-          $scope.data_author.map(function (item) {
+        var data_author = {}
+        $scope.data_author.map(function (item) {
             data_author[item.scheme] = item.url
-          })
-          $scope.authors_keys.map(function (key){
+        })
+        $scope.authors_keys.map(function (key) {
             let list_nameIdentifiers = []
-            $rootScope.recordsVM.invenioRecordsModel[key].nameIdentifiers.map(function(item) {
-              if (item.nameIdentifierScheme) {
-                item.nameIdentifierURI = data_author[item.nameIdentifierScheme]
-              }
-              list_nameIdentifiers.push(item)
-            })
+            uri_form = $rootScope.recordsVM.invenioRecordsModel[key]
+            if (!Array.isArray(uri_form)) {
+                uri_form.nameIdentifiers.map(function (item) {
+                    if (item.nameIdentifierScheme) {
+                        item.nameIdentifierURI = data_author[item.nameIdentifierScheme]
+                    }
+                    list_nameIdentifiers.push(item)
+                })
+            }
+            else if (Array.isArray(uri_form)) {
+                uri_form.map(function (object) {
+                    object.nameIdentifiers.map(function (item) {
+                        if (item.nameIdentifierScheme) {
+                            item.nameIdentifierURI = data_author[item.nameIdentifierScheme]
+                        }
+                        list_nameIdentifiers.push(item)
+                    })
+                })
+            }
             $rootScope.recordsVM.invenioRecordsModel[key].nameIdentifiers = list_nameIdentifiers
-          })
-       }
+        })
+}
 
       $scope.getDataAuthors = function () {
         var numberTitleMap = 0;
@@ -596,13 +609,22 @@ function toObject(arr) {
           var author_idt_form = $scope.searchFilemetaForm(author_idt_schema.title);
           var author_form;
           if (author_idt_schema && author_idt_form) {
-            if (author_idt_schema.type == 'object')
+            if (author_idt_schema.type == 'object') {
               sub_item_keys.map(function (item) {
                 if (!!author_idt_schema.properties[item]){
                   author_schema = author_idt_schema.properties[item].items;
                   author_form = get_subitem(author_idt_form.items, item)
-                }
-              })
+                  }
+                })
+              }
+            else if (author_idt_schema.type == 'array') {
+              sub_item_keys.map(function (item) {
+                  if (!!author_idt_schema.items.properties[item]) {
+                      author_schema = author_idt_schema.items.properties[item].items;
+                      author_form = get_subitem(author_idt_form.items, item)
+                  }
+                })
+              }
               for (let searchTitleMap in author_form.items) {
                 if (author_form.items[searchTitleMap].hasOwnProperty('titleMap')) {
                   numberTitleMap = searchTitleMap;
