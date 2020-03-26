@@ -502,7 +502,7 @@ msgid "Hide Email"
 msgstr "メールを非表示"
 
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:86
-msgid "Release Date"
+msgid "Open Date"
 msgstr "ファイル公開日"
 
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:92
