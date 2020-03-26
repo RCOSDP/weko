@@ -50,7 +50,7 @@ def validate_json(file):
             context = json_data["@context"]
             if type(context) is list:
                 context = ",".join(context)
-            if re.match("http://iiif.io/api/presentation/./context.json", context)
+            if re.match("http://iiif.io/api/presentation/./context.json", context):
                 retrun True
             return False
         except BaseException:
