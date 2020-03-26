@@ -822,17 +822,23 @@ class SchemaTree:
                     k = 'jpcoar:identifier'
 
                 # Remove items that are not set as controlled vocabulary
-                elif k == 'jpcoar:creator' or k == 'jpcoar:contributor' or k == 'jpcoar:rightsHolder':
+                elif k == 'jpcoar:creator' or k == 'jpcoar:contributor' \
+                        or k == 'jpcoar:rightsHolder':
                     if '@attributes' in v['jpcoar:nameIdentifier']:
-                        lst_nameIdentifierScheme = v['jpcoar:nameIdentifier']['@attributes']['nameIdentifierScheme'][0]
+                        lst_nameIdentifierScheme = v['jpcoar:nameIdentifier'][
+                            '@attributes']['nameIdentifierScheme'][0]
                         lst_value = v['jpcoar:nameIdentifier']['@value'][0]
-                        lst_nameIdentifierURI = v['jpcoar:nameIdentifier']['@attributes']['nameIdentifierURI'][0]
+                        lst_nameIdentifierURI = v['jpcoar:nameIdentifier'][
+                            '@attributes']['nameIdentifierURI'][0]
                         index_remove_items = []
 
                         for identifior_item in lst_nameIdentifierScheme:
-                            if identifior_item.upper() not in current_app.config[
-                                'WEKO_SCHEMA_CREATORNAME_INDENTIFIOR_VOCABULARIES']:
-                                index_remove_items.extend([lst_nameIdentifierScheme.index(identifior_item)])
+                            if not identifior_item.upper() in current_app.\
+                                    config['WEKO_SCHEMA_CREATORNAME'
+                                           '_INDENTIFIOR_VOCABULARIES']:
+                                index_remove_items.extend([
+                                    lst_nameIdentifierScheme.
+                                    index(identifior_item)])
 
                         for index in index_remove_items[::-1]:
                             lst_nameIdentifierScheme.pop(index)
