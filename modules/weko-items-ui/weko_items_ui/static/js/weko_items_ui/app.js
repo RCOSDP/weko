@@ -158,27 +158,35 @@ var CustomBSDatePicker = {
     CustomBSDatePicker.validate();
   },
   /**
+  * Init attribute of model object if them undefine.
+  * @param  {[object]}  model
+  * @param  {[object]}  element is date input control.
+  */
+  initAttributeForModel: function (model, element) {
+    let ng_model = $(element).attr('ng-model').replace(/']/g, '');
+    let arr = ng_model.split("['");
+    //Init attribute of model object if them undefine.
+    let str_code = '';
+    $.each(arr, function (ind_01, val_02) {
+      str_code += (ind_01 == 0) ? val_02 : "['" + val_02 + "']";
+      let chk_str_code = '';
+      if (ind_01 != arr.length - 1) {
+        chk_str_code = "if(!" + str_code + ") " + str_code + "={};";
+      }
+      eval(chk_str_code);
+    });
+  },
+  /**
   * Excute this function before 'Save' and 'Next' processing
   * Get data from fields in order to fill to model.
-  * @param  {[type]}  model
+  * @param  {[object]}  model
   * @param  {[Boolean]}  reverse
   */
   setDataFromFieldToModel: function (model, reverse) {
     let cls = CustomBSDatePicker.option.cls;
     let element_arr = $('.' + cls);
     $.each(element_arr, function (ind, val) {
-      let ng_model = $(val).attr('ng-model').replace(/']/g, '');
-      let arr = ng_model.split("['");
-      //Init attribute of model object if them undefine.
-      let str_code = '';
-      $.each(arr, function (ind_01, val_02) {
-        str_code += (ind_01 == 0) ? val_02 : "['" + val_02 + "']";
-        let chk_str_code = '';
-        if (ind_01 != arr.length - 1) {
-          chk_str_code = "if(!" + str_code + ") " + str_code + "={};";
-        }
-        eval(chk_str_code);
-      });
+      CustomBSDatePicker.initAttributeForModel(model, val);
       if (reverse) {
         //Fill data from model to fields
         str_code = "$(val).val(" + $(val).attr('ng-model') + ")";
@@ -217,6 +225,7 @@ var CustomBSDatePicker = {
     let cls = CustomBSDatePicker.option.cls;
     let element_arr = $('.' + cls);
     $.each(element_arr, function (ind, val) {
+      CustomBSDatePicker.initAttributeForModel(model, val);
       let ng_model = $(val).attr('ng-model');
       let last_index = ng_model.lastIndexOf('[');
       let previous_attr = ng_model.substring(0, last_index);
