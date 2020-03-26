@@ -571,7 +571,6 @@ class OpenSearchDetailData:
                             fe.content(description_text,
                                        description_lang)
 
-
     def _set_publication_date(self, fe, item_map, item_metadata):
         if self.output_type == self.OUTPUT_ATOM:
             _date = 'date.@value'

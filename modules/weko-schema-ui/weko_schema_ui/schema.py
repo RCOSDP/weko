@@ -443,7 +443,7 @@ class SchemaTree:
             else:
                 list_subitem_key.append(key)
             for value, identify in get_value_from_content_by_mapping_key(
-                        atr_vm.copy(), list_subitem_key):
+                    atr_vm.copy(), list_subitem_key):
                 if parent_id != identify and parent_id != 0:
                     klst.append(blst)
                     blst = []
@@ -575,9 +575,9 @@ class SchemaTree:
                         # check if @value has value
                         node_val = v.get('@value', None)
                         if isinstance(node_val, list) and node_val[0] and (
-                                node_val[0].count(None) == 0 or (
-                                node_val[0].count(None) > 0 and
-                                node_val[0].count(None) != len(
+                                node_val[0].count(None) == 0
+                                or (node_val[0].count(None) > 0
+                                    and node_val[0].count(None) != len(
                                 node_val[0]))):
                             # get index of None value
                             lst_none_idx = [idx for idx, val in
@@ -708,7 +708,7 @@ class SchemaTree:
                 # get value of the combination between record and mapping data that is inited at __init__ function
                 mpdic = value_item_parent.get(
                     self._schema_name) if self._schema_name \
-                                          in value_item_parent else ''
+                    in value_item_parent else ''
                 if isinstance(mpdic, str) and len(mpdic) == 0:
                     continue
                 # List or string

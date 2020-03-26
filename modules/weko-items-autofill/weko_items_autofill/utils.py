@@ -604,6 +604,7 @@ def get_crossref_contributor_data(data):
     """
     return _build_name_data(data)
 
+
 def get_start_and_end_page(data):
     """Get start page and end page data.
 

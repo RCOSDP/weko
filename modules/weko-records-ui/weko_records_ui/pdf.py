@@ -38,6 +38,7 @@ from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 from .models import PDFCoverPageSettings
 from .utils import get_license_pdf, get_pair_value
 
+
 """ Function counting numbers of full-width character and half-width character\
         differently """
 

@@ -223,7 +223,7 @@ def item_metadata_validation(item_id, identifier_type):
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if item_type.name_id in journalarticle_nameid or resource_type in \
-            journalarticle_type:
+                journalarticle_type:
             properties = ['title',
                           'publisher',
                           'sourceIdentifier',
