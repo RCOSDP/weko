@@ -1410,7 +1410,7 @@ def validate_save_title_and_share_user_id(result, data):
 
 
 def get_data_authors_prefix_settings():
-    """Get all authors prefix settings"""
+    """Get all authors prefix settings."""
     from weko_authors.models import AuthorsPrefixSettings
     try:
         return db.session.query(AuthorsPrefixSettings).all()
