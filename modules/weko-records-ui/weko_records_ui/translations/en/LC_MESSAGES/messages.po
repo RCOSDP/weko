@@ -492,6 +492,20 @@ msgstr ""
 msgid "Hide Email"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:86
+msgid "Open Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:92
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:101
+msgid "Display"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:96
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:105
+msgid "Hide Open Date"
+msgstr "Hide"
+
 #: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:137
 msgid "Header Settings"
 msgstr ""
