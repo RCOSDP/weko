@@ -2390,7 +2390,7 @@ function toObject(arr) {
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
             //If CustomBSDatePicker empty => remove attr.
             CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
-            
+
             let title = $rootScope.recordsVM.invenioRecordsModel['title'];
             let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
             $scope.saveTilteAndShareUserID(title, shareUserID);
@@ -2408,12 +2408,17 @@ function toObject(arr) {
         }));
         while (!$scope.isJsonCleaned(obj)) {
           obj = JSON.parse(JSON.stringify(obj, function (k, v) {
-            /* Filter empty Object */
+            /* Filter empty Objects */
             return JSON.stringify(v) === JSON.stringify({}) ? void 0 : v;
           }));
           obj = JSON.parse(JSON.stringify(obj, function (k, v) {
-            /* Filter null Array */
-            return JSON.stringify(v) === JSON.stringify([null]) ? void 0 : v;
+            /* Filter null values and empty Arrays */
+            if (Array.isArray(v)) {
+              v = v.filter(function(value, index, arr){
+                return value !== null;
+              });
+            }
+            return JSON.stringify(v) === JSON.stringify([]) ? void 0 : v;
           }));
         }
         return obj;
