@@ -668,7 +668,7 @@ function toObject(arr) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
           filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
           if (filemeta_schema && filemeta_form) {
-            filemeta_schema.items.properties['filename']['enum'] = [];
+            filemeta_schema.items.properties['filename']['enum'] = [null];
             filemeta_filename_form = filemeta_form.items[0];
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(function (file) {
@@ -1303,7 +1303,7 @@ function toObject(arr) {
           let value = schema.properties[key];
           // Find form that contains license type obj
           if (value.items && value.items.properties && value.items.properties.hasOwnProperty(licenseTypeName)) {
-            let listLicenseEnum = [];
+            let listLicenseEnum = [null];
             // Collect list license
             for (let ind in listLicenseObj) {
               listLicenseEnum.push(listLicenseObj[ind]['value']);
