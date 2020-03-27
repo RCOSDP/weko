@@ -243,7 +243,8 @@ class ItemTypePropertiesView(BaseView):
         """Renders an primitive property view."""
         lists = ItemTypeProps.get_records([])
         properties = lists.copy()
-        defaults_property_ids = current_app.config.get('WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_IDS')
+        defaults_property_ids = current_app.config.get(
+            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_IDS')
         for item in lists:
             if item.id in defaults_property_ids:
                 properties.remove(item)

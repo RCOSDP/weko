@@ -510,7 +510,7 @@ function toObject(arr) {
       $scope.outputapplication_keys = [];
       $scope.authors_keys = [];
       $scope.data_author = [];
-      $scope.sub_item_keys = ['nameIdentifiers', 'affiliation'];
+      $scope.sub_item_keys = ['nameIdentifiers', 'affiliation', 'contributorAffiliations'];
       $scope.scheme_uri_mapping = [
         {
           scheme : 'nameIdentifierScheme',
@@ -571,7 +571,7 @@ function toObject(arr) {
           }
         }
       };
-      
+
       $scope.getValueAuthor = function () {
         var data_author = {}
         $scope.data_author.map(function (item) {
@@ -602,8 +602,8 @@ function toObject(arr) {
           else if (Array.isArray(uri_form_model)) {
             uri_form_model.map(function (object) {
               $scope.sub_item_keys.map(function (subkey) {
-                if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
-                  let name_identifier_form = uri_form_model[subkey]
+                if (Object.keys(object).indexOf(subkey) >= 0) {
+                  let name_identifier_form = object[subkey]
                   name_identifier_form.map(function (form) {
                     $scope.sub_item_scheme.map(function (scheme) {
                       if (form[scheme]) {
