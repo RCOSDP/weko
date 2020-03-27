@@ -588,12 +588,11 @@ function toObject(arr) {
         })
         $scope.authors_keys.map(function (key) {
             let list_nameIdentifiers = []
-            uri_form = $rootScope.recordsVM.invenioRecordsForm[key]
-            uri_form_model = $rootScope.recordsVM.invenioRecordsModel[key]
+            let uri_form_model = $rootScope.recordsVM.invenioRecordsModel[key]
             if (!Array.isArray(uri_form_model)) {
                 $scope.sub_item_keys.map(function (subkey) {
                   if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
-                    name_identifier_form = uri_form_model[subkey]
+                    let name_identifier_form = uri_form_model[subkey]
                     name_identifier_form.map(function (form) {
                     $scope.sub_item_scheme.map(function (scheme) {
                       if (form[scheme]) {
@@ -613,7 +612,7 @@ function toObject(arr) {
                 uri_form_model.map(function (object) {
                     $scope.sub_item_keys.map(function (subkey) {
                   if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
-                    name_identifier_form = uri_form_model[subkey]
+                    let name_identifier_form = uri_form_model[subkey]
                     name_identifier_form.map(function (form) {
                     $scope.sub_item_scheme.map(function (scheme) {
                       if (form[scheme]) {
@@ -640,7 +639,6 @@ function toObject(arr) {
 }
 
       $scope.getDataAuthors = function () {
-        var numberTitleMap = 0;
         var author_schema;
         var author_form;
         $scope.sub_item_keys.map(function(key) {
@@ -677,8 +675,8 @@ function toObject(arr) {
       $scope.addSchemeToSelectForm = function(author_form, author_schema) {
            for (let searchTitleMap in author_form.items) {
                 if (author_form.items[searchTitleMap].hasOwnProperty('titleMap')) {
-                  numberTitleMap = searchTitleMap;
-                  author_form_key = author_form.items[searchTitleMap].key
+                  var numberTitleMap = searchTitleMap;
+                  var author_form_key = author_form.items[searchTitleMap].key
                   // Only clear and do logic for "Scheme" field
                   $scope.sub_item_scheme.map(function (scheme) {
                       if (author_form_key.includes(scheme)) {
@@ -705,9 +703,9 @@ function toObject(arr) {
               }
               // set read only Creator Name Identifier URI
               $scope.sub_item_uri.map(function(item) {
-                var uri_form = get_subitem(author_form.items, item)
-                if (uri_form) {
-                  uri_form['readonly'] = true;
+                let identifier_uri_form = get_subitem(author_form.items, item)
+                if (identifier_uri_form) {
+                  identifier_uri_form['readonly'] = true;
                 }
               })
             }
@@ -2751,7 +2749,6 @@ function toObject(arr) {
 
     var ModalInstanceCtrl = function ($scope, $modalInstance, items) {
       $scope.items = items;
-      $scope.searchKey = '';
       $scope.selected = {
         item: $scope.items[0]
       };
