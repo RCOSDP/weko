@@ -571,72 +571,76 @@ function toObject(arr) {
           }
         }
       };
-      $.ajax({
-        url: '/api/items/author_prefix_settings',
-        method: 'GET',
-        async: false,
-        success: function (data, status) {
-          $scope.data_author = data;
-        },
-        error: function (data, status) {
-        }
-      });
+      
       $scope.getValueAuthor = function () {
         var data_author = {}
         $scope.data_author.map(function (item) {
-            data_author[item.scheme] = item.url
+          data_author[item.scheme] = item.url
         })
         $scope.authors_keys.map(function (key) {
-            let list_nameIdentifiers = []
-            let uri_form_model = $rootScope.recordsVM.invenioRecordsModel[key]
-            if (!Array.isArray(uri_form_model)) {
-                $scope.sub_item_keys.map(function (subkey) {
-                  if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
-                    let name_identifier_form = uri_form_model[subkey]
-                    name_identifier_form.map(function (form) {
-                    $scope.sub_item_scheme.map(function (scheme) {
-                      if (form[scheme]) {
-                        $scope.scheme_uri_mapping.map(function (mapping) {
-                          if(mapping.scheme == scheme) {
-                            form[mapping.uri] = data_author[form[scheme]]
-                          }
-                        })
-                      }
-                    })
-                    list_nameIdentifiers.push(form)
-                   })
-                 }
-               })
-            }
-            else if (Array.isArray(uri_form_model)) {
-                uri_form_model.map(function (object) {
-                    $scope.sub_item_keys.map(function (subkey) {
-                  if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
-                    let name_identifier_form = uri_form_model[subkey]
-                    name_identifier_form.map(function (form) {
-                    $scope.sub_item_scheme.map(function (scheme) {
-                      if (form[scheme]) {
-                        $scope.scheme_uri_mapping.map(function (mapping) {
-                          if(mapping.scheme == scheme) {
-                            form[mapping.uri] = data_author[form[scheme]]
-                          }
-                        })
-                      }
-                    })
-                    list_nameIdentifiers.push(form)
-                    })
-                  }
+          let list_nameIdentifiers = []
+          let uri_form_model = $rootScope.recordsVM.invenioRecordsModel[key]
+          if (!Array.isArray(uri_form_model)) {
+            $scope.sub_item_keys.map(function (subkey) {
+              if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
+                let name_identifier_form = uri_form_model[subkey]
+                name_identifier_form.map(function (form) {
+                  $scope.sub_item_scheme.map(function (scheme) {
+                    if (form[scheme]) {
+                      $scope.scheme_uri_mapping.map(function (mapping) {
+                        if (mapping.scheme == scheme) {
+                          form[mapping.uri] = data_author[form[scheme]]
+                        }
+                      })
+                    }
+                  })
+                  list_nameIdentifiers.push(form)
                 })
-               })
-            }
-
-            $scope.sub_item_scheme.map(function (scheme) {
-              if(Object.keys($rootScope.recordsVM.invenioRecordsModel[key]).indexOf(scheme) >= 0) {
-                $rootScope.recordsVM.invenioRecordsModel[key].scheme = list_nameIdentifiers
               }
             })
+          }
+          else if (Array.isArray(uri_form_model)) {
+            uri_form_model.map(function (object) {
+              $scope.sub_item_keys.map(function (subkey) {
+                if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
+                  let name_identifier_form = uri_form_model[subkey]
+                  name_identifier_form.map(function (form) {
+                    $scope.sub_item_scheme.map(function (scheme) {
+                      if (form[scheme]) {
+                        $scope.scheme_uri_mapping.map(function (mapping) {
+                          if (mapping.scheme == scheme) {
+                            form[mapping.uri] = data_author[form[scheme]]
+                          }
+                        })
+                      }
+                    })
+                    list_nameIdentifiers.push(form)
+                  })
+                }
+              })
+            })
+          }
+
+          $scope.sub_item_scheme.map(function (scheme) {
+            if (Object.keys($rootScope.recordsVM.invenioRecordsModel[key]).indexOf(scheme) >= 0) {
+              $rootScope.recordsVM.invenioRecordsModel[key].scheme = list_nameIdentifiers
+            }
+          })
         })
-}
+      }
+
+      $scope.initAuthorList = function () {
+        $.ajax({
+          url: '/api/items/author_prefix_settings',
+          method: 'GET',
+          async: false,
+          success: function (data, status) {
+            $scope.data_author = data;
+          },
+          error: function (data, status) {
+          }
+        });
+      }
 
       $scope.getDataAuthors = function () {
         var author_schema;
@@ -1570,6 +1574,7 @@ function toObject(arr) {
         $scope.autoSetTitle();
         $scope.initCorrespondingIdList();
         $scope.autoTitleData();
+        $scope.initAuthorList();
         $scope.getDataAuthors();
         //When switch language, Getting files uploaded.
         let bucketFiles = JSON.parse(sessionStorage.getItem('files'));
