@@ -688,6 +688,7 @@ function toObject(arr) {
                         $scope.sub_item_scheme.map(function (item) {
                           if (author_schema.properties[item]) {
                             author_schema.properties[item]['enum'] = [];
+                            author_schema.properties[item]['enum'].push(null)
                             $scope.data_author.forEach(function (value_scheme) {
                               $scope.sub_item_scheme.map(function (key) {
                                 if (author_schema.properties[key]) {
