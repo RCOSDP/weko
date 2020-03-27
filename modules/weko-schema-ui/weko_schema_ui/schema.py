@@ -827,7 +827,8 @@ class SchemaTree:
                     if '@attributes' in v['jpcoar:nameIdentifier']:
                         lst_nameIdentifierScheme = v['jpcoar:nameIdentifier'][
                             '@attributes']['nameIdentifierScheme'][0]
-                        lst_value = v['jpcoar:nameIdentifier']['@value'][0]
+                        if '@value' in v['jpcoar:nameIdentifier']:
+                            lst_value = v['jpcoar:nameIdentifier']['@value'][0]
                         lst_nameIdentifierURI = v['jpcoar:nameIdentifier'][
                             '@attributes']['nameIdentifierURI'][0]
                         index_remove_items = []
@@ -842,7 +843,8 @@ class SchemaTree:
 
                         for index in index_remove_items[::-1]:
                             lst_nameIdentifierScheme.pop(index)
-                            lst_value.pop(index)
+                            if len(lst_value):
+                                lst_value.pop(index)
                             lst_nameIdentifierURI.pop(index)
 
                 k = get_prefix(k)
