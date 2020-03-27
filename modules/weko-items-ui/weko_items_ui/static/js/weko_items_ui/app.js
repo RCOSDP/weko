@@ -559,12 +559,12 @@ function toObject(arr) {
         return fileMetaForm;
       };
 
-      $scope.searchKey = function(item) {
+      $scope.searchSchemaIdentifierKey = function(item) {
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           var properties = value.properties ? value.properties : (value.items ? value.items.properties : [])
           if (Object.keys(properties).indexOf(item) >= 0) {
-              if ($scope.authors_keys.indexOf(key) >= 0 ) {
+              if ($scope.authors_keys.indexOf(key) >= 0) {
                 break
               }
              $scope.authors_keys.push(key);
@@ -646,7 +646,7 @@ function toObject(arr) {
         var author_schema;
         var author_form;
         $scope.sub_item_keys.map(function(key) {
-          $scope.searchKey(key);
+          $scope.searchSchemaIdentifierKey(key);
         })
         $scope.authors_keys.forEach(function (author_key) {
           var author_idt_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[author_key];
@@ -2764,7 +2764,7 @@ function toObject(arr) {
         $modalInstance.dismiss('cancel');
       };
       $scope.search = function () {
-        $scope.items.push($scope.searchKey);
+        $scope.items.push($scope.searchSchemaIdentifierKey);
       }
     };
 
