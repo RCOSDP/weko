@@ -510,6 +510,23 @@ function toObject(arr) {
       $scope.outputapplication_keys = [];
       $scope.authors_keys = [];
       $scope.data_author = [];
+      $scope.sub_item_keys = ['nameIdentifiers', 'affiliation'];
+      $scope.scheme_uri_mapping = [
+        {
+          scheme : 'nameIdentifierScheme',
+          uri : 'nameIdentifierURI'
+        },
+        {
+          scheme : 'affiliationNameIdentifierScheme',
+          uri : 'affiliationNameIdentifierURI'
+        },
+        {
+          scheme : 'contributorAffiliationScheme',
+          uri : 'contributorAffiliationURI'
+        }
+      ]
+      $scope.sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
+      $scope.sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
 
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
@@ -547,8 +564,8 @@ function toObject(arr) {
           var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           var properties = value.properties ? value.properties : (value.items ? value.items.properties : [])
           if (Object.keys(properties).indexOf(item) >= 0) {
-              if ($scope.authors_keys.indexOf(key) >=0) {
-              break
+              if ($scope.authors_keys.indexOf(key) >= 0 ) {
+                break
               }
              $scope.authors_keys.push(key);
           }
@@ -571,95 +588,130 @@ function toObject(arr) {
         })
         $scope.authors_keys.map(function (key) {
             let list_nameIdentifiers = []
-            uri_form = $rootScope.recordsVM.invenioRecordsModel[key]
-            if (!Array.isArray(uri_form)) {
-                uri_form.nameIdentifiers.map(function (item) {
-                    if (item.nameIdentifierScheme) {
-                        item.nameIdentifierURI = data_author[item.nameIdentifierScheme]
-                    }
-                    list_nameIdentifiers.push(item)
-                })
-            }
-            else if (Array.isArray(uri_form)) {
-                uri_form.map(function (object) {
-                    object.nameIdentifiers.map(function (item) {
-                        if (item.nameIdentifierScheme) {
-                            item.nameIdentifierURI = data_author[item.nameIdentifierScheme]
-                        }
-                        list_nameIdentifiers.push(item)
+            uri_form = $rootScope.recordsVM.invenioRecordsForm[key]
+            uri_form_model = $rootScope.recordsVM.invenioRecordsModel[key]
+            if (!Array.isArray(uri_form_model)) {
+                $scope.sub_item_keys.map(function (subkey) {
+                  if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
+                    name_identifier_form = uri_form_model[subkey]
+                    name_identifier_form.map(function (form) {
+                    $scope.sub_item_scheme.map(function (scheme) {
+                      if (form[scheme]) {
+                        $scope.scheme_uri_mapping.map(function (mapping) {
+                          if(mapping.scheme == scheme) {
+                            form[mapping.uri] = data_author[form[scheme]]
+                          }
+                        })
+                      }
                     })
-                })
+                    list_nameIdentifiers.push(form)
+                   })
+                 }
+               })
             }
-            $rootScope.recordsVM.invenioRecordsModel[key].nameIdentifiers = list_nameIdentifiers
+            else if (Array.isArray(uri_form_model)) {
+                uri_form_model.map(function (object) {
+                    $scope.sub_item_keys.map(function (subkey) {
+                  if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
+                    name_identifier_form = uri_form_model[subkey]
+                    name_identifier_form.map(function (form) {
+                    $scope.sub_item_scheme.map(function (scheme) {
+                      if (form[scheme]) {
+                        $scope.scheme_uri_mapping.map(function (mapping) {
+                          if(mapping.scheme == scheme) {
+                            form[mapping.uri] = data_author[form[scheme]]
+                          }
+                        })
+                      }
+                    })
+                    list_nameIdentifiers.push(form)
+                    })
+                  }
+                })
+               })
+            }
+
+            $scope.sub_item_scheme.map(function (scheme) {
+              if(Object.keys($rootScope.recordsVM.invenioRecordsModel[key]).indexOf(scheme) >= 0) {
+                $rootScope.recordsVM.invenioRecordsModel[key].scheme = list_nameIdentifiers
+              }
+            })
         })
 }
 
       $scope.getDataAuthors = function () {
         var numberTitleMap = 0;
         var author_schema;
-        var sub_item_keys = ['nameIdentifiers'];
-        var sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
-        var sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
-
-        sub_item_keys.map(function(key) {
+        var author_form;
+        $scope.sub_item_keys.map(function(key) {
           $scope.searchKey(key);
         })
         $scope.authors_keys.forEach(function (author_key) {
           var author_idt_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[author_key];
           var author_idt_form = $scope.searchFilemetaForm(author_idt_schema.title);
-          var author_form;
           if (author_idt_schema && author_idt_form) {
             if (author_idt_schema.type == 'object') {
-              sub_item_keys.map(function (item) {
+              $scope.sub_item_keys.map(function (item) {
                 if (!!author_idt_schema.properties[item]){
                   author_schema = author_idt_schema.properties[item].items;
-                  author_form = get_subitem(author_idt_form.items, item)
+                  author_form = get_subitem(author_idt_form.items, item);
+                  $scope.addSchemeToSelectForm(author_form, author_schema);
                   }
                 })
               }
             else if (author_idt_schema.type == 'array') {
-              sub_item_keys.map(function (item) {
+              $scope.sub_item_keys.map(function (item) {
                   if (!!author_idt_schema.items.properties[item]) {
                       author_schema = author_idt_schema.items.properties[item].items;
-                      author_form = get_subitem(author_idt_form.items, item)
+                      author_form = get_subitem(author_idt_form.items, item);
+                      $$scope.addSchemeToSelectForm(author_form, author_schema);
                   }
                 })
               }
-              for (let searchTitleMap in author_form.items) {
+          }
+        });
+        $rootScope.$broadcast('schemaFormRedraw');
+      };
+
+
+      $scope.addSchemeToSelectForm = function(author_form, author_schema) {
+           for (let searchTitleMap in author_form.items) {
                 if (author_form.items[searchTitleMap].hasOwnProperty('titleMap')) {
                   numberTitleMap = searchTitleMap;
-                  author_form.items[searchTitleMap].titleMap = [];
-                  sub_item_scheme.map(function (item) {
-                    if (author_schema.properties[item]) {
-                      author_schema.properties[item]['enum'] = [];
-                      const sub_item_scheme = ['nameIdentifierScheme', ]
-                      $scope.data_author.forEach(function (value_scheme) {
-                        sub_item_scheme.map(function (key) {
-                          if (author_schema.properties[key]) {
-                            author_schema.properties[key]['enum'].push(value_scheme['scheme']);
-                            author_form.items[numberTitleMap].titleMap.push({
-                              name: value_scheme['scheme'],
-                              value: value_scheme['scheme']
+                  author_form_key = author_form.items[searchTitleMap].key
+                  // Only clear and do logic for "Scheme" field
+                  $scope.sub_item_scheme.map(function (scheme) {
+                      if (author_form_key.includes(scheme)) {
+                        author_form.items[searchTitleMap].titleMap = [];
+                        $scope.sub_item_scheme.map(function (item) {
+                          if (author_schema.properties[item]) {
+                            author_schema.properties[item]['enum'] = [];
+                            $scope.data_author.forEach(function (value_scheme) {
+                              $scope.sub_item_scheme.map(function (key) {
+                                if (author_schema.properties[key]) {
+                                  author_schema.properties[key]['enum'].push(value_scheme['scheme']);
+                                  author_form.items[numberTitleMap].titleMap.push({
+                                    name: value_scheme['scheme'],
+                                    value: value_scheme['scheme']
+                                  });
+                                }
+                              })
                             });
+                            author_form.items[searchTitleMap]['onChange'] = 'getValueAuthor(event)';
                           }
                         })
-                      });
-                      author_form.items[searchTitleMap]['onChange'] = 'getValueAuthor(event)';
-                    }
+                      }
                   })
               }
               // set read only Creator Name Identifier URI
-              sub_item_uri.map(function(item) {
+              $scope.sub_item_uri.map(function(item) {
                 var uri_form = get_subitem(author_form.items, item)
                 if (uri_form) {
                   uri_form['readonly'] = true;
                 }
               })
             }
-          }
-        });
-        $rootScope.$broadcast('schemaFormRedraw');
-      };
+      }
 
       $scope.searchUsageApplicationIdKey = function() {
         if ($scope.usageapplication_keys.length > 0) {
