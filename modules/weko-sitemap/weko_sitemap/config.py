@@ -22,3 +22,15 @@ WEKO_SITEMAP_TOTAL_MAX_URL_COUNT = 10000000
 WEKO_SITEMAP_URL_SCHEME = 'https'
 
 WEKO_SITEMAP_CACHE_TIMEOUT = 60 * 60 * 24 * 3
+
+# base URL for site (don't chang name)
+SITEMAP_BLUEPRINT = None
+"""Set our own Blueprint"""
+
+SITEMAP_BLUEPRINT_URL_PREFIX = '/weko/sitemaps'
+
+SITEMAP_ENDPOINT_URL = '/sitemapindex.xml'
+
+SITEMAP_ENDPOINT_PAGE_URL = '/sitemap_<int:page>.xml.gz'
+
+SITEMAP_MAX_URL_COUNT = 10000

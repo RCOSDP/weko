@@ -18,21 +18,20 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""VIews for weko-user-profiles."""
+"""Views for weko-user-profiles."""
 
-
-from flask import Blueprint, current_app, flash, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
-from flask_security.confirmable import send_confirmation_instructions
-from invenio_db import db
 
 from .api import current_userprofile
 from .forms import EmailProfileForm, ProfileForm, VerificationForm, \
     confirm_register_form_factory, register_form_factory
 from .models import UserProfile
+from .utils import get_user_profile_info, handle_profile_form, \
+    handle_verification_form
 
 blueprint = Blueprint(
     'weko_user_profiles',
@@ -85,6 +84,29 @@ def userprofile(value):
     return UserProfile.get_by_userid(int(value))
 
 
+@blueprint_api_init.route('/get_profile_info/', methods=['GET'])
+def get_profile_info():
+    """Get user profile.
+
+    @return:
+    """
+    result = {
+        'positions': '',
+        'results': '',
+        'error': '',
+    }
+
+    try:
+        user_id = current_user.id
+        if user_id is not None:
+            result['results'] = get_user_profile_info(user_id)
+            result['positions'] = current_app.config[
+                'WEKO_USERPROFILES_POSITION_LIST']
+    except Exception as e:
+        result['error'] = str(e)
+    return jsonify(result)
+
+
 @blueprint.route('/', methods=['GET', 'POST'])
 @login_required
 @register_menu(
@@ -117,62 +139,34 @@ def profile():
 def profile_form_factory():
     """Create a profile form."""
     if current_app.config['USERPROFILES_EMAIL_ENABLED']:
-        return EmailProfileForm(
+        form = EmailProfileForm(
             formdata=None,
             username=current_userprofile.username,
-            # full_name=current_userprofile.full_name,
+            fullname=current_userprofile.fullname,
             timezone=current_userprofile.timezone,
             language=current_userprofile.language,
             email=current_user.email,
             email_repeat=current_user.email,
+            university=current_userprofile.university,
+            department=current_userprofile.department,
+            position=current_userprofile.position,
+            otherPosition=current_userprofile.otherPosition,
+            phoneNumber=current_userprofile.phoneNumber,
+            instituteName=current_userprofile.instituteName,
+            institutePosition=current_userprofile.institutePosition,
+            instituteName2=current_userprofile.instituteName2,
+            institutePosition2=current_userprofile.institutePosition2,
+            instituteName3=current_userprofile.instituteName3,
+            institutePosition3=current_userprofile.institutePosition3,
+            instituteName4=current_userprofile.instituteName4,
+            institutePosition4=current_userprofile.institutePosition4,
+            instituteName5=current_userprofile.instituteName5,
+            institutePosition5=current_userprofile.institutePosition5,
             prefix='profile', )
+        return form
     else:
-        return ProfileForm(
+        form = ProfileForm(
             formdata=None,
             obj=current_userprofile,
             prefix='profile', )
-
-
-def handle_verification_form(form):
-    """Handle email sending verification form."""
-    form.process(formdata=request.form)
-
-    if form.validate_on_submit():
-        send_confirmation_instructions(current_user)
-        # NOTE: Flash message.
-        flash(_("Verification email sent."), category="success")
-
-
-def handle_profile_form(form):
-    """Handle profile update form."""
-    form.process(formdata=request.form)
-
-    if form.validate_on_submit():
-        email_changed = False
-        with db.session.begin_nested():
-            # Update profile.
-            current_userprofile.username = form.username.data
-            # current_userprofile.full_name = form.full_name.data
-            current_userprofile.timezone = form.timezone.data
-            current_userprofile.language = form.language.data
-            db.session.add(current_userprofile)
-
-            # Update email
-            if current_app.config['USERPROFILES_EMAIL_ENABLED'] and \
-               form.email.data != current_user.email:
-                current_user.email = form.email.data
-                current_user.confirmed_at = None
-                db.session.add(current_user)
-                email_changed = True
-        db.session.commit()
-
-        if email_changed:
-            send_confirmation_instructions(current_user)
-            # NOTE: Flash message after successful update of profile.
-            flash(_('Profile was updated. We have sent a verification '
-                    'email to %(email)s. Please check it.',
-                    email=current_user.email),
-                  category='success')
-        else:
-            # NOTE: Flash message after successful update of profile.
-            flash(_('Profile was updated.'), category='success')
+        return form

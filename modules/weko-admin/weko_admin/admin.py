@@ -64,9 +64,9 @@ class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Block style setting page."""
-        wysiwyg_editor_default = [
-            '<div class="ql-editor ql-blank" data-gramm="false" '
-            'contenteditable="true"><p><br></p></div>']
+        # wysiwyg_editor_default = [
+        #     '<div class="ql-editor ql-blank" data-gramm="false" '
+        #     'contenteditable="true"><p><br></p></div>']
 
         body_bg = '#fff'
         panel_bg = '#fff'
@@ -249,7 +249,6 @@ class ReportView(BaseView):
 
             # Emails to send reports to
             all_email_address = StatisticsEmail().get_all()
-            current_app.logger.info(all_email_address)
             return self.render(
                 current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
                 result=result,
@@ -269,11 +268,9 @@ class ReportView(BaseView):
     def get_file_stats_tsv(self):
         """Get file download/preview stats report."""
         stats_json = json.loads(request.form.get('report'))
-        file_type = request.form.get('type')
+        # file_type = request.form.get('type')
         year = request.form.get('year')
         month = request.form.get('month').zfill(2)
-
-        # current_app.logger.info(request.form.to_dict())
 
         # File Format: logReport__YYYY-MM.zip
         zip_date = str(year) + '-' + str(month).zfill(2)
@@ -320,7 +317,6 @@ class ReportView(BaseView):
             format(name='email_schedule')
 
         # Get Schedule
-        # current_app.logger.info(request.form.to_dict())
         frequency = request.form.get('frequency')
         enabled = True if request.form.get('dis_enable_schedule') == 'True' \
             else False
@@ -434,7 +430,6 @@ class LogAnalysisSettings(BaseView):
         try:
             restricted_ip_addresses = LogAnalysisRestrictedIpAddress.get_all()
             shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
-            # current_app.logger.info(LogAnalysisRestrictedCrawlerList.get_all_active())
             if not shared_crawlers:
                 LogAnalysisRestrictedCrawlerList.add_list(current_app.config[
                     "WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
@@ -482,7 +477,8 @@ class RankingSettingsView(BaseView):
                 form = request.form.get('submit', None)
                 if form == 'save_ranking_settings':
                     settings = RankingSettings()
-                    settings.is_show = request.form.get('is_show', False)
+                    settings.is_show = request.form.get('is_show',
+                                                        False) == 'True'
                     new_item_period = int(request.form.get('new_item_period',
                                                            14))
                     if new_item_period < 1 or new_item_period > 30:
@@ -582,8 +578,8 @@ class SearchSettingsView(BaseView):
                 setting_data=result
             )
         except BaseException as e:
+            current_app.logger.error('Could not save search settings', e)
             abort(500)
-            # current_app.logger.error('Could not save search settings', e)
             # flash(_('Unable to change search settings.'), 'error')
 
 
@@ -769,7 +765,9 @@ class SiteInfoView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         return self.render(
-            current_app.config["WEKO_ADMIN_SITE_INFO"]
+            current_app.config["WEKO_ADMIN_SITE_INFO"],
+            enable_notify=current_app.config[
+                "WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS"]
         )
 
 
@@ -927,7 +925,7 @@ class IdentifierSettingView(ModelView):
 
         :param obj: input object
         """
-        return self._use_append_repository(
+        return self._use_append_repository_edit(
             super(IdentifierSettingView, self).edit_form(obj)
         )
 
@@ -936,13 +934,31 @@ class IdentifierSettingView(ModelView):
         form.repo_selected.data = 'Root Index'
         return form
 
+    def _use_append_repository_edit(self, form):
+        form.repository.query_factory = self._get_community_list_edit
+        form.repository.render_kw = {'disabled': True}
+        return form
+
     def _get_community_list(self):
+        try:
+            id_list = []
+            id_data = Identifier.query.all()
+            for i in id_data:
+                id_list.append(i.repository)
+            query_data = Community.query.filter(
+                Community.id.notin_(id_list)).all()
+            if 'Root Index' not in id_list:
+                query_data.insert(0, Community(id='Root Index'))
+        except Exception as ex:
+            current_app.logger.debug(ex)
+        return query_data
+
+    def _get_community_list_edit(self):
         try:
             query_data = Community.query.all()
             query_data.insert(0, Community(id='Root Index'))
         except Exception as ex:
             current_app.logger.debug(ex)
-
         return query_data
 
 

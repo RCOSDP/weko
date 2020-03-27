@@ -204,6 +204,20 @@ class Index(db.Model, Timestamp):
         children = cls.query.filter_by(parent=id).all()
         return False if (children is None or len(children) == 0) else True
 
+    @classmethod
+    def get_all(cls):
+        """Get all Indexes."""
+        query_result = cls.query.all()
+        result = []
+        if query_result:
+            for index in query_result:
+                data = {
+                    'id': index.id,
+                    'index_name': index.index_name
+                }
+                result.append(data)
+        return [] if (result is None or len(result) == 0) else result
+
 # class IndexItems(db.Model):
 #     """"""
 #     __tablename__ = 'index_item'

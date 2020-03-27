@@ -19,9 +19,9 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit API."""
+import copy
 import uuid
-from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 
 import redis
 from dictdiffer import patch
@@ -35,10 +35,10 @@ from invenio_deposit.errors import MergeConflict
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_indexer.api import RecordIndexer
-from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
+from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.serializers.utils import serialize_relations
-from invenio_pidstore.errors import PIDInvalidAction
+from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
@@ -164,60 +164,17 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
-    def update_relation_info(self, record, relation_info):
-        """Update relation info."""
-        self.get_es_index()
-        relation = 'relation'
-        relation_type = 'relation_type'
-        relation_type_val = []
-        for d in relation_info[0]:
-            pid = d.get('item_data').get('links').get('self').split('/')[len(
-                d.get('item_data').get('links').get('self').split('/')) - 1]
-            links = '/records/' + pid
-            sub_data = dict(
-                item_links=links,
-                item_title=d.get('item_title'),
-                value=d.get('sele_id'))
-            relation_type_val.append(sub_data)
-        if relation_info[0]:
-            body = {'doc': {relation: {relation_type: relation_type_val}}}
-        else:
-            body = {'doc': {relation: {}}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(record.id),
-            body=body
-        )
-
-    def get_item_link_info(self, pid):
-        """Get item link info."""
-        try:
-            self.get_es_index()
-            item_link_info = None
-            get_item_link_q = {
-                "query": {
-                    "match": {
-                        "control_number": "@control_number"
-                    }
-                }
-            }
-            query_q = json.dumps(get_item_link_q).replace(
-                "@control_number", pid)
-            query_q = json.loads(query_q)
-            indexer = RecordIndexer()
-            res = indexer.client.search(index=self.es_index, body=query_q)
-            item_link_info = res.get("hits").get(
-                "hits")[0].get('_source').get("relation")
-        except Exception as ex:
-            current_app.logger.debug(ex)
-        return item_link_info
-
     def update_path(self, record, update_revision=True):
         """Update path."""
         self.get_es_index()
         path = 'path'
-        body = {'doc': {path: record.get(path)}}
+        body = {
+            'doc': {
+                path: record.get(path),
+                '_updated': datetime.utcnow().replace(
+                    tzinfo=timezone.utc).isoformat()
+            }
+        }
         if update_revision:
             return self.client.update(
                 index=self.es_index,
@@ -404,7 +361,7 @@ class WekoDeposit(Deposit):
 
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
-        if self.data is None:
+        if not self.data:
             self.data = self.get('_deposit', {})
         if 'control_number' in self:
             self.pop('control_number')
@@ -413,19 +370,13 @@ class WekoDeposit(Deposit):
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
         try:
-            # rec_pid = PersistentIdentifier.get('recid', self.data.get('id', 0))
-            # current_app.logger.info('The current id is : ')
-            # current_app.logger.info(self.data.get('id', 0))
-            # current_app.logger.info(self.pid)
-
             deposit = super(WekoDeposit, self).publish(pid, id_)
-            # deposit = super(WekoDeposit, self).publish(pid, id_)
 
             # update relation version current to ES
             pid = PersistentIdentifier.query.filter_by(
                 pid_type='recid', object_uuid=self.id).first()
             relations = serialize_relations(pid)
-            if relations is not None and 'version' in relations:
+            if relations and 'version' in relations:
                 relations_ver = relations['version'][0]
                 relations_ver['id'] = pid.object_uuid
                 relations_ver['is_last'] = relations_ver.get('index') == 0
@@ -442,53 +393,49 @@ class WekoDeposit(Deposit):
 
         Adds bucket creation immediately on deposit creation.
         """
+        if '$schema' in data:
+            data.pop('$schema')
+
         bucket = Bucket.create(
             quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
             max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
         )
-        if '$schema' in data:
-            data.pop('$schema')
-
         data['_buckets'] = {'deposit': str(bucket.id)}
 
         # save user_name & display name.
         if current_user and current_user.is_authenticated:
             user = UserProfile.get_by_userid(current_user.get_id())
-
-            username = ''
-            displayname = ''
-            if user is not None:
-                username = user._username
-                displayname = user._displayname
             if '_deposit' in data:
                 data['_deposit']['owners_ext'] = {
-                    'username': username,
-                    'displayname': displayname,
+                    'username': user._username if user else '',
+                    'displayname': user._displayname if user else '',
                     'email': current_user.email
                 }
-        if not recid:
-            deposit = super(WekoDeposit, cls).create(data, id_=id_)
-        else:
-            deposit = super(
-                WekoDeposit,
-                cls).create(
+
+        if recid:
+            deposit = super(WekoDeposit, cls).create(
                 data,
                 id_=id_,
-                recid=recid)
-        RecordsBuckets.create(record=deposit.model, bucket=bucket)
+                recid=recid
+            )
+        else:
+            deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
-        dep_id = str(data['_deposit']['id'])
-        recid = PersistentIdentifier.get('recid', dep_id)
-        depid = PersistentIdentifier.get('depid', dep_id)
-        p_depid = PersistentIdentifier.create(
+        if data.get('_deposit'):
+            record_id = str(data['_deposit']['id'])
+        parent_pid = PersistentIdentifier.create(
             'parent',
-            'parent:{0}'.format(dep_id),
+            'parent:{0}'.format(record_id),
             object_type='rec',
-            object_uuid=uuid.uuid4(),
+            object_uuid=id_,
             status=PIDStatus.REGISTERED
         )
 
-        PIDVersioning(parent=p_depid).insert_draft_child(child=recid)
+        RecordsBuckets.create(record=deposit.model, bucket=bucket)
+
+        recid = PersistentIdentifier.get('recid', record_id)
+        depid = PersistentIdentifier.get('depid', record_id)
+        PIDVersioning(parent=parent_pid).insert_draft_child(child=recid)
         RecordDraft.link(recid, depid)
 
         return deposit
@@ -504,17 +451,20 @@ class WekoDeposit(Deposit):
         super(WekoDeposit, self).update(dc)
 #        if 'pid' in self['_deposit']:
 #            self['_deposit']['pid']['revision_id'] += 1
-        if has_request_context():
-            if current_user:
-                user_id = current_user.get_id()
-            else:
-                user_id = -1
-            item_created.send(
-                current_app._get_current_object(),
-                user_id=user_id,
-                item_id=self.pid,
-                item_title=self.data['title']
-            )
+        try:
+            if has_request_context():
+                if current_user:
+                    user_id = current_user.get_id()
+                else:
+                    user_id = -1
+                item_created.send(
+                    current_app._get_current_object(),
+                    user_id=user_id,
+                    item_id=self.pid,
+                    item_title=self.data['title']
+                )
+        except BaseException:
+            abort(500, 'MAPPING_ERROR')
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
@@ -605,12 +555,11 @@ class WekoDeposit(Deposit):
                 # the latest record: item without version ID
                 last_pid = pid  # pv.last_child
                 # Get copy of the latest record
-                latest_record = WekoDeposit.get_record(
-                    last_pid.object_uuid)
-                if latest_record is not None:
+                latest_record = WekoDeposit.get_record(last_pid.object_uuid)
+                if latest_record:
                     data = latest_record.dumps()
-
                     owners = data['_deposit']['owners']
+                    bucket = data['_buckets']
                     keys_to_remove = ('_deposit', 'doi', '_oai',
                                       '_files', '_buckets', '$schema')
                     for k in keys_to_remove:
@@ -620,13 +569,15 @@ class WekoDeposit(Deposit):
                     recid = '{0}.{1}' . format(
                         last_pid.pid_value,
                         get_latest_version_id(last_pid.pid_value))
-                    # NOTE: We call the superclass `create()` method, because we
-                    # don't want a new empty bucket, but an unlocked snapshot of
-                    # the old record's bucket.
-                    deposit = super(WekoDeposit, self).create(data, recid=recid)
+                    # NOTE: We call the superclass `create()` method, because
+                    # we don't want a new empty bucket, but
+                    # an unlocked snapshot of the old record's bucket.
+                    deposit = super(WekoDeposit, self).create(data,
+                                                              recid=recid)
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
+                    deposit['_buckets'] = {'deposit': bucket['deposit']}
 
                     recid = PersistentIdentifier.get(
                         'recid', str(data['_deposit']['id']))
@@ -638,24 +589,8 @@ class WekoDeposit(Deposit):
                         child=recid)
                     RecordDraft.link(recid, depid)
 
-                    # Create snapshot from the record's bucket and update data
-                    if latest_record.files is not None:
-                        snapshot = latest_record.files.bucket.snapshot(
-                            lock=False)
-                        snapshot.locked = False
-                        deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                        RecordsBuckets.create(
-                            record=deposit.model, bucket=snapshot)
-                    if 'extra_formats' in latest_record['_buckets']:
-                        extra_formats_snapshot = \
-                            latest_record.extra_formats.bucket.snapshot(
-                                lock=False)
-                        deposit['_buckets']['extra_formats'] = \
-                            str(extra_formats_snapshot.id)
-                        RecordsBuckets.create(record=deposit.model,
-                                              bucket=extra_formats_snapshot)
                     index = {'index': self.get('path', []),
-                             'actions': 'private'}
+                             'actions': self.get('publish_status')}
                     if 'activity_info' in session:
                         del session['activity_info']
                     item_metadata = ItemsMetadata.get_record(
@@ -780,8 +715,8 @@ class WekoDeposit(Deposit):
         # Prepare index id list if the current index_lst is a path list
         if index_lst:
             index_id_lst = []
-            for index in index_lst:
-                indexes = str(index).split('/')
+            for _index in index_lst:
+                indexes = str(_index).split('/')
                 index_id_lst.append(indexes[len(indexes) - 1])
             index_lst = index_id_lst
 
@@ -796,13 +731,16 @@ class WekoDeposit(Deposit):
             index_lst.append(lst.path)
 
         # convert item meta data
-        dc, jrc, is_edit = json_loader(data, self.pid)
-        dc['publish_date'] = data.get('pubdate')
-        dc['title'] = [data.get('title')]
-        dc['relation_version_is_last'] = True
-        self.data = data
-        self.jrc = jrc
-        self.is_edit = is_edit
+        try:
+            dc, jrc, is_edit = json_loader(data, self.pid)
+            dc['publish_date'] = data.get('pubdate')
+            dc['title'] = [data.get('title')]
+            dc['relation_version_is_last'] = True
+            self.data = data
+            self.jrc = jrc
+            self.is_edit = is_edit
+        except BaseException:
+            abort(500, 'MAPPING_ERROR')
 
         # Save Index Path on ES
         jrc.update(dict(path=index_lst))
@@ -816,7 +754,7 @@ class WekoDeposit(Deposit):
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')
-        if actions == 'publish':
+        if actions == 'publish' or actions == '0':
             pubs = '0'
         elif 'id' in data:
             recid = PersistentIdentifier.query.filter_by(
@@ -845,13 +783,13 @@ class WekoDeposit(Deposit):
                     flag_modified(r, 'json')
                 except BaseException:
                     pass
-                if r.json['path'] == []:
+                if not r.json['path']:
                     from weko_records_ui.utils import soft_delete
                     soft_delete(obj_uuid)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
-            raise(ex)
+            raise ex
 
     @classmethod
     def update_by_index_tree_id(cls, path, target):
@@ -910,7 +848,12 @@ class WekoDeposit(Deposit):
             self.indexer.update_feedback_mail_list(feedback_mail)
 
     def update_jpcoar_identifier(self):
-        """Update JPCOAR meta data item for grant DOI which added at the Identifier Grant screen."""
+        """
+        Update JPCOAR meta data item.
+
+        Update JPCOAR meta data item for grant DOI which added at the
+        Identifier Grant screen.
+        """
         obj = ItemsMetadata.get_record(self.id)
         attrs = ['attribute_value_mlt',
                  'item_1551265147138',
@@ -938,11 +881,24 @@ class WekoDeposit(Deposit):
         with db.session.begin_nested():
             # update item_metadata
             index = {'index': self.get('path', []),
-                     'actions': 'private'}
+                     'actions': self.get('publish_status')}
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
+
+            # Get draft bucket's data
+            record_bucket = RecordsBuckets.query.filter_by(
+                record_id=pid.object_uuid
+            ).first()
+            bucket = {
+                "_buckets": {
+                    "deposit": str(record_bucket.bucket_id)
+                }
+            }
+
             args = [index, item_metadata]
             self.update(*args)
+            # Update '_buckets'
+            super(WekoDeposit, self).update(bucket)
             self.commit()
             # update records_metadata
             flag_modified(self.model, 'json')
@@ -962,6 +918,13 @@ class WekoRecord(Record):
         """Return an instance of record PID."""
         pid = self.record_fetcher(self.id, self)
         obj = PersistentIdentifier.get(pid.pid_type, pid.pid_value)
+        return obj
+
+    @property
+    def pid_recid(self):
+        """Return an instance of record PID."""
+        pid = self.record_fetcher(self.id, self)
+        obj = PersistentIdentifier.get('recid', pid.pid_value)
         return obj
 
     @property
@@ -998,7 +961,8 @@ class WekoRecord(Record):
                             if v.get('nameIdentifierURI'):
                                 uri = v.get('nameIdentifierURI')
                             elif v.get('nameIdentifierScheme'):
-                                uri = 'http://' + v.get('nameIdentifierScheme')\
+                                uri = 'http://'\
+                                      + v.get('nameIdentifierScheme')\
                                       + '.io/' + name
                             v['nameIdentifier'] = dict(name=name, uri=uri)
             return mlt
@@ -1032,22 +996,42 @@ class WekoRecord(Record):
                     if nval['attribute_name'] == 'Reference' \
                             or nval['attribute_type'] == 'file':
                         nval['attribute_value_mlt'] = \
-                            get_all_items(mlt, solst, True)
+                            get_all_items(copy.deepcopy(mlt),
+                                          copy.deepcopy(solst), True)
                     else:
                         is_author = nval['attribute_type'] == 'creator'
                         if is_author:
-                            mlt = get_name_iddentifier_uri(mlt)
+                            mlt = get_name_iddentifier_uri(copy.deepcopy(mlt))
                         nval['attribute_value_mlt'] = \
-                            get_attribute_value_all_items(mlt, solst, is_author)
+                            get_attribute_value_all_items(copy.deepcopy(mlt),
+                                                          copy.deepcopy(solst),
+                                                          is_author)
                     items.append(nval)
                 else:
                     items.append(val)
 
-            current_app.logger.debug("items: {}".format(items))
-
             return items
         except BaseException:
             abort(500)
+
+    @property
+    def pid_doi(self):
+        """Return pid_value of doi identifier."""
+        return self._get_pid('doi')
+
+    @property
+    def pid_cnri(self):
+        """Return pid_value of doi identifier."""
+        return self._get_pid('hdl')
+
+    @property
+    def pid_parent(self):
+        """Return pid_value of doi identifier."""
+        pid_ver = PIDVersioning(child=self.pid_recid)
+        if pid_ver:
+            return pid_ver.parents.one_or_none()
+        else:
+            return None
 
     @classmethod
     def get_record_by_pid(cls, pid):
@@ -1076,3 +1060,14 @@ class WekoRecord(Record):
         if path:
             coverpage_state = Indexes.get_coverpage_state(path)
         return coverpage_state
+
+    def _get_pid(self, pid_type):
+        """Return pid_value from persistent identifier."""
+        try:
+            return PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                object_uuid=self.pid_parent.object_uuid,
+                status=PIDStatus.REGISTERED).one_or_none()
+        except PIDDoesNotExistError as pid_not_exist:
+            current_app.logger.error(pid_not_exist)
+        return None

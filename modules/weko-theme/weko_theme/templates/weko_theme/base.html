@@ -85,11 +85,14 @@
         <div id="widget-page-id" hidden>{{ page.id }}</div>
     {%- endif %}
     {%- if not community_id %}
+    <div class="lds-ring-background hidden">
+      <div class="lds-ring"></div>
+    </div>
     <div id="page_body" class="grid-stack" {%- if render_widgets is not none %}style="display: None;"{%- endif %}>
       {%- block page_header %}
         {% include config.THEME_HEADER_TEMPLATE %}
       {%- endblock page_header %}
-      <div id="main_contents" style="height: 100%;">
+      <div id="main_contents">
     {%- endif%}
     <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
     {%- block page_body %}

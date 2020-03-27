@@ -441,6 +441,8 @@ class Action(db.Model, TimestampMixin):
         db.DateTime, nullable=False, default=datetime.now)
     """the last update date of action."""
 
+    action_is_need_agree = db.Column(db.Boolean, nullable=True, default=False)
+
 
 class FlowDefine(db.Model, TimestampMixin):
     """Define Flow."""
@@ -614,6 +616,10 @@ class WorkFlow(db.Model, TimestampMixin):
                            order_by=desc('item_type.tag'))
     )
 
+    index_tree_id = db.Column(
+        db.BigInteger, nullable=True, unique=False)
+    """Index tree id that this workflow will belong to"""
+
     flow_id = db.Column(db.Integer(), db.ForeignKey(FlowDefine.id),
                         nullable=False, unique=False)
     """the id of flow."""
@@ -730,6 +736,13 @@ class Activity(db.Model, TimestampMixin):
     activity_community_id = db.Column(db.Text, nullable=True)
     """activity community id"""
 
+    activity_confirm_term_of_use = db.Column(db.Boolean, nullable=True,
+                                             default=True)
+
+    title = db.Column(db.Text, nullable=True)
+
+    shared_user_id = db.Column(db.Integer(), nullable=True)
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
@@ -755,6 +768,9 @@ class ActivityAction(db.Model, TimestampMixin):
 
     action_comment = db.Column(db.Text, nullable=True)
     """action comment."""
+
+    action_handler = db.Column(db.Integer, nullable=True)
+    """action handler"""
 
 
 class ActivityHistory(db.Model, TimestampMixin):

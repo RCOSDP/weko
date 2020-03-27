@@ -38,8 +38,8 @@ from .models import WidgetDesignPage, WidgetDesignPageMultiLangData, \
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
     convert_data_to_design_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
-    get_elasticsearch_result_by_date, update_general_item, \
-    validate_main_widget_insertion
+    delete_widget_cache, get_elasticsearch_result_by_date, \
+    update_general_item, validate_main_widget_insertion
 
 
 class WidgetItemServices:
@@ -464,7 +464,8 @@ class WidgetDesignServices:
             if widget_setting:
                 settings = widget_setting.get('settings')
                 if settings:
-                    settings = json.loads(settings)
+                    settings = json.loads(settings) \
+                        if isinstance(settings, str) else settings
                     for item in settings:
                         widget_preview = dict()
                         widget_preview["widget_id"] = item.get("widget_id")
@@ -472,7 +473,6 @@ class WidgetDesignServices:
                         widget_preview["y"] = item.get("y")
                         widget_preview["width"] = item.get("width")
                         widget_preview["height"] = item.get("height")
-                        widget_preview["width"] = item.get("width")
                         widget_preview["id"] = item.get("id")
                         widget_preview["type"] = item.get("type")
                         widget_preview["name"] = item.get("name")
@@ -533,7 +533,8 @@ class WidgetDesignServices:
         """Extract the design from model."""
         result_settings = []
         if settings:
-            settings = json.loads(settings)
+            settings = json.loads(settings) \
+                if isinstance(settings, str) else settings
             for widget_item in settings:
                 widget = cls._get_design_base_on_current_language(
                     current_language,
@@ -586,7 +587,8 @@ class WidgetDesignServices:
         page_id = data.get('page_id')  # Save design to page rather than layout
         setting_data = data.get('settings')
         try:
-            json_data = json.loads(setting_data)
+            json_data = json.loads(setting_data) \
+                if isinstance(setting_data, str) else setting_data
             if isinstance(json_data, list):
                 for item in json_data:
                     widget_item = \
@@ -607,6 +609,8 @@ class WidgetDesignServices:
                 result["result"] = WidgetDesignPage.update_settings(
                     page_id, setting_data)
             elif repository_id and setting_data and valid:  # Main design
+                # Delete cache
+                delete_widget_cache(repository_id)
                 if WidgetDesignSetting.select_by_repository_id(repository_id):
                     result["result"] = WidgetDesignSetting.update(
                         repository_id, setting_data)
@@ -672,9 +676,12 @@ class WidgetDesignServices:
                      ]
 
             success = True
+            # Delete cache
+            delete_widget_cache(repo_id)
             for model in data:  # FIXME: May be confusing to update both here
                 if model.get('settings'):
-                    json_data = json.loads(model.get('settings'))
+                    json_data = json.loads(model.get('settings')) if isinstance(
+                        model.get('settings'), str) else model.get('settings')
                     update_data = cls.update_item_in_preview_widget_item(
                         widget_id, data_result, json_data)
                     if model.get('page_id'):  # Update page
@@ -711,7 +718,9 @@ class WidgetDesignServices:
 
                 for model in data:
                     if model.get('settings'):
-                        json_data = json.loads(model.get('settings'))
+                        json_data = json.loads(model.get('settings')) \
+                            if isinstance(model.get('settings'), str) \
+                            else model.get('settings')
                         for item in json_data:
                             if str(item.get('widget_id')) == \
                                     str(widget_item_id):
@@ -820,7 +829,9 @@ class WidgetDesignPageServices:
             widget_design = WidgetDesignSetting.select_by_repository_id(
                 repository_id)
             if widget_design:
-                settings = json.loads(widget_design.get('settings', '[]'))
+                settings = json.loads(widget_design.get('settings', '[]')) \
+                    if isinstance(widget_design.get('settings', '[]'), str) \
+                    else widget_design.get('settings')
                 if settings:
                     settings = cls._update_page_id_for_widget_design_setting(
                         settings,
@@ -859,7 +870,8 @@ class WidgetDesignPageServices:
     @classmethod
     def _update_page_id_for_widget_item_setting(cls, page_id,
                                                 widget_item):
-        settings = json.loads(widget_item.settings)
+        settings = json.loads(widget_item.settings) \
+            if isinstance(widget_item.settings, str) else widget_item.settings
         default_page_id = "0"
         if settings and settings.get('menu_show_pages'):
             menu_show_pages = settings.get('menu_show_pages')

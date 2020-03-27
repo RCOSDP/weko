@@ -579,9 +579,6 @@ def check_has_attribute_value(node):
                 if val:
                     if isinstance(val, str):
                         return True
-                    elif isinstance(val, dict):
-                        for v in val.values():
-                            return check_has_attribute_value(v)
                     else:
                         return check_has_attribute_value(val)
         return False
@@ -614,13 +611,16 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
             try:
                 if isinstance(alst, list):
                     for a in alst:
-                        result.extend(to_sort_dict(a, klst))
+                        result.append(to_sort_dict(a, klst))
                 else:
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
+                            result.append({key: val})
+                        elif isinstance(val, list) and len(
+                                val) > 0 and isinstance(val[0], str):
                             result.append({key: val})
                         else:
                             if check_has_attribute_value(val):
@@ -638,7 +638,7 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
         try:
             if isinstance(nlst, list):
                 for lst in nlst:
-                    _list.extend(set_attribute_value(lst))
+                    _list.append(set_attribute_value(lst))
             # check OrderedDict is dict and not empty
             elif isinstance(nlst, dict) and bool(nlst):
                 d = {}
@@ -648,6 +648,9 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
                                 or (key == 'nameIdentifier')):
                         # the last children level
                         d[item_name] = val
+                    elif isinstance(val, list) and len(val) > 0 and isinstance(
+                            val[0], str):
+                        d[item_name] = ', '.join(val)
                     else:
                         # parents level
                         # check if have any child

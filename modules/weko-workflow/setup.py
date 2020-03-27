@@ -104,6 +104,8 @@ setup(
             'workflow_iframe_js = weko_workflow.bundles:js_iframe',
             'workflow_oa_policy_js = weko_workflow.bundles:js_oa_policy',
             'workflow_css = weko_workflow.bundles:css_workflow',
+            'workflow_datepicker_css ='
+            ' weko_workflow.bundles:css_datepicker_workflow',
             'workflow_identifier_grant_js = '
             'weko_workflow.bundles:js_identifier_grant',
             'workflow_quit_confirmation_js = '

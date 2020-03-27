@@ -82,3 +82,15 @@ WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
 
 WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR = '#4169E1'
 """Default HTML color for widget components."""
+
+WEKO_GRIDLAYOUT_AUTO_ADJUST_THE_HEIGHT = True
+"""Auto adjust the height of the widget on Top page"""
+
+WEKO_GRIDLAYOUT_COMPRESS_LEVEL = 6
+"""Compress level"""
+
+WEKO_GRIDLAYOUT_IS_COMPRESS_WIDGET = True
+"""Enable compress widget setting response"""
+
+WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY = "widget_cache"
+"""The Widget cache key"""

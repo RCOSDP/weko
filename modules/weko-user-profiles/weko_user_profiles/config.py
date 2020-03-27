@@ -93,3 +93,78 @@ USERPROFILES_LANGUAGE_LIST = [('', _('Automatic')),
 
 USERPROFILES_LANGUAGE_DEFAULT = 'ja'
 """Settings default value of language for user profile module."""
+
+WEKO_USERPROFILES_OTHERS_INPUT_DETAIL = "Others (Input Detail)"
+"""Other input detail"""
+
+WEKO_USERPROFILES_POSITION_LIST_GENERAL = [
+    ('', ''),
+    ('Professor', _('Professor')),
+    ('Assistant Professor', _('Assistant Professor')),
+    ('Full-time Instructor', _('Full-time Instructor')),
+    ('Assistant Teacher', _('Assistant Teacher')),
+    ('Full-time Researcher', _('Full-time Researcher')),
+    (WEKO_USERPROFILES_OTHERS_INPUT_DETAIL, _('Others (Input Detail)')),
+    ('JSPS Research Fellowship for Young Scientists (PD, SPD etc.)',
+        _('JSPS Research Fellowship for Young Scientists (PD, SPD etc.)'))
+]
+"""General Position list"""
+
+WEKO_USERPROFILES_POSITION_LIST_GRADUATED_STUDENT = [
+    ('JSPS Research Fellowship for Young Scientists (DC1, DC2)',
+     _('JSPS Research Fellowship for Young Scientists (DC1, DC2)')),
+    ('Doctoral Course (Doctoral Program)',
+     _('Doctoral Course (Doctoral Program)')),
+    ('Master Course (Master Program)', _('Master Course (Master Program)')),
+    ('Fellow Researcher', _('Fellow Researcher')),
+    ('Listener', _('Listener'))
+]
+"""Graduated Student Position list"""
+
+WEKO_USERPROFILES_POSITION_LIST_STUDENT = [('Student', _('Student'))]
+"""Student Position list"""
+
+WEKO_USERPROFILES_POSITION_LIST = \
+    WEKO_USERPROFILES_POSITION_LIST_GENERAL + \
+    WEKO_USERPROFILES_POSITION_LIST_GRADUATED_STUDENT + \
+    WEKO_USERPROFILES_POSITION_LIST_STUDENT
+"""Position list"""
+
+WEKO_USERPROFILES_INSTITUTE_POSITION_LIST = [
+    ('', ''),
+    ('Member', _('Member')),
+    ('Committee member', _('Committee member')),
+    ('Director/Officer', _('Director/Officer')),
+    ('President', _('President'))
+]
+"""Institute Position list"""
+
+WEKO_USERPROFILES_ADMINISTRATOR_ROLE = 'Administrator'
+"""Administrator Role"""
+
+WEKO_USERPROFILES_GENERAL_ROLE = 'General'
+"""General Role"""
+
+WEKO_USERPROFILES_GRADUATED_STUDENT_ROLE = 'Graduated Student'
+"""Graduated Student Role"""
+
+WEKO_USERPROFILES_STUDENT_ROLE = 'Student'
+"""Student Role"""
+
+WEKO_USERPROFILES_ROLE_MAPPING_ENABLED = False
+"""Enable role mapping"""
+
+WEKO_USERPROFILES_ROLES = [
+    WEKO_USERPROFILES_ADMINISTRATOR_ROLE,
+    WEKO_USERPROFILES_GENERAL_ROLE,
+    WEKO_USERPROFILES_GRADUATED_STUDENT_ROLE,
+    WEKO_USERPROFILES_STUDENT_ROLE
+]
+"""Roles"""
+
+WEKO_USERPROFILES_ROLE_MAPPING = {}
+"""Role mapping"""
+
+WEKO_USERPROFILES_FORM_COLUMN = ["username", "timezone", "language", "email",
+                                 "email_repeat"]
+"""User profile form column"""

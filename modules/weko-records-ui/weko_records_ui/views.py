@@ -26,13 +26,11 @@ import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
-from flask_login import current_user, login_required
+from flask_login import login_required
 from flask_security import current_user
-from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
-from invenio_files_rest.views import ObjectResource, check_permission, \
-    file_downloaded
+from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -46,20 +44,23 @@ from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
+from weko_records.api import ItemLink
 from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
-from weko_workflow.api import WorkActivity
-from weko_workflow.models import ActionStatusPolicy
+from weko_workflow.api import WorkFlow
 
 from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings
 
 from .ipaddr import check_site_license_permission
-from .models import PDFCoverPageSettings
-from .permissions import check_created_id, check_file_download_permission, \
-    check_original_pdf_download_permission
+from .models import FilePermission, PDFCoverPageSettings
+from .permissions import check_content_clickable, check_created_id, \
+    check_file_download_permission, check_original_pdf_download_permission, \
+    check_permission_period, get_correct_usage_workflow, get_permission, \
+    is_open_restricted
 from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_min_price_billing_file_download, get_record_permalink
+    get_min_price_billing_file_download, get_record_permalink, \
+    get_registration_data_type
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -212,58 +213,24 @@ def get_license_icon(type):
     :param type:
     :return:
     """
-    lic_dict = {
-        'license_0': _('Creative Commons : Attribution'),
-        'license_1': _('Creative Commons : Attribution - ShareAlike'),
-        'license_2': _('Creative Commons : Attribution - NoDerivatives'),
-        'license_3': _('Creative Commons : Attribution - NonCommercial'),
-        'license_4': _('Creative Commons : Attribution - NonCommercial - '
-                       'ShareAlike'),
-        'license_5': _('Creative Commons : Attribution - NonCommercial - '
-                       'NoDerivatives'),
-    }
-
-    href_dict = {
-        'license_0': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
-        'license_1': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
-        'license_2': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
-        'license_3': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
-        'license_4': 'https://creativecommons.org/'
-                     'licenses/by-nc-sa/4.0/deed.ja',
-        'license_5': 'https://creativecommons.org/'
-                     'licenses/by-nc-nd/4.0/deed.ja',
-    }
-
-    if 'license_0' in type:
-        src = '88x31(1).png'
-        lic = lic_dict.get('license_0')
-        href = href_dict.get('license_0')
-    elif 'license_1' in type:
-        src = '88x31(2).png'
-        lic = lic_dict.get('license_1')
-        href = href_dict.get('license_1')
-    elif 'license_2' in type:
-        src = '88x31(3).png'
-        lic = lic_dict.get('license_2')
-        href = href_dict.get('license_2')
-    elif 'license_3' in type:
-        src = '88x31(4).png'
-        lic = lic_dict.get('license_3')
-        href = href_dict.get('license_3')
-    elif 'license_4' in type:
-        src = '88x31(5).png'
-        lic = lic_dict.get('license_4')
-        href = href_dict.get('license_4')
-    elif 'license_5' in type:
-        src = '88x31(6).png'
-        lic = lic_dict.get('license_5')
-        href = href_dict.get('license_5')
-    else:
-        src = ''
-        lic = ''
-        href = '#'
-
-    src = '/static/images/default/' + src if len(src) > 0 else ''
+    list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+    license_icon_location = \
+        current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_LOCATION']
+    from invenio_i18n.ext import current_i18n
+    current_lang = current_i18n.language
+    # In case of current lang is not JA, set to default
+    if current_lang != 'ja':
+        current_lang = 'default'
+    src = ''
+    lic = ''
+    href = '#'
+    for item in list_license_dict:
+        if item['value'] != "license_free" and item['value'] in type:
+            src = item['src']
+            lic = item['name']
+            href = item['href_' + current_lang]
+            break
+    src = license_icon_location + src if len(src) > 0 else ''
     lst = (src, lic, href)
 
     return lst
@@ -288,6 +255,64 @@ def check_file_permission(record, fjson):
     :return: result
     """
     return check_file_download_permission(record, fjson)
+
+
+@blueprint.app_template_filter('check_file_permission_period')
+def check_file_permission_period(record, fjson):
+    """Check File Download Permission.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    return check_permission_period(get_permission(record, fjson))
+
+
+@blueprint.app_template_filter('get_permission')
+def get_file_permission(record, fjson):
+    """Get File Download Permission.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    return get_permission(record, fjson)
+
+
+@blueprint.app_template_filter('check_content_file_clickable')
+def check_content_file_clickable(record, fjson):
+    """Check If content file is clickable.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    return check_content_clickable(record, fjson)
+
+
+@blueprint.app_template_filter('get_usage_workflow')
+def get_usage_workflow(record):
+    """Get correct usage workflow to redirect user.
+
+    :param record
+    :return: result
+    """
+    data_type = get_registration_data_type(record)
+    return get_correct_usage_workflow(data_type)
+
+
+@blueprint.app_template_filter('get_workflow_detail')
+def get_workflow_detail(workflow_id):
+    """Get workflow detail.
+
+    :param
+    :return: result
+    """
+    workflow_detail = WorkFlow().get_workflow_by_id(workflow_id)
+    if workflow_detail:
+        return workflow_detail
+    else:
+        abort(404)
 
 
 def _get_google_scholar_meta(record):
@@ -365,10 +390,20 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if not pid_ver.exists or pid_ver.is_last_child:
         abort(404)
     active_versions = list(pid_ver.children or [])
-    if active_versions:
-        active_versions.remove(pid_ver.last_child)
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
                         or [])
+    try:
+        if WekoRecord.get_record(id_=active_versions[-1].object_uuid)[
+                '_deposit']['status'] == 'draft':
+            active_versions.pop()
+        if WekoRecord.get_record(id_=all_versions[-1].object_uuid)[
+                '_deposit']['status'] == 'draft':
+            all_versions.pop()
+    except Exception:
+        pass
+    if active_versions:
+        # active_versions.remove(pid_ver.last_child)
+        active_versions.pop()
 
     check_site_license_permission()
     check_items_settings()
@@ -400,9 +435,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     detail_condition = get_search_detail_keyword('')
 
-    weko_indexer = WekoIndexer()
-    res = weko_indexer.get_item_link_info(pid=record.get("control_number"))
-    if res is not None:
+    # Add Item Reference data to Record Metadata
+    pid_without_ver = record.get("control_number").split('.')[0]
+    res = ItemLink.get_item_link_info(pid_without_ver)
+    if res:
         record["relation"] = res
     else:
         record["relation"] = {}
@@ -413,18 +449,16 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Check if user has the permission to download original pdf file
     # and the cover page setting is set and its value is enable (not disabled)
     can_download_original = check_original_pdf_download_permission(record) \
-        and pdfcoverpage_set_rec is not None \
-        and pdfcoverpage_set_rec.avail != 'disable'
+        and pdfcoverpage_set_rec and pdfcoverpage_set_rec.avail != 'disable'
 
     # Get item meta data
     record['permalink_uri'] = None
-    permalink = get_record_permalink(pid.object_uuid)
+    permalink = get_record_permalink(record)
     if not permalink:
         record['permalink_uri'] = request.url
     else:
         record['permalink_uri'] = permalink
 
-    from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
 
     datastore = RedisStore(redis.StrictRedis.from_url(
@@ -438,14 +472,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = True
 
     groups_price = get_groups_price(record)
-    billing_files_permission = None
-    billing_files_prices = None
-    if groups_price:
-        billing_files_permission = \
-            get_billing_file_download_permission(groups_price)
-        billing_files_prices = \
-            get_min_price_billing_file_download(groups_price,
-                                                billing_files_permission)
+    billing_files_permission = get_billing_file_download_permission(
+        groups_price) if groups_price else None
+    billing_files_prices = get_min_price_billing_file_download(
+        groups_price,
+        billing_files_permission) if groups_price else None
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
@@ -463,7 +494,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail = ObjectVersion.get_by_bucket(
             record.get('_buckets').get('deposit')).\
             filter_by(is_thumbnail=True).all()
-
+    files = []
+    for f in record.files:
+        if check_file_permission(record, f.data) or is_open_restricted(f.data):
+            files.append(f)
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
@@ -474,6 +508,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         active_versions=active_versions,
         all_versions=all_versions,
         record=record,
+        files=files,
         display_stats=display_stats,
         filename=filename,
         can_download_original_pdf=can_download_original,
@@ -547,8 +582,9 @@ def parent_view_method(pid_value=0):
     if p_pid:
         pid_version = PIDVersioning(parent=p_pid)
         if pid_version.last_child:
-            return redirect(url_for('invenio_records_ui.recid',
-                                    pid_value=pid_version.last_child.pid_value))
+            return redirect(
+                url_for('invenio_records_ui.recid',
+                        pid_value=pid_version.last_child.pid_value))
     return abort(404)
 
 
@@ -595,7 +631,6 @@ def set_pdfcoverpage_header():
 def file_version_update():
     """Bulk delete items and index trees."""
     # Only allow authorised users to update object version
-    from invenio_files_rest.permissions import has_update_version_role
     if has_update_version_role(current_user):
 
         bucket_id = request.values.get('bucket_id')
@@ -603,10 +638,9 @@ def file_version_update():
         version_id = request.values.get('version_id')
         is_show = request.values.get('is_show')
         if not bucket_id and not key and not version_id:
-            from invenio_files_rest.models import ObjectVersion
             object_version = ObjectVersion.get(bucket=bucket_id, key=key,
                                                version_id=version_id)
-            if object_version is not None:
+            if object_version:
                 # Do update the path on record
                 object_version.is_show = True if is_show == '1' else False
                 db.session.commit()
@@ -640,7 +674,6 @@ def citation(record, pid, style=None, ln=None):
 def soft_delete(recid):
     """Soft delete item."""
     try:
-        from invenio_files_rest.permissions import has_update_version_role
         if not has_update_version_role(current_user):
             abort(403)
         soft_delete_imp(recid)
@@ -655,11 +688,31 @@ def soft_delete(recid):
 def restore(recid):
     """Restore item."""
     try:
-        from invenio_files_rest.permissions import has_update_version_role
         if not has_update_version_role(current_user):
             abort(403)
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
     except Exception as ex:
         print(str(ex))
+        abort(500)
+
+
+@blueprint.route("/records/permission/<recid>", methods=['POST'])
+@login_required
+def init_permission(recid):
+    """Create file permission in database."""
+    user_id = current_user.get_id()
+    data = request.get_json()
+    file_name = data.get('file_name')
+    activity_id = data.get('activity_id')
+    try:
+        permission = FilePermission.init_file_permission(user_id, recid,
+                                                         file_name,
+                                                         activity_id)
+        if permission:
+            return make_response(
+                'File permission: ' + file_name + 'of record: ' + recid
+                + ' CREATED', 200)
+    except Exception as ex:
+        current_app.logger.debug(ex)
         abort(500)

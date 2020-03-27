@@ -1126,3 +1126,35 @@ msgstr "言語が登録言語から削除されました。"
 #: weko_admin/template/weko_admin/admin/site_info.html:56
 msgid "Site info is saved successfully."
 msgstr "サイト情報が正常に保存されました。"
+
+#: weko_admin/template/weko_admin/admin/site_info.html:59
+msgid "Log in Instructions"
+msgstr "ログインの注意書き"
+
+#: weko_admin/template/weko_admin/admin/site_info.html:60
+msgid "Add Instructions"
+msgstr "注意書きの追加"
+
+#: weko_admin/template/weko_admin/admin/site_info.html:61
+msgid "The same language is set for many instructions."
+msgstr " 同一言語を複数の注意書きに設定されています。"
+
+#: weko_admin/template/weko_admin/admin/site_info.html:61
+msgid "Maximum length of instruction is 200 characters. "
+msgstr "注意書きの字数上限は200字です。"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Index Tree/Facet Display Setting"
+msgstr "インデックスツリー／ファセット　表示設定"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Index Tree"
+msgstr "インデックスツリー"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Facet"
+msgstr "ファセット"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Display"
+msgstr "表示する"

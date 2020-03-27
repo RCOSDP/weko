@@ -188,3 +188,12 @@ repository
 <https://raw.githubusercontent.com/eprints/eprints/3.3/lib/static/oai2.xsl>`_
 (GPLv3 licensed).
 """
+
+
+OAISERVER_SYSTEM_IDENTIFIER_MAPPING = {
+    "system_identifier.@value":
+        "subitem_systemidt_identifier",
+    "system_identifier.@attributes.identifierType":
+        "subitem_systemidt_identifier_type",
+}
+"""Config used to specify system identifier mapping of jpcoar"""

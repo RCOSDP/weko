@@ -74,6 +74,9 @@ SEARCH_UI_JSTEMPLATE_SELECT_BOX = 'templates/weko_search_ui/selectbox.html'
 
 SEARCH_UI_JSTEMPLATE_SORT_ORDER = 'templates/weko_search_ui/togglebutton.html'
 
+WEKO_ITEM_ADMIN_IMPORT_TEMPLATE = 'weko_search_ui/admin/import.html'
+"""import template for the import page."""
+
 INDEX_IMG = 'indextree/36466818-image.jpg'
 
 # Opensearch description
@@ -104,29 +107,65 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
 
 RECORDS_REST_ENDPOINTS['recid']['record_class'] = 'weko_records.api:WekoRecord'
 RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
-    'application/vnd.citationstyles.csl+json': ('weko_records.serializers:csl_v1_response'),
+    'application/vnd.citationstyles.csl+json': (
+        'weko_records.serializers:csl_v1_response'),
     'text/x-bibliography': ('weko_records.serializers:citeproc_v1_response')
 }
 
 # RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all
 
-INDEXER_DEFAULT_INDEX = '{}-weko-item-v1.0.0'.format(index_prefix)  # Use direct index
+INDEXER_DEFAULT_INDEX = '{}-weko-item-v1.0.0'.format(
+    index_prefix)  # Use direct index
 INDEXER_DEFAULT_DOCTYPE = 'item-v1.0.0'
 INDEXER_DEFAULT_DOC_TYPE = 'item-v1.0.0'
 INDEXER_FILE_DOC_TYPE = 'content'
 
 SEARCH_UI_SEARCH_INDEX = '{}-weko'.format(index_prefix)
 
-
 # set item type aggs
 RECORDS_REST_FACETS = dict()
+
+WEKO_FACETED_SEARCH_MAPPING = {
+    'accessRights': 'accessRights',
+    'language': 'language',
+    'distributor': 'contributor.contributorName',
+    'dataType': 'description.value'
+}
+
 RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
     aggs=dict(
-        itemtypes=dict(terms=dict(
-            field='item_type_id')),
+        accessRights=dict(terms=dict(
+            field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])),
+        language=dict(terms=dict(
+            field=WEKO_FACETED_SEARCH_MAPPING['language'])),
+        distributor=dict(
+            filter=dict(
+                term={"contributor.@attributes.contributorType": "Distributor"}
+            ),
+            aggs=dict(
+                distributor=dict(
+                    terms=dict(
+                        field=WEKO_FACETED_SEARCH_MAPPING['distributor']))
+            )
+        ),
+        dataType=dict(
+            filter=dict(
+                term={"description.descriptionType": "Other"}
+            ),
+            aggs=dict(
+                dataType=dict(
+                    terms=dict(
+                        field=WEKO_FACETED_SEARCH_MAPPING['dataType']))
+            )
+        )
+    ),
+    post_filters=dict(
+        accessRights=terms_filter(WEKO_FACETED_SEARCH_MAPPING['accessRights']),
+        language=terms_filter(WEKO_FACETED_SEARCH_MAPPING['language']),
+        distributor=terms_filter(WEKO_FACETED_SEARCH_MAPPING['distributor']),
+        dataType=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType']),
     )
 )
-
 
 RECORDS_REST_SORT_OPTIONS = dict()
 RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
@@ -196,7 +235,6 @@ RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
     # add 20181121 end
 )
 
-
 WEKO_SEARCH_REST_ENDPOINTS = dict(
     recid=dict(
         pid_type='recid',
@@ -241,7 +279,8 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         }}),
         "id": ("", {
             "id_attr": {
-                "identifier": ("relation.relatedIdentifier", "identifierType=*"),
+                "identifier": (
+                    "relation.relatedIdentifier", "identifierType=*"),
                 "URI": ("identifier", "identifierType=*"),
                 "fullTextURL": ("file.URI", "objectType=*"),
                 "selfDOI": ("identifierRegistration", "identifierType=*"),
@@ -254,7 +293,8 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                 "pmid": ("relation.relatedIdentifier", "identifierType=PMID"),
                 "doi": ("relation.relatedIdentifier", "identifierType=DOI"),
                 "NAID": ("relation.relatedIdentifier", "identifierType=NAID"),
-                "ichushi": ("relation.relatedIdentifier", "identifierType=ICHUSHI")
+                "ichushi": (
+                    "relation.relatedIdentifier", "identifierType=ICHUSHI")
             }})
     },
     "string": {
@@ -332,3 +372,50 @@ WEKO_SEARCH_TYPE_DICT = {
 WEKO_SYS_USER = 'System Administrator'
 
 WEKO_REPO_USER = 'Repository Administrator'
+
+WEKO_FLOW_DEFINE = {'flow_name': 'Registration Flow'}
+
+WEKO_FLOW_DEFINE_LIST_ACTION = [
+    {
+        "id": "1",
+        "name": "Start",
+        "date": "2019-12-03",
+        "version": "1.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "3",
+        "name": "Item Registration",
+        "date": "2019-12-3",
+        "version": "1.0.1",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    },
+    {
+        "id": "2",
+        "name": "End",
+        "date": "2019-12-03",
+        "version": "1.0.0",
+        "user": "0",
+        "user_deny": False,
+        "role": "0",
+        "role_deny": False,
+        "action": "ADD"
+    }
+]
+
+WEKO_IMPORT_CHECK_LIST_NAME = [
+    'No', 'Item Type', 'Item Id', 'Title', 'Check result'
+]
+
+WEKO_IMPORT_LIST_NAME = [
+    'No', 'Start Date', 'End Date', 'Item Id', 'Action', 'Work Flow Status'
+]
+WEKO_ADMIN_LIFETIME_DEFAULT = 1800

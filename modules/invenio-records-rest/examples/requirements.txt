@@ -1,0 +1,2 @@
+invenio-db>=1.0.0a10
+invenio-indexer>=1.0.0a6

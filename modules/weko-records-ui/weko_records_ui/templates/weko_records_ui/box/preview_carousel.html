@@ -26,12 +26,12 @@
       <a class="preview-panel-toggle">
         {{_('Preview')}}
         <span class="pull-right preview-arrow-right"><i class="fa fa-chevron-right"></i></span>
-        <span class="pull-right preview-arrow-down hidden">
+        <span class="pull-right preview-arrow-down">
           <i class="fa fa-chevron-down"></i>
         </span>
       </a>
     </div>
-    <div class="hidden preview-panel-body">
+    <div class="preview-panel-body">
       {%- if nav and (files | length > 1) %}
         <div class="weko-carousel-navbar text-center">
           <a class="pull-left carousel-control" href="#{{ el_id }}" role="button" data-slide-to="0">

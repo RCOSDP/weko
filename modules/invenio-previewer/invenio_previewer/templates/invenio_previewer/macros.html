@@ -1,0 +1,67 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2016 CERN.
+#
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+-#}
+
+{%- macro preview_file(preview_endpoint, pid, filename, id='preview-iframe', width='100%', height='400' ) %}
+  <iframe
+   class="preview-iframe"
+   id="{{id}}"
+   width="{{width}}"
+   height="{{height}}"
+   src="{{ url_for(preview_endpoint, pid_value=pid.pid_value, filename=filename) }}"></iframe>
+{%- endmacro %}
+
+{%- macro file_list(files) %}
+  <table class="table table-striped">
+    <thead>
+      <tr class="">
+        <th>{{_('Name')}}</th>
+        <th>{{_('Date')}}</th>
+        <th>{{_('Size')}}</th>
+       <th>{{_('Action')}}</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for file in files %}
+      <tr class="">
+        <td>
+          <a class="forcewrap" href="{{ file.uri }}">
+            {{ file.key }}
+          </a>
+        </td>
+        <td class="nowrap">{{ file.date }}</td>
+        <td class="nowrap">{{ file.size }}</td>
+        <td class="nowrap">
+          <span class="pull-right">
+            <a class="btn btn-xs btn-default" href="{{ file.uri }}">
+              <i class="fa fa-download"></i>
+              {{_('Download')}}
+            </a>
+          </span>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{%- endmacro %}

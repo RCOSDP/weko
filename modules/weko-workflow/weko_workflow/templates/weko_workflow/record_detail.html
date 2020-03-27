@@ -45,7 +45,12 @@
               </tr>
               </thead>
               <tbody>
+              {%- set preview_count = {'value': 0} -%}
               {%- for file in files|sort(attribute='key') -%}
+               {%- if file.displaytype == 'preview' -%}
+                 {% if preview_count.update({'value': preview_count.value + 1}) %}
+                 {% endif %}
+               {%- endif -%}
               {% if file.is_thumbnail == False %}
                 {%- set img = file.mimetype | get_image_src -%}
                 {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
@@ -90,10 +95,11 @@
               {%- endif -%}
               <!-- demo -->
               {%- endfor -%}
+              <input type='hidden' id='preview_count' value='{{preview_count.value}}' />
               </tbody>
             </table>
             {%- endif %}
-              {{ output_item_detail(record, files_thumbnail, pid) }}
+              {{ output_item_detail(record, files_thumbnail, pid, items_show_list ) }}
             {%- if 'main_entry_personal_name' in record %}
             <p class="record_authors">
               <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>

@@ -20,25 +20,22 @@
 
 """Blueprint for weko-search-ui."""
 
-import json
-import os
-import sys
+import time
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, abort, current_app, jsonify, make_response, \
-    redirect, render_template, request, url_for
+from flask import Blueprint, current_app, jsonify, render_template, request
+from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.models import AdminSettings
-from weko_gridlayout.models import WidgetDesignPage
 from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
+from weko_records.api import ItemLink
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_theme.utils import get_design_layout
 
@@ -46,7 +43,6 @@ from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
 from .config import WEKO_SEARCH_TYPE_DICT
-from .query import item_path_search_factory
 from .utils import check_permission, get_feedback_mail_list, \
     get_journal_info, parse_feedback_mail_data
 
@@ -96,7 +92,8 @@ def search():
 
     # add at 1206 for search management
     sort_options, display_number = SearchSetting.get_results_setting()
-    disply_setting = dict(size=display_number)
+    ts = time.time()
+    disply_setting = dict(size=display_number, timestamp=ts)
 
     detail_condition = get_search_detail_keyword('')
 
@@ -106,13 +103,22 @@ def search():
 
     height = style.height if style else None
     if 'item_link' in get_args:
-        activity_id = request.args.get('item_link')
         from weko_workflow.api import WorkActivity
+
+        activity_id = request.args.get('item_link')
         workflow_activity = WorkActivity()
         activity_detail, item, steps, action_id, cur_step, temporary_comment,\
             approval_record, step_item_login_url, histories, res_check, pid, \
             community_id, ctx = workflow_activity.get_activity_index_search(
                 activity_id=activity_id)
+
+        # Get ex-Item Links
+        recid = item['pid'].get('value') if item.get('pid') else None
+        if recid:
+            pid_without_ver = recid.split('.')[0]
+            item_link = ItemLink.get_item_link_info(pid_without_ver)
+            ctx['item_link'] = item_link
+
         return render_template(
             'weko_workflow/activity_detail.html',
             page=page,
@@ -134,6 +140,7 @@ def search():
             height=height,
             allow_item_exporting=export_settings.allow_item_exporting,
             is_permission=check_permission(),
+            is_login=bool(current_user.get_id()),
             **ctx)
     else:
         journal_info = None
@@ -157,13 +164,12 @@ def search():
                 if index_info:
                     index_display_format = index_info.display_format
                     if index_display_format == '2':
-                        disply_setting = dict(size=100)
+                        disply_setting = dict(size=100, timestamp=ts)
 
         if hasattr(current_i18n, 'language'):
             index_link_list = get_index_link_list(current_i18n.language)
         else:
             index_link_list = get_index_link_list()
-
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
             page=page,
@@ -181,6 +187,7 @@ def search():
             index_display_format=index_display_format,
             allow_item_exporting=export_settings.allow_item_exporting,
             is_permission=check_permission(),
+            is_login=bool(current_user.get_id()),
             **ctx)
 
 
@@ -246,3 +253,9 @@ def search_feedback_mail_list():
     if data:
         result = parse_feedback_mail_data(data)
     return jsonify(result)
+
+
+@blueprint.route("/get_child_list/<int:index_id>", methods=['GET'])
+def get_child_list(index_id=0):
+    """Get child id list to index list display."""
+    return jsonify(Indexes.get_child_id_list(index_id))

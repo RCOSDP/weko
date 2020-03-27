@@ -1,0 +1,254 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
+
+{%- block css %}
+  {{ super() }}
+{%- endblock css %}
+
+{%- block javascript -%}
+  {{ super() }}
+  {%- assets "workflow_activity_list_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript -%}
+
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('community') }}
+{%- endblock page_body_tabs %}
+
+{%- block page_body_main %}
+<!--<div class="row">-->
+  <!--<div class="col-sm-12">-->
+    <!--<table class="table table-striped table-bordered">-->
+    <!--<thead>-->
+      <!--<tr>-->
+        <!--<th>{{ _('No.') }}</th>-->
+        <!--<th>{{ _('Title') }}</th>-->
+        <!--<th>{{ _('Description') }}</th>-->
+        <!--<th></th>-->
+      <!--</tr>-->
+    <!--</thead>-->
+    <!--<tbody>-->
+    <!--{%- set args = request.args.copy().to_dict() -%}-->
+    <!--<form method="GET" id="search_form" role="form">-->
+      <!--{{ form.p(class_="form-control " + form.p.short_name, placeholder='Search communities', type='text') }}-->
+    <!--</form>-->
+    <!--<br />-->
+    <!--<div class="form-inline">-->
+      <!--<div class="form-group">-->
+        <!--<p class="help-block hidden-xs">-->
+          <!--{{ _('Showing %(x_from)d to %(x_to)d out of %(x_total)d communities.', x_from=r_from, x_to=r_to, x_total=r_total) }}-->
+        <!--</p>-->
+      <!--</div>-->
+      <!--<div class="form-group pull-right">-->
+        <!--<div class="btn-group">-->
+          <!--<a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">-->
+            <!--<i class="glyphicon glyphicon-random"></i> {{ _('Sort by') }}-->
+            <!--<span class="caret"></span>-->
+          <!--</a>-->
+          <!--<ul class="dropdown-menu">-->
+          <!--{%- for opt in ['title', 'ranking'] -%}-->
+            <!--{%- set new_args = args.copy() -%}-->
+            <!--{%- do new_args.update({'so': opt}) -%}-->
+            <!--<li>-->
+              <!--<a href="{{ url_for('invenio_communities.index', **new_args) }}" class="active">-->
+                <!--<i class="pull-right icon {{ 'glyphicon glyphicon-ok' if args.get('so', 'ranking')==opt }}"></i>-->
+                <!--{{ opt }}-->
+              <!--</a>-->
+            <!--</li>-->
+          <!--{%- endfor -%}-->
+          <!--</ul>-->
+        <!--</div>-->
+      <!--</div>-->
+    <!--</div>-->
+    <!--<br>-->
+    <!--{% if communities %}-->
+      <!--{%- for row in communities|batch(2) %}-->
+        <!--{%- for obj in row %}-->
+        <!--<tr class="">-->
+          <!--<th scope="row">{{loop.index}}</th>-->
+          <!--<td>{{ obj.title }}</td>-->
+          <!--<td>{{ obj.description }}</td>-->
+          <!--<td>-->
+            <!--<div class="">-->
+              <!--<div class="form-group">-->
+                <!--<div class="dropdown">-->
+                    <!--<button type="button" class="btn dropdown-toggle" id="dropdownMenu_View" data-toggle="dropdown">{{ _('View') }}-->
+                        <!--<span class="caret"></span>-->
+                    <!--</button>-->
+                    <!--<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu_View">-->
+                        <!--<li role="presentation">-->
+                            <!--<a role="menuitem" tabindex="-1" href="{{url_for('.view', community_id=obj.id, view='basic')}}">{{ _('Basic') }}</a>-->
+                        <!--</li>-->
+                        <!--<li role="presentation">-->
+                            <!--<a role="menuitem" tabindex="-1" href="{{url_for('.view', community_id=obj.id, view='weko')}}">{{ _('Weko') }}</a>-->
+                        <!--</li>-->
+                    <!--</ul>-->
+                <!--</div>-->
+              <!--</div>-->
+            <!--</div>-->
+          <!--</td>-->
+        <!--</tr>-->
+        <!--{%- endfor %}-->
+      <!--{%- endfor %}-->
+    <!--{% else %}-->
+        <!--<p class="text-muted text-center">-->
+          <!--<strong>{{ _('Your search did not match any communities. Please try again.') }}</strong>-->
+        <!--</p>-->
+    <!--{% endif %}-->
+    <!--</tbody>-->
+    <!--</table>-->
+  <!--</div>-->
+<!--</div>-->
+
+<div class="communities">
+  <div class="row">
+    <div class="col-xs-12 col-sm-12 col-md-12">
+        <h1>
+          <i class="fa fa-group"></i>
+          {{ _("Communities") }} <small>{{ _("created and curated by %(x_name)s users", x_name=config.THEME_SITENAME) }}</small>
+        </h1>
+
+    </div>
+    <div class="col-sm-8 col-md-8">
+      {%- set args = request.args.copy().to_dict() -%}
+      <form method="GET" id="search_form" role="form">
+        {{ form.p(class_="form-control " + form.p.short_name, placeholder='Search communities', type='text') }}
+      </form>
+        <br />
+        <div class="form-inline">
+          <div class="form-group">
+            <p class="help-block hidden-xs">
+              {{ _('Showing %(x_from)d to %(x_to)d out of %(x_total)d communities.', x_from=r_from, x_to=r_to, x_total=r_total) }}
+            </p>
+          </div>
+          <div class="form-group pull-right">
+            <div class="btn-group">
+              <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+                <i class="glyphicon glyphicon-random"></i> {{ _('Sort by') }}
+                <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+              {%- for opt in ['title', 'ranking'] -%}
+                {%- set new_args = args.copy() -%}
+                {%- do new_args.update({'so': opt}) -%}
+                <li>
+                  <a href="{{ url_for('invenio_communities.community_list', **new_args) }}" class="active">
+                    <i class="pull-right icon {{ 'glyphicon glyphicon-ok' if args.get('so', 'ranking')==opt }}"></i>
+                    {{ opt }}
+                  </a>
+                </li>
+              {%- endfor -%}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% if communities %}
+        {% if featured_community and not request.args.get('p') and pagination.page == 1 %}
+        <br />
+        <div class="wrapper">
+          <div class="ribbon-wrapper-green">
+            <div class="ribbon-green">{{ _("Featured") }}</div>
+          </div>
+          <a href="{{url_for('.detail', community_id=featured_community.id)}}">
+          <h2>{{ featured_community.title }}</h2>
+          </a>
+          <div>
+            {{ featured_community.description|striptags }}
+          </div>
+        </div>
+        {% endif %}
+        <br />
+        {%- for row in communities|batch(2) %}
+          <div class="row">
+            {%- for obj in row %}
+              {% if obj %}
+                <div class="col-sm-12 col-md-6">
+                  <div class="well">
+                    <h4>
+                      <div class="pull-right">
+                        <div class="form-group">
+                          <a href="{{url_for('.view', community_id=obj.id, view='basic')}}" class="btn btn-info">{{ _('Basic') }}</a>
+                          <a href="{{url_for('.view', community_id=obj.id, view='weko')}}" class="btn btn-info">{{ _('Weko') }}</a>
+                        </div>
+                      </div>
+                      {{ obj.title }}
+                    </h4><br />
+                    <p>{{ obj.description|striptags|truncate }}</p>
+                    <small class="text-muted">Curated by: {{ obj.owner.profile.username }}</small>
+                  </div>
+                </div>
+              {% endif %}
+            {%- endfor %}
+          </div>
+        {%- endfor %}
+        {% if pagination.total_count > pagination.per_page %}
+          <div align="center">
+            <ul class="pagination">
+              <li{{ ' class="disabled"'|safe if not pagination.has_prev }}>
+                {%- set new_args = args.copy() -%}
+                {%- do new_args.update({'page': 1}) -%}
+                <a title="first" href="{{ url_for('.community_list', **new_args) }}">&laquo;</a>
+              </li>
+              <li{{ ' class="disabled"'|safe if not pagination.has_prev }}>
+                {%- do args.update({'page': pagination.page-1 }) -%}
+                <a title="prev" href="{{ url_for('.community_list', **args) }}">&lsaquo;</a>
+              </li>
+              {%- for page_p in pagination.iter_pages() %}
+                {%- if page_p -%}
+                  {%- set new_args = args.copy() -%}
+                  {%- do new_args.update({'page': page_p}) -%}
+                  <li{{ ' class="active"'|safe if page_p == pagination.page }}>
+                    <a href="{{ url_for('.community_list', **new_args) }}">{{ page_p }}</a>
+                  </li>
+                {%- else -%}
+                  <li class="disabled"><a href="#">...</a></li>
+                {%- endif -%}
+              {%- endfor -%}
+              <li{{ ' class="disabled"'|safe if not pagination.has_next }}>
+                {%- set new_args = args.copy() -%}
+                {%- do new_args.update({'page': pagination.page+1}) -%}
+                <a href="{{ url_for('.community_list', **new_args) }}">&rsaquo;</a>
+              </li>
+              <li{{ ' class="disabled"'|safe if not pagination.has_next }}>
+                {%- set new_args = args.copy() -%}
+                {%- do new_args.update({'page': pagination.pages }) -%}
+                <a title="last" href="{{ url_for('.community_list', **new_args) }}">&raquo;</a>
+              </li>
+            </ul>
+          </div>
+        {% endif %}
+      {% else %}
+        <p class="text-muted text-center">
+          <strong>{{ _('Your search did not match any communities. Please try again.') }}</strong>
+        </p>
+      {% endif %}
+    </div> <!-- /.col-sm-8 col-md-8 -->
+    <div class="col-sm-4 col-md-4">
+      {% include "invenio_communities/mycommunities.html" %}
+    </div>
+  </div>
+</div>
+
+
+{%- endblock page_body_main %}

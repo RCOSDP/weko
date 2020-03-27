@@ -417,3 +417,7 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
+msgid "Add Filter"
+msgstr ""
+
+

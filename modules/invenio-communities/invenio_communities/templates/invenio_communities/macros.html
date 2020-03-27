@@ -1,0 +1,67 @@
+{#
+# This file is part of Invenio.
+# Copyright (C) 2016 CERN.
+#
+# Invenio is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+#}
+{% macro community_header(community, link=True, subtitle=None) %}
+<div id="community_header" class="container-fluid community-default" hidden="true">
+  <div class="{{ community.id }}-header">
+    <div class="row">
+      {%- if community.community_header %}
+        <div id="wysiwyg_header" class="col-md-12">{{ community.community_header|safe }}</div>
+      {% else %}
+        <div class="col-md-12">
+          <h1>
+            {%- if link %}
+            <a href="{{ url_for('invenio_communities.detail', community_id=community.id) }}" style="color: #ffffff;">{{community.title}}</a>
+            {% else %}
+            {{community.title}}
+            {%- endif %}
+            {%- if subtitle %}
+            <small>{{subtitle}}</small>
+            {%- endif %}
+          </h1>
+        </div>
+      {%- endif %}
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro community_footer(community, link=True, subtitle=None) %}
+<div id="community_footer" class="container-fluid community-default" hidden="true">
+  <div class="{{ community.id }}-footer">
+    {%- if community.community_footer %}
+    <div class="row">
+      <div id="wysiwyg_footer" class="col-md-12">{{ community.community_footer|safe }}</div>
+    </div>
+    {% else %}
+    <div class="row">
+      <div class="col-xs-12"><hr /></div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12 col-sm-12 text-center-xs" style="color: #ffffff;">
+        {% trans link="http://inveniosoftware.org" %}<p>Powered by <a href="{{link}}" style="color: #ffffff;">CERN Data Centre & Invenio</a><p>{% endtrans %}
+      </div>
+    </div>
+    {%- endif %}
+  </div>
+</div>
+{% endmacro %}

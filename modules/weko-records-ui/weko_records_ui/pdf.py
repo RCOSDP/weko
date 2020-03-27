@@ -36,7 +36,7 @@ from weko_records.serializers.feed import WekoFeedGenerator
 from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 
 from .models import PDFCoverPageSettings
-from .views import blueprint
+from .utils import get_license_pdf
 
 
 """ Function counting numbers of full-width character and half-width character\
@@ -193,7 +193,14 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         item_metadata_json['lang'] = 'English'
     elif item_metadata_json['lang'] == 'ja':
         item_metadata_json['lang'] = 'Japanese'
-
+    try:
+        lang_field = item_map['language.@value'].split('.')
+        if item_metadata_json[lang_field[0]][lang_field[1]] == 'eng':
+            item_metadata_json['lang'] = 'English'
+        elif item_metadata_json[lang_field[0]][lang_field[1]] == 'jpn':
+            item_metadata_json['lang'] = 'Japanese'
+    except BaseException:
+        pass
     try:
         lang = item_metadata_json.get('lang')
     except (KeyError, IndexError):
@@ -281,7 +288,6 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     for key in metadata_dict:
         if metadata_dict[key] is None:
             metadata_dict[key] = ''
-
     metadata_list = [
         "{}: {}".format(lang_data["Metadata"]["LANG"], metadata_dict["lang"]),
         "{}: {}".format(
@@ -367,97 +373,13 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         license = item_metadata_json[_file_item_id][0].get('licensetype')
     except (KeyError, IndexError, TypeError):
         license = None
-    if license == 'license_free':  # Free writing
-        txt = item_metadata_json[_file_item_id][0].get('licensefree')
-        if txt is None:
-            txt = ''
-        pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
-    elif license == 'license_0':  # Attribution
-        txt = lang_data["License"]["LICENSE_0"]
-        src = blueprint.root_path + "/static/images/creative_commons/by.png"
-        lnk = "http://creativecommons.org/licenses/by/4.0/"
-        pdf.multi_cell(footer_w, footer_h, txt, 0, 1, 'L', False)
-        pdf.ln(h=2)
-        pdf.image(
-            src,
-            x=cc_logo_xposition,
-            y=None,
-            w=0,
-            h=0,
-            type='',
-            link=lnk)
-    elif license == 'license_1':  # Attribution-ShareAlike
-        txt = lang_data["License"]["LICENSE_1"]
-        src = blueprint.root_path + "/static/images/creative_commons/by-sa.png"
-        lnk = "http://creativecommons.org/licenses/by-sa/4.0/"
-        pdf.multi_cell(footer_w, footer_h, txt, 0, 1, 'L', False)
-        pdf.ln(h=2)
-        pdf.image(
-            src,
-            x=cc_logo_xposition,
-            y=None,
-            w=0,
-            h=0,
-            type='',
-            link=lnk)
-    elif license == 'license_2':  # Attribution-NoDerivatives
-        txt = lang_data["License"]["LICENSE_2"]
-        src = blueprint.root_path + "/static/images/creative_commons/by-nd.png"
-        lnk = "http://creativecommons.org/licenses/by-nd/4.0/"
-        pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
-        pdf.ln(h=2)
-        pdf.image(
-            src,
-            x=cc_logo_xposition,
-            y=None,
-            w=0,
-            h=0,
-            type='',
-            link=lnk)
-    elif license == 'license_3':  # Attribution-NonCommercial
-        txt = lang_data["License"]["LICENSE_3"]
-        src = blueprint.root_path + "/static/images/creative_commons/by-nc.png"
-        lnk = "http://creativecommons.org/licenses/by-nc/4.0/"
-        pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
-        pdf.ln(h=2)
-        pdf.image(
-            src,
-            x=cc_logo_xposition,
-            y=None,
-            w=0,
-            h=0,
-            type='',
-            link=lnk)
-    elif license == 'license_4':  # Attribution-NonCommercial-ShareAlike
-        txt = lang_data["License"]["LICENSE_4"]
-        src = blueprint.root_path + "/static/images/creative_commons/\
-            by-nc-sa.png"
-        lnk = "http://creativecommons.org/licenses/by-nc-sa/4.0/"
-        pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
-        pdf.ln(h=2)
-        pdf.image(
-            src,
-            x=cc_logo_xposition,
-            y=None,
-            w=0,
-            h=0,
-            type='',
-            link=lnk)
-    elif license == 'license_5':  # Attribution-NonCommercial-NoDerivatives
-        txt = lang_data["License"]["LICENSE_5"]
-        src = blueprint.root_path + "/static/images/creative_commons/\
-            by-nc-nd.png"
-        lnk = "http://creativecommons.org/licenses/by-nc-nd/4.0/"
-        pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
-        pdf.ln(h=2)
-        pdf.image(
-            src,
-            x=cc_logo_xposition,
-            y=None,
-            w=0,
-            h=0,
-            type='',
-            link=lnk)
+
+    list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+    for item in list_license_dict:
+        if item['value'] == license:
+            get_license_pdf(license, item_metadata_json, pdf, _file_item_id,
+                            footer_w, footer_h, cc_logo_xposition, item)
+            break
     else:
         pdf.multi_cell(footer_w, footer_h, '', 0, 'L', False)
 

@@ -47,7 +47,7 @@ services:
       - INVENIO_ROLE_REPOSITORY=Repository Administrator
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
-      - FLASK_DEBUG=1
+      - FLASK_DEBUG=0
       - SEARCH_INDEX_PREFIX=tenant1
     volumes:
       - weko3_data:/var/tmp
@@ -55,7 +55,19 @@ services:
       - type: bind
         source: .
         target: /code
+      - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
+      - /code/modules/invenio-s3/invenio_s3.egg-info
+      - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
       - /code/modules/invenio-oaiserver/invenio_oaiserver.egg-info
+      - /code/modules/invenio-records/invenio_records.egg-info
+      - /code/modules/invenio-previewer/invenio_previewer.egg-info
+      - /code/modules/invenio-stats/invenio_stats.egg-info
+      - /code/modules/invenio-records-rest/invenio_records_rest.egg-info
+      - /code/modules/invenio-communities/invenio_communities.egg-info
+      - /code/modules/invenio-mail/invenio_mail.egg-info
+      - /code/modules/invenio-deposit/invenio_deposit.egg-info
+      - /code/modules/invenio-resourcesyncserver/invenio_resourcesyncserver.egg-info
+      - /code/modules/invenio-resourcesyncclient/invenio_resourcesyncclient.egg-info
       - /code/modules/weko-theme/weko_theme.egg-info
       - /code/modules/weko-itemtypes-ui/weko_itemtypes_ui.egg-info
       - /code/modules/weko-items-ui/weko_items_ui.egg-info
@@ -89,7 +101,7 @@ services:
 
   postgresql:
     restart: "always"
-    image: postgres
+    image: postgres:12
     environment:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
@@ -158,7 +170,7 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     links:
       - elasticsearch
-      
+
 volumes:
   weko3_data:
   static_data:

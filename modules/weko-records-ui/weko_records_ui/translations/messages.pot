@@ -562,3 +562,535 @@ msgstr ""
 #: weko_records_ui/templates/weko_records_ui/box/head.html:6
 msgid "of this record available."
 msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "User Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Corresponding Usage Application ID"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Annual Report"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Corresponding Output ID"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Data Type"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Content File"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliated Institution"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "User Information"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "FullName"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Usage location"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Affiliation"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Mail Address"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Phone Number"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Research Title"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Research Plan"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Affiliation"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Mail Address"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Item Title"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Position(Other)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliation"
+msgstr ""
+
+msgid "PubDate"
+msgstr ""
+
+msgid "life"
+msgstr ""
+
+msgid "accumulation"
+msgstr ""
+
+msgid "combinational_analysis"
+msgstr ""
+
+msgid "perfectures"
+msgstr ""
+
+msgid "location_information"
+msgstr ""
+
+msgid "Output Type"
+msgstr ""
+
+msgid "Published Media Name"
+msgstr ""
+
+msgid "Published URL (DOI)"
+msgstr ""
+
+msgid "Published Date"
+msgstr ""
+
+msgid "Field"
+msgstr ""
+
+msgid "Member"
+msgstr ""
+
+msgid "Dataset Usage"
+msgstr ""
+
+msgid "Stop"
+msgstr ""
+
+msgid "Position(Others)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "write your own license"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-NC-ND 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+msgstr ""
+
+# WEKO_RECORDS_UI_ITEM_DETAIL
+msgid "Date (ISO-8601)"
+msgstr ""
+
+msgid "Subject"
+msgstr ""
+
+msgid "Subject Scheme"
+msgstr ""
+
+msgid "Subject URI"
+msgstr ""
+
+msgid "Alternative Title"
+msgstr ""
+
+msgid "Creator"
+msgstr ""
+
+msgid "Creator Name Identifier"
+msgstr ""
+
+msgid "Creator Name Identifier Scheme"
+msgstr ""
+
+msgid "Creator Name Identifier URI"
+msgstr ""
+
+msgid "Creator Name"
+msgstr ""
+
+msgid "Name_"
+msgstr ""
+
+msgid "Creator Family Name"
+msgstr ""
+
+msgid "Family Name"
+msgstr ""
+
+msgid "Creator Given Name"
+msgstr ""
+
+msgid "Given Name"
+msgstr ""
+
+msgid "Creator Alternative Name"
+msgstr ""
+
+msgid "Alternative Name"
+msgstr ""
+
+msgid "Affiliation Name Identifier"
+msgstr ""
+
+msgid "Affiliation Name Identifier Scheme"
+msgstr ""
+
+msgid "Affiliation Name Identifier URI"
+msgstr ""
+
+msgid "Affiliation Name"
+msgstr ""
+
+msgid "Creator Email Address"
+msgstr ""
+
+msgid "Description Type"
+msgstr ""
+
+msgid "Bibliographic Information"
+msgstr ""
+
+msgid "Journal Title"
+msgstr ""
+
+msgid "Volume Number"
+msgstr ""
+
+msgid "Issue Number"
+msgstr ""
+
+msgid "Page Start"
+msgstr ""
+
+msgid "Page End"
+msgstr ""
+
+msgid "Publication year"
+msgstr ""
+
+msgid "Date Type"
+msgstr ""
+
+msgid "Publisher"
+msgstr ""
+
+msgid "Source Identifier"
+msgstr ""
+
+msgid "Source Identifier Type"
+msgstr ""
+
+msgid "Source Identifier"
+msgstr ""
+
+msgid "Relation"
+msgstr ""
+
+msgid "Relation Type"
+msgstr ""
+
+msgid "Related Identifier"
+msgstr ""
+
+msgid "Related Identifier Type"
+msgstr ""
+
+msgid "Identifier Type"
+msgstr ""
+
+msgid "Related Title"
+msgstr ""
+
+msgid "Rights"
+msgstr ""
+
+msgid "Resource"
+msgstr ""
+
+msgid "Fileinfo"
+msgstr ""
+
+msgid "Text"
+msgstr ""
+
+msgid "Version Type"
+msgstr ""
+
+msgid "URI"
+msgstr ""
+
+msgid "Label"
+msgstr ""
+
+msgid "Mime Type"
+msgstr ""
+
+msgid "Heading"
+msgstr ""
+
+msgid "Headline"
+msgstr ""
+
+msgid "Subheading"
+msgstr ""
+
+msgid "Access Right"
+msgstr ""
+
+msgid "Access Rights URI"
+msgstr ""
+
+msgid "Contributor"
+msgstr ""
+
+msgid "Contributor Type"
+msgstr ""
+
+msgid "Contributor Name Identifier"
+msgstr ""
+
+msgid "Contributor Name Identifier Scheme"
+msgstr ""
+
+msgid "Contributor Name Identifier URI"
+msgstr ""
+
+msgid "Contributor_Name"
+msgstr ""
+
+msgid "Contributor Family Name"
+msgstr ""
+
+msgid "Contributor Given Name"
+msgstr ""
+
+msgid "Contributor Alternative Name"
+msgstr ""
+
+msgid "Contributor Alternative"
+msgstr ""
+
+msgid "Contributor Email Address"
+msgstr ""
+
+msgid "Degree Name"
+msgstr ""
+
+msgid "Degree Grantor"
+msgstr ""
+
+msgid "Degree Grantor Name Identifier"
+msgstr ""
+
+msgid "Degree Grantor Name"
+msgstr ""
+
+msgid "Date Granted"
+msgstr ""
+
+msgid "Dissertation Number"
+msgstr ""
+
+msgid "Contributor ID"
+msgstr ""
+
+msgid "Funding Reference"
+msgstr ""
+
+msgid "Funder Name"
+msgstr ""
+
+msgid "Award Number"
+msgstr ""
+
+msgid "Book Name"
+msgstr ""
+
+msgid "Date Reported"
+msgstr ""
+
+msgid "Name Identifier"
+msgstr ""
+
+msgid "Name Identifier Scheme"
+msgstr ""
+
+msgid "Description_"
+msgstr ""
+
+msgid "Rights Resource"
+msgstr ""
+
+msgid "Rights Holder"
+msgstr ""
+
+msgid "Rights Holder Name Identifier"
+msgstr ""
+
+msgid "Rights Holder Name Identifier Scheme"
+msgstr ""
+
+msgid "Rights Holder Name Identifier URI"
+msgstr ""
+
+msgid "Rights Holder Name"
+msgstr ""
+
+msgid "Resource Type"
+msgstr ""
+
+msgid "Temporal"
+msgstr ""
+
+msgid "Geo Location"
+msgstr ""
+
+msgid "Geo Location Point"
+msgstr ""
+
+msgid "Point Longitude"
+msgstr ""
+
+msgid "Point Latitude"
+msgstr ""
+
+msgid "Geo Location Box"
+msgstr ""
+
+msgid "West Bound Longitude"
+msgstr ""
+
+msgid "East Bound Longitude"
+msgstr ""
+
+msgid "South Bound Latitude"
+msgstr ""
+
+msgid "North Bound Latitude"
+msgstr ""
+
+msgid "Geo Location Place"
+msgstr ""
+
+msgid "Funder Identifier"
+msgstr ""
+
+msgid "Funder Identifier Type"
+msgstr ""
+
+msgid "Award Number URI"
+msgstr ""
+
+msgid "Award Title"
+msgstr ""
+
+msgid "Source Title"
+msgstr ""
+
+msgid "Number of Pages"
+msgstr ""
+
+msgid "Degree Grantor Name Identifier Scheme"
+msgstr ""
+
+msgid "Conference"
+msgstr ""
+
+msgid "Conference Name"
+msgstr ""
+
+msgid "Conference Sequence"
+msgstr ""
+
+msgid "Conference Place"
+msgstr ""
+
+msgid "Conference Country"
+msgstr ""
+
+msgid "URI Object Type"
+msgstr ""
+
+msgid "URI Label"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Extent"
+msgstr ""

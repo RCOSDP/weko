@@ -36,7 +36,8 @@ from sqlalchemy.sql.expression import func, literal_column
 from weko_groups.api import Group
 
 from .models import Index
-from .utils import cached_index_tree_json, get_index_id_list, get_tree_json, \
+from .utils import cached_index_tree_json, filter_index_list_by_role, \
+    get_index_id_list, get_publish_index_id_list, get_tree_json, \
     get_user_roles, reset_tree
 
 
@@ -246,7 +247,10 @@ class Indexes(object):
                                 "name_en"),
                             literal_column("0", db.Integer).label("lev"),
                             Index.public_state,
-                            Index.comment
+                            Index.public_date,
+                            Index.comment,
+                            Index.browsing_role,
+                            Index.browsing_group
                         ).filter(Index.id == index_id)).all()
 
                 if obj:
@@ -596,6 +600,22 @@ class Indexes(object):
         return obj
 
     @classmethod
+    def get_index_by_name(cls, index_name="", pid=0):
+        """Validation importing zip file.
+
+        :argument
+            index_name   -- {str} index_name query
+            pid          -- {number} parent index id
+        :return
+            return       -- index id import item
+
+        """
+        with db.session.begin_nested():
+            obj = db.session.query(Index). \
+                filter_by(index_name=index_name, parent=pid).one_or_none()
+        return obj
+
+    @classmethod
     def get_root_index_count(cls):
         """Get root index."""
         with db.session.begin_nested():
@@ -653,7 +673,7 @@ class Indexes(object):
         q = db.session.query(recursive_t).filter(
             recursive_t.c.path.in_(node_path)). \
             order_by(recursive_t.c.path).all()
-        return q
+        return filter_index_list_by_role(q)
 
     @classmethod
     def get_self_list(cls, node_path, community_id=None):
@@ -672,7 +692,7 @@ class Indexes(object):
             query = db.session.query(recursive_t).filter(db.or_(
                 recursive_t.c.cid == pid, recursive_t.c.pid == pid))
             if not get_user_roles()[0]:
-                query = query.filter(recursive_t.c.public)
+                query = query.filter(recursive_t.c.public_state)
             q = query.order_by(recursive_t.c.path).all()
             lst = list()
             if node_path != '0':
@@ -691,7 +711,7 @@ class Indexes(object):
                 db.or_(recursive_t.c.pid == pid,
                        recursive_t.c.cid == pid))
             if not get_user_roles()[0]:
-                query = query.filter(recursive_t.c.public)
+                query = query.filter(recursive_t.c.public_state)
             q = query.order_by(recursive_t.c.path).all()
             return q
 
@@ -767,8 +787,11 @@ class Indexes(object):
             Index.index_name_english.label("name_en"),
             # add by ryuu at 1108 end
             literal_column("1", db.Integer).label("lev"),
-            Index.public_state.label("public"),
-            Index.comment.label("comment")
+            Index.public_state.label("public_state"),
+            Index.public_date.label("public_date"),
+            Index.comment.label("comment"),
+            Index.browsing_role.label("browsing_role"),
+            Index.browsing_group.label("browsing_group")
         ).filter(Index.parent == pid). \
             cte(name="recursive_t", recursive=True)
 
@@ -785,7 +808,10 @@ class Indexes(object):
                 # add by ryuu at 1108 end
                 rec_alias.c.lev + 1,
                 test_alias.public_state,
-                test_alias.comment
+                test_alias.public_date,
+                test_alias.comment,
+                test_alias.browsing_role,
+                test_alias.browsing_group
             ).filter(test_alias.parent == rec_alias.c.cid)
         )
 
@@ -1176,6 +1202,25 @@ class Indexes(object):
             db.or_(recursive_t.c.pid == pid,
                    recursive_t.c.cid == pid))
         if not get_user_roles()[0]:
-            query = query.filter(recursive_t.c.public)
+            query = query.filter(recursive_t.c.public_state)
         q = query.order_by(recursive_t.c.path).all()
         return q
+
+    @classmethod
+    def get_child_id_list(cls, index_id=0):
+        """Get child id list without recursive."""
+        q = Index.query.filter_by(parent=index_id). \
+            order_by(Index.position).all()
+        return [x.id for x in filter_index_list_by_role(q)]
+
+    @classmethod
+    def get_list_path_publish(cls, index_id):
+        """
+        Get list index path of index publish.
+
+        :param index_id: Identifier of the index.
+        :return: the list of index_path.
+        """
+        tree_path = get_publish_index_id_list(cls.get_index_tree(index_id),
+                                              [])
+        return tree_path

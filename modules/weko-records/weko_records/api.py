@@ -39,7 +39,7 @@ from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
-from .models import FileMetadata, ItemMetadata, ItemType
+from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
 from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
     SiteLicenseInfo, SiteLicenseIpAddress
@@ -981,9 +981,8 @@ class ItemTypeProps(RecordBase):
         Arguments:
             data {dict} -- schema to remove required key
         """
-        if "required" in data:
-            if not data.get("required"):
-                data.pop("required", None)
+        if "required" in data and not data.get("required"):
+            data.pop("required", None)
         if "properties" in data:
             for k, v in data.get("properties").items():
                 if v.get("items"):
@@ -1735,3 +1734,111 @@ class FeedbackMailList(object):
             db.session.rollback()
             return False
         return True
+
+
+class ItemLink(object):
+    """Get Community Info."""
+
+    org_item_id = 0
+
+    def __init__(self, pid):
+        """Constructor."""
+        self.org_item_id = int(pid)
+
+    @classmethod
+    def get_item_link_info(cls, pid):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        from weko_deposit.api import WekoRecord
+
+        dst_relations = ItemReference.get_src_references(pid).all()
+        ret = []
+
+        for relation in dst_relations:
+            record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
+            ret.append(dict(
+                item_links=relation.dst_item_pid,
+                item_title=record.get('item_title'),
+                value=relation.reference_type
+            ))
+
+        return ret
+
+    def update(self, items):
+        """Record publish  status change view.
+
+        Change record publish status with given status and renders record
+        export template.
+
+        :param items: PID object.
+        :return: The rendered template.
+        """
+        dst_relations = ItemReference.get_src_references(
+            self.org_item_id).all()
+        dst_ids = [dst_item.dst_item_pid for dst_item in dst_relations]
+        updated = []
+        created = []
+        for item in items:
+            item_id = item['item_id']
+            if item_id in dst_ids:
+                updated.extend(item for dst_item in dst_relations if
+                               dst_item.reference_type != item['sele_id'])
+                dst_ids.remove(item_id)
+            else:
+                created.append(item)
+
+        deleted = dst_ids
+        try:
+            with db.session.begin_nested():
+                if created:
+                    self.bulk_create(created)
+                if updated:
+                    self.bulk_update(updated)
+                if deleted:
+                    self.bulk_delete(deleted)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+            return ex
+        return None
+
+    def bulk_create(self, dst_items):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        objects = [ItemReference(
+            src_item_pid=self.org_item_id,
+            dst_item_pid=cr['item_id'],
+            reference_type=cr['sele_id']) for cr in dst_items]
+        db.session.bulk_save_objects(objects)
+
+    def bulk_update(self, dst_items):
+        """Record publish  status change view.
+
+        :param dst_items: PID object.
+        :return: The rendered template.
+        """
+        objects = [ItemReference(
+            src_item_pid=self.org_item_id,
+            dst_item_pid=cr['item_id'],
+            reference_type=cr['sele_id']) for cr in dst_items]
+        for obj in objects:
+            db.session.merge(obj)
+
+    def bulk_delete(self, dst_item_ids):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        for dst_item_id in dst_item_ids:
+            db.session.query(ItemReference).filter(
+                ItemReference.src_item_pid == self.org_item_id,
+                ItemReference.dst_item_pid == dst_item_id
+            ).delete(synchronize_session='fetch')

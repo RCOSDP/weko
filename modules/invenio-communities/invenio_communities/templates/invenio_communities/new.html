@@ -1,0 +1,359 @@
+{#
+# This file is part of Invenio.
+# Copyright (C) 2013, 2014, 2015, 2016 CERN.
+#
+# Invenio is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+#}
+
+{%- extends config.COMMUNITIES_BASE_TEMPLATE -%}
+
+{%- block css %}
+  {% if is_new -%}
+    {% assets "invenio_communities_css_tree" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {%- else -%}
+    {% assets "invenio_communities_css_tree_display" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {%- endif %}
+  {{ super() }}
+  <style>
+    .sub-label {
+      font-weight: normal !important;
+      font-size: 85% !important;
+    }
+    .body-container {
+      max-width: 80% !important;
+    }
+
+    /* For weko index tree */
+    tree-internal .tree .folding.weko-node-leaf {display: none;}
+    tree-internal .tree .folding.weko-node-empty:before {
+      content: '\25B7';
+      color: #757575;
+    }
+    tree-internal ul .more {
+      -webkit-text-fill-color: #337ab7;
+      text-decoration: underline;
+    }
+    tree-internal ul .value-container {
+      font-size: 14px;
+    }
+    label[for="identifier"]::after, label[for="title"]::after {
+      content: "*";
+      color: red;
+    }
+  </style>
+{%- endblock css %}
+
+{%- block javascript -%}
+  {{ super() }}
+  <script src="{{url_for('static', filename='node_modules/ckeditor/ckeditor.js')}}"></script>
+  <script type="text/javascript">
+  var CKEDITOR_BASEPATH = '{{url_for('static', filename='node_modules/ckeditor/')}}';
+  function init_ckeditor(selector, type) {
+      if(type=="simple"){
+          CKEDITOR.replace( selector, {
+              toolbar: [
+                  ['PasteText','PasteFromWord'],
+                  ['Bold','Italic','Strike','-','Subscript','Superscript',],
+                  ['NumberedList','BulletedList', 'Blockquote'],
+                  ['Undo','Redo','-','Find','Replace','-', 'RemoveFormat'],
+                  ['Mathjax', 'SpecialChar', 'ScientificChar'],
+                  ['Source'], ['Maximize'],
+              ],
+              extraPlugins: 'blockquote,mathjax', //scientificchar,
+              disableNativeSpellChecker: false,
+              removePlugins: 'elementspath',
+              removeButtons: '',
+              mathJaxLib: '{{config.THEME_MATHJAX_CDN}}'
+          });
+      } else {
+          CKEDITOR.replace( selector, {
+              toolbar: [
+                  ['PasteText','PasteFromWord'],
+                  ['Bold','Italic','Strike','-','Subscript','Superscript',],
+                  ['NumberedList','BulletedList', 'Blockquote', '-', 'JustifyLeft',
+                  'JustifyCenter', 'JustifyRight', 'JustifyBlock', '-', 'Table',
+                  'base64image', '-', 'Link', 'Anchor'],
+                  ['Undo','Redo','-','Find','Replace','-', 'RemoveFormat'],
+                  ['Mathjax', 'SpecialChar', 'ScientificChar'],
+                  ['Styles', 'Format'], ['Source'], ['Maximize'],
+              ],
+              extraPlugins: 'blockquote,mathjax,base64image,justify', //scientificchar,
+              disableNativeSpellChecker: false,
+              removePlugins: 'elementspath,image',
+              removeButtons: '',
+              mathJaxLib: '{{config.THEME_MATHJAX_CDN}}',
+              language: 'en'
+          });
+      }
+  }
+  init_ckeditor("page", 'advanced');
+  init_ckeditor("description", 'advanced');
+  init_ckeditor("curation_policy", 'advanced');
+  init_ckeditor("community_header", 'advanced');
+  init_ckeditor("community_footer", 'advanced');
+  </script>
+  {% if is_new -%}
+    {% assets "invenio_communities_js_tree" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- else -%}
+    {% assets "invenio_communities_js_tree_display" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- endif %}
+{%- endblock javascript -%}
+
+{% block page_body %}
+<div class="container-fluid body-container">
+  {% if not is_new %}
+  <div id="deletemodal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="deletemodal_label" aria-hidden="true">
+    <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3 id="deletemodal_label">Delete community?</h3>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <h5>Warning</h5>
+          <ul>
+            <li>If you proceed, this community will be deleted and you will loose all connections to records currently attached to this community and you will not be able to recover them.</li>
+            <li>Any external repository harvesting your community collection will stop working.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <form action="{{url_for('.delete', community_id=community.id)}}" method="POST">
+          {{form.csrf_token}}
+          {%- for field in deleteform %}{{ field }}{% endfor %}
+          <button class="btn btn-large" data-dismiss="modal" aria-hidden="true">No, thanks</button>
+          <button type="submit" href="{{ url_for('.delete', community_id=community.id) }}" class="btn btn-danger"><i class="icon-trash  icon-white"></i> Yes, delete</button>
+        </form>
+      </div>
+      </div>
+    </div>
+  </div>
+  {% if community.is_deleted %}
+    <div class="alert alert-danger">This community will be deleted on {{ community.delete_time.strftime('%d-%m-%Y') }}.</div>
+  {% endif %}
+  {% endif %}
+  <div class="row">
+    <div class="col-md-12">
+      <h1>{% if is_new -%}
+      <i class="icon-plus"></i> {{ _("New community") }}
+      {%- else -%}
+      <i class="icon-edit"></i> {{ _("Edit community") }}
+      {%- endif %}</h1>
+    </div>
+  </div> <!-- /.row -->
+  <div class="row">
+    <div id="index_show" class="col-md-3">
+      <div class="panel-group">
+        <div class="panel panel-default">
+          <div class="panel-heading">{{ _("Index Tree") }}</div>
+          <div class="panel-body">
+            {% if is_new -%}
+            <app-tree-community></app-tree-community>
+            {%- else -%}
+            <app-tree-items></app-tree-items>
+            {%- endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="file_container" class="col-md-6">
+      <form method="POST" id="edit_form" class="form-horizontal" enctype="multipart/form-data" role="form">
+      {{form.csrf_token}}
+      <div class="panel-group">
+        <input class="hide" id="index_checked_nodeId" name="index_checked_nodeId" placeholder="" type="text" value="">
+      {% if not is_new %}
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <span class="panel-toggle text-muted pull-right"></span>
+            <a class="panel-toggle" data-toggle="collapse" data-idx="0" href="#collapse0">Community URLs<b class="caret"></b></a>
+          </div>
+          <div id="collapse0" class="panel-body collapse in">
+            <div class="panel-inner">
+              <fieldset>
+                <div class="form-group">
+                  <label class="control-label col-md-3"><i class="icon-share"></i>Collection URL:</label>
+                  <div class="controls col-md-9"><a href="{{ community.community_url }}">{{ community.community_url }}</a>
+                    <p class="text-muted field-desc"><small>Above address links directly to your community collection.</small></p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-md-3"><i class="icon-share"></i>Upload URL:</label>
+                  <div class="controls col-md-9"><a href="{{ community.upload_url }}">{{ community.upload_url }}</a>
+                    <p class="text-muted field-desc"><small>Above address will automatically ensure people who use it will have their record added to your community collection.</small></p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-md-3"><i class="icon-share"></i>Curation URL:</label>
+                  <div class="controls col-md-9"><a href="{{ community.community_provisional_url }}">{{ community.community_provisional_url }}</a>
+                    <p class="text-muted field-desc"><small>Above address links to your private curation URL. You will find all uploads pending your curation.</small></p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-md-3"><i class="icon-share"></i>Harvesting URL:</label>
+                  <div class="controls col-md-9"><a href="{{ community.oaiset_url }}">{{ community.oaiset_url }}</a>
+                    <p class="text-muted field-desc"><small>Above address links to a OAI-PMH feed, which can be used by other digital repositories to harvest this community.</small></p>
+                  </div>
+                </div> <!-- /.form-group -->
+              </fieldset>
+            </div> <!-- /.panel-inner -->
+          </div> <!-- /#collapse0 .panel-body collapse in -->
+        </div> <!-- /.panel panel-default -->
+      {% endif %}
+      {%- for title, fieldnames, conf in form.field_sets %}
+        <div class="panel panel-default">
+          {%- if title %}
+          <div class="panel-heading">
+            <span class="panel-toggle text-muted pull-right">{{conf.state}}</span>
+            <a class="panel-toggle" data-toggle="collapse" data-idx="{{loop.index}}" href="#collapse{{loop.index}}">{{title}} <b class="caret"></b></a>
+          </div>
+          {%- endif %}
+          <div id="collapse{{loop.index}}" class="panel-body collapse{% if conf.classes %} {{conf.classes}}{% endif %}">
+            <div class="panel-inner">
+              {%- if conf.description %}
+              <p>{{ conf.description|urlize }}</p>
+              {%- endif %}
+              {% if not is_new %}
+              <fieldset>
+                <div class="form-group field-identifier">
+                  <label class="control-label col-md-3" for="identifier">
+                    <i class="icon-barcode"></i> Identifier
+                  </label>
+                  <div class="controls col-md-9">
+                    <input class="form-control" type="text" disabled value="{{community.id}}">
+                    <p class="text-muted help-block field-desc"><small>The identifier cannot be changed after creation of the community.</small></p>
+                  </div>
+                </div>
+              </fieldset>
+              {% endif %}
+              <fieldset>
+              {%- for f in fieldnames %}
+                {% if f == '-' %}
+                  <hr />
+                {%- else %}
+                  {%- set field = form.get_field_by_name(f) %}
+                  {% if field %}
+                    <div class="form-group field-{{ field.name }}{% if field.errors %} has-error{% endif %}">
+                      <label class="control-label{{' required' if field.required else ''}} col-md-3" for="{{field.label.field_id}}">
+                        {%- if field._icon_html or form.get_field_icon(f) %}
+                          {% if form.get_field_icon(f) %}
+                            <i class="icon-{{ form.get_field_icon(f) }}"></i>
+                          {% else %}
+                            {{ field._icon_html|safe }}
+                          {% endif %}
+                        {%- endif %}
+                        {{ field.label.text }}
+                      </label>
+                      <div class="controls col-md-9">
+                        {% if form.has_autocomplete(field) %}
+                        <div id="{{f}}_values" class="col-md-5 tag-values">
+                          <ul class="unstyled">
+                            {% if f == "funding_source" %}
+                              {% for tag in field.get_tags() %}
+                                <li class="alert alert-info tag" data-tag-id="{{tag.grant_agreement_number}}"><button type="button" class="close" data-dismiss="alert">&times;</button>{{tag.label}}</li>
+                              {% endfor %}
+                            {% endif %}
+                          </ul>
+                        </div>
+                        {% endif %}
+                        {%- if field.type == "Date" %}
+                          {{ field(class_="form-control col-md-2 " + field.short_name, placeholder=form.get_field_placeholder(f)) }}
+                        {%- else %}
+                          {{ field(class_="form-control col-md-5 " + field.short_name, placeholder=form.get_field_placeholder(f)) }}
+                        {%- endif %}
+                        {% if field.description %}
+                          <p class="text-muted field-desc">
+                            <small>{{field.description|urlize}}</small>
+                          </p>
+                        {% endif %}
+                        {% if field.errors %}
+                          <span class="text-danger help-inline" id="error-{{ field.name }}">
+                            {% for error in field.errors %}
+                              {{ error }}
+                              {% if not loop.last %}
+                                <br />
+                              {% endif %}
+                            {% endfor %}
+                          </span>
+                        {% endif %}
+                      </div> <!-- /.controls col-md-9 -->
+                    </div> <!-- /.form-group -->
+                  {%- endif %}
+                {%- endif %}
+              {%- endfor %}
+              </fieldset>
+              <fieldset>
+                <div class="form-group field-color">
+                  <label class="control-label col-md-3" for="identifier">
+                    <i class="icon-barcode"></i> Color Setting
+                  </label>
+                  <div class="controls col-md-9">
+                    <div class="row">
+                      <div class="col-sm-12">
+                        <div class="form-group col-sm-3">
+                          <label class="sub-label" for="body-bg">{{_('Body')}}</label>
+                          {% if community.color_bg1 %}
+                            <input type="color" class="form-control color_bg1" name="color_bg1" value={{ community.color_bg1 }}>
+                          {% else %}
+                            <input type="color" class="form-control color_bg1" name="color_bg1" value="#ffffff">
+                          {% endif %}
+                        </div>
+                        <div class="form-group col-sm-3">
+                          <label class="sub-label" for="panel-bg">{{_('Panel')}}</label>
+                          {% if community.color_bg2 %}
+                            <input type="color" class="form-control color_bg2" name="color_bg2" value={{ community.color_bg2 }}>
+                          {% else %}
+                            <input type="color" class="form-control color_bg2" name="color_bg2" value="#ffffff">
+                          {% endif %}
+                        </div>
+                        <div class="form-group col-sm-3">
+                          <label class="sub-label" for="panel-default-border">{{_('Border')}}</label>
+                          {% if community.color_frame %}
+                            <input type="color" class="form-control color_frame" name="color_frame" value={{ community.color_frame }}>
+                          {% else %}
+                            <input type="color" class="form-control color_frame" name="color_frame" value="#dddddd">
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <p class="text-muted help-block field-desc"><small>Optional. A color design of the community collection, which will be displayed on the index page of the community.</small></p>
+                  </div>
+                </div>
+              </fieldset>
+            </div> <!-- /.panel-inner -->
+          </div> <!-- /#collapse .panel-body -->
+        </div> <!-- /.panel panel-default -->
+      {%- endfor %}
+      </div>
+      <div class="well clearfix" style="margin-top: 10px;">
+        {% if not community.is_deleted %}
+        <button type="button" role="button" data-toggle="modal" class="btn btn-danger pull-left{% if is_new %} hide{% endif %}" data-target="#deletemodal"><i class="icon-trash  icon-white"></i> Delete</button>
+        {% endif %}
+        <span class="pull-right">
+          <button type="submit" class="btn btn-primary edit-form-submit"><i class="icon-ok  icon-white"></i> {% if is_new %}Create{% else %}Save{% endif %}</a>
+        </span>
+      </div>
+      </form>
+    </div>
+    <div class="col-md-3">
+      {% include "invenio_communities/mycommunities.html" %}
+    </div>
+  </div> <!-- /.row -->
+</div> <!-- /.container body-container -->
+{% endblock %}

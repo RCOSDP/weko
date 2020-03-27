@@ -127,6 +127,7 @@ def helper_remove_empty_enum(data):
 
     Arguments:
         data {dict} -- schema to remove enum key
+
     """
     if "enum" in data.keys():
         if not data.get("enum"):
@@ -167,6 +168,9 @@ def add_required_subitem(data):
         for k, v in properties.items():
             if is_properties_exist_in_item(v):
                 sub_data = add_required_subitem(v)
+                if sub_data is None:
+                    sub_data = v
+                    list_required_item.append(str(k))
                 properties[k] = sub_data
             else:
                 list_required_item.append(str(k))
@@ -210,23 +214,3 @@ def has_system_admin_access():
                 is_sys_admin = True
                 break
     return is_sys_admin
-
-
-def get_content_workflow(item):
-    """Get content workflow.
-
-    Arguments:
-        item {Object PostgreSql} -- list work flow
-
-    Returns:
-        result {dictionary} -- content of work flow
-
-    """
-    result = dict()
-    result['flows_name'] = item.flows_name
-    result['id'] = item.id
-    result['itemtype_id'] = item.itemtype_id
-    result['flow_id'] = item.flow_id
-    result['flow_name'] = item.flow_define.flow_name
-    result['item_type_name'] = item.itemtype.item_type_name.name
-    return result

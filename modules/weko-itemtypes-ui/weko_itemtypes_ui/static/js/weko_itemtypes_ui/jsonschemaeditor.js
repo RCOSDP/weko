@@ -157,7 +157,7 @@ var SchemaCheckboxes = React.createClass({
 		return this.propsToState(this.props);
 	},
 	propsToState: function propsToState(props) {
-		var data = props.data;
+        var data = props.data; //get enum for checkboxes
 		if (data.hasOwnProperty('enum') && data.enum.length > 0) {
 			data.enum = data.enum.join('|');
 		} else {
@@ -191,10 +191,7 @@ var SchemaCheckboxes = React.createClass({
 		return {
 			type: "array",
 			format: "checkboxes",
-			items: {
-			  type: "string",
-			  enum: arr
-			}
+			enum: arr
 		};
 	},
 	render: function render() {
@@ -493,11 +490,16 @@ var SchemaObject = React.createClass({
 		var parentkey = parent_Key;
 		var form = [];
 		var forms = [];
+		var rename_subitem_config = false;
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
+				let subKey = itemKey.split("_");
+				if (rename_subitem_config && subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+					itemKey = self.createSubItemName(value.title);
+				}
 				var sub_form = {};
 				if ('text' === value.format || 'textarea' === value.format) {
 					sub_form = {
@@ -513,14 +515,31 @@ var SchemaObject = React.createClass({
 						templateUrl: "/static/templates/weko_deposit/datepicker.html",
 						title: value.title
 					};
-				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
+				} else if ('checkboxes' === value.format) {
+          sub_form = {
+            key: parentkey + itemKey,
+            type: "template",
+            templateUrl: "/static/templates/weko_deposit/checkboxes.html",
+            title: value.title,
+            titleMap: self.refs['subitem' + index].exportTitleMap()
+          };
+				}else if ('select' === value.format) {
 					sub_form = {
 						key: parentkey + itemKey,
 						type: value.format,
 						title: value.title,
 						titleMap: self.refs['subitem' + index].exportTitleMap()
 					};
-				} else if ('array' === value.format) {
+				}
+				 else if ('radios' === value.format ) {
+					sub_form = {
+						key: parentkey + itemKey,
+						type: "template",
+						title: value.title,
+						templateUrl: "/static/templates/weko_deposit/datepicker.html",
+						titleMap: self.refs['subitem' + index].exportTitleMap()
+					};
+				}  else if ('array' === value.format) {
 					sub_form = {
 						key: parentkey + itemKey,
 						add: "New",
@@ -551,11 +570,16 @@ var SchemaObject = React.createClass({
 
 		var self = this;
 		var properties = {};
+		var rename_subitem_config = false;
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this2.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
+				let subKey = itemKey.split("_");
+				if (rename_subitem_config && subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+					itemKey = self.createSubItemName(value.title);
+				}
 				if ('text' === value.format || 'textarea' === value.format || 'datetime' === value.format) {
 					properties[itemKey] = value;
 				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
@@ -589,6 +613,18 @@ var SchemaObject = React.createClass({
 		}
 
 		return result;
+	},
+	// Defined prefix for sub item name
+	prefixSubitemname: 'subitem_',
+	customSuffixSubItemName: function customSuffixSubItemName(suffix){
+		// Replace all space to _
+		suffix = suffix.replace(/ /g, '_');
+		// convert to lower case character
+		suffix = suffix.toLowerCase();
+		return suffix;
+	},
+	createSubItemName: function createSubItemName(suffix){
+		return this.prefixSubitemname + this.customSuffixSubItemName(suffix);
 	},
 	on: function on(event, callback) {
 		this.callbacks = this.callbacks || {};

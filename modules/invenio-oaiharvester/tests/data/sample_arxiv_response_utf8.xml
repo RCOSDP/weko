@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+    <responseDate>2017-12-07T10:34:37Z</responseDate>
+    <request verb="GetRecord" identifier="oai:arXiv.org:1207.1019" metadataPrefix="oai_dc">http://export.arxiv.org/oai2</request>
+    <GetRecord>
+        <record>
+            <header>
+               <identifier>oai:arXiv.org:1207.1019</identifier>
+               <datestamp>2015-01-16</datestamp>
+               <setSpec>cs</setSpec>
+               <setSpec>stat</setSpec>
+           </header>
+           <metadata>
+               <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+                   <dc:title>PAC-Bayesian Majority Vote for Late Classifier Fusion</dc:title>
+                   <dc:creator>Morvant, Emilie</dc:creator>
+                   <dc:creator>Habrard, Amaury</dc:creator>
+                   <dc:creator>Ayache, Stéphane</dc:creator>
+                   <dc:subject>Statistics - Machine Learning</dc:subject>
+                   <dc:subject>Computer Science - Computer Vision and Pattern Recognition</dc:subject>
+                   <dc:subject>Computer Science - Learning</dc:subject>
+                   <dc:subject>Computer Science - Multimedia</dc:subject>
+                   <dc:description>  A lot of attention has been devoted to multimedia indexing over the past few
+                    years. In the literature, we often consider two kinds of fusion schemes: The
+                    early fusion and the late fusion. In this paper we focus on late classifier
+                    fusion, where one combines the scores of each modality at the decision level.
+                    To tackle this problem, we investigate a recent and elegant well-founded
+                    quadratic program named MinCq coming from the Machine Learning PAC-Bayes
+                    theory. MinCq looks for the weighted combination, over a set of real-valued
+                    functions seen as voters, leading to the lowest misclassification rate, while
+                    making use of the voters' diversity. We provide evidence that this method is
+                    naturally adapted to late fusion procedure. We propose an extension of MinCq by
+                    adding an order- preserving pairwise loss for ranking, helping to improve Mean
+                    Averaged Precision measure. We confirm the good behavior of the MinCq-based
+                    fusion approaches with experiments on a real image benchmark.
+                </dc:description>
+                <dc:description>Comment: 7 pages, Research report</dc:description>
+                <dc:date>2012-07-04</dc:date>
+                <dc:type>text</dc:type>
+                <dc:identifier>http://arxiv.org/abs/1207.1019</dc:identifier>
+            </oai_dc:dc>
+        </metadata>
+    </record>
+</GetRecord>
+</OAI-PMH>

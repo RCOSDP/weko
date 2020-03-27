@@ -1,0 +1,170 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#                                                                                                                                           # WEKO3
+is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{% extends 'admin/model/edit.html' %}
+
+{% block body %}
+{{ super() }}
+
+</br>
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('Schedule')}}</h4>
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-4">
+    <label>{{_('Harvesting Interval')}}</label>
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <div class="col-xs-2">
+      <p class="">{{_('Frequency')}}</p>
+    </div>
+    <div class="col-xs-2">
+      <p class="{{'hidden' if current_schedule['frequency'] == 'daily' else ''}}"
+        id="sched_details_label">{{_('Details')}}</p>
+    </div>
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <form method="POST" name="harvesting_sched_form" id="harvesting_sched_form"
+      action={{url_for('harvestsettings.set_schedule',id=model.id)}}>
+      <div class="form-group">
+        <div class="col-xs-2">
+          <select class="form-control" id="_sched_frequency" name="frequency">
+            {% for frequency in frequency_options %}
+              <option value="{{ frequency }}"
+                {{'selected = "selected"' if frequency == current_schedule['frequency'] else ''}}>
+                {{ frequency | title }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-xs-2">
+          <select class="form-control {{'' if current_schedule['frequency'] == 'monthly' else 'hidden'}}"
+            id="_sched_details_monthly" name="monthly_details">
+            {%- for x in range(1, 31) %}
+              {%- set day = '%02d' % x %}
+              {%- set day_str = x | string %}
+              {%- set is_monthly = (current_schedule['frequency'] == 'monthly') %}
+              <option value="{{ day_str }}"
+                class="monthly-option"
+                {{'selected = "selected"' if day_str == current_schedule['details'] else ''}}>
+                {{ day }}
+              </option>
+            {%- endfor %}
+          </select>
+          <select class="form-control {{'' if current_schedule['frequency'] == 'weekly' else 'hidden'}}"
+            id="_sched_details_weekly" name="weekly_details">
+            {%- for day_of_week in days_of_week %}
+              {%- set is_weekly = (current_schedule['frequency'] == 'weekly') %}
+              {%- set index = loop.index0 | string %}
+              <option class="weekly-option"
+                value="{{ index }}"
+                {{'selected = "selected"' if index == current_schedule['details'] else ''}}>
+                {{ day_of_week }}
+              </option>
+            {%- endfor %}
+          </select>
+        </div>
+        <div class="col-xs-2">
+          <div class="form-group">
+            <label class="radio-inline" for="enable_schedule">
+              <input type="radio" name="dis_enable_schedule" id="enable_schedule" value="True"
+                {{ 'checked' if current_schedule['enabled'] else '' }}>
+              {{_('On')}}
+            </label>
+            <label class="radio-inline" for="disable_schedule">
+              <input type="radio" name="dis_enable_schedule" id="disable_schedule" value="False"
+                {{ 'checked' if not current_schedule['enabled'] else '' }} >
+              {{_('Off')}}
+            </label>
+          </div>
+        </div>
+        <div class="form-group col-xs-2">
+          <a id="confirm__sched" class="btn btn-primary save-button"
+            data-toggle="modal" data-target="#schedule_confirm_modal">
+            <span class="glyphicon glyphicon-saved"></span>
+            {{_('Save')}}
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Schedule Confirm Modal -->
+{% from "weko_theme/macros/modal_page.html" import confirm_modal %}
+{{ confirm_modal(modal_id="schedule_confirm_modal",
+                 button_id="confirm_schedule_button",
+                 button_text="Confirm",
+                 title=_('Confirmation'),
+                 body=_('Are you sure you want to save changes?'))}}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+function _(x) {
+    return x
+}
+
+</script>
+
+<script>
+$(document).ready(function () {
+
+  // Confirm schedule change
+  $('#confirm_schedule_button').on('click', function () {
+    $('#harvesting_sched_form').submit();
+  });
+
+  // Change selectable options based on frequency
+  $('#_sched_frequency').on('change', function () {
+    var frequency = $(this).val();
+    switch(frequency) {
+      case 'monthly':
+        $('#_sched_details_weekly').addClass('hidden');
+        $('.weekly-option').prop('selected', false);
+        $('#_sched_details_monthly').removeClass('hidden');
+        break;
+      case 'weekly':
+        $('#_sched_details_monthly').addClass('hidden');
+        $('.monthly-option').prop('selected', false);
+        $('#_sched_details_weekly').removeClass('hidden');
+        break;
+      case 'daily':
+        $('#_sched_details_weekly').addClass('hidden');
+        $('#_sched_details_monthly').addClass('hidden');
+        $('#sched_details_label').addClass('hidden');
+        $('.monthly-option').prop('selected', false);
+        $('.weekly-option').prop('selected', false);
+    }
+  });
+});
+</script>
+
+{% endblock %}
+

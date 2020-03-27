@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+{%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
+{%- block css %}
+  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
+  <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
+  {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block page_header %}
+{%- endblock page_header %}
+{%- block page_footer %}
+{%- endblock page_footer %}
+{%- block page_body %}
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
+        <h3>{{_('Terms and Conditions')}}</h3>
+<div class="panel panel-default panel-body" style="overflow-y: auto; max-height:400px;" >
+<form id="term-and-condition-form" action='/workflow/activity/detail/{{activity.activity_id}}' method="POST">
+  <div class="form-check">
+                {%- for content in term_and_condition_content %}
+      <span class="action-name">{{content}}</span>
+                  <br>
+                {% endfor %}
+    <br>
+    <div style="position: relative;">
+      <input type="checkbox" class="form-check-input pointer" id="checked" name="checked">
+      <label class="form-check-label pointer" for="checked" style="position: absolute;top: 1px;left: 20px;">
+        {{_('I have read and agreed to the Terms and Conditions')}}
+      </label>
+    </div>
+    </div>
+</form>
+</div>
+<br>
+<div>
+  <span class="pull-left">{{_('After checking the Terms and Conditions, please check the [I have read and agreed to the Terms and Conditions] at the end of scroll.')}}</span>
+  <button type="submit" id='button-check' form="term-and-condition-form" class="btn btn-info pull-right" disabled="disabled">
+    {{ _('Next') }}
+    <span class="glyphicon glyphicon-chevron-right"></span>
+  </button>
+</div>
+
+{%- endblock page_body %}

@@ -52,6 +52,9 @@ THEME_LOGO = 'images/weko-logo.png'
 THEME_LOGO_ADMIN = 'images/weko-logo.png'
 """The logo to be used on the admin views header."""
 
+THEME_URL_LOGO_ADMIN = '/'
+"""The url of admin logo"""
+
 THEME_FOOTER_TEMPLATE = 'weko_theme/footer.html'
 """Footer template which is normally included in :data:`BASE_TEMPLATE`."""
 
@@ -63,6 +66,9 @@ THEME_FOOTER_WYSIWYG_TEMPLATE = 'weko_theme/footer_wysiwyg.html'
 
 THEME_SITENAME = 'WEKO3'
 """The name of the site to be used on the header and as a title."""
+
+THEME_SITEURL = 'https://localhost'
+"""The URL displayed in the sitemap. Change it to self domain name."""
 
 THEME_SEARCHBAR = True
 """Enable or disable the search bar."""

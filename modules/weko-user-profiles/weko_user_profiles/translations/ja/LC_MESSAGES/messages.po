@@ -253,3 +253,122 @@ msgstr "プロフィールを更新しました"
 #~ msgid "Update profile"
 #~ msgstr "プロフィールを更新"
 
+### Label on 'Profile' screen
+msgid "University/Institution"
+msgstr "大学・機関"
+
+msgid "Affiliated Division/Department"
+msgstr "所属部局・部署"
+
+msgid "Position"
+msgstr "役職"
+
+msgid "Other Position"
+msgstr ""
+
+msgid "Phone number"
+msgstr "電話番号"
+
+msgid "Affiliated Institution Name"
+msgstr "所属学会名"
+
+msgid "Affiliated Institution Position"
+msgstr "所属学会役職"
+
+### Position's data list in combobox
+msgid "Professor"
+msgstr "教授"
+
+msgid "Assistant Professor"
+msgstr "准教授"
+
+msgid "Full-time Instructor"
+msgstr "専任講師"
+
+msgid "Assistant Teacher"
+msgstr "助教"
+
+msgid "Full-time Researcher"
+msgstr "常勤研究員"
+
+msgid "Others (Input Detail)"
+msgstr "その他（具体的に入力）"
+
+msgid "JSPS Research Fellowship for Young Scientists (PD, SPD etc.)"
+msgstr "日本学術振興会特別研究員(PD, SPD等)"
+
+msgid "JSPS Research Fellowship for Young Scientists (DC1, DC2)"
+msgstr "日本学術振興会特別研究員(DC1, DC2)"
+
+msgid "Doctoral Course (Doctoral Program)"
+msgstr "博士課程(博士後期課程)"
+
+msgid "Master Course (Master Program)"
+msgstr "修士課程(博士前期課程)"
+
+msgid "Fellow Researcher"
+msgstr "研究生"
+
+msgid "Listener"
+msgstr "聴講生"
+
+msgid "Student"
+msgstr "学部生"
+
+### Affiliated Institution Position's data list in combobox
+msgid "Member"
+msgstr "会員"
+
+msgid "Committee member"
+msgstr "委員"
+
+msgid "Director/Officer"
+msgstr "理事・役員"
+
+msgid "President"
+msgstr "会長"
+
+msgid "Input when selecting Others"
+msgstr "その他の選択時に入力"
+
+###
+### Message validate
+###
+msgid "University/Institution not provided."
+msgstr "大学・機関が指定されていません"
+
+msgid "Affiliated Division/Department not provided."
+msgstr "所属部局・部署が指定されていません"
+
+msgid "Position not provided."
+msgstr "役職が指定されていません"
+
+msgid "Phone number not provided."
+msgstr "電話番号が指定されていません"
+
+msgid "Affiliated Institution Name not provided."
+msgstr "所属学会名が指定されていません"
+
+msgid "Affiliated Institution Position not provided."
+msgstr "所属学会役職が指定されていません"
+
+msgid "Phone number must be less than 15 characters."
+msgstr "電話番号の字数上限は15字です。"
+
+msgid "Text field must be less than 100 characters."
+msgstr "テキストフィールドの字数上限は100字です。"
+
+msgid "Phone Number format is incorrect."
+msgstr "電話番号の形式が正しくありません。"
+
+msgid "Position is being inputted (Only input when selecting 'Others')"
+msgstr "役職が入力されています（「その他」選択時のみ入力可能）"
+
+msgid "Fullname"
+msgstr "氏名"
+
+msgid "Full name not provided."
+msgstr "氏名が指定されていません"
+
+msgid "Position (Others)"
+msgstr "役職（その他）"

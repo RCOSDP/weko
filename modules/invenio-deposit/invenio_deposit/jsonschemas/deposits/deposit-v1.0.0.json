@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "Deposit schema.",
+  "description": "Describe information needed for deposit module.",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "_deposit": {
+      "title": "Deposit",
+      "description": "Internal deposit metadata.",
+      "type": "object",
+      "name": "_deposit",
+      "properties": {
+        "id": {
+          "title": "Persistent Identifier of the deposit",
+          "description": "Identifier of the deposit - usually the value of corresponding 'depid'-type PID.",
+          "type": "string",
+          "name": "id"
+        },
+        "pid": {
+          "title": "Persistent identifier of the published record",
+          "description": "Identifier of the published record - usually the type and value of a 'recid'-type PID of the corresponding published record.",
+          "type": "object",
+          "name": "pid",
+          "properties": {
+            "revision_id": {
+              "title": "Record Revision ID",
+              "description": "ID of the RecordMetadata revision. Used for record merging.",
+              "type": "integer"
+            },
+            "type": {
+              "title": "PID Type",
+              "description": "Type of the PID, in correspondece with PID's 'pid_type' property.",
+              "type": "string"
+            },
+            "value": {
+              "title": "PID Value",
+              "description": "Value of the PID, in correspondece with PID's 'pid_value' property.",
+              "type": "string"
+            }
+          }
+        },
+        "created_by": {
+          "title": "Creator",
+          "description": "ID of user that created the deposit.",
+          "type": "integer",
+          "name": "created_by"
+        },
+        "owners": {
+          "title": "Owners",
+          "description": "Owners of the deposit (a list of user's IDs).",
+          "type": "array",
+          "name": "owners",
+          "items": [
+            {
+              "type": "integer"
+            }
+          ]
+        },
+        "status": {
+          "title": "Status",
+          "description": "Status of the deposit, either 'draft' or 'published'.",
+          "type": "string",
+          "name": "status",
+          "enum": [
+            "draft",
+            "published"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "_files": {
+      "description": "Files",
+      "description": "Internal listing of files attached to deposit.",
+      "type": "array",
+      "name": "_files",
+      "items": {
+        "$ref": "../records-files/records-files-v1.0.0.json"
+      }
+    }
+  },
+  "required": [
+    "_deposit"
+  ]
+}

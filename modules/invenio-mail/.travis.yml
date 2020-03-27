@@ -1,0 +1,60 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2015-2018 CERN.
+#
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+
+
+notifications:
+  email: false
+
+sudo: false
+
+language: python
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env: REQUIREMENTS=devel
+
+cache:
+  - pip
+
+env:
+  - REQUIREMENTS=lowest
+  - REQUIREMENTS=release
+  - REQUIREMENTS=devel
+
+python:
+  - "2.7"
+  - "3.5"
+
+before_install:
+  - "travis_retry pip install --upgrade pip setuptools py"
+  - "travis_retry pip install twine wheel coveralls requirements-builder"
+  - "requirements-builder --level=min setup.py > .travis-lowest-requirements.txt"
+  - "requirements-builder --level=pypi setup.py > .travis-release-requirements.txt"
+  - "requirements-builder --level=dev --req requirements-devel.txt setup.py > .travis-devel-requirements.txt"
+
+install:
+  - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
+  - "travis_retry pip install -e .[all]"
+
+script:
+  - "./run-tests.sh"
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: inveniosoftware
+  password:
+    secure: "YmRXvtdnjBi0AD0W2tVc0F0tC+6tqO2iiyNrH42gty3KSL38FW9WDDePHuKDQhb1Bta2vV+5eLmqny1szOZs8z+GkQzIRAxsyemq2LjRg9hFMTtnhcnyJw3I6JF/GTcbECmPo7Olf9NduF33OP+4Y89xXLuhfgbvbEvYPL7vSx2H5si1dD0n6IvmuW7VbKp3XHNB2TJMTzkuiqP0jdC4nArcuwU/sBHvIVHvF89qCNks3yv9B6l0YRRiYbZejtx98y04MdyHww6V8UbhRk4luDTZxNr2QVNv/9WIvYaiMxgQoLc1e9EIV5IS1kQ8mLlU/jcMdbztGsZP41Hyb9+oUrnOcf3N27ZdPv1pWP47U9y85bxrKJaVrwWVIlGd1Fl1JT5V5JiFGXOu4C/m2GJsgpq02fOUs4Vuj3FkHU/hlfLrfLZYEPXqNdGjAORDJYe+sLrp+6vEfL7K+0MfWIie0FLq725fg3PDNhGfq87z3/DHI8AcBrwf3DkSbjdw1ca8Yds/VHsp14abqAKTfkIM5Bwss7ZAHLRdfv274VWHLB5E/KatkR5rymyhl0R6dxv55LdX9nPz/yY2SNUoYUa1NdSc1b213QK6Fdikz/donz1wK3iycfYbC8RK66n7C3CuZfSG+BCrCuP6+l0/9M2dM/n+wmWhKt8yxfHe1Cho6CA="
+  distributions: "sdist bdist_wheel"
+  on:
+    tags: true
+    python: "2.7"
+    condition: $REQUIREMENTS = release

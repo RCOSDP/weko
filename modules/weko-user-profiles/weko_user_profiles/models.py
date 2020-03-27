@@ -65,14 +65,64 @@ class UserProfile(db.Model):
     _displayname = db.Column('displayname', db.String(255))
     """Case preserving version of username."""
 
-    # full_name = db.Column(db.String(255), nullable=False, default='')
-    # """Full name of person."""
+    fullname = db.Column(db.String(100), nullable=False, default='')
+    """Full name of person."""
 
     timezone = db.Column(db.String(255), nullable=False, default='')
     """Selected timezone."""
 
     language = db.Column(db.String(255), nullable=False, default='')
     """Selected language."""
+
+    """University / Institution"""
+    university = db.Column('university', db.String(100))
+
+    """Affiliation department / Department"""
+    department = db.Column('department', db.String(100))
+
+    """Position"""
+    position = db.Column('position', db.String(100))
+
+    """Position"""
+    otherPosition = db.Column('otherPosition', db.String(100))
+
+    """Phone number"""
+    phoneNumber = db.Column('phoneNumber', db.String(15))
+
+    """Affiliation institute name 1"""
+    """Affiliation institute name (n)"""
+    instituteName = db.Column('instituteName', db.String(100))
+
+    """Affiliation institute position (n)"""
+    institutePosition = db.Column('institutePosition', db.String(255))
+
+    """Affiliation institute name 2"""
+    """Affiliation institute name (n)"""
+    instituteName2 = db.Column('instituteName2', db.String(100))
+
+    """Affiliation institute position (n)"""
+    institutePosition2 = db.Column('institutePosition2', db.String(255))
+
+    """Affiliation institute name 3"""
+    """Affiliation institute name (n)"""
+    instituteName3 = db.Column('instituteName3', db.String(100))
+
+    """Affiliation institute position (n)"""
+    institutePosition3 = db.Column('institutePosition3', db.String(255))
+
+    """Affiliation institute name 4"""
+    """Affiliation institute name (n)"""
+    instituteName4 = db.Column('instituteName4', db.String(100))
+
+    """Affiliation institute position (n)"""
+    institutePosition4 = db.Column('institutePosition4', db.String(255))
+
+    """Affiliation institute name 5"""
+    """Affiliation institute name (n)"""
+    instituteName5 = db.Column('instituteName5', db.String(100))
+
+    """Affiliation institute position (n)"""
+    institutePosition5 = db.Column('institutePosition5', db.String(255))
 
     @hybrid_property
     def username(self):
@@ -119,6 +169,30 @@ class UserProfile(db.Model):
     def is_anonymous(self):
         """Return whether this UserProfile is anonymous."""
         return False
+
+    def get_institute_data(self):
+        """Get institute data.
+
+        :return:
+        """
+        institute_dict = {
+            1: {'subitem_affiliated_institution_name': self.instituteName,
+                'subitem_affiliated_institution_position':
+                    self.institutePosition},
+            2: {'subitem_affiliated_institution_name': self.instituteName2,
+                'subitem_affiliated_institution_position':
+                    self.institutePosition2},
+            3: {'subitem_affiliated_institution_name': self.instituteName3,
+                'subitem_affiliated_institution_position':
+                    self.institutePosition3},
+            4: {'subitem_affiliated_institution_name': self.instituteName4,
+                'subitem_affiliated_institution_position':
+                    self.institutePosition4},
+            5: {'subitem_affiliated_institution_name': self.instituteName5,
+                'subitem_affiliated_institution_position':
+                    self.institutePosition5}
+        }
+        return institute_dict
 
 
 @event.listens_for(User, 'init')

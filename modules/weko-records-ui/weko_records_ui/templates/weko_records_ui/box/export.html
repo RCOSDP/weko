@@ -26,7 +26,7 @@
 <dt>{{_('OAI-PMH')}}</dt>
 <ul class="list-inline">
   {%- for slug, fmt in formats %}
-  {%- if 'junii2' in fmt['title'] or 'JPCOAR' in fmt['title'] or 'DublinCore' in fmt['title'] %}
+  {%- if fmt['title'] in ['junii2', 'JPCOAR', 'DublinCore', 'DDI'] %}
     <li><a
       href="{{ url_for('invenio_oaiserver.response')+'?verb=GetRecord&metadataPrefix='+slug+'&identifier='+record['_oai'].id }}">
       <img src="/static/images/default/oai_pmh.png" alt="OAI-PMH" />

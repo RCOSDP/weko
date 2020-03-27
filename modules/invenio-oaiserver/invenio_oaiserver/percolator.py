@@ -125,10 +125,7 @@ def get_record_sets(record):
             yield spec
 
     # get list of sets that match using percolator
-    from flask import current_app
-    current_app.logger.info('record: {}'.format(record))
     index, doc_type = RecordIndexer().record_to_index(record)
-    current_app.logger.info('index: {0}, doc_type: {1}'.format(index, doc_type))
     document = record.dumps()
 
     percolator_doc_type = _get_percolator_doc_type(index)

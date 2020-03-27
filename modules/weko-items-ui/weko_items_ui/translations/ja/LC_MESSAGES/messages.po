@@ -400,3 +400,27 @@ msgstr "進捗"
 #: weko_items_ui/templates/weko_items_ui/iframe/upload_thumbnail_list.html:
 msgid "Actions"
 msgstr "アクション"
+
+
+msgid "Specified index does not exist"
+msgstr "指定されたインデックスが存在していません。お手数ですが、管理者の方へ問い合わせをお願いします。"
+
+
+msgid "Advisor"
+msgstr "指導教員"
+
+msgid "Guarantor"
+msgstr "保証人"
+
+msgid "Email (Advisor)"
+msgstr "メール（指導教員）"
+
+msgid "Email (Guarantor)"
+msgstr "メール（保証人）"
+
+msgid "The following email address is not registered in the system. Please recheck and input."
+msgstr "以下のメールアドレスがシステムに登録されていません。ご確認の上、再度入力してください。"
+
+msgid "The specified number has been exceeded. You can only select up to two fields."
+msgstr "規定の数を超えています。選択できるのは２つまでです。"
+

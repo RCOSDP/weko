@@ -27,7 +27,7 @@ from .models import WidgetDesignPage
 from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
-    get_system_language, get_widget_type_list
+    get_system_language, get_widget_design_setting, get_widget_type_list
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -113,8 +113,8 @@ def load_widget_design_setting(current_language=''):
     """
     data = request.get_json()
     repository_id = data.get('repository_id')
-    return jsonify(WidgetDesignServices.get_widget_design_setting(
-        repository_id, current_language or get_default_language()))
+    response = get_widget_design_setting(repository_id, current_language)
+    return response
 
 
 @blueprint_api.route(
@@ -384,7 +384,8 @@ def view_widget_page():
         # Check if has main and if it does use different template
         if page.settings:
             main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
-            settings = json.loads(page.settings)
+            settings = json.loads(page.settings) \
+                if isinstance(page.settings, str) else page.settings
             for item in settings:
                 if item['type'] == main_type:
                     return render_template(
@@ -420,7 +421,8 @@ def handle_not_found(exception, **extra):
         _add_url_rule(page.url)
         if page.settings:
             main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
-            settings = json.loads(page.settings)
+            settings = json.loads(page.settings) \
+                if isinstance(page.settings, str) else page.settings
             for item in settings:
                 if item['type'] == main_type:
                     return render_template(

@@ -57,7 +57,7 @@ class WekoTheme(object):
         :param app: The Flask application.
         """
         for k in dir(config):
-            app.config[k] = getattr(config, k)
+            app.config.setdefault(k, getattr(config, k))
         if "ADMIN_UI_SKIN" in app.config:
             app.config.update(
                 ADMIN_UI_SKIN='skin-red',

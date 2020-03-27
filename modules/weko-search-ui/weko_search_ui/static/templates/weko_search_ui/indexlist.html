@@ -79,10 +79,12 @@
         </div>
       </div>
     </div>
+    <span ng-hide="sort_index_list(vm.invenioSearchResults.aggregations.path.buckets[0])"></span>
     <div id="index_tree_list">
       <ul class="list-group">
         <div class="list-group-item"
-          ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0] track by $index" ng-if="(typeIndexList !== 'root' && !$first)  || typeIndexList === 'root'"
+          ng-repeat="index_path in sorted_child_list track by $index"
+          ng-if="typeIndexList !== 'root' || typeIndexList === 'root'"
           style="position: relative;">
           <a ng-href="/search?search_type=2&q={{ index_path.key.split('/').pop() }}{{commInfoIndex}}" style="
                 color: #333;
@@ -93,14 +95,15 @@
                 <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
                 <span ng-if="is_permission">{{ index_path.name.split('/').pop() }} <{{index_path.key.split('/').pop()}}></span>
                 <span ng-if="!is_permission">{{ index_path.name.split('/').pop() }}</span>
-                <span ng-if="index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0" class="badge"
+                <span
+                    ng-if="(index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0)&&(is_login)" class="badge"
                   style="float:right">{{index_path.date_range.pub_cnt}} items (Private {{index_path.date_range.un_pub_cnt}}
                   items )
                 </span>
-                <span ng-if="index_path.date_range.pub_cnt==0&&index_path.date_range.un_pub_cnt==0" class="badge"
+                <span
+                    ng-if="(index_path.date_range.pub_cnt==0&&index_path.date_range.un_pub_cnt==0)||(!is_login)" class="badge"
                   style="float:right">{{index_path.date_range.pub_cnt}} items </span>
             </div>
-
           </a>
           <div style="padding-left: 14px">
                 <span ng-bind-html="display_comment(index_path.comment) | sanitize"></span>

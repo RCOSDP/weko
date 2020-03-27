@@ -1,0 +1,90 @@
+{#
+# This file is part of Invenio.
+# Copyright (C) 2013, 2014, 2016 CERN.
+#
+# Invenio is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+#}
+
+{% extends config.SEARCH_UI_SEARCH_TEMPLATE %}
+
+{%- from "invenio_communities/macros.html" import community_header %}
+
+{% set title = community.title + " | " + config.THEME_SITENAME %}
+{% set search_hidden_params = {"communities": community.id} %}
+
+{%- block page_header %}
+{% set search_input_placeholder = "Search " + community.title %}
+{% include "invenio_search_ui/header.html" %}
+{%- endblock page_header %}
+
+{% block page_body %}
+<div class="communities">
+  <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
+  {{ community_header(community) }}
+  <div class="container">
+  <div class="row">
+    <div class="col-md-8" id="invenio-search">
+      <h2>Recent uploads</h2>
+      <form action="{{url_for('.search', community_id=community.id)}}" role="search">
+        <div class="form-group">
+          <div class="input-group">
+            <input type="text" class="form-control" name="q" placeholder="{{_('Search ') + community.title}}">
+            <div class="input-group-btn">
+              <button id="simple_search" type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+            </div>
+          </div>
+        </div>
+      </form>
+      {%- block search_body %}
+      <invenio-search search-endpoint="/api/records/"
+       search-hidden-params='{"community":"{{ community.id }}", "sort": "mostrecent", "size": 10}'
+       search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'>
+        {%- block search_error %}
+        <invenio-search-error
+         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
+         message="{{ _('Error') }}">
+        </invenio-search-error>
+        {%- endblock search_error %}
+        {%- block search_loading %}
+        <invenio-search-loading
+         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
+         message="{{ _('Loading...') }}">
+        </invenio-search-loading>
+        {%- endblock search_loading %}
+        {%- block search_results %}
+        <invenio-search-results
+         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RESULTS_BASIC) }}">
+        </invenio-search-results>
+        {%- endblock search_results %}
+      </invenio-search>
+      {%- endblock search_body %}
+      <p class="text-center"><a class="btn btn-default" href="{{url_for('.search', community_id=community
+      .id)}}">More</a></p>
+      <div class="col-sm-9 col-md-9 col-lg-9 m-top-20">
+    </div>
+    </div>
+    <div class="col-md-4">
+      <div class="well">{% include "invenio_communities/portalbox_upload.html" %}</div>
+      <div class="well">{% include "invenio_communities/portalbox_main.html" %}</div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock page_body %}

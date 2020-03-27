@@ -218,3 +218,173 @@ msgstr "入力内容を破棄してもよろしいですか？"
 #~ msgid "Index List"
 #~ msgstr "インデクスリスト"
 
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Summary"
+msgstr "サマリー"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Total"
+msgstr "総計"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "New Item"
+msgstr "新規登録アイテム"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Update Item"
+msgstr "更新アイテム"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Check Error"
+msgstr "チェックエラー"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Download"
+msgstr "ダウンロード"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "No."
+msgstr "No."
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Item Id"
+msgstr "アイテムID"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Title"
+msgstr "タイトル"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Check Result"
+msgstr "チェック結果"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Error"
+msgstr "エラー"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Update"
+msgstr "更新"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Not match"
+msgstr "一致しない"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Register"
+msgstr "登録"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Start Date"
+msgstr "開始日"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "End Date"
+msgstr "終了日"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Action"
+msgstr "アクション"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "End"
+msgstr "End"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Work Flow Status"
+msgstr "ワークフローステータス"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Done"
+msgstr "作業済"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "To Do"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Access"
+msgstr "アクセス制限"
+
+#: weko_search_ui/config.py:
+msgid "Open access"
+msgstr "オープンアクセス"
+
+#: weko_search_ui/config.py:
+msgid "Restricted access"
+msgstr "制約付きアクセス"
+
+#: weko_search_ui/config.py:
+msgid "Metadata only access"
+msgstr "メタデータのみ"
+
+#: weko_search_ui/config.py:
+msgid "Embargoed access"
+msgstr "エンバーゴ期間中"
+
+#: weko_search_ui/config.py:
+msgid "Data Language"
+msgstr "データの言語"
+
+#: weko_search_ui/config.py:
+msgid "Distributor"
+msgstr "配布者"
+
+#: weko_search_ui/config.py:
+msgid "Data Type"
+msgstr "データタイプ"
+
+#: weko_search_ui/config.py:
+msgid "Chinese"
+msgstr "中国語"
+
+#: weko_search_ui/config.py:
+msgid "Mandarin Chinese"
+msgstr "北京語"
+
+#: weko_search_ui/config.py:
+msgid "English"
+msgstr "英語"
+
+#: weko_search_ui/config.py:
+msgid "French"
+msgstr "フランス語"
+
+#: weko_search_ui/config.py:
+msgid "German"
+msgstr "ドイツ語"
+
+#: weko_search_ui/config.py:
+msgid "Japanese"
+msgstr "日本語"
+
+#: weko_search_ui/config.py:
+msgid "Korean"
+msgstr "韓国語"
+
+#: weko_search_ui/config.py:
+msgid "Russian"
+msgstr "ロシア語"
+
+#: weko_search_ui/config.py:
+msgid "Center for Social Research and Data Archives, Institute of Social Science, University of Tokyo"
+msgstr "東京大学 社会科学研究所附属社会調査・データアーカイブ研究センター"
+
+#: weko_search_ui/config.py:
+msgid "Institute of Economic Research, Hitotsubashi University"
+msgstr "一橋大学 経済研究所"
+
+#: weko_search_ui/config.py:
+msgid "Panel Data Research Center at Keio University"
+msgstr "慶應義塾大学 経済学部附属経済研究所パネルデータ設計・解析センター"
+
+#: weko_search_ui/config.py:
+msgid "Japanese General Social Surveys, Osaka University of Commerce"
+msgstr "大阪商業大学 ＪＧＳＳ研究センター"
+
+#: weko_search_ui/config.py:
+msgid "Historiographical Institute The University of Tokyo"
+msgstr "東京大学 史料編纂所"
+
+
+

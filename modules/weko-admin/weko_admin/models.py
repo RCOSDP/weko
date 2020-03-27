@@ -170,6 +170,22 @@ class SearchManagement(db.Model):
     )
     """ The list of search condition """
 
+    display_control = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """ The status of display control """
+
     create_date = db.Column(db.DateTime, default=datetime.now)
     """Create Time"""
 
@@ -186,6 +202,7 @@ class SearchManagement(db.Model):
                     'dlt_keyword_sort_selected')
                 data_obj.sort_setting = data.get('sort_options')
                 data_obj.search_conditions = data.get('detail_condition')
+                data_obj.display_control = data.get('display_control')
                 data_obj.search_setting_all = data
                 db.session.add(data_obj)
             db.session.commit()
@@ -216,6 +233,7 @@ class SearchManagement(db.Model):
                     'dlt_keyword_sort_selected')
                 setting_data.sort_setting = data.get('sort_options')
                 setting_data.search_conditions = data.get('detail_condition')
+                setting_data.display_control = data.get('display_control')
                 setting_data.search_setting_all = data
                 db.session.merge(setting_data)
             db.session.commit()
@@ -839,7 +857,6 @@ class BillingPermission(db.Model):
                     db.session.merge(billing_data)
                 else:
                     cls.create(user_id, is_active)
-                    current_app.logger.info('New user is created!')
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -1285,6 +1302,22 @@ class SiteInfo(db.Model):
     )
     """site name info."""
 
+    notify = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=False
+    )
+    """notify."""
+
     @classmethod
     def get(cls):
         """Get site infomation."""
@@ -1316,6 +1349,13 @@ class SiteInfo(db.Model):
                         "name": escape(sn.get('name').strip()),
                         "language": escape(sn.get('language')),
                     })
+                notify = []
+                list_notify = site_info.get('notify') or []
+                for nt in list_notify:
+                    notify.append({
+                        "notify_name": escape(nt.get('notify_name').strip()),
+                        "language": escape(nt.get('language')),
+                    })
                 query_object.copy_right = escape(site_info.get(
                     "copy_right").strip())
                 query_object.description = escape(site_info.get(
@@ -1325,6 +1365,7 @@ class SiteInfo(db.Model):
                 query_object.favicon_name = escape(site_info.get(
                     "favicon_name").strip())
                 query_object.site_name = site_name
+                query_object.notify = notify
 
                 if new_site_info_flag:
                     db.session.add(query_object)

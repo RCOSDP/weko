@@ -22,7 +22,6 @@
 
 import copy
 import json
-import re
 from collections import Iterable, OrderedDict
 from functools import partial
 
@@ -137,7 +136,7 @@ class SchemaConverter:
             chdsm = OrderedDict()
             for chd in element.iterchildren():
                 if (chd not in ignore_list
-                        and not getXSVal(element.name).__eq__(getXSVal(chd.name))
+                    and not getXSVal(element.name).__eq__(getXSVal(chd.name))
                         and is_valid_element(chd.name)
                         and not isinstance(chd, XsdAnyElement)):
                     ctp = OrderedDict()
@@ -159,8 +158,8 @@ class SchemaConverter:
         except Exception as ex:
             current_app.error(ex)
             abort(
-                400,
-                "Error creating Schema: Can not open xsd file. Please check it!")
+                400, "Error creating Schema: "
+                     "Can not open xsd file. Please check it!")
 
         # namespace
         nsp, tagns = schema_data.target_prefix, schema_data.target_namespace
@@ -255,6 +254,7 @@ class SchemaTree:
                 self._record.pop("_buckets", {})
                 self._record.pop("_deposit", {})
                 mjson = Mapping.get_record(id)
+                self.item_type_mapping = mjson
                 mp = mjson.dumps()
                 if mjson:
                     for k, v in self._record.items():
@@ -269,7 +269,7 @@ class SchemaTree:
     def __converter(self, node):
 
         _need_to_nested = ('subjectScheme', 'dateType', 'identifierType',
-                           'objectType',)
+                           'objectType', 'descriptionType')
 
         def list_reduce(olst):
             if isinstance(olst, list):
@@ -296,15 +296,14 @@ class SchemaTree:
                             lambda x: get_attr(x) in _need_to_nested,
                             attr.keys())) if attr else []
                     if attr and alst:
-                        return list(map(partial(create_json, get_attr(alst[0])),
-                                        list_reduce(
-                                            [attr.get(alst[0])]),
-                                        list(list_reduce(val))))
+                        return list(map(partial(
+                            create_json, get_attr(alst[0])),
+                            list_reduce([attr.get(alst[0])]),
+                            list(list_reduce(val)))
+                        )
 
                     return list(list_reduce(val))
                 else:
-                    if attr:
-                        node.pop(self._atr)
                     for k, v in node.items():
                         if k != self._atr:
                             node[k] = json_reduce(v)
@@ -427,7 +426,7 @@ class SchemaTree:
                 if klst:
                     node[k1] = klst
 
-        def get_mapping_value(mpdic, atr_vm, k):
+        def get_mapping_value(mpdic, atr_vm, k, atr_name):
             remain_keys = []
 
             def remove_empty_tag(mp):
@@ -445,6 +444,92 @@ class SchemaTree:
                         if remove_empty_tag(it):
                             mp.remove(it)
                 return False
+
+            def get_type_item(item_type_mapping, atr_name):
+                type_item = None
+                if atr_name == 'contributor':
+                    type_item = 'contributorType'
+                elif atr_name == 'relation':
+                    type_item = 'relationType'
+                for k, v in self.item_type_mapping.items():
+                    jpcoar = v.get("jpcoar_mapping")
+                    if isinstance(jpcoar, dict):
+                        if atr_name in jpcoar.keys():
+                            value = jpcoar[atr_name]
+                            if '@attributes' in value.keys():
+                                attr = value['@attributes']
+                                if type_item in attr:
+                                    return attr[type_item]
+
+            def get_item_by_type(temporary, type_item):
+                """Get Contributor and Relation by Type."""
+                key_level_1 = None
+                key_level_2 = None
+                key_level_3 = None
+                if type_item == "Distributor":
+                    key_level_1 = 'citation'
+                    key_level_2 = 'distStmt'
+                    key_level_3 = 'distrbtr'
+                elif type_item == 'Other':
+                    key_level_1 = 'citation'
+                    key_level_2 = 'distStmt'
+                    key_level_3 = 'depositr'
+                elif type_item == "DataCollector":
+                    key_level_1 = 'method'
+                    key_level_2 = 'dataColl'
+                    key_level_3 = 'dataCollector'
+                elif type_item == 'isReferencedBy':
+                    key_level_1 = 'othrStdyMat'
+                    key_level_2 = 'relPubl'
+                elif type_item == 'isSupplementedBy':
+                    key_level_1 = 'othrStdyMat'
+                    key_level_2 = 'relStdy'
+                elif type_item == 'isPartOf':
+                    key_level_1 = 'citation'
+                    key_level_2 = 'serStmt'
+                    key_level_3 = 'serName'
+
+                if isinstance(temporary, dict):
+                    if key_level_3:
+                        for k, v in temporary.items():
+                            if k == key_level_1:
+                                value_of_stdydscr = {k: v}
+                                if key_level_3 in \
+                                    value_of_stdydscr[key_level_1][
+                                        key_level_2].keys():
+                                    value_of_stdydscr[key_level_1][
+                                        key_level_2] = {
+                                        key_level_3:
+                                            value_of_stdydscr[key_level_1][
+                                                key_level_2][key_level_3]}
+                                    temporary = value_of_stdydscr
+                                    return temporary
+                    else:
+                        for k, v in temporary.items():
+                            if k == key_level_1:
+                                value_of_stdydscr = {k: v}
+                                if key_level_2 in value_of_stdydscr[
+                                        key_level_1].keys():
+                                    value_of_stdydscr[key_level_1] = {
+                                        key_level_2:
+                                            value_of_stdydscr[key_level_1][
+                                                key_level_2]}
+                                    temporary = value_of_stdydscr
+                                    return temporary
+
+            def handle_type_ddi(atr_name, list_type, vlst):
+                key_item_type = get_type_item(
+                    self.item_type_mapping, atr_name.lower())
+                if key_item_type in atr_vm.keys():
+                    item_type = atr_vm[key_item_type]
+                    if item_type in list_type:
+                        vlst[0]['stdyDscr'] = get_item_by_type(
+                            vlst[0]['stdyDscr'], item_type)
+                    else:
+                        vlst[0]['stdyDscr'] = {}
+                else:
+                    vlst[0]['stdyDscr'] = {}
+                return vlst[0]['stdyDscr']
 
             vlst = []
             for ky, vl in mpdic.items():
@@ -509,6 +594,22 @@ class SchemaTree:
                 if remove_empty:
                     remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
+            if isinstance(atr_vm, dict) and isinstance(vlst, list) and \
+                    'stdyDscr' in vlst[0].keys():
+                if atr_name == 'Contributor':
+                    list_contributor_type = ['Distributor', 'Other',
+                                             'DataCollector']
+                    vlst[0]['stdyDscr'] = handle_type_ddi(
+                        atr_name,
+                        list_contributor_type,
+                        vlst
+                    )
+                elif atr_name == 'Relation':
+                    list_relation_type = ['isReferencedBy', 'isSupplementedBy',
+                                          'isPartOf']
+                    vlst[0]['stdyDscr'] = handle_type_ddi(atr_name,
+                                                          list_relation_type,
+                                                          vlst)
             return vlst
 
         vlst = []
@@ -523,6 +624,8 @@ class SchemaTree:
                 atr_v = v.get('attribute_value')
                 # List of dict
                 atr_vm = v.get('attribute_value_mlt')
+                # attr of name
+                atr_name = v.get('attribute_name')
                 if atr_v:
                     if isinstance(atr_v, list):
                         atr_v = [atr_v]
@@ -530,10 +633,11 @@ class SchemaTree:
                         atr_v = [[atr_v]]
                     set_value(mpdic, atr_v)
                     vlst.append(mpdic)
-                elif atr_vm:
+                elif atr_vm and atr_name:
                     if isinstance(atr_vm, list) and isinstance(mpdic, dict):
                         for lst in atr_vm:
-                            vlst.extend(get_mapping_value(mpdic, lst, k))
+                            vlst.extend(
+                                get_mapping_value(mpdic, lst, k, atr_name))
         return vlst
 
     def create_xml(self):
@@ -603,7 +707,8 @@ class SchemaTree:
                                 atrt = get_atr_list(altt)
                             for i in range(len(val[index])):
                                 chld = etree.Element(kname, None, ns)
-                                chld.text = val[index][i]
+                                # chld.text = val[index][i]
+                                chld.text = str(val[index][i])
                                 if len(atrt) > i:
                                     for k2, v2 in atrt[i].items():
                                         chld.set(get_prefix(k2), v2)
@@ -644,14 +749,15 @@ class SchemaTree:
                                      and isinstance(n.get(self._atr), dict)
                                      for attr in n.get(self._atr).values()])
                                 if int(multi) > 1:
-                                    multi_nodes = [copy.deepcopy(node) for j in
+                                    multi_nodes = [copy.deepcopy(node) for _ in
                                                    range(int(multi))]
                                     for idx, item in enumerate(multi_nodes):
                                         for nd in item.values():
                                             nd[self._v] = [nd[self._v][idx]]
                                             for key in nd.get(self._atr):
                                                 nd.get(self._atr)[key] = [
-                                                    nd.get(self._atr)[key][idx]]
+                                                    nd.get(self._atr)[key][
+                                                        idx]]
                                     nodes = multi_nodes
                             for val in nodes:
                                 child = etree.Element(kname, None, ns)
@@ -662,13 +768,36 @@ class SchemaTree:
                                         k1 = get_prefix(k1)
                                         set_children(k1, v1, child)
 
+        def merge_json_xml(json, dct):
+            if isinstance(json, dict):
+                for k, v in json.items():
+                    if k in dct:
+                        merge_json_xml(json[k], dct[k])
+                    else:
+                        dct[k] = json[k]
+            elif isinstance(json, list):
+                for i in json:
+                    if isinstance(i, list):
+                        dct[0] += i
+                    else:
+                        merge_json_xml(i, dct)
+
         if not self._schema_obj:
             E = ElementMaker()
             root = E.Weko()
             root.text = "Sorry! This Item has not been mappinged."
             return root
+        list_json_xml = self.__get_value_list(remove_empty=True)
+        if self._schema_name == current_app.config[
+                'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
+            dct_xml = dict()
+            list_dict = list()
+            for json_child in list_json_xml:
+                merge_json_xml(json_child, dct_xml)
+            list_dict.append(dct_xml)
+            list_json_xml = list_dict
 
-        node_tree = self.find_nodes(self.__get_value_list(remove_empty=True))
+        node_tree = self.find_nodes(list_json_xml)
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
         ns.update({'xml': "http://www.w3.org/XML/1998/namespace"})
@@ -687,9 +816,12 @@ class SchemaTree:
         # Create sub element
         for lst in node_tree:
             for k, v in lst.items():
+                if k == 'custom:system_file':
+                    k = 'jpcoar:file'
+                elif k == 'custom:system_identifier':
+                    k = 'jpcoar:identifier'
                 k = get_prefix(k)
                 set_children(k, v, root)
-
         return root
 
     def to_list(self):

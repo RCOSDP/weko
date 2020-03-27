@@ -19,13 +19,12 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
-
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
-from flask import current_app
+from flask import current_app, session
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
@@ -34,6 +33,7 @@ from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
 
+from .config import WEKO_INDEX_TREE_STATE_PREFIX
 from .models import Index
 
 
@@ -118,9 +118,18 @@ def get_tree_json(index_list, root_id):
         index_relation[index_element.pid].append(index_element.cid)
         index_position[index_element.cid] = position
 
+    def get_user_list_expand():
+        """Get list index expand."""
+        key = current_app.config.get(
+            "WEKO_INDEX_TREE_STATE_PREFIX",
+            WEKO_INDEX_TREE_STATE_PREFIX
+        )
+        return session.get(key, [])
+
     def generate_index_dict(index_element, is_root):
         """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
         index_dict = index_element._asdict()
+
         if not is_root:
             pid = str(index_element.pid)
             parent = index_list[index_position[index_element.pid]]
@@ -128,16 +137,30 @@ def get_tree_json(index_list, root_id):
                 pid = '{}/{}'.format(parent.pid, pid)
                 parent = index_list[index_position[parent.pid]]
             index_dict.update({'parent': pid})
+
+        list_index_expand = get_user_list_expand()
+        is_expand_on_init = str(index_element.cid) in list_index_expand
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_element.name,
             'position': index_element.position,
             'emitLoadNextLevel': False,
-            'settings': {'isCollapsedOnInit': True, 'checked': False}
+            'settings': {
+                'isCollapsedOnInit': not is_expand_on_init,
+                'checked': False
+            }
         })
-        for attr in ['public_state', 'public_date', 'browsing_role', 'contribute_role',
-                     'browsing_group', 'contribute_group', 'more_check', 'display_no',
-                     'coverpage_state']:
+        for attr in [
+            'public_state',
+            'public_date',
+            'browsing_role',
+            'contribute_role',
+            'browsing_group',
+            'contribute_group',
+            'more_check',
+            'display_no',
+            'coverpage_state'
+        ]:
             if hasattr(index_element, attr):
                 index_dict.update({attr: getattr(index_element, attr)})
         return index_dict
@@ -215,13 +238,39 @@ def check_roles(user_role, roles):
 
 def check_groups(user_group, groups):
     """Check groups."""
-    is_can = True
+    is_can = False
     if current_user.is_authenticated:
         group = [x for x in user_group if str(x) in (groups or [])]
-        if not group:
-            is_can = False
+        if group:
+            is_can = True
 
     return is_can
+
+
+def filter_index_list_by_role(index_list):
+    """Filter index list by role."""
+    def _check(index_data, roles, groups):
+        """Check index data by role."""
+        can_view = False
+        if roles[0]:
+            can_view = True
+        else:
+            if check_roles(roles, index_data.browsing_role) \
+                    or check_groups(groups, index_data.browsing_group):
+                if index_data.public_state \
+                        and (index_data.public_date is None
+                             or (isinstance(index_data.public_date, datetime)
+                                 and date.today() >= index_data.public_date.date())):
+                    can_view = True
+        return can_view
+
+    result_list = []
+    roles = get_user_roles()
+    groups = get_user_groups()
+    for i in index_list:
+        if _check(i, roles, groups):
+            result_list.append(i)
+    return result_list
 
 
 def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
@@ -301,6 +350,29 @@ def get_index_id_list(indexes, id_list=None):
 
                 children = index.get('children')
                 get_index_id_list(children, id_list)
+
+    return id_list
+
+
+def get_publish_index_id_list(indexes, id_list=None):
+    """Get index id list."""
+    if id_list is None:
+        id_list = []
+    if isinstance(indexes, list):
+        for index in indexes:
+            if isinstance(index, dict):
+                if index.get('id', '') == 'more':
+                    continue
+
+                parent = index.get('parent', '')
+                if index.get('public_state'):
+                    if parent is not '' and parent is not '0':
+                        id_list.append(parent + '/' + index.get('id', ''))
+                    else:
+                        id_list.append(index.get('id', ''))
+
+                children = index.get('children')
+                get_publish_index_id_list(children, id_list)
 
     return id_list
 
@@ -404,3 +476,26 @@ def generate_path(index_ids):
         result.append(path[str(index.cid)])
 
     return result
+
+
+def get_index_id(activity_id):
+    """Get index ID base on activity id.
+
+    :param activity_id:
+    :return:
+    """
+    from weko_workflow.api import WorkActivity, WorkFlow
+    activity = WorkActivity()
+    activity_detail = activity.get_activity_detail(activity_id)
+    workflow = WorkFlow()
+    workflow_detail = workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
+    index_tree_id = workflow_detail.index_tree_id
+    if index_tree_id:
+        from .api import Indexes
+        index_result = Indexes.get_index(index_tree_id)
+        if not index_result:
+            index_tree_id = None
+    else:
+        index_tree_id = None
+    return index_tree_id

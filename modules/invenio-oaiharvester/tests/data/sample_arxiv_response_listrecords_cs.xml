@@ -1,0 +1,1125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+<responseDate>2016-01-18T15:33:12Z</responseDate>
+<request verb="ListRecords" until="2015-01-18" from="2015-01-16" metadataPrefix="arXiv" set="cs">http://export.arxiv.org/oai2</request>
+<ListRecords>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1101.4388</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1101.4388</id><created>2011-01-23</created><updated>2012-03-28</updated><authors><author><keyname>Song</keyname><forenames>Guohui</forenames></author><author><keyname>Zhang</keyname><forenames>Haizhang</forenames></author><author><keyname>Hickernell</keyname><forenames>Fred J.</forenames></author></authors><title>Reproducing Kernel Banach Spaces with the l1 Norm</title><categories>stat.ML cs.LG math.FA</categories><comments>28 pages, an extra section was added</comments><journal-ref>Appl. Comput. Harmon. Anal., 34:96-116, 2013</journal-ref><doi>10.1016/j.acha.2012.03.009</doi><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Targeting at sparse learning, we construct Banach spaces B of functions on an
+input space X with the properties that (1) B possesses an l1 norm in the sense
+that it is isometrically isomorphic to the Banach space of integrable functions
+on X with respect to the counting measure; (2) point evaluations are continuous
+linear functionals on B and are representable through a bilinear form with a
+kernel function; (3) regularized learning schemes on B satisfy the linear
+representer theorem. Examples of kernel functions admissible for the
+construction of such spaces are given.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1111.1546</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1111.1546</id><created>2011-11-07</created><updated>2015-01-15</updated><authors><author><keyname>Brunsch</keyname><forenames>Tobias</forenames></author><author><keyname>R&#xf6;glin</keyname><forenames>Heiko</forenames></author></authors><title>Improved Smoothed Analysis of Multiobjective Optimization</title><categories>cs.DS</categories><comments>to appear in JACM</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We present several new results about smoothed analysis of multiobjective
+optimization problems. Motivated by the discrepancy between worst-case analysis
+and practical experience, this line of research has gained a lot of attention
+in the last decade. We consider problems in which d linear and one arbitrary
+objective function are to be optimized over a subset S of {0,1}^n of feasible
+solutions. We improve the previously best known bound for the smoothed number
+of Pareto-optimal solutions to O(n^{2d} phi^d), where phi denotes the
+perturbation parameter. Additionally, we show that for any constant c the c-th
+moment of the smoothed number of Pareto-optimal solutions is bounded by
+O((n^{2d} phi^d)^c). This improves the previously best known bounds
+significantly. Furthermore, we address the criticism that the perturbations in
+smoothed analysis destroy the zero-structure of problems by showing that the
+smoothed number of Pareto-optimal solutions remains polynomially bounded even
+for zero-preserving perturbations. This broadens the class of problems captured
+by smoothed analysis and it has consequences for non-linear objective
+functions. One corollary of our result is that the smoothed number of
+Pareto-optimal solutions is polynomially bounded for polynomial objective
+functions.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1207.1019</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1207.1019</id><created>2012-07-04</created><authors><author><keyname>Morvant</keyname><forenames>Emilie</forenames><affiliation>LIF</affiliation></author><author><keyname>Habrard</keyname><forenames>Amaury</forenames><affiliation>LAHC</affiliation></author><author><keyname>Ayache</keyname><forenames>St&#xe9;phane</forenames><affiliation>LIF</affiliation></author></authors><title>PAC-Bayesian Majority Vote for Late Classifier Fusion</title><categories>stat.ML cs.CV cs.LG cs.MM</categories><comments>7 pages, Research report</comments><proxy>ccsd</proxy><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  A lot of attention has been devoted to multimedia indexing over the past few
+years. In the literature, we often consider two kinds of fusion schemes: The
+early fusion and the late fusion. In this paper we focus on late classifier
+fusion, where one combines the scores of each modality at the decision level.
+To tackle this problem, we investigate a recent and elegant well-founded
+quadratic program named MinCq coming from the Machine Learning PAC-Bayes
+theory. MinCq looks for the weighted combination, over a set of real-valued
+functions seen as voters, leading to the lowest misclassification rate, while
+making use of the voters' diversity. We provide evidence that this method is
+naturally adapted to late fusion procedure. We propose an extension of MinCq by
+adding an order- preserving pairwise loss for ranking, helping to improve Mean
+Averaged Precision measure. We confirm the good behavior of the MinCq-based
+fusion approaches with experiments on a real image benchmark.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1306.1076</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1306.1076</id><created>2013-06-05</created><updated>2015-01-15</updated><authors><author><keyname>Yun</keyname><forenames>Se-Young</forenames></author><author><keyname>Shin</keyname><forenames>Jinwoo</forenames></author><author><keyname>Yi</keyname><forenames>Yung</forenames></author></authors><title>CSMA using the Bethe Approximation: Scheduling and Utility Maximization</title><categories>cs.NI cs.IT math.IT</categories><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  CSMA (Carrier Sense Multiple Access), which resolves contentions over
+wireless networks in a fully distributed fashion, has recently gained a lot of
+attentions since it has been proved that appropriate control of CSMA parameters
+guarantees optimality in terms of stability (i.e., scheduling) and system- wide
+utility (i.e., scheduling and congestion control). Most CSMA-based algorithms
+rely on the popular MCMC (Markov Chain Monte Carlo) technique, which enables
+one to find optimal CSMA parameters through iterative loops of
+`simulation-and-update'. However, such a simulation-based approach often
+becomes a major cause of exponentially slow convergence, being poorly adaptive
+to flow/topology changes. In this paper, we develop distributed iterative
+algorithms which produce approximate solutions with convergence in polynomial
+time for both stability and utility maximization problems. In particular, for
+the stability problem, the proposed distributed algorithm requires, somewhat
+surprisingly, only one iteration among links. Our approach is motivated by the
+Bethe approximation (introduced by Yedidia, Freeman and Weiss in 2005) allowing
+us to express approximate solutions via a certain non-linear system with
+polynomial size. Our polynomial convergence guarantee comes from directly
+solving the non-linear system in a distributed manner, rather than multiple
+simulation-and-update loops in existing algorithms. We provide numerical
+results to show that the algorithm produces highly accurate solutions and
+converges much faster than the prior ones.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1306.5042</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1306.5042</id><created>2013-06-21</created><updated>2013-11-28</updated><authors><author><keyname>Li</keyname><forenames>Qian</forenames></author><author><keyname>Zhou</keyname><forenames>Tao</forenames></author><author><keyname>Lv</keyname><forenames>Linyuan</forenames></author><author><keyname>Chen</keyname><forenames>Duanbing</forenames></author></authors><title>Identifying Influential Spreaders by Weighted LeaderRank</title><categories>physics.soc-ph cs.SI physics.data-an</categories><comments>15 pages and 8 figures</comments><journal-ref>Physica A 404 (2014) 47-55</journal-ref><doi>10.1016/j.physa.2014.02.041</doi><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Identifying influential spreaders is crucial for understanding and
+controlling spreading processes on social networks. Via assigning
+degree-dependent weights onto links associated with the ground node, we
+proposed a variant to a recent ranking algorithm named LeaderRank [L. Lv et
+al., PLoS ONE 6 (2011) e21202]. According to the simulations on the standard
+SIR model, the weighted LeaderRank performs better than LeaderRank in three
+aspects: (i) the ability to find out more influential spreaders, (ii) the
+higher tolerance to noisy data, and (iii) the higher robustness to intentional
+attacks.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1308.3822</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1308.3822</id><created>2013-08-17</created><updated>2015-01-15</updated><authors><author><keyname>Kearns</keyname><forenames>Steven M.</forenames></author></authors><title>Sublinear Matching With Finite Automata Using Reverse Suffix Scanning</title><categories>cs.DS</categories><comments>This version of the paper is a streamlined presentation that includes
+  the definition of Offsetting Finite Automata, which replaces the name
+  Accelerated Finite Automata in previous version</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We give algorithms to accelerate the computation of deterministic finite
+automata (DFA) by calculating the state of a DFA n positions ahead utilizing a
+reverse scan of the next n characters. Often this requires scanning fewer than
+n characters resulting in a fraction of the input being skipped and a
+commensurate increase in processing speed. The skipped fraction is &gt; 80% in
+several of our examples. We introduce offsetting finite automata (OFA) to
+encode the accelerated computation. OFA generalize DFA by adding an integer
+offset to the current input index at each state transition. We give algorithms
+for constructing an OFA that accepts the same language as a DFA while possibly
+skipping input, and for matching with an OFA. Compared to previous algorithms
+that attempt to skip some of the input, the new matching algorithm can skip
+more often and can skip farther. In the worst case the new matching algorithm
+scans the same number of characters as a simple forward scan, whereas previous
+approaches often scan more, so the new algorithm can be used as a reliable
+replacement for the simple forward scan. Additionally, the new algorithm adapts
+to available memory and time constraints.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1309.7543</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1309.7543</id><created>2013-09-29</created><updated>2014-10-11</updated><authors><author><keyname>Kumar</keyname><forenames>Santhosh</forenames></author><author><keyname>Young</keyname><forenames>Andrew J.</forenames></author><author><keyname>Macris</keyname><forenames>Nicolas</forenames></author><author><keyname>Pfister</keyname><forenames>Henry D.</forenames></author></authors><title>Threshold Saturation for Spatially-Coupled LDPC and LDGM Codes on BMS
+  Channels</title><categories>cs.IT math.IT</categories><comments>(v1) This article supersedes arXiv:1301.6111 (v2) Accepted to the
+  IEEE Transactions on Information Theory</comments><journal-ref>IEEE Transactions on Information Theory, Vol. 60, No. 12, pp.
+  7389-7415, Dec. 2014</journal-ref><doi>10.1109/TIT.2014.2360692</doi><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Spatially-coupled low-density parity-check (LDPC) codes, which were first
+introduced as LDPC convolutional codes, have been shown to exhibit excellent
+performance under low-complexity belief-propagation decoding. This phenomenon
+is now termed threshold saturation via spatial coupling. Spatially-coupled
+codes have been successfully applied in numerous areas. In particular, it was
+proven that spatially-coupled regular LDPC codes universally achieve capacity
+over the class of binary memoryless symmetric (BMS) channels under
+belief-propagation decoding.
+  Recently, potential functions have been used to simplify threshold saturation
+proofs for scalar and vector recursions. In this paper, potential functions are
+used to prove threshold saturation for irregular LDPC and low-density
+generator-matrix (LDGM) codes on BMS channels, extending the simplified proof
+technique to BMS channels. The corresponding potential functions are closely
+related to the average Bethe free entropy of the ensembles in the large-system
+limit. These functions also appear in statistical physics when the replica
+method is used to analyze optimal decoding.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1310.6119</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1310.6119</id><created>2013-10-23</created><updated>2015-01-15</updated><authors><author><keyname>Patsonakis</keyname><forenames>Christos</forenames></author><author><keyname>Roussopoulos</keyname><forenames>Mema</forenames></author></authors><title>Asynchronous Rumour Spreading in Social and Signed Topologies</title><categories>cs.SI physics.soc-ph</categories><comments>10 pages, 4 figures, 5 tables</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  In this paper, we present an experimental analysis of the asynchronous push &amp;
+pull rumour spreading protocol. This protocol is, to date, the best-performing
+rumour spreading protocol for simple, scalable, and robust information
+dissemination in distributed systems. We analyse the effect that multiple
+parameters have on the protocol's performance, such as using memory to avoid
+contacting the same neighbor twice in a row, varying the stopping criteria used
+by nodes to decide when to stop spreading the rumour, employing more
+sophisticated neighbor selection policies instead of the standard uniform
+random choice, and others. Prior work has focused on either providing
+theoretical upper bounds regarding the number of rounds needed to spread the
+rumour to all nodes, or, proposes improvements by adjusting isolated
+parameters. To our knowledge, our work is the first to study how multiple
+parameters affect system behaviour both in isolation and combination and under
+a wide range of values. Our analysis is based on experimental simulations using
+real-world social network datasets, thus complementing prior theoretical work
+to shed light on how the protocol behaves in practical, real-world systems. We
+also study the behaviour of the protocol on a special type of social graph,
+called signed networks (e.g., Slashdot and Epinions), whose links indicate
+stronger trust relationships. Finally, through our detailed analysis, we
+demonstrate how a few simple additions to the protocol can improve the total
+time required to inform 100% of the nodes by a maximum of 99.69% and an average
+of 82.37%.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1311.5932</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1311.5932</id><created>2013-11-22</created><authors><author><keyname>Cui</keyname><forenames>Ai-Xiang</forenames></author><author><keyname>Yang</keyname><forenames>Zimo</forenames></author><author><keyname>Zhou</keyname><forenames>Tao</forenames></author></authors><title>Strong ties promote the epidemic prevalence in
+  susceptible-infected-susceptible spreading dynamics</title><categories>physics.soc-ph cs.SI</categories><comments>7 pages, 6 figures, and 1 Table. arXiv admin note: substantial text
+  overlap with arXiv:1204.0100</comments><journal-ref>PLoS ONE 9(12): e113457 (2014)</journal-ref><doi>10.1371/journal.pone.0113457</doi><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Understanding spreading dynamics will benefit society as a whole in better
+preventing and controlling diseases, as well as facilitating the socially
+responsible information while depressing destructive rumors. In network-based
+spreading dynamics, edges with different weights may play far different roles:
+a friend from afar usually brings novel stories, and an intimate relationship
+is highly risky for a flu epidemic. In this article, we propose a weighted
+susceptible-infected-susceptible model on complex networks, where the weight of
+an edge is defined by the topological proximity of the two associated nodes.
+Each infected individual is allowed to select limited number of neighbors to
+contact, and a tunable parameter is introduced to control the preference to
+contact through high-weight or low-weight edges. Experimental results on six
+real networks show that the epidemic prevalence can be largely promoted when
+strong ties are favored in the spreading process. By comparing with two
+statistical null models respectively with randomized topology and randomly
+redistributed weights, we show that the distribution pattern of weights, rather
+than the topology, mainly contributes to the experimental observations. Further
+analysis suggests that the weight-weight correlation strongly affects the
+results: high-weight edges are more significant in keeping high epidemic
+prevalence when the weight-weight correlation is present.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1404.5569</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1404.5569</id><created>2014-04-22</created><updated>2015-01-14</updated><authors><author><keyname>B&#xf6;hm</keyname><forenames>Martin</forenames></author><author><keyname>Sgall</keyname><forenames>Ji&#x159;&#xed;</forenames></author><author><keyname>van Stee</keyname><forenames>Rob</forenames></author><author><keyname>Vesel&#xfd;</keyname><forenames>Pavel</forenames></author></authors><title>Better Algorithms for Online Bin Stretching</title><categories>cs.DS</categories><comments>Corrected typos, added figures</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Online Bin Stretching is a semi-online variant of bin packing in which the
+algorithm has to use the same number of bins as the optimal packing, but is
+allowed to slightly overpack the bins. The goal is to minimize the amount of
+overpacking, i.e., the maximum size packed into any bin.
+  We give an algorithm for Online Bin Stretching with a stretching factor of
+1.5 for any number of bins. We also show a specialized algorithm for three bins
+with a stretching factor of 11/8 = 1.375.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1405.2349</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1405.2349</id><created>2014-05-09</created><updated>2015-01-15</updated><authors><author><keyname>H&#x105;z&#x142;a</keyname><forenames>Jan</forenames></author><author><keyname>Holenstein</keyname><forenames>Thomas</forenames></author></authors><title>Upper Tail Estimates with Combinatorial Proofs</title><categories>cs.DM</categories><comments>Full version of the paper from STACS 2015</comments><acm-class>G.3</acm-class><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We study generalisations of a simple, combinatorial proof of a Chernoff bound
+similar to the one by Impagliazzo and Kabanets (RANDOM, 2010).
+  In particular, we prove a randomized version of the hitting property of
+expander random walks and apply it to obtain a concentration bound for expander
+random walks which is essentially optimal for small deviations and a large
+number of steps. At the same time, we present a simpler proof that still yields
+a &quot;right&quot; bound settling a question asked by Impagliazzo and Kabanets.
+  Next, we obtain a simple upper tail bound for polynomials with input
+variables in $[0, 1]$ which are not necessarily independent, but obey a certain
+condition inspired by Impagliazzo and Kabanets. The resulting bound is used by
+Holenstein and Sinha (FOCS, 2012) in the proof of a lower bound for the number
+of calls in a black-box construction of a pseudorandom generator from a one-way
+function.
+  We then show that the same technique yields the upper tail bound for the
+number of copies of a fixed graph in an Erd\H{o}s-R\'enyi random graph,
+matching the one given by Janson, Oleszkiewicz and Ruci\'nski (Israel J. Math,
+2002).
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1410.1594</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1410.1594</id><created>2014-10-06</created><updated>2015-01-15</updated><authors><author><keyname>Winkler</keyname><forenames>Marco</forenames></author><author><keyname>Reichardt</keyname><forenames>Joerg</forenames></author></authors><title>Node-Specific Triad Pattern Mining for Complex-Network Analysis</title><categories>cs.SI cs.DS physics.data-an physics.soc-ph</categories><comments>Published in IEEE ICDMW 2014</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  The mining of graphs in terms of their local substructure is a
+well-established methodology to analyze networks. It was hypothesized that
+motifs - subgraph patterns which appear significantly more often than expected
+at random - play a key role for the ability of a system to perform its task.
+Yet the framework commonly used for motif-detection averages over the local
+environments of all nodes. Therefore, it remains unclear whether motifs are
+overrepresented in the whole system or only in certain regions.
+  In this contribution, we overcome this limitation by mining node-specific
+triad patterns. For every vertex, the abundance of each triad pattern is
+considered only in triads it participates in. We investigate systems of various
+fields and find that motifs are distributed highly heterogeneously. In
+particular we focus on the feed-forward loop motif which has been alleged to
+play a key role in biological networks.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1412.3138</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1412.3138</id><created>2014-12-08</created><updated>2015-01-15</updated><authors><author><keyname>Zhou</keyname><forenames>Yichao</forenames></author><author><keyname>Wu</keyname><forenames>Yuexin</forenames></author><author><keyname>Zeng</keyname><forenames>Jianyang</forenames></author></authors><title>Computational Protein Design Using AND/OR Branch-and-Bound Search</title><categories>cs.AI cs.CE cs.DS</categories><comments>RECOMB 2015</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  The computation of the global minimum energy conformation (GMEC) is an
+important and challenging topic in structure-based computational protein
+design. In this paper, we propose a new protein design algorithm based on the
+AND/OR branch-and-bound (AOBB) search, which is a variant of the traditional
+branch-and-bound search algorithm, to solve this combinatorial optimization
+problem. By integrating with a powerful heuristic function, AOBB is able to
+fully exploit the graph structure of the underlying residue interaction network
+of a backbone template to significantly accelerate the design process. Tests on
+real protein data show that our new protein design algorithm is able to solve
+many prob- lems that were previously unsolvable by the traditional exact search
+algorithms, and for the problems that can be solved with traditional provable
+algorithms, our new method can provide a large speedup by several orders of
+magnitude while still guaranteeing to find the global minimum energy
+conformation (GMEC) solution.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1412.6073</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1412.6073</id><created>2014-11-19</created><updated>2015-01-15</updated><authors><author><keyname>Kunegis</keyname><forenames>J&#xe9;r&#xf4;me</forenames></author></authors><title>Exploiting the Structure of Bipartite Graphs for Algebraic and Spectral
+  Graph Theory Applications</title><categories>cs.DM cs.SI</categories><comments>37 pages; fixed references</comments><doi>10.1080/15427951.2014.958250</doi><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  In this article, we extend several algebraic graph analysis methods to
+bipartite networks. In various areas of science, engineering and commerce, many
+types of information can be represented as networks, and thus the discipline of
+network analysis plays an important role in these domains. A powerful and
+widespread class of network analysis methods is based on algebraic graph
+theory, i.e., representing graphs as square adjacency matrices. However, many
+networks are of a very specific form that clashes with that representation:
+They are bipartite. That is, they consist of two node types, with each edge
+connecting a node of one type with a node of the other type. Examples of
+bipartite networks (also called \emph{two-mode networks}) are persons and the
+social groups they belong to, musical artists and the musical genres they play,
+and text documents and the words they contain. In fact, any type of feature
+that can be represented by a categorical variable can be interpreted as a
+bipartite network. Although bipartite networks are widespread, most literature
+in the area of network analysis focuses on unipartite networks, i.e., those
+networks with only a single type of node. The purpose of this article is to
+extend a selection of important algebraic network analysis methods to bipartite
+networks, showing that many methods from algebraic graph theory can be applied
+to bipartite networks with only minor modifications. We show methods for
+clustering, visualization and link prediction. Additionally, we introduce new
+algebraic methods for measuring the bipartivity in near-bipartite graphs.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.02894</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.02894</id><created>2015-01-13</created><updated>2015-01-15</updated><authors><author><keyname>Salarian</keyname><forenames>Mehdi.</forenames></author><author><keyname>Mohamadinia</keyname><forenames>Babak.</forenames></author><author><keyname>Rasekhi</keyname><forenames>Jalil</forenames></author></authors><title>A Modified No Search Algorithm for Fractal Image Compression</title><categories>cs.CV cs.MM</categories><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Fractal image compression has some desirable properties like high quality at
+high compression ratio, fast decoding, and resolution independence. Therefore
+it can be used for many applications such as texture mapping and pattern
+recognition and image watermarking. But it suffers from long encoding time due
+to its need to find the best match between sub blocks. This time is related to
+the approach that is used. In this paper we present a fast encoding Algorithm
+based on no search method. Our goal is that more blocks are covered in initial
+step of quad tree algorithm. Experimental result has been compared with other
+new fast fractal coding methods, showing it is better in term of bit rate in
+same condition while the other parameters are fixed.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.02917</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.02917</id><created>2015-01-13</created><updated>2015-01-15</updated><authors><author><keyname>Wunder</keyname><forenames>Gerhard</forenames></author><author><keyname>Kasparick</keyname><forenames>Martin</forenames></author><author><keyname>Jung</keyname><forenames>Peter</forenames></author></authors><title>Spline Waveforms and Interference Analysis for 5G Random Access with
+  Short Message Support</title><categories>cs.IT math.IT</categories><comments>This version contains minor corrections and the title of the paper
+  was changed</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  One of the main drivers for new waveforms in future 5G wireless communication
+systems is to handle efficiently the variety of traffic types and requirements.
+In this paper, we introduce a new random access within the standard acquisition
+procedures to support sporadic traffic as an enabler of the Internet of Things
+(IoT). The major challenge hereby is to cope with the highly asynchronous
+access of different devices and to allow transmission of control signaling and
+payload &quot;in one shot&quot;. We address this challenge by using a waveform design
+approach based on bi-orthogonal frequency division multiplexing where transmit
+orthogonality is replaced in favor of better temporal and spectral properties.
+We show that this approach allows data transmission in frequencies that
+otherwise have to remain unused. More precisely, we utilize frequencies
+previously used as guard bands, located towards the standard synchronous
+communication pipes as well as in between the typically small amount of
+resources used by each IoT device. We demonstrate the superiority of this
+waveform approach over the conventional random access using a novel
+mathematical approach and numerical experiments.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.02925</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.02925</id><created>2015-01-13</created><updated>2015-01-15</updated><authors><author><keyname>Clouston</keyname><forenames>Ranald</forenames></author><author><keyname>Bizjak</keyname><forenames>Ale&#x161;</forenames></author><author><keyname>Grathwohl</keyname><forenames>Hans Bugge</forenames></author><author><keyname>Birkedal</keyname><forenames>Lars</forenames></author></authors><title>Programming and Reasoning with Guarded Recursion for Coinductive Types</title><categories>cs.PL cs.LO</categories><comments>Version of FoSSaCS 2015 paper with appendices</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We present the guarded lambda-calculus, an extension of the simply typed
+lambda-calculus with guarded recursive and coinductive types. The use of
+guarded recursive types ensures the productivity of well-typed programs.
+Guarded recursive types may be transformed into coinductive types by a
+type-former inspired by modal logic and Atkey-McBride clock quantification,
+allowing the typing of acausal functions. We give a call-by-name operational
+semantics for the calculus, and define adequate denotational semantics in the
+topos of trees. The adequacy proof entails that the evaluation of a program
+always terminates. We demonstrate the expressiveness of the calculus by showing
+the definability of solutions to Rutten's behavioural differential equations.
+We introduce a program logic with L\&quot;{o}b induction for reasoning about the
+contextual equivalence of programs.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03302</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03302</id><created>2015-01-14</created><updated>2015-01-15</updated><authors><author><keyname>Malinowski</keyname><forenames>Mateusz</forenames></author><author><keyname>Fritz</keyname><forenames>Mario</forenames></author></authors><title>Hard to Cheat: A Turing Test based on Answering Questions about Images</title><categories>cs.AI cs.CL cs.CV cs.LG</categories><comments>Presented in AAAI-15 Workshop: Beyond the Turing Test</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Progress in language and image understanding by machines has sparkled the
+interest of the research community in more open-ended, holistic tasks, and
+refueled an old AI dream of building intelligent machines. We discuss a few
+prominent challenges that characterize such holistic tasks and argue for
+&quot;question answering about images&quot; as a particular appealing instance of such a
+holistic task. In particular, we point out that it is a version of a Turing
+Test that is likely to be more robust to over-interpretations and contrast it
+with tasks like grounding and generation of descriptions. Finally, we discuss
+tools to measure progress in this field.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03461</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03461</id><created>2015-01-14</created><authors><author><keyname>Azad</keyname><forenames>Ariful</forenames></author></authors><title>An Algorithmic Pipeline for Analyzing Multi-parametric Flow Cytometry
+  Data</title><categories>q-bio.QM cs.CE cs.DS</categories><comments>PhD dissertation, May 2014, Purdue University</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Flow cytometry (FC) is a single-cell profiling platform for measuring the
+phenotypes of individual cells from millions of cells in biological samples. FC
+employs high-throughput technologies and generates high-dimensional data, and
+hence algorithms for analyzing the data represent a bottleneck. This
+dissertation addresses several computational challenges arising in modern
+cytometry while mining information from high-dimensional and high-content
+biological data. A collection of combinatorial and statistical algorithms for
+locating, matching, prototyping, and classifying cellular populations from
+multi-parametric FC data is developed.
+  The algorithmic pipeline, flowMatch, developed in this dissertation consists
+of five well-defined algorithmic modules to (1) transform data to stabilize
+within-population variance, (2) identify cell populations by robust clustering
+algorithms, (3) register cell populations across samples, (4) encapsulate a
+class of samples with templates, and (5) classify samples based on their
+similarity with the templates. Components of flowMatch can work independently
+or collaborate with each other to perform the complete data analysis. flowMatch
+is made available as an open-source R package in Bioconductor.
+  We have employed flowMatch for classifying leukemia samples, evaluating the
+phosphorylation effects on T cells, classifying healthy immune profiles, and
+classifying the vaccination status of HIV patients. In these analyses, the
+pipeline is able to reach biologically meaningful conclusions quickly and
+efficiently with the automated algorithms. The algorithms included in flowMatch
+can also be applied to problems outside of flow cytometry such as in microarray
+data analysis and image recognition. Therefore, this dissertation contributes
+to the solution of fundamental problems in computational cytometry and related
+domains.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03529</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03529</id><created>2015-01-14</created><authors><author><keyname>Gholami</keyname><forenames>Mohammad Reza</forenames></author><author><keyname>Dwivedi</keyname><forenames>Satyam</forenames></author><author><keyname>Jansson</keyname><forenames>Magnus</forenames></author><author><keyname>H&#xe4;ndel</keyname><forenames>Peter</forenames></author></authors><title>Ranging without time stamps exchanging</title><categories>stat.AP cs.IT math.IT</categories><comments>5 pages</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We investigate the range estimate between two wireless nodes without time
+stamps exchanging. Considering practical aspects of oscillator clocks, we
+propose a new model for ranging in which the measurement errors include the sum
+of two distributions, namely, uniform and Gaussian. We then derive an
+approximate maximum likelihood estimator (AMLE), which poses a difficult global
+optimization problem. To avoid the difficulty in solving the complex AMLE, we
+propose a simple estimator based on the method of moments. Numerical results
+show a promising performance for the proposed technique.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03547</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03547</id><created>2015-01-14</created><authors><author><keyname>Abdelwahab</keyname><forenames>Sherif</forenames></author><author><keyname>Hamdaoui</keyname><forenames>Bechir</forenames></author><author><keyname>Guizani</keyname><forenames>Mohsen</forenames></author></authors><title>Cloud-Assisted Remote Sensor Network Virtualization for Distributed
+  Consensus Estimation</title><categories>cs.NI</categories><comments>11 pages, double column, pre-submission</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We develop cloud-assisted remote sensing techniques for enabling distributed
+consensus estimation of unknown parameters in a given geographic area. We first
+propose a distributed sensor network virtualization algorithm that searches
+for, selects, and coordinates Internet-accessible sensors to perform a sensing
+task in a specific region. The algorithm converges in linearithmic time for
+large-scale networks, and requires exchanging a number of messages that is at
+most linear in the number of sensors. Second, we design an uncoordinated,
+distributed algorithm that relies on the selected sensors to estimate a set of
+parameters without requiring synchronization among the sensors. Our simulation
+results show that the proposed algorithm, when compared to conventional ADMM
+(Alternating Direction Method of Multipliers), reduces communication overhead
+significantly without compromising the estimation error. In addition, the
+convergence time, though increases slightly, is still linear as in the case of
+conventional ADMM.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03549</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03549</id><created>2015-01-14</created><authors><author><keyname>Borcea</keyname><forenames>Ciprian S.</forenames></author><author><keyname>Streinu</keyname><forenames>Ileana</forenames></author></authors><title>Liftings and stresses for planar periodic frameworks</title><categories>math.MG cs.CG</categories><comments>An extended abstract of this paper has appeared in Proc. 30th annual
+  Symposium on Computational Geometry (SOCG'14), Kyoto, Japan, June 2014</comments><msc-class>52C25, 74N10</msc-class><acm-class>I.3.5</acm-class><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We formulate and prove a periodic analog of Maxwell's theorem relating
+stressed planar frameworks and their liftings to polyhedral surfaces with
+spherical topology. We use our lifting theorem to prove deformation and
+rigidity-theoretic properties for planar periodic pseudo-triangulations,
+generalizing features known for their finite counterparts. These properties are
+then applied to questions originating in mathematical crystallography and
+materials science, concerning planar periodic auxetic structures and ultrarigid
+periodic frameworks.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03551</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03551</id><created>2015-01-14</created><authors><author><keyname>Borcea</keyname><forenames>Ciprian S.</forenames></author><author><keyname>Streinu</keyname><forenames>Ileana</forenames></author></authors><title>Deforming Diamond</title><categories>math.MG cs.CG</categories><msc-class>52C25, 74N10</msc-class><acm-class>I.3.5</acm-class><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  For materials science, diamond crystals are almost unrivaled for hardness and
+a range of other properties. Yet, when simply abstracting the carbon bonding
+structure as a geometric bar-and-joint periodic framework, it is far from
+rigid. We study the geometric deformations of this type of framework in
+arbitrary dimension d, with particular regard to the volume variation of a unit
+cell.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03566</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03566</id><created>2015-01-14</created><authors><author><keyname>Ge</keyname><forenames>Gennian</forenames></author><author><keyname>Shangguan</keyname><forenames>Chong</forenames></author></authors><title>On a Conjecture of Erd{\H{o}}s, Frankl and F{\&quot;u}redi</title><categories>cs.IT math.CO math.IT</categories><comments>5 pages</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Let $\mathcal{X}$ be an $n$-element set. Assume $\mathscr{F}$ is a collection
+of subsets of $\mathcal{X}$. We call $\mathscr{F}$ an $r$-cover-free family if
+$F_0\nsubseteq F_1\cup\cdots\cup F_r$ holds for all distinct
+$F_0,F_1,...,F_r\in\mathscr{F}$. Given $r$, denote $n(r)$ the minimal $n$ such
+that there exits an $r$-cover-free family on an $n$-element set with
+cardinality larger than $n$. Thirty years ago, Erd\H{o}s, Frankl and F{\&quot;u}redi
+\cite{CFF} proved that $\binom{r+2}{2}\leq n(r)&lt; r^2+o(r^2)$. They also
+conjectured $\lim_{r\rightarrow\infty} n(r)/r^2=1$ and claimed that
+$n(r)&gt;(1+o(1))\frac{5}{6}r^2$, without proof. In this paper, it is proved that
+$\lim_{r\rightarrow\infty} n(r)/r^2\geq(15+\sqrt{33})/24$, which is a quantity
+in $[6/7,7/8]$. In particular, their conjecture is proved to be true for all
+r-cover-free families with uniform $(r+1)$-subsets.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03577</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03577</id><created>2015-01-15</created><authors><author><keyname>Zhu</keyname><forenames>Xuzhen</forenames></author><author><keyname>Tian</keyname><forenames>Hui</forenames></author><author><keyname>Hu</keyname><forenames>Zheng</forenames></author><author><keyname>Zhang</keyname><forenames>Ping</forenames></author><author><keyname>Zhou</keyname><forenames>Tao</forenames></author></authors><title>Consistence beats causality in recommender systems</title><categories>cs.IR physics.data-an</categories><comments>16 pages, 4 tables, 4 figures</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  The explosive growth of information challenges people's capability in finding
+out items fitting to their own interests. Recommender systems provide an
+efficient solution by automatically push possibly relevant items to users
+according to their past preferences. Recommendation algorithms usually embody
+the causality from what having been collected to what should be recommended. In
+this article, we argue that in many cases, a user's interests are stable, and
+thus the previous and future preferences are highly consistent. The temporal
+order of collections then does not necessarily imply a causality relationship.
+We further propose a consistence-based algorithm that outperforms the
+state-of-the-art recommendation algorithms in disparate real data sets,
+including \textit{Netflix}, \textit{MovieLens}, \textit{Amazon} and
+\textit{Rate Your Music}.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03593</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03593</id><created>2015-01-15</created><authors><author><keyname>Ta</keyname><forenames>Vinh-Thong</forenames><affiliation>Inria Grenoble Rh&#xf4;ne-Alpes / CITI Insa de Lyon, CITI</affiliation></author><author><keyname>Antignac</keyname><forenames>Thibaud</forenames><affiliation>Inria Grenoble Rh&#xf4;ne-Alpes / CITI Insa de Lyon, CITI</affiliation></author></authors><title>Privacy by Design: On the Conformance Between Protocols and
+  Architectures</title><categories>cs.CR cs.LO</categories><comments>FPS - 7th International Symposium on Foundations \&amp; Practice of
+  Security, Nov 2014, Montreal, Canada. Springer</comments><proxy>ccsd</proxy><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  In systems design, we generally distinguish the architecture and the protocol
+levels. In the context of privacy by design, in the first case, we talk about
+privacy architectures, which define the privacy goals and the main features of
+the system at high level. In the latter case, we consider the underlying
+concrete protocols and privacy enhancing technologies that implement the
+architectures. In this paper, we address the question that whether a given
+protocol conforms to a privacy architecture and provide the answer based on
+formal methods. We propose a process algebra variant to define protocols and
+reason about privacy properties, as well as a mapping procedure from protocols
+to architectures that are defined in a high-level architecture language.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03601</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03601</id><created>2015-01-15</created><authors><author><keyname>Zhong</keyname><forenames>Xiaoxiong</forenames></author><author><keyname>Qin</keyname><forenames>Yang</forenames></author><author><keyname>Li</keyname><forenames>Li</forenames></author></authors><title>Capacity Analysis in Multi-Radio Multi-Channel Cognitive Radio Networks:
+  A Small World Perspective</title><categories>cs.NI</categories><comments>Wireless Pers Commun(2014)79:2209-2225</comments><doi>10.1007/s11277-014-1981-y</doi><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Cognitive radio (CR) has emerged as a promising technology to improve
+spectrum utilization. Capacity analysis is very useful in investigating the
+ultimate performance limits for wireless networks. Meanwhile, with increasing
+potential future applications for the CR systems, it is necessary to explore
+the limitations on their capacity in a dynamic spectrum access environment.
+However, due to spectrum sharing in cognitive radio networks (CRNs), the
+capacity of the secondary network (SRN) is much more difficult to analyze than
+that of traditional wireless networks. To overcome this difficulty, in this
+paper we introduce a novel solution based on small world model to analyze the
+capacity of SRN. First, we propose a new method of shortcut creation for CRNs,
+which is based on connectivity ratio. Also, a new channel assignment algorithm
+is proposed, which jointly considers the available time and transmission time
+of the channels. And then, we derive the capacity of SRN based on the small
+world model over multi-radio multi-channel (MRMC) environment. The simulation
+results show that our proposed scheme can obtain a higher capacity and smaller
+latency compared with traditional schemes in MRMC CRNs.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03602</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03602</id><created>2015-01-15</created><authors><author><keyname>Hadravov&#xe1;</keyname><forenames>Jana</forenames></author><author><keyname>Holub</keyname><forenames>&#x160;t&#x11b;p&#xe1;n</forenames></author></authors><title>Equation $x^iy^jx^k=u^iv^ju^k$ in words</title><categories>cs.FL</categories><msc-class>68R15</msc-class><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We will prove that the word $a^ib^ja^k$ is periodicity forcing if $j \geq 3$
+and $i+k \geq 3$, where $i$ and $k$ are positive integers. Also we will give
+examples showing that both bounds are optimal.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03605</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03605</id><created>2015-01-15</created><authors><author><keyname>Lawonn</keyname><forenames>Kai</forenames></author><author><keyname>Preim</keyname><forenames>Bernhard</forenames></author></authors><title>Feature Lines for Illustrating Medical Surface Models: Mathematical
+  Background and Survey</title><categories>cs.GR</categories><comments>33 pages</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  This paper provides a tutorial and survey for a specific kind of illustrative
+visualization technique: feature lines. We examine different feature line
+methods. For this, we provide the differential geometry behind these concepts
+and adapt this mathematical field to the discrete differential geometry. All
+discrete differential geometry terms are explained for triangulated surface
+meshes. These utilities serve as basis for the feature line methods. We provide
+the reader with all knowledge to re-implement every feature line method.
+Furthermore, we summarize the methods and suggest a guideline for which kind of
+surface which feature line algorithm is best suited. Our work is motivated by,
+but not restricted to, medical and biological surface models.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03613</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03613</id><created>2015-01-15</created><authors><author><keyname>Carl&#xe0;</keyname><forenames>Lorenzo</forenames></author><author><keyname>Fantacci</keyname><forenames>Romano</forenames></author><author><keyname>Gei</keyname><forenames>Francesco</forenames></author><author><keyname>Marabissi</keyname><forenames>Dania</forenames></author><author><keyname>Micciullo</keyname><forenames>Luigia</forenames></author></authors><title>LTE enhancements for Public Safety and Security communications to
+  support Group Multimedia Communications</title><categories>cs.NI cs.MM</categories><comments>IEEE Network Magazine, to appear</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Currently Public Safety and Security communication systems rely on reliable
+and secure Professional Mobile Radio (PMR) Networks that are mainly devoted to
+provide voice services. However, the evolution trend for PMR networks is
+towards the provision of new value-added multimedia services such as video
+streaming, in order to improve the situational awareness and enhance the
+life-saving operations. The challenge here is to exploit the future commercial
+broadband networks to deliver voice and multimedia services satisfying the PMR
+service requirements. In particular, a viable solution till now seems that of
+adapting the new Long Term Evolution technology to provide IP-based broadband
+services with the security and reliability typical of PMR networks. This paper
+outlines different alternatives to achieve this goal and, in particular,
+proposes a proper solution for providing multimedia services with PMR standards
+over commercial LTE networks.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03617</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03617</id><created>2015-01-15</created><authors><author><keyname>Mohamed</keyname><forenames>Marghny H.</forenames></author><author><keyname>Mahdy</keyname><forenames>Yousef B.</forenames></author><author><keyname>Shaban</keyname><forenames>Wafaa Abd El-Wahed</forenames></author></authors><title>Confidential Algorithm for Golden Cryptography Using Haar Wavelet</title><categories>cs.CR</categories><license>http://creativecommons.org/licenses/by/3.0/</license><abstract>  One of the most important consideration techniques when one want to solve the
+protecting of digital signal is the golden matrix. The golden matrices can be
+used for creation of a new kind of cryptography called the golden cryptography.
+Many research papers have proved that the method is very fast and simple for
+technical realization and can be used for cryptographic protection of digital
+signals. In this paper, we introduce a technique of encryption based on
+combination of haar wavelet and golden matrix. These combinations carry out
+after compression data by adaptive Huffman code to reduce data size and remove
+redundant data. This process will provide multisecurity services. In addition
+Message Authentication Code (MAC) technique can be used to provide
+authentication and the integrity of this scheme. The proposed scheme is
+accomplished through five stages, the compression data, key generation,
+encryption stage, the decryption stage and decompression at communication ends.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03643</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03643</id><created>2015-01-15</created><authors><author><keyname>Zhang</keyname><forenames>Hui</forenames></author></authors><title>On robust width property for Lasso and Dantzig selector</title><categories>cs.IT math.IT math.OC</categories><comments>6 pages</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Recently, Jameson Cahill and Dustin G. Mixon completely characterize the
+sensing operators in many compressed sensing instances with a robust width
+property. The introduced property allows uniformly stable and robust
+reconstruction via convex optimization. However, their theory does not cover
+the Lasso and the Dantzig selector models, both of which are popular
+alternatives in statistics community. In this note, we discover that the robust
+width property can be perfectly applied to these two models as well. Our main
+results definitely solve the open problem left by Jameson Cahill and Dustin G.
+Mixon.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03686</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03686</id><created>2015-01-15</created><authors><author><keyname>Biniaz</keyname><forenames>Ahmad</forenames></author><author><keyname>Bose</keyname><forenames>Prosenjit</forenames></author><author><keyname>Maheshwari</keyname><forenames>Anil</forenames></author><author><keyname>Smid</keyname><forenames>Michiel</forenames></author></authors><title>Packing Plane Perfect Matchings into a Point Set</title><categories>cs.CG cs.DM</categories><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Given a set $P$ of $n$ points in the plane, where $n$ is even, we consider
+the following question: How many plane perfect matchings can be packed into
+$P$? We prove that at least $\lceil\log_2{n}\rceil-2$ plane perfect matchings
+can be packed into any point set $P$. For some special configurations of point
+sets, we give the exact answer. We also consider some extensions of this
+problem.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03704</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03704</id><created>2015-01-15</created><authors><author><keyname>Zheng</keyname><forenames>Le</forenames></author><author><keyname>Maleki</keyname><forenames>Arian</forenames></author><author><keyname>Wang</keyname><forenames>Xiaodong</forenames></author><author><keyname>Long</keyname><forenames>Teng</forenames></author></authors><title>Does $\ell_p$-minimization outperform $\ell_1$-minimization?</title><categories>cs.IT math.IT math.ST stat.TH</categories><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  In many application areas we are faced with the following question: Can we
+recover a sparse vector $x_o \in \mathbb{R}^N$ from its undersampled set of
+noisy observations $y \in \mathbb{R}^n$, $y=A x_o+w$. The last decade has
+witnessed a surge of algorithms and theoretical results addressing this
+question. One of the most popular algorithms is the $\ell_p$-penalized least
+squares (LPLS) given by the following formulation: \[ \hat{x}(\lambda,p )\in
+\arg\min_x \frac{1}{2}\|y - Ax\|_2^2+\lambda\|x\|_p^p, \] where $p \in [0,1]$.
+Despite the non-convexity of these problems for $p&lt;1$, they are still appealing
+because of the following folklores in compressed sensing: (i)
+$\hat{x}(\lambda,p )$ is closer to $x_o$ than $\hat{x}(\lambda,1)$. (ii) If we
+employ iterative methods that aim to converge to a local minima of LPLS, then
+under good initialization these algorithms converge to a solution that is
+closer to $x_o$ than $\hat{x}(\lambda,1)$. In spite of the existence of plenty
+of empirical results that support these folklore theorems, the theoretical
+progress to establish them has been very limited.
+  This paper aims to study the above folklore theorems and establish their
+scope of validity. Starting with approximate message passing algorithm as a
+heuristic method for solving LPLS, we study the impact of initialization on the
+performance of AMP. Then, we employ the replica analysis to show the connection
+between the solution of $AMP$ and $\hat{x}(\lambda, p)$ in the asymptotic
+settings. This enables us to compare the accuracy of $\hat{x}(\lambda,p)$ for
+$p \in [0,1]$. In particular, we will characterize the phase transition and
+noise sensitivity of LPLS for every $0\leq p\leq 1$ accurately. Our results in
+the noiseless setting confirm that LPLS exhibits the same phase transition for
+every $0\leq p &lt;1$ and this phase transition is much higher than that of LASSO.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03711</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03711</id><created>2015-01-15</created><authors><author><keyname>Rubio</keyname><forenames>Javier</forenames></author><author><keyname>Mu&#xf1;oz</keyname><forenames>Olga</forenames></author><author><keyname>Pascual-Iserte</keyname><forenames>Antonio</forenames></author></authors><title>A Stochastic Approach for Resource Allocation with Backhaul and Energy
+  Harvesting Constraints</title><categories>cs.IT math.IT</categories><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We propose a novel stochastic radio resource allocation strategy that
+achieves long-term fairness considering backhaul and air-interface capacity
+limitations. The base station is considered to be only powered with a finite
+battery that is recharged by an energy harvesting source. Such energy
+harvesting is also taken into account in the proposed resource allocation
+strategy. This technical scenario can be found in remote rural areas where the
+backhaul connection is very limited and the base stations are fed with solar
+panels of reduced size. Our results show that the proposed scheme achieves
+higher fairness among the users and, in some cases, a higher sum-rate compared
+with the well-known proportional fair scheduler.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03715</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03715</id><created>2015-01-15</created><authors><author><keyname>Tixier</keyname><forenames>Audrey</forenames></author></authors><title>Blind identification of an unknown interleaved convolutional code</title><categories>cs.IT math.IT</categories><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We give here an efficient method to reconstruct the block interleaver and
+recover the convolutional code when several noisy interleaved codewords are
+given. We reconstruct the block interleaver without assumption on its
+structure. By running some experimental tests we show the efficiency of this
+method even with moderate noise.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03719</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03719</id><created>2015-01-15</created><authors><author><keyname>Levi</keyname><forenames>Gil</forenames></author><author><keyname>Hassner</keyname><forenames>Tal</forenames></author></authors><title>LATCH: Learned Arrangements of Three Patch Codes</title><categories>cs.CV</categories><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We present a novel means of describing local image appearances using binary
+strings. Binary descriptors have drawn increasing interest in recent years due
+to their speed and low memory footprint. A known shortcoming of these
+representations is their inferior performance compared to larger, histogram
+based descriptors such as the SIFT. Our goal is to close this performance gap
+while maintaining the benefits attributed to binary representations. To this
+end we propose the Learned Arrangements of Three Patch Codes descriptors, or
+LATCH. Our key observation is that existing binary descriptors are at an
+increased risk from noise and local appearance variations. This, as they
+compare the values of pixel pairs; changes to either of the pixels can easily
+lead to changes in descriptor values, hence damaging its performance. In order
+to provide more robustness, we instead propose a novel means of comparing pixel
+patches. This ostensibly small change, requires a substantial redesign of the
+descriptors themselves and how they are produced. Our resulting LATCH
+representation is rigorously compared to state-of-the-art binary descriptors
+and shown to provide far better performance for similar computation and space
+requirements.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03724</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03724</id><created>2015-01-15</created><authors><author><keyname>Avraham</keyname><forenames>Rinat Ben</forenames></author><author><keyname>Kaplan</keyname><forenames>Haim</forenames></author><author><keyname>Sharir</keyname><forenames>Micha</forenames></author></authors><title>A faster algorithm for the discrete Fr\'echet distance under translation</title><categories>cs.CG</categories><acm-class>F.2.2; I.3.5; I.5.3</acm-class><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  The discrete Fr\'echet distance is a useful similarity measure for comparing
+two sequences of points $P=(p_1,\ldots, p_m)$ and $Q=(q_1,\ldots,q_n)$. In many
+applications, the quality of the matching can be improved if we let $Q$ undergo
+some transformation relative to $P$. In this paper we consider the problem of
+finding a translation of $Q$ that brings the discrete Fr\'echet distance
+between $P$ and $Q$ to a minimum. We devise an algorithm that computes the
+minimum discrete Fr\'echet distance under translation in $\mathbb{R}^2$, and
+runs in $O(m^3n^2(1+\log(n/m))\log(m+n))$ time, assuming $m\leq n$. This
+improves a previous algorithm of Jiang et al.~\cite{JXZ08}, which runs in
+$O(m^3n^3 \log(m + n))$ time.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03736</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03736</id><created>2015-01-15</created><authors><author><keyname>Couvreur</keyname><forenames>Alain</forenames></author><author><keyname>Otmani</keyname><forenames>Ayoub</forenames></author><author><keyname>Tillich</keyname><forenames>Jean-Pierre</forenames></author><author><keyname>Gauthier-Umana</keyname><forenames>Val&#xe9;rie</forenames></author></authors><title>A Polynomial-Time Attack on the BBCRS Scheme</title><categories>cs.CR cs.IT math.IT</categories><comments>Accepted to the conference Public Key Cryptography (PKC) 2015</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  The BBCRS scheme is a variant of the McEliece public-key encryption scheme
+where the hiding phase is performed by taking the inverse of a matrix which is
+of the form $\mathbf{T} +\mathbf{R}$ where $\mathbf{T}$ is a sparse matrix with
+average row/column weight equal to a very small quantity $m$, usually $m &lt; 2$,
+and $\mathbf{R}$ is a matrix of small rank $z\geqslant 1$. The rationale of
+this new transformation is the reintroduction of families of codes, like
+generalized Reed-Solomon codes, that are famously known for representing
+insecure choices. We present a key-recovery attack when $z = 1$ and $m$ is
+chosen between $1$ and $1 + R + O( \frac{1}{\sqrt{n}} )$ where $R$ denotes the
+code rate. This attack has complexity $O(n^6)$ and breaks all the parameters
+suggested in the literature.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03737</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03737</id><created>2015-01-15</created><authors><author><keyname>Hirche</keyname><forenames>Christoph</forenames></author></authors><title>Polar codes in quantum information theory</title><categories>quant-ph cs.IT math.IT</categories><comments>Master's thesis, Leibniz Universit\&quot;at Hannover, 67 pages, 8 figures,
+  chapter 3 partly based on arXiv:1409.7246</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Polar codes are the first capacity achieving and efficiently implementable
+codes for classical communication. Recently they have also been generalized to
+communication over classical-quantum and quantum channels. In this work we
+present our recent results for polar coding in quantum information theory,
+including applications to classical-quantum multiple access channels,
+interference channels and compound communication settings, including the first
+proof of channel coding achieving the Han-Kobayashi rate region of the
+interference channel without the need of a simultaneous decoder. Moreover we
+add to the existing framework by extending polar codes to achieve the
+asymmetric capacity and improving the block error probability for
+classical-quantum channels. In addition we use polar codes to prove a new
+achievable rate region for the classical-quantum broadcast channel. We also
+discuss polar codes for quantum communication over quantum channels and state
+results towards codes for compound quantum channels in this setting. We
+conclude by stating a list of interesting open questions to invite further
+research on the topic.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03757</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03757</id><created>2015-01-15</created><authors><author><keyname>Osipov</keyname><forenames>Evgeny</forenames></author><author><keyname>Kleyko</keyname><forenames>Denis</forenames></author></authors><title>An Approach for Self-Adaptive Path Loss Modeling for Accurate
+  Positioning in Underground Environments</title><categories>cs.NI</categories><comments>6 pages, 9 figures</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  This paper proposes a real-time self-adaptive approach for accurate path loss
+estimation in underground mines or tunnels based on signal strength
+measurements from heterogeneous radio communication technologies. The proposed
+model features simplicity of implementation. The methodology was validated in
+simulations as well as was verified by measurements taken in real environments.
+The proposed method leverages accuracy of positioning matching to the existing
+approaches while requiring smaller engineering efforts.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03771</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03771</id><created>2015-01-15</created><authors><author><keyname>Osokin</keyname><forenames>Anton</forenames></author><author><keyname>Vetrov</keyname><forenames>Dmitry</forenames></author></authors><title>Submodular relaxation for inference in Markov random fields</title><categories>cs.CV math.OC stat.ML</categories><comments>This paper is accepted for publication in IEEE Transactions on
+  Pattern Analysis and Machine Intelligence</comments><doi>10.1109/TPAMI.2014.2369046</doi><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  In this paper we address the problem of finding the most probable state of a
+discrete Markov random field (MRF), also known as the MRF energy minimization
+problem. The task is known to be NP-hard in general and its practical
+importance motivates numerous approximate algorithms. We propose a submodular
+relaxation approach (SMR) based on a Lagrangian relaxation of the initial
+problem. Unlike the dual decomposition approach of Komodakis et al., 2011 SMR
+does not decompose the graph structure of the initial problem but constructs a
+submodular energy that is minimized within the Lagrangian relaxation. Our
+approach is applicable to both pairwise and high-order MRFs and allows to take
+into account global potentials of certain types. We study theoretical
+properties of the proposed approach and evaluate it experimentally.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03779</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03779</id><created>2015-01-15</created><authors><author><keyname>Roth</keyname><forenames>Holger R.</forenames></author><author><keyname>Hampshire</keyname><forenames>Thomas E.</forenames></author><author><keyname>Helbren</keyname><forenames>Emma</forenames></author><author><keyname>Hu</keyname><forenames>Mingxing</forenames></author><author><keyname>Vega</keyname><forenames>Roser</forenames></author><author><keyname>Halligan</keyname><forenames>Steve</forenames></author><author><keyname>Hawkes</keyname><forenames>David J.</forenames></author></authors><title>Computer-assisted polyp matching between optical colonoscopy and CT
+  colonography: a phantom study</title><categories>cs.CV</categories><comments>This paper was presented at the SPIE Medical Imaging 2014 conference</comments><journal-ref>Proc. SPIE 9036, Medical Imaging 2014: Image-Guided Procedures,
+  Robotic Interventions, and Modeling, 903609 (March 12, 2014)</journal-ref><doi>10.1117/12.2042860</doi><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  Potentially precancerous polyps detected with CT colonography (CTC) need to
+be removed subsequently, using an optical colonoscope (OC). Due to large
+colonic deformations induced by the colonoscope, even very experienced
+colonoscopists find it difficult to pinpoint the exact location of the
+colonoscope tip in relation to polyps reported on CTC. This can cause unduly
+prolonged OC examinations that are stressful for the patient, colonoscopist and
+supporting staff.
+  We developed a method, based on monocular 3D reconstruction from OC images,
+that automatically matches polyps observed in OC with polyps reported on prior
+CTC. A matching cost is computed, using rigid point-based registration between
+surface point clouds extracted from both modalities. A 3D printed and painted
+phantom of a 25 cm long transverse colon segment was used to validate the
+method on two medium sized polyps. Results indicate that the matching cost is
+smaller at the correct corresponding polyp between OC and CTC: the value is 3.9
+times higher at the incorrect polyp, comparing the correct match between polyps
+to the incorrect match. Furthermore, we evaluate the matching of the
+reconstructed polyp from OC with other colonic endoluminal surface structures
+such as haustral folds and show that there is a minimum at the correct polyp
+from CTC.
+  Automated matching between polyps observed at OC and prior CTC would
+facilitate the biopsy or removal of true-positive pathology or exclusion of
+false-positive CTC findings, and would reduce colonoscopy false-negative
+(missed) polyps. Ultimately, such a method might reduce healthcare costs,
+patient inconvenience and discomfort.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03784</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03784</id><created>2015-01-15</created><authors><author><keyname>Kleyko</keyname><forenames>Denis</forenames></author><author><keyname>Osipov</keyname><forenames>Evgeny</forenames></author><author><keyname>Senior</keyname><forenames>Alexander</forenames></author><author><keyname>Khan</keyname><forenames>Asad I.</forenames></author><author><keyname>&#x15e;ekercio&#x11f;lu</keyname><forenames>Y. Ahmet</forenames></author></authors><title>Holographic Graph Neuron: a Bio-Inspired Architecture for Pattern
+  Processing</title><categories>cs.AI</categories><comments>9 pages, 13 figures</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  This article proposes the use of Vector Symbolic Architectures for
+implementing Hierarchical Graph Neuron, an architecture for memorizing patterns
+of generic sensor stimuli. The adoption of a Vector Symbolic representation
+ensures a one-layered design for the approach, while maintaining the previously
+reported properties and performance characteristics of Hierarchical Graph
+Neuron, and also improving the noise resistance of the architecture. The
+proposed architecture enables a linear (with respect to the number of stored
+entries) time search for an arbitrary sub-pattern.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03796</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03796</id><created>2015-01-15</created><authors><author><keyname>Balsubramani</keyname><forenames>Akshay</forenames></author><author><keyname>Dasgupta</keyname><forenames>Sanjoy</forenames></author><author><keyname>Freund</keyname><forenames>Yoav</forenames></author></authors><title>The Fast Convergence of Incremental PCA</title><categories>cs.LG stat.ML</categories><comments>NIPS 2013</comments><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  We consider a situation in which we see samples in $\mathbb{R}^d$ drawn
+i.i.d. from some distribution with mean zero and unknown covariance A. We wish
+to compute the top eigenvector of A in an incremental fashion - with an
+algorithm that maintains an estimate of the top eigenvector in O(d) space, and
+incrementally adjusts the estimate with each new data point that arrives. Two
+classical such schemes are due to Krasulina (1969) and Oja (1983). We give
+finite-sample convergence rates for both.
+</abstract></arXiv>
+</metadata>
+</record>
+<record>
+<header>
+ <identifier>oai:arXiv.org:1501.03810</identifier>
+ <datestamp>2015-01-16</datestamp>
+ <setSpec>cs</setSpec>
+</header>
+<metadata>
+ <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+ <id>1501.03810</id><created>2015-01-15</created><authors><author><keyname>Kamalapurkar</keyname><forenames>Rushikesh</forenames></author><author><keyname>Fischer</keyname><forenames>Nicholas</forenames></author><author><keyname>Obuz</keyname><forenames>Serhat</forenames></author><author><keyname>Dixon</keyname><forenames>Warren E.</forenames></author></authors><title>Time-Varying Input and State Delay Compensation for Uncertain Nonlinear
+  Systems</title><categories>cs.SY</categories><license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license><abstract>  A robust controller is developed for uncertain, second-order nonlinear
+systems subject to simultaneous unknown, time-varying state delays and known,
+time-varying input delays in addition to additive, sufficiently smooth
+disturbances. An integral term composed of previous control values facilitates
+a delay-free open-loop error system and the development of the feedback control
+structure. A stability analysis based on Lyapunov-Krasovskii (LK) functionals
+guarantees uniformly ultimately bounded tracking under the assumption that the
+delays are bounded and slowly varying.
+</abstract></arXiv>
+</metadata>
+</record>
+</ListRecords>
+</OAI-PMH>

@@ -25,6 +25,7 @@ from blinker import Namespace
 from flask import Blueprint, current_app, render_template, request
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
+from weko_admin.models import SiteInfo
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
@@ -114,12 +115,14 @@ def get_site_info(site_info):
     :return: result
 
     """
-    from weko_admin.models import SiteInfo
-    from weko_admin.utils import get_site_name_for_current_language
+    from weko_admin.utils import get_site_name_for_current_language, \
+        get_notify_for_current_language
     site_info = SiteInfo.get()
     site_name = site_info.site_name if site_info and site_info.site_name else []
+    notify = site_info.notify if site_info and site_info.notify else []
     title = get_site_name_for_current_language(site_name) \
         or current_app.config['THEME_SITENAME']
+    login_instructions = get_notify_for_current_language(notify)
     favicon = request.url_root + 'api/admin/favicon'
     prefix = ''
     if site_info and site_info.favicon:
@@ -129,6 +132,7 @@ def get_site_info(site_info):
 
     result = {
         'title': title,
+        'login_instructions': login_instructions,
         'site_name': site_info.site_name if site_info
         and site_info.site_name else [],
         'description': site_info.description if site_info
@@ -137,6 +141,10 @@ def get_site_info(site_info):
         and site_info.copy_right else '',
         'keyword': site_info.keyword if site_info and site_info.keyword else '',
         'favicon': favicon,
-        'url': request.url
+        'url': request.url,
+        'notify': site_info.notify if site_info
+        and site_info.notify else [],
+        'enable_notify': current_app.config[
+            "WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS"]
     }
     return result

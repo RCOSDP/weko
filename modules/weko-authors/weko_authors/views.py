@@ -29,6 +29,7 @@ from weko_records.models import ItemMetadata
 
 from .models import Authors, AuthorsPrefixSettings
 from .permissions import author_permission
+from .utils import get_author_setting_obj
 
 blueprint = Blueprint(
     'weko_authors',
@@ -411,14 +412,33 @@ def get_prefix_list():
     return jsonify(data)
 
 
+@blueprint_api.route("/list_vocabulary", methods=['get'])
+@login_required
+@author_permission.require(http_exception=403)
+def get_list_schema():
+    """Get all scheme items config.py."""
+    data = {
+        "list": current_app.config['WEKO_AUTHORS_LIST_SCHEME'],
+        "index": current_app.config['WEKO_AUTHORS_INDEX_ITEM_OTHER']
+    }
+    return jsonify(data)
+
+
 @blueprint_api.route("/edit_prefix", methods=['post'])
 @login_required
 @author_permission.require(http_exception=403)
 def update_prefix():
     """Update authors prefix settings."""
-    data = request.get_json()
-    AuthorsPrefixSettings.update(**data)
-    return jsonify(msg=_('Success'))
+    try:
+        data = request.get_json()
+        check = get_author_setting_obj(data['scheme'])
+        if check is None or check.id == data['id']:
+            AuthorsPrefixSettings.update(**data)
+            return jsonify({'code': 200, 'msg': 'Success'})
+        else:
+            return jsonify({'code': 400, 'msg': 'Specified scheme is already exist.'})
+    except Exception:
+        return jsonify({'code': 204, 'msg': 'Failed'})
 
 
 @blueprint_api.route("/delete_prefix/<id>", methods=['delete'])
@@ -435,6 +455,13 @@ def delete_prefix(id):
 @author_permission.require(http_exception=403)
 def create_prefix():
     """Add new authors prefix settings."""
-    data = request.get_json()
-    AuthorsPrefixSettings.create(**data)
-    return jsonify(msg=_('Success'))
+    try:
+        data = request.get_json()
+        check = get_author_setting_obj(data['scheme'])
+        if check is None:
+            AuthorsPrefixSettings.create(**data)
+            return jsonify({'code': 200, 'msg': 'Success'})
+        else:
+            return jsonify({'code': 400, 'msg': 'Specified scheme is already exist.'})
+    except Exception:
+        return jsonify({'code': 204, 'msg': 'Failed'})

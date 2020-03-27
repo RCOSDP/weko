@@ -21,11 +21,12 @@
 """Views for weko-admin."""
 
 import calendar
+import json
 import sys
 from datetime import timedelta
 
 from flask import Blueprint, Response, abort, current_app, flash, jsonify, \
-    render_template, request
+    make_response, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -36,14 +37,15 @@ from sqlalchemy.orm import session
 from weko_records.models import SiteLicenseInfo
 from werkzeug.local import LocalProxy
 
-from . import config
 from .api import send_site_license_mail
+from .config import WEKO_HEADER_NO_CACHE
 from .models import SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
     get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_initial_stats_report, \
-    get_selected_language, get_unit_stats_report, save_api_certification, \
-    update_admin_lang_setting, validate_certification, validation_site_info
+    get_search_setting, get_selected_language, get_unit_stats_report, \
+    save_api_certification, update_admin_lang_setting, \
+    validate_certification, validation_site_info
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -508,6 +510,7 @@ def get_site_info():
     result['favicon'] = site_info.favicon
     result['favicon_name'] = site_info.favicon_name
     result['site_name'] = site_info.site_name
+    result['notify'] = site_info.notify
     return jsonify(result)
 
 
@@ -529,3 +532,28 @@ def get_avatar():
     b = io.BytesIO(favicon)
     w = FileWrapper(b)
     return Response(b, mimetype="image/x-icon", direct_passthrough=True)
+
+
+@blueprint_api.route('/search_control/display_control', methods=['GET'])
+def display_control_function():
+    """Get display control.
+
+    :return: display_control.
+    """
+    display_control = get_search_setting().get("display_control")
+    r = make_response(json.dumps(display_control))
+
+    r.headers["Cache-Control"] = current_app.config.get(
+        "WEKO_HEADER_NO_CACHE",
+        WEKO_HEADER_NO_CACHE
+    ).get("Cache-Control")
+    r.headers["Pragma"] = current_app.config.get(
+        "WEKO_HEADER_NO_CACHE",
+        WEKO_HEADER_NO_CACHE
+    ).get("Pragma")
+    r.headers["Expires"] = current_app.config.get(
+        "WEKO_HEADER_NO_CACHE",
+        WEKO_HEADER_NO_CACHE
+    ).get("Expires")
+
+    return r

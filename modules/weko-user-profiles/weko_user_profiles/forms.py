@@ -20,6 +20,7 @@
 
 """Forms for user profiles."""
 
+from flask import current_app
 from flask_babelex import lazy_gettext as _
 from flask_login import current_user
 from flask_security.forms import email_required, email_validator, \
@@ -31,7 +32,9 @@ from wtforms.validators import DataRequired, EqualTo, StopValidation, \
     ValidationError
 
 from .api import current_userprofile
-from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST
+from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+    WEKO_USERPROFILES_OTHERS_INPUT_DETAIL, WEKO_USERPROFILES_POSITION_LIST
 from .models import UserProfile
 from .validators import USERNAME_RULES, validate_username
 
@@ -51,6 +54,44 @@ def current_user_email(form, field):
         raise StopValidation()
 
 
+def check_phone_number(form, field):
+    """Validate phone number.
+
+    @param form:
+    @param field:
+    """
+    if len(field.data) > 15:
+        raise ValidationError('Phone number must be less than 15 characters.')
+    field = field.data.split("-")
+    if not all([x.isdigit() for x in field]):
+        raise ValidationError(_('Phone Number format is incorrect.'))
+
+
+def check_length_100_characters(form, field):
+    """Check length 100.
+
+    :param form:
+    :param field:
+    """
+    if len(field.data) > 100:
+        raise ValidationError(_("Text field must be less than 100 characters."))
+
+
+def check_other_position(form, field):
+    """Check other position.
+
+    @param form:
+    @param field:
+    """
+    if form.position.data != WEKO_USERPROFILES_OTHERS_INPUT_DETAIL:
+        if len(strip_filter(field.data)) > 0:
+            raise ValidationError(_("Position is being inputted "
+                                    "(Only input when selecting 'Others')"))
+    else:
+        if len(strip_filter(field.data)) == 0:
+            raise ValidationError(_('Position not provided.'))
+
+
 class ProfileForm(FlaskForm):
     """Form for editing user profile."""
 
@@ -62,11 +103,6 @@ class ProfileForm(FlaskForm):
                       username_rules=USERNAME_RULES),
         validators=[DataRequired(message=_('Username not provided.'))],
         filters=[strip_filter], )
-
-    # full_name = StringField(
-    #     # NOTE: Form label
-    #     _('Full name'),
-    #     filters=[strip_filter], )
 
     timezone = SelectField(
         # NOTE: Form label
@@ -81,27 +117,6 @@ class ProfileForm(FlaskForm):
         filters=[strip_filter],
         choices=USERPROFILES_LANGUAGE_LIST,
     )
-
-    def validate_username(form, field):
-        """Wrap username validator for WTForms."""
-        try:
-            validate_username(field.data)
-        except ValueError as e:
-            raise ValidationError(e)
-
-        try:
-            user_profile = UserProfile.get_by_username(field.data)
-            if current_userprofile.is_anonymous or \
-                    (current_userprofile.user_id != user_profile.user_id
-                     and field.data != current_userprofile.username):
-                # NOTE: Form validation error.
-                raise ValidationError(_('Username already exists.'))
-        except NoResultFound:
-            return
-
-
-class EmailProfileForm(ProfileForm):
-    """Form to allow editing of email address."""
 
     email = StringField(
         # NOTE: Form field label
@@ -127,6 +142,188 @@ class EmailProfileForm(ProfileForm):
             EqualTo('email', message=_('Email addresses do not match.'))
         ]
     )
+
+    fullname = StringField(
+        # NOTE: Form label
+        _('Fullname'),
+        validators=[
+            DataRequired(message=_('Full name not provided.')),
+            check_length_100_characters
+        ],
+        filters=[strip_filter])
+
+    # University / Institution
+    university = StringField(
+        _('University/Institution'),
+        validators=[
+            DataRequired(message=_('University/Institution not provided.')),
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation department / Department
+    department = StringField(
+        _('Affiliated Division/Department'),
+        validators=[
+            DataRequired(
+                message=_('Affiliated Division/Department not provided.')),
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Position
+    position = SelectField(
+        _('Position'),
+        filters=[strip_filter],
+        validators=[
+            DataRequired(message=_('Position not provided.')),
+        ],
+        choices=WEKO_USERPROFILES_POSITION_LIST
+    )
+
+    # Other Position
+    otherPosition = StringField(
+        _('Position (Others)'),
+        validators=[
+            check_other_position
+        ],
+        render_kw={"placeholder": _("Input when selecting Others")}
+    )
+
+    # Phone number
+    phoneNumber = StringField(
+        _('Phone number'),
+        validators=[
+            DataRequired(message=_('Phone number not provided.')),
+            check_phone_number
+        ]
+    )
+
+    # Affiliation institute 1
+    # Affiliation institute name (n)
+    instituteName = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation institute position (n)
+    institutePosition = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
+
+    # Affiliation institute 2
+    # Affiliation institute name (n)
+    instituteName2 = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation institute position (n)
+    institutePosition2 = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
+
+    # Affiliation institute 3
+    # Affiliation institute name (n)
+    instituteName3 = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation institute position (n)
+    institutePosition3 = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
+
+    # Affiliation institute 4
+    # Affiliation institute name (n)
+    instituteName4 = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation institute position (n)
+    institutePosition4 = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
+
+    # Affiliation institute 5
+    # Affiliation institute name (n)
+    instituteName5 = StringField(
+        _('Affiliated Institution Name'),
+        validators=[
+            check_length_100_characters
+        ],
+        filters=[strip_filter]
+    )
+
+    # Affiliation institute position (n)
+    institutePosition5 = SelectField(
+        _('Affiliated Institution Position'),
+        filters=[strip_filter],
+        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    )
+
+    def validate_username(form, field):
+        """Wrap username validator for WTForms."""
+        try:
+            validate_username(field.data)
+        except ValueError as e:
+            raise ValidationError(e)
+
+        try:
+            user_profile = UserProfile.get_by_username(field.data)
+            if current_userprofile.is_anonymous or \
+                    (current_userprofile.user_id != user_profile.user_id
+                     and field.data != current_userprofile.username):
+                # NOTE: Form validation error.
+                raise ValidationError(_('Username already exists.'))
+        except NoResultFound:
+            return
+
+
+class EmailProfileForm(ProfileForm):
+    """Form to allow editing of email address."""
+
+    def __init__(self, *args, **kwargs):
+        """Initial Profile Form.
+
+        @param args:
+        @param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        form_column = current_app.config['WEKO_USERPROFILES_FORM_COLUMN']
+        disable_column_lst = list()
+        if isinstance(form_column, list):
+            for key in kwargs:
+                if key not in form_column:
+                    disable_column_lst.append(key)
+
+            for key in disable_column_lst:
+                if hasattr(self, key):
+                    delattr(self, key)
 
 
 class VerificationForm(FlaskForm):

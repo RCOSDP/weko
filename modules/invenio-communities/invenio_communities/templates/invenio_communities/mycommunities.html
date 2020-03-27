@@ -1,0 +1,86 @@
+{#
+# This file is part of Invenio.
+# Copyright (C) 2013, 2014, 2015, 2016 CERN.
+#
+# Invenio is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+#}
+
+<div class="well">
+{% if current_user.is_authenticated %}
+  {% if mycommunities %}
+  <h2>
+    {{ _('My communities') }}
+    <!--<div class="pull-right">-->
+      <!--&nbsp;<a href="{{url_for('.new')}}" class="btn btn-primary"><i class="icon-plus-sign"></i> {{ _('New') }}</a>-->
+    <!--</div>-->
+  </h2>
+  <table class="table table-striped">
+  {% for obj in mycommunities %}
+    <tr>
+      <td>
+        <a href="{{url_for('.edit', community_id=obj.id)}}">{{obj.title if obj.title else 'Untitled'}}</a>
+        <br />
+        <small class="muted">{{ _('Identifier') }}: {{obj.id}}</small>
+      </td>
+      <td>
+        <div class="btn-group">
+          <a class="btn btn-default dropdown-toggle btn-xs" data-toggle="dropdown" href="#">
+            {{ _('Actions') }}
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a href="{{url_for('.view', community_id=obj.id, view='basic')}}"><i class="icon-eye-open"></i> {{ _('Basic') }}</a></li>
+            <li><a href="{{url_for('.view', community_id=obj.id, view='weko')}}"><i class="icon-eye-open"></i> {{ _('Weko') }}</a></li>
+            <li><a href="{{url_for('.edit', community_id=obj.id)}}"><i class="icon-pencil"></i> {{ _('Edit') }}</a></li>
+          </ul>
+        </div> <!-- /.btn-group -->
+      </td>
+    </tr>
+  {% endfor %}
+  </table>
+  {% else %}
+  <p class="muted">{{ _('You currently have no community collections.') }}</p>
+  <h4>
+    <div class="pull-right">
+      <!--&nbsp;<a href="{{url_for('.new')}}" class="btn btn-primary"><i class="icon-plus-sign"></i> {{ _('New') }}</a>-->
+    </div>
+    <strong>{{ _('Want your own community?') }}</strong>
+  </h4>
+  <p>{{ _('It\'s easy. Just click the button to get started.') }}</p>
+  <ul>
+    <li><strong>{{ _('Curate') }}</strong> &mdash; {{ _('accept/reject what goes in your community collection.') }}</li>
+    <li><strong>{{ _('Export') }}</strong> &mdash; {{ _('your community collection is automatically exported via OAI-PMH') }}</li>
+    <li><strong>{{ _('Upload') }}</strong> &mdash; {{ _('get custom upload link to send to people') }}</li>
+  </ul>
+  {% endif %}
+{% else %}
+  <h4>
+    <div class="pull-right">
+      &nbsp;<a href="{{url_for('security.register')}}" class="btn btn-warning btn-large signup">{{ _('Sign Up') }}</a>
+    </div>
+    <strong>{{ _('Want your own community?') }}</strong>
+  </h4>
+  <p>{{ _('It\'s easy. Just click the button to get started.') }}</p>
+  <ul>
+    <li><strong>{{ _('Curate') }}</strong> &mdash; {{ _('accept/reject what goes in your community collection.') }}</li>
+    <li><strong>{{ _('Export') }}</strong> &mdash; {{ _('your community collection is automatically exported via OAI-PMH') }}</li>
+    <li><strong>{{ _('Upload') }}</strong> &mdash; {{ _('get custom upload link to send to people') }}</li>
+  </ul>
+{% endif %}
+</div>

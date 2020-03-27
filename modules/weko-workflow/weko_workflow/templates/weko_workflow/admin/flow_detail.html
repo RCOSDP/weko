@@ -182,7 +182,7 @@
       <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp
       {{_('Back')}}
    </button>
-  <button type="button" class="btn btn-primary pull-right" id="btn_submit" 
+  <button type="button" class="btn btn-primary pull-right" id="btn_submit"
       data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
       <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
        {{_('Save')}}
@@ -303,7 +303,7 @@
       Object.assign(apply_action, {user_deny: $(this).is(':checked')});
       localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     });
-    
+
     function addAlert(message) {
         $('#alerts').append(
             '<div class="alert alert-light" id="alert-style">' +

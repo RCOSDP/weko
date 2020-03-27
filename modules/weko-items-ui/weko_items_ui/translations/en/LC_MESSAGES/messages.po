@@ -286,3 +286,24 @@ msgstr ""
 #: weko_items_ui/templates/weko_items_ui/iframe/upload_thumbnail_list.html:
 msgid "Actions"
 msgstr ""
+
+msgid "Specified index does not exist"
+msgstr "Specified index does not exist. Please Contact Your System Administrator."
+
+msgid "Advisor"
+msgstr ""
+
+msgid "Guarantor"
+msgstr ""
+
+msgid "Email (Advisor)"
+msgstr ""
+
+msgid "Email (Guarantor)"
+msgstr ""
+
+msgid "The following email address is not registered in the system. Please recheck and input."
+msgstr ""
+
+msgid "The specified number has been exceeded. You can only select up to two fields."
+msgstr ""
