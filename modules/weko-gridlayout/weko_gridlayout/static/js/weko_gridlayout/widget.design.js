@@ -30,10 +30,12 @@ class Repository extends React.Component {
     }
 
     componentDidMount() {
-        fetch("/api/admin/load_repository")
-            .then(res => res.json())
-            .then(
-                (result) => {
+        $.ajax({
+            context: this,
+            url: "/api/admin/load_repository",
+            type: 'GET',
+            dataType: "json",
+            success: function (result) {
                     if (result.error) {
                         addAlert(result.error);
                         return;
@@ -47,12 +49,10 @@ class Repository extends React.Component {
                         selectOptions: options
                     });
                 },
-
-                (error) => {
+            error: function (error) {
                     console.log(error);
                 }
-            );
-
+        });
     }
 
     handleChange(event) {
@@ -61,15 +61,13 @@ class Repository extends React.Component {
             repository_id: repositoryId
         };
         let url = "/api/admin/load_widget_list_design_setting";
-        fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data)})
-            .then(res => res.json())
-            .then(
-                (result) => {
+        $.ajax({
+            url: url,
+            type: 'POST',
+            dataType: "json",
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (result) {
                     if (result.error) {
                         console.log(result.error);
                         return;
@@ -81,10 +79,10 @@ class Repository extends React.Component {
                     widgetPreviewElement = widgetList['data'];
                     loadWidgetList(widgetPreviewElement);
                 },
-                (error) => {
+            error: function (error) {
                     console.log(error);
                 }
-            );
+        });
 
         disableButton();
         this.setState({ repositoryId: repositoryId });
@@ -172,20 +170,24 @@ class WidgetList extends React.Component {
           let data = {
               repository_id: this.props.repositoryId
           };
-          fetch('/api/admin/load_widget_design_pages', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data)})
-             .then(res => res.json())
-             .then((result) => {
+            $.ajax({
+                context: this,
+                url: '/api/admin/load_widget_design_pages',
+                type: 'POST',
+                dataType: "json",
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (result) {
                  if (result.error) {
                      alertModal("Can't get page list! \nDetail: " + result.error);
                  }
                  else {
                      this.displayOptions(result['page-list']['data']);  //this.state.selectedPage
                  }
+                },
+                error: function (error) {
+                    console.log(error);
+                }
           });
         }
     }
@@ -214,40 +216,37 @@ class WidgetList extends React.Component {
 
     getPageDesign(id, isMainLayout) {
         let url;
-        let requestParam;
+        let requestType = 'GET';
+        let data;
         if(String(id) === '0' || isMainLayout) {  // If zero, then the main layout was selected
             url = '/api/admin/load_widget_design_setting';
-            let data = {
+            data = {
               repository_id: this.props.repositoryId
             };
-            requestParam = {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(data)
-            }
+            requestType = 'POST'
         }
         else {  // Get design setting for page not repository
             url = '/api/admin/load_widget_design_page_setting/' + id;
         }
-        fetch(url, {
-            ...requestParam
-        })
-            .then(res => res.json())
-            .then((result) => {
-                    if (result.error) {
-                        alertModal(result.error);
-                        return;
-                    }
-                    let widgetList = result['widget-settings'];
-                    loadWidgetPreview(widgetList);
-                },
-                (error) => {
+        $.ajax({
+            url: url,
+            type: requestType,
+            dataType: "json",
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (result) {
+                if (result.error) {
                     alertModal(result.error);
+                    return;
+                }
+                let widgetList = result['widget-settings'];
+                loadWidgetPreview(widgetList);
+             },
+             error: function (error) {
+                alertModal(error);
                     console.log(error);
                 }
-          );
+        });
     }
 
     handleChange(event) {
@@ -300,16 +299,14 @@ class PagesListSelectControls extends React.Component {
           page_id: this.props.selectedOption,
           repository_id: this.props.repositoryId
         };
-        fetch('/api/admin/load_widget_design_page',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData)
-          })
-           .then(res => res.json())
-           .then((result) => {
+        $.ajax({
+            context: this,
+            url: '/api/admin/load_widget_design_page',
+            type: 'POST',
+            dataType: "json",
+            contentType: 'application/json',
+            data: JSON.stringify(requestData),
+            success: function (result) {
                if (result.error) {
                    this.setState({page: {}});
                    alertModal("Can't get page! \nDetail: " + result.error);
@@ -321,23 +318,24 @@ class PagesListSelectControls extends React.Component {
                    });
                }
         },
-        (error) => {
+            error: function (error) {
             this.setState({page: {}});
-            alertModal("Can't get page! \nDetail: " + result.error);
+                alertModal("Can't get page! \nDetail: " + error);
+            }
         });
     }
 
     handleDelete() {
         this.setState({deleteModalOpen: false});
         let postData = {page_id: this.props.selectedOption};
-        fetch('/api/admin/delete_widget_design_page', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(postData),
-        }).then(res => res.json()
-        ).then((result) => {
+        $.ajax({
+            context: this,
+            url: '/api/admin/delete_widget_design_page',
+            type: 'POST',
+            dataType: "json",
+            contentType: 'application/json',
+            data: JSON.stringify(postData),
+            success: function (result) {
             if (result.error) {  // Exception occured while saving
                 alertModal(result.error);
             }
@@ -347,6 +345,7 @@ class PagesListSelectControls extends React.Component {
             else {
                 this.props.refreshList();
                 addAlert('Successfully deleted page.');
+            }
             }
         });
     }
@@ -499,14 +498,14 @@ class AddPageModal extends React.Component {
                 is_main_layout: this.state.isMainLayout,
                 is_edit: this.props.isEdit,
             };
-            fetch(this.props.addPageEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(postData),
-            }).then(res => res.json()
-            ).then((result) => {
+            $.ajax({
+                context: this,
+                url: this.props.addPageEndpoint,
+                type: 'POST',
+                dataType: "json",
+                contentType: 'application/json',
+                data: JSON.stringify(postData),
+                success: function (result) {
                 if (result.error) {  // Exception occured while saving
                     alertModal(result.error);
                 }
@@ -519,10 +518,11 @@ class AddPageModal extends React.Component {
                     addAlert('Successfully saved page.');
                 }
             },
-            (error) => {
+            error: function (error) {
               alertModal('Unable to save page: Unexpected error.');
-            });
-        }
+            }
+        });
+      }
     }
 
     handleClose(event) {
@@ -636,9 +636,12 @@ class PageTitle extends React.Component {
         let langList = [];
         let langName = {};
         let systemRegisteredLang = [];
-        fetch('/api/admin/get_system_lang')
-            .then(res => res.json())
-            .then((result) => {   // TODO: Could all of this be simplified?
+        $.ajax({
+            context: this,
+            url: '/api/admin/get_system_lang',
+            type: 'GET',
+            dataType: "json",
+            success: function (result) {
                 if (result.error) {
                     let message = "Can't get system language! \nDetail: " + result.error;
                     addAlert(message);
@@ -680,7 +683,8 @@ class PageTitle extends React.Component {
                         defaultLanguage: defaultLang
                     });
                 }
-            });
+            }
+        });
     }
 
     componentDidMount() {
@@ -812,29 +816,25 @@ class ButtonLayout extends React.Component {
 
     handleCancel() {  // Reset to current settings
         let url;
-        let requestParam;
+        let requestType = 'GET';
+        let data;
         if(this.props.pageId == 0) {  // If zero, then the main layout is selected
             url = '/api/admin/load_widget_design_setting';
-            let data = {
+            data = {
               repository_id: this.props.repositoryId
             };
-            requestParam = {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(data)
-            }
+            requestType = 'POST'
         }
         else {  // Get design setting for page not repository
             url = '/api/admin/load_widget_design_page_setting/' + this.props.pageId;
         }
-        fetch(url,{
-          ...requestParam
-        })
-            .then(res => res.json())
-            .then(
-                (result) => {
+        $.ajax({
+            url: url,
+            type: requestType,
+            dataType: "json",
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (result) {
                     if (result.error) {
                         alertModal(error);
                         PreviewGrid.clearGrid();
@@ -843,11 +843,11 @@ class ButtonLayout extends React.Component {
                     let widgetList = result['widget-settings'];
                     loadWidgetPreview(widgetList);
                 },
-                (error) => {
+            error: function (error) {
                     PreviewGrid.clearGrid();
                     console.log(error);
                 }
-            );
+        });
     }
 
     render() {
@@ -920,6 +920,8 @@ var PreviewGrid = new function () {
             width: 12,
             float: true,
             removeTimeout: 100,
+            cellHeight: 6,
+            verticalMargin: 10,
             acceptWidgets: '.grid-stack-item'
         };
 
@@ -1072,7 +1074,7 @@ function addWidget() {
                 x: 0,
                 y: 0,
                 width: 2,
-                height: 1,
+                height: 6,
                 auto_position: true,
                 name: widgetName,
                 id: widgetId,
@@ -1298,11 +1300,11 @@ function saveWidgetDesignSetting(widgetDesignData) {
                     let d = new Date();
                     let date = d.getFullYear() + '-' + (d.getMonth() > 8 ? '' : '0') + (d.getMonth() + 1)
                       + '-' + (d.getDate() > 9 ? '' : '0') + d.getDate();
-                    elements.forEach(function (el) {
-                        if (!el.getAttribute('data-created_date')) {
-                            el.setAttribute('data-created_date', date);
+                    for (var index = 0; index < elements.length; index++) {
+                        if (!elements[index].getAttribute('data-created_date')) {
+                            elements[index].setAttribute('data-created_date', date);
                         }
-                    });
+                    }
                 }
             },
             error: function (error) {

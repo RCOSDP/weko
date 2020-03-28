@@ -303,3 +303,88 @@ msgstr ""
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Next"
 msgstr ""
+
+
+#: weko_search_ui/config.py:
+msgid "Access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Open access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Restricted access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Metadata only access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Embargoed access"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Data Language"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Distributor"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Data Type"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Chinese"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Mandarin Chinese"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "English"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "French"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "German"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Japanese"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Korean"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Russian"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Center for Social Research and Data Archives, Institute of Social Science, University of Tokyo"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Institute of Economic Research, Hitotsubashi University"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Panel Data Research Center at Keio University"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Japanese General Social Surveys, Osaka University of Commerce"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Historiographical Institute The University of Tokyo"
+msgstr ""

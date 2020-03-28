@@ -170,6 +170,22 @@ class SearchManagement(db.Model):
     )
     """ The list of search condition """
 
+    display_control = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """ The status of display control """
+
     create_date = db.Column(db.DateTime, default=datetime.now)
     """Create Time"""
 
@@ -186,6 +202,7 @@ class SearchManagement(db.Model):
                     'dlt_keyword_sort_selected')
                 data_obj.sort_setting = data.get('sort_options')
                 data_obj.search_conditions = data.get('detail_condition')
+                data_obj.display_control = data.get('display_control')
                 data_obj.search_setting_all = data
                 db.session.add(data_obj)
             db.session.commit()
@@ -216,6 +233,7 @@ class SearchManagement(db.Model):
                     'dlt_keyword_sort_selected')
                 setting_data.sort_setting = data.get('sort_options')
                 setting_data.search_conditions = data.get('detail_condition')
+                setting_data.display_control = data.get('display_control')
                 setting_data.search_setting_all = data
                 db.session.merge(setting_data)
             db.session.commit()

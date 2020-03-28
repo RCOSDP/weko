@@ -48,7 +48,7 @@ from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid, to_files_js
-from weko_records.api import FeedbackMailList, ItemsMetadata
+from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.utils import get_list_licence
@@ -58,14 +58,14 @@ from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    ITEM_REGISTRATION_ACTION_ID
+    ITEM_REGISTRATION_ACTION_ID, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_unregister_buckets, \
-    get_activity_id_of_record_without_version, get_identifier_setting, \
-    is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
-    merge_buckets_by_records, register_hdl, saving_doi_pidstore, \
-    set_bucket_default_size
+    filter_condition, get_activity_id_of_record_without_version, \
+    get_identifier_setting, is_hidden_pubdate, is_show_autofill_metadata, \
+    item_metadata_validation, merge_buckets_by_records, register_hdl, \
+    saving_doi_pidstore, set_bucket_default_size
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -82,25 +82,45 @@ def index():
     """Render a basic view."""
     activity = WorkActivity()
     getargs = request.args
+
+    conditions = {}
+    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
+                          'item', 'status', 'tab', 'sizewait', 'sizetodo',
+                          'sizeall',
+                          'pagesall', 'pagestodo', 'pageswait']
+    for args in getargs:
+        for key in list_key_condition:
+            if key in args:
+                filter_condition(conditions, key, request.args.get(args))
+
     ctx = {'community': None}
     community_id = ""
-    if 'community' in getargs:
-        activities = activity.get_activity_list(request.args.get('community'))
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        ctx = {'community': comm}
-        community_id = comm.id
-    else:
-        activities = activity.get_activity_list()
-
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         request.args.get('community') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
+    tab = request.args.get('tab')
+    tab = WEKO_WORKFLOW_TODO_TAB if not tab else tab
+    if 'community' in getargs:
+        activities, maxpage, size, pages, name_param = activity \
+            .get_activity_list(request.args.get('community'),
+                               conditions=conditions)
+        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        ctx = {'community': comm}
+        community_id = comm.id
+    else:
+        activities, maxpage, size, pages, name_param = activity \
+            .get_activity_list(conditions=conditions)
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
+        pages=pages,
+        name_param=name_param,
+        size=size,
+        tab=tab,
+        maxpage=maxpage,
         render_widgets=render_widgets,
         activities=activities,
         community_id=community_id,
@@ -211,15 +231,34 @@ def init_activity():
 def list_activity():
     """List activity."""
     activity = WorkActivity()
-    activities = activity.get_activity_list()
+    getargs = request.args
+    conditions = {}
+    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
+                          'item', 'status', 'tab', 'sizewait', 'sizetodo',
+                          'sizeall',
+                          'pagesall', 'pagestodo', 'pageswait']
+    for args in getargs:
+        for key in list_key_condition:
+            if key in args:
+                filter_condition(conditions, key, request.args.get(args))
+
+    activities, maxpage, size, pages, name_param = activity.get_activity_list(
+        conditions=conditions)
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    tab = request.args.get('tab')
+    tab = 'todo' if not tab else tab
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
+        pages=pages,
+        name_param=name_param,
+        size=size,
+        tab=tab,
+        maxpage=maxpage,
         render_widgets=render_widgets,
         activities=activities
     )
@@ -262,7 +301,7 @@ def display_activity(activity_id=0):
 
     # display_activity of Identifier grant
     identifier_setting = None
-    if 'identifier_grant' == action_endpoint and item:
+    if action_endpoint == 'identifier_grant' and item:
         community_id = request.args.get('community', None)
         if not community_id:
             community_id = 'Root Index'
@@ -270,12 +309,13 @@ def display_activity(activity_id=0):
 
         # valid date pidstore_identifier data
         if identifier_setting:
+            text_empty = '<Empty>'
             if not identifier_setting.jalc_doi:
-                identifier_setting.jalc_doi = '<Empty>'
+                identifier_setting.jalc_doi = text_empty
             if not identifier_setting.jalc_crossref_doi:
-                identifier_setting.jalc_crossref_doi = '<Empty>'
+                identifier_setting.jalc_crossref_doi = text_empty
             if not identifier_setting.jalc_datacite_doi:
-                identifier_setting.jalc_datacite_doi = '<Empty>'
+                identifier_setting.jalc_datacite_doi = text_empty
 
     temporary_identifier_select = 0
     temporary_identifier_inputs = []
@@ -314,6 +354,7 @@ def display_activity(activity_id=0):
     show_autofill_metadata = True
     is_hidden_pubdate_value = False
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -373,11 +414,10 @@ def display_activity(activity_id=0):
             if deposit:
                 files = to_files_js(deposit)
 
-        if files:
-            if not files_thumbnail:
-                files_thumbnail = [i for i in files
-                                   if 'is_thumbnail' in i.keys()
-                                   and i['is_thumbnail']]
+        if files and not files_thumbnail:
+            files_thumbnail = [i for i in files
+                               if 'is_thumbnail' in i.keys()
+                               and i['is_thumbnail']]
 
         from weko_deposit.links import base_factory
         links = base_factory(pid)
@@ -410,6 +450,12 @@ def display_activity(activity_id=0):
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
     list_license = get_list_licence()
+
+    if item and item.get('pid'):
+        pid_without_ver = item['pid']['value'].split('.')[0]
+        item_link = ItemLink.get_item_link_info(pid_without_ver)
+        ctx['item_link'] = item_link
+
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
@@ -573,10 +619,10 @@ def next_action(activity_id='0', action_id=0):
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
 
-    if 'begin_action' == action_endpoint:
+    if action_endpoint == 'begin_action':
         return jsonify(code=0, msg=_('success'))
 
-    if 'end_action' == action_endpoint:
+    if action_endpoint == 'end_action':
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
 
@@ -621,47 +667,51 @@ def next_action(activity_id='0', action_id=0):
             journal=post_json.get('journal')
         )
 
-    if 'approval' == action_endpoint:
-        if item_id is not None:
-            item = ItemsMetadata.get_record(id_=item_id)
-            pid_identifier = PersistentIdentifier.get_by_object(
-                pid_type='depid', object_type='rec', object_uuid=item.id)
-            record_class = import_string('weko_deposit.api:WekoRecord')
-            resolver = Resolver(pid_type='recid', object_type='rec',
-                                getter=record_class.get_record)
-            _pid, _approval_record = resolver.resolve(pid_identifier.pid_value)
-
-            action_feedbackmail = work_activity.get_action_feedbackmail(
-                activity_id=activity_id,
-                action_id=ITEM_REGISTRATION_ACTION_ID)
-            if action_feedbackmail:
-                FeedbackMailList.update(
-                    item_id=item_id,
-                    feedback_maillist=action_feedbackmail.feedback_maillist
-                )
-                if not recid and pid_without_ver:
-                    FeedbackMailList.update(
-                        item_id=pid_without_ver.object_uuid,
-                        feedback_maillist=action_feedbackmail.feedback_maillist
-                    )
-
-            if record:
-                deposit.update_feedback_mail()
-                deposit.update_jpcoar_identifier()
-            # TODO: Make private as default.
-            # UpdateItem.publish(pid, approval_record)
-
-    if 'item_link' == action_endpoint:
-        relation_data = post_json.get('link_data'),
+    if action_endpoint == 'approval' and item_id:
         item = ItemsMetadata.get_record(id_=item_id)
         pid_identifier = PersistentIdentifier.get_by_object(
             pid_type='depid', object_type='rec', object_uuid=item.id)
         record_class = import_string('weko_deposit.api:WekoRecord')
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
-        _pid, item_record = resolver.resolve(pid_identifier.pid_value)
-        updated_item = UpdateItem()
-        updated_item.set_item_relation(relation_data, item_record)
+        _pid, _approval_record = resolver.resolve(pid_identifier.pid_value)
+
+        action_feedbackmail = work_activity.get_action_feedbackmail(
+            activity_id=activity_id,
+            action_id=ITEM_REGISTRATION_ACTION_ID)
+        if action_feedbackmail:
+            FeedbackMailList.update(
+                item_id=item_id,
+                feedback_maillist=action_feedbackmail.feedback_maillist
+            )
+            if not recid and pid_without_ver:
+                FeedbackMailList.update(
+                    item_id=pid_without_ver.object_uuid,
+                    feedback_maillist=action_feedbackmail.feedback_maillist
+                )
+
+        if record:
+            deposit.update_feedback_mail()
+            deposit.update_jpcoar_identifier()
+        # TODO: Make private as default.
+        # UpdateItem.publish(pid, approval_record)
+
+    if action_endpoint == 'item_link' and record:
+        current_pid = PersistentIdentifier.get_by_object(
+            pid_type='recid',
+            object_type='rec',
+            object_uuid=item_id
+        )
+
+        if not pid_without_ver:
+            pid_without_ver = get_record_without_version(current_pid)
+
+        item_link = ItemLink(pid_without_ver.pid_value)
+        relation_data = post_json.get('link_data')
+        if relation_data:
+            errors = item_link.update(relation_data)
+            if errors:
+                return jsonify(code=-1, msg=_(errors))
 
     # save pidstore_identifier to ItemsMetadata
     identifier_select = post_json.get('identifier_grant')
@@ -686,15 +736,6 @@ def next_action(activity_id='0', action_id=0):
             action_id=action_id,
             identifier=identifier_grant
         )
-        # get workflow of first record attached version ID: x.1
-        # if not recid and pid_without_ver:
-        #     activity_without_ver = \
-        #         get_activity_id_of_record_without_version(pid_without_ver)
-        #     work_activity.create_or_update_action_identifier(
-        #         activity_id=activity_without_ver,
-        #         action_id=action_id,
-        #         identifier=identifier_grant
-        #     )
 
         error_list = item_metadata_validation(item_id, identifier_select)
 
@@ -1124,6 +1165,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
     except (ValueError, Exception):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
+
 
 @blueprint.route('/get_feedback_maillist/<string:activity_id>',
                  methods=['GET'])

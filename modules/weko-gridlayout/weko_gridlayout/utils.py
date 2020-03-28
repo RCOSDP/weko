@@ -20,14 +20,19 @@
 
 """Utilities for convert response json."""
 import copy
+import gzip
 import json
 import xml.etree.ElementTree as Et
 from datetime import datetime
+from io import BytesIO
 from xml.etree.ElementTree import tostring
 
+import redis
 from elasticsearch.exceptions import NotFoundError
-from flask import Markup, Response, current_app, request
+from flask import Markup, Response, current_app, jsonify, request
+from invenio_cache import current_cache
 from invenio_search import RecordsSearch
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
 from weko_index_tree.api import Indexes
@@ -179,7 +184,8 @@ def validate_admin_widget_item_setting(widget_id):
         data = WidgetDesignSetting.select_by_repository_id(
             repository_id)
         if data.get('settings'):
-            json_data = json.loads(data.get('settings')) if isinstance(data.get('settings'), str) else data.get('settings')
+            json_data = json.loads(data.get('settings')) if isinstance(
+                data.get('settings'), str) else data.get('settings')
             for item in json_data:
                 if str(item.get('widget_id')) == str(widget_item_id):
                     return True
@@ -339,7 +345,7 @@ def _build_new_arrivals_setting_data(result, setting):
         setting.get('new_dates')) or config.WEKO_GRIDLAYOUT_DEFAULT_NEW_DATE
     result['display_result'] = Markup.escape(setting.get(
         'display_result')) or config.WEKO_GRIDLAYOUT_DEFAULT_DISPLAY_RESULT
-    result['rss_feed'] = Markup.escape(setting.get('rss_feed')) or False
+    result['rss_feed'] = setting.get('rss_feed') or False
 
 
 def _build_notice_setting_data(result, setting):
@@ -412,7 +418,8 @@ def convert_widget_multi_lang_to_dict(multi_lang_data):
     """
     result = dict()
     description = json.loads(multi_lang_data.description_data) \
-        if isinstance(multi_lang_data.description_data, str) else multi_lang_data.description_data
+        if isinstance(multi_lang_data.description_data, str) \
+        else multi_lang_data.description_data
 
     result['id'] = multi_lang_data.id
     result['widget_id'] = multi_lang_data.widget_id
@@ -775,8 +782,9 @@ def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
     # Check if main design has main widget
     main_design = \
         WidgetDesignSetting.select_by_repository_id(repository_id or '')
-    main_has_main = has_main_contents_widget(
-        json.loads(main_design.get('settings', '[]')) if isinstance(main_design.get('settings', '[]'), str) else main_design.get('settings')) if main_design else False
+    settings = json.loads(main_design.get('settings', '[]')) if isinstance(
+        main_design.get('settings', '[]'), str) else main_design.get('settings')
+    main_has_main = has_main_contents_widget(settings) if main_design else False
 
     # Get page which has main
     page_with_main = get_widget_design_page_with_main(repository_id)
@@ -801,7 +809,8 @@ def get_widget_design_page_with_main(repository_id):
     if repository_id:
         for page in WidgetDesignPage.get_by_repository_id(repository_id):
             if page.settings and has_main_contents_widget(
-                    json.loads(page.settings) if isinstance(page.settings, str) else page.settings):
+                    json.loads(page.settings)
+                    if isinstance(page.settings, str) else page.settings):
                 return page
     return None
 
@@ -810,8 +819,10 @@ def main_design_has_main_widget(repository_id):
     """Check if main design has main widget."""
     main_design = WidgetDesignSetting.select_by_repository_id(repository_id)
     if main_design:
-        return has_main_contents_widget(
-            json.loads(main_design.get('settings', '[]')) if isinstance(main_design.get('settings', '[]'), str) else main_design.get('settings'))
+        settings = json.loads(main_design.get('settings', '[]')) \
+            if isinstance(main_design.get('settings', '[]'), str) \
+            else main_design.get('settings')
+        return has_main_contents_widget(settings)
     return False
 
 
@@ -822,3 +833,82 @@ def has_main_contents_widget(settings):
             if item.get('type') == config.WEKO_GRIDLAYOUT_MAIN_TYPE:
                 return True
     return False
+
+
+def get_widget_design_setting(repository_id, current_language):
+    """Get widget design setting.
+
+    @param repository_id: The repository identifier
+    @param current_language:
+    @return:
+    """
+    def validate_response():
+        """Check the response data can compress with gzip.
+
+        @return: True if the response data can compress with gzip
+        """
+        is_valid = True
+        accept_encoding = request.headers.get('Accept-Encoding', '')
+        response = jsonify({})
+        if not config.WEKO_GRIDLAYOUT_IS_COMPRESS_WIDGET or \
+            response.direct_passthrough or \
+            'gzip' not in accept_encoding.lower() or \
+                'Content-Encoding' in response.headers:
+            is_valid = False
+        return is_valid
+
+    def get_widget_response():
+        """Get widget setting response.
+
+        @return: The widget setting response
+        """
+        from .services import WidgetDesignServices
+        widget_setting_data = WidgetDesignServices.get_widget_design_setting(
+            repository_id, current_language or get_default_language())
+        return jsonify(widget_setting_data)
+
+    if validate_response() and current_language:
+        key = (config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY
+               + repository_id + "_" + current_language)
+        if current_cache.get(key) is None:
+            data = compress_widget_response(get_widget_response())
+            current_cache.set(key, data)
+            return data
+        else:
+            return current_cache.get(key)
+    else:
+        return get_widget_response()
+
+
+def compress_widget_response(response):
+    """Compress widget response.
+
+    @param response: The response data
+    @return: The response data is compressed
+    """
+    gzip_buffer = BytesIO()
+    gzip_file = gzip \
+        .GzipFile(mode='wb',
+                  compresslevel=config.WEKO_GRIDLAYOUT_COMPRESS_LEVEL,
+                  fileobj=gzip_buffer)
+    gzip_file.write(response.get_data())
+    gzip_file.close()
+    response.set_data(gzip_buffer.getvalue())
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Length'] = len(response.get_data())
+    return response
+
+
+def delete_widget_cache(repository_id):
+    """Delete widget cache.
+
+    @param repository_id: The repository identifier
+    @return:
+    """
+    cache_store = RedisStore(redis.StrictRedis.from_url(
+        current_app.config['CACHE_REDIS_URL']))
+    cache_key = (
+        "*" + config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY + repository_id
+        + "_*")
+    for key in cache_store.redis.scan_iter(cache_key):
+        cache_store.redis.delete(key)

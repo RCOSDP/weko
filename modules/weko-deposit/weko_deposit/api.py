@@ -164,55 +164,6 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
-    def update_relation_info(self, record, relation_info):
-        """Update relation info."""
-        self.get_es_index()
-        relation = 'relation'
-        relation_type = 'relation_type'
-        relation_type_val = []
-        for d in relation_info[0]:
-            pid = d.get('item_data').get('links').get('self').split('/')[len(
-                d.get('item_data').get('links').get('self').split('/')) - 1]
-            links = '/records/' + pid
-            sub_data = dict(
-                item_links=links,
-                item_title=d.get('item_title'),
-                value=d.get('sele_id'))
-            relation_type_val.append(sub_data)
-        if relation_info[0]:
-            body = {'doc': {relation: {relation_type: relation_type_val}}}
-        else:
-            body = {'doc': {relation: {}}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(record.id),
-            body=body
-        )
-
-    def get_item_link_info(self, pid):
-        """Get item link info."""
-        item_link_info = None
-        try:
-            self.get_es_index()
-            get_item_link_q = {
-                "query": {
-                    "match": {
-                        "control_number": "@control_number"
-                    }
-                }
-            }
-            query_q = json.dumps(get_item_link_q).replace(
-                "@control_number", pid)
-            query_q = json.loads(query_q)
-            indexer = RecordIndexer()
-            res = indexer.client.search(index=self.es_index, body=query_q)
-            item_link_info = res.get("hits").get(
-                "hits")[0].get('_source').get("relation")
-        except Exception as ex:
-            current_app.logger.debug(ex)
-        return item_link_info
-
     def update_path(self, record, update_revision=True):
         """Update path."""
         self.get_es_index()
@@ -970,7 +921,7 @@ class WekoRecord(Record):
         return obj
 
     @property
-    def recid(self):
+    def pid_recid(self):
         """Return an instance of record PID."""
         pid = self.record_fetcher(self.id, self)
         obj = PersistentIdentifier.get('recid', pid.pid_value)
@@ -1076,7 +1027,7 @@ class WekoRecord(Record):
     @property
     def pid_parent(self):
         """Return pid_value of doi identifier."""
-        pid_ver = PIDVersioning(child=self.recid)
+        pid_ver = PIDVersioning(child=self.pid_recid)
         if pid_ver:
             return pid_ver.parents.one_or_none()
         else:

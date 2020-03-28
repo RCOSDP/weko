@@ -66,6 +66,18 @@ katex_min_css = Bundle(
     output="gen/weko_gridlayout_katex_min.%(version)s.css",
 )
 
+trumbowyg_css_plugin = Bundle(
+    'css/weko_gridlayout/trumbowyg_plugin/colors/trumbowyg.colors.min.css',
+    'css/weko_gridlayout/trumbowyg_plugin/table/trumbowyg.table.min.css',
+    output="gen/trumbowyg_css_plugin.min.%(version)s.css",
+)
+
+trumbowyg_css = Bundle(
+    trumbowyg_css_plugin,
+    'css/weko_gridlayout/trumbowyg.min.css',
+    output="gen/trumbowyg_css.min.%(version)s.css",
+)
+
 katex_min_js = Bundle(
     'js/weko_gridlayout/katex.min.js',
     output="gen/weko_gridlayout_katex_min.%(version)s.js",
@@ -79,4 +91,22 @@ prop_types_js = Bundle(
 react_quill_js = Bundle(
     'js/weko_gridlayout/react.quill.js',
     output="gen/weko_gridlayout_react_quill.%(version)s.js",
+)
+
+trumbowyg_js_plugin = Bundle(
+    'js/weko_gridlayout/trumbowyg_plugin/base64/trumbowyg.base64.min.js',
+    'js/weko_gridlayout/trumbowyg_plugin/pasteimage/'
+    'trumbowyg.pasteimage.min.js',
+    'js/weko_gridlayout/trumbowyg_plugin/fontfamily/'
+    'trumbowyg.fontfamily.min.js',
+    'js/weko_gridlayout/trumbowyg_plugin/fontsize/trumbowyg.fontsize.min.js',
+    'js/weko_gridlayout/trumbowyg_plugin/colors/trumbowyg.colors.min.js',
+    'js/weko_gridlayout/trumbowyg_plugin/table/trumbowyg.table.min.js',
+    output="gen/trumbowyg_js_plugin.%(version)s.js",
+)
+
+react_trumbowyg_js = Bundle(
+    'js/weko_gridlayout/react-trumbowyg.js',
+    trumbowyg_js_plugin,
+    output="gen/react_trumbowyg_js.%(version)s.js",
 )

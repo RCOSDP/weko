@@ -53,6 +53,7 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_file_download_permission
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
+from weko_workflow.api import WorkActivity
 from weko_workflow.models import Action as _Action
 
 
@@ -355,7 +356,7 @@ def parse_ranking_results(results,
                 else:
                     t['date'] = new_date
                     date = new_date
-            title = item[title_key]
+            title = item.get(title_key)
             if title_key == 'user_id':
                 user_info = UserProfile.get_by_userid(title)
                 if user_info:
@@ -1385,3 +1386,24 @@ def set_multi_language_name(item, cur_lang):
             if 'name_i18n' in value \
                     and len(value['name_i18n'][cur_lang]) > 0:
                 value['name'] = value['name_i18n'][cur_lang]
+
+
+def validate_save_title_and_share_user_id(result, data):
+    """Save title and shared user id for activity.
+
+    :param result: json object
+    :param data: json object
+    :return: The result.
+    """
+    try:
+        if data and isinstance(data, dict):
+            activity_id = data['activity_id']
+            title = data['title']
+            shared_user_id = data['shared_user_id']
+            activity = WorkActivity()
+            activity.update_title_and_shared_user_id(activity_id, title,
+                                                     shared_user_id)
+    except Exception as ex:
+        result['is_valid'] = False
+        result['error'] = str(ex)
+    return result
