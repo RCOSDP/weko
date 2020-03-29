@@ -88,3 +88,6 @@ weko-demodata/
 # nginx
 nginx/keys/*
 scripts/backup
+
+reload.trigger
+
