@@ -158,27 +158,35 @@ var CustomBSDatePicker = {
     CustomBSDatePicker.validate();
   },
   /**
+  * Init attribute of model object if them undefine.
+  * @param  {[object]}  model
+  * @param  {[object]}  element is date input control.
+  */
+  initAttributeForModel: function (model, element) {
+    let ng_model = $(element).attr('ng-model').replace(/']/g, '');
+    let arr = ng_model.split("['");
+    //Init attribute of model object if them undefine.
+    let str_code = '';
+    $.each(arr, function (ind_01, val_02) {
+      str_code += (ind_01 == 0) ? val_02 : "['" + val_02 + "']";
+      let chk_str_code = '';
+      if (ind_01 != arr.length - 1) {
+        chk_str_code = "if(!" + str_code + ") " + str_code + "={};";
+      }
+      eval(chk_str_code);
+    });
+  },
+  /**
   * Excute this function before 'Save' and 'Next' processing
   * Get data from fields in order to fill to model.
-  * @param  {[type]}  model
+  * @param  {[object]}  model
   * @param  {[Boolean]}  reverse
   */
   setDataFromFieldToModel: function (model, reverse) {
     let cls = CustomBSDatePicker.option.cls;
     let element_arr = $('.' + cls);
     $.each(element_arr, function (ind, val) {
-      let ng_model = $(val).attr('ng-model').replace(/']/g, '');
-      let arr = ng_model.split("['");
-      //Init attribute of model object if them undefine.
-      let str_code = '';
-      $.each(arr, function (ind_01, val_02) {
-        str_code += (ind_01 == 0) ? val_02 : "['" + val_02 + "']";
-        let chk_str_code = '';
-        if (ind_01 != arr.length - 1) {
-          chk_str_code = "if(!" + str_code + ") " + str_code + "={};";
-        }
-        eval(chk_str_code);
-      });
+      CustomBSDatePicker.initAttributeForModel(model, val);
       if (reverse) {
         //Fill data from model to fields
         str_code = "$(val).val(" + $(val).attr('ng-model') + ")";
@@ -208,6 +216,22 @@ var CustomBSDatePicker = {
       }
     });
     return result;
+  },
+  /**
+   * If input empty, this attribute delete.
+   * Fix bug: not enter data for date field.
+  */
+  removeLastAttr: function(model){
+    let cls = CustomBSDatePicker.option.cls;
+    let element_arr = $('.' + cls);
+    $.each(element_arr, function (ind, val) {
+      CustomBSDatePicker.initAttributeForModel(model, val);
+      let ng_model = $(val).attr('ng-model');
+      let last_index = ng_model.lastIndexOf('[');
+      let previous_attr = ng_model.substring(0, last_index);
+      let str_code = "if("+ng_model+"==''){"+previous_attr+"={}}";
+      eval(str_code);
+    });
   }
 }
 
@@ -753,17 +777,15 @@ function toObject(arr) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
           filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
           if (filemeta_schema && filemeta_form) {
-            filemeta_schema.items.properties['filename']['enum'] = [];
-            filemeta_filename_form = get_subitem(filemeta_form.items, 'filename');
-            if (filemeta_filename_form) {
-              filemeta_filename_form['titleMap'] = [];
-              $rootScope.filesVM.files.forEach(file => {
-                if (file.completed && !file.is_thumbnail) {
-                  filemeta_schema.items.properties['filename']['enum'].push(file.key);
-                  filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
-                }
-              });
-            }
+            filemeta_schema.items.properties['filename']['enum'] = [null];
+            filemeta_filename_form = filemeta_form.items[0];
+            filemeta_filename_form['titleMap'] = [];
+            $rootScope.filesVM.files.forEach(function (file) {
+              if (file.completed && !file.is_thumbnail) {
+                filemeta_schema.items.properties['filename']['enum'].push(file.key);
+                filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
+              }
+            });
           }
           groupsprice_schema = filemeta_schema.items.properties['groupsprice']
           groupsprice_form = get_subitem(filemeta_form.items, 'groupsprice')
@@ -1390,7 +1412,7 @@ function toObject(arr) {
           let value = schema.properties[key];
           // Find form that contains license type obj
           if (value.items && value.items.properties && value.items.properties.hasOwnProperty(licenseTypeName)) {
-            let listLicenseEnum = [];
+            let listLicenseEnum = [null];
             // Collect list license
             for (let ind in listLicenseObj) {
               listLicenseEnum.push(listLicenseObj[ind]['value']);
@@ -1487,6 +1509,38 @@ function toObject(arr) {
         }
       }
 
+      /**
+      * Set required and collapsed for all sub item.
+      * If form required, setting "required" is true and "collapsed" is false.
+      * If root panel collapse, sub panel will collapse.
+      * @param {Boolean} isCollapsed.
+      * @param {object} forms is item of form.
+      */
+      $scope.recursiveSetCollapsedForForm = function (isCollapsed, forms) {
+        angular.forEach(forms, function(val, key){
+          val["collapsed"] = isCollapsed;
+          val["required"] = !isCollapsed;
+          if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
+            $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
+          }
+        });
+      }
+      /**
+      * Set required and collapsed for all root item.
+      */
+      $scope.setCollapsedAndRequiredForForm = function(){
+        let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
+        let forms = $rootScope.recordsVM.invenioRecordsForm;
+        let isCollapsed;
+        angular.forEach(forms, function(val, key){
+          isCollapsed = requiredList.indexOf(val.key) == -1;
+          val["collapsed"] = isCollapsed;
+          if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
+            $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
+          }
+        });
+      }
+
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.hiddenPubdate();
         $scope.initContributorData();
@@ -1534,7 +1588,6 @@ function toObject(arr) {
         }
 
         $scope.showError();
-
         // Delay 3s after page render
         setTimeout(function () {
           $scope.autofillJournal();
@@ -1542,11 +1595,14 @@ function toObject(arr) {
           let model = $rootScope.recordsVM.invenioRecordsModel;
           CustomBSDatePicker.setDataFromFieldToModel(model, true);
         }, 3000);
-
         // Auto fill user profile
         $scope.autoFillProfileInfo();
         $scope.autoSetCorrespondingUsageAppId();
+        //Set required and collapsed for all root and sub item.
+        $scope.setCollapsedAndRequiredForForm();
       });
+
+
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
@@ -2458,7 +2514,8 @@ function toObject(arr) {
             // Do nothing
           } else {
             $scope.addApprovalMail();
-            var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
+            var jsonObj = $scope.cleanJsonObject($rootScope.recordsVM.invenioRecordsModel);
+            var str = JSON.stringify(jsonObj);
             var indexOfLink = str.indexOf("authorLink");
             if (indexOfLink != -1) {
               str = str.split(',"authorLink":[]').join('');
@@ -2469,6 +2526,9 @@ function toObject(arr) {
               }
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+            //If CustomBSDatePicker empty => remove attr.
+            CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
+
             let title = $rootScope.recordsVM.invenioRecordsModel['title'];
             let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
             $scope.saveTilteAndShareUserID(title, shareUserID);
@@ -2477,6 +2537,46 @@ function toObject(arr) {
           }
         }
       };
+
+      /* Delete all empty and null Nodes in a JSON Object tree */
+      $scope.cleanJsonObject = function(obj) {
+        obj = JSON.parse(JSON.stringify(obj, function (k, v) {
+          /* Filter empty and null value */
+          return !v ? void 0 : v;
+        }));
+        while (!$scope.isJsonCleaned(obj)) {
+          obj = JSON.parse(JSON.stringify(obj, function (k, v) {
+            /* Filter empty Objects */
+            return JSON.stringify(v) === JSON.stringify({}) ? void 0 : v;
+          }));
+          obj = JSON.parse(JSON.stringify(obj, function (k, v) {
+            /* Filter null values and empty Arrays */
+            if (Array.isArray(v)) {
+              v = v.filter(function(value, index, arr){
+                return value !== null;
+              });
+            }
+            return JSON.stringify(v) === JSON.stringify([]) ? void 0 : v;
+          }));
+        }
+        return obj;
+      }
+
+      /* Check if the JSON Object tree contains empty object by recursive method */
+      $scope.isJsonCleaned = function(obj) {
+        if (typeof obj === 'object') {
+          if (jQuery.isEmptyObject(obj)) {
+            return false;
+          } else {
+            for (var key in obj) {
+              if (!$scope.isJsonCleaned(obj[key])) {
+                 return false;
+               }
+            }
+          }
+        }
+        return true;
+      }
 
       $scope.saveTilteAndShareUserID = function(title, shareUserID) {
         let activityID = $('#activity_id').text();
