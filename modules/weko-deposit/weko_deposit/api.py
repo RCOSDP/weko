@@ -1195,12 +1195,12 @@ class WekoRecord(Record):
             """
             date = []
             if isinstance(issue_dates, list):
-            for issued_date in issue_dates:
-                if issued_date.get(
-                    'bibliographicIssueDate') and issued_date.get(
-                        'bibliographicIssueDateType') == 'Issued':
-                    date.append(issued_date.get('bibliographicIssueDate'))
-            return date
+                for issued_date in issue_dates:
+                    if issued_date.get(
+                        'bibliographicIssueDate') and issued_date.get(
+                            'bibliographicIssueDateType') == 'Issued':
+                        date.append(issued_date.get('bibliographicIssueDate'))
+                return date
 
         try:
 
