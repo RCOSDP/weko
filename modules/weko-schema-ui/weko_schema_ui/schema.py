@@ -796,7 +796,7 @@ class SchemaTree:
                 index_remove_items = []
                 total_remove_items = len(lst_name_identifier_scheme)
                 for identifior_item in lst_name_identifier_scheme:
-                    if not identifior_item in lst_name_identifier_default:
+                    if identifior_item not in lst_name_identifier_default:
                         index_remove_items.extend([
                             lst_name_identifier_scheme.index(identifior_item)])
                 for index in index_remove_items[::-1]:
@@ -849,7 +849,8 @@ class SchemaTree:
                     or k == 'jpcoar:rightsHolder':
                     remove_item_other(v['jpcoar:nameIdentifier'])
                     if 'jpcoar:affiliation' in v:
-                        remove_item_other(v['jpcoar:affiliation']['jpcoar:nameIdentifier'])
+                        remove_item_other(v['jpcoar:affiliation'][
+                                              'jpcoar:nameIdentifier'])
 
                 k = get_prefix(k)
                 set_children(k, v, root)
