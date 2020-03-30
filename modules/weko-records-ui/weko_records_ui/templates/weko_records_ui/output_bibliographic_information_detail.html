@@ -16,7 +16,7 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#} 
+#}
 
 {% macro output_bibliographic_information(lst) %}
     <tr>
@@ -24,9 +24,13 @@
         <td>
             {%- for l in lst['attribute_value_mlt'] %}
             {% for source_title in l.get('title_attribute_name') %}
-                {{source_title}} <br>
+                {% if source_title != '' %}
+                    {{source_title}} <br>
+                {% endif %}
             {% endfor %}
-            <br>
+            {% if not (l.get('title_attribute_name')|length == 1 and l.get('title_attribute_name')[0] == "") and l.get('magazine_attribute_name') |length > 0  %}
+                <br>
+            {% endif %}
             {% set count = [] %}
             {% for magazine in l.get('magazine_attribute_name') %}
                 {% for key, value in magazine.items() %}
