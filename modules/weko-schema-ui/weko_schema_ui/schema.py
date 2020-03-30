@@ -782,6 +782,30 @@ class SchemaTree:
                     else:
                         merge_json_xml(i, dct)
 
+        # Function Remove items others
+        def remove_item_other(name_identifier):
+            lst_name_identifier_default = current_app.config['WEKO_SCHEMA_UI_LIST_SCHEME']
+            if '@attributes' in name_identifier:
+                element_first = 0
+                lst_name_identifier_scheme = name_identifier[
+                    '@attributes']['nameIdentifierScheme'][element_first]
+                if '@value' in name_identifier:
+                    lst_value = name_identifier['@value'][element_first]
+                lst_name_identifier_uri = name_identifier[
+                    '@attributes']['nameIdentifierURI'][element_first]
+                index_remove_items = []
+                total_remove_items = len(lst_name_identifier_scheme)
+                for identifior_item in lst_name_identifier_scheme:
+                    if not identifior_item in lst_name_identifier_default:
+                        index_remove_items.extend([
+                            lst_name_identifier_scheme.index(identifior_item)])
+                for index in index_remove_items[::-1]:
+                    lst_name_identifier_scheme.pop(index)
+                    if len(lst_value) == total_remove_items:
+                        lst_value.pop(index)
+                        total_remove_items = total_remove_items - 1
+                    lst_name_identifier_uri.pop(index)
+
         if not self._schema_obj:
             E = ElementMaker()
             root = E.Weko()
@@ -820,32 +844,12 @@ class SchemaTree:
                     k = 'jpcoar:file'
                 elif k == 'custom:system_identifier':
                     k = 'jpcoar:identifier'
-
-                # Remove items that are not set as controlled vocabulary
+                    # Remove items that are not set as controlled vocabulary
                 elif k == 'jpcoar:creator' or k == 'jpcoar:contributor' \
-                        or k == 'jpcoar:rightsHolder':
-                    if '@attributes' in v['jpcoar:nameIdentifier']:
-                        lst_nameIdentifierScheme = v['jpcoar:nameIdentifier'][
-                            '@attributes']['nameIdentifierScheme'][0]
-                        if '@value' in v['jpcoar:nameIdentifier']:
-                            lst_value = v['jpcoar:nameIdentifier']['@value'][0]
-                        lst_nameIdentifierURI = v['jpcoar:nameIdentifier'][
-                            '@attributes']['nameIdentifierURI'][0]
-                        index_remove_items = []
-
-                        for identifior_item in lst_nameIdentifierScheme:
-                            if not identifior_item.upper() in current_app.\
-                                    config['WEKO_SCHEMA_CREATORNAME'
-                                           '_INDENTIFIOR_VOCABULARIES']:
-                                index_remove_items.extend([
-                                    lst_nameIdentifierScheme.
-                                    index(identifior_item)])
-
-                        for index in index_remove_items[::-1]:
-                            lst_nameIdentifierScheme.pop(index)
-                            if len(lst_value):
-                                lst_value.pop(index)
-                            lst_nameIdentifierURI.pop(index)
+                    or k == 'jpcoar:rightsHolder':
+                    remove_item_other(v['jpcoar:nameIdentifier'])
+                    if 'jpcoar:affiliation' in v:
+                        remove_item_other(v['jpcoar:affiliation']['jpcoar:nameIdentifier'])
 
                 k = get_prefix(k)
                 set_children(k, v, root)
