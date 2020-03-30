@@ -38,6 +38,7 @@ from weko_admin.models import AdminLangSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_records_ui.utils import get_pair_value
 from weko_search_ui.query import item_search_factory
 from weko_theme import config as theme_config
 
@@ -715,9 +716,13 @@ def find_rss_value(data, keyword):
             desc_val = item_map.get('description.@value')
             desc_dat = source.get('_item_metadata').get(desc_typ.split('.')[0])
             if desc_dat and desc_dat.get('attribute_value_mlt'):
-                for desc in desc_dat.get('attribute_value_mlt'):
-                    if desc.get(desc_typ.split('.')[1]) == 'Abstract':
-                        return desc.get(desc_val.split('.')[1])
+                list_des_data = get_pair_value(desc_val.split('.')[1:],
+                                               desc_typ.split('.')[1:],
+                                               desc_dat.get(
+                                                   'attribute_value_mlt'))
+                for des_text, des_type in list_des_data:
+                    if des_type == 'Abstract':
+                        return des_text
         else:
             return ''
     elif keyword == '_updated':
