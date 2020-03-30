@@ -847,11 +847,11 @@ class SchemaTree:
                     k = 'jpcoar:identifier'
                     # Remove items that are not set as controlled vocabulary
                 elif k == 'jpcoar:creator' or k == 'jpcoar:contributor' \
-                    or k == 'jpcoar:rightsHolder':
+                        or k == 'jpcoar:rightsHolder':
                     remove_custom_scheme(v['jpcoar:nameIdentifier'])
                     if 'jpcoar:affiliation' in v:
                         remove_custom_scheme(v['jpcoar:affiliation'][
-                                              'jpcoar:nameIdentifier'])
+                            'jpcoar:nameIdentifier'])
 
                 k = get_prefix(k)
                 set_children(k, v, root)
