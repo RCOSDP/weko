@@ -666,7 +666,7 @@ function toObject(arr) {
                   if (!!author_idt_schema.items.properties[item]) {
                       author_schema = author_idt_schema.items.properties[item].items;
                       author_form = get_subitem(author_idt_form.items, item);
-                      $$scope.addSchemeToSelectForm(author_form, author_schema);
+                      $scope.addSchemeToSelectForm(author_form, author_schema);
                   }
                 })
               }
