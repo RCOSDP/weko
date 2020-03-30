@@ -586,7 +586,7 @@ function toObject(arr) {
                 let name_identifier_form = uri_form_model[subkey]
                 name_identifier_form.map(function (form) {
                   $scope.sub_item_scheme.map(function (scheme) {
-                    if (form[scheme]) {
+                    if (form.hasOwnProperty(scheme)) {
                       $scope.scheme_uri_mapping.map(function (mapping) {
                         if (mapping.scheme == scheme) {
                           form[mapping.uri] = data_author[form[scheme]]
@@ -606,7 +606,7 @@ function toObject(arr) {
                   let name_identifier_form = object[subkey]
                   name_identifier_form.map(function (form) {
                     $scope.sub_item_scheme.map(function (scheme) {
-                      if (form[scheme]) {
+                      if (form.hasOwnProperty(scheme)) {
                         $scope.scheme_uri_mapping.map(function (mapping) {
                           if (mapping.scheme == scheme) {
                             form[mapping.uri] = data_author[form[scheme]]
