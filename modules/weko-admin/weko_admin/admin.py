@@ -893,6 +893,27 @@ class IdentifierSettingView(ModelView):
         'repository': QuerySelectField,
     }
 
+    def validate_form(self, form):
+        """
+            Custom validate the form on submit.
+
+            :param form:
+                Form to validate
+        """
+        if isinstance(form.repository.data, Community):
+            id_list = []
+            id_data = Identifier.query.all()
+            for i in id_data:
+                id_list.append(i.repository)
+
+            if form.repository.data.id in id_list:
+                if (form.action == 'create' or
+                        form.repo_selected.data != form.repository.data.id):
+                    flash(_('Specified repository is already registered.'),
+                          'error')
+                    return False
+        return super(IdentifierSettingView, self).validate_form(form)
+
     def on_model_change(self, form, model, is_created):
         """
         Perform some actions before a model is created or updated.
@@ -946,28 +967,15 @@ class IdentifierSettingView(ModelView):
     def _use_append_repository(self, form):
         form.repository.query_factory = self._get_community_list
         form.repo_selected.data = 'Root Index'
+        setattr(form, 'action', 'create')
         return form
 
     def _use_append_repository_edit(self, form):
-        form.repository.query_factory = self._get_community_list_edit
-        form.repository.render_kw = {'disabled': True}
+        form.repository.query_factory = self._get_community_list
+        setattr(form, 'action', 'edit')
         return form
 
     def _get_community_list(self):
-        try:
-            id_list = []
-            id_data = Identifier.query.all()
-            for i in id_data:
-                id_list.append(i.repository)
-            query_data = Community.query.filter(
-                Community.id.notin_(id_list)).all()
-            if 'Root Index' not in id_list:
-                query_data.insert(0, Community(id='Root Index'))
-        except Exception as ex:
-            current_app.logger.debug(ex)
-        return query_data
-
-    def _get_community_list_edit(self):
         try:
             query_data = Community.query.all()
             query_data.insert(0, Community(id='Root Index'))

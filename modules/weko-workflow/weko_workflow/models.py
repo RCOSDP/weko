@@ -884,8 +884,8 @@ class ActionIdentifier(db.Model, TimestampMixin):
     """Action identifier grant jalc datacite doi input."""
 
     action_identifier_ndl_jalc_doi = db.Column(db.String(255),
-                                              nullable=True,
-                                              default="")
+                                               nullable=True,
+                                               default="")
     """Action identifier grant ndl jalc doi input."""
 
 
