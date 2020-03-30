@@ -501,20 +501,6 @@ msgstr "メールを表示"
 msgid "Hide Email"
 msgstr "メールを非表示"
 
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:86
-msgid "Open Date"
-msgstr "ファイル公開日"
-
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:92
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:101
-msgid "Display"
-msgstr "表示"
-
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:96
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:105
-msgid "Hide Open Date"
-msgstr "非表示"
-
 #: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:137
 msgid "Header Settings"
 msgstr "ヘッダ設定"
@@ -1113,3 +1099,12 @@ msgstr "フォーマット"
 
 msgid "Extent"
 msgstr "サイズ"
+
+msgid "Issued Date"
+msgstr "発行日"
+
+msgid "Issue"
+msgstr "号"
+
+msgid "Volume"
+msgstr "巻"
