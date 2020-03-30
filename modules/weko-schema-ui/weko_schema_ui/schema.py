@@ -880,6 +880,31 @@ class SchemaTree:
                     else:
                         merge_json_xml(i, dct)
 
+        # Function Remove items others
+        def remove_custom_scheme(name_identifier):
+            lst_name_identifier_default = current_app.config['WEKO_SCHEMA_UI_LIST_SCHEME']
+            if '@attributes' in name_identifier:
+                element_first = 0
+                lst_name_identifier_scheme = name_identifier[
+                    '@attributes']['nameIdentifierScheme'][element_first]
+                lst_value = []
+                if '@value' in name_identifier:
+                    lst_value = name_identifier['@value'][element_first]
+                lst_name_identifier_uri = name_identifier[
+                    '@attributes']['nameIdentifierURI'][element_first]
+                index_remove_items = []
+                total_remove_items = len(lst_name_identifier_scheme)
+                for identifior_item in lst_name_identifier_scheme:
+                    if identifior_item not in lst_name_identifier_default:
+                        index_remove_items.extend([
+                            lst_name_identifier_scheme.index(identifior_item)])
+                for index in index_remove_items[::-1]:
+                    lst_name_identifier_scheme.pop(index)
+                    if len(lst_value) == total_remove_items:
+                        lst_value.pop(index)
+                        total_remove_items = total_remove_items - 1
+                    lst_name_identifier_uri.pop(index)
+
         if not self._schema_obj:
             E = ElementMaker()
             root = E.Weko()
@@ -914,6 +939,14 @@ class SchemaTree:
         # Create sub element
         for lst in node_tree:
             for k, v in lst.items():
+                # Remove items that are not set as controlled vocabulary
+                if k == 'jpcoar:creator' or k == 'jpcoar:contributor' \
+                        or k == 'jpcoar:rightsHolder':
+                    remove_custom_scheme(v['jpcoar:nameIdentifier'])
+                    if 'jpcoar:affiliation' in v:
+                        remove_custom_scheme(v['jpcoar:affiliation'][
+                            'jpcoar:nameIdentifier'])
+
                 k = get_prefix(k)
                 set_children(k, v, root)
         return root

@@ -58,4 +58,9 @@ WEKO_BILLING_FILE_PROP_ID = 103
 """Id of billing file property."""
 
 WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_IDS = [3, 60, 62, 102]
-"""Ids of default properties"""
+"""Ids of default properties
+    3 = Right Holder
+    60 = Creator / Author
+    62 = Contributor
+    102 = Bibliographic information
+"""

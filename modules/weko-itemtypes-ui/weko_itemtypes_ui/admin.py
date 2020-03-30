@@ -243,7 +243,8 @@ class ItemTypePropertiesView(BaseView):
         """Renders an primitive property view."""
         lists = ItemTypeProps.get_records([])
         properties = lists.copy()
-        defaults_property_ids = current_app.config.get('WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_IDS')
+        defaults_property_ids = current_app.config.get(
+            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_IDS')
         for item in lists:
             if item.id in defaults_property_ids:
                 properties.remove(item)
@@ -251,9 +252,9 @@ class ItemTypePropertiesView(BaseView):
         billing_perm = BillingPermission.get_billing_information_by_id(
             WEKO_BILLING_FILE_ACCESS)
         if not billing_perm or not billing_perm.is_active:
-            for prop in lists:
+            for prop in properties:
                 if prop.id == WEKO_BILLING_FILE_PROP_ID:
-                    lists.remove(prop)
+                    properties.remove(prop)
 
         return self.render(
             current_app.config['WEKO_ITEMTYPES_UI_ADMIN_CREATE_PROPERTY'],
