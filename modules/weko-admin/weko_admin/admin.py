@@ -826,7 +826,7 @@ class IdentifierSettingView(ModelView):
     column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
                          jalc_crossref_doi=_('JaLC CrossRef DOI'),
                          jalc_datacite_doi=_('JaLC DataCite DOI'),
-                         ndl_jalc_doi='NDL JaLC DOI',
+                         ndl_jalc_doi=_('NDL JaLC DOI'),
                          suffix=_('Semi-automatic Suffix')
                          )
 
@@ -906,12 +906,11 @@ class IdentifierSettingView(ModelView):
             for i in id_data:
                 id_list.append(i.repository)
 
-            if form.repository.data.id in id_list:
-                if (form.action == 'create' or
-                        form.repo_selected.data != form.repository.data.id):
-                    flash(_('Specified repository is already registered.'),
-                          'error')
-                    return False
+            if (form.repository.data.id in id_list) and \
+                (form.action == 'create' or
+                 form.repo_selected.data != form.repository.data.id):
+                flash(_('Specified repository is already registered.'), 'error')
+                return False
         return super(IdentifierSettingView, self).validate_form(form)
 
     def on_model_change(self, form, model, is_created):

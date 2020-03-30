@@ -74,6 +74,10 @@ msgstr ""
 msgid "JaLC DataCite DOI"
 msgstr ""
 
+#: weko_records_ui/admin.py:829
+msgid "NDL JaLC DOI"
+msgstr ""
+
 #: weko_records_ui/admin.py:284
 msgid "CNRI"
 msgstr ""
