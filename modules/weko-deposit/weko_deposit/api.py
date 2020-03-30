@@ -1194,6 +1194,7 @@ class WekoRecord(Record):
             :return:
             """
             date = []
+            if isinstance(issue_dates, list):
             for issued_date in issue_dates:
                 if issued_date.get(
                     'bibliographicIssueDate') and issued_date.get(

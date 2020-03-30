@@ -46,7 +46,7 @@
                       {%- endfor -%}
                   </td>
                 </tr>
-              {%- elif lst['attribute_type'] == 'creator' or lst['attribute_name'] == 'Creator' -%}
+              {%- elif lst['attribute_type'] == 'creator' -%}
                  {%- if lst['attribute_value_mlt'][0].get('name') -%}
                      <tr>
                        <th scope="row" colspan="6">{{ lst['attribute_name'] }}</th>
