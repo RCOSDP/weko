@@ -841,12 +841,8 @@ class SchemaTree:
         # Create sub element
         for lst in node_tree:
             for k, v in lst.items():
-                if k == 'custom:system_file':
-                    k = 'jpcoar:file'
-                elif k == 'custom:system_identifier':
-                    k = 'jpcoar:identifier'
-                    # Remove items that are not set as controlled vocabulary
-                elif k == 'jpcoar:creator' or k == 'jpcoar:contributor' \
+                # Remove items that are not set as controlled vocabulary
+                if k == 'jpcoar:creator' or k == 'jpcoar:contributor' \
                         or k == 'jpcoar:rightsHolder':
                     remove_custom_scheme(v['jpcoar:nameIdentifier'])
                     if 'jpcoar:affiliation' in v:
