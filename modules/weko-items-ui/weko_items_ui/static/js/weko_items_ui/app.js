@@ -688,7 +688,7 @@ function toObject(arr) {
                         $scope.sub_item_scheme.map(function (item) {
                           if (author_schema.properties[item]) {
                             author_schema.properties[item]['enum'] = [];
-                            author_schema.properties[item]['enum'].push(null)
+                            author_schema.properties[item]['enum'].push(null);
                             $scope.data_author.forEach(function (value_scheme) {
                               $scope.sub_item_scheme.map(function (key) {
                                 if (author_schema.properties[key]) {
@@ -752,6 +752,7 @@ function toObject(arr) {
           form = $scope.searchFilemetaForm(schema.title);
           if (schema && form) {
             schema.items.properties['subitem_corresponding_usage_application_id']['enum'] = [];
+            schema.items.properties['subitem_corresponding_usage_application_id']['enum'].push(null);
             usage_application_form = form.items[0];
             usage_application_form['titleMap'] = []
           }
@@ -763,6 +764,7 @@ function toObject(arr) {
           output_form = $scope.searchFilemetaForm(output_schema.title);
           if (output_schema && output_form) {
             output_schema.items.properties['subitem_corresponding_output_id']['enum'] = [];
+            output_schema.items.properties['subitem_corresponding_output_id']['enum'].push(null);
             output_report_form = output_form.items[0];
             output_report_form['titleMap'] = []
           }
@@ -831,6 +833,7 @@ function toObject(arr) {
           filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
           if (filemeta_schema && filemeta_form) {
             filemeta_schema.items.properties['filename']['enum'] = [];
+            filemeta_schema.items.properties['filename']['enum'].push(null);
             filemeta_filename_form = get_subitem(filemeta_form.items, 'filename');
             if (filemeta_filename_form) {
               filemeta_filename_form['titleMap'] = [];
@@ -846,6 +849,7 @@ function toObject(arr) {
           groupsprice_form = get_subitem(filemeta_form.items, 'groupsprice')
           if (groupsprice_schema && groupsprice_form) {
             groupsprice_schema.items.properties['group']['enum'] = [];
+            groupsprice_schema.items.properties['group']['enum'].push(null);
             group_form = groupsprice_form.items[0];
             group_form['titleMap'] = [];
             $scope.groups.forEach(function (group) {
