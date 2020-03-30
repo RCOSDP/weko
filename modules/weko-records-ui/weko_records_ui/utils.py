@@ -38,6 +38,8 @@ def check_items_settings():
     settings = AdminSettings.get('items_display_settings')
     current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+    if hasattr(settings, 'item_display_open_date'):
+        current_app.config['OPEN_DATE_DISPLAY_FLG'] = settings.item_display_open_date
 
 
 def get_record_permalink(record):
