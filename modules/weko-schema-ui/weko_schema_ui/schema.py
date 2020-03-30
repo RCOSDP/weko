@@ -783,12 +783,13 @@ class SchemaTree:
                         merge_json_xml(i, dct)
 
         # Function Remove items others
-        def remove_item_other(name_identifier):
+        def remove_custom_scheme(name_identifier):
             lst_name_identifier_default = current_app.config['WEKO_SCHEMA_UI_LIST_SCHEME']
             if '@attributes' in name_identifier:
                 element_first = 0
                 lst_name_identifier_scheme = name_identifier[
                     '@attributes']['nameIdentifierScheme'][element_first]
+                lst_value = []
                 if '@value' in name_identifier:
                     lst_value = name_identifier['@value'][element_first]
                 lst_name_identifier_uri = name_identifier[
@@ -847,9 +848,9 @@ class SchemaTree:
                     # Remove items that are not set as controlled vocabulary
                 elif k == 'jpcoar:creator' or k == 'jpcoar:contributor' \
                     or k == 'jpcoar:rightsHolder':
-                    remove_item_other(v['jpcoar:nameIdentifier'])
+                    remove_custom_scheme(v['jpcoar:nameIdentifier'])
                     if 'jpcoar:affiliation' in v:
-                        remove_item_other(v['jpcoar:affiliation'][
+                        remove_custom_scheme(v['jpcoar:affiliation'][
                                               'jpcoar:nameIdentifier'])
 
                 k = get_prefix(k)
