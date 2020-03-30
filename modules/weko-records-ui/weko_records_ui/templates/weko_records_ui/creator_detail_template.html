@@ -18,7 +18,7 @@
  # MA 02111-1307, USA.
  #}
 
-{% macro ouput_creator_data(attribute_value_mlt) %}
+{% macro output_creator_data(attribute_value_mlt) %}
     {%- set index = 0 -%}
     {%- for attribute_data in attribute_value_mlt -%}
         {%- set index = index + loop.index -%}
@@ -48,7 +48,7 @@
                             {%- endif -%}
                             {%- if 'nameIdentifier' in i -%}
                                 <a href='{%- if "nameIdentifierURI" in i -%} {{i["nameIdentifierURI"]}} {%- endif -%}'>
-                                    {{i['nameIdentifier']}} 
+                                    {{i['nameIdentifier']}}
                                 </a>
                             {%- endif -%}
                         </p>
@@ -102,6 +102,6 @@
                             </table>
                 {%- endif -%}
             </div>
-        </div>        
+        </div>
     {%- endfor -%}
 {% endmacro %}
