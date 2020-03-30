@@ -18,9 +18,9 @@
   # MA 02111-1307, USA.
   #}
 
- {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
-{% from "weko_records_ui/creator_detail_template.html" import ouput_creator_data %}
- {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
+{% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
+{% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
+{% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
 {% macro output_item_detail(record, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true) %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info %}
