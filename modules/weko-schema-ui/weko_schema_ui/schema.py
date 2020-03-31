@@ -782,7 +782,7 @@ class SchemaTree:
                     else:
                         merge_json_xml(i, dct)
 
-        # Function Remove items others
+        # Function Remove custom scheme
         def remove_custom_scheme(name_identifier, v):
             lst_name_identifier_default = current_app.config['WEKO_SCHEMA_UI_LIST_SCHEME']
             if '@attributes' in name_identifier:
@@ -844,15 +844,18 @@ class SchemaTree:
         root.attrib['{{{pre}}}schemaLocation'.format(pre=xsi)] = self._location
 
         # Create sub element
+        indetifier_keys = ['jpcoar:creator', 'jpcoar:contributor',
+                           'jpcoar:rightsHolder']
+        affiliation_key = 'jpcoar:affiliation'
+        name_identifier_key = 'jpcoar:nameIdentifier'
         for lst in node_tree:
             for k, v in lst.items():
                 # Remove items that are not set as controlled vocabulary
-                if k == 'jpcoar:creator' or k == 'jpcoar:contributor' \
-                        or k == 'jpcoar:rightsHolder':
-                    remove_custom_scheme(v['jpcoar:nameIdentifier'], v)
-                    if 'jpcoar:affiliation' in v:
-                        remove_custom_scheme(v['jpcoar:affiliation'][
-                            'jpcoar:nameIdentifier'], v)
+                if k in indetifier_keys:
+                    remove_custom_scheme(v[name_identifier_key], v)
+                    if affiliation_key in v:
+                        remove_custom_scheme(v[affiliation_key][
+                            name_identifier_key], v)
                 k = get_prefix(k)
                 set_children(k, v, root)
         return root
