@@ -163,6 +163,7 @@ var CustomBSDatePicker = {
   * @param  {[object]}  element is date input control.
   */
   initAttributeForModel: function (model, element) {
+    if($(element).val().length > 0) return;
     let ng_model = $(element).attr('ng-model').replace(/']/g, '');
     let arr = ng_model.split("['");
     //Init attribute of model object if them undefine.
