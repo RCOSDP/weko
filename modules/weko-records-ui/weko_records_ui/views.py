@@ -719,3 +719,20 @@ def init_permission(recid):
     except Exception as ex:
         current_app.logger.debug(ex)
         abort(500)
+
+
+@blueprint.app_template_filter('translate_content')
+def translate_content(content):
+    """Translate record detail content.
+
+    @param content:
+    @return:
+    """
+    try:
+        if content:
+            return _(content)
+        else:
+            return content
+    except Exception as ex:
+        current_app.logger.debug(ex)
+        return content
