@@ -225,12 +225,14 @@ var CustomBSDatePicker = {
     let cls = CustomBSDatePicker.option.cls;
     let element_arr = $('.' + cls);
     $.each(element_arr, function (ind, val) {
-      CustomBSDatePicker.initAttributeForModel(model, val);
-      let ng_model = $(val).attr('ng-model');
-      let last_index = ng_model.lastIndexOf('[');
-      let previous_attr = ng_model.substring(0, last_index);
-      let str_code = "if("+ng_model+"==''){"+previous_attr+"={}}";
-      eval(str_code);
+      if($(val).val().length > 0){
+        CustomBSDatePicker.initAttributeForModel(model, val);
+        let ng_model = $(val).attr('ng-model');
+        let last_index = ng_model.lastIndexOf('[');
+        let previous_attr = ng_model.substring(0, last_index);
+        let str_code = "if("+ng_model+"==''){"+previous_attr+"={}}";
+        eval(str_code);
+      }
     });
   }
 }
