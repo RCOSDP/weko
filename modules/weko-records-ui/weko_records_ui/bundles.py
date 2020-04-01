@@ -28,7 +28,6 @@ style = NpmBundle(
     'node_modules/typeahead.js-bootstrap-css/typeaheadjs.css',
     'node_modules/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css',
     'css/weko_records_ui/style.css',
-    'css/weko_records_ui/bootstrap-popover-x.min.css',
     output="gen/weko_records_ui.%(version)s.css",
     npm={
         'bootstrap-sass': '~3.3.5',
@@ -72,7 +71,6 @@ js = NpmBundle(
     'js/weko_records_ui/csl.js',
     'js/weko_records_ui/detail.js',
     'js/weko_records_ui/bulk_update.js',
-    'js/weko_records_ui/bootstrap-popover-x.min.js',
     filters='jsmin',
     output="gen/weko_records_ui.%(version)s.js",
     npm={
@@ -89,4 +87,15 @@ file_action_js = Bundle(
     'js/weko_records_ui/file_action.js',
     filters='jsmin',
     output="gen/weko_records_ui_file_action.%(version)s.js",
+)
+
+bootstrap_popover_js = Bundle(
+    'js/weko_records_ui/bootstrap-popover-x.min.js',
+    filters='jsmin',
+    output="gen/bootstrap_popover_js.%(version)s.js",
+)
+
+bootstrap_popover_css = Bundle(
+    'css/weko_records_ui/bootstrap-popover-x.min.css',
+    output="gen/bootstrap_popover_css.%(version)s.css",
 )
