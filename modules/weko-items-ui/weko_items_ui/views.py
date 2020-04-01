@@ -109,15 +109,17 @@ def index(item_type_id=0):
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         need_file = False
-
+        need_billing_file = False
         if 'filename' in json.dumps(item_type.schema):
             need_file = True
-
+        if 'billing_filename' in json.dumps(item_type.schema):
+            need_billing_file = True
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
             page=page,
             render_widgets=render_widgets,
             need_file=need_file,
+            need_billing_file=need_billing_file,
             record={},
             jsonschema=json_schema,
             schemaform=schema_form,
@@ -167,11 +169,15 @@ def iframe_index(item_type_id=0):
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
         need_file = False
+        need_billing_file = False
         if 'filename' in json.dumps(item_type.schema):
             need_file = True
+        if 'billing_filename' in json.dumps(item_type.schema):
+            need_billing_file = True
         return render_template(
             'weko_items_ui/iframe/item_edit.html',
             need_file=need_file,
+            need_billing_file=need_billing_file,
             records=record,
             jsonschema=json_schema,
             schemaform=schema_form,
@@ -589,11 +595,15 @@ def default_view_method(pid, record, template=None):
         if 'endpoints' in item_json:
             endpoints = item_json.get('endpoints')
     need_file = False
+    need_billing_file = False
     if 'filename' in json.dumps(item_type.schema):
         need_file = True
+    if 'billing_filename' in json.dumps(item_type.schema):
+        need_billing_file = True
     return render_template(
         template,
         need_file=need_file,
+        need_billing_file=need_billing_file,
         record=record,
         jsonschema=json_schema,
         schemaform=schema_form,

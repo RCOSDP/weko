@@ -26,9 +26,9 @@
                 {%- if 'licensetype' in k -%}
                     {% set att_val  = v | get_license_icon %}
                     {{ att_val [1] }}<br />
-                {%- elif 'accessrole' in k or 'accessdate' in k -%}
+                {%- elif 'accessrole' in k or ('date' in k and 'dateValue' in v.date) -%}
                     {%- if is_logged_in or open_day_display_flg -%}
-                        {{ v }}<br>                        
+                        {{ v }}<br>
                     {%- endif -%}
                 {%- else -%}
                     {{ v }}<br>

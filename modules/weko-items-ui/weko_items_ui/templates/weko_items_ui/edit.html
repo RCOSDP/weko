@@ -77,6 +77,11 @@
           {% else %} initialization="{{ config.DEPOSIT_SEARCH_API }}" {% endif %}
           extra-params='{"headers":{"Content-Type": "application/json"}}'>
           {%- endif %}
+          <invenio-files-uploader method="PUT" endpoint="{{ config.DEPOSIT_FILES_API }}" {% if pid %}
+          initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}" files='{{files|tojson}}'
+          {% else %} initialization="{{ config.DEPOSIT_SEARCH_API }}" {% endif %}
+          extra-params='{"headers":{"Content-Type": "application/json"}}'>
+          {%- endif %}
           <invenio-records {%- if pid %}
             initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
             links='{{links|tojson}}' {%- else %} initialization="{{ config.DEPOSIT_SEARCH_API }}" {%- endif %}

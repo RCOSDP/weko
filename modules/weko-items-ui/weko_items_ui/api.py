@@ -36,6 +36,7 @@ def item_login(item_type_id=0):
     """
     template_url = 'weko_items_ui/iframe/item_edit.html'
     need_file = False
+    need_billing_file = False
     record = {}
     json_schema = ''
     schema_form = ''
@@ -73,6 +74,8 @@ def item_login(item_type_id=0):
                 endpoints = item_json.get('endpoints')
         if 'filename' in json.dumps(item_type.schema):
             need_file = True
+        if 'billing_filename' in json.dumps(item_type.schema):
+            need_billing_file = True
         if 'subitem_thumbnail' in json.dumps(item_type.schema):
             need_thumbnail = True
             key = [i[0].split('.')[0] for i in find_items(item_type.form)
@@ -85,6 +88,7 @@ def item_login(item_type_id=0):
         template_url = 'weko_items_ui/iframe/error.html'
         current_app.logger.debug(str(e))
 
-    return template_url, need_file, record, json_schema, schema_form, \
+    return template_url, need_file, need_billing_file,\
+        record, json_schema, schema_form, \
         item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
         allow_multi_thumbnail
