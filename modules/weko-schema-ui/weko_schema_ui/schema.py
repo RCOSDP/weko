@@ -709,7 +709,8 @@ class SchemaTree:
             if key_item_parent != 'pubdate' and isinstance(value_item_parent,
                                                            dict):
                 # Dict
-                # get value of the combination between record and mapping data that is inited at __init__ function
+                # get value of the combination between record and \
+                # mapping data that is inited at __init__ function
                 mpdic = value_item_parent.get(
                     self._schema_name) if self._schema_name \
                     in value_item_parent else ''
@@ -886,7 +887,8 @@ class SchemaTree:
 
         # Function Remove custom scheme
         def remove_custom_scheme(name_identifier, v):
-            lst_name_identifier_default = current_app.config['WEKO_SCHEMA_UI_LIST_SCHEME']
+            lst_name_identifier_default = current_app.config[
+                'WEKO_SCHEMA_UI_LIST_SCHEME']
             if '@attributes' in name_identifier and \
                     name_identifier['@attributes'].get('nameIdentifierScheme'):
                 element_first = 0
