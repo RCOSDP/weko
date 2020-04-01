@@ -1125,3 +1125,6 @@ msgstr ""
 
 msgid "Volume"
 msgstr ""
+
+msgid "Search repository"
+msgstr ""

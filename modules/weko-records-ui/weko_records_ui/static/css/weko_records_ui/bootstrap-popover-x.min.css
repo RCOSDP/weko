@@ -322,6 +322,10 @@
      border: none !important;
  }
 
+ .key_lang span{
+    word-break: break-all;
+ }
+
  .key span {
     font-weight: normal;
     background-color:#ccc;
@@ -340,6 +344,7 @@
 .table-borderless > tbody > tr > td{
     padding: 10px 0 10px 10px ;
     min-width: 300px;
+    max-width: 500px;
 }
 
 .table-borderless > tbody > tr {
