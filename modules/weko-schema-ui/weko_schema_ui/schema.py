@@ -382,18 +382,22 @@ class SchemaTree:
                                     i.get(key), list_key):
                                 yield a, b
             elif isinstance(list_key, list) and len(list_key) == 1:
-                key = list_key[0]
-                if isinstance(atr_vm, dict):
-                    if atr_vm.get(key) is None:
-                        yield None, id(key)
-                    else:
-                        yield atr_vm[key], id(key)
-                elif isinstance(atr_vm, list):
-                    for i in atr_vm:
-                        if i.get(key) is None:
+                try:
+                    key = list_key[0]
+                    if isinstance(atr_vm, dict):
+                        if atr_vm.get(key) is None:
                             yield None, id(key)
                         else:
-                            yield i[key], id(key)
+                            yield atr_vm[key], id(key)
+                    elif isinstance(atr_vm, list):
+                        for i in atr_vm:
+                            if i.get(key) is None:
+                                yield None, id(key)
+                            else:
+                                yield i[key], id(key)
+                except Exception:
+                    import traceback
+                    traceback.print_exc()
 
         def get_url(z, key, val):
             # If related to file, process, otherwise return row value
