@@ -373,6 +373,11 @@ function autocomplete(inp, arr) {
   });
 }
 
+// remove file form after click x
+function deleteFileForm(id) {
+  $("#fileForm_" + id + "").remove();
+}
+
 get_search_data = function (keyword) {
   get_search_data_url = '/api/items/get_search_data/' + keyword;
   if (keyword == 'username') {
@@ -858,6 +863,14 @@ function toObject(arr) {
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
           filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
+          // Change file name form to first element of invenioRecordsForm
+          let records = $rootScope.recordsVM.invenioRecordsForm;
+          records.forEach(function(item,i){
+            if(item.key == filemeta_key){
+              $rootScope.recordsVM.invenioRecordsForm.splice(i, 1);
+              $rootScope.recordsVM.invenioRecordsForm.unshift(item);
+            }
+          });
           if (filemeta_schema && filemeta_form) {
             filemeta_schema.items.properties['filename']['enum'] = [null];
             filemeta_filename_form = filemeta_form.items[0];
@@ -1677,9 +1690,47 @@ function toObject(arr) {
         $scope.autoSetCorrespondingUsageAppId();
         //Set required and collapsed for all root and sub item.
         $scope.setCollapsedAndRequiredForForm();
+
+        // Delay 1s after page render
+        setTimeout(function () {
+          // Change position of FileName
+          $scope.changePositionFileName();
+          appendFileForm();
+        }, 1000);
       });
 
+      $scope.changePositionFileName = function () {
+        // Set FileName visible
+        $('#new-postion-filename').empty();
+        $('invenio-records-form bootstrap-decorator.ng-scope').first().appendTo("#new-postion-filename");
+      }
 
+      // Clear File Forms
+      function clearFileForm() {
+        while ($('#new-postion-filename').find('li').length > 1) {
+          $('#new-postion-filename').find('li').find('button').last().click()
+        }
+      }
+
+      // Generate form for new upload
+      function appendFileForm() {
+        clearFileForm();
+        var i = 0;
+        var countFile = $rootScope.filesVM.files.length;
+        if (countFile > 0) {
+          for (i = 0; i < countFile - 1; i++) {
+            // click New button (to add form)
+            $('#new-postion-filename').find('button').last().click()
+          }
+          // Auto fill filename
+          var fileNameFieldList = $('#new-postion-filename').find('select[name="filename"]');
+          i = 1;
+          fileNameFieldList.toArray().forEach(function (fileNameField) {
+            fileNameField.options.selectedIndex = i;
+            i++;
+          });
+        }
+      }
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
@@ -1689,11 +1740,30 @@ function toObject(arr) {
         sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
         sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
         sessionStorage.setItem('url', $scope.currentUrl);
+        // Delay 1s after page render
+        setTimeout(function() {
+          // Change position of FileName
+          $scope.changePositionFileName();
+          // Upload file then append form
+          appendFileForm();
+        }, 1000);
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
         $scope.initFilenameList();
         $scope.hiddenPubdate();
+        //Add file uploaded to sessionStorage when uploaded processing done
+        window.history.pushState("", "", $scope.currentUrl);
+        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
+        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
+        sessionStorage.setItem('url', $scope.currentUrl);
+        // Delay 1s after page render
+        setTimeout(function() {
+          // Change position of FileName
+          $scope.changePositionFileName();
+          // Upload file then append form
+          appendFileForm();
+        }, 1000);
       });
 
       $scope.getItemMetadata = function () {

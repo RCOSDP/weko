@@ -71,13 +71,8 @@
   <div class="row">
     <div class="col-md-12">
       <div id="weko-records">
-        {%- if need_file %}
+        {%- if need_file or need_billing_file %}
         <invenio-files-uploader method="PUT" endpoint="{{ config.DEPOSIT_FILES_API }}" {% if pid %}
-          initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}" files='{{files|tojson}}'
-          {% else %} initialization="{{ config.DEPOSIT_SEARCH_API }}" {% endif %}
-          extra-params='{"headers":{"Content-Type": "application/json"}}'>
-          {%- endif %}
-          <invenio-files-uploader method="PUT" endpoint="{{ config.DEPOSIT_FILES_API }}" {% if pid %}
           initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}" files='{{files|tojson}}'
           {% else %} initialization="{{ config.DEPOSIT_SEARCH_API }}" {% endif %}
           extra-params='{"headers":{"Content-Type": "application/json"}}'>
@@ -133,6 +128,24 @@
               </div>
             </div>
             {%- endif %}
+
+            {%- if need_billing_file %}
+            This is billing file area
+            <div class="row" ng-hide="false">
+              <div class="col-sm-9" ng-show="true">
+                <invenio-files-error
+                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                </invenio-files-error>
+                <invenio-files-upload-zone
+                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                </invenio-files-upload-zone>
+                <invenio-files-list
+                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}">
+                </invenio-files-list>
+              </div>
+            </div>
+            {%- endif %}
+
             <div ng-controller="WekoRecordsCtrl">
               <div class="row" ng-hide="false">
                 <div class="col-sm-9" ng-show="true">
