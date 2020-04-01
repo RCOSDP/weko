@@ -887,7 +887,8 @@ class SchemaTree:
         # Function Remove custom scheme
         def remove_custom_scheme(name_identifier, v):
             lst_name_identifier_default = current_app.config['WEKO_SCHEMA_UI_LIST_SCHEME']
-            if '@attributes' in name_identifier:
+            if '@attributes' in name_identifier and \
+                    name_identifier['@attributes'].get('nameIdentifierScheme'):
                 element_first = 0
                 lst_name_identifier_scheme = name_identifier[
                     '@attributes']['nameIdentifierScheme'][element_first]
