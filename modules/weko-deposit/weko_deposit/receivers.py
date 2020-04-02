@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 #
-# """Deposit module receivers."""
+# Deposit module receivers.
 
 from .api import WekoDeposit
 from .pidstore import get_record_without_version
+
 
 def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     """Append file content to ES record."""
@@ -26,4 +27,3 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     json['content'] = contents
     if contents:
         kwargs['arguments']['pipeline'] = 'item-file-pipeline'
-
