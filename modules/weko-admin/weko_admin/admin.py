@@ -895,10 +895,10 @@ class IdentifierSettingView(ModelView):
 
     def validate_form(self, form):
         """
-            Custom validate the form on submit.
+        Custom validate the form on submit.
 
-            :param form:
-                Form to validate
+        :param form:
+            Form to validate
         """
         if isinstance(form.repository.data, Community):
             id_list = []
@@ -907,8 +907,8 @@ class IdentifierSettingView(ModelView):
                 id_list.append(i.repository)
 
             if (form.repository.data.id in id_list) and \
-                (form.action == 'create' or
-                 form.repo_selected.data != form.repository.data.id):
+                (form.action == 'create'
+                 or form.repo_selected.data != form.repository.data.id):
                 flash(_('Specified repository is already registered.'), 'error')
                 return False
         return super(IdentifierSettingView, self).validate_form(form)
