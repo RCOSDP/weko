@@ -316,6 +316,8 @@ def display_activity(activity_id=0):
                 identifier_setting.jalc_crossref_doi = text_empty
             if not identifier_setting.jalc_datacite_doi:
                 identifier_setting.jalc_datacite_doi = text_empty
+            if not identifier_setting.ndl_jalc_doi:
+                identifier_setting.ndl_jalc_doi = text_empty
 
     temporary_identifier_select = 0
     temporary_identifier_inputs = []
@@ -330,6 +332,8 @@ def display_activity(activity_id=0):
             last_identifier_setting.get('action_identifier_jalc_cr_doi'))
         temporary_identifier_inputs.append(
             last_identifier_setting.get('action_identifier_jalc_dc_doi'))
+        temporary_identifier_inputs.append(
+            last_identifier_setting.get('action_identifier_ndl_jalc_doi'))
 
     temporary_journal = activity.get_action_journal(
         activity_id=activity_id, action_id=action_id)
@@ -722,13 +726,16 @@ def next_action(activity_id='0', action_id=0):
             'identifier_grant_jalc_cr_doi_suffix')
         idf_grant_jalc_dc_doi_manual = post_json.get(
             'identifier_grant_jalc_dc_doi_suffix')
+        idf_grant_ndl_jalc_doi_manual = post_json.get(
+            'identifier_grant_ndl_jalc_doi_suffix')
 
         # If is action identifier_grant, then save to to database
         identifier_grant = {
             'action_identifier_select': identifier_select,
             'action_identifier_jalc_doi': idf_grant_jalc_doi_manual,
             'action_identifier_jalc_cr_doi': idf_grant_jalc_cr_doi_manual,
-            'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual
+            'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual,
+            'action_identifier_ndl_jalc_doi': idf_grant_ndl_jalc_doi_manual
         }
 
         work_activity.create_or_update_action_identifier(

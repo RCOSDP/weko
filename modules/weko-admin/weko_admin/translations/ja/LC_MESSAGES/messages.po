@@ -138,6 +138,10 @@ msgstr "検索"
 msgid "Site License"
 msgstr "サイトライセンス"
 
+#: weko_admin/admin.py:917
+msgid "Specified repository is already registered."
+msgstr "指定したリポジトリが既に登録されました。"
+
 #: weko_admin/config.py:104
 msgid "No. Of File Downloads"
 msgstr "ファイルダウンロード数"
