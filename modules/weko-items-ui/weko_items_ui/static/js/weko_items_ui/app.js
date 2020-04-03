@@ -1696,7 +1696,7 @@ function toObject(arr) {
         setTimeout(function () {
           // Change position of FileName
           $scope.changePositionFileName();
-          appendFileForm();
+          $scope.appendFileForm();
         }, 1000);
       });
 
@@ -1759,7 +1759,7 @@ function toObject(arr) {
           // Change position of FileName
           $scope.changePositionFileName();
           // Upload file then append form
-          appendFileForm();
+          $scope.appendFileForm();
         }, 1000);
       });
 
@@ -1777,7 +1777,7 @@ function toObject(arr) {
           // Change position of FileName
           $scope.changePositionFileName();
           // Upload file then append form
-          appendFileForm();
+          $scope.appendFileForm();
         }, 1000);
       });
 
