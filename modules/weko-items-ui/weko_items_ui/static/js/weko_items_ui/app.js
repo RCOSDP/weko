@@ -560,14 +560,14 @@ function toObject(arr) {
       $scope.sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
       $scope.sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
 
-      $scope.searchFilemetaKey = function () {
+      $scope.searchFilemetaKey = function (filekey) {
         if ($scope.filemeta_keys.length > 0) {
           return $scope.filemeta_keys;
         }
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (value.type == 'array') {
-            if (value.items.properties.hasOwnProperty('filename')) {
+            if (value.items.properties.hasOwnProperty(filekey)) {
               $scope.filemeta_keys.push(key);
               break;
             }
@@ -858,8 +858,8 @@ function toObject(arr) {
         }
       }
 
-      $scope.initFilenameList = function () {
-        $scope.searchFilemetaKey();
+      $scope.initFilenameList = function (filekey) {
+        $scope.searchFilemetaKey(filekey);
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
           filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
@@ -872,12 +872,12 @@ function toObject(arr) {
             }
           });
           if (filemeta_schema && filemeta_form) {
-            filemeta_schema.items.properties['filename']['enum'] = [null];
+            filemeta_schema.items.properties[filekey]['enum'] = [null];
             filemeta_filename_form = filemeta_form.items[0];
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(function (file) {
               if (file.completed && !file.is_thumbnail) {
-                filemeta_schema.items.properties['filename']['enum'].push(file.key);
+                filemeta_schema.items.properties[filekey]['enum'].push(file.key);
                 filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
               }
             });
@@ -1640,7 +1640,8 @@ function toObject(arr) {
         $scope.hiddenPubdate();
         $scope.initContributorData();
         $scope.initUserGroups();
-        $scope.initFilenameList();
+        $scope.initFilenameList('filename');
+        $scope.initFilenameList('billing_filename');
         $scope.searchTypeKey();
         $scope.setDataForLicenseType();
         $scope.renderValidationErrorList();
@@ -1664,7 +1665,6 @@ function toObject(arr) {
             );
           }
         }
-        $scope.initFilenameList();
         //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
@@ -1733,7 +1733,8 @@ function toObject(arr) {
       }
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
-        $scope.initFilenameList();
+        $scope.initFilenameList('filename');
+        $scope.initFilenameList('billing_filename');
         $scope.hiddenPubdate();
         //Add file uploaded to sessionStorage when uploaded processing done
         window.history.pushState("", "", $scope.currentUrl);
@@ -1750,7 +1751,8 @@ function toObject(arr) {
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
-        $scope.initFilenameList();
+        $scope.initFilenameList('filename');
+        $scope.initFilenameList('billing_filename');
         $scope.hiddenPubdate();
         //Add file uploaded to sessionStorage when uploaded processing done
         window.history.pushState("", "", $scope.currentUrl);

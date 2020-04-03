@@ -1417,3 +1417,17 @@ def get_data_authors_prefix_settings():
     except Exception as e:
         current_app.logger.error(e)
         return None
+
+
+def is_schema_include_key(schema, filekey):
+    """Check if schema have filename/billing_filename key"""
+    properties = schema.get('properties')
+    result = False
+    for key in properties:
+        item = properties.get(key)
+        if 'properties' in item:
+            object = item.get('properties')
+            for property in object:
+                if property == filekey:
+                    result = True
+    return result

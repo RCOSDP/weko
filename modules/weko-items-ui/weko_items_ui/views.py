@@ -62,7 +62,7 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
-    validate_user_mail_and_index
+    validate_user_mail_and_index, is_schema_include_key
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -108,12 +108,9 @@ def index(item_type_id=0):
                 url_for('.index', item_type_id=lists[0].item_type[0].id))
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        need_file = False
-        need_billing_file = False
-        if 'filename' in json.dumps(item_type.schema):
-            need_file = True
-        if 'billing_filename' in json.dumps(item_type.schema):
-            need_billing_file = True
+        need_file = is_schema_include_key(item_type.schema, 'filename')
+        need_billing_file = is_schema_include_key(item_type.schema,
+                                                  'billing_filename')
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
             page=page,
@@ -168,12 +165,9 @@ def iframe_index(item_type_id=0):
                 files = item_json.get('files')
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
-        need_file = False
-        need_billing_file = False
-        if 'filename' in json.dumps(item_type.schema):
-            need_file = True
-        if 'billing_filename' in json.dumps(item_type.schema):
-            need_billing_file = True
+        need_file = is_schema_include_key(item_type.schema, 'filename')
+        need_billing_file = is_schema_include_key(item_type.schema,
+                                                  'billing_filename')
         return render_template(
             'weko_items_ui/iframe/item_edit.html',
             need_file=need_file,
@@ -594,12 +588,9 @@ def default_view_method(pid, record, template=None):
             files = item_json.get('files')
         if 'endpoints' in item_json:
             endpoints = item_json.get('endpoints')
-    need_file = False
-    need_billing_file = False
-    if 'filename' in json.dumps(item_type.schema):
-        need_file = True
-    if 'billing_filename' in json.dumps(item_type.schema):
-        need_billing_file = True
+    need_file = is_schema_include_key(item_type.schema, 'filename')
+    need_billing_file = is_schema_include_key(item_type.schema,
+                                              'billing_filename')
     return render_template(
         template,
         need_file=need_file,

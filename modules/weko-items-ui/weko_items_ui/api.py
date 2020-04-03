@@ -22,7 +22,7 @@ from flask import current_app, json, session, url_for
 from flask_login import login_required
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes
-from weko_records.utils import find_items
+from weko_records.utils import find_items, is_schema_include_key
 
 from .permissions import item_permission
 
@@ -60,7 +60,7 @@ def item_login(item_type_id=0):
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id and sessionstore.redis.exists(
-                'activity_item_' + activity_id):
+            'activity_item_' + activity_id):
             item_str = sessionstore.get('activity_item_' + activity_id)
             item_json = json.loads(item_str)
             if 'metainfo' in item_json:
@@ -72,10 +72,10 @@ def item_login(item_type_id=0):
                                    and i['is_thumbnail']]
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
-        if 'filename' in json.dumps(item_type.schema):
-            need_file = True
-        if 'billing_filename' in json.dumps(item_type.schema):
-            need_billing_file = True
+
+        need_file = is_schema_include_key(item_type.schema, 'filename')
+        need_billing_file = is_schema_include_key(item_type.schema,
+                                                  'billing_filename')
         if 'subitem_thumbnail' in json.dumps(item_type.schema):
             need_thumbnail = True
             key = [i[0].split('.')[0] for i in find_items(item_type.form)
@@ -88,7 +88,7 @@ def item_login(item_type_id=0):
         template_url = 'weko_items_ui/iframe/error.html'
         current_app.logger.debug(str(e))
 
-    return template_url, need_file, need_billing_file,\
+    return template_url, need_file, need_billing_file, \
         record, json_schema, schema_form, \
         item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
         allow_multi_thumbnail

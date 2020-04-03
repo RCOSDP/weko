@@ -128,6 +128,7 @@
                 </div>
               </div>
               {%- if need_file %}
+              {{ need_file }}
               <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 <div class="col-sm-12">
                   <invenio-files-error
@@ -142,6 +143,23 @@
                 </div>
               </div>
               {%- endif %}
+
+              {%- if need_billing_file %}
+              <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                <div class="col-sm-12">
+                  <invenio-files-error
+                    template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                  </invenio-files-error>
+                  <invenio-files-upload-zone
+                    template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                  </invenio-files-upload-zone>
+                  <invenio-files-list
+                    template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
+                  ></invenio-files-list>
+                </div>
+              </div>
+              {%- endif %}
+
               <div>
                 <div class="row">
                   <div class="col-sm-12">
