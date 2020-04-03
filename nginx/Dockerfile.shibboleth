@@ -10,8 +10,6 @@ apt-get update && \
 apt-get install -y  opensaml2-schemas xmltooling-schemas libshibsp8 \
         libshibsp-plugins shibboleth-sp2-common shibboleth-sp2-utils supervisor && \
 apt-get install -y man netcat wget curl openssl nano less sudo procps git php7.3-fpm vim
-apt-get install -y php-pear
-pear install HTTP_REQUEST2
 #apt-get install -y nginx-dbg man netcat wget curl openssl nano less sudo procps git
 
 # Build nginx shibboleth modules, taken from
@@ -52,7 +50,7 @@ sed -i "s/^# alias l/alias l/g" /root/.bashrc
 ENV SHELL=/bin/bash
 
 COPY nginx.conf   /etc/nginx/nginx.conf
-COPY ./shibboleth/weko.conf /etc/nginx/conf.d/weko.conf
+COPY ./shibboleth/port443.conf /etc/nginx/conf.d/port443.conf
 COPY ./shibboleth/shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 COPY ./shibboleth/attribute-map.xml /etc/shibboleth/attribute-map.xml
 COPY ./shibboleth/shibboleth.conf /etc/supervisor/conf.d/shibboleth.conf
@@ -65,12 +63,11 @@ ADD ./keys/server.crt /etc/nginx/server.crt
 ADD ./keys/server.key /etc/nginx/server.key
 RUN chmod 400 /etc/nginx/server.key
 
-ADD ./shibboleth/sp-cert.pem /etc/shibboleth/sp-cert.pem
 ADD ./shibboleth/sp-key.pem /etc/shibboleth/sp-key.pem
 RUN chmod 400 /etc/shibboleth/sp-key.pem
+ADD ./shibboleth/sp-cert.pem /etc/shibboleth/sp-cert.pem
 
 RUN mkdir -p /var/www/secure
-# COPY ./shibboleth/phpinfo.php /var/www/secure/phpinfo.php
-COPY ./shibboleth/login.php /var/www/secure/login.php
+COPY ./shibboleth/phpinfo.php /var/www/secure/phpinfo.php
 
 RUN rm /etc/nginx/conf.d/default.conf
