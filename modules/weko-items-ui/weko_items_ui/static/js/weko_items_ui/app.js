@@ -1707,29 +1707,41 @@ function toObject(arr) {
       }
 
       // Clear File Forms
-      function clearFileForm() {
-        while ($('#new-postion-filename').find('li').length > 1) {
-          $('#new-postion-filename').find('li').find('button').last().click()
-        }
+      $scope.clearFileForm = function () {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          while (model[filemeta_key].length > 1) {
+            model[filemeta_key].pop();
+          }
+        });
       }
 
       // Generate form for new upload
-      function appendFileForm() {
-        clearFileForm();
-        var i = 0;
+      $scope.appendFileForm = function () {
+        $scope.searchFilemetaKey();
+        $scope.clearFileForm();
+        let model = $rootScope.recordsVM.invenioRecordsModel;
         var countFile = $rootScope.filesVM.files.length;
-        if (countFile > 0) {
-          for (i = 0; i < countFile - 1; i++) {
-            // click New button (to add form)
-            $('#new-postion-filename').find('button').last().click()
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          // Add or remove form to equal with count of file
+          while (model[filemeta_key].length !== countFile) {
+            if (model[filemeta_key].length < countFile) {
+              model[filemeta_key].push({});
+            } else if (model[filemeta_key].length > countFile) {
+              model[filemeta_key].pop();
+            }
           }
-          // Auto fill filename
-          var fileNameFieldList = $('#new-postion-filename').find('select[name="filename"]');
-          i = 1;
-          fileNameFieldList.toArray().forEach(function (fileNameField) {
-            fileNameField.options.selectedIndex = i;
-            i++;
-          });
+          $scope.autoFillFileInfo(filemeta_key);
+        });
+      }
+
+      $scope.autoFillFileInfo = function (filemeta_key) {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        var countFile = $rootScope.filesVM.files.length;
+        for (var i = 0; i < countFile; i++) {
+          // Fill filename to model
+          model[filemeta_key][i].filename = $rootScope.filesVM.files[i].key
+          // Fill more here
         }
       }
 
