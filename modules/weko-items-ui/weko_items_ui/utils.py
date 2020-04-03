@@ -1425,8 +1425,15 @@ def is_schema_include_key(schema, filekey):
     result = False
     for key in properties:
         item = properties.get(key)
+        # Do check for object type
         if 'properties' in item:
             object = item.get('properties')
+            for property in object:
+                if property == filekey:
+                    result = True
+        # Do check for array/multiple type
+        elif 'items' in item:
+            object = item.get('items').get('properties')
             for property in object:
                 if property == filekey:
                     result = True

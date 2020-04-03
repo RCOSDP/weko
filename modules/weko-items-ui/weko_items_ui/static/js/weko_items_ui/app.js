@@ -871,8 +871,9 @@ function toObject(arr) {
               $rootScope.recordsVM.invenioRecordsForm.unshift(item);
             }
           });
-          if (filemeta_schema && filemeta_form) {
-            filemeta_schema.items.properties[filekey]['enum'] = [null];
+          if (filemeta_schema && filemeta_form && filemeta_schema.items.properties[filekey]) {
+            filemeta_schema.items.properties[filekey]['enum'] = [];
+            filemeta_schema.items.properties[filekey]['enum'].push(null)
             filemeta_filename_form = filemeta_form.items[0];
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(function (file) {

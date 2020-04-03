@@ -22,7 +22,8 @@ from flask import current_app, json, session, url_for
 from flask_login import login_required
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes
-from weko_records.utils import find_items, is_schema_include_key
+from weko_records.utils import find_items
+from .utils import is_schema_include_key
 
 from .permissions import item_permission
 
@@ -74,6 +75,7 @@ def item_login(item_type_id=0):
                 endpoints = item_json.get('endpoints')
 
         need_file = is_schema_include_key(item_type.schema, 'filename')
+
         need_billing_file = is_schema_include_key(item_type.schema,
                                                   'billing_filename')
         if 'subitem_thumbnail' in json.dumps(item_type.schema):
