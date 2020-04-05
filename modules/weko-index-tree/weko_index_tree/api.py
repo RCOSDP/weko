@@ -40,6 +40,8 @@ from .utils import cached_index_tree_json, filter_index_list_by_role, \
     get_index_id_list, get_publish_index_id_list, get_tree_json, \
     get_user_roles, reset_tree
 
+from urllib import parse
+
 
 class Indexes(object):
     """Define API for index tree creation and update."""
@@ -797,14 +799,15 @@ class Indexes(object):
 
         rec_alias = aliased(recursive_t, name="rec")
         test_alias = aliased(Index, name="t")
+
         recursive_t = recursive_t.union_all(
             db.session.query(
                 test_alias.parent,
                 test_alias.id,
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                rec_alias.c.name + '/' + test_alias.index_name,
+                rec_alias.c.name + '//' + test_alias.index_name,
                 # add by ryuu at 1108 start
-                rec_alias.c.name_en + '/' + test_alias.index_name_english,
+                rec_alias.c.name_en + '//' + test_alias.index_name_english,
                 # add by ryuu at 1108 end
                 rec_alias.c.lev + 1,
                 test_alias.public_state,
