@@ -41,9 +41,9 @@
               <ol class="breadcrumb"
                 style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
                 {%- if nav.name != None and current_i18n.language == 'ja'  %}
-                  {%- set name = nav.name.split('//') -%}
+                  {%- set name = nav.name.split('||') -%}
                 {%- else %}
-                  {%- set name = nav.name_en.split('//') -%}
+                  {%- set name = nav.name_en.split('||') -%}
                 {%- endif -%}
                 {%- set p = nav.path.split('/') -%}
                 {%- for n in name -%}

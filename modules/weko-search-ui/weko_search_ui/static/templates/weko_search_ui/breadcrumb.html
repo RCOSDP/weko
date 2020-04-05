@@ -8,8 +8,8 @@
 
     >
       <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}{{commInfoIndex}}">
-        {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('//')[$index]}}</a>
-      <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('//')[$index]}}</span>
+        {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('||')[$index]}}</a>
+      <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('||')[$index]}}</span>
     </li>
   </ol>
 </div>
@@ -17,7 +17,7 @@
   <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" style="padding-bottom: 10px; display: flex">
     <img ng-if="$last" ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index"
          ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}" class="img-thumbnail ng-hide" id="thumbnail_img"
-         alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('//')[$index]}}>
+         alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('||')[$index]}}>
     <span ng-if="(vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="padding: 0 10px">
         <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize"></p>
       </span>
