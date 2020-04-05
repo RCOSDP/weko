@@ -31,7 +31,7 @@
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('edit_tree') }}
 {%- endblock page_body_tabs%}
 
@@ -50,7 +50,7 @@
       </div>
       <div class="panel-footer">
         <button id="index-tree-submit" class="btn btn-light send-button">
-            <span class="glyphicon glyphicon-send"></span> 
+            <span class="glyphicon glyphicon-send"></span>
                {{_('Send')}}
         </button>
       </div>

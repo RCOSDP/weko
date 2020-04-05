@@ -30,12 +30,12 @@
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('rank') }}
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
-{% from "weko_items_ui/macros/ranking_list.html" import ranking_list %}
+{% from "weko_items_ui/macros/ranking_list.html" import ranking_list with context %}
 
 {%- if is_show %}
   <div class="row">

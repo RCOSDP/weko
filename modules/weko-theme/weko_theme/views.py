@@ -24,6 +24,7 @@
 from blinker import Namespace
 from flask import Blueprint, current_app, render_template, request
 from flask_security import current_user
+from flask_login import login_required
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import SiteInfo
 from weko_index_tree.models import IndexStyle

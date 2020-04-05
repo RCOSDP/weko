@@ -21,7 +21,7 @@
 
 {%- block body_title_right %}
 <button type="button" id="btn_edit_stop" class="btn btn-primary action-button">
- <span class="glyphicon glyphicon-chevron-left"></span> 
+ <span class="glyphicon glyphicon-chevron-left"></span>
   {{_('Top Page')}}
 </button>
 {%- endblock body_title_right %}
@@ -29,7 +29,7 @@
 {%- block body_center %}
   <ul class="nav nav-tabs">
   {%- block page_body_tabs %}
-    {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+    {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector with context %}
   {%- endblock page_body_tabs%}
   </ul>
   <div class="row" style="height: 100%">
