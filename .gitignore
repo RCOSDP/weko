@@ -86,7 +86,8 @@ celeryd.pid
 weko-demodata/
 
 # nginx
-nginx/keys/*
+nginx/keys/server.crt
+nginx/keys/server.key
 scripts/backup
 
 reload.trigger
