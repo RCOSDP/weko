@@ -83,7 +83,7 @@ def get_metadata_from_map(item_data, item_id):
             for prop in props:
                 for k, v in prop.items():
                     if isinstance(v, list) or isinstance(v, dict):
-                        value.update(get_sub_item_data(v, key))
+                        value.update(get_sub_item_data(v, key + '.' + k))
                     else:
                         sub_key = key + '.' + k if key else k
                         if sub_key in value:
@@ -97,7 +97,7 @@ def get_metadata_from_map(item_data, item_id):
         else:
             for k, v in props.items():
                 if isinstance(v, list) or isinstance(v, dict):
-                    value.update(get_sub_item_data(v, key))
+                    value.update(get_sub_item_data(v, key + '.' + k))
                 else:
                     sub_key = key + '.' + k if key else k
                     if sub_key in value:
@@ -553,36 +553,23 @@ class OpenSearchDetailData:
         _description_value = 'description.@value'
         if _description_value in item_map:
             description_key = item_map[_description_value]
+            description_key_lang = item_map[_description_attr_lang]
             item_id = description_key.split('.')[0]
-
+            from weko_records_ui.utils import get_pair_value
             # Get item data
             if item_id in item_metadata:
-                description_metadata = get_metadata_from_map(
-                    item_metadata[item_id], item_id)
-                if not isinstance(description_metadata, dict)\
-                        or description_metadata.get(description_key) is None:
-                    return
-                descriptions = description_metadata.get(description_key)
-                description_langs = description_metadata.get(
-                    item_map[_description_attr_lang])
-
-                if description_langs:
-                    if isinstance(description_langs, list):
-                        for i in range(len(description_langs)):
-                            description_lang = description_langs[i]
-                            if request_lang:
-                                if description_lang == request_lang:
-                                    fe.content(
-                                        descriptions[i], description_lang)
-                            else:
-                                fe.content(
-                                    descriptions[i], description_lang)
-                    else:
+                description_data = get_pair_value(
+                    description_key.split('.')[1:],
+                    description_key_lang.split('.')[1:],
+                    item_metadata[item_id]['attribute_value_mlt'])
+                for description_text, description_lang in description_data:
+                    if description_text and description_lang:
                         if request_lang:
-                            if description_langs == request_lang:
-                                fe.content(descriptions, description_langs)
+                            if description_lang == request_lang:
+                                fe.content(description_text, description_lang)
                         else:
-                            fe.content(descriptions, description_langs)
+                            fe.content(description_text,
+                                       description_lang)
 
     def _set_publication_date(self, fe, item_map, item_metadata):
         if self.output_type == self.OUTPUT_ATOM:
@@ -637,38 +624,24 @@ class OpenSearchDetailData:
         _publisher_value = 'publisher.@value'
         if _publisher_value in item_map:
             publisher_key = item_map[_publisher_value]
+            publisher_key_lang = item_map[_publisher_attr_lang]
             item_id = publisher_key.split('.')[0]
-
+            from weko_records_ui.utils import get_pair_value
             # Get item data
             if item_id in item_metadata:
-                publisher_metadata = get_metadata_from_map(
-                    item_metadata[item_id], item_id)
-                if not isinstance(publisher_metadata, dict) \
-                        or publisher_metadata.get(publisher_key) is None:
-                    return
-                publisher_names = publisher_metadata.get(publisher_key)
-                publisher_name_langs = publisher_metadata.get(
-                    item_map[_publisher_attr_lang])
-
-                if publisher_name_langs:
-                    if isinstance(publisher_name_langs, list):
-                        for i in range(len(publisher_name_langs)):
-                            publisher_name_lang = publisher_name_langs[i]
-                            if request_lang:
-                                if publisher_name_lang == request_lang:
-                                    fe.dc.dc_publisher(publisher_names[i],
-                                                       publisher_name_lang)
-                            else:
-                                fe.dc.dc_publisher(publisher_names[i],
-                                                   publisher_name_lang)
-                    else:
+                publisher_data = get_pair_value(
+                    publisher_key.split('.')[1:],
+                    publisher_key_lang.split('.')[1:],
+                    item_metadata[item_id]['attribute_value_mlt'])
+                for publisher_name, publisher_lang in publisher_data:
+                    if publisher_name and publisher_lang:
                         if request_lang:
-                            if publisher_name_langs == request_lang:
-                                fe.dc.dc_publisher(publisher_names,
-                                                   publisher_name_langs)
+                            if publisher_lang == request_lang:
+                                fe.dc.dc_publisher(publisher_name,
+                                                   publisher_lang)
                         else:
-                            fe.dc.dc_publisher(publisher_names,
-                                               publisher_name_langs)
+                            fe.dc.dc_publisher(publisher_name,
+                                               publisher_lang)
 
     def _set_source_identifier(self, fe, item_map, item_metadata):
         if self.output_type == self.OUTPUT_ATOM:

@@ -104,7 +104,7 @@
                 template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
               </invenio-records-alert>
               <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                <div class="col-sm-9">
+                <div class="col-sm-12">
                   <ul class="list-inline text-right">
                       <!-- <li>
                            <button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-info" ng-click="updateDataJson()" style="width: 80px; height: 40px;font-size: 15px;">
@@ -129,7 +129,7 @@
               </div>
               {%- if need_file %}
               <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                <div class="col-sm-9">
+                <div class="col-sm-12">
                   <invenio-files-error
                     template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
                   </invenio-files-error>
@@ -144,7 +144,7 @@
               {%- endif %}
               {%- if need_thumbnail %}
                 <div class="row">
-                  <div class="col-sm-9">
+                  <div class="col-sm-12">
                     <div class="panel panel-default">
                       <div class="panel-heading">
                         <h3 class="panel-title">{{_('Thumbnail')}}</h3>
@@ -180,7 +180,7 @@
               <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 {%- if show_automatic_metadata_input %}
                 <div class="row">
-                  <div class="col-sm-9">
+                  <div class="col-sm-12">
                   <p class="text-center">
                     <button class="btn btn-success"
                         ng-click="getItemMetadata()">
@@ -201,7 +201,7 @@
                 <!--add by ryuu. end 20180410-->
                 {%- if enable_contributor %}
                 <div class="row">
-                  <div class="col-sm-9" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  <div class="col-sm-12" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     <div class="panel panel-default" >
                       <div class="panel-heading">
                         <h3 class="panel-title">Contributor</h3>
@@ -338,7 +338,10 @@
           {% if user_profile %}
             {% set user_profile_data = user_profile|tojson %}
           {% endif %}
-          {% set list_license_data = list_license|tojson %}
+          {% set list_license_data = "" %}
+          {% if list_license %}
+            {% set list_license_data = list_license|tojson %}
+          {% endif %}
           <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{title}}'>
           <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
           <input type="hidden" id="action_endpoint_key" name="action_endpoint_key" value='{{endpoint_key}}'>

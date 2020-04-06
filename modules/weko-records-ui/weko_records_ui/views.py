@@ -44,6 +44,7 @@ from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
+from weko_records.api import ItemLink
 from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
@@ -217,9 +218,9 @@ def get_license_icon(type):
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_LOCATION']
     from invenio_i18n.ext import current_i18n
     current_lang = current_i18n.language
-    # In case of current lang is not bot JA and EN, set to default EN
-    if current_lang != 'ja' and current_lang != 'en':
-        current_lang = 'en'
+    # In case of current lang is not JA, set to default
+    if current_lang != 'ja':
+        current_lang = 'default'
     src = ''
     lic = ''
     href = '#'
@@ -392,11 +393,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
                         or [])
     try:
-        if WekoRecord.get_record(
-                id_=active_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+        if WekoRecord.get_record(id_=active_versions[-1].object_uuid)[
+                '_deposit']['status'] == 'draft':
             active_versions.pop()
-        if WekoRecord.get_record(
-                id_=all_versions[-1].object_uuid)['_deposit']['status'] == 'draft':
+        if WekoRecord.get_record(id_=all_versions[-1].object_uuid)[
+                '_deposit']['status'] == 'draft':
             all_versions.pop()
     except Exception:
         pass
@@ -434,9 +435,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     detail_condition = get_search_detail_keyword('')
 
-    weko_indexer = WekoIndexer()
-    res = weko_indexer.get_item_link_info(pid=record.get("control_number"))
-    if res is not None:
+    # Add Item Reference data to Record Metadata
+    pid_without_ver = record.get("recid").split('.')[0]
+    res = ItemLink.get_item_link_info(pid_without_ver)
+    if res:
         record["relation"] = res
     else:
         record["relation"] = {}
@@ -499,6 +501,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
+    open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
+
     return render_template(
         template,
         pid=pid,
@@ -525,6 +529,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         billing_files_prices=billing_files_prices,
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
+        open_day_display_flg=open_day_display_flg,
         **ctx,
         **kwargs
     )
@@ -714,3 +719,20 @@ def init_permission(recid):
     except Exception as ex:
         current_app.logger.debug(ex)
         abort(500)
+
+
+@blueprint.app_template_filter('translate_content')
+def translate_content(content):
+    """Translate record detail content.
+
+    @param content:
+    @return:
+    """
+    try:
+        if content:
+            return _(content)
+        else:
+            return content
+    except Exception as ex:
+        current_app.logger.debug(ex)
+        return content

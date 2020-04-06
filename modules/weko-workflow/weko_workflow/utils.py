@@ -224,7 +224,7 @@ def item_metadata_validation(item_id, identifier_type):
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if item_type.name_id in journalarticle_nameid or resource_type in \
                 journalarticle_type:
-            properties = ['title'
+            properties = ['title',
                           'publisher',
                           'sourceIdentifier',
                           'sourceTitle']
@@ -278,11 +278,13 @@ def validation_item_property(mapping_data, identifier_type, properties):
             "creator.givenName.@value")
         data = []
         creators = mapping_data.record.get(key.split('.')[0])
-        for creator in creators.get("attribute_value_mlt"):
-            for subitem in creator:
-                for item in creator[subitem]:
-                    if item.get(key.split('.')[1]):
-                        data.append(item.get(key.split('.')[1]))
+        if key:
+            given_name_data = get_sub_item_value(
+                creators.get("attribute_value_mlt"), key.split('.')[-1])
+            if given_name_data:
+                for value in given_name_data:
+                    data.append(value)
+            data.append(given_name_data)
 
         repeatable = True
         requirements = check_required_data(data, key, repeatable)
@@ -299,13 +301,19 @@ def validation_item_property(mapping_data, identifier_type, properties):
         data = []
         idt_data = []
         creators = mapping_data.record.get(key.split('.')[0])
-        for creator in creators.get("attribute_value_mlt"):
-            for subitem in creator:
-                for item in creator[subitem]:
-                    if item.get(key.split('.')[1]):
-                        data.append(item.get(key.split('.')[1]))
-                    if item.get(idt_key.split('.')[1]):
-                        idt_data.append(item.get(idt_key.split('.')[1]))
+        if key:
+            creator_data = get_sub_item_value(
+                creators.get("attribute_value_mlt"),
+                key.split('.')[-1])
+            if creator_data:
+                for value in creator_data:
+                    data.append(value)
+        if idt_key:
+            creator_name_identifier = get_sub_item_value(
+                creators.get("attribute_value_mlt"), idt_key.split('.')[-1])
+            if creator_name_identifier:
+                for value in creator_name_identifier:
+                    idt_data.append(value)
 
         repeatable = True
         requirements = check_required_data(data, key, repeatable)
@@ -484,9 +492,32 @@ class MappingData(object):
         if not attribute:
             return None, key
         else:
-            for attr in attribute.get('attribute_value_mlt'):
-                data.append(attr.get(key.split('.')[1]))
+            data_result = get_sub_item_value(
+                attribute.get('attribute_value_mlt'), key.split('.')[-1])
+            if data_result:
+                for value in data_result:
+                    data.append(value)
         return data, key
+
+
+def get_sub_item_value(atr_vm, key):
+    """Get all data of input key.
+
+    @param atr_vm:
+    @param key:
+    @return:
+    """
+    if isinstance(atr_vm, dict):
+        for ke, va in atr_vm.items():
+            if key == ke:
+                yield va
+            else:
+                for z in get_sub_item_value(va, key):
+                    yield z
+    elif isinstance(atr_vm, list):
+        for n in atr_vm:
+            for k in get_sub_item_value(n, key):
+                yield k
 
 
 class IdentifierHandle(object):
@@ -824,3 +855,18 @@ def get_parent_pid_with_type(pid_type, object_uuid):
     except PIDDoesNotExistError as pid_not_exist:
         current_app.logger.error(pid_not_exist)
         return None
+
+
+def filter_condition(json, name, condition):
+    """
+    Add conditions to json object.
+
+    :param json:
+    :param name:
+    :param condition:
+    :return:
+    """
+    if json.get(name):
+        json[name].append(condition)
+    else:
+        json[name] = [condition]

@@ -75,6 +75,10 @@ msgstr "Skipped"
 msgid "action_error"
 msgstr "Error"
 
+#: weko_workflow/models.py:85
+msgid "action_canceled"
+msgstr "Canceled"
+
 #: weko_workflow/models.py:130
 msgid "activity_active"
 msgstr "Active"
@@ -468,3 +472,5 @@ msgstr ""
 #~ msgid "Update flow action successfully"
 #~ msgstr ""
 
+msgid "Add Filter"
+msgstr ""

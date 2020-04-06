@@ -16,6 +16,228 @@ require([
   });
 });
 
+/**
+ * Custom bs-datepicker.
+ * Default bs-datepicker: just support one pattern for input.
+ * Custom bs-datepicker: support validate three pattern.
+ * Used way:
+ *  templateUrl: /static/templates/weko_deposit/datepicker_multi_format.html
+ *  customFormat: enter your pattern.
+ *    if it none, pattern are yyyy-MM-dd, yyyy-MM, yyyy.
+*/
+var Pattern = {
+  yyyy: '\\d{4}',
+  MM: '(((0)[1-9])|((1)[0-2]))',
+  dd: '([0-2][0-9]|(3)[0-1])',
+  sep: '(-)'
+}
+var Format = {
+  yyyyMMdd: '^(' + Pattern.yyyy + Pattern.sep +
+    Pattern.MM + Pattern.sep + Pattern.dd + ')$',
+  yyyyMM: '^(' + Pattern.yyyy + Pattern.sep + Pattern.MM + ')$',
+  yyyy: '^(' + Pattern.yyyy + ')$',
+}
+var CustomBSDatePicker = {
+  option: {
+    element: undefined,
+    defaultFormat: Format.yyyyMMdd + '|' + Format.yyyyMM + '|' + Format.yyyy,
+    cls: 'multi_date_format'
+  },
+  /**
+   * Clear validate status for this element.
+  */
+  init: function () {
+    let $element = $(CustomBSDatePicker.option.element);
+    let $this_parent = $element.parent().parent();
+    $element.removeClass('ng-invalid ng-invalid-date ng-invalid-parse');
+    $element.next().next().addClass('hide');
+    $this_parent.removeClass('has-error');
+  },
+  /**
+   * Get format from defined user on form schema.
+   * If user don't defined, this pattern get default pattern.
+   * Default pattern: option.defaultFormat.
+   * @return {String} return pattern.
+  */
+  getPattern: function () {
+    let def_pattern = CustomBSDatePicker.option.defaultFormat;
+    let $element = $(CustomBSDatePicker.option.element);
+    let pattern = $element.data('custom-format');
+    return (pattern.length == 0) ? def_pattern : pattern;
+  },
+  /**
+   * Check data input valid with defined pattern.
+   * @return {Boolean} return true if value matched
+  */
+  isMatchRegex: function () {
+    let $element = $(CustomBSDatePicker.option.element);
+    let val = $element.val();
+    let pattern = CustomBSDatePicker.getPattern();
+    let reg = new RegExp(pattern);
+    return reg.test(val);
+  },
+  /**
+   * Check input required.
+   * @return {Boolean} return true if input required
+  */
+  isRequired: function () {
+    let $lement = $(CustomBSDatePicker.option.element);
+    let $this_parent = $lement.parent().parent();
+    let label = $this_parent.find('label');
+    return label.hasClass('field-required');
+  },
+  /**
+  * Get the number of days in any particular month
+  * @param  {number} m The month (valid: 0-11)
+  * @param  {number} y The year
+  * @return {number}   The number of days in the month
+  */
+  daysInMonth: function (m, y) {
+    switch (m) {
+      case 1:
+        return (y % 4 == 0 && y % 100) || y % 400 == 0 ? 29 : 28;
+      case 8: case 3: case 5: case 10:
+        return 30;
+      default:
+        return 31
+    }
+  },
+  /**
+  * Check if a date is valid
+  * @param  {number}  d The day
+  * @param  {number}  m The month
+  * @param  {number}  y The year
+  * @return {Boolean}   Returns true if valid
+  */
+  isValidDate: function (d, m, y) {
+    let month = parseInt(m, 10) - 1;
+    let check_min_month = m >= 0;
+    let check_max_month = m < 12;
+    let check_min_day = d > 0;
+    let check_max_day = d <= CustomBSDatePicker.daysInMonth(month, y);
+    return check_min_month && check_max_month && check_min_day && check_max_day;
+  },
+  /**
+   * Check all validate for this.
+   * All validation valid => return true.
+   * @return {Boolean} Returns true if valid
+  */
+  isValidate: function () {
+    let $element = $(CustomBSDatePicker.option.element);
+    let val = $element.val();
+    if (val.length == 0) {
+      //Required input invalid.
+      if (CustomBSDatePicker.isRequired()) return false;
+    } else {
+      //Data input is not match with defined pattern.
+      if (!CustomBSDatePicker.isMatchRegex()) return false;
+      //Check day by month and year.
+      let arr = val.split('-');
+      if (arr.length == 3 && !CustomBSDatePicker.isValidDate(arr[2], arr[1], arr[0])) return false;
+    }
+    return true;
+  },
+  /**
+   * Check validate and apply css for this field.
+  */
+  validate: function () {
+    let $element = $(CustomBSDatePicker.option.element);
+    let $this_parent = $element.parent().parent();
+    if (!CustomBSDatePicker.isValidate()) {
+      $element.next().next().removeClass('hide');
+      $this_parent.addClass('has-error');
+    }
+  },
+  /**
+   * This is mean function in order to validate.
+   * @param {[type]} element date field
+  */
+  process: function (element) {
+    CustomBSDatePicker.option.element = element;
+    CustomBSDatePicker.init();
+    CustomBSDatePicker.validate();
+  },
+  /**
+  * Init attribute of model object if them undefine.
+  * @param  {[object]}  model
+  * @param  {[object]}  element is date input control.
+  */
+  initAttributeForModel: function (model, element) {
+    if($(element).val().length == 0) return;
+    let ng_model = $(element).attr('ng-model').replace(/']/g, '');
+    let arr = ng_model.split("['");
+    //Init attribute of model object if them undefine.
+    let str_code = '';
+    $.each(arr, function (ind_01, val_02) {
+      str_code += (ind_01 == 0) ? val_02 : "['" + val_02 + "']";
+      let chk_str_code = '';
+      if (ind_01 != arr.length - 1) {
+        chk_str_code = "if(!" + str_code + ") " + str_code + "={};";
+      }
+      eval(chk_str_code);
+    });
+  },
+  /**
+  * Excute this function before 'Save' and 'Next' processing
+  * Get data from fields in order to fill to model.
+  * @param  {[object]}  model
+  * @param  {[Boolean]}  reverse
+  */
+  setDataFromFieldToModel: function (model, reverse) {
+    let cls = CustomBSDatePicker.option.cls;
+    let element_arr = $('.' + cls);
+    $.each(element_arr, function (ind, val) {
+      CustomBSDatePicker.initAttributeForModel(model, val);
+      if (reverse) {
+        //Fill data from model to fields
+        str_code = "$(val).val(" + $(val).attr('ng-model') + ")";
+        eval(str_code);
+      } else {
+        //Fill data from fields to model
+        str_code = $(val).attr('ng-model') + '=$(val).val()';
+        eval(str_code);
+      }
+    });
+  },
+  /**
+   * Get date fields name which invalid.
+   * @return {array} Returns name list.
+  */
+  getInvalidFieldNameList: function () {
+    let cls = CustomBSDatePicker.option.cls;
+    let element_arr = $('.' + cls);
+    let result = [];
+    $.each(element_arr, function (ind, val) {
+      let $element = $(val);
+      let $parent = $element.parent().parent();
+      if ($parent.hasClass('has-error')) {
+        let name = $element.attr('name');
+        let label = $("label[for=" + name + "]").text().trim();
+        result.push(label);
+      }
+    });
+    return result;
+  },
+  /**
+   * If input empty, this attribute delete.
+   * Fix bug: not enter data for date field.
+  */
+  removeLastAttr: function(model){
+    let cls = CustomBSDatePicker.option.cls;
+    let element_arr = $('.' + cls);
+    $.each(element_arr, function (ind, val) {
+      if($(val).val().length > 0){
+        CustomBSDatePicker.initAttributeForModel(model, val);
+        let ng_model = $(val).attr('ng-model');
+        let last_index = ng_model.lastIndexOf('[');
+        let previous_attr = ng_model.substring(0, last_index);
+        let str_code = "if("+ng_model+"==''){"+previous_attr+"={}}";
+        eval(str_code);
+      }
+    });
+  }
+}
+
 // script for Contributor
 var username_arr = [];
 var email_arr = [];
@@ -277,6 +499,13 @@ function handleSharePermission(value) {
   }
 }
 
+function toObject(arr) {
+  var rv = {};
+  for (var i = 0; i < arr.length; ++i)
+    rv[i] = arr[i];
+  return rv;
+}
+
 (function (angular) {
   function addAlert(message, class_style) {
     id_alert = "";
@@ -306,23 +535,43 @@ function handleSharePermission(value) {
       $scope.error_list = [];
       $scope.usageapplication_keys = [];
       $scope.outputapplication_keys = [];
+      $scope.authors_keys = [];
+      $scope.data_author = [];
+      $scope.sub_item_keys = ['nameIdentifiers', 'affiliation', 'contributorAffiliations'];
+      $scope.scheme_uri_mapping = [
+        {
+          scheme : 'nameIdentifierScheme',
+          uri : 'nameIdentifierURI'
+        },
+        {
+          scheme : 'affiliationNameIdentifierScheme',
+          uri : 'affiliationNameIdentifierURI'
+        },
+        {
+          scheme : 'contributorAffiliationScheme',
+          uri : 'contributorAffiliationURI'
+        }
+      ]
+      $scope.sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
+      $scope.sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
+
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
           return $scope.filemeta_keys;
         }
-        Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-          ([key, value]) => {
-            if (value.type == 'array') {
-              if (value.items.properties.hasOwnProperty('filename')) {
-                $scope.filemeta_keys.push(key)
-              }
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+          var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          if (value.type == 'array') {
+            if (value.items.properties.hasOwnProperty('filename')) {
+              $scope.filemeta_keys.push(key);
+              break;
             }
           }
-        );
+        }
       }
       $scope.searchFilemetaForm = function (title) {
         let fileMetaForm = "";
-        $rootScope.recordsVM.invenioRecordsForm.forEach(recordForm => {
+        $rootScope.recordsVM.invenioRecordsForm.forEach(function (recordForm) {
           if (recordForm.title === title) {
             fileMetaForm = recordForm;
           }
@@ -337,54 +586,212 @@ function handleSharePermission(value) {
         return fileMetaForm;
       };
 
-      $scope.searchUsageApplicationIdKey = function() {
-          if ($scope.usageapplication_keys.length > 0) {
-              return $scope.usageapplication_keys;
-          }
-          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-              ([key, value]) => {
-                  if (value.type == 'array') {
-                      if (value.items.properties.hasOwnProperty('subitem_corresponding_usage_application_id')) {
-                        $scope.usageapplication_keys.push(key)
-                      }
-                  }
+      $scope.searchSchemaIdentifierKey = function(item) {
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+          var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          var properties = value.properties ? value.properties : (value.items ? value.items.properties : [])
+          if (Object.keys(properties).indexOf(item) >= 0) {
+              if ($scope.authors_keys.indexOf(key) >= 0) {
+                break
               }
-          );
+             $scope.authors_keys.push(key);
+          }
+        }
+      };
+
+      $scope.getValueAuthor = function () {
+        var data_author = {}
+        $scope.data_author.map(function (item) {
+          data_author[item.scheme] = item.url
+        })
+        $scope.authors_keys.map(function (key) {
+          let list_nameIdentifiers = []
+          let uri_form_model = $rootScope.recordsVM.invenioRecordsModel[key]
+          if (!Array.isArray(uri_form_model)) {
+            $scope.sub_item_keys.map(function (subkey) {
+              if (Object.keys(uri_form_model).indexOf(subkey) >= 0) {
+                let name_identifier_form = uri_form_model[subkey]
+                name_identifier_form.map(function (form) {
+                  $scope.sub_item_scheme.map(function (scheme) {
+                    if (form.hasOwnProperty(scheme)) {
+                      $scope.scheme_uri_mapping.map(function (mapping) {
+                        if (mapping.scheme == scheme) {
+                          form[mapping.uri] = data_author[form[scheme]]
+                        }
+                      })
+                    }
+                  })
+                  list_nameIdentifiers.push(form)
+                })
+              }
+            })
+          }
+          else if (Array.isArray(uri_form_model)) {
+            uri_form_model.map(function (object) {
+              $scope.sub_item_keys.map(function (subkey) {
+                if (Object.keys(object).indexOf(subkey) >= 0) {
+                  let name_identifier_form = object[subkey]
+                  name_identifier_form.map(function (form) {
+                    $scope.sub_item_scheme.map(function (scheme) {
+                      if (form.hasOwnProperty(scheme)) {
+                        $scope.scheme_uri_mapping.map(function (mapping) {
+                          if (mapping.scheme == scheme) {
+                            form[mapping.uri] = data_author[form[scheme]]
+                          }
+                        })
+                      }
+                    })
+                    list_nameIdentifiers.push(form)
+                  })
+                }
+              })
+            })
+          }
+
+          $scope.sub_item_scheme.map(function (scheme) {
+            if (Object.keys($rootScope.recordsVM.invenioRecordsModel[key]).indexOf(scheme) >= 0) {
+              $rootScope.recordsVM.invenioRecordsModel[key].scheme = list_nameIdentifiers
+            }
+          })
+        })
+      }
+
+      $scope.initAuthorList = function () {
+        $.ajax({
+          url: '/api/items/author_prefix_settings',
+          method: 'GET',
+          async: false,
+          success: function (data, status) {
+            $scope.data_author = data;
+          },
+          error: function (data, status) {
+          }
+        });
+      }
+
+      $scope.getDataAuthors = function () {
+        var author_schema;
+        var author_form;
+        $scope.sub_item_keys.map(function(key) {
+          $scope.searchSchemaIdentifierKey(key);
+        })
+        $scope.authors_keys.forEach(function (author_key) {
+          var author_idt_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[author_key];
+          var author_idt_form = $scope.searchFilemetaForm(author_idt_schema.title);
+          if (author_idt_schema && author_idt_form) {
+            if (author_idt_schema.type == 'object') {
+              $scope.sub_item_keys.map(function (item) {
+                if (!!author_idt_schema.properties[item]){
+                  author_schema = author_idt_schema.properties[item].items;
+                  author_form = get_subitem(author_idt_form.items, item);
+                  $scope.addSchemeToSelectForm(author_form, author_schema);
+                  }
+                })
+              }
+            else if (author_idt_schema.type == 'array') {
+              $scope.sub_item_keys.map(function (item) {
+                  if (!!author_idt_schema.items.properties[item]) {
+                      author_schema = author_idt_schema.items.properties[item].items;
+                      author_form = get_subitem(author_idt_form.items, item);
+                      $scope.addSchemeToSelectForm(author_form, author_schema);
+                  }
+                })
+              }
+          }
+        });
+        $rootScope.$broadcast('schemaFormRedraw');
+      };
+
+
+      $scope.addSchemeToSelectForm = function(author_form, author_schema) {
+           for (let searchTitleMap in author_form.items) {
+                if (author_form.items[searchTitleMap].hasOwnProperty('titleMap')) {
+                  var numberTitleMap = searchTitleMap;
+                  var author_form_key = author_form.items[searchTitleMap].key
+                  // Only clear and do logic for "Scheme" field
+                  $scope.sub_item_scheme.map(function (scheme) {
+                      if (author_form_key.includes(scheme)) {
+                        author_form.items[searchTitleMap].titleMap = [];
+                        $scope.sub_item_scheme.map(function (item) {
+                          if (author_schema.properties[item]) {
+                            author_schema.properties[item]['enum'] = [];
+                            author_schema.properties[item]['enum'].push(null);
+                            $scope.data_author.forEach(function (value_scheme) {
+                              $scope.sub_item_scheme.map(function (key) {
+                                if (author_schema.properties[key]) {
+                                  author_schema.properties[key]['enum'].push(value_scheme['scheme']);
+                                  author_form.items[numberTitleMap].titleMap.push({
+                                    name: value_scheme['scheme'],
+                                    value: value_scheme['scheme']
+                                  });
+                                }
+                              })
+                            });
+                            author_form.items[searchTitleMap]['onChange'] = 'getValueAuthor(event)';
+                          }
+                        })
+                      }
+                  })
+              }
+              // set read only Creator Name Identifier URI
+              $scope.sub_item_uri.map(function(item) {
+                let identifier_uri_form = get_subitem(author_form.items, item)
+                if (identifier_uri_form) {
+                  identifier_uri_form['readonly'] = true;
+                }
+              })
+            }
+      }
+
+      $scope.searchUsageApplicationIdKey = function() {
+        if ($scope.usageapplication_keys.length > 0) {
+          return $scope.usageapplication_keys;
+        }
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+          var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          if (value.type == 'array') {
+            if (value.items.properties.hasOwnProperty('subitem_corresponding_usage_application_id')) {
+              $scope.usageapplication_keys.push(key);
+              break;
+            }
+          }
+        }
       };
 
       $scope.searchOutputApplicationIdKey = function() {
-          if ($scope.outputapplication_keys.length > 0) {
-              return $scope.outputapplication_keys;
+        if ($scope.outputapplication_keys.length > 0) {
+            return $scope.outputapplication_keys;
+        }
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+          if ($rootScope.recordsVM.invenioRecordsSchema.properties[key].type == 'array') {
+            if ($rootScope.recordsVM.invenioRecordsSchema.properties[key].items.properties.hasOwnProperty('subitem_corresponding_output_id')) {
+              $scope.outputapplication_keys.push(key);
+              break;
+            }
           }
-          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-              ([key, value]) => {
-                  if (value.type == 'array') {
-                      if (value.items.properties.hasOwnProperty('subitem_corresponding_output_id')) {
-                          $scope.outputapplication_keys.push(key)
-                      }
-                  }
-              }
-          );
+        }
       }
 
       $scope.initCorrespondingIdList = function () {
         $scope.searchUsageApplicationIdKey();
-        $scope.usageapplication_keys.forEach(key => {
+        $scope.usageapplication_keys.forEach(function (key) {
           schema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           form = $scope.searchFilemetaForm(schema.title);
           if (schema && form) {
             schema.items.properties['subitem_corresponding_usage_application_id']['enum'] = [];
+            schema.items.properties['subitem_corresponding_usage_application_id']['enum'].push(null);
             usage_application_form = form.items[0];
             usage_application_form['titleMap'] = []
           }
         });
 
         $scope.searchOutputApplicationIdKey();
-        $scope.outputapplication_keys.forEach(key => {
+        $scope.outputapplication_keys.forEach(function (key) {
           output_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           output_form = $scope.searchFilemetaForm(output_schema.title);
           if (output_schema && output_form) {
             output_schema.items.properties['subitem_corresponding_output_id']['enum'] = [];
+            output_schema.items.properties['subitem_corresponding_output_id']['enum'].push(null);
             output_report_form = output_form.items[0];
             output_report_form['titleMap'] = []
           }
@@ -406,7 +813,7 @@ function handleSharePermission(value) {
                 usageActivity = data['usage_application'];
               }
               if (usageActivity.length > 0) {
-                usageActivity.forEach(activity => {
+                usageActivity.forEach(function (activity) {
                   if (typeof schema != 'undefined' && typeof usage_application_form != 'undefined' && schema && usage_application_form) {
                     schema.items.properties['subitem_corresponding_usage_application_id']['enum'].push(activity);
                     usage_application_form['titleMap'].push({
@@ -419,7 +826,7 @@ function handleSharePermission(value) {
 
               let outputReport = data['output_report'];
               if (outputReport.length > 0) {
-                outputReport.forEach(report => {
+                outputReport.forEach(function (report) {
                   if (typeof output_schema != 'undefined' && typeof output_report_form != 'undefined' && output_schema && output_report_form) {
                     output_schema.items.properties['subitem_corresponding_output_id']['enum'].push(report);
                     output_report_form['titleMap'].push({
@@ -429,7 +836,6 @@ function handleSharePermission(value) {
                   }
                 })
               }
-
               $rootScope.$broadcast('schemaFormRedraw');
             },
             error: function (data, status) {
@@ -438,16 +844,25 @@ function handleSharePermission(value) {
         }
       };
 
+      function get_subitem(items, subitem) {
+        for (var i = 0; i < items.length; i++) {
+          var key = items[i].key
+          if (typeof key !== 'undefined' && key.includes(subitem)) {
+            return items[i]
+          }
+        }
+      }
+
       $scope.initFilenameList = function () {
         $scope.searchFilemetaKey();
-        $scope.filemeta_keys.forEach(filemeta_key => {
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
           filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
           if (filemeta_schema && filemeta_form) {
-            filemeta_schema.items.properties['filename']['enum'] = [];
+            filemeta_schema.items.properties['filename']['enum'] = [null];
             filemeta_filename_form = filemeta_form.items[0];
             filemeta_filename_form['titleMap'] = [];
-            $rootScope.filesVM.files.forEach(file => {
+            $rootScope.filesVM.files.forEach(function (file) {
               if (file.completed && !file.is_thumbnail) {
                 filemeta_schema.items.properties['filename']['enum'].push(file.key);
                 filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
@@ -455,12 +870,13 @@ function handleSharePermission(value) {
             });
           }
           groupsprice_schema = filemeta_schema.items.properties['groupsprice']
-          groupsprice_form = filemeta_form.items[6];
+          groupsprice_form = get_subitem(filemeta_form.items, 'groupsprice')
           if (groupsprice_schema && groupsprice_form) {
             groupsprice_schema.items.properties['group']['enum'] = [];
+            groupsprice_schema.items.properties['group']['enum'].push(null);
             group_form = groupsprice_form.items[0];
             group_form['titleMap'] = [];
-            $scope.groups.forEach(group => {
+            $scope.groups.forEach(function (group) {
               groupsprice_schema.items.properties['group']['enum'].push(group.id);
               group_form['titleMap'].push({ name: group.value, value: group.id });
             });
@@ -548,15 +964,15 @@ function handleSharePermission(value) {
         if ($scope.resourceTypeKey.length > 0) {
           return $scope.resourceTypeKey;
         }
-        Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-          ([key, value]) => {
-            if (value.type == 'object') {
-              if (value.properties.hasOwnProperty('resourcetype')) {
-                $scope.resourceTypeKey = key;
-              }
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+          let value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          if (value.type == 'object') {
+            if (value.properties.hasOwnProperty('resourcetype')) {
+              $scope.resourceTypeKey = key;
+              break;
             }
           }
-        );
+        }
       }
       $scope.resourceTypeSelect = function () {
         let resourcetype = $("select[name='resourcetype']").val();
@@ -717,21 +1133,21 @@ function handleSharePermission(value) {
         }
       }
       $scope.getBibliographicMetaKey = function () {
-        Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-          ([key, value]) => {
-            if (value.properties && value.properties.hasOwnProperty('bibliographic_title')) {
-              $scope.bibliographic_key = key;
-              const titleProperties = value.properties.bibliographic_title.items.properties;
-              Object.entries(titleProperties).forEach(([subKey, subValue]) => {
-                if (subValue.format == "text") {
-                  $scope.bibliographic_title_key = subKey;
-                } else if (subValue.format == "select") {
-                  $scope.bibliographic_title_lang_key = subKey;
-                }
-              });
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+          let value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          if (value.properties && value.properties.hasOwnProperty('bibliographic_title')) {
+            $scope.bibliographic_key = key;
+            const titleProperties = value.properties.bibliographic_title.items.properties;
+            for (var subkey in titleProperties) {
+              let subValue = titleProperties[subkey];
+              if (subValue.format == "text") {
+                $scope.bibliographic_title_key = subkey;
+              } else if (subValue.format == "select") {
+                $scope.bibliographic_title_lang_key = subkey;
+              }
             }
           }
-        );
+        }
       }
       $scope.autofillJournal = function () {
         this.getBibliographicMetaKey();
@@ -770,23 +1186,40 @@ function handleSharePermission(value) {
         }
       }
 
-        $scope.translationsInstitutePosition = function (value) {
-                return [...document.getElementById('institute_position_list').options].find(o => o.value === value).text;
-            };
+      $scope.findTextByElementId = function (elementId, value){
+        var options = document.getElementById(elementId).options;
+        for (i=0; i< options.length; i++){
+          if (options[i].value === value){
+            return options[i].text
+          }
+        }
+      }
 
-            $scope.translationsInstitutePositionByText = function (text) {
-                return [...document.getElementById('institute_position_list').options].find(o => o.text === text).value;
-            };
+      $scope.findValueByElementId = function (elementId, text){
+        var options = document.getElementById(elementId).options;
+        for (i=0; i< options.length; i++){
+          if (options[i].text === text){
+            return options[i].value
+          }
+        }
+      }
+      $scope.translationsInstitutePosition = function (value) {
+          return $scope.findTextByElementId('institute_position_list', value)
+      };
 
-            $scope.translationsPosition = function (value) {
-                return [...document.getElementById('position_list').options].find(o => o.value === value).text;
-            };
+      $scope.translationsInstitutePositionByText = function (text) {
+          return $scope.findValueByElementId('institute_position_list', text)
+      };
 
-            $scope.translationsPositionByText = function (text) {
-                return [...document.getElementById('position_list').options].find(o => o.text === text).value;
-            };
+      $scope.translationsPosition = function (value) {
+          return $scope.findTextByElementId('position_list', value)
+      };
 
-            $scope.updatePositionKey = function() {
+      $scope.translationsPositionByText = function (text) {
+          return $scope.findValueByElementId('position_list', text)
+      };
+
+      $scope.updatePositionKey = function() {
                 let model = $rootScope.recordsVM.invenioRecordsModel;
                 if (Object.keys(model).length === 0 && model.constructor === Object) {
                     return false;
@@ -803,8 +1236,9 @@ function handleSharePermission(value) {
                                 $rootScope.recordsVM.invenioRecordsModel[key]['subitem_position'] = position;
                                 if (model[key]['subitem_affiliated_institution'] && model[key]['subitem_affiliated_institution'].length >0) {
 
-                                    for (const [index, affiliatedInstitution] of model[key]['subitem_affiliated_institution'].entries()) {
-                                        let translationsAffiliatedInstitution = affiliatedInstitution['subitem_affiliated_institution_position']
+                                  for (let index in toObject(model[key]['subitem_affiliated_institution'])) {
+                                      let affiliatedInstitution = toObject(model[key]['subitem_affiliated_institution'])[index];
+                                      let translationsAffiliatedInstitution = affiliatedInstitution['subitem_affiliated_institution_position']
                                         if (translationsAffiliatedInstitution) {
                                             let institutionPosition = $scope.translationsInstitutePositionByText(translationsAffiliatedInstitution);
                                             $rootScope.recordsVM.invenioRecordsModel[key]['subitem_affiliated_institution'][index]['subitem_affiliated_institution_position'] = institutionPosition;
@@ -814,7 +1248,7 @@ function handleSharePermission(value) {
                                 }
                                 isExisted = true;
                                 // Set read only for user information property
-                                $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly'] = true;
+                                $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })['readonly'] = true;
                                 break;
                             }
                         }
@@ -833,22 +1267,23 @@ function handleSharePermission(value) {
               let fullName = model[key]['subitem_fullname'];
               let userMail = model[key]['subitem_mail_address'];
               if (fullName || userMail) {
-                  let position = model[key]['subitem_position'];
-                  position = $scope.translationsPosition(position);
-                  $rootScope.recordsVM.invenioRecordsModel[key]['subitem_position'] = position;
-                  if (model[key]['subitem_affiliated_institution'] && model[key]['subitem_affiliated_institution'].length >0) {
+                let position = model[key]['subitem_position'];
+                position = $scope.translationsPosition(position);
+                $rootScope.recordsVM.invenioRecordsModel[key]['subitem_position'] = position;
+                if (model[key]['subitem_affiliated_institution'] && model[key]['subitem_affiliated_institution'].length >0) {
 
-                      for (const [index, affiliatedInstitution] of model[key]['subitem_affiliated_institution'].entries()) {
-                          let translationsAffiliatedInstitution = affiliatedInstitution['subitem_affiliated_institution_position']
-                          if (translationsAffiliatedInstitution) {
-                              let institutionPosition = $scope.translationsInstitutePosition(translationsAffiliatedInstitution);
-                              $rootScope.recordsVM.invenioRecordsModel[key]['subitem_affiliated_institution'][index]['subitem_affiliated_institution_position'] = institutionPosition;
-                          }
-                      }
-                  }
+                     for (let index in toObject(model[key]['subitem_affiliated_institution'])) {
+                        let affiliatedInstitution = toObject(model[key]['subitem_affiliated_institution'])[index];
+                        let translationsAffiliatedInstitution = affiliatedInstitution['subitem_affiliated_institution_position']
+                        if (translationsAffiliatedInstitution) {
+                            let institutionPosition = $scope.translationsInstitutePosition(translationsAffiliatedInstitution);
+                            $rootScope.recordsVM.invenioRecordsModel[key]['subitem_affiliated_institution'][index]['subitem_affiliated_institution_position'] = institutionPosition;
+                        }
+                    }
+                }
                 isExisted = true;
                 // Set read only for user information property
-                $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly']=true;
+                $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })['readonly'] = true;
                 break;
               }
             }
@@ -875,55 +1310,53 @@ function handleSharePermission(value) {
         var affiliatedInstitutionName = 'subitem_affiliated_institution_name';
         var affiliatedInstitutionPosition = 'subitem_affiliated_institution_position';
         var userInfoKey = null;
-        Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-          ([key, value]) => {
-            var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
-            if (currentInvenioRecordsSchema.properties) {
-              let containAffiliatedDivision = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedDivision);
-              let containAffiliatedInstitution = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedInstitution);
-              if (containAffiliatedDivision && containAffiliatedInstitution) {
-                // Store key of user info to disable this form later
-                userInfoKey = key;
-                $rootScope.recordsVM.invenioRecordsModel[key] = {};
-                var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel[key];
-                Object.entries(currentInvenioRecordsSchema.properties).forEach(([subKey, subValue]) => {
-                  if (currentInvenioRecordsSchema.properties[subKey].type == "array") {
-                    //Affiliated institution is an array
-                    let containInstitutionName = currentInvenioRecordsSchema.properties[subKey].items.properties.hasOwnProperty(affiliatedInstitutionName);
-                    let containInstitutionPosition = currentInvenioRecordsSchema.properties[subKey].items.properties.hasOwnProperty(affiliatedInstitutionPosition);
-                    if (containInstitutionName && containInstitutionPosition) {
-                      //init the Affiliated Institution
-                      currentInvenioRecordsModel[subKey] = [];
-                      // get arr Affiliated institution form the result data
-                      var arrAffiliatedData = data.results[subKey];
-                      if (arrAffiliatedData) {
-                        // Set value for each pair of Affiliated Institution data
-                        arrAffiliatedData.forEach((value, index) => {
-                          currentInvenioRecordsModel[subKey][index] = {};
-                          currentInvenioRecordsModel[subKey][index][affiliatedInstitutionName] = value.subitem_affiliated_institution_name;
-                          let institutionPosition = $scope.translationsInstitutePosition(value.subitem_affiliated_institution_position);
-                          currentInvenioRecordsModel[subKey][index][affiliatedInstitutionPosition] = institutionPosition;
-                        });
-                      }
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+          var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          if (currentInvenioRecordsSchema.properties) {
+            let containAffiliatedDivision = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedDivision);
+            let containAffiliatedInstitution = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedInstitution);
+            if (containAffiliatedDivision && containAffiliatedInstitution) {
+              // Store key of user info to disable this form later
+              userInfoKey = key;
+              $rootScope.recordsVM.invenioRecordsModel[key] = {};
+              var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel[key];
+              for (let subKey in currentInvenioRecordsSchema.properties) {
+                if (currentInvenioRecordsSchema.properties[subKey].type == "array") {
+                  //Affiliated institution is an array
+                  let containInstitutionName = currentInvenioRecordsSchema.properties[subKey].items.properties.hasOwnProperty(affiliatedInstitutionName);
+                  let containInstitutionPosition = currentInvenioRecordsSchema.properties[subKey].items.properties.hasOwnProperty(affiliatedInstitutionPosition);
+                  if (containInstitutionName && containInstitutionPosition) {
+                    //init the Affiliated Institution
+                    currentInvenioRecordsModel[subKey] = [];
+                    // get arr Affiliated institution form the result data
+                    var arrAffiliatedData = data.results[subKey];
+                    if (arrAffiliatedData) {
+                      // Set value for each pair of Affiliated Institution data
+                      arrAffiliatedData.forEach(function(value, index) {
+                        currentInvenioRecordsModel[subKey][index] = {};
+                        currentInvenioRecordsModel[subKey][index][affiliatedInstitutionName] = value.subitem_affiliated_institution_name;
+                        let institutionPosition = $scope.translationsInstitutePosition(value.subitem_affiliated_institution_position);
+                        currentInvenioRecordsModel[subKey][index][affiliatedInstitutionPosition] = institutionPosition;
+                      });
                     }
-                  } else {
-                    if (data.results[subKey]) {
-                if (subKey==='subitem_position') {
-                    let position = $scope.translationsPosition(data.results[subKey]);
-                    $rootScope.recordsVM.invenioRecordsModel[key][subKey] = position;
+                  }
                 } else {
+                  if (data.results[subKey]) {
+                    if (subKey==='subitem_position') {
+                      let position = $scope.translationsPosition(data.results[subKey]);
+                      $rootScope.recordsVM.invenioRecordsModel[key][subKey] = position;
+                    } else {
                       $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey])
                     }
                   }
-        }
-                });
+                }
               }
             }
           }
-        );
+        }
         if (userInfoKey != null) {
           // Set read only for user information property
-          $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == userInfoKey)['readonly'] = true;
+          $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == userInfoKey })['readonly'] = true;
         }
       };
 
@@ -943,7 +1376,7 @@ function handleSharePermission(value) {
                 }
               }
               if (title && $("#auto_fill_title").val() !== '""') {
-                $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly'] = true;
+                $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })['readonly'] = true;
                 setTimeout(function () {
                   $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
                 }, 1000);
@@ -968,8 +1401,8 @@ function handleSharePermission(value) {
           let titleKey = null;
           titleData = JSON.parse(titleData);
           let userName = JSON.parse($('#user_info_data').val()).results.subitem_displayname;
-          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-            ([key, value]) => {
+          for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+            var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
               if (value && value.type === "array" && value.items) {
                 if (value.items.properties && value.items.properties.hasOwnProperty("subitem_item_title")) {
                   titleKey = key;
@@ -980,12 +1413,13 @@ function handleSharePermission(value) {
                   jaTitle['subitem_item_title'] = titleData['ja'] + " - " + userName;
                   jaTitle['subitem_item_title_language'] = "ja";
                   $rootScope.recordsVM.invenioRecordsModel[key] = [jaTitle, enTitle];
-                }
+                  break;
               }
-            });
+            }
+          }
           if (titleKey != null) {
             // Set read only for title
-            $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == titleKey)['readonly'] = true;
+            $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == titleKey })['readonly'] = true;
           }
           setTimeout(function () {
             $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
@@ -1003,8 +1437,8 @@ function handleSharePermission(value) {
             if (model.hasOwnProperty(key)) {
               let title = model[key]['subitem_dataset_usage'];
               if (title && $("#item_title").val() !== '""') {
-                if ($rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)) {
-                  $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == key)['readonly'] = true;
+                if ($rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })) {
+                  $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == key })['readonly'] = true;
                   setTimeout(function () {
                     $("input[name='subitem_dataset_usage']").attr("disabled", "disabled");
                   }, 1000);
@@ -1027,18 +1461,19 @@ function handleSharePermission(value) {
         if (itemTitleElement !== null && itemTitleElement.val()) {
           let itemTitle = decodeURI(itemTitleElement.val());
           let titleKey = null;
-          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-            ([key, value]) => {
+          for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+            let value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
               if (value && value.properties) {
                 if (value.properties.hasOwnProperty("subitem_dataset_usage")) {
                   titleKey = key;
                   $rootScope.recordsVM.invenioRecordsModel[key] = {'subitem_dataset_usage': itemTitle};
+                  break;
                 }
               }
-            });
+          }
           if (titleKey != null) {
             // Set read only for title
-            $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key === titleKey)['readonly'] = true;
+            $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key === titleKey })['readonly'] = true;
           }
           setTimeout(function () {
             $("input[name='subitem_dataset_usage']").attr("disabled", "disabled");
@@ -1057,19 +1492,19 @@ function handleSharePermission(value) {
         var listLicenseTypeKey = [];
 
         for (let key in schema.properties) {
-            let value = schema.properties[key];
-            // Find form that contains license type obj
-            if (value.items && value.items.properties && value.items.properties.hasOwnProperty(licenseTypeName)) {
-              let listLicenseEnum = [];
-              // Collect list license
-              for (let ind in listLicenseObj) {
-                listLicenseEnum.push(listLicenseObj[ind]['value']);
+          let value = schema.properties[key];
+          // Find form that contains license type obj
+          if (value.items && value.items.properties && value.items.properties.hasOwnProperty(licenseTypeName)) {
+            let listLicenseEnum = [null];
+            // Collect list license
+            for (let ind in listLicenseObj) {
+              listLicenseEnum.push(listLicenseObj[ind]['value']);
               //set enum of license type form as list license above
               value.items.properties[licenseTypeName]['enum'] = listLicenseEnum;
               listLicenseTypeKey.push(key);
             }
           }
-      }
+        }
         if (listLicenseTypeKey.length > 0) {
           let containLicenseTypeForm = null;
             for(let ind in listLicenseTypeKey){
@@ -1077,9 +1512,8 @@ function handleSharePermission(value) {
               {
                 if($rootScope.recordsVM.invenioRecordsForm[key].key == listLicenseTypeKey[ind]){
                   containLicenseTypeForm = $rootScope.recordsVM.invenioRecordsForm[key];
-                  // The index of license type is always "3", correspond to its property
-                  if (containLicenseTypeForm && containLicenseTypeForm.items && containLicenseTypeForm.items.length >= 2) {
-                    licenseTypeForm = containLicenseTypeForm.items[2];
+                  if (containLicenseTypeForm && containLicenseTypeForm.items) {
+                    licenseTypeForm = get_subitem(containLicenseTypeForm.items, 'licensetype');
                     // Set title map by listLicenseObj above
                     licenseTypeForm['titleMap'] = listLicenseObj;
                   }
@@ -1095,15 +1529,15 @@ function handleSharePermission(value) {
 
       $scope.autoSetCorrespondingUsageAppId = function () {
         if ($scope.usage_report_activity_id != ''){
-          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-            ([key, value]) => {
+          for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+            let value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
               if (value && value.items) {
                 if (value.items.properties.hasOwnProperty("subitem_corresponding_usage_application_id")) {
                   $rootScope.recordsVM.invenioRecordsModel[key] = []
                   $rootScope.recordsVM.invenioRecordsModel[key].push({'subitem_corresponding_usage_application_id': $scope.usage_report_activity_id})
                 }
               }
-            });
+          }
           setTimeout(function () {
             $("[name='subitem_corresponding_usage_application_id']").attr("disabled", 'disabled');
           }, 1000);
@@ -1119,7 +1553,7 @@ function handleSharePermission(value) {
           success: function (response) {
             if (response.code) {
               // addAlert(response.msg, 'alert-danger');
-              response.msg.map(item => {
+              response.msg.map(function (item) {
                 addAlert(item, 'alert-danger');
               })
               $scope.render_requirements = true;
@@ -1157,16 +1591,51 @@ function handleSharePermission(value) {
         }
       }
 
+      /**
+      * Set required and collapsed for all sub item.
+      * If form required, setting "required" is true and "collapsed" is false.
+      * If root panel collapse, sub panel will collapse.
+      * @param {Boolean} isCollapsed.
+      * @param {object} forms is item of form.
+      */
+      $scope.recursiveSetCollapsedForForm = function (isCollapsed, forms) {
+        angular.forEach(forms, function(val, key){
+          val["collapsed"] = isCollapsed;
+          val["required"] = !isCollapsed;
+          if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
+            $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
+          }
+        });
+      }
+      /**
+      * Set required and collapsed for all root item.
+      */
+      $scope.setCollapsedAndRequiredForForm = function(){
+        let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
+        let forms = $rootScope.recordsVM.invenioRecordsForm;
+        let isCollapsed;
+        angular.forEach(forms, function(val, key){
+          isCollapsed = requiredList.indexOf(val.key) == -1;
+          val["collapsed"] = isCollapsed;
+          if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
+            $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
+          }
+        });
+      }
+
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.hiddenPubdate();
         $scope.initContributorData();
         $scope.initUserGroups();
+        $scope.initFilenameList();
         $scope.searchTypeKey();
         $scope.setDataForLicenseType();
         $scope.renderValidationErrorList();
         $scope.autoSetTitle();
         $scope.initCorrespondingIdList();
         $scope.autoTitleData();
+        $scope.initAuthorList();
+        $scope.getDataAuthors();
         //When switch language, Getting files uploaded.
         let bucketFiles = JSON.parse(sessionStorage.getItem('files'));
         let bucketEndpoints = JSON.parse(sessionStorage.getItem('endpoints'));
@@ -1196,16 +1665,21 @@ function handleSharePermission(value) {
         }
 
         $scope.showError();
-
         // Delay 3s after page render
-        setTimeout(() => {
+        setTimeout(function () {
           $scope.autofillJournal();
+          //Case edit: fill data to fields when page loaded.
+          let model = $rootScope.recordsVM.invenioRecordsModel;
+          CustomBSDatePicker.setDataFromFieldToModel(model, true);
         }, 3000);
-
         // Auto fill user profile
         $scope.autoFillProfileInfo();
         $scope.autoSetCorrespondingUsageAppId();
+        //Set required and collapsed for all root and sub item.
+        $scope.setCollapsedAndRequiredForForm();
       });
+
+
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
@@ -1232,7 +1706,7 @@ function handleSharePermission(value) {
         if ($("#is_hidden_pubdate").val() !== "True"){
           return;
         }
-        let pubdate = $rootScope.recordsVM.invenioRecordsForm.find(subItem => subItem.key == 'pubdate');
+        let pubdate = $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == 'pubdate' });
         pubdate['condition'] = true;
         pubdate['required'] = false;
         if (!$rootScope.recordsVM.invenioRecordsModel["pubdate"]) {
@@ -1247,7 +1721,7 @@ function handleSharePermission(value) {
       $scope.setValueToField = function (id, value) {
         if (!id) {
           return;
-        } else if (!$scope.depositionForm[id]) {
+        } else if (!$scope.depositionForm[id] || typeof $scope.depositionForm[id] != "object") {
           return;
         }
 
@@ -1298,6 +1772,9 @@ function handleSharePermission(value) {
         for (let item in $rootScope.recordsVM.invenioRecordsModel) {
           this.clearAllFieldCallBack($rootScope.recordsVM.invenioRecordsModel[item]);
         }
+        for(let key in $scope.depositionForm){
+          $scope.setValueToField($scope.depositionForm[key]);
+        }
       }
 
       $scope.clearAllFieldCallBack = function (item) {
@@ -1305,16 +1782,20 @@ function handleSharePermission(value) {
           return item;
         }
         if (Array.isArray(item)) {
-          let subItem = item[0];
+          for (let i in item) {
+            let subItem = item[i];
           this.clearAllFieldCallBack(subItem);
+          }
         } else {
           for (let subItem in item) {
             if ($.isEmptyObject(item[subItem])) {
               continue;
             } else if (Array.isArray(item[subItem])) {
-              let childItem = item[subItem][0];
               let result = [];
-              result.push(this.clearAllFieldCallBack(childItem));
+              for (let i in item[subItem]) {
+                let childItem = item[subItem][i];
+                result.push(this.clearAllFieldCallBack(childItem));
+              }
               item[subItem] = result;
             } else {
               if (typeof item[subItem] === 'string' || item[subItem] instanceof String) {
@@ -1356,54 +1837,49 @@ function handleSharePermission(value) {
       }
 
       $scope.setRecordDataCallBack = function (data) {
-        const THREE_FLOOR_ITEM = [
-          "creator",
-          "relation",
-          "contributor"
-        ];
-        const CREATOR_NAMES = "creatorNames";
 
         data.result.forEach(function (item) {
-          if (THREE_FLOOR_ITEM.includes(item.key)) {
-            let keys = Object.keys(item);
-            keys.forEach(function (itemKey) {
-              if (itemKey != 'key') {
-                let listSubData = item[itemKey];
-                if (!$.isEmptyObject(listSubData)) {
-                  if (Array.isArray(listSubData)) {
-                    listSubData.forEach(function (subData) {
-                      let subKey = Object.keys(subData)[0];
-                      if (!$.isEmptyObject(subData[subKey])) {
-                        if (subData.hasOwnProperty(CREATOR_NAMES)) {
-                          $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey][0]['creatorName'] = subData.creatorNames;
-                        } else {
-                          $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey] = subData[subKey];
-                        }
-                      }
-                    });
-                  } else if (typeof listSubData === 'object') {
-                    if (listSubData.hasOwnProperty(CREATOR_NAMES) &&
-                      $rootScope.recordsVM.invenioRecordsModel[itemKey].hasOwnProperty(CREATOR_NAMES)) {
-                      $rootScope.recordsVM.invenioRecordsModel[itemKey][CREATOR_NAMES][0]['creatorName'] = listSubData.creatorNames;
-                    }
-                  }
-                }
-              }
-            });
-          } else {
-            let keys = Object.keys(item)
-            keys.forEach(function (itemKey) {
-              if (itemKey != 'key') {
-                let itemData = item[itemKey];
-                if (!$.isEmptyObject(itemData)) {
-                  $rootScope.recordsVM.invenioRecordsModel[itemKey] = itemData;
-                }
-              }
-            });
-          }
+            let model = $rootScope.recordsVM.invenioRecordsModel;
+            $scope.setRecordData(model, item);
         });
+        CustomBSDatePicker.setDataFromFieldToModel($rootScope.recordsVM.invenioRecordsModel, true);
         $('#meta-search').modal('toggle');
-      }
+      };
+
+      $scope.setRecordData = function (model, itemData) {
+        if (Array.isArray(itemData)) {
+          if (itemData.length === 1) {
+            $scope.setRecordData(model[0], itemData[0]);
+          } else {
+            let cloneData = model[0];
+            for (let key in itemData) {
+              if (model[key]) {
+                $scope.setRecordData(model[key], itemData[key]);
+              } else {
+                model.push(JSON.parse(JSON.stringify(cloneData)));
+                $scope.setRecordData(model[key], itemData[key]);
+              }
+            }
+          }
+        } else if (typeof (itemData) === "object") {
+          let keys = Object.keys(itemData);
+          keys.forEach(function (itemKey) {
+            let data = itemData[itemKey];
+            if (typeof data === "string") {
+              model[itemKey] = data
+            } else {
+              if (model) {
+                if (model[itemKey]) {
+                  $scope.setRecordData(model[itemKey], itemData[itemKey]);
+                } else {
+                  model[itemKey] = itemData[itemKey];
+                }
+              }
+            }
+          });
+        }
+      };
+
       $scope.searchSource = function (model_id, arrayFlg, form) {
         // alert(form.key[1]);
         var modalcontent = form.key[1];
@@ -1642,34 +2118,45 @@ function handleSharePermission(value) {
           url: get_url,
           method: 'GET',
           async: false,
-          success: (data, status) => {
+          success: function (data, status) {
             let title = "";
             let lang = "en";
-            let titleID = data.title;
-            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])) {
-              let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
-              if (Array.isArray(titleField)) {
-                if (titleField[0].hasOwnProperty(titleID[1])) {
-                  titleField = titleField[0];
-                }
+            let titleData = data.title;
+            if (titleData['title_parent_key'] && $rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleData['title_parent_key'])) {
+              tempRecord = $rootScope.recordsVM.invenioRecordsModel[titleData['title_parent_key']];
+              // Get title
+              if (titleData['title_value_lst_key']) {
+                titleData['title_value_lst_key'].forEach(function (val) {
+                  if (Array.isArray(tempRecord) && tempRecord[0].hasOwnProperty(val)) {
+                    tempRecord = tempRecord[0][val];
+                  }
+                  else if (tempRecord.hasOwnProperty(val)) {
+                    tempRecord = tempRecord[val];
+                  }
+                  title = tempRecord;
+                });
               }
-              if (titleField && titleField[0]) {
-                titleField = titleField[0];
+              if (titleData['title_lang_lst_key']) {
+                tempRecord = $rootScope.recordsVM.invenioRecordsModel[titleData['title_parent_key']];
+                // Get pubDate
+                titleData['title_lang_lst_key'].forEach(function (val) {
+                  if (Array.isArray(tempRecord) && tempRecord[0].hasOwnProperty(val)) {
+                    tempRecord = tempRecord[0][val];
+                  }
+                  else if (tempRecord.hasOwnProperty(val)) {
+                    tempRecord = tempRecord[val];
+                  }
+                  lang = tempRecord;
+                });
               }
-              if (titleField.hasOwnProperty(titleID[1])) {
-                title = titleField[titleID[1]];
-                if (titleField.hasOwnProperty(titleID[2]) && titleField[titleID[2]]) {
-                  lang = titleField[titleID[2]];
-                }
-              }
-            }
-            if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
-              $rootScope.recordsVM.invenioRecordsModel['title'] = title;
-              $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
-            } else {
-              if (title != "") {
+              if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
                 $rootScope.recordsVM.invenioRecordsModel['title'] = title;
                 $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+              } else {
+                if (title != "") {
+                  $rootScope.recordsVM.invenioRecordsModel['title'] = title;
+                  $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+                }
               }
             }
           },
@@ -1691,7 +2178,7 @@ function handleSharePermission(value) {
         if (emails.length === 0) {
           return invalid_emails;
         }
-        emails.each(idx => {
+        emails.each(function (idx) {
           email = emails[idx]
           result = re.test(String(email.text).toLowerCase());
           if (result) {
@@ -1725,6 +2212,9 @@ function handleSharePermission(value) {
       };
 
       $scope.validateInputData = function (activityId, steps, isAutoSetIndexAction) {
+        let schemaForm = $scope.depositionForm.$error.schemaForm;
+        //Get error of custom bs-datepicker fields.
+        let listCusItemErrors = CustomBSDatePicker.getInvalidFieldNameList();
         if (!this.validateRequiredItem()) {
           // Check required item
           return false;
@@ -1732,7 +2222,7 @@ function handleSharePermission(value) {
           return false;
         } else if (!this.validateFieldMaxItems()) {
           return false;
-        } else if ($scope.depositionForm.$invalid) {
+        } else if (($scope.depositionForm.$invalid && schemaForm) || listCusItemErrors.length > 0) {
           // Check containing control or form is invalid
 
           let recordsForm = $rootScope.recordsVM.invenioRecordsForm;
@@ -1740,24 +2230,22 @@ function handleSharePermission(value) {
           for (let i = 0; i < recordsForm.length; i++) {
             itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
           }
-
-          let schemaForm = $scope.depositionForm.$error.schemaForm;
+          //Get error from schemaForm
           let listItemErrors = [];
-          for (let i = 0; i < schemaForm.length; i++) {
-            let name = schemaForm[i].$name;
-            if (itemsDict.hasOwnProperty(name)) {
-              name = itemsDict[name];
+          if(schemaForm){
+            for (let i = 0; i < schemaForm.length; i++) {
+              let name = schemaForm[i].$name;
+              if (itemsDict.hasOwnProperty(name)) {
+                name = itemsDict[name];
+              }
+              listItemErrors.push(name);
             }
-            listItemErrors.push(name);
           }
-
+          //Merge two array error to one array error.
+          listItemErrors = listItemErrors.concat(listCusItemErrors);
           // Generate error message and show modal
           let message = $("#validate_error").val() + '<br/><br/>';
-          message += listItemErrors[0];
-          for (let k = 1; k < listItemErrors.length; k++) {
-            let subMessage = ', ' + listItemErrors[k];
-            message += subMessage;
-          }
+          message += listItemErrors.join(', ');
           $("#inputModal").html(message);
           $("#allModal").modal("show");
           return false;
@@ -1778,9 +2266,11 @@ function handleSharePermission(value) {
             'item_id': $("#autofill_item_type_id").val(),
             'data': request.data
           }
-          request.data = JSON.stringify(requestData);
           $.ajax({
-            ...request,
+            url: validateURL,
+            method: 'POST',
+            data: JSON.stringify(requestData),
+            contentType: "application/json",
             async: false,
             success: function (data, status) {
               if (data.is_valid) {
@@ -1804,10 +2294,10 @@ function handleSharePermission(value) {
 
       $scope.validateFieldMaxItems = function () {
         let isValid = true;
-        Object.entries($rootScope.recordsVM.invenioRecordsModel).forEach(
-          ([key, value]) => {
-            if (value && value.hasOwnProperty('subitem_field')
-              && Array.isArray(value['subitem_field']) && value['subitem_field'].length > 2) {
+        for (let key in $rootScope.recordsVM.invenioRecordsModel) {
+          let value = $rootScope.recordsVM.invenioRecordsModel[key];
+          if (value && value.hasOwnProperty('subitem_field') &&
+              Array.isArray(value['subitem_field']) && value['subitem_field'].length > 2) {
               let errorMessage = $("#validate_maxitems_field").val();
               $("#inputModal").html(errorMessage);
               $("#allModal").modal("show");
@@ -1815,7 +2305,6 @@ function handleSharePermission(value) {
               return isValid;
             }
           }
-        );
         return isValid;
       };
 
@@ -1828,8 +2317,7 @@ function handleSharePermission(value) {
         var subItemGuarantorPosition = 'subitem_guarantor_position';
         var subItemGuarantorPositionOther = 'subitem_guarantor_position(other)';
         var otherChoice = "Others (Input Detail)";
-        Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
-          ([key, value]) => {
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
             if (result) {
               var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
               if (currentInvenioRecordsSchema.properties) {
@@ -1866,7 +2354,7 @@ function handleSharePermission(value) {
                 }
               }
             }
-          });
+          }
         return result;
       }
 
@@ -1884,7 +2372,7 @@ function handleSharePermission(value) {
         actionEndpointKey = JSON.parse(actionEndpointKey);
         approvalMailSubKey = JSON.parse(approvalMailSubKey);
         let param = {};
-        steps.forEach(step => {
+        steps.forEach(function (step) {
           if (step.ActionEndpoint == actionEndpointKey.approval1 && approvalMailSubKey.approval1) {
             emailsToValidate.push('email_approval1');
             let subitemApprovalMailAddress = $scope.depositionForm[approvalMailSubKey.approval1];
@@ -1923,6 +2411,7 @@ function handleSharePermission(value) {
       $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction, approvalMailSubKey) {
         let result = true;
         $.ajax({
+          context: this,
           url: '/api/items/validate_email_and_index',
           headers: {
             'Content-Type': 'application/json'
@@ -1931,7 +2420,7 @@ function handleSharePermission(value) {
           async: false,
           data: JSON.stringify(param),
           dataType: "json",
-          success: (data, status) => {
+          success: function (data, status) {
             let listEmailErrors = [];
             if (param.email_approval1 && param.email_approval2) {
               result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors) + this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
@@ -1995,17 +2484,17 @@ function handleSharePermission(value) {
 
       $scope.priceValidator = function () {
         var result = true;
-        $scope.filemeta_keys.forEach(filemeta_key => {
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
           groupsprice_record = $rootScope.recordsVM.invenioRecordsModel[filemeta_key];
           if (!Array.isArray(groupsprice_record)){
             return result;
           }
-          groupsprice_record.forEach(record => {
+          groupsprice_record.forEach(function (record) {
             prices = record.groupsprice;
             if (!prices) {
               return;
             }
-            prices.forEach(price => {
+            prices.forEach(function (price) {
               if (price.price && isNaN(price.price)) {
                 result = false;
               }
@@ -2076,7 +2565,7 @@ function handleSharePermission(value) {
         return true;
       }
 
-      $scope.updateDataJson = async function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+      $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
         $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
@@ -2102,7 +2591,8 @@ function handleSharePermission(value) {
             // Do nothing
           } else {
             $scope.addApprovalMail();
-            var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
+            var jsonObj = $scope.cleanJsonObject($rootScope.recordsVM.invenioRecordsModel);
+            var str = JSON.stringify(jsonObj);
             var indexOfLink = str.indexOf("authorLink");
             if (indexOfLink != -1) {
               str = str.split(',"authorLink":[]').join('');
@@ -2113,11 +2603,78 @@ function handleSharePermission(value) {
               }
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+            //If CustomBSDatePicker empty => remove attr.
+            CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
+
+            let title = $rootScope.recordsVM.invenioRecordsModel['title'];
+            let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
+            $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
         }
       };
+
+      /* Delete all empty and null Nodes in a JSON Object tree */
+      $scope.cleanJsonObject = function(obj) {
+        obj = JSON.parse(JSON.stringify(obj, function (k, v) {
+          /* Filter empty and null value */
+          return !v ? void 0 : v;
+        }));
+        while (!$scope.isJsonCleaned(obj)) {
+          obj = JSON.parse(JSON.stringify(obj, function (k, v) {
+            /* Filter empty Objects */
+            return JSON.stringify(v) === JSON.stringify({}) ? void 0 : v;
+          }));
+          obj = JSON.parse(JSON.stringify(obj, function (k, v) {
+            /* Filter null values and empty Arrays */
+            if (Array.isArray(v)) {
+              v = v.filter(function(value, index, arr){
+                return value !== null;
+              });
+            }
+            return JSON.stringify(v) === JSON.stringify([]) ? void 0 : v;
+          }));
+        }
+        return obj;
+      }
+
+      /* Check if the JSON Object tree contains empty object by recursive method */
+      $scope.isJsonCleaned = function(obj) {
+        if (typeof obj === 'object') {
+          if (jQuery.isEmptyObject(obj)) {
+            return false;
+          } else {
+            for (var key in obj) {
+              if (!$scope.isJsonCleaned(obj[key])) {
+                 return false;
+               }
+            }
+          }
+        }
+        return true;
+      }
+
+      $scope.saveTilteAndShareUserID = function(title, shareUserID) {
+        let activityID = $('#activity_id').text();
+        let data = {
+          'title': title,
+          'shared_user_id': shareUserID,
+          'activity_id': activityID
+        }
+        $.ajax({
+          url: '/api/items/save_title_and_share_user_id',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(data),
+          dataType: 'json',
+          success: function(response){
+
+          }
+        });
+      }
 
       $scope.addApprovalMail = function () {
         let approvalMailSubKey = $("#approval_email_key").val();
@@ -2143,6 +2700,11 @@ function handleSharePermission(value) {
       };
 
       $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail) {
+        //When press 'Next' or 'Save' button, setting data for model.
+        //This function is called in updataDataJson function.
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        CustomBSDatePicker.setDataFromFieldToModel(model, false);
+
         var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
         let permission = false;
         $scope.$broadcast('schemaFormValidate');
@@ -2195,6 +2757,9 @@ function handleSharePermission(value) {
         };
         InvenioRecordsAPI.request(request).then(
           function success(response) {
+            //When save: date fields data is lost, so this will fill data.
+            let model = $rootScope.recordsVM.invenioRecordsModel;
+            CustomBSDatePicker.setDataFromFieldToModel(model, true);
             addAlert(response.data.msg);
           },
           function error(response) {
@@ -2247,7 +2812,7 @@ function handleSharePermission(value) {
           if (!angular.equals([], thumbnail_item)) {
             var thumbnail_list = [];
 
-            $rootScope.filesVM.files.forEach(file => {
+            $rootScope.filesVM.files.forEach(function (file) {
               if (file.is_thumbnail) {
                 var file_form = {};
                 file_form[thumbnail_item[2][0]] = file.key;
@@ -2273,7 +2838,7 @@ function handleSharePermission(value) {
 
       $scope.searchThumbnailForm = function (title) {
         var thumbnail_attrs = [];
-        $rootScope.recordsVM.invenioRecordsForm.forEach(RecordForm => {
+        $rootScope.recordsVM.invenioRecordsForm.forEach(function (RecordForm) {
           if (RecordForm.title == title) {
             var properties = RecordForm.schema.properties || RecordForm.schema.items.properties;
             var subItem = Object.keys(properties)[0] || 'subitem_thumbnail';
@@ -2289,6 +2854,12 @@ function handleSharePermission(value) {
         delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_doi;
         delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_hdl;
         delete $rootScope.recordsVM.invenioRecordsModel.system_identifier_uri;
+        delete $rootScope.recordsVM.invenioRecordsModel.updated_date;
+        delete $rootScope.recordsVM.invenioRecordsModel.created_date;
+        delete $rootScope.recordsVM.invenioRecordsModel.persistent_identifier_doi;
+        delete $rootScope.recordsVM.invenioRecordsModel.persistent_identifier_h;
+        delete $rootScope.recordsVM.invenioRecordsModel.ranking_page_url;
+        delete $rootScope.recordsVM.invenioRecordsModel.belonging_index_info;
       }
     }
     // Inject depedencies
@@ -2302,7 +2873,6 @@ function handleSharePermission(value) {
 
     var ModalInstanceCtrl = function ($scope, $modalInstance, items) {
       $scope.items = items;
-      $scope.searchKey = '';
       $scope.selected = {
         item: $scope.items[0]
       };
@@ -2313,7 +2883,7 @@ function handleSharePermission(value) {
         $modalInstance.dismiss('cancel');
       };
       $scope.search = function () {
-        $scope.items.push($scope.searchKey);
+        $scope.items.push($scope.searchSchemaIdentifierKey);
       }
     };
 

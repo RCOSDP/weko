@@ -51,8 +51,7 @@ class ComponentExclusionTarget extends React.Component {
         selectedId: []
       });
     } else {
-      if (!this.state.selectedId.includes(id)) {
-
+      if (this.state.selectedId.indexOf(id) == -1) {
         selectedId.push(id);
         this.setState({
           selectedId: selectedId
@@ -86,7 +85,7 @@ class ComponentExclusionTarget extends React.Component {
         {
           listEmail.map((item, id) => {
             return (
-              <a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
+              <a className={`list-group-item list-group-item-action ${this.state.selectedId.indexOf(id) > -1 ? 'active' : ''}`}
                 onClick={() => { this.handleClick(id) }}
                 key={id}
                 value={item.author_id}>
@@ -107,11 +106,13 @@ class ComponentExclusionTarget extends React.Component {
   deleteCommand(event) {
     const listEmail = this.state.listEmail;
     const selectedId = this.state.selectedId;
-    let selectedElement = listEmail.filter((item, id) => {
-      return selectedId.includes(id)
-    })
-
-    this.props.removeEmailFromList(Array.from(selectedElement, item => item.email));
+    var selectedEmails = [];
+    for (var index=0; index < listEmail.length; index++){
+      if (selectedId.indexOf(index) > -1){
+        selectedEmails.push(listEmail[index].email);
+      }
+    }
+    this.props.removeEmailFromList(selectedEmails);
     this.handleClick(-1);
   }
 
@@ -121,7 +122,7 @@ class ComponentExclusionTarget extends React.Component {
 
   render() {
     return (
-      <div className="col-sm-9 form-group style-component">
+      <div className="col-sm-12 form-group style-component">
         <label className="control-label col-xs-3" style={{textAlign:'right'}}>
           {COMPONENT_SEARCH_EMAIL_NAME}
         </label>
@@ -204,8 +205,7 @@ class TableUserEmailComponent extends React.Component {
     $("#sltBoxListEmail > a").each(function () {
       listUser.push(this.value);
     });
-    let isExist = listUser.includes(pk_id);
-    if (!isExist) {
+    if (listUser.indexOf(pk_id) == -1) {
       event.target.disabled = true;
       let data = {
         "author_id": pk_id,
@@ -251,17 +251,19 @@ class SearchComponent extends React.Component {
       searchKey: this.state.searchKey,
       pageNumber: 1,
     }
-    fetch("/api/admin/search_email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    })
-      .then(res => res.json())
-      .then((result) => {
+    $.ajax({
+      context: this,
+      url: "/api/admin/search_email",
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(request),
+      success: function (result) {
         this.props.getListUser(result.hits.hits, result.hits.total);
-      });
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
   }
   handleChange(event) {
     this.setState({ searchKey: event.target.value });
@@ -350,17 +352,19 @@ class Pagination extends React.Component {
       searchKey: this.props.searchKey,
       pageNumber: pageNumber,
     }
-    fetch("/api/admin/search_email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    })
-      .then(res => res.json())
-      .then((result) => {
+    $.ajax({
+      context: this,
+      url: "/api/admin/search_email",
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(request),
+      success: function (result) {
         this.props.getListUser(result.hits.hits, result.hits.total);
-      });
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
   }
   generatePagination() {
     let listPage = [];
@@ -541,8 +545,13 @@ class MainLayout extends React.Component {
 
   removeEmailFromList(listData) {
     let listEmail = this.state.listEmail;
-    listEmail = listEmail.filter((el) => !listData.includes(el.email));
-    this.setState({ listEmail: listEmail });
+    var listRemainEmail = [];
+    for (var index in listEmail){
+      if (listData.indexOf(listEmail[index].email) == -1){
+        listRemainEmail.push(listEmail[index])
+      }
+    }
+    this.setState({ listEmail: listRemainEmail });
   }
 
   isDuplicateAuthorId(listEmail, author_id) {
@@ -551,7 +560,7 @@ class MainLayout extends React.Component {
         return item.author_id
       }
     })
-    return authorIdList.includes(author_id)
+    return authorIdList.indexOf(author_id) > -1
   }
 
   isDuplicateEmail(data, listEmail) {
