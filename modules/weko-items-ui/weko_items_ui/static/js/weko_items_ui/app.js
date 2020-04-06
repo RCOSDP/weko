@@ -1757,6 +1757,7 @@ function toObject(arr) {
           model[filemeta_key][i].size[0].value = filesUploaded[i].size.toString();
           // Fill format
           model[filemeta_key][i].format = filesUploaded[i].mimetype
+        }
       }
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
