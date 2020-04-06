@@ -226,6 +226,9 @@ class SchemaTree:
                 self.get_mapping_data()
         self._v = "@value"
         self._atr = "@attributes"
+        self._atr_lang = "xml:lang"
+        # list of node need be be separated to multiple nodes by language
+        self. _separate_node_lst = None
         self._location = ''
         self._target_namespace = ''
         schemas = WekoSchema.get_all()
@@ -794,82 +797,109 @@ class SchemaTree:
 
             return nlst
 
-        def set_children(kname, node, tree, index=0):
-            if isinstance(node, dict):
-                val = node.get(self._v)
-                # the last children level
-                if val:
-                    if node.get(self._atr):
-                        atr = get_atr_list(node.get(self._atr))
-                        for altt in atr:
-                            if altt:
-                                # atr = get_atr_list(atr[index])
-                                atrt = get_atr_list(altt)
+        def set_children(kname, node, tree, parent_keys,
+                         current_lang=None, index=0):
+            current_separate_key_node=None
+            if self. _separate_node_lst:
+                for separate_node_key in self. _separate_node_lst.keys():
+                    if separate_node_key.split('.') == parent_keys:
+                        current_separate_key_node = separate_node_key
+            # current lang is None means current node(or its parents) no need to be separated
+            if current_separate_key_node and current_lang:
+                existed_attr = node.get(self._atr, None)
+                if not existed_attr:
+                    existed_attr = {}
+                    node.update({self._atr: existed_attr})
+                att_lang = {self._atr_lang: [[current_lang]]}
+                existed_attr.update(att_lang)
+                node.update(existed_attr)
+            if not current_lang and current_separate_key_node:
+                for lang in self. _separate_node_lst.get(current_separate_key_node):
+                    set_children(kname, node, tree, parent_keys, lang)
+            else:
+                if isinstance(node, dict):
+                    val = node.get(self._v)
+                    # the last children level
+                    if val:
+                        if node.get(self._atr):
+                            atr = get_atr_list(node.get(self._atr))
+                            for altt in atr:
+                                if altt:
+                                    # atr = get_atr_list(atr[index])
+                                    atrt = get_atr_list(altt)
+                                for i in range(len(val[index])):
+                                    # just ignore in case target lang != current_lang
+                                    if len(atrt) > i:
+                                        if self._atr_lang in atrt[i].keys() and atrt[i].get(self._atr_lang) and atrt[i].get(self._atr_lang)!= current_lang:
+                                            continue
+                                    chld = etree.Element(kname, None, ns)
+                                    chld.text = val[index][i]
+                                    if len(atrt) > i:
+                                        for k2, v2 in atrt[i].items():
+                                            if v2 is None:
+                                                continue
+                                            chld.set(get_prefix(k2), v2)
+                                    tree.append(chld)
+                                index += 1
+                        else:
                             for i in range(len(val[index])):
                                 chld = etree.Element(kname, None, ns)
                                 chld.text = val[index][i]
-                                if len(atrt) > i:
-                                    for k2, v2 in atrt[i].items():
+                                tree.append(chld)
+                    else:
+                        # parents level
+                        # if have any child
+                        if check_node(node):
+                            # @ attributes only
+                            atr = get_atr_list(node.get(self._atr))
+                            if atr:
+                                atr = get_atr_list(atr[index])
+                                for i, obj in enumerate(atr):
+                                    chld = etree.Element(kname, None, ns)
+                                    tree.append(chld)
+                                    for k2, v2 in obj.items():
                                         if v2 is None:
                                             continue
                                         chld.set(get_prefix(k2), v2)
-                                tree.append(chld)
-                            index += 1
-                    else:
-                        for i in range(len(val[index])):
-                            chld = etree.Element(kname, None, ns)
-                            chld.text = val[index][i]
-                            tree.append(chld)
-                else:
-                    # parents level
-                    # if have any child
-                    if check_node(node):
-                        # @ attributes only
-                        atr = get_atr_list(node.get(self._atr))
-                        if atr:
-                            atr = get_atr_list(atr[index])
-                            for i, obj in enumerate(atr):
-                                chld = etree.Element(kname, None, ns)
-                                tree.append(chld)
-                                for k2, v2 in obj.items():
-                                    if v2 is None:
-                                        continue
-                                    chld.set(get_prefix(k2), v2)
 
-                                for k1, v1 in node.items():
-                                    if k1 != self._atr:
-                                        k1 = get_prefix(k1)
-                                        set_children(k1, v1, chld, i)
-                        else:
-                            nodes = [node]
-                            if bool(node) and not [i for i in node.values() if
-                                                   i and (not i.get(
-                                                       self._v) or not i.get(
-                                                       self._atr))]:
-                                multi = max(
-                                    [len(attr) for n in node.values()
-                                     if n and n.get(self._atr)
-                                     and isinstance(n.get(self._atr), dict)
-                                     for attr in n.get(self._atr).values()])
-                                if int(multi) > 1:
-                                    multi_nodes = [copy.deepcopy(node) for _ in
-                                                   range(int(multi))]
-                                    for idx, item in enumerate(multi_nodes):
-                                        for nd in item.values():
-                                            nd[self._v] = [nd[self._v][idx]]
-                                            for key in nd.get(self._atr):
-                                                nd.get(self._atr)[key] = [
-                                                    nd.get(self._atr)[key][
-                                                        idx]]
-                                    nodes = multi_nodes
-                            for val in nodes:
-                                child = etree.Element(kname, None, ns)
-                                tree.append(child)
+                                    for k1, v1 in node.items():
+                                        if k1 != self._atr:
+                                            k1 = get_prefix(k1)
+                                            clone_lst = parent_keys.copy()
+                                            clone_lst.append(k1)
+                                            set_children(k1, v1, chld, clone_lst,current_lang,i)
+                            else:
+                                nodes = [node]
+                                if bool(node) and not [i for i in node.values() if
+                                                       i and (not i.get(
+                                                           self._v) or not i.get(
+                                                           self._atr))]:
+                                    multi = max(
+                                        [len(attr) for n in node.values()
+                                         if n and n.get(self._atr)
+                                         and isinstance(n.get(self._atr), dict)
+                                         for attr in n.get(self._atr).values()])
+                                    if int(multi) > 1:
+                                        multi_nodes = [copy.deepcopy(node) for _ in
+                                                       range(int(multi))]
+                                        for idx, item in enumerate(multi_nodes):
+                                            for nd in item.values():
+                                                nd[self._v] = [nd[self._v][idx]]
+                                                for key in nd.get(self._atr):
+                                                    nd.get(self._atr)[key] = [
+                                                        nd.get(self._atr)[key][
+                                                            idx]]
+                                        nodes = multi_nodes
+                                for val in nodes:
+                                    child = etree.Element(kname, None, ns)
+                                    tree.append(child)
 
-                                for k1, v1 in val.items():
-                                    if k1 != self._atr:
-                                        k1 = get_prefix(k1)
-                                        set_children(k1, v1, child)
+                                    for k1, v1 in val.items():
+                                        if k1 != self._atr:
+                                            k1 = get_prefix(k1)
+                                            clone_lst = parent_keys.copy()
+                                            clone_lst.append(k1)
+                                            set_children(k1, v1, child, clone_lst,current_lang)
 
         def merge_json_xml(json, dct):
             if isinstance(json, dict):
@@ -931,7 +961,7 @@ class SchemaTree:
                 merge_json_xml(json_child, dct_xml)
             list_dict.append(dct_xml)
             list_json_xml = list_dict
-
+            self. _separate_node_lst ={'stdyDscr.citation': set()}
         node_tree = self.find_nodes(list_json_xml)
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -953,6 +983,11 @@ class SchemaTree:
                            'jpcoar:rightsHolder']
         affiliation_key = 'jpcoar:affiliation'
         name_identifier_key = 'jpcoar:nameIdentifier'
+        # Remove all None languages
+        if self. _separate_node_lst:
+            for key,val in self. _separate_node_lst.items():
+                if None in val:
+                    val.remove(None)
         for lst in node_tree:
             for k, v in lst.items():
                 # Remove items that are not set as controlled vocabulary
@@ -962,7 +997,7 @@ class SchemaTree:
                         remove_custom_scheme(v[affiliation_key][
                             name_identifier_key], v)
                 k = get_prefix(k)
-                set_children(k, v, root)
+                set_children(k, v, root, [k])
         return root
 
     def to_list(self):
@@ -1078,6 +1113,12 @@ class SchemaTree:
             for x in get_node_dic(key):
                 nv = copy.deepcopy(v)
                 for kst in klst:
+                    current_separate_key = None
+                    if self. _separate_node_lst:
+                        for nodes_key, nodes_val in self. _separate_node_lst.items():
+                            if kst.startswith(nodes_key):
+                                current_separate_key = nodes_key
+                                break
                     kst = kst.split(".")
                     gene = items_node({key: x}, kst)
                     # iter nested path(nodes)
@@ -1095,6 +1136,11 @@ class SchemaTree:
                                         node.update({self._v: [[val]]})
                                 if atr:
                                     if isinstance(atr, dict):
+                                        if self._atr_lang in atr.keys() and  current_separate_key and \
+                                            atr.get(self._atr_lang)[0]:
+                                            self. _separate_node_lst.get(
+                                                 current_separate_key).update(
+                                                atr.get(self._atr_lang)[0])
                                         for k1, v1 in atr.items():
                                             if isinstance(v1, str):
                                                 atr[k1] = [[v1]]
