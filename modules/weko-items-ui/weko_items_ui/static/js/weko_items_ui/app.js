@@ -373,11 +373,6 @@ function autocomplete(inp, arr) {
   });
 }
 
-// remove file form after click x
-function deleteFileForm(id) {
-  $("#fileForm_" + id + "").remove();
-}
-
 get_search_data = function (keyword) {
   get_search_data_url = '/api/items/get_search_data/' + keyword;
   if (keyword == 'username') {
@@ -1724,12 +1719,8 @@ function toObject(arr) {
         var countFile = $rootScope.filesVM.files.length;
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           // Add or remove form to equal with count of file
-          while (model[filemeta_key].length !== countFile) {
-            if (model[filemeta_key].length < countFile) {
-              model[filemeta_key].push({});
-            } else if (model[filemeta_key].length > countFile) {
-              model[filemeta_key].pop();
-            }
+          while (model[filemeta_key].length < countFile) {
+            model[filemeta_key].push({});
           }
           $scope.autoFillFileInfo(filemeta_key);
         });
@@ -1738,26 +1729,35 @@ function toObject(arr) {
       $scope.autoFillFileInfo = function (filemeta_key) {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         let schema = $rootScope.recordsVM.invenioRecordsSchema.properties;
-        var countFile = $rootScope.filesVM.files.length;
-        for (var i = 0; i < countFile; i++) {
-          // Fill filename to model
-          if (Object.keys(schema[filemeta_key].items.properties).indexOf('filename') >= 0) {
-            model[filemeta_key][i]['filename'] = $rootScope.filesVM.files[i].key
-          }
-          else if (Object.keys(schema[filemeta_key].items.properties).indexOf('billing_filename') >= 0) {
-            model[filemeta_key][i]['billing_filename'] = $rootScope.filesVM.files[i].key
-          }
-        }
         let filesUploaded = $rootScope.filesVM.files;
         for (var i = 0; i < filesUploaded.length; i++) {
           // Fill filename
-          model[filemeta_key][i].filename = filesUploaded[i].key
+          if (Object.keys(schema[filemeta_key].items.properties).indexOf('filename') >= 0) {
+            model[filemeta_key][i]['filename'] = filesUploaded[i].key
+          }
+          else if (Object.keys(schema[filemeta_key].items.properties).indexOf('billing_filename') >= 0) {
+            model[filemeta_key][i]['billing_filename'] = filesUploaded[i].key
+          }
           // Fill size
           model[filemeta_key][i].size =[{}]; // init array
-          model[filemeta_key][i].size[0].value = filesUploaded[i].size.toString();
+          model[filemeta_key][i].size[0].value = $scope.bytesToReadableString(filesUploaded[i].size);
           // Fill format
           model[filemeta_key][i].format = filesUploaded[i].mimetype
         }
+      }
+
+      $scope.bytesToReadableString = function (bytes) {
+        var limit = Math.pow(1024, 4);
+        if (bytes > limit) {
+            return round(bytes / limit, 1) + ' Tb';
+        } else if (bytes > (limit /= 1024)) {
+            return round(bytes / limit, 1) + ' Gb';
+        } else if (bytes > (limit /= 1024)) {
+            return round(bytes / limit, 1) + ' Mb';
+        } else if (bytes > 1024) {
+            return Math.round(bytes / 1024) + ' Kb';
+        }
+        return bytes + ' B';
       }
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
