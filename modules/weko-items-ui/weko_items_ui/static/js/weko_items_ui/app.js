@@ -1737,12 +1737,26 @@ function toObject(arr) {
 
       $scope.autoFillFileInfo = function (filemeta_key) {
         let model = $rootScope.recordsVM.invenioRecordsModel;
+        let schema = $rootScope.recordsVM.invenioRecordsSchema.properties;
         var countFile = $rootScope.filesVM.files.length;
         for (var i = 0; i < countFile; i++) {
           // Fill filename to model
-          model[filemeta_key][i].filename = $rootScope.filesVM.files[i].key
-          // Fill more here
+          if (Object.keys(schema[filemeta_key].items.properties).indexOf('filename') >= 0) {
+            model[filemeta_key][i]['filename'] = $rootScope.filesVM.files[i].key
+          }
+          else if (Object.keys(schema[filemeta_key].items.properties).indexOf('billing_filename') >= 0) {
+            model[filemeta_key][i]['billing_filename'] = $rootScope.filesVM.files[i].key
+          }
         }
+        let filesUploaded = $rootScope.filesVM.files;
+        for (var i = 0; i < filesUploaded.length; i++) {
+          // Fill filename
+          model[filemeta_key][i].filename = filesUploaded[i].key
+          // Fill size
+          model[filemeta_key][i].size =[{}]; // init array
+          model[filemeta_key][i].size[0].value = filesUploaded[i].size.toString();
+          // Fill format
+          model[filemeta_key][i].format = filesUploaded[i].mimetype
       }
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
