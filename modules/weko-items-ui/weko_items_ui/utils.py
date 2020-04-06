@@ -1050,6 +1050,16 @@ def _export_item(record_id,
         exported_item['item_type_id'] = record.get('item_type_id')
         if not records_data:
             records_data = record
+        if exported_item['item_type_id']:
+            list_hidden = get_ignore_item_from_option(
+                exported_item['item_type_id'])
+            if records_data.get('metadata'):
+                meta_data = records_data.get('metadata')
+                if not show_hide_meta_data_for_role(
+                        meta_data.get('weko_creator_id')):
+                    for data in list_hidden:
+                        if meta_data.get(data):
+                            del records_data['metadata'][data]
 
         # Create metadata file.
         with open('{}/{}_metadata.json'.format(tmp_path,
@@ -1417,3 +1427,69 @@ def get_data_authors_prefix_settings():
     except Exception as e:
         current_app.logger.error(e)
         return None
+
+
+def show_hide_meta_data_for_role(weko_creator_id):
+    """
+    Show hide metadate for curent user role.
+
+    :return:
+    """
+    is_admin = False
+    is_community_admin = False
+    item_register = False
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            is_admin = True
+            break
+    # Community users
+    community_role_name = current_app.config[
+        'WEKO_PERMISSION_ROLE_COMMUNITY']
+    for role in list(current_user.roles or []):
+        if role.name in community_role_name:
+            is_community_admin = True
+            break
+    # Item Register
+    if weko_creator_id in list(current_user.roles or []):
+        item_register = True
+
+    return is_admin or is_community_admin or item_register
+
+
+def get_ignore_item_from_option(_item_type_id):
+    """Get all keys of properties that is set Hide option on metadata.
+            """
+    ignore_list = []
+    item_type_mapping, meta_options = get_options_and_order_list(_item_type_id)
+    for key, val in meta_options.items():
+        hidden = val.get('option').get('hidden')
+        if hidden:
+            ignore_list.append(
+                get_mapping_name_item_type_by_key(key, item_type_mapping))
+    return ignore_list
+
+
+def get_mapping_name_item_type_by_key(key, item_type_mapping):
+    for data in item_type_mapping:
+        print
+        if data == key:
+            property_data = item_type_mapping.get(data)
+            if isinstance(property_data.get('jpcoar_mapping'), dict):
+                for name in property_data.get('jpcoar_mapping'):
+                    return name
+    return key
+
+
+def get_options_and_order_list(item_type_id):
+    """Get Options by item type id.
+
+    :param item_type_id:
+    :return: options dict and sorted list
+    """
+    from weko_records.api import ItemTypes, Mapping
+    json_item = ItemTypes.get_record(item_type_id)
+    item_type_mapping = Mapping.get_record(item_type_id)
+    meta_options = json_item.model.render.get('meta_fix')
+    meta_options.update(json_item.model.render.get('meta_list'))
+    return item_type_mapping, meta_options
