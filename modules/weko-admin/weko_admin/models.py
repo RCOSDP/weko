@@ -1663,6 +1663,9 @@ class Identifier(db.Model):
     jalc_datacite_flag = db.Column(db.Boolean, default=True)
     """ Jalc_datacite_flag of the Identifier """
 
+    ndl_jalc_flag = db.Column(db.Boolean, default=True)
+    """ Ndl_jalc_flag of the Identifier """
+
     jalc_doi = db.Column(db.String(100), nullable=True)
     """ Jalc_doi of the Identifier """
 
@@ -1671,6 +1674,9 @@ class Identifier(db.Model):
 
     jalc_datacite_doi = db.Column(db.String(100), nullable=True)
     """ Jalc_datacite_doi of the Identifier """
+
+    ndl_jalc_doi = db.Column(db.String(100), nullable=True)
+    """ Ndl_jalc_doi of the Identifier """
 
     suffix = db.Column(db.String(100), nullable=True)
     """ Suffix of the Identifier """
