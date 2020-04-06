@@ -209,7 +209,7 @@ class ShibUser(object):
 
     def valid_site_license(self):
         """
-        Check and set relation role for Weko3 user by wekoSocietyAffiliation.
+        Get license from shib attr.
 
         :return:
 
