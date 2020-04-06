@@ -1946,6 +1946,9 @@ function toObject(arr) {
           if (authorInfoObj[0].hasOwnProperty('nameIdentifiers')) {
             $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].nameIdentifiers = authorInfoObj[0].nameIdentifiers;
           }
+          if (authorInfoObj[0].hasOwnProperty('creatorMails')) {
+            $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].creatorMails = authorInfoObj[0].creatorMails;
+          }
 
           var weko_id = $('#weko_id').text();
           $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].weko_id = weko_id;
@@ -1976,6 +1979,9 @@ function toObject(arr) {
           }
           if (authorInfoObj[0].hasOwnProperty('nameIdentifiers')) {
             $rootScope.recordsVM.invenioRecordsModel[modelId].nameIdentifiers = authorInfoObj[0].nameIdentifiers;
+          }
+          if (authorInfoObj[0].hasOwnProperty('creatorMails')) {
+            $rootScope.recordsVM.invenioRecordsModel[modelId].creatorMails = authorInfoObj[0].creatorMails;
           }
 
           var weko_id = $('#weko_id').text();
