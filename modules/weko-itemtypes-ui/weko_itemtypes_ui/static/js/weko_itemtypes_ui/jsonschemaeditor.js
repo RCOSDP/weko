@@ -304,7 +304,7 @@ var SchemaSelect = React.createClass({
 		return {
 			type: this.state.type,
 			format: "select",
-			enum: this.state.enum.length > 0 ? this.state.enum_original : []
+			enum: this.state.enum_original ? this.state.enum_original : this.state.enum.length > 0 ? this.state.enum.split('|') : []
 		};
 	},
 	render: function render() {
