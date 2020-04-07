@@ -801,7 +801,7 @@ class SchemaTree:
                          current_lang=None, index=0):
             if kname == 'type':
                 return
-            current_separate_key_node=None
+            current_separate_key_node = None
             if self._separate_node_lst:
                 for separate_node_key in self._separate_node_lst.keys():
                     if separate_node_key.split('.') == parent_keys:
@@ -816,14 +816,17 @@ class SchemaTree:
                 existed_attr.update(att_lang)
                 node.update(existed_attr)
             if not current_lang and current_separate_key_node:
-                for lang in self._separate_node_lst.get(current_separate_key_node):
+                for lang in self._separate_node_lst.get(
+                        current_separate_key_node):
                     set_children(kname, node, tree, parent_keys, lang)
             else:
                 if isinstance(node, dict):
                     val = node.get(self._v)
                     node_type = node.get('type')
-                    mandatory = True if node_type.get('minOccurs') == 1 else False
-                    repeatable = False if node_type.get('maxOccurs') == 1 else True
+                    mandatory = True if node_type.get(
+                        'minOccurs') == 1 else False
+                    repeatable = False if node_type.get(
+                        'maxOccurs') == 1 else True
                     # the last children level
                     if val:
                         if node.get(self._atr):
@@ -832,11 +835,12 @@ class SchemaTree:
                                 if altt:
                                     # atr = get_atr_list(atr[index])
                                     atrt = get_atr_list(altt)
-                                clone_val, clone_atr = recorect_node(val[index],
-                                                                     atrt,
-                                                                     current_lang,
-                                                                     mandatory,
-                                                                     repeatable)
+                                clone_val, clone_atr = recorrect_node(
+                                    val[index],
+                                    atrt,
+                                    current_lang,
+                                    mandatory,
+                                    repeatable)
                                 for i in range(len(clone_val)):
                                     chld = etree.Element(kname, None, ns)
                                     chld.text = clone_val[i]
@@ -873,7 +877,9 @@ class SchemaTree:
                                             k1 = get_prefix(k1)
                                             clone_lst = parent_keys.copy()
                                             clone_lst.append(k1)
-                                            set_children(k1, v1, chld, clone_lst,current_lang,i)
+                                            set_children(k1, v1, chld,
+                                                         clone_lst,
+                                                         current_lang, i)
                             else:
                                 nodes = [node]
                                 if bool(node) and not [i for i in node.values() if
@@ -886,7 +892,8 @@ class SchemaTree:
                                          and isinstance(n.get(self._atr), dict)
                                          for attr in n.get(self._atr).values()])
                                     if int(multi) > 1:
-                                        multi_nodes = [copy.deepcopy(node) for _ in
+                                        multi_nodes = [copy.deepcopy(node) for _
+                                                       in
                                                        range(int(multi))]
                                         for idx, item in enumerate(multi_nodes):
                                             for nd in item.values():
@@ -905,10 +912,12 @@ class SchemaTree:
                                             k1 = get_prefix(k1)
                                             clone_lst = parent_keys.copy()
                                             clone_lst.append(k1)
-                                            set_children(k1, v1, child, clone_lst,current_lang)
+                                            set_children(k1, v1, child,
+                                                         clone_lst,
+                                                         current_lang)
 
-        def recorect_node(val, attr, current_lang, mandatory=True,
-                          repeatable=False):
+        def recorrect_node(val, attr, current_lang, mandatory=True,
+                            repeatable=False):
             if not current_lang:
                 return val, attr
             val_result = []
@@ -1015,7 +1024,7 @@ class SchemaTree:
                 merge_json_xml(json_child, dct_xml)
             list_dict.append(dct_xml)
             list_json_xml = list_dict
-            self._separate_node_lst ={'stdyDscr.citation': set()}
+            self._separate_node_lst = {'stdyDscr.citation': set()}
         node_tree = self.find_nodes(list_json_xml)
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -1039,7 +1048,7 @@ class SchemaTree:
         name_identifier_key = 'jpcoar:nameIdentifier'
         # Remove all None languages
         if self._separate_node_lst:
-            for key,val in self._separate_node_lst.items():
+            for key, val in self._separate_node_lst.items():
                 if None in val:
                     val.remove(None)
         for lst in node_tree:
@@ -1169,7 +1178,8 @@ class SchemaTree:
                 for kst in klst:
                     current_separate_key = None
                     if self._separate_node_lst:
-                        for nodes_key, nodes_val in self._separate_node_lst.items():
+                        for nodes_key, nodes_val in \
+                            self._separate_node_lst.items():
                             if kst.startswith(nodes_key):
                                 current_separate_key = nodes_key
                                 break
