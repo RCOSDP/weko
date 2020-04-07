@@ -126,11 +126,11 @@
     <div class="col-xs-12 col-sm-12 col-md-12">
         <h1>
           <i class="fa fa-group"></i>
-          {{ _("Communities") }} <small>{{ _("created and curated by %(x_name)s users", x_name=config.THEME_SITENAME) }}</small>
+          {{ _("Communities") }} <small>{{ _("Universities on MERAL Portal") }}</small>
         </h1>
 
     </div>
-    <div class="col-sm-8 col-md-8">
+    <div class="col-sm-12 col-md-12">
       {%- set args = request.args.copy().to_dict() -%}
       <form method="GET" id="search_form" role="form">
         {{ form.p(class_="form-control " + form.p.short_name, placeholder='Search communities', type='text') }}
@@ -188,14 +188,18 @@
                     <h4>
                       <div class="pull-right">
                         <div class="form-group">
-                          <a href="{{url_for('.view', community_id=obj.id, view='basic')}}" class="btn btn-info">{{ _('Basic') }}</a>
-                          <a href="{{url_for('.view', community_id=obj.id, view='weko')}}" class="btn btn-info">{{ _('Weko') }}</a>
+                          <!--
+                            <a href="{{url_for('.view', community_id=obj.id, view='basic')}}" class="btn btn-info">{{ _('Basic') }}</a>
+                          -->
+                          <a href="{{url_for('.view', community_id=obj.id, view='weko')}}" class="btn btn-info">{{ _('Go to this repository') }}</a>
                         </div>
                       </div>
                       {{ obj.title }}
                     </h4><br />
                     <p>{{ obj.description|striptags|truncate }}</p>
-                    <small class="text-muted">Curated by: {{ obj.owner.profile.username }}</small>
+                    <!--
+                      <small class="text-muted">Curated by: {{ obj.owner.profile.username }}</small>
+                    -->
                   </div>
                 </div>
               {% endif %}
@@ -244,9 +248,8 @@
         </p>
       {% endif %}
     </div> <!-- /.col-sm-8 col-md-8 -->
-    <div class="col-sm-4 col-md-4">
-      {% include "invenio_communities/mycommunities.html" %}
-    </div>
+
+
   </div>
 </div>
 

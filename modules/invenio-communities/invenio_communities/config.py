@@ -46,11 +46,10 @@ COMMUNITIES_RECORD_KEY = 'communities'
 
 COMMUNITIES_SORTING_OPTIONS = [
     'title',
-    'ranking',
 ]
 """Possible communities sorting options."""
 
-COMMUNITIES_DEFAULT_SORTING_OPTION = 'ranking'
+COMMUNITIES_DEFAULT_SORTING_OPTION = 'title'
 """Default sorting option."""
 
 COMMUNITIES_OAI_FORMAT = 'user-{community_id}'
