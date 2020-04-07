@@ -233,21 +233,20 @@ def getById():
 @author_permission.require(http_exception=403)
 def mapping():
     """Transfer the author to JPCOAR format."""
-
     def get_name_creator(res, _source):
         name_info = _source.get('authorNameInfo')
         for i in name_info:
             if i.get('nameShowFlg') == 'true':
                 if i.get('nameFormat') == 'familyNmAndNm':
                     tmp = {'familyName': i.get('familyName'),
-                        'familyNameLang': i.get('language')}
+                           'familyNameLang': i.get('language')}
                     res['familyNames'].append(tmp)
                     tmp = {'givenName': i.get('firstName'),
-                        'givenNameLang': i.get('language')}
+                           'givenNameLang': i.get('language')}
                     res['givenNames'].append(tmp)
                 else:
                     tmp = {'creatorName': i.get('fullName'),
-                        'creatorNameLang': i.get('language')}
+                           'creatorNameLang': i.get('language')}
                     res['creatorNames'].append(tmp)
 
     def get_identifier_creator(res, _source):
@@ -456,7 +455,8 @@ def update_prefix():
             AuthorsPrefixSettings.update(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
         else:
-            return jsonify({'code': 400, 'msg': 'Specified scheme is already exist.'})
+            return jsonify(
+                {'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
 
@@ -482,6 +482,7 @@ def create_prefix():
             AuthorsPrefixSettings.create(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
         else:
-            return jsonify({'code': 400, 'msg': 'Specified scheme is already exist.'})
+            return jsonify(
+                {'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
