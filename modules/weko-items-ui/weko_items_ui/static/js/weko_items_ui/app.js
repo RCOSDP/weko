@@ -1908,36 +1908,23 @@ function toObject(arr) {
         }else{
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId];
         }
-        creatorModel.affiliation = authorInfoObj[0].hasOwnProperty('affiliation') ? authorInfoObj[0].affiliation : [{}];
-        creatorModel.creatorAlternatives = authorInfoObj[0].hasOwnProperty('creatorAlternatives') ? authorInfoObj[0].creatorAlternatives : [{}];
-        creatorModel.familyNames = authorInfoObj[0].hasOwnProperty('familyNames') ? authorInfoObj[0].familyNames : [{}];
-        creatorModel.givenNames = authorInfoObj[0].hasOwnProperty('givenNames') ? authorInfoObj[0].givenNames : [{}];
-        creatorModel.nameIdentifiers = authorInfoObj[0].hasOwnProperty('nameIdentifiers') ? authorInfoObj[0].nameIdentifiers : [{}];
-        creatorModel.creatorMails = authorInfoObj[0].hasOwnProperty('creatorMails') ? authorInfoObj[0].creatorMails : [{}];
-        //creatorName = familyName + givenName
-        let familyName = creatorModel.familyNames[0].hasOwnProperty('familyName') ? creatorModel.familyNames[0].familyName : '';
-        let givenName = creatorModel.givenNames[0].hasOwnProperty('givenName') ? creatorModel.givenNames[0].givenName : '';
-        let subCreatorName = {
-          "creatorName": familyName + " " + givenName,
-          "creatorNameLang": creatorModel.familyNames[0].familyNameLang
-        };
-        creatorModel.creatorNames = [subCreatorName];
-
-        if(arrayFlg == 'true'){
-          if (authorInfoObj[0].hasOwnProperty('familyNames') && authorInfoObj[0].hasOwnProperty('givenNames')) {
-            if (!authorInfoObj[0].hasOwnProperty('creatorNames')) {
+        angular.forEach(authorInfoObj, function(value, key) {
+          creatorModel = Object.assign(creatorModel, value);
+          //creatorName = familyName + givenName
+          if (value.hasOwnProperty('familyNames') && value.hasOwnProperty('givenNames')) {
+            if (!value.hasOwnProperty('creatorNames')) {
               creatorModel.creatorNames = [];
             }
-            for (var i = 0; i < authorInfoObj[0].familyNames.length; i++) {
+            for (var i = 0; i < value.familyNames.length; i++) {
               let subCreatorName = { "creatorName": "", "creatorNameLang": "" };
-              let familyName = authorInfoObj[0].familyNames[i].familyName;
-              let givenName = authorInfoObj[0].givenNames[i].givenName;
+              let familyName = value.familyNames[i].familyName;
+              let givenName = value.givenNames[i].givenName;
               subCreatorName.creatorName = familyName + "　" + givenName;
-              subCreatorName.creatorNameLang = authorInfoObj[0].familyNames[i].creatorNameLang;
+              subCreatorName.creatorNameLang = value.familyNames[i].familyNameLang;
               creatorModel.creatorNames.push(subCreatorName);
             }
           }
-        }
+        });
         creatorModel.weko_id = weko_id;
         creatorModel.weko_id_hidden = weko_id;
         creatorModel.authorLink = ['check'];
