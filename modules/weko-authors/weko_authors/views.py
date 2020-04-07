@@ -234,7 +234,7 @@ def getById():
 def mapping():
     """Transfer the author to JPCOAR format."""
 
-    def fillDataForName(res, _source):
+    def get_name_creator(res, _source):
         name_info = _source.get('authorNameInfo')
         for i in name_info:
             if i.get('nameShowFlg') == 'true':
@@ -250,10 +250,8 @@ def mapping():
                         'creatorNameLang': i.get('language')}
                     res['creatorNames'].append(tmp)
 
-    def fillDataForIdentifier(res, _source):
-        """ """
-        def getInfoAuthorId(idTtype):
-            """ """
+    def get_identifier_creator(res, _source):
+        def get_info_author_id(idTtype):
             prefix_settings = AuthorsPrefixSettings.query.all()
             scheme = uri = ''
             for prefix in prefix_settings:
@@ -267,17 +265,17 @@ def mapping():
 
         id_info = _source.get('authorIdInfo')
         for j in id_info:
-            scheme, uri = getInfoAuthorId(int(j['idType']))
             if j.get('authorIdShowFlg') == 'true':
+                scheme, uri = get_info_author_id(int(j['idType']))
                 authorId = j.get('authorId')
                 tmp = {
-                    'nameIdentifier': j.get('authorId'),
+                    'nameIdentifier': authorId,
                     'nameIdentifierScheme': scheme,
                     'nameIdentifierURI': uri
                 }
                 res['nameIdentifiers'].append(tmp)
 
-    def fillDataForEmail(res, _source):
+    def get_email_creator(res, _source):
         emailInfo = _source.get('emailInfo')
         for item in emailInfo:
             email = item.get('email')
@@ -285,6 +283,7 @@ def mapping():
             res['creatorMails'].append(emailJson)
 
     data = request.get_json()
+
     # get author data
     author_id = data.get('id') or ''
     indexer = RecordIndexer()
@@ -294,13 +293,15 @@ def mapping():
         id=author_id
     )
     _source = result.get('_source')
+
     # transfer to JPCOAR format
     res = {'familyNames': [], 'givenNames': [], 'creatorNames': [],
            'nameIdentifiers': [], 'creatorAlternative': [], 'creatorMails': []}
 
-    fillDataForName(res, _source)
-    fillDataForIdentifier(res, _source)
-    fillDataForEmail(res, _source)
+    get_name_creator(res, _source)
+    get_identifier_creator(res, _source)
+    get_email_creator(res, _source)
+
     # remove empty element
     last = {}
     for k, v in res.items():
@@ -308,6 +309,7 @@ def mapping():
             last[k] = v
 
     current_app.logger.debug([last])
+
     return json.dumps([last])
 
 
