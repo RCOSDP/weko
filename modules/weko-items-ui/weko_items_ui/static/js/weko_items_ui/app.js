@@ -1781,7 +1781,7 @@ function toObject(arr) {
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key].forEach(function (fileInfo) {
-            if (fileInfo.filename == modelValue) {
+            if (fileInfo.filename == modelValue || fileInfo.billing_filename == modelValue) {
               fileInfo.size = [{}];
               fileInfo.size[0].value = filesObject[modelValue].size;
               fileInfo.format = filesObject[modelValue].format;
