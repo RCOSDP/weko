@@ -525,7 +525,7 @@ def package_export_file(item_type_data):
     return tsv_output
 
 
-def make_stats_tsv(item_type_id, recids):
+def make_stats_tsv(hidden, item_type_id, recids):
     """Prepare TSV data for each Item Types.
 
     Arguments:
@@ -538,6 +538,12 @@ def make_stats_tsv(item_type_id, recids):
 
     """
     item_type = ItemTypes.get_by_id(item_type_id).render
+
+    list_hide = get_item_from_option(item_type_id)
+    if hidden and item_type:
+        for name_hide in list_hide:
+            item_type = hide_items_type(item_type, name_hide)
+
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
 
@@ -876,7 +882,7 @@ def export_items(post_data):
         for record_id in record_ids:
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
-            exported_item = _export_item(
+            exported_item, hidden= _export_item(
                 record_id,
                 export_format,
                 include_contents,
@@ -908,6 +914,7 @@ def export_items(post_data):
         # Create export info file
         for item_type_id in item_types_data:
             keys, labels, records = make_stats_tsv(
+                hidden,
                 item_type_id,
                 item_types_data[item_type_id]['recids'])
             item_types_data[item_type_id]['recids'].sort()
@@ -954,7 +961,7 @@ def export_item_custorm(post_data):
         # Double check for limits
         record_path = export_path + '/recid_' + str(record_id)
         os.makedirs(record_path, exist_ok=True)
-        exported_item = _export_item(
+        exported_item, hidden= _export_item(
             record_id,
             None,
             include_contents,
@@ -985,6 +992,7 @@ def export_item_custorm(post_data):
         # Create export info file
         for item_type_id in item_types_data:
             keys, labels, records = make_stats_tsv(
+                hidden,
                 item_type_id,
                 item_types_data[item_type_id]['recids'])
             item_types_data[item_type_id]['recids'].sort()
@@ -1041,7 +1049,7 @@ def _export_item(record_id,
     """Exports files for record according to view permissions."""
     exported_item = {}
     record = WekoRecord.get_record_by_pid(record_id)
-
+    hidden = True
     if record:
         exported_item['record_id'] = record.id
         exported_item['name'] = 'recid_{}'.format(record_id)
@@ -1055,8 +1063,8 @@ def _export_item(record_id,
                 exported_item['item_type_id'])
             if records_data.get('metadata'):
                 meta_data = records_data.get('metadata')
-                if not show_hide_meta_data_for_role(
-                        meta_data.get('weko_creator_id')):
+                hidden = hide_meta_data_for_role(meta_data)
+                if hidden:
                     for data in list_hidden:
                         if meta_data.get(data):
                             del records_data['metadata'][data]
@@ -1081,7 +1089,7 @@ def _export_item(record_id,
                             shutil.copy2(file.obj.file.uri,
                                          tmp_path + '/' + file.obj.basename)
 
-    return exported_item
+    return exported_item, hidden
 
 
 def get_new_items_by_date(start_date: str, end_date: str) -> dict:
@@ -1429,39 +1437,41 @@ def get_data_authors_prefix_settings():
         return None
 
 
-def show_hide_meta_data_for_role(weko_creator_id):
+def hide_meta_data_for_role(weko_creator):
     """
     Show hide metadate for curent user role.
 
     :return:
     """
-    is_admin = False
-    is_community_admin = False
-    item_register = False
+    is_hidden = True
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     for role in list(current_user.roles or []):
         if role.name in supers:
-            is_admin = True
+            is_hidden = False
             break
     # Community users
     community_role_name = current_app.config[
         'WEKO_PERMISSION_ROLE_COMMUNITY']
     for role in list(current_user.roles or []):
         if role.name in community_role_name:
-            is_community_admin = True
+            is_hidden = False
             break
-    # Item Register
-    if weko_creator_id in list(current_user.roles or []):
-        item_register = True
+    # Item Register Share User
+    if weko_creator.get('weko_creator_id') in list(current_user.roles or []):
+        is_hidden = False
 
-    return is_admin or is_community_admin or item_register
+    #Share User
+    if weko_creator.get('weko_shared_id') in list(current_user.roles or []):
+        is_hidden = False
+
+    return is_hidden
 
 
 def get_ignore_item_from_option(_item_type_id):
     """Get all keys of properties that is set Hide option on metadata.
             """
     ignore_list = []
-    item_type_mapping, meta_options = get_options_and_order_list(_item_type_id)
+    meta_options, item_type_mapping = get_options_and_order_list(_item_type_id)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
@@ -1472,13 +1482,37 @@ def get_ignore_item_from_option(_item_type_id):
 
 def get_mapping_name_item_type_by_key(key, item_type_mapping):
     for data in item_type_mapping:
-        print
         if data == key:
             property_data = item_type_mapping.get(data)
             if isinstance(property_data.get('jpcoar_mapping'), dict):
                 for name in property_data.get('jpcoar_mapping'):
                     return name
     return key
+
+
+def get_item_from_option(_item_type_id):
+    """Get all keys of properties that is set Hide option on metadata.
+            """
+    ignore_list = []
+    meta_options = get_options_list(_item_type_id)
+    for key, val in meta_options.items():
+        hidden = val.get('option').get('hidden')
+        if hidden:
+            ignore_list.append(key)
+    return ignore_list
+
+
+def get_options_list(item_type_id):
+    """Get Options by item type id.
+
+    :param item_type_id:
+    :return: options dict
+    """
+    from weko_records.api import ItemTypes
+    json_item = ItemTypes.get_record(item_type_id)
+    meta_options = json_item.model.render.get('meta_fix')
+    meta_options.update(json_item.model.render.get('meta_list'))
+    return meta_options
 
 
 def get_options_and_order_list(item_type_id):
@@ -1492,4 +1526,47 @@ def get_options_and_order_list(item_type_id):
     item_type_mapping = Mapping.get_record(item_type_id)
     meta_options = json_item.model.render.get('meta_fix')
     meta_options.update(json_item.model.render.get('meta_list'))
-    return item_type_mapping, meta_options
+    return meta_options, item_type_mapping
+
+
+def hide_table_row_map(data, mapping_key):
+    for key, value in data.items():
+        if isinstance(value, dict) or isinstance(value, list):
+            if key == 'schema' and value.get('properties'):
+                if isinstance(value.get('properties'),
+                              dict) and mapping_key in value.get(
+                        'properties'):
+                    del data[key]['properties'][mapping_key]
+            elif key == 'form':
+                sub_del = None
+                for index in range(len(value)):
+                    if isinstance(value[index],
+                                  dict) and mapping_key in value[
+                        index].get(
+                            'key'):
+                        sub_del = index
+                if sub_del:
+                    del data[key][sub_del]
+            else:
+                if isinstance(value, dict) and mapping_key in value:
+                    del data[key][mapping_key]
+                if isinstance(value, list) and mapping_key in value:
+                    del data[key][value.index(mapping_key)]
+    return data
+
+
+def hide_items_type(data, mapping_key):
+    for key, value in data.items():
+        if key == 'schemaeditor':
+            for k, v in value.items():
+                if isinstance(v, dict) and mapping_key in v:
+                    del data[key][k][mapping_key]
+                if isinstance(v, list) and mapping_key in v:
+                    del data[key][k][v.index(mapping_key)]
+        elif key == "table_row_map":
+            data[key] = hide_table_row_map(data[key], mapping_key)
+        elif isinstance(value, dict) and mapping_key in value:
+            del data[key][mapping_key]
+        elif isinstance(value, list) and mapping_key in value:
+            del data[key][value.index(mapping_key)]
+    return data
