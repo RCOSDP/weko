@@ -731,6 +731,18 @@ class ExtendComponent extends React.Component {
                     write_more: false,
                 };
             }
+        } else if (this.props.type === NEW_ARRIVALS) {
+          let newDate = this.props.data_load.new_dates && this.props.data_load.new_dates != "None" || 5;
+          let displayResult = this.props.data_load.display_result && this.props.data_load.display_result!= "None" || 5;
+          let newArrivalsData = {
+            new_dates: newDate,
+            display_result: displayResult
+          };
+          this.props.getValueOfField(this.props.key_binding, newArrivalsData);
+          this.state = {
+            type: this.props.type,
+            settings: newArrivalsData,
+          }
         }
         else {
             this.state = {
@@ -752,6 +764,13 @@ class ExtendComponent extends React.Component {
         this.handleChangeMenuColor = this.handleChangeMenuColor.bind(this);
         this.handleComponentDidMountOrientation = this.handleComponentDidMountOrientation.bind(this);
     }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.type !== this.state.type && this.state.type === NEW_ARRIVALS) {
+            this.props.getValueOfField(this.props.key_binding, this.state.settings);
+        }
+    }
+
     static getDerivedStateFromProps(nextProps, prevState) {
         if (nextProps.data_load && !prevState.write_more && nextProps.data_load.more_description) {
             return {

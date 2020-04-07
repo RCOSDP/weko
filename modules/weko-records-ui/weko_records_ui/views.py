@@ -436,7 +436,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     detail_condition = get_search_detail_keyword('')
 
     # Add Item Reference data to Record Metadata
-    pid_without_ver = record.get("control_number").split('.')[0]
+    pid_without_ver = record.get("recid").split('.')[0]
     res = ItemLink.get_item_link_info(pid_without_ver)
     if res:
         record["relation"] = res
@@ -501,6 +501,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
+    open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
+
     return render_template(
         template,
         pid=pid,
@@ -527,6 +529,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         billing_files_prices=billing_files_prices,
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
+        open_day_display_flg=open_day_display_flg,
         **ctx,
         **kwargs
     )
@@ -716,3 +719,20 @@ def init_permission(recid):
     except Exception as ex:
         current_app.logger.debug(ex)
         abort(500)
+
+
+@blueprint.app_template_filter('translate_content')
+def translate_content(content):
+    """Translate record detail content.
+
+    @param content:
+    @return:
+    """
+    try:
+        if content:
+            return _(content)
+        else:
+            return content
+    except Exception as ex:
+        current_app.logger.debug(ex)
+        return content

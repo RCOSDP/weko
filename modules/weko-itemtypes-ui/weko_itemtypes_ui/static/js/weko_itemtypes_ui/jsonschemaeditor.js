@@ -191,10 +191,7 @@ var SchemaCheckboxes = React.createClass({
 		return {
 			type: "array",
 			format: "checkboxes",
-			items: {
-			  type: "string",
-			  enum: arr
-			}
+			enum: arr
 		};
 	},
 	render: function render() {
@@ -278,6 +275,7 @@ var SchemaSelect = React.createClass({
 	propsToState: function propsToState(props) {
 		var data = props.data;
 		if (data.hasOwnProperty('enum') && data.enum.length > 0) {
+			data.enum_original = data.enum;
 			data.enum = data.enum.join('|');
 		} else {
 			data.enum = '';
@@ -303,14 +301,10 @@ var SchemaSelect = React.createClass({
 		return titleMap;
 	},
 	export: function _export() {
-		var arr = [];
-		if (this.state.enum.length > 0) {
-			arr = this.state.enum.split('|');
-		}
 		return {
-			type: "string",
+			type: this.state.type,
 			format: "select",
-			enum: arr
+			enum: this.state.enum.length > 0 ? this.state.enum_original : []
 		};
 	},
 	render: function render() {

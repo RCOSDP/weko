@@ -19,13 +19,17 @@
 #}
 
 
-{% macro output_attribute_value(attribute_value_mlt) %}
+{% macro output_attribute_value(attribute_value_mlt, is_logged_in=false, open_day_display_flg=true) %}
     {%- if attribute_value_mlt is mapping -%}
         {%- for k, v in attribute_value_mlt.items() -%}
             {%- if '.name' not in k -%}
                 {%- if 'licensetype' in k -%}
                     {% set att_val  = v | get_license_icon %}
                     {{ att_val [1] }}<br />
+                {%- elif 'accessrole' in k or 'accessdate' in k -%}
+                    {%- if is_logged_in or open_day_display_flg -%}
+                        {{ v }}<br>                        
+                    {%- endif -%}
                 {%- else -%}
                     {{ v }}<br>
                 {%- endif -%}
@@ -33,7 +37,7 @@
         {%- endfor -%}
     {%- elif attribute_value_mlt is iterable and attribute_value_mlt is not string -%}
         {%- for attribute_value in attribute_value_mlt -%}
-            {{ output_attribute_value(attribute_value) }}
+            {{ output_attribute_value(attribute_value, is_logged_in, open_day_display_flg) }}
         {%- endfor -%}
     {%- endif -%}
 {% endmacro %}
@@ -104,10 +108,7 @@
         {% set label_text = _(label) %}
       {%- endif -%}
       <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label_text }}</th>
-    {%- if content -%}
-      {%- set content = _(content) -%}
-    {%- endif -%}
-    <td class="{%- if label == 'Research Plan' or label == 'Summary' or label == 'Annual Report' %}multiple-line{%- endif %}">{{ content }} </td>
+    <td class="{%- if label == 'Research Plan' or label == 'Summary' or label == 'Annual Report' %}multiple-line{%- endif %}">{{ content | translate_content }}</td>
   </tr>
 {% endmacro %}
 

@@ -1407,3 +1407,13 @@ def validate_save_title_and_share_user_id(result, data):
         result['is_valid'] = False
         result['error'] = str(ex)
     return result
+
+
+def get_data_authors_prefix_settings():
+    """Get all authors prefix settings."""
+    from weko_authors.models import AuthorsPrefixSettings
+    try:
+        return db.session.query(AuthorsPrefixSettings).all()
+    except Exception as e:
+        current_app.logger.error(e)
+        return None

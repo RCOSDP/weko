@@ -1099,3 +1099,15 @@ msgstr "フォーマット"
 
 msgid "Extent"
 msgstr "サイズ"
+
+msgid "Issued Date"
+msgstr "発行日"
+
+msgid "Issue"
+msgstr "号"
+
+msgid "Volume"
+msgstr "巻"
+
+msgid "Search repository"
+msgstr "レポジトリを検索する"

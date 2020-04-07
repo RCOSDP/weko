@@ -88,3 +88,14 @@ file_action_js = Bundle(
     filters='jsmin',
     output="gen/weko_records_ui_file_action.%(version)s.js",
 )
+
+bootstrap_popover_js = Bundle(
+    'js/weko_records_ui/bootstrap-popover-x.min.js',
+    filters='jsmin',
+    output="gen/bootstrap_popover_js.%(version)s.js",
+)
+
+bootstrap_popover_css = Bundle(
+    'css/weko_records_ui/bootstrap-popover-x.min.css',
+    output="gen/bootstrap_popover_css.%(version)s.css",
+)

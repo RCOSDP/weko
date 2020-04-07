@@ -1094,3 +1094,15 @@ msgstr ""
 
 msgid "Extent"
 msgstr ""
+
+msgid "Issued Date"
+msgstr ""
+
+msgid "Issue"
+msgstr ""
+
+msgid "Volume"
+msgstr ""
+
+msgid "Search repository"
+msgstr ""
