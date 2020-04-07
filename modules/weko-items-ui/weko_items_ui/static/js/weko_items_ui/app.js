@@ -1823,17 +1823,19 @@ function toObject(arr) {
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
-        $scope.initFilenameList('filename');
-        $scope.initFilenameList('billing_filename');
-        $scope.hiddenPubdate();
-        $scope.removeFileForm(f.key);
-        $scope.updateNumFiles();
-        $scope.storeFilesToSession();
-        // Delay 1s after page render
-        setTimeout(function() {
-          // Change position of FileName
-          $scope.changePositionFileName();
-        }, 1000);
+        if (f.completed) {
+          $scope.initFilenameList('filename');
+          $scope.initFilenameList('billing_filename');
+          $scope.hiddenPubdate();
+          $scope.removeFileForm(f.key);
+          $scope.updateNumFiles();
+          $scope.storeFilesToSession();
+          // Delay 1s after page render
+          setTimeout(function() {
+            // Change position of FileName
+            $scope.changePositionFileName();
+          }, 1000);
+        }
       });
 
       $scope.getItemMetadata = function () {
