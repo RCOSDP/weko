@@ -23,9 +23,9 @@ from flask_login import login_required
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes
 from weko_records.utils import find_items
-from .utils import is_schema_include_key
 
 from .permissions import item_permission
+from .utils import is_schema_include_key
 
 
 @login_required
@@ -61,7 +61,7 @@ def item_login(item_type_id=0):
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id and sessionstore.redis.exists(
-            'activity_item_' + activity_id):
+                'activity_item_' + activity_id):
             item_str = sessionstore.get('activity_item_' + activity_id)
             item_json = json.loads(item_str)
             if 'metainfo' in item_json:

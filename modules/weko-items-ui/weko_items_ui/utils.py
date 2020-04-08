@@ -1420,7 +1420,7 @@ def get_data_authors_prefix_settings():
 
 
 def is_schema_include_key(schema):
-    """Check if schema have filename/billing_filename key"""
+    """Check if schema have filename/billing_filename key."""
     properties = schema.get('properties')
     need_file = False
     need_billing_file = False
@@ -1445,4 +1445,3 @@ def is_schema_include_key(schema):
                 if property == 'filename' and not need_billing_file:
                     need_file = True
     return need_file, need_billing_file
-
