@@ -57,12 +57,13 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     get_current_user, get_data_authors_prefix_settings, get_list_email, \
     get_list_username, get_new_items_by_date, get_user_info_by_email, \
     get_user_info_by_username, get_user_information, get_user_permission, \
-    parse_ranking_results, remove_excluded_items_in_json_schema, \
-    set_multi_language_name, to_files_js, update_index_tree_for_record, \
+    is_schema_include_key, parse_ranking_results, \
+    remove_excluded_items_in_json_schema, set_multi_language_name, \
+    to_files_js, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
-    validate_user_mail_and_index, is_schema_include_key
+    validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
