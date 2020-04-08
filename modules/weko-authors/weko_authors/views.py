@@ -266,25 +266,25 @@ def mapping():
         for j in id_info:
             if j.get('authorIdShowFlg') == 'true':
                 scheme, uri = get_info_author_id(int(j['idType']))
-                authorId = j.get('authorId')
+                author_id = j.get('authorId')
                 tmp = {
-                    'nameIdentifier': authorId,
+                    'nameIdentifier': author_id,
                     'nameIdentifierScheme': scheme,
                     'nameIdentifierURI': uri
                 }
                 res['nameIdentifiers'].append(tmp)
 
     def get_email_creator(res, _source):
-        emailInfo = _source.get('emailInfo')
-        for item in emailInfo:
+        email_info = _source.get('emailInfo')
+        for item in email_info:
             email = item.get('email')
-            emailJson = {'creatorMail': email}
-            res['creatorMails'].append(emailJson)
+            email_json = {'creatorMail': email}
+            res['creatorMails'].append(email_json)
 
     data = request.get_json()
 
     # get author data
-    author_id = data.get('id') or ''
+    author_id = data.get('id', '')
     indexer = RecordIndexer()
     result = indexer.client.get(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
