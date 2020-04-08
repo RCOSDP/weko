@@ -1731,8 +1731,8 @@ function toObject(arr) {
               fileInfo['billing_filename'] = filesUploaded[i].key;
             }
             // Fill size
-            fileInfo.size = [{}]; // init array
-            fileInfo.size[0].value = $scope.bytesToReadableString(filesUploaded[i].size);
+            fileInfo.filesize = [{}]; // init array
+            fileInfo.filesize[0].value = $scope.bytesToReadableString(filesUploaded[i].size);
             // Fill format
             fileInfo.format = filesUploaded[i].mimetype;
             // Fill Date and DateType
@@ -1783,8 +1783,8 @@ function toObject(arr) {
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key].forEach(function (fileInfo) {
             if (fileInfo.filename == modelValue || fileInfo.billing_filename == modelValue) {
-              fileInfo.size = [{}];
-              fileInfo.size[0].value = filesObject[modelValue].size;
+              fileInfo.filesize = [{}];
+              fileInfo.filesize[0].value = filesObject[modelValue].size;
               fileInfo.format = filesObject[modelValue].format;
               fileInfo.date = [{}];
               fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
