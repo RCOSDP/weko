@@ -99,8 +99,7 @@ def json_loader(data, pid):
             item_data = ojson["properties"][k]
             if 'array' == item_data.get('type'):
                 properties_data = item_data['items']['properties']
-                if 'filename' in properties_data \
-                        or 'billing_filename' in properties_data:
+                if 'filename' in properties_data:
                     item["attribute_type"] = 'file'
 
             if isinstance(v, list):

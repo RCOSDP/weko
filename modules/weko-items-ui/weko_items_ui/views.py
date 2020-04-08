@@ -108,9 +108,8 @@ def index(item_type_id=0):
                 url_for('.index', item_type_id=lists[0].item_type[0].id))
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        need_file = is_schema_include_key(item_type.schema, 'filename')
-        need_billing_file = is_schema_include_key(item_type.schema,
-                                                  'billing_filename')
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
+
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
             page=page,
@@ -165,9 +164,8 @@ def iframe_index(item_type_id=0):
                 files = item_json.get('files')
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
-        need_file = is_schema_include_key(item_type.schema, 'filename')
-        need_billing_file = is_schema_include_key(item_type.schema,
-                                                  'billing_filename')
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
+
         return render_template(
             'weko_items_ui/iframe/item_edit.html',
             need_file=need_file,
@@ -588,9 +586,8 @@ def default_view_method(pid, record, template=None):
             files = item_json.get('files')
         if 'endpoints' in item_json:
             endpoints = item_json.get('endpoints')
-    need_file = is_schema_include_key(item_type.schema, 'filename')
-    need_billing_file = is_schema_include_key(item_type.schema,
-                                              'billing_filename')
+    need_file, need_billing_file = is_schema_include_key(item_type.schema)
+
     return render_template(
         template,
         need_file=need_file,

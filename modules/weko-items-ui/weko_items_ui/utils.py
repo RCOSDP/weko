@@ -1419,22 +1419,30 @@ def get_data_authors_prefix_settings():
         return None
 
 
-def is_schema_include_key(schema, filekey):
+def is_schema_include_key(schema):
     """Check if schema have filename/billing_filename key"""
     properties = schema.get('properties')
-    result = False
+    need_file = False
+    need_billing_file = False
     for key in properties:
         item = properties.get(key)
         # Do check for object type
         if 'properties' in item:
             object = item.get('properties')
             for property in object:
-                if property == filekey:
-                    result = True
+                if property == 'is_billing':
+                    need_billing_file = True
+            for property in object:
+                if property == 'filename' and not need_billing_file:
+                    need_file = True
         # Do check for array/multiple type
         elif 'items' in item:
             object = item.get('items').get('properties')
             for property in object:
-                if property == filekey:
-                    result = True
-    return result
+                if property == 'is_billing':
+                    need_billing_file = True
+            for property in object:
+                if property == 'filename' and not need_billing_file:
+                    need_file = True
+    return need_file, need_billing_file
+

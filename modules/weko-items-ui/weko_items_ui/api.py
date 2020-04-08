@@ -74,10 +74,8 @@ def item_login(item_type_id=0):
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
 
-        need_file = is_schema_include_key(item_type.schema, 'filename')
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
-        need_billing_file = is_schema_include_key(item_type.schema,
-                                                  'billing_filename')
         if 'subitem_thumbnail' in json.dumps(item_type.schema):
             need_thumbnail = True
             key = [i[0].split('.')[0] for i in find_items(item_type.form)
