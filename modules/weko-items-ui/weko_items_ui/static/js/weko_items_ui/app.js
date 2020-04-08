@@ -563,8 +563,7 @@ function toObject(arr) {
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (value.type == 'array') {
-            if (value.items.properties.hasOwnProperty('filename') ||
-                value.items.properties.hasOwnProperty('billing_filename')) {
+            if (value.items.properties.hasOwnProperty('filename')) {
               $scope.filemeta_keys.push(key);
             }
           }
@@ -855,7 +854,8 @@ function toObject(arr) {
         }
       }
 
-      $scope.initFilenameList = function (filekey) {
+      $scope.initFilenameList = function () {
+        var filekey = 'filename';
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
@@ -1657,8 +1657,7 @@ function toObject(arr) {
         $scope.initContributorData();
         $scope.initUserGroups();
         $scope.loadFilesFromSession();
-        $scope.initFilenameList('filename');
-        $scope.initFilenameList('billing_filename');
+        $scope.initFilenameList();
         $scope.searchTypeKey();
         $scope.setDataForLicenseType();
         $scope.renderValidationErrorList();
@@ -1724,12 +1723,7 @@ function toObject(arr) {
           for (var i = $scope.previousNumFiles; i < filesUploaded.length; i++) {
             var fileInfo = new Object();
             // Fill filename
-            if (Object.keys(schema[filemeta_key].items.properties).indexOf('filename') >= 0) {
-              fileInfo['filename'] = filesUploaded[i].key;
-            }
-            else if (Object.keys(schema[filemeta_key].items.properties).indexOf('billing_filename') >= 0) {
-              fileInfo['billing_filename'] = filesUploaded[i].key;
-            }
+            fileInfo['filename'] = filesUploaded[i].key;
             // Fill size
             fileInfo.filesize = [{}]; // init array
             fileInfo.filesize[0].value = $scope.bytesToReadableString(filesUploaded[i].size);
@@ -1746,7 +1740,7 @@ function toObject(arr) {
         // Filter empty form
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
-            return fileInfo.filename || fileInfo.billing_filename;
+            return fileInfo.filename;
           });
         });
       }
@@ -1756,7 +1750,7 @@ function toObject(arr) {
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
-            return !(fileInfo.filename == filename || fileInfo.billing_filename == filename);
+            return fileInfo.filename != filename;
           });
         });
       }
@@ -1782,7 +1776,7 @@ function toObject(arr) {
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key].forEach(function (fileInfo) {
-            if (fileInfo.filename == modelValue || fileInfo.billing_filename == modelValue) {
+            if (fileInfo.filename == modelValue) {
               fileInfo.filesize = [{}];
               fileInfo.filesize[0].value = filesObject[modelValue].size;
               fileInfo.format = filesObject[modelValue].format;
@@ -1810,8 +1804,7 @@ function toObject(arr) {
       }
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
-        $scope.initFilenameList('filename');
-        $scope.initFilenameList('billing_filename');
+        $scope.initFilenameList();
         $scope.hiddenPubdate();
         $scope.addFileFormAndFill();
         $scope.updateNumFiles();
@@ -1825,8 +1818,7 @@ function toObject(arr) {
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
         if (f.completed) {
-          $scope.initFilenameList('filename');
-          $scope.initFilenameList('billing_filename');
+          $scope.initFilenameList();
           $scope.hiddenPubdate();
           $scope.removeFileForm(f.key);
           $scope.updateNumFiles();
