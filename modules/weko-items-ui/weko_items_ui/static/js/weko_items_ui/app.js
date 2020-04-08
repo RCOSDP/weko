@@ -556,20 +556,21 @@ function toObject(arr) {
       $scope.sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
       $scope.previousNumFiles = 0;
 
-      $scope.searchFilemetaKey = function (filekey) {
+      $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
           return $scope.filemeta_keys;
         }
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (value.type == 'array') {
-            if (value.items.properties.hasOwnProperty(filekey)) {
+            if (value.items.properties.hasOwnProperty('filename') ||
+                value.items.properties.hasOwnProperty('billing_filename')) {
               $scope.filemeta_keys.push(key);
-              break;
             }
           }
         }
       }
+      
       $scope.searchFilemetaForm = function (title) {
         let fileMetaForm = "";
         $rootScope.recordsVM.invenioRecordsForm.forEach(function (recordForm) {
@@ -855,18 +856,10 @@ function toObject(arr) {
       }
 
       $scope.initFilenameList = function (filekey) {
-        $scope.searchFilemetaKey(filekey);
+        $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
           filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
-          // Change file name form to first element of invenioRecordsForm
-          let records = $rootScope.recordsVM.invenioRecordsForm;
-          records.forEach(function(item,i){
-            if(item.key == filemeta_key){
-              $rootScope.recordsVM.invenioRecordsForm.splice(i, 1);
-              $rootScope.recordsVM.invenioRecordsForm.unshift(item);
-            }
-          });
           if (filemeta_schema && filemeta_form && filemeta_schema.items.properties[filekey]) {
             filemeta_schema.items.properties[filekey]['enum'] = [];
             filemeta_schema.items.properties[filekey]['enum'].push(null)
@@ -1703,15 +1696,23 @@ function toObject(arr) {
 
         // Delay 1s after page render
         setTimeout(function () {
-          // Change position of FileName
+          // Change position of File and Billing File
           $scope.changePositionFileName();
         }, 1000);
       });
 
       $scope.changePositionFileName = function () {
-        // Set FileName visible
         $('#new-postion-filename').empty();
-        $('invenio-records-form bootstrap-decorator.ng-scope').first().appendTo("#new-postion-filename");
+        let records = $rootScope.recordsVM.invenioRecordsForm;
+        // Move File to upload area
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          records.forEach(function(item,i){
+            if(item.key == filemeta_key){
+              $('invenio-records-form bootstrap-decorator.ng-scope').eq(i).appendTo("#new-postion-filename");
+            }
+          });
+        });
       }
 
       $scope.addFileFormAndFill = function () {
