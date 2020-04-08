@@ -204,27 +204,30 @@ def shib_sp_login():
     :return: confirm page when relation is empty
     """
     try:
-        if not current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
-            return url_for_security('login')
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
-        if shib_session_id is None or len(shib_session_id) == 0:
+        if not shib_session_id and not current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
             return url_for_security('login')
+
         shib_attr, error = parse_attributes()
         if error:
             return url_for_security('login')
+
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
         ttl_sec = int(current_app.config['SHIB_ACCOUNTS_LOGIN_CACHE_TTL'])
         datastore.put(config.SHIB_CACHE_PREFIX + shib_session_id,
                       bytes(json.dumps(shib_attr), encoding='utf-8'),
                       ttl_secs=ttl_sec)
+
         shib_user = ShibUser(shib_attr)
+        # Check the relation of shibboleth user with weko account.
         rst = shib_user.get_relation_info()
-        """ check the relation of shibboleth user with weko account"""
+
         next_url = 'weko_accounts.shib_auto_login'
         if rst is None:
-            """relation is not existed, cache shibboleth info to redis."""
+            # Relation is not existed, cache shibboleth info to redis.
             next_url = 'weko_accounts.shib_login'
+
         query_string = {
             'SHIB_ATTR_SESSION_ID': shib_session_id,
             '_method': 'GET'

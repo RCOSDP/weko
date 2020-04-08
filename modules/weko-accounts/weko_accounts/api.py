@@ -84,7 +84,7 @@ class ShibUser(object):
         :return:
 
         """
-        return self.shib_attr.get('wekoSiteUserWithinIpRange', False)
+        return self.shib_attr.get('shib_ip_range_flag', False)
 
     def get_relation_info(self):
         """
@@ -140,7 +140,8 @@ class ShibUser(object):
         :return: ShibbolethUser instance
 
         """
-        kwargs = dict(email=self.shib_attr.get('shib_eppn'), password='',
+        kwargs = dict(email=self.shib_attr.get('shib_eppn'),
+                      password='',
                       active=True)
         kwargs['password'] = hash_password(kwargs['password'])
         kwargs['confirmed_at'] = datetime.utcnow()
@@ -193,7 +194,7 @@ class ShibUser(object):
             error = _(r"Can't get relation Weko User.")
             return False, error
 
-        shib_role_auth = self.shib_attr.get('wekoSocietyAffiliation', '')
+        shib_role_auth = self.shib_attr.get('shib_role_authority_name', '')
         if not shib_role_auth:
             current_app.logger.debug(_("Failed to get attribute."))
             return self._set_weko_user_role(current_app.config[
