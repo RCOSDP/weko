@@ -1756,6 +1756,9 @@ function toObject(arr) {
       }
 
       $scope.bytesToReadableString = function (bytes) {
+        function round(num, precision) {
+          return Math.round(num * Math.pow(10, precision)) / Math.pow(10, precision);
+        }
         var limit = Math.pow(1024, 4);
         if (bytes > limit) {
             return round(bytes / limit, 1) + ' Tb';
