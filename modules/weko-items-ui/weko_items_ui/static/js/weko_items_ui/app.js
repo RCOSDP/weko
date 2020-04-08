@@ -1919,7 +1919,7 @@ function toObject(arr) {
               let subCreatorName = { "creatorName": "", "creatorNameLang": "" };
               let familyName = value.familyNames[i].familyName;
               let givenName = value.givenNames[i].givenName;
-              subCreatorName.creatorName = familyName + "　" + givenName;
+              subCreatorName.creatorName = familyName + " " + givenName;
               subCreatorName.creatorNameLang = value.familyNames[i].familyNameLang;
               creatorModel.creatorNames.push(subCreatorName);
             }
