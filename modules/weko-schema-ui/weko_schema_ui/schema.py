@@ -227,8 +227,8 @@ class SchemaTree:
         self._v = "@value"
         self._atr = "@attributes"
         self._atr_lang = "xml:lang"
-        # list of node need be be separated to multiple nodes by language
-        self._separate_node_lst = None
+        # nodes need be be separated to multiple nodes by language
+        self._separate_nodes = None
         self._location = ''
         self._target_namespace = ''
         schemas = WekoSchema.get_all()
@@ -802,8 +802,8 @@ class SchemaTree:
             if kname == 'type':
                 return
             current_separate_key_node = None
-            if self._separate_node_lst:
-                for separate_node_key in self._separate_node_lst.keys():
+            if self._separate_nodes:
+                for separate_node_key in self._separate_nodes.keys():
                     if separate_node_key.split('.') == parent_keys:
                         current_separate_key_node = separate_node_key
             # current lang is None means current node(or its parents) no need to be separated
@@ -816,7 +816,7 @@ class SchemaTree:
                 existed_attr.update(att_lang)
                 node.update(existed_attr)
             if not current_lang and current_separate_key_node:
-                for lang in self._separate_node_lst.get(
+                for lang in self._separate_nodes.get(
                         current_separate_key_node):
                     set_children(kname, node, tree, parent_keys, lang)
             else:
@@ -950,11 +950,12 @@ class SchemaTree:
                 att_result = [attr[0]]
 
             if not repeatable:
+                len_current_list = len(val) - len(remove_lst) - len(none_lst)
                 # Get the first one of current
-                if len(val) - len(remove_lst) - len(none_lst) > 1:
+                if len_current_list > 1:
                     val_result = [val[current_lst[0]]]
                     att_result = [attr[current_lst[0]]]
-                elif len(val) - len(remove_lst) - len(none_lst) == 0:
+                elif len_current_list == 0:
                     if len(none_lst) > 0:
                         val_result = [val[none_lst[0]]]
                         att_result = [attr[none_lst[0]]]
@@ -1024,7 +1025,7 @@ class SchemaTree:
                 merge_json_xml(json_child, dct_xml)
             list_dict.append(dct_xml)
             list_json_xml = list_dict
-            self._separate_node_lst = {'stdyDscr.citation': set()}
+            self._separate_nodes = {'stdyDscr.citation': set()}
         node_tree = self.find_nodes(list_json_xml)
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -1047,8 +1048,8 @@ class SchemaTree:
         affiliation_key = 'jpcoar:affiliation'
         name_identifier_key = 'jpcoar:nameIdentifier'
         # Remove all None languages
-        if self._separate_node_lst:
-            for key, val in self._separate_node_lst.items():
+        if self._separate_nodes:
+            for key, val in self._separate_nodes.items():
                 if None in val:
                     val.remove(None)
         for lst in node_tree:
@@ -1177,9 +1178,9 @@ class SchemaTree:
                 nv = copy.deepcopy(v)
                 for kst in klst:
                     current_separate_key = None
-                    if self._separate_node_lst:
+                    if self._separate_nodes:
                         for nodes_key, nodes_val in \
-                            self._separate_node_lst.items():
+                            self._separate_nodes.items():
                             if kst.startswith(nodes_key):
                                 current_separate_key = nodes_key
                                 break
@@ -1202,7 +1203,7 @@ class SchemaTree:
                                     if isinstance(atr, dict):
                                         if self._atr_lang in atr.keys() and  current_separate_key and \
                                             atr.get(self._atr_lang)[0]:
-                                            self._separate_node_lst.get(
+                                            self._separate_nodes.get(
                                                  current_separate_key).update(
                                                 atr.get(self._atr_lang)[0])
                                         for k1, v1 in atr.items():
