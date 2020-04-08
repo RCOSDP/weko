@@ -1909,7 +1909,12 @@ function toObject(arr) {
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId];
         }
         angular.forEach(authorInfoObj, function(value, key) {
-          creatorModel = Object.assign(creatorModel, value);
+          creatorModel.affiliation = value.hasOwnProperty('affiliation') ? value.affiliation : [{}];
+          creatorModel.creatorAlternatives = value.hasOwnProperty('creatorAlternatives') ? value.creatorAlternatives : [{}];
+          creatorModel.familyNames = value.hasOwnProperty('familyNames') ? value.familyNames : [{}];
+          creatorModel.givenNames = value.hasOwnProperty('givenNames') ? value.givenNames : [{}];
+          creatorModel.nameIdentifiers = value.hasOwnProperty('nameIdentifiers') ? value.nameIdentifiers : [{}];
+          creatorModel.creatorMails = value.hasOwnProperty('creatorMails') ? value.creatorMails : [{}];
           //creatorName = familyName + givenName
           if (value.hasOwnProperty('familyNames') && value.hasOwnProperty('givenNames')) {
             if (!value.hasOwnProperty('creatorNames')) {
@@ -1925,9 +1930,6 @@ function toObject(arr) {
             }
           }
         });
-        creatorModel.weko_id = weko_id;
-        creatorModel.weko_id_hidden = weko_id;
-        creatorModel.authorLink = ['check'];
         //画面にデータを設定する
         $("#btn_id").text('');
         $("#author_info").text('');
