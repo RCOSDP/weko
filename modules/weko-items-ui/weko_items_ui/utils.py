@@ -1064,15 +1064,16 @@ def _export_item(record_id,
                 exported_item['item_type_id'])
             if records_data.get('metadata'):
                 meta_data = records_data.get('metadata')
-                temp = {
+                record_role_ids = {
                     'weko_creator_id': meta_data.get('weko_creator_id'),
                     'weko_shared_id': meta_data.get('weko_shared_id')
                 }
-                list_item_role.update({exported_item['item_type_id']: temp})
-                if hide_meta_data_for_role(temp):
-                    for data in list_hidden:
-                        if meta_data.get(data):
-                            del records_data['metadata'][data]
+                list_item_role.update(
+                    {exported_item['item_type_id']: record_role_ids})
+                if hide_meta_data_for_role(record_role_ids):
+                    for hide_key in list_hidden:
+                        if meta_data.get(hide_key):
+                            del records_data['metadata'][hide_key]
 
         # Create metadata file.
         with open('{}/{}_metadata.json'.format(tmp_path,
@@ -1494,9 +1495,9 @@ def get_mapping_name_item_type_by_key(key, item_type_mapping):
     :param key:
     :return: name
     """
-    for data in item_type_mapping:
-        if data == key:
-            property_data = item_type_mapping.get(data)
+    for mapping_key in item_type_mapping:
+        if mapping_key == key:
+            property_data = item_type_mapping.get(mapping_key)
             if isinstance(property_data.get('jpcoar_mapping'), dict):
                 for name in property_data.get('jpcoar_mapping'):
                     return name
