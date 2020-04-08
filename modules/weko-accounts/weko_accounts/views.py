@@ -149,7 +149,15 @@ def confirm_user():
             datastore.delete(cache_key)
             return redirect(url_for_security('login'))
         shib_user.bind_relation_info(account)
-        if shib_user.shib_user is not None:
+
+        error = shib_user.check_in()
+
+        if error:
+            datastore.delete(cache_key)
+            flash(error, category='error')
+            return redirect(url_for_security('login'))
+
+        if shib_user.shib_user:
             shib_user.shib_user_login()
         datastore.delete(cache_key)
         return redirect(session['next'] if 'next' in session else '/')
@@ -187,18 +195,16 @@ def shib_login():
         csrf_random = generate_random_str(length=64)
         session['csrf_random'] = csrf_random
 
-        error = ''
         shib_role_auth = cache_val.get('shib_role_authority_name', '')
         if not shib_role_auth:
             current_app.logger.debug(_("Failed to get attribute."))
 
-        shib_role_config = current_app.config['SHIB_ACCOUNTS_ROLE_RELATION']
-        if shib_role_auth == '' or shib_role_auth in shib_role_config.keys():
-            return True, shib_role_config[shib_role_auth]
-        else:
+        shib_role_config = config.SHIB_ACCOUNTS_ROLE_RELATION
+
+        if shib_role_auth and shib_role_auth not in shib_role_config.keys():
             current_app.logger.error(_("Invalid attribute."))
             flash(_("Invalid attribute."), category='error')
-            return url_for_security('login')
+            return redirect(url_for_security('login'))
 
         return render_template(
             config.WEKO_ACCOUNTS_CONFIRM_USER_TEMPLATE,

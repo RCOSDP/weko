@@ -63,15 +63,14 @@ class ShibUser(object):
         try:
             user_role = Role.query.filter_by(name=role_name).first()
             if user_role in self.user.roles:
-                current_app.logger.debug('{} had been assigned to this User!',
-                                         role_name)
+                current_app.logger.debug("{} had been assigned to this User!".format(role_name))
                 return ret
             with db.session.begin_nested():
                 ret = _datastore.add_role_to_user(self.user, user_role)
             db.session.commit()
         except Exception as ex:
             current_app.logger.debug("An error occurred when trying to add "
-                                     "Role: {} to this User!", ex)
+                                     "Role: {} to this User!".format(ex))
             db.session.rollback()
             ret = False
         return ret
@@ -198,7 +197,7 @@ class ShibUser(object):
         if not shib_role_auth:
             current_app.logger.debug(_("Failed to get attribute."))
             return self._set_weko_user_role(current_app.config[
-                                            'WEKO_GENERAL_ROLE'])
+                                            'WEKO_GENERAL_ROLE']), error
 
         shib_role_config = current_app.config['SHIB_ACCOUNTS_ROLE_RELATION']
         if shib_role_auth in shib_role_config.keys():
@@ -227,16 +226,17 @@ class ShibUser(object):
         :return:
 
         """
-        error = ''
+        error = None
         check_role, error = self.assign_user_role()
         if not check_role:
             return error
 
-        check_license, error = self.valid_site_license()
-        if not check_license:
-            return error
+        # ! NEED RELATION SHIB_ATTR
+        # check_license, error = self.valid_site_license()
+        # if not check_license:
+        #     return error
 
-        return True
+        return error
 
     @classmethod
     def shib_user_logout(cls):
