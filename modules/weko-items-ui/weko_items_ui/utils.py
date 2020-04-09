@@ -525,7 +525,7 @@ def package_export_file(item_type_data):
     return tsv_output
 
 
-def make_stats_tsv(list_item_role, item_type_id, recids):
+def make_stats_tsv(item_type_id, recids, list_item_role):
     """Prepare TSV data for each Item Types.
 
     Arguments:
@@ -538,9 +538,10 @@ def make_stats_tsv(list_item_role, item_type_id, recids):
 
     """
     item_type = ItemTypes.get_by_id(item_type_id).render
-    hidden = hide_meta_data_for_role(list_item_role.get(item_type_id))
     list_hide = get_item_from_option(item_type_id)
-    if hidden and item_type and item_type.get('table_row'):
+    if hide_meta_data_for_role(
+        list_item_role.get(item_type_id)) and item_type and item_type.get(
+            'table_row'):
         for name_hide in list_hide:
             item_type['table_row'] = hide_table_row_for_tsv(
                 item_type.get('table_row'), name_hide)
@@ -916,9 +917,9 @@ def export_items(post_data):
         # Create export info file
         for item_type_id in item_types_data:
             keys, labels, records = make_stats_tsv(
-                list_item_role,
                 item_type_id,
-                item_types_data[item_type_id]['recids'])
+                item_types_data[item_type_id]['recids'],
+                list_item_role)
             item_types_data[item_type_id]['recids'].sort()
             item_types_data[item_type_id]['keys'] = keys
             item_types_data[item_type_id]['labels'] = labels
@@ -994,9 +995,9 @@ def export_item_custorm(post_data):
         # Create export info file
         for item_type_id in item_types_data:
             keys, labels, records = make_stats_tsv(
-                list_item_role,
                 item_type_id,
-                item_types_data[item_type_id]['recids'])
+                item_types_data[item_type_id]['recids'],
+                list_item_role)
             item_types_data[item_type_id]['recids'].sort()
             item_types_data[item_type_id]['keys'] = keys
             item_types_data[item_type_id]['labels'] = labels
@@ -1061,7 +1062,7 @@ def _export_item(record_id,
         if not records_data:
             records_data = record
         if exported_item['item_type_id']:
-            list_hidden = get_ignore_item_from_option(
+            list_hidden = get_ignore_item_from_mapping(
                 exported_item['item_type_id'])
             if records_data.get('metadata'):
                 meta_data = records_data.get('metadata')
@@ -1477,8 +1478,12 @@ def hide_meta_data_for_role(record):
     return is_hidden
 
 
-def get_ignore_item_from_option(_item_type_id):
-    """Get all keys of properties that is set Hide option on metadata."""
+def get_ignore_item_from_mapping(_item_type_id):
+    """
+    Get ignore item from mapping
+    :param _item_type_id:
+    :return ignore_list:
+    """
     ignore_list = []
     meta_options, item_type_mapping = get_options_and_order_list(_item_type_id)
     for key, val in meta_options.items():
@@ -1522,7 +1527,6 @@ def get_options_list(item_type_id):
     :param item_type_id:
     :return: options dict
     """
-    from weko_records.api import ItemTypes
     json_item = ItemTypes.get_record(item_type_id)
     meta_options = json_item.model.render.get('meta_fix')
     meta_options.update(json_item.model.render.get('meta_list'))
