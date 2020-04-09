@@ -63,15 +63,14 @@ class ShibUser(object):
         try:
             user_role = Role.query.filter_by(name=role_name).first()
             if user_role in self.user.roles:
-                current_app.logger.debug('{} had been assigned to this User!',
-                                         role_name)
+                current_app.logger.debug("{} had been assigned to this User!".format(role_name))
                 return ret
             with db.session.begin_nested():
                 ret = _datastore.add_role_to_user(self.user, user_role)
             db.session.commit()
         except Exception as ex:
             current_app.logger.debug("An error occurred when trying to add "
-                                     "Role: {} to this User!", ex)
+                                     "Role: {} to this User!".format(ex))
             db.session.rollback()
             ret = False
         return ret
@@ -84,7 +83,7 @@ class ShibUser(object):
         :return:
 
         """
-        return self.shib_attr.get('wekoSiteUserWithinIpRange', False)
+        return self.shib_attr.get('shib_ip_range_flag', False)
 
     def get_relation_info(self):
         """
@@ -140,7 +139,8 @@ class ShibUser(object):
         :return: ShibbolethUser instance
 
         """
-        kwargs = dict(email=self.shib_attr.get('shib_eppn'), password='',
+        kwargs = dict(email=self.shib_attr.get('shib_eppn'),
+                      password='',
                       active=True)
         kwargs['password'] = hash_password(kwargs['password'])
         kwargs['confirmed_at'] = datetime.utcnow()
@@ -187,19 +187,19 @@ class ShibUser(object):
         :return:
 
         """
+        from .config import WEKO_GENERAL_ROLE, SHIB_ACCOUNTS_ROLE_RELATION
         error = ''
 
         if not self.user:
             error = _(r"Can't get relation Weko User.")
             return False, error
 
-        shib_role_auth = self.shib_attr.get('wekoSocietyAffiliation', '')
+        shib_role_auth = self.shib_attr.get('shib_role_authority_name', '')
         if not shib_role_auth:
             current_app.logger.debug(_("Failed to get attribute."))
-            return self._set_weko_user_role(current_app.config[
-                                            'WEKO_GENERAL_ROLE'])
+            return self._set_weko_user_role(WEKO_GENERAL_ROLE), error
 
-        shib_role_config = current_app.config['SHIB_ACCOUNTS_ROLE_RELATION']
+        shib_role_config = SHIB_ACCOUNTS_ROLE_RELATION
         if shib_role_auth in shib_role_config.keys():
             return self._set_weko_user_role(shib_role_config[shib_role_auth])
         else:
@@ -226,16 +226,17 @@ class ShibUser(object):
         :return:
 
         """
-        error = ''
+        error = None
         check_role, error = self.assign_user_role()
         if not check_role:
             return error
 
-        check_license, error = self.valid_site_license()
-        if not check_license:
-            return error
+        # ! NEED RELATION SHIB_ATTR
+        # check_license, error = self.valid_site_license()
+        # if not check_license:
+        #     return error
 
-        return True
+        return error
 
     @classmethod
     def shib_user_logout(cls):

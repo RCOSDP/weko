@@ -38,6 +38,8 @@ def check_items_settings():
     settings = AdminSettings.get('items_display_settings')
     current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+    if hasattr(settings, 'item_display_open_date'):
+        current_app.config['OPEN_DATE_DISPLAY_FLG'] = settings.item_display_open_date
 
 
 def get_record_permalink(record):
@@ -279,3 +281,30 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
             h=0,
             type='',
             link=lnk)
+
+
+def get_pair_value(name_keys, lang_keys, datas):
+    """Get pairs value of name and language.
+
+    :param name_keys:
+    :param lang_keys:
+    :param datas:
+    :return:
+    """
+    if len(name_keys) == 1 and len(lang_keys) == 1:
+        if isinstance(datas, list):
+            for data in datas:
+                for name, lang in get_pair_value(name_keys, lang_keys, data):
+                    yield name, lang
+        elif isinstance(datas, dict) and (
+                name_keys[0] in datas or lang_keys[0] in datas):
+            yield datas.get(name_keys[0], ''), datas.get(lang_keys[0], '')
+    else:
+        if isinstance(datas, list):
+            for data in datas:
+                for name, lang in get_pair_value(name_keys, lang_keys, data):
+                    yield name, lang
+        elif isinstance(datas, dict):
+            for name, lang in get_pair_value(name_keys[1:], lang_keys[1:],
+                                             datas.get(name_keys[0])):
+                yield name, lang

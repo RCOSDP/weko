@@ -777,3 +777,354 @@ msgstr ""
 # WEKO_RECORDS_UI_ITEM_DETAIL
 msgid "Date (ISO-8601)"
 msgstr ""
+
+msgid "Subject"
+msgstr ""
+
+msgid "Subject Scheme"
+msgstr ""
+
+msgid "Subject URI"
+msgstr ""
+
+msgid "Alternative Title"
+msgstr ""
+
+msgid "Creator"
+msgstr ""
+
+msgid "Creator Name Identifier"
+msgstr ""
+
+msgid "Creator Name Identifier Scheme"
+msgstr ""
+
+msgid "Creator Name Identifier URI"
+msgstr ""
+
+msgid "Creator Name"
+msgstr ""
+
+msgid "Name_"
+msgstr "Name"
+
+msgid "Creator Family Name"
+msgstr ""
+
+msgid "Family Name"
+msgstr ""
+
+msgid "Creator Given Name"
+msgstr ""
+
+msgid "Given Name"
+msgstr ""
+
+msgid "Creator Alternative Name"
+msgstr ""
+
+msgid "Alternative Name"
+msgstr ""
+
+msgid "Affiliation Name Identifier"
+msgstr ""
+
+msgid "Affiliation Name Identifier Scheme"
+msgstr ""
+
+msgid "Affiliation Name Identifier URI"
+msgstr ""
+
+msgid "Affiliation Name"
+msgstr ""
+
+msgid "Creator Email Address"
+msgstr ""
+
+msgid "Description Type"
+msgstr ""
+
+msgid "Bibliographic Information"
+msgstr ""
+
+msgid "Journal Title"
+msgstr ""
+
+msgid "Volume Number"
+msgstr ""
+
+msgid "Issue Number"
+msgstr ""
+
+msgid "Page Start"
+msgstr ""
+
+msgid "Page End"
+msgstr ""
+
+msgid "Publication year"
+msgstr ""
+
+msgid "Date Type"
+msgstr ""
+
+msgid "Publisher"
+msgstr ""
+
+msgid "Source Identifier"
+msgstr ""
+
+msgid "Source Identifier Type"
+msgstr ""
+
+msgid "Source Identifier"
+msgstr ""
+
+msgid "Relation"
+msgstr ""
+
+msgid "Relation Type"
+msgstr ""
+
+msgid "Related Identifier"
+msgstr ""
+
+msgid "Related Identifier Type"
+msgstr ""
+
+msgid "Identifier Type"
+msgstr ""
+
+msgid "Related Title"
+msgstr ""
+
+msgid "Rights"
+msgstr ""
+
+msgid "Resource"
+msgstr ""
+
+msgid "Fileinfo"
+msgstr ""
+
+msgid "Text"
+msgstr ""
+
+msgid "Version Type"
+msgstr ""
+
+msgid "URI"
+msgstr ""
+
+msgid "Label"
+msgstr ""
+
+msgid "Mime Type"
+msgstr ""
+
+msgid "Heading"
+msgstr ""
+
+msgid "Headline"
+msgstr ""
+
+msgid "Subheading"
+msgstr ""
+
+msgid "Access Right"
+msgstr ""
+
+msgid "Access Rights URI"
+msgstr ""
+
+msgid "Contributor"
+msgstr ""
+
+msgid "Contributor Type"
+msgstr ""
+
+msgid "Contributor Name Identifier"
+msgstr ""
+
+msgid "Contributor Name Identifier Scheme"
+msgstr ""
+
+msgid "Contributor Name Identifier URI"
+msgstr ""
+
+msgid "Contributor_Name"
+msgstr "Contributor Name"
+
+msgid "Contributor Family Name"
+msgstr ""
+
+msgid "Contributor Given Name"
+msgstr ""
+
+msgid "Contributor Alternative Name"
+msgstr ""
+
+msgid "Contributor Alternative"
+msgstr ""
+
+msgid "Contributor Email Address"
+msgstr ""
+
+msgid "Degree Name"
+msgstr ""
+
+msgid "Degree Grantor"
+msgstr ""
+
+msgid "Degree Grantor Name Identifier"
+msgstr ""
+
+msgid "Degree Grantor Name"
+msgstr ""
+
+msgid "Date Granted"
+msgstr ""
+
+msgid "Dissertation Number"
+msgstr ""
+
+msgid "Contributor ID"
+msgstr ""
+
+msgid "Funding Reference"
+msgstr ""
+
+msgid "Funder Name"
+msgstr ""
+
+msgid "Award Number"
+msgstr ""
+
+msgid "Book Name"
+msgstr ""
+
+msgid "Date Reported"
+msgstr ""
+
+msgid "Name Identifier"
+msgstr ""
+
+msgid "Name Identifier Scheme"
+msgstr ""
+
+msgid "Description_"
+msgstr "Description"
+
+msgid "Rights Resource"
+msgstr ""
+
+msgid "Rights Holder"
+msgstr ""
+
+msgid "Rights Holder Name Identifier"
+msgstr ""
+
+msgid "Rights Holder Name Identifier Scheme"
+msgstr ""
+
+msgid "Rights Holder Name Identifier URI"
+msgstr ""
+
+msgid "Rights Holder Name"
+msgstr ""
+
+msgid "Resource Type"
+msgstr ""
+
+msgid "Temporal"
+msgstr ""
+
+msgid "Geo Location"
+msgstr ""
+
+msgid "Geo Location Point"
+msgstr ""
+
+msgid "Point Longitude"
+msgstr ""
+
+msgid "Point Latitude"
+msgstr ""
+
+msgid "Geo Location Box"
+msgstr ""
+
+msgid "West Bound Longitude"
+msgstr ""
+
+msgid "East Bound Longitude"
+msgstr ""
+
+msgid "South Bound Latitude"
+msgstr ""
+
+msgid "North Bound Latitude"
+msgstr ""
+
+msgid "Geo Location Place"
+msgstr ""
+
+msgid "Funder Identifier"
+msgstr ""
+
+msgid "Funder Identifier Type"
+msgstr ""
+
+msgid "Award Number URI"
+msgstr ""
+
+msgid "Award Title"
+msgstr ""
+
+msgid "Source Title"
+msgstr ""
+
+msgid "Number of Pages"
+msgstr ""
+
+msgid "Degree Grantor Name Identifier Scheme"
+msgstr ""
+
+msgid "Conference"
+msgstr ""
+
+msgid "Conference Name"
+msgstr ""
+
+msgid "Conference Sequence"
+msgstr ""
+
+msgid "Conference Place"
+msgstr ""
+
+msgid "Conference Country"
+msgstr ""
+
+msgid "URI Object Type"
+msgstr ""
+
+msgid "URI Label"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Extent"
+msgstr ""
+
+msgid "Issued Date"
+msgstr ""
+
+msgid "Issue"
+msgstr ""
+
+msgid "Volume"
+msgstr ""
+
+msgid "Search repository"
+msgstr ""

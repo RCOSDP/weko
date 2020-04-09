@@ -366,7 +366,41 @@ class SchemaTree:
                     for k, x in get_sub_item_value(n, key, atr_vm):
                         yield k, x
 
+        def get_value_from_content_by_mapping_key(atr_vm, list_key):
+            # In case has more than 1 key
+            # for ex:"subitem_1551257025236.subitem_1551257043769"
+            if isinstance(list_key, list) and len(list_key) > 1:
+                key = list_key.pop(0)
+                if isinstance(atr_vm, dict) and atr_vm.get(key):
+                    for a, b in get_value_from_content_by_mapping_key(
+                            atr_vm.get(key), list_key):
+                        yield a, b
+                elif isinstance(atr_vm, list):
+                    for i in atr_vm:
+                        if i.get(key):
+                            for a, b in get_value_from_content_by_mapping_key(
+                                    i.get(key), list_key):
+                                yield a, b
+            elif isinstance(list_key, list) and len(list_key) == 1:
+                try:
+                    key = list_key[0]
+                    if isinstance(atr_vm, dict):
+                        if atr_vm.get(key) is None:
+                            yield None, id(key)
+                        else:
+                            yield atr_vm[key], id(key)
+                    elif isinstance(atr_vm, list):
+                        for i in atr_vm:
+                            if i.get(key) is None:
+                                yield None, id(key)
+                            else:
+                                yield i[key], id(key)
+                except Exception:
+                    import traceback
+                    traceback.print_exc()
+
         def get_url(z, key, val):
+            # If related to file, process, otherwise return row value
             if key and 'filemeta' in key:
                 attr = z.get(self._atr, {})
                 attr = attr.get(
@@ -407,13 +441,20 @@ class SchemaTree:
             klst = []
             blst = []
             parent_id = 0
-            for k2, p2 in get_sub_item_value(atr_vm, key):
-                if parent_id != p2 and parent_id != 0:
+            list_subitem_key = []
+            if '.' in key:
+                list_subitem_key = key.split('.')
+            else:
+                list_subitem_key.append(key)
+            for value, identify in get_value_from_content_by_mapping_key(
+                    atr_vm.copy(), list_subitem_key):
+                if parent_id != identify and parent_id != 0:
                     klst.append(blst)
                     blst = []
-                rlst.append(k2)
-                blst.append(get_url(z, kn, k2))
-                parent_id = p2
+                rlst.append(value)
+                # something related to FILE
+                blst.append(get_url(z, kn, value))
+                parent_id = identify
             if blst:
                 klst.append(blst)
             return klst
@@ -531,30 +572,66 @@ class SchemaTree:
                     vlst[0]['stdyDscr'] = {}
                 return vlst[0]['stdyDscr']
 
+            def clean_none_value(dct):
+                clean = {}
+                for k, v in dct.items():
+                    if isinstance(v, dict):
+                        # check if @value has value
+                        node_val = v.get('@value', None)
+                        if isinstance(node_val, list) and node_val[0] and (
+                                node_val[0].count(None) == 0
+                                or (node_val[0].count(None) > 0
+                                    and node_val[0].count(None) != len(
+                                node_val[0]))):
+                            # get index of None value
+                            lst_none_idx = [idx for idx, val in
+                                            enumerate(node_val[0]) if
+                                            val is None or val == '']
+                            if len(lst_none_idx) > 0:
+                                # delete all None element in @value
+                                for i in lst_none_idx:
+                                    del node_val[0][i]
+                                # delete all None element in all @attributes
+                                for key, val in v.get(self._atr).items():
+                                    for i in lst_none_idx:
+                                        del val[0][i]
+                            clean[k] = v
+                        else:
+                            nested = clean_none_value(v)
+                            if len(nested.keys()) > 0:
+                                clean[k] = nested
+                return clean
+
             vlst = []
             for ky, vl in mpdic.items():
                 vlc = copy.deepcopy(vl)
-                for z, y in get_key_value(vlc):
-                    # if it`s attributes node
-                    if y == self._atr:
-                        get_atr_value_lst(z, atr_vm, remain_keys)
+                for node_result, node_result_key in get_key_value(vlc):
+                    if node_result_key == self._atr:
+                        get_atr_value_lst(node_result, atr_vm, remain_keys)
                     else:
-                        if not z.get(self._v):
+                        if not node_result.get(self._v):
                             continue
 
                         # check expression or formula
-                        exp, lk = analysis(z.get(self._v))
+                        # exp = ,
+                        # lk = subitem_1551255702686
+                        exp, lk = analysis(node_result.get(self._v))
                         # if not have expression or formula
                         if len(lk) == 1:
                             nlst = get_items_value_lst(
-                                atr_vm, lk[0].strip(), remain_keys, z, k)
+                                atr_vm.copy(), lk[0].strip(), remain_keys,
+                                node_result, k)
                             if nlst:
-                                z[self._v] = nlst
+                                # [['Update PDF 3']]
+                                node_result[self._v] = nlst
+                            else:
+                                continue
                         else:
                             nlst = []
                             for val in lk:
                                 klst = get_items_value_lst(
-                                    atr_vm, val.strip(), remain_keys, z, k)
+                                    atr_vm, val.strip(), remain_keys,
+                                    node_result, k)
                                 nlst.append(klst)
 
                             if nlst:
@@ -590,10 +667,25 @@ class SchemaTree:
                                                 vst = []
                                             vst.append(ava[1:])
 
-                                z[self._v] = mlst
+                                node_result[self._v] = mlst
                 if remove_empty:
                     remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
+
+            attr_of_parent_item = {}
+            for k, v in vlst[0].items():
+                # get attribute of parent Node if any
+                if self._atr in v:
+                    attr_of_parent_item = {self._atr: v[self._atr]}
+            # remove None value
+            vlst = clean_none_value(vlst[0])
+
+            if vlst:
+                for k, v in vlst.items():
+                    if attr_of_parent_item:
+                        v.update(attr_of_parent_item)
+            vlst = [vlst]
+
             if isinstance(atr_vm, dict) and isinstance(vlst, list) and \
                     'stdyDscr' in vlst[0].keys():
                 if atr_name == 'Contributor':
@@ -613,19 +705,23 @@ class SchemaTree:
             return vlst
 
         vlst = []
-        for k, v in self._record.items():
-            if k != 'pubdate' and isinstance(v, dict):
+        for key_item_parent, value_item_parent in self._record.items():
+            if key_item_parent != 'pubdate' and isinstance(value_item_parent,
+                                                           dict):
                 # Dict
-                mpdic = v.get(
-                    self._schema_name) if self._schema_name in v else ''
+                # get value of the combination between record and \
+                # mapping data that is inited at __init__ function
+                mpdic = value_item_parent.get(
+                    self._schema_name) if self._schema_name \
+                    in value_item_parent else ''
                 if isinstance(mpdic, str) and len(mpdic) == 0:
                     continue
                 # List or string
-                atr_v = v.get('attribute_value')
+                atr_v = value_item_parent.get('attribute_value')
                 # List of dict
-                atr_vm = v.get('attribute_value_mlt')
+                atr_vm = value_item_parent.get('attribute_value_mlt')
                 # attr of name
-                atr_name = v.get('attribute_name')
+                atr_name = value_item_parent.get('attribute_name')
                 if atr_v:
                     if isinstance(atr_v, list):
                         atr_v = [atr_v]
@@ -635,9 +731,13 @@ class SchemaTree:
                     vlst.append(mpdic)
                 elif atr_vm and atr_name:
                     if isinstance(atr_vm, list) and isinstance(mpdic, dict):
-                        for lst in atr_vm:
-                            vlst.extend(
-                                get_mapping_value(mpdic, lst, k, atr_name))
+                        for atr_vm_item in atr_vm:
+                            vlst_child = get_mapping_value(mpdic, atr_vm_item,
+                                                           key_item_parent,
+                                                           atr_name)
+                            if vlst_child[0]:
+                                vlst.extend(vlst_child)
+                            # truong
         return vlst
 
     def create_xml(self):
@@ -707,10 +807,11 @@ class SchemaTree:
                                 atrt = get_atr_list(altt)
                             for i in range(len(val[index])):
                                 chld = etree.Element(kname, None, ns)
-                                # chld.text = val[index][i]
-                                chld.text = str(val[index][i])
+                                chld.text = val[index][i]
                                 if len(atrt) > i:
                                     for k2, v2 in atrt[i].items():
+                                        if v2 is None:
+                                            continue
                                         chld.set(get_prefix(k2), v2)
                                 tree.append(chld)
                             index += 1
@@ -731,6 +832,8 @@ class SchemaTree:
                                 chld = etree.Element(kname, None, ns)
                                 tree.append(chld)
                                 for k2, v2 in obj.items():
+                                    if v2 is None:
+                                        continue
                                     chld.set(get_prefix(k2), v2)
 
                                 for k1, v1 in node.items():
@@ -782,6 +885,38 @@ class SchemaTree:
                     else:
                         merge_json_xml(i, dct)
 
+        # Function Remove custom scheme
+        def remove_custom_scheme(name_identifier, v):
+            lst_name_identifier_default = current_app.config[
+                'WEKO_SCHEMA_UI_LIST_SCHEME']
+            if '@attributes' in name_identifier and \
+                    name_identifier['@attributes'].get('nameIdentifierScheme'):
+                element_first = 0
+                lst_name_identifier_scheme = name_identifier[
+                    '@attributes']['nameIdentifierScheme'][element_first]
+                lst_value = []
+                if '@value' in name_identifier:
+                    lst_value = name_identifier['@value'][element_first]
+                lst_name_identifier_uri = name_identifier[
+                    '@attributes']['nameIdentifierURI'][element_first]
+                index_remove_items = []
+                total_remove_items = len(lst_name_identifier_scheme)
+                for identifior_item in lst_name_identifier_scheme:
+                    if identifior_item not in lst_name_identifier_default:
+                        index_remove_items.extend([
+                            lst_name_identifier_scheme.index(identifior_item)])
+                if len(index_remove_items) == total_remove_items:
+                    del v['jpcoar:nameIdentifier']
+                    if 'jpcoar:affiliation' in v:
+                        del v['jpcoar:affiliation']
+                else:
+                    for index in index_remove_items[::-1]:
+                        lst_name_identifier_scheme.pop(index)
+                        if len(lst_value) == total_remove_items:
+                            lst_value.pop(index)
+                            total_remove_items = total_remove_items - 1
+                        lst_name_identifier_uri.pop(index)
+
         if not self._schema_obj:
             E = ElementMaker()
             root = E.Weko()
@@ -814,8 +949,18 @@ class SchemaTree:
         root.attrib['{{{pre}}}schemaLocation'.format(pre=xsi)] = self._location
 
         # Create sub element
+        indetifier_keys = ['jpcoar:creator', 'jpcoar:contributor',
+                           'jpcoar:rightsHolder']
+        affiliation_key = 'jpcoar:affiliation'
+        name_identifier_key = 'jpcoar:nameIdentifier'
         for lst in node_tree:
             for k, v in lst.items():
+                # Remove items that are not set as controlled vocabulary
+                if k in indetifier_keys:
+                    remove_custom_scheme(v[name_identifier_key], v)
+                    if affiliation_key in v:
+                        remove_custom_scheme(v[affiliation_key][
+                            name_identifier_key], v)
                 k = get_prefix(k)
                 set_children(k, v, root)
         return root
@@ -999,7 +1144,7 @@ def cache_schema(schema_name, delete=False):
             object_pairs_hook=OrderedDict)
         if delete:
             datastore.delete(cache_key)
-    except BaseException:
+    except BaseException as ex:
         try:
             schema = get_schema()
             if schema:

@@ -29,7 +29,7 @@ import sys
 
 import redis
 from flask import Blueprint, abort, current_app, redirect, render_template, \
-    request, session, url_for
+    request, session, url_for, flash
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_security import url_for_security
@@ -106,6 +106,7 @@ def shib_auto_login():
             ShibUser.shib_user_logout()
             datastore.delete(cache_key)
             current_app.logger.error(error)
+            flash(error, category='error')
             return redirect(url_for_security('login'))
 
         if shib_user.shib_user:
@@ -148,7 +149,15 @@ def confirm_user():
             datastore.delete(cache_key)
             return redirect(url_for_security('login'))
         shib_user.bind_relation_info(account)
-        if shib_user.shib_user is not None:
+
+        error = shib_user.check_in()
+
+        if error:
+            datastore.delete(cache_key)
+            flash(error, category='error')
+            return redirect(url_for_security('login'))
+
+        if shib_user.shib_user:
             shib_user.shib_user_login()
         datastore.delete(cache_key)
         return redirect(session['next'] if 'next' in session else '/')
@@ -186,6 +195,17 @@ def shib_login():
         csrf_random = generate_random_str(length=64)
         session['csrf_random'] = csrf_random
 
+        shib_role_auth = cache_val.get('shib_role_authority_name', '')
+        if not shib_role_auth:
+            current_app.logger.debug(_("Failed to get attribute."))
+
+        shib_role_config = config.SHIB_ACCOUNTS_ROLE_RELATION
+
+        if shib_role_auth and shib_role_auth not in shib_role_config.keys():
+            current_app.logger.error(_("Invalid attribute."))
+            flash(_("Invalid attribute."), category='error')
+            return redirect(url_for_security('login'))
+
         return render_template(
             config.WEKO_ACCOUNTS_CONFIRM_USER_TEMPLATE,
             csrf_random=csrf_random,
@@ -204,27 +224,30 @@ def shib_sp_login():
     :return: confirm page when relation is empty
     """
     try:
-        if not current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
-            return url_for_security('login')
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
-        if shib_session_id is None or len(shib_session_id) == 0:
+        if not shib_session_id and not current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
             return url_for_security('login')
+
         shib_attr, error = parse_attributes()
         if error:
             return url_for_security('login')
+
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
         ttl_sec = int(current_app.config['SHIB_ACCOUNTS_LOGIN_CACHE_TTL'])
         datastore.put(config.SHIB_CACHE_PREFIX + shib_session_id,
                       bytes(json.dumps(shib_attr), encoding='utf-8'),
                       ttl_secs=ttl_sec)
+
         shib_user = ShibUser(shib_attr)
+        # Check the relation of shibboleth user with weko account.
         rst = shib_user.get_relation_info()
-        """ check the relation of shibboleth user with weko account"""
+
         next_url = 'weko_accounts.shib_auto_login'
         if rst is None:
-            """relation is not existed, cache shibboleth info to redis."""
+            # Relation is not existed, cache shibboleth info to redis.
             next_url = 'weko_accounts.shib_login'
+
         query_string = {
             'SHIB_ATTR_SESSION_ID': shib_session_id,
             '_method': 'GET'

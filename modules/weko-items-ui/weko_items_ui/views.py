@@ -26,8 +26,8 @@ import sys
 from datetime import date, timedelta
 
 import redis
-from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
-    render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, json, jsonify, \
+    redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -54,11 +54,11 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
 from .utils import _get_max_export_items, export_items, get_actionid, \
-    get_current_user, get_list_email, get_list_username, \
-    get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, parse_ranking_results, \
-    remove_excluded_items_in_json_schema, set_multi_language_name, \
-    to_files_js, update_index_tree_for_record, \
+    get_current_user, get_data_authors_prefix_settings, get_list_email, \
+    get_list_username, get_new_items_by_date, get_user_info_by_email, \
+    get_user_info_by_username, get_user_information, get_user_permission, \
+    parse_ranking_results, remove_excluded_items_in_json_schema, \
+    set_multi_language_name, to_files_js, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
@@ -1011,7 +1011,8 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'value': 'desc'})
         rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, list_name='all',
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all',
                                   title_key='record_name',
                                   count_key='total_all', pid_key='pid_value')
 
@@ -1025,7 +1026,8 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, list_name='data', title_key='col2',
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
 
     # created_most_items_user
@@ -1038,9 +1040,9 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['created_most_items_user'] = \
-            parse_ranking_results(result, list_name='data',
-                                  title_key='username', count_key='count',
-                                  pid_key='')
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data',
+                                  title_key='user_id', count_key='count')
 
     # most_searched_keywords
     if settings.rankings['most_searched_keywords']:
@@ -1051,9 +1053,9 @@ def ranking():
             agg_sort={'value': 'desc'}
         )
         rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, list_name='all',
-                                  title_key='search_key', count_key='count',
-                                  pid_key='')
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all',
+                                  title_key='search_key', count_key='count')
 
     # new_items
     if settings.rankings['new_items']:
@@ -1251,3 +1253,22 @@ def save_title_and_share_user_id():
     data = request.get_json()
     validate_save_title_and_share_user_id(result, data)
     return jsonify(result)
+
+
+@blueprint_api.route('/author_prefix_settings', methods=['GET'])
+def get_authors_prefix_settings():
+    """Get all author prefix settings."""
+    author_prefix_settings = get_data_authors_prefix_settings()
+    if author_prefix_settings is not None:
+        results = []
+        for prefix in author_prefix_settings:
+            scheme = prefix.scheme
+            url = prefix.url
+            result = dict(
+                scheme=scheme,
+                url=url
+            )
+            results.append(result)
+        return jsonify(results)
+    else:
+        return abort(403)

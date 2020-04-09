@@ -763,3 +763,351 @@ msgstr "Creative Commons CC0 1.0 全世界 パブリック・ドメイン提供"
 # WEKO_RECORDS_UI_ITEM_DETAIL
 msgid "Date (ISO-8601)"
 msgstr "日付（ISO-8601）"
+
+msgid "Subject"
+msgstr "主題"
+
+msgid "Subject Scheme"
+msgstr "主題Scheme"
+
+msgid "Subject URI"
+msgstr "主題URI"
+
+msgid "Alternative Title"
+msgstr "その他（別言語等）のタイトル"
+
+msgid "Creator"
+msgstr "作成者"
+
+msgid "Creator Name Identifier"
+msgstr "作成者識別子"
+
+msgid "Creator Name Identifier Scheme"
+msgstr "作成者識別子Scheme"
+
+msgid "Creator Name Identifier URI"
+msgstr "作成者識別子URI"
+
+msgid "Creator Name"
+msgstr "作成者姓名"
+
+msgid "Name_"
+msgstr "姓名"
+
+msgid "Creator Family Name"
+msgstr "作成者姓"
+
+msgid "Family Name"
+msgstr "姓"
+
+msgid "Creator Given Name"
+msgstr "作成者名"
+
+msgid "Given Name"
+msgstr "名"
+
+msgid "Creator Alternative Name"
+msgstr "作成者別名"
+
+msgid "Alternative Name"
+msgstr "別名"
+
+msgid "Affiliation Name Identifier"
+msgstr "所属機関識別子"
+
+msgid "Affiliation Name Identifier Scheme"
+msgstr "所属機関識別子Scheme"
+
+msgid "Affiliation Name Identifier URI"
+msgstr "所属機関識別子URI"
+
+msgid "Affiliation Name"
+msgstr "所属機関名"
+
+msgid "Creator Email Address"
+msgstr "作成者メールアドレス"
+
+msgid "Description Type"
+msgstr "内容記述タイプ"
+
+msgid "Bibliographic Information"
+msgstr "書誌情報"
+
+msgid "Journal Title"
+msgstr "雑誌名"
+
+msgid "Volume Number"
+msgstr "巻"
+
+msgid "Issue Number"
+msgstr "号"
+
+msgid "Page Start"
+msgstr "開始ページ"
+
+msgid "Page End"
+msgstr "終了ページ"
+
+msgid "Publication Year"
+msgstr "発行年"
+
+msgid "Date Type"
+msgstr "日付タイプ"
+
+msgid "Publisher"
+msgstr "出版者"
+
+msgid "Source Identifier"
+msgstr "収録物識別子"
+
+msgid "Source Identifier Type"
+msgstr "収録物識別子タイプ"
+
+msgid "Relation"
+msgstr "関連情報"
+
+msgid "Relation Type"
+msgstr "関連タイプ"
+
+msgid "Related Identifier"
+msgstr "関連識別子"
+
+msgid "Related Identifier Type"
+msgstr "関連識別子タイプ"
+
+msgid "Identifier Type"
+msgstr "識別子タイプ"
+
+msgid "Related Title"
+msgstr "関連名称"
+
+msgid "Rights"
+msgstr "権利情報"
+
+msgid "Resource"
+msgstr "URI"
+
+msgid "Fileinfo"
+msgstr "ファイル情報"
+
+msgid "Text"
+msgstr "テキスト"
+
+msgid "Version Type"
+msgstr "出版タイプ"
+
+msgid "URI"
+msgstr "本文URL"
+
+msgid "Label"
+msgstr "ラベル"
+
+msgid "Mime Type"
+msgstr "フォーマット"
+
+msgid "Heading"
+msgstr "見出し"
+
+msgid "Headline"
+msgstr "大見出し"
+
+msgid "Subheading"
+msgstr "小見出し"
+
+msgid "Access Rights"
+msgstr "アクセス権"
+
+msgid "Access Rights URI"
+msgstr "アクセス権URI"
+
+msgid "Contributor"
+msgstr "寄与者"
+
+msgid "Contributor Type"
+msgstr "寄与者タイプ"
+
+msgid "Contributor Name Identifier"
+msgstr "寄与者識別子"
+
+msgid "Contributor Name Identifier Scheme"
+msgstr "寄与者識別子Scheme"
+
+msgid "Contributor Name Identifier URI"
+msgstr "寄与者識別子URI"
+
+msgid "Contributor_Name"
+msgstr "寄与者姓名"
+
+msgid "Contributor Family Name"
+msgstr "寄与者姓"
+
+msgid "Contributor Given Name"
+msgstr "寄与者名"
+
+msgid "Contributor Alternative Name"
+msgstr "寄与者別名"
+
+msgid "Contributor Alternative"
+msgstr "研究分担者別名"
+
+msgid "Contributor Email Address"
+msgstr "作成者メールアドレス"
+
+msgid "Degree Name"
+msgstr "学位名"
+
+msgid "Degree Grantor"
+msgstr "学位授与機関"
+
+msgid "Degree Grantor Name Identifier"
+msgstr "学位授与機関識別子"
+
+msgid "Degree Grantor Name"
+msgstr "学位授与機関名"
+
+msgid "Date Granted"
+msgstr "学位授与年月日"
+
+msgid "Dissertation Number"
+msgstr "学位授与番号"
+
+msgid "Contributor ID"
+msgstr "研究分担者ID"
+
+msgid "Funding Reference"
+msgstr "助成情報"
+
+msgid "Funder Name"
+msgstr "助成機関名"
+
+msgid "Award Number"
+msgstr "研究課題番号"
+
+msgid "Book Name"
+msgstr "図書名"
+
+msgid "Date Reported"
+msgstr "報告年度"
+
+msgid "Name Identifier"
+msgstr "学位授与機関識別子"
+
+msgid "Name Identifier Scheme"
+msgstr "学位授与機関識別子Scheme"
+
+msgid "Description_"
+msgstr "内容記述"
+
+msgid "Rights Resource"
+msgstr "権利情報Resource"
+
+msgid "Rights Holder"
+msgstr "権利者情報"
+
+msgid "Rights Holder Name Identifier"
+msgstr "権利者識別子"
+
+msgid "Rights Holder Name Identifier Scheme"
+msgstr "権利者識別子Scheme"
+
+msgid "Rights Holder Name Identifier URI"
+msgstr "権利者識別子URI"
+
+msgid "Rights Holder Name"
+msgstr "権利者名"
+
+msgid "Resource Type"
+msgstr "資源タイプ"
+
+msgid "Temporal"
+msgstr "時間的範囲"
+
+msgid "Geo Location"
+msgstr "位置情報"
+
+msgid "Geo Location Point"
+msgstr "位置情報（点）"
+
+msgid "Point Longitude"
+msgstr "経度"
+
+msgid "Point Latitude"
+msgstr "緯度"
+
+msgid "Geo Location Box"
+msgstr "位置情報（空間）"
+
+msgid "West Bound Longitude"
+msgstr "西部経度"
+
+msgid "East Bound Longitude"
+msgstr "東部経度"
+
+msgid "South Bound Latitude"
+msgstr "南部緯度"
+
+msgid "North Bound Latitude"
+msgstr "北部緯度"
+
+msgid "Geo Location Place"
+msgstr "位置情報（自由記述）"
+
+msgid "Funder Identifier"
+msgstr "助成機関識別子"
+
+msgid "Funder Identifier Type"
+msgstr "助成機関識別子タイプ"
+
+msgid "Award Number URI"
+msgstr "研究課題番号URI"
+
+msgid "Award Title"
+msgstr "研究課題名"
+
+msgid "Source Title"
+msgstr "収録物名"
+
+msgid "Number of Pages"
+msgstr "ページ数"
+
+msgid "Degree Grantor Name Identifier Scheme"
+msgstr "学位授与機関識別子Scheme"
+
+msgid "Conference"
+msgstr "会議記述"
+
+msgid "Conference Name"
+msgstr "会議名"
+
+msgid "Conference Sequence"
+msgstr "回次"
+
+msgid "Conference Place"
+msgstr "開催地"
+
+msgid "Conference Country"
+msgstr "開催国"
+
+msgid "URI Object Type"
+msgstr "オブジェクトタイプ"
+
+msgid "URI Label"
+msgstr "ラベル"
+
+msgid "Format"
+msgstr "フォーマット"
+
+msgid "Extent"
+msgstr "サイズ"
+
+msgid "Issued Date"
+msgstr "発行日"
+
+msgid "Issue"
+msgstr "号"
+
+msgid "Volume"
+msgstr "巻"
+
+msgid "Search repository"
+msgstr "レポジトリを検索する"

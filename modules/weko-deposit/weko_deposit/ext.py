@@ -20,10 +20,12 @@
 
 """Flask extension for weko-deposit."""
 
+from invenio_indexer.signals import before_record_index
+
 from . import config
 from .rest import create_blueprint
 from .views import blueprint
-
+from .receivers import append_file_content
 
 class WekoDeposit(object):
     """weko-deposit extension."""
@@ -60,6 +62,8 @@ class WekoDeposit(object):
         for k in dir(config):
             if k.startswith('WEKO_DEPOSIT_'):
                 app.config.setdefault(k, getattr(config, k))
+        before_record_index.connect(append_file_content)
+
 
 
 class WekoDepositREST(object):

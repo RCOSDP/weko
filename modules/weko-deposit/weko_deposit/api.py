@@ -34,6 +34,7 @@ from invenio_deposit.api import Deposit, index, preserve
 from invenio_deposit.errors import MergeConflict
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
+from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -54,6 +55,8 @@ from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
 
+from .config import DEPOSIT_RECORDS_UI_CREATOR, MAGAZINE_INFORMATION, \
+    MAGAZINE_INFORMATION_KEY
 from .pidstore import get_latest_version_id, weko_deposit_fetcher, \
     weko_deposit_minter
 from .signals import item_created
@@ -163,55 +166,6 @@ class WekoIndexer(RecordIndexer):
             id=str(version.get('id')),
             body=body
         )
-
-    def update_relation_info(self, record, relation_info):
-        """Update relation info."""
-        self.get_es_index()
-        relation = 'relation'
-        relation_type = 'relation_type'
-        relation_type_val = []
-        for d in relation_info[0]:
-            pid = d.get('item_data').get('links').get('self').split('/')[len(
-                d.get('item_data').get('links').get('self').split('/')) - 1]
-            links = '/records/' + pid
-            sub_data = dict(
-                item_links=links,
-                item_title=d.get('item_title'),
-                value=d.get('sele_id'))
-            relation_type_val.append(sub_data)
-        if relation_info[0]:
-            body = {'doc': {relation: {relation_type: relation_type_val}}}
-        else:
-            body = {'doc': {relation: {}}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(record.id),
-            body=body
-        )
-
-    def get_item_link_info(self, pid):
-        """Get item link info."""
-        item_link_info = None
-        try:
-            self.get_es_index()
-            get_item_link_q = {
-                "query": {
-                    "match": {
-                        "control_number": "@control_number"
-                    }
-                }
-            }
-            query_q = json.dumps(get_item_link_q).replace(
-                "@control_number", pid)
-            query_q = json.loads(query_q)
-            indexer = RecordIndexer()
-            res = indexer.client.search(index=self.es_index, body=query_q)
-            item_link_info = res.get("hits").get(
-                "hits")[0].get('_source').get("relation")
-        except Exception as ex:
-            current_app.logger.debug(ex)
-        return item_link_info
 
     def update_path(self, record, update_revision=True):
         """Update path."""
@@ -1010,11 +964,244 @@ class WekoRecord(Record):
                             if v.get('nameIdentifierURI'):
                                 uri = v.get('nameIdentifierURI')
                             elif v.get('nameIdentifierScheme'):
-                                uri = 'http://'\
-                                      + v.get('nameIdentifierScheme')\
+                                uri = 'http://' \
+                                      + v.get('nameIdentifierScheme') \
                                       + '.io/' + name
                             v['nameIdentifier'] = dict(name=name, uri=uri)
             return mlt
+
+        def format_creator(author, after_format, default_lang, list_lang):
+            def format_creator_to_show_detail(author, default_lang, parent_key,
+                                              lst):
+                # Get creator name to show on item detail.
+                name_key = ''
+                lang_key = ''
+                if parent_key == DEPOSIT_RECORDS_UI_CREATOR['creator_names']:
+                    name_key = DEPOSIT_RECORDS_UI_CREATOR['creator_name']
+                    lang_key = DEPOSIT_RECORDS_UI_CREATOR['creator_lang']
+                elif parent_key == DEPOSIT_RECORDS_UI_CREATOR['family_names']:
+                    name_key = DEPOSIT_RECORDS_UI_CREATOR['family_name']
+                    lang_key = DEPOSIT_RECORDS_UI_CREATOR['family_lang']
+                elif parent_key == DEPOSIT_RECORDS_UI_CREATOR['given_names']:
+                    name_key = DEPOSIT_RECORDS_UI_CREATOR['given_name']
+                    lang_key = DEPOSIT_RECORDS_UI_CREATOR['given_lang']
+                elif parent_key == DEPOSIT_RECORDS_UI_CREATOR[
+                        'alternative_names']:
+                    name_key = DEPOSIT_RECORDS_UI_CREATOR['alternative_name']
+                    lang_key = DEPOSIT_RECORDS_UI_CREATOR['alternative_lang']
+                if parent_key in author:
+                    lst_value = author[parent_key]
+                    if len(lst_value) > 0:
+                        for i in range(len(lst_value)):
+                            if lst_value[i] and lst_value[i].get(
+                                    lang_key) == default_lang:
+                                lst.append(
+                                    lst_value[i][name_key])
+                                break
+
+            def format_creator_to_show_popup(author, default_lang, dict_temp):
+                if isinstance(author, dict):
+                    for key, value in author.items():
+                        if key == DEPOSIT_RECORDS_UI_CREATOR[
+                                'identifiers'] or key == \
+                                DEPOSIT_RECORDS_UI_CREATOR['creator_mails']:
+                            continue
+                        format_creator_to_show_popup(value, default_lang,
+                                                     dict_temp)
+                else:
+                    for i in author:
+                        count = 0
+                        if isinstance(i, dict) and default_lang:
+                            for k, v in i.items():
+                                if v == default_lang and 'Lang' in k:
+                                    if dict_temp:
+                                        dict_temp[default_lang].update(i)
+                                    else:
+                                        dict_temp[default_lang] = i
+                        else:
+                            for k, v in i.items():
+                                if 'Lang' in k:
+                                    count = count + 1
+                            if count == 0:
+                                if dict_temp:
+                                    dict_temp['NoLanguage'].update(i)
+                                else:
+                                    dict_temp['NoLanguage'] = i
+
+            lst = []
+            creator_names = DEPOSIT_RECORDS_UI_CREATOR['creator_names']
+            family_names = DEPOSIT_RECORDS_UI_CREATOR['family_names']
+            given_names = DEPOSIT_RECORDS_UI_CREATOR['given_names']
+            alternative_names = DEPOSIT_RECORDS_UI_CREATOR['alternative_names']
+            list_parent_key = [creator_names, family_names, given_names,
+                               alternative_names]
+            for parent_key in list_parent_key:
+                format_creator_to_show_detail(author, default_lang, parent_key,
+                                              lst)
+                if lst:
+                    break
+            # if lst is None when chose default language
+            if not lst:
+                for lang in list_lang:
+                    for parent_key in list_parent_key:
+                        format_creator_to_show_detail(author, lang, parent_key,
+                                                      lst)
+                        if lst:
+                            break
+                    if lst:
+                        break
+            # if lst is None when chose priority language
+            if not lst:
+                for parent_key in list_parent_key:
+                    format_creator_to_show_detail(author, None, parent_key,
+                                                  lst)
+                    if lst:
+                        break
+            after_format['name'] = lst
+            list_temp = []
+            dict_temp = {}
+            # Format data by key is language default.
+            format_creator_to_show_popup(author, default_lang, dict_temp)
+            if dict_temp:
+                list_temp.append(dict_temp)
+                dict_temp = {}
+
+            # Format data by key if language is ja-Kana.
+            if default_lang == "ja":
+                dict_temp = {}
+                format_creator_to_show_popup(author, 'ja-Kana', dict_temp)
+                if dict_temp:
+                    list_temp.append(dict_temp)
+                    dict_temp = {}
+
+            # If list_temp not None when get value by default language
+            if list_temp:
+                list_lang.remove(default_lang)
+
+            # Get value by priority language
+            for lang in list_lang:
+                format_creator_to_show_popup(author, lang, dict_temp)
+                if dict_temp:
+                    list_temp.append(dict_temp)
+                    dict_temp = {}
+                if lang == 'ja':
+                    format_creator_to_show_popup(author, 'ja-Kana', dict_temp)
+                    if dict_temp:
+                        list_temp.append(dict_temp)
+                        dict_temp = {}
+            # Get value have no language
+            format_creator_to_show_popup(author, None, dict_temp)
+            if dict_temp:
+                list_temp.append(dict_temp)
+            after_format.update({'order_lang': list_temp})
+
+        def get_bibliographic_list(bibliographic_list_meta_data):
+            """
+            Get bibliographic information list.
+
+            :rtype: object
+            """
+            bibliographic_list = []
+            for bibliographic in bibliographic_list_meta_data:
+                title_data, magazine, length = get_bibliographic(bibliographic)
+                bibliographic_list.append({
+                    'title_attribute_name': title_data,
+                    'magazine_attribute_name': magazine,
+                    'length': length
+                })
+            return bibliographic_list
+
+        def get_bibliographic(bibliographic):
+            """
+            Get bibliographic information data.
+
+            :param bibliographic:
+            :return: title_data, magazine, length
+            """
+            title_data = []
+            if bibliographic.get('bibliographic_titles'):
+                title_data = get_source_title(
+                    bibliographic.get('bibliographic_titles'))
+            magazine, length = get_magazine_information(bibliographic)
+            return title_data, magazine, length
+
+        def get_magazine_information(bibliographic):
+            """
+            Get magazine information data.
+
+            :param bibliographic:
+            :return:
+            """
+            magazine_name = MAGAZINE_INFORMATION
+            magazine = []
+            for name in MAGAZINE_INFORMATION_KEY:
+                if name == 'p.':
+                    page = get_page_tart_and_page_end(
+                        bibliographic.get('bibliographicPageStart'),
+                        bibliographic.get('bibliographicPageEnd'))
+                    if page != '':
+                        magazine.append({name: page})
+                elif name == 'bibliographicIssueDates':
+                    dates = get_issue_dates(
+                        bibliographic.get('bibliographicIssueDates'))
+                    if dates:
+                        magazine.append(
+                            {magazine_name.get(name): " ".join(
+                                str(x) for x in dates)})
+                elif bibliographic.get(name):
+                    magazine.append(
+                        {magazine_name.get(name): bibliographic.get(name)})
+            length = len(magazine) if len(magazine) else 0
+            return magazine, length
+
+        def get_source_title(source_titles):
+            """
+            Get source title.
+
+            :param source_titles:
+            :return:
+            """
+            title_data = []
+            for source_title in source_titles:
+                title = source_title['bibliographic_titleLang'] + ' : ' if \
+                    source_title.get('bibliographic_titleLang') else ''
+                title += source_title[
+                    'bibliographic_title'] if source_title.get(
+                    'bibliographic_title') else ''
+                title_data.append(title)
+            return title_data
+
+        def get_page_tart_and_page_end(page_start, page_end):
+            """
+            Get page start and page end.
+
+            :param page_start:
+            :param page_end:
+            :return:
+            """
+            page = ''
+            page += page_start if page_start is not None else ''
+            temp = page_end if page == '' else '-' + page_end
+            page += temp if page_end else ''
+
+            return page
+
+        def get_issue_dates(issue_dates):
+            """
+            Get issue dates.
+
+            :param issue_dates:
+            :return:
+            """
+            date = []
+            if isinstance(issue_dates, list):
+                for issued_date in issue_dates:
+                    if issued_date.get(
+                        'bibliographicIssueDate') and issued_date.get(
+                            'bibliographicIssueDateType') == 'Issued':
+                        date.append(issued_date.get('bibliographicIssueDate'))
+                return date
+
         try:
 
             items = []
@@ -1049,12 +1236,41 @@ class WekoRecord(Record):
                                           copy.deepcopy(solst), True)
                     else:
                         is_author = nval['attribute_type'] == 'creator'
+                        from weko_gridlayout.utils import get_register_language
                         if is_author:
-                            mlt = get_name_iddentifier_uri(copy.deepcopy(mlt))
-                        nval['attribute_value_mlt'] = \
-                            get_attribute_value_all_items(copy.deepcopy(mlt),
-                                                          copy.deepcopy(solst),
-                                                          is_author)
+                            list_lang = []
+                            for lang in get_register_language():
+                                list_lang.append(lang['lang_code'])
+                            creators = []
+                            if mlt:
+                                for author in mlt:
+                                    after_format = {}
+                                    format_creator(author, after_format,
+                                                   current_i18n.language,
+                                                   list_lang.copy())
+                                    identifiers = DEPOSIT_RECORDS_UI_CREATOR[
+                                        'identifiers']
+                                    creator_mails = DEPOSIT_RECORDS_UI_CREATOR[
+                                        'creator_mails']
+                                    if identifiers in author:
+                                        after_format[identifiers] = author[
+                                            identifiers]
+                                    if creator_mails in author:
+                                        after_format[creator_mails] = author[
+                                            creator_mails]
+                                    creators.append(after_format)
+                            nval['attribute_value_mlt'] = creators
+                        elif nval['attribute_name'] == \
+                                'Bibliographic Information':
+                            nval['attribute_value_mlt'] = \
+                                get_bibliographic_list(
+                                copy.deepcopy(mlt))
+                        else:
+                            nval['attribute_value_mlt'] = \
+                                get_attribute_value_all_items(
+                                    copy.deepcopy(mlt),
+                                    copy.deepcopy(solst),
+                                    is_author)
                     items.append(nval)
                 else:
                     items.append(val)

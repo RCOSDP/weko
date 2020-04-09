@@ -64,7 +64,7 @@ def parse_attributes():
         current_app.logger.debug('Shib    {0}: {1}'.format(name, value))
         attrs[name] = value
 
-        if required:
+        if required and not value:
             error = True
 
     return attrs, error

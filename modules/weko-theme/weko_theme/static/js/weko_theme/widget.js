@@ -225,7 +225,7 @@ let PageBodyGrid = function () {
             let readMore = (languageDescription.read_more) ? languageDescription.read_more : READ_MORE_DEFAULT;
             templateWriteMoreNotice = '</br>' +
                 '<div id="' + moreDescriptionID + '" class="hidden">' + moreDescription + '</div>' +
-                '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
+                '<a style="padding-bottom:35px;" id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
                 linkID + '\',\'' + escapeHtml(readMore) + '\', \'' + escapeHtml(hideRest) + '\')">' + readMore +
                 '</a>';
         }
@@ -244,7 +244,7 @@ let PageBodyGrid = function () {
           let widget = data[widgetId][created_date];
             let initNum = widget.access_counter ? Number(widget.access_counter) : 0;
             result = widget.all.count ? Number(widget.all.count) : 0;
-            if (!Number.isNaN(initNum)) {
+            if (typeof(initNum) == 'number') {
                 result = result + initNum;
             }
         }
@@ -262,13 +262,13 @@ let PageBodyGrid = function () {
                 + '</div>';
     };
 
+    const currentTime = new Date().getTime();
+
     this.buildNewArrivals = function (widgetID, term, rss, id, count) {
         $.ajax({
             method: 'GET',
-            url: '/api/admin/get_new_arrivals/' + widgetID,
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            url: '/api/admin/get_new_arrivals/' + widgetID + '?time=' + currentTime,
+            contentType: 'application/json',
             success: function(response) {
                 var result = response.data;
                 var rssHtml = '';
@@ -407,8 +407,8 @@ let PageBodyGrid = function () {
         } else if (node.type === ACCESS_COUNTER) {
             let widgetId = 0;
             if (node.access_counter &&
-                !Number.isNaN(Number(node.widget_id))) {
-                widgetId = Number(node.widget_id);
+                typeof(node.widget_id) == 'number') {
+                widgetId = node.widget_id;
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
             let _this = this
@@ -422,7 +422,7 @@ let PageBodyGrid = function () {
           id = 'id="' + innerID + '"';
           // Extract only the settings we want:
           var menuSettings = {};
-          Object.keys(node).forEach(function(k) { if (k.startsWith('menu_')) menuSettings[k] = node[k] });
+          Object.keys(node).forEach(function(k) { if (k.indexOf('menu_') == 0) menuSettings[k] = node[k] });
           this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
         } else if (node.type === HEADER_TYPE) {
             $("#community_header").attr("hidden", true);
@@ -622,6 +622,9 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
   if (otherElement) {
     let scrollHeight = otherElement.prop("scrollHeight");
     let clientHeight = otherElement.prop("clientHeight");
+    if(isIE11()){
+      scrollHeight = scrollHeight + 21;
+    }
     if (scrollHeight > clientHeight) {
       let cellHeight = pageBodyGrid.getCellHeight();
       let verticalMargin = pageBodyGrid.getVerticalMargin();
@@ -760,7 +763,11 @@ function buildWidget() {
     new ResizeSensor($(".widget-resize"), function () {
       $(".widget-resize").each(function () {
         let headerElementHeight = $(this).find(".panel-heading").height();
-        $(this).find(".panel-body").css("padding-top", String(headerElementHeight + 11) + "px");
+        let plusHeight = 11;
+        if (isIE11()){
+            plusHeight = 21;
+          }
+        $(this).find(".panel-body").css("padding-top", String(headerElementHeight + plusHeight) + "px");
       });
     });
 
@@ -769,9 +776,16 @@ function buildWidget() {
   }
 }
 
+function isIE11(){
+    return !!window.MSInputMethodContext && !!document.documentMode;
+}
+
 function handleAutoAdjustWidget(pageBodyGrid) {
-  let ortherSensor = new ResizeSensor($('.grid-stack-item-content > .panel-body'), function () {
-    $('.grid-stack-item-content > .panel-body').each(function () {
+  if (isIE11()){
+    $('.header-footer-type').parent().addClass('widgetIE');
+  }
+  let ortherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+    $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
       autoAdjustWidgetHeight("", pageBodyGrid, _this);
     });
@@ -794,10 +808,21 @@ function handleAutoAdjustWidget(pageBodyGrid) {
 
 function removeSensorListener(sensor, timeout) {
   if (!timeout) {
-    timeout = 5000;
+    timeout = 2000;
   }
   setTimeout(function() {
     sensor.detach();
+    $('.header-footer-type').parent().removeClass('widgetIE');
+    if(isIE11()){
+        // Add class fix css IE11
+        $('#page_body').addClass('ie');
+        // scroll-x when content > div
+        $(".trumbowyg-editor").each(function(){
+            if($(this).find('img').length !== 0){
+                $(this).addClass("scroll_x");
+            }
+        })
+    }
   }, timeout);
 }
 
