@@ -1701,6 +1701,7 @@ function toObject(arr) {
       });
 
       $scope.changePositionFileName = function () {
+        $('#new-postion-filename').parent().children('bootstrap-decorator').remove();
         $('#new-postion-filename').empty();
         let records = $rootScope.recordsVM.invenioRecordsForm;
         // Move File to upload area

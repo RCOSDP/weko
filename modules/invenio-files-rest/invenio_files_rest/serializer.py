@@ -68,6 +68,7 @@ class ObjectVersionSchema(BaseSchema):
     uploaded_owners = fields.Method('upload_owners', dump_only=True)
     is_show = fields.Boolean()
     is_thumbnail = fields.Boolean()
+    is_billing = fields.Boolean()
     tags = fields.Method('dump_tags', dump_only=True)
 
     def upload_owners(self, o):

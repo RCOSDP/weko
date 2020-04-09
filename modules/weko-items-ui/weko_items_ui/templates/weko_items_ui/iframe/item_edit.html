@@ -159,16 +159,16 @@
                 </div>
               </div>
               {%- endif %}
-
-              <div>
-                <div class="row">
-                  <div class="col-sm-12">
-                    <form name="depositionForm" class="form-horizontal ng-pristine ng-isolate-scope ng-valid ng-valid-schema-form">
-                      <div id="new-postion-filename"></div>
-                    </form>
+              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading"> 
+                <div>
+                  <div class="row">
+                    <div class="col-sm-12">
+                      <form name="depositionForm" class="form-horizontal ng-pristine ng-isolate-scope ng-valid ng-valid-schema-form" sf-schema="recordsVM.invenioRecordsSchema">
+                        <div id="new-postion-filename"></div>
+                      </form>
+                    </div>
                   </div>
                 </div>
-              </div>
               {%- if need_thumbnail %}
                 <div class="row">
                   <div class="col-sm-12">
@@ -204,8 +204,7 @@
                   </div>
                 </div>
               {%- endif %}
-              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                {%- if show_automatic_metadata_input %}
+               {%- if show_automatic_metadata_input %}
                 <div class="row">
                   <div class="col-sm-12">
                   <p class="text-center">
