@@ -569,7 +569,7 @@ function toObject(arr) {
           }
         }
       }
-      
+
       $scope.searchFilemetaForm = function (title) {
         let fileMetaForm = "";
         $rootScope.recordsVM.invenioRecordsForm.forEach(function (recordForm) {
@@ -711,7 +711,7 @@ function toObject(arr) {
                   var author_form_key = author_form.items[searchTitleMap].key
                   // Only clear and do logic for "Scheme" field
                   $scope.sub_item_scheme.map(function (scheme) {
-                      if (author_form_key.includes(scheme)) {
+                      if (author_form_key.indexOf(scheme) != -1) {
                         author_form.items[searchTitleMap].titleMap = [];
                         $scope.sub_item_scheme.map(function (item) {
                           if (author_schema.properties[item]) {
@@ -848,7 +848,7 @@ function toObject(arr) {
       function get_subitem(items, subitem) {
         for (var i = 0; i < items.length; i++) {
           var key = items[i].key
-          if (typeof key !== 'undefined' && key.includes(subitem)) {
+          if (typeof key !== 'undefined' && key.indexOf(subitem) != -1) {
             return items[i]
           }
         }
