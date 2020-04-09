@@ -1709,7 +1709,7 @@ function toObject(arr) {
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           records.forEach(function(item,i){
             if(item.key == filemeta_key){
-              $('invenio-records-form bootstrap-decorator.ng-scope').eq(i).appendTo("#new-postion-filename");
+              $('invenio-records-form').find('bootstrap-decorator[form="schemaForm.form[' + i + ']"]').appendTo("#new-postion-filename");
             }
           });
         });
