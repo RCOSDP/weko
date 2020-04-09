@@ -628,7 +628,8 @@ def make_stats_tsv(list_item_role, item_type_id, recids):
                             'attribute_value_mlt']
                         if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
                             and len(attr_val[idx][sub_attr]) > idx_2 \
-                                and attr_val[idx][sub_attr][idx_2].get(sub_attr_2):
+                            and attr_val[idx][sub_attr][idx_2].get(
+                                sub_attr_2):
                             cur_len = len(attr_val[idx][sub_attr][idx_2][
                                 sub_attr_2])
                             if cur_len > max_length:
@@ -1464,14 +1465,14 @@ def hide_meta_data_for_role(record):
         if role.name in community_role_name:
             is_hidden = False
             break
+    if record:
+        # Item Register users
+        if record.get('weko_creator_id') in list(current_user.roles or []):
+            is_hidden = False
 
-    # Item Register users
-    if record.get('weko_creator_id') in list(current_user.roles or []):
-        is_hidden = False
-
-    # Share users
-    if record.get('weko_shared_id') in list(current_user.roles or []):
-        is_hidden = False
+        # Share users
+        if record.get('weko_shared_id') in list(current_user.roles or []):
+            is_hidden = False
 
     return is_hidden
 
