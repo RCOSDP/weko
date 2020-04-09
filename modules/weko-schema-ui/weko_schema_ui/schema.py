@@ -222,17 +222,30 @@ class SchemaTree:
             if record and record.get("metadata") else None
         self._schema_name = schema_name if schema_name else None
         if self._record:
-            self._root_name, self._ns, self._schema_obj = \
+            self._root_name, self._ns, self._schema_obj, self._item_type_id = \
                 self.get_mapping_data()
         self._v = "@value"
         self._atr = "@attributes"
         self._location = ''
         self._target_namespace = ''
         schemas = WekoSchema.get_all()
+        if self._record and self._item_type_id:
+            self._ignore_list = self.get_ignore_item_from_option()
         for schema in schemas:
             if self._schema_name == schema.schema_name:
                 self._location = schema.schema_location
                 self._target_namespace = schema.target_namespace
+
+    def get_ignore_item_from_option(self):
+        """Get all keys of properties that is enable Hide option in metadata."""
+        ignore_list = []
+        from weko_records.utils import get_options_and_order_list
+        _, meta_options = get_options_and_order_list(self._item_type_id)
+        for key, val in meta_options.items():
+            hidden = val.get('option').get('hidden')
+            if hidden:
+                ignore_list.append(key)
+        return ignore_list
 
     def get_mapping_data(self):
         """
@@ -261,10 +274,12 @@ class SchemaTree:
                         if isinstance(v, dict) and mp.get(k) and k != "_oai":
                             v.update({self._schema_name: mp.get(
                                 k).get(self._schema_name)})
+                return id
 
         # inject mappings info to record
-        get_mapping()
-        return rec.get('root_name'), rec.get('namespaces'), rec.get('schema')
+        item_type_id = get_mapping()
+        return rec.get('root_name'), rec.get('namespaces'), rec.get(
+            'schema'), item_type_id
 
     def __converter(self, node):
 
@@ -324,6 +339,7 @@ class SchemaTree:
         """
         obj = cls(schema_name=schema_name)
         obj._record = records
+        obj._ignore_list = []
         vlst = list(map(obj.__converter,
                         filter(lambda x: isinstance(x, dict),
                                obj.__get_value_list())))
@@ -714,7 +730,9 @@ class SchemaTree:
                 mpdic = value_item_parent.get(
                     self._schema_name) if self._schema_name \
                     in value_item_parent else ''
-                if isinstance(mpdic, str) and len(mpdic) == 0:
+                if (isinstance(mpdic, str) and len(mpdic) == 0) or (len(
+                    self._ignore_list) > 0 and key_item_parent
+                                                        in self._ignore_list):
                     continue
                 # List or string
                 atr_v = value_item_parent.get('attribute_value')
