@@ -82,9 +82,7 @@ class WekoAccounts(object):
             app.config['SSO_ATTRIBUTE_MAP'] = config.SSO_ATTRIBUTE_MAP
 
         for k in dir(config):
-            if k.startswith('WEKO_ACCOUNTS_'):
-                app.config.setdefault(k, getattr(config, k))
-            elif k.startswith('BABEL_'):
+            if k.startswith('WEKO_ACCOUNTS_') or k.startswith('BABEL_'):
                 app.config.setdefault(k, getattr(config, k))
 
     def _enable_logger_activity(self, app):

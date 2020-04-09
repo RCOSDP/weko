@@ -6,12 +6,6 @@
 // ############################################################################
 
 // Declare all variables
-var wayf_URL = "https://ds.gakunin.nii.ac.jp/WAYF";
-var sp_domain = "https://register-ci.nii.ac.jp";
-var wayf_sp_entityID = sp_domain + "/shibboleth-sp";
-var wayf_sp_handlerURL = sp_domain + "/Shibboleth.sso";
-var wayf_return_url = sp_domain + "/auth/action/shibLogin?contentsServer=CINII&targetUrl=";
-
 var wayf_use_discovery_service;
 var wayf_use_small_logo = true;
 var wayf_width;
@@ -1478,6 +1472,8 @@ var wayf_hint_list = [];
 var inc_search_list = [];
 
 // Customize pattern 2
+var category = true;
+
 var inc_search_list_clone = [];
 var discofeed_flg = false;
 var inc_type_list = ['All', 'Hokkaido', 'Tohoku', 'Kanto', 'Chubu', 'Kinki', 'Chugoku', 'Shikoku', 'Kyushu', 'Others'];
@@ -1524,8 +1520,16 @@ var hint_idp_group = ' Hint! IdP';
 var wayf_overwrite_submit_button_text = "ログイン";
 var wayf_overwrite_checkbox_label_text = "ブラウザ起動中は自動ログイン";
 
-// Pattern 2 customize
-var category = true;
+var wayf_URL = "https://ds.gakunin.nii.ac.jp/WAYF";
+var sp_domain = "https://idp.repo.nii.ac.jp";
+var wayf_sp_entityID = sp_domain + "/shibboleth-sp";
+var wayf_sp_handlerURL = sp_domain + "/Shibboleth.sso";
+var wayf_return_url = sp_domain + "/loginproxy/getAuthInfo";
+var wayf_discofeed_url = "https://ds.gakunin.nii.ac.jp/DiscoFeed/PS0054JP"; 
+var wayf_width = "390";
+var wayf_background_color = '#F8F8FF';
+var wayf_font_color = '#000080';
+var wayf_border_color = '#214890';
 
 // Define functions
 function submitForm() {
