@@ -187,6 +187,7 @@ class ShibUser(object):
         :return:
 
         """
+        from .config import WEKO_GENERAL_ROLE, SHIB_ACCOUNTS_ROLE_RELATION
         error = ''
 
         if not self.user:
@@ -196,10 +197,9 @@ class ShibUser(object):
         shib_role_auth = self.shib_attr.get('shib_role_authority_name', '')
         if not shib_role_auth:
             current_app.logger.debug(_("Failed to get attribute."))
-            return self._set_weko_user_role(current_app.config[
-                                            'WEKO_GENERAL_ROLE']), error
+            return self._set_weko_user_role(WEKO_GENERAL_ROLE), error
 
-        shib_role_config = current_app.config['SHIB_ACCOUNTS_ROLE_RELATION']
+        shib_role_config = SHIB_ACCOUNTS_ROLE_RELATION
         if shib_role_auth in shib_role_config.keys():
             return self._set_weko_user_role(shib_role_config[shib_role_auth])
         else:
