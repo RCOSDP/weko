@@ -42,23 +42,26 @@
   },
   {
     "key": "date_first_issue_online",
-    "type": "text",
     "condition": "model.is_output && model.publication_type == 'serial'",
     "required": true,
     "title_i18n": {
       "en": "Date of first issue available online",
       "ja": "最古オンライン巻号の出版年月日"
-    }
+    },
+    "type": "template",
+    "format": "yyyy-MM-dd",
+    "templateUrl": "/static/templates/weko_deposit/datepicker.html"
   },
   {
     "key": "date_first_issue_online",
-    "type": "text",
-    "format": "yyyy-MM-dd",
     "condition": "model.is_output && model.publication_type != 'serial'",
     "title_i18n": {
       "en": "Date of first issue available online",
       "ja": "最古オンライン巻号の出版年月日"
-    }
+    },
+    "type": "template",
+    "format": "yyyy-MM-dd",
+    "templateUrl": "/static/templates/weko_deposit/datepicker.html"
   },
   {
     "key": "num_first_vol_online",
@@ -90,13 +93,14 @@
   },
   {
     "key": "date_last_issue_online",
-    "type": "text",
-    "format": "yyyy-MM-dd",
     "condition": "model.is_output",
     "title_i18n": {
       "en": "Date of last issue available online",
       "ja": "最新オンライン巻号の出版年月日"
-    }
+    },
+    "type": "template",
+    "format": "yyyy-MM-dd",
+    "templateUrl": "/static/templates/weko_deposit/datepicker.html"
   },
   {
     "key": "num_last_vol_online",
