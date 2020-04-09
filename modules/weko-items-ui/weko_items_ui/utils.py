@@ -1479,8 +1479,8 @@ def hide_meta_data_for_role(record):
 
 
 def get_ignore_item_from_mapping(_item_type_id):
-    """
-    Get ignore item from mapping
+    """Get ignore item from mapping.
+
     :param _item_type_id:
     :return ignore_list:
     """
