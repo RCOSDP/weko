@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 #
-# Deposit module receivers.
+# Copyright (C) 2020 National Institute of Informatics.
+#
+# INVENIO-ResourceSyncClient is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
+"""Deposit module receivers."""
 
 from .api import WekoDeposit
 from .pidstore import get_record_without_version
