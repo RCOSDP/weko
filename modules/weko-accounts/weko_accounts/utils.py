@@ -48,7 +48,7 @@ def generate_random_str(length=128):
 
     return ''.join(
         rng.choice(string.ascii_letters + string.digits)
-        for dummy in range(0, length)
+        for _ in range(0, length)
     )
 
 
