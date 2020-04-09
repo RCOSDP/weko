@@ -63,7 +63,8 @@ class ShibUser(object):
         try:
             user_role = Role.query.filter_by(name=role_name).first()
             if user_role in self.user.roles:
-                current_app.logger.debug("{} had been assigned to this User!".format(role_name))
+                current_app.logger.debug("{} had been assigned to this "
+                                         "User!".format(role_name))
                 return ret
             with db.session.begin_nested():
                 ret = _datastore.add_role_to_user(self.user, user_role)
@@ -201,7 +202,8 @@ class ShibUser(object):
 
         shib_role_config = SHIB_ACCOUNTS_ROLE_RELATION
         if shib_role_auth in shib_role_config.keys():
-            return self._set_weko_user_role(shib_role_config[shib_role_auth])
+            return self._set_weko_user_role(shib_role_config[
+                shib_role_auth]), error
         else:
             error = _("Invalid attribute.")
 
@@ -226,7 +228,6 @@ class ShibUser(object):
         :return:
 
         """
-        error = None
         check_role, error = self.assign_user_role()
         if not check_role:
             return error
@@ -236,7 +237,7 @@ class ShibUser(object):
         # if not check_license:
         #     return error
 
-        return error
+        return None
 
     @classmethod
     def shib_user_logout(cls):

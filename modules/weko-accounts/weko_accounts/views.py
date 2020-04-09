@@ -225,7 +225,8 @@ def shib_sp_login():
     """
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
-        if not shib_session_id and not current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
+        if not shib_session_id and not current_app.config[
+                'SHIB_ACCOUNTS_LOGIN_ENABLED']:
             return url_for_security('login')
 
         shib_attr, error = parse_attributes()
