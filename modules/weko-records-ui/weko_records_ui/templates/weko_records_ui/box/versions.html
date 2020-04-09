@@ -3,7 +3,7 @@
   {%- if pid in active_versions %}
     {%- set pid_version_index = active_versions.index(pid) %}
     {%- set version_label_const = _('Ver.') %}
-    <table class="table">
+    <table class="table table-responsive" style="display: block;">
       {%- if not active_versions[0].pid_value | pid_value_version %}
         {%- set current_version_index = all_versions[-1].pid_value | pid_value_version | int %}
         <tr class="{% if pid_version_index == 0 %}info {% endif %}">
