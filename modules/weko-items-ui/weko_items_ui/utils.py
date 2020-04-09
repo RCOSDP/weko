@@ -1429,19 +1429,15 @@ def is_schema_include_key(schema):
         # Do check for object type
         if 'properties' in item:
             object = item.get('properties')
-            for property in object:
-                if property == 'is_billing':
-                    need_billing_file = True
-            for property in object:
-                if property == 'filename' and not need_billing_file:
-                    need_file = True
+            if 'is_billing' in object and 'filename' in object:
+                need_billing_file = True
+            if 'is_billing' not in object and 'filename' in object:
+                need_file = True
         # Do check for array/multiple type
         elif 'items' in item:
             object = item.get('items').get('properties')
-            for property in object:
-                if property == 'is_billing':
-                    need_billing_file = True
-            for property in object:
-                if property == 'filename' and not need_billing_file:
-                    need_file = True
+            if 'is_billing' in object and 'filename' in object:
+                need_billing_file = True
+            if 'is_billing' not in object and 'filename' in object:
+                need_file = True
     return need_file, need_billing_file
