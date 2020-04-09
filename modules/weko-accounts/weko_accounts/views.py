@@ -28,8 +28,8 @@ import json
 import sys
 
 import redis
-from flask import Blueprint, abort, current_app, redirect, render_template, \
-    request, session, url_for, flash
+from flask import Blueprint, abort, current_app, flash, redirect, \
+    render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_security import url_for_security
