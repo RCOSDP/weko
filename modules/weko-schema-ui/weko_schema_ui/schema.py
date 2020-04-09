@@ -1178,8 +1178,6 @@ class SchemaTree:
         vlst = []
         alst = []
         ndic = copy.deepcopy(self._schema_obj)
-        # delete type dict
-        # del_type(ndic)
         tlst = self.to_list()
 
         # start
