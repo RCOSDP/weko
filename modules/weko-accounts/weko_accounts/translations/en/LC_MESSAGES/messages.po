@@ -125,7 +125,7 @@ msgid "Institutional Login for institutions in Japan."
 msgstr ""
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
-msgid "login_pattern_1_description_footer"
+msgid "Users who belongs to institution outside Japan, please choose your institution's location."
 msgstr "Users who belongs to institution outside Japan, please choose your institution\'s location."
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html
