@@ -227,6 +227,8 @@ class SchemaTree:
         self._v = "@value"
         self._atr = "@attributes"
         self._atr_lang = "xml:lang"
+        self._special_lang = 'ja-Kana'
+        self._special_lang_default = 'ja'
         # nodes need be be separated to multiple nodes by language
         self._separate_nodes = None
         self._location = ''
@@ -466,9 +468,9 @@ class SchemaTree:
             for k1, v1 in node.items():
                 # if 'item' not in v1:
                 #     continue
-                klst = get_items_value_lst(atr_vm, v1, rlst)
-                if klst:
-                    node[k1] = klst
+                    klst = get_items_value_lst(atr_vm, v1, rlst)
+                    if klst:
+                        node[k1] = klst
 
         def get_mapping_value(mpdic, atr_vm, k, atr_name):
             remain_keys = []
@@ -835,22 +837,22 @@ class SchemaTree:
                                 if altt:
                                     # atr = get_atr_list(atr[index])
                                     atrt = get_atr_list(altt)
-                                clone_val, clone_atr = recorrect_node(
-                                    val[index],
-                                    atrt,
-                                    current_lang,
-                                    mandatory,
-                                    repeatable)
-                                for i in range(len(clone_val)):
-                                    chld = etree.Element(kname, None, ns)
-                                    chld.text = clone_val[i]
-                                    if len(clone_atr) > i:
-                                        for k2, v2 in clone_atr[i].items():
-                                            if v2 is None:
-                                                continue
-                                            chld.set(get_prefix(k2), v2)
-                                    tree.append(chld)
-                                index += 1
+                                    clone_val, clone_atr = recorrect_node(
+                                        val[index],
+                                        atrt,
+                                        current_lang,
+                                        mandatory,
+                                        repeatable)
+                                    for i in range(len(clone_val)):
+                                        chld = etree.Element(kname, None, ns)
+                                        chld.text = clone_val[i]
+                                        if len(clone_atr) > i:
+                                            for k2, v2 in clone_atr[i].items():
+                                                if v2 is None:
+                                                    continue
+                                                chld.set(get_prefix(k2), v2)
+                                        tree.append(chld)
+                                    index += 1
                         else:
                             for i in range(len(val[index])):
                                 chld = etree.Element(kname, None, ns)
@@ -926,13 +928,18 @@ class SchemaTree:
             remove_lst = []
             none_lst = []
             current_lst = []
-
             for i in range(len(val)):
-                if self._atr_lang in attr[i].keys() and attr[i].get(
+                att_lang = self._atr_lang in attr[i].keys()
+                if att_lang and attr[i].get(
+                    self._atr_lang) and attr[i].get(
+                    self._atr_lang) == self._special_lang and \
+                    current_lang == self._special_lang_default:
+                    current_lst.append(i)
+                if att_lang and attr[i].get(
                     self._atr_lang) and attr[i].get(
                     self._atr_lang) != current_lang:
                     remove_lst.append(i)
-                elif self._atr_lang in attr[i].keys() and attr[
+                elif att_lang and attr[
                     i].get(self._atr_lang) is None:
                     none_lst.append(i)
                 else:
@@ -1025,7 +1032,7 @@ class SchemaTree:
                 merge_json_xml(json_child, dct_xml)
             list_dict.append(dct_xml)
             list_json_xml = list_dict
-            self._separate_nodes = {'stdyDscr.citation': set()}
+            self._separate_nodes = {'stdyDscr.citation': set(),'stdyDscr.stdyInfo': set(),'stdyDscr.method': set(),'stdyDscr.dataAccs': set(),'stdyDscr.othrStdyMat': set()}
         node_tree = self.find_nodes(list_json_xml)
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -1047,9 +1054,13 @@ class SchemaTree:
                            'jpcoar:rightsHolder']
         affiliation_key = 'jpcoar:affiliation'
         name_identifier_key = 'jpcoar:nameIdentifier'
-        # Remove all None languages
+        # Remove all None languages and check special case
         if self._separate_nodes:
             for key, val in self._separate_nodes.items():
+                if self._special_lang in val:
+                    if self._special_lang_default not in val:
+                        val.add(self._special_lang_default)
+                    val.remove(self._special_lang)
                 if None in val:
                     val.remove(None)
         for lst in node_tree:
