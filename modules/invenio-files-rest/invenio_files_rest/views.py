@@ -574,12 +574,13 @@ class ObjectResource(ContentNegotiatedMethodView):
 
         return obj
 
-    def create_object(self, bucket, key, is_thumbnail):
+    def create_object(self, bucket, key, is_thumbnail, is_billing):
         """Create a new object.
 
         :param bucket: The bucket (instance or id) to get the object from.
         :param key: The file key.
         :param is_thumbnail: for thumbnail.
+        :param is_billing: for billing file.
         :returns: A Flask response.
         """
         # Initial validation of size based on Content-Length.
@@ -603,7 +604,8 @@ class ObjectResource(ContentNegotiatedMethodView):
             current_app.logger.error(desc)
             raise FileSizeError(description=desc)
         with db.session.begin_nested():
-            obj = ObjectVersion.create(bucket, key, is_thumbnail=is_thumbnail)
+            obj = ObjectVersion.create(bucket, key, is_thumbnail=is_thumbnail,
+                                       is_billing=is_billing)
             obj.set_contents(
                 stream, size=content_length, size_limit=size_limit)
             # Check add tags
@@ -886,7 +888,8 @@ class ObjectResource(ContentNegotiatedMethodView):
     @use_kwargs(put_args)
     @pass_bucket
     @need_bucket_permission('bucket-update')
-    def put(self, bucket=None, key=None, is_thumbnail=None, upload_id=None):
+    def put(self, bucket=None, key=None, is_thumbnail=None, upload_id=None,
+            is_billing=None):
         """Update a new object or upload a part of a multipart upload.
 
         :param bucket: The bucket (instance or id) to get the object from.
@@ -900,7 +903,9 @@ class ObjectResource(ContentNegotiatedMethodView):
             return self.multipart_uploadpart(bucket, key, upload_id)
         else:
             is_thumbnail = True if is_thumbnail is not None else False
-            return self.create_object(bucket, key, is_thumbnail=is_thumbnail)
+            is_billing = True if is_billing is not None else False
+            return self.create_object(bucket, key, is_thumbnail=is_thumbnail,
+                                      is_billing=is_billing)
 
     @use_kwargs(delete_args)
     @pass_bucket

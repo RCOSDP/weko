@@ -449,7 +449,8 @@ class Bucket(db.Model, Timestamp):
             db.session.add(bucket)
 
         for o in ObjectVersion.get_by_bucket(self):
-            o.copy(bucket=bucket, is_thumbnail=o.is_thumbnail)
+            o.copy(bucket=bucket, is_thumbnail=o.is_thumbnail,
+                   is_billing=o.is_billing)
 
         bucket.locked = True if lock else self.locked
 
@@ -1037,6 +1038,11 @@ class ObjectVersion(db.Model, Timestamp):
                              default=False)
     """Defines if object is the thumbnail."""
 
+    is_billing_file = db.Column(db.Boolean(name='is_billing'),
+                             nullable=False,
+                             default=False)
+    """Defines if the file is billing file."""
+
     __table_args__ = (
         db.UniqueConstraint('bucket_id', 'version_id', 'key'),
     )
@@ -1160,7 +1166,8 @@ class ObjectVersion(db.Model, Timestamp):
 
     @ensure_not_deleted(
         msg=[ObjectVersionError('Cannot copy a delete marker.')])
-    def copy(self, bucket=None, key=None, is_thumbnail=False):
+    def copy(self, bucket=None, key=None, is_thumbnail=False,
+             is_billing=False):
         """Copy an object version to a given bucket + object key.
 
         The copy operation is handled completely at the metadata level. The
@@ -1181,13 +1188,16 @@ class ObjectVersion(db.Model, Timestamp):
             Default: current object key.
         :param is_thumbnail: for thumbnail.
             Default: False.
+        :param is_billing: for billing file.
+            Default: False.
         :returns: The copied object version.
         """
         new_ob = ObjectVersion.create(
             self.bucket if bucket is None else as_bucket(bucket),
             key or self.key,
             _file_id=self.file_id,
-            is_thumbnail=is_thumbnail
+            is_thumbnail=is_thumbnail,
+            is_billing=is_billing
         )
 
         for tag in self.tags:
@@ -1225,7 +1235,8 @@ class ObjectVersion(db.Model, Timestamp):
 
     @classmethod
     def create(cls, bucket, key, _file_id=None, stream=None, mimetype=None,
-               version_id=None, is_thumbnail=False, **kwargs):
+               version_id=None, is_thumbnail=False,
+               is_billing_file=False, **kwargs):
         """Create a new object in a bucket.
 
         The created object is by default created as a delete marker. You must
@@ -1238,6 +1249,7 @@ class ObjectVersion(db.Model, Timestamp):
             immediately after being created.
         :param mimetype: MIME type of the file object if it is known.
         :param is_thumbnail: for thumbnail.
+        :param is_billing_file: for billing file.
         :param kwargs: Keyword arguments passed to ``Object.set_contents()``.
         """
         bucket = as_bucket(bucket)
@@ -1272,6 +1284,7 @@ class ObjectVersion(db.Model, Timestamp):
                 updated_user_id=login_user_id,
                 is_show=False,
                 is_thumbnail=is_thumbnail,
+                is_billing_file=is_billing_file
             )
             if _file_id:
                 file_ = _file_id if isinstance(_file_id, FileInstance) else \
