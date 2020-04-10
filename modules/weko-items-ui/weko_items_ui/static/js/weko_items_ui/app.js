@@ -1793,7 +1793,9 @@ function toObject(arr) {
       }
 
       $scope.updateNumFiles = function () {
-        $scope.previousNumFiles = $rootScope.filesVM.files.length;
+        if (!angular.isUndefined($rootScope.filesVM)) {
+          $scope.previousNumFiles = $rootScope.filesVM.files.length;
+        }
       }
 
       $scope.getFilesObject = function () {
