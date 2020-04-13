@@ -730,8 +730,8 @@ class SchemaTree:
                 mpdic = value_item_parent.get(
                     self._schema_name) if self._schema_name \
                     in value_item_parent else ''
-                if mpdic is "" or (self._ignore_list and
-                                   key_item_parent in self._ignore_list):
+                if mpdic is "" or (
+                        self._ignore_list and key_item_parent in self._ignore_list):
                     continue
                 # List or string
                 atr_v = value_item_parent.get('attribute_value')
