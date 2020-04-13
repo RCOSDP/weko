@@ -348,7 +348,9 @@ def get_all_items(nlst, klst, is_get_name=False):
             item_name = lst[1]
             if len(key_arr) >= 3:
                 parent_key = key_arr[-2].replace('[]', '')
-                item_name = item_name + '.' + get_name(parent_key)
+                parent_key_name = get_name(parent_key)
+                if item_name and parent_key_name:
+                    item_name = item_name + '.' + get_name(parent_key)
 
             return item_name
 

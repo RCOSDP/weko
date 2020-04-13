@@ -554,6 +554,7 @@ function toObject(arr) {
       ]
       $scope.sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
       $scope.sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
+      $scope.previousNumFiles = 0;
 
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
@@ -564,11 +565,11 @@ function toObject(arr) {
           if (value.type == 'array') {
             if (value.items.properties.hasOwnProperty('filename')) {
               $scope.filemeta_keys.push(key);
-              break;
             }
           }
         }
       }
+
       $scope.searchFilemetaForm = function (title) {
         let fileMetaForm = "";
         $rootScope.recordsVM.invenioRecordsForm.forEach(function (recordForm) {
@@ -710,7 +711,7 @@ function toObject(arr) {
                   var author_form_key = author_form.items[searchTitleMap].key
                   // Only clear and do logic for "Scheme" field
                   $scope.sub_item_scheme.map(function (scheme) {
-                      if (author_form_key.includes(scheme)) {
+                      if (author_form_key.indexOf(scheme) != -1) {
                         author_form.items[searchTitleMap].titleMap = [];
                         $scope.sub_item_scheme.map(function (item) {
                           if (author_schema.properties[item]) {
@@ -847,24 +848,26 @@ function toObject(arr) {
       function get_subitem(items, subitem) {
         for (var i = 0; i < items.length; i++) {
           var key = items[i].key
-          if (typeof key !== 'undefined' && key.includes(subitem)) {
+          if (typeof key !== 'undefined' && key.indexOf(subitem) != -1) {
             return items[i]
           }
         }
       }
 
       $scope.initFilenameList = function () {
+        var filekey = 'filename';
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
           filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
-          if (filemeta_schema && filemeta_form) {
-            filemeta_schema.items.properties['filename']['enum'] = [null];
+          if (filemeta_schema && filemeta_form && filemeta_schema.items.properties[filekey]) {
+            filemeta_schema.items.properties[filekey]['enum'] = [];
+            filemeta_schema.items.properties[filekey]['enum'].push(null)
             filemeta_filename_form = filemeta_form.items[0];
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(function (file) {
               if (file.completed && !file.is_thumbnail) {
-                filemeta_schema.items.properties['filename']['enum'].push(file.key);
+                filemeta_schema.items.properties[filekey]['enum'].push(file.key);
                 filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
               }
             });
@@ -1623,19 +1626,7 @@ function toObject(arr) {
         });
       }
 
-      $rootScope.$on('invenio.records.loading.stop', function (ev) {
-        $scope.hiddenPubdate();
-        $scope.initContributorData();
-        $scope.initUserGroups();
-        $scope.initFilenameList();
-        $scope.searchTypeKey();
-        $scope.setDataForLicenseType();
-        $scope.renderValidationErrorList();
-        $scope.autoSetTitle();
-        $scope.initCorrespondingIdList();
-        $scope.autoTitleData();
-        $scope.initAuthorList();
-        $scope.getDataAuthors();
+      $scope.loadFilesFromSession = function () {
         //When switch language, Getting files uploaded.
         let bucketFiles = JSON.parse(sessionStorage.getItem('files'));
         let bucketEndpoints = JSON.parse(sessionStorage.getItem('endpoints'));
@@ -1651,7 +1642,31 @@ function toObject(arr) {
             );
           }
         }
+      }
+
+      $scope.storeFilesToSession = function () {
+        //Add file uploaded to sessionStorage when uploaded processing done
+        window.history.pushState("", "", $scope.currentUrl);
+        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
+        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
+        sessionStorage.setItem('url', $scope.currentUrl);
+      }
+
+      $rootScope.$on('invenio.records.loading.stop', function (ev) {
+        $scope.hiddenPubdate();
+        $scope.initContributorData();
+        $scope.initUserGroups();
+        $scope.loadFilesFromSession();
         $scope.initFilenameList();
+        $scope.searchTypeKey();
+        $scope.setDataForLicenseType();
+        $scope.renderValidationErrorList();
+        $scope.autoSetTitle();
+        $scope.initCorrespondingIdList();
+        $scope.autoTitleData();
+        $scope.initAuthorList();
+        $scope.getDataAuthors();
+        $scope.updateNumFiles();
         //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
@@ -1677,23 +1692,149 @@ function toObject(arr) {
         $scope.autoSetCorrespondingUsageAppId();
         //Set required and collapsed for all root and sub item.
         $scope.setCollapsedAndRequiredForForm();
+
+        // Delay 1s after page render
+        setTimeout(function () {
+          // Change position of File and Billing File
+          $scope.changePositionFileName();
+        }, 1000);
       });
 
+      $scope.changePositionFileName = function () {
+        $('#new-postion-filename').parent().children('bootstrap-decorator').remove();
+        $('#new-postion-filename').empty();
+        let records = $rootScope.recordsVM.invenioRecordsForm;
+        // Move File to upload area
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          records.forEach(function(item,i){
+            if(item.key == filemeta_key){
+              $('invenio-records-form').find('bootstrap-decorator[form="schemaForm.form[' + i + ']"]').appendTo("#new-postion-filename");
+            }
+          });
+        });
+      }
 
+      $scope.addFileFormAndFill = function () {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        let schema = $rootScope.recordsVM.invenioRecordsSchema.properties;
+        let filesUploaded = $rootScope.filesVM.files;
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          for (var i = $scope.previousNumFiles; i < filesUploaded.length; i++) {
+            var fileInfo = new Object();
+            // Fill filename
+            fileInfo['filename'] = filesUploaded[i].key;
+            // Fill size
+            fileInfo.filesize = [{}]; // init array
+            fileInfo.filesize[0].value = $scope.bytesToReadableString(filesUploaded[i].size);
+            // Fill format
+            fileInfo.format = filesUploaded[i].mimetype;
+            // Fill Date and DateType
+            fileInfo.date = [{}]; // init array
+            fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
+            fileInfo.date[0].dateType = "Available";
+            // Push data to model
+            model[filemeta_key].push(fileInfo);
+          }
+        });
+        // Filter empty form
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
+            return fileInfo.filename;
+          });
+        });
+      }
+
+      $scope.removeFileForm = function (filename) {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
+            return fileInfo.filename != filename;
+          });
+        });
+      }
+
+      $scope.bytesToReadableString = function (bytes) {
+        function round(num, precision) {
+          return Math.round(num * Math.pow(10, precision)) / Math.pow(10, precision);
+        }
+        var limit = Math.pow(1024, 4);
+        if (bytes > limit) {
+            return round(bytes / limit, 1) + ' Tb';
+        } else if (bytes > (limit /= 1024)) {
+            return round(bytes / limit, 1) + ' Gb';
+        } else if (bytes > (limit /= 1024)) {
+            return round(bytes / limit, 1) + ' Mb';
+        } else if (bytes > 1024) {
+            return Math.round(bytes / 1024) + ' Kb';
+        }
+        return bytes + ' B';
+      }
+
+      // This is callback function - Please do NOT change function name
+      $scope.fileNameSelect = function (modelValue) {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        let filesObject = $scope.getFilesObject();
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          model[filemeta_key].forEach(function (fileInfo) {
+            if (fileInfo.filename == modelValue) {
+              fileInfo.filesize = [{}];
+              fileInfo.filesize[0].value = filesObject[modelValue].size;
+              fileInfo.format = filesObject[modelValue].format;
+              fileInfo.date = [{}];
+              fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
+              fileInfo.date[0].dateType = "Available";
+            }
+          });
+        });
+      }
+
+      $scope.updateNumFiles = function () {
+        if (!angular.isUndefined($rootScope.filesVM)) {
+          $scope.previousNumFiles = $rootScope.filesVM.files.length;
+        }
+      }
+
+      $scope.getFilesObject = function () {
+        let filesUploaded = $rootScope.filesVM.files;
+        var filesObject = new Object();
+        filesUploaded.forEach(function (file) {
+          filesObject[file.key] = new Object();
+          filesObject[file.key].size = $scope.bytesToReadableString(file.size);
+          filesObject[file.key].format = file.mimetype;
+        });
+        return filesObject;
+      }
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
         $scope.hiddenPubdate();
-        //Add file uploaded to sessionStorage when uploaded processing done
-        window.history.pushState("", "", $scope.currentUrl);
-        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
-        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
-        sessionStorage.setItem('url', $scope.currentUrl);
+        $scope.addFileFormAndFill();
+        $scope.updateNumFiles();
+        $scope.storeFilesToSession();
+        // Delay 1s after page render
+        setTimeout(function() {
+          // Change position of FileName
+          $scope.changePositionFileName();
+        }, 1000);
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
-        $scope.initFilenameList();
-        $scope.hiddenPubdate();
+        if (f.completed) {
+          $scope.initFilenameList();
+          $scope.hiddenPubdate();
+          $scope.removeFileForm(f.key);
+          $scope.updateNumFiles();
+          $scope.storeFilesToSession();
+          // Delay 1s after page render
+          setTimeout(function() {
+            // Change position of FileName
+            $scope.changePositionFileName();
+          }, 1000);
+        }
       });
 
       $scope.getItemMetadata = function () {

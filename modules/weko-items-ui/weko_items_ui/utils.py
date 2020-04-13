@@ -1556,3 +1556,27 @@ def hide_table_row_for_tsv(table_row, hide_key):
         if key == hide_key:
             del table_row[table_row.index(hide_key)]
     return table_row
+
+
+def is_schema_include_key(schema):
+    """Check if schema have filename/billing_filename key."""
+    properties = schema.get('properties')
+    need_file = False
+    need_billing_file = False
+    for key in properties:
+        item = properties.get(key)
+        # Do check for object type
+        if 'properties' in item:
+            object = item.get('properties')
+            if 'is_billing' in object and 'filename' in object:
+                need_billing_file = True
+            if 'is_billing' not in object and 'filename' in object:
+                need_file = True
+        # Do check for array/multiple type
+        elif 'items' in item:
+            object = item.get('items').get('properties')
+            if 'is_billing' in object and 'filename' in object:
+                need_billing_file = True
+            if 'is_billing' not in object and 'filename' in object:
+                need_file = True
+    return need_file, need_billing_file

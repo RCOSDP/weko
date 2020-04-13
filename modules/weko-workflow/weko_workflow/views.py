@@ -346,6 +346,7 @@ def display_activity(activity_id=0):
     pid = None
     record = {}
     need_file = False
+    need_billing_file = False
     json_schema = ''
     schema_form = ''
     item_save_uri = ''
@@ -371,7 +372,8 @@ def display_activity(activity_id=0):
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
         session['activity_info'] = activity_session
         # get item edit page info.
-        step_item_login_url, need_file, record, json_schema, schema_form,\
+        step_item_login_url, need_file, need_billing_file, \
+            record, json_schema, schema_form,\
             item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
@@ -480,6 +482,7 @@ def display_activity(activity_id=0):
         records=record,
         step_item_login_url=step_item_login_url,
         need_file=need_file,
+        need_billing_file=need_billing_file,
         jsonschema=json_schema,
         schemaform=schema_form,
         id=workflow_detail.itemtype_id,

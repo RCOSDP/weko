@@ -57,8 +57,9 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     get_current_user, get_data_authors_prefix_settings, get_list_email, \
     get_list_username, get_new_items_by_date, get_user_info_by_email, \
     get_user_info_by_username, get_user_information, get_user_permission, \
-    parse_ranking_results, remove_excluded_items_in_json_schema, \
-    set_multi_language_name, to_files_js, update_index_tree_for_record, \
+    is_schema_include_key, parse_ranking_results, \
+    remove_excluded_items_in_json_schema, set_multi_language_name, \
+    to_files_js, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
@@ -108,16 +109,14 @@ def index(item_type_id=0):
                 url_for('.index', item_type_id=lists[0].item_type[0].id))
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        need_file = False
-
-        if 'filename' in json.dumps(item_type.schema):
-            need_file = True
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
             page=page,
             render_widgets=render_widgets,
             need_file=need_file,
+            need_billing_file=need_billing_file,
             record={},
             jsonschema=json_schema,
             schemaform=schema_form,
@@ -166,12 +165,12 @@ def iframe_index(item_type_id=0):
                 files = item_json.get('files')
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
-        need_file = False
-        if 'filename' in json.dumps(item_type.schema):
-            need_file = True
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
+
         return render_template(
             'weko_items_ui/iframe/item_edit.html',
             need_file=need_file,
+            need_billing_file=need_billing_file,
             records=record,
             jsonschema=json_schema,
             schemaform=schema_form,
@@ -588,12 +587,12 @@ def default_view_method(pid, record, template=None):
             files = item_json.get('files')
         if 'endpoints' in item_json:
             endpoints = item_json.get('endpoints')
-    need_file = False
-    if 'filename' in json.dumps(item_type.schema):
-        need_file = True
+    need_file, need_billing_file = is_schema_include_key(item_type.schema)
+
     return render_template(
         template,
         need_file=need_file,
+        need_billing_file=need_billing_file,
         record=record,
         jsonschema=json_schema,
         schemaform=schema_form,
