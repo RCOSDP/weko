@@ -270,6 +270,9 @@ def shib_stub_login():
 
     session['next'] = request.args.get('next', '/')
 
+    # LOGIN USING JAIROCLOUD PAGE
+    # return redirect(config.SHIB_IDP_LOGIN_URL)
+
     return render_template(
         config.SECURITY_LOGIN_SHIB_USER_TEMPLATE,
         module_name=_('WEKO-Accounts'))
