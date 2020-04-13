@@ -108,3 +108,32 @@ msgstr ""
 #~ msgid "%(module_name)s"
 #~ msgstr ""
 
+#: weko_accounts/api.py:202
+msgid "Failed to get attribute."
+msgstr ""
+
+#: weko_accounts/api.py:209
+msgid "Invalid attribute."
+msgstr ""
+
+#: weko_accounts/api.py:223
+msgid "Failed to login."
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
+msgid "Institutional Login for institutions in Japan."
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
+msgid "Users who belongs to institution outside Japan, please choose your institution's location."
+msgstr "Users who belongs to institution outside Japan, please choose your institution\'s location."
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html
+msgid "Select Institution"
+msgstr ""
+
+msgid "login_pattern_2_description_header"
+msgstr ""
+
+msgid "Back to Top Page"
+msgstr ""
