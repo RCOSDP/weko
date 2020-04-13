@@ -525,7 +525,7 @@ def package_export_file(item_type_data):
     return tsv_output
 
 
-def make_stats_tsv(item_type_id, recids):
+def make_stats_tsv(item_type_id, recids, list_item_role):
     """Prepare TSV data for each Item Types.
 
     Arguments:
@@ -538,6 +538,14 @@ def make_stats_tsv(item_type_id, recids):
 
     """
     item_type = ItemTypes.get_by_id(item_type_id).render
+    list_hide = get_item_from_option(item_type_id)
+    if hide_meta_data_for_role(
+        list_item_role.get(item_type_id)) and item_type and item_type.get(
+            'table_row'):
+        for name_hide in list_hide:
+            item_type['table_row'] = hide_table_row_for_tsv(
+                item_type.get('table_row'), name_hide)
+
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
 
@@ -621,7 +629,8 @@ def make_stats_tsv(item_type_id, recids):
                             'attribute_value_mlt']
                         if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
                             and len(attr_val[idx][sub_attr]) > idx_2 \
-                                and attr_val[idx][sub_attr][idx_2].get(sub_attr_2):
+                            and attr_val[idx][sub_attr][idx_2].get(
+                                sub_attr_2):
                             cur_len = len(attr_val[idx][sub_attr][idx_2][
                                 sub_attr_2])
                             if cur_len > max_length:
@@ -876,7 +885,7 @@ def export_items(post_data):
         for record_id in record_ids:
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
-            exported_item = _export_item(
+            exported_item, list_item_role = _export_item(
                 record_id,
                 export_format,
                 include_contents,
@@ -909,7 +918,8 @@ def export_items(post_data):
         for item_type_id in item_types_data:
             keys, labels, records = make_stats_tsv(
                 item_type_id,
-                item_types_data[item_type_id]['recids'])
+                item_types_data[item_type_id]['recids'],
+                list_item_role)
             item_types_data[item_type_id]['recids'].sort()
             item_types_data[item_type_id]['keys'] = keys
             item_types_data[item_type_id]['labels'] = labels
@@ -954,7 +964,7 @@ def export_item_custorm(post_data):
         # Double check for limits
         record_path = export_path + '/recid_' + str(record_id)
         os.makedirs(record_path, exist_ok=True)
-        exported_item = _export_item(
+        exported_item, list_item_role = _export_item(
             record_id,
             None,
             include_contents,
@@ -986,7 +996,8 @@ def export_item_custorm(post_data):
         for item_type_id in item_types_data:
             keys, labels, records = make_stats_tsv(
                 item_type_id,
-                item_types_data[item_type_id]['recids'])
+                item_types_data[item_type_id]['recids'],
+                list_item_role)
             item_types_data[item_type_id]['recids'].sort()
             item_types_data[item_type_id]['keys'] = keys
             item_types_data[item_type_id]['labels'] = labels
@@ -1041,7 +1052,7 @@ def _export_item(record_id,
     """Exports files for record according to view permissions."""
     exported_item = {}
     record = WekoRecord.get_record_by_pid(record_id)
-
+    list_item_role = {}
     if record:
         exported_item['record_id'] = record.id
         exported_item['name'] = 'recid_{}'.format(record_id)
@@ -1050,6 +1061,21 @@ def _export_item(record_id,
         exported_item['item_type_id'] = record.get('item_type_id')
         if not records_data:
             records_data = record
+        if exported_item['item_type_id']:
+            list_hidden = get_ignore_item_from_mapping(
+                exported_item['item_type_id'])
+            if records_data.get('metadata'):
+                meta_data = records_data.get('metadata')
+                record_role_ids = {
+                    'weko_creator_id': meta_data.get('weko_creator_id'),
+                    'weko_shared_id': meta_data.get('weko_shared_id')
+                }
+                list_item_role.update(
+                    {exported_item['item_type_id']: record_role_ids})
+                if hide_meta_data_for_role(record_role_ids):
+                    for hide_key in list_hidden:
+                        if meta_data.get(hide_key):
+                            del records_data['metadata'][hide_key]
 
         # Create metadata file.
         with open('{}/{}_metadata.json'.format(tmp_path,
@@ -1071,7 +1097,7 @@ def _export_item(record_id,
                             shutil.copy2(file.obj.file.uri,
                                          tmp_path + '/' + file.obj.basename)
 
-    return exported_item
+    return exported_item, list_item_role
 
 
 def get_new_items_by_date(start_date: str, end_date: str) -> dict:
@@ -1417,3 +1443,116 @@ def get_data_authors_prefix_settings():
     except Exception as e:
         current_app.logger.error(e)
         return None
+
+
+def hide_meta_data_for_role(record):
+    """
+    Show hide metadate for curent user role.
+
+    :return:
+    """
+    is_hidden = True
+
+    # Admin users
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            is_hidden = False
+            break
+    # Community users
+    community_role_name = current_app.config[
+        'WEKO_PERMISSION_ROLE_COMMUNITY']
+    for role in list(current_user.roles or []):
+        if role.name in community_role_name:
+            is_hidden = False
+            break
+    if record:
+        # Item Register users
+        if record.get('weko_creator_id') in list(current_user.roles or []):
+            is_hidden = False
+
+        # Share users
+        if record.get('weko_shared_id') in list(current_user.roles or []):
+            is_hidden = False
+
+    return is_hidden
+
+
+def get_ignore_item_from_mapping(_item_type_id):
+    """Get ignore item from mapping.
+
+    :param _item_type_id:
+    :return ignore_list:
+    """
+    ignore_list = []
+    meta_options, item_type_mapping = get_options_and_order_list(_item_type_id)
+    for key, val in meta_options.items():
+        hidden = val.get('option').get('hidden')
+        if hidden:
+            ignore_list.append(
+                get_mapping_name_item_type_by_key(key, item_type_mapping))
+    return ignore_list
+
+
+def get_mapping_name_item_type_by_key(key, item_type_mapping):
+    """Get mapping name item type by key.
+
+    :param item_type_mapping:
+    :param key:
+    :return: name
+    """
+    for mapping_key in item_type_mapping:
+        if mapping_key == key:
+            property_data = item_type_mapping.get(mapping_key)
+            if isinstance(property_data.get('jpcoar_mapping'), dict):
+                for name in property_data.get('jpcoar_mapping'):
+                    return name
+    return key
+
+
+def get_item_from_option(_item_type_id):
+    """Get all keys of properties that is set Hide option on metadata."""
+    ignore_list = []
+    meta_options = get_options_list(_item_type_id)
+    for key, val in meta_options.items():
+        hidden = val.get('option').get('hidden')
+        if hidden:
+            ignore_list.append(key)
+    return ignore_list
+
+
+def get_options_list(item_type_id):
+    """Get Options by item type id.
+
+    :param item_type_id:
+    :return: options dict
+    """
+    json_item = ItemTypes.get_record(item_type_id)
+    meta_options = json_item.model.render.get('meta_fix')
+    meta_options.update(json_item.model.render.get('meta_list'))
+    return meta_options
+
+
+def get_options_and_order_list(item_type_id):
+    """Get Options by item type id.
+
+    :param item_type_id:
+    :return: options dict and item type mapping
+    """
+    from weko_records.api import Mapping
+    meta_options = get_options_list(item_type_id)
+    item_type_mapping = Mapping.get_record(item_type_id)
+    return meta_options, item_type_mapping
+
+
+def hide_table_row_for_tsv(table_row, hide_key):
+    """Get Options by item type id.
+
+    :param hide_key:
+    :param table_row:
+    :return: table_row
+    """
+    for key in table_row:
+        if key == hide_key:
+            del table_row[table_row.index(hide_key)]
+    return table_row

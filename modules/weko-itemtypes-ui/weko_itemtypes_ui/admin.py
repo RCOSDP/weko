@@ -272,7 +272,7 @@ class ItemTypePropertiesView(BaseView):
 
         billing_perm = BillingPermission.get_billing_information_by_id(
             WEKO_BILLING_FILE_ACCESS)
-        if not billing_perm and not billing_perm.is_active:
+        if not billing_perm or not billing_perm.is_active:
             for prop in props:
                 if prop.id == WEKO_BILLING_FILE_PROP_ID:
                     props.remove(prop)
