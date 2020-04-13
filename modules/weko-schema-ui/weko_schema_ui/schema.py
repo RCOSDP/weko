@@ -608,7 +608,7 @@ class SchemaTree:
                                 for i in lst_none_idx:
                                     del node_val[0][i]
                                 # delete all None element in all @attributes
-                                for key, val in v.get(self._atr).items():
+                                for key, val in v.get(self._atr, {}).items():
                                     for i in lst_none_idx:
                                         del val[0][i]
                             clean[k] = v
