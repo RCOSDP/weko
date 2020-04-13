@@ -58,8 +58,8 @@ WEKO_ACCOUNTS_STUB_USER_TEMPLATE = 'weko_accounts/shib_user.html'
 SHIB_ACCOUNTS_LOGIN_CACHE_TTL = 180
 """Cache default timeout 3 minute"""
 
-SHIB_IDP_LOGIN_URL = 'https://www.we50hitdev.com/secure/login.php'
-"""IdP属性情報は. """
+SHIB_IDP_LOGIN_URL = 'https://localhost/secure/login.php'
+"""Login proxy URL."""
 
 SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_EPPN': (True, 'shib_eppn'),
@@ -72,14 +72,14 @@ SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_MAIL': (False, 'shib_mail'),
     'SHIB_ATTR_USER_NAME': (False, 'shib_user_name'),
 }
-"""IdP属性情報は."""
+"""IdP attribute map."""
 
 SHIB_ACCOUNTS_ROLE_RELATION = {
     '管理者': 'System Administrator',
     '図書館員': 'Repository Administrator',
     '教員': 'Contributor'
 }
-"""IdP属性値に対するロール割り当て."""
+"""Role relation."""
 
 WEKO_GENERAL_ROLE = 'Contributor'
-"""デフォルトロール."""
+"""Default role."""
