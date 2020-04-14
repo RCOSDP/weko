@@ -149,7 +149,7 @@
                 <span class="caret"></span>
               </a>
               <ul class="dropdown-menu">
-              {%- for opt in ['title', 'ranking'] -%}
+              {%- for opt in config.COMMUNITIES_SORTING_OPTIONS -%}
                 {%- set new_args = args.copy() -%}
                 {%- do new_args.update({'so': opt}) -%}
                 <li>
