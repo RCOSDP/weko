@@ -267,9 +267,9 @@ def filter_index_list_by_role(index_list):
     result_list = []
     roles = []
     groups = []
-    if current_user and current_user.is_authenticated:
-        roles = get_user_roles()
-        groups = get_user_groups()
+    #if current_user and current_user.is_authenticated:
+    roles = get_user_roles()
+    groups = get_user_groups()
 
     for i in index_list:
         if _check(i, roles, groups):
