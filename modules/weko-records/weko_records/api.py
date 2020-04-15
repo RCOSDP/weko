@@ -321,8 +321,9 @@ class ItemTypes(RecordBase):
         return record
 
     @classmethod
-    def update(cls, id_=0, name=None, schema=None, form=None, render=None,
-               tag=1):
+    def create_or_update(cls, id_=0, name=None, schema=None, form=None,
+                         render=None,
+                         tag=1):
         r"""Update an item type instance and store it in the database.
 
         :param id_: Identifier of item type.
@@ -335,7 +336,12 @@ class ItemTypes(RecordBase):
         """
         assert name
         item_type_name = None
-        if id_ > 0:
+        # Create a new record
+        if not id_ or id_ <= 0:
+            return cls.create(item_type_name=item_type_name, name=name,
+                              schema=schema, form=form, render=render, tag=tag)
+        # Update for existed record
+        else:
             with db.session.no_autoflush:
                 # Get the item type by identifier
                 result = cls.get_by_id(id_=id_)
@@ -345,8 +351,13 @@ class ItemTypes(RecordBase):
 
                 # Get the latest tag of item type by name identifier
                 result = cls.get_by_name_id(name_id=result.name_id)
+                old_render = deepcopy(result[0].render)
+                new_render = deepcopy(render)
+                from weko_records.utils import check_to_upgrade_version
+                upgrade_version = True if \
+                    check_to_upgrade_version(old_render, new_render) else False
+                updated_name = False
                 tag = result[0].tag + 1
-
                 # Check if the name has been changed
                 item_type_name = result[0].item_type_name
                 if name != item_type_name.name:
@@ -358,8 +369,42 @@ class ItemTypes(RecordBase):
                             'Invalid name: {}'.format(name))
                         raise ValueError(_('Invalid name.'))
                     item_type_name.name = name
-        return cls.create(item_type_name=item_type_name, name=name,
-                          schema=schema, form=form, render=render, tag=tag)
+                    updated_name = True
+                if upgrade_version or updated_name:
+                    return cls.create(item_type_name=item_type_name, name=name,
+                                      schema=schema, form=form, render=render,
+                                      tag=tag)
+                else:
+                    return cls.update(id_, schema, form, render)
+
+    @classmethod
+    def update(cls, item_type_id, schema, form, render):
+        """Update item type record.
+
+        @param item_type_id:
+        @param schema:
+        @param form:
+        @param render:
+        @return:
+        """
+        with db.session.begin_nested():
+            current_record = cls.get_by_id(id_=item_type_id)
+            record = cls(current_record.schema)
+            before_record_update.send(
+                current_app._get_current_object(),
+                record=record,
+            )
+            current_record.schema = schema
+            current_record.form = form
+            current_record.render = render
+            db.session.merge(current_record)
+            record.model = current_record
+        db.session.commit()
+        after_record_update.send(
+            current_app._get_current_object(),
+            record=record,
+        )
+        return record
 
     @classmethod
     def get_record(cls, id_, with_deleted=False):

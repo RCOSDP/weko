@@ -179,7 +179,7 @@ class ItemType(db.Model, Timestamp):
     @property
     def latest_edit_history(self):
         """Get latest edit note of self."""
-        return self.edit_notes[0].notes if self.edit_notes else {}
+        return self.edit_notes[-1].notes if self.edit_notes else {}
 
 
 class ItemTypeEditHistory(db.Model, Timestamp):
