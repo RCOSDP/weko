@@ -26,7 +26,7 @@ WEKO_ACCOUNTS_LOGGER_ENABLED = True
 WEKO_ACCOUNTS_BASE_TEMPLATE = 'weko_accounts/base.html'
 """Default base template for the demo page."""
 
-SHIB_ACCOUNTS_LOGIN_ENABLED = True
+SHIB_ACCOUNTS_LOGIN_ENABLED = False
 """ Enable Shibboleth user login system"""
 
 SHIB_CACHE_PREFIX = 'Shib-Session-'
