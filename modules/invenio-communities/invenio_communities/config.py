@@ -117,7 +117,7 @@ COMMUNITIES_EDIT_TEMPLATE = 'invenio_communities/new.html'
 """Template for the edit communtiy page."""
 
 COMMUNITIES_URL_COMMUNITY_VIEW = \
-    '{protocol}://{host}/communities/{community_id}/'
+    '{protocol}://{host}/{community_id}/'
 """String pattern to generate the URL for the view of a community."""
 
 THEME_MATHJAX_CDN = '//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML'

@@ -125,7 +125,7 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
-      - "ES_JAVA_OPTS=-Xms2048m -Xmx4092m"
+      - "ES_JAVA_OPTS=-Xms4092m -Xmx4092m"
     ulimits:
       memlock:
         soft: -1

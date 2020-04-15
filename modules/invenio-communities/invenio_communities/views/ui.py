@@ -51,7 +51,7 @@ from invenio_communities.utils import Pagination, render_template_to_string
 blueprint = Blueprint(
     'invenio_communities',
     __name__,
-    url_prefix='/communities',
+    url_prefix='/',
     template_folder='../templates',
     static_folder='../static',
 )
