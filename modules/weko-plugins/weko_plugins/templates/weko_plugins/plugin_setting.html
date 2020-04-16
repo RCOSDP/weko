@@ -21,7 +21,7 @@
 {%- extends config.WEKO_PLUGINS_BASE_TEMPLATE %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector(plugin.identifier) }}
 {%- endblock page_body_tabs%}
 
