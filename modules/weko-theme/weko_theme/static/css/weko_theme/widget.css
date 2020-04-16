@@ -227,3 +227,8 @@
 .panel-body.without-after-element:after {
   content: none;
 }
+
+#header {
+  overflow: initial !important;
+  overflow: inherit !important;
+}

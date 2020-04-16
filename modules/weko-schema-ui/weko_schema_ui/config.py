@@ -80,3 +80,10 @@ WEKO_SCHEMA_DDI_VERSION = "2.5"
 
 WEKO_SCHEMA_DDI_SCHEMA_NAME = "ddi_mapping"
 """DDI schema name"""
+
+WEKO_SCHEMA_UI_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
+                              'Kakenhi', 'Ringgolf', 'GRID']
+""" List of scheme """
+
+WEKO_SCHEME_FIRST_INDEX = 0
+""" Name Identifior Item first index """

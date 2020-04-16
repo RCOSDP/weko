@@ -783,17 +783,21 @@ class IdentifierSettingView(ModelView):
 
     column_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'ndl_jalc_doi',
         'suffix',
         'jalc_flag',
         'jalc_crossref_flag',
-        'jalc_datacite_flag')
+        'jalc_datacite_flag',
+        'ndl_jalc_flag')
 
     column_searchable_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'ndl_jalc_doi',
         'suffix')
 
     column_details_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'ndl_jalc_doi',
         'suffix', 'created_userId', 'created_date', 'updated_userId',
         'updated_date')
 
@@ -806,12 +810,14 @@ class IdentifierSettingView(ModelView):
                          'jalc_doi',
                          'jalc_crossref_doi',
                          'jalc_datacite_doi',
+                         'ndl_jalc_doi',
                          rules.Header(_('Suffix')),
                          'suffix',
                          rules.Header(_('Enable/Disable')),
                          'jalc_flag',
                          'jalc_crossref_flag',
                          'jalc_datacite_flag',
+                         'ndl_jalc_flag',
                          'repo_selected',
                          ]
 
@@ -820,6 +826,7 @@ class IdentifierSettingView(ModelView):
     column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
                          jalc_crossref_doi=_('JaLC CrossRef DOI'),
                          jalc_datacite_doi=_('JaLC DataCite DOI'),
+                         ndl_jalc_doi=_('NDL JaLC DOI'),
                          suffix=_('Semi-automatic Suffix')
                          )
 
@@ -852,6 +859,9 @@ class IdentifierSettingView(ModelView):
         'jalc_datacite_doi': {
             'validators': [_validator_halfwidth_input]
         },
+        'ndl_jalc_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
         'suffix': {
             'validators': [_validator_halfwidth_input]
         }
@@ -870,6 +880,10 @@ class IdentifierSettingView(ModelView):
             'maxlength': 100,
             'readonly': True,
         },
+        'ndl_jalc_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
         'suffix': {
             'maxlength': 100,
         }
@@ -878,6 +892,26 @@ class IdentifierSettingView(ModelView):
     form_overrides = {
         'repository': QuerySelectField,
     }
+
+    def validate_form(self, form):
+        """
+        Custom validate the form on submit.
+
+        :param form:
+            Form to validate
+        """
+        if isinstance(form.repository.data, Community):
+            id_list = []
+            id_data = Identifier.query.all()
+            for i in id_data:
+                id_list.append(i.repository)
+
+            if (form.repository.data.id in id_list) and \
+                (form.action == 'create'
+                 or form.repo_selected.data != form.repository.data.id):
+                flash(_('Specified repository is already registered.'), 'error')
+                return False
+        return super(IdentifierSettingView, self).validate_form(form)
 
     def on_model_change(self, form, model, is_created):
         """
@@ -932,28 +966,15 @@ class IdentifierSettingView(ModelView):
     def _use_append_repository(self, form):
         form.repository.query_factory = self._get_community_list
         form.repo_selected.data = 'Root Index'
+        setattr(form, 'action', 'create')
         return form
 
     def _use_append_repository_edit(self, form):
-        form.repository.query_factory = self._get_community_list_edit
-        form.repository.render_kw = {'disabled': True}
+        form.repository.query_factory = self._get_community_list
+        setattr(form, 'action', 'edit')
         return form
 
     def _get_community_list(self):
-        try:
-            id_list = []
-            id_data = Identifier.query.all()
-            for i in id_data:
-                id_list.append(i.repository)
-            query_data = Community.query.filter(
-                Community.id.notin_(id_list)).all()
-            if 'Root Index' not in id_list:
-                query_data.insert(0, Community(id='Root Index'))
-        except Exception as ex:
-            current_app.logger.debug(ex)
-        return query_data
-
-    def _get_community_list_edit(self):
         try:
             query_data = Community.query.all()
             query_data.insert(0, Community(id='Root Index'))

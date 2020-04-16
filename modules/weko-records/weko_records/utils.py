@@ -123,7 +123,13 @@ def json_loader(data, pid):
 
     # convert to es jpcoar mapping data
     jrc = SchemaTree.get_jpcoar_json(jpcoar)
-
+    list_key = []
+    for k, v in jrc.items():
+        if not v:
+            list_key.append(k)
+    if list_key:
+        for key in list_key:
+            del jrc[key]
     if dc:
         # get the tile name to detail page
         title = data.get("title")
@@ -342,7 +348,9 @@ def get_all_items(nlst, klst, is_get_name=False):
             item_name = lst[1]
             if len(key_arr) >= 3:
                 parent_key = key_arr[-2].replace('[]', '')
-                item_name = item_name + '.' + get_name(parent_key)
+                parent_key_name = get_name(parent_key)
+                if item_name and parent_key_name:
+                    item_name = item_name + '.' + get_name(parent_key)
 
             return item_name
 

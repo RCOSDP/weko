@@ -38,7 +38,7 @@
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('item_management') }}
 {%- endblock page_body_tabs%}
 
@@ -55,7 +55,7 @@
           <div role="navigation">
             <ul class="nav nav-tabs">
               {%- block item_management_tabs %}
-                {% from "weko_theme/macros/item_management_tabs_selector.html" import tabs_selector %}
+                {% from "weko_theme/macros/item_management_tabs_selector.html" import tabs_selector with context %}
                 {{ tabs_selector('custom_sort') }}
               {%- endblock item_management_tabs%}
             </ul>

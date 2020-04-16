@@ -1,28 +1,17 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
+# Copyright (C) 2020 National Institute of Informatics.
 #
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+# WEKO3 is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
 
 """Shibboleth User API."""
 
 from datetime import datetime
 
 from flask import current_app, session
+from flask_babelex import gettext as _
 from flask_login import current_user, user_logged_in, user_logged_out
 from flask_security.utils import hash_password, verify_password
 from invenio_accounts.models import Role, User
@@ -50,34 +39,58 @@ class ShibUser(object):
         self.shib_user = None
         """The :class:`.models.ShibbolethUser` instance."""
 
+    def _set_weko_user_role(self, role_name):
+        """
+        Assign role for weko3 user.
+
+        :param role_name:
+        :return:
+
+        """
+        ret = True
+        try:
+            user_role = Role.query.filter_by(name=role_name).first()
+            if user_role in self.user.roles:
+                current_app.logger.debug("{} had been assigned to this "
+                                         "User!".format(role_name))
+                return ret
+            with db.session.begin_nested():
+                ret = _datastore.add_role_to_user(self.user, user_role)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.debug("An error occurred when trying to add "
+                                     "Role: {} to this User!".format(ex))
+            db.session.rollback()
+            ret = False
+        return ret
+
+    def _get_site_license(self):
+        """
+        Assign role for weko3 user.
+
+        :param shib_role_auth:
+        :return:
+
+        """
+        return self.shib_attr.get('shib_ip_range_flag', False)
+
     def get_relation_info(self):
         """
-        Get weko user info by shibboleth user info.
+        Get weko user info by Shibboleth user info.
 
         :return: ShibbolethUser if exists relation else None
 
         """
         shib_user = None
-        if self.shib_attr['shib_eppn'] is not None and len(
-                self.shib_attr['shib_eppn']) > 0:
+        if self.shib_attr['shib_eppn']:
             shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
-        if shib_user is None:
-            """First login for Weko"""
-            return None
-            # check email info on account_user
-            # weko_user = User.query.filter_by(
-            #     email=self.shib_attr['shib_mail']).one_or_none()
-            # if weko_user is not None:
-            #     # need check weko user info for the same email address
-            #     return 'chk'
-            # new shibboleth user login
-            # shib_user = self.new_relation_info()
 
-        if shib_user is not None:
+        if shib_user:
             self.shib_user = shib_user
-            if self.user is None:
+            if not self.user:
                 self.user = shib_user.weko_user
+
         return shib_user
 
     def check_weko_user(self, account, pwd):
@@ -115,7 +128,8 @@ class ShibUser(object):
         :return: ShibbolethUser instance
 
         """
-        kwargs = dict(email=self.shib_attr.get('shib_eppn'), password='',
+        kwargs = dict(email=self.shib_attr.get('shib_eppn'),
+                      password='',
                       active=True)
         kwargs['password'] = hash_password(kwargs['password'])
         kwargs['confirmed_at'] = datetime.utcnow()
@@ -154,6 +168,64 @@ class ShibUser(object):
         session['user_id'] = self.user.id
         session['user_src'] = 'Shib'
         user_logged_in.send(current_app._get_current_object(), user=self.user)
+
+    def assign_user_role(self):
+        """
+        Check and set relation role for Weko3 user by wekoSocietyAffiliation.
+
+        :return:
+
+        """
+        from .config import WEKO_GENERAL_ROLE, SHIB_ACCOUNTS_ROLE_RELATION
+        error = ''
+
+        if not self.user:
+            error = _(r"Can't get relation Weko User.")
+            return False, error
+
+        shib_role_auth = self.shib_attr.get('shib_role_authority_name', '')
+        if not shib_role_auth:
+            current_app.logger.debug(_("Failed to get attribute."))
+            return self._set_weko_user_role(WEKO_GENERAL_ROLE), error
+
+        shib_role_config = SHIB_ACCOUNTS_ROLE_RELATION
+        if shib_role_auth in shib_role_config.keys():
+            return self._set_weko_user_role(shib_role_config[
+                shib_role_auth]), error
+        else:
+            error = _("Invalid attribute.")
+
+        return False, error
+
+    def valid_site_license(self):
+        """
+        Get license from shib attr.
+
+        :return:
+
+        """
+        if self._get_site_license():
+            return True, ''
+        else:
+            return False, _('Failed to login.')
+
+    def check_in(self):
+        """
+        Get and check-in Shibboleth attr data before login to system.
+
+        :return:
+
+        """
+        check_role, error = self.assign_user_role()
+        if not check_role:
+            return error
+
+        # ! NEED RELATION SHIB_ATTR
+        # check_license, error = self.valid_site_license()
+        # if not check_license:
+        #     return error
+
+        return None
 
     @classmethod
     def shib_user_logout(cls):

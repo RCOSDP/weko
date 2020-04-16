@@ -34,7 +34,7 @@
 {%- endblock javascript %}
 
 {%- block body %}
-{% from "weko_authors/macros/tabs_selector.html" import tabs_selector %}
+{% from "weko_authors/macros/tabs_selector.html" import tabs_selector with context %}
 {{ tabs_selector('prefix_list') }}
 <input id="lang-code" type="hidden" value="{{lang_code}}" />
 <div class="row">

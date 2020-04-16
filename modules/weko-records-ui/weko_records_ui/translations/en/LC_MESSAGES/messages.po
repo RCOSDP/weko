@@ -69,6 +69,10 @@ msgstr ""
 msgid "JaLC DataCite DOI"
 msgstr ""
 
+#: weko_records_ui/admin.py:829
+msgid "NDL JaLC DOI"
+msgstr ""
+
 #: weko_records_ui/admin.py:217
 msgid "CNRI"
 msgstr ""
@@ -1115,4 +1119,22 @@ msgid "Format"
 msgstr ""
 
 msgid "Extent"
+msgstr ""
+
+msgid "Issued Date"
+msgstr ""
+
+msgid "Issue"
+msgstr ""
+
+msgid "Volume"
+msgstr ""
+
+msgid "Search repository"
+msgstr ""
+
+msgid "Content File"
+msgstr ""
+
+msgid "Billing File"
 msgstr ""

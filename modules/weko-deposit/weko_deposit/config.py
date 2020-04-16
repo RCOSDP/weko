@@ -125,3 +125,38 @@ RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY = None
 RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY = None
 RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY = None
 DEPOSIT_JSONSCHEMAS_PREFIX = ''
+
+DEPOSIT_RECORDS_UI_CREATOR = {
+    'creator_names': 'creatorNames',
+    'creator_name': 'creatorName',
+    'creator_lang': 'creatorNameLang',
+    'family_names': 'familyNames',
+    'family_name': 'familyName',
+    'family_lang': 'familyNameLang',
+    'given_names': 'givenNames',
+    'given_name': 'givenName',
+    'given_lang': 'givenNameLang',
+    'alternative_names': 'creatorAlternatives',
+    'alternative_name': 'creatorAlternative',
+    'alternative_lang': 'creatorAlternativeLang',
+    'identifiers': 'nameIdentifiers',
+    'creator_mails': 'creatorMails'
+
+}
+
+MAGAZINE_INFORMATION_KEY = [
+    'bibliographicVolumeNumber',
+    'bibliographicIssueNumber',
+    'p.',
+    'bibliographicNumberOfPages',
+    'bibliographicIssueDates'
+]
+"""Key of magazine information."""
+
+MAGAZINE_INFORMATION = {
+    'bibliographicVolumeNumber': 'Volume',
+    'bibliographicIssueNumber': 'Issue',
+    'bibliographicNumberOfPages': 'Number of Pages',
+    'bibliographicIssueDates': 'Issued Date'
+}
+"""Magazine information key and value."""
