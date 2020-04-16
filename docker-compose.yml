@@ -147,6 +147,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    command: [nginx-debug, '-g', 'daemon off;']
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
     links:
