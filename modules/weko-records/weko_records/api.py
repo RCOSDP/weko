@@ -434,6 +434,7 @@ class ItemTypes(RecordBase):
         :returns: A list of :class:`ItemTypes` instance.
         """
         with db.session.no_autoflush:
+            query = ItemType.query.filter_by(name_id=name_id)
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return query.order_by(desc(ItemType.tag)).all()
