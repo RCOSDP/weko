@@ -164,7 +164,7 @@ class ItemTypeMetaDataView(BaseView):
             table_row_map = data.get('table_row_map')
             json_schema = fix_json_schema(
                 table_row_map.get(
-                        'schema'))
+                    'schema'))
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
