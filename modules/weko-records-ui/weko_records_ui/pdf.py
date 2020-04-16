@@ -269,7 +269,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
                 if creator_name.get('creatorNameLang') == lang_user:
                     creator_name_list.append(creator_name.get('creatorName'))
                 if creator_name.get('creatorNameLang') == 'en':
-                    default_creator_name_list.append(creator_name.get('creatorName'))
+                    default_creator_name_list.append(creator_name.get(
+                        'creatorName'))
         if not creator_name_list and default_creator_name_list:
             creator_name_list = default_creator_name_list
         # Get creator affiliation
@@ -277,9 +278,11 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         if creator_item.get('affiliation'):
             for creator_affiliation in creator_item.get('affiliation'):
                 if creator_affiliation.get('affiliationNameLang') == lang_user:
-                    creator_affiliation_list.append(creator_affiliation.get('affiliationName'))
+                    creator_affiliation_list.append(creator_affiliation.get(
+                        'affiliationName'))
                 if creator_affiliation.get('affiliationNameLang') == 'en':
-                    default_creator_affiliation_list.append(creator_affiliation.get('affiliationName'))
+                    default_creator_affiliation_list.\
+                        append(creator_affiliation.get('affiliationName'))
         if not creator_affiliation_list and default_creator_affiliation_list:
             creator_affiliation_list = default_creator_affiliation_list
 
