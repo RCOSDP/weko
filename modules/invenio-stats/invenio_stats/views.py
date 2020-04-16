@@ -121,6 +121,7 @@ class QueryRecordViewCount(WekoQuery):
         result = {}
         period = []
         country = {}
+        unknown_view = 0
 
         try:
             if not query_date:
@@ -135,7 +136,8 @@ class QueryRecordViewCount(WekoQuery):
                           'start_date': query_date + '-01',
                           'end_date': query_date + '-' + str(lastday).zfill(2)
                           + 'T23:59:59'}
-            query_period_cfg = current_stats.queries['bucket-record-view-histogram']
+            query_period_cfg = current_stats.queries[
+                'bucket-record-view-histogram']
             query_period = query_period_cfg.query_class(
                 **query_period_cfg.query_config)
 
@@ -147,6 +149,7 @@ class QueryRecordViewCount(WekoQuery):
             result['total'] = res_total['count']
             for d in res_total['buckets']:
                 country[d['key']] = d['count']
+                unknown_view += d['count']
             result['country'] = country
             # period
             if get_period:
@@ -161,6 +164,12 @@ class QueryRecordViewCount(WekoQuery):
                     start -= timedelta(days=16)
                     start = datetime(start.year, start.month, 15)
                 result['period'] = period
+
+            unknown_view = result['total'] - unknown_view
+            if unknown_view:
+                country[str(getattr(config, 'WEKO_STATS_UNKNOWN_LABEL'))] = \
+                    unknown_view
+                result['country'] = country
         except Exception as e:
             current_app.logger.debug(e)
             result['total'] = 0
@@ -196,6 +205,8 @@ class QueryFileStatsCount(WekoQuery):
         period = []
         country_list = []
         mapping = {}
+        unknown_download = 0
+        unknown_preview = 0
 
         if not query_date:
             params = {'bucket_id': bucket_id,
@@ -214,12 +225,14 @@ class QueryFileStatsCount(WekoQuery):
 
         try:
             # file download
-            query_download_total_cfg = current_stats.queries['bucket-file-download-total']
+            query_download_total_cfg = current_stats.queries[
+                'bucket-file-download-total']
             query_download_total = query_download_total_cfg.query_class(
                 **query_download_total_cfg.query_config)
             res_download_total = query_download_total.run(**params)
             # file preview
-            query_preview_total_cfg = current_stats.queries['bucket-file-preview-total']
+            query_preview_total_cfg = current_stats.queries[
+                'bucket-file-preview-total']
             query_preview_total = query_preview_total_cfg.query_class(
                 **query_preview_total_cfg.query_config)
             res_preview_total = query_preview_total.run(**params)
@@ -232,6 +245,7 @@ class QueryFileStatsCount(WekoQuery):
                 data['country'] = d['key']
                 data['download_counts'] = d['value']
                 data['preview_counts'] = 0
+                unknown_download += d['value']
                 country_list.append(data)
                 mapping[d['key']] = len(country_list) - 1
             for d in res_preview_total['buckets']:
@@ -244,6 +258,7 @@ class QueryFileStatsCount(WekoQuery):
                     data['download_counts'] = 0
                     data['preview_counts'] = d['value']
                     country_list.append(data)
+                unknown_preview += d['value']
             result['country_list'] = country_list
             # period
             if get_period:
@@ -258,6 +273,17 @@ class QueryFileStatsCount(WekoQuery):
                     start -= timedelta(days=16)
                     start = datetime(start.year, start.month, 15)
                 result['period'] = period
+
+            unknown_download = result['download_total'] - unknown_download
+            unknown_preview = result['preview_total'] - unknown_preview
+            if unknown_download or unknown_preview:
+                data = dict(
+                    country=str(getattr(config, 'WEKO_STATS_UNKNOWN_LABEL')),
+                    download_count=unknown_download,
+                    preview_counts=unknown_preview
+                )
+                country_list.append(data)
+                result['country_list'] = country_list
         except Exception as e:
             current_app.logger.debug(e)
             result['download_total'] = 0
@@ -492,7 +518,8 @@ blueprint.add_url_rule(
 )
 
 blueprint.add_url_rule(
-    '/<string:target_report>/<string:start_date>/<string:end_date>/<string:unit>',
+    '/<string:target_report>/<string:start_date>/<string:end_date>/<string'
+    ':unit>',
     view_func=item_reg_report,
 )
 
