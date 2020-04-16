@@ -161,26 +161,24 @@ class ItemTypeMetaDataView(BaseView):
 
         data = request.get_json()
         try:
+            table_row_map = data.get('table_row_map')
             json_schema = fix_json_schema(
-                data.get(
-                    'table_row_map').get(
+                table_row_map.get(
                         'schema'))
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
-            record = ItemTypes.create_or_update(id_=item_type_id,
-                                                name=data.get(
-                                                    'table_row_map').get(
-                                                    'name'),
-                                                schema=json_schema,
-                                                form=data.get(
-                                                    'table_row_map').get(
-                                                    'form'),
-                                                render=data)
+            record = ItemTypes.update(id_=item_type_id,
+                                      name=table_row_map.get(
+                                          'name'),
+                                      schema=json_schema,
+                                      form=table_row_map.get(
+                                          'form'),
+                                      render=data)
             # Just update Mapping when create new record
             if record.model.id != item_type_id:
                 Mapping.create(item_type_id=record.model.id,
-                               mapping=data.get('table_row_map').
+                               mapping=table_row_map.
                                get('mapping'))
 
             ItemTypeEditHistory.create_or_update(

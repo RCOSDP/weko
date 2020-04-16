@@ -321,9 +321,8 @@ class ItemTypes(RecordBase):
         return record
 
     @classmethod
-    def create_or_update(cls, id_=0, name=None, schema=None, form=None,
-                         render=None,
-                         tag=1):
+    def update(cls, id_=0, name=None, schema=None, form=None, render=None,
+               tag=1):
         r"""Update an item type instance and store it in the database.
 
         :param id_: Identifier of item type.
@@ -375,36 +374,11 @@ class ItemTypes(RecordBase):
                                       schema=schema, form=form, render=render,
                                       tag=tag)
                 else:
-                    return cls.update(id_, schema, form, render)
-
-    @classmethod
-    def update(cls, item_type_id, schema, form, render):
-        """Update item type record.
-
-        @param item_type_id:
-        @param schema:
-        @param form:
-        @param render:
-        @return:
-        """
-        with db.session.begin_nested():
-            current_record = cls.get_by_id(id_=item_type_id)
-            record = cls(current_record.schema)
-            before_record_update.send(
-                current_app._get_current_object(),
-                record=record,
-            )
-            current_record.schema = schema
-            current_record.form = form
-            current_record.render = render
-            db.session.merge(current_record)
-            record.model = current_record
-        db.session.commit()
-        after_record_update.send(
-            current_app._get_current_object(),
-            record=record,
-        )
-        return record
+                    current_record = cls.get_record(id_)
+                    current_record.model.schema = schema
+                    current_record.model.form = form
+                    current_record.model.render = render
+                    return current_record.commit()
 
     @classmethod
     def get_record(cls, id_, with_deleted=False):
@@ -460,7 +434,6 @@ class ItemTypes(RecordBase):
         :returns: A list of :class:`ItemTypes` instance.
         """
         with db.session.no_autoflush:
-            query = ItemType.query.filter_by(name_id=name_id)
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return query.order_by(desc(ItemType.tag)).all()
@@ -560,7 +533,7 @@ class ItemTypes(RecordBase):
 
         :returns: The :class:`ItemTypes` instance.
         """
-        if self.model is None or self.model.json is None:
+        if self.model is None:
             raise MissingModelError()
 
         with db.session.begin_nested():
@@ -569,10 +542,10 @@ class ItemTypes(RecordBase):
                 record=self
             )
 
-            self.validate(**kwargs)
+            # self.validate(**kwargs)
 
-            self.model.json = dict(self)
-            flag_modified(self.model, 'json')
+            # self.model.json = dict(self)
+            # flag_modified(self.model, 'json')
 
             db.session.merge(self.model)
 
