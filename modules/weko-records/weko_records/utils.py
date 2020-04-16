@@ -721,7 +721,7 @@ def remove_multiple(schema):
 
 
 def check_to_upgrade_version(old_render, new_render):
-    """Check whether upgrade or keep version by checking different renders data.
+    """Check upgrade or keep version by checking different renders data.
 
     @param old_render:
     @param new_render:
