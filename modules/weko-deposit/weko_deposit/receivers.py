@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 National Institute of Informatics.
-#
-# INVENIO-ResourceSyncClient is free software; you can redistribute it and/or
-# modify it under the terms of the MIT License; see LICENSE file for more
-# details.
-
-"""Deposit module receivers."""
+# Deposit module receivers.
 
 from .api import WekoDeposit
 from .pidstore import get_record_without_version
@@ -50,7 +44,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     json['content'] = contents
     if contents:
         kwargs['arguments']['pipeline'] = 'item-file-pipeline'
-    for val im.values():
+    for i in im.values():
         if isinstance(i, dict):
             if i.get('attribute_type') == 'creator':
                 pass
