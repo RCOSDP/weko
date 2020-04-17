@@ -271,7 +271,7 @@ def shib_stub_login():
     session['next'] = request.args.get('next', '/')
 
     # LOGIN USING JAIROCLOUD PAGE
-    if current_app.config['SHIB_IDP_LOGIN_ENABLE']:
+    if current_app.config['SHIB_IDP_LOGIN_ENABLED']:
         return redirect(config.SHIB_IDP_LOGIN_URL)
     else:
         return render_template(

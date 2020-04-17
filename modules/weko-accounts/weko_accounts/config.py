@@ -84,5 +84,5 @@ SHIB_ACCOUNTS_ROLE_RELATION = {
 WEKO_GENERAL_ROLE = 'Contributor'
 """Default role."""
 
-SHIB_IDP_LOGIN_ENABLE = True
-"""Enable login throught JairoCloud account."""
+SHIB_IDP_LOGIN_ENABLED = False
+"""Enable login by JairoCloud IdP."""

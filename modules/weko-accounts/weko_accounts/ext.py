@@ -80,6 +80,8 @@ class WekoAccounts(object):
             app.config['SHIB_ACCOUNTS_LOGIN_CACHE_TTL'] = \
                 config.SHIB_ACCOUNTS_LOGIN_CACHE_TTL
             app.config['SSO_ATTRIBUTE_MAP'] = config.SSO_ATTRIBUTE_MAP
+            app.config['SHIB_IDP_LOGIN_ENABLED'] = \
+                config.SHIB_IDP_LOGIN_ENABLED
 
         for k in dir(config):
             if k.startswith('WEKO_ACCOUNTS_') or k.startswith('BABEL_'):
