@@ -85,4 +85,4 @@ WEKO_GENERAL_ROLE = 'Contributor'
 """Default role."""
 
 SHIB_IDP_LOGIN_ENABLED = False
-"""Enable login by JairoCloud IdP."""
+"""Shibboleth login pattern. (True: Shibboleth IdP(JairoCloud), False: Embedded DS-Pattern 1)."""
