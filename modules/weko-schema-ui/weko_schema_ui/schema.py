@@ -222,17 +222,35 @@ class SchemaTree:
             if record and record.get("metadata") else None
         self._schema_name = schema_name if schema_name else None
         if self._record:
-            self._root_name, self._ns, self._schema_obj = \
+            self._root_name, self._ns, self._schema_obj, self._item_type_id = \
                 self.get_mapping_data()
         self._v = "@value"
         self._atr = "@attributes"
+        self._atr_lang = "xml:lang"
+        self._special_lang = 'ja-Kana'
+        self._special_lang_default = 'ja'
+        # nodes need be be separated to multiple nodes by language
+        self._separate_nodes = None
         self._location = ''
         self._target_namespace = ''
         schemas = WekoSchema.get_all()
+        if self._record and self._item_type_id:
+            self._ignore_list = self.get_ignore_item_from_option()
         for schema in schemas:
             if self._schema_name == schema.schema_name:
                 self._location = schema.schema_location
                 self._target_namespace = schema.target_namespace
+
+    def get_ignore_item_from_option(self):
+        """Get all keys of properties that is enable Hide option in metadata."""
+        ignore_list = []
+        from weko_records.utils import get_options_and_order_list
+        _, meta_options = get_options_and_order_list(self._item_type_id)
+        for key, val in meta_options.items():
+            hidden = val.get('option').get('hidden')
+            if hidden:
+                ignore_list.append(key)
+        return ignore_list
 
     def get_mapping_data(self):
         """
@@ -261,15 +279,17 @@ class SchemaTree:
                         if isinstance(v, dict) and mp.get(k) and k != "_oai":
                             v.update({self._schema_name: mp.get(
                                 k).get(self._schema_name)})
+                return id
 
         # inject mappings info to record
-        get_mapping()
-        return rec.get('root_name'), rec.get('namespaces'), rec.get('schema')
+        item_type_id = get_mapping()
+        return rec.get('root_name'), rec.get('namespaces'), rec.get(
+            'schema'), item_type_id
 
     def __converter(self, node):
 
         _need_to_nested = ('subjectScheme', 'dateType', 'identifierType',
-                           'objectType',)
+                           'objectType', 'descriptionType')
 
         def list_reduce(olst):
             if isinstance(olst, list):
@@ -304,8 +324,6 @@ class SchemaTree:
 
                     return list(list_reduce(val))
                 else:
-                    if attr:
-                        node.pop(self._atr)
                     for k, v in node.items():
                         if k != self._atr:
                             node[k] = json_reduce(v)
@@ -326,6 +344,7 @@ class SchemaTree:
         """
         obj = cls(schema_name=schema_name)
         obj._record = records
+        obj._ignore_list = []
         vlst = list(map(obj.__converter,
                         filter(lambda x: isinstance(x, dict),
                                obj.__get_value_list())))
@@ -368,7 +387,41 @@ class SchemaTree:
                     for k, x in get_sub_item_value(n, key, atr_vm):
                         yield k, x
 
+        def get_value_from_content_by_mapping_key(atr_vm, list_key):
+            # In case has more than 1 key
+            # for ex:"subitem_1551257025236.subitem_1551257043769"
+            if isinstance(list_key, list) and len(list_key) > 1:
+                key = list_key.pop(0)
+                if isinstance(atr_vm, dict) and atr_vm.get(key):
+                    for a, b in get_value_from_content_by_mapping_key(
+                            atr_vm.get(key), list_key):
+                        yield a, b
+                elif isinstance(atr_vm, list):
+                    for i in atr_vm:
+                        if i.get(key):
+                            for a, b in get_value_from_content_by_mapping_key(
+                                    i.get(key), list_key):
+                                yield a, b
+            elif isinstance(list_key, list) and len(list_key) == 1:
+                try:
+                    key = list_key[0]
+                    if isinstance(atr_vm, dict):
+                        if atr_vm.get(key) is None:
+                            yield None, id(key)
+                        else:
+                            yield atr_vm[key], id(key)
+                    elif isinstance(atr_vm, list):
+                        for i in atr_vm:
+                            if i.get(key) is None:
+                                yield None, id(key)
+                            else:
+                                yield i[key], id(key)
+                except Exception:
+                    import traceback
+                    traceback.print_exc()
+
         def get_url(z, key, val):
+            # If related to file, process, otherwise return row value
             if key and 'filemeta' in key:
                 attr = z.get(self._atr, {})
                 attr = attr.get(
@@ -409,13 +462,20 @@ class SchemaTree:
             klst = []
             blst = []
             parent_id = 0
-            for k2, p2 in get_sub_item_value(atr_vm, key):
-                if parent_id != p2 and parent_id != 0:
+            list_subitem_key = []
+            if '.' in key:
+                list_subitem_key = key.split('.')
+            else:
+                list_subitem_key.append(key)
+            for value, identify in get_value_from_content_by_mapping_key(
+                    atr_vm.copy(), list_subitem_key):
+                if parent_id != identify and parent_id != 0:
                     klst.append(blst)
                     blst = []
-                rlst.append(k2)
-                blst.append(get_url(z, kn, k2))
-                parent_id = p2
+                rlst.append(value)
+                # something related to FILE
+                blst.append(get_url(z, kn, value))
+                parent_id = identify
             if blst:
                 klst.append(blst)
             return klst
@@ -533,30 +593,66 @@ class SchemaTree:
                     vlst[0]['stdyDscr'] = {}
                 return vlst[0]['stdyDscr']
 
+            def clean_none_value(dct):
+                clean = {}
+                for k, v in dct.items():
+                    if isinstance(v, dict):
+                        # check if @value has value
+                        node_val = v.get('@value', None)
+                        if isinstance(node_val, list) and node_val[0] and (
+                                node_val[0].count(None) == 0
+                                or (node_val[0].count(None) > 0
+                                    and node_val[0].count(None) != len(
+                                node_val[0]))):
+                            # get index of None value
+                            lst_none_idx = [idx for idx, val in
+                                            enumerate(node_val[0]) if
+                                            val is None or val == '']
+                            if len(lst_none_idx) > 0:
+                                # delete all None element in @value
+                                for i in lst_none_idx:
+                                    del node_val[0][i]
+                                # delete all None element in all @attributes
+                                for key, val in v.get(self._atr, {}).items():
+                                    for i in lst_none_idx:
+                                        del val[0][i]
+                            clean[k] = v
+                        else:
+                            nested = clean_none_value(v)
+                            if len(nested.keys()) > 0:
+                                clean[k] = nested
+                return clean
+
             vlst = []
             for ky, vl in mpdic.items():
                 vlc = copy.deepcopy(vl)
-                for z, y in get_key_value(vlc):
-                    # if it`s attributes node
-                    if y == self._atr:
-                        get_atr_value_lst(z, atr_vm, remain_keys)
+                for node_result, node_result_key in get_key_value(vlc):
+                    if node_result_key == self._atr:
+                        get_atr_value_lst(node_result, atr_vm, remain_keys)
                     else:
-                        if not z.get(self._v):
+                        if not node_result.get(self._v):
                             continue
 
                         # check expression or formula
-                        exp, lk = analysis(z.get(self._v))
+                        # exp = ,
+                        # lk = subitem_1551255702686
+                        exp, lk = analysis(node_result.get(self._v))
                         # if not have expression or formula
                         if len(lk) == 1:
                             nlst = get_items_value_lst(
-                                atr_vm, lk[0].strip(), remain_keys, z, k)
+                                atr_vm.copy(), lk[0].strip(), remain_keys,
+                                node_result, k)
                             if nlst:
-                                z[self._v] = nlst
+                                # [['Update PDF 3']]
+                                node_result[self._v] = nlst
+                            else:
+                                continue
                         else:
                             nlst = []
                             for val in lk:
                                 klst = get_items_value_lst(
-                                    atr_vm, val.strip(), remain_keys, z, k)
+                                    atr_vm, val.strip(), remain_keys,
+                                    node_result, k)
                                 nlst.append(klst)
 
                             if nlst:
@@ -592,10 +688,25 @@ class SchemaTree:
                                                 vst = []
                                             vst.append(ava[1:])
 
-                                z[self._v] = mlst
+                                node_result[self._v] = mlst
                 if remove_empty:
                     remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
+
+            attr_of_parent_item = {}
+            for k, v in vlst[0].items():
+                # get attribute of parent Node if any
+                if self._atr in v:
+                    attr_of_parent_item = {self._atr: v[self._atr]}
+            # remove None value
+            vlst = clean_none_value(vlst[0])
+
+            if vlst:
+                for k, v in vlst.items():
+                    if attr_of_parent_item:
+                        v.update(attr_of_parent_item)
+            vlst = [vlst]
+
             if isinstance(atr_vm, dict) and isinstance(vlst, list) and \
                     'stdyDscr' in vlst[0].keys():
                 if atr_name == 'Contributor':
@@ -615,19 +726,24 @@ class SchemaTree:
             return vlst
 
         vlst = []
-        for k, v in self._record.items():
-            if k != 'pubdate' and isinstance(v, dict):
+        for key_item_parent, value_item_parent in self._record.items():
+            if key_item_parent != 'pubdate' and isinstance(value_item_parent,
+                                                           dict):
                 # Dict
-                mpdic = v.get(
-                    self._schema_name) if self._schema_name in v else ''
-                if isinstance(mpdic, str) and len(mpdic) == 0:
+                # get value of the combination between record and \
+                # mapping data that is inited at __init__ function
+                mpdic = value_item_parent.get(
+                    self._schema_name) if self._schema_name \
+                    in value_item_parent else ''
+                if mpdic is "" or (
+                        self._ignore_list and key_item_parent in self._ignore_list):
                     continue
                 # List or string
-                atr_v = v.get('attribute_value')
+                atr_v = value_item_parent.get('attribute_value')
                 # List of dict
-                atr_vm = v.get('attribute_value_mlt')
+                atr_vm = value_item_parent.get('attribute_value_mlt')
                 # attr of name
-                atr_name = v.get('attribute_name')
+                atr_name = value_item_parent.get('attribute_name')
                 if atr_v:
                     if isinstance(atr_v, list):
                         atr_v = [atr_v]
@@ -637,9 +753,13 @@ class SchemaTree:
                     vlst.append(mpdic)
                 elif atr_vm and atr_name:
                     if isinstance(atr_vm, list) and isinstance(mpdic, dict):
-                        for lst in atr_vm:
-                            vlst.extend(
-                                get_mapping_value(mpdic, lst, k, atr_name))
+                        for atr_vm_item in atr_vm:
+                            vlst_child = get_mapping_value(mpdic, atr_vm_item,
+                                                           key_item_parent,
+                                                           atr_name)
+                            if vlst_child[0]:
+                                vlst.extend(vlst_child)
+                            # truong
         return vlst
 
     def create_xml(self):
@@ -696,79 +816,179 @@ class SchemaTree:
 
             return nlst
 
-        def set_children(kname, node, tree, index=0):
-            if isinstance(node, dict):
-                val = node.get(self._v)
-                # the last children level
-                if val:
-                    if node.get(self._atr):
-                        atr = get_atr_list(node.get(self._atr))
-                        for altt in atr:
-                            if altt:
-                                # atr = get_atr_list(atr[index])
-                                atrt = get_atr_list(altt)
+        def set_children(kname, node, tree, parent_keys,
+                         current_lang=None, index=0):
+            if kname == 'type':
+                return
+            current_separate_key_node = None
+            if self._separate_nodes:
+                for separate_node_key in self._separate_nodes.keys():
+                    if separate_node_key.split('.') == parent_keys:
+                        current_separate_key_node = separate_node_key
+            # current lang is None means current node(or its parents) no need to be separated
+            if current_separate_key_node and current_lang:
+                existed_attr = node.get(self._atr, None)
+                if not existed_attr:
+                    existed_attr = {}
+                    node.update({self._atr: existed_attr})
+                att_lang = {self._atr_lang: [[current_lang]]}
+                existed_attr.update(att_lang)
+                node.update(existed_attr)
+            if not current_lang and current_separate_key_node:
+                for lang in self._separate_nodes.get(
+                        current_separate_key_node):
+                    set_children(kname, node, tree, parent_keys, lang)
+            else:
+                if isinstance(node, dict):
+                    val = node.get(self._v)
+                    node_type = node.get('type')
+                    mandatory = True if node_type.get(
+                        'minOccurs') == 1 else False
+                    repeatable = False if node_type.get(
+                        'maxOccurs') == 1 else True
+                    # the last children level
+                    if val:
+                        if node.get(self._atr):
+                            atr = get_atr_list(node.get(self._atr))
+                            for altt in atr:
+                                if altt:
+                                    # atr = get_atr_list(atr[index])
+                                    atrt = get_atr_list(altt)
+                                    clone_val, clone_atr = recorrect_node(
+                                        val[index],
+                                        atrt,
+                                        current_lang,
+                                        mandatory,
+                                        repeatable)
+                                    for i in range(len(clone_val)):
+                                        chld = etree.Element(kname, None, ns)
+                                        chld.text = clone_val[i]
+                                        if len(clone_atr) > i:
+                                            for k2, v2 in clone_atr[i].items():
+                                                if v2 is None:
+                                                    continue
+                                                chld.set(get_prefix(k2), v2)
+                                        tree.append(chld)
+                                    index += 1
+                        else:
                             for i in range(len(val[index])):
                                 chld = etree.Element(kname, None, ns)
-                                # chld.text = val[index][i]
-                                chld.text = str(val[index][i])
-                                if len(atrt) > i:
-                                    for k2, v2 in atrt[i].items():
-                                        chld.set(get_prefix(k2), v2)
+                                chld.text = val[index][i]
                                 tree.append(chld)
-                            index += 1
                     else:
-                        for i in range(len(val[index])):
-                            chld = etree.Element(kname, None, ns)
-                            chld.text = val[index][i]
-                            tree.append(chld)
+                        # parents level
+                        # if have any child
+                        if check_node(node):
+                            # @ attributes only
+                            atr = get_atr_list(node.get(self._atr))
+                            if atr:
+                                atr = get_atr_list(atr[index])
+                                for i, obj in enumerate(atr):
+                                    chld = etree.Element(kname, None, ns)
+                                    tree.append(chld)
+                                    for k2, v2 in obj.items():
+                                        if v2 is None:
+                                            continue
+                                        chld.set(get_prefix(k2), v2)
+
+                                    for k1, v1 in node.items():
+                                        if k1 != self._atr:
+                                            k1 = get_prefix(k1)
+                                            clone_lst = parent_keys.copy()
+                                            clone_lst.append(k1)
+                                            set_children(k1, v1, chld,
+                                                         clone_lst,
+                                                         current_lang, i)
+                            else:
+                                nodes = [node]
+                                if bool(node) and not [i for i in node.values()
+                                                       if
+                                                       i and (not i.get(
+                                                           self._v) or not i.get(
+                                                           self._atr))]:
+                                    multi = max(
+                                        [len(attr) for n in node.values()
+                                         if n and n.get(self._atr)
+                                         and isinstance(n.get(self._atr), dict)
+                                         for attr in n.get(self._atr).values()])
+                                    if int(multi) > 1:
+                                        multi_nodes = [copy.deepcopy(node) for _
+                                                       in
+                                                       range(int(multi))]
+                                        for idx, item in enumerate(multi_nodes):
+                                            for nd in item.values():
+                                                nd[self._v] = [nd[self._v][idx]]
+                                                for key in nd.get(self._atr):
+                                                    nd.get(self._atr)[key] = [
+                                                        nd.get(self._atr)[key][
+                                                            idx]]
+                                        nodes = multi_nodes
+                                for val in nodes:
+                                    child = etree.Element(kname, None, ns)
+                                    tree.append(child)
+
+                                    for k1, v1 in val.items():
+                                        if k1 != self._atr:
+                                            k1 = get_prefix(k1)
+                                            clone_lst = parent_keys.copy()
+                                            clone_lst.append(k1)
+                                            set_children(k1, v1, child,
+                                                         clone_lst,
+                                                         current_lang)
+
+        def recorrect_node(val, attr, current_lang, mandatory=True,
+                           repeatable=False):
+            if not current_lang:
+                return val, attr
+            val_result = []
+            att_result = []
+
+            remove_lst = []
+            none_lst = []
+            current_lst = []
+            for i in range(len(val)):
+                att_lang = self._atr_lang in attr[i].keys()
+                if att_lang and attr[i].get(
+                    self._atr_lang) and attr[i].get(
+                    self._atr_lang) == self._special_lang and \
+                        current_lang == self._special_lang_default:
+                    current_lst.append(i)
+                if att_lang and attr[i].get(
+                    self._atr_lang) and attr[i].get(
+                        self._atr_lang) != current_lang:
+                    remove_lst.append(i)
+                elif att_lang and attr[
+                        i].get(self._atr_lang) is None:
+                    none_lst.append(i)
                 else:
-                    # parents level
-                    # if have any child
-                    if check_node(node):
-                        # @ attributes only
-                        atr = get_atr_list(node.get(self._atr))
-                        if atr:
-                            atr = get_atr_list(atr[index])
-                            for i, obj in enumerate(atr):
-                                chld = etree.Element(kname, None, ns)
-                                tree.append(chld)
-                                for k2, v2 in obj.items():
-                                    chld.set(get_prefix(k2), v2)
+                    current_lst.append(i)
 
-                                for k1, v1 in node.items():
-                                    if k1 != self._atr:
-                                        k1 = get_prefix(k1)
-                                        set_children(k1, v1, chld, i)
-                        else:
-                            nodes = [node]
-                            if bool(node) and not [i for i in node.values() if
-                                                   i and (not i.get(
-                                                       self._v) or not i.get(
-                                                       self._atr))]:
-                                multi = max(
-                                    [len(attr) for n in node.values()
-                                     if n and n.get(self._atr)
-                                     and isinstance(n.get(self._atr), dict)
-                                     for attr in n.get(self._atr).values()])
-                                if int(multi) > 1:
-                                    multi_nodes = [copy.deepcopy(node) for _ in
-                                                   range(int(multi))]
-                                    for idx, item in enumerate(multi_nodes):
-                                        for nd in item.values():
-                                            nd[self._v] = [nd[self._v][idx]]
-                                            for key in nd.get(self._atr):
-                                                nd.get(self._atr)[key] = [
-                                                    nd.get(self._atr)[key][
-                                                        idx]]
-                                    nodes = multi_nodes
-                            for val in nodes:
-                                child = etree.Element(kname, None, ns)
-                                tree.append(child)
+            # Remove all diff
+            for i in range(len(val)):
+                if i not in remove_lst:
+                    val_result.append(val[i])
+                    att_result.append(attr[i])
 
-                                for k1, v1 in val.items():
-                                    if k1 != self._atr:
-                                        k1 = get_prefix(k1)
-                                        set_children(k1, v1, child)
+            # Get the first one of others
+            if mandatory and len(val) - len(remove_lst) == 0:
+                val_result = [val[0]]
+                att_result = [attr[0]]
+
+            if not repeatable:
+                len_current_list = len(val) - len(remove_lst) - len(none_lst)
+                # Get the first one of current
+                if len_current_list > 1:
+                    val_result = [val[current_lst[0]]]
+                    att_result = [attr[current_lst[0]]]
+                elif len_current_list == 0:
+                    if len(none_lst) > 0:
+                        val_result = [val[none_lst[0]]]
+                        att_result = [attr[none_lst[0]]]
+                    else:
+                        val_result = [val[remove_lst[0]]]
+                        att_result = [attr[remove_lst[0]]]
+
+            return val_result, att_result
 
         def merge_json_xml(json, dct):
             if isinstance(json, dict):
@@ -784,6 +1004,38 @@ class SchemaTree:
                     else:
                         merge_json_xml(i, dct)
 
+        # Function Remove custom scheme
+        def remove_custom_scheme(name_identifier, v):
+            lst_name_identifier_default = current_app.config[
+                'WEKO_SCHEMA_UI_LIST_SCHEME']
+            if '@attributes' in name_identifier and \
+                    name_identifier['@attributes'].get('nameIdentifierScheme'):
+                element_first = 0
+                lst_name_identifier_scheme = name_identifier[
+                    '@attributes']['nameIdentifierScheme'][element_first]
+                lst_value = []
+                if '@value' in name_identifier:
+                    lst_value = name_identifier['@value'][element_first]
+                lst_name_identifier_uri = name_identifier[
+                    '@attributes']['nameIdentifierURI'][element_first]
+                index_remove_items = []
+                total_remove_items = len(lst_name_identifier_scheme)
+                for identifior_item in lst_name_identifier_scheme:
+                    if identifior_item not in lst_name_identifier_default:
+                        index_remove_items.extend([
+                            lst_name_identifier_scheme.index(identifior_item)])
+                if len(index_remove_items) == total_remove_items:
+                    del v['jpcoar:nameIdentifier']
+                    if 'jpcoar:affiliation' in v:
+                        del v['jpcoar:affiliation']
+                else:
+                    for index in index_remove_items[::-1]:
+                        lst_name_identifier_scheme.pop(index)
+                        if len(lst_value) == total_remove_items:
+                            lst_value.pop(index)
+                            total_remove_items = total_remove_items - 1
+                        lst_name_identifier_uri.pop(index)
+
         if not self._schema_obj:
             E = ElementMaker()
             root = E.Weko()
@@ -798,7 +1050,11 @@ class SchemaTree:
                 merge_json_xml(json_child, dct_xml)
             list_dict.append(dct_xml)
             list_json_xml = list_dict
-
+            self._separate_nodes = {'stdyDscr.citation': set(),
+                                    'stdyDscr.stdyInfo': set(),
+                                    'stdyDscr.method': set(),
+                                    'stdyDscr.dataAccs': set(),
+                                    'stdyDscr.othrStdyMat': set()}
         node_tree = self.find_nodes(list_json_xml)
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -816,14 +1072,29 @@ class SchemaTree:
         root.attrib['{{{pre}}}schemaLocation'.format(pre=xsi)] = self._location
 
         # Create sub element
+        indetifier_keys = ['jpcoar:creator', 'jpcoar:contributor',
+                           'jpcoar:rightsHolder']
+        affiliation_key = 'jpcoar:affiliation'
+        name_identifier_key = 'jpcoar:nameIdentifier'
+        # Remove all None languages and check special case
+        if self._separate_nodes:
+            for key, val in self._separate_nodes.items():
+                if self._special_lang in val:
+                    if self._special_lang_default not in val:
+                        val.add(self._special_lang_default)
+                    val.remove(self._special_lang)
+                if None in val:
+                    val.remove(None)
         for lst in node_tree:
             for k, v in lst.items():
-                if k == 'custom:system_file':
-                    k = 'jpcoar:file'
-                elif k == 'custom:system_identifier':
-                    k = 'jpcoar:identifier'
+                # Remove items that are not set as controlled vocabulary
+                if k in indetifier_keys:
+                    remove_custom_scheme(v[name_identifier_key], v)
+                    if affiliation_key in v:
+                        remove_custom_scheme(v[affiliation_key][
+                            name_identifier_key], v)
                 k = get_prefix(k)
-                set_children(k, v, root)
+                set_children(k, v, root, [k])
         return root
 
     def to_list(self):
@@ -924,8 +1195,6 @@ class SchemaTree:
         vlst = []
         alst = []
         ndic = copy.deepcopy(self._schema_obj)
-        # delete type dict
-        del_type(ndic)
         tlst = self.to_list()
 
         # start
@@ -939,6 +1208,13 @@ class SchemaTree:
             for x in get_node_dic(key):
                 nv = copy.deepcopy(v)
                 for kst in klst:
+                    current_separate_key = None
+                    if self._separate_nodes:
+                        for nodes_key, nodes_val in \
+                                self._separate_nodes.items():
+                            if kst.startswith(nodes_key):
+                                current_separate_key = nodes_key
+                                break
                     kst = kst.split(".")
                     gene = items_node({key: x}, kst)
                     # iter nested path(nodes)
@@ -956,6 +1232,12 @@ class SchemaTree:
                                         node.update({self._v: [[val]]})
                                 if atr:
                                     if isinstance(atr, dict):
+                                        if self._atr_lang in atr.keys() \
+                                            and current_separate_key and \
+                                                atr.get(self._atr_lang)[0]:
+                                            self._separate_nodes.get(
+                                                current_separate_key).update(
+                                                atr.get(self._atr_lang)[0])
                                         for k1, v1 in atr.items():
                                             if isinstance(v1, str):
                                                 atr[k1] = [[v1]]
@@ -1005,7 +1287,7 @@ def cache_schema(schema_name, delete=False):
             object_pairs_hook=OrderedDict)
         if delete:
             datastore.delete(cache_key)
-    except BaseException:
+    except BaseException as ex:
         try:
             schema = get_schema()
             if schema:

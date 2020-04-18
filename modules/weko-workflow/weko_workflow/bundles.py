@@ -31,11 +31,12 @@ js_workflow = Bundle(
 js_item_link = Bundle(
     'js/weko_workflow/workflow_item_link.js',
     filters='requirejs',
-    output="gen/workflow_item_link.js"
+    output="gen/workflow_item_link.%(version)s.js"
 )
 
 js_activity_list = Bundle(
     'js/weko_workflow/activity_list.js',
+    'js/weko_workflow/bootstrap-datepicker.min.js',
     filters='requirejs',
     output="gen/workflow_activity_list.js"
 )
@@ -67,4 +68,9 @@ js_quit_confirmation = Bundle(
 css_workflow = Bundle(
     'css/weko_workflow/style.css',
     output="gen/workflow_workflow.css"
+)
+
+css_datepicker_workflow = Bundle(
+    'css/weko_workflow/bootstrap-datepicker3.standalone.min.css',
+    output="gen/bootstrap-datepicker3.css"
 )

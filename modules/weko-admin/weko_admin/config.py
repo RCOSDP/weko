@@ -298,6 +298,16 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
             {'id': 'custom_sort_asc', 'contents': 'Custom(asc/desc)'}
         ]
     },
+    'display_control': {
+        'display_index_tree': {
+            'id': 'display_index_tree',
+            'status': True
+        },
+        'display_facet_search': {
+            'id': 'display_facet_search',
+            'status': True
+        }
+    },
     'detail_condition': [
         {'id': 'title',
          'contents': 'Title',
@@ -667,3 +677,11 @@ WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR = 'weko_records_ui/admin/pidstore_ident
 
 WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS = False
 """ Enable Login Instructions """
+
+
+WEKO_HEADER_NO_CACHE = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+""" Header no cache property """

@@ -26,8 +26,8 @@ import sys
 from datetime import date, timedelta
 
 import redis
-from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
-    render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, json, jsonify, \
+    redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -54,13 +54,15 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
 from .utils import _get_max_export_items, export_items, get_actionid, \
-    get_current_user, get_list_email, get_list_username, \
-    get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, parse_ranking_results, \
+    get_current_user, get_data_authors_prefix_settings, get_list_email, \
+    get_list_username, get_new_items_by_date, get_user_info_by_email, \
+    get_user_info_by_username, get_user_information, get_user_permission, \
+    is_schema_include_key, parse_ranking_results, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
     to_files_js, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
-    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
+    update_sub_items_by_user_role, validate_form_input_data, \
+    validate_save_title_and_share_user_id, validate_user, \
     validate_user_mail_and_index
 
 blueprint = Blueprint(
@@ -107,16 +109,14 @@ def index(item_type_id=0):
                 url_for('.index', item_type_id=lists[0].item_type[0].id))
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        need_file = False
-
-        if 'filename' in json.dumps(item_type.schema):
-            need_file = True
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
             page=page,
             render_widgets=render_widgets,
             need_file=need_file,
+            need_billing_file=need_billing_file,
             record={},
             jsonschema=json_schema,
             schemaform=schema_form,
@@ -165,12 +165,12 @@ def iframe_index(item_type_id=0):
                 files = item_json.get('files')
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
-        need_file = False
-        if 'filename' in json.dumps(item_type.schema):
-            need_file = True
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
+
         return render_template(
             'weko_items_ui/iframe/item_edit.html',
             need_file=need_file,
+            need_billing_file=need_billing_file,
             records=record,
             jsonschema=json_schema,
             schemaform=schema_form,
@@ -322,7 +322,13 @@ def get_schema_form(item_type_id=0):
         hidden_subitem = ['subitem_thumbnail',
                           'subitem_systemidt_identifier',
                           'subitem_systemfile_datetime',
-                          'subitem_systemfile_filename'
+                          'subitem_systemfile_filename',
+                          'subitem_system_id_rg_doi',
+                          'subitem_system_date_type',
+                          'subitem_system_date',
+                          'subitem_system_identifier_type',
+                          'subitem_system_identifier',
+                          'subitem_system_text'
                           ]
 
         for i in hidden_subitem:
@@ -581,12 +587,12 @@ def default_view_method(pid, record, template=None):
             files = item_json.get('files')
         if 'endpoints' in item_json:
             endpoints = item_json.get('endpoints')
-    need_file = False
-    if 'filename' in json.dumps(item_type.schema):
-        need_file = True
+    need_file, need_billing_file = is_schema_include_key(item_type.schema)
+
     return render_template(
         template,
         need_file=need_file,
+        need_billing_file=need_billing_file,
         record=record,
         jsonschema=json_schema,
         schemaform=schema_form,
@@ -805,10 +811,11 @@ def prepare_edit_item():
         if not workflow:
             item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
             id_list = [x.id for x in item_type_list]
-            workflow = (WorkFlow.query
-                        .filter(WorkFlow.itemtype_id.in_(id_list))
-                        .order_by(WorkFlow.itemtype_id.desc())
-                        .order_by(WorkFlow.flow_id.asc()).first())
+            workflow = (
+                WorkFlow.query
+                .filter(WorkFlow.itemtype_id.in_(id_list))
+                .order_by(WorkFlow.itemtype_id.desc())
+                .order_by(WorkFlow.flow_id.asc()).first())
         return workflow
 
     if request.headers['Content-Type'] != 'application/json':
@@ -1003,7 +1010,8 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'value': 'desc'})
         rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, list_name='all',
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all',
                                   title_key='record_name',
                                   count_key='total_all', pid_key='pid_value')
 
@@ -1017,7 +1025,8 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, list_name='data', title_key='col2',
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
 
     # created_most_items_user
@@ -1030,9 +1039,9 @@ def ranking():
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['created_most_items_user'] = \
-            parse_ranking_results(result, list_name='data',
-                                  title_key='username', count_key='count',
-                                  pid_key='')
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data',
+                                  title_key='user_id', count_key='count')
 
     # most_searched_keywords
     if settings.rankings['most_searched_keywords']:
@@ -1043,9 +1052,9 @@ def ranking():
             agg_sort={'value': 'desc'}
         )
         rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, list_name='all',
-                                  title_key='search_key', count_key='count',
-                                  pid_key='')
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all',
+                                  title_key='search_key', count_key='count')
 
     # new_items
     if settings.rankings['new_items']:
@@ -1227,3 +1236,38 @@ def corresponding_activity_list():
         result = {'usage_application': usage_application_list,
                   'output_report': output_report_list}
     return jsonify(result)
+
+
+@blueprint_api.route('/save_title_and_share_user_id', methods=['POST'])
+@login_required
+def save_title_and_share_user_id():
+    """Validate input title and shared user id for activity.
+
+    :return:
+    """
+    result = {
+        "is_valid": True,
+        "error": ""
+    }
+    data = request.get_json()
+    validate_save_title_and_share_user_id(result, data)
+    return jsonify(result)
+
+
+@blueprint_api.route('/author_prefix_settings', methods=['GET'])
+def get_authors_prefix_settings():
+    """Get all author prefix settings."""
+    author_prefix_settings = get_data_authors_prefix_settings()
+    if author_prefix_settings is not None:
+        results = []
+        for prefix in author_prefix_settings:
+            scheme = prefix.scheme
+            url = prefix.url
+            result = dict(
+                scheme=scheme,
+                url=url
+            )
+            results.append(result)
+        return jsonify(results)
+    else:
+        return abort(403)

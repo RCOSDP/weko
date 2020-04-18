@@ -19,7 +19,10 @@
 # MA 02111-1307, USA.
 
 """Utils for weko-accounts."""
-from flask import request
+import random
+import string
+
+from flask import current_app, request
 
 
 def get_remote_addr():
@@ -30,20 +33,38 @@ def get_remote_addr():
     # addresses, the first address being the actual remote address.
     """
     address = request.headers.get('X-Real-IP', None)
+
     if address is None:
         address = request.headers.get('X-Forwarded-For', request.remote_addr)
         if address is not None:
             address = address.encode('utf-8').split(b',')[0].strip()
+
     return address
 
 
 def generate_random_str(length=128):
     """Generate secret key."""
-    import string
-    import random
-
     rng = random.SystemRandom()
+
     return ''.join(
         rng.choice(string.ascii_letters + string.digits)
-        for dummy in range(0, length)
+        for _ in range(0, length)
     )
+
+
+def parse_attributes():
+    """Parse arguments from environment variables."""
+    attrs = {}
+    error = False
+
+    for header, attr in current_app.config['SSO_ATTRIBUTE_MAP'].items():
+        required, name = attr
+        value = request.form.get(header, '') if request.method == 'POST' \
+            else request.args.get(header, '')
+        current_app.logger.debug('Shib    {0}: {1}'.format(name, value))
+        attrs[name] = value
+
+        if required and not value:
+            error = True
+
+    return attrs, error

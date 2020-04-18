@@ -179,7 +179,7 @@ class ItemType(db.Model, Timestamp):
     @property
     def latest_edit_history(self):
         """Get latest edit note of self."""
-        return self.edit_notes[0].notes if self.edit_notes else {}
+        return self.edit_notes[-1].notes if self.edit_notes else {}
 
 
 class ItemTypeEditHistory(db.Model, Timestamp):
@@ -662,6 +662,56 @@ class FeedbackMailList(db.Model, Timestamp):
     """List of feedback mail in json format."""
 
 
+class ItemReference(db.Model, Timestamp):
+    """Model of item reference relations."""
+
+    __tablename__ = 'item_reference'
+
+    src_item_pid = db.Column(
+        db.Integer(),
+        nullable=True,
+        primary_key=True
+    )
+    """PID of source item."""
+
+    dst_item_pid = db.Column(
+        db.Integer(),
+        nullable=True,
+        primary_key=True
+    )
+    """PID for destination item."""
+
+    reference_type = db.Column(
+        db.String(50),
+        nullable=False
+    )
+    """参照元と参照先のアイテム間の関連内容。"""
+
+    def __repr__(self):
+        """Text representation of a ItemReference relation."""
+        return "<ItemReference Relation: (records/{r.src_item_pid}) -> " \
+               "(records/{r.dst_item_pid}) " \
+               "(Type: {r.reference_type})>".format(r=self)
+
+    @classmethod
+    def get_src_references(cls, pid):
+        """Get all relations where given PID is a src."""
+        return cls.query.filter(cls.src_item_pid == pid)
+
+    @classmethod
+    def get_dst_references(cls, pid):
+        """Get all relations where given PID is a dst."""
+        return cls.query.filter(cls.dst_item_pid == pid)
+
+    @classmethod
+    def relation_exists(cls, src_pid, dst_pid, reference_type):
+        """Determine if given relation already exists."""
+        return ItemReference.query.filter_by(
+            src_item_pid=src_pid,
+            dst_item_pid=dst_pid,
+            reference_type=reference_type).count() > 0
+
+
 __all__ = (
     'Timestamp',
     'ItemType',
@@ -674,4 +724,5 @@ __all__ = (
     'SiteLicenseInfo',
     'SiteLicenseIpAddress',
     'FeedbackMailList',
+    'ItemReference'
 )

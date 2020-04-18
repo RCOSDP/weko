@@ -380,7 +380,6 @@ class CreateResourceComponent extends React.Component {
 
   render() {
     const { state } = this;
-    console.log(state)
     return (
       <div className="create-resource">
         <div className="row form-group ">
@@ -648,7 +647,6 @@ class EditResourceComponent extends React.Component {
     const new_data = { ...this.state };
     delete new_data.tree_list;
     delete new_data.id;
-    console.log(new_data.publish_date)
     new_data.publish_date = moment(new_data.publish_date, "MM/DD/YYYY").format("YYYY-MM-DDT00:00:00")
     fetch(urlUpdate + "/" + this.state.id, {
       method: "POST",
@@ -1008,7 +1006,6 @@ function initDatepicker() {
     forceParse: false
   })
   .on("changeDate", function(e) {
-    console.log("changeDate",e.target.value)
     if (document.getElementById("publish_date_picker").classList.contains('has-error')) {
       document.getElementById("publish_date_picker").classList.remove('has-error');
     }

@@ -44,9 +44,10 @@ WEKO_WORKFLOW_ACTION_ENDPOINTS = {
 }
 
 IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
-                         (1, 'JaLC DOI', 'http://doi.org'),
-                         (2, 'JaLC CrossRef DOI', 'http://doi.org'),
-                         (3, 'JaLC DataCite DOI', 'http://doi.org')
+                         (1, 'JaLC DOI', 'https://doi.org'),
+                         (2, 'JaLC CrossRef DOI', 'https://doi.org'),
+                         (3, 'JaLC DataCite DOI', 'https://doi.org'),
+                         (4, 'NDL JaLC DOI', 'https://doi.org')
                          ]
 """Options list for Identifier Grant action."""
 
@@ -97,3 +98,9 @@ WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL = True
 
 WEKO_WORKFLOW_ENABLE_CONTRIBUTOR = True
 """Enable Contributor"""
+
+WEKO_WORKFLOW_TODO_TAB = 'todo'
+
+WEKO_WORKFLOW_WAIT_TAB = 'wait'
+
+WEKO_WORKFLOW_ALL_TAB = 'all'

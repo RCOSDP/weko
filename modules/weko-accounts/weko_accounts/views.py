@@ -28,8 +28,8 @@ import json
 import sys
 
 import redis
-from flask import Blueprint, abort, current_app, redirect, render_template, \
-    request, session, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, \
+    render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_security import url_for_security
@@ -39,7 +39,7 @@ from werkzeug.local import LocalProxy
 
 from . import config
 from .api import ShibUser
-from .utils import generate_random_str
+from .utils import generate_random_str, parse_attributes
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -75,28 +75,43 @@ def shib_auto_login():
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
-        if shib_session_id is None:
+        if not shib_session_id:
             shib_session_id = session['shib_session_id']
             is_auto_bind = True
+
         if shib_session_id is None or len(shib_session_id) == 0:
             return redirect(url_for_security('login'))
+
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
         cache_key = config.SHIB_CACHE_PREFIX + shib_session_id
         if not datastore.redis.exists(cache_key):
             return redirect(url_for_security('login'))
+
         cache_val = datastore.get(cache_key)
-        if cache_val is None:
+        if not cache_val:
             datastore.delete(cache_key)
             return redirect(url_for_security('login'))
+
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
         if not is_auto_bind:
             shib_user.get_relation_info()
         else:
             shib_user.new_relation_info()
-        if shib_user.shib_user is not None:
+
+        error = shib_user.check_in()
+
+        if error:
+            ShibUser.shib_user_logout()
+            datastore.delete(cache_key)
+            current_app.logger.error(error)
+            flash(error, category='error')
+            return redirect(url_for_security('login'))
+
+        if shib_user.shib_user:
             shib_user.shib_user_login()
+
         datastore.delete(cache_key)
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
@@ -134,7 +149,15 @@ def confirm_user():
             datastore.delete(cache_key)
             return redirect(url_for_security('login'))
         shib_user.bind_relation_info(account)
-        if shib_user.shib_user is not None:
+
+        error = shib_user.check_in()
+
+        if error:
+            datastore.delete(cache_key)
+            flash(error, category='error')
+            return redirect(url_for_security('login'))
+
+        if shib_user.shib_user:
             shib_user.shib_user_login()
         datastore.delete(cache_key)
         return redirect(session['next'] if 'next' in session else '/')
@@ -151,21 +174,38 @@ def shib_login():
     """
     try:
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+
         if shib_session_id is None or len(shib_session_id) == 0:
             return redirect(url_for_security('login'))
+
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
         cache_key = config.SHIB_CACHE_PREFIX + shib_session_id
+
         if not datastore.redis.exists(cache_key):
             return redirect(url_for_security('login'))
         cache_val = datastore.get(cache_key)
-        if cache_val is None:
+
+        if not cache_val:
             datastore.delete(cache_key)
             return redirect(url_for_security('login'))
+
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         session['shib_session_id'] = shib_session_id
         csrf_random = generate_random_str(length=64)
         session['csrf_random'] = csrf_random
+
+        shib_role_auth = cache_val.get('shib_role_authority_name', '')
+        if not shib_role_auth:
+            current_app.logger.debug(_("Failed to get attribute."))
+
+        shib_role_config = config.SHIB_ACCOUNTS_ROLE_RELATION
+
+        if shib_role_auth and shib_role_auth not in shib_role_config.keys():
+            current_app.logger.error(_("Invalid attribute."))
+            flash(_("Invalid attribute."), category='error')
+            return redirect(url_for_security('login'))
+
         return render_template(
             config.WEKO_ACCOUNTS_CONFIRM_USER_TEMPLATE,
             csrf_random=csrf_random,
@@ -173,6 +213,7 @@ def shib_login():
                 cache_val['shib_mail']) > 0 else '')
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+
     return abort(400)
 
 
@@ -183,27 +224,31 @@ def shib_sp_login():
     :return: confirm page when relation is empty
     """
     try:
-        if not current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
-            return url_for_security('login')
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
-        if shib_session_id is None or len(shib_session_id) == 0:
+        if not shib_session_id and not current_app.config[
+                'SHIB_ACCOUNTS_LOGIN_ENABLED']:
             return url_for_security('login')
+
         shib_attr, error = parse_attributes()
         if error:
             return url_for_security('login')
+
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
         ttl_sec = int(current_app.config['SHIB_ACCOUNTS_LOGIN_CACHE_TTL'])
         datastore.put(config.SHIB_CACHE_PREFIX + shib_session_id,
                       bytes(json.dumps(shib_attr), encoding='utf-8'),
                       ttl_secs=ttl_sec)
+
         shib_user = ShibUser(shib_attr)
+        # Check the relation of shibboleth user with weko account.
         rst = shib_user.get_relation_info()
-        """ check the relation of shibboleth user with weko account"""
+
         next_url = 'weko_accounts.shib_auto_login'
         if rst is None:
-            """relation is not existed, cache shibboleth info to redis."""
+            # Relation is not existed, cache shibboleth info to redis.
             next_url = 'weko_accounts.shib_login'
+
         query_string = {
             'SHIB_ATTR_SESSION_ID': shib_session_id,
             '_method': 'GET'
@@ -216,14 +261,22 @@ def shib_sp_login():
 
 @blueprint.route('/shib/sp/login', methods=['GET'])
 def shib_stub_login():
-    """Shibboleth sp test page.
+    """Shibboleth SP login redirect.
 
     :return:
     """
     if not current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
         return abort(403)
+
     session['next'] = request.args.get('next', '/')
-    return redirect(config.SHIB_IDP_LOGIN_URL)
+
+    # LOGIN USING JAIROCLOUD PAGE
+    if current_app.config['SHIB_IDP_LOGIN_ENABLED']:
+        return redirect(config.SHIB_IDP_LOGIN_URL)
+    else:
+        return render_template(
+            config.SECURITY_LOGIN_SHIB_USER_TEMPLATE,
+            module_name=_('WEKO-Accounts'))
 
 
 @blueprint.route('/shib/logout')
@@ -234,18 +287,3 @@ def shib_logout():
     """
     ShibUser.shib_user_logout()
     return 'logout success'
-
-
-def parse_attributes():
-    """Parse arguments from environment variables."""
-    attrs = {}
-    error = False
-    for header, attr in current_app.config['SSO_ATTRIBUTE_MAP'].items():
-        required, name = attr
-        value = request.form.get(header, '') if request.method == 'POST' \
-            else request.args.get(header, '')
-        current_app.logger.debug('Shib    {0}: {1}'.format(name, value))
-        attrs[name] = value
-        if (not value or value == '') and required:
-            error = True
-    return attrs, error

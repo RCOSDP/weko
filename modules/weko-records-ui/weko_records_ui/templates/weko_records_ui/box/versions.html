@@ -10,7 +10,7 @@
           <td>
             <a href="{{ url_for('invenio_records_ui.recid', pid_value=active_versions[0].pid_value) }}">{{ version_label_const + current_version_index | string }} </a>
           </td>
-          <td align="right">
+          <td align="right" style="word-wrap: anywhere;">
             <small class="text-muted">{{ all_versions[-1].updated }}</small>
           </td>
         </tr>
@@ -25,7 +25,7 @@
             <td>
               <a href="{{ url_for('invenio_records_ui.recid', pid_value=pid_version.pid_value) }}">{{ version_label }} </a>
             </td>
-            <td align="right">
+            <td align="right" style="word-wrap: anywhere;">
               <small class="text-muted">{{ version_date }}</small>
             </td>
           </tr>

@@ -66,6 +66,11 @@ ITEM_SEARCH_FLG = 'name'
 EMAIL_DISPLAY_FLG = True
 # setting the email of author if display
 
+OPEN_DATE_DISPLAY_FLG = True
+OPEN_DATE_DISPLAY_VALUE = '1'
+OPEN_DATE_HIDE_VALUE = '0'
+# setting the release date if display
+
 # CSL Citation Formatter
 # ======================
 #: Styles Endpoint for CSL
@@ -294,7 +299,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
     {
         'name': _('Creative Commons Attribution 4.0 International (CC BY 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
-        'href_en': 'https://creativecommons.org/licenses/by/4.0/deed.en',
+        'href_default': 'https://creativecommons.org/licenses/by/4.0/',
         'value': 'license_0',
         'src': '88x31(1).png',
         'src_pdf': 'by.png',
@@ -307,7 +312,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
             'Creative Commons Attribution-ShareAlike 4.0 '
             'International (CC BY-SA 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
-        'href_en': 'https://creativecommons.org/licenses/by-sa/4.0/deed.en',
+        'href_default': 'https://creativecommons.org/licenses/by-sa/4.0/',
         'value': 'license_1',
         'src': '88x31(2).png',
         'src_pdf': 'by-sa.png',
@@ -320,7 +325,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
             'Creative Commons Attribution-NoDerivatives 4.0 International '
             '(CC BY-ND 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
-        'href_en': 'https://creativecommons.org/licenses/by-nd/4.0/deed.en',
+        'href_default': 'https://creativecommons.org/licenses/by-nd/4.0/',
         'value': 'license_2',
         'src': '88x31(3).png',
         'src_pdf': 'by-nd.png',
@@ -332,7 +337,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'name': _('Creative Commons Attribution-NonCommercial 4.0 International'
                   ' (CC BY-NC 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
-        'href_en': 'https://creativecommons.org/licenses/by-nc/4.0/deed.en',
+        'href_default': 'https://creativecommons.org/licenses/by-nc/4.0/',
         'value': 'license_3',
         'src': '88x31(4).png',
         'src_pdf': 'by-nc.png',
@@ -345,7 +350,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
             'Creative Commons Attribution-NonCommercial-ShareAlike 4.0'
             ' International (CC BY-NC-SA 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
-        'href_en': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en',
+        'href_default': 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
         'value': 'license_4',
         'src': '88x31(5).png',
         'src_pdf': 'by-nc-sa.png',
@@ -359,7 +364,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
             ' 4.0 International'
             ' (CC BY-NC-ND 4.0)'),
         'href_ja': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
-        'href_en': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.en',
+        'href_default': 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
         'value': 'license_5',
         'src': '88x31(6).png',
         'src_pdf': 'by-nc-nd.png',

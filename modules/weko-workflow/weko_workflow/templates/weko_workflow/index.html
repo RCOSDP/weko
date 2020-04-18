@@ -21,7 +21,7 @@
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('flow') }}
 {%- endblock page_body_tabs%}
 

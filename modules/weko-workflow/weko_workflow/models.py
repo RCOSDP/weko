@@ -739,6 +739,10 @@ class Activity(db.Model, TimestampMixin):
     activity_confirm_term_of_use = db.Column(db.Boolean, nullable=True,
                                              default=True)
 
+    title = db.Column(db.Text, nullable=True)
+
+    shared_user_id = db.Column(db.Integer(), nullable=True)
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
@@ -878,6 +882,11 @@ class ActionIdentifier(db.Model, TimestampMixin):
                                               nullable=True,
                                               default="")
     """Action identifier grant jalc datacite doi input."""
+
+    action_identifier_ndl_jalc_doi = db.Column(db.String(255),
+                                               nullable=True,
+                                               default="")
+    """Action identifier grant ndl jalc doi input."""
 
 
 class ActionFeedbackMail(db.Model, TimestampMixin):

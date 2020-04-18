@@ -70,6 +70,7 @@ def item_path_search_factory(search, index_id="0"):
     :returns: Tuple with search instance and URL arguments.
     """
     def _get_index_search_query():
+        """Get index search query."""
         query_q = {
             "from": 0,
             "size": 10000,

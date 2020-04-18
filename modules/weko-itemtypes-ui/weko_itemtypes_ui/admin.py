@@ -161,23 +161,25 @@ class ItemTypeMetaDataView(BaseView):
 
         data = request.get_json()
         try:
+            table_row_map = data.get('table_row_map')
             json_schema = fix_json_schema(
-                data.get(
-                    'table_row_map').get(
-                        'schema'))
+                table_row_map.get(
+                    'schema'))
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
             record = ItemTypes.update(id_=item_type_id,
-                                      name=data.get(
-                                          'table_row_map').get('name'),
+                                      name=table_row_map.get(
+                                          'name'),
                                       schema=json_schema,
-                                      form=data.get(
-                                          'table_row_map').get('form'),
+                                      form=table_row_map.get(
+                                          'form'),
                                       render=data)
-
-            Mapping.create(item_type_id=record.model.id,
-                           mapping=data.get('table_row_map').get('mapping'))
+            # Just update Mapping when create new record
+            if record.model.id != item_type_id:
+                Mapping.create(item_type_id=record.model.id,
+                               mapping=table_row_map.
+                               get('mapping'))
 
             ItemTypeEditHistory.create_or_update(
                 item_type_id=record.model.id,
@@ -242,17 +244,23 @@ class ItemTypePropertiesView(BaseView):
     def index(self, property_id=0):
         """Renders an primitive property view."""
         lists = ItemTypeProps.get_records([])
+        properties = lists.copy()
+        defaults_property_ids = current_app.config.get(
+            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_IDS')
+        for item in lists:
+            if item.id in defaults_property_ids:
+                properties.remove(item)
 
         billing_perm = BillingPermission.get_billing_information_by_id(
             WEKO_BILLING_FILE_ACCESS)
         if not billing_perm or not billing_perm.is_active:
-            for prop in lists:
+            for prop in properties:
                 if prop.id == WEKO_BILLING_FILE_PROP_ID:
-                    lists.remove(prop)
+                    properties.remove(prop)
 
         return self.render(
             current_app.config['WEKO_ITEMTYPES_UI_ADMIN_CREATE_PROPERTY'],
-            lists=lists,
+            lists=properties,
             lang_code=session.get('selected_language', 'en')  # Set default
         )
 
@@ -266,7 +274,7 @@ class ItemTypePropertiesView(BaseView):
 
         billing_perm = BillingPermission.get_billing_information_by_id(
             WEKO_BILLING_FILE_ACCESS)
-        if not billing_perm and not billing_perm.is_active:
+        if not billing_perm or not billing_perm.is_active:
             for prop in props:
                 if prop.id == WEKO_BILLING_FILE_PROP_ID:
                     props.remove(prop)
@@ -367,7 +375,11 @@ class ItemTypeMappingView(BaseView):
             meta_system_items = ['system_identifier_doi',
                                  'system_identifier_hdl',
                                  'system_identifier_uri',
-                                 'system_file']
+                                 'system_file',
+                                 'updated_date', 'created_date',
+                                 'persistent_identifier_doi',
+                                 'persistent_identifier_h',
+                                 'ranking_page_url', 'belonging_index_info']
 
             for key in meta_system_items:
                 if isinstance(meta_system, dict) and meta_system.get(key) \

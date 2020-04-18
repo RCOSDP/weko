@@ -1,25 +1,27 @@
 {#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
 
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
-{% macro output_item_detail(record, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false) %}
+{% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
+{% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
+{% macro output_item_detail(record, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true) %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info %}
         <tr>
@@ -44,6 +46,16 @@
                       {%- endfor -%}
                   </td>
                 </tr>
+              {%- elif lst['attribute_type'] == 'creator' -%}
+                 {%- if lst['attribute_value_mlt'][0].get('name') -%}
+                     <tr>
+                       <th scope="row" colspan="6">{{ lst['attribute_name'] }}</th>
+                       <td>{{output_creator_data(lst['attribute_value_mlt'])}}
+                       </td>
+                     </tr>
+                 {%- endif -%}
+              {% elif lst['attribute_name'] == 'Bibliographic Information' %}
+                 {{ output_bibliographic_information(lst) }}
               {% else %}
                   {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' %}
                     {%- if lst['attribute_value'] is string or lst['attribute_value'] or lst['attribute_value_mlt']|length > 0 -%}
@@ -60,7 +72,7 @@
                               {% endfor %}
                           {% endif %}
                           {%- for l in lst['attribute_value_mlt'] -%}
-                              {{ output_attribute_value(l) }}
+                              {{ output_attribute_value(l, is_logged_in, open_day_display_flg) }}
                           {%- endfor -%}
                       </td>
                     </tr>
@@ -91,18 +103,16 @@
           {% endif %}
       {% endfor %}
       {% if record.relation and is_top_page %}
-        {%- if record.relation.relation_type -%}
         <tr>
           <th scope="row" colspan="6">{{ _('Link') }}</th>
           <td>
-              {%- for sub_record in record.relation.relation_type %}
+              {%- for sub_record in record.relation %}
                 <a target="_self"
                    href="{{ sub_record.item_links }}">{{ sub_record.item_title }}</a>
                 <br>
               {% endfor %}
           </td>
         </tr>
-        {%- endif -%}
       {% endif %}
       {% if record.pubdate and is_top_page and is_logged_in %}
         <tr>
