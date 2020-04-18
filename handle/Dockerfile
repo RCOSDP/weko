@@ -17,8 +17,8 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 ## Handle Server setup
 
 # Get the handle server package and put it in the container
-ADD http://www.handle.net/hnr-source/handle-9.2.0-distribution.tar.gz /tmp/
-RUN mkdir -p /opt/handle && tar xf /tmp/handle-9.2.0-distribution.tar.gz -C /opt/handle --strip-components=1
+ADD http://www.handle.net/hnr-source/handle-9.1.0-distribution.tar.gz /tmp/
+RUN mkdir -p /opt/handle && tar xf /tmp/handle-9.1.0-distribution.tar.gz -C /opt/handle --strip-components=1
 
 # Add the jdbc connector so it gets loaded
 RUN ln -s /usr/share/java/mysql-connector-java.jar /opt/handle/lib/mysql-connector-java.jar
