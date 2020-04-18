@@ -174,7 +174,7 @@ services:
   handle:
     image: handle_svr
     build:
-      context: .
+      context: ./handle
       dockerfile: Dockerfile
     restart: always
     ports:
