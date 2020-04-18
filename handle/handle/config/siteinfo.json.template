@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "protocolVersion": "2.10",
+  "serialNumber": 1,
+  "primarySite": true,
+  "multiPrimary": false,
+  "attributes": [
+    {
+      "name": "desc",
+      "value": "LHS 1"
+    }
+  ],
+  "servers": [
+    {
+      "serverId": 1,
+      "address": "$HANDLE_HOST_IP",
+      "publicKey": {
+        "format": "base64",
+        "value": "$SERVER_PUBLIC_KEY_DSA_BASE64"
+      },
+      "interfaces": [
+        {
+          "query": true,
+          "admin": false,
+          "protocol": "UDP",
+          "port": 2641
+        },
+        {
+          "query": true,
+          "admin": true,
+          "protocol": "TCP",
+          "port": 2641
+        },
+        {
+          "query": true,
+          "admin": true,
+          "protocol": "HTTP",
+          "port": 8000
+        }
+      ]
+   }
+  ]
+}

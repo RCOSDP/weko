@@ -1,0 +1,64 @@
+{
+  "hdl_http_config" = {
+    "num_threads" = "15"
+    "bind_port" = "8000"
+    "log_accesses" = "yes"
+  }
+
+  "server_type" = "server"
+  "hdl_udp_config" = {
+    "num_threads" = "15"
+    "bind_port" = "2641"
+    "log_accesses" = "yes"
+  }
+
+  "hdl_tcp_config" = {
+    "num_threads" = "15"
+    "bind_port" = "2641"
+    "log_accesses" = "yes"
+  }
+
+  "log_save_config" = {
+    "log_save_directory" = "logs"
+    "log_save_interval" = "Never"
+  }
+
+  "no_udp_resolution" = "yes"
+  "interfaces" = (
+    "hdl_udp"
+    "hdl_tcp"
+    "hdl_http"
+  )
+
+  "server_config" = {
+    "server_admins" = (
+      $SERVER_ADMINS
+    )
+
+    "replication_admins" = (
+      $REPLICATION_ADMINS
+    )
+
+    "max_session_time" = "$MAX_SESSION_TIME"
+    "this_server_id" = "$THIS_SERVER_ID"
+    "max_auth_time" = "$MAX_AUTH_TIME"
+    "server_admin_full_access" = "$SERVER_ADMIN_FULL_ACCESS"
+    "allow_na_admins" = "$ALLOW_NA_ADMINS"
+    "template_ns_override" = "$TEMPLATE_NS_OVERRIDE"
+    "trace_resolution" = "$TRACE_RESOLUTION"
+    "case_sensitive" = "$CASE_SENSITIVE"
+    "allow_recursion" = "$ALLOW_RECURSION"
+    "allow_list_hdls" = "$ALLOW_LIST_HDLS"
+
+    storage_type = "$STORAGE_TYPE"
+
+    sql_settings = {
+      sql_url = "$SQL_URL"
+      sql_driver = "$SQL_DRIVER"
+      sql_login = "$SQL_LOGIN"
+      sql_passwd = "$SQL_PASSWD"
+      sql_read_only = "$SQL_READ_ONLY"
+    }
+  }
+
+}
