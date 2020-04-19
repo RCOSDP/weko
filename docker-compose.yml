@@ -96,11 +96,12 @@ services:
       - redis
       - elasticsearch
       - rabbitmq
+      - handle
     ports:
       - "5001:5000"
-    networks:
-      app_net:
-        ipv4_address: 172.16.0.2
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.0.2
 
   postgresql:
     restart: "always"
@@ -122,9 +123,9 @@ services:
     image: redis
     ports:
       - "26301:6379"
-    networks:
-      app_net:
-        ipv4_address: 172.16.3.2
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.3.2
 
   elasticsearch:
     restart: "always"
@@ -148,9 +149,9 @@ services:
     ports:
       - "24301:4369"
       - "45601:25672"
-    networks:
-      app_net:
-        ipv4_address: 172.16.5.2
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.5.2
 
   nginx:
     restart: "always"
@@ -162,9 +163,9 @@ services:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
     links:
       - web
-    networks:
-      app_net:
-        ipv4_address: 172.16.6.2
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.6.2
 
   flower:
     restart: "always"
@@ -174,9 +175,9 @@ services:
       - "5501:5555"
     links:
       - rabbitmq
-    networks:
-      app_net:
-        ipv4_address: 172.16.7.2
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.7.2
 
   kibana:
     build:
@@ -191,9 +192,9 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     links:
       - elasticsearch
-    networks:
-      app_net:
-        ipv4_address: 172.16.8.2
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.8.2
 
   handle:
     image: handle_svr
@@ -206,7 +207,7 @@ services:
       - "2641:2641/tcp"
       - "8000:8000/tcp"
     environment:
-      HANDLE_HOST_IP: '172.16.9.2'
+ #     HANDLE_HOST_IP: '172.16.9.2'
       SERVER_ADMINS: '300:200/23'
       REPLICATION_ADMINS: '300:200/23'
       ALLOW_RECURSION: 'yes'
@@ -217,9 +218,9 @@ services:
       - handle_data:/opt/handle/
     links:
       - web
-    networks:
-      app_net:
-        ipv4_address: 172.16.9.2
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.9.2
 
 volumes:
   weko3_data:
@@ -228,10 +229,10 @@ volumes:
   es-data:
   handle_data:
 
-networks:
-  app_net:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.16.0.0/16
+#networks:
+#  app_net:
+#    driver: bridge
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 172.16.0.0/16
