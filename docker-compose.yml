@@ -216,8 +216,8 @@ services:
     volumes:
       - handle_data:/var/handle/svr
       - handle_data:/opt/handle/
-    links:
-      - web
+#    links:
+#      - web
 #    networks:
 #      app_net:
 #        ipv4_address: 172.16.9.2
