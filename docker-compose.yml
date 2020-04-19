@@ -114,9 +114,9 @@ services:
       - pgsql-data:/var/lib/postgresql/data
     ports:
       - "25401:5432"
-    networks:
-      app_net:
-        ipv4_address: 172.16.1.2
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.1.2
 
   redis:
     restart: "always"
@@ -139,9 +139,9 @@ services:
     ports:
       - "29201:9200"
       - "29301:9300"
-    networks:
-      app_net:
-        ipv4_address: 172.16.4.2
+ #   networks:
+ #     app_net:
+ #       ipv4_address: 172.16.4.2
 
   rabbitmq:
     restart: "always"
