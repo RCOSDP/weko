@@ -39,10 +39,8 @@ config = {
     'TEMPLATE_NS_OVERRIDE': os.getenv('TEMPLATE_NS_OVERRIDE', 'no'),
     'HOME_PREFIX' = os.getenv('HOME_PREFIX', '0.NA/YOUR_PREFIX'),
     'DESC' = os.getenv('DESC', 'YOUR DESCRIPTION'),
-'CONTACT_EMAIL' = os.getenv('CONTACT_EMAIL', 'YOUR EMAIL'),
-'ORG_NAME' = os.getenv('ORG_NAME', 'YOUR ORG')
-
-
+    'CONTACT_EMAIL' = os.getenv('CONTACT_EMAIL', 'YOUR EMAIL'),
+    'ORG_NAME' = os.getenv('ORG_NAME', 'YOUR ORG')
 }
 
 # Create private / public keys based on config using hdl-convert-key tool
