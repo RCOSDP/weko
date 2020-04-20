@@ -9,7 +9,7 @@ CMD ["/sbin/my_init"]
 # Update installed APT packages
 RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold"
 
-RUN apt-get install -y ntp wget openjdk-8-jre python3 mysql-client libmysql-java
+RUN apt-get install -y ntp wget openjdk-8-jre python3 mysql-client libmysql-java sqlite3 libpostgresql-jdbc-java
 
 # Cleanup
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -22,6 +22,8 @@ RUN mkdir -p /opt/handle && tar xf /tmp/handle-9.1.0-distribution.tar.gz -C /opt
 
 # Add the jdbc connector so it gets loaded
 RUN ln -s /usr/share/java/mysql-connector-java.jar /opt/handle/lib/mysql-connector-java.jar
+RUN ln -s /usr/share/java/postgresql.jar /opt/handle/lib/postgresql.jar
+ADD https://bitbucket.org/xerial/sqlite-jdbc/downloads/sqlite-jdbc-3.30.1.jar /opt/handle/lib/
 
 # Copy over the handle base configs and build script
 COPY handle/ /home/handle/
