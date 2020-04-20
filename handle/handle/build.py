@@ -40,7 +40,9 @@ config = {
     'HOME_PREFIX': os.getenv('HOME_PREFIX','0.NA/YOUR_PREFIX'),
     'DESC': os.getenv('DESC', 'YOUR DESCRIPTION'),
     'CONTACT_EMAIL': os.getenv('CONTACT_EMAIL', 'YOUR EMAIL'),
-    'ORG_NAME': os.getenv('ORG_NAME', 'YOUR ORG')
+    'ORG_NAME': os.getenv('ORG_NAME', 'YOUR ORG'),
+    'ADMIN_PRIVATE_KEY_PEM': os.getenv('SERVER_PRIVATE_KEY_PEM', '').encode('ASCII'), # Explict convert to byte string
+    'ADMIN_PUBLIC_KEY_PEM': os.getenv('SERVER_PUBLIC_KEY_PEM', '').encode('ASCII') # Explict convert to byte string
 }
 
 # Create private / public keys based on config using hdl-convert-key tool
