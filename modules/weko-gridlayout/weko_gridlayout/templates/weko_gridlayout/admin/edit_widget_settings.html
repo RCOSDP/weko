@@ -34,6 +34,9 @@
     <input id="model_data" type="hidden" data-editdata='{{model}}' value='' />
     <input id="return_url" type="hidden" value='{{return_url}}' />
     <div id="root" class="col-xs-12"></div>
+      {% set content = "The widget is setting a CSS height property greater than 90%, widget height automatic adjustment feature will not work on the top page. Do you want to save this widget?" %}
+      <input id="confirmHeightCSS" type="hidden"
+             value="{{ content | translate_content }}"/>
     {% from "weko_theme/macros/modal_page.html" import all_modal %}
     {{ all_modal() }}
     {% endblock %}
