@@ -1,0 +1,146 @@
+# Translations template for weko-gridlayout.
+# Copyright (C) 2020 National Institute of Informatics
+# This file is distributed under the same license as the weko-gridlayout
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-gridlayout 1.0.0.dev20190000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2020-04-20 17:56+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.0\n"
+
+#: weko_gridlayout/admin.py:261 weko_gridlayout/admin.py:318
+msgid "Record does not exist."
+msgstr ""
+
+#: weko_gridlayout/admin.py:349
+#, python-format
+msgid "Record was successfully deleted."
+msgid_plural "%(count)s records were successfully deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#: weko_gridlayout/admin.py:358
+#, python-format
+msgid "Failed to delete records. %(error)s"
+msgstr ""
+
+#: weko_gridlayout/admin.py:376
+#, python-format
+msgid ""
+"Cannot delete widget (ID: %(widget_id)s, because it's setting in Widget "
+"Design."
+msgstr ""
+
+#: weko_gridlayout/admin.py:392
+#, python-format
+msgid "Failed to delete record. %(error)s"
+msgstr ""
+
+#: weko_gridlayout/admin.py:445
+msgid "ID"
+msgstr ""
+
+#: weko_gridlayout/admin.py:446
+msgid "Repository"
+msgstr ""
+
+#: weko_gridlayout/admin.py:447
+msgid "Widget Type"
+msgstr ""
+
+#: weko_gridlayout/admin.py:448
+msgid "Label"
+msgstr ""
+
+#: weko_gridlayout/admin.py:449
+msgid "Enable"
+msgstr ""
+
+#: weko_gridlayout/admin.py:450
+msgid "Has Frame Border"
+msgstr ""
+
+#: weko_gridlayout/admin.py:457 weko_gridlayout/admin.py:464
+msgid "Setting"
+msgstr ""
+
+#: weko_gridlayout/admin.py:458
+msgid "Widget"
+msgstr ""
+
+#: weko_gridlayout/admin.py:465
+msgid "Widget Design"
+msgstr ""
+
+#: weko_gridlayout/services.py:622
+msgid ""
+"Failed to save design:\n"
+"                         Main contents may only be set to one layout."
+msgstr ""
+
+#: weko_gridlayout/services.py:627
+msgid ""
+"Failed to save design:\n"
+" Check input values."
+msgstr ""
+
+#: weko_gridlayout/services.py:631
+msgid "Failed to save design: Unexpected error."
+msgstr ""
+
+#: weko_gridlayout/services.py:756 weko_gridlayout/services.py:984
+msgid "Unable to retrieve page: Page not found."
+msgstr ""
+
+#: weko_gridlayout/services.py:759 weko_gridlayout/services.py:987
+msgid "Unable to retrieve page: Unexpected error."
+msgstr ""
+
+#: weko_gridlayout/services.py:798
+msgid "Unable to save page: URL already exists."
+msgstr ""
+
+#: weko_gridlayout/services.py:801
+msgid "Unable to save page: Unexpected error."
+msgstr ""
+
+#: weko_gridlayout/services.py:906
+msgid "Unable to delete page."
+msgstr ""
+
+#: weko_gridlayout/services.py:937
+msgid "Unable to retrieve page list."
+msgstr ""
+
+#: weko_gridlayout/views.py:81
+msgid "weko-gridlayout"
+msgstr ""
+
+#: weko_gridlayout/views.py:181 weko_gridlayout/views.py:247
+#: weko_gridlayout/views.py:265
+msgid "Header Error"
+msgstr ""
+
+#: weko_gridlayout/templates/weko_gridlayout/index.html:12
+#, python-format
+msgid "Welcome to %(module_name)s"
+msgstr ""
+
+#: weko_gridlayout/templates/weko_gridlayout/admin/create_widget_settings.html:37
+#: weko_gridlayout/templates/weko_gridlayout/admin/edit_widget_settings.html:38
+msgid ""
+"The widget is setting a CSS height property greater than 90%, widget "
+"height automatic adjustment feature will not work on the top page. Do you"
+" want to save this widget?"
+msgstr ""
+
