@@ -50,6 +50,10 @@
     "allow_recursion" = "$ALLOW_RECURSION"
     "allow_list_hdls" = "$ALLOW_LIST_HDLS"
 
+    "auto_homed_prefixes" = (
+      "$HOME_PREFIX"
+    )
+
     storage_type = "$STORAGE_TYPE"
 
     sql_settings = {

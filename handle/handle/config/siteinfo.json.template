@@ -7,7 +7,7 @@
   "attributes": [
     {
       "name": "desc",
-      "value": "LHS 1"
+      "value": "$DESC"
     }
   ],
   "servers": [
