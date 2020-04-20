@@ -60,6 +60,19 @@ with subprocess.Popen([handle_convert_cmd], stdin=subprocess.PIPE, stdout=subpro
 # Build a base64 version of key for the siteinfo file
 config['SERVER_PUBLIC_KEY_DSA_BASE64'] = base64.b64encode(public_key_dsa).decode('ASCII')
 
+with subprocess.Popen([handle_convert_cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE) as p:
+    private_key_dsa = p.communicate(input=config['ADMIN_PRIVATE_KEY_PEM'])[0]
+    with open(os.path.join(OUT_DIR, "adminpriv.bin"), 'wb') as f:
+        f.write(private_key_dsa)
+
+public_key_dsa = None
+with subprocess.Popen([handle_convert_cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE) as p:
+    public_key_dsa = p.communicate(input=config['ADMIN_PUBLIC_KEY_PEM'])[0]
+    with open(os.path.join(OUT_DIR, "adminpub.bin"), 'wb') as f:
+        f.write(public_key_dsa)
+
+
+
 # Build the templates
 def generate_template(template, out_file, config):
     """Generate a output file from a config"""
@@ -73,3 +86,4 @@ def generate_template(template, out_file, config):
 generate_template(os.path.join(CONFIG_DIR, 'config.dct.template'), os.path.join(OUT_DIR, 'config.dct'), config)
 generate_template(os.path.join(CONFIG_DIR, 'siteinfo.json.template'), os.path.join(OUT_DIR,'siteinfo.json'), config)
 generate_template(os.path.join(CONFIG_DIR, 'contactdata.dct.template'), os.path.join(OUT_DIR,'contactdata.dct'), config)
+generate_template(os.path.join(CONFIG_DIR, 'addadmin.batch.template'), os.path.join(OUT_DIR,'addadmin.batch'), config)
