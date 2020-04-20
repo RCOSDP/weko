@@ -59,7 +59,7 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     get_user_info_by_username, get_user_information, get_user_permission, \
     is_schema_include_key, parse_ranking_results, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
-    to_files_js, update_index_tree_for_record, \
+    to_files_js, translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
@@ -243,45 +243,13 @@ def get_json_schema(item_type_id=0, activity_id=""):
     :param activity_id: Activity ID.  (Default: Null)
     :return: The json object.
     """
-    def set_validation_message(item, cur_lang):
-        """Set validation message.
-
-        :param item: json of control (ex: json of text input).
-        :param cur_lang: current language.
-        :return: item, set validationMessage attribute for item.
-        """
-        i18n = 'validationMessage_i18n'
-        message_attr = 'validationMessage'
-        if i18n in item:
-            item[message_attr] = item[i18n][cur_lang]
-
-    def translate_validation_message(item_property, cur_lang):
-        """Recursive in order to set translate language validation message.
-
-        :param item_property: .
-        :param cur_lang: .
-        :return: .
-        """
-        items_attr = 'items'
-        properties_attr = 'properties'
-        if items_attr in item_property:
-            for _key1, value1 in item_property.get(items_attr).items():
-                if not type(value1) is dict:
-                    continue
-                for _key2, value2 in value1.items():
-                    set_validation_message(value2, cur_lang)
-                    translate_validation_message(value2, cur_lang)
-        if properties_attr in item_property:
-            for _key, value in item_property.get(properties_attr).items():
-                set_validation_message(value, cur_lang)
-                translate_validation_message(value, cur_lang)
-
     try:
         result = None
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
             result = ItemTypes.get_record(item_type_id)
+            properties = result.get('properties')
             if 'filemeta' in json.dumps(result):
                 group_list = Group.get_group_list()
                 group_enum = list(group_list.keys())
@@ -289,7 +257,6 @@ def get_json_schema(item_type_id=0, activity_id=""):
                     'filemeta').get(
                     'items').get('properties').get('groups')
                 filemeta_group['enum'] = group_enum
-            properties = result.get('properties')
             for _key, value in properties.items():
                 translate_validation_message(value, cur_lang)
         if result is None:
