@@ -72,4 +72,4 @@ def generate_template(template, out_file, config):
 
 generate_template(os.path.join(CONFIG_DIR, 'config.dct.template'), os.path.join(OUT_DIR, 'config.dct'), config)
 generate_template(os.path.join(CONFIG_DIR, 'siteinfo.json.template'), os.path.join(OUT_DIR,'siteinfo.json'), config)
-generate_template(os.path.join(CONFIG_DIR, 'contactdata.dct.template'), os.path.join(OUT_DIR,'siteinfo.json'), config)
+generate_template(os.path.join(CONFIG_DIR, 'contactdata.dct.template'), os.path.join(OUT_DIR,'contactdata.dct'), config)
