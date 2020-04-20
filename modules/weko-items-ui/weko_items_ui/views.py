@@ -243,46 +243,66 @@ def get_json_schema(item_type_id=0, activity_id=""):
     :param activity_id: Activity ID.  (Default: Null)
     :return: The json object.
     """
+    def set_validation_message(item, cur_lang):
+        """Set validation message.
+
+        :param item: json of control (ex: json of text input).
+        :param cur_lang: current language.
+        :return: item, set validationMessage attribute for item.
+        """
+        i18n = 'validationMessage_i18n'
+        message_attr = 'validationMessage'
+        if i18n in item:
+            item[message_attr] = item[i18n][cur_lang]
+
+    def translate_validation_message(item_property, cur_lang):
+        """Recursive in order to set translate language validation message.
+
+        :param item_property: .
+        :param cur_lang: .
+        :return: .
+        """
+        items_attr = 'items'
+        properties_attr = 'properties'
+        if items_attr in item_property:
+            for _key1, value1 in item_property.get(items_attr).items():
+                if not type(value1) is dict:
+                    continue
+                for _key2, value2 in value1.items():
+                    set_validation_message(value2, cur_lang)
+                    translate_validation_message(value2, cur_lang)
+        if properties_attr in item_property:
+            for _key, value in item_property.get(properties_attr).items():
+                set_validation_message(value, cur_lang)
+                translate_validation_message(value, cur_lang)
+
     try:
         result = None
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
-            if item_type_id == 20:
-                result = ItemTypes.get_by_id(item_type_id)
-                if result is None:
-                    return '{}'
-                json_schema = result.schema
-                properties = json_schema.get('properties')
-                for _key, value in properties.items():
-                    if 'validationMessage_i18n' in value:
-                        value['validationMessage'] =\
-                            value['validationMessage_i18n'][cur_lang]
-            else:
-                result = ItemTypes.get_record(item_type_id)
-                if 'filemeta' in json.dumps(result):
-                    group_list = Group.get_group_list()
-                    group_enum = list(group_list.keys())
-                    filemeta_group = result.get('properties').get(
-                        'filemeta').get(
-                        'items').get('properties').get('groups')
-                    filemeta_group['enum'] = group_enum
-
+            result = ItemTypes.get_record(item_type_id)
+            if 'filemeta' in json.dumps(result):
+                group_list = Group.get_group_list()
+                group_enum = list(group_list.keys())
+                filemeta_group = properties.get(
+                    'filemeta').get(
+                    'items').get('properties').get('groups')
+                filemeta_group['enum'] = group_enum
+            properties = result.get('properties')
+            for _key, value in properties.items():
+                translate_validation_message(value, cur_lang)
         if result is None:
             return '{}'
-
         if activity_id:
             updated_json_schema = update_json_schema_by_activity_id(
                 result,
                 activity_id)
             if updated_json_schema:
                 result = updated_json_schema
-
         json_schema = result
-
         # Remove excluded item in json_schema
         remove_excluded_items_in_json_schema(item_type_id, json_schema)
-
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
