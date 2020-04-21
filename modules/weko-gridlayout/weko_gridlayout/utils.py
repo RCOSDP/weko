@@ -927,11 +927,11 @@ def delete_widget_cache(repository_id, page_id=None):
     cache_store = RedisStore(redis.StrictRedis.from_url(
         current_app.config['CACHE_REDIS_URL']))
     if page_id:
-        key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
-               + repository_id + "_" + page_id + "_*")
+        cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
+                     + repository_id + "_" + page_id + "_*")
     else:
-        key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY
-               + repository_id + "_*")
+        cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY
+                     + repository_id + "_*")
 
-    for key in cache_store.redis.scan_iter(key):
+    for key in cache_store.redis.scan_iter(cache_key):
         cache_store.redis.delete(key)
