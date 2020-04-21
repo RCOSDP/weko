@@ -21,7 +21,6 @@ const INTERVAL_TIME = 60000; //one minute
     window.lodash = _.noConflict();
 }());
 let widgetList;
-let showInfoPopup = false;
 let PageBodyGrid = function () {
     this.init = function () {
         let options = {
@@ -809,11 +808,11 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   if (isIE11()){
     $('.header-footer-type').parent().addClass('widgetIE');
   }
-  let ortherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+  let otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
     $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
         if (!_this.hasClass("no-auto-height")) {
-            autoAdjustWidgetHeight("", pageBodyGrid, _this);
+          autoAdjustWidgetHeight("", pageBodyGrid, _this);
         }
     });
   });
@@ -828,7 +827,7 @@ function handleAutoAdjustWidget(pageBodyGrid) {
     autoAdjustWidgetHeight(headerContent, pageBodyGrid);
   });
 
-  removeSensorListener(ortherSensor);
+  removeSensorListener(otherSensor);
   removeSensorListener(mainContentSensor);
   removeSensorListener(headerSensor);
 }
@@ -869,16 +868,16 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
     let moreDes = $("#" + moreDescriptionID);
     let textLink = $("#" + linkID);
     if (moreDes) {
-        let parrentElement = moreDes.parent();
+        let parentElement = moreDes.parent();
         if (moreDes.hasClass("hidden")) {
             moreDes.removeClass("hidden");
             textLink.text(hideRest);
-            parrentElement.css('overflow-y', 'auto');
-            parrentElement.removeClass('without-after-element');
+            parentElement.css('overflow-y', 'auto');
+            parentElement.removeClass('without-after-element');
         } else {
             moreDes.addClass("hidden");
-            parrentElement.css('overflow-y', 'hidden');
-            parrentElement.addClass('without-after-element');
+            parentElement.css('overflow-y', 'hidden');
+            parentElement.addClass('without-after-element');
             textLink.text(readMore);
         }
     }
