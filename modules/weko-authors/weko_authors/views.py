@@ -233,55 +233,73 @@ def getById():
 @author_permission.require(http_exception=403)
 def mapping():
     """Transfer the author to JPCOAR format."""
+    def get_name_creator(res, _source):
+        name_info = _source.get('authorNameInfo')
+        for i in name_info:
+            if i.get('nameShowFlg') == 'true':
+                if i.get('nameFormat') == 'familyNmAndNm':
+                    tmp = {'familyName': i.get('familyName'),
+                           'familyNameLang': i.get('language')}
+                    res['familyNames'].append(tmp)
+                    tmp = {'givenName': i.get('firstName'),
+                           'givenNameLang': i.get('language')}
+                    res['givenNames'].append(tmp)
+                else:
+                    tmp = {'creatorName': i.get('fullName'),
+                           'creatorNameLang': i.get('language')}
+                    res['creatorNames'].append(tmp)
+
+    def get_identifier_creator(res, _source):
+        def get_info_author_id(idTtype):
+            prefix_settings = AuthorsPrefixSettings.query.all()
+            scheme = uri = ''
+            for prefix in prefix_settings:
+                if prefix.id == idTtype:
+                    scheme = prefix.name
+                    if scheme == 'KAKEN2':
+                        scheme = 'kakenhi'
+                    uri = prefix.url
+                    return scheme, uri
+            return scheme, uri
+
+        id_info = _source.get('authorIdInfo')
+        for j in id_info:
+            if j.get('authorIdShowFlg') == 'true':
+                scheme, uri = get_info_author_id(int(j['idType']))
+                author_id = j.get('authorId')
+                tmp = {
+                    'nameIdentifier': author_id,
+                    'nameIdentifierScheme': scheme,
+                    'nameIdentifierURI': uri
+                }
+                res['nameIdentifiers'].append(tmp)
+
+    def get_email_creator(res, _source):
+        email_info = _source.get('emailInfo')
+        for item in email_info:
+            email = item.get('email')
+            email_json = {'creatorMail': email}
+            res['creatorMails'].append(email_json)
+
     data = request.get_json()
 
     # get author data
-    author_id = data.get('id') or ''
+    author_id = data.get('id', '')
     indexer = RecordIndexer()
     result = indexer.client.get(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         id=author_id
     )
+    _source = result.get('_source')
 
     # transfer to JPCOAR format
     res = {'familyNames': [], 'givenNames': [], 'creatorNames': [],
-           'nameIdentifiers': []}
+           'nameIdentifiers': [], 'creatorAlternative': [], 'creatorMails': []}
 
-    name_info = result.get('_source').get('authorNameInfo')
-    for i in name_info:
-        if i.get('nameShowFlg') == 'true':
-            if i.get('nameFormat') == 'familyNmAndNm':
-                tmp = {'familyName': i.get('familyName'),
-                       'lang': i.get('language')}
-                res['familyNames'].append(tmp)
-                tmp = {'givenName': i.get('firstName'),
-                       'lang': i.get('language')}
-                res['givenNames'].append(tmp)
-            else:
-                tmp = {'creatorName': i.get('fullName'),
-                       'lang': i.get('language')}
-                res['creatorNames'].append(tmp)
-
-    prefix_settings = AuthorsPrefixSettings.query.all()
-    id_type_dict = {}
-    for prefix in prefix_settings:
-        id_type_dict[prefix.id] = prefix.name
-
-    id_info = result.get('_source').get('authorIdInfo')
-    for j in id_info:
-        try:
-            id_scheme = id_type_dict[int(j['idType'])]
-            if id_scheme == 'KAKEN2':
-                id_scheme = 'kakenhi'
-        except KeyError:
-            id_scheme = ''
-
-        if j.get('authorIdShowFlg') == 'true':
-            tmp = {'nameIdentifier': j.get('authorId'),
-                   'nameIdentifierScheme': id_scheme,
-                   'nameIdentifierURI': ''}
-            res['nameIdentifiers'].append(tmp)
+    get_name_creator(res, _source)
+    get_identifier_creator(res, _source)
+    get_email_creator(res, _source)
 
     # remove empty element
     last = {}
@@ -290,6 +308,7 @@ def mapping():
             last[k] = v
 
     current_app.logger.debug([last])
+
     return json.dumps([last])
 
 
@@ -436,7 +455,8 @@ def update_prefix():
             AuthorsPrefixSettings.update(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
         else:
-            return jsonify({'code': 400, 'msg': 'Specified scheme is already exist.'})
+            return jsonify(
+                {'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
 
@@ -462,6 +482,7 @@ def create_prefix():
             AuthorsPrefixSettings.create(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
         else:
-            return jsonify({'code': 400, 'msg': 'Specified scheme is already exist.'})
+            return jsonify(
+                {'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})

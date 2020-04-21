@@ -316,6 +316,8 @@ def display_activity(activity_id=0):
                 identifier_setting.jalc_crossref_doi = text_empty
             if not identifier_setting.jalc_datacite_doi:
                 identifier_setting.jalc_datacite_doi = text_empty
+            if not identifier_setting.ndl_jalc_doi:
+                identifier_setting.ndl_jalc_doi = text_empty
 
     temporary_identifier_select = 0
     temporary_identifier_inputs = []
@@ -330,6 +332,8 @@ def display_activity(activity_id=0):
             last_identifier_setting.get('action_identifier_jalc_cr_doi'))
         temporary_identifier_inputs.append(
             last_identifier_setting.get('action_identifier_jalc_dc_doi'))
+        temporary_identifier_inputs.append(
+            last_identifier_setting.get('action_identifier_ndl_jalc_doi'))
 
     temporary_journal = activity.get_action_journal(
         activity_id=activity_id, action_id=action_id)
@@ -342,6 +346,7 @@ def display_activity(activity_id=0):
     pid = None
     record = {}
     need_file = False
+    need_billing_file = False
     json_schema = ''
     schema_form = ''
     item_save_uri = ''
@@ -367,7 +372,8 @@ def display_activity(activity_id=0):
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
         session['activity_info'] = activity_session
         # get item edit page info.
-        step_item_login_url, need_file, record, json_schema, schema_form,\
+        step_item_login_url, need_file, need_billing_file, \
+            record, json_schema, schema_form,\
             item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
@@ -476,6 +482,7 @@ def display_activity(activity_id=0):
         records=record,
         step_item_login_url=step_item_login_url,
         need_file=need_file,
+        need_billing_file=need_billing_file,
         jsonschema=json_schema,
         schemaform=schema_form,
         id=workflow_detail.itemtype_id,
@@ -722,13 +729,16 @@ def next_action(activity_id='0', action_id=0):
             'identifier_grant_jalc_cr_doi_suffix')
         idf_grant_jalc_dc_doi_manual = post_json.get(
             'identifier_grant_jalc_dc_doi_suffix')
+        idf_grant_ndl_jalc_doi_manual = post_json.get(
+            'identifier_grant_ndl_jalc_doi_suffix')
 
         # If is action identifier_grant, then save to to database
         identifier_grant = {
             'action_identifier_select': identifier_select,
             'action_identifier_jalc_doi': idf_grant_jalc_doi_manual,
             'action_identifier_jalc_cr_doi': idf_grant_jalc_cr_doi_manual,
-            'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual
+            'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual,
+            'action_identifier_ndl_jalc_doi': idf_grant_ndl_jalc_doi_manual
         }
 
         work_activity.create_or_update_action_identifier(

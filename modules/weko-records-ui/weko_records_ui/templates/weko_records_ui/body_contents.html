@@ -42,7 +42,7 @@
     </div>
     <div class="panel-body" style="padding-top: 10px;">
       <div class="row">
-        <div id="detail-item" class="col-sm-9 col-md-9 col-lg-9 col-left">
+        <div id="detail-item" class="col-sm-8 col-md-8 col-lg-8 col-left">
           <div id="record_id" class="hide">{{ record.id }}</div>
           {%- block record_author %}
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
@@ -282,7 +282,7 @@
             {% endif %}
           </div>
         </div>
-        <div id="invenio-csl" class="col-sm-3 col-md-3 col-lg-3 col-right">
+        <div id="invenio-csl" class="col-sm-4 col-md-4 col-lg-4 col-right">
           <!-- start demo block -->
           {%- include "weko_records_ui/box/stats.html" %}
           {%- include "weko_records_ui/box/versions.html" %}

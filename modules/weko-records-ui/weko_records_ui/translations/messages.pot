@@ -1106,3 +1106,9 @@ msgstr ""
 
 msgid "Search repository"
 msgstr ""
+
+msgid "Content File"
+msgstr ""
+
+msgid "Billing File"
+msgstr ""

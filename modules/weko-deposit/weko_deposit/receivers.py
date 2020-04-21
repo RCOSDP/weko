@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# """Deposit module receivers."""
+# Copyright (C) 2020 National Institute of Informatics.
+#
+# INVENIO-ResourceSyncClient is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
+"""Deposit module receivers."""
 
 from .api import WekoDeposit
 from .pidstore import get_record_without_version
+
 
 def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     """Append file content to ES record."""
@@ -26,4 +33,3 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     json['content'] = contents
     if contents:
         kwargs['arguments']['pipeline'] = 'item-file-pipeline'
-

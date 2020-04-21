@@ -226,7 +226,7 @@ def check_roles(user_role, roles):
     if isinstance(roles, type("")):
         roles = roles.split(',')
     if not user_role[0]:
-        if current_user and current_user.is_authenticated:
+        if current_user.is_authenticated:
             role = [x for x in (user_role[1] or ['98'])
                     if str(x) in (roles or [])]
             if not role and (user_role[1] or "98" not in roles):
@@ -252,9 +252,9 @@ def filter_index_list_by_role(index_list):
     def _check(index_data, roles, groups):
         """Check index data by role."""
         can_view = False
-        if roles and roles[0]:
+        if roles[0]:
             can_view = True
-        elif roles:
+        else:
             if check_roles(roles, index_data.browsing_role) \
                     or check_groups(groups, index_data.browsing_group):
                 if index_data.public_state \
@@ -265,12 +265,8 @@ def filter_index_list_by_role(index_list):
         return can_view
 
     result_list = []
-    roles = []
-    groups = []
-    #if current_user and current_user.is_authenticated:
     roles = get_user_roles()
     groups = get_user_groups()
-
     for i in index_list:
         if _check(i, roles, groups):
             result_list.append(i)

@@ -554,6 +554,7 @@ function toObject(arr) {
       ]
       $scope.sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
       $scope.sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
+      $scope.previousNumFiles = 0;
 
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
@@ -564,11 +565,11 @@ function toObject(arr) {
           if (value.type == 'array') {
             if (value.items.properties.hasOwnProperty('filename')) {
               $scope.filemeta_keys.push(key);
-              break;
             }
           }
         }
       }
+
       $scope.searchFilemetaForm = function (title) {
         let fileMetaForm = "";
         $rootScope.recordsVM.invenioRecordsForm.forEach(function (recordForm) {
@@ -710,7 +711,7 @@ function toObject(arr) {
                   var author_form_key = author_form.items[searchTitleMap].key
                   // Only clear and do logic for "Scheme" field
                   $scope.sub_item_scheme.map(function (scheme) {
-                      if (author_form_key.includes(scheme)) {
+                      if (author_form_key.indexOf(scheme) != -1) {
                         author_form.items[searchTitleMap].titleMap = [];
                         $scope.sub_item_scheme.map(function (item) {
                           if (author_schema.properties[item]) {
@@ -847,24 +848,26 @@ function toObject(arr) {
       function get_subitem(items, subitem) {
         for (var i = 0; i < items.length; i++) {
           var key = items[i].key
-          if (typeof key !== 'undefined' && key.includes(subitem)) {
+          if (typeof key !== 'undefined' && key.indexOf(subitem) != -1) {
             return items[i]
           }
         }
       }
 
       $scope.initFilenameList = function () {
+        var filekey = 'filename';
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
           filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
-          if (filemeta_schema && filemeta_form) {
-            filemeta_schema.items.properties['filename']['enum'] = [null];
+          if (filemeta_schema && filemeta_form && filemeta_schema.items.properties[filekey]) {
+            filemeta_schema.items.properties[filekey]['enum'] = [];
+            filemeta_schema.items.properties[filekey]['enum'].push(null)
             filemeta_filename_form = filemeta_form.items[0];
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(function (file) {
               if (file.completed && !file.is_thumbnail) {
-                filemeta_schema.items.properties['filename']['enum'].push(file.key);
+                filemeta_schema.items.properties[filekey]['enum'].push(file.key);
                 filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
               }
             });
@@ -1623,19 +1626,7 @@ function toObject(arr) {
         });
       }
 
-      $rootScope.$on('invenio.records.loading.stop', function (ev) {
-        $scope.hiddenPubdate();
-        $scope.initContributorData();
-        $scope.initUserGroups();
-        $scope.initFilenameList();
-        $scope.searchTypeKey();
-        $scope.setDataForLicenseType();
-        $scope.renderValidationErrorList();
-        $scope.autoSetTitle();
-        $scope.initCorrespondingIdList();
-        $scope.autoTitleData();
-        $scope.initAuthorList();
-        $scope.getDataAuthors();
+      $scope.loadFilesFromSession = function () {
         //When switch language, Getting files uploaded.
         let bucketFiles = JSON.parse(sessionStorage.getItem('files'));
         let bucketEndpoints = JSON.parse(sessionStorage.getItem('endpoints'));
@@ -1651,7 +1642,31 @@ function toObject(arr) {
             );
           }
         }
+      }
+
+      $scope.storeFilesToSession = function () {
+        //Add file uploaded to sessionStorage when uploaded processing done
+        window.history.pushState("", "", $scope.currentUrl);
+        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
+        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
+        sessionStorage.setItem('url', $scope.currentUrl);
+      }
+
+      $rootScope.$on('invenio.records.loading.stop', function (ev) {
+        $scope.hiddenPubdate();
+        $scope.initContributorData();
+        $scope.initUserGroups();
+        $scope.loadFilesFromSession();
         $scope.initFilenameList();
+        $scope.searchTypeKey();
+        $scope.setDataForLicenseType();
+        $scope.renderValidationErrorList();
+        $scope.autoSetTitle();
+        $scope.initCorrespondingIdList();
+        $scope.autoTitleData();
+        $scope.initAuthorList();
+        $scope.getDataAuthors();
+        $scope.updateNumFiles();
         //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
@@ -1677,23 +1692,149 @@ function toObject(arr) {
         $scope.autoSetCorrespondingUsageAppId();
         //Set required and collapsed for all root and sub item.
         $scope.setCollapsedAndRequiredForForm();
+
+        // Delay 1s after page render
+        setTimeout(function () {
+          // Change position of File and Billing File
+          $scope.changePositionFileName();
+        }, 1000);
       });
 
+      $scope.changePositionFileName = function () {
+        $('#new-postion-filename').parent().children('bootstrap-decorator').remove();
+        $('#new-postion-filename').empty();
+        let records = $rootScope.recordsVM.invenioRecordsForm;
+        // Move File to upload area
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          records.forEach(function(item,i){
+            if(item.key == filemeta_key){
+              $('invenio-records-form').find('bootstrap-decorator[form="schemaForm.form[' + i + ']"]').appendTo("#new-postion-filename");
+            }
+          });
+        });
+      }
 
+      $scope.addFileFormAndFill = function () {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        let schema = $rootScope.recordsVM.invenioRecordsSchema.properties;
+        let filesUploaded = $rootScope.filesVM.files;
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          for (var i = $scope.previousNumFiles; i < filesUploaded.length; i++) {
+            var fileInfo = new Object();
+            // Fill filename
+            fileInfo['filename'] = filesUploaded[i].key;
+            // Fill size
+            fileInfo.filesize = [{}]; // init array
+            fileInfo.filesize[0].value = $scope.bytesToReadableString(filesUploaded[i].size);
+            // Fill format
+            fileInfo.format = filesUploaded[i].mimetype;
+            // Fill Date and DateType
+            fileInfo.date = [{}]; // init array
+            fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
+            fileInfo.date[0].dateType = "Available";
+            // Push data to model
+            model[filemeta_key].push(fileInfo);
+          }
+        });
+        // Filter empty form
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
+            return fileInfo.filename;
+          });
+        });
+      }
+
+      $scope.removeFileForm = function (filename) {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
+            return fileInfo.filename != filename;
+          });
+        });
+      }
+
+      $scope.bytesToReadableString = function (bytes) {
+        function round(num, precision) {
+          return Math.round(num * Math.pow(10, precision)) / Math.pow(10, precision);
+        }
+        var limit = Math.pow(1024, 4);
+        if (bytes > limit) {
+            return round(bytes / limit, 1) + ' Tb';
+        } else if (bytes > (limit /= 1024)) {
+            return round(bytes / limit, 1) + ' Gb';
+        } else if (bytes > (limit /= 1024)) {
+            return round(bytes / limit, 1) + ' Mb';
+        } else if (bytes > 1024) {
+            return Math.round(bytes / 1024) + ' Kb';
+        }
+        return bytes + ' B';
+      }
+
+      // This is callback function - Please do NOT change function name
+      $scope.fileNameSelect = function (modelValue) {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        let filesObject = $scope.getFilesObject();
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          model[filemeta_key].forEach(function (fileInfo) {
+            if (fileInfo.filename == modelValue) {
+              fileInfo.filesize = [{}];
+              fileInfo.filesize[0].value = filesObject[modelValue].size;
+              fileInfo.format = filesObject[modelValue].format;
+              fileInfo.date = [{}];
+              fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
+              fileInfo.date[0].dateType = "Available";
+            }
+          });
+        });
+      }
+
+      $scope.updateNumFiles = function () {
+        if (!angular.isUndefined($rootScope.filesVM)) {
+          $scope.previousNumFiles = $rootScope.filesVM.files.length;
+        }
+      }
+
+      $scope.getFilesObject = function () {
+        let filesUploaded = $rootScope.filesVM.files;
+        var filesObject = new Object();
+        filesUploaded.forEach(function (file) {
+          filesObject[file.key] = new Object();
+          filesObject[file.key].size = $scope.bytesToReadableString(file.size);
+          filesObject[file.key].format = file.mimetype;
+        });
+        return filesObject;
+      }
 
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
         $scope.hiddenPubdate();
-        //Add file uploaded to sessionStorage when uploaded processing done
-        window.history.pushState("", "", $scope.currentUrl);
-        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
-        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
-        sessionStorage.setItem('url', $scope.currentUrl);
+        $scope.addFileFormAndFill();
+        $scope.updateNumFiles();
+        $scope.storeFilesToSession();
+        // Delay 1s after page render
+        setTimeout(function() {
+          // Change position of FileName
+          $scope.changePositionFileName();
+        }, 1000);
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
-        $scope.initFilenameList();
-        $scope.hiddenPubdate();
+        if (f.completed) {
+          $scope.initFilenameList();
+          $scope.hiddenPubdate();
+          $scope.removeFileForm(f.key);
+          $scope.updateNumFiles();
+          $scope.storeFilesToSession();
+          // Delay 1s after page render
+          setTimeout(function() {
+            // Change position of FileName
+            $scope.changePositionFileName();
+          }, 1000);
+        }
       });
 
       $scope.getItemMetadata = function () {
@@ -1901,89 +2042,35 @@ function toObject(arr) {
         var modelId = $('#btn_id').text();
         var array_index = $('#array_index').text();
         var authorInfoObj = JSON.parse(authorInfo);
-        var updateIndex = 0;
-        if (arrayFlg == 'true') {
-          if (authorInfoObj[0].hasOwnProperty('affiliation')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].affiliation = authorInfoObj[0].affiliation;
-          }
-          if (authorInfoObj[0].hasOwnProperty('creatorAlternatives')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].creatorAlternatives = authorInfoObj[0].creatorAlternatives;
-          }
-
-          if (authorInfoObj[0].hasOwnProperty('creatorNames')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].creatorNames = authorInfoObj[0].creatorNames;
-          }
-
-          if (authorInfoObj[0].hasOwnProperty('familyNames')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].familyNames = authorInfoObj[0].familyNames;
-            if ($rootScope.recordsVM.invenioRecordsModel[modelId][array_index].familyNames.length == 1) {
-              familyName = authorInfoObj[0].familyNames[0].familyName;
-            }
-          } else {
-            $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].familyNames = { "familyName": "", "lang": "" };
-          }
-          if (authorInfoObj[0].hasOwnProperty('givenNames')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].givenNames = authorInfoObj[0].givenNames;
-            if ($rootScope.recordsVM.invenioRecordsModel[modelId][array_index].givenNames.length == 1) {
-              givenName = authorInfoObj[0].givenNames[0].givenName;
-            }
-          } else {
-            $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].givenNames = { "givenName": "", "lang": "" };
-          }
-
-          if (authorInfoObj[0].hasOwnProperty('familyNames') && authorInfoObj[0].hasOwnProperty('givenNames')) {
-            if (!authorInfoObj[0].hasOwnProperty('creatorNames')) {
-              $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].creatorNames = [];
-            }
-            for (var i = 0; i < authorInfoObj[0].familyNames.length; i++) {
-              var subCreatorName = { "creatorName": "", "lang": "" };
-              subCreatorName.creatorName = authorInfoObj[0].familyNames[i].familyName + "　" + authorInfoObj[0].givenNames[i].givenName;
-              subCreatorName.lang = authorInfoObj[0].familyNames[i].lang;
-              $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].creatorNames.push(subCreatorName);
-            }
-          }
-
-          if (authorInfoObj[0].hasOwnProperty('nameIdentifiers')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].nameIdentifiers = authorInfoObj[0].nameIdentifiers;
-          }
-
-          var weko_id = $('#weko_id').text();
-          $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].weko_id = weko_id;
-          $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].weko_id_hidden = weko_id;
-          $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].authorLink = ['check'];
-          //            2018/05/28 end
-        } else {
-          if (authorInfoObj[0].hasOwnProperty('affiliation')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId].affiliation = authorInfoObj[0].affiliation;
-          }
-          if (authorInfoObj[0].hasOwnProperty('creatorAlternatives')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId].creatorAlternatives = authorInfoObj[0].creatorAlternatives;
-          }
-          if (authorInfoObj[0].hasOwnProperty('creatorNames')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId].creatorNames = authorInfoObj[0].creatorNames;
-          } else {
-            $rootScope.recordsVM.invenioRecordsModel[modelId].creatorNames = {};
-          }
-          if (authorInfoObj[0].hasOwnProperty('familyNames')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId].familyNames = authorInfoObj[0].familyNames;
-          } else {
-            $rootScope.recordsVM.invenioRecordsModel[modelId].familyNames = {};
-          }
-          if (authorInfoObj[0].hasOwnProperty('givenNames')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId].givenNames = authorInfoObj[0].givenNames;
-          } else {
-            $rootScope.recordsVM.invenioRecordsModel[modelId].givenNames = {};
-          }
-          if (authorInfoObj[0].hasOwnProperty('nameIdentifiers')) {
-            $rootScope.recordsVM.invenioRecordsModel[modelId].nameIdentifiers = authorInfoObj[0].nameIdentifiers;
-          }
-
-          var weko_id = $('#weko_id').text();
-          $rootScope.recordsVM.invenioRecordsModel[modelId].weko_id = weko_id;
-          $rootScope.recordsVM.invenioRecordsModel[modelId].weko_id_hidden = weko_id;
-          $rootScope.recordsVM.invenioRecordsModel[modelId].authorLink = ['check'];
-
+        var weko_id = $('#weko_id').text();
+        let creatorModel;
+        if(arrayFlg == 'true'){
+          creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId][array_index];
+        }else{
+          creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId];
         }
+        angular.forEach(authorInfoObj, function(value, key) {
+          creatorModel.affiliation = value.hasOwnProperty('affiliation') ? value.affiliation : [{}];
+          creatorModel.creatorAlternatives = value.hasOwnProperty('creatorAlternatives') ? value.creatorAlternatives : [{}];
+          creatorModel.familyNames = value.hasOwnProperty('familyNames') ? value.familyNames : [{}];
+          creatorModel.givenNames = value.hasOwnProperty('givenNames') ? value.givenNames : [{}];
+          creatorModel.nameIdentifiers = value.hasOwnProperty('nameIdentifiers') ? value.nameIdentifiers : [{}];
+          creatorModel.creatorMails = value.hasOwnProperty('creatorMails') ? value.creatorMails : [{}];
+          //creatorName = familyName + givenName
+          if (value.hasOwnProperty('familyNames') && value.hasOwnProperty('givenNames')) {
+            if (!value.hasOwnProperty('creatorNames')) {
+              creatorModel.creatorNames = [];
+            }
+            for (var i = 0; i < value.familyNames.length; i++) {
+              let subCreatorName = { "creatorName": "", "creatorNameLang": "" };
+              let familyName = value.familyNames[i].familyName;
+              let givenName = value.givenNames[i].givenName;
+              subCreatorName.creatorName = familyName + " " + givenName;
+              subCreatorName.creatorNameLang = value.familyNames[i].familyNameLang;
+              creatorModel.creatorNames.push(subCreatorName);
+            }
+          }
+        });
         //画面にデータを設定する
         $("#btn_id").text('');
         $("#author_info").text('');

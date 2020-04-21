@@ -96,8 +96,12 @@ services:
       - redis
       - elasticsearch
       - rabbitmq
+      - handle
     ports:
       - "5001:5000"
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.0.2
 
   postgresql:
     restart: "always"
@@ -110,12 +114,18 @@ services:
       - pgsql-data:/var/lib/postgresql/data
     ports:
       - "25401:5432"
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.1.2
 
   redis:
     restart: "always"
     image: redis
     ports:
       - "26301:6379"
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.3.2
 
   elasticsearch:
     restart: "always"
@@ -133,6 +143,9 @@ services:
     ports:
       - "29201:9200"
       - "29301:9300"
+ #   networks:
+ #     app_net:
+ #       ipv4_address: 172.16.4.2
 
   rabbitmq:
     restart: "always"
@@ -140,6 +153,9 @@ services:
     ports:
       - "24301:4369"
       - "45601:25672"
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.5.2
 
   nginx:
     restart: "always"
@@ -152,6 +168,9 @@ services:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
     links:
       - web
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.6.2
 
   flower:
     restart: "always"
@@ -161,6 +180,9 @@ services:
       - "5501:5555"
     links:
       - rabbitmq
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.7.2
 
   kibana:
     build:
@@ -175,9 +197,50 @@ services:
       - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
     links:
       - elasticsearch
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.8.2
+
+  handle:
+    image: handle_svr
+    build:
+      context: ./handle
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "2641:2641/udp"
+      - "2641:2641/tcp"
+      - "8000:8000/tcp"
+    environment:
+ #     HANDLE_HOST_IP: '172.16.9.2'
+      SERVER_ADMINS: '300:0.NA/YOUR_PREFIX'
+      REPLICATION_ADMINS: '300:0.NA/YOUR_PREFIX'
+      HOME_PREFIX: '0.NA/YOUR_PREFIX'
+      DESC: '0.NA/YOUR_PREFIX'
+      CONTACT_EMAIL: 'root@localhost.localdomain'
+      ORG_NAME: 'TEST'
+      ALLOW_RECURSION: 'yes'
+      SERVER_PRIVATE_KEY_PEM: "-----BEGIN PRIVATE KEY-----\r\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDE6BihxA1nebi7\r\nj1Ya9WyfLTo40syq8QGShFlVia8PLBFhQxO4tnwOmWwqPkmU6Hv3C8n15rxc2Irs\r\nsf+ynY1NEM39rkMHYbJHO07dYQhgw133LP5vG34SNsGWMNVF2cvtCQNNup60ULhX\r\n5LIAmjSP1gZ4KvjYGuQFO9BtRTbGNsXsAk004ubAbjMwEX3xuyZiEe77UqgQbZ6D\r\nQmE7KcgTN+WGFf0KkGKdNKkD7Uo1ZFVf4Kou6HOiupgAk6pk1Ae9UkVj9actZAEh\r\nxgkW/KuyWbCiviZPprFGuEeXvkbXKyUCFlu6UaAgTt04s3QAE8DV8nxgZ5xsENY0\r\n/iC/PM9tAgMBAAECggEAR8TMzZFWzWNZSMuqt7LCf5YNhY6X2Kp1R0EECqBfdSk7\r\nwHahZo7k0rFq8k63pRXDsTzTxNPvzeuDX1hVeXXhfbhlTFRKzBL41uuwCBKI6jPr\r\nON9mcXrUzbC1iJeN9KK4qFHDqX4ewFw3hJmvo3aRN+frfbsz7hiHCb1Ob7VtjHrg\r\nftMDVCbZloh9UX1PcX1wUjraKUTKfqGKA4L7D8Pta7w/Piuspht+kB47Qlq948ra\r\ngIGbrH1HYBj0XPBDSgdQYBxbHBjXeB8b89cZI2gNSKbh+vJC+eaoZxcZROKz9Y8G\r\nugMHdpDueTMcHMu6c3QKXWD4Gd6x891njk9xsTfJ5QKBgQDqtZDDbx2ysmWdEXs9\r\nqVST0HYro5NZYrHKeYeP0CqInVp2M4C15S78FchMLtwlLM1ZN+//zqqyZPsdH6hO\r\nZxsR4MbPBl4iJcEX7S+pP/X7GdnwKIBE6rctEwnJODRqvbbPyoFhW2HpQSzjPqQ2\r\niCs/Zv4V0ZLY1BkBOBNFoAxd/wKBgQDWxKz+wkkMWACX0CF9HYiO/ikNr6kPpY5h\r\neKxrNiEtI0LMNBVDhqXHgHAcDTxEjAGFUhbhgPjKpZUp8andUn/NN7Ug0Q8H7eB9\r\no16qv0vfSF2DvBMOPmPY+iAR5QVHpJsSfevK2EABsnqakC/Oi0/J2vKVk2CaXpsw\r\nSkuI/UkqkwKBgQCGyzuWYcxGgloFOLL0mLjwIzqamVjYbuv4go8uMrkauHPpim6T\r\nCEpRkBj2V7sqxm4wnQWCfiheR8xHz5STYneTbun+n4OUTOZ2XUuQAiG80f3uBPSV\r\nn88PXe2y2EqSOt4wu/ZN+XNjyICFCca5Yr6jrPyjfza8vCKYJqI6zE4N9QKBgQCL\r\n4mJDNMxba95HA1ssoNXXPRgEQAu/kzefqPe0hPcq7TKOysWmy8aioLdkrgI5K2+6\r\nJHOewWBKrXrwbOUUsK1pPwWMsF437eowKv53/E0wy3ONYCyRNHXYV2IYBbFgrogK\r\njVXNMvjNojBVB+D7iKWZdjBW2D0tjr1JwLpeKYtEXQKBgAIW2RlhKC55PGlrJqbz\r\nQllc3iqu1n82e/+ijYnult5Uo1Zs8LpffJ4ZEL6eQwaa8o1w7JtMlCg6Xh/a+i+s\r\nfPz2pLt00jq2ZxvxpNIy26S2lSgvkVcI0E/YsuLsNVzsWYY2R2nd0/r4MjcHFwqX\r\nl+3nWx1T3CYaqo24fIkcFOYN\r\n-----END PRIVATE KEY-----"
+      SERVER_PUBLIC_KEY_PEM: "-----BEGIN PUBLIC KEY-----\r\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOgYocQNZ3m4u49WGvVs\r\nny06ONLMqvEBkoRZVYmvDywRYUMTuLZ8DplsKj5JlOh79wvJ9ea8XNiK7LH/sp2N\r\nTRDN/a5DB2GyRztO3WEIYMNd9yz+bxt+EjbBljDVRdnL7QkDTbqetFC4V+SyAJo0\r\nj9YGeCr42BrkBTvQbUU2xjbF7AJNNOLmwG4zMBF98bsmYhHu+1KoEG2eg0JhOynI\r\nEzflhhX9CpBinTSpA+1KNWRVX+CqLuhzorqYAJOqZNQHvVJFY/WnLWQBIcYJFvyr\r\nslmwor4mT6axRrhHl75G1yslAhZbulGgIE7dOLN0ABPA1fJ8YGecbBDWNP4gvzzP\r\nbQIDAQAB\r\n-----END PUBLIC KEY-----"
+      ADMIN_PRIVATE_KEY_PEM: "-----BEGIN PRIVATE KEY-----\r\n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\r\nNkO2XSAAt21tIMEPNNBZzAAVLlw3pXY=\r\n-----END PRIVATE KEY-----"
+      ADMIN_PUBLIC_KEY_PEM: "-----BEGIN PUBLIC KEY-----\r\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAqRFdxghDvAAuXXhkZA4p\r\nOD4+YBkuV3rd+lrWzeai/V0Ex4D1isblEK9oU2thgVvIINjLMvgvf5j08NT/iYoE\r\nwIDhZokhx8ryF2hx+avk6luSdrsFK2SStRV6E7KAoRWFePk+KJD+2lDIQwRfwurM\r\njPjG0qXtd6W5K3kcDxKxNI72UM3oCV2k+a3WhI86bXcgciz9aNg/9LTFLN0Achex\r\nhjXcTevlD3RKXeF/uFUody52GstuKiEY8y/BMYwZRhuN0o4vpWRX4rDjJHsIgXiS\r\nxNaesB/2lXrBdolW2waZfNMYPMm6AscCFi+I//1DA4Se++Fq7ZpuD7fGVJ1eSsVk\r\nbQAKRfyRAh7H8lQQvwcnhfXJw2O0vC5aHGEY3xpRB50Ma0jqHiDtViUMVjOm8rsL\r\nsqnBv0GLCq9b+uvTaQRmbW+aOWIbI+JDKlR1R3GEqyBmJzXtFX6OU/i9fDe+xV1K\r\nrXJWkFl8sxc+6GP8WsoYdt406TLuVLmHZ5JffKa742ST8d3SfpOWHdZGjkE/aDix\r\nEauibfCMqVwAvyc2woB/3yrn/JLRW9e6ekmm2LrYxUyldwcITb6+mHqEumkuldcz\r\nuYIKA3ZoIRPWYi18U0j+4+S83QSJg5ntuaSpIZt10+Quwmm5OYQSIx64QK/Hfmrx\r\noMIcmjmON8V5rwS4n9Su50ECAwEAAQ==\r\n-----END PUBLIC KEY-----"
+#    links:
+#      - web
+#    networks:
+#      app_net:
+#        ipv4_address: 172.16.9.2
 
 volumes:
   weko3_data:
   static_data:
   pgsql-data:
   es-data:
+  handle_data:
+
+#networks:
+#  app_net:
+#    driver: bridge
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 172.16.0.0/16
