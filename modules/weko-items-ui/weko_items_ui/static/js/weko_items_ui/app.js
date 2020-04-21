@@ -580,7 +580,6 @@ function toObject(arr) {
                 form = recordForm
               }
             }
-            form = recordForm;
           }
         });
         return form;
@@ -677,7 +676,7 @@ function toObject(arr) {
         })
         $scope.authors_keys.forEach(function (author_key) {
           var author_idt_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[author_key];
-          var author_idt_form = $scope.searchForm('creatorNames');
+          var author_idt_form = $scope.searchForm(author_key);
           if (author_idt_schema && author_idt_form) {
             if (author_idt_schema.type == 'object') {
               $scope.sub_item_keys.map(function (item) {
