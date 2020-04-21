@@ -607,7 +607,7 @@ class WidgetDesignServices:
 
             if page_id and repository_id and setting_data and valid:  # Page
                 # Delete the widget page design is cached
-                delete_widget_cache(repository_id, page_id)
+                delete_widget_cache("", page_id)
                 result["result"] = WidgetDesignPage.update_settings(
                     page_id, setting_data)
             elif repository_id and setting_data and valid:  # Main design
