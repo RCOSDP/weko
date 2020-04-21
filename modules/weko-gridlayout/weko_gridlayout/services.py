@@ -678,8 +678,6 @@ class WidgetDesignServices:
                      ]
 
             success = True
-            # Delete the widget design is cached
-            delete_widget_cache(repo_id)
             for model in data:  # FIXME: May be confusing to update both here
                 if model.get('settings'):
                     json_data = json.loads(model.get('settings')) if isinstance(
@@ -690,10 +688,16 @@ class WidgetDesignServices:
                         if not WidgetDesignPage.update_settings(
                                 model.get('page_id', 0), update_data):
                             success = False
+                        else:
+                            # Delete the widget page design is cached
+                            delete_widget_cache("", model.get('page_id'))
                     else:  # Update main layout
                         if not WidgetDesignSetting.update(
                                 repo_id, update_data):
                             success = False
+                        else:
+                            # Delete the widget design is cached
+                            delete_widget_cache(repo_id)
             return success
         except Exception as e:
             current_app.logger.error(e)
