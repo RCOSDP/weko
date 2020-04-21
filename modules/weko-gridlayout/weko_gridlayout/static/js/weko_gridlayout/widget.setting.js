@@ -19,6 +19,12 @@ const DEFAULT_BORDER_STYLE = "solid";
 const DEFAULT_THEME = "default";
 const DEFAULT_MENU_BACKGROUND_COLOR = "#ffffff";
 const DEFAULT_MENU_COLOR = "#000000";
+const MESSAGE = {
+  confirm_01: {
+    en: "Please set CSS height property to 90% or less.",
+    ja: "CSSの高さ(height)プロパティは90%以下にしてください。",
+  }
+}
 
 function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
     if(key_binding === "border_style" && !initialValue){
@@ -1131,7 +1137,7 @@ class ComponentButtonLayout extends React.Component {
         FOOTER_TYPE
       ]
       if (widgetEditorTypes.includes(data.widget_type) && !this.validateCustomCSS(data['multiLangSetting'])) {
-        let confirmMessage = document.getElementById("confirmHeightCSS").value;
+        let confirmMessage = getMessage("confirm_01");
         return confirm(confirmMessage);
       }
       return true;
@@ -1884,3 +1890,18 @@ $(function () {
         document.getElementById('root')
     )
 });
+
+function getMessage(messageCode) {
+  const defaultLanguage = "en";
+  let currentLanguage = document.getElementById("current_language").value;
+  let message = MESSAGE[messageCode];
+  if (message) {
+    if (message[currentLanguage]) {
+      return message[currentLanguage];
+    } else {
+      return message[defaultLanguage];
+    }
+  } else {
+    return "";
+  }
+}

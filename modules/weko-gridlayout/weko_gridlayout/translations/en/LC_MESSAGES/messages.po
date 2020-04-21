@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-gridlayout 1.0.0.dev20190000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2020-04-20 17:56+0700\n"
-"PO-Revision-Date: 2020-04-20 18:01+0700\n"
+"POT-Creation-Date: 2020-04-21 15:28+0700\n"
+"PO-Revision-Date: 2020-04-21 15:28+0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -83,43 +83,43 @@ msgstr ""
 msgid "Widget Design"
 msgstr ""
 
-#: weko_gridlayout/services.py:622
+#: weko_gridlayout/services.py:624
 msgid ""
 "Failed to save design:\n"
 "                         Main contents may only be set to one layout."
 msgstr ""
 
-#: weko_gridlayout/services.py:627
+#: weko_gridlayout/services.py:629
 msgid ""
 "Failed to save design:\n"
 " Check input values."
 msgstr ""
 
-#: weko_gridlayout/services.py:631
+#: weko_gridlayout/services.py:633
 msgid "Failed to save design: Unexpected error."
 msgstr ""
 
-#: weko_gridlayout/services.py:756 weko_gridlayout/services.py:984
+#: weko_gridlayout/services.py:758 weko_gridlayout/services.py:986
 msgid "Unable to retrieve page: Page not found."
 msgstr ""
 
-#: weko_gridlayout/services.py:759 weko_gridlayout/services.py:987
+#: weko_gridlayout/services.py:761 weko_gridlayout/services.py:989
 msgid "Unable to retrieve page: Unexpected error."
 msgstr ""
 
-#: weko_gridlayout/services.py:798
+#: weko_gridlayout/services.py:800
 msgid "Unable to save page: URL already exists."
 msgstr ""
 
-#: weko_gridlayout/services.py:801
+#: weko_gridlayout/services.py:803
 msgid "Unable to save page: Unexpected error."
 msgstr ""
 
-#: weko_gridlayout/services.py:906
+#: weko_gridlayout/services.py:908
 msgid "Unable to delete page."
 msgstr ""
 
-#: weko_gridlayout/services.py:937
+#: weko_gridlayout/services.py:939
 msgid "Unable to retrieve page list."
 msgstr ""
 
@@ -127,21 +127,13 @@ msgstr ""
 msgid "weko-gridlayout"
 msgstr ""
 
-#: weko_gridlayout/views.py:181 weko_gridlayout/views.py:247
-#: weko_gridlayout/views.py:265
+#: weko_gridlayout/views.py:184 weko_gridlayout/views.py:250
+#: weko_gridlayout/views.py:268
 msgid "Header Error"
 msgstr ""
 
 #: weko_gridlayout/templates/weko_gridlayout/index.html:12
 #, python-format
 msgid "Welcome to %(module_name)s"
-msgstr ""
-
-#: weko_gridlayout/templates/weko_gridlayout/admin/create_widget_settings.html:37
-#: weko_gridlayout/templates/weko_gridlayout/admin/edit_widget_settings.html:38
-msgid ""
-"The widget is setting a CSS height property greater than 90%, widget "
-"height automatic adjustment feature will not work on the top page. Do you"
-" want to save this widget?"
 msgstr ""
 
