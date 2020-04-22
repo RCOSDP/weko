@@ -210,9 +210,11 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
                 sn = sn + '_mapping'
 
             if not os.path.exists(furl):
-                return jsonify({'status': 'Please upload file first.'})
+                abort(400, 'Please upload file first')
+            if not data.get('file_name'):
+                abort(400, 'File Name is empty.')
 
-            fn = data.get('file_name') if 'file_name' in data else None
+            fn = data.get('file_name')
             zip_file = data.get('zip_name') if 'zip_name' in data else None
             fn = os.path.join(furl, (fn if '.' in fn else fn + '.xsd'))
 
