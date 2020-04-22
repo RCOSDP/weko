@@ -20,7 +20,7 @@ const DEFAULT_THEME = "default";
 const DEFAULT_MENU_BACKGROUND_COLOR = "#ffffff";
 const DEFAULT_MENU_COLOR = "#000000";
 const MESSAGE = {
-  confirm_01: {
+  error_01: {
     en: "Please set CSS height property to 90% or less.",
     ja: "CSSの高さ(height)プロパティは90%以下にしてください。",
   }
@@ -1098,7 +1098,6 @@ class ComponentButtonLayout extends React.Component {
         this.showErrorMessage = this.showErrorMessage.bind(this);
         this.validateData = this.validateData.bind(this);
         this.validateCustomCSS = this.validateCustomCSS.bind(this);
-        this.checkConfirmData = this.checkConfirmData.bind(this);
         this.addAlert = this.addAlert.bind(this);
         this.sendRequest = this.sendRequest.bind(this);
     }
@@ -1108,6 +1107,13 @@ class ComponentButtonLayout extends React.Component {
       request.data_id = this.props.data_id;
       let errorMessage = "";
       let data_validate = this.validateFieldIsValid(data.widget_type);
+      let widgetEditorTypes = [
+        FREE_DESCRIPTION_TYPE,
+        NOTICE_TYPE,
+        ACCESS_COUNTER,
+        HEADER_TYPE,
+        FOOTER_TYPE
+      ]
       if (data.repository === "0" || data.repository === "") {
         errorMessage = "Repository is required!";
       } else if (data.widget_type === "0" || data.widget_type === "") {
@@ -1116,36 +1122,20 @@ class ComponentButtonLayout extends React.Component {
         errorMessage = "Label is required!";
       } else if (!data_validate.status) {
         errorMessage = data_validate.error;
+      } else if (widgetEditorTypes.includes(data.widget_type) && !this.validateCustomCSS(data['multiLangSetting'])) {
+        errorMessage = getMessage("error_01");
       }
 
       if (errorMessage) {
         this.showErrorMessage(errorMessage);
         return false;
-      } else if (!this.checkConfirmData(request)) {
-        return false;
-      }
-      return true;
-    }
-
-    checkConfirmData(request) {
-      let data = request.data;
-      let widgetEditorTypes = [
-        FREE_DESCRIPTION_TYPE,
-        NOTICE_TYPE,
-        ACCESS_COUNTER,
-        HEADER_TYPE,
-        FOOTER_TYPE
-      ]
-      if (widgetEditorTypes.includes(data.widget_type) && !this.validateCustomCSS(data['multiLangSetting'])) {
-        let confirmMessage = getMessage("confirm_01");
-        return confirm(confirmMessage);
       }
       return true;
     }
 
     validateCustomCSS(multiLangData) {
       function validateHeightCSS(description) {
-        let heightPattern = /height *: *(9\d|\d{3,})%/;
+        let heightPattern = /height *: *(9[1-9]|\d{3,}) *%/;
         let searchCSSInlinePattern = new RegExp(/style=((?!<).)*/.source
           + heightPattern.source
           + /((?!<).)*?>/.source);
@@ -1223,7 +1213,6 @@ class ComponentButtonLayout extends React.Component {
     }
 
     sendRequest(request) {
-        console.log("save data");
       return $.ajax({
         context: this,
         url: this.props.url_request,

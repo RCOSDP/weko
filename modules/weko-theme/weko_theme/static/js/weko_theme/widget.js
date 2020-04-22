@@ -600,7 +600,7 @@ let WidgetTheme = function () {
 
   this.validateWidgetHeight = function (widgetType, widgetData) {
     if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, HEADER_TYPE, FOOTER_TYPE].indexOf(widgetType) > -1) {
-      let heightPattern = /height *: *(9\d|\d{3,})%/;
+      let heightPattern = /height *: *(9[1-9]|\d{3,}) *%/;
       let searchCSSInlinePattern = new RegExp(/style=((?!<).)*/.source
         + heightPattern.source
         + /((?!<).)*?>/.source);
