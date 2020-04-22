@@ -223,7 +223,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
                 with zipfile.ZipFile(os.path.join(furl, zip_file)) as fp:
                     fp.extractall(furl)
 
-                xsd = SchemaConverter(fn, root_name)
+            xsd = SchemaConverter(fn, root_name)
             try:
                 self.record_class.create(pid, sn.lower(), data,
                                          xsd.to_dict(), data.get('xsd_file'),
