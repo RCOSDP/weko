@@ -98,7 +98,7 @@ services:
       - rabbitmq
       - handle
     ports:
-      - "5001:5000"
+      - "127.0.0.1:5001:5000"
 #    networks:
 #      app_net:
 #        ipv4_address: 172.16.0.2
@@ -113,7 +113,7 @@ services:
     volumes:
       - pgsql-data:/var/lib/postgresql/data
     ports:
-      - "25401:5432"
+      - "127.0.0.1:25401:5432"
 #    networks:
 #      app_net:
 #        ipv4_address: 172.16.1.2
@@ -122,7 +122,7 @@ services:
     restart: "always"
     image: redis
     ports:
-      - "26301:6379"
+      - "127.0.0.1:26301:6379"
 #    networks:
 #      app_net:
 #        ipv4_address: 172.16.3.2
@@ -135,14 +135,14 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
-      - "ES_JAVA_OPTS=-Xms4092m -Xmx4092m"
+      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
     ulimits:
       memlock:
         soft: -1
         hard: -1
     ports:
-      - "29201:9200"
-      - "29301:9300"
+      - "127.0.0.1:29201:9200"
+      - "127.0.0.1:29301:9300"
  #   networks:
  #     app_net:
  #       ipv4_address: 172.16.4.2
@@ -151,8 +151,8 @@ services:
     restart: "always"
     image: rabbitmq
     ports:
-      - "24301:4369"
-      - "45601:25672"
+      - "127.0.0.1:24301:4369"
+      - "127.0.0.1:45601:25672"
 #    networks:
 #      app_net:
 #        ipv4_address: 172.16.5.2
@@ -177,7 +177,7 @@ services:
     image: mher/flower
     command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
     ports:
-      - "5501:5555"
+      - "127.0.0.1:5501:5555"
     links:
       - rabbitmq
 #    networks:
@@ -191,7 +191,7 @@ services:
     restart: "always"
     command: kibana
     ports:
-      - "5601:5601"
+      - "127.0.0.1:5601:5601"
     environment:
       - "ELASTICSEARCH_URL=http://elasticsearch:9200"
       - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
