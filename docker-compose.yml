@@ -210,7 +210,7 @@ services:
     ports:
       - "2641:2641/udp"
       - "2641:2641/tcp"
-      - "8000:8000/tcp"
+      - "127.0.0.1:8000:8000/tcp"
     environment:
  #     HANDLE_HOST_IP: '172.16.9.2'
       SERVER_ADMINS: '300:0.NA/YOUR_PREFIX'
