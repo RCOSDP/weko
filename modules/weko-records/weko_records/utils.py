@@ -674,3 +674,78 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
     alst = set_attribute_value(orderdict)
 
     return alst
+
+
+def check_input_value(old, new):
+    """Check different between old and new data.
+
+    @param old:
+    @param new:
+    @return:
+    """
+    diff = False
+    for k in old.keys():
+        if old[k]['input_value'] != new[k]['input_value']:
+            diff = True
+            break
+    return diff
+
+
+def remove_key(removed_key, item_val):
+    """Remove removed_key out of item_val.
+
+    @param removed_key:
+    @param item_val:
+    @return:
+    """
+    if not isinstance(item_val, dict):
+        return
+    if removed_key in item_val.keys():
+        del item_val[removed_key]
+    for k, v in item_val.items():
+        remove_key(removed_key, v)
+
+
+def remove_multiple(schema):
+    """Remove multiple of schema.
+
+    @param schema:
+    @return:
+    """
+    for k in schema['properties'].keys():
+        if 'maxItems' and 'minItems' in schema['properties'][k].keys():
+            del schema['properties'][k]['maxItems']
+            del schema['properties'][k]['minItems']
+        if 'items' in schema['properties'][k].keys():
+            schema['properties'][k] = schema['properties'][k]['items']
+
+
+def check_to_upgrade_version(old_render, new_render):
+    """Check upgrade or keep version by checking different renders data.
+
+    @param old_render:
+    @param new_render:
+    @return:
+    """
+    if old_render.get('meta_list').keys() != \
+            new_render.get('meta_list').keys():
+        return True
+    # Check diff input value:
+    if check_input_value(old_render.get('meta_list'),
+                         new_render.get('meta_list')):
+        return True
+    # Check diff schema
+    old_schema = old_render.get('table_row_map').get('schema')
+    new_schema = new_render.get('table_row_map').get('schema')
+
+    remove_key('required', old_schema)
+    remove_key('required', new_schema)
+
+    remove_key('title', old_schema['properties'])
+    remove_key('title', new_schema['properties'])
+
+    remove_multiple(old_schema)
+    remove_multiple(new_schema)
+    if old_schema != new_schema:
+        return True
+    return False

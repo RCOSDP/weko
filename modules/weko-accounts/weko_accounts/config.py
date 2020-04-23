@@ -83,3 +83,6 @@ SHIB_ACCOUNTS_ROLE_RELATION = {
 
 WEKO_GENERAL_ROLE = 'Contributor'
 """Default role."""
+
+SHIB_IDP_LOGIN_ENABLED = False
+"""Shibboleth login pattern. (True: Shibboleth IdP(JairoCloud), False: Embedded DS-Pattern 1)."""

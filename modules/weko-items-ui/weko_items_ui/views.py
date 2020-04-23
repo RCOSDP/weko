@@ -59,7 +59,7 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     get_user_info_by_username, get_user_information, get_user_permission, \
     is_schema_include_key, parse_ranking_results, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
-    to_files_js, update_index_tree_for_record, \
+    to_files_js, translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
@@ -248,41 +248,28 @@ def get_json_schema(item_type_id=0, activity_id=""):
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
-            if item_type_id == 20:
-                result = ItemTypes.get_by_id(item_type_id)
-                if result is None:
-                    return '{}'
-                json_schema = result.schema
-                properties = json_schema.get('properties')
-                for _key, value in properties.items():
-                    if 'validationMessage_i18n' in value:
-                        value['validationMessage'] =\
-                            value['validationMessage_i18n'][cur_lang]
-            else:
-                result = ItemTypes.get_record(item_type_id)
-                if 'filemeta' in json.dumps(result):
-                    group_list = Group.get_group_list()
-                    group_enum = list(group_list.keys())
-                    filemeta_group = result.get('properties').get(
-                        'filemeta').get(
-                        'items').get('properties').get('groups')
-                    filemeta_group['enum'] = group_enum
-
+            result = ItemTypes.get_record(item_type_id)
+            properties = result.get('properties')
+            if 'filemeta' in json.dumps(result):
+                group_list = Group.get_group_list()
+                group_enum = list(group_list.keys())
+                filemeta_group = properties.get(
+                    'filemeta').get(
+                    'items').get('properties').get('groups')
+                filemeta_group['enum'] = group_enum
+            for _key, value in properties.items():
+                translate_validation_message(value, cur_lang)
         if result is None:
             return '{}'
-
         if activity_id:
             updated_json_schema = update_json_schema_by_activity_id(
                 result,
                 activity_id)
             if updated_json_schema:
                 result = updated_json_schema
-
         json_schema = result
-
         # Remove excluded item in json_schema
         remove_excluded_items_in_json_schema(item_type_id, json_schema)
-
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])

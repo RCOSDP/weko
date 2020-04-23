@@ -1114,7 +1114,7 @@ msgid "Volume"
 msgstr "巻"
 
 msgid "Search repository"
-msgstr "レポジトリを検索する"
+msgstr "リポジトリを検索する"
 
 msgid "Content File"
 msgstr "コンテンツ本体"

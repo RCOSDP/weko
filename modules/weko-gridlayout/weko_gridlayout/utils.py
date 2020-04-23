@@ -840,11 +840,12 @@ def has_main_contents_widget(settings):
     return False
 
 
-def get_widget_design_setting(repository_id, current_language):
+def get_widget_design_setting(repository_id, current_language, page_id=None):
     """Get widget design setting.
 
     @param repository_id: The repository identifier
-    @param current_language:
+    @param current_language: The current language
+    @param page_id: The Page identifier.
     @return:
     """
     def validate_response():
@@ -862,27 +863,39 @@ def get_widget_design_setting(repository_id, current_language):
             is_valid = False
         return is_valid
 
-    def get_widget_response():
+    def get_widget_response(_page_id):
         """Get widget setting response.
 
+        :param _page_id: The Page identifier.
         @return: The widget setting response
         """
-        from .services import WidgetDesignServices
-        widget_setting_data = WidgetDesignServices.get_widget_design_setting(
-            repository_id, current_language or get_default_language())
+        lang_code = current_language or get_default_language()
+        if _page_id:
+            from .services import WidgetDesignPageServices
+            widget_setting_data = WidgetDesignPageServices\
+                .get_widget_design_setting(_page_id, lang_code)
+        else:
+            from .services import WidgetDesignServices
+            widget_setting_data = WidgetDesignServices\
+                .get_widget_design_setting(
+                    repository_id, lang_code)
         return jsonify(widget_setting_data)
 
     if validate_response() and current_language:
-        key = (config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY
-               + repository_id + "_" + current_language)
+        if page_id:
+            key = (config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
+                   + repository_id + "_" + page_id + "_" + current_language)
+        else:
+            key = (config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY
+                   + repository_id + "_" + current_language)
         if current_cache.get(key) is None:
-            data = compress_widget_response(get_widget_response())
+            data = compress_widget_response(get_widget_response(page_id))
             current_cache.set(key, data)
             return data
         else:
             return current_cache.get(key)
     else:
-        return get_widget_response()
+        return get_widget_response(page_id)
 
 
 def compress_widget_response(response):
@@ -904,16 +917,21 @@ def compress_widget_response(response):
     return response
 
 
-def delete_widget_cache(repository_id):
+def delete_widget_cache(repository_id, page_id=None):
     """Delete widget cache.
 
     @param repository_id: The repository identifier
+    @param page_id: The Page identifier
     @return:
     """
     cache_store = RedisStore(redis.StrictRedis.from_url(
         current_app.config['CACHE_REDIS_URL']))
-    cache_key = (
-        "*" + config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY + repository_id
-        + "_*")
+    if page_id:
+        cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
+                     + repository_id + "_" + page_id + "_*")
+    else:
+        cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY
+                     + repository_id + "_*")
+
     for key in cache_store.redis.scan_iter(cache_key):
         cache_store.redis.delete(key)
