@@ -1703,15 +1703,14 @@ function toObject(arr) {
       });
 
       $scope.changePositionFileName = function () {
-        $('#new-postion-filename').parent().children('bootstrap-decorator').remove();
-        $('#new-postion-filename').empty();
         let records = $rootScope.recordsVM.invenioRecordsForm;
-        // Move File to upload area
+        let depositionForm = $('invenio-records-form').find('form[name="depositionForm"]');
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           records.forEach(function(item,i){
             if(item.key == filemeta_key){
-              $('invenio-records-form').find('bootstrap-decorator[form="schemaForm.form[' + i + ']"]').appendTo("#new-postion-filename");
+              // Move to top
+              depositionForm.find('bootstrap-decorator[form="schemaForm.form['+ i + ']"]').prependTo(depositionForm);
             }
           });
         });
