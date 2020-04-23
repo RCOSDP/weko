@@ -856,16 +856,25 @@ function toObject(arr) {
         }
       }
 
+      $scope.getFormByKey = function (key) {
+        let forms = $rootScope.recordsVM.invenioRecordsForm;
+        for (let i in forms) {
+          if (forms[i].hasOwnProperty('key') && forms[i].key == key) {
+            return forms[i];
+          }
+        }
+      }
+
       $scope.initFilenameList = function () {
         var filekey = 'filename';
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
-          filemeta_form = $scope.searchForm('filename');
+          filemeta_form = $scope.getFormByKey(filemeta_key);
           if (filemeta_schema && filemeta_form && filemeta_schema.items.properties[filekey]) {
             filemeta_schema.items.properties[filekey]['enum'] = [];
             filemeta_schema.items.properties[filekey]['enum'].push(null)
-            filemeta_filename_form = get_subitem(filemeta_form.items, 'filename');
+            filemeta_filename_form = get_subitem(filemeta_form.items, filekey);
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(function (file) {
               if (file.completed && !file.is_thumbnail) {
