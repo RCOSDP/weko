@@ -225,13 +225,13 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 //   add button
   $rootScope.add_link = function(data, index) {
     let sub_data = {
-      seleOption: [],
+      // seleOption: [],
       item_id: 0,
       item_title: "",
       sele_id: ""
     };
 
-    sub_data.seleOption = angular.copy($scope.sele_options);
+    // sub_data.seleOption = angular.copy($scope.sele_options);
     sub_data.sele_id = "relateTo";
     sub_data.item_id = data.metadata.control_number;
     sub_data.item_title = data.metadata.title[0];
@@ -241,13 +241,13 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 //   add ex_item_link
   $scope.add_ex_link = function (data) {
     let item_data = {
-      seleOption: [],
+      // seleOption: [],
       item_id: "",
       item_title: "",
       sele_id: ""
     };
 
-    item_data.seleOption = angular.copy($scope.sele_options);
+    // item_data.seleOption = angular.copy($scope.sele_options);
     item_data.sele_id = data.value;
     item_data.item_id = data.item_links;
     item_data.item_title = data.item_title;
@@ -280,9 +280,12 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         } else {
           document.location.reload(true);
         }
+      } else {
+        alert(response.data.msg);
       }
     }, function errorCallback(response) {
-      alert(response.data.msg)
+      alert(response.data.msg);
+      document.location.reload(true);
     });
   };
 //   run button
@@ -307,9 +310,12 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         } else {
           document.location.reload(true);
         }
+      } else {
+        alert(response.data.msg);
       }
     }, function errorCallback(response) {
-        alert(response.data.msg)
+        alert(response.data.msg);
+        document.location.reload(true);
     });
   };
 

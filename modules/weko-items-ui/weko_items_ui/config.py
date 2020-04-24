@@ -72,18 +72,6 @@ WEKO_ITEMS_UI_EXPORT_FORMAT_JSON = 'JSON'
 WEKO_ITEMS_UI_EXPORT_FORMAT_BIBTEX = 'BIBTEX'
 """Format for exporting items -- BIBTEX. """
 
-IDENTIFIER_GRANT_DOI = 0
-"""Identifier grant was select."""
-
-IDENTIFIER_GRANT_CAN_WITHDRAW = -1
-"""Identifier grant can withdraw."""
-
-IDENTIFIER_GRANT_IS_WITHDRAWING = -2
-"""Identifier grant is withdrawing."""
-
-IDENTIFIER_GRANT_WITHDRAWN = -3
-"""Identifier grant was withdrawn."""
-
 WEKO_ITEMS_UI_DATA_REGISTRATION = ""
 WEKO_ITEMS_UI_APPLICATION_FOR_LIFE = ""
 WEKO_ITEMS_UI_APPLICATION_FOR_ACCUMULATION = ""
@@ -150,3 +138,6 @@ WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY = {}
 WEKO_ITEMS_UI_APPROVAL_MAIL_SUBITEM_KEY = {}
 
 WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST = []
+
+WEKO_API_RETURN_CODE_ERROR = -1
+"""Number response indicates that API is not processing request."""

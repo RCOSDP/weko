@@ -32,7 +32,7 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     after_record_revert, after_record_update, before_record_delete, \
     before_record_insert, before_record_revert, before_record_update
 from jsonpatch import apply_patch
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
@@ -1741,20 +1741,20 @@ class ItemLink(object):
 
     org_item_id = 0
 
-    def __init__(self, pid):
+    def __init__(self, recid: str):
         """Constructor."""
-        self.org_item_id = int(pid)
+        self.org_item_id = recid
 
     @classmethod
-    def get_item_link_info(cls, pid):
+    def get_item_link_info(cls, recid):
         """Record publish  status change view.
 
-        :param pid: PID object.
-        :return: The rendered template.
+        :param recid: Record Identifier.
+        :return  ret: The rendered template.
         """
         from weko_deposit.api import WekoRecord
 
-        dst_relations = ItemReference.get_src_references(pid).all()
+        dst_relations = ItemReference.get_src_references(recid).all()
         ret = []
 
         for relation in dst_relations:
@@ -1791,6 +1791,7 @@ class ItemLink(object):
                 created.append(item)
 
         deleted = dst_ids
+
         try:
             with db.session.begin_nested():
                 if created:
@@ -1800,16 +1801,20 @@ class ItemLink(object):
                 if deleted:
                     self.bulk_delete(deleted)
             db.session.commit()
+        except IntegrityError as ex:
+            current_app.logger.error(ex.orig)
+            db.session.rollback()
+            return str(ex.orig)
         except SQLAlchemyError as ex:
             current_app.logger.error(ex)
             db.session.rollback()
-            return ex
+            return str(ex)
         return None
 
     def bulk_create(self, dst_items):
         """Record publish  status change view.
 
-        :param pid: PID object.
+        :param dst_items: PID object.
         :return: The rendered template.
         """
         objects = [ItemReference(

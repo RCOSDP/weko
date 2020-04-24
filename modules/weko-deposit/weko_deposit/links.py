@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Link Factory weko-deposit."""
-# from flask import current_app, request
+
 from invenio_deposit.links import deposit_links_factory
 
 

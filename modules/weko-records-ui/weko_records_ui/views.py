@@ -436,7 +436,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     detail_condition = get_search_detail_keyword('')
 
     # Add Item Reference data to Record Metadata
-    pid_without_ver = record.get("control_number").split('.')[0]
+    pid_without_ver = record.get('recid').split('.')[0]
     res = ItemLink.get_item_link_info(pid_without_ver)
     if res:
         record["relation"] = res
@@ -605,7 +605,7 @@ def set_pdfcoverpage_header():
         header_output_image_filename = header_output_image_file.filename
         header_output_image = record.header_output_image
         if not header_output_image_filename == '':
-            upload_dir = "/code/header-icons/"
+            upload_dir = "/home/invenio/.virtualenvs/invenio/var/instance/static/"
             header_output_image = upload_dir + header_output_image_filename
             header_output_image_file.save(header_output_image)
         header_display_position = request.form.get('header-display-position')

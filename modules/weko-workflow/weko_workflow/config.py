@@ -103,3 +103,15 @@ WEKO_WORKFLOW_TODO_TAB = 'todo'
 WEKO_WORKFLOW_WAIT_TAB = 'wait'
 
 WEKO_WORKFLOW_ALL_TAB = 'all'
+
+IDENTIFIER_GRANT_DOI = 0
+"""Identifier grant was select."""
+
+IDENTIFIER_GRANT_CAN_WITHDRAW = -1
+"""Identifier grant can withdraw."""
+
+IDENTIFIER_GRANT_IS_WITHDRAWING = -2
+"""Identifier grant is withdrawing."""
+
+IDENTIFIER_GRANT_WITHDRAWN = -3
+"""Identifier grant was withdrawn."""

@@ -34,7 +34,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
-from weko_records.api import ItemsMetadata, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
+    Mapping
 from weko_records.serializers.utils import get_mapping
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
@@ -839,3 +840,88 @@ def filter_condition(json, name, condition):
         json[name].append(condition)
     else:
         json[name] = [condition]
+
+
+def get_actionid(endpoint):
+    """
+    Get action_id by action_endpoint.
+
+    parameter:
+    return: action_id
+    """
+    with db.session.no_autoflush:
+        action = _Action.query.filter_by(
+            action_endpoint=endpoint).one_or_none()
+        if action:
+            return action.id
+        else:
+            return None
+
+
+def prepare_edit_workflow(post_activity, recid, deposit):
+    """
+    Get user information by email.
+
+    Query database to get user id by using email
+    Get username from database using user id
+    Pack response data: user id, user name, email
+
+    parameter:
+        post_activity:
+        recid:
+        deposit:
+    return:
+        response
+    """
+    # ! Check pid's version
+    current_app.logger.debug('*' * 60)
+    # current_app.logger.debug(post_activity)
+    current_app.logger.debug(recid)
+    # current_app.logger.debug(deposit)
+    community = post_activity['community']
+    post_workflow = post_activity['post_workflow']
+    activity = WorkActivity()
+
+    draft_record = deposit.prepare_edit_item(recid)
+
+    # Create a new workflow activity.
+    rtn = activity.init_activity(post_activity,
+                                 community,
+                                 draft_record.model.object_uuid)
+
+    return rtn
+
+    if rtn:
+        # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
+        identifier_actionid = get_actionid('identifier_grant')
+        if post_workflow:
+            identifier = activity.get_action_identifier_grant(
+                post_workflow.activity_id, identifier_actionid)
+        else:
+            identifier = activity.get_action_identifier_grant(
+                '', identifier_actionid)
+
+        if identifier:
+            if identifier.get('action_identifier_select') > \
+                    current_app.config.get('IDENTIFIER_GRANT_DOI'):
+                identifier['action_identifier_select'] = \
+                    current_app.config.get('IDENTIFIER_GRANT_CAN_WITHDRAW')
+            elif identifier.get('action_identifier_select') == \
+                    current_app.config.get('IDENTIFIER_GRANT_IS_WITHDRAWING'):
+                identifier['action_identifier_select'] = \
+                    current_app.config.get('IDENTIFIER_GRANT_WITHDRAWN')
+            activity.create_or_update_action_identifier(
+                rtn.activity_id,
+                identifier_actionid,
+                identifier)
+
+        mail_list = FeedbackMailList.get_mail_list_by_item_id(
+            item_id=recid.object_uuid)
+        if mail_list:
+            activity.create_or_update_action_feedbackmail(
+                activity_id=rtn.activity_id,
+                action_id=current_app.config.get('ITEM_REGISTRATION_ACTION_ID'),
+                feedback_maillist=mail_list
+            )
+
+    return rtn

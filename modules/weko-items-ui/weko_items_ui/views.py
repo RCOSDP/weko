@@ -35,6 +35,7 @@ from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryItemRegReportHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
@@ -43,22 +44,21 @@ from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_index_id, get_user_roles
-from weko_records.api import FeedbackMailList, ItemTypes
+from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
-from weko_workflow.config import ITEM_REGISTRATION_ACTION_ID
-from weko_workflow.models import ActionStatusPolicy, WorkFlow
+from weko_workflow.models import ActionStatusPolicy as ASP
+from weko_workflow.utils import prepare_edit_workflow
+from werkzeug.utils import import_string
 
-from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
-    IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
-from .utils import _get_max_export_items, export_items, get_actionid, \
+from .utils import _get_max_export_items, export_items, \
     get_current_user, get_list_email, get_list_username, \
     get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, parse_ranking_results, \
-    remove_excluded_items_in_json_schema, set_multi_language_name, \
-    to_files_js, update_index_tree_for_record, \
+    get_user_information, get_user_permission, get_workflow_by_item_type_id, \
+    parse_ranking_results, remove_excluded_items_in_json_schema, \
+    set_multi_language_name, to_files_js, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
@@ -474,10 +474,13 @@ def iframe_items_index(pid_value='0'):
                     contain_application_endpoint = True
             enable_auto_set_index = current_app.config.get(
                 'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE')
+
+            current_app.logger.debug(record)
             if enable_auto_set_index and contain_application_endpoint:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
-                return redirect(url_for('weko_workflow.iframe_success'))
+                return redirect(url_for('weko_workflow.iframe_success'))     
+
             # Get the design for widget rendering
             from weko_theme.utils import get_design_layout
 
@@ -523,12 +526,14 @@ def iframe_items_index(pid_value='0'):
                 port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
         if request.method == 'PUT':
             """update index of item info."""
+            current_app.logger.debug('request.method == \'PUT\'')
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
             sessionstore.delete('item_index_{}'.format(pid_value))
             item = json.loads(item_str)
             item['index'] = data
         elif request.method == 'POST':
             """update item data info."""
+            current_app.logger.debug('request.method == \'POST\'')
             sessionstore.put(
                 'item_index_{}'.format(pid_value),
                 json.dumps(data),
@@ -794,8 +799,8 @@ def prepare_edit_item():
     """Prepare_edit_item.
 
     Host the api which provide 2 service:
-        Create new activity for editing flow
         Check permission: check if user is owner/admin/shared user
+        Create new activity for editing flow
     request:
         header: Content type must be json
         data:
@@ -805,187 +810,120 @@ def prepare_edit_item():
         msg: meassage result,
         data: url redirect
     """
-    def _get_workflow_by_item_type_id(item_type_name_id, item_type_id):
-        """Get workflow settings by item type id."""
-        workflow = WorkFlow.query.filter_by(
-            itemtype_id=item_type_id).first()
-        if not workflow:
-            item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
-            id_list = [x.id for x in item_type_list]
-            workflow = (
-                WorkFlow.query
-                .filter(WorkFlow.itemtype_id.in_(id_list))
-                .order_by(WorkFlow.itemtype_id.desc())
-                .order_by(WorkFlow.flow_id.asc()).first())
-        return workflow
-
+    err_code = current_app.config.get('WEKO_API_RETURN_CODE_ERROR', -1)
     if request.headers['Content-Type'] != 'application/json':
         """Check header of request"""
-        return jsonify(code=-1, msg=_('Header Error'))
+        return jsonify(
+            code=err_code,
+            msg=_('Header Error')
+        )
+
     post_activity = request.get_json()
+    getargs = request.args
     pid_value = post_activity.get('pid_value')
+    community = getargs.get('community', None)
 
     if pid_value:
-        try:
-            record = WekoRecord.get_record_by_pid(pid_value)
-            owner = str(record.get('owner'))
-            shared_id = str(record.get('weko_shared_id'))
-            user_id = str(get_current_user())
-            is_admin = get_user_roles()
-            activity = WorkActivity()
+        record_class = import_string('weko_deposit.api:WekoDeposit')
+        resolver = Resolver(pid_type='recid',
+                            object_type='rec',
+                            getter=record_class.get_record)
+        recid, deposit = resolver.resolve(pid_value)
+        authenticators = [str(deposit.get('owner')),
+                            str(deposit.get('weko_shared_id'))]
+        user_id = str(get_current_user())
+        activity = WorkActivity()
+        latest_pid = PIDVersioning(child=recid).last_child
 
-            pid_object = PersistentIdentifier.get('recid', pid_value)
-
-            latest_pid = PIDVersioning(child=pid_object).last_child
-
-            # check user's permission
-            if user_id != owner and not is_admin[0] and user_id != shared_id:
-                return jsonify(
-                    code=-1,
-                    msg=_(r"You are not allowed to edit this item.")
-                )
-            lists = ItemTypes.get_latest()
-            if not lists:
-                return jsonify(code=-1,
-                               msg=_(r"You do not even have an Itemtype."))
-            item_type_id = record.get('item_type_id')
-            item_type = ItemTypes.get_by_id(item_type_id)
-            if not item_type:
-                return jsonify(code=-1, msg=_(r"This itemtype isn't found."))
-
-            # check item is being editied
-            item_id = latest_pid.object_uuid
-            workflow_activity = activity.get_workflow_activity_by_item_id(
-                item_id
+        # ! Check User's Permissions
+        if not user_id in authenticators and not get_user_roles()[0]:
+            return jsonify(
+                code=err_code,
+                msg=_("You are not allowed to edit this item.")
             )
-            if not workflow_activity:
-                # get workflow of first record attached version ID: x.1
-                workflow_activity = activity.get_workflow_activity_by_item_id(
-                    pid_object.object_uuid
+
+        # ! Check dependency ItemType
+        if not ItemTypes.get_latest():
+            return jsonify(
+                code=err_code,
+                msg=_("You do not even have an ItemType.")
+            )
+
+        item_type_id = deposit.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        if not item_type:
+            return jsonify(
+                code=err_code,
+                msg=_("Dependency ItemType not found.")
+            )
+
+        if not deposit:
+            return jsonify(
+                code=err_code,
+                msg=_('Record does not exist.')
+            )
+
+        # ! Check Record is being edit
+        item_uuid = latest_pid.object_uuid
+        post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+
+        if not post_workflow:
+            # ? If couldn't get POST Activity from latest PID, using parent PID's Activity.
+            post_workflow = activity.get_workflow_activity_by_item_id(
+                recid.object_uuid
+            )
+            # if workflow of the item is not found
+            # use default settings of item type to which the item belongs
+        # else:
+            # Show error when ActionStatusPolicy is BEGIN or DOING
+        # if not post_workflow:
+        #     return jsonify(
+        #         code=err_code,
+        #         msg=_("POST Activity of current Record not found.")
+        #     )
+
+        if post_workflow:
+            if post_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
+                return jsonify(
+                    code=err_code,
+                    msg=_("This Item is being edited.")
                 )
-                # if workflow of the item is not found
-                # use default settings of item type to which the item belongs
-            else:
-                # show error when has stt is Begin or Doing
-                if workflow_activity.action_status == \
-                    ActionStatusPolicy.ACTION_BEGIN \
-                    or workflow_activity.action_status == \
-                        ActionStatusPolicy.ACTION_DOING:
-                    return jsonify(code=-1,
-                                   msg=_(r"The workflow is being edited."))
+            post_activity['workflow_id'] = post_workflow.workflow_id
+            post_activity['flow_id'] = post_workflow.flow_id
+        else:
+            workflow = get_workflow_by_item_type_id(item_type.name_id, item_type_id)
+            if not workflow:
+                return jsonify(
+                    code=err_code,
+                    msg=_('Workflow setting does not exist.')
+                )
+            post_activity['workflow_id'] = workflow.id
+            post_activity['flow_id'] = workflow.flow_id
+        post_activity['itemtype_id'] = item_type_id
+        post_activity['community'] = community
+        post_activity['post_workflow'] = post_workflow
 
-            # prepare params for new workflow activity
-            if workflow_activity:
-                post_activity['workflow_id'] = workflow_activity.workflow_id
-                post_activity['flow_id'] = workflow_activity.flow_id
-            else:
-                workflow = _get_workflow_by_item_type_id(
-                    item_type.name_id, item_type_id)
-                if not workflow:
-                    return jsonify(code=-1,
-                                   msg=_('Workflow setting does not exist.'))
-                post_activity['workflow_id'] = workflow.id
-                post_activity['flow_id'] = workflow.flow_id
-            post_activity['itemtype_id'] = item_type_id
-            getargs = request.args
-            community = getargs.get('community', None)
+        rtn = prepare_edit_workflow(post_activity, recid, deposit)
 
-            # Create a new version of a record.
-            record = WekoDeposit.get_record(item_id)
-            if not record:
-                return jsonify(code=-1, msg=_('Record does not exist.'))
+        if community:
+            comm = GetCommunity.get_community_by_id(community)
+            url_redirect = url_for('weko_workflow.display_activity',
+                                    activity_id=rtn.activity_id,
+                                    community=comm.id)
+        else:
+            url_redirect = url_for('weko_workflow.display_activity',
+                                    activity_id=rtn.activity_id)
 
-            deposit = WekoDeposit(record, record.model)
-            draft_record = deposit.newversion(pid_object)
+        return jsonify(
+            code=0,
+            msg='success',
+            data=dict(redirect=url_redirect)
+        )
 
-            if not draft_record:
-                return jsonify(code=-1, msg=_('An error has occurred.'))
-
-            # Create snapshot bucket for draft record
-            from invenio_records_files.models import RecordsBuckets
-            try:
-                with db.session.begin_nested():
-                    from weko_workflow.utils import delete_bucket
-                    draft_deposit = WekoDeposit(
-                        draft_record,
-                        draft_record.model
-                    )
-                    snapshot = record.files.bucket.snapshot(lock=False)
-                    snapshot.locked = False
-                    draft_deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                    draft_record_bucket = RecordsBuckets.create(
-                        record=draft_record.model,
-                        bucket=snapshot
-                    )
-
-                    # Remove duplicated buckets
-                    draft_record_buckets = RecordsBuckets.query.filter_by(
-                        record_id=draft_record.model.id
-                    ).all()
-                    for record_bucket in draft_record_buckets:
-                        if record_bucket != draft_record_bucket:
-                            delete_bucket_id = record_bucket.bucket_id
-                            RecordsBuckets.query.filter_by(
-                                bucket_id=delete_bucket_id).delete()
-                            delete_bucket(delete_bucket_id)
-                    draft_deposit.commit()
-            except Exception as ex:
-                db.session.rollback()
-                current_app.logger.exception(str(ex))
-                return jsonify(code=-1, msg=_('An error has occurred.'))
-
-            # Create a new workflow activity.
-            rtn = activity.init_activity(post_activity,
-                                         community,
-                                         draft_record.model.id)
-
-            if rtn:
-                # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
-                identifier_actionid = get_actionid('identifier_grant')
-                if workflow_activity:
-                    identifier = activity.get_action_identifier_grant(
-                        workflow_activity.activity_id, identifier_actionid)
-                else:
-                    identifier = activity.get_action_identifier_grant(
-                        '', identifier_actionid)
-
-                if identifier:
-                    if identifier.get('action_identifier_select') > \
-                            IDENTIFIER_GRANT_DOI:
-                        identifier['action_identifier_select'] = \
-                            IDENTIFIER_GRANT_CAN_WITHDRAW
-                    elif identifier.get('action_identifier_select') == \
-                            IDENTIFIER_GRANT_IS_WITHDRAWING:
-                        identifier['action_identifier_select'] = \
-                            IDENTIFIER_GRANT_WITHDRAWN
-                    activity.create_or_update_action_identifier(
-                        rtn.activity_id,
-                        identifier_actionid,
-                        identifier)
-
-                mail_list = FeedbackMailList.get_mail_list_by_item_id(
-                    item_id=pid_object.object_uuid)
-                if mail_list:
-                    activity.create_or_update_action_feedbackmail(
-                        activity_id=rtn.activity_id,
-                        action_id=ITEM_REGISTRATION_ACTION_ID,
-                        feedback_maillist=mail_list
-                    )
-
-                if community:
-                    comm = GetCommunity.get_community_by_id(community)
-                    url_redirect = url_for('weko_workflow.display_activity',
-                                           activity_id=rtn.activity_id,
-                                           community=comm.id)
-                else:
-                    url_redirect = url_for('weko_workflow.display_activity',
-                                           activity_id=rtn.activity_id)
-                return jsonify(code=0, msg='success',
-                               data={'redirect': url_redirect})
-
-        except Exception as e:
-            current_app.logger.error('Unexpected error: ', str(e))
-    return jsonify(code=-1, msg=_('An error has occurred.'))
+    return jsonify(
+        code=err_code,
+        msg=_('An error has occurred.')
+    )
 
 
 @blueprint.route('/ranking', methods=['GET'])

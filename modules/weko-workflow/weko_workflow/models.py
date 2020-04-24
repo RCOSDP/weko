@@ -28,6 +28,7 @@ from invenio_accounts.models import Role, User
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
+from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
 from weko_groups.widgets import RadioGroupWidget
@@ -928,3 +929,49 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
         nullable=True
     )
     """Action journal info."""
+
+
+class ActionItemLink(db.Model, Timestamp):
+    """Storage action Item Link."""
+
+    __tablename__ = 'workflow_action_itemlink'
+
+    id = db.Column(
+        db.Integer(),
+        nullable=False,
+        primary_key=True,
+        autoincrement=True
+    )
+    """Action Item Link Identifier."""
+
+    activity_id = db.Column(
+        db.String(24),
+        nullable=False,
+        unique=False,
+        index=True
+    )
+    """Activity id of Activity Action."""
+
+    action_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(Action.id),
+        nullable=True,
+        unique=False
+    )
+    """Action id."""
+
+    item_links = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Action Item Link information."""

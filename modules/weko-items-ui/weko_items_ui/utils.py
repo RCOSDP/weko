@@ -298,22 +298,6 @@ def get_current_user():
     return current_id
 
 
-def get_actionid(endpoint):
-    """
-    Get action_id by action_endpoint.
-
-    parameter:
-    return: action_id
-    """
-    with db.session.no_autoflush:
-        action = _Action.query.filter_by(
-            action_endpoint=endpoint).one_or_none()
-        if action:
-            return action.id
-        else:
-            return None
-
-
 def parse_ranking_results(results,
                           display_rank,
                           list_name='all',
@@ -1407,3 +1391,20 @@ def validate_save_title_and_share_user_id(result, data):
         result['is_valid'] = False
         result['error'] = str(ex)
     return result
+
+
+def get_workflow_by_item_type_id(item_type_name_id, item_type_id):
+    """Get workflow settings by item type id."""
+    from weko_workflow.models import ActionStatusPolicy, WorkFlow
+
+    workflow = WorkFlow.query.filter_by(
+        itemtype_id=item_type_id).first()
+    if not workflow:
+        item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
+        id_list = [x.id for x in item_type_list]
+        workflow = (
+            WorkFlow.query
+            .filter(WorkFlow.itemtype_id.in_(id_list))
+            .order_by(WorkFlow.itemtype_id.desc())
+            .order_by(WorkFlow.flow_id.asc()).first())
+    return workflow

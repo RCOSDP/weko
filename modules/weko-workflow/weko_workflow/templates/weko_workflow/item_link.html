@@ -68,7 +68,7 @@
                   <div class="row" ng-repeat="sub_link_item in link_item_list track by $index">
                     <div class="col-sm-4 col-md-4 col-lg-4">
                       <select class="form-control" ng-model="sub_link_item.sele_id">
-                        <option ng-repeat="option in sub_link_item.seleOption" value="{[ option.id ]}">{[
+                        <option ng-repeat="option in sele_options" value="{[ option.id ]}">{[
                           option.content]}</option>
                       </select>
                     </div>

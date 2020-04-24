@@ -369,18 +369,23 @@ class WekoDeposit(Deposit):
             self['$schema'] = current_app.extensions['invenio-jsonschemas'].\
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
+
         try:
             deposit = super(WekoDeposit, self).publish(pid, id_)
 
             # update relation version current to ES
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid', object_uuid=self.id).first()
-            relations = serialize_relations(pid)
+            recid = PersistentIdentifier.query.filter_by(
+                pid_type='recid',
+                object_uuid=self.id
+            ).one_or_none()
+            relations = serialize_relations(recid)
             if relations and 'version' in relations:
                 relations_ver = relations['version'][0]
-                relations_ver['id'] = pid.object_uuid
+                relations_ver['id'] = recid.object_uuid
                 relations_ver['is_last'] = relations_ver.get('index') == 0
                 self.indexer.update_relation_version_is_last(relations_ver)
+            RecordDraft.unlink(recid, deposit.pid)
+
             return deposit
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
@@ -541,7 +546,7 @@ class WekoDeposit(Deposit):
             flag_modified(record, 'json')
             db.session.merge(record)
 
-    def newversion(self, pid=None):
+    def newversion(self, pid=None, is_draft=False):
         """Create a new version deposit."""
         deposit = None
         try:
@@ -566,14 +571,19 @@ class WekoDeposit(Deposit):
                         data.pop(k, None)
 
                     # attaching version ID
-                    recid = '{0}.{1}' . format(
+                    if is_draft:
+                        draft_id = '{0}.{1}' . format(
+                            last_pid.pid_value,
+                            0)
+                    else:
+                        draft_id = '{0}.{1}' . format(
                         last_pid.pid_value,
                         get_latest_version_id(last_pid.pid_value))
                     # NOTE: We call the superclass `create()` method, because
                     # we don't want a new empty bucket, but
                     # an unlocked snapshot of the old record's bucket.
                     deposit = super(WekoDeposit, self).create(data,
-                                                              recid=recid)
+                                                              recid=draft_id)
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
@@ -905,6 +915,61 @@ class WekoDeposit(Deposit):
             db.session.merge(self.model)
 
         return self.__class__(self.model.json, model=self.model)
+
+    def prepare_edit_item(self, recid):
+        """
+        Get user information by email.
+
+        Query database to get user id by using email
+        Get username from database using user id
+        Pack response data: user id, user name, email
+
+        parameter:
+            recid: The email
+        return:
+            response
+        """
+        # prepare params for new workflow activity
+        current_app.logger.debug('PREPARE params for new workflow activity')
+
+        draft_deposit = self.newversion(recid, is_draft=True)
+        # depid = PersistentIdentifier.get('depid', str(recid.pid_value))
+        # last_recid = PIDVersioning(child=recid).last_child
+        draft_recid = PersistentIdentifier.get('recid', str(draft_deposit['recid']))
+        draft_depid = RecordDraft.get_draft(draft_recid)
+
+        return draft_deposit
+        # Create snapshot bucket for draft record
+        # try:
+        #     with db.session.begin_nested():
+        #         from weko_workflow.utils import delete_bucket
+        #         # draft_deposit = WekoDeposit(
+        #         #     draft_record,
+        #         #     draft_record.model
+        #         # )
+        #         snapshot = deposit.files.bucket.snapshot(lock=False)
+        #         snapshot.locked = False
+        #         draft_deposit['_buckets'] = {'deposit': str(snapshot.id)}
+        #         draft_record_bucket = RecordsBuckets.create(
+        #             deposit=draft_record.model,
+        #             bucket=snapshot
+        #         )
+
+        #         # Remove duplicated buckets
+        #         draft_record_buckets = RecordsBuckets.query.filter_by(
+        #             record_id=draft_record.model.id
+        #         ).all()
+        #         for record_bucket in draft_record_buckets:
+        #             if record_bucket != draft_record_bucket:
+        #                 delete_bucket_id = record_bucket.bucket_id
+        #                 RecordsBuckets.query.filter_by(
+        #                     bucket_id=delete_bucket_id).delete()
+        #                 delete_bucket(delete_bucket_id)
+        #         draft_deposit.commit()
+        # except Exception as ex:
+        #     db.session.rollback()
+        #     current_app.logger.exception(str(ex))
+        #     return None
 
 
 class WekoRecord(Record):
