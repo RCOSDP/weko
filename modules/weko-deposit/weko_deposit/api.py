@@ -1186,6 +1186,21 @@ class WekoRecord(Record):
 
             return page
 
+        def is_biblio_info_data(attribute_value_mlt):
+            """Check if current attribute is bibliographic."""
+            if isinstance(attribute_value_mlt, list):
+                for attribute in attribute_value_mlt:
+                    for schema_key in current_app[
+                            'BIBLIOGRAPHIC_INFORMATION_SCHEMA_KEY']:
+                        if schema_key in attribute:
+                            return True
+            else:
+                for schema_key in current_app[
+                        'BIBLIOGRAPHIC_INFORMATION_SCHEMA_KEY']:
+                    if schema_key in attribute_value_mlt:
+                        return True
+            return False
+
         def get_issue_dates(issue_dates):
             """
             Get issue dates.
@@ -1260,8 +1275,9 @@ class WekoRecord(Record):
                                             creator_mails]
                                     creators.append(after_format)
                             nval['attribute_value_mlt'] = creators
-                        elif nval['attribute_name'] == \
-                                'Bibliographic Information':
+                        elif val.get(
+                                'attribute_value_mlt') and is_biblio_info_data(
+                                val.get('attribute_value_mlt')):
                             nval['attribute_value_mlt'] = \
                                 get_bibliographic_list(
                                 copy.deepcopy(mlt))

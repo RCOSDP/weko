@@ -54,7 +54,7 @@
                        </td>
                      </tr>
                  {%- endif -%}
-              {% elif lst['attribute_name'] == 'Bibliographic Information' %}
+              {%- elif lst.get('attribute_value_mlt') is not none and lst['attribute_value_mlt'][0]['magazine_attribute_name'] -%}
                  {{ output_bibliographic_information(lst) }}
               {% else %}
                   {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' %}
