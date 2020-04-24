@@ -122,7 +122,7 @@ class ComponentExclusionTarget extends React.Component {
 
   render() {
     return (
-      <div className="col-sm-9 form-group style-component">
+      <div className="col-sm-12 form-group style-component">
         <label className="control-label col-xs-3" style={{textAlign:'right'}}>
           {COMPONENT_SEARCH_EMAIL_NAME}
         </label>

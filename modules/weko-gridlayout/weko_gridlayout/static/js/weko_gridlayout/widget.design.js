@@ -778,8 +778,7 @@ class PreviewWidget extends React.Component {
     constructor(props) {
         super(props);
         this.style = {
-            "border": "1px solid #eee",
-            "min-height": "300px",
+            "border": "1px solid #eee"
         };
     }
 

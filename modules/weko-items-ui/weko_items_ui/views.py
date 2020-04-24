@@ -53,12 +53,13 @@ from weko_workflow.utils import prepare_edit_workflow
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
-from .utils import _get_max_export_items, export_items, \
-    get_current_user, get_list_email, get_list_username, \
-    get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, get_workflow_by_item_type_id, \
-    parse_ranking_results, remove_excluded_items_in_json_schema, \
-    set_multi_language_name, to_files_js, update_index_tree_for_record, \
+from .utils import _get_max_export_items, export_items, get_actionid, \
+    get_current_user, get_data_authors_prefix_settings, get_list_email, \
+    get_list_username, get_new_items_by_date, get_user_info_by_email, \
+    get_user_info_by_username, get_user_information, get_user_permission, \
+    is_schema_include_key, parse_ranking_results, \
+    remove_excluded_items_in_json_schema, set_multi_language_name, \
+    to_files_js, translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
@@ -108,16 +109,14 @@ def index(item_type_id=0):
                 url_for('.index', item_type_id=lists[0].item_type[0].id))
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        need_file = False
-
-        if 'filename' in json.dumps(item_type.schema):
-            need_file = True
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
             page=page,
             render_widgets=render_widgets,
             need_file=need_file,
+            need_billing_file=need_billing_file,
             record={},
             jsonschema=json_schema,
             schemaform=schema_form,
@@ -166,12 +165,12 @@ def iframe_index(item_type_id=0):
                 files = item_json.get('files')
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
-        need_file = False
-        if 'filename' in json.dumps(item_type.schema):
-            need_file = True
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
+
         return render_template(
             'weko_items_ui/iframe/item_edit.html',
             need_file=need_file,
+            need_billing_file=need_billing_file,
             records=record,
             jsonschema=json_schema,
             schemaform=schema_form,
@@ -249,41 +248,28 @@ def get_json_schema(item_type_id=0, activity_id=""):
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
-            if item_type_id == 20:
-                result = ItemTypes.get_by_id(item_type_id)
-                if result is None:
-                    return '{}'
-                json_schema = result.schema
-                properties = json_schema.get('properties')
-                for _key, value in properties.items():
-                    if 'validationMessage_i18n' in value:
-                        value['validationMessage'] =\
-                            value['validationMessage_i18n'][cur_lang]
-            else:
-                result = ItemTypes.get_record(item_type_id)
-                if 'filemeta' in json.dumps(result):
-                    group_list = Group.get_group_list()
-                    group_enum = list(group_list.keys())
-                    filemeta_group = result.get('properties').get(
-                        'filemeta').get(
-                        'items').get('properties').get('groups')
-                    filemeta_group['enum'] = group_enum
-
+            result = ItemTypes.get_record(item_type_id)
+            properties = result.get('properties')
+            if 'filemeta' in json.dumps(result):
+                group_list = Group.get_group_list()
+                group_enum = list(group_list.keys())
+                filemeta_group = properties.get(
+                    'filemeta').get(
+                    'items').get('properties').get('groups')
+                filemeta_group['enum'] = group_enum
+            for _key, value in properties.items():
+                translate_validation_message(value, cur_lang)
         if result is None:
             return '{}'
-
         if activity_id:
             updated_json_schema = update_json_schema_by_activity_id(
                 result,
                 activity_id)
             if updated_json_schema:
                 result = updated_json_schema
-
         json_schema = result
-
         # Remove excluded item in json_schema
         remove_excluded_items_in_json_schema(item_type_id, json_schema)
-
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
@@ -593,12 +579,12 @@ def default_view_method(pid, record, template=None):
             files = item_json.get('files')
         if 'endpoints' in item_json:
             endpoints = item_json.get('endpoints')
-    need_file = False
-    if 'filename' in json.dumps(item_type.schema):
-        need_file = True
+    need_file, need_billing_file = is_schema_include_key(item_type.schema)
+
     return render_template(
         template,
         need_file=need_file,
+        need_billing_file=need_billing_file,
         record=record,
         jsonschema=json_schema,
         schemaform=schema_form,
@@ -1191,3 +1177,22 @@ def save_title_and_share_user_id():
     data = request.get_json()
     validate_save_title_and_share_user_id(result, data)
     return jsonify(result)
+
+
+@blueprint_api.route('/author_prefix_settings', methods=['GET'])
+def get_authors_prefix_settings():
+    """Get all author prefix settings."""
+    author_prefix_settings = get_data_authors_prefix_settings()
+    if author_prefix_settings is not None:
+        results = []
+        for prefix in author_prefix_settings:
+            scheme = prefix.scheme
+            url = prefix.url
+            result = dict(
+                scheme=scheme,
+                url=url
+            )
+            results.append(result)
+        return jsonify(results)
+    else:
+        return abort(403)

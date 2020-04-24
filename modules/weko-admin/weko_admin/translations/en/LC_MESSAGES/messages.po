@@ -99,6 +99,10 @@ msgstr ""
 msgid "WebAPI Account"
 msgstr ""
 
+#: weko_admin/admin.py:917
+msgid "Specified repository is already registered."
+msgstr ""
+
 #: weko_admin/ext.py:42
 msgid "A translation string"
 msgstr ""

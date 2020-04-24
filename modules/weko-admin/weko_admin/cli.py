@@ -215,12 +215,13 @@ def authors_prefix():
 
 @authors_prefix.command('default_settings')
 @click.argument('name')
+@click.argument('scheme')
 @click.argument('url')
 @with_appcontext
-def create_default_settings(name, url):
+def create_default_settings(name, scheme, url):
     """Create default settings."""
     try:
-        AuthorsPrefixSettings.create(name, url)
+        AuthorsPrefixSettings.create(name, scheme, url)
         click.secho('insert setting success')
     except Exception as ex:
         click.secho(str(ex))
