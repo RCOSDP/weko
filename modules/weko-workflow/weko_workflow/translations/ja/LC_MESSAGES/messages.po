@@ -510,4 +510,8 @@ msgstr "閉じる"
 msgid "Add Filter"
 msgstr "フィルターを追加"
 
+msgid "Link"
+msgstr "リンク"
 
+msgid "Display Name"
+msgstr "表示名"

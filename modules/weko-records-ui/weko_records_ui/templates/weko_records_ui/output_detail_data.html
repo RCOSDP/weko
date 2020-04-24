@@ -108,7 +108,11 @@
         {% set label_text = _(label) %}
       {%- endif -%}
       <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label_text }}</th>
-    <td class="{%- if label == 'Research Plan' or label == 'Summary' or label == 'Annual Report' %}multiple-line{%- endif %}">{{ content | translate_content }}</td>
+      {%- if label == 'URL' -%}
+          <td><a href="{{content}}">{{ content | translate_content }}</a></td>
+      {%- else -%}
+          <td class="{%- if label == 'Research Plan' or label == 'Summary' or label == 'Annual Report' %}multiple-line{%- endif %}">{{ content | translate_content }}</td>
+      {%- endif -%}
   </tr>
 {% endmacro %}
 
