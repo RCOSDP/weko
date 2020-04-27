@@ -127,48 +127,6 @@
                   </ul>
                 </div>
               </div>
-              {%- if need_file %}
-              
-              <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                <div class="col-sm-12">
-                  <invenio-files-error
-                    template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
-                  </invenio-files-error>
-                  <invenio-files-upload-zone
-                    template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
-                  </invenio-files-upload-zone>
-                  <invenio-files-list
-                    template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
-                  ></invenio-files-list>
-                </div>
-              </div>
-              {%- endif %}
-
-              {%- if need_billing_file %}
-              <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                <div class="col-sm-12">
-                  <invenio-files-error
-                    template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
-                  </invenio-files-error>
-                  <invenio-files-upload-zone
-                    template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
-                  </invenio-files-upload-zone>
-                  <invenio-files-list
-                    template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
-                  ></invenio-files-list>
-                </div>
-              </div>
-              {%- endif %}
-              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading"> 
-                <div>
-                  <div class="row">
-                    <div class="col-sm-12">
-                      <form name="depositionForm" class="form-horizontal ng-pristine ng-isolate-scope ng-valid ng-valid-schema-form" sf-schema="recordsVM.invenioRecordsSchema">
-                        <div id="new-postion-filename"></div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
               {%- if need_thumbnail %}
                 <div class="row">
                   <div class="col-sm-12">
@@ -204,7 +162,8 @@
                   </div>
                 </div>
               {%- endif %}
-               {%- if show_automatic_metadata_input %}
+              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading"> 
+                {%- if show_automatic_metadata_input %}
                 <div class="row">
                   <div class="col-sm-12">
                   <p class="text-center">
@@ -271,6 +230,36 @@
                 {%- endif %}
                 <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
                 <div ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  {%- if need_file %}
+                  <div id="file_upload" class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="col-sm-12">
+                      <invenio-files-error
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                      </invenio-files-error>
+                      <invenio-files-upload-zone
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                      </invenio-files-upload-zone>
+                      <invenio-files-list
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
+                      ></invenio-files-list>
+                    </div>
+                  </div>
+                  {%- endif %}
+                  {%- if need_billing_file %}
+                  <div id="billing_file_upload" class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="col-sm-12">
+                      <invenio-files-error
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                      </invenio-files-error>
+                      <invenio-files-upload-zone
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                      </invenio-files-upload-zone>
+                      <invenio-files-list
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
+                      ></invenio-files-list>
+                    </div>
+                  </div>
+                  {%- endif %}
                   <invenio-records-form
                     form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
                     form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
