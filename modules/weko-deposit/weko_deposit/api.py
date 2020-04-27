@@ -1190,12 +1190,12 @@ class WekoRecord(Record):
             """Check if current attribute is bibliographic."""
             if isinstance(attribute_value_mlt, list):
                 for attribute in attribute_value_mlt:
-                    for schema_key in current_app[
+                    for schema_key in current_app.config[
                             'BIBLIOGRAPHIC_INFORMATION_SCHEMA_KEY']:
                         if schema_key in attribute:
                             return True
             else:
-                for schema_key in current_app[
+                for schema_key in current_app.config[
                         'BIBLIOGRAPHIC_INFORMATION_SCHEMA_KEY']:
                     if schema_key in attribute_value_mlt:
                         return True
