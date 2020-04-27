@@ -484,9 +484,10 @@ class SchemaTree:
             for k1, v1 in node.items():
                 # if 'item' not in v1:
                 #     continue
-                klst = get_items_value_lst(atr_vm, v1, rlst)
-                if klst:
-                    node[k1] = klst
+                if isinstance(v1, str):
+                    klst = get_items_value_lst(atr_vm, v1, rlst)
+                    if klst:
+                        node[k1] = klst
 
         def get_mapping_value(mpdic, atr_vm, k, atr_name):
             remain_keys = []
@@ -699,7 +700,10 @@ class SchemaTree:
                 if self._atr in v:
                     attr_of_parent_item = {self._atr: v[self._atr]}
             # remove None value
-            vlst = clean_none_value(vlst[0])
+            # for ddi_mapping, we need to keep attribute data even if value data is None
+            vlst = vlst[
+                0] if self._schema_name == 'ddi_mapping' else clean_none_value(
+                vlst[0])
 
             if vlst:
                 for k, v in vlst.items():
@@ -725,6 +729,80 @@ class SchemaTree:
                                                           vlst)
             return vlst
 
+        def validate_overlap_mapping():
+            """ Validate duplicate mapping.
+            @return:
+            """
+
+            def get_lst_mapping(current_checking, parent_node=[]):
+                """ Get list detail mapping of current checking node
+                @param current_checking:
+                @param parent_node:
+                @return:
+                """
+                for key, val in current_checking.items():
+                    if isinstance(val, str):
+                        parent_node.append(key)
+                        return_val = '.'.join(parent_node)
+                        yield return_val
+                    else:
+                        parent_node_clone = copy.deepcopy(parent_node)
+                        parent_node_clone.append(key)
+                        for i in get_lst_mapping(val, parent_node_clone):
+                            yield i
+
+            def get_detail_node(lst_data, idx):
+                """ Get detail info of node.
+                @param lst_data:
+                @param idx:
+                @return:
+                """
+                item_key = next(iter(lst_data[idx]))
+                item_val = lst_mapping_detail[idx].get(item_key)
+                lst_values = [i for i in item_val if i.endswith('@value')]
+                return item_key, item_val, lst_values
+
+            lst_temporary = {}
+            for k, v in self._record.items():
+                if isinstance(v, dict) and v.get(self._schema_name):
+                    for data in get_lst_mapping(v.get(self._schema_name),
+                                             [self._schema_name]):
+                        if not lst_temporary.get(k, None):
+                            lst_temporary[k] = []
+                        lst_temporary.get(k).append(data)
+            lst_mapping_detail = []
+            for k, v in lst_temporary.items():
+                lst_mapping_detail.append({k: v})
+
+            for i in range(len(lst_mapping_detail)):
+                item_src_key, item_src_val, lst_values_src = get_detail_node(
+                    lst_mapping_detail, i)
+                for j in range(i + 1, len(lst_mapping_detail)):
+                    item_des_key, item_des_val, lst_values_des = get_detail_node(
+                        lst_mapping_detail, j)
+                    lst_overlap = list(
+                        set(lst_values_src).intersection(lst_values_des))
+                    if lst_overlap:
+                        for overlap_val in lst_overlap:
+                            overlap_key = overlap_val.replace('.@value', '')
+                            lst_all_src = [i for i in item_src_val if
+                                           i.startswith(overlap_key)]
+                            lst_all_des = [i for i in item_des_val if
+                                           i.startswith(overlap_key)]
+                            if lst_all_src != lst_all_des:
+                                current_app.logger.error(
+                                    (
+                                        'Mapping Error: Duplicate mapping between {0} and {1} at key:{2}').format(
+                                        item_src_key, item_des_key,
+                                        overlap_key))
+                                overlap_key = overlap_key.split('.')
+                                last_key = overlap_key.pop()
+                                del_item = self._record[item_des_key]
+                                for x in overlap_key:
+                                    del_item = del_item[x]
+                                del del_item[last_key]
+
+        validate_overlap_mapping()
         vlst = []
         for key_item_parent, value_item_parent in self._record.items():
             if key_item_parent != 'pubdate' and isinstance(value_item_parent,
@@ -759,7 +837,6 @@ class SchemaTree:
                                                            atr_name)
                             if vlst_child[0]:
                                 vlst.extend(vlst_child)
-                            # truong
         return vlst
 
     def create_xml(self):
@@ -834,7 +911,7 @@ class SchemaTree:
                 att_lang = {self._atr_lang: [[current_lang]]}
                 existed_attr.update(att_lang)
                 node.update(existed_attr)
-            if not current_lang and current_separate_key_node:
+            if current_lang is None and current_separate_key_node:
                 for lang in self._separate_nodes.get(
                         current_separate_key_node):
                     set_children(kname, node, tree, parent_keys, lang)
@@ -1085,6 +1162,9 @@ class SchemaTree:
                     val.remove(self._special_lang)
                 if None in val:
                     val.remove(None)
+                # Just add an empty element in case there is no language
+                if len(val) == 0:
+                    val.add('')
         for lst in node_tree:
             for k, v in lst.items():
                 # Remove items that are not set as controlled vocabulary
