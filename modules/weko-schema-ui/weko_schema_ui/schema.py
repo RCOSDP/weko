@@ -243,6 +243,7 @@ class SchemaTree:
 
     def get_ignore_item_from_option(self):
         """Get all keys of properties that is enable Hide option in metadata."""
+
         ignore_list = []
         from weko_records.utils import get_options_and_order_list
         _, meta_options = get_options_and_order_list(self._item_type_id)
@@ -700,7 +701,8 @@ class SchemaTree:
                 if self._atr in v:
                     attr_of_parent_item = {self._atr: v[self._atr]}
             # remove None value
-            # for ddi_mapping, we need to keep attribute data even if value data is None
+            # for ddi_mapping, we need to keep attribute data
+            # even if value data is None
             vlst = vlst[
                 0] if self._schema_name == 'ddi_mapping' else clean_none_value(
                 vlst[0])
@@ -730,12 +732,14 @@ class SchemaTree:
             return vlst
 
         def validate_overlap_mapping():
-            """ Validate duplicate mapping.
+            """Validate duplicate mapping.
+
             @return:
             """
 
             def get_lst_mapping(current_checking, parent_node=[]):
-                """ Get list detail mapping of current checking node
+                """Get list detail mapping of current checking node.
+
                 @param current_checking:
                 @param parent_node:
                 @return:
@@ -752,7 +756,8 @@ class SchemaTree:
                             yield i
 
             def get_detail_node(lst_data, idx):
-                """ Get detail info of node.
+                """Get detail info of node.
+
                 @param lst_data:
                 @param idx:
                 @return:
@@ -766,7 +771,7 @@ class SchemaTree:
             for k, v in self._record.items():
                 if isinstance(v, dict) and v.get(self._schema_name):
                     for data in get_lst_mapping(v.get(self._schema_name),
-                                             [self._schema_name]):
+                                                [self._schema_name]):
                         if not lst_temporary.get(k, None):
                             lst_temporary[k] = []
                         lst_temporary.get(k).append(data)
@@ -778,8 +783,8 @@ class SchemaTree:
                 item_src_key, item_src_val, lst_values_src = get_detail_node(
                     lst_mapping_detail, i)
                 for j in range(i + 1, len(lst_mapping_detail)):
-                    item_des_key, item_des_val, lst_values_des = get_detail_node(
-                        lst_mapping_detail, j)
+                    item_des_key, item_des_val, lst_values_des = \
+                        get_detail_node(lst_mapping_detail, j)
                     lst_overlap = list(
                         set(lst_values_src).intersection(lst_values_des))
                     if lst_overlap:
@@ -790,11 +795,12 @@ class SchemaTree:
                             lst_all_des = [i for i in item_des_val if
                                            i.startswith(overlap_key)]
                             if lst_all_src != lst_all_des:
-                                current_app.logger.error(
-                                    (
-                                        'Mapping Error: Duplicate mapping between {0} and {1} at key:{2}').format(
-                                        item_src_key, item_des_key,
-                                        overlap_key))
+                                err_msg = 'Mapping Error: Duplicate mapping ' \
+                                          'between {0} and {1} ' \
+                                          'at key:{2}'.format(
+                                            item_src_key, item_des_key,
+                                            overlap_key)
+                                current_app.logger.error(err_msg)
                                 overlap_key = overlap_key.split('.')
                                 last_key = overlap_key.pop()
                                 del_item = self._record[item_des_key]
@@ -814,7 +820,8 @@ class SchemaTree:
                     self._schema_name) if self._schema_name \
                     in value_item_parent else ''
                 if mpdic is "" or (
-                        self._ignore_list and key_item_parent in self._ignore_list):
+                        self._ignore_list and key_item_parent
+                            in self._ignore_list):
                     continue
                 # List or string
                 atr_v = value_item_parent.get('attribute_value')
