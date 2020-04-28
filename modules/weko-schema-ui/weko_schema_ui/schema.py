@@ -432,9 +432,9 @@ class SchemaTree:
                 if 'fulltext' in attr:
                     pid = self._record.get('control_number')
                     if pid:
-                        return request.host_url[:-1] + \
-                               url_for('invenio_records_ui.recid_files',
-                                       pid_value=pid, filename=val)
+                        return request.host_url[:-1] + url_for(
+                            'invenio_records_ui.recid_files', pid_value=pid,
+                            filename=val)
                     else:
                         return val
                 else:
@@ -802,9 +802,9 @@ class SchemaTree:
                             if lst_all_src != lst_all_des:
                                 err_msg = 'Mapping Error: Duplicate mapping ' \
                                           'between {0} and {1} ' \
-                                          'at key:{2}'.format(
-                                            item_src_key, item_des_key,
-                                            overlap_key)
+                                          'at key:{2}'.format(item_src_key,
+                                                              item_des_key,
+                                                              overlap_key)
                                 current_app.logger.error(err_msg)
                                 overlap_key = overlap_key.split('.')
                                 last_key = overlap_key.pop()
@@ -822,8 +822,7 @@ class SchemaTree:
                 # get value of the combination between record and \
                 # mapping data that is inited at __init__ function
                 mpdic = value_item_parent.get(
-                    self._schema_name) if self._schema_name \
-                                          in value_item_parent else ''
+                    self._schema_name) if self._schema_name in value_item_parent else ''
                 if mpdic is "" or (
                     self._ignore_list and key_item_parent
                         in self._ignore_list):
@@ -1186,8 +1185,8 @@ class SchemaTree:
                 if k in indetifier_keys:
                     remove_custom_scheme(v[name_identifier_key], v)
                     if affiliation_key in v:
-                        remove_custom_scheme(v[affiliation_key][
-                                                 name_identifier_key], v)
+                        remove_custom_scheme(
+                            v[affiliation_key][name_identifier_key], v)
                 k = get_prefix(k)
                 set_children(k, v, root, [k])
         return root
