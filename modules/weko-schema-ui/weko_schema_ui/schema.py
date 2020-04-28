@@ -1037,7 +1037,7 @@ class SchemaTree:
                     self._atr_lang) == self._special_lang and \
                         current_lang == self._special_lang_default:
                     current_lst.append(i)
-                if att_lang and attr[i].get(
+                elif att_lang and attr[i].get(
                     self._atr_lang) and attr[i].get(
                         self._atr_lang) != current_lang:
                     remove_lst.append(i)
