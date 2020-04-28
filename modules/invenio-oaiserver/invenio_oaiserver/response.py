@@ -407,12 +407,11 @@ def create_identifier_index(root, **kwargs):
 
     except Exception as e:
         current_app.logger.error(str(e))
-        pass
     return root
 
 
 def check_correct_system_props_mapping(object_uuid, system_mapping_config):
-    """Validate and return if jpcoar mapping is correct.
+    """Validate and return if selection mapping is correct.
 
     Correct mapping mean item map have the 2 field same with config
     """
@@ -435,8 +434,9 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
 
 
 def combine_record_file_urls(record, object_uuid):
-    """Validate and return if jpcoar mapping is correct.
+    """Add file urls to record metadata.
 
+    Get file property information by item_mapping and put to metadata.
     """
     from weko_records.api import ItemsMetadata, Mapping
     from weko_records.serializers.utils import get_mapping
@@ -446,32 +446,25 @@ def combine_record_file_urls(record, object_uuid):
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
 
-    if current_app.config["OAISERVER_FILE_PROPS_MAPPING"]:
-        file_keys = item_map.get(current_app.config[
-                                     "OAISERVER_FILE_PROPS_MAPPING"])
+    file_keys = item_map.get(current_app.config[
+        "OAISERVER_FILE_PROPS_MAPPING"])
+    file_keys = file_keys.split('.')
 
-        file_keys = file_keys.split('.')
-
-        if len(file_keys) != 3:
-            return record
-
-        if record.get(file_keys[0]):
-            attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
-            if isinstance(attr_mlt, list):
-                for attr in attr_mlt:
-                    if attr.get(file_keys[1]):
-                        attr[file_keys[1]][file_keys[2]] = \
-                            '{}record/{}/files/{}'.format(
-                                request.url_root,
-                                record.get('recid'),
-                                attr.get('filename'))
-            elif isinstance(attr_mlt, dict) and attr_mlt.get(file_keys[1]):
-                attr_mlt[file_keys[1]][file_keys[2]] = \
-                    '{}record/{}/files/{}'.format(
-                        request.url_root,
-                        record.get('recid'),
-                        attr_mlt.get('filename'))
-            else:
-                return record
+    if len(file_keys) == 3 and record.get(file_keys[0]):
+        attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
+        if isinstance(attr_mlt, list):
+            for attr in attr_mlt:
+                if attr.get(file_keys[1]):
+                    attr[file_keys[1]][file_keys[2]] = \
+                        '{}record/{}/files/{}'.format(
+                            request.url_root,
+                            record.get('recid'),
+                            attr.get('filename'))
+        elif isinstance(attr_mlt, dict) and attr_mlt.get(file_keys[1]):
+            attr_mlt[file_keys[1]][file_keys[2]] = \
+                '{}record/{}/files/{}'.format(
+                    request.url_root,
+                    record.get('recid'),
+                    attr_mlt.get('filename'))
 
     return record
