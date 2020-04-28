@@ -60,9 +60,10 @@ class SchemaConverter:
 
     def create_schema(self, schema_file):
         """Create_schema."""
+
         def getXSVal(element_name):  # replace prefix namespace
             if (element_name is not None
-                    and isinstance(element_name, Iterable)
+                and isinstance(element_name, Iterable)
                     and "}" in element_name):
                 for k, nsp in schema_data.namespaces.items():
                     if nsp in element_name:
@@ -137,7 +138,7 @@ class SchemaConverter:
             for chd in element.iterchildren():
                 if (chd not in ignore_list
                     and not getXSVal(element.name).__eq__(getXSVal(chd.name))
-                        and is_valid_element(chd.name)
+                    and is_valid_element(chd.name)
                         and not isinstance(chd, XsdAnyElement)):
                     ctp = OrderedDict()
                     chn = getXSVal(chd.name)
@@ -243,7 +244,6 @@ class SchemaTree:
 
     def get_ignore_item_from_option(self):
         """Get all keys of properties that is enable Hide option in metadata."""
-
         ignore_list = []
         from weko_records.utils import get_options_and_order_list
         _, meta_options = get_options_and_order_list(self._item_type_id)
@@ -355,6 +355,7 @@ class SchemaTree:
 
     def __get_value_list(self, remove_empty=False):
         """Find values to a list."""
+
         def analysis(field):
             exp = (',',)
             return exp[0], field.split(exp[0])
@@ -432,8 +433,8 @@ class SchemaTree:
                     pid = self._record.get('control_number')
                     if pid:
                         return request.host_url[:-1] + \
-                            url_for('invenio_records_ui.recid_files',
-                                    pid_value=pid, filename=val)
+                               url_for('invenio_records_ui.recid_files',
+                                       pid_value=pid, filename=val)
                     else:
                         return val
                 else:
@@ -602,22 +603,28 @@ class SchemaTree:
                         # check if @value has value
                         node_val = v.get('@value', None)
                         if isinstance(node_val, list) and node_val[0] and (
-                                node_val[0].count(None) == 0
-                                or (node_val[0].count(None) > 0
-                                    and node_val[0].count(None) != len(
+                            node_val[0].count(None) == 0
+                            or (node_val[0].count(None) > 0
+                                and node_val[0].count(None) != len(
                                 node_val[0]))):
                             # get index of None value
                             lst_none_idx = [idx for idx, val in
                                             enumerate(node_val[0]) if
                                             val is None or val == '']
-                            if len(lst_none_idx) > 0:
-                                # delete all None element in @value
-                                for i in lst_none_idx:
-                                    del node_val[0][i]
-                                # delete all None element in all @attributes
-                                for key, val in v.get(self._atr, {}).items():
+                            if self._schema_name != 'ddi_mapping':
+                                if len(lst_none_idx) > 0:
+                                    # delete all None element in @value
                                     for i in lst_none_idx:
-                                        del val[0][i]
+                                        del node_val[0][i]
+                                    # delete all None element in all @attributes
+                                    for key, val in v.get(self._atr,
+                                                          {}).items():
+                                        for i in lst_none_idx:
+                                            del val[0][i]
+                            else:
+                                if not v.get(self._atr, {}).items():
+                                    for i in lst_none_idx:
+                                        del node_val[0][i]
                             clean[k] = v
                         else:
                             nested = clean_none_value(v)
@@ -703,9 +710,7 @@ class SchemaTree:
             # remove None value
             # for ddi_mapping, we need to keep attribute data
             # even if value data is None
-            vlst = vlst[
-                0] if self._schema_name == 'ddi_mapping' else clean_none_value(
-                vlst[0])
+            vlst = clean_none_value(vlst[0])
 
             if vlst:
                 for k, v in vlst.items():
@@ -818,10 +823,10 @@ class SchemaTree:
                 # mapping data that is inited at __init__ function
                 mpdic = value_item_parent.get(
                     self._schema_name) if self._schema_name \
-                    in value_item_parent else ''
+                                          in value_item_parent else ''
                 if mpdic is "" or (
-                        self._ignore_list and key_item_parent
-                            in self._ignore_list):
+                    self._ignore_list and key_item_parent
+                        in self._ignore_list):
                     continue
                 # List or string
                 atr_v = value_item_parent.get('attribute_value')
@@ -853,6 +858,7 @@ class SchemaTree:
         :return:
 
         """
+
         def check_node(node):
             if isinstance(node, dict):
                 if node.get(self._v):
@@ -909,7 +915,8 @@ class SchemaTree:
                 for separate_node_key in self._separate_nodes.keys():
                     if separate_node_key.split('.') == parent_keys:
                         current_separate_key_node = separate_node_key
-            # current lang is None means current node(or its parents) no need to be separated
+            # current lang is None means current node(or its parents)
+            # no need to be separated
             if current_separate_key_node and current_lang:
                 existed_attr = node.get(self._atr, None)
                 if not existed_attr:
@@ -1125,6 +1132,7 @@ class SchemaTree:
             root = E.Weko()
             root.text = "Sorry! This Item has not been mappinged."
             return root
+
         list_json_xml = self.__get_value_list(remove_empty=True)
         if self._schema_name == current_app.config[
                 'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
@@ -1179,7 +1187,7 @@ class SchemaTree:
                     remove_custom_scheme(v[name_identifier_key], v)
                     if affiliation_key in v:
                         remove_custom_scheme(v[affiliation_key][
-                            name_identifier_key], v)
+                                                 name_identifier_key], v)
                 k = get_prefix(k)
                 set_children(k, v, root, [k])
         return root
@@ -1234,6 +1242,7 @@ class SchemaTree:
 
     def find_nodes(self, mlst):
         """Find_nodes."""
+
         def get_generator(nlst):
             gdc.clear()
 
@@ -1345,6 +1354,7 @@ def cache_schema(schema_name, delete=False):
     :return:
 
     """
+
     def get_schema():
         try:
             rec = WekoSchema.get_record_by_name(schema_name)
