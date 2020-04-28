@@ -279,7 +279,7 @@ class QueryFileStatsCount(WekoQuery):
             if unknown_download or unknown_preview:
                 data = dict(
                     country=str(getattr(config, 'WEKO_STATS_UNKNOWN_LABEL')),
-                    download_count=unknown_download,
+                    download_counts=unknown_download,
                     preview_counts=unknown_preview
                 )
                 country_list.append(data)
