@@ -465,12 +465,13 @@ def combine_record_file_urls(record, object_uuid):
                                 request.url_root,
                                 record.get('recid'),
                                 attr.get('filename'))
-            else: # Treat as dict
-                if attr_mlt.get(file_keys[1]):
-                    attr_mlt[file_keys[1]][file_keys[2]] = \
-                        '{}record/{}/files/{}'.format(
-                            request.url_root,
-                            record.get('recid'),
-                            attr_mlt.get('filename'))
+            elif isinstance(attr_mlt, dict) and attr_mlt.get(file_keys[1]):
+                attr_mlt[file_keys[1]][file_keys[2]] = \
+                    '{}record/{}/files/{}'.format(
+                        request.url_root,
+                        record.get('recid'),
+                        attr_mlt.get('filename'))
+            else:
+                return record
 
     return record
