@@ -611,7 +611,8 @@ class SchemaTree:
                             lst_none_idx = [idx for idx, val in
                                             enumerate(node_val[0]) if
                                             val is None or val == '']
-                            if self._schema_name != 'ddi_mapping':
+                            if self._schema_name != current_app.config[
+                                    'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
                                 if len(lst_none_idx) > 0:
                                     # delete all None element in @value
                                     for i in lst_none_idx:
