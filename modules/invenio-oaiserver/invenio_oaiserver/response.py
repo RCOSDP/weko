@@ -456,15 +456,23 @@ def combine_record_file_urls(record, object_uuid):
             for attr in attr_mlt:
                 if attr.get(file_keys[1]):
                     attr[file_keys[1]][file_keys[2]] = \
-                        '{}record/{}/files/{}'.format(
+                        create_files_url(
                             request.url_root,
                             record.get('recid'),
                             attr.get('filename'))
         elif isinstance(attr_mlt, dict) and attr_mlt.get(file_keys[1]):
             attr_mlt[file_keys[1]][file_keys[2]] = \
-                '{}record/{}/files/{}'.format(
+                create_files_url(
                     request.url_root,
                     record.get('recid'),
                     attr_mlt.get('filename'))
 
     return record
+
+
+def create_files_url(root_url, record_id, filename):
+    """Generation of downloading file url."""
+    return "{}record/{}/files/{}".format(
+        root_url,
+        record_id,
+        filename)
