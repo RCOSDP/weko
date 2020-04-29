@@ -57,8 +57,8 @@ from weko_user_profiles.models import UserProfile
 
 from .config import DEPOSIT_RECORDS_UI_CREATOR, MAGAZINE_INFORMATION, \
     MAGAZINE_INFORMATION_KEY
-from .pidstore import get_latest_version_id, weko_deposit_fetcher, \
-    weko_deposit_minter
+from .pidstore import get_latest_version_id, get_record_without_version, \
+    weko_deposit_fetcher, weko_deposit_minter
 from .signals import item_created
 
 PRESERVE_FIELDS = (
@@ -1354,10 +1354,13 @@ class WekoRecord(Record):
 
     def _get_pid(self, pid_type):
         """Return pid_value from persistent identifier."""
+        pid_without_ver = get_record_without_version(self.pid_recid)
+        if not pid_without_ver:
+            return None
         try:
             return PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
-                object_uuid=self.pid_parent.object_uuid,
+                object_uuid=pid_without_ver.object_uuid,
                 status=PIDStatus.REGISTERED).one_or_none()
         except PIDDoesNotExistError as pid_not_exist:
             current_app.logger.error(pid_not_exist)
