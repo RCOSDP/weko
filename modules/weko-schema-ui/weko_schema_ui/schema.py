@@ -693,36 +693,38 @@ class SchemaTree:
                     remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
 
-            attr_of_parent_item = {}
-            for k, v in vlst[0].items():
-                # get attribute of parent Node if any
-                if self._atr in v:
-                    attr_of_parent_item = {self._atr: v[self._atr]}
-            # remove None value
-            vlst = clean_none_value(vlst[0])
+            for vlist_item in vlst:
+                attr_of_parent_item = {}
+                for k, v in vlist_item.items():
+                    # get attribute of parent Node if any
+                    if self._atr in v:
+                        attr_of_parent_item = {self._atr: v[self._atr]}
+                # remove None value
+                vlist_item = clean_none_value(vlist_item)
 
-            if vlst:
-                for k, v in vlst.items():
-                    if attr_of_parent_item:
-                        v.update(attr_of_parent_item)
-            vlst = [vlst]
+                if vlist_item:
+                    for k, v in vlist_item.items():
+                        if attr_of_parent_item:
+                            v.update(attr_of_parent_item)
 
-            if isinstance(atr_vm, dict) and isinstance(vlst, list) and \
-                    'stdyDscr' in vlst[0].keys():
-                if atr_name == 'Contributor':
-                    list_contributor_type = ['Distributor', 'Other',
-                                             'DataCollector']
-                    vlst[0]['stdyDscr'] = handle_type_ddi(
-                        atr_name,
-                        list_contributor_type,
-                        vlst
-                    )
-                elif atr_name == 'Relation':
-                    list_relation_type = ['isReferencedBy', 'isSupplementedBy',
-                                          'isPartOf']
-                    vlst[0]['stdyDscr'] = handle_type_ddi(atr_name,
-                                                          list_relation_type,
-                                                          vlst)
+                if isinstance(atr_vm, dict) and isinstance(vlist_item, list) \
+                    and 'stdyDscr' in vlist_item.keys():
+                    if atr_name == 'Contributor':
+                        list_contributor_type = ['Distributor', 'Other',
+                                                 'DataCollector']
+                        vlist_item['stdyDscr'] = handle_type_ddi(
+                            atr_name,
+                            list_contributor_type,
+                            vlist_item
+                        )
+                    elif atr_name == 'Relation':
+                        list_relation_type = ['isReferencedBy',
+                                              'isSupplementedBy',
+                                              'isPartOf']
+                        vlist_item['stdyDscr'] = handle_type_ddi(
+                            atr_name,
+                            list_relation_type,
+                            vlist_item)
             return vlst
 
         vlst = []
