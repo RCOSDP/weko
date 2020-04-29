@@ -1328,7 +1328,7 @@ class WekoRecord(Record):
 
     def _get_pid(self, pid_type):
         """Return pid_value from persistent identifier."""
-        pid_without_ver = get_record_without_version(self.pid)
+        pid_without_ver = get_record_without_version(self.pid_recid)
         if not pid_without_ver:
             return None
         try:
