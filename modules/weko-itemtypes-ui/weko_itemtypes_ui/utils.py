@@ -272,7 +272,7 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
     """
 
     def process_overlap():
-        """Process partial overlap if any"""
+        """Process partial overlap if any."""
         for overlap_val in lst_overlap:
             overlap_key = overlap_val.replace('.@value', '')
             lst_all_src = [i for i in item_src_val if
