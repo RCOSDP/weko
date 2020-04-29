@@ -248,6 +248,20 @@ def get_detail_node(lst_data, idx):
     return item_key, item_val, lst_values
 
 
+def get_all_mapping(item_value):
+    """Get all mapping of each item.
+
+    @param item_value:
+    @return:
+    """
+    lst_result = []
+    for sub_key, sub_val in item_value.items():
+        if sub_key.endswith('_mapping') and isinstance(sub_val, dict):
+            for i in get_lst_mapping(sub_val, [sub_key]):
+                lst_result.append(i)
+    return lst_result
+
+
 def check_duplicate_mapping(data_mapping, meta_system, item_type):
     """Check_duplicate mapping.
 
@@ -257,13 +271,8 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
     @return:
     """
     lst_temporary = {}
-    for k, v in data_mapping.items():
-        for k1, v1 in v.items():
-            if k1.endswith('_mapping') and isinstance(v1, dict):
-                for i in get_lst_mapping(v1, [k1]):
-                    if not lst_temporary.get(k, None):
-                        lst_temporary[k] = []
-                    lst_temporary.get(k).append(i)
+    for item_key, item_value in data_mapping.items():
+        lst_temporary[item_key] = get_all_mapping(item_value)
     lst_mapping_detail = []
     for k, v in lst_temporary.items():
         lst_mapping_detail.append({k: v})
@@ -272,7 +281,6 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
         item_src_key, item_src_val, lst_values_src = get_detail_node(
             lst_mapping_detail, i)
         if item_src_key in meta_system:
-            print(item_src_key)
             continue
         for j in range(i + 1, len(lst_mapping_detail)):
             item_des_key, item_des_val, lst_values_des = get_detail_node(

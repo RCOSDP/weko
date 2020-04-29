@@ -33,7 +33,7 @@ $(document).ready(function () {
 
    function addError(message,err_items) {
     message += '<br/>'
-     err_items.forEach(items =>{
+     err_items.forEach(function(items){
        message += '[' + items[0] + ' && ' + items[1] + ']' + '<br/>'
      })
     $('#errors').append(
