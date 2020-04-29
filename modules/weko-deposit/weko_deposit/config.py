@@ -160,3 +160,14 @@ MAGAZINE_INFORMATION = {
     'bibliographicIssueDates': 'Issued Date'
 }
 """Magazine information key and value."""
+
+BIBLIOGRAPHIC_INFORMATION_SCHEMA_KEY = [
+    'bibliographic_titles',
+    'bibliographicPageEnd',
+    'bibliographicIssueNumber',
+    'bibliographicPageStart',
+    'bibliographicVolumeNumber',
+    'bibliographicNumberOfPages',
+    'bibliographicIssueDates'
+]
+"""Magazine schema key."""
