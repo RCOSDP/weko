@@ -270,6 +270,22 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
     @param item_type:
     @return:
     """
+
+    def process_overlap():
+        """Process partial overlap if any"""
+        for overlap_val in lst_overlap:
+            overlap_key = overlap_val.replace('.@value', '')
+            lst_all_src = [i for i in item_src_val if
+                           i.startswith(overlap_key)]
+            lst_all_des = [i for i in item_des_val if
+                           i.startswith(overlap_key)]
+            if lst_all_src != lst_all_des:
+                item_src_name = item_type.schema.get(
+                    'properties').get(item_src_key).get('title')
+                item_des_name = item_type.schema.get(
+                    'properties').get(item_des_key).get('title')
+                lst_duplicate.append([item_src_name, item_des_name])
+
     lst_temporary = {}
     for item_key, item_value in data_mapping.items():
         lst_temporary[item_key] = get_all_mapping(item_value)
@@ -290,16 +306,6 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
             lst_overlap = list(
                 set(lst_values_src).intersection(lst_values_des))
             if lst_overlap:
-                for overlap_val in lst_overlap:
-                    overlap_key = overlap_val.replace('.@value', '')
-                    lst_all_src = [i for i in item_src_val if
-                                   i.startswith(overlap_key)]
-                    lst_all_des = [i for i in item_des_val if
-                                   i.startswith(overlap_key)]
-                    if lst_all_src != lst_all_des:
-                        item_src_name = item_type.schema.get(
-                            'properties').get(item_src_key).get('title')
-                        item_des_name = item_type.schema.get(
-                            'properties').get(item_des_key).get('title')
-                        lst_duplicate.append([item_src_name, item_des_name])
+                process_overlap()
+
     return lst_duplicate
