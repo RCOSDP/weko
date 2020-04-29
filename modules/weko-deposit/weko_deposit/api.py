@@ -1050,6 +1050,16 @@ class WekoRecord(Record):
                             break
                     if lst:
                         break
+            # if lst is ja-Kana when chose priority language
+            list_other_languages = ['ja-Kana']
+            if not lst:
+                for other_language in list_other_languages:
+                    for parent_key in list_parent_key:
+                        format_creator_to_show_detail(author, other_language,
+                                                      parent_key,
+                                                      lst)
+                        if lst:
+                            break
             # if lst is None when chose priority language
             if not lst:
                 for parent_key in list_parent_key:
