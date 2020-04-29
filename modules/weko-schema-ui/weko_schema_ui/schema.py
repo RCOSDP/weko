@@ -60,7 +60,6 @@ class SchemaConverter:
 
     def create_schema(self, schema_file):
         """Create_schema."""
-
         def getXSVal(element_name):  # replace prefix namespace
             if (element_name is not None
                 and isinstance(element_name, Iterable)
@@ -355,7 +354,6 @@ class SchemaTree:
 
     def __get_value_list(self, remove_empty=False):
         """Find values to a list."""
-
         def analysis(field):
             exp = (',',)
             return exp[0], field.split(exp[0])
@@ -780,7 +778,6 @@ class SchemaTree:
         :return:
 
         """
-
         def check_node(node):
             if isinstance(node, dict):
                 if node.get(self._v):
@@ -1164,7 +1161,6 @@ class SchemaTree:
 
     def find_nodes(self, mlst):
         """Find_nodes."""
-
         def get_generator(nlst):
             gdc.clear()
 
@@ -1276,7 +1272,6 @@ def cache_schema(schema_name, delete=False):
     :return:
 
     """
-
     def get_schema():
         try:
             rec = WekoSchema.get_record_by_name(schema_name)

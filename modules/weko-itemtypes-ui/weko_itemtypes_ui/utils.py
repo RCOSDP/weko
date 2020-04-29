@@ -270,7 +270,6 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
     @param item_type:
     @return:
     """
-
     def process_overlap():
         """Process partial overlap if any."""
         for overlap_val in lst_overlap:
