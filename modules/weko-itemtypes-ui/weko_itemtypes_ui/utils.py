@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Utils for weko-itemtypes-ui."""
-
+import copy
 from copy import deepcopy
 
 from flask import current_app
@@ -214,3 +214,84 @@ def has_system_admin_access():
                 is_sys_admin = True
                 break
     return is_sys_admin
+
+
+def get_lst_mapping(current_checking, parent_node=[]):
+    """Get list detail mapping of current checking node.
+
+    @param current_checking:
+    @param parent_node:
+    @return:
+    """
+    for key, val in current_checking.items():
+        if isinstance(val, str):
+            parent_node.append(key)
+            return_val = '.'.join(parent_node)
+            yield return_val
+        else:
+            parent_node_clone = copy.deepcopy(parent_node)
+            parent_node_clone.append(key)
+            for i in get_lst_mapping(val, parent_node_clone):
+                yield i
+
+
+def get_detail_node(lst_data, idx):
+    """Get detail info of node.
+
+    @param lst_data:
+    @param idx:
+    @return:
+    """
+    item_key = next(iter(lst_data[idx]))
+    item_val = lst_data[idx].get(item_key)
+    lst_values = [i for i in item_val if i.endswith('@value')]
+    return item_key, item_val, lst_values
+
+
+def check_duplicate_mapping(data_mapping, meta_system, item_type):
+    """Check_duplicate mapping.
+
+    @param data_mapping:
+    @param meta_system:
+    @param item_type:
+    @return:
+    """
+    lst_temporary = {}
+    for k, v in data_mapping.items():
+        for k1, v1 in v.items():
+            if k1.endswith('_mapping') and isinstance(v1, dict):
+                for i in get_lst_mapping(v1, [k1]):
+                    if not lst_temporary.get(k, None):
+                        lst_temporary[k] = []
+                    lst_temporary.get(k).append(i)
+    lst_mapping_detail = []
+    for k, v in lst_temporary.items():
+        lst_mapping_detail.append({k: v})
+    lst_duplicate = []
+    for i in range(len(lst_mapping_detail)):
+        item_src_key, item_src_val, lst_values_src = get_detail_node(
+            lst_mapping_detail, i)
+        if item_src_key in meta_system:
+            print(item_src_key)
+            continue
+        for j in range(i + 1, len(lst_mapping_detail)):
+            item_des_key, item_des_val, lst_values_des = get_detail_node(
+                lst_mapping_detail, j)
+            if item_src_key in meta_system:
+                continue
+            lst_overlap = list(
+                set(lst_values_src).intersection(lst_values_des))
+            if lst_overlap:
+                for overlap_val in lst_overlap:
+                    overlap_key = overlap_val.replace('.@value', '')
+                    lst_all_src = [i for i in item_src_val if
+                                   i.startswith(overlap_key)]
+                    lst_all_des = [i for i in item_des_val if
+                                   i.startswith(overlap_key)]
+                    if lst_all_src != lst_all_des:
+                        item_src_name = item_type.schema.get(
+                            'properties').get(item_src_key).get('title')
+                        item_des_name = item_type.schema.get(
+                            'properties').get(item_des_key).get('title')
+                        lst_duplicate.append([item_src_name, item_des_name])
+    return lst_duplicate
