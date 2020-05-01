@@ -25,5 +25,6 @@ ADD weko.conf /etc/nginx/conf.d/
 ADD nginx.conf /etc/nginx/nginx.conf
 ADD ./keys/server.crt /etc/nginx/server.crt
 ADD ./keys/server.key /etc/nginx/server.key
+ADD htpasswd /etc/nginx/.htpasswd
 
 RUN chmod 400 /etc/nginx/server.key
