@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-FROM nginx:stable
+FROM nginx:stable AS nginx-with-shib
 
 # Make apt-get commands temporarily non-interactive
 # Solution from https://github.com/phusion/baseimage-docker/issues/58
@@ -28,16 +28,14 @@ export DEBIAN_FRONTEND=noninteractive && \
 export DEBCONF_NONINTERACTIVE_SEEN=true && \
 apt-get update && \
 apt-get install -y man netcat wget curl openssl nano less sudo procps git supervisor && \
-apt-get install -y shibboleth-sp-common shibboleth-sp-utils php-fpm
+apt-get install -y shibboleth-sp-common shibboleth-sp-utils php-fpm gcc pcre pcre-devel make perl httpd-tools
 #apt-get install -y shibboleth-sp2-common shibboleth-sp2-utils
-
-
 
 # Build nginx shibboleth modules, taken from
 # https://github.com/ConsortiumGARR/idem-tutorials/blob/master/idem-community/HOWTO-Shibboleth/Service-Provider/Debian/HOW%20TO%20SETUP%20A%20SHIBBOLETH%20SP%20WITH%20NGINX.md
 RUN mkdir -p /root/nginx-modules/deb
 WORKDIR /root/nginx-modules
-ADD http://hg.nginx.org/pkg-oss/archive/tip.tar.gz tip.tar.gz
+RUN wget "http://hg.nginx.org/pkg-oss/archive/tip.tar.gz" -o /root/nginx-modules/tip.tar.gz
 # cant work!
 #ADD tip.tar.gz /root/nginx-modules/tip.tar.gz
 
@@ -47,12 +45,16 @@ git clone https://github.com/openresty/headers-more-nginx-module.git && \
 git clone https://github.com/nginx-shib/nginx-http-shibboleth.git && \
 pkg-oss/build_module.sh -y -o /root/nginx-modules/deb/ -n shibboleth -v `nginx -v 2>&1 | sed -n -e 's|^.*/||p' | tr -d '\n'` nginx-http-shibboleth/ && \
 pkg-oss/build_module.sh -y -o /root/nginx-modules/deb/ -n headers-more -v `nginx -v 2>&1 | sed -n -e 's|^.*/||p' | tr -d '\n'` headers-more-nginx-module && \
-cp -vf nginx-http-shibboleth/includes/* /etc/nginx && \
-rm -f deb/*-dbg_*.deb && dpkg -i deb/*.deb && \
-rm -fr /root/debuild && rm -f tip.tar.gz && \
-apt-get purge -y build-essential gcc make unzip wget mercurial git libpcre3-dev zlib1g-dev libssl-dev devscripts debhelper dpkg-dev quilt lsb-release && \
-apt-get autoremove -y && \
-apt-get clean -y
+cp -vf nginx-http-shibboleth/includes/* /etc/nginx
+
+
+FROM nginx:stable
+
+RUN mkdir -p /root/nginx-modules/deb
+WORKDIR /root/nginx-modules
+COPY --from=nginx-with-shib /root/nginx-modules/deb /root/nginx-modules/deb
+COPY --from=nginx-with-shib /etc/nginx /etc/nginx
+#RUN wget "https://github.com/atomx/nginx-http-auth-digest/archive/master.zip" -O /root/nginx-modules/nginx-http-auth-digest.zip
 
 # Create _shibd uid.gid so we can control the numeric value of uid:gid
 RUN \
@@ -64,7 +66,7 @@ RUN apt-get install -y php-curl
 ADD shibboleth.conf /etc/supervisor/conf.d/shibboleth.conf
 ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD attribute-map.xml /etc/shibboleth/attribute-map.xml
-ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml 
+ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml
 
 ADD ./keys/server.crt /etc/shibboleth/server.crt
 ADD ./keys/server.key /etc/shibboleth/server.key
