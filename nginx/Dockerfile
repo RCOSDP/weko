@@ -1,67 +1,43 @@
-# -*- coding: utf-8 -*-
-#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+FROM ubuntu:19.10 AS nginx-with-shib
 
-FROM nginx:stable AS nginx-with-shib
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /tmp
 
-# Make apt-get commands temporarily non-interactive
-# Solution from https://github.com/phusion/baseimage-docker/issues/58
-# Update apt cache to use fastest local mirror
-RUN \
-export DEBIAN_FRONTEND=noninteractive && \
-export DEBCONF_NONINTERACTIVE_SEEN=true && \
-apt-get update && \
-apt-get install -y man netcat wget curl openssl nano less sudo procps git supervisor && \
-apt-get install -y shibboleth-sp-common shibboleth-sp-utils
-#apt-get install -y shibboleth-sp2-common shibboleth-sp2-utils
+RUN apt-get update -y && apt-get install -y wget curl gnupg2 ca-certificates lsb-release unzip uuid-dev dpkg-dev
+RUN echo "deb http://nginx.org/packages/ubuntu eoan nginx" | tee /etc/apt/sources.list.d/nginx.list
+RUN echo "deb-src http://nginx.org/packages/ubuntu eoan nginx" | tee -a /etc/apt/sources.list.d/nginx.list
+RUN curl -fsSL https://nginx.org/keys/nginx_signing.key | apt-key add -
+RUN apt-get update -y
+RUN apt-get source -y nginx
+RUN apt-get build-dep -y nginx
 
-# Build nginx shibboleth modules, taken from
-# https://github.com/ConsortiumGARR/idem-tutorials/blob/master/idem-community/HOWTO-Shibboleth/Service-Provider/Debian/HOW%20TO%20SETUP%20A%20SHIBBOLETH%20SP%20WITH%20NGINX.md
-RUN mkdir -p /root/nginx-modules/deb
-WORKDIR /root/nginx-modules
-RUN wget "http://hg.nginx.org/pkg-oss/archive/tip.tar.gz" -o /root/nginx-modules/tip.tar.gz
-# cant work!
-#ADD tip.tar.gz /root/nginx-modules/tip.tar.gz
+# https://github.com/samizdatco/nginx-http-auth-digest
+RUN wget "https://github.com/samizdatco/nginx-http-auth-digest/archive/master.zip" -O nginx-http-auth-digest.zip
+# https://github.com/nginx-shib/nginx-http-shibboleth
+RUN wget "https://github.com/nginx-shib/nginx-http-shibboleth/archive/v2.0.1.tar.gz" -O nginx-http-shibboleth-2.0.1.tar.gz
+RUN wget "https://github.com/openresty/headers-more-nginx-module/archive/v0.33.tar.gz" -O headers-more-nginx-module-0.33.tar.gz
+RUN wget "https://github.com/apache/incubator-pagespeed-ngx/archive/v1.13.35.2-stable.tar.gz" -O incubator-pagespeed-ngx-1.13.35.2-stable.tar.gz
+RUN wget "https://github.com/FRiCKLE/ngx_cache_purge/archive/2.3.tar.gz" -O ngx_cache_purge-2.3.tar.gz
 
-RUN \
-tar -xvf tip.tar.gz && mv pkg-oss-* pkg-oss/ && \
-git clone https://github.com/openresty/headers-more-nginx-module.git && \
-git clone https://github.com/nginx-shib/nginx-http-shibboleth.git && \
-pkg-oss/build_module.sh -y -o /root/nginx-modules/deb/ -n shibboleth -v `nginx -v 2>&1 | sed -n -e 's|^.*/||p' | tr -d '\n'` nginx-http-shibboleth/ && \
-pkg-oss/build_module.sh -y -o /root/nginx-modules/deb/ -n headers-more -v `nginx -v 2>&1 | sed -n -e 's|^.*/||p' | tr -d '\n'` headers-more-nginx-module && \
-cp -vf nginx-http-shibboleth/includes/* /etc/nginx
+RUN unzip nginx-http-auth-digest.zip && \
+  tar zxf nginx-http-shibboleth-2.0.1.tar.gz && \
+  tar zxf headers-more-nginx-module-0.33.tar.gz && \
+  tar zxvf incubator-pagespeed-ngx-1.13.35.2-stable.tar.gz && \
+  tar zxf ngx_cache_purge-2.3.tar.gz
 
+RUN cd /tmp/incubator-pagespeed-ngx-1.13.35.2-stable ; wget https://dl.google.com/dl/page-speed/psol/1.13.35.2-x64.tar.gz ; tar -xzvf 1.13.35.2-x64.tar.gz
+RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.18.0/debian/rules
+RUN cd nginx-1.18.0 && dpkg-buildpackage -b
 
-FROM nginx:stable
+FROM ubuntu:19.10
 
-RUN mkdir -p /root/nginx-modules/deb
-WORKDIR /root/nginx-modules
-COPY --from=nginx-with-shib /root/nginx-modules/deb /root/nginx-modules/deb
-COPY --from=nginx-with-shib /etc/nginx /etc/nginx
-#RUN wget "https://github.com/atomx/nginx-http-auth-digest/archive/master.zip" -O /root/nginx-modules/nginx-http-auth-digest.zip
-# php-fpm gcc pcre pcre-devel make perl httpd-tools
-# Create _shibd uid.gid so we can control the numeric value of uid:gid
-RUN \
-adduser nginx _shibd && \
-adduser nginx www-data
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm
 
-RUN apt-get install -y php-curl
+WORKDIR /tmp
+COPY --from=nginx-with-shib /tmp/nginx_1.18.0-1~eoan_amd64.deb .
+COPY --from=nginx-with-shib /tmp/nginx-dbg_1.18.0-1~eoan_amd64.deb .
+RUN dpkg -i nginx_1.18.0-1~eoan_amd64.deb
 
 ADD shibboleth.conf /etc/supervisor/conf.d/shibboleth.conf
 ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml
@@ -79,6 +55,8 @@ ADD nginx.conf /etc/nginx/nginx.conf
 ADD ./keys/server.crt /etc/nginx/server.crt
 ADD ./keys/server.key /etc/nginx/server.key
 ADD ./idp-metadata.xml /etc/shibboleth/idp-metadata.xml
+ADD ./htpasswd /etc/nginx/.htpasswd
+ADD ./htdigest /etc/nginx/.htdigest
 
 RUN chmod 400 /etc/nginx/server.key
 
@@ -92,3 +70,4 @@ ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params
 
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/shibboleth.conf"]
+
