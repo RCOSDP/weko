@@ -28,7 +28,7 @@ export DEBIAN_FRONTEND=noninteractive && \
 export DEBCONF_NONINTERACTIVE_SEEN=true && \
 apt-get update && \
 apt-get install -y man netcat wget curl openssl nano less sudo procps git supervisor && \
-apt-get install -y shibboleth-sp-common shibboleth-sp-utils php-fpm gcc pcre pcre-devel make perl httpd-tools
+apt-get install -y shibboleth-sp-common shibboleth-sp-utils
 #apt-get install -y shibboleth-sp2-common shibboleth-sp2-utils
 
 # Build nginx shibboleth modules, taken from
@@ -55,7 +55,7 @@ WORKDIR /root/nginx-modules
 COPY --from=nginx-with-shib /root/nginx-modules/deb /root/nginx-modules/deb
 COPY --from=nginx-with-shib /etc/nginx /etc/nginx
 #RUN wget "https://github.com/atomx/nginx-http-auth-digest/archive/master.zip" -O /root/nginx-modules/nginx-http-auth-digest.zip
-
+# php-fpm gcc pcre pcre-devel make perl httpd-tools
 # Create _shibd uid.gid so we can control the numeric value of uid:gid
 RUN \
 adduser nginx _shibd && \
