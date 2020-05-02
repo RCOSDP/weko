@@ -32,7 +32,7 @@ RUN cd nginx-1.18.0 && dpkg-buildpackage -b
 FROM ubuntu:19.10
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm
+RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php7.3-fpm
 
 WORKDIR /tmp
 COPY --from=nginx-with-shib /tmp/nginx_1.18.0-1~eoan_amd64.deb .
