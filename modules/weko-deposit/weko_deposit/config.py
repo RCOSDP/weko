@@ -140,8 +140,11 @@ WEKO_DEPOSIT_SYS_CREATOR_KEY = {
     'alternative_name': 'creatorAlternative',
     'alternative_lang': 'creatorAlternativeLang',
     'identifiers': 'nameIdentifiers',
-    'creator_mails': 'creatorMails'
-
+    'creator_mails': 'creatorMails',
+    'affiliation_name_identifier_scheme': 'affiliationNameIdentifierScheme',
+    'affiliation_name': 'affiliationName',
+    'affiliation_name_identifier': 'affiliationNameIdentifier',
+    'affiliation_name_identifier_URI': 'affiliationNameIdentifierURI',
 }
 """Key of Bibliographic information."""
 
