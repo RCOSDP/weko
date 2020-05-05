@@ -1109,7 +1109,12 @@ class _FormatSysCreator:
 
     def _format_creator_to_show_detail(self, language, parent_key,
                                        lst):
-        # Get creator name to show on item detail.
+        """Get creator name to show on item detail.
+
+        :param language: language
+        :param parent_key: parent key
+        :param lst:
+        """
         name_key = ''
         lang_key = ''
         if parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']:
@@ -1134,6 +1139,13 @@ class _FormatSysCreator:
 
     def _format_creator_to_show_popup(self, creators, language, creator_list,
                                       creator_list_temp=None):
+        """Format creator to show on popup.
+
+        :param creators: Creators information.
+        :param language: Language.
+        :param creator_list: Creator list.
+        :param creator_list_temp: Creator temporary list.
+        """
         if creator_list_temp is None:
             creator_list_temp = []
         if isinstance(creators, dict):
@@ -1156,6 +1168,12 @@ class _FormatSysCreator:
     @staticmethod
     def _get_creator_based_on_language(creator_data, creator_list_temp,
                                        language):
+        """Get creator based on language.
+
+        :param creator_data:
+        :param creator_list_temp:
+        :param language:
+        """
         count = 0
         for k, v in creator_data.items():
             if 'Lang' in k:
@@ -1169,7 +1187,7 @@ class _FormatSysCreator:
     def format_creator(self):
         """Format creator data to display on detail screen.
 
-        :return:
+        :return: <dict> The creators are formatted.
         """
         creator_lst = []
         rtn_value = {}
@@ -1189,6 +1207,20 @@ class _FormatSysCreator:
         rtn_value['name'] = creator_lst
         creator_list = []
 
+        self._get_creator_to_display_on_popup(creator_list, ja_kana_language,
+                                              ja_language)
+        rtn_value.update({'order_lang': creator_list})
+
+        return rtn_value
+
+    def _get_creator_to_display_on_popup(self, creator_list, ja_kana_language,
+                                         ja_language):
+        """Get creator to display on popup.
+
+        :param creator_list:Creator list.
+        :param ja_kana_language: ja kana language key.
+        :param ja_language: ja language key.
+        """
         # Format creator by key is language default.
         self._format_creator_to_show_popup(self.creator, self.current_language,
                                            creator_list)
@@ -1213,12 +1245,15 @@ class _FormatSysCreator:
         # Get creator in case there is no language input
         self._format_creator_to_show_popup(self.creator, None,
                                            creator_list)
-        rtn_value.update({'order_lang': creator_list})
-
-        return rtn_value
 
     def _get_default_creator_name(self, ja_kana_language, list_parent_key,
                                   creator_names):
+        """Get default creator name.
+
+        :param ja_kana_language: ja kana language key.
+        :param list_parent_key:parent list key.
+        :param creator_names: Creators name.
+        """
         def _get_creator(_language):
             for parent_key in list_parent_key:
                 self._format_creator_to_show_detail(_language,
