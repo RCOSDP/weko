@@ -112,9 +112,7 @@
 {% macro _fill_data(data_list) %}
   {% if data_list %}
     {% for detail_data in data_list %}
-      {% if detail_data is string %}
-        {{ detail_data }}<br>
-      {% endif %}
+      {{ detail_data }}<br>
     {% endfor %}
   {% endif %}
 {% endmacro %}

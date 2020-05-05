@@ -1140,7 +1140,7 @@ class _FormatSysCreator:
                         break
 
     def _get_creator_to_show_popup(self, creators: Union[list, dict],
-                                   language: str,
+                                   language: any,
                                    creator_list: list,
                                    creator_list_temp: list = None) -> NoReturn:
         """Format creator to show on popup.
@@ -1250,10 +1250,14 @@ class _FormatSysCreator:
                 self._format_creator_on_creator_popup(creator_data, creator_tmp)
                 des_creator.append(creator_tmp)
         elif isinstance(creators, dict):
+            alternative_name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY[
+                'alternative_name']
             for key, value in creators.items():
                 des_creator[key] = {}
                 if key != self.no_language_key and isinstance(value, dict):
                     self._format_creator_name(value, des_creator[key])
+                    des_creator[key][alternative_name_key] = value.get(
+                        alternative_name_key, [])
                 else:
                     des_creator[key] = value.copy()
                 self._format_creator_affiliation(value.copy(), des_creator[key])
