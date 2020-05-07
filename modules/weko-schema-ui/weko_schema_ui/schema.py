@@ -708,7 +708,7 @@ class SchemaTree:
                             v.update(attr_of_parent_item)
 
                 if isinstance(atr_vm, dict) and isinstance(vlist_item, list) \
-                    and 'stdyDscr' in vlist_item.keys():
+                        and 'stdyDscr' in vlist_item.keys():
                     if atr_name == 'Contributor':
                         list_contributor_type = ['Distributor', 'Other',
                                                  'DataCollector']
