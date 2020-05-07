@@ -31,6 +31,17 @@ $(document).ready(function () {
           '&times;</button>' + message + '</div>');
        }
 
+   function addError(message,err_items) {
+    message += '<br/>'
+     err_items.forEach(function(items){
+       message += '[' + items[0] + ' && ' + items[1] + ']' + '<br/>'
+     })
+    $('#errors').append(
+        '<div class="alert alert-danger alert-dismissable">' +
+        '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+        '&times;</button>' + message + '</div>');
+     }
+
   function initPropertiesItems(){
     $(".list-group-prop-items").each(function( index ) {
       if ($(this).children(".list_jpcoar_mapping").length > 1 && $("#is-system-admin").val() === 'True'){
@@ -735,7 +746,11 @@ $(document).ready(function () {
       success: function(data,textStatus){
         page_global.showDiag = false;
         $('html,body').scrollTop(0);
-        addAlert(data.msg);
+        if ("duplicate" in data) {
+          addError(data.msg, data.err_items);
+        } else {
+          addAlert(data.msg);
+        }
         //$('.modal-body').text(data.msg);
         //$('#myModal').modal('show');
       },

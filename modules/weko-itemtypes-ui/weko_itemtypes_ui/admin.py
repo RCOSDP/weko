@@ -36,7 +36,8 @@ from weko_schema_ui.api import WekoSchema
 
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
 from .permissions import item_type_permission
-from .utils import fix_json_schema, has_system_admin_access, remove_xsd_prefix
+from .utils import check_duplicate_mapping, fix_json_schema, \
+    has_system_admin_access, remove_xsd_prefix
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -480,6 +481,13 @@ class ItemTypeMappingView(BaseView):
             return jsonify(msg=_('Header Error'))
 
         data = request.get_json()
+        item_type = ItemTypes.get_by_id(data.get('item_type_id'))
+        meta_system = item_type.render.get('meta_system')
+        lst_duplicate = check_duplicate_mapping(data.get('mapping'),
+                                                meta_system, item_type)
+        if len(lst_duplicate) > 0:
+            return jsonify(duplicate=True, err_items=lst_duplicate,
+                           msg=_('Duplicate mapping as below:'))
         try:
             Mapping.create(item_type_id=data.get('item_type_id'),
                            mapping=data.get('mapping'))
