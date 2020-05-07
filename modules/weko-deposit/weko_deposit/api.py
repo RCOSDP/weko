@@ -57,8 +57,8 @@ from weko_user_profiles.models import UserProfile
 
 from .config import DEPOSIT_RECORDS_UI_CREATOR, MAGAZINE_INFORMATION, \
     MAGAZINE_INFORMATION_KEY
-from .pidstore import get_latest_version_id, weko_deposit_fetcher, \
-    weko_deposit_minter
+from .pidstore import get_latest_version_id, get_record_without_version, \
+    weko_deposit_fetcher, weko_deposit_minter
 from .signals import item_created
 
 PRESERVE_FIELDS = (
@@ -1050,6 +1050,16 @@ class WekoRecord(Record):
                             break
                     if lst:
                         break
+            # if lst is ja-Kana when chose priority language
+            list_other_languages = ['ja-Kana']
+            if not lst:
+                for other_language in list_other_languages:
+                    for parent_key in list_parent_key:
+                        format_creator_to_show_detail(author, other_language,
+                                                      parent_key,
+                                                      lst)
+                        if lst:
+                            break
             # if lst is None when chose priority language
             if not lst:
                 for parent_key in list_parent_key:
@@ -1186,6 +1196,21 @@ class WekoRecord(Record):
 
             return page
 
+        def is_biblio_info_data(attribute_value_mlt):
+            """Check if current attribute is bibliographic."""
+            if isinstance(attribute_value_mlt, list):
+                for attribute in attribute_value_mlt:
+                    for schema_key in current_app.config[
+                            'BIBLIOGRAPHIC_INFORMATION_SCHEMA_KEY']:
+                        if schema_key in attribute:
+                            return True
+            else:
+                for schema_key in current_app.config[
+                        'BIBLIOGRAPHIC_INFORMATION_SCHEMA_KEY']:
+                    if schema_key in attribute_value_mlt:
+                        return True
+            return False
+
         def get_issue_dates(issue_dates):
             """
             Get issue dates.
@@ -1260,8 +1285,9 @@ class WekoRecord(Record):
                                             creator_mails]
                                     creators.append(after_format)
                             nval['attribute_value_mlt'] = creators
-                        elif nval['attribute_name'] == \
-                                'Bibliographic Information':
+                        elif val.get(
+                                'attribute_value_mlt') and is_biblio_info_data(
+                                val.get('attribute_value_mlt')):
                             nval['attribute_value_mlt'] = \
                                 get_bibliographic_list(
                                 copy.deepcopy(mlt))
@@ -1328,10 +1354,13 @@ class WekoRecord(Record):
 
     def _get_pid(self, pid_type):
         """Return pid_value from persistent identifier."""
+        pid_without_ver = get_record_without_version(self.pid_recid)
+        if not pid_without_ver:
+            return None
         try:
             return PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
-                object_uuid=self.pid_parent.object_uuid,
+                object_uuid=pid_without_ver.object_uuid,
                 status=PIDStatus.REGISTERED).one_or_none()
         except PIDDoesNotExistError as pid_not_exist:
             current_app.logger.error(pid_not_exist)
