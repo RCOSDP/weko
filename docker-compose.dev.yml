@@ -28,7 +28,7 @@ web:
     - INVENIO_WEB_HOST=127.0.0.1
     - INVENIO_WEB_INSTANCE=invenio
     - INVENIO_WEB_VENV=invenio
-    - INVENIO_USER_EMAIL=info@inveniosoftware.org
+    - INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
     - INVENIO_USER_PASS=uspass123
     - INVENIO_POSTGRESQL_HOST=postgresql
     - INVENIO_POSTGRESQL_DBNAME=invenio
