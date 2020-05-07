@@ -304,13 +304,13 @@ def getrecord(**kwargs):
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
 
-    temp_rec = copy.deepcopy(record)
+    etree_record = copy.deepcopy(record)
     if check_correct_system_props_mapping(
             pid.object_uuid,
             current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
-        temp_rec = combine_record_file_urls(temp_rec, pid.object_uuid)
+        etree_record = combine_record_file_urls(etree_record, pid.object_uuid)
 
-    root = record_dumper(pid, {'_source': temp_rec})
+    root = record_dumper(pid, {'_source': etree_record})
 
     if check_correct_system_props_mapping(
             pid.object_uuid,
@@ -425,8 +425,8 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
 
     if system_mapping_config:
         for key in system_mapping_config:
-            if key in item_map and system_mapping_config[key]\
-                    not in item_map[key]:
+            if key not in item_map or key in item_map and \
+                    system_mapping_config[key] not in item_map[key]:
                 return False
     else:
         return False
@@ -448,19 +448,24 @@ def combine_record_file_urls(record, object_uuid):
 
     file_keys = item_map.get(current_app.config[
         "OAISERVER_FILE_PROPS_MAPPING"])
-    file_keys = file_keys.split('.')
+
+    if not file_keys:
+        return record
+    else:
+        file_keys = file_keys.split('.')
 
     if len(file_keys) == 3 and record.get(file_keys[0]):
         attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
         if isinstance(attr_mlt, list):
             for attr in attr_mlt:
-                if attr.get(file_keys[1]):
+                if attr.get(file_keys[1]) and attr.get('filename'):
                     attr[file_keys[1]][file_keys[2]] = \
                         create_files_url(
                             request.url_root,
                             record.get('recid'),
                             attr.get('filename'))
-        elif isinstance(attr_mlt, dict) and attr_mlt.get(file_keys[1]):
+        elif isinstance(attr_mlt, dict) and attr_mlt.get(file_keys[1]) and \
+                attr_mlt.get('filename'):
             attr_mlt[file_keys[1]][file_keys[2]] = \
                 create_files_url(
                     request.url_root,
