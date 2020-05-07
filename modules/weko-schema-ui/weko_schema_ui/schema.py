@@ -600,11 +600,7 @@ class SchemaTree:
                     if isinstance(v, dict):
                         # check if @value has value
                         node_val = v.get('@value', None)
-                        if isinstance(node_val, list) and node_val[0] and (
-                            node_val[0].count(None) == 0
-                            or (node_val[0].count(None) > 0
-                                and node_val[0].count(None) != len(
-                                node_val[0]))):
+                        if isinstance(node_val, list) and node_val[0]:
                             # get index of None value
                             lst_none_idx = [idx for idx, val in
                                             enumerate(node_val[0]) if
