@@ -420,4 +420,8 @@ msgstr ""
 msgid "Add Filter"
 msgstr ""
 
+msgid "Link"
+msgstr ""
 
+msgid "Display Name"
+msgstr ""

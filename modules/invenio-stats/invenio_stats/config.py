@@ -182,3 +182,7 @@ mimicked the same functonality.
 
 SEARCH_INDEX_PREFIX = os.environ.get('SEARCH_INDEX_PREFIX', '')
 """Search index prefix which is set in weko config."""
+
+
+WEKO_STATS_UNKNOWN_LABEL = 'UNKNOWN'
+"""Label using for missing of view or file-download stats."""
