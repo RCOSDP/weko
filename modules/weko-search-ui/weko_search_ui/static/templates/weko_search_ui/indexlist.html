@@ -82,7 +82,7 @@
     <span ng-hide="sort_index_list(vm.invenioSearchResults.aggregations.path.buckets[0])"></span>
     <div id="index_tree_list">
       <ul class="list-group">
-        <div class="list-group-item"
+        <div class="panel-body list-group-item panel-body"
           ng-repeat="index_path in sorted_child_list track by $index"
           ng-if="typeIndexList !== 'root' || typeIndexList === 'root'"
           style="position: relative;">

@@ -322,13 +322,32 @@ class WekoDeposit(Deposit):
         """Check if deposit is published."""
         return self['_deposit'].get('pid') is not None
 
+    def check(self,d):
+        """ Delete a item with size zero string. """
+        if isinstance(d,dict):
+            for key in list(d):
+                if isinstance(d[key],dict):
+                    self.check(d[key])
+                elif isinstance(d[key],list):
+                    for item in d[key]:
+                        self.check(item)
+                elif isinstance(d[key],str):
+                    if (len(d[key])==0):
+                        d.pop(key)
+
     @preserve(fields=('_deposit', '$schema'))
     def merge_with_published(self):
         """Merge changes with latest published version."""
         pid, first = self.fetch_published()
         lca = first.revisions[self['_deposit']['pid']['revision_id']]
         # ignore _deposit and $schema field
-        args = [lca.dumps(), first.dumps(), self.dumps()]
+        a = lca.dumps()
+        b = first.dumps()
+        c = self.dumps()
+        self.check(a)
+        self.check(b)
+        self.check(c)
+        args = [a, b, c]
         for arg in args:
             if '$schema' in arg:
                 del arg['$schema']
@@ -526,6 +545,7 @@ class WekoDeposit(Deposit):
 
                 # Get file contents
                 self.get_content_files()
+
 
                 # upload file content to Elasticsearch
                 self.indexer.upload_metadata(self.jrc, self.pid.object_uuid,
