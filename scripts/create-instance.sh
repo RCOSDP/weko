@@ -37,7 +37,7 @@ if [ "${INVENIO_WEB_VENV}" = "" ]; then
 fi
 if [ "${INVENIO_USER_EMAIL}" = "" ]; then
     echo "[ERROR] Please set environment variable INVENIO_USER_EMAIL before runnning this script."
-    echo "[ERROR] Example: export INVENIO_USER_EMAIL=info@inveniosoftware.org"
+    echo "[ERROR] Example: export INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp"
     exit 1
 fi
 if [ "${INVENIO_USER_PASS}" = "" ]; then

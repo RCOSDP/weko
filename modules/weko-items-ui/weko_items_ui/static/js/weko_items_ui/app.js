@@ -570,21 +570,19 @@ function toObject(arr) {
         }
       }
 
-      $scope.searchFilemetaForm = function (title) {
-        let fileMetaForm = "";
+      $scope.searchForm = function (sub_item_key) {
+        let form = "";
         $rootScope.recordsVM.invenioRecordsForm.forEach(function (recordForm) {
-          if (recordForm.title === title) {
-            fileMetaForm = recordForm;
-          }
-          if (recordForm.hasOwnProperty('title_i18n')) {
-            for (let item in recordForm.title_i18n) {
-              if (recordForm.title_i18n[item] === title) {
-                fileMetaForm = recordForm;
+          if (recordForm.hasOwnProperty('items')) {
+            items = recordForm.items
+            for (let i in items) {
+              if (items[i].hasOwnProperty('key') && items[i].key.indexOf(sub_item_key) >= 0) {
+                form = recordForm
               }
             }
           }
         });
-        return fileMetaForm;
+        return form;
       };
 
       $scope.searchSchemaIdentifierKey = function(item) {
@@ -678,14 +676,16 @@ function toObject(arr) {
         })
         $scope.authors_keys.forEach(function (author_key) {
           var author_idt_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[author_key];
-          var author_idt_form = $scope.searchFilemetaForm(author_idt_schema.title);
+          var author_idt_form = $scope.searchForm(author_key);
           if (author_idt_schema && author_idt_form) {
             if (author_idt_schema.type == 'object') {
               $scope.sub_item_keys.map(function (item) {
                 if (!!author_idt_schema.properties[item]){
                   author_schema = author_idt_schema.properties[item].items;
                   author_form = get_subitem(author_idt_form.items, item);
-                  $scope.addSchemeToSelectForm(author_form, author_schema);
+                  if (typeof author_form != 'undefined' && typeof author_schema != 'undefined') {
+                      $scope.addSchemeToSelectForm(author_form, author_schema);
+                    }
                   }
                 })
               }
@@ -694,7 +694,9 @@ function toObject(arr) {
                   if (!!author_idt_schema.items.properties[item]) {
                       author_schema = author_idt_schema.items.properties[item].items;
                       author_form = get_subitem(author_idt_form.items, item);
-                      $scope.addSchemeToSelectForm(author_form, author_schema);
+                      if (typeof author_form != 'undefined' && typeof author_schema != 'undefined') {
+                        $scope.addSchemeToSelectForm(author_form, author_schema);
+                    }
                   }
                 })
               }
@@ -777,7 +779,7 @@ function toObject(arr) {
         $scope.searchUsageApplicationIdKey();
         $scope.usageapplication_keys.forEach(function (key) {
           schema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
-          form = $scope.searchFilemetaForm(schema.title);
+          form = $scope.searchForm('subitem_corresponding_usage_application_id');
           if (schema && form) {
             schema.items.properties['subitem_corresponding_usage_application_id']['enum'] = [];
             schema.items.properties['subitem_corresponding_usage_application_id']['enum'].push(null);
@@ -789,7 +791,7 @@ function toObject(arr) {
         $scope.searchOutputApplicationIdKey();
         $scope.outputapplication_keys.forEach(function (key) {
           output_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
-          output_form = $scope.searchFilemetaForm(output_schema.title);
+          output_form = $scope.searchForm('subitem_corresponding_output_id');
           if (output_schema && output_form) {
             output_schema.items.properties['subitem_corresponding_output_id']['enum'] = [];
             output_schema.items.properties['subitem_corresponding_output_id']['enum'].push(null);
@@ -854,16 +856,25 @@ function toObject(arr) {
         }
       }
 
+      $scope.getFormByKey = function (key) {
+        let forms = $rootScope.recordsVM.invenioRecordsForm;
+        for (let i in forms) {
+          if (forms[i].hasOwnProperty('key') && forms[i].key == key) {
+            return forms[i];
+          }
+        }
+      }
+
       $scope.initFilenameList = function () {
         var filekey = 'filename';
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
-          filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
+          filemeta_form = $scope.getFormByKey(filemeta_key);
           if (filemeta_schema && filemeta_form && filemeta_schema.items.properties[filekey]) {
             filemeta_schema.items.properties[filekey]['enum'] = [];
             filemeta_schema.items.properties[filekey]['enum'].push(null)
-            filemeta_filename_form = filemeta_form.items[0];
+            filemeta_filename_form = get_subitem(filemeta_form.items, filekey);
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(function (file) {
               if (file.completed && !file.is_thumbnail) {
@@ -877,7 +888,7 @@ function toObject(arr) {
           if (groupsprice_schema && groupsprice_form) {
             groupsprice_schema.items.properties['group']['enum'] = [];
             groupsprice_schema.items.properties['group']['enum'].push(null);
-            group_form = groupsprice_form.items[0];
+            group_form = get_subitem(groupsprice_form.items, 'groupsprice');
             group_form['titleMap'] = [];
             $scope.groups.forEach(function (group) {
               groupsprice_schema.items.properties['group']['enum'].push(group.id);
@@ -1701,15 +1712,14 @@ function toObject(arr) {
       });
 
       $scope.changePositionFileName = function () {
-        $('#new-postion-filename').parent().children('bootstrap-decorator').remove();
-        $('#new-postion-filename').empty();
         let records = $rootScope.recordsVM.invenioRecordsForm;
-        // Move File to upload area
+        let depositionForm = $('invenio-records-form').find('form[name="depositionForm"]');
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           records.forEach(function(item,i){
             if(item.key == filemeta_key){
-              $('invenio-records-form').find('bootstrap-decorator[form="schemaForm.form[' + i + ']"]').appendTo("#new-postion-filename");
+              // Move to top
+              depositionForm.find('bootstrap-decorator[form="schemaForm.form['+ i + ']"]').prependTo(depositionForm);
             }
           });
         });

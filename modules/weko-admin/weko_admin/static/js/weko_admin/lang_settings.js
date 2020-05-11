@@ -59,7 +59,9 @@ $(document).ready(function () {
   });
 
   moveTop.on('click', function () {
-    rightSelect.find('option:selected').detach().prependTo(rightSelect);
+    // The 1ms timeout fixes a display bug in Chrome (4/28/2020)
+    let detached = rightSelect.find('option:selected').detach();
+    setTimeout(function() {detached.prependTo(rightSelect);}, 1);
   });
 
   $('#moveUp').on('click', function () {

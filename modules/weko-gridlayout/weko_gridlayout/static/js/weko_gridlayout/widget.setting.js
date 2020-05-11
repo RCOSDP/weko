@@ -19,6 +19,12 @@ const DEFAULT_BORDER_STYLE = "solid";
 const DEFAULT_THEME = "default";
 const DEFAULT_MENU_BACKGROUND_COLOR = "#ffffff";
 const DEFAULT_MENU_COLOR = "#000000";
+const MESSAGE = {
+  error_01: {
+    en: "Please set CSS height property to 90% or less.",
+    ja: "CSSの高さ(height)プロパティは90%以下にしてください。",
+  }
+}
 
 function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
     if(key_binding === "border_style" && !initialValue){
@@ -1090,15 +1096,74 @@ class ComponentButtonLayout extends React.Component {
         this.isLabelValid = this.isLabelValid.bind(this);
         this.validateFieldIsValid = this.validateFieldIsValid.bind(this);
         this.showErrorMessage = this.showErrorMessage.bind(this);
+        this.validateData = this.validateData.bind(this);
+        this.validateCustomCSS = this.validateCustomCSS.bind(this);
+        this.addAlert = this.addAlert.bind(this);
+        this.sendRequest = this.sendRequest.bind(this);
+    }
+
+    validateData(request) {
+      let data = request.data;
+      request.data_id = this.props.data_id;
+      let errorMessage = "";
+      let data_validate = this.validateFieldIsValid(data.widget_type);
+      let widgetEditorTypes = [
+        FREE_DESCRIPTION_TYPE,
+        NOTICE_TYPE,
+        ACCESS_COUNTER,
+        HEADER_TYPE,
+        FOOTER_TYPE
+      ]
+      if (data.repository === "0" || data.repository === "") {
+        errorMessage = "Repository is required!";
+      } else if (data.widget_type === "0" || data.widget_type === "") {
+        errorMessage = "Type is required.";
+      } else if (!this.isLabelValid(data['multiLangSetting'])) {
+        errorMessage = "Label is required!";
+      } else if (!data_validate.status) {
+        errorMessage = data_validate.error;
+      } else if (widgetEditorTypes.includes(data.widget_type) && !this.validateCustomCSS(data['multiLangSetting'])) {
+        errorMessage = getMessage("error_01");
+      }
+
+      if (errorMessage) {
+        this.showErrorMessage(errorMessage);
+        return false;
+      }
+      return true;
+    }
+
+    validateCustomCSS(multiLangData) {
+      function validateHeightCSS(description) {
+        let heightPattern = /height *: *(9[1-9]|\d{3,}) *%/;
+        let searchCSSInlinePattern = new RegExp(/style=((?!<).)*/.source
+          + heightPattern.source
+          + /((?!<).)*?>/.source);
+        let searchCSSClassPattern = new RegExp(/{(.|\n)*/.source
+          + heightPattern.source
+          + /(.|\n)*}/.source);
+
+        return (description.search(searchCSSInlinePattern) < 0 && description.search(searchCSSClassPattern) < 0);
+      }
+
+      function validateDescription(descriptionData) {
+        let description = descriptionData["description"];
+        let moreDescription = descriptionData["more_description"];
+        return !(description && !validateHeightCSS(description) || moreDescription && !validateHeightCSS(moreDescription));
+
+      }
+
+      for (let key in multiLangData) {
+        if (multiLangData[key].hasOwnProperty("description")) {
+          if (!validateDescription(multiLangData[key]["description"])) {
+            return false;
+          }
+        }
+      }
+      return true;
     }
 
     saveCommand(event) {
-        function addAlert(message) {
-            $('#alerts').append(
-                '<div class="alert alert-light" id="alert-style">' +
-                '<button type="button" class="close" data-dismiss="alert">' +
-                '&times;</button>' + message + '</div>');
-        }
         // Convert data
         let data = this.props.data;
         let multiLangData = data['multiLangSetting'];
@@ -1141,42 +1206,41 @@ class ComponentButtonLayout extends React.Component {
             data_id: '',
         };
         request.data_id = this.props.data_id;
-        let data_validate = this.validateFieldIsValid(data.widget_type);
-        if (data.repository === "0" || data.repository === "") {
-            let errorMessage = "Repository is required!";
-            this.showErrorMessage(errorMessage);
-        } else if (data.widget_type === "0" || data.widget_type === "") {
-            let errorMessage = "Type is required.";
-            this.showErrorMessage(errorMessage);
-        } else if (!this.isLabelValid(data['multiLangSetting'])) {
-            let errorMessage = "Label is required!";
-            this.showErrorMessage(errorMessage);
-        } else if(!data_validate.status){
-            let errorMessage = data_validate.error;
-            this.showErrorMessage(errorMessage);
-        }else {
-            return $.ajax({
-                context: this,
-                url: this.props.url_request,
-                method: 'POST',
-                contentType: 'application/json',
-                dataType: 'json',
-                data: JSON.stringify(request),
-                success: function (result){
-                    if (result.success) {
-                        addAlert(result.message);
-                    } else {
-                        let errorMessage = result.message;
-                        this.showErrorMessage(errorMessage);
-                    }
-                }
-            })
+
+        if (this.validateData(request)) {
+          this.sendRequest(request);
         }
+    }
+
+    sendRequest(request) {
+      return $.ajax({
+        context: this,
+        url: this.props.url_request,
+        method: 'POST',
+        contentType: 'application/json',
+        dataType: 'json',
+        data: JSON.stringify(request),
+        success: function (result) {
+          if (result.success) {
+            this.addAlert(result.message);
+          } else {
+            let errorMessage = result.message;
+            this.showErrorMessage(errorMessage);
+          }
+        }
+      })
     }
 
     showErrorMessage(errorMessage) {
       $("#inputModal").html(errorMessage);
       $("#allModal").modal("show");
+    }
+
+    addAlert(message) {
+      $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
     }
 
     validateFieldIsValid(widget_type){
@@ -1261,7 +1325,6 @@ class ComponentButtonLayout extends React.Component {
                         addAlert(result.message);
                         window.location = this.props.return_url;
                     } else {
-                        //alert(result.message);
                         let errorMessage = result.message;
                         this.showErrorMessage(errorMessage);
                     }
@@ -1816,3 +1879,18 @@ $(function () {
         document.getElementById('root')
     )
 });
+
+function getMessage(messageCode) {
+  const defaultLanguage = "en";
+  let currentLanguage = document.getElementById("current_language").value;
+  let message = MESSAGE[messageCode];
+  if (message) {
+    if (message[currentLanguage]) {
+      return message[currentLanguage];
+    } else {
+      return message[defaultLanguage];
+    }
+  } else {
+    return "";
+  }
+}

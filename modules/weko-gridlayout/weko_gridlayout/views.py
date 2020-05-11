@@ -132,8 +132,9 @@ def load_widget_design_page_setting(page_id: str, current_language=''):
     :param current_language: The language default
     :return:
     """
-    return jsonify(WidgetDesignPageServices.get_widget_design_setting(
-        page_id, current_language or get_default_language()))
+    response = get_widget_design_setting("", current_language,
+                                         page_id)
+    return response
 
 
 @blueprint_api.route('/load_widget_list_design_setting',

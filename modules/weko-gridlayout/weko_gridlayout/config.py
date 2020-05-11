@@ -94,3 +94,6 @@ WEKO_GRIDLAYOUT_IS_COMPRESS_WIDGET = True
 
 WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY = "widget_cache"
 """The Widget cache key"""
+
+WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY = "widget_page_cache"
+"""The Page cache key"""

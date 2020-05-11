@@ -126,7 +126,7 @@ RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY = None
 RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY = None
 DEPOSIT_JSONSCHEMAS_PREFIX = ''
 
-DEPOSIT_RECORDS_UI_CREATOR = {
+WEKO_DEPOSIT_SYS_CREATOR_KEY = {
     'creator_names': 'creatorNames',
     'creator_name': 'creatorName',
     'creator_lang': 'creatorNameLang',
@@ -140,23 +140,38 @@ DEPOSIT_RECORDS_UI_CREATOR = {
     'alternative_name': 'creatorAlternative',
     'alternative_lang': 'creatorAlternativeLang',
     'identifiers': 'nameIdentifiers',
-    'creator_mails': 'creatorMails'
-
+    'creator_mails': 'creatorMails',
+    'affiliation_name_identifier_scheme': 'affiliationNameIdentifierScheme',
+    'affiliation_name': 'affiliationName',
+    'affiliation_name_identifier': 'affiliationNameIdentifier',
+    'affiliation_name_identifier_URI': 'affiliationNameIdentifierURI',
 }
+"""Key of Bibliographic information."""
 
-MAGAZINE_INFORMATION_KEY = [
+WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY = [
     'bibliographicVolumeNumber',
     'bibliographicIssueNumber',
     'p.',
     'bibliographicNumberOfPages',
     'bibliographicIssueDates'
 ]
-"""Key of magazine information."""
+"""Key of Bibliographic information."""
 
-MAGAZINE_INFORMATION = {
+WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO = {
     'bibliographicVolumeNumber': 'Volume',
     'bibliographicIssueNumber': 'Issue',
     'bibliographicNumberOfPages': 'Number of Pages',
     'bibliographicIssueDates': 'Issued Date'
 }
-"""Magazine information key and value."""
+"""Bibliographic information key and value."""
+
+WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = [
+    'bibliographic_titles',
+    'bibliographicPageEnd',
+    'bibliographicIssueNumber',
+    'bibliographicPageStart',
+    'bibliographicVolumeNumber',
+    'bibliographicNumberOfPages',
+    'bibliographicIssueDates'
+]
+"""Bibliographic information sys key."""

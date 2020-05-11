@@ -39,30 +39,29 @@ def check_items_settings():
     current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
     if hasattr(settings, 'item_display_open_date'):
-        current_app.config['OPEN_DATE_DISPLAY_FLG'] = settings.item_display_open_date
+        current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
+            settings.item_display_open_date
 
 
 def get_record_permalink(record):
     """
-    Get identifier of record.
+    Get latest doi/cnri's value of record.
 
     :param record: index_name_english
-    :return: dict of item type info
+    :return: pid value of doi/cnri.
     """
-    pid_doi = record.pid_doi
-    pid_cnri = record.pid_cnri
+    doi = record.pid_doi
+    cnri = record.pid_cnri
 
-    if pid_doi and pid_cnri:
-        if pid_doi.updated > pid_cnri.updated:
-            return record.pid_doi.pid_value
+    if doi and cnri:
+        if doi.updated > cnri.updated:
+            return doi.pid_value
         else:
-            return record.pid_cnri.pid_value
-    elif record.pid_doi:
-        return record.pid_doi.pid_value
-    elif record.pid_cnri:
-        return record.pid_cnri.pid_value
-    else:
-        return None
+            return cnri.pid_value
+    elif doi or cnri:
+        return doi.pid_value if doi else cnri.pid_value
+
+    return None
 
 
 def get_groups_price(record: dict) -> list:
