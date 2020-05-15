@@ -358,3 +358,6 @@ msgstr ""
 
 msgid "The specified number has been exceeded. You can only select up to two fields."
 msgstr ""
+
+msgid "Required item is not inputted"
+msgstr ""

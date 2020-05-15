@@ -852,6 +852,50 @@ def get_list_file_by_record_id(recid):
     return list_file_name
 
 
+def write_bibtex_files(item_types_data, export_path):
+    """Write Bitex data to files.
+
+    @param item_types_data:
+    @param export_path:
+    @return:
+    """
+    for item_type_id in item_types_data:
+        item_type_data = item_types_data[item_type_id]
+        output = make_bibtex_data(item_type_data['recids'])
+        # create file to write data in case has output of Bibtex
+        if output:
+            with open('{}/{}.bib'.format(export_path,
+                                         item_type_data.get('name')),
+                      'w') as file:
+                file.write(output)
+
+
+def write_tsv_files(item_types_data, export_path, list_item_role):
+    """Write TSV data to files.
+
+    @param item_types_data:
+    @param export_path:
+    @param list_item_role:
+    @return:
+    """
+    for item_type_id in item_types_data:
+        keys, labels, records = make_stats_tsv(
+            item_type_id,
+            item_types_data[item_type_id]['recids'],
+            list_item_role)
+        item_types_data[item_type_id]['recids'].sort()
+        item_types_data[item_type_id]['keys'] = keys
+        item_types_data[item_type_id]['labels'] = labels
+        item_types_data[item_type_id]['data'] = records
+        item_type_data = item_types_data[item_type_id]
+
+        with open('{}/{}.tsv'.format(export_path,
+                                     item_type_data.get('name')),
+                  'w') as file:
+            tsvs_output = package_export_file(item_type_data)
+            file.write(tsvs_output.getvalue())
+
+
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
@@ -915,22 +959,10 @@ def export_items(post_data):
             item_types_data[item_type_id]['recids'].append(record_id)
 
         # Create export info file
-        for item_type_id in item_types_data:
-            keys, labels, records = make_stats_tsv(
-                item_type_id,
-                item_types_data[item_type_id]['recids'],
-                list_item_role)
-            item_types_data[item_type_id]['recids'].sort()
-            item_types_data[item_type_id]['keys'] = keys
-            item_types_data[item_type_id]['labels'] = labels
-            item_types_data[item_type_id]['data'] = records
-            item_type_data = item_types_data[item_type_id]
-
-            with open('{}/{}.tsv'.format(export_path,
-                                         item_type_data.get('name')),
-                      'w') as file:
-                tsvs_output = package_export_file(item_type_data)
-                file.write(tsvs_output.getvalue())
+        if export_format == 'BIBTEX':
+            write_bibtex_files(item_types_data, export_path)
+        else:
+            write_tsv_files(item_types_data, export_path, list_item_role)
 
         # Create bag
         bagit.make_bag(export_path)
@@ -1626,3 +1658,39 @@ def translate_validation_message(item_property, cur_lang):
         for _key, value in item_property.get(properties_attr).items():
             set_validation_message(value, cur_lang)
             translate_validation_message(value, cur_lang)
+
+
+def validate_bibtex(record_ids):
+    """Validate data of records for Bibtex exporting.
+
+    @param record_ids:
+    @return:
+    """
+    lst_invalid_ids = []
+    err_msg = _('Please input all required item.')
+    from weko_schema_ui.serializers import WekoBibTexSerializer
+    for record_id in record_ids:
+        record = WekoRecord.get_record_by_pid(record_id)
+        pid = record.pid_recid
+        serializer = WekoBibTexSerializer()
+        result = serializer.serialize(pid, record, True)
+        if not result or result == err_msg:
+            lst_invalid_ids.append(record_id)
+    return lst_invalid_ids
+
+
+def make_bibtex_data(record_ids):
+    """Serialize all Bibtex data by record ids
+    @param record_ids:
+    @return:
+    """
+    result = ''
+    err_msg = _('Please input all required item.')
+    from weko_schema_ui.serializers import WekoBibTexSerializer
+    for record_id in record_ids:
+        record = WekoRecord.get_record_by_pid(record_id)
+        pid = record.pid_recid
+        serializer = WekoBibTexSerializer()
+        output = serializer.serialize(pid, record)
+        result += output if output != err_msg else ''
+    return result

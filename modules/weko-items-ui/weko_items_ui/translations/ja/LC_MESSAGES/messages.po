@@ -424,3 +424,5 @@ msgstr "以下のメールアドレスがシステムに登録されていませ
 msgid "The specified number has been exceeded. You can only select up to two fields."
 msgstr "規定の数を超えています。選択できるのは２つまでです。"
 
+msgid "Required item is not inputted"
+msgstr "必須項目がありません。"

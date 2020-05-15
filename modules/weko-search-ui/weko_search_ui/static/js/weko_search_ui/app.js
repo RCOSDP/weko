@@ -334,10 +334,45 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
           }
         });
       })
+      exportBibtex=document.getElementById("export_format_radio_bibtex").checked
+      if (exportBibtex) {
+        let invalidBibtexRecordIds = $scope.validateBibtexExport(Object.keys(export_metadata));
+        if (invalidBibtexRecordIds.length > 0) {
+          $scope.showErrMsgBibtex(invalidBibtexRecordIds);
+        }
+      }
       $('#record_metadata').val(JSON.stringify(export_metadata));
       $('#export_items_form').submit();  // Submit form and let controller handle file making
     }
     $('#item_export_button').attr("disabled", false);
+  }
+
+  $scope.validateBibtexExport = function (record_ids) {
+    request_url = '/items/validate_bibtext_export';
+    var data = { record_ids: record_ids }
+    invalidRecordIds = []
+    $.ajax({
+      method: 'POST',
+      url: request_url,
+      data: JSON.stringify(data),
+      async: false,
+      contentType: 'application/json',
+      success: function (data) {
+        if (data.invalid_record_ids.length) {
+          invalidRecordIds = data.invalid_record_ids;
+        }
+      },
+      error: function (status, error) {
+        console.log(error);
+      }
+    });
+    return invalidRecordIds;
+  }
+
+  $scope.showErrMsgBibtex = function(invalidRecordIds) {
+    invalidRecordIds.forEach(function(recordId){
+      $('#bibtex_err_' + recordId).removeClass('hide');
+    });
   }
 
   $scope.getExportItemsMetadata = function () {

@@ -1098,6 +1098,19 @@ def check_restricted_content():
     return jsonify({'restricted_records': list(restricted_records)})
 
 
+@blueprint.route('/validate_bibtext_export', methods=['POST'])
+def validate_bibtex_export():
+    """Validate export Bibtex.
+
+    @return:
+    """
+    from .utils import validate_bibtex
+    post_data = request.get_json()
+    record_ids = post_data['record_ids']
+    invalid_record_ids = validate_bibtex(record_ids)
+    return jsonify(invalid_record_ids=invalid_record_ids)
+
+
 @blueprint.route('/export', methods=['GET', 'POST'])
 def export():
     """Item export view."""

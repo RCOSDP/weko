@@ -19,274 +19,451 @@
 # MA 02111-1307, USA.
 
 """WEKO BibTex Serializer."""
-
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from enum import Enum
 
 from bibtexparser.bibdatabase import BibDatabase
 from bibtexparser.bwriter import BibTexWriter
-from flask import abort
+from flask import current_app
 
 from ..schema import SchemaTree, cache_schema
 from .wekoxml import WekoXMLSerializer
 
 
+class BibTexTypes(Enum):
+    """BibTex Types."""
+
+    ARTICLE = 'article'
+    BOOK = 'book'
+    BOOKLET = 'booklet'
+    CONFERENCE = 'conference'
+    INBOOK = 'inbook'
+    INCOLLECTION = 'incollection'
+    INPROCEEDINGS = 'inproceedings'
+    MANUAL = 'manual'
+    MASTERSTHESIS = 'mastersthesis'
+    MISC = 'misc'
+    PHDTHESIS = 'phdthesis'
+    PROCEEDINGS = 'proceedings'
+    TECHREPORT = 'techreport'
+    UNPUBLISHED = 'unpublished'
+
+
+class BibTexFields(Enum):
+    """BibTex Fields."""
+
+    AUTHOR = 'author'
+    YOMI = 'yomi'
+    TITLE = 'title'
+    BOOK_TITLE = 'book'
+    JOURNAL = 'journal'
+    VOLUME = 'volume'
+    NUMBER = 'issue'
+    PAGES = 'pages'
+    PAGE_START = 'page_start'
+    PAGE_END = 'page_end'
+    NOTE = 'note'
+    PUBLISHER = 'publisher'
+    YEAR = 'year'
+    MONTH = 'month'
+    URL = 'url'
+    DOI = 'doi'
+    SCHOOL = 'school'
+    TYPE = 'type'
+    EDITOR = 'editor'
+    EDITION = 'edition'
+    CHAPTER = 'chapter'
+    SERIES = 'series'
+    ADDRESS = 'address'
+    ORGANIZATION = 'organization'
+    KEY = 'key'
+    CROSSREF = 'crossref'
+    ANNOTE = 'annote'
+    INSTITUTION = 'institution'
+    HOW_PUBLISHER = 'how publisher'
+
+
 class WekoBibTexSerializer():
     """Weko bibtex serializer."""
+
+    # Mapping type between Bibtex type and dc:type of jpcoar
+    type_mapping = {
+        BibTexTypes.ARTICLE: ['journal article',
+                              'departmental bulletin paper',
+                              'review article', 'data paper', 'periodical',
+                              'editorial',
+                              'article'],
+        BibTexTypes.BOOK: ['book'],
+        BibTexTypes.INBOOK: ['book part'],
+        BibTexTypes.INPROCEEDINGS: ['conference paper'],
+        BibTexTypes.MASTERSTHESIS: ['master thesis'],
+        BibTexTypes.MISC: ['research proposal', 'technical documentation',
+                           'thesis',
+                           'bachelor thesis', 'cartographic material',
+                           'map',
+                           'lecture', 'conference object', 'conference poster',
+                           'image', 'still image', 'moving image', 'video',
+                           'sound',
+                           'musical notation', 'interactive resource',
+                           'learning material', 'patent', 'dataset', 'software',
+                           'workflow',
+                           'other'],
+        BibTexTypes.PHDTHESIS: ['doctoral thesis'],
+        BibTexTypes.PROCEEDINGS: ['conference proceedings'],
+        BibTexTypes.TECHREPORT: ['report',
+                                 'research report',
+                                 'working paper',
+                                 'technical report',
+                                 'policy report',
+                                 'internal report',
+                                 'report part'],
+        BibTexTypes.INCOLLECTION: [],
+        BibTexTypes.BOOKLET: [],
+        BibTexTypes.CONFERENCE: [],
+        BibTexTypes.MANUAL: [],
+        BibTexTypes.UNPUBLISHED: []}
 
     def __init__(self):
         """Init."""
         # Load namespace
         self.ns = cache_schema('jpcoar_mapping').get('namespaces')
-
-        # JPCOAR types
-        self.article_types = ['conference paper', 'data paper', 'editorial',
-                              'journal article', 'periodical',
-                              'review article', 'article',
-                              'departmental bulletin paper']
-
-        self.book_types = ['book', 'book part']
-        self.inproceedings_types = ['conference proceedings']
-        self.techreport_types = [
-            'technical report',
-            'report',
-            'research report']
-        self.unpublished_types = ['conference object', 'conference poster']
-
-        self.misc_types = ['thesis', 'bachelor thesis', 'master thesis',
-                           'doctoral thesis', 'learning material',
-                           'dataset', 'software', 'other',
-                           'cartographic material', 'map', 'image',
-                           'still image', 'moving image', 'video',
-                           'lecture', 'patent', 'internal report',
-                           'policy report', 'report part', 'working paper',
-                           'sound', 'interactive resource',
-                           'musical notation', 'research proposal',
-                           'technical documentation', 'workflow']
-
+        self.lst_identifier_type = ['doi', 'hdl', 'url']
         # JPCOAR elements
-        creator_name = '{' + self.ns['jpcoar'] + '}' + 'creatorName'
-        title = '{' + self.ns['dc'] + '}' + 'title'
-        source_title = '{' + self.ns['jpcoar'] + '}' + 'sourceTitle'
-        volume = '{' + self.ns['jpcoar'] + '}' + 'volume'
-        issue = '{' + self.ns['jpcoar'] + '}' + 'issue'
-        page_start = '{' + self.ns['jpcoar'] + '}' + 'pageStart'
-        page_end = '{' + self.ns['jpcoar'] + '}' + 'pageEnd'
-        date = '{' + self.ns['datacite'] + '}' + 'date'
-        publisher = '{' + self.ns['dc'] + '}' + 'publisher'
-        type = '{' + self.ns['datacite'] + '}' + 'description'
-        mime_type = '{' + self.ns['jpcoar'] + '}' + 'mimeType'
-        contributor_name = '{' + self.ns['jpcoar'] + '}' + 'contributor' + \
-                           '//' + '{' + self.ns['jpcoar'] + \
-            '}' + 'affiliationName'
+        jp_jp = '{' + self.ns['jpcoar'] + '}'
+        jp_dc = '{' + self.ns['dc'] + '}'
+        jp_datacite = '{' + self.ns['datacite'] + '}'
+        self.find_pattern = './/{}'
 
-        # [BibTex]Article columns
-        self.article_cols_required = {'author': creator_name,
-                                      'title': title,
-                                      'journal': source_title,
-                                      'date': date}
+        self.fields_mapping = {
+            BibTexFields.AUTHOR: jp_jp + 'creatorName',
+            BibTexFields.TITLE: jp_dc + 'title',
+            BibTexFields.JOURNAL: jp_jp + 'sourceTitle',
+            BibTexFields.BOOK_TITLE: jp_jp + 'sourceTitle',
+            BibTexFields.VOLUME: jp_jp + 'volume',
+            BibTexFields.NUMBER: jp_jp + 'issue',
+            BibTexFields.PAGE_START: jp_jp + 'pageStart',
+            BibTexFields.PAGE_END: jp_jp + 'pageEnd',
+            BibTexFields.PUBLISHER: jp_dc + 'publisher',
+            BibTexFields.HOW_PUBLISHER: jp_dc + 'mimeType',
+            BibTexFields.YEAR: jp_datacite + 'date',
+            BibTexFields.MONTH: jp_datacite + 'date',
+            BibTexFields.INSTITUTION: jp_jp + 'contributor' + '//' + jp_jp + 'contributorName',
+            BibTexFields.TYPE: 'none',
+            BibTexFields.EDITOR: 'none',
+            BibTexFields.EDITION: 'none',
+            BibTexFields.CHAPTER: 'none',
+            BibTexFields.SERIES: 'none',
+            BibTexFields.ADDRESS: 'none',
+            BibTexFields.NOTE: jp_datacite + 'description',
+            BibTexFields.SCHOOL: jp_jp + 'degreeGrantorName',
+            BibTexFields.ORGANIZATION: 'none',
+            BibTexFields.KEY: 'none',
+            BibTexFields.CROSSREF: 'none',
+            BibTexFields.ANNOTE: 'none',
+            BibTexFields.DOI: jp_jp + 'identifier',
+            BibTexFields.URL: jp_jp + 'identifier',
+        }
 
-        self.article_cols_all = {'author': creator_name,
-                                 'title': title,
-                                 'journal': source_title,
-                                 'volume': volume,
-                                 'number': issue,
-                                 'page_start': page_start,
-                                 'page_end': page_end,
-                                 'date': date}
+    @staticmethod
+    def get_bibtex_type_fields(self, bibtex_type):
+        """Get all fields of BibTex type.
 
-        # [BibTex]Book columns
-        self.book_cols_required = {'author': creator_name,
-                                   'title': title,
-                                   'publisher': publisher,
-                                   'date': date}
+        @param self:
+        @param bibtex_type:
+        @return:
+        """
+        result = {
+            BibTexTypes.ARTICLE: self.get_article_fields(),
+            BibTexTypes.BOOK: self.get_book_fields(),
+            BibTexTypes.BOOKLET: self.get_booklet_fields(),
+            BibTexTypes.CONFERENCE: self.get_conference_fields(),
+            BibTexTypes.INBOOK: self.get_inbook_fields(),
+            BibTexTypes.INCOLLECTION: self.get_incollection_fields(),
+            BibTexTypes.INPROCEEDINGS: self.get_inproceedings_fields(),
+            BibTexTypes.MANUAL: self.get_manual_fields(),
+            BibTexTypes.MASTERSTHESIS: self.get_mastersthesis_fields(),
+            BibTexTypes.MISC: self.get_misc_fields(),
+            BibTexTypes.PHDTHESIS: self.get_phdthesis_fields(),
+            BibTexTypes.PROCEEDINGS: self.get_proceedings_fields(),
+            BibTexTypes.TECHREPORT: self.get_techreport_fields(),
+            BibTexTypes.UNPUBLISHED: self.get_unpublished_fields(),
+        }
+        return result.get(bibtex_type)
 
-        self.book_cols_all = {'author': creator_name,
-                              'title': title,
-                              'volume': volume,
-                              'number': issue,
-                              'publisher': publisher,
-                              'date': date}
+    @staticmethod
+    def get_article_fields():
+        """Get article's fields.
 
-        # [BibTex]Booklet columns
-        self.booklet_cols_required = {'title': title}
+        @return:
+        """
+        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.JOURNAL, BibTexFields.YEAR]
+        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+                        BibTexFields.PAGE_START,
+                        BibTexFields.PAGE_END, BibTexFields.MONTH,
+                        BibTexFields.NOTE, BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
 
-        self.booklet_cols_all = {'author': creator_name,
-                                 'title': title,
-                                 'howpublished': mime_type,
-                                 'date': date}
+    @staticmethod
+    def get_book_fields():
+        """Get book's fields.
 
-        # [BibTex]Inbook columns
-        self.inbook_cols_required = {'author': creator_name,
-                                     'title': title,
-                                     'page_start': page_start,
-                                     'page_end': page_end,
-                                     'publisher': publisher,
-                                     'date': date}
+        @return:
+        """
+        lst_required = [BibTexFields.TITLE, BibTexFields.PUBLISHER,
+                        BibTexFields.YEAR]
+        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+                        BibTexFields.MONTH,
+                        BibTexFields.EDITION, BibTexFields.SERIES,
+                        BibTexFields.ADDRESS,
+                        BibTexFields.NOTE, BibTexFields.KEY]
+        lst_required_partial = [[BibTexFields.EDITOR,
+                                 BibTexFields.AUTHOR]]
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
 
-        self.inbook_cols_all = {'author': creator_name,
-                                'title': title,
-                                'volume': volume,
-                                'number': issue,
-                                'page_start': page_start,
-                                'page_end': page_end,
-                                'publisher': publisher,
-                                'date': date,
-                                'type': type}
+    @staticmethod
+    def get_booklet_fields():
+        """Get booklet's fields.
 
-        # [BibTex]Incollection columns
-        self.incollection_cols_required = {'author': creator_name,
-                                           'title': title,
-                                           'booktitle': source_title,
-                                           'publisher': publisher,
-                                           'date': date}
+        @return:
+        """
+        lst_required = [BibTexFields.TITLE]
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.HOW_PUBLISHER,
+                        BibTexFields.YEAR, BibTexFields.MONTH,
+                        BibTexFields.ADDRESS, BibTexFields.NOTE,
+                        BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
 
-        self.incollection_cols_all = {'author': creator_name,
-                                      'title': title,
-                                      'booktitle': source_title,
-                                      'volume': volume,
-                                      'number': issue,
-                                      'page_start': page_start,
-                                      'page_end': page_end,
-                                      'publisher': publisher,
-                                      'date': date,
-                                      'type': type}
+    @staticmethod
+    def get_conference_fields():
+        """Get conference's fields.
 
-        # [BibTex]Inproceedings columns
-        self.inproceedings_cols_required = {'author': creator_name,
-                                            'title': title,
-                                            'booktitle': source_title,
-                                            'date': date}
+        @return:
+        """
+        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR]
+        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+                        BibTexFields.PAGE_START,
+                        BibTexFields.PAGE_END, BibTexFields.PUBLISHER,
+                        BibTexFields.MONTH,
+                        BibTexFields.EDITOR, BibTexFields.SERIES,
+                        BibTexFields.ADDRESS, BibTexFields.NOTE,
+                        BibTexFields.ORGANIZATION, BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
 
-        self.inproceedings_cols_all = {'author': creator_name,
-                                       'title': title,
-                                       'booktitle': source_title,
-                                       'volume': volume,
-                                       'number': issue,
-                                       'page_start': page_start,
-                                       'page_end': page_end,
-                                       'publisher': publisher,
-                                       'date': date}
+    @staticmethod
+    def get_inbook_fields():
+        """Get inbook's fields.
 
-        # [BibTex]Techreport columns
-        self.techreport_cols_required = {'author': creator_name,
-                                         'title': title,
-                                         'date': date,
-                                         'institution': contributor_name}
+        @return:
+        """
+        lst_required = [BibTexFields.TITLE, BibTexFields.YEAR,
+                        BibTexFields.PUBLISHER]
+        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+                        BibTexFields.MONTH,
+                        BibTexFields.TYPE, BibTexFields.EDITION,
+                        BibTexFields.SERIES,
+                        BibTexFields.ADDRESS, BibTexFields.NOTE,
+                        BibTexFields.KEY]
+        lst_required_partial = [[BibTexFields.AUTHOR,
+                                 BibTexFields.EDITOR],
+                                [BibTexFields.PAGES,
+                                 BibTexFields.CHAPTER]]
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
 
-        self.techreport_cols_all = {'author': creator_name,
-                                    'title': title,
-                                    'number': issue,
-                                    'date': date,
-                                    'institution': contributor_name,
-                                    'type': type}
+    @staticmethod
+    def get_incollection_fields():
+        """Get incollection's fields.
 
-        # [BibTex]Unpublished columns
-        self.unpublished_cols_required = {'author': creator_name,
-                                          'title': title}
+        @return:
+        """
+        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR,
+                        BibTexFields.PUBLISHER]
+        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+                        BibTexFields.PAGE_START,
+                        BibTexFields.PAGE_END, BibTexFields.MONTH,
+                        BibTexFields.TYPE, BibTexFields.EDITOR,
+                        BibTexFields.EDITION, BibTexFields.CHAPTER,
+                        BibTexFields.SERIES,
+                        BibTexFields.ADDRESS, BibTexFields.NOTE,
+                        BibTexFields.ORGANIZATION, BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
 
-        self.unpublished_cols_all = {'author': creator_name,
-                                     'title': title,
-                                     'date': date}
+    @staticmethod
+    def get_inproceedings_fields():
+        """Get inproceedings's fields.
 
-        # [BibTex]Misc columns
-        self.misc_cols_all = {'author': creator_name,
-                              'title': title,
-                              'howpublished': mime_type,
-                              'date': date}
+        @return:
+        """
+        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR]
+        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+                        BibTexFields.PAGE_START,
+                        BibTexFields.PAGE_END, BibTexFields.PUBLISHER,
+                        BibTexFields.MONTH, BibTexFields.EDITOR,
+                        BibTexFields.SERIES,
+                        BibTexFields.ADDRESS, BibTexFields.NOTE,
+                        BibTexFields.ORGANIZATION, BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
 
-    def serialize(self, pid, record):
+    @staticmethod
+    def get_manual_fields():
+        """Get manual's fields.
+
+        @return:
+        """
+        lst_required = [BibTexFields.TITLE]
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.YEAR,
+                        BibTexFields.MONTH, BibTexFields.EDITION,
+                        BibTexFields.ADDRESS, BibTexFields.NOTE,
+                        BibTexFields.ORGANIZATION, BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
+
+    @staticmethod
+    def get_mastersthesis_fields():
+        """Get mastersthesis's fields.
+
+        @return:
+        """
+        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.YEAR, BibTexFields.SCHOOL]
+        lst_optional = [BibTexFields.MONTH, BibTexFields.TYPE,
+                        BibTexFields.ADDRESS, BibTexFields.NOTE,
+                        BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
+
+    @staticmethod
+    def get_phdthesis_fields():
+        """Get phdthesis's fields.
+
+        @return:
+        """
+        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.YEAR, BibTexFields.SCHOOL]
+        lst_optional = [BibTexFields.MONTH, BibTexFields.TYPE,
+                        BibTexFields.ADDRESS, BibTexFields.NOTE,
+                        BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
+
+    @staticmethod
+    def get_proceedings_fields():
+        """Get proceedings's fields.
+
+        @return:
+        """
+        lst_required = [BibTexFields.TITLE, BibTexFields.YEAR]
+        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+                        BibTexFields.PUBLISHER, BibTexFields.MONTH,
+                        BibTexFields.EDITOR, BibTexFields.SERIES,
+                        BibTexFields.ADDRESS, BibTexFields.NOTE,
+                        BibTexFields.ORGANIZATION, BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
+
+    @staticmethod
+    def get_techreport_fields():
+        """Get techreport's fields.
+
+        @return:
+        """
+        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.YEAR, BibTexFields.INSTITUTION]
+        lst_optional = [BibTexFields.NUMBER, BibTexFields.MONTH,
+                        BibTexFields.TYPE, BibTexFields.ADDRESS,
+                        BibTexFields.NOTE, BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
+
+    @staticmethod
+    def get_unpublished_fields():
+        """Get unpublished's fields.
+
+        @return:
+        """
+        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.NOTE]
+        lst_optional = [BibTexFields.YEAR, BibTexFields.MONTH,
+                        BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
+
+    @staticmethod
+    def get_misc_fields():
+        """Get mis's fields.
+
+        @return:
+        """
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.HOW_PUBLISHER, BibTexFields.YEAR,
+                        BibTexFields.MONTH, BibTexFields.NOTE,
+                        BibTexFields.KEY]
+        lst_required_partial = []
+        return {'required': lst_required, 'optional': lst_optional,
+                'required_partial': lst_required_partial}
+
+    def serialize(self, pid, record, validate_mode=False):
         """Serialize to bibtex from jpcoar record.
 
         :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
             instance.
         :param record: The :class:`invenio_records.api.Record` instance.
+        :param validate_mode: validate or not
         :returns: The object serialized.
         """
-        # Get JPCOAR data(XML) and ElementTree root
+        err_msg = 'Please input all required item.'
+        # Get JPCOAR datas(XML) and ElementTree root
         jpcoar_data = self.get_jpcoar_data(pid, record)
         root = ET.fromstring(jpcoar_data)
-
         if self.is_empty(root):
-            return 'This item has no mapping info.'
+            return err_msg
 
         db = BibDatabase()
-        # Article
-        if self.is_bibtex_type(root,
-                               self.article_types,
-                               self.article_cols_required):
+        bibtex_type = self.get_bibtex_type(root)
 
-            db.entries.append(self.get_bibtex_data(root,
-                                                   self.article_cols_all,
-                                                   'article'))
-        # Incollection
-        elif self.is_bibtex_type(root,
-                                 self.book_types,
-                                 self.incollection_cols_required):
+        if not bibtex_type:
+            current_app.logger.error(
+                "Can not find Bibtex type for record {}".format(
+                    record.get('recid')))
+            return err_msg
+        valid, lst_invalid_fields = self.validate_fields(root, bibtex_type)
 
-            db.entries.append(self.get_bibtex_data(root,
-                                                   self.incollection_cols_all,
-                                                   'incollection'))
-        # Inbook
-        elif self.is_bibtex_type(root,
-                                 self.book_types,
-                                 self.inbook_cols_required):
+        if validate_mode:
+            return valid
+        elif not validate_mode and not valid:
+            if len(lst_invalid_fields) > 0:
+                current_app.logger.error(
+                    'Missing required fields [{}] for record {}'.format(
+                        ','.join(lst_invalid_fields), record.get('recid')))
+            return err_msg
 
-            db.entries.append(self.get_bibtex_data(root,
-                                                   self.inbook_cols_all,
-                                                   'inbook'))
-        # Book
-        elif self.is_bibtex_type(root,
-                                 self.book_types,
-                                 self.book_cols_required):
-
-            db.entries.append(self.get_bibtex_data(root,
-                                                   self.book_cols_all,
-                                                   'book'))
-        # Booklet
-        elif self.is_bibtex_type(root,
-                                 self.book_types,
-                                 self.booklet_cols_required):
-
-            db.entries.append(self.get_bibtex_data(root,
-                                                   self.booklet_cols_all,
-                                                   'booklet'))
-        # Inproceedings
-        elif self.is_bibtex_type(root,
-                                 self.inproceedings_types,
-                                 self.inproceedings_cols_required):
-
-            db.entries.append(self.get_bibtex_data(root,
-                                                   self.inproceedings_cols_all,
-                                                   'inproceedings'))
-        # Techreport
-        elif self.is_bibtex_type(root,
-                                 self.techreport_types,
-                                 self.techreport_cols_required):
-
-            db.entries.append(self.get_bibtex_data(root,
-                                                   self.techreport_cols_all,
-                                                   'techreport'))
-        # Unpublished
-        elif self.is_bibtex_type(root,
-                                 self.unpublished_types,
-                                 self.unpublished_cols_required):
-
-            db.entries.append(self.get_bibtex_data(root,
-                                                   self.unpublished_cols_all,
-                                                   'unpublished'))
-        # Misc
-        elif self.is_misc_type(root):
-            db.entries.append(self.get_bibtex_data(root,
-                                                   self.misc_cols_all,
-                                                   'misc'))
-        # Unknown type
-        else:
-            return 'This item has no mapping info.'
-
+        db.entries.append(self.get_bibtex_data(root, bibtex_type))
         writer = BibTexWriter()
-
-        return writer.write(db)
+        result = writer.write(db)
+        return result
 
     @staticmethod
     def get_jpcoar_data(pid, record):
@@ -318,115 +495,208 @@ class WekoBibTexSerializer():
 
         return False
 
-    def is_bibtex_type(self, root, bibtex_types, bibtex_cols_required):
+    def get_bibtex_type(self, root):
         """
         Determine jpcoar record types(except misc).
 
         :return:
 
         """
+        type_result = None
         type_value = ''
         for element in root.findall('.//dc:type', self.ns):
             type_value = element.text
+        # Determine which type of Bibtex type is it
+        for bib_type, item_types in self.type_mapping.items():
+            if type_value.lower() in item_types:
+                type_result = bib_type
+                break
+        return type_result
 
-        if type_value.lower() not in bibtex_types:
-            return False
+    def validate_fields(self, root, bibtex_type):
+        """Validate required fields of bibtex type.
 
-        if not self.contains_all(root, bibtex_cols_required.values()):
-            return False
-
-        return True
-
-    def is_misc_type(self, root):
+        @param root:
+        @param bibtex_type:
+        @return:
         """
-        Determine jpcoar record type(misc).
 
-        :param root:
-        :return:
+        def validate_by_att(attribute_name, expected_values):
+            valid_date = False
+            for element in elements:
+                if element.get(attribute_name) and element.get(
+                        attribute_name).lower() in expected_values:
+                    valid_date = True
+            return valid_date
 
+        def validate_partial_req():
+            result = True
+            for par_req in fields.get('required_partial'):
+                partial_valid = False
+                for field in par_req:
+                    # check for pages because pages is represented for start
+                    # and end page
+                    if field == BibTexFields.PAGES:
+                        start_page = root.findall(self.find_pattern.format(
+                            self.fields_mapping[BibTexFields.PAGE_START]),
+                            self.ns)
+                        end_page = root.findall(
+                            self.find_pattern.format(self.fields_mapping[BibTexFields.PAGE_END]),
+                            self.ns)
+                        if len(start_page) > 0 and len(end_page) > 0:
+                            partial_valid = True
+                            continue
+                    else:
+                        field_data = root.findall(
+                            self.find_pattern.format(self.fields_mapping[field]),
+                            self.ns)
+                        if len(field_data) > 0:
+                            partial_valid = True
+                            continue
+                if not partial_valid:
+                    result = False
+                    lst_invalid_fields.append(par_req[0].value)
+                    lst_invalid_fields.append(par_req[1].value)
+            return result
+
+        lst_invalid_fields = []
+        required_valid = True
+        fields = self.get_bibtex_type_fields(bibtex_type)
+        for item_required in fields.get('required'):
+            elements = root.findall(
+                self.find_pattern.format(self.fields_mapping[item_required]),
+                self.ns)
+            if len(elements) == 0:
+                required_valid = False
+                lst_invalid_fields.append(item_required.value)
+            elif item_required == BibTexFields.YEAR or \
+                    item_required == BibTexFields.MONTH:
+                date_valid = validate_by_att('dateType', ['issued'])
+                if not date_valid:
+                    lst_invalid_fields.append(item_required.value)
+                    required_valid = False
+            elif item_required == BibTexFields.DOI:
+                doi_valid = validate_by_att('identifierType', ['doi'])
+                if not doi_valid:
+                    lst_invalid_fields.append(item_required.value)
+                    required_valid = False
+            elif item_required == BibTexFields.URL:
+                url_valid = validate_by_att('identifierType',
+                                            ['doi', 'hdl', 'uri'])
+                if not url_valid:
+                    lst_invalid_fields.append(item_required.value)
+                    required_valid = False
+        partial_req_valid = validate_partial_req()
+        return required_valid and partial_req_valid, lst_invalid_fields
+
+    def combine_all_fields(self, bibtex_type):
+        """Combine all fields of item type.
+
+        @param bibtex_type:
+        @return:
         """
-        type_value = ''
-        for element in root.findall('.//dc:type', self.ns):
-            type_value = element.text
+        all_field_type = self.get_bibtex_type_fields(bibtex_type)
+        all_fields = all_field_type.get(
+            'required') + all_field_type.get('optional')
+        partial_req = all_field_type.get('required_partial')
+        for item in partial_req:
+            if BibTexFields.PAGES in item:
+                item.remove(BibTexFields.PAGES)
+                item.extend(BibTexFields.PAGE_START,
+                            BibTexFields.PAGE_END)
+            all_fields.extend(item)
+        return all_fields
 
-        if type_value.lower() in self.misc_types or \
-                type_value.lower() in self.article_types or \
-                type_value.lower() in self.book_types or \
-                type_value.lower() in self.inproceedings_types or \
-                type_value.lower() in self.techreport_types or \
-                type_value.lower() in self.unpublished_types:
+    def get_bibtex_data(self, root, bibtex_type):
+        """Get Bibtex data base on Bibtex type.
 
-            return True
-
-        return False
-
-    def contains_all(self, root, field_list):
+        @param root:
+        @param bibtex_type:
+        @return:
         """
-        Determine whether all required items exist.
 
-        :param root:
-        :param field_list:
-        :return:
+        def process_by_att(att, expected_val, existed_lst):
+            date_type = element.get(att)
+            if date_type and date_type.lower() == expected_val and \
+                    element.text not in existed_lst:
+                dates.append(element.text)
 
-        """
-        for field in field_list:
-            if len(root.findall('.//' + field, self.ns)) == 0:
-                return False
+        def process_author():
+            author_lang = element.get(xml_ns + 'lang')
+            if not author_lang or author_lang.lower() != 'ja-kana':
+                creator[BibTexFields.AUTHOR.value].append(
+                    element.text)
+            else:
+                creator[BibTexFields.YOMI.value].append(
+                    element.text)
 
-        return True
+        def process_url():
+            identifier_type = element.get(xml_ns + 'identifierType')
+            if identifier_type and identifier_type.lower in self.lst_identifier_type:
+                lst_identifier_type_data[
+                    identifier_type.lower].append(element.text)
 
-    def get_bibtex_data(self, root, bibtex_cols_all={}, entry_type='article'):
-        """
-        Get bibtex data from jpcoar record.
-
-        :param root:
-        :param bibtex_cols_all:
-        :param entry_type:
-        :return:
-
-        """
-        # Initialization
         data = {}
         page_start = ''
         page_end = ''
         xml_ns = '{' + self.ns['xml'] + '}'
+        creator = {BibTexFields.AUTHOR.value: [],
+                   BibTexFields.YOMI.value: []}
+        lst_identifier_type_data = {}
+        dois = []
+        all_fields = self.combine_all_fields(bibtex_type)
 
-        # Create book record
-        for field in bibtex_cols_all.keys():
-            elements = root.findall('.//' + bibtex_cols_all[field], self.ns)
+        for i in self.lst_identifier_type:
+            lst_identifier_type_data[i] = []
+
+        for field in all_fields:
+            elements = root.findall(
+                self.find_pattern.format(self.fields_mapping[field]), self.ns)
             if len(elements) != 0:
-
                 value = ''
                 dates = []
                 for element in elements:
-                    if field == 'date' and (element.get('dateType') is not None
-                                            and element.get('dateType').lower() == 'issued'):
-                        dates.append(element.text)
-                        continue
-                    elif field == 'type' and (element.get('descriptionType') is None
-                                              or element.get('descriptionType').lower() != 'other'):
-                        continue
-                    elif field == 'author' and (element.get(xml_ns + 'lang') is None
-                                                or element.get(xml_ns + 'lang').lower() != 'en'):
-                        continue
-
+                    if field == BibTexFields.YEAR or \
+                            field == BibTexFields.MONTH:
+                        process_by_att('DateType', 'issued', dates)
+                    elif field == BibTexFields.AUTHOR:
+                        process_author()
+                    elif field == BibTexFields.DOI:
+                        process_by_att(xml_ns + 'identifierType', 'doi', dois)
+                    elif field == BibTexFields.URL:
+                        process_url()
                     if value != '':
-                        value += ' and ' if field == 'author' else ', '
+                        value += ' and ' if field == BibTexFields.AUTHOR else ', '
                     value += element.text
 
-                if field == 'page_start':
+                if field == BibTexFields.PAGE_START:
                     page_start = value
-                elif field == 'page_end':
+                elif field == BibTexFields.PAGE_END:
                     page_end = value
-                elif field == 'date' and len(dates) != 0:
-                    data['year'], data['month'] = self.get_dates(dates)
+                elif field == BibTexFields.YEAR or \
+                        field == BibTexFields.MONTH and len(dates) != 0:
+                    data[BibTexFields.YEAR.value], data[
+                        BibTexFields.MONTH.value] = self.get_dates(dates)
+                elif field == BibTexFields.AUTHOR:
+                    if creator[BibTexFields.AUTHOR.value]:
+                        data[field.value] = ' and '.join(
+                            creator[BibTexFields.AUTHOR.value])
+                    if creator[BibTexFields.YOMI.value]:
+                        data[BibTexFields.YOMI.value] = ' and '.join(
+                            creator[BibTexFields.YOMI.value])
+                elif field == BibTexFields.DOI and len(dois) > 0:
+                    data[field.value] = ','.join(dois)
+                elif field == BibTexFields.URL and len():
+                    data[field.value] = self.get_identifier(
+                        self.lst_identifier_type,
+                        lst_identifier_type_data)
                 elif value != '':
-                    data[field] = value
+                    data[field.value] = value
 
         if page_start != '' and page_end != '':
             data['pages'] = str(page_start) + '--' + str(page_end)
 
-        data['ENTRYTYPE'] = entry_type
+        data['ENTRYTYPE'] = bibtex_type.value
         data['ID'] = self.get_item_id(root)
 
         return data
@@ -470,3 +740,16 @@ class WekoBibTexSerializer():
             month += date.strftime('%b')
 
         return year, month
+
+    @staticmethod
+    def get_identifier(identifier_type, identifier_types_data):
+        """Get identifier data.
+
+        @param identifier_type:
+        @param identifier_types_data:
+        @return:
+        """
+        for type in identifier_type:
+            if identifier_types_data.get(type) and len(
+                    identifier_types_data.get(type)) > 0:
+                return identifier_types_data.get(type)[0]
