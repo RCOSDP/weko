@@ -47,11 +47,12 @@ def validate_json(file):
     with file.open() as fp:
         try:
             json_data = json.loads(fp.read().decode('utf-8'))
-            context = json_data["@context"]
-            if type(context) is list:
-                context = ",".join(context)
-            if re.match("http://iiif.io/api/presentation/./context.json", context):
-                return True
+            if "@context" in json_data.keys():
+                context = json_data["@context"]
+                if type(context) is list:
+                    context = ",".join(context)
+                if re.match("http://iiif.io/api/presentation/./context.json", context):
+                    return True
             return False
         except BaseException:
             return False
