@@ -31,3 +31,5 @@ invenio-search-ui==1.0.0a9
 invenio-theme==1.0.0b4
 invenio-csl-rest==1.0.0a1
 flask-sitemap==0.1.0
+Flask-IIIF==0.6.1
+invenio-iiif==1.0.0a5 
