@@ -108,7 +108,7 @@ class WekoBibTexSerializer():
                            'musical notation', 'interactive resource',
                            'learning material', 'patent', 'dataset', 'software',
                            'workflow',
-                           'other'],
+                           'other（その他）','other（プレプリント）'],
         BibTexTypes.PHDTHESIS: ['doctoral thesis'],
         BibTexTypes.PROCEEDINGS: ['conference proceedings'],
         BibTexTypes.TECHREPORT: ['report',
@@ -148,7 +148,7 @@ class WekoBibTexSerializer():
             BibTexFields.HOW_PUBLISHER: jp_dc + 'mimeType',
             BibTexFields.YEAR: jp_datacite + 'date',
             BibTexFields.MONTH: jp_datacite + 'date',
-            BibTexFields.INSTITUTION: jp_jp + 'contributor' + '//' + jp_jp + 'contributorName',
+            BibTexFields.INSTITUTION: 'none',
             BibTexFields.TYPE: 'none',
             BibTexFields.EDITOR: 'none',
             BibTexFields.EDITION: 'none',
@@ -165,7 +165,6 @@ class WekoBibTexSerializer():
             BibTexFields.URL: jp_jp + 'identifier',
         }
 
-    @staticmethod
     def get_bibtex_type_fields(self, bibtex_type):
         """Get all fields of BibTex type.
 
@@ -602,8 +601,8 @@ class WekoBibTexSerializer():
         for item in partial_req:
             if BibTexFields.PAGES in item:
                 item.remove(BibTexFields.PAGES)
-                item.extend(BibTexFields.PAGE_START,
-                            BibTexFields.PAGE_END)
+                item.extend([BibTexFields.PAGE_START,
+                            BibTexFields.PAGE_END])
             all_fields.extend(item)
         return all_fields
 
@@ -658,7 +657,7 @@ class WekoBibTexSerializer():
                 for element in elements:
                     if field == BibTexFields.YEAR or \
                             field == BibTexFields.MONTH:
-                        process_by_att('DateType', 'issued', dates)
+                        process_by_att('dateType', 'issued', dates)
                     elif field == BibTexFields.AUTHOR:
                         process_author()
                     elif field == BibTexFields.DOI:

@@ -1,3 +1,9 @@
+const MESSAGE = {
+  bibtex_err: {
+    en: "Required item is not inputted.",
+    ja: "必須項目がありません。",
+  }
+}
 require([
   "jquery",
   "bootstrap",
@@ -115,6 +121,21 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $rootScope.commInfo = "";
     $rootScope.commInfoIndex = "";
   }
+
+  $rootScope.getMessage = function(messageCode) {
+  const defaultLanguage = "en";
+  let currentLanguage = document.getElementById("current_language").value;
+  let message = MESSAGE[messageCode];
+  if (message) {
+    if (message[currentLanguage]) {
+      return message[currentLanguage];
+    } else {
+      return message[defaultLanguage];
+    }
+  } else {
+    return "";
+  }
+}
 
   $rootScope.disable_flg = true;
   $rootScope.display_flg = true;
@@ -369,9 +390,10 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     return invalidRecordIds;
   }
 
-  $scope.showErrMsgBibtex = function(invalidRecordIds) {
-    invalidRecordIds.forEach(function(recordId){
-      $('#bibtex_err_' + recordId).removeClass('hide');
+  $scope.showErrMsgBibtex = function (invalidRecordIds) {
+    errMsg = $scope.getMessage('bibtex_err');
+    invalidRecordIds.forEach(function (recordId) {
+      document.getElementById('bibtex_err_' + recordId).textContent=errMsg;
     });
   }
 
