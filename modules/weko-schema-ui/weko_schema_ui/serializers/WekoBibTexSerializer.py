@@ -108,7 +108,8 @@ class WekoBibTexSerializer():
                            'musical notation', 'interactive resource',
                            'learning material', 'patent', 'dataset', 'software',
                            'workflow',
-                           'other（その他）','other（プレプリント）'],
+                           'other（その他）',
+                           'other（プレプリント）'],
         BibTexTypes.PHDTHESIS: ['doctoral thesis'],
         BibTexTypes.PROCEEDINGS: ['conference proceedings'],
         BibTexTypes.TECHREPORT: ['report',
@@ -638,6 +639,7 @@ class WekoBibTexSerializer():
         data = {}
         page_start = ''
         page_end = ''
+        title = ''
         xml_ns = '{' + self.ns['xml'] + '}'
         creator = {BibTexFields.AUTHOR.value: [],
                    BibTexFields.YOMI.value: []}
@@ -664,6 +666,9 @@ class WekoBibTexSerializer():
                         process_by_att(xml_ns + 'identifierType', 'doi', dois)
                     elif field == BibTexFields.URL:
                         process_url()
+                    elif field == BibTexFields.TITLE and title == '':
+                        # Get only one title at all
+                        title = element.text
                     if value != '':
                         value += ' and ' if field == BibTexFields.AUTHOR else ', '
                     value += element.text
@@ -689,6 +694,8 @@ class WekoBibTexSerializer():
                     data[field.value] = self.get_identifier(
                         self.lst_identifier_type,
                         lst_identifier_type_data)
+                elif field == BibTexFields.TITLE and title != '':
+                    data[field.value] = title
                 elif value != '':
                     data[field.value] = value
 
