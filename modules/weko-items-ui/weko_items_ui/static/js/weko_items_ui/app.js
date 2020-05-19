@@ -1653,6 +1653,21 @@ function toObject(arr) {
             );
           }
         }
+
+        setTimeout(function (){
+          let recordsModel = JSON.parse(sessionStorage.getItem('recordsModel'));
+          let model = $rootScope.recordsVM.invenioRecordsModel;
+          $scope.searchFilemetaKey();
+          if(!$.isEmptyObject(recordsModel) && $scope.currentUrl == bucketUrl){
+            $scope.filemeta_keys.forEach(function (filemeta_key) {
+              if($.isEmptyObject(recordsModel[filemeta_key])){
+                model[filemeta_key] = [{}];
+              }else{
+                model[filemeta_key] = recordsModel[filemeta_key];
+              }
+            });
+          }
+        }, 3000);
       }
 
       $scope.storeFilesToSession = function () {
@@ -1661,6 +1676,7 @@ function toObject(arr) {
         sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
         sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
         sessionStorage.setItem('url', $scope.currentUrl);
+        sessionStorage.setItem('recordsModel', JSON.stringify($rootScope.recordsVM.invenioRecordsModel));
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
@@ -1734,6 +1750,7 @@ function toObject(arr) {
           for (var i = $scope.previousNumFiles; i < filesUploaded.length; i++) {
             var fileInfo = new Object();
             // Fill filename
+            fileInfo['version_id'] = filesUploaded[i].version_id;
             fileInfo['filename'] = filesUploaded[i].key;
             // Fill size
             fileInfo.filesize = [{}]; // init array
@@ -1756,12 +1773,12 @@ function toObject(arr) {
         });
       }
 
-      $scope.removeFileForm = function (filename) {
+      $scope.removeFileForm = function (version_id) {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
-            return fileInfo.filename != filename;
+            return fileInfo.version_id != version_id;
           });
         });
       }
@@ -1836,7 +1853,7 @@ function toObject(arr) {
         if (f.completed) {
           $scope.initFilenameList();
           $scope.hiddenPubdate();
-          $scope.removeFileForm(f.key);
+          $scope.removeFileForm(f.version_id);
           $scope.updateNumFiles();
           $scope.storeFilesToSession();
           // Delay 1s after page render
