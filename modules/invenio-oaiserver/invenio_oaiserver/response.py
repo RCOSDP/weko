@@ -458,14 +458,18 @@ def combine_record_file_urls(record, object_uuid):
         attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
         if isinstance(attr_mlt, list):
             for attr in attr_mlt:
-                if attr.get(file_keys[1]) and attr.get('filename'):
+                if attr.get('filename'):
+                    if not attr.get(file_keys[1]):
+                        attr[file_keys[1]] = {}
                     attr[file_keys[1]][file_keys[2]] = \
                         create_files_url(
                             request.url_root,
                             record.get('recid'),
                             attr.get('filename'))
-        elif isinstance(attr_mlt, dict) and attr_mlt.get(file_keys[1]) and \
+        elif isinstance(attr_mlt, dict) and \
                 attr_mlt.get('filename'):
+            if not attr_mlt.get(file_keys[1]):
+                attr_mlt[file_keys[1]] = {}
             attr_mlt[file_keys[1]][file_keys[2]] = \
                 create_files_url(
                     request.url_root,
