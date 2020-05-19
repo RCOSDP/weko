@@ -1653,7 +1653,19 @@ function toObject(arr) {
             );
           }
         }
+        $scope.setFilesModel();
+      }
 
+      $scope.storeFilesToSession = function () {
+        //Add file uploaded to sessionStorage when uploaded processing done
+        window.history.pushState("", "", $scope.currentUrl);
+        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
+        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
+        sessionStorage.setItem('url', $scope.currentUrl);
+        sessionStorage.setItem('recordsModel', JSON.stringify($rootScope.recordsVM.invenioRecordsModel));
+      }
+
+      $scope.setFilesModel = function () {
         setTimeout(function (){
           let recordsModel = JSON.parse(sessionStorage.getItem('recordsModel'));
           let model = $rootScope.recordsVM.invenioRecordsModel;
@@ -1668,15 +1680,6 @@ function toObject(arr) {
             });
           }
         }, 3000);
-      }
-
-      $scope.storeFilesToSession = function () {
-        //Add file uploaded to sessionStorage when uploaded processing done
-        window.history.pushState("", "", $scope.currentUrl);
-        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
-        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
-        sessionStorage.setItem('url', $scope.currentUrl);
-        sessionStorage.setItem('recordsModel', JSON.stringify($rootScope.recordsVM.invenioRecordsModel));
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
