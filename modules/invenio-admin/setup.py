@@ -47,7 +47,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-Admin>=1.5.5',
+    'Flask-Admin>=1.5.3',
     'Flask-Menu>=0.5.0',
     'Flask-Principal>=0.4.0',
     'invenio-accounts>=1.1.3',
