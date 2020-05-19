@@ -545,14 +545,14 @@ class WekoBibTexSerializer():
                             self.__ns)
                         if len(start_page) > 0 and len(end_page) > 0:
                             partial_valid = True
-                            continue
+                            break
                     else:
                         field_data = root.findall(
                             self.__find_pattern.format(self.__fields_mapping[field]),
                             self.__ns)
                         if len(field_data) > 0:
                             partial_valid = True
-                            continue
+                            break
                 if not partial_valid:
                     result = False
                     lst_invalid_fields.append(par_req[0].value)
@@ -560,6 +560,7 @@ class WekoBibTexSerializer():
             return result
 
         lst_invalid_fields = []
+        identifierType_str = 'identifierType'
         required_valid = True
         fields = self.____get_bibtex_type_fields(bibtex_type)
         for item_required in fields.get('required'):
@@ -576,12 +577,12 @@ class WekoBibTexSerializer():
                     lst_invalid_fields.append(item_required.value)
                     required_valid = False
             elif item_required == BibTexFields.DOI:
-                doi_valid = validate_by_att('identifierType', ['doi'])
+                doi_valid = validate_by_att(identifierType_str, ['doi'])
                 if not doi_valid:
                     lst_invalid_fields.append(item_required.value)
                     required_valid = False
             elif item_required == BibTexFields.URL:
-                url_valid = validate_by_att('identifierType',
+                url_valid = validate_by_att(identifierType_str,
                                             ['doi', 'hdl', 'uri'])
                 if not url_valid:
                     lst_invalid_fields.append(item_required.value)
@@ -641,6 +642,7 @@ class WekoBibTexSerializer():
         page_end = ''
         title = ''
         xml_ns = '{' + self.__ns['xml'] + '}'
+        and_str = ' and '
         creator = {BibTexFields.AUTHOR.value: [],
                    BibTexFields.YOMI.value: []}
         lst_identifier_type_data = {}
@@ -670,7 +672,7 @@ class WekoBibTexSerializer():
                         # Get only one title at all
                         title = element.text
                     if value != '':
-                        value += ' and ' if field == BibTexFields.AUTHOR else ', '
+                        value += and_str if field == BibTexFields.AUTHOR else ', '
                     value += element.text
 
                 if field == BibTexFields.PAGE_START:
@@ -683,10 +685,10 @@ class WekoBibTexSerializer():
                         BibTexFields.MONTH.value] = self.__get_dates(dates)
                 elif field == BibTexFields.AUTHOR:
                     if creator[BibTexFields.AUTHOR.value]:
-                        data[field.value] = ' and '.join(
+                        data[field.value] = and_str.join(
                             creator[BibTexFields.AUTHOR.value])
                     if creator[BibTexFields.YOMI.value]:
-                        data[BibTexFields.YOMI.value] = ' and '.join(
+                        data[BibTexFields.YOMI.value] = and_str.join(
                             creator[BibTexFields.YOMI.value])
                 elif field == BibTexFields.DOI and len(dois) > 0:
                     data[field.value] = ','.join(dois)

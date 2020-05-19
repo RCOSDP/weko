@@ -108,7 +108,7 @@ require([
   });
 });
 
-  function getMessage(messageCode) {
+function getMessage(messageCode) {
   const defaultLanguage = "en";
   let currentLanguage = document.getElementById("current_language").value;
   let message = MESSAGE[messageCode];
