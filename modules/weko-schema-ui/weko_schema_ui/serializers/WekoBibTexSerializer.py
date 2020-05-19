@@ -438,7 +438,7 @@ class WekoBibTexSerializer():
         # Get JPCOAR datas(XML) and ElementTree root
         jpcoar_data = self.__get_jpcoar_data(pid, record)
         root = ET.fromstring(jpcoar_data)
-        if self.is_empty(root):
+        if self.__is_empty(root):
             return err_msg
 
         db = BibDatabase()
