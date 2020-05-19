@@ -136,7 +136,7 @@ class Journals(object):
         try:
             with db.session.begin_nested():
                 journal = db.session.query(Journal).\
-                    filter_by(id=journal_id).one_or_none()
+                    filter_by(index_id=journal_id).one_or_none()
                 if not journal:
                     return
 
