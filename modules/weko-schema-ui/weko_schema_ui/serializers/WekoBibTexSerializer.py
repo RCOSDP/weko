@@ -128,15 +128,15 @@ class WekoBibTexSerializer():
     def __init__(self):
         """Init."""
         # Load namespace
-        self.ns = cache_schema('jpcoar_mapping').get('namespaces')
-        self.lst_identifier_type = ['doi', 'hdl', 'url']
+        self.__ns = cache_schema('jpcoar_mapping').get('namespaces')
+        self.__lst_identifier_type = ['doi', 'hdl', 'url']
         # JPCOAR elements
-        jp_jp = '{' + self.ns['jpcoar'] + '}'
-        jp_dc = '{' + self.ns['dc'] + '}'
-        jp_datacite = '{' + self.ns['datacite'] + '}'
-        self.find_pattern = './/{}'
+        jp_jp = '{' + self.__ns['jpcoar'] + '}'
+        jp_dc = '{' + self.__ns['dc'] + '}'
+        jp_datacite = '{' + self.__ns['datacite'] + '}'
+        self.__find_pattern = './/{}'
 
-        self.fields_mapping = {
+        self.__fields_mapping = {
             BibTexFields.AUTHOR: jp_jp + 'creatorName',
             BibTexFields.TITLE: jp_dc + 'title',
             BibTexFields.JOURNAL: jp_jp + 'sourceTitle',
@@ -166,7 +166,7 @@ class WekoBibTexSerializer():
             BibTexFields.URL: jp_jp + 'identifier',
         }
 
-    def get_bibtex_type_fields(self, bibtex_type):
+    def ____get_bibtex_type_fields(self, bibtex_type):
         """Get all fields of BibTex type.
 
         @param self:
@@ -174,25 +174,25 @@ class WekoBibTexSerializer():
         @return:
         """
         result = {
-            BibTexTypes.ARTICLE: self.get_article_fields(),
-            BibTexTypes.BOOK: self.get_book_fields(),
-            BibTexTypes.BOOKLET: self.get_booklet_fields(),
-            BibTexTypes.CONFERENCE: self.get_conference_fields(),
-            BibTexTypes.INBOOK: self.get_inbook_fields(),
-            BibTexTypes.INCOLLECTION: self.get_incollection_fields(),
-            BibTexTypes.INPROCEEDINGS: self.get_inproceedings_fields(),
-            BibTexTypes.MANUAL: self.get_manual_fields(),
-            BibTexTypes.MASTERSTHESIS: self.get_mastersthesis_fields(),
-            BibTexTypes.MISC: self.get_misc_fields(),
-            BibTexTypes.PHDTHESIS: self.get_phdthesis_fields(),
-            BibTexTypes.PROCEEDINGS: self.get_proceedings_fields(),
-            BibTexTypes.TECHREPORT: self.get_techreport_fields(),
-            BibTexTypes.UNPUBLISHED: self.get_unpublished_fields(),
+            BibTexTypes.ARTICLE: self.__get_article_fields(),
+            BibTexTypes.BOOK: self.__get_book_fields(),
+            BibTexTypes.BOOKLET: self.__get_booklet_fields(),
+            BibTexTypes.CONFERENCE: self.__get_conference_fields(),
+            BibTexTypes.INBOOK: self.__get_inbook_fields(),
+            BibTexTypes.INCOLLECTION: self.__get_incollection_fields(),
+            BibTexTypes.INPROCEEDINGS: self.__get_inproceedings_fields(),
+            BibTexTypes.MANUAL: self.__get_manual_fields(),
+            BibTexTypes.MASTERSTHESIS: self.__get_mastersthesis_fields(),
+            BibTexTypes.MISC: self.__get_misc_fields(),
+            BibTexTypes.PHDTHESIS: self.__get_phdthesis_fields(),
+            BibTexTypes.PROCEEDINGS: self.__get_proceedings_fields(),
+            BibTexTypes.TECHREPORT: self.__get_techreport_fields(),
+            BibTexTypes.UNPUBLISHED: self.__get_unpublished_fields(),
         }
         return result.get(bibtex_type)
 
     @staticmethod
-    def get_article_fields():
+    def __get_article_fields():
         """Get article's fields.
 
         @return:
@@ -208,7 +208,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_book_fields():
+    def __get_book_fields():
         """Get book's fields.
 
         @return:
@@ -226,7 +226,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_booklet_fields():
+    def __get_booklet_fields():
         """Get booklet's fields.
 
         @return:
@@ -241,7 +241,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_conference_fields():
+    def __get_conference_fields():
         """Get conference's fields.
 
         @return:
@@ -260,7 +260,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_inbook_fields():
+    def __get_inbook_fields():
         """Get inbook's fields.
 
         @return:
@@ -281,7 +281,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_incollection_fields():
+    def __get_incollection_fields():
         """Get incollection's fields.
 
         @return:
@@ -302,7 +302,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_inproceedings_fields():
+    def __get_inproceedings_fields():
         """Get inproceedings's fields.
 
         @return:
@@ -321,7 +321,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_manual_fields():
+    def __get_manual_fields():
         """Get manual's fields.
 
         @return:
@@ -336,7 +336,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_mastersthesis_fields():
+    def __get_mastersthesis_fields():
         """Get mastersthesis's fields.
 
         @return:
@@ -351,7 +351,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_phdthesis_fields():
+    def __get_phdthesis_fields():
         """Get phdthesis's fields.
 
         @return:
@@ -366,7 +366,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_proceedings_fields():
+    def __get_proceedings_fields():
         """Get proceedings's fields.
 
         @return:
@@ -382,7 +382,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_techreport_fields():
+    def __get_techreport_fields():
         """Get techreport's fields.
 
         @return:
@@ -397,7 +397,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_unpublished_fields():
+    def __get_unpublished_fields():
         """Get unpublished's fields.
 
         @return:
@@ -411,7 +411,7 @@ class WekoBibTexSerializer():
                 'required_partial': lst_required_partial}
 
     @staticmethod
-    def get_misc_fields():
+    def __get_misc_fields():
         """Get mis's fields.
 
         @return:
@@ -436,20 +436,20 @@ class WekoBibTexSerializer():
         """
         err_msg = 'Please input all required item.'
         # Get JPCOAR datas(XML) and ElementTree root
-        jpcoar_data = self.get_jpcoar_data(pid, record)
+        jpcoar_data = self.__get_jpcoar_data(pid, record)
         root = ET.fromstring(jpcoar_data)
         if self.is_empty(root):
             return err_msg
 
         db = BibDatabase()
-        bibtex_type = self.get_bibtex_type(root)
+        bibtex_type = self.__get_bibtex_type(root)
 
         if not bibtex_type:
             current_app.logger.error(
                 "Can not find Bibtex type for record {}".format(
                     record.get('recid')))
             return err_msg
-        valid, lst_invalid_fields = self.validate_fields(root, bibtex_type)
+        valid, lst_invalid_fields = self.__validate_fields(root, bibtex_type)
 
         if validate_mode:
             return valid
@@ -460,13 +460,13 @@ class WekoBibTexSerializer():
                         ','.join(lst_invalid_fields), record.get('recid')))
             return err_msg
 
-        db.entries.append(self.get_bibtex_data(root, bibtex_type))
+        db.entries.append(self.__get_bibtex_data(root, bibtex_type))
         writer = BibTexWriter()
         result = writer.write(db)
         return result
 
     @staticmethod
-    def get_jpcoar_data(pid, record):
+    def __get_jpcoar_data(pid, record):
         """Get jpcoar record.
 
         :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
@@ -481,7 +481,7 @@ class WekoBibTexSerializer():
 
         return data
 
-    def is_empty(self, root):
+    def __is_empty(self, root):
         """
         Determine whether the jpcoar record is empty.
 
@@ -489,13 +489,13 @@ class WekoBibTexSerializer():
         :return:
 
         """
-        elements = root.findall('.//jpcoar:jpcoar', self.ns)
+        elements = root.findall('.//jpcoar:jpcoar', self.__ns)
         if len(elements) == 0 or len(list(elements[0])) == 0:
             return True
 
         return False
 
-    def get_bibtex_type(self, root):
+    def __get_bibtex_type(self, root):
         """
         Determine jpcoar record types(except misc).
 
@@ -504,7 +504,7 @@ class WekoBibTexSerializer():
         """
         type_result = None
         type_value = ''
-        for element in root.findall('.//dc:type', self.ns):
+        for element in root.findall('.//dc:type', self.__ns):
             type_value = element.text
         # Determine which type of Bibtex type is it
         for bib_type, item_types in self.type_mapping.items():
@@ -513,7 +513,7 @@ class WekoBibTexSerializer():
                 break
         return type_result
 
-    def validate_fields(self, root, bibtex_type):
+    def __validate_fields(self, root, bibtex_type):
         """Validate required fields of bibtex type.
 
         @param root:
@@ -537,19 +537,19 @@ class WekoBibTexSerializer():
                     # check for pages because pages is represented for start
                     # and end page
                     if field == BibTexFields.PAGES:
-                        start_page = root.findall(self.find_pattern.format(
-                            self.fields_mapping[BibTexFields.PAGE_START]),
-                            self.ns)
+                        start_page = root.findall(self.__find_pattern.format(
+                            self.__fields_mapping[BibTexFields.PAGE_START]),
+                            self.__ns)
                         end_page = root.findall(
-                            self.find_pattern.format(self.fields_mapping[BibTexFields.PAGE_END]),
-                            self.ns)
+                            self.__find_pattern.format(self.__fields_mapping[BibTexFields.PAGE_END]),
+                            self.__ns)
                         if len(start_page) > 0 and len(end_page) > 0:
                             partial_valid = True
                             continue
                     else:
                         field_data = root.findall(
-                            self.find_pattern.format(self.fields_mapping[field]),
-                            self.ns)
+                            self.__find_pattern.format(self.__fields_mapping[field]),
+                            self.__ns)
                         if len(field_data) > 0:
                             partial_valid = True
                             continue
@@ -561,11 +561,11 @@ class WekoBibTexSerializer():
 
         lst_invalid_fields = []
         required_valid = True
-        fields = self.get_bibtex_type_fields(bibtex_type)
+        fields = self.____get_bibtex_type_fields(bibtex_type)
         for item_required in fields.get('required'):
             elements = root.findall(
-                self.find_pattern.format(self.fields_mapping[item_required]),
-                self.ns)
+                self.__find_pattern.format(self.__fields_mapping[item_required]),
+                self.__ns)
             if len(elements) == 0:
                 required_valid = False
                 lst_invalid_fields.append(item_required.value)
@@ -589,13 +589,13 @@ class WekoBibTexSerializer():
         partial_req_valid = validate_partial_req()
         return required_valid and partial_req_valid, lst_invalid_fields
 
-    def combine_all_fields(self, bibtex_type):
+    def __combine_all_fields(self, bibtex_type):
         """Combine all fields of item type.
 
         @param bibtex_type:
         @return:
         """
-        all_field_type = self.get_bibtex_type_fields(bibtex_type)
+        all_field_type = self.____get_bibtex_type_fields(bibtex_type)
         all_fields = all_field_type.get(
             'required') + all_field_type.get('optional')
         partial_req = all_field_type.get('required_partial')
@@ -607,7 +607,7 @@ class WekoBibTexSerializer():
             all_fields.extend(item)
         return all_fields
 
-    def get_bibtex_data(self, root, bibtex_type):
+    def __get_bibtex_data(self, root, bibtex_type):
         """Get Bibtex data base on Bibtex type.
 
         @param root:
@@ -632,7 +632,7 @@ class WekoBibTexSerializer():
 
         def process_url():
             identifier_type = element.get(xml_ns + 'identifierType')
-            if identifier_type and identifier_type.lower in self.lst_identifier_type:
+            if identifier_type and identifier_type.lower in self.__lst_identifier_type:
                 lst_identifier_type_data[
                     identifier_type.lower].append(element.text)
 
@@ -640,19 +640,19 @@ class WekoBibTexSerializer():
         page_start = ''
         page_end = ''
         title = ''
-        xml_ns = '{' + self.ns['xml'] + '}'
+        xml_ns = '{' + self.__ns['xml'] + '}'
         creator = {BibTexFields.AUTHOR.value: [],
                    BibTexFields.YOMI.value: []}
         lst_identifier_type_data = {}
         dois = []
-        all_fields = self.combine_all_fields(bibtex_type)
+        all_fields = self.__combine_all_fields(bibtex_type)
 
-        for i in self.lst_identifier_type:
+        for i in self.__lst_identifier_type:
             lst_identifier_type_data[i] = []
 
         for field in all_fields:
             elements = root.findall(
-                self.find_pattern.format(self.fields_mapping[field]), self.ns)
+                self.__find_pattern.format(self.__fields_mapping[field]), self.__ns)
             if len(elements) != 0:
                 value = ''
                 dates = []
@@ -680,7 +680,7 @@ class WekoBibTexSerializer():
                 elif field == BibTexFields.YEAR or \
                         field == BibTexFields.MONTH and len(dates) != 0:
                     data[BibTexFields.YEAR.value], data[
-                        BibTexFields.MONTH.value] = self.get_dates(dates)
+                        BibTexFields.MONTH.value] = self.__get_dates(dates)
                 elif field == BibTexFields.AUTHOR:
                     if creator[BibTexFields.AUTHOR.value]:
                         data[field.value] = ' and '.join(
@@ -691,8 +691,8 @@ class WekoBibTexSerializer():
                 elif field == BibTexFields.DOI and len(dois) > 0:
                     data[field.value] = ','.join(dois)
                 elif field == BibTexFields.URL and len():
-                    data[field.value] = self.get_identifier(
-                        self.lst_identifier_type,
+                    data[field.value] = self.__get_identifier(
+                        self.__lst_identifier_type,
                         lst_identifier_type_data)
                 elif field == BibTexFields.TITLE and title != '':
                     data[field.value] = title
@@ -703,12 +703,12 @@ class WekoBibTexSerializer():
             data['pages'] = str(page_start) + '--' + str(page_end)
 
         data['ENTRYTYPE'] = bibtex_type.value
-        data['ID'] = self.get_item_id(root)
+        data['ID'] = self.__get_item_id(root)
 
         return data
 
     @staticmethod
-    def get_item_id(root):
+    def __get_item_id(root):
         """
         Get item id from jpcoar record.
 
@@ -727,7 +727,7 @@ class WekoBibTexSerializer():
         return item_id
 
     @staticmethod
-    def get_dates(dates):
+    def __get_dates(dates):
         """
         Get year and month from date.
 
@@ -748,7 +748,7 @@ class WekoBibTexSerializer():
         return year, month
 
     @staticmethod
-    def get_identifier(identifier_type, identifier_types_data):
+    def __get_identifier(identifier_type, identifier_types_data):
         """Get identifier data.
 
         @param identifier_type:

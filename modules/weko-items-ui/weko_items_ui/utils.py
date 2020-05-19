@@ -853,7 +853,7 @@ def get_list_file_by_record_id(recid):
 
 
 def write_bibtex_files(item_types_data, export_path):
-    """Write Bitex data to files.
+    """Write Bibtex data to files.
 
     @param item_types_data:
     @param export_path:
@@ -892,8 +892,8 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
         with open('{}/{}.tsv'.format(export_path,
                                      item_type_data.get('name')),
                   'w') as file:
-            tsvs_output = package_export_file(item_type_data)
-            file.write(tsvs_output.getvalue())
+            tsv_output = package_export_file(item_type_data)
+            file.write(tsv_output.getvalue())
 
 
 def export_items(post_data):
@@ -1025,22 +1025,7 @@ def export_item_custorm(post_data):
         item_types_data[item_type_id]['recids'].append(record_id)
 
         # Create export info file
-        for item_type_id in item_types_data:
-            keys, labels, records = make_stats_tsv(
-                item_type_id,
-                item_types_data[item_type_id]['recids'],
-                list_item_role)
-            item_types_data[item_type_id]['recids'].sort()
-            item_types_data[item_type_id]['keys'] = keys
-            item_types_data[item_type_id]['labels'] = labels
-            item_types_data[item_type_id]['data'] = records
-            item_type_data = item_types_data[item_type_id]
-
-            with open('{}/{}.tsv'.format(export_path,
-                                         item_type_data.get('name')),
-                      'w') as file:
-                tsvs_output = package_export_file(item_type_data)
-                file.write(tsvs_output.getvalue())
+        write_tsv_files(item_types_data, export_path, list_item_role)
 
         # Create bag
         bagit.make_bag(export_path)
@@ -1680,7 +1665,8 @@ def validate_bibtex(record_ids):
 
 
 def make_bibtex_data(record_ids):
-    """Serialize all Bibtex data by record ids
+    """Serialize all Bibtex data by record ids.
+
     @param record_ids:
     @return:
     """

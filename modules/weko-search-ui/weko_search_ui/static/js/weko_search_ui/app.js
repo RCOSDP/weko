@@ -108,6 +108,20 @@ require([
   });
 });
 
+  function getMessage(messageCode) {
+  const defaultLanguage = "en";
+  let currentLanguage = document.getElementById("current_language").value;
+  let message = MESSAGE[messageCode];
+  if (message) {
+    if (message[currentLanguage]) {
+      return message[currentLanguage];
+    } else {
+      return message[defaultLanguage];
+    }
+  } else {
+    return "";
+  }
+}
 
 //add controller to invenioSearch
 // add by ryuu. at 20181129 start
@@ -122,20 +136,6 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $rootScope.commInfoIndex = "";
   }
 
-  $rootScope.getMessage = function(messageCode) {
-  const defaultLanguage = "en";
-  let currentLanguage = document.getElementById("current_language").value;
-  let message = MESSAGE[messageCode];
-  if (message) {
-    if (message[currentLanguage]) {
-      return message[currentLanguage];
-    } else {
-      return message[defaultLanguage];
-    }
-  } else {
-    return "";
-  }
-}
 
   $rootScope.disable_flg = true;
   $rootScope.display_flg = true;
@@ -355,7 +355,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
           }
         });
       })
-      exportBibtex=document.getElementById("export_format_radio_bibtex").checked
+      let exportBibtex = document.getElementById("export_format_radio_bibtex").checked
       if (exportBibtex) {
         let invalidBibtexRecordIds = $scope.validateBibtexExport(Object.keys(export_metadata));
         if (invalidBibtexRecordIds.length > 0) {
@@ -369,9 +369,9 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
   }
 
   $scope.validateBibtexExport = function (record_ids) {
-    request_url = '/items/validate_bibtext_export';
+    var request_url = '/items/validate_bibtext_export';
     var data = { record_ids: record_ids }
-    invalidRecordIds = []
+    var invalidRecordIds = []
     $.ajax({
       method: 'POST',
       url: request_url,
@@ -391,7 +391,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
   }
 
   $scope.showErrMsgBibtex = function (invalidRecordIds) {
-    errMsg = $scope.getMessage('bibtex_err');
+    var errMsg = getMessage('bibtex_err');
     invalidRecordIds.forEach(function (recordId) {
       document.getElementById('bibtex_err_' + recordId).textContent=errMsg;
     });
