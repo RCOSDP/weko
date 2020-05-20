@@ -918,7 +918,7 @@ def export_items(post_data):
     if len(record_ids) > _get_max_export_items():
         return abort(400)
     elif len(record_ids) == 0:
-        return ('', 204)
+        return '', 204
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory()
