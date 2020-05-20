@@ -866,7 +866,7 @@ def write_bibtex_files(item_types_data, export_path):
         if output:
             with open('{}/{}.bib'.format(export_path,
                                          item_type_data.get('name')),
-                      'w', encoding="utf-8") as file:
+                      'w', encoding='utf8') as file:
                 file.write(output)
 
 
@@ -918,8 +918,7 @@ def export_items(post_data):
     if len(record_ids) > _get_max_export_items():
         return abort(400)
     elif len(record_ids) == 0:
-        flash(_('Please select Items to export.'), 'error')
-        return redirect(url_for('weko_items_ui.export'))
+        return ('', 204)
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory()
@@ -1679,7 +1678,7 @@ def make_bibtex_data(record_ids):
     from weko_schema_ui.serializers import WekoBibTexSerializer
     for record_id in record_ids:
         record = WekoRecord.get_record_by_pid(record_id)
-        pid = record.pid_recid
+        pid = record.pid_re
         serializer = WekoBibTexSerializer()
         output = serializer.serialize(pid, record)
         result += output if output != err_msg else ''
