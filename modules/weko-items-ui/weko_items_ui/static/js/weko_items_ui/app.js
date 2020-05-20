@@ -1669,6 +1669,7 @@ function toObject(arr) {
         setTimeout(function (){
           let recordsModel = JSON.parse(sessionStorage.getItem('recordsModel'));
           let model = $rootScope.recordsVM.invenioRecordsModel;
+          let bucketUrl = sessionStorage.getItem('url');
           $scope.searchFilemetaKey();
           if(!$.isEmptyObject(recordsModel) && $scope.currentUrl == bucketUrl){
             $scope.filemeta_keys.forEach(function (filemeta_key) {
@@ -1679,6 +1680,14 @@ function toObject(arr) {
               }
             });
           }
+
+          let files = $rootScope.filesVM.files;
+          $scope.filemeta_keys.forEach(function (filemeta_key) {
+            for (i = 0; i < model[filemeta_key].length; i++) {
+              model[filemeta_key][i].version_id = files[i].version_id;
+            }
+          });
+
         }, 3000);
       }
 
