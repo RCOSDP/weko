@@ -521,7 +521,7 @@ function toObject(arr) {
   // Bootstrap it!
   angular.element(document).ready(function () {
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
-      $scope.currentUrl = '';
+      $scope.currentUrl = window.location.pathname + window.location.search;
       $scope.resourceTypeKey = "";
       $scope.groups = [];
       $scope.filemeta_keys = [];
@@ -1639,11 +1639,20 @@ function toObject(arr) {
 
       $scope.loadFilesFromSession = function () {
         //When switch language, Getting files uploaded.
-        let bucketFiles = JSON.parse(sessionStorage.getItem('files'));
-        let bucketEndpoints = JSON.parse(sessionStorage.getItem('endpoints'));
-        let bucketUrl = sessionStorage.getItem('url');
-        $scope.currentUrl = window.location.pathname + window.location.search;
-        if (bucketFiles && bucketEndpoints && $scope.currentUrl == bucketUrl){
+        let actionID = $("#activity_id").text();
+        let fileData = sessionStorage.getItem(actionID);
+        if (!fileData) {
+          $scope.setFilesModel();
+          return;
+        }
+        fileData = JSON.parse(fileData);
+        let bucketFiles = fileData['files'];
+        let bucketEndpoints = fileData['endpoints'];
+        let recordsModel = fileData['recordsModel'];
+        if (bucketFiles && bucketEndpoints) {
+          bucketFiles = JSON.parse(bucketFiles);
+          bucketEndpoints = JSON.parse(bucketEndpoints);
+          recordsModel = JSON.parse(recordsModel);
           bucketEndpoints.html = '';
           $rootScope.filesVM.files = bucketFiles;
           $rootScope.filesVM.invenioFilesEndpoints = bucketEndpoints;
@@ -1652,30 +1661,31 @@ function toObject(arr) {
               'invenio.records.endpoints.updated', bucketEndpoints
             );
           }
+          $scope.setFilesModel(recordsModel);
         }
-        $scope.setFilesModel();
       }
 
       $scope.storeFilesToSession = function () {
         //Add file uploaded to sessionStorage when uploaded processing done
         window.history.pushState("", "", $scope.currentUrl);
-        sessionStorage.setItem('files', JSON.stringify($rootScope.filesVM.files));
-        sessionStorage.setItem('endpoints', JSON.stringify($rootScope.filesVM.invenioFilesEndpoints));
-        sessionStorage.setItem('url', $scope.currentUrl);
-        sessionStorage.setItem('recordsModel', JSON.stringify($rootScope.recordsVM.invenioRecordsModel));
+        let actionID = $("#activity_id").text();
+        let data = {
+          "files": JSON.stringify($rootScope.filesVM.files),
+          "endpoints": JSON.stringify($rootScope.filesVM.invenioFilesEndpoints),
+          "recordsModel": JSON.stringify($rootScope.recordsVM.invenioRecordsModel),
+        }
+        sessionStorage.setItem(actionID, JSON.stringify(data))
       }
 
-      $scope.setFilesModel = function () {
+      $scope.setFilesModel = function (recordsModel) {
         setTimeout(function (){
-          let recordsModel = JSON.parse(sessionStorage.getItem('recordsModel'));
           let model = $rootScope.recordsVM.invenioRecordsModel;
-          let bucketUrl = sessionStorage.getItem('url');
           $scope.searchFilemetaKey();
-          if(!$.isEmptyObject(recordsModel) && $scope.currentUrl == bucketUrl){
+          if(!$.isEmptyObject(recordsModel)){
             $scope.filemeta_keys.forEach(function (filemeta_key) {
               if($.isEmptyObject(recordsModel[filemeta_key])){
                 model[filemeta_key] = [{}];
-              }else{
+              } else {
                 model[filemeta_key] = recordsModel[filemeta_key];
               }
             });
@@ -2738,6 +2748,7 @@ function toObject(arr) {
             let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
             $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
+            sessionStorage.removeItem(activityId);
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
         }
