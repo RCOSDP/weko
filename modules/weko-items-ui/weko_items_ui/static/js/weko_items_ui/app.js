@@ -1684,7 +1684,9 @@ function toObject(arr) {
           let files = $rootScope.filesVM.files;
           $scope.filemeta_keys.forEach(function (filemeta_key) {
             for (i = 0; i < model[filemeta_key].length; i++) {
-              model[filemeta_key][i].version_id = files[i].version_id;
+              if(model[filemeta_key][i] && files[i]){
+                model[filemeta_key][i].version_id = files[i].version_id;
+              }
             }
           });
 
