@@ -866,7 +866,7 @@ def write_bibtex_files(item_types_data, export_path):
         if output:
             with open('{}/{}.bib'.format(export_path,
                                          item_type_data.get('name')),
-                      'w') as file:
+                      'w', encoding="utf-8") as file:
                 file.write(output)
 
 
@@ -910,6 +910,10 @@ def export_items(post_data):
         post_data['export_file_contents_radio'] == 'True' else False
     export_format = post_data['export_format_radio']
     record_ids = json.loads(post_data['record_ids'])
+    invalid_record_ids = json.loads(post_data['invalid_record_ids'])
+    invalid_record_ids = [int(i) for i in invalid_record_ids]
+    # Remove all invalid records
+    record_ids = set(record_ids) - set(invalid_record_ids)
     record_metadata = json.loads(post_data['record_metadata'])
     if len(record_ids) > _get_max_export_items():
         return abort(400)
