@@ -1678,7 +1678,7 @@ def make_bibtex_data(record_ids):
     from weko_schema_ui.serializers import WekoBibTexSerializer
     for record_id in record_ids:
         record = WekoRecord.get_record_by_pid(record_id)
-        pid = record.pid_re
+        pid = record.pid_recid
         serializer = WekoBibTexSerializer()
         output = serializer.serialize(pid, record)
         result += output if output != err_msg else ''
