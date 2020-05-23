@@ -144,13 +144,10 @@ def get():
     match = [{"term": {"gather_flg": 0}}]
 
     if search_key:
-        search_keys = search_key.split(" ")
-        for key in search_keys:
-            if key:
-                match.append({"multi_match": {"query": key}})
+        match.append({"multi_match": {"query": search_key, "type": "phrase"}})
     query = {"bool": {"must": match}}
-    size = (data.get('numOfPage')
-            or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
+    size = int(data.get('numOfPage')
+               or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
     num = data.get('pageNumber') or 1
     offset = (int(num) - 1) * size if int(num) > 1 else 0
 

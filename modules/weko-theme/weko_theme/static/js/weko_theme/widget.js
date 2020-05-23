@@ -828,8 +828,19 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   });
 
   removeSensorListener(otherSensor);
-  removeSensorListener(mainContentSensor);
+  removeSensorListener(mainContentSensor, getMainContentSensorTimout());
   removeSensorListener(headerSensor);
+}
+
+function getMainContentSensorTimout() {
+  let mainContentSensorTimeout = 2000;
+  let pathName = window.location.pathname;
+  let searchPattern = /^\/(search|page)/;
+  if (pathName === "/" || pathName.search(searchPattern) > -1) {
+    mainContentSensorTimeout = 10000;
+  }
+
+  return mainContentSensorTimeout;
 }
 
 function removeSensorListener(sensor, timeout) {

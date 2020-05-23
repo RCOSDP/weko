@@ -150,7 +150,7 @@ class MainLayout extends React.Component {
     const that = this
     return (
       <div>
-        {is_enable && <div className="facet-search">
+        {is_enable && <div className="facet-search break-word">
           {
             Object.keys(list_facet).map(function(name, key) {
               const item = list_facet[name]

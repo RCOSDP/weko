@@ -287,9 +287,9 @@ class SchemaTree:
             'schema'), item_type_id
 
     def __converter(self, node):
-
+        description_type = "descriptionType"
         _need_to_nested = ('subjectScheme', 'dateType', 'identifierType',
-                           'objectType', 'descriptionType')
+                           'objectType', description_type)
 
         def list_reduce(olst):
             if isinstance(olst, list):
@@ -306,6 +306,20 @@ class SchemaTree:
         def create_json(name, node1, node2):
             return {name: node1, "value": node2}
 
+        def _check_description_type(_attr, _alst):
+            """Check description type.
+
+            :param _attr: attribute value.
+            :param _alst: attribute type list.
+            :return: True if the description type has value.
+            """
+            is_valid = True
+            _attr_type = _alst[0]
+            if _attr_type == description_type\
+                    and len(list(list_reduce([_attr.get(_attr_type)]))) == 0:
+                is_valid = False
+            return is_valid
+
         def json_reduce(node):
             if isinstance(node, dict):
                 val = node.get(self._v)
@@ -315,7 +329,7 @@ class SchemaTree:
                         filter(
                             lambda x: get_attr(x) in _need_to_nested,
                             attr.keys())) if attr else []
-                    if attr and alst:
+                    if attr and alst and _check_description_type(attr, alst):
                         return list(map(partial(
                             create_json, get_attr(alst[0])),
                             list_reduce([attr.get(alst[0])]),

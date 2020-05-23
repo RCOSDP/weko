@@ -305,7 +305,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         },
         'display_facet_search': {
             'id': 'display_facet_search',
-            'status': True
+            'status': False
         }
     },
     'detail_condition': [

@@ -93,6 +93,11 @@
           {{ layout.messages() }}
           <h4>{{ admin_view.name }}</h4>
         </section>
+      {% elif header %}
+        <section class="content-header">
+          {{ layout.messages() }}
+          <h4>{{ header }}</h4>
+        </section>
       {% endif %}
       <section class="content">
         {% set render_ctx = h.resolve_ctx() %}

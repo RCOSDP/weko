@@ -757,6 +757,7 @@ class WekoDeposit(Deposit):
             self.data = data
             self.jrc = jrc
             self.is_edit = is_edit
+            self._convert_description_to_object()
         except BaseException:
             abort(500, 'MAPPING_ERROR')
 
@@ -784,6 +785,21 @@ class WekoDeposit(Deposit):
         jrc.update(ps)
         dc.update(ps)
         return dc
+
+    def _convert_description_to_object(self):
+        """Convert description to object."""
+        description_key = "description"
+        if isinstance(self.jrc, dict) and self.jrc.get(description_key):
+            _description = self.jrc.get(description_key)
+            _new_description = []
+            if isinstance(_description, list):
+                for data in _description:
+                    if isinstance(data, str):
+                        _new_description.append({"value": data})
+                    else:
+                        _new_description.append(data)
+            if _new_description:
+                self.jrc[description_key] = _new_description
 
     @classmethod
     def delete_by_index_tree_id(cls, path):
