@@ -114,7 +114,8 @@ def create_blueprint(app, endpoints):
             # ),
             # search_factory=search_factory,
             links_factory=obj_or_import_string(
-                options.get('links_factory_imp'), default=default_links_factory
+                options.get('links_factory_imp'),
+                default=default_links_factory
             ),
             pid_type=options.get('pid_type'),
             pid_minter=options.get('pid_minter'),
@@ -152,9 +153,12 @@ class ItemResource(ContentNegotiatedMethodView):
 
     view_name = '{0}_item'
 
-    def __init__(self, ctx, search_serializers=None,
+    def __init__(self,
+                 ctx,
+                 search_serializers=None,
                  record_serializers=None,
-                 default_media_type=None, **kwargs):
+                 default_media_type=None,
+                 **kwargs):
         """Constructor."""
         super(ItemResource, self).__init__(
             method_serializers={
@@ -179,8 +183,10 @@ class ItemResource(ContentNegotiatedMethodView):
     def post(self, pid, record, **kwargs):
         """Post."""
         from weko_deposit.links import base_factory
-        response = self.make_response(pid, record, 201,
-                                      links_factory=base_factory)
+        response = self.make_response(pid,
+                                     record,
+                                     201,
+                                     links_factory=base_factory)
         return response
 
     def put(self, **kwargs):
@@ -197,11 +203,12 @@ class ItemResource(ContentNegotiatedMethodView):
             cache_key = current_app.config[
                 'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
-            datastore.put(
-                cache_key,
-                json.dumps(data).encode('utf-8'),
-                ttl_secs=ttl_sec)
+            if datastore.redis.exists(cache_key):
+                datastore.put(
+                    cache_key,
+                    json.dumps(data).encode('utf-8'),
+                    ttl_secs=ttl_sec)
         except BaseException:
-            abort(400, "Failed to register item")
+            abort(400, "Failed to register item!")
 
         return jsonify({'status': 'success'})

@@ -905,18 +905,16 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         response
     """
     # ! Check pid's version
-    current_app.logger.debug('*' * 60)
-    current_app.logger.debug(recid)
     community = post_activity['community']
     post_workflow = post_activity['post_workflow']
     activity = WorkActivity()
 
-    draft_record = deposit.prepare_edit_item(recid)
+    # draft_record = deposit.prepare_edit_item(recid)
 
     # Create a new workflow activity.
     rtn = activity.init_activity(post_activity,
                                  community,
-                                 draft_record.model.id)
+                                 recid.object_uuid)
 
     return rtn
 

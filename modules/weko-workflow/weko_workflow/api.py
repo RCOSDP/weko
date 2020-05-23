@@ -263,7 +263,6 @@ class Flow(object):
             flow_action = _FlowAction.query.filter_by(
                 flow_id=flow_id,
                 action_id=ITEM_REGISTRATION_FLOW_ID).all()
-            current_app.logger.debug(flow_action)
             return flow_action
 
 
@@ -1554,7 +1553,7 @@ class WorkActivity(object):
         try:
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
-                    item_id=object_uuid).one_or_none()
+                    item_id=object_uuid).order_by(_Activity.updated.desc()).first()
                 return activity
         except Exception as ex:
             current_app.logger.error(ex)

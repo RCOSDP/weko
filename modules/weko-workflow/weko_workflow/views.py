@@ -34,6 +34,7 @@ from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
@@ -54,6 +55,7 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.utils import get_list_licence
 from werkzeug.utils import import_string
+from weko_deposit.api import WekoRecord
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -68,6 +70,7 @@ from .utils import IdentifierHandle, delete_unregister_buckets, \
     is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
     merge_buckets_by_records, register_hdl, saving_doi_pidstore, \
     set_bucket_default_size
+from invenio_pidrelations.serializers.utils import serialize_relations
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -407,9 +410,6 @@ def display_activity(activity_id=0):
                             getter=record_class.get_record)
         recid, approval_record = resolver.resolve(recid.pid_value)
         deposit = WekoDeposit.get_record(item.id)
-
-        current_app.logger.debug(recid)
-        current_app.logger.debug(type(approval_record))
 
         # files = to_files_js(deposit)
 
@@ -815,6 +815,7 @@ def next_action(activity_id='0', action_id=0):
                 updated_item = UpdateItem()
                 # publish record without version ID when registering newly
                 if recid:
+                    # draft_record = deposit.newversion(current_pid, is_draft=True)
                     # new record attached version ID
                     ver_attaching_record = deposit.newversion(current_pid)
                     new_activity_id = ver_attaching_record.model.id
@@ -822,18 +823,23 @@ def next_action(activity_id='0', action_id=0):
                         ver_attaching_record,
                         ver_attaching_record.model)
                     ver_attaching_deposit.publish()
-                    record_bucket_id = merge_buckets_by_records(
-                        current_pid.object_uuid,
-                        ver_attaching_record.model.id,
-                        sub_bucket_delete=True
-                    )
-                    if not record_bucket_id:
-                        return jsonify(code=-1, msg=_('error'))
+                    # record_bucket_id = merge_buckets_by_records(
+                    #     current_pid.object_uuid,
+                    #     ver_attaching_record.model.id,
+                    #     sub_bucket_delete=True
+                    # )
+                    # if not record_bucket_id:
+                    #     return jsonify(code=-1, msg=_('error'))
                     # Record without version: Make status Public as default
                     updated_item.publish(deposit)
                 else:
                     # update to record without version ID when editing
-                    new_activity_id = deposit.model.id
+                    pv = PIDVersioning(child=pid_without_ver)
+                    last_ver = PIDVersioning(parent=pv.parent).get_children(
+                        ordered=False,
+                        pid_status=PIDStatus.REGISTERED
+                    ).filter(PIDRelation.relation_type==2).order_by(PIDRelation.index.desc()).first()
+
                     if pid_without_ver:
                         record_without_ver = WekoDeposit.get_record(
                             pid_without_ver.object_uuid)
@@ -841,17 +847,45 @@ def next_action(activity_id='0', action_id=0):
                             record_without_ver,
                             record_without_ver.model)
                         deposit_without_ver['path'] = deposit.get('path', [])
+
+                        maintain_record = WekoDeposit.get_record(
+                            last_ver.object_uuid)
+                        maintain_deposit = WekoDeposit(
+                            maintain_record,
+                            maintain_record.model)
+                        maintain_deposit['path'] = deposit.get('path', [])
+
+                        # recid = PersistentIdentifier.query.filter_by(
+                        #     pid_type='recid',
+                        #     object_uuid=deposit.id
+                        # ).one_or_none()
+                        # relations = serialize_relations(recid)
+                        # if relations and 'version' in relations:
+                        #     relations_ver = relations['version'][0]
+                        #     relations_ver['id'] = recid.object_uuid
+                        #     relations_ver['is_last'] = relations_ver.get('index') == 0
+                        #     deposit_without_ver.indexer.update_relation_version_is_last(relations_ver)
+                        #     maintain_deposit.indexer.update_relation_version_is_last(relations_ver)
+
                         parent_record = deposit_without_ver.\
                             merge_data_to_record_without_version(current_pid)
                         deposit_without_ver.publish()
 
-                        set_bucket_default_size(new_activity_id)
-                        merge_buckets_by_records(
-                            new_activity_id,
-                            pid_without_ver.object_uuid
-                        )
+                        new_parent_record = maintain_deposit.\
+                            merge_data_to_record_without_version(current_pid)
+                        maintain_deposit.publish()
+                        
+                        # set_bucket_default_size(new_activity_id)
+                        # merge_buckets_by_records(
+                        #     new_activity_id,
+                        #     pid_without_ver.object_uuid
+                        # )
+                        new_parent_record.commit()
+                        db.session.commit()
                         updated_item.publish(parent_record)
-                delete_unregister_buckets(new_activity_id)
+                        # updated_item.publish(maintain_deposit)
+                        new_activity_id = last_ver.object_uuid
+                # delete_unregister_buckets(new_activity_id)
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,

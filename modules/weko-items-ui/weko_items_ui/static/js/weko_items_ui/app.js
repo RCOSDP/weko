@@ -2707,7 +2707,11 @@ function toObject(arr) {
             let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
             $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
-            $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
+            if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
+              $rootScope.recordsVM.actionHandler(['newversion', 'PUT'], next_frame);
+            } else {
+              $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
+            }
           }
         }
       };

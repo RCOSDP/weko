@@ -413,10 +413,8 @@ def items_index(pid_value='0'):
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
             sessionstore.delete('item_index_{}'.format(pid_value))
-            current_app.logger.debug(item_str)
             item = json.loads(item_str)
             item['index'] = data
-            current_app.logger.debug(item)
         elif request.method == 'POST':
             """update item data info."""
             sessionstore.put(
@@ -461,7 +459,6 @@ def iframe_items_index(pid_value='0'):
             enable_auto_set_index = current_app.config.get(
                 'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE')
 
-            current_app.logger.debug(record)
             if enable_auto_set_index and contain_application_endpoint:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
@@ -512,14 +509,12 @@ def iframe_items_index(pid_value='0'):
                 port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
         if request.method == 'PUT':
             """update index of item info."""
-            current_app.logger.debug('request.method == \'PUT\'')
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
             sessionstore.delete('item_index_{}'.format(pid_value))
             item = json.loads(item_str)
             item['index'] = data
         elif request.method == 'POST':
             """update item data info."""
-            current_app.logger.debug('request.method == \'POST\'')
             sessionstore.put(
                 'item_index_{}'.format(pid_value),
                 json.dumps(data),
@@ -889,7 +884,7 @@ def prepare_edit_item():
         post_activity['community'] = community
         post_activity['post_workflow'] = post_workflow
 
-        rtn = prepare_edit_workflow(post_activity, recid, deposit)
+        rtn = prepare_edit_workflow(post_activity, latest_pid, deposit)
 
         if community:
             comm = GetCommunity.get_community_by_id(community)
@@ -1196,3 +1191,48 @@ def get_authors_prefix_settings():
         return jsonify(results)
     else:
         return abort(403)
+
+
+@blueprint.route('/newversion/<string:pid_value>',
+                 methods=['PUT'])
+@login_required
+@item_permission.require(http_exception=403)
+def newversion(pid_value='0'):
+    """Iframe items index."""
+    # TODO: create new version and redirect to frame_index page
+    pid = PersistentIdentifier.get('recid', pid_value)
+    
+    deposit = WekoDeposit.get_record(pid.object_uuid)
+
+    draft_record = deposit.newversion(pid)
+    action = 'private' if deposit.get('publish_status', '1') == '1' \
+        else 'publish'
+    if not draft_record:
+        return jsonify(code=-1, msg=_('An error has occurred.'))
+
+    community_id = session.get('itemlogin_community_id')
+    ctx = {'community': None}
+    if community_id:
+        comm = GetCommunity.get_community_by_id(community_id)
+        ctx = {'community': comm}
+    cur_activity = session['itemlogin_activity']
+    steps = session['itemlogin_steps']
+    contain_application_endpoint = False
+
+    for step in steps:
+        if step.get('ActionEndpoint') == 'item_login_application':
+            contain_application_endpoint = True
+    enable_auto_set_index = current_app.config.get(
+        'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE')
+    if enable_auto_set_index and contain_application_endpoint:
+        index_id = get_index_id(cur_activity.activity_id)
+        update_index_tree_for_record(pid_value, index_id)
+        return redirect(url_for('weko_workflow.iframe_success'))
+    # Get the design for widget rendering
+    from weko_theme.utils import get_design_layout
+
+    page, render_widgets = get_design_layout(
+        community_id
+        or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
+    return jsonify({'status': 'error'})

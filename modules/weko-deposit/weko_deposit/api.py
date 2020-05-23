@@ -21,6 +21,7 @@
 """Weko Deposit API."""
 import copy
 import uuid
+import sys
 from datetime import datetime, timezone
 from typing import NoReturn, Union
 
@@ -127,7 +128,6 @@ class WekoIndexer(RecordIndexer):
 
         if 'content' in jrc:  # Only pass through pipeline if file exists
             full_body['pipeline'] = 'item-file-pipeline'
-
         self.client.index(**full_body)
 
     def delete_file_index(self, body, parent_id):
@@ -389,7 +389,7 @@ class WekoDeposit(Deposit):
                 relations_ver['id'] = recid.object_uuid
                 relations_ver['is_last'] = relations_ver.get('index') == 0
                 self.indexer.update_relation_version_is_last(relations_ver)
-            RecordDraft.unlink(recid, deposit.pid)
+            # RecordDraft.unlink(recid, deposit.pid)
 
             return deposit
         except SQLAlchemyError as ex:
@@ -720,11 +720,14 @@ class WekoDeposit(Deposit):
                     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
                     pid_value=self.pid.pid_value)
 
-                data_str = datastore.get(cache_key)
-                datastore.delete(cache_key)
-                data = json.loads(data_str.decode('utf-8'))
-        except BaseException:
-            abort(500, 'Failed to register item')
+                if datastore.redis.exists(cache_key):
+                    data_str = datastore.get(cache_key)
+                    datastore.delete(cache_key)
+                    data = json.loads(data_str.decode('utf-8'))
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.debug(ex)
+            abort(500, 'Failed to register item!')
         # Get index path
         index_lst = index_obj.get('index', [])
         # Prepare index id list if the current index_lst is a path list
@@ -903,12 +906,19 @@ class WekoDeposit(Deposit):
             # Get draft bucket's data
             record_bucket = RecordsBuckets.query.filter_by(
                 record_id=pid.object_uuid
-            ).first()
-            bucket = {
-                "_buckets": {
-                    "deposit": str(record_bucket.bucket_id)
+            ).one_or_none()
+            if record_bucket:
+                bucket = {
+                    "_buckets": {
+                        "deposit": str(record_bucket.bucket_id)
+                    }
                 }
-            }
+            else:
+                bucket = {
+                    "_buckets": {
+                        "deposit": None
+                    }
+                }
 
             args = [index, item_metadata]
             self.update(*args)
@@ -935,11 +945,8 @@ class WekoDeposit(Deposit):
             response
         """
         # prepare params for new workflow activity
-        current_app.logger.debug('PREPARE params for new workflow activity')
 
         draft_deposit = self.newversion(recid, is_draft=True)
-        # depid = PersistentIdentifier.get('depid', str(recid.pid_value))
-        # last_recid = PIDVersioning(child=recid).last_child
         draft_recid = PersistentIdentifier.get('recid', str(draft_deposit['recid']))
         draft_depid = RecordDraft.get_draft(draft_recid)
 
