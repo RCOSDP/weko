@@ -23,6 +23,7 @@
 import json
 import os
 import sys
+import traceback
 from datetime import date, timedelta
 
 import redis
@@ -437,6 +438,9 @@ def iframe_items_index(pid_value='0'):
         if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.iframe_index'))
 
+        current_app.logger.debug(PersistentIdentifier.get('recid', pid_value))
+        current_app.logger.debug(PersistentIdentifier.get('depid', pid_value))
+
         record = WekoRecord.get_record_by_pid(pid_value)
         action = 'private' if record.get('publish_status', '1') == '1' \
             else 'publish'
@@ -521,7 +525,7 @@ def iframe_items_index(pid_value='0'):
                 ttl_secs=300)
         return jsonify(data)
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        traceback.print_exc(file=sys.stdout)
     return abort(400)
 
 
@@ -884,7 +888,7 @@ def prepare_edit_item():
         post_activity['community'] = community
         post_activity['post_workflow'] = post_workflow
 
-        rtn = prepare_edit_workflow(post_activity, latest_pid, deposit)
+        rtn = prepare_edit_workflow(post_activity, recid, deposit)
 
         if community:
             comm = GetCommunity.get_community_by_id(community)
@@ -1202,37 +1206,43 @@ def newversion(pid_value='0'):
     # TODO: create new version and redirect to frame_index page
     pid = PersistentIdentifier.get('recid', pid_value)
     
-    deposit = WekoDeposit.get_record(pid.object_uuid)
+    record = WekoDeposit.get_record(pid.object_uuid)
 
+    deposit = WekoDeposit(record, record.model)
     draft_record = deposit.newversion(pid)
-    action = 'private' if deposit.get('publish_status', '1') == '1' \
-        else 'publish'
+
+    # action = 'private' if deposit.get('publish_status', '1') == '1' \
+    #     else 'publish'
+
+    current_app.logger.debug("*" * 60)
+    current_app.logger.debug(deposit)
+    current_app.logger.debug(draft_record)
+    current_app.logger.debug(draft_record.model.id)
+
+    with db.session.begin_nested():
+        activity = WorkActivity()
+        wf_activity = activity.get_workflow_activity_by_item_id(pid.object_uuid)
+        wf_activity.item_id = draft_record.model.id
+        db.session.merge(wf_activity)
+
     if not draft_record:
         return jsonify(code=-1, msg=_('An error has occurred.'))
 
-    community_id = session.get('itemlogin_community_id')
-    ctx = {'community': None}
-    if community_id:
-        comm = GetCommunity.get_community_by_id(community_id)
-        ctx = {'community': comm}
-    cur_activity = session['itemlogin_activity']
-    steps = session['itemlogin_steps']
-    contain_application_endpoint = False
+    db.session.commit()
 
-    for step in steps:
-        if step.get('ActionEndpoint') == 'item_login_application':
-            contain_application_endpoint = True
-    enable_auto_set_index = current_app.config.get(
-        'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE')
-    if enable_auto_set_index and contain_application_endpoint:
-        index_id = get_index_id(cur_activity.activity_id)
-        update_index_tree_for_record(pid_value, index_id)
-        return redirect(url_for('weko_workflow.iframe_success'))
-    # Get the design for widget rendering
-    from weko_theme.utils import get_design_layout
+    # try:
+    #     data = request.get_json()
+    #     # Saving ItemMetadata cached on Redis by pid
+    #     datastore = RedisStore(redis.StrictRedis.from_url(
+    #         current_app.config['CACHE_REDIS_URL']))
+    #     cache_key = current_app.config[
+    #         'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid.pid_value)
+    #     ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
+    #     datastore.put(
+    #         cache_key,
+    #         json.dumps(data).encode('utf-8'),
+    #         ttl_secs=ttl_sec)
+    # except BaseException:
+    #     abort(400, "Failed to register item!")
 
-    page, render_widgets = get_design_layout(
-        community_id
-        or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-
-    return jsonify({'status': 'error'})
+    return jsonify(success=True)

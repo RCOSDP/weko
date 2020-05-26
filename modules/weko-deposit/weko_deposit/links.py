@@ -20,9 +20,8 @@
 
 """Link Factory weko-deposit."""
 
-from flask import current_app
 from invenio_deposit.links import deposit_links_factory
-
+from .pidstore import get_latest_version_id
 
 def links_factory(pid, **kwargs):
     """Deposit links factory."""
@@ -38,6 +37,10 @@ def base_factory(pid, **kwargs):
     links['index'] = "/api/deposits/redirect/" + pid.pid_value
     links['r'] = "/items/index/" + pid.pid_value
     links['iframe_tree'] = "/items/iframe/index/" + pid.pid_value
-    links['newversion'] = "/items/newversion/" + pid.pid_value.split(".")[0]
+    links['newversion'] = "/items/newversion/" + pid.pid_value
+    links['edit'] = "/api/deposits/redirect/" + pid.pid_value + ".0"
+    links['iframe_tree_edit'] = "/items/iframe/index/" + pid.pid_value + ".0"
+    links['index_upgrade'] = "/api/deposits/redirect/" + pid.pid_value + "." + str(get_latest_version_id(pid.pid_value))
+    links['iframe_tree_upgrade'] = "/items/iframe/index/" + pid.pid_value + "." + str(get_latest_version_id(pid.pid_value))
 
     return links

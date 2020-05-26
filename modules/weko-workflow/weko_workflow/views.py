@@ -655,7 +655,8 @@ def next_action(activity_id='0', action_id=0):
             pid_without_ver = get_record_without_version(current_pid)
 
     if action_endpoint == 'item_login':
-        register_hdl(activity_id)
+        # register_hdl(activity_id)
+        pass
 
     if post_json.get('temporary_save') == 1 \
             and not action_endpoint in ['identifier_grant', 'item_link']:
@@ -813,6 +814,9 @@ def next_action(activity_id='0', action_id=0):
             if deposit:
                 deposit.publish()
                 updated_item = UpdateItem()
+
+                current_app.logger.debug("*" * 60)
+
                 # publish record without version ID when registering newly
                 if recid:
                     # draft_record = deposit.newversion(current_pid, is_draft=True)
@@ -840,6 +844,8 @@ def next_action(activity_id='0', action_id=0):
                         pid_status=PIDStatus.REGISTERED
                     ).filter(PIDRelation.relation_type==2).order_by(PIDRelation.index.desc()).first()
 
+                    current_app.logger.debug(last_ver)
+                    current_app.logger.debug(pid_without_ver)
                     if pid_without_ver:
                         record_without_ver = WekoDeposit.get_record(
                             pid_without_ver.object_uuid)

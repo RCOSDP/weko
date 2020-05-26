@@ -424,3 +424,14 @@ msgstr "以下のメールアドレスがシステムに登録されていませ
 msgid "The specified number has been exceeded. You can only select up to two fields."
 msgstr "規定の数を超えています。選択できるのは２つまでです。"
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Version Management"
+msgstr "バージョン管理"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Update version"
+msgstr "バージョンを更新する"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Keep version"
+msgstr "バージョンを維持する"

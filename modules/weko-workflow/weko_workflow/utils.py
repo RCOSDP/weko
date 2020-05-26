@@ -909,7 +909,11 @@ def prepare_edit_workflow(post_activity, recid, deposit):
     post_workflow = post_activity['post_workflow']
     activity = WorkActivity()
 
-    # draft_record = deposit.prepare_edit_item(recid)
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value="{}.0".format(recid.pid_value)).one_or_none()
+
+    if not draft_pid:
+        draft_record = deposit.prepare_edit_item(recid)
 
     # Create a new workflow activity.
     rtn = activity.init_activity(post_activity,

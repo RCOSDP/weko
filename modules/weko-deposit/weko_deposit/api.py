@@ -454,6 +454,7 @@ class WekoDeposit(Deposit):
     def update(self, *args, **kwargs):
         """Update only drafts."""
         self['_deposit']['status'] = 'draft'
+
         if len(args) > 1:
             dc = self.convert_item_metadata(args[0], args[1])
         else:
@@ -602,7 +603,16 @@ class WekoDeposit(Deposit):
                     PIDVersioning(
                         parent=pv.parent).insert_draft_child(
                         child=recid)
-                    RecordDraft.link(recid, depid)
+                    RecordDraft.link(recid, depid) 
+
+                    if is_draft:
+                        from invenio_pidrelations.models import PIDRelation
+                        with db.session.begin_nested():
+                            parent_pid = PIDVersioning(child=recid).parent
+                            relation = PIDRelation.query.filter_by(parent=parent_pid, child=recid).one_or_none()
+                            relation.relation_type = 3
+                            db.session.merge(relation)
+                            # db.session.commit()
 
                     index = {'index': self.get('path', []),
                              'actions': self.get('publish_status')}
@@ -713,6 +723,8 @@ class WekoDeposit(Deposit):
         self.delete_es_index_attempt(self.pid)
 
         try:
+            # current_app.logger.debug("*" * 60)
+            # current_app.logger.debug(self.pid)
             if not data:
                 datastore = RedisStore(redis.StrictRedis.from_url(
                     current_app.config['CACHE_REDIS_URL']))
@@ -963,8 +975,8 @@ class WekoDeposit(Deposit):
         # prepare params for new workflow activity
 
         draft_deposit = self.newversion(recid, is_draft=True)
-        draft_recid = PersistentIdentifier.get('recid', str(draft_deposit['recid']))
-        draft_depid = RecordDraft.get_draft(draft_recid)
+        # draft_recid = PersistentIdentifier.get('recid', str(draft_deposit['recid']))
+        # draft_depid = RecordDraft.get_draft(draft_recid)
 
         return draft_deposit
         # Create snapshot bucket for draft record

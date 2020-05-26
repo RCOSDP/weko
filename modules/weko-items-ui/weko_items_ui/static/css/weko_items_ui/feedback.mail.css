@@ -73,3 +73,14 @@
   .alert-info {
     border-radius: 3px;
   }
+
+/* CSS for version controller */
+.label-version-controller {
+  font-weight: normal;
+  padding-right: 15px;
+}
+
+input.input-version-controller {
+  margin: 2px 0 0;
+  margin-right: 5px;
+}

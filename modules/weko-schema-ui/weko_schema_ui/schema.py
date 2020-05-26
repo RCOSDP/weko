@@ -1273,7 +1273,6 @@ class SchemaTree:
                 nlst.append({k: nv})
         return nlst
         # end
-        # ---------------------------------------------------------------------------------------------------
 
 
 def cache_schema(schema_name, delete=False):
