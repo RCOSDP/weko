@@ -104,7 +104,7 @@ class Journals(object):
             # real url: '?action=' +
             # current_app.config['WEKO_INDEXTREE_JOURNAL_OPENSEARCH_URI'] +
             # '&index_id='
-            data["title_url"] = request.host_url + 'search?search_type=2&q={}'.\
+            data["title_url"] = 'search?search_type=2&q={}'.\
                 format(index_id)
             data["title_id"] = index_id
 
