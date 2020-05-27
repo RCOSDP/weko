@@ -52,7 +52,7 @@
               <select class="form-control" id="item-type-lists">
                 {%- for list in lists -%}
                 <option value="{{ list.item_type.0.id }}" {% if
-                        list.item_type.0.id== id %}selected{%
+                        list.item_type.0.id== id %}{{ " selected" }}{%
                         endif %}>{{ list.name }}({{
                   list.item_type.0.tag }})
                 </option>
@@ -68,7 +68,7 @@
                 jpcoar_prop_lists.keys() -%}
                 <option value="{{mapping_list_name}}" {% if
                         mapping_name== mapping_list_name
-                        %}selected{% endif %}>
+                        %}{{ " selected" }}{% endif %}>
                   {{mapping_list_name}}
                 </option>
                 {%- endfor -%}
@@ -128,22 +128,22 @@
                   <div class="form-inline">
                     <div class="radio">
                       <label>
-                        <input id="{{key}}" type="radio" name="radio_parent_list" value="{{key}}" {%- if not is_system_admin -%}disabled{%- endif -%}>
+                        <input id="{{key}}" type="radio" name="radio_parent_list" value="{{key}}" {%- if not is_system_admin -%}{{ " disabled" }}{%- endif -%}>
                       </label>
                     </div>
-                    <select class="form-control" name="parent_list" {%- if not is_system_admin -%}disabled{%- endif -%}>
+                    <select class="form-control" name="parent_list" {%- if not is_system_admin -%}{{ " disabled" }}{%- endif -%}>
                       {%- if keys_count == 1 -%}
                       <option value=""></option>
                       {%- endif -%}
                       {%- for jp_key in jpcoar_prop_list.keys() -%}
-                      <option value="{{ jp_key }}" {%- if jp_key== mapping_key -%}selected{%- endif -%}>{{jp_key}}</option>
+                      <option value="{{ jp_key }}" {%- if jp_key== mapping_key -%}{{ " selected" }}{%- endif -%}>{{jp_key}}</option>
                       {%- endfor -%}
                     </select>
                     <div class="btn-group pull-right" data-key="{{key}}">
                       <button type="button" class="btn btn-success
                             ten-pixel-right-margin ten-pixel-bottom-margin"
-                              data-action="add" style="position:unset;" {% if not is_system_admin %}disabled{% endif %}>
-                        <span class="glyphicon glyphicon-plus"></span>&nbsp
+                              data-action="add" style="position:unset;" {% if not is_system_admin %}{{ " disabled" }}{% endif %}>
+                        <span class="glyphicon glyphicon-plus"></span>&nbsp;
                         {{_('Add')}}
                       </button>
                       <button type="button" class="btn btn-danger
@@ -165,10 +165,10 @@
                   <div class="form-inline">
                     <div class="radio">
                       <label>
-                        <input type="radio" name="radio_parent_list" value="{{key}}" {%- if not is_system_admin -%}disabled{%- endif -%}>
+                        <input type="radio" name="radio_parent_list" value="{{key}}" {%- if not is_system_admin -%}{{ " disabled" }}{%- endif -%}>
                       </label>
                     </div>
-                    <select class="form-control" name="parent_list" {%- if not is_system_admin -%}disabled{%- endif -%}>
+                    <select class="form-control" name="parent_list" {%- if not is_system_admin -%}{{ " disabled" }}{%- endif -%}>
                       <option value=""></option>
                       {%- for jp_key in jpcoar_prop_list.keys() -%}
                       <option value="{{jp_key}}">{{jp_key}}</option>
@@ -183,8 +183,8 @@
 
                       <button type="button" class="btn btn-success
                               ten-pixel-right-margin ten-pixel-bottom-margin"
-                              style="position:unset;" data-action="add" value="" {%- if not is_system_admin -%}disabled{%- endif -%}>
-                        <span class="glyphicon glyphicon-plus"></span>&nbsp
+                              style="position:unset;" data-action="add" value="" {%- if not is_system_admin -%}{{ " disabled" }}{%- endif -%}>
+                        <span class="glyphicon glyphicon-plus"></span>&nbsp;
                         {{_('Add')}}
                       </button>
 
@@ -272,7 +272,7 @@
                 {%- endif -%}
                 {%- for jp_key in jpcoar_prop_list.keys() -%}
                 <option value="{{ jp_key }}" {%- if jp_key==
-                        mapping_key -%}selected{%- endif -%}>
+                        mapping_key -%}{{ " selected" }}{%- endif -%}>
                   {{jp_key}}
                 </option>
                 {%- endfor -%}
@@ -293,7 +293,7 @@
                             ten-pixel-right-margin ten-pixel-bottom-margin"
                         data-action="add"
                         style="position:unset;">
-                  <span class="glyphicon glyphicon-plus"></span>&nbsp
+                  <span class="glyphicon glyphicon-plus"></span>&nbsp;
                   {{_('Add')}}
                 </button>
 
@@ -301,7 +301,7 @@
                             ten-pixel-bottom-margin"
                         style="position:unset;"
                         data-action="del" {%- if keys_count== 1
-                        -%}disabled{%- endif -%}>
+                        -%}{{ " disabled" }}{%- endif -%}>
                   <span class="glyphicon glyphicon-remove"></span>
                 </button>
 
@@ -342,7 +342,7 @@
                               ten-pixel-right-margin ten-pixel-bottom-margin"
                         style="position:unset;"
                         data-action="add" value="">
-                  <span class="glyphicon glyphicon-plus"></span>&nbsp
+                  <span class="glyphicon glyphicon-plus"></span>&nbsp;
                   {{_('Add')}}
                 </button>
 
@@ -409,7 +409,7 @@
             <!-- <button id="sub_mapping-add" class="btn btn-success pull-right">{{_('Add')}}</button>-->
             <button id="sub_mapping-add"
                     class="btn btn-success pull-right twentyeight-pixel-right-margin">
-              <span class="glyphicon glyphicon-plus"></span>&nbsp
+              <span class="glyphicon glyphicon-plus"></span>&nbsp;
               {{_('Add')}}
             </button>
           </div>
@@ -445,7 +445,7 @@
                         class="btn btn-danger five-pixel-margin"
                         style="position:unset;"
                         data-action="del_sub_child">
-                  <span class="glyphicon glyphicon-trash"></span>&nbsp
+                  <span class="glyphicon glyphicon-trash"></span>&nbsp;
                   {{_('Delete')}}
                 </button>
                 <!--<div style="position: relative;" style="padding: 50px; background-color: #E5E4E2; display: inline-block;">
@@ -474,7 +474,7 @@
                         class="btn btn-danger five-pixel-margin"
                         style="position:unset;"
                         data-action="del_child">
-                  <span class="glyphicon glyphicon-trash"></span>&nbsp
+                  <span class="glyphicon glyphicon-trash"></span>&nbsp;
                   {{_('Delete')}}
                 </button>
               </fieldset>
@@ -551,7 +551,7 @@
                           class="btn btn-danger twentyeight-pixel-right-margin"
                           style="position:unset;"
                           data-action="del_child">
-                    <span class="glyphicon glyphicon-trash"></span>&nbsp
+                    <span class="glyphicon glyphicon-trash"></span>&nbsp;
                     {{_('Delete')}}
                   </button>
                 </div>
@@ -587,7 +587,7 @@
   <div class="col-sm-10"></div>
   <div class="col-sm-2">
     <button id="mapping-submit" class="btn btn-primary pull-right">
-      <span class="glyphicon glyphicon-save"></span>&nbsp
+      <span class="glyphicon glyphicon-save"></span>&nbsp;
       {{_('Save')}}
     </button>
   </div>
@@ -613,12 +613,12 @@
         </button>
         <button type="button" class="btn btn-primary hide"
                 id="btn_submit">
-          <span class="glyphicon glyphicon-save"></span>&nbsp
+          <span class="glyphicon glyphicon-save"></span>&nbsp;
           {{_('Save')}}
         </button>
         <button type="button" class="btn btn-default"
                 data-dismiss="modal">
-          <span class="glyphicon glyphicon-remove"></span>&nbsp
+          <span class="glyphicon glyphicon-remove"></span>&nbsp;
           {{_('Close')}}
         </button>
       </div>
