@@ -914,11 +914,14 @@ def prepare_edit_workflow(post_activity, recid, deposit):
 
     if not draft_pid:
         draft_record = deposit.prepare_edit_item(recid)
-
-    # Create a new workflow activity.
-    rtn = activity.init_activity(post_activity,
+        rtn = activity.init_activity(post_activity,
                                  community,
-                                 recid.object_uuid)
+                                 draft_record.model.id)
+    else:
+        # Create a new workflow activity.
+        rtn = activity.init_activity(post_activity,
+                                    community,
+                                    draft_pid.object_uuid)
 
     return rtn
 

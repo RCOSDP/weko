@@ -21,14 +21,14 @@ class MainLayout extends React.Component {
             {VERSION_CONTROLLER_LABEL}
           </label>
           <div class="col-sm-9">
-            <label class="col-sm-3">
+            <div class="col-sm-3">
               <input type="radio" name="radioVersionSelect" value="update" />{" "}
               {UPGRADE_RADIO_BUTTON_LABEL}
-            </label>
-            <label class="col-sm-3">
+            </div>
+            <div class="col-sm-3">
               <input type="radio" name="radioVersionSelect" value="keep" />{" "}
               {EDIT_RADIO_BUTTON_LABEL}
-            </label>
+            </div>
           </div>
         </div>
       </div>

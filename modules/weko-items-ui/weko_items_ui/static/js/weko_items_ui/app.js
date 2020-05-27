@@ -2653,10 +2653,9 @@ function toObject(arr) {
         if ($("#react-component-version").length != 0) {
           let versionSelected = $("input[name='radioVersionSelect']:checked").val();
           if (versionSelected == undefined) {
-            var versionHeader = $("#version-management-header").text();
+            var versionHeader = $("#component-version-label").val();
             listItemErrors.push(versionHeader);
-            $("#help-block-radio-version").removeClass('hide');
-            $("#version-management").addClass("has-error");
+            $("#react-component-version").addClass("has-error");
           }
         }
 
