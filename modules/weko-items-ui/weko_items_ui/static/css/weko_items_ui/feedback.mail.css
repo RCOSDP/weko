@@ -10,7 +10,8 @@
 }
 
 .style-component {
-    margin-top: 15px;
+    /* margin-top: 15px; */
+    margin: 0px;
     font-size: 14px;
   }
 
@@ -52,7 +53,7 @@
 
   .style-deleteBtn{
     float: right !important;
-    margin-bottom: 32px;
+    /* margin-bottom: 32px; */
   }
 
   .style-table-modal{
@@ -75,12 +76,12 @@
   }
 
 /* CSS for version controller */
-.label-version-controller {
+.label-radio-version {
   font-weight: normal;
   padding-right: 15px;
 }
 
-input.input-version-controller {
+input.input-radio-version {
   margin: 2px 0 0;
   margin-right: 5px;
 }

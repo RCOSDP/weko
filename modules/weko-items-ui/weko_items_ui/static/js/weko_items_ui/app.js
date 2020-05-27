@@ -2650,15 +2650,15 @@ function toObject(arr) {
         }
 
         // Handle validate radio_version
-        // if ($("#react-component-version").length != 0) {
-        //   var versionSelected = $("input[name='radioVersionSelect']:checked").val();
-        //   if (versionSelected == undefined) {
-        //     var versionHeader = $("#version-management-header").text();
-        //   listItemErrors.push(versionHeader);
-        //     $("#help-block-radio-version").removeClass('hide');
-        //     $("#version-management").addClass("has-error");
-        //   }
-        // }
+        if ($("#react-component-version").length != 0) {
+          var versionSelected = $("input[name='radioVersionSelect']:checked").val();
+          if (versionSelected == undefined) {
+            var versionHeader = $("#version-management-header").text();
+            listItemErrors.push(versionHeader);
+            $("#help-block-radio-version").removeClass('hide');
+            $("#version-management").addClass("has-error");
+          }
+        }
 
         if (listItemErrors.length > 0) {
           let message = $("#validate_error").val() + '<br/><br/>';

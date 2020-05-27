@@ -88,6 +88,6 @@ feedback_maillist_css = Bundle(
 )
 
 version_controller_js = Bundle(
-    'js/weko_items_ui/version_controller.js',
-    output="gen/weko_items_ui_version_controller.%(version)s.js",
+    "js/weko_items_ui/version_controller.js",
+    output="gen/weko_items_ui_feedback_maillist.%(version)s.js",
 )
