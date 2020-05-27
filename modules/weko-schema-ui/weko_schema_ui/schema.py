@@ -210,7 +210,7 @@ class SchemaConverter:
 class SchemaTree:
     """Schematree."""
 
-    def __init__(self, record=None, schema_name=None):
+    def __init__(self, record=None, schema_name=None, identifier=None):
         """
         Init.
 
@@ -221,6 +221,7 @@ class SchemaTree:
         self._record = record["metadata"] \
             if record and record.get("metadata") else None
         self._schema_name = schema_name if schema_name else None
+        self._identifier = identifier if identifier else {}
         if self._record:
             self._root_name, self._ns, self._schema_obj, self._item_type_id = \
                 self.get_mapping_data()
@@ -274,6 +275,7 @@ class SchemaTree:
                 mjson = Mapping.get_record(id)
                 self.item_type_mapping = mjson
                 mp = mjson.dumps()
+                self._record['system_identifier_doi'] = self._identifier
                 if mjson:
                     for k, v in self._record.items():
                         if isinstance(v, dict) and mp.get(k) and k != "_oai":
