@@ -2650,15 +2650,15 @@ function toObject(arr) {
         }
 
         // Handle validate radio_version
-        if ($("#react-component-version").length != 0) {
-          var versionSelected = $("input[name='radioVersionSelect']:checked").val();
-          if (versionSelected == undefined) {
-            var versionHeader = $("#version-management-header").text();
-          listItemErrors.push(versionHeader);
-            $("#help-block-radio-version").removeClass('hide');
-            $("#version-management").addClass("has-error");
-          }
-        }
+        // if ($("#react-component-version").length != 0) {
+        //   var versionSelected = $("input[name='radioVersionSelect']:checked").val();
+        //   if (versionSelected == undefined) {
+        //     var versionHeader = $("#version-management-header").text();
+        //   listItemErrors.push(versionHeader);
+        //     $("#help-block-radio-version").removeClass('hide');
+        //     $("#version-management").addClass("has-error");
+        //   }
+        // }
 
         if (listItemErrors.length > 0) {
           let message = $("#validate_error").val() + '<br/><br/>';
@@ -2674,7 +2674,7 @@ function toObject(arr) {
         return true;
       }
 
-      $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+      $scope.updateDataJson = async function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
         $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
@@ -2719,7 +2719,7 @@ function toObject(arr) {
             let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
             $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
-            let edit = false;
+            let edit = true;
             if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
               if (edit) {
                 $rootScope.recordsVM.actionHandler(['edit', 'PUT'], "iframe_tree_edit");

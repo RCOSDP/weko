@@ -1211,14 +1211,6 @@ def newversion(pid_value='0'):
     deposit = WekoDeposit(record, record.model)
     draft_record = deposit.newversion(pid)
 
-    # action = 'private' if deposit.get('publish_status', '1') == '1' \
-    #     else 'publish'
-
-    current_app.logger.debug("*" * 60)
-    current_app.logger.debug(deposit)
-    current_app.logger.debug(draft_record)
-    current_app.logger.debug(draft_record.model.id)
-
     with db.session.begin_nested():
         activity = WorkActivity()
         wf_activity = activity.get_workflow_activity_by_item_id(pid.object_uuid)
