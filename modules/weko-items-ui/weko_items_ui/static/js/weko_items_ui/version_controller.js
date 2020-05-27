@@ -16,8 +16,8 @@ class MainLayout extends React.Component {
                 <div class="form-group">
                     <label class="control-label col-sm-3 text-right">{label}</label>
                     <div class="col-sm-9" onChange={this.setVersion.bind(this)}>
-                        <label><input type="radio" name="version" value="update" />{updateOption}</label>
-                        <label><input type="radio" name="version" value="keep" />{keepOption}</label>
+                        <label><input type="radio" name="radioVersionSelect" value="update" />{updateOption}</label>
+                        <label><input type="radio" name="radioVersionSelect" value="keep" />{keepOption}</label>
                     </div>
                 </div>
             </div>

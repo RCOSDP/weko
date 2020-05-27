@@ -2651,7 +2651,7 @@ function toObject(arr) {
 
         // Handle validate radio_version
         if ($("#react-component-version").length != 0) {
-          var versionSelected = $("input[name='radioVersionSelect']:checked").val();
+          let versionSelected = $("input[name='radioVersionSelect']:checked").val();
           if (versionSelected == undefined) {
             var versionHeader = $("#version-management-header").text();
             listItemErrors.push(versionHeader);
@@ -2719,11 +2719,11 @@ function toObject(arr) {
             let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
             $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
-            let edit = true;
+            let versionSelected = $("input[name='radioVersionSelect']:checked").val();
             if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
-              if (edit) {
+              if (versionSelected == "keep") {
                 $rootScope.recordsVM.actionHandler(['edit', 'PUT'], "iframe_tree_edit");
-              } else {
+              } else if (versionSelected == "update") {
                 $rootScope.recordsVM.actionHandler(['newversion', 'PUT']);
                 $rootScope.recordsVM.actionHandler(['index_upgrade', 'PUT'], "iframe_tree_upgrade");
               }
