@@ -1,0 +1,15 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2017-2018 CERN.
+#
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+
+-e git+https://github.com/GoogleCloudPlatform/flask-talisman.git#egg=Flask-Talisman
+-e git+https://github.com/alisaifee/flask-limiter.git#egg=Flask-Limiter
+-e git+https://github.com/inveniosoftware/flask-celeryext.git#egg=flask-celeryext
+-e git+https://github.com/inveniosoftware/invenio-base.git#egg=invenio-base
+-e git+https://github.com/inveniosoftware/invenio-cache.git#egg=invenio-cache
+-e git+https://github.com/inveniosoftware/invenio-config.git#egg=invenio-config

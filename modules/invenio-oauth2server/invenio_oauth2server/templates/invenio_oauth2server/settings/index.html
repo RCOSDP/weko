@@ -1,0 +1,88 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2018 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+{%- extends config.OAUTH2SERVER_SETTINGS_TEMPLATE %}
+
+{# FIXME Import from future formatter. #}
+{%- from "invenio_oauth2server/settings/_macros.html" import render_field with context%}
+{%- import "invenio_oauth2server/settings/helpers.html" as helpers with context %}
+
+{% block settings_content %}
+{{helpers.panel_start(
+    _('Developer Applications'),
+    btn=_('New application'),
+    btn_icon='fa fa-plus',
+    btn_href=url_for('.client_new'),
+    with_body=False,
+)}}
+{% if clients %}
+<div class="panel-body">
+    <p>{{ _('You have registered these applications to use the %(site_name)s API:', site_name=config.THEME_SITENAME) }}</p>
+</div>
+<ul class="list-group">
+    {%- for c in clients %}
+    <li class="list-group-item">
+    <a href="{{url_for('.client_view', client_id=c.client_id)}}">{{c.name}}</a><br/><small class="text-muted">{{c.description}}</small>
+    </li>
+    {%- endfor %}
+</ul>
+{% else %}
+<div class="panel-body">
+    <p>{{ _("You have not yet registered any applications. Click the 'New application' button to create an application to access the %(site_name)s API.", site_name=config['THEME_SITENAME']) }}</p>
+</div>
+{% endif %}
+{{helpers.panel_end(with_body=False)}}
+{{helpers.panel_start(
+    _('Personal access tokens'),
+    btn=_('New token'),
+    btn_icon='fa fa-plus',
+    btn_href=url_for('.token_new'),
+    with_body=False,
+)}}
+{% if tokens %}
+<div class="panel-body">
+    <p>{{ _('Following are personal tokens used to access the %(site_name)s API:', site_name=config.THEME_SITENAME) }}</p>
+</div>
+<ul class="list-group">
+    {%- for t in tokens %}
+    <li class="list-group-item">
+    <a href="{{url_for('.token_view', token_id=t.id)}}">{{t.client.name}}</a>{% if t.scopes %} &mdash; <small class="text-muted">{% for s in t.get_visible_scopes() %}{{ s }}{% if not loop.last%}, {% endif%}{% endfor %}</small>{% endif %}<br/><small class="text-muted">{{t.client.description}}</small>
+    </li>
+    {%- endfor %}
+</ul>
+{% else %}
+<div class="panel-body">
+    <p>{{ _("You have not yet created any personal access tokens. Click the 'New token' button to create a personal access token.") }}</p>
+</div>
+{% endif %}
+{{helpers.panel_end(with_body=False)}}
+{{helpers.panel_start(
+    _('Authorized applications'),
+    with_body=False,
+)}}
+{% if authorized_apps %}
+<div class="panel-body">
+    <p>{{ _('You have granted the following application access to your account:') }}</p>
+</div>
+<ul class="list-group">
+    {%- for a in authorized_apps %}
+    <li class="list-group-item">
+    <div class="pull-right">
+        <a href="{{url_for('.token_revoke', token_id=a.id)}}" class="btn btn-default btn-xs"><i class="fa fa-times-circle"></i> {{ _('Revoke') }}</a>
+    </div>
+    <a href="{{url_for('.token_permission_view', token_id=a.id)}}">{{a.client.name}}</a><br/><small class="text-muted">{{a.client.description}}</small>
+    </li>
+    {%- endfor %}
+</ul>
+{% else %}
+<div class="panel-body">
+    <p>{{ _('You have not yet granted any external applications access to your account.') }}</p>
+</div>
+{% endif %}
+{{helpers.panel_end(with_body=False)}}
+{% endblock %}
