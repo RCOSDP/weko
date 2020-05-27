@@ -429,9 +429,9 @@ msgid "Version Management"
 msgstr "バージョン管理"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
-msgid "Update version"
+msgid "Upgrade Version"
 msgstr "バージョンを更新する"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
-msgid "Keep version"
+msgid "Keep Version"
 msgstr "バージョンを維持する"
