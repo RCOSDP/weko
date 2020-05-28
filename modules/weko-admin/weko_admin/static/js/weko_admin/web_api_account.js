@@ -120,7 +120,8 @@ var loadDataForInputType = function () {
 }
 
 var loadCurrentCertData = function () {
-  let get_url = "/api/admin/get_curr_api_cert/" + $('#input_type').val();
+  const currentTime = new Date().getTime();
+  let get_url = "/api/admin/get_curr_api_cert/" + $('#input_type').val() + '?time=' + currentTime;;
   $.ajax({
     url: get_url,
     type: 'GET',
