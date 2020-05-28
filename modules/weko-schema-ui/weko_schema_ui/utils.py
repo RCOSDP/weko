@@ -24,6 +24,8 @@ import itertools
 import re
 from functools import reduce
 
+from flask import current_app
+
 from invenio_oaiserver.response import NS_OAIPMH, NS_OAIPMH_XSD, NS_XSI, \
     NSMAP, header, verb
 from invenio_records_ui.utils import obj_or_import_string
@@ -69,6 +71,11 @@ def dumps_etree(records, schema_type):
 
 
 def get_identifer(record):
+    """Get Identifier of record(DOI or HDL), if not set URL as default.
+
+    @param record:
+    @return:
+    """
     result = {
         "attribute_name": "Identifer",
         "attribute_value_mlt": [
@@ -93,7 +100,8 @@ def get_identifer(record):
             identifier_type = record.pid_cnri.pid_type.upper()
         else:
             from flask import request
-            identifier = request.url_root + 'records/' + record_id
+            identifier = current_app.config['WEKO_SCHEME_RECORD_URL'].format(
+                request.url_root, record_id)
             identifier_type = 'URI'
         result['attribute_value_mlt'][0][
             'subitem_systemidt_identifier'] = identifier
