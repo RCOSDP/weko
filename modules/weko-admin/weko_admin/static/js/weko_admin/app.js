@@ -77,7 +77,8 @@
       }
       // set deny to allow
       $scope.setDenyToAllow= function(index){
-        for(var i of index){
+        for (let idx = 0; index < idx.length; idx++) {
+          let i = index[idx];
           var a = {id:"",name:""};
           a.id = $scope.dbJson.item_type.deny[i].id;
           a.name = $scope.dbJson.item_type.deny[i].name;
@@ -87,7 +88,8 @@
       }
       // set allow to deny
       $scope.setAllowToDeny= function(index){
-        for(var i of index){
+        for (let idx = 0; index < idx.length; idx++) {
+          let i = index[idx];
           var a = {id:"",name:""};
           a.id = $scope.dbJson.item_type.allow[i].id;
           a.name = $scope.dbJson.item_type.allow[i].name;
@@ -123,7 +125,7 @@
            }
            $scope.ipCheckFlgArry[chk1].ipRangeCheck = false;
         }
-        isError = $scope.ipCheckFlgArry.find(item => item.ipCheckFlg === true || item.ipRangeCheck === true);
+        isError = $scope.ipCheckFlgArry.filter(function(item){ return item.ipCheckFlg === true || item.ipRangeCheck === true })[0];
         if (!isError) {
           var url = $location.path();
           dbJson = $scope.dbJson;

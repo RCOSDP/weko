@@ -124,7 +124,7 @@ var loadCurrentCertData = function () {
   $.ajax({
     url: get_url,
     type: 'GET',
-    success: (data, status) => {
+    success: function(data, status)  {
       $('#cross_ref_account').val(data.results.cert_data);
     },
     error: function (error) {
