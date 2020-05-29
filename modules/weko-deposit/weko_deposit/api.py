@@ -51,7 +51,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
-from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes
+from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, set_timestamp
@@ -969,8 +969,6 @@ class WekoDeposit(Deposit):
             self.commit()
             # update records_metadata
             flag_modified(self.model, 'json')
-            current_app.logger.debug("X" * 60)
-            current_app.logger.debug(self.model)
             db.session.add(self.model)
             db.session.add(self_bucket)
 
@@ -1211,6 +1209,23 @@ class WekoRecord(Record):
             current_app.logger.error(pid_not_exist)
         return None
 
+    def update_item_link(self, pid_value):
+        """Return pid_value from persistent identifier."""
+        from weko_records.models import ItemReference
+        item_link = ItemLink(self.pid.pid_value)
+        items = ItemReference.get_src_references(pid_value).all()
+        current_app.logger.debug(items)
+        current_app.logger.debug(item_link)
+        relation_data = []
+
+        for item in items:
+            _item = dict(item_id=item.dst_item_pid, sele_id=item.reference_type)
+            relation_data.append(_item)
+
+        if relation_data:
+            err = item_link.update(relation_data)
+            if err:
+                return None
 
 class _FormatSysCreator:
     """Format system creator for detail page."""

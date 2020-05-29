@@ -2723,7 +2723,7 @@ function toObject(arr) {
               if (versionSelected == "keep") {
                 $rootScope.recordsVM.actionHandler(['edit', 'PUT'], "iframe_tree_edit");
               } else if (versionSelected == "update") {
-                $rootScope.recordsVM.actionHandler(['newversion', 'PUT']);
+                await $rootScope.recordsVM.actionHandler(['newversion', 'PUT']);
                 $rootScope.recordsVM.actionHandler(['index_upgrade', 'PUT'], "iframe_tree_upgrade");
               }
             } else {

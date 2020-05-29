@@ -1766,7 +1766,7 @@ class ItemLink(object):
 
     @classmethod
     def get_item_link_info(cls, recid):
-        """Record publish  status change view.
+        """Record publish status change view.
 
         :param recid: Record Identifier.
         :return  ret: The rendered template.
@@ -1831,7 +1831,7 @@ class ItemLink(object):
         return None
 
     def bulk_create(self, dst_items):
-        """Record publish  status change view.
+        """Record publish status change view.
 
         :param dst_items: PID object.
         :return: The rendered template.
@@ -1843,7 +1843,7 @@ class ItemLink(object):
         db.session.bulk_save_objects(objects)
 
     def bulk_update(self, dst_items):
-        """Record publish  status change view.
+        """Record publish status change view.
 
         :param dst_items: PID object.
         :return: The rendered template.

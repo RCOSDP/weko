@@ -811,20 +811,14 @@ def next_action(activity_id='0', action_id=0):
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
             new_activity_id = None
+
             if deposit:
                 if ".0" in current_pid.pid_value:
                     deposit.commit()
                 deposit.publish()
                 updated_item = UpdateItem()
-
-                current_app.logger.debug("*" * 60)
-                current_app.logger.debug(recid)
-                current_app.logger.debug(pid_without_ver)
-                current_app.logger.debug(current_pid)
-
                 # publish record without version ID when registering newly
                 if recid:
-                    # draft_record = deposit.newversion(current_pid, is_draft=True)
                     # new record attached version ID
                     ver_attaching_record = deposit.newversion(current_pid)
                     new_activity_id = ver_attaching_record.model.id
@@ -840,15 +834,22 @@ def next_action(activity_id='0', action_id=0):
                     # if not record_bucket_id:
                     #     return jsonify(code=-1, msg=_('error'))
                     # Record without version: Make status Public as default
+                    weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
+                    if weko_record:
+                        weko_record.update_item_link(current_pid.pid_value)
                     updated_item.publish(deposit)
                 else:
                     # update to record without version ID when editing
                     pv = PIDVersioning(child=pid_without_ver)
-                    last_ver = PIDVersioning(parent=pv.parent).get_children(
-                        ordered=False,
-                        pid_status=PIDStatus.REGISTERED
-                    ).filter(PIDRelation.relation_type==2).order_by(PIDRelation.index.desc()).first()
-
+                    if ".0" in current_pid.pid_value:
+                        last_ver = PIDVersioning(parent=pv.parent).get_children(
+                            pid_status=PIDStatus.REGISTERED
+                        ).filter(PIDRelation.relation_type==2).order_by(PIDRelation.index.desc()).first()
+                    else:
+                        # draft_ver = PIDVersioning(parent=pv.parent).get_children(
+                        #     pid_status=PIDStatus.REGISTERED
+                        # ).filter(PIDRelation.relation_type==3).all()
+                        draft_pid = PersistentIdentifier.get('recid','{}.0'.format(pid_without_ver.pid_value))
                     if pid_without_ver:
                         record_without_ver = WekoDeposit.get_record(
                             pid_without_ver.object_uuid)
@@ -864,7 +865,13 @@ def next_action(activity_id='0', action_id=0):
                                 maintain_record,
                                 maintain_record.model)
                             maintain_deposit['path'] = deposit.get('path', [])
-
+                        else:
+                            draft_deposit = WekoDeposit.get_record(
+                                draft_pid.object_uuid)
+                            # draft_deposit = WekoDeposit(
+                            #     draft_record,
+                            #     draft_record.model)
+                            draft_deposit['path'] = deposit.get('path', [])
                         # recid = PersistentIdentifier.query.filter_by(
                         #     pid_type='recid',
                         #     object_uuid=deposit.id
@@ -886,16 +893,26 @@ def next_action(activity_id='0', action_id=0):
                                 merge_data_to_record_without_version(current_pid)
                             maintain_deposit.publish()
                             new_parent_record.commit()
-
+                        else:
+                            new_draft_record = draft_deposit.\
+                                merge_data_to_record_without_version(current_pid)
+                            draft_deposit.publish()
+                            new_draft_record.commit()
                         # set_bucket_default_size(new_activity_id)
                         # merge_buckets_by_records(
                         #     new_activity_id,
                         #     pid_without_ver.object_uuid
                         # )
+                        weko_record = WekoRecord.get_record_by_pid(pid_without_ver.pid_value)
+                        if weko_record:
+                            weko_record.update_item_link(current_pid.pid_value)
                         db.session.commit()
                         updated_item.publish(parent_record)
                         # updated_item.publish(maintain_deposit)
-                        new_activity_id = last_ver.object_uuid
+                        if ".0" in current_pid.pid_value:
+                            new_activity_id = last_ver.object_uuid
+                        else:
+                            new_activity_id = current_pid.object_uuid
                 # delete_unregister_buckets(new_activity_id)
             activity.update(
                 action_id=next_flow_action[0].action_id,
