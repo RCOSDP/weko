@@ -65,19 +65,19 @@ def dumps_etree(records, schema_type):
             records['metadata'] = records['metadata'].get('_item_metadata', {})
         scname = schema_type if re.search(
             r'.*_mapping', schema_type) else schema_type + "_mapping"
-        identifier = get_identifer(records)
+        identifier = get_identifier(records)
         stree = SchemaTree(records, scname, identifier=identifier)
         return stree.create_xml()
 
 
-def get_identifer(record):
+def get_identifier(record):
     """Get Identifier of record(DOI or HDL), if not set URL as default.
 
     @param record:
     @return:
     """
     result = {
-        "attribute_name": "Identifer",
+        "attribute_name": "Identifier",
         "attribute_value_mlt": [
             {
                 "subitem_systemidt_identifier": "",
@@ -87,8 +87,6 @@ def get_identifer(record):
     }
     record_deposit = record.get('metadata').get('_deposit')
     if record_deposit:
-        identifier = None
-        identifier_type = None
         record_id = record_deposit.get('id')
         from weko_deposit.api import WekoRecord
         record = WekoRecord.get_record_by_pid(record_id)
@@ -110,6 +108,7 @@ def get_identifer(record):
     else:
         result = {}
     return result
+
 
 def dumps(records, schema_type=None, **kwargs):
     """
