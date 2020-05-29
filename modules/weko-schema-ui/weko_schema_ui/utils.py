@@ -24,14 +24,13 @@ import itertools
 import re
 from functools import reduce
 
-from flask import current_app
-
+from flask import current_app, request
 from invenio_oaiserver.response import NS_OAIPMH, NS_OAIPMH_XSD, NS_XSI, \
     NSMAP, header, verb
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
-
+from weko_deposit.api import WekoRecord
 from .schema import SchemaTree
 
 MISSING = object()
@@ -88,7 +87,6 @@ def get_identifier(record):
     record_deposit = record.get('metadata').get('_deposit')
     if record_deposit:
         record_id = record_deposit.get('id')
-        from weko_deposit.api import WekoRecord
         record = WekoRecord.get_record_by_pid(record_id)
         if record.pid_doi:
             identifier = record.pid_doi.pid_value
@@ -97,7 +95,6 @@ def get_identifier(record):
             identifier = record.pid_cnri.pid_value
             identifier_type = record.pid_cnri.pid_type.upper()
         else:
-            from flask import request
             identifier = current_app.config['WEKO_SCHEME_RECORD_URL'].format(
                 request.url_root, record_id)
             identifier_type = 'URI'
