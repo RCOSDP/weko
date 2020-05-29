@@ -20,8 +20,8 @@
 
 """Weko Deposit API."""
 import copy
-import uuid
 import sys
+import uuid
 from datetime import datetime, timezone
 from typing import NoReturn, Union
 
@@ -40,6 +40,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -51,8 +52,9 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
-from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, ItemLink
-from weko_records.models import ItemMetadata
+from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
+    ItemTypes
+from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
@@ -389,8 +391,6 @@ class WekoDeposit(Deposit):
                 relations_ver['id'] = recid.object_uuid
                 relations_ver['is_last'] = relations_ver.get('index') == 0
                 self.indexer.update_relation_version_is_last(relations_ver)
-            # RecordDraft.unlink(recid, deposit.pid)
-
             return deposit
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
@@ -431,6 +431,7 @@ class WekoDeposit(Deposit):
         else:
             deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
+        record_id = 0
         if data.get('_deposit'):
             record_id = str(data['_deposit']['id'])
         parent_pid = PersistentIdentifier.create(
@@ -440,8 +441,8 @@ class WekoDeposit(Deposit):
             object_uuid=id_,
             status=PIDStatus.REGISTERED
         )
-        RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
+        RecordsBuckets.create(record=deposit.model, bucket=bucket)
         recid = PersistentIdentifier.get('recid', record_id)
         depid = PersistentIdentifier.get('depid', record_id)
         PIDVersioning(parent=parent_pid).insert_draft_child(child=recid)
@@ -453,7 +454,6 @@ class WekoDeposit(Deposit):
     def update(self, *args, **kwargs):
         """Update only drafts."""
         self['_deposit']['status'] = 'draft'
-
         if len(args) > 1:
             dc = self.convert_item_metadata(args[0], args[1])
         else:
@@ -549,7 +549,7 @@ class WekoDeposit(Deposit):
         if record and record.json and '$schema' in record.json:
             record.json.pop('$schema')
             flag_modified(record, 'json')
-            db.session.add(record)
+            db.session.merge(record)
 
     def newversion(self, pid=None, is_draft=False):
         """Create a new version deposit."""
@@ -570,7 +570,7 @@ class WekoDeposit(Deposit):
                     data = latest_record.dumps()
                     owners = data['_deposit']['owners']
                     keys_to_remove = ('_deposit', 'doi', '_oai',
-                                      '_buckets', '_files', '$schema')
+                                      '_files', '_buckets', '$schema')
                     for k in keys_to_remove:
                         data.pop(k, None)
 
@@ -581,16 +581,16 @@ class WekoDeposit(Deposit):
                             0)
                     else:
                         draft_id = '{0}.{1}' . format(
-                        last_pid.pid_value,
-                        get_latest_version_id(last_pid.pid_value))
+                            last_pid.pid_value,
+                            get_latest_version_id(last_pid.pid_value))
                     # NOTE: We call the superclass `create()` method, because
                     # we don't want a new empty bucket, but
                     # an unlocked snapshot of the old record's bucket.
-                    deposit = super(WekoDeposit, self).create(data, recid=draft_id)
+                    deposit = super(WekoDeposit, self).create(data,
+                                                              recid=draft_id)
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
-                    # deposit['_buckets'] = {'deposit': bucket['deposit']}
 
                     recid = PersistentIdentifier.get(
                         'recid', str(data['_deposit']['id']))
@@ -600,24 +600,28 @@ class WekoDeposit(Deposit):
                     PIDVersioning(
                         parent=pv.parent).insert_draft_child(
                         child=recid)
-                    RecordDraft.link(recid, depid) 
-
+                    RecordDraft.link(recid, depid)
                     if is_draft:
-                        from invenio_pidrelations.models import PIDRelation
                         with db.session.begin_nested():
                             parent_pid = PIDVersioning(child=recid).parent
-                            relation = PIDRelation.query.filter_by(parent=parent_pid, child=recid).one_or_none()
+                            relation = PIDRelation.query.\
+                                filter_by(parent=parent_pid,
+                                          child=recid).one_or_none()
                             relation.relation_type = 3
                             db.session.merge(relation)
-                            snapshot = latest_record.files.bucket.snapshot(lock=False)
+                            snapshot = latest_record.files.bucket.\
+                                snapshot(lock=False)
                             snapshot.locked = False
                             deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                            RecordsBuckets.create(record=deposit.model, bucket=snapshot)
+                            RecordsBuckets.create(record=deposit.model,
+                                                  bucket=snapshot)
 
-                    with db.session.begin_nested():
-                        deposit_bucket = RecordsBuckets.query.filter_by(record=deposit.model).one_or_none()
-                        if deposit_bucket:
-                            deposit['_buckets'] = {'deposit': str(deposit_bucket.bucket_id)}
+                    deposit_bucket = RecordsBuckets.query.\
+                        filter_by(record=deposit.model).one_or_none()
+                    if deposit_bucket:
+                        deposit['_buckets'] = {
+                            'deposit': str(deposit_bucket.bucket_id)
+                        }
 
                     index = {'index': self.get('path', []),
                              'actions': self.get('publish_status')}
@@ -740,8 +744,8 @@ class WekoDeposit(Deposit):
                     datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
             current_app.logger.debug(ex)
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
             abort(500, 'Failed to register item!')
         # Get index path
         index_lst = index_obj.get('index', [])
@@ -959,8 +963,6 @@ class WekoDeposit(Deposit):
             ).first()
             if self_bucket:
                 self_bucket.bucket_id = snapshot.id
-            current_app.logger.debug("*" * 60)
-            current_app.logger.debug(snapshot.id)
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
@@ -975,55 +977,16 @@ class WekoDeposit(Deposit):
 
     def prepare_edit_item(self, recid):
         """
-        Get user information by email.
-
-        Query database to get user id by using email
-        Get username from database using user id
-        Pack response data: user id, user name, email
+        Create draft version of main record.
 
         parameter:
-            recid: The email
+            recid: recid
         return:
             response
         """
-        # prepare params for new workflow activity
-
         draft_deposit = self.newversion(recid, is_draft=True)
-        # draft_recid = PersistentIdentifier.get('recid', str(draft_deposit['recid']))
-        # draft_depid = RecordDraft.get_draft(draft_recid)
 
         return draft_deposit
-        # Create snapshot bucket for draft record
-        # try:
-        #     with db.session.begin_nested():
-        #         from weko_workflow.utils import delete_bucket
-        #         # draft_deposit = WekoDeposit(
-        #         #     draft_record,
-        #         #     draft_record.model
-        #         # )
-        #         snapshot = deposit.files.bucket.snapshot(lock=False)
-        #         snapshot.locked = False
-        #         draft_deposit['_buckets'] = {'deposit': str(snapshot.id)}
-        #         draft_record_bucket = RecordsBuckets.create(
-        #             deposit=draft_record.model,
-        #             bucket=snapshot
-        #         )
-
-        #         # Remove duplicated buckets
-        #         draft_record_buckets = RecordsBuckets.query.filter_by(
-        #             record_id=draft_record.model.id
-        #         ).all()
-        #         for record_bucket in draft_record_buckets:
-        #             if record_bucket != draft_record_bucket:
-        #                 delete_bucket_id = record_bucket.bucket_id
-        #                 RecordsBuckets.query.filter_by(
-        #                     bucket_id=delete_bucket_id).delete()
-        #                 delete_bucket(delete_bucket_id)
-        #         draft_deposit.commit()
-        # except Exception as ex:
-        #     db.session.rollback()
-        #     current_app.logger.exception(str(ex))
-        #     return None
 
 
 class WekoRecord(Record):
@@ -1209,8 +1172,7 @@ class WekoRecord(Record):
         return None
 
     def update_item_link(self, pid_value):
-        """Return pid_value from persistent identifier."""
-        from weko_records.models import ItemReference
+        """Update current Item Reference base of IR of pid_value input."""
         item_link = ItemLink(self.pid.pid_value)
         items = ItemReference.get_src_references(pid_value).all()
         current_app.logger.debug(items)
@@ -1218,13 +1180,13 @@ class WekoRecord(Record):
         relation_data = []
 
         for item in items:
-            _item = dict(item_id=item.dst_item_pid, sele_id=item.reference_type)
+            _item = dict(item_id=item.dst_item_pid,
+                         sele_id=item.reference_type)
             relation_data.append(_item)
 
         if relation_data:
-            err = item_link.update(relation_data)
-            if err:
-                return None
+            item_link.update(relation_data)
+
 
 class _FormatSysCreator:
     """Format system creator for detail page."""
@@ -1298,7 +1260,8 @@ class _FormatSysCreator:
         else:
             for creator_data in creators:
                 self._get_creator_based_on_language(creator_data,
-                                                    creator_list_temp, language)
+                                                    creator_list_temp,
+                                                    language)
 
     @staticmethod
     def _get_creator_based_on_language(creator_data: dict,
@@ -1378,7 +1341,8 @@ class _FormatSysCreator:
         if isinstance(creators, list):
             for creator_data in creators:
                 creator_tmp = {}
-                self._format_creator_on_creator_popup(creator_data, creator_tmp)
+                self._format_creator_on_creator_popup(creator_data,
+                                                      creator_tmp)
                 des_creator.append(creator_tmp)
         elif isinstance(creators, dict):
             alternative_name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY[
@@ -1391,7 +1355,8 @@ class _FormatSysCreator:
                         alternative_name_key, [])
                 else:
                     des_creator[key] = value.copy()
-                self._format_creator_affiliation(value.copy(), des_creator[key])
+                self._format_creator_affiliation(value.copy(),
+                                                 des_creator[key])
 
     @staticmethod
     def _format_creator_name(creator_data: dict,
@@ -1437,8 +1402,8 @@ class _FormatSysCreator:
             :return: The max length of list.
             """
             max_data = max(
-                [len(identifier_schema), len(affiliation_name), len(identifier),
-                 len(identifier_uri)])
+                [len(identifier_schema), len(affiliation_name),
+                 len(identifier), len(identifier_uri)])
             return max_data
 
         identifier_schema_key = WEKO_DEPOSIT_SYS_CREATOR_KEY[
