@@ -38,9 +38,9 @@ def base_factory(pid, **kwargs):
     links['r'] = "/items/index/" + pid.pid_value
     links['iframe_tree'] = "/items/iframe/index/" + pid.pid_value
     links['newversion'] = "/items/newversion/" + pid.pid_value
-    links['edit'] = "/api/deposits/redirect/" + pid.pid_value + ".0"
-    links['iframe_tree_edit'] = "/items/iframe/index/" + pid.pid_value + ".0"
-    links['index_upgrade'] = "/api/deposits/redirect/" + pid.pid_value + "." + str(get_latest_version_id(pid.pid_value))
-    links['iframe_tree_upgrade'] = "/items/iframe/index/" + pid.pid_value + "." + str(get_latest_version_id(pid.pid_value))
+    links['edit'] = "/api/deposits/redirect/" + pid.pid_value
+    links['iframe_tree_edit'] = "/items/iframe/index/" + pid.pid_value
+    links['index_upgrade'] = "/api/deposits/redirect/" + pid.pid_value.split(".")[0] + "." + str(get_latest_version_id(pid.pid_value.split(".")[0]))
+    links['iframe_tree_upgrade'] = "/items/iframe/index/" + pid.pid_value.split(".")[0] + "." + str(get_latest_version_id(pid.pid_value.split(".")[0]))
 
     return links

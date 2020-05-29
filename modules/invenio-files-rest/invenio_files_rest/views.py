@@ -379,6 +379,9 @@ class LocationResource(ContentNegotiatedMethodView):
     @need_location_permission('location-update', hidden=False)
     def post(self):
         """Create bucket."""
+        import traceback
+        import sys
+        traceback.print_exc(file=sys.stdout)
         with db.session.begin_nested():
             bucket = Bucket.create(
                 storage_class=current_app.config[

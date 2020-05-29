@@ -818,6 +818,9 @@ def next_action(activity_id='0', action_id=0):
                 updated_item = UpdateItem()
 
                 current_app.logger.debug("*" * 60)
+                current_app.logger.debug(recid)
+                current_app.logger.debug(pid_without_ver)
+                current_app.logger.debug(current_pid)
 
                 # publish record without version ID when registering newly
                 if recid:
@@ -846,11 +849,6 @@ def next_action(activity_id='0', action_id=0):
                         pid_status=PIDStatus.REGISTERED
                     ).filter(PIDRelation.relation_type==2).order_by(PIDRelation.index.desc()).first()
 
-                    current_app.logger.debug(deposit)
-                    current_app.logger.debug(last_ver)
-                    current_app.logger.debug(pid_without_ver)
-                    current_app.logger.debug(current_pid)
-
                     if pid_without_ver:
                         record_without_ver = WekoDeposit.get_record(
                             pid_without_ver.object_uuid)
@@ -866,7 +864,6 @@ def next_action(activity_id='0', action_id=0):
                                 maintain_record,
                                 maintain_record.model)
                             maintain_deposit['path'] = deposit.get('path', [])
-
 
                         # recid = PersistentIdentifier.query.filter_by(
                         #     pid_type='recid',
@@ -889,7 +886,7 @@ def next_action(activity_id='0', action_id=0):
                                 merge_data_to_record_without_version(current_pid)
                             maintain_deposit.publish()
                             new_parent_record.commit()
-                        
+
                         # set_bucket_default_size(new_activity_id)
                         # merge_buckets_by_records(
                         #     new_activity_id,

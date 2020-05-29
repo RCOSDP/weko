@@ -509,9 +509,11 @@ class Deposit(Record):
 
     def _create_bucket(self):
         """Override bucket creation."""
-        return Bucket.create(storage_class=current_app.config[
-            'DEPOSIT_DEFAULT_STORAGE_CLASS'
-        ])
+        return Bucket.create(
+            storage_class=current_app.config[
+            'DEPOSIT_DEFAULT_STORAGE_CLASS'],
+            max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
+        )
 
     @property
     def status(self):

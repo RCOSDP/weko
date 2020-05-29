@@ -1204,8 +1204,11 @@ def get_authors_prefix_settings():
 def newversion(pid_value='0'):
     """Iframe items index."""
     # TODO: create new version and redirect to frame_index page
+    draft_pid = PersistentIdentifier.get('recid', pid_value)
+    if ".0" in pid_value:
+        pid_value = pid_value.split(".")[0]
     pid = PersistentIdentifier.get('recid', pid_value)
-    
+
     record = WekoDeposit.get_record(pid.object_uuid)
 
     deposit = WekoDeposit(record, record.model)
@@ -1213,7 +1216,7 @@ def newversion(pid_value='0'):
 
     with db.session.begin_nested():
         activity = WorkActivity()
-        wf_activity = activity.get_workflow_activity_by_item_id(pid.object_uuid)
+        wf_activity = activity.get_workflow_activity_by_item_id(draft_pid.object_uuid)
         wf_activity.item_id = draft_record.model.id
         db.session.merge(wf_activity)
 
@@ -1221,6 +1224,8 @@ def newversion(pid_value='0'):
         return jsonify(code=-1, msg=_('An error has occurred.'))
 
     db.session.commit()
+
+    
 
     # try:
     #     data = request.get_json()
