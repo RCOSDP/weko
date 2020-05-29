@@ -1216,24 +1216,27 @@ def newversion(pid_value='0'):
     if not draft_record:
         return jsonify(code=-1, msg=_('An error has occurred.'))
 
-    draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
-    with db.session.begin_nested():
-        activity = WorkActivity()
-        wf_activity = activity.get_workflow_activity_by_item_id(draft_pid.object_uuid)
-        wf_activity.item_id = draft_record.model.id
-        db.session.merge(wf_activity)
+    try:
+        draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+        with db.session.begin_nested():
+            activity = WorkActivity()
+            wf_activity = activity.get_workflow_activity_by_item_id(draft_pid.object_uuid)
+            wf_activity.item_id = draft_record.model.id
+            db.session.merge(wf_activity)
 
-        new_record_bucket = RecordsBuckets.query.filter_by(
-            record_id=draft_record.model.id).one_or_none()
+            new_record_bucket = RecordsBuckets.query.filter_by(
+                record_id=draft_record.model.id).one_or_none()
 
-        snapshot = draft_deposit.files.bucket.snapshot(lock=False)
-        snapshot.locked = False
-        draft_record['_buckets'] = {'deposit': str(snapshot.id)}
-        new_record_bucket.bucket_id = snapshot.id
+            if new_record_bucket:
+                snapshot = draft_deposit.files.bucket.snapshot(lock=False)
+                snapshot.locked = False
+                draft_record['_buckets'] = {'deposit': str(snapshot.id)}
+                new_record_bucket.bucket_id = snapshot.id
 
-        db.session.add(new_record_bucket)
-        draft_record.commit()
+                db.session.add(new_record_bucket)
+                draft_record.commit()
 
-    db.session.commit()
-
+        db.session.commit()
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(success=True)

@@ -2673,7 +2673,7 @@ function toObject(arr) {
         return true;
       }
 
-      $scope.updateDataJson = async function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+      $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
         $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
@@ -2723,8 +2723,7 @@ function toObject(arr) {
               if (versionSelected == "keep") {
                 $rootScope.recordsVM.actionHandler(['edit', 'PUT'], "iframe_tree_edit");
               } else if (versionSelected == "update") {
-                await $rootScope.recordsVM.actionHandler(['newversion', 'PUT']);
-                $rootScope.recordsVM.actionHandler(['index_upgrade', 'PUT'], "iframe_tree_upgrade");
+                $rootScope.recordsVM.actionHandler([['newversion', 'PUT'], ['index_upgrade', 'PUT']], "iframe_tree_upgrade");
               }
             } else {
               $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);

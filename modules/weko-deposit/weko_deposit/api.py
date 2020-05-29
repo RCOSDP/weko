@@ -456,8 +456,6 @@ class WekoDeposit(Deposit):
 
         if len(args) > 1:
             dc = self.convert_item_metadata(args[0], args[1])
-            current_app.logger.debug("*" * 60)
-            current_app.logger.debug(args[1])
         else:
             dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
@@ -961,7 +959,8 @@ class WekoDeposit(Deposit):
             ).first()
             if self_bucket:
                 self_bucket.bucket_id = snapshot.id
-
+            current_app.logger.debug("*" * 60)
+            current_app.logger.debug(snapshot.id)
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
