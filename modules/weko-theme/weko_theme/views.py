@@ -30,6 +30,7 @@ from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword
+import time
 
 from .utils import get_design_layout, get_weko_contents, has_widget_design
 
@@ -123,7 +124,8 @@ def get_site_info(site_info):
     title = get_site_name_for_current_language(site_name) \
         or current_app.config['THEME_SITENAME']
     login_instructions = get_notify_for_current_language(notify)
-    favicon = request.url_root + 'api/admin/favicon'
+    ts = time.time()
+    favicon = request.url_root + 'api/admin/favicon?timestamp=' + str(ts)
     prefix = ''
     if site_info and site_info.favicon:
         prefix = site_info.favicon.split(",")[0] == 'data:image/x-icon;base64'
