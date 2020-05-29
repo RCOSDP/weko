@@ -481,7 +481,7 @@ class RankingSettingsView(BaseView):
                                                         False) == 'True'
                     new_item_period = int(request.form.get('new_item_period',
                                                            14))
-                    if new_item_period < 1 or new_item_period > 30:
+                    if new_item_period < 1 or new_item_period > 3650:
                         current_app.logger.debug(new_item_period)
                         raise
                     settings.new_item_period = new_item_period

@@ -37,6 +37,10 @@
 {%- endblock javascript -%}
 
 {% block page_body %}
+  {%- block page_header %}
+        {% include config.THEME_HEADER_TEMPLATE %}
+      {%- endblock page_header %}
+
 <div class="communities">
   {{ community_header(community, link=False) }}
   {%- block community_body %}

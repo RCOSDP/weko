@@ -25,12 +25,11 @@
 <small class="text-muted">{{_("Community")}}</small>
 <div>
   <br>
-  <img src="{{ community.logo_url }}" style="display: block; margin: auto; max-width: 100%; max-height: 200px;">
-  <br>
+  <img src="{{ community.logo_url }}" style="display: block; margin: auto; max-width: 100%; max-height: 120px;">
 </div>
 <hr>
 {%- endif %}
-<h4>{{community.title}}</h4>
+<h5>{{community.title}}</h5>
 {%- if community.description %}
 {{ community.description | sanitize_html | safe }}
 {%- endif %}
@@ -38,7 +37,6 @@
 <a href="{{ url_for('invenio_communities.about', community_id=community.id) }}" class="pull-right">
   {{ _('Read more') }}
 </a>
-<br />
 {%- endif %}
 <hr />
 <dl>

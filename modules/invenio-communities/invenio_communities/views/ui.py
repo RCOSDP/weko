@@ -51,7 +51,7 @@ from invenio_communities.utils import Pagination, render_template_to_string
 blueprint = Blueprint(
     'invenio_communities',
     __name__,
-    url_prefix='/',
+    url_prefix='/c',
     template_folder='../templates',
     static_folder='../static',
 )
@@ -121,7 +121,7 @@ def index():
     communities = Community.filter_communities(p, so)
     featured_community = FeaturedCommunity.get_featured_or_none()
     form = SearchForm(p=p)
-    per_page = 10
+    per_page = 20
     page = max(page, 1)
     p = Pagination(page, per_page, communities.count())
 
@@ -652,7 +652,7 @@ def community_list():
     communities = Community.filter_communities(p, so)
     featured_community = FeaturedCommunity.get_featured_or_none()
     form = SearchForm(p=p)
-    per_page = 10
+    per_page = 20
     page = max(page, 1)
     p = Pagination(page, per_page, communities.count())
 

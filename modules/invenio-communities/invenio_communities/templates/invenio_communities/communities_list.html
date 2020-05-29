@@ -184,22 +184,10 @@
             {%- for obj in row %}
               {% if obj %}
                 <div class="col-sm-12 col-md-6">
-                  <div class="well">
-                    <h4>
-                      <div class="pull-right">
-                        <div class="form-group">
-                          <!--
-                            <a href="{{url_for('.view', community_id=obj.id, view='basic')}}" class="btn btn-info">{{ _('Basic') }}</a>
-                          -->
-                          <a href="{{url_for('.view', community_id=obj.id, view='weko')}}" class="btn btn-info">{{ _('Go to this repository') }}</a>
-                        </div>
-                      </div>
-                      {{ obj.title }}
-                    </h4><br />
-                    <p>{{ obj.description|striptags|truncate }}</p>
-                    <!--
-                      <small class="text-muted">Curated by: {{ obj.owner.profile.username }}</small>
-                    -->
+                  <div class="well" >
+                    <h5>
+                      <a href="{{url_for('.view', community_id=obj.id, view='weko')}}">{{ obj.title }}</a>
+</h5>
                   </div>
                 </div>
               {% endif %}
