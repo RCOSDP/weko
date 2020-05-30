@@ -37,6 +37,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
+from invenio_records_files.models import RecordsBuckets
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryItemRegReportHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
@@ -54,17 +55,17 @@ from weko_workflow.utils import prepare_edit_workflow
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
-from .utils import _get_max_export_items, export_items, \
-    get_current_user, get_data_authors_prefix_settings, get_list_email, \
-    get_list_username, get_new_items_by_date, get_user_info_by_email, \
-    get_user_info_by_username, get_user_information, get_user_permission, \
+from .utils import _get_max_export_items, export_items, get_current_user, \
+    get_data_authors_prefix_settings, get_list_email, get_list_username, \
+    get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
+    get_user_information, get_user_permission, get_workflow_by_item_type_id, \
     is_schema_include_key, parse_ranking_results, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
     to_files_js, translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
-    validate_user_mail_and_index, get_workflow_by_item_type_id
+    validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -1035,6 +1036,19 @@ def check_restricted_content():
     return jsonify({'restricted_records': list(restricted_records)})
 
 
+@blueprint.route('/validate_bibtext_export', methods=['POST'])
+def validate_bibtex_export():
+    """Validate export Bibtex.
+
+    @return:
+    """
+    from .utils import validate_bibtex
+    post_data = request.get_json()
+    record_ids = post_data['record_ids']
+    invalid_record_ids = validate_bibtex(record_ids)
+    return jsonify(invalid_record_ids=invalid_record_ids)
+
+
 @blueprint.route('/export', methods=['GET', 'POST'])
 def export():
     """Item export view."""
@@ -1203,40 +1217,50 @@ def get_authors_prefix_settings():
 @item_permission.require(http_exception=403)
 def newversion(pid_value='0'):
     """Iframe items index."""
-    from invenio_records_files.models import RecordsBuckets
     # TODO: create new version and redirect to frame_index page
     draft_pid = PersistentIdentifier.get('recid', pid_value)
     if ".0" in pid_value:
         pid_value = pid_value.split(".")[0]
     pid = PersistentIdentifier.get('recid', pid_value)
-    record = WekoDeposit.get_record(pid.object_uuid)
-    deposit = WekoDeposit(record, record.model)
-    draft_record = deposit.newversion(pid)
-
-    if not draft_record:
-        return jsonify(code=-1, msg=_('An error has occurred.'))
-
+    deposit = WekoDeposit.get_record(pid.object_uuid)
+    # deposit = WekoDeposit(record, record.model)
     try:
+        upgrade_record = deposit.newversion(pid)
+
+        if not upgrade_record:
+            return jsonify(code=-1,
+                        msg=_('An error has occurred.'))
+
         draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
         with db.session.begin_nested():
             activity = WorkActivity()
             wf_activity = activity.get_workflow_activity_by_item_id(draft_pid.object_uuid)
-            wf_activity.item_id = draft_record.model.id
+            wf_activity.item_id = upgrade_record.model.id
             db.session.merge(wf_activity)
 
-            new_record_bucket = RecordsBuckets.query.filter_by(
-                record_id=draft_record.model.id).one_or_none()
+            upgrade_record_bucket = RecordsBuckets.query.filter_by(
+                record_id=upgrade_record.model.id).first()
 
-            if new_record_bucket:
+            current_app.logger.debug("*" * 60)
+            current_app.logger.debug(upgrade_record_bucket)
+            current_app.logger.debug(RecordsBuckets.query.filter_by(
+                record_id=upgrade_record.model.id).all())
+            if upgrade_record_bucket:
                 snapshot = draft_deposit.files.bucket.snapshot(lock=False)
                 snapshot.locked = False
-                draft_record['_buckets'] = {'deposit': str(snapshot.id)}
-                new_record_bucket.bucket_id = snapshot.id
+                bucket = {
+                    "_buckets": {
+                        "deposit": str(snapshot.id) if snapshot else None
+                    }
+                }
+                upgrade_record_bucket.bucket_id = snapshot.id
 
-                db.session.add(new_record_bucket)
-                draft_record.commit()
+                upgrade_record.update(bucket)
+                upgrade_record.commit()
+                db.session.add(upgrade_record_bucket)
 
         db.session.commit()
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        db.session.rollback()
     return jsonify(success=True)

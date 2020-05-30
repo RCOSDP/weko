@@ -435,3 +435,6 @@ msgstr "バージョンを更新する"
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
 msgid "Keep Version"
 msgstr "バージョンを維持する"
+
+msgid "Required item is not inputted"
+msgstr "必須項目がありません。"

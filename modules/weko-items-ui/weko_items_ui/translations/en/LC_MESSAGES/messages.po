@@ -319,3 +319,6 @@ msgstr ""
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
 msgid "Keep Version"
 msgstr ""
+
+msgid "Required item is not inputted"
+msgstr ""

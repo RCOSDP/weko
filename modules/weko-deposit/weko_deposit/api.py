@@ -942,7 +942,8 @@ class WekoDeposit(Deposit):
             record_bucket = RecordsBuckets.query.filter_by(
                 record_id=pid.object_uuid
             ).first()
-
+            current_app.logger.debug(deposit_pid)
+            current_app.logger.debug(deposit_pid.files.bucket)
             snapshot = deposit_pid.files.bucket.snapshot(lock=False)
             snapshot.locked = False
             if record_bucket:

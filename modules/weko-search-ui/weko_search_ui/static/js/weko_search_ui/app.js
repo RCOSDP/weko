@@ -1,3 +1,9 @@
+const MESSAGE = {
+  bibtex_err: {
+    en: "Required item is not inputted.",
+    ja: "必須項目がありません。",
+  }
+}
 require([
   "jquery",
   "bootstrap",
@@ -102,6 +108,20 @@ require([
   });
 });
 
+function getMessage(messageCode) {
+  const defaultLanguage = "en";
+  let currentLanguage = document.getElementById("current_language").value;
+  let message = MESSAGE[messageCode];
+  if (message) {
+    if (message[currentLanguage]) {
+      return message[currentLanguage];
+    } else {
+      return message[defaultLanguage];
+    }
+  } else {
+    return "";
+  }
+}
 
 //add controller to invenioSearch
 // add by ryuu. at 20181129 start
@@ -115,6 +135,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $rootScope.commInfo = "";
     $rootScope.commInfoIndex = "";
   }
+
 
   $rootScope.disable_flg = true;
   $rootScope.display_flg = true;
@@ -277,15 +298,15 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
 
 
   // Check if current hits in selected array
-  $scope.checkIfAllInArray = function () {
-    angular.forEach($scope.vm.invenioSearchResults.hits.hits, function (record) {
+  $scope.checkIfAllInArray = function() {
+    all_in_array = true;
+    angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
       item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
-      if (checkAll && item_index == -1) {
-        $rootScope.item_export_checkboxes.push(record.id);
-      } else if (!checkAll && item_index >= 0) {
-        $rootScope.item_export_checkboxes.splice(item_index, 1);
+      if(item_index == -1) {
+        all_in_array = false;
       }
     });
+    return all_in_array;
   }
 
   $scope.checkAll = function (checkAll) {
@@ -326,6 +347,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     if ($rootScope.item_export_checkboxes.length <= $rootScope.max_export_num) {
       records_metadata = $scope.getExportItemsMetadata();
       $('#record_ids').val(JSON.stringify($rootScope.item_export_checkboxes));
+      $('#invalid_record_ids').val(JSON.stringify([]));
       let export_metadata = {}
       $rootScope.item_export_checkboxes.map(function(recid) {
         $.each(records_metadata, function (index, value) {
@@ -334,10 +356,47 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
           }
         });
       })
+      let exportBibtex = document.getElementById("export_format_radio_bibtex").checked
+      if (exportBibtex) {
+        let invalidBibtexRecordIds = $scope.validateBibtexExport(Object.keys(export_metadata));
+        if (invalidBibtexRecordIds.length > 0) {
+          $('#invalid_record_ids').val(JSON.stringify(invalidBibtexRecordIds));
+          $scope.showErrMsgBibtex(invalidBibtexRecordIds);
+        }
+      }
       $('#record_metadata').val(JSON.stringify(export_metadata));
       $('#export_items_form').submit();  // Submit form and let controller handle file making
     }
     $('#item_export_button').attr("disabled", false);
+  }
+
+  $scope.validateBibtexExport = function (record_ids) {
+    var request_url = '/items/validate_bibtext_export';
+    var data = { record_ids: record_ids }
+    var invalidRecordIds = []
+    $.ajax({
+      method: 'POST',
+      url: request_url,
+      data: JSON.stringify(data),
+      async: false,
+      contentType: 'application/json',
+      success: function (data) {
+        if (data.invalid_record_ids.length) {
+          invalidRecordIds = data.invalid_record_ids;
+        }
+      },
+      error: function (status, error) {
+        console.log(error);
+      }
+    });
+    return invalidRecordIds;
+  }
+
+  $scope.showErrMsgBibtex = function (invalidRecordIds) {
+    var errMsg = getMessage('bibtex_err');
+    invalidRecordIds.forEach(function (recordId) {
+      document.getElementById('bibtex_err_' + recordId).textContent=errMsg;
+    });
   }
 
   $scope.getExportItemsMetadata = function () {
