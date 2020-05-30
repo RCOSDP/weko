@@ -28,6 +28,8 @@ let PageBodyGrid = function () {
             float: true,
             verticalMargin: 4,
             cellHeight: 10,
+            oneColumnModeClass: false,
+            //disableOneColumnMode: true,
             acceptWidgets: '.grid-stack-item'
         };
         let widget = $('#page_body');
