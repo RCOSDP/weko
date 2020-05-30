@@ -30,7 +30,7 @@
         <div class="col-md-12">
           <h1>
             {%- if link %}
-	    <a href="{{url_for('invenio_communities.view', community_id=community.id, view='weko')}}" style="color: #ffffff;">{{community.title}}</a>
+	    <a href="{{url_for('invenio_communities.view', community_id=community.id, view='weko')}}" style="color: #ffffff; padding-left: 15px;">{{community.title}}</a>
 	    <!--
             <a href="{{ url_for('invenio_communities.detail', community_id=community.id) }}" style="color: #ffffff;">{{community.title}}</a>
 	    -->
@@ -61,7 +61,7 @@
     </div>
     <div class="row">
       <div class="col-xs-12 col-sm-12 text-center-xs" style="color: #ffffff;">
-        {% trans link="http://inveniosoftware.org" %}<p>Powered by <a href="{{link}}" style="color: #ffffff;">CERN Data Centre & Invenio</a><p>{% endtrans %}
+        <p>Powered by <a href="/" style="color: #ffffff;">MERAL Portal</a><p>
       </div>
     </div>
     {%- endif %}
