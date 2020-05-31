@@ -250,39 +250,52 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     except (KeyError, IndexError):
         pass
-    creator_item = item_metadata_json.get(_creator_item_id)
-    try:
-        creator_mail = creator_item['creatorMails'][0].get('creatorMail')
-    except (KeyError, IndexError, TypeError):
-        creator_mail = None
-    try:
-        creator_name = None
-        default_creator_name = None
-        for creator_metadata in creator_item['creatorNames']:
-            if creator_metadata.get('creatorNameLang') == lang_user:
-                creator_name = creator_metadata.get('creatorName')
-            if creator_metadata.get('creatorNameLang') == 'en':
-                default_creator_name = creator_metadata.get('creatorName')
+    creator_items = item_metadata_json.get(_creator_item_id)
+    if type(creator_items) is dict:
+        creator_items = [creator_items]
+    creator_mail_list = []
+    creator_name_list = []
+    creator_affiliation_list = []
+    for creator_item in creator_items:
+        # Get creator mail
+        if creator_item.get('creatorMails'):
+            for creator_mail in creator_item.get('creatorMails'):
+                if creator_mail.get('creatorMail'):
+                    creator_mail_list.append(creator_mail.get('creatorMail'))
+        # Get creator name
+        default_creator_name_list = []
+        if creator_item.get('creatorNames'):
+            for creator_name in creator_item.get('creatorNames'):
+                if creator_name.get('creatorNameLang') == lang_user:
+                    creator_name_list.append(creator_name.get('creatorName'))
+                if creator_name.get('creatorNameLang') == 'en':
+                    default_creator_name_list.append(creator_name.get(
+                        'creatorName'))
+        if not creator_name_list and default_creator_name_list:
+            creator_name_list = default_creator_name_list
+        # Get creator affiliation
+        default_creator_affiliation_list = []
+        if creator_item.get('affiliation'):
+            for creator_affiliation in creator_item.get('affiliation'):
+                if creator_affiliation.get('affiliationNameLang') == lang_user:
+                    creator_affiliation_list.append(creator_affiliation.get(
+                        'affiliationName'))
+                if creator_affiliation.get('affiliationNameLang') == 'en':
+                    default_creator_affiliation_list.\
+                        append(creator_affiliation.get('affiliationName'))
+        if not creator_affiliation_list and default_creator_affiliation_list:
+            creator_affiliation_list = default_creator_affiliation_list
 
-        if creator_name is None:
-            creator_name = default_creator_name
-    except (KeyError, IndexError, TypeError):
-        creator_name = None
-    try:
-        affiliation = creator_item['affiliation'][0].get(
-            'affiliationNames')
-    except (KeyError, IndexError, TypeError):
-        affiliation = None
-
+    seperator = ', '
     metadata_dict = {
         "lang": lang,
         "publisher": publisher,
         "pubdate": pubdate,
         "keywords_ja": keywords_ja,
         "keywords_en": keywords_en,
-        "creator_mail": creator_mail,
-        "creator_name": creator_name,
-        "affiliation": affiliation
+        "creator_mail": seperator.join(creator_mail_list),
+        "creator_name": seperator.join(creator_name_list),
+        "affiliation": seperator.join(creator_affiliation_list)
     }
 
     # Change the values from None to '' for printing

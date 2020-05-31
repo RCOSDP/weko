@@ -18,7 +18,8 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
+{%- extends config.BASE_PAGE_TEMPLATE %}
+
 
 {%- block css %}
   {{ super() }}
@@ -35,6 +36,10 @@
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('community') }}
 {%- endblock page_body_tabs %}
+
+{%- block page_header %}
+    {{ super() }}
+{%- endblock page_header %}
 
 {%- block page_body_main %}
 <!--<div class="row">-->

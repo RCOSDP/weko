@@ -98,21 +98,25 @@ gtag('config', 'UA-161400038-1');
     </div>
     <div id="page_body" class="grid-stack" {%- if render_widgets is not none %}style="display: None;"{%- endif %}>
       {%- block page_header %}
+      {%- if not community_id %}
         {% include config.THEME_HEADER_TEMPLATE %}
+        {%- else %}
+        {% include config.THEME_HEADER_LOGIN_TEMPLATE %}
+
+        {%- endif%}
       {%- endblock page_header %}
       <div id="main_contents">
-	      {% else %}
-	       {%- block navbar_right %}
-        {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
-      {%- endblock navbar_right %}
-            <div class="navbar-form navbar-right">
-        {%- if config.I18N_LANGUAGES %}
-        {% from "weko_theme/macros/language_selector.html" import language_selector_dropdown %}
-        {{ language_selector_dropdown() }}
-        {%- endif %}
-      </div>
+    {%- else %}
+    <div class="lds-ring-background hidden">
+      <div class="lds-ring"></div>
+    </div>
+    <div id="page_body" class="grid-stack" {%- if render_widgets is not none %}style="display: None;"{%- endif %}>
+    {{ self.page_header() }}
+    <div id="main_contents">
 
-	      {%- endif%}
+
+
+	  {%- endif%}
     <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
     {%- block page_body %}
     {%- endblock page_body %}
@@ -122,11 +126,14 @@ gtag('config', 'UA-161400038-1');
         <div id="main_footer" class="hidden">
       {% else %}
       <div id="main_footer" {%- if render_widgets or page %}class="hidden"{%- endif %}>
-      {%- endif %}
+      {% endif %}
         {%- block page_footer %}
           {% include config.THEME_FOOTER_TEMPLATE %}
         {%- endblock page_footer %}
       </div>
+    </div>
+    {%- else %}
+    </div>
     </div>
     {%- endif%}
     {%- endblock body_inner %}

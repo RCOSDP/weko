@@ -29,6 +29,8 @@ from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
     get_system_language, get_widget_design_setting, get_widget_type_list
 
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
+
 blueprint = Blueprint(
     'weko_gridlayout',
     __name__,
@@ -130,8 +132,9 @@ def load_widget_design_page_setting(page_id: str, current_language=''):
     :param current_language: The language default
     :return:
     """
-    return jsonify(WidgetDesignPageServices.get_widget_design_setting(
-        page_id, current_language or get_default_language()))
+    response = get_widget_design_setting("", current_language,
+                                         page_id)
+    return response
 
 
 @blueprint_api.route('/load_widget_list_design_setting',

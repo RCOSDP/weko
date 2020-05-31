@@ -130,6 +130,7 @@ setup(
             'zip = invenio_previewer.extensions.zip',
             'ipynb = invenio_previewer.extensions.ipynb',
             'default = invenio_previewer.extensions.default',
+            'iiif_presentation = invenio_previewer.extensions.iiif_presentation',
         ],
     },
     extras_require=extras_require,

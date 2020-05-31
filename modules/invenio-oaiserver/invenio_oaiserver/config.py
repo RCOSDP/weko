@@ -197,3 +197,13 @@ OAISERVER_SYSTEM_IDENTIFIER_MAPPING = {
         "subitem_systemidt_identifier_type",
 }
 """Config used to specify system identifier mapping of jpcoar"""
+
+
+OAISERVER_SYSTEM_FILE_MAPPING = {
+    "system_file.URI.@value":
+        "subitem_systemfile_filename_uri"
+}
+"""Config used to specify system file mapping of jpcoar"""
+
+OAISERVER_FILE_PROPS_MAPPING = "file.URI.@value"
+"""Config used to specify system file mapping of jpcoar"""

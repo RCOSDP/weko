@@ -536,7 +536,7 @@ let WidgetTheme = function () {
         let labelColor = (widget_settings.label_color) ? widget_settings.label_color : '';
         let borderColor = (widget_settings.frame_border_color) ? widget_settings.frame_border_color : '';
         let panelClasses = "panel-body no-padding-side trumbowyg-editor";
-        let overFlowBody = "";
+        let overFlowX = "";
         if (template === this.TEMPLATE_SIDE_LINE) {
             template.border['border-left-style'] = (widget_settings.border_style) ? widget_settings.border_style : 'groove';
             if (widget_settings.border_style === BORDER_STYLE_DOUBLE) {
@@ -562,13 +562,15 @@ let WidgetTheme = function () {
             }
         }
         let header = (widget_settings.label_enable) ?
-            '        <div class="panel-heading no-padding-side widget-header widget-header-position" style="' + headerBorder + this.buildCssText('color', labelTextColor) + this.buildCssText('background-color', labelColor) + '">' +
+            '        <div class="panel-heading no-padding-side widget-header widget-header-position" ' +
+                            'style="' + headerBorder + this.buildCssText('color', labelTextColor)
+                            + this.buildCssText('background-color', labelColor) + '">' +
             '            <strong>' + widget_data.header + '</strong>' +
             '        </div>' : '';
         let headerClass = (widget_settings.label_enable) ? '' : 'no-pad-top-30';
-        headerClass += (widget_settings.type === NEW_ARRIVALS || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) ? ' no-before-content' : '';
-        if (widget_settings.type === MENU_TYPE || widget_settings.type === ACCESS_COUNTER || widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) {
-            overFlowBody = "overflow-y: hidden; overflow-x: hidden; ";
+        headerClass += ([NEW_ARRIVALS, HEADER_TYPE, FOOTER_TYPE].indexOf(widget_settings.type) > -1) ? ' no-before-content' : '';
+        if ([MENU_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].indexOf(widget_settings.type) > -1) {
+            overFlowX = "overflow-x: hidden;";
         }
         if (widget_settings.type === MENU_TYPE) {
             panelClasses = "panel-body";
@@ -580,15 +582,37 @@ let WidgetTheme = function () {
         if(widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE){
             setClass = "grid-stack-item-content panel header-footer-type";
         }
+        let overflowY = "overflow-y: hidden !important;";
+        let noAutoHeight = "";
+        if (!this.validateWidgetHeight(widget_settings.type, widget_data.body)) {
+            noAutoHeight = "no-auto-height";
+            overflowY = "";
+        }
         let result = '<div class="grid-stack-item widget-resize">' +
             '    <div class="' + setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + ' " style="padding-top: 30px; overflow-y: hidden !important; padding-bottom: 0!important;' + this.buildCssText('background-color', backgroundColor) + ' ' + overFlowBody + '"' + id + '>' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 30px; padding-bottom: 0!important;'
+                        + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
+                        + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
         return result;
     };
+
+  this.validateWidgetHeight = function (widgetType, widgetData) {
+    if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, HEADER_TYPE, FOOTER_TYPE].indexOf(widgetType) > -1) {
+      let heightPattern = /height *: *(9[1-9]|\d{3,}) *%/;
+      let searchCSSInlinePattern = new RegExp(/style=((?!<).)*/.source
+        + heightPattern.source
+        + /((?!<).)*?>/.source);
+      let searchCSSClassPattern = new RegExp(/{(.|\n)*/.source
+        + heightPattern.source
+        + /(.|\n)*}/.source);
+      return (widgetData.search(searchCSSInlinePattern) < 0 && widgetData.search(searchCSSClassPattern) < 0);
+    }
+    return true;
+  };
 
     this.buildCssText = function (keyword, data) {
         let cssStr = '';
@@ -786,10 +810,12 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   if (isIE11()){
     $('.header-footer-type').parent().addClass('widgetIE');
   }
-  let ortherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+  let otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
     $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
-      autoAdjustWidgetHeight("", pageBodyGrid, _this);
+        if (!_this.hasClass("no-auto-height")) {
+          autoAdjustWidgetHeight("", pageBodyGrid, _this);
+        }
     });
   });
 
@@ -803,9 +829,20 @@ function handleAutoAdjustWidget(pageBodyGrid) {
     autoAdjustWidgetHeight(headerContent, pageBodyGrid);
   });
 
-  removeSensorListener(ortherSensor);
-  removeSensorListener(mainContentSensor);
+  removeSensorListener(otherSensor);
+  removeSensorListener(mainContentSensor, getMainContentSensorTimout());
   removeSensorListener(headerSensor);
+}
+
+function getMainContentSensorTimout() {
+  let mainContentSensorTimeout = 2000;
+  let pathName = window.location.pathname;
+  let searchPattern = /^\/(search|page)/;
+  if (pathName === "/" || pathName.search(searchPattern) > -1) {
+    mainContentSensorTimeout = 10000;
+  }
+
+  return mainContentSensorTimeout;
 }
 
 function removeSensorListener(sensor, timeout) {
@@ -844,16 +881,16 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
     let moreDes = $("#" + moreDescriptionID);
     let textLink = $("#" + linkID);
     if (moreDes) {
-        let parrentElement = moreDes.parent();
+        let parentElement = moreDes.parent();
         if (moreDes.hasClass("hidden")) {
             moreDes.removeClass("hidden");
             textLink.text(hideRest);
-            parrentElement.css('overflow-y', 'auto');
-            parrentElement.removeClass('without-after-element');
+            parentElement.css('overflow-y', 'auto');
+            parentElement.removeClass('without-after-element');
         } else {
             moreDes.addClass("hidden");
-            parrentElement.css('overflow-y', 'hidden');
-            parrentElement.addClass('without-after-element');
+            parentElement.css('overflow-y', 'hidden');
+            parentElement.addClass('without-after-element');
             textLink.text(readMore);
         }
     }

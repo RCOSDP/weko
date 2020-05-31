@@ -47,6 +47,8 @@ from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
     save_api_certification, update_admin_lang_setting, \
     validate_certification, validation_site_info
 
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
+
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
 
@@ -192,7 +194,7 @@ def save_lang_list():
     return jsonify(msg=result)
 
 
-@blueprint_api.route('/get_selected_lang', methods=['GET'])
+@blueprint_api.route('/get_selected_lang' , methods=['GET'])
 def get_selected_lang():
     """Get selected language."""
     try:

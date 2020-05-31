@@ -36,7 +36,7 @@ if [ "${INVENIO_WEB_VENV}" = "" ]; then
 fi
 if [ "${INVENIO_USER_EMAIL}" = "" ]; then
     echo "[ERROR] Please set environment variable INVENIO_USER_EMAIL before runnning this script."
-    echo "[ERROR] Example: export INVENIO_USER_EMAIL=info@inveniosoftware.org"
+    echo "[ERROR] Example: export INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp"
     exit 1
 fi
 if [ "${INVENIO_USER_PASS}" = "" ]; then
@@ -277,35 +277,35 @@ ${INVENIO_WEB_INSTANCE} language create \
 
 ##### sphinxdoc-create-test-data-begin
 ${INVENIO_WEB_INSTANCE} users create \
-       "test01@hitachi.com" \
+       "repoadmin@example.org" \
        --password "${INVENIO_USER_PASS}" \
        --active
 
 ${INVENIO_WEB_INSTANCE} roles add \
-       "test01@hitachi.com" \
+       "repoadmin@example.org" \
        "${INVENIO_ROLE_REPOSITORY}"
 
 ${INVENIO_WEB_INSTANCE} users create \
-       "test02@hitachi.com" \
+       "contributor@example.org" \
        --password "${INVENIO_USER_PASS}" \
        --active
 
 ${INVENIO_WEB_INSTANCE} roles add \
-        "test02@hitachi.com" \
+        "contributor@example.org" \
        "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} users create \
-       "test03@hitachi.com" \
+       "user@example.org" \
        --password "${INVENIO_USER_PASS}" \
        --active
 
 ${INVENIO_WEB_INSTANCE} users create \
-      "test04@hitachi.com" \
+      "comadmin@example.org" \
       --password "${INVENIO_USER_PASS}" \
       --active
 
 ${INVENIO_WEB_INSTANCE} roles add \
-        "test04@hitachi.com" \
+        "comadmin@example.org" \
        "${INVENIO_ROLE_COMMUNITY}"
 
 ##### sphinxdoc-create-test-data-end

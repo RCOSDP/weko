@@ -7,12 +7,11 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """OAI-PMH 2.0 response generator."""
-
+import copy
 from datetime import MINYEAR, datetime, timedelta
 
-from flask import current_app, url_for
+from flask import current_app, request, url_for
 from invenio_db import db
-# from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
@@ -305,9 +304,17 @@ def getrecord(**kwargs):
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
 
-    root = record_dumper(pid, {'_source': record})
+    etree_record = copy.deepcopy(record)
+    if check_correct_system_props_mapping(
+            pid.object_uuid,
+            current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
+        etree_record = combine_record_file_urls(etree_record, pid.object_uuid)
 
-    if check_correct_jpcoar_mapping(pid.object_uuid):
+    root = record_dumper(pid, {'_source': etree_record})
+
+    if check_correct_system_props_mapping(
+            pid.object_uuid,
+            current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING')):
         if record.pid_doi:
             root = create_identifier_index(root,
                                            pid_type=record.pid_doi.pid_type,
@@ -400,12 +407,11 @@ def create_identifier_index(root, **kwargs):
 
     except Exception as e:
         current_app.logger.error(str(e))
-        pass
     return root
 
 
-def check_correct_jpcoar_mapping(object_uuid):
-    """Validate and return if jpcoar mapping is correct.
+def check_correct_system_props_mapping(object_uuid, system_mapping_config):
+    """Validate and return if selection mapping is correct.
 
     Correct mapping mean item map have the 2 field same with config
     """
@@ -417,13 +423,65 @@ def check_correct_jpcoar_mapping(object_uuid):
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
 
-    if current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
-        for key in current_app.config\
-                .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING'):
-            if key in item_map and current_app.config\
-                .get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING')[key]\
-                    not in item_map[key]:
+    if system_mapping_config:
+        for key in system_mapping_config:
+            if key not in item_map or key in item_map and \
+                    system_mapping_config[key] not in item_map[key]:
                 return False
     else:
         return False
     return True
+
+
+def combine_record_file_urls(record, object_uuid):
+    """Add file urls to record metadata.
+
+    Get file property information by item_mapping and put to metadata.
+    """
+    from weko_records.api import ItemsMetadata, Mapping
+    from weko_records.serializers.utils import get_mapping
+
+    item_type = ItemsMetadata.get_by_object_id(object_uuid)
+    item_type_id = item_type.item_type_id
+    type_mapping = Mapping.get_record(item_type_id)
+    item_map = get_mapping(type_mapping, "jpcoar_mapping")
+
+    file_keys = item_map.get(current_app.config[
+        "OAISERVER_FILE_PROPS_MAPPING"])
+
+    if not file_keys:
+        return record
+    else:
+        file_keys = file_keys.split('.')
+
+    if len(file_keys) == 3 and record.get(file_keys[0]):
+        attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
+        if isinstance(attr_mlt, list):
+            for attr in attr_mlt:
+                if attr.get('filename'):
+                    if not attr.get(file_keys[1]):
+                        attr[file_keys[1]] = {}
+                    attr[file_keys[1]][file_keys[2]] = \
+                        create_files_url(
+                            request.url_root,
+                            record.get('recid'),
+                            attr.get('filename'))
+        elif isinstance(attr_mlt, dict) and \
+                attr_mlt.get('filename'):
+            if not attr_mlt.get(file_keys[1]):
+                attr_mlt[file_keys[1]] = {}
+            attr_mlt[file_keys[1]][file_keys[2]] = \
+                create_files_url(
+                    request.url_root,
+                    record.get('recid'),
+                    attr_mlt.get('filename'))
+
+    return record
+
+
+def create_files_url(root_url, record_id, filename):
+    """Generation of downloading file url."""
+    return "{}record/{}/files/{}".format(
+        root_url,
+        record_id,
+        filename)

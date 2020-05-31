@@ -1580,3 +1580,49 @@ def is_schema_include_key(schema):
             if 'is_billing' not in object and 'filename' in object:
                 need_file = True
     return need_file, need_billing_file
+
+
+def isExistKeyInDict(_key, _dict):
+    """Check key exist in dict and value of key is dict type.
+
+    :param _key: key in dict.
+    :param _dict: dict.
+    :return: if key exist and value of this key is dict type => return True
+    else False.
+    """
+    return isinstance(_dict, dict) and isinstance(_dict.get(_key), dict)
+
+
+def set_validation_message(item, cur_lang):
+    """Set validation message.
+
+    :param item: json of control (ex: json of text input).
+    :param cur_lang: current language.
+    :return: item, set validationMessage attribute for item.
+    """
+    i18n = 'validationMessage_i18n'
+    message_attr = 'validationMessage'
+    if i18n in item and cur_lang:
+        item[message_attr] = item[i18n][cur_lang]
+
+
+def translate_validation_message(item_property, cur_lang):
+    """Recursive in order to set translate language validation message.
+
+    :param item_property: .
+    :param cur_lang: .
+    :return: .
+    """
+    items_attr = 'items'
+    properties_attr = 'properties'
+    if isExistKeyInDict(items_attr, item_property):
+        for _key1, value1 in item_property.get(items_attr).items():
+            if not type(value1) is dict:
+                continue
+            for _key2, value2 in value1.items():
+                set_validation_message(value2, cur_lang)
+                translate_validation_message(value2, cur_lang)
+    if isExistKeyInDict(properties_attr, item_property):
+        for _key, value in item_property.get(properties_attr).items():
+            set_validation_message(value, cur_lang)
+            translate_validation_message(value, cur_lang)

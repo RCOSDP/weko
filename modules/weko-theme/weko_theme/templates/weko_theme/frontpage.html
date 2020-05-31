@@ -47,6 +47,8 @@
 {%- block page_header %}
   {%-if not community_id %}
     {{ super() }}
+  {%- else%}
+    {{ super() }}
   {%- endif%}
 {%- endblock page_header %}
 
@@ -67,7 +69,7 @@
 
 	    <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
       {{ community_header(community, subtitle='') }}
-      <div id="page_body" class="grid-stack collapse hidden">
+      <div id="page_body" class="grid-stack">
         <div id="main_contents">
           {{ super() }}
         </div>

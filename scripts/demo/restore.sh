@@ -21,19 +21,6 @@
 # quit on errors and unbound symbols:
 set -o errexit
 
-# args-check-begin
-if [ ! -f ./docker-compose.yml ]; then
-    echo "No such ./docker-compose.yml"
-    exit 1
-fi
-
-if [ ! -d "$1" ]; then
-    echo "Usage: $0 backupdir"
-    exit 1
-fi
-BACKUPDIR=$1
-# args-check-end
-
 # create-database-begin
 docker-compose exec web invenio db drop --yes-i-know
 docker-compose exec web invenio db init
@@ -41,24 +28,18 @@ docker-compose exec web invenio db create -v
 # create-database-end
 
 # postgresql-restore-begin
-if [ -f ${BACKUPDIR}/postgresql/weko.sql.gz ]; then
-    gunzip ${BACKUPDIR}/postgresql/weko.sql.gz
-fi
-docker cp ${BACKUPDIR}/postgresql/weko.sql $(docker-compose ps -q postgresql):/
+docker cp ./scripts/demo/postgresql/weko.sql $(docker-compose ps -q postgresql):/
 docker-compose exec postgresql psql -U invenio -d invenio -f weko.sql
 # postgresql-restore-end
 
 # elasticsearch-restore-begin
-echo "elasticsearch-restore(1/4)"
-docker-compose exec web invenio index destroy --force --yes-i-know
-docker-compose exec web invenio index delete '*' --force --yes-i-know
-echo ""
 docker-compose stop
 docker-compose start elasticsearch
-sleep 20
-echo "elasticsearch-restore(2/4)"
+sleep 10
 docker-compose exec elasticsearch \
-    curl -XPUT \
+    curl -XDELETE http://localhost:9200/*
+docker-compose exec elasticsearch \
+    curl -X PUT \
     http://localhost:9200/_snapshot/weko_backup \
     -H 'cache-control: no-cache' \
     -H 'content-type: application/json' \
@@ -68,29 +49,15 @@ docker-compose exec elasticsearch \
                 "location": "/usr/share/elasticsearch/backups"
             }
         }'
-docker cp ${BACKUPDIR}/elasticsearch/backups $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/
-echo ""
-echo "elasticsearch-restore(3/4)"
+docker cp ./scripts/demo/elasticsearch/backups $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/
 docker-compose exec elasticsearch chown -R elasticsearch:elasticsearch ./backups
-echo ""
-echo "elasticsearch-restore(4/4)"
 docker-compose exec elasticsearch \
-    curl -XPOST \
-    http://localhost:9200/_snapshot/weko_backup/snapshot_all/_restore?wait_for_completion=true \
-    -H 'content-type: application/json' \
-    -d '{ 
-            "indices": "*", 
-            "ignore_unavailable": true,
-            "include_global_state": true
-        }'
-echo ""
+    curl -X POST \
+    http://localhost:9200/_snapshot/weko_backup/snapshot_all/_restore?wait_for_completion=true
 docker-compose start
 # elasticsearch-restore-end
 
 # contents-restore-begin
-if [ -d "${BACKUPDIR}/contents" ]; then
-    sudo chown -R 1000:1000 ${BACKUPDIR}/contents
-    docker-compose exec web rm -fr /var/tmp/*
-    docker cp ${BACKUPDIR}/contents/tmp/. $(docker-compose ps -q web):/var/tmp
-fi
+sudo chown -R 1000:1000 ./scripts/demo/contents
+docker-compose exec web cp -r /code/scripts/demo/contents/tmp /var/
 # contents-restore-end

@@ -160,13 +160,14 @@ class ItemManagementBulkSearch(BaseView):
         detail_condition = get_search_detail_keyword('')
 
         height = style.height if style else None
-
+        header = ''
         if 'item_management' in get_args:
             management_type = request.args.get('item_management', 'sort')
-
             has_items = False
             has_child_trees = False
+            header = _('Custom Sort')
             if management_type == 'delete':
+                header = _('Bulk Delete')
                 # Does this tree has items or children?
                 q = request.args.get('q')
                 if q is not None and q.isdigit():
@@ -178,6 +179,8 @@ class ItemManagementBulkSearch(BaseView):
                         has_items = len(tree_items) > 0
                         if recursive_tree is not None:
                             has_child_trees = len(recursive_tree) > 1
+            elif management_type == 'update':
+                header = _('Bulk Update')
 
             return self.render(
                 current_app.config[
@@ -186,6 +189,7 @@ class ItemManagementBulkSearch(BaseView):
                 community_id=community_id,
                 width=width,
                 height=height,
+                header=header,
                 management_type=management_type,
                 fields=current_app.config[
                     'WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
@@ -359,7 +363,7 @@ item_management_bulk_search_adminview = {
     'kwargs': {
         'endpoint': 'items/search',
         'category': 'Items',
-        'name': ''
+        'name': '',
     }
 }
 

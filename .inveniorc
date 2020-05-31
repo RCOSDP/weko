@@ -6,7 +6,7 @@
 export INVENIO_WEB_HOST=192.168.50.10
 export INVENIO_WEB_INSTANCE=invenio
 export INVENIO_WEB_VENV=invenio
-export INVENIO_USER_EMAIL=info@inveniosoftware.org
+export INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
 export INVENIO_USER_PASS=uspass123
 export INVENIO_POSTGRESQL_HOST=192.168.50.11
 export INVENIO_POSTGRESQL_DBNAME=invenio
