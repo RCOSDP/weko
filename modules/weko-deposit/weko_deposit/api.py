@@ -633,7 +633,8 @@ class WekoDeposit(Deposit):
                     args = [index, item_metadata]
                     deposit.update(*args)
                     deposit.commit()
-            return deposit
+            # return deposit
+            return self.__class__(deposit.model.json, model=deposit.model)
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
@@ -937,25 +938,32 @@ class WekoDeposit(Deposit):
                      'actions': self.get('publish_status')}
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
-            deposit_pid = WekoDeposit.get_record(pid.object_uuid)
+
+            bucket = {
+                "_buckets": {
+                    "deposit": None
+                }
+            }
+            self_bucket = None
+            current_app.logger.debug("*" * 60)
+            current_app.logger.debug(self.pid)
+            current_app.logger.debug(pid)
+            # if ".0" not in self.pid.pid_value:
+            if ".0" not in pid.pid_value:
+                draft_pid = PersistentIdentifier.get('recid','{}.0'.format(pid.pid_value.split(".")[0]))
+                draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            else:
+                draft_deposit = WekoDeposit.get_record(pid.object_uuid)
             # Get draft bucket's data
             record_bucket = RecordsBuckets.query.filter_by(
                 record_id=pid.object_uuid
             ).first()
-            current_app.logger.debug(deposit_pid)
-            current_app.logger.debug(deposit_pid.files.bucket)
-            snapshot = deposit_pid.files.bucket.snapshot(lock=False)
+            snapshot = draft_deposit.files.bucket.snapshot(lock=False)
             snapshot.locked = False
             if record_bucket:
                 bucket = {
                     "_buckets": {
                         "deposit": str(snapshot.id)
-                    }
-                }
-            else:
-                bucket = {
-                    "_buckets": {
-                        "deposit": None
                     }
                 }
 
@@ -964,6 +972,7 @@ class WekoDeposit(Deposit):
             ).first()
             if self_bucket:
                 self_bucket.bucket_id = snapshot.id
+
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
@@ -972,6 +981,7 @@ class WekoDeposit(Deposit):
             # update records_metadata
             flag_modified(self.model, 'json')
             db.session.add(self.model)
+            # if self_bucket:
             db.session.add(self_bucket)
 
         return self.__class__(self.model.json, model=self.model)
@@ -1176,8 +1186,6 @@ class WekoRecord(Record):
         """Update current Item Reference base of IR of pid_value input."""
         item_link = ItemLink(self.pid.pid_value)
         items = ItemReference.get_src_references(pid_value).all()
-        current_app.logger.debug(items)
-        current_app.logger.debug(item_link)
         relation_data = []
 
         for item in items:

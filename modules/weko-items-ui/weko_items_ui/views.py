@@ -1223,7 +1223,6 @@ def newversion(pid_value='0'):
         pid_value = pid_value.split(".")[0]
     pid = PersistentIdentifier.get('recid', pid_value)
     deposit = WekoDeposit.get_record(pid.object_uuid)
-    # deposit = WekoDeposit(record, record.model)
     try:
         upgrade_record = deposit.newversion(pid)
 
@@ -1231,34 +1230,11 @@ def newversion(pid_value='0'):
             return jsonify(code=-1,
                         msg=_('An error has occurred.'))
 
-        draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
         with db.session.begin_nested():
             activity = WorkActivity()
             wf_activity = activity.get_workflow_activity_by_item_id(draft_pid.object_uuid)
             wf_activity.item_id = upgrade_record.model.id
             db.session.merge(wf_activity)
-
-            upgrade_record_bucket = RecordsBuckets.query.filter_by(
-                record_id=upgrade_record.model.id).first()
-
-            current_app.logger.debug("*" * 60)
-            current_app.logger.debug(upgrade_record_bucket)
-            current_app.logger.debug(RecordsBuckets.query.filter_by(
-                record_id=upgrade_record.model.id).all())
-            if upgrade_record_bucket:
-                snapshot = draft_deposit.files.bucket.snapshot(lock=False)
-                snapshot.locked = False
-                bucket = {
-                    "_buckets": {
-                        "deposit": str(snapshot.id) if snapshot else None
-                    }
-                }
-                upgrade_record_bucket.bucket_id = snapshot.id
-
-                upgrade_record.update(bucket)
-                upgrade_record.commit()
-                db.session.add(upgrade_record_bucket)
-
         db.session.commit()
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
