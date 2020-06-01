@@ -654,8 +654,8 @@ def next_action(activity_id='0', action_id=0):
             pid_without_ver = get_record_without_version(current_pid)
 
     if action_endpoint == 'item_login':
-        # register_hdl(activity_id)
-        pass
+        if current_pid and ".0" not in current_pid.pid_value:
+            register_hdl(activity_id)
 
     if post_json.get('temporary_save') == 1 \
             and not action_endpoint in ['identifier_grant', 'item_link']:
