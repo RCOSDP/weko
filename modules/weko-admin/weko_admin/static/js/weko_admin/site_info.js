@@ -177,19 +177,19 @@ class MainLayout extends React.Component {
       })
     }
 
-    handleSave(){
-      const {site_name,copy_right,keyword,description,favicon_name,favicon, notify} = this.state
+    handleSave() {
+      const { site_name, copy_right, keyword, description, favicon_name, favicon, notify } = this.state
       const validate = this.handleValidation()
-      console.log("validate",validate)
-      if(validate.status) {
-      let new_site_name = JSON.parse(JSON.stringify(site_name))
-      for (let index = 0; index < new_site_name.length; index++) {
-        new_site_name[index].index = index
-      }
-      let new_notify = JSON.parse(JSON.stringify(notify))
-      for (let index = 0; index < new_notify.length; index++) {
-        new_notify[index].index = index
-      }
+      console.log("validate", validate)
+      if (validate.status) {
+        let new_site_name = JSON.parse(JSON.stringify(site_name))
+        for (let index = 0; index < new_site_name.length; index++) {
+          new_site_name[index].index = index
+        }
+        let new_notify = JSON.parse(JSON.stringify(notify))
+        for (let index = 0; index < new_notify.length; index++) {
+          new_notify[index].index = index
+        }
         const that = this
         $.ajax({
           url: "/api/admin/update_site_info",
@@ -206,36 +206,36 @@ class MainLayout extends React.Component {
             notify: new_notify
           }),
           success: function (result) {
-        console.log(result)
-        if(result.error) {
+            console.log(result)
+            if (result.error) {
               that.setState({
-            errors: result.data,
-            success: false,
-            list_error: error,
-            show_alert: true
-          },()=>{
+                errors: result.data,
+                success: false,
+                list_error: error,
+                show_alert: true
+              }, () => {
                 that.handle_focus_error()
-          })
-        } else {
+              })
+            } else {
               that.setState({
-          success: true,
-          show_alert: true
-        })
-        }
+                success: true,
+                show_alert: true
+              })
+            }
           },
           error: function (error) {
             console.log(error);
           }
-      });
+        });
       } else {
         this.setState({
-            errors: validate.item,
-            success: false,
-            list_error: validate.message,
-            show_alert: true
-          },()=>{
-            this.handle_focus_error()
-          })
+          errors: validate.item,
+          success: false,
+          list_error: validate.message,
+          show_alert: true
+        }, () => {
+          this.handle_focus_error()
+        })
       }
     }
 

@@ -77,7 +77,7 @@
       }
       // set deny to allow
       $scope.setDenyToAllow= function(index){
-        for (let idx = 0; index < idx.length; idx++) {
+        for (let idx = 0; idx < index.length; idx++) {
           let i = index[idx];
           var a = {id:"",name:""};
           a.id = $scope.dbJson.item_type.deny[i].id;
@@ -88,7 +88,7 @@
       }
       // set allow to deny
       $scope.setAllowToDeny= function(index){
-        for (let idx = 0; index < idx.length; idx++) {
+        for (let idx = 0; idx < index.length; idx++) {
           let i = index[idx];
           var a = {id:"",name:""};
           a.id = $scope.dbJson.item_type.allow[i].id;

@@ -21,6 +21,8 @@
 """Blueprint for weko-theme."""
 
 
+import time
+
 from blinker import Namespace
 from flask import Blueprint, current_app, render_template, request
 from flask_security import current_user
@@ -30,7 +32,6 @@ from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword
-import time
 
 from .utils import get_design_layout, get_weko_contents, has_widget_design
 
