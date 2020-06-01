@@ -147,6 +147,7 @@
               {{ _('Showing %(x_from)d to %(x_to)d out of %(x_total)d universities.', x_from=r_from, x_to=r_to, x_total=r_total) }}
             </p>
           </div>
+          <!--
           <div class="form-group pull-right">
             <div class="btn-group">
               <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
@@ -167,6 +168,7 @@
               </ul>
             </div>
           </div>
+          -->
         </div>
       {% if communities %}
         {% if featured_community and not request.args.get('p') and pagination.page == 1 %}
