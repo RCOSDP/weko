@@ -61,6 +61,8 @@
 {%- block page_header %}
   {%-if not community %}
   {{ super() }}
+  {%- else%}
+  {{ super() }}
   {%- endif%}
 {%- endblock page_header %}
 
