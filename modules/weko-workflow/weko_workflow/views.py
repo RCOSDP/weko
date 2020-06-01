@@ -814,6 +814,8 @@ def next_action(activity_id='0', action_id=0):
                 new_activity_id = handle_finish_workflow(deposit,
                                                          current_pid,
                                                          recid)
+                if not new_activity_id:
+                    return jsonify(code=-1, msg=_('error'))
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
@@ -1037,7 +1039,8 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         post_json = request.get_json()
         password = post_json.get('passwd', None)
         if not password:
-            return jsonify(code=-1, msg=_('Password not provided'))
+            return jsonify(code=-1,
+                           msg=_('Password not provided'))
         wekouser = ShibUser()
         if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()

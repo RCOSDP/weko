@@ -633,8 +633,8 @@ class WekoDeposit(Deposit):
                     args = [index, item_metadata]
                     deposit.update(*args)
                     deposit.commit()
-            # return deposit
-            return self.__class__(deposit.model.json, model=deposit.model)
+            return deposit
+            # return self.__class__(deposit.model.json, model=deposit.model)
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
@@ -945,9 +945,6 @@ class WekoDeposit(Deposit):
                 }
             }
             self_bucket = None
-            current_app.logger.debug("*" * 60)
-            current_app.logger.debug(self.pid)
-            current_app.logger.debug(pid)
             # if ".0" not in self.pid.pid_value:
             if ".0" not in pid.pid_value:
                 draft_pid = PersistentIdentifier.get('recid','{}.0'.format(pid.pid_value.split(".")[0]))
@@ -1136,9 +1133,14 @@ class WekoRecord(Record):
         """Return pid_value of doi identifier."""
         pid_ver = PIDVersioning(child=self.pid_recid)
         if pid_ver:
-            return pid_ver.parents.one_or_none()
+            ret = pid_ver.parents.one_or_none()
+            if not ret:
+                pid_ver.relation_type = 3
+                return pid_ver.parents.one_or_none()
+            else:
+                return ret
         else:
-            return None
+            return ret
 
     @classmethod
     def get_record_by_pid(cls, pid):
