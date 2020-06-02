@@ -871,7 +871,6 @@ def prepare_edit_item():
                         code=err_code,
                         msg=_("This Item is being edited.")
                     )
-            else:
                 from invenio_pidstore.models import PIDStatus
                 from invenio_pidrelations.models import PIDRelation
                 pv = PIDVersioning(child=recid)
