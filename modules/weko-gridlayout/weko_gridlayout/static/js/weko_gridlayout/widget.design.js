@@ -919,9 +919,9 @@ var PreviewGrid = new function () {
             width: 12,
             float: true,
             removeTimeout: 100,
-            cellHeight: 6,
-            verticalMargin: 10,
-	    oneColumnModeClass: false,    
+            cellHeight: 1,
+            verticalMargin: 1,
+	    //oneColumnModeClass: false,    
 	    // disableOneColumnMode: true,
             acceptWidgets: '.grid-stack-item'
         };

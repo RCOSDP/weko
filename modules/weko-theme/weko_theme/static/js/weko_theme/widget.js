@@ -26,9 +26,9 @@ let PageBodyGrid = function () {
         let options = {
             width: 12,
             float: true,
-            verticalMargin: 4,
-            cellHeight: 10,
-            oneColumnModeClass: false,
+            verticalMargin: 1,
+            cellHeight: 1,
+            //oneColumnModeClass: false,
             //disableOneColumnMode: true,
             acceptWidgets: '.grid-stack-item'
         };
