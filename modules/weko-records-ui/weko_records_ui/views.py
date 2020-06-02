@@ -491,7 +491,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     files_thumbnail = []
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
-            record.get('_buckets').get('deposit')).\
+            record.files.bucket.id).\
             filter_by(is_thumbnail=True).all()
     files = []
     for f in record.files:

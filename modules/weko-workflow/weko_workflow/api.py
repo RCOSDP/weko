@@ -1554,10 +1554,9 @@ class WorkActivity(object):
         """
         try:
             with db.session.no_autoflush:
-                if __name__ == '__main__':
-                    activity = _Activity.query.filter_by(
-                        item_id=object_uuid).order_by(
-                        _Activity.updated.desc()).first()
+                activity = _Activity.query.filter_by(
+                    item_id=object_uuid).order_by(
+                    _Activity.updated.desc()).first()
                 return activity
         except Exception as ex:
             current_app.logger.error(ex)

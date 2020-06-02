@@ -856,6 +856,39 @@ def prepare_edit_item():
                     code=err_code,
                     msg=_("This Item is being edited.")
                 )
+            draft_pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid',
+                pid_value="{}.0".format(recid.pid_value)
+            ).one_or_none()
+
+            if draft_pid:
+                draft_workflow = activity.get_workflow_activity_by_item_id(
+                    draft_pid.object_uuid)
+                if draft_workflow and \
+                        draft_workflow.action_status in [ASP.ACTION_BEGIN,
+                                                         ASP.ACTION_DOING]:
+                    return jsonify(
+                        code=err_code,
+                        msg=_("This Item is being edited.")
+                    )
+            else:
+                from invenio_pidstore.models import PIDStatus
+                from invenio_pidrelations.models import PIDRelation
+                pv = PIDVersioning(child=recid)
+                latest_pid = PIDVersioning(parent=pv.parent).get_children(
+                    pid_status=PIDStatus.REGISTERED
+                ).filter(PIDRelation.relation_type == 2).order_by(
+                    PIDRelation.index.desc()).first()
+                latest_workflow = activity.get_workflow_activity_by_item_id(
+                    latest_pid.object_uuid)
+                if latest_workflow and \
+                    draft_workflow.action_status in [ASP.ACTION_BEGIN,
+                                                     ASP.ACTION_DOING]:
+                    return jsonify(
+                        code=err_code,
+                        msg=_("This Item is being edited.")
+                    )
+
             post_activity['workflow_id'] = post_workflow.workflow_id
             post_activity['flow_id'] = post_workflow.flow_id
         else:

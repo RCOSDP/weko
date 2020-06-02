@@ -1027,13 +1027,13 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     merge_data_to_record_without_version(current_pid)
                 deposit_without_ver.publish()
 
-                last_ver = None
+                pv = PIDVersioning(child=pid_without_ver)
+                last_ver = PIDVersioning(parent=pv.parent).get_children(
+                    pid_status=PIDStatus.REGISTERED
+                ).filter(PIDRelation.relation_type == 2).order_by(
+                    PIDRelation.index.desc()).first()
+                # Handle Edit workflow
                 if ".0" in current_pid.pid_value:
-                    pv = PIDVersioning(child=pid_without_ver)
-                    last_ver = PIDVersioning(parent=pv.parent).get_children(
-                        pid_status=PIDStatus.REGISTERED
-                    ).filter(PIDRelation.relation_type == 2).order_by(
-                        PIDRelation.index.desc()).first()
                     maintain_record = WekoDeposit.get_record(
                         last_ver.object_uuid)
                     maintain_deposit = WekoDeposit(
@@ -1044,7 +1044,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         merge_data_to_record_without_version(current_pid)
                     maintain_deposit.publish()
                     new_parent_record.commit()
-                else:
+                else:   # Handle Upgrade workflow
                     draft_pid = PersistentIdentifier.get(
                         'recid',
                         '{}.0'.format(pid_without_ver.pid_value)
