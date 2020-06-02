@@ -23,6 +23,15 @@
 {% macro community_header(community, link=True, subtitle=None) %}
 <div id="community_header" class="container-fluid community-default" hidden="true">
   <div class="{{ community.id }}-header">
+    {%- block navbar_right %}
+    {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
+  {%- endblock navbar_right %}
+  <div class="navbar-form navbar-right">
+    {%- if config.I18N_LANGUAGES %}
+    {% from "weko_theme/macros/language_selector.html" import language_selector_dropdown %}
+    {{ language_selector_dropdown() }}
+    {%- endif %}
+  </div>
     <div class="row">
       {%- if community.community_header %}
         <div id="wysiwyg_header" class="col-md-12">{{ community.community_header|safe }}</div>
@@ -43,6 +52,7 @@
           </h1>
         </div>
       {%- endif %}
+
     </div>
   </div>
 </div>
