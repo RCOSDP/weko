@@ -23,46 +23,48 @@
 
 <head>
   {%- block head %}
-  {%- block head_meta %}
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  {%- if google_scholar_meta %}
-  {%- for metadata in google_scholar_meta %}
-  <meta name="{{ metadata.name }}" content="{{ metadata.data }}">
-  {%- endfor %}
-  {%- endif %}
-  {%- if description %}
-  <meta name="description" content="{{ description }}" />{% endif %}
-  {%- if keywords %}
-  <meta name="keywords" content="{{ keywords }}" />{% endif %}
-  {%- if config.get('THEME_GOOGLE_SITE_VERIFICATION', None) %}
-  {%- for google_id in config.THEME_GOOGLE_SITE_VERIFICATION %}
-  <meta name="google-site-verification" content="{{google_id}}" />
-  {%- endfor %}
-  {%- endif %}
-  {%- endblock head_meta %}
-  {%- from "weko_theme/macros/site_info.html" import site_info %}
-  {{ site_info() }}
-  {%- block head_links %}
-  <!--    <link rel="shortcut icon" href="{{ config.get('WEKO_SITE_INFO').favicon }}"/>-->
-  {%- if keywords %}
-  <link rel="canonical" href="{{ canonical_url }}" />{% endif %}
-  {%- block head_links_langs %}
-  {%- if alternate_urls %}
-  {%- for alt_ln, alternate_url in alternate_urls.items() %}
-  <link rel="alternate" hreflang="{{ alt_ln }}" href="{{ alternate_url }}" />
-  {%- endfor %}
-  {%- endif %}
-  {%- endblock head_links_langs %}
-  {%- block head_apple_icons %}
-  {%- for size in [144, 114, 72, 57] %}
-  {%- set icon_name = 'apple-touch-icon-%d-precomposed.png' | format(size) %}
-  <link rel="apple-touch-icon-precomposed" sizes="{{ size }}x{{ size }}"
-    href="{{ url_for('static', filename=icon_name) }}" />
-  {%- endfor %}
-  {%- endblock head_apple_icons %}
-  {%- endblock head_links %}
+    {%- block head_meta %}
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      {%- if google_scholar_meta %}
+      {%- for metadata in google_scholar_meta %}
+        <meta name="{{ metadata.name }}" content="{{ metadata.data }}">
+      {%- endfor %}
+      {%- endif %}
+      {%- if description %}
+        <meta name="description" content="{{ description }}" />
+      {% endif %}
+      {%- if keywords %}
+        <meta name="keywords" content="{{ keywords }}" />
+      {% endif %}
+      {%- if config.get('THEME_GOOGLE_SITE_VERIFICATION', None) %}
+      {%- for google_id in config.THEME_GOOGLE_SITE_VERIFICATION %}
+        <meta name="google-site-verification" content="{{google_id}}" />
+      {%- endfor %}
+      {%- endif %}
+    {%- endblock head_meta %}
+    {%- from "weko_theme/macros/site_info.html" import site_info %}
+    {{ site_info() }}
+    {%- block head_links %}
+      <!--    <link rel="shortcut icon" href="{{ config.get('WEKO_SITE_INFO').favicon }}"/>-->
+      {%- if keywords %}
+        <link rel="canonical" href="{{ canonical_url }}" />
+      {% endif %}
+      {%- block head_links_langs %}
+        {%- if alternate_urls %}
+        {%- for alt_ln, alternate_url in alternate_urls.items() %}
+          <link rel="alternate" hreflang="{{ alt_ln }}" href="{{ alternate_url }}" />
+        {%- endfor %}
+        {%- endif %}
+      {%- endblock head_links_langs %}
+      {%- block head_apple_icons %}
+        {%- for size in [144, 114, 72, 57] %}
+        {%- set icon_name = 'apple-touch-icon-%d-precomposed.png' | format(size) %}
+      <link rel="apple-touch-icon-precomposed" sizes="{{ size }}x{{ size }}" href="{{ url_for('static', filename=icon_name) }}" />
+      {%- endfor %}
+    {%- endblock head_apple_icons %}
+    {%- endblock head_links %}
   {%- block header %}{% endblock header %}
   {%- block css %}
   {% assets "weko_theme_css" %}
@@ -83,14 +85,7 @@
   <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {%- endblock css %}
   {%- endblock head %}
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-161400038-1"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'UA-161400038-1');
-  </script>
+
 </head>
 
 <body {% if body_css_classes %} class="{{ body_css_classes|join(' ') }}" {% endif %}{% if g.ln %}
@@ -103,6 +98,7 @@
     <![endif]-->
   {%- endblock browserupgrade %}
   {%- block body_inner %}
+  <div id="check-xs" class="hidden-xs"></div>
   {%- if page %}
   <div id="widget-page-id" hidden>{{ page.id }}</div>
   {%- endif %}
@@ -115,14 +111,14 @@
     {% include config.THEME_HEADER_TEMPLATE %}
     {%- endif%}
     {%- endblock page_header %}
-    <div id="main_contents">
+    <div id="main_contents" style="display: block;" class="grid-stack-item" data-gs-y="2">
       <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
       {%- block page_body %}
       {%- endblock page_body %}
     </div>
     {%- if not community_id and not community %}
     {% if render_header_footer %}
-    <div id="main_footer" class="hidden">
+    <div id="main_footer grid-stack-item" class="hidden" data-gs-y="3">
       {% else %}
       <div id="main_footer" {%- if render_widgets or page %}class="hidden" {%- endif %}>
         {% endif %}
