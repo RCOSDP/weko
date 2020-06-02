@@ -21,7 +21,9 @@
 """Link Factory weko-deposit."""
 
 from invenio_deposit.links import deposit_links_factory
+
 from .pidstore import get_latest_version_id
+
 
 def links_factory(pid, **kwargs):
     """Deposit links factory."""

@@ -23,7 +23,6 @@
 import json
 import os
 import sys
-import traceback
 from datetime import date, timedelta
 
 import redis
@@ -37,7 +36,6 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
-from invenio_records_files.models import RecordsBuckets
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryItemRegReportHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
@@ -439,9 +437,6 @@ def iframe_items_index(pid_value='0'):
         if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.iframe_index'))
 
-        current_app.logger.debug(PersistentIdentifier.get('recid', pid_value))
-        current_app.logger.debug(PersistentIdentifier.get('depid', pid_value))
-
         record = WekoRecord.get_record_by_pid(pid_value)
         action = 'private' if record.get('publish_status', '1') == '1' \
             else 'publish'
@@ -467,7 +462,7 @@ def iframe_items_index(pid_value='0'):
             if enable_auto_set_index and contain_application_endpoint:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
-                return redirect(url_for('weko_workflow.iframe_success'))     
+                return redirect(url_for('weko_workflow.iframe_success'))
 
             # Get the design for widget rendering
             from weko_theme.utils import get_design_layout
@@ -526,7 +521,7 @@ def iframe_items_index(pid_value='0'):
                 ttl_secs=300)
         return jsonify(data)
     except BaseException:
-        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
 
@@ -796,7 +791,8 @@ def prepare_edit_item():
         msg: meassage result,
         data: url redirect
     """
-    err_code = current_app.config.get('WEKO_API_RETURN_CODE_ERROR', -1)
+    err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
+                                      -1)
     if request.headers['Content-Type'] != 'application/json':
         """Check header of request"""
         return jsonify(
@@ -816,13 +812,13 @@ def prepare_edit_item():
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
         authenticators = [str(deposit.get('owner')),
-                            str(deposit.get('weko_shared_id'))]
+                          str(deposit.get('weko_shared_id'))]
         user_id = str(get_current_user())
         activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
 
         # ! Check User's Permissions
-        if not user_id in authenticators and not get_user_roles()[0]:
+        if user_id not in authenticators and not get_user_roles()[0]:
             return jsonify(
                 code=err_code,
                 msg=_("You are not allowed to edit this item.")
@@ -853,23 +849,9 @@ def prepare_edit_item():
         item_uuid = latest_pid.object_uuid
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
 
-        if not post_workflow:
-            # ? If couldn't get POST Activity from latest PID, using parent PID's Activity.
-            post_workflow = activity.get_workflow_activity_by_item_id(
-                recid.object_uuid
-            )
-            # if workflow of the item is not found
-            # use default settings of item type to which the item belongs
-        # else:
-            # Show error when ActionStatusPolicy is BEGIN or DOING
-        # if not post_workflow:
-        #     return jsonify(
-        #         code=err_code,
-        #         msg=_("POST Activity of current Record not found.")
-        #     )
-
         if post_workflow:
-            if post_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
+            if post_workflow.action_status in [ASP.ACTION_BEGIN,
+                                               ASP.ACTION_DOING]:
                 return jsonify(
                     code=err_code,
                     msg=_("This Item is being edited.")
@@ -877,7 +859,11 @@ def prepare_edit_item():
             post_activity['workflow_id'] = post_workflow.workflow_id
             post_activity['flow_id'] = post_workflow.flow_id
         else:
-            workflow = get_workflow_by_item_type_id(item_type.name_id, item_type_id)
+            post_workflow = activity.get_workflow_activity_by_item_id(
+                recid.object_uuid
+            )
+            workflow = get_workflow_by_item_type_id(item_type.name_id,
+                                                    item_type_id)
             if not workflow:
                 return jsonify(
                     code=err_code,
@@ -894,11 +880,11 @@ def prepare_edit_item():
         if community:
             comm = GetCommunity.get_community_by_id(community)
             url_redirect = url_for('weko_workflow.display_activity',
-                                    activity_id=rtn.activity_id,
-                                    community=comm.id)
+                                   activity_id=rtn.activity_id,
+                                   community=comm.id)
         else:
             url_redirect = url_for('weko_workflow.display_activity',
-                                    activity_id=rtn.activity_id)
+                                   activity_id=rtn.activity_id)
 
         return jsonify(
             code=0,
@@ -1228,11 +1214,12 @@ def newversion(pid_value='0'):
 
         if not upgrade_record:
             return jsonify(code=-1,
-                        msg=_('An error has occurred.'))
+                           msg=_('An error has occurred.'))
 
         with db.session.begin_nested():
             activity = WorkActivity()
-            wf_activity = activity.get_workflow_activity_by_item_id(draft_pid.object_uuid)
+            wf_activity = activity.get_workflow_activity_by_item_id(
+                draft_pid.object_uuid)
             wf_activity.item_id = upgrade_record.model.id
             db.session.merge(wf_activity)
         db.session.commit()

@@ -22,7 +22,7 @@
 
 from copy import deepcopy
 
-from flask import current_app, jsonify, request
+from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -43,10 +43,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import UpdateItem, WorkActivity
-from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
-    IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_SELECT_DICT, \
-    IDENTIFIER_GRANT_WITHDRAWN, ITEM_REGISTRATION_ACTION_ID, \
-    WEKO_SERVER_CNRI_HOST_LINK
+from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
 
 
@@ -853,8 +850,6 @@ def get_parent_pid_with_type(pid_type, object_uuid):
     """
     try:
         record = WekoRecord.get_record(object_uuid)
-        pv = PIDVersioning(child=record.pid_recid)
-        current_app.logger.debug(pv.parents)
         with db.session.no_autoflush:
             pid_object = PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
@@ -899,33 +894,35 @@ def get_actionid(endpoint):
 
 def prepare_edit_workflow(post_activity, recid, deposit):
     """
-    Get user information by email.
+    Prepare Workflow Activity for draft record.
 
-    Query database to get user id by using email
-    Get username from database using user id
-    Pack response data: user id, user name, email
+    Check and create draft record with id is "x.0".
+    Create new workflow activity.
+    Clone Identifier and Feedbackmail relation to last activity.
 
     parameter:
-        post_activity:
-        recid:
-        deposit:
+        post_activity: latest activity information.
+        recid: current record id.
+        deposit: current deposit data.
     return:
-        response
+        rtn: new activity
+
     """
     # ! Check pid's version
     community = post_activity['community']
     post_workflow = post_activity['post_workflow']
     activity = WorkActivity()
-    rtn = None
 
     draft_pid = PersistentIdentifier.query.filter_by(
-        pid_type='recid', pid_value="{}.0".format(recid.pid_value)).one_or_none()
+        pid_type='recid',
+        pid_value="{}.0".format(recid.pid_value)
+    ).one_or_none()
 
     if not draft_pid:
-        draft_record = deposit.prepare_edit_item(recid)
+        draft_record = deposit.prepare_draft_item(recid)
         rtn = activity.init_activity(post_activity,
-                                 community,
-                                 draft_record.model.id)
+                                     community,
+                                     draft_record.model.id)
     else:
         with db.session.begin_nested():
             draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
@@ -934,8 +931,8 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             db.session.add(bucket)
         db.session.commit()
         rtn = activity.init_activity(post_activity,
-                                    community,
-                                    draft_pid.object_uuid)
+                                     community,
+                                     draft_pid.object_uuid)
 
     if rtn:
         # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
@@ -949,13 +946,17 @@ def prepare_edit_workflow(post_activity, recid, deposit):
 
         if identifier:
             if identifier.get('action_identifier_select') > \
-                    IDENTIFIER_GRANT_DOI:
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0):
                 identifier['action_identifier_select'] = \
-                    IDENTIFIER_GRANT_CAN_WITHDRAW
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
             elif identifier.get('action_identifier_select') == \
-                    IDENTIFIER_GRANT_IS_WITHDRAWING:
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2):
                 identifier['action_identifier_select'] = \
-                    IDENTIFIER_GRANT_WITHDRAWN
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN", -3)
             activity.create_or_update_action_identifier(
                 rtn.activity_id,
                 identifier_actionid,
@@ -964,9 +965,11 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         mail_list = FeedbackMailList.get_mail_list_by_item_id(
             item_id=recid.object_uuid)
         if mail_list:
+            action_id = current_app.config.get(
+                "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
             activity.create_or_update_action_feedbackmail(
                 activity_id=rtn.activity_id,
-                action_id=ITEM_REGISTRATION_ACTION_ID,
+                action_id=action_id,
                 feedback_maillist=mail_list
             )
 
@@ -988,8 +991,10 @@ def handle_finish_workflow(deposit, current_pid, recid):
 
     item_id = None
     try:
-        pid_without_ver = PersistentIdentifier.get("recid",
-                                                   current_pid.pid_value.split(".")[0])
+        pid_without_ver = PersistentIdentifier.get(
+            "recid",
+            current_pid.pid_value.split(".")[0]
+        )
         if ".0" in current_pid.pid_value:
             deposit.commit()
         deposit.publish()
@@ -1022,11 +1027,13 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     merge_data_to_record_without_version(current_pid)
                 deposit_without_ver.publish()
 
+                last_ver = None
                 if ".0" in current_pid.pid_value:
                     pv = PIDVersioning(child=pid_without_ver)
                     last_ver = PIDVersioning(parent=pv.parent).get_children(
                         pid_status=PIDStatus.REGISTERED
-                    ).filter(PIDRelation.relation_type==2).order_by(PIDRelation.index.desc()).first()
+                    ).filter(PIDRelation.relation_type == 2).order_by(
+                        PIDRelation.index.desc()).first()
                     maintain_record = WekoDeposit.get_record(
                         last_ver.object_uuid)
                     maintain_deposit = WekoDeposit(
@@ -1038,7 +1045,10 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     maintain_deposit.publish()
                     new_parent_record.commit()
                 else:
-                    draft_pid = PersistentIdentifier.get('recid','{}.0'.format(pid_without_ver.pid_value))
+                    draft_pid = PersistentIdentifier.get(
+                        'recid',
+                        '{}.0'.format(pid_without_ver.pid_value)
+                    )
                     draft_deposit = WekoDeposit.get_record(
                         draft_pid.object_uuid)
                     draft_deposit['path'] = deposit.get('path', [])
@@ -1047,12 +1057,13 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     draft_deposit.publish()
                     new_draft_record.commit()
 
-                weko_record = WekoRecord.get_record_by_pid(pid_without_ver.pid_value)
+                weko_record = WekoRecord.get_record_by_pid(
+                    pid_without_ver.pid_value)
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
                 db.session.commit()
                 updated_item.publish(parent_record)
-                if ".0" in current_pid.pid_value:
+                if ".0" in current_pid.pid_value and last_ver:
                     item_id = last_ver.object_uuid
                 else:
                     item_id = current_pid.object_uuid

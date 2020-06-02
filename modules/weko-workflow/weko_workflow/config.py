@@ -60,24 +60,15 @@ IDENTIFIER_GRANT_SUFFIX_METHOD = 0
     :case 2: Free input
 """
 
-IDENTIFIER_ITEMSMETADATA_KEY = [
-    'identifier.@value',
-    'identifier.@attributes.identifierType',
-    'identifierRegistration.@value',
-    'identifierRegistration.@attributes.identifierType'
-]
-"""ItemsMetadata format for Identifier Grant action."""
-
-IDENTIFIER_GRANT_CAN_WITHDRAW = -1
+WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW = -1
 """Identifier grant can withdraw."""
 
-IDENTIFIER_GRANT_IS_WITHDRAWING = -2
+WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING = -2
 """Identifier grant is withdrawing."""
 
-ITEM_REGISTRATION_ACTION_ID = 3
+WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID = 3
 """Item Registration action id default."""
 
-ITEM_REGISTRATION_FLOW_ID = 3
 """Identifier grant is withdrawing."""
 
 IDENTIFIER_GRANT_SELECT_DICT = {
@@ -105,14 +96,8 @@ WEKO_WORKFLOW_WAIT_TAB = 'wait'
 
 WEKO_WORKFLOW_ALL_TAB = 'all'
 
-IDENTIFIER_GRANT_DOI = 0
+WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI = 0
 """Identifier grant was select."""
 
-IDENTIFIER_GRANT_CAN_WITHDRAW = -1
-"""Identifier grant can withdraw."""
-
-IDENTIFIER_GRANT_IS_WITHDRAWING = -2
-"""Identifier grant is withdrawing."""
-
-IDENTIFIER_GRANT_WITHDRAWN = -3
+WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN = -3
 """Identifier grant was withdrawn."""

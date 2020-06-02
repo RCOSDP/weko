@@ -38,7 +38,6 @@
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_items_ui_radio_version_management_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {%- if need_thumbnail %}
@@ -114,8 +113,9 @@
                           </button>
                       </li> -->
                       <input type="hidden" id="next-frame" value="iframe_tree">
+                      <input type="hidden" id="next-frame-upgrade" value="iframe_tree_upgrade">
+                      <input type="hidden" id="next-frame-edit" value="iframe_tree_edit">
                     {%- if pid %}
-
                     <!-- <li>
                           <button ng-disabled="recordsVM.invenioRecordsLoading"
                           ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
@@ -276,12 +276,27 @@
                     <input id="invalid-email-format" type="hidden" value="{{_('Invalid email format.')}}" />
                   {%- endblock feedback_mail_list %}
 
-                  {% if record|length %} <!-- Check Item Registation is edit mode then show version_management -->
+                  {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
                     {%- block radio_version_management %}
-                      <div id="react-component-version"></div>
-                      <input id="component-version-label" type="hidden" value="{{_('Version Management')}}" />
-                      <input id="upgrade-radiobutton-label" type="hidden" value="{{_('Upgrade Version')}}" />
-                      <input id="edit-radiobutton-label" type="hidden" value="{{_('Keep Version')}}" />
+                    <div id="react-component-version">
+                      <div className="row">
+                        <div class="form-group">
+                          <label class="control-label col-sm-3 text-right">
+                            {{_('Version Management')}}
+                          </label>
+                          <div class="col-sm-9">
+                            <div class="col-sm-3">
+                              <input type="radio" name="radioVersionSelect" value="update" />
+                              {{_('Upgrade Version')}}
+                            </div>
+                            <div class="col-sm-3">
+                              <input type="radio" name="radioVersionSelect" value="keep" />
+                              {{_('Keep Version')}}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     {%- endblock radio_version_management %}
                   {% endif %}
                 </div>

@@ -54,7 +54,6 @@ from weko_records_ui.permissions import check_file_download_permission
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
-from weko_workflow.models import Action as _Action
 
 
 def get_list_username():
@@ -1634,7 +1633,7 @@ def translate_validation_message(item_property, cur_lang):
 
 def get_workflow_by_item_type_id(item_type_name_id, item_type_id):
     """Get workflow settings by item type id."""
-    from weko_workflow.models import ActionStatusPolicy, WorkFlow
+    from weko_workflow.models import WorkFlow
 
     workflow = WorkFlow.query.filter_by(
         itemtype_id=item_type_id).first()

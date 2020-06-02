@@ -130,6 +130,7 @@ class WekoIndexer(RecordIndexer):
 
         if 'content' in jrc:  # Only pass through pipeline if file exists
             full_body['pipeline'] = 'item-file-pipeline'
+
         self.client.index(**full_body)
 
     def delete_file_index(self, body, parent_id):
@@ -376,7 +377,6 @@ class WekoDeposit(Deposit):
             self['$schema'] = current_app.extensions['invenio-jsonschemas'].\
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
-
         try:
             deposit = super(WekoDeposit, self).publish(pid, id_)
 
@@ -443,6 +443,7 @@ class WekoDeposit(Deposit):
         )
 
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
+
         recid = PersistentIdentifier.get('recid', record_id)
         depid = PersistentIdentifier.get('depid', record_id)
         PIDVersioning(parent=parent_pid).insert_draft_child(child=recid)
@@ -574,7 +575,7 @@ class WekoDeposit(Deposit):
                     for k in keys_to_remove:
                         data.pop(k, None)
 
-                    # attaching version ID
+                    # Attaching version ID, "{}.0" for draft record id.
                     if is_draft:
                         draft_id = '{0}.{1}' . format(
                             last_pid.pid_value,
@@ -601,6 +602,7 @@ class WekoDeposit(Deposit):
                         parent=pv.parent).insert_draft_child(
                         child=recid)
                     RecordDraft.link(recid, depid)
+                    # Set relation type of draft record is 3: Draft
                     if is_draft:
                         with db.session.begin_nested():
                             parent_pid = PIDVersioning(child=recid).parent
@@ -616,6 +618,7 @@ class WekoDeposit(Deposit):
                             RecordsBuckets.create(record=deposit.model,
                                                   bucket=snapshot)
 
+                    # Clone bucket to new record
                     deposit_bucket = RecordsBuckets.query.\
                         filter_by(record=deposit.model).one_or_none()
                     if deposit_bucket:
@@ -634,7 +637,6 @@ class WekoDeposit(Deposit):
                     deposit.update(*args)
                     deposit.commit()
             return deposit
-            # return self.__class__(deposit.model.json, model=deposit.model)
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
@@ -739,13 +741,12 @@ class WekoDeposit(Deposit):
                 cache_key = current_app.config[
                     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
                     pid_value=self.pid.pid_value)
-
+                # Check exist item cache before delete
                 if datastore.redis.exists(cache_key):
                     data_str = datastore.get(cache_key)
                     datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
-        except BaseException as ex:
-            current_app.logger.debug(ex)
+        except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
             abort(500, 'Failed to register item!')
         # Get index path
@@ -931,7 +932,7 @@ class WekoDeposit(Deposit):
                 db.session.rollback()
 
     def merge_data_to_record_without_version(self, pid):
-        """Update changes from record attached version to without version."""
+        """Update changes to current record by record from PID."""
         with db.session.begin_nested():
             # update item_metadata
             index = {'index': self.get('path', []),
@@ -939,15 +940,15 @@ class WekoDeposit(Deposit):
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
 
+            # Clone bucket
             bucket = {
                 "_buckets": {
                     "deposit": None
                 }
             }
-            self_bucket = None
-            # if ".0" not in self.pid.pid_value:
             if ".0" not in pid.pid_value:
-                draft_pid = PersistentIdentifier.get('recid','{}.0'.format(pid.pid_value.split(".")[0]))
+                draft_pid = PersistentIdentifier.get('recid', '{}.0'.format(
+                    pid.pid_value.split(".")[0]))
                 draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
             else:
                 draft_deposit = WekoDeposit.get_record(pid.object_uuid)
@@ -983,7 +984,7 @@ class WekoDeposit(Deposit):
 
         return self.__class__(self.model.json, model=self.model)
 
-    def prepare_edit_item(self, recid):
+    def prepare_draft_item(self, recid):
         """
         Create draft version of main record.
 
@@ -1133,14 +1134,12 @@ class WekoRecord(Record):
         """Return pid_value of doi identifier."""
         pid_ver = PIDVersioning(child=self.pid_recid)
         if pid_ver:
-            ret = pid_ver.parents.one_or_none()
-            if not ret:
+            # Get pid parent of draft record
+            if ".0" in self.pid_recid.pid_value:
                 pid_ver.relation_type = 3
                 return pid_ver.parents.one_or_none()
-            else:
-                return ret
-        else:
-            return ret
+            return pid_ver.parents.one_or_none()
+        return None
 
     @classmethod
     def get_record_by_pid(cls, pid):

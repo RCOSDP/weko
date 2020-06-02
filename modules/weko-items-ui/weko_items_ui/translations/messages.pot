@@ -365,7 +365,7 @@ msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
 msgid "Upgrade Version"
-sgstr ""
+msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
 msgid "Keep Version"

@@ -10,8 +10,7 @@
 }
 
 .style-component {
-    /* margin-top: 15px; */
-    margin: 0px;
+    margin: 0;
     font-size: 14px;
   }
 
@@ -53,7 +52,6 @@
 
   .style-deleteBtn{
     float: right !important;
-    /* margin-bottom: 32px; */
   }
 
   .style-table-modal{

@@ -999,6 +999,7 @@ class ItemTypeProps(RecordBase):
 
         Arguments:
             data {dict} -- schema to remove required key
+
         """
         if "required" in data and not data.get("required"):
             data.pop("required", None)
@@ -1756,7 +1757,7 @@ class FeedbackMailList(object):
 
 
 class ItemLink(object):
-    """Get Community Info."""
+    """Item Link API."""
 
     org_item_id = 0
 
@@ -1766,10 +1767,10 @@ class ItemLink(object):
 
     @classmethod
     def get_item_link_info(cls, recid):
-        """Record publish status change view.
+        """Get item link info of recid.
 
         :param recid: Record Identifier.
-        :return  ret: The rendered template.
+        :return ret: List destination records.
         """
         from weko_deposit.api import WekoRecord
 
@@ -1787,13 +1788,10 @@ class ItemLink(object):
         return ret
 
     def update(self, items):
-        """Record publish  status change view.
+        """Update list item link of current record.
 
-        Change record publish status with given status and renders record
-        export template.
-
-        :param items: PID object.
-        :return: The rendered template.
+        :param items: List record_d and relation type.
+        :return: Error or not.
         """
         dst_relations = ItemReference.get_src_references(
             self.org_item_id).all()
@@ -1831,10 +1829,9 @@ class ItemLink(object):
         return None
 
     def bulk_create(self, dst_items):
-        """Record publish status change view.
+        """Create list of item links.
 
-        :param dst_items: PID object.
-        :return: The rendered template.
+        :param dst_items: List items.
         """
         objects = [ItemReference(
             src_item_pid=self.org_item_id,
@@ -1843,10 +1840,9 @@ class ItemLink(object):
         db.session.bulk_save_objects(objects)
 
     def bulk_update(self, dst_items):
-        """Record publish status change view.
+        """Update list of item links.
 
-        :param dst_items: PID object.
-        :return: The rendered template.
+        :param dst_items: List items.
         """
         objects = [ItemReference(
             src_item_pid=self.org_item_id,
@@ -1856,10 +1852,9 @@ class ItemLink(object):
             db.session.merge(obj)
 
     def bulk_delete(self, dst_item_ids):
-        """Record publish  status change view.
+        """Delete list of item links.
 
-        :param pid: PID object.
-        :return: The rendered template.
+        :param dst_item_ids: List items.
         """
         for dst_item_id in dst_item_ids:
             db.session.query(ItemReference).filter(

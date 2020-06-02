@@ -33,7 +33,6 @@ from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
-from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
@@ -54,22 +53,17 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.utils import get_list_licence
 from werkzeug.utils import import_string
-from weko_deposit.api import WekoRecord
 
-from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
+from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
-from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    ITEM_REGISTRATION_ACTION_ID, WEKO_WORKFLOW_TODO_TAB
+from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
+    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, delete_unregister_buckets, \
-    filter_condition, get_actionid, \
+from .utils import IdentifierHandle, filter_condition, get_actionid, \
     get_activity_id_of_record_without_version, get_identifier_setting, \
-    is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
-    merge_buckets_by_records, register_hdl, saving_doi_pidstore, \
-    set_bucket_default_size, handle_finish_workflow
-from invenio_pidrelations.serializers.utils import serialize_relations
+    handle_finish_workflow, is_hidden_pubdate, is_show_autofill_metadata, \
+    item_metadata_validation, register_hdl, saving_doi_pidstore
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -382,9 +376,6 @@ def display_activity(activity_id=0):
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
         if item:
-            # Remove the unused local variable
-            # _pid_identifier = PersistentIdentifier.get_by_object(
-            #     pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
 
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -402,15 +393,11 @@ def display_activity(activity_id=0):
         # get record data for the first time access to editing item screen
         recid = PersistentIdentifier.get_by_object(
             pid_type='recid', object_type='rec', object_uuid=item.id)
-        # depid = PersistentIdentifier.get_by_object(
-        #     pid_type='depid', object_type='rec', object_uuid=item.id)
         record_class = import_string('weko_deposit.api:WekoRecord')
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
         recid, approval_record = resolver.resolve(recid.pid_value)
         deposit = WekoDeposit.get_record(item.id)
-
-        # files = to_files_js(deposit)
 
         # get files data after click Save btn
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -423,9 +410,8 @@ def display_activity(activity_id=0):
             item_json = json.loads(item_str.decode('utf-8'))
             if 'files' in item_json:
                 files = item_json.get('files')
-        if not files:
-            if deposit:
-                files = to_files_js(deposit)
+        if deposit and not files:
+            files = to_files_js(deposit)
 
         if files and not files_thumbnail:
             files_thumbnail = [i for i in files
@@ -643,6 +629,7 @@ def next_action(activity_id='0', action_id=0):
     recid = None
     deposit = None
     pid_without_ver = None
+    current_pid = None
     if activity_detail and activity_detail.item_id:
         item_id = activity_detail.item_id
         current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
@@ -653,12 +640,12 @@ def next_action(activity_id='0', action_id=0):
         if deposit:
             pid_without_ver = get_record_without_version(current_pid)
 
-    if action_endpoint == 'item_login':
-        if current_pid and ".0" not in current_pid.pid_value:
-            register_hdl(activity_id)
+    if action_endpoint == 'item_login' and current_pid and ".0" not in \
+            current_pid.pid_value:
+        register_hdl(activity_id)
 
     if post_json.get('temporary_save') == 1 \
-            and not action_endpoint in ['identifier_grant', 'item_link']:
+            and action_endpoint not in ['identifier_grant', 'item_link']:
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
@@ -690,7 +677,8 @@ def next_action(activity_id='0', action_id=0):
 
         action_feedbackmail = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
-            action_id=ITEM_REGISTRATION_ACTION_ID)
+            action_id=current_app.config.get(
+                "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
         if action_feedbackmail:
             FeedbackMailList.update(
                 item_id=item_id,
@@ -724,7 +712,6 @@ def next_action(activity_id='0', action_id=0):
             err = item_link.update(relation_data)
             if err:
                 return jsonify(code=-1, msg=_(err))
-        
         if post_json.get('temporary_save') == 1:
             return jsonify(code=0, msg=_('success'))
 
@@ -982,29 +969,6 @@ def cancel_action(activity_id='0', action_id=0):
         action_status=ActionStatusPolicy.ACTION_CANCELED,
         commond=post_json.get('commond'))
 
-    # clear deposit
-    activity_detail = work_activity.get_activity_detail(activity_id)
-    # if activity_detail:
-    #     cancel_item_id = activity_detail.item_id
-    #     if not cancel_item_id:
-    #         pid_value = post_json.get('pid_value')
-    #         if pid_value:
-    #             pid = PersistentIdentifier.get('recid', pid_value)
-    #             cancel_item_id = pid.object_uuid
-    #     if cancel_item_id:
-    #         cancel_record = WekoDeposit.get_record(cancel_item_id)
-    #         if cancel_record:
-    #             cancel_deposit = WekoDeposit(
-    #                 cancel_record, cancel_record.model)
-    #             cancel_deposit.clear()
-    #             # Remove draft child
-    #             cancel_pid = PersistentIdentifier.get_by_object(
-    #                 pid_type='recid', object_type='rec',
-    #                 object_uuid=cancel_item_id)
-    #             cancel_pv = PIDVersioning(child=cancel_pid)
-    #             if cancel_pv.exists:
-    #                 cancel_pv.remove_child(cancel_pid)
-
     work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
         action_status=ActionStatusPolicy.ACTION_CANCELED)
@@ -1053,7 +1017,8 @@ def withdraw_confirm(activity_id='0', action_id='0'):
 
             if identifier_handle.delete_pidstore_doi():
                 identifier['action_identifier_select'] = \
-                    IDENTIFIER_GRANT_IS_WITHDRAWING
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2)
                 if identifier:
                     activity.create_or_update_action_identifier(
                         activity_id,
@@ -1163,7 +1128,8 @@ def get_feedback_maillist(activity_id='0'):
         work_activity = WorkActivity()
         action_feedbackmail = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
-            action_id=ITEM_REGISTRATION_ACTION_ID)
+            action_id=current_app.config.get(
+                "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
         if action_feedbackmail:
             mail_list = action_feedbackmail.feedback_maillist
             for mail in mail_list:

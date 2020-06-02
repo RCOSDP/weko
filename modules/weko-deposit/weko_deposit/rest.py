@@ -116,8 +116,7 @@ def create_blueprint(app, endpoints):
             # ),
             # search_factory=search_factory,
             links_factory=obj_or_import_string(
-                options.get('links_factory_imp'),
-                default=default_links_factory
+                options.get('links_factory_imp'), default=default_links_factory
             ),
             pid_type=options.get('pid_type'),
             pid_minter=options.get('pid_minter'),
@@ -155,9 +154,7 @@ class ItemResource(ContentNegotiatedMethodView):
 
     view_name = '{0}_item'
 
-    def __init__(self,
-                 ctx,
-                 search_serializers=None,
+    def __init__(self, ctx, search_serializers=None,
                  record_serializers=None,
                  default_media_type=None,
                  **kwargs):
@@ -185,10 +182,8 @@ class ItemResource(ContentNegotiatedMethodView):
     def post(self, pid, record, **kwargs):
         """Post."""
         from weko_deposit.links import base_factory
-        response = self.make_response(pid,
-                                     record,
-                                     201,
-                                     links_factory=base_factory)
+        response = self.make_response(pid, record, 201,
+                                      links_factory=base_factory)
         return response
 
     def put(self, **kwargs):
