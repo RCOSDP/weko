@@ -895,9 +895,9 @@
           "date": {
             "match_mapping_type": "date",
             "match_pattern": "regex",
-            "match": "^(subitem|item)_\\d+$",
+            "match": ".*?",
             "mapping": {
-              "type": "date",
+              "type": "keyword",
               "index": false,
               "copy_to": "date_search"
             }
