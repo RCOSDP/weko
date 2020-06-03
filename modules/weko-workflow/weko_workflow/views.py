@@ -979,9 +979,6 @@ def cancel_action(activity_id='0', action_id=0):
             if pid_value:
                 pid = PersistentIdentifier.get('recid', pid_value)
                 cancel_item_id = pid.object_uuid
-        if ".0" in cancel_item_id:
-            return jsonify(code=-1,
-                           msg=_('Error! Cannot process quit activity!'))
         if cancel_item_id:
             cancel_record = WekoDeposit.get_record(cancel_item_id)
             try:
@@ -992,7 +989,8 @@ def cancel_action(activity_id='0', action_id=0):
                         cancel_deposit.clear()
                         # Remove draft child
                         cancel_pid = PersistentIdentifier.get_by_object(
-                            pid_type='recid', object_type='rec',
+                            pid_type='recid',
+                            object_type='rec',
                             object_uuid=cancel_item_id)
                         cancel_pv = PIDVersioning(child=cancel_pid)
                         if cancel_pv.exists:
