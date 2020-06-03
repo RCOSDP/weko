@@ -33,6 +33,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
@@ -968,6 +969,41 @@ def cancel_action(activity_id='0', action_id=0):
         action_version=post_json.get('action_version'),
         action_status=ActionStatusPolicy.ACTION_CANCELED,
         commond=post_json.get('commond'))
+
+    # Clear deposit
+    activity_detail = work_activity.get_activity_detail(activity_id)
+    if activity_detail:
+        cancel_item_id = activity_detail.item_id
+        if not cancel_item_id:
+            pid_value = post_json.get('pid_value')
+            if pid_value:
+                pid = PersistentIdentifier.get('recid', pid_value)
+                cancel_item_id = pid.object_uuid
+        if ".0" in cancel_item_id:
+            return jsonify(code=-1,
+                           msg=_('Error! Cannot process quit activity!'))
+        if cancel_item_id:
+            cancel_record = WekoDeposit.get_record(cancel_item_id)
+            try:
+                with db.session.begin_nested():
+                    if cancel_record:
+                        cancel_deposit = WekoDeposit(
+                            cancel_record, cancel_record.model)
+                        cancel_deposit.clear()
+                        # Remove draft child
+                        cancel_pid = PersistentIdentifier.get_by_object(
+                            pid_type='recid', object_type='rec',
+                            object_uuid=cancel_item_id)
+                        cancel_pv = PIDVersioning(child=cancel_pid)
+                        if cancel_pv.exists:
+                            cancel_pv.remove_child(cancel_pid)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                current_app.logger.error(
+                    'Unexpected error: {}', sys.exc_info()[0])
+                return jsonify(code=-1,
+                               msg=sys.exc_info()[0])
 
     work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
