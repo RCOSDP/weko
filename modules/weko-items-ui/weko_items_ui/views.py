@@ -1234,8 +1234,7 @@ def get_authors_prefix_settings():
 @login_required
 @item_permission.require(http_exception=403)
 def newversion(pid_value='0'):
-    """Iframe items index."""
-    # TODO: create new version and redirect to frame_index page
+    """Create new version and update it's id to current activity."""
     draft_pid = PersistentIdentifier.get('recid', pid_value)
     if ".0" in pid_value:
         pid_value = pid_value.split(".")[0]

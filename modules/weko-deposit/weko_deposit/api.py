@@ -588,7 +588,8 @@ class WekoDeposit(Deposit):
                     # we don't want a new empty bucket, but
                     # an unlocked snapshot of the old record's bucket.
                     deposit = super(WekoDeposit, self).create(data,
-                                                              recid=draft_id)
+                                                              recid=draft_id,
+                                                              with_bucket=False)
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
@@ -602,29 +603,31 @@ class WekoDeposit(Deposit):
                         parent=pv.parent).insert_draft_child(
                         child=recid)
                     RecordDraft.link(recid, depid)
-                    # Set relation type of draft record is 3: Draft
+                    
                     if is_draft:
                         with db.session.begin_nested():
+                            # Set relation type of draft record is 3: Draft
                             parent_pid = PIDVersioning(child=recid).parent
                             relation = PIDRelation.query.\
                                 filter_by(parent=parent_pid,
-                                          child=recid).one_or_none()
+                                            child=recid).one_or_none()
                             relation.relation_type = 3
                             db.session.merge(relation)
-                            snapshot = latest_record.files.bucket.\
-                                snapshot(lock=False)
-                            snapshot.locked = False
-                            deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                            RecordsBuckets.create(record=deposit.model,
-                                                  bucket=snapshot)
+                            
+                    snapshot = latest_record.files.bucket.\
+                        snapshot(lock=False)
+                    snapshot.locked = False
+                    deposit['_buckets'] = {'deposit': str(snapshot.id)}
+                    RecordsBuckets.create(record=deposit.model,
+                                          bucket=snapshot)
 
                     # Clone bucket to new record
-                    deposit_bucket = RecordsBuckets.query.\
-                        filter_by(record=deposit.model).one_or_none()
-                    if deposit_bucket:
-                        deposit['_buckets'] = {
-                            'deposit': str(deposit_bucket.bucket_id)
-                        }
+                    # deposit_bucket = RecordsBuckets.query.\
+                    #     filter_by(record=deposit.model).one_or_none()
+                    # if deposit_bucket:
+                    #     deposit['_buckets'] = {
+                    #         'deposit': str(deposit_bucket.bucket_id)
+                    #     }
 
                     index = {'index': self.get('path', []),
                              'actions': self.get('publish_status')}
