@@ -935,6 +935,7 @@ class WekoDeposit(Deposit):
 
     def merge_data_to_record_without_version(self, pid):
         """Update changes to current record by record from PID."""
+        from weko_workflow.utils import delete_bucket
         with db.session.begin_nested():
             # update item_metadata
             index = {'index': self.get('path', []),
@@ -966,23 +967,44 @@ class WekoDeposit(Deposit):
             #     }
             # }
 
-            self_bucket = RecordsBuckets.query.filter_by(
-                record_id=self.id
-            ).first()
-            self_bucket.sync(draft_deposit.files.bucket, True)
+            # self_bucket = RecordsBuckets.query.filter_by(
+            #     record_id=self.id
+            # ).first()
+            # bucket = Bucket.get(draft_deposit.files.bucket.id)
+            # self_bucket.bucket.sync(draft_deposit.files.bucket, True)
             # if self_bucket:
             #     self_bucket.bucket_id = snapshot.id
+            bucket = Bucket.get(draft_deposit.files.bucket.id)
+            if ".0" in self.pid.pid_value:
+                sync_bucket = RecordsBuckets.query.filter_by(
+                    record_id=pid.object_uuid
+                ).first()
+            else:
+                sync_bucket = RecordsBuckets.query.filter_by(
+                    record_id=self.id
+                ).first()
+            sync_bucket.bucket.locked = False
+            snapshot = bucket.snapshot(lock=False)
+            snapshot.locked = False
+            old_bucket_id = sync_bucket.bucket_id
+            sync_bucket.bucket = snapshot
+            delete_bucket(old_bucket_id)
 
+            bucket = {
+                "_buckets": {
+                    "deposit": str(snapshot.id)
+                }
+            }
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
-            # super(WekoDeposit, self).update(bucket)
+            super(WekoDeposit, self).update(bucket)
             self.commit()
             # update records_metadata
             flag_modified(self.model, 'json')
             db.session.add(self.model)
             # if self_bucket:
-            db.session.add(self_bucket)
+            db.session.add(sync_bucket)
 
         return self.__class__(self.model.json, model=self.model)
 

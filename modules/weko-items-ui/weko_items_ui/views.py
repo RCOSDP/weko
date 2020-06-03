@@ -881,8 +881,8 @@ def prepare_edit_item():
                 latest_workflow = activity.get_workflow_activity_by_item_id(
                     latest_pid.object_uuid)
                 if latest_workflow and \
-                    draft_workflow.action_status in [ASP.ACTION_BEGIN,
-                                                     ASP.ACTION_DOING]:
+                    latest_workflow.action_status in [ASP.ACTION_BEGIN,
+                                                      ASP.ACTION_DOING]:
                     return jsonify(
                         code=err_code,
                         msg=_("This Item is being edited.")
