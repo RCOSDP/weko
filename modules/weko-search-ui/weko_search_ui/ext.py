@@ -23,11 +23,13 @@
 from . import config
 from .rest import create_blueprint
 from .views import blueprint
+from weko_logging.utils import my_profiler
 
 
 class WekoSearchUI(object):
     """weko-search-ui extension."""
 
+    @my_profiler
     def __init__(self, app=None):
         """Extension initialization.
 
@@ -36,6 +38,7 @@ class WekoSearchUI(object):
         if app:
             self.init_app(app)
 
+    @my_profiler
     def init_app(self, app):
         """Flask application initialization.
 
@@ -49,6 +52,7 @@ class WekoSearchUI(object):
         from .views import search
         app.view_functions['invenio_search_ui.search'] = search
 
+    @my_profiler
     def init_config(self, app):
         """Initialize configuration.
 
@@ -89,6 +93,7 @@ class WekoSearchUI(object):
 class WekoSearchREST(object):
     """Index Search Rest Obj."""
 
+    @my_profiler
     def __init__(self, app=None):
         """Extension initialization.
 
@@ -97,6 +102,7 @@ class WekoSearchREST(object):
         if app:
             self.init_app(app)
 
+    @my_profiler
     def init_app(self, app):
         """Flask application initialization.
 

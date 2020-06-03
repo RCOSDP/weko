@@ -27,9 +27,12 @@ from weko_records.utils import find_items
 from .permissions import item_permission
 from .utils import is_schema_include_key
 
+from weko_logging.utils import my_profiler
+
 
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def item_login(item_type_id=0):
     """Return information that item register need.
 

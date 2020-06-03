@@ -24,10 +24,12 @@ from . import config
 from .permissions import item_permission
 from .views import blueprint, check_ranking_show
 
+from weko_logging.utils import my_profiler
 
 class _WekoItemsUIState(object):
     """WekoItemsUI state."""
 
+    @my_profiler
     def __init__(self, app, permission):
         """Initialize state.
 
@@ -41,6 +43,7 @@ class _WekoItemsUIState(object):
 class WekoItemsUI(object):
     """weko-items-ui extension."""
 
+    @my_profiler
     def __init__(self, app=None):
         """Extension initialization.
 
@@ -49,6 +52,7 @@ class WekoItemsUI(object):
         if app:
             self.init_app(app)
 
+    @my_profiler
     def init_app(self, app):
         """Flask application initialization.
 
@@ -60,6 +64,7 @@ class WekoItemsUI(object):
         app.extensions['weko-items-ui'] = state
         app.jinja_env.globals.update(check_ranking_show=check_ranking_show)
 
+    @my_profiler
     def init_config(self, app):
         """Initialize configuration.
 

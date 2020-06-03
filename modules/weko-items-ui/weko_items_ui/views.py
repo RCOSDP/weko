@@ -65,6 +65,8 @@ from .utils import _get_max_export_items, export_items, get_actionid, \
     validate_save_title_and_share_user_id, validate_user, \
     validate_user_mail_and_index
 
+from weko_logging.utils import my_profiler
+
 blueprint = Blueprint(
     'weko_items_ui',
     __name__,
@@ -86,6 +88,7 @@ blueprint_api = Blueprint(
 @blueprint.route('/<int:item_type_id>', methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def index(item_type_id=0):
     """Renders an item register view.
 
@@ -133,6 +136,7 @@ def index(item_type_id=0):
 @blueprint.route('/iframe/<int:item_type_id>', methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def iframe_index(item_type_id=0):
     """Renders an item register view.
 
@@ -187,6 +191,7 @@ def iframe_index(item_type_id=0):
 @blueprint.route('/iframe/model/save', methods=['POST'])
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def iframe_save_model():
     """Renders an item register view.
 
@@ -212,6 +217,7 @@ def iframe_save_model():
 
 
 @blueprint.route('/iframe/success', methods=['GET'])
+@my_profiler
 def iframe_success():
     """Renders an item register view.
 
@@ -222,6 +228,7 @@ def iframe_success():
 
 
 @blueprint.route('/iframe/error', methods=['GET'])
+@my_profiler
 def iframe_error():
     """Renders an item register view.
 
@@ -236,6 +243,7 @@ def iframe_error():
                  methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def get_json_schema(item_type_id=0, activity_id=""):
     """Get json schema.
 
@@ -279,6 +287,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
 @blueprint.route('/schemaform/<int:item_type_id>', methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def get_schema_form(item_type_id=0):
     """Get schema form.
 
@@ -374,6 +383,7 @@ def get_schema_form(item_type_id=0):
 @blueprint.route('/index/<string:pid_value>', methods=['GET', 'PUT', 'POST'])
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def items_index(pid_value='0'):
     """Items index."""
     try:
@@ -433,6 +443,7 @@ def items_index(pid_value='0'):
                  methods=['GET', 'PUT', 'POST'])
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def iframe_items_index(pid_value='0'):
     """Iframe items index."""
     try:
@@ -525,6 +536,7 @@ def iframe_items_index(pid_value='0'):
     return abort(400)
 
 
+@my_profiler
 def default_view_method(pid, record, template=None):
     """Default view method.
 
@@ -593,6 +605,7 @@ def default_view_method(pid, record, template=None):
     )
 
 
+@my_profiler
 def to_links_js(pid):
     """Get API links."""
     self_url = current_app.config['DEPOSIT_RECORDS_API'].format(
@@ -608,6 +621,7 @@ def to_links_js(pid):
 
 @blueprint.route('/upload', methods=['GET'])
 @login_required
+@my_profiler
 def index_upload():
     """Renders an item data upload view.
 
@@ -619,6 +633,7 @@ def index_upload():
 
 
 @blueprint_api.route('/get_search_data/<data_type>', methods=['GET'])
+@my_profiler
 def get_search_data(data_type=''):
     """get_search_data.
 
@@ -649,6 +664,7 @@ def get_search_data(data_type=''):
 
 
 @blueprint_api.route('/validate_email_and_index', methods=['POST'])
+@my_profiler
 def validate_user_email_and_index():
     """Validate user mail and index.
 
@@ -664,6 +680,7 @@ def validate_user_email_and_index():
 
 
 @blueprint_api.route('/validate_user_info', methods=['POST'])
+@my_profiler
 def validate_user_info():
     """validate_user_info.
 
@@ -724,6 +741,7 @@ def validate_user_info():
 
 @blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>',
                      methods=['GET'])
+@my_profiler
 def get_user_info(owner, shared_user_id):
     """get_user_info.
 
@@ -755,6 +773,7 @@ def get_user_info(owner, shared_user_id):
 
 
 @blueprint_api.route('/get_current_login_user_id', methods=['GET'])
+@my_profiler
 def get_current_login_user_id():
     """get_current_login_user_id.
 
@@ -776,6 +795,7 @@ def get_current_login_user_id():
 
 @blueprint_api.route('/prepare_edit_item', methods=['POST'])
 @login_required
+@my_profiler
 def prepare_edit_item():
     """Prepare_edit_item.
 
@@ -791,6 +811,7 @@ def prepare_edit_item():
         msg: meassage result,
         data: url redirect
     """
+    @my_profiler
     def _get_workflow_by_item_type_id(item_type_name_id, item_type_id):
         """Get workflow settings by item type id."""
         workflow = WorkFlow.query.filter_by(
@@ -975,6 +996,7 @@ def prepare_edit_item():
 
 
 @blueprint.route('/ranking', methods=['GET'])
+@my_profiler
 def ranking():
     """Ranking page view."""
     # get ranking settings
@@ -1067,6 +1089,7 @@ def ranking():
         rankings=rankings)
 
 
+@my_profiler
 def check_ranking_show():
     """Check ranking show/hide."""
     result = 'hide'
@@ -1076,7 +1099,9 @@ def check_ranking_show():
     return result
 
 
+
 @blueprint_api.route('/check_restricted_content', methods=['POST'])
+@my_profiler
 def check_restricted_content():
     """Check if record has restricted content for current user.
 
@@ -1099,6 +1124,7 @@ def check_restricted_content():
 
 
 @blueprint.route('/export', methods=['GET', 'POST'])
+@my_profiler
 def export():
     """Item export view."""
     export_settings = AdminSettings.get('item_export_settings') or \
@@ -1145,6 +1171,7 @@ def export():
 
 @blueprint_api.route('/validate', methods=['POST'])
 @login_required
+@my_profiler
 def validate():
     """Validate input data.
 
@@ -1164,6 +1191,7 @@ def validate():
                      methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def check_validation_error_msg(activity_id):
     """Check whether sessionstore('updated_json_schema_') is exist.
 
@@ -1210,6 +1238,7 @@ def check_validation_error_msg(activity_id):
 @blueprint.route('/corresponding-activity', methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
+@my_profiler
 def corresponding_activity_list():
     """Get corresponding usage & output activity list.
 
@@ -1227,6 +1256,7 @@ def corresponding_activity_list():
 
 @blueprint_api.route('/save_title_and_share_user_id', methods=['POST'])
 @login_required
+@my_profiler
 def save_title_and_share_user_id():
     """Validate input title and shared user id for activity.
 
@@ -1242,6 +1272,7 @@ def save_title_and_share_user_id():
 
 
 @blueprint_api.route('/author_prefix_settings', methods=['GET'])
+@my_profiler
 def get_authors_prefix_settings():
     """Get all author prefix settings."""
     author_prefix_settings = get_data_authors_prefix_settings()

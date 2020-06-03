@@ -28,11 +28,13 @@ from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
 from weko_records.utils import get_keywords_data_load
 
+from weko_logging.utils import my_profiler
 
 class SearchSetting(object):
     """About search setting."""
 
     @classmethod
+    @my_profiler
     def get_results_setting(cls):
         """Get result setting."""
         res = sm.get()
@@ -58,6 +60,7 @@ class SearchSetting(object):
         return sort_options, display_number
 
     @classmethod
+    @my_profiler
     def get_default_sort(cls, search_type):
         """Get default sort."""
         res = sm.get()
@@ -80,12 +83,14 @@ class SearchSetting(object):
         return sort_key, sort
 
     @classmethod
+    @my_profiler
     def get_sort_key(cls, key_str):
         """Get sort key."""
         return current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
             current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key_str).get('fields')[0]
 
     @classmethod
+    @my_profiler
     def get_custom_sort(cls, index_id, sort_type):
         """Get custom sort."""
         if sort_type == "asc":
@@ -126,6 +131,7 @@ class SearchSetting(object):
         return script_str, default_sort
 
     @classmethod
+    @my_profiler
     def get_nested_sorting(cls, key_str):
         """Get nested sorting object."""
         nested_sorting = None
@@ -135,7 +141,7 @@ class SearchSetting(object):
             nested_sorting = sort_option.get('nested')
         return nested_sorting
 
-
+@my_profiler
 def get_search_detail_keyword(str):
     """Get search detail keyword."""
     res = sm.get()

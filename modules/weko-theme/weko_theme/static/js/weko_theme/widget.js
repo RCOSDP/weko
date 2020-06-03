@@ -184,7 +184,8 @@ let PageBodyGrid = function () {
     };
 
     this.loadGrid = function (widgetListItems) {
-        let items = GridStackUI.Utils.sort(widgetListItems);
+        //let items = GridStackUI.Utils.sort(widgetListItems);
+        let items = widgetListItems;
         let hasMainContent = false;
         items.forEach(function (node) {
             if (MAIN_CONTENT_TYPE === node.type) {

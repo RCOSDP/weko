@@ -921,7 +921,7 @@ var PreviewGrid = new function () {
             removeTimeout: 100,
             cellHeight: 1,
             verticalMargin: 1,
-	    //oneColumnModeClass: false,    
+	    //oneColumnModeClass: false,
 	    // disableOneColumnMode: true,
             acceptWidgets: '.grid-stack-item'
         };
@@ -935,7 +935,8 @@ var PreviewGrid = new function () {
 
     this.loadGrid = function (widgetListItems) {
         this.grid.removeAll();
-        let items = GridStackUI.Utils.sort(widgetListItems);
+        //let items = GridStackUI.Utils.sort(widgetListItems);
+        let items = widgetListItems;
         isHasMainContent = false;
         isHasHeader = false;
         isHasFooter = false;

@@ -40,6 +40,8 @@ from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
     get_content_workflow, get_tree_items, handle_workflow, make_stats_tsv
 
+from weko_logging.utils import my_profiler
+
 _signals = Namespace()
 searched = _signals.signal('searched')
 
@@ -48,6 +50,7 @@ class ItemManagementBulkDelete(BaseView):
     """Item Management - Bulk Delete view."""
 
     @expose('/', methods=['GET', 'PUT'])
+    @my_profiler
     def index(self):
         """Bulk delete items and index trees."""
         if request.method == 'PUT':
@@ -100,6 +103,7 @@ class ItemManagementCustomSort(BaseView):
     """Item Management - Custom Sort view."""
 
     @expose('/', methods=['GET'])
+    @my_profiler
     def index(self):
         """Custom sort index."""
         return self.render(
@@ -108,6 +112,7 @@ class ItemManagementCustomSort(BaseView):
         )
 
     @expose('/save', methods=['POST'])
+    @my_profiler
     def save_sort(self):
         """Save custom sort."""
         try:
@@ -138,6 +143,7 @@ class ItemManagementBulkSearch(BaseView):
     """Item Management - Search."""
 
     @expose('/', methods=['GET'])
+    @my_profiler
     def index(self):
         """Index Search page ui."""
         search_type = request.args.get('search_type', '0')
@@ -203,6 +209,7 @@ class ItemManagementBulkSearch(BaseView):
             return abort(500)
 
     @staticmethod
+    @my_profiler
     def is_visible():
         """Should never be visible."""
         return False
@@ -212,6 +219,7 @@ class ItemImportView(BaseView):
     """BaseView for Admin Import."""
 
     @expose('/', methods=['GET'])
+    @my_profiler
     def index(self):
         """Renders an item import view.
 
@@ -228,6 +236,7 @@ class ItemImportView(BaseView):
         )
 
     @expose('/check', methods=['POST'])
+    @my_profiler
     def check(self) -> jsonify:
         """Validate item import."""
         data = request.get_json()
@@ -246,6 +255,7 @@ class ItemImportView(BaseView):
         return jsonify(code=1, list_record=list_record, data_path=data_path)
 
     @expose('/download_check', methods=['POST'])
+    @my_profiler
     def download_check(self):
         """Download report check result."""
         data = request.get_json()
@@ -274,6 +284,7 @@ class ItemImportView(BaseView):
             )
 
     @expose('/import', methods=['POST'])
+    @my_profiler
     def import_items(self) -> jsonify:
         """Import item into System."""
         data = request.get_json() or {}
@@ -299,6 +310,7 @@ class ItemImportView(BaseView):
         return jsonify(response_object)
 
     @expose("/check_status", methods=["POST"])
+    @my_profiler
     def get_status(self):
         """Get status of import process."""
         data = request.get_json()
@@ -330,6 +342,7 @@ class ItemImportView(BaseView):
         return jsonify(response_object)
 
     @expose('/export_import', methods=['POST'])
+    @my_profiler
     def download_import(self):
         """Download import result."""
         data = request.get_json()

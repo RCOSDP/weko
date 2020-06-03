@@ -105,14 +105,20 @@
   <div class="lds-ring-background hidden">
     <div class="lds-ring"></div>
   </div>
-  <div id="page_body" class="grid-stack" {%- if render_widgets is not none %}style="display: None;" {%- endif %}>
+  <div id="page_body" {%- if render_widgets is not none %}style="display: None;" class="grid-stack" {%- else%}  {%- endif %}>
     {%- block page_header %}
     {%- if not community_id %}
     {% include config.THEME_HEADER_TEMPLATE %}
     {%- endif%}
     {%- endblock page_header %}
-    <div id="main_contents" style="display: block;" class="grid-stack-item" data-gs-y="2">
+    {%-if community %}
+
+    <div id="main_contents" style="display: block;" data-gs-y="2">
       <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
+      {%- else%}
+      <div id="main_contents" style="display: block;"  data-gs-y="2">
+        <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
+      {%- endif%}
       {%- block page_body %}
       {%- endblock page_body %}
     </div>
