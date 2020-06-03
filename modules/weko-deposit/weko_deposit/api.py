@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from typing import NoReturn, Union
 
 import redis
-from dictdiffer import patch
+from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from flask import abort, current_app, has_request_context, json, request, \
     session
@@ -345,7 +345,68 @@ class WekoDeposit(Deposit):
             m.run()
         except UnresolvedConflictsException:
             raise MergeConflict()
-        return patch(m.unified_patches, lca)
+        return self._patch(m.unified_patches, lca)
+
+    @staticmethod
+    def _patch(diff_result, destination, in_place=False):
+        """Patch the diff result to the destination dictionary.
+
+        :param diff_result: Changes returned by ``diff``.
+        :param destination: Structure to apply the changes to.
+        :param in_place: By default, destination dictionary is deep copied
+                         before applying the patch, and the copy is returned.
+                         Setting ``in_place=True`` means that patch will apply
+                         the changes directly to and return the destination
+                         structure.
+        """
+        (ADD, REMOVE, CHANGE) = (
+            'add', 'remove', 'change')
+        if not in_place:
+            destination = copy.deepcopy(destination)
+
+        def add(node, changes):
+            for key, value in changes:
+                dest = dot_lookup(destination, node)
+                if isinstance(dest, list):
+                    dest.insert(key, value)
+                elif isinstance(dest, set):
+                    dest |= value
+                else:
+                    dest[key] = value
+
+        def change(node, changes):
+            dest = dot_lookup(destination, node, parent=True)
+            if isinstance(node, str):
+                last_node = node.split('.')[-1]
+            else:
+                last_node = node[-1]
+            if isinstance(dest, list):
+                last_node = int(last_node)
+            _, value = changes
+            dest[last_node] = value
+
+        def remove(node, changes):
+            for key, value in changes:
+                dest = dot_lookup(destination, node)
+                if isinstance(dest, set):
+                    dest -= value
+                else:
+                    if isinstance(dest, list) and isinstance(key, int) and len(
+                            dest) > key:
+                        del dest[key]
+                    elif isinstance(dest, dict) and dest.get(key):
+                        del dest[key]
+
+        patchers = {
+            REMOVE: remove,
+            ADD: add,
+            CHANGE: change
+        }
+
+        for action, node, changes in diff_result:
+            patchers[action](node, changes)
+
+        return destination
 
     def _publish_new(self, id_=None):
         """Override the publish new to avoid creating multiple pids."""
