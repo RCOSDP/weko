@@ -602,31 +602,23 @@ class WekoDeposit(Deposit):
                         parent=pv.parent).insert_draft_child(
                         child=recid)
                     RecordDraft.link(recid, depid)
-                    
+
                     if is_draft:
                         with db.session.begin_nested():
                             # Set relation type of draft record is 3: Draft
                             parent_pid = PIDVersioning(child=recid).parent
                             relation = PIDRelation.query.\
                                 filter_by(parent=parent_pid,
-                                            child=recid).one_or_none()
+                                          child=recid).one_or_none()
                             relation.relation_type = 3
-                            db.session.merge(relation)
-                            
+                        db.session.merge(relation)
+
                     snapshot = latest_record.files.bucket.\
                         snapshot(lock=False)
                     snapshot.locked = False
                     deposit['_buckets'] = {'deposit': str(snapshot.id)}
                     RecordsBuckets.create(record=deposit.model,
                                           bucket=snapshot)
-
-                    # Clone bucket to new record
-                    # deposit_bucket = RecordsBuckets.query.\
-                    #     filter_by(record=deposit.model).one_or_none()
-                    # if deposit_bucket:
-                    #     deposit['_buckets'] = {
-                    #         'deposit': str(deposit_bucket.bucket_id)
-                    #     }
 
                     index = {'index': self.get('path', []),
                              'actions': self.get('publish_status')}
@@ -956,24 +948,6 @@ class WekoDeposit(Deposit):
             else:
                 draft_deposit = WekoDeposit.get_record(pid.object_uuid)
             # Get draft bucket's data
-            # record_bucket = RecordsBuckets.query.filter_by(
-            #     record_id=pid.object_uuid
-            # ).first()
-            # snapshot = draft_deposit.files.bucket.snapshot(lock=False)
-            # snapshot.locked = False
-            # bucket = {
-            #     "_buckets": {
-            #         "deposit": str(record_bucket.id)
-            #     }
-            # }
-
-            # self_bucket = RecordsBuckets.query.filter_by(
-            #     record_id=self.id
-            # ).first()
-            # bucket = Bucket.get(draft_deposit.files.bucket.id)
-            # self_bucket.bucket.sync(draft_deposit.files.bucket, True)
-            # if self_bucket:
-            #     self_bucket.bucket_id = snapshot.id
             bucket = Bucket.get(draft_deposit.files.bucket.id)
             if ".0" in self.pid.pid_value:
                 sync_bucket = RecordsBuckets.query.filter_by(
@@ -998,12 +972,15 @@ class WekoDeposit(Deposit):
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
-            super(WekoDeposit, self).update(bucket)
+            if ".0" in self.pid.pid_value:
+                draft_deposit['_buckets'] = {"deposit": str(snapshot.id)}
+                draft_deposit.commit()
+            else:
+                super(WekoDeposit, self).update(bucket)
             self.commit()
             # update records_metadata
             flag_modified(self.model, 'json')
             db.session.add(self.model)
-            # if self_bucket:
             db.session.add(sync_bucket)
 
         return self.__class__(self.model.json, model=self.model)
