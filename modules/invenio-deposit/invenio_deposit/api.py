@@ -245,9 +245,8 @@ class Deposit(Record):
                 data['_deposit']['owners'].append(creator_id)
 
             data['_deposit']['created_by'] = creator_id
-        
-        return super(Deposit, cls).create(data,
-                                          id_=id_)
+
+        return super(Deposit, cls).create(data, id_=id_)
 
     @contextmanager
     def _process_files(self, record_id, data):
