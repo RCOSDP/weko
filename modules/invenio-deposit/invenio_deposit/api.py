@@ -207,7 +207,7 @@ class Deposit(Record):
 
     @classmethod
     @index
-    def create(cls, data, id_=None, recid=None, with_bucket=True):
+    def create(cls, data, id_=None, recid=None):
         """Create a deposit.
 
         Initialize the follow information inside the deposit:
@@ -247,8 +247,7 @@ class Deposit(Record):
             data['_deposit']['created_by'] = creator_id
         
         return super(Deposit, cls).create(data,
-                                          id_=id_,
-                                          with_bucket=with_bucket)
+                                          id_=id_)
 
     @contextmanager
     def _process_files(self, record_id, data):

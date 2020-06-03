@@ -588,8 +588,7 @@ class WekoDeposit(Deposit):
                     # we don't want a new empty bucket, but
                     # an unlocked snapshot of the old record's bucket.
                     deposit = super(WekoDeposit, self).create(data,
-                                                              recid=draft_id,
-                                                              with_bucket=False)
+                                                              recid=draft_id)
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
