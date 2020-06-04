@@ -2694,7 +2694,7 @@ function toObject(arr) {
         if ($("#react-component-version").length != 0) {
           let versionSelected = $("input[name='radioVersionSelect']:checked").val();
           if (versionSelected == undefined) {
-            var versionHeader = $("#component-version-label").val();
+            var versionHeader = $("#component-version-label").text().trim();
             listItemErrors.push(versionHeader);
             $("#react-component-version").addClass("has-error");
           }
