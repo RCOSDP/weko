@@ -28,7 +28,6 @@ from invenio_accounts.models import Role, User
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
-from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
 from weko_groups.widgets import RadioGroupWidget
