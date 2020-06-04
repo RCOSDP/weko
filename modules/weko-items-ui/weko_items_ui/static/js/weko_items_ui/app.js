@@ -1693,14 +1693,31 @@ function toObject(arr) {
 
           let files = $rootScope.filesVM.files;
           $scope.filemeta_keys.forEach(function (filemeta_key) {
-            for (i = 0; i < model[filemeta_key].length; i++) {
-              if(model[filemeta_key][i] && files[i]){
-                model[filemeta_key][i].version_id = files[i].version_id;
+            for (let i = 0; i < model[filemeta_key].length; i++) {
+              if (model[filemeta_key][i]) {
+                let modelFile = model[filemeta_key][i];
+                files.forEach(function (file) {
+                  if (modelFile.filename === file.key
+                    && !$rootScope.isModelFileVersion(model[filemeta_key], file.version_id)) {
+                    modelFile.version_id = file.version_id;
+                  }
+                })
               }
             }
           });
 
         }, 3000);
+      }
+
+      $rootScope.isModelFileVersion = function (modelFileList, versionId) {
+        let rtnValue = false;
+        for (let i = 0; i < modelFileList.length; i++) {
+          if (modelFileList[i].version_id === versionId) {
+            rtnValue = true;
+            break;
+          }
+        }
+        return rtnValue;
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
