@@ -934,4 +934,3 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
         nullable=True
     )
     """Action journal info."""
-
