@@ -1087,7 +1087,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
     except ValueError:
-        current_app.logger.error('Unexpected error: {}', sys.exc_info()[0])
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error!'))
 
 
