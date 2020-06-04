@@ -31,6 +31,7 @@ from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 from weko_deposit.api import WekoRecord
+
 from .schema import SchemaTree
 
 MISSING = object()
@@ -97,6 +98,7 @@ def get_identifier(record):
         else:
             identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
                 request.url_root, record_id)
+            identifier_type = 'URI'
         result['attribute_value_mlt'][0][
             'subitem_systemidt_identifier'] = identifier
         result['attribute_value_mlt'][0][

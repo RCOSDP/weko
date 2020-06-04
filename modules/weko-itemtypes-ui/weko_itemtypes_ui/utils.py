@@ -298,8 +298,10 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
             item_src_in_sys = item_src_key in meta_system
             lst_overlap = list(set(lst_values_src).intersection(lst_values_des))
             if lst_overlap:
-                item_src_name = item_type.schema.get('properties').get(item_src_key).get('title')
-                item_des_name = item_type.schema.get('properties').get(item_des_key).get('title')
+                item_src_name = item_type.schema.get('properties').get(
+                    item_src_key).get('title')
+                item_des_name = item_type.schema.get('properties').get(
+                    item_des_key).get('title')
                 if item_des_in_sys and item_src_in_sys:
                     continue
                 elif (item_des_in_sys or item_src_in_sys) and lst_overlap:
