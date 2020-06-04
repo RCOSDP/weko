@@ -95,9 +95,8 @@ def get_identifier(record):
             identifier = record.pid_cnri.pid_value
             identifier_type = record.pid_cnri.pid_type.upper()
         else:
-            identifier = current_app.config['WEKO_SCHEME_RECORD_URL'].format(
+            identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
                 request.url_root, record_id)
-            identifier_type = 'URI'
         result['attribute_value_mlt'][0][
             'subitem_systemidt_identifier'] = identifier
         result['attribute_value_mlt'][0][

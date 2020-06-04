@@ -88,5 +88,5 @@ WEKO_SCHEMA_UI_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
 WEKO_SCHEME_FIRST_INDEX = 0
 """ Name Identifior Item first index """
 
-WEKO_SCHEME_RECORD_URL = "{}records/{}"
+WEKO_SCHEMA_RECORD_URL = "{}records/{}"
 """Pattern of url record."""

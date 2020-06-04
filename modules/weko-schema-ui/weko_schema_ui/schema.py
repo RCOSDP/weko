@@ -615,14 +615,15 @@ class SchemaTree:
                 for k, v in dct.items():
                     if isinstance(v, dict):
                         # check if @value has value
-                        node_val = v.get('@value', None)
+                        ddi_schema = self._schema_name == current_app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME']
+                        node_val = v.get(self._v, None)
+                        node_att = v.get(self._atr, None)
                         if isinstance(node_val, list) and node_val[0]:
                             # get index of None value
                             lst_none_idx = [idx for idx, val in
                                             enumerate(node_val[0]) if
                                             val is None or val == '']
-                            if self._schema_name != current_app.config[
-                                    'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
+                            if not ddi_schema:
                                 if len(lst_none_idx) > 0:
                                     # delete all None element in @value
                                     for i in lst_none_idx:
@@ -636,6 +637,11 @@ class SchemaTree:
                                 if not v.get(self._atr, {}).items():
                                     for i in lst_none_idx:
                                         del node_val[0][i]
+                            clean[k] = v
+                        elif ddi_schema and not node_val and node_att and node_att[next(iter(node_att))][0]:
+                            # Add len(node_att) None elements to value in order to display att later
+                            v[self._v] = [
+                                [None] * len(node_att[next(iter(node_att))][0])]
                             clean[k] = v
                         else:
                             nested = clean_none_value(v)

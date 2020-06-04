@@ -245,7 +245,7 @@ def get_detail_node(lst_data, idx):
     item_key = next(iter(lst_data[idx]))
     item_val = lst_data[idx].get(item_key)
     lst_values = [i for i in item_val if i.endswith('@value')]
-    return item_key, lst_values
+    return item_key, item_val, lst_values
 
 
 def get_all_mapping(item_value):
@@ -270,6 +270,17 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
     @param item_type:
     @return:
     """
+    def process_overlap():
+        """Process partial overlap if any."""
+        for overlap_val in lst_overlap:
+            overlap_key = overlap_val.replace('.@value', '')
+            lst_all_src = [i for i in item_src_val if
+                           i.startswith(overlap_key)]
+            lst_all_des = [i for i in item_des_val if
+                           i.startswith(overlap_key)]
+            if lst_all_src != lst_all_des:
+                lst_duplicate.append([item_src_name, item_des_name])
+
     lst_temporary = {}
     for item_key, item_value in data_mapping.items():
         lst_temporary[item_key] = get_all_mapping(item_value)
@@ -278,20 +289,22 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
         lst_mapping_detail.append({k: v})
     lst_duplicate = []
     for i in range(len(lst_mapping_detail)):
-        item_src_key, lst_values_src = get_detail_node(
+        item_src_key, item_src_val, lst_values_src = get_detail_node(
             lst_mapping_detail, i)
         for j in range(i + 1, len(lst_mapping_detail)):
-            item_des_key, lst_values_des = get_detail_node(
+            item_des_key, item_des_val, lst_values_des = get_detail_node(
                 lst_mapping_detail, j)
-            if item_src_key in meta_system and item_des_key in meta_system:
-                continue
-            lst_overlap = list(
-                set(lst_values_src).intersection(lst_values_des))
+            item_des_in_sys = item_des_key in meta_system
+            item_src_in_sys = item_src_key in meta_system
+            lst_overlap = list(set(lst_values_src).intersection(lst_values_des))
             if lst_overlap:
-                item_src_name = item_type.schema.get(
-                    'properties').get(item_src_key).get('title')
-                item_des_name = item_type.schema.get(
-                    'properties').get(item_des_key).get('title')
-                lst_duplicate.append([item_src_name, item_des_name])
+                item_src_name = item_type.schema.get('properties').get(item_src_key).get('title')
+                item_des_name = item_type.schema.get('properties').get(item_des_key).get('title')
+                if item_des_in_sys and item_src_in_sys:
+                    continue
+                elif (item_des_in_sys or item_src_in_sys) and lst_overlap:
+                    lst_duplicate.append([item_src_name, item_des_name])
+                else:
+                    process_overlap()
 
     return lst_duplicate
