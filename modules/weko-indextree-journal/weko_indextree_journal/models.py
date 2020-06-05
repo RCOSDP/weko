@@ -186,7 +186,7 @@ class Journal(db.Model, Timestamp):
     """" first_editor """
 
     parent_publication_title_id = db.Column(
-        db.BigInteger, nullable=True, default=0)
+        db.BigInteger, nullable=True)
     """Parent publication identifier of the journal."""
     """
         int(11)
@@ -195,7 +195,7 @@ class Journal(db.Model, Timestamp):
     """
 
     preceding_publication_title_id = db.Column(
-        db.BigInteger, nullable=True, default=0)
+        db.BigInteger, nullable=True)
     """Preceding publication identifier of the journal."""
     """
         int(11)

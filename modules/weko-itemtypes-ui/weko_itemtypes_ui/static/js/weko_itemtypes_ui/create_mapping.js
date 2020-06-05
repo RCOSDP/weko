@@ -3,6 +3,25 @@ $(document).ready(function () {
   $('#myModal').modal({
     show: false
   })
+
+  if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function (search, this_len) {
+      if (this_len === undefined || this_len > this.length) {
+        this_len = this.length;
+      }
+      return this.substring(this_len - search.length, this_len) === search;
+    };
+  }
+
+  if (!String.prototype.startsWith) {
+    Object.defineProperty(String.prototype, 'startsWith', {
+      value: function (search, rawPos) {
+        var pos = rawPos > 0 ? rawPos | 0 : 0;
+        return this.substring(pos, pos + search.length) === search;
+      }
+    });
+  }
+
   var page_global = {
     src_mapping_name:'',
     dst_mapping_name:'',
@@ -258,13 +277,13 @@ $(document).ready(function () {
           }
         }
       }
-      sub_jpcoar_type.attributes.forEach(element => {
+      sub_jpcoar_type.attributes.forEach(function (element) {
         if(element.hasOwnProperty('restriction')) {
           let new_jpcoar_prop = $('.jpcoar-prop-select-temp').clone(true);
           new_jpcoar_prop.find('label').text(element.name);
           new_jpcoar_prop.find('p').text(element.use);
           if(element.restriction.hasOwnProperty('enumeration')) {
-            element.restriction.enumeration.forEach(option => {
+            element.restriction.enumeration.forEach(function (option) {
               new_jpcoar_prop.find('select').append('<option value="'+option+'">'+option+'</option>');
             });
             if(setting_prop.hasOwnProperty(element.name)) {
@@ -325,29 +344,30 @@ $(document).ready(function () {
     $('#sub_children_lists div.sub_child_list').remove();
     let re = /\s*;\s*|\s*,\s*|\s*-\s*|\s*:\s*/g;
     if(Object.keys(page_global.sub_mapping_list).length > 0) {
-      Object.entries(page_global.sub_mapping_list).forEach(([key, value]) => {
+      for(let key in page_global.sub_mapping_list) {
+        let value = page_global.sub_mapping_list[key];
         let new_sub_info = $('div.sub_children_list').clone(true);
-        if(page_global.sub_itemtype_list.length > 0) {
+        if (page_global.sub_itemtype_list.length > 0) {
           let sub_itemtype_sub_keys = value.split(re);
-          if(sub_itemtype_sub_keys.length > 1) {
+          if (sub_itemtype_sub_keys.length > 1) {
             let sub_itemtype_sub_info = new_sub_info.find('.sub_child_itemtype_list').clone(true);
             new_sub_info.find('.sub_children_itemtype_list').empty();
-            sub_itemtype_sub_keys.forEach(function(sub_val){
-              let split_str = value.substr(value.indexOf(sub_val)+sub_val.length, 1);
+            sub_itemtype_sub_keys.forEach(function (sub_val) {
+              let split_str = value.substr(value.indexOf(sub_val) + sub_val.length, 1);
               let sub_itemtype_sub_info_temp = sub_itemtype_sub_info.clone(true);
               sub_itemtype_sub_info_temp.find('select[name="sub_itemtype_list"]').empty();
               let find_select_sub_itemtype_list = sub_itemtype_sub_info_temp.find('select[name="sub_itemtype_list"]');
               let options = "";
-              page_global.sub_itemtype_list.forEach(function(element){
-                let display_name = element[1].length>0?element[1]:$('#sub-item-type-lists-label').text();
-                if(element[0].endsWith(sub_val)) {
-                  options += '<option value="'+element[0]+'" selected>'+display_name+'</option>';
+              page_global.sub_itemtype_list.forEach(function (element) {
+                let display_name = element[1].length > 0 ? element[1] : $('#sub-item-type-lists-label').text();
+                if (element[0].endsWith(sub_val)) {
+                  options += '<option value="' + element[0] + '" selected>' + display_name + '</option>';
                 } else {
-                  options += '<option value="'+element[0]+'">'+display_name+'</option>';
+                  options += '<option value="' + element[0] + '">' + display_name + '</option>';
                 }
               });
               find_select_sub_itemtype_list.append(options);
-              if(split_str.length > 0) {
+              if (split_str.length > 0) {
                 sub_itemtype_sub_info_temp.find('input[type="text"]').val(split_str);
                 sub_itemtype_sub_info_temp.find('input[type="text"]').parent().removeClass('has-error');
               }
@@ -359,17 +379,17 @@ $(document).ready(function () {
             new_sub_info.find('select[name="sub_itemtype_list"]').empty();
             let find_select_sub_itemtype_list = new_sub_info.find('select[name="sub_itemtype_list"]');
             let options = "";
-            page_global.sub_itemtype_list.forEach(function(element){
-              let display_name = element[1].length>0?element[1]:$('#sub-item-type-lists-label').text();
-              if(element[0].endsWith(value)) {
-                options += '<option value="'+element[0]+'" selected>'+display_name+'</option>';
+            page_global.sub_itemtype_list.forEach(function (element) {
+              let display_name = element[1].length > 0 ? element[1] : $('#sub-item-type-lists-label').text();
+              if (element[0].endsWith(value)) {
+                options += '<option value="' + element[0] + '" selected>' + display_name + '</option>';
               } else {
-                options += '<option value="'+element[0]+'">'+display_name+'</option>';
+                options += '<option value="' + element[0] + '">' + display_name + '</option>';
               }
             });
             find_select_sub_itemtype_list.append(options);
           }
-          if(page_global.sub_itemtype_list.length == 1) {
+          if (page_global.sub_itemtype_list.length == 1) {
             new_sub_info.find('select[name="sub_itemtype_list"]').attr('disabled', true);
           }
         }
@@ -388,7 +408,7 @@ $(document).ready(function () {
         }
         new_sub_info.removeClass('sub_children_list hide').addClass('sub_child_list');
         new_sub_info.appendTo('#sub_children_lists');
-      });
+      }
     } else {
       let new_sub_info = $('div.sub_children_list').clone(true);
       if(page_global.sub_itemtype_list.length > 0) {
@@ -424,29 +444,33 @@ $(document).ready(function () {
     if(typeof entries == "string") {
       page_global.sub_mapping_list[jpcoar_key] = entries;
     } else if(typeof entries == "object") {
-      Object.entries(entries).forEach(([key, value]) => {
-        if(!key.startsWith('@')) {
+      for (let key in entries) {
+        let value = entries[key];
+        if (!key.startsWith('@')) {
           make_list_mapping(value, [jpcoar_key, key].join('.'));
         } else {
-          if(key == '@value') {
+          if (key === '@value') {
             page_global.sub_mapping_list[jpcoar_key] = value;
           }
-          if(key == '@attributes') {
-            Object.entries(value).forEach(([attr_key, attr_value]) => {
-              page_global.sub_mapping_list[[jpcoar_key, '@'+attr_key].join('.')] = attr_value;
-            });
+          if (key === '@attributes') {
+            for (let attr_key in value) {
+              let attr_value = value[attr_key];
+              page_global.sub_mapping_list[[jpcoar_key, '@' + attr_key].join('.')] = attr_value;
+            }
           }
         }
-      });
+      }
     }
   }
   function make_list_itemtype(entries, base_key, base_title) {
     if(entries['type'] == 'object') {
-      for(const [key, value] of Object.entries(entries['properties'])) {
+      for (let key in entries['properties']) {
+        let value = entries['properties'][key];
         make_list_itemtype(value, [base_key, key].join('.'), [base_title, value['title']].join('.'));
       }
     } else if(entries['type'] == 'array') {
-      for(const [key, value] of Object.entries(entries['items']['properties'])) {
+      for (let key in entries['items']['properties']) {
+        let value = entries['items']['properties'][key]
         make_list_itemtype(value, [base_key, key].join('.'), [base_title, value['title']].join('.'));
       }
     } else {
@@ -456,7 +480,8 @@ $(document).ready(function () {
   }
   function make_list_jpcoar(entries, base_key) {
     if(Object.keys(entries).length > 1) {
-      for(const [key, value] of Object.entries(entries)) {
+      for (let key in entries) {
+        let value = entries[key];
         if('type' == key) {
           if(value.hasOwnProperty('attributes')) {
             make_list_jpcoar_prop(value.attributes, base_key);
@@ -479,7 +504,8 @@ $(document).ready(function () {
 
   function make_list_ddi(entries, base_key) {
     if(Object.keys(entries).length > 1) {
-      for(const [key, value] of Object.entries(entries)) {
+      for (let key in entries) {
+        let value = entries[key];
         if('type' == key) {
           if(value.hasOwnProperty('attributes')) {
             make_list_ddi_prop(value.attributes, base_key);
@@ -523,13 +549,13 @@ $(document).ready(function () {
 //      return;
 //    }
   function make_list_jpcoar_prop(attr_list, base_key){
-    attr_list.forEach(element => {
-      page_global.sub_jpcoar_list.push([base_key, '@'+element.name].join('.'));
+    attr_list.forEach(function (element) {
+      page_global.sub_jpcoar_list.push([base_key, '@' + element.name].join('.'));
     });
   }
 
   function make_list_ddi_prop(attr_list, base_key){
-    attr_list.forEach(element => {
+    attr_list.forEach(function (element) {
       page_global.sub_jpcoar_list.push([base_key, '@'+element.name].join('.'));
     });
 
@@ -613,7 +639,7 @@ $(document).ready(function () {
       }
     }
     sub_itemtype_list = [];
-    $('div .sub_child_list').each((index, element) => {
+    $('div .sub_child_list').each(function (index, element) {
       sub_temp_itemtype = {
         sub_jpcoar: null,
         sub_itemtypes: null
@@ -621,7 +647,7 @@ $(document).ready(function () {
       sub_temp_itemtype.sub_jpcoar = $(element).find('select[name="sub_jpcoar_list"]').val();
       if($(element).find('.sub_child_itemtype_list').length > 1) {
         sub_temp_itemtype.sub_itemtypes = [];
-        $(element).find('.sub_child_itemtype_list').each((idx, elm) => {
+        $(element).find('.sub_child_itemtype_list').each(function (idx, elm) {
           sub_itemtype_key = {
             itemtype_key: null,
             itemlink_key: null
@@ -635,7 +661,7 @@ $(document).ready(function () {
       }
       sub_itemtype_list.push(sub_temp_itemtype);
     });
-    sub_itemtype_list.forEach( element => {
+    sub_itemtype_list.forEach(function (element) {
       if(element.sub_jpcoar && element.sub_jpcoar.length > 0) {
         let sub_itemtypes = element.sub_itemtypes;
         let sub_jpcoar = element.sub_jpcoar;
@@ -673,7 +699,7 @@ $(document).ready(function () {
             sub_sub_itemtype = '';
             if(typeof sub_itemtypes == 'object') {
               if(sub_itemtypes.length > 0) {
-                sub_itemtypes.forEach(elm => {
+                sub_itemtypes.forEach(function (elm)  {
                   sub_sub_itemtype = sub_sub_itemtype + elm.itemtype_key.split('.').pop() + elm.itemlink_key;
                 });
               }
@@ -795,7 +821,7 @@ $(document).ready(function () {
   function getCurrentSubJPCOARList() {
     let currentList = [];
     $('select[name="sub_jpcoar_list"]').each(function () {
-      if (!currentList.includes(this.value)) {
+      if (currentList.indexOf(this.value) < 0) {
         currentList.push(this.value);
       }
     });
