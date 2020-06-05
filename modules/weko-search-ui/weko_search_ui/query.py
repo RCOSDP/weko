@@ -918,6 +918,78 @@ def item_search_factory(self,
 
     return search, urlkwargs
 
+@my_profiler
+def item_search_with_limit(self,
+                        search,
+                        list_index_id=None,
+                        size=10000):
+    """Factory for opensearch.
+
+    :param self:
+    :param search: Record Search's instance
+    :param start_date: Start date for search
+    :param end_date: End date for search
+    :param list_index_id: index tree list or None
+    :return:
+    """
+    def _get_query(indexes,size):
+        query_string = "_type:{} AND " \
+                       "relation_version_is_last:true AND " \
+                       "publish_status:0".format(current_app.config[
+                           "INDEXER_DEFAULT_DOC_TYPE"])
+        query_filter = []
+        if indexes:
+            for index in indexes:
+                q_wildcard = {
+                    "wildcard": {
+                        "path": "*{}*".format(index)
+                    }
+                }
+                query_filter.append(q_wildcard)
+        query_q = {
+            "size": size,
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "query_string": {
+                                "query": query_string
+                            }
+                        },
+                        {
+                            "bool": {
+                                "should": query_filter
+                            }
+                        }
+                    ]
+                }
+            },
+            "sort":
+                [
+                    {
+                        "publish_date":
+                            {
+                                "order": "desc"
+                            }
+                    }
+            ]
+        }
+        return query_q
+
+    query_q = _get_query(list_index_id,size)
+    urlkwargs = MultiDict()
+    try:
+        extr = search._extra.copy()
+        search.update_from_dict(query_q)
+        search._extra.update(extr)
+    except SyntaxError:
+        current_app.logger.debug(
+            "Failed parsing query: {0}".format(query_q),
+            exc_info=True)
+        raise InvalidQueryRESTError()
+
+    return search, urlkwargs
+
 
 @my_profiler
 def feedback_email_search_factory(self, search):

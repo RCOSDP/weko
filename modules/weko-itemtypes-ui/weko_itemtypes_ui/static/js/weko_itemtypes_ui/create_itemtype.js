@@ -294,7 +294,7 @@ $(document).ready(function () {
             accessrole: {
               type: "string",
               title: "Access",
-              enum: ["open_access","open_date","open_login","open_no","open_restricted"]
+              enum: ["open_access","open_date","open_login","open_no"]
             },
             accessdate: {
               type: "string",

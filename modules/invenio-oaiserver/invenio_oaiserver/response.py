@@ -312,18 +312,6 @@ def getrecord(**kwargs):
 
     root = record_dumper(pid, {'_source': etree_record})
 
-    if check_correct_system_props_mapping(
-            pid.object_uuid,
-            current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING')):
-        if record.pid_doi:
-            root = create_identifier_index(root,
-                                           pid_type=record.pid_doi.pid_type,
-                                           pid_value=record.pid_doi.pid_value)
-        if record.pid_cnri:
-            root = create_identifier_index(root,
-                                           pid_type=record.pid_cnri.pid_type,
-                                           pid_value=record.pid_cnri.pid_value)
-
     e_metadata.append(root)
     return e_tree
 

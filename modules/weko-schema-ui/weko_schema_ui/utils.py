@@ -24,11 +24,13 @@ import itertools
 import re
 from functools import reduce
 
+from flask import current_app, request
 from invenio_oaiserver.response import NS_OAIPMH, NS_OAIPMH_XSD, NS_XSI, \
     NSMAP, header, verb
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
+from weko_deposit.api import WekoRecord
 
 from .schema import SchemaTree
 
@@ -63,8 +65,47 @@ def dumps_etree(records, schema_type):
             records['metadata'] = records['metadata'].get('_item_metadata', {})
         scname = schema_type if re.search(
             r'.*_mapping', schema_type) else schema_type + "_mapping"
-        stree = SchemaTree(records, scname)
+        identifier = get_identifier(records)
+        stree = SchemaTree(records, scname, identifier=identifier)
         return stree.create_xml()
+
+
+def get_identifier(record):
+    """Get Identifier of record(DOI or HDL), if not set URL as default.
+
+    @param record:
+    @return:
+    """
+    result = {
+        "attribute_name": "Identifier",
+        "attribute_value_mlt": [
+            {
+                "subitem_systemidt_identifier": "",
+                "subitem_systemidt_identifier_type": ""
+            }
+        ]
+    }
+    record_deposit = record.get('metadata').get('_deposit')
+    if record_deposit:
+        record_id = record_deposit.get('id')
+        record = WekoRecord.get_record_by_pid(record_id)
+        if record.pid_doi:
+            identifier = record.pid_doi.pid_value
+            identifier_type = record.pid_doi.pid_type.upper()
+        elif record.pid_cnri:
+            identifier = record.pid_cnri.pid_value
+            identifier_type = record.pid_cnri.pid_type.upper()
+        else:
+            identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
+                request.url_root, record_id)
+            identifier_type = 'URI'
+        result['attribute_value_mlt'][0][
+            'subitem_systemidt_identifier'] = identifier
+        result['attribute_value_mlt'][0][
+            'subitem_systemidt_identifier_type'] = identifier_type
+    else:
+        result = {}
+    return result
 
 
 def dumps(records, schema_type=None, **kwargs):

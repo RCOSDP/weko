@@ -55,7 +55,7 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
 from .permissions import item_permission
 from .utils import _get_max_export_items, export_items, get_actionid, \
     get_current_user, get_data_authors_prefix_settings, get_list_email, \
-    get_list_username, get_new_items_by_date, get_user_info_by_email, \
+    get_list_username, get_new_items_by_date,get_latest_items, get_user_info_by_email, \
     get_user_info_by_username, get_user_information, get_user_permission, \
     is_schema_include_key, parse_ranking_results, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
@@ -1071,9 +1071,10 @@ def ranking():
             timedelta(days=int(settings.new_item_period) - 1)
         if new_item_start_date < start_date:
             new_item_start_date = start_date
-        result = get_new_items_by_date(
-            new_item_start_date.strftime('%Y-%m-%d'),
-            end_date.strftime('%Y-%m-%d'))
+        # result = get_new_items_by_date(
+        #    new_item_start_date.strftime('%Y-%m-%d'),
+        #    end_date.strftime('%Y-%m-%d'))
+        result = get_latest_items(10)
         rankings['new_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='all', title_key='record_name',

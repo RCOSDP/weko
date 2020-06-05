@@ -51,7 +51,7 @@ from weko_index_tree.utils import get_index_id
 from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_file_download_permission
-from weko_search_ui.query import item_search_factory
+from weko_search_ui.query import item_search_factory,item_search_with_limit
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import Action as _Action
@@ -1142,6 +1142,27 @@ def get_new_items_by_date(start_date: str, end_date: str) -> dict:
                                                           record_search,
                                                           start_date,
                                                           end_date)
+        search_result = search_instance.execute()
+        result = search_result.to_dict()
+    except NotFoundError as e:
+        current_app.logger.debug("Indexes do not exist yet: ", str(e))
+
+    return result
+
+@my_profiler
+def get_latest_items(size: int ) -> dict:
+    """Get latest publication items.
+
+    :param start_date:
+    :param end_date:
+    :return:
+    """
+    record_search = RecordsSearch(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    result = dict()
+
+    try:
+        search_instance, _qs_kwargs = item_search_with_limit(None,record_search,None,size)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:

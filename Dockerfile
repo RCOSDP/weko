@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 # Use Python-3.5:
-FROM python:3.5-slim
+FROM python:3.5-slim 
 
 # Configure Weko instance:
 ENV INVENIO_WEB_HOST=127.0.0.1
