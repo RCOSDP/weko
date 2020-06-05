@@ -294,6 +294,8 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
         for j in range(i + 1, len(lst_mapping_detail)):
             item_des_key, item_des_val, lst_values_des = get_detail_node(
                 lst_mapping_detail, j)
+            if item_des_key == 'system_file' or item_src_key == 'system_file':
+                continue
             item_des_in_sys = item_des_key in meta_system
             item_src_in_sys = item_src_key in meta_system
             lst_overlap = list(set(lst_values_src).intersection(lst_values_des))
