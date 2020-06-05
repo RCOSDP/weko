@@ -1261,3 +1261,42 @@ msgstr ""
 
 msgid "Identifier Registration"
 msgstr ""
+
+msgid "Related Study"
+msgstr ""
+
+msgid "Related Study DOI"
+msgstr ""
+
+msgid "Related Publications"
+msgstr ""
+
+msgid "Related Publications DOI"
+msgstr ""
+
+msgid "Fund Agency"
+msgstr ""
+
+msgid "Fund Agency ID"
+msgstr ""
+
+msgid "Funder Identifier Type"
+msgstr ""
+
+msgid "Grant No"
+msgstr ""
+
+msgid "Award Title"
+msgstr ""
+
+msgid "Distributor Abbreviation"
+msgstr ""
+
+msgid "Distributor Affiliation"
+msgstr ""
+
+msgid "Distributor URI"
+msgstr ""
+
+msgid "Contributor IdentifierType"
+msgstr ""

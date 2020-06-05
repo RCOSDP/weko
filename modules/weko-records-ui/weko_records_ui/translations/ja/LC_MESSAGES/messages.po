@@ -1245,3 +1245,54 @@ msgstr "(DOI登録用)登録機関"
 
 msgid "Identifier Registration"
 msgstr "識別子の登録"
+
+msgid "Related Study"
+msgstr "関連研究"
+
+msgid "Related Study DOI"
+msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Related Publications"
+msgstr "関連文献"
+
+msgid "Related Publications DOI"
+msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Related Study"
+msgstr "関連研究"
+
+msgid "Related Study DOI"
+msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Related Publications"
+msgstr "関連文献"
+
+msgid "Related Publications DOI"
+msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Fund Agency"
+msgstr "研究費拠出機関名"
+
+msgid "Fund Agency ID"
+msgstr "研究費拠出機関 ID"
+
+msgid "Funder Identifier Type"
+msgstr "(JPCOAR対応用)ID付与機関"
+
+msgid "Grant No"
+msgstr "研究課題番号"
+
+msgid "Award Title"
+msgstr "(JPCOAR対応用)研究課題タイトル"
+
+msgid "Distributor Abbreviation"
+msgstr "配布機関略称"
+
+msgid "Distributor Affiliation"
+msgstr "配布者の所属"
+
+msgid "Distributor URI"
+msgstr "配布機関URI"
+
+msgid "Contributor IdentifierType"
+msgstr "(JPCOAR対応用)寄与者属性"
