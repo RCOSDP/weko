@@ -433,9 +433,14 @@ def combine_record_file_urls(record, object_uuid):
     item_type_id = item_type.item_type_id
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
+    item_map_ddi = get_mapping(type_mapping, "ddi_mapping")
 
-    file_keys = item_map.get(current_app.config[
-        "OAISERVER_FILE_PROPS_MAPPING"])
+    if item_map_ddi:
+        file_keys = item_map_ddi.get(
+            "stdyDscr.dataAccs.setAvail.accsPlac.@value")
+    else:
+        file_keys = item_map.get(current_app.config[
+            "OAISERVER_FILE_PROPS_MAPPING"])
 
     if not file_keys:
         return record
