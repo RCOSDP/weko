@@ -43,6 +43,8 @@ PREVIEWER_ZIP_MAX_FILES = 1000
 """Max number of files showed in the ZIP previewer."""
 
 PREVIEWER_PREFERENCE = [
+    'iiif_image',
+    'iiif_presentation',
     'csv_dthreejs',
     'simple_image',
     'json_prismjs',

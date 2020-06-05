@@ -55,6 +55,9 @@ services:
       - type: bind
         source: .
         target: /code
+      - /code/modules/invenio-admin/invenio_admin.egg-info 
+      - /code/modules/invenio-app/invenio_app.egg-info 
+      - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info 
       - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
       - /code/modules/invenio-s3/invenio_s3.egg-info
       - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
