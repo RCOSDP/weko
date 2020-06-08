@@ -84,12 +84,7 @@ provision_web_common_ubuntu14 () {
          libxml2-dev \
          libxslt-dev \
          libzip-dev \
-         libpng-dev \
-         zlib1g-dev \ 
-         libopenjp2-7-dev \
          libjpeg-dev \
-         imagemagick \
-         libmagickwand-dev \
          nodejs \
          python-dev \
          python-pip
