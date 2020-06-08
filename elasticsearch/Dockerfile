@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 # Use Elasticsearch 6.
-FROM docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.9
+FROM docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.2
 WORKDIR /usr/share/elasticsearch
 RUN mkdir -p backups && \
     chown -R elasticsearch:elasticsearch ./backups
