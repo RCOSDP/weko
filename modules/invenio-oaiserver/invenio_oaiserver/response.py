@@ -298,8 +298,12 @@ def getrecord(**kwargs):
         indexes = Indexes.get_path_list(record.get("path"))
         publish_state = 6
         for index in indexes:
-            if not index[publish_state]:
-                return True
+            if len(indexes) == 1:
+                if not index[publish_state]:
+                    return True
+            else:
+                if index[publish_state]:
+                    return False
         return False
 
     record_dumper = serializer(kwargs['metadataPrefix'])
