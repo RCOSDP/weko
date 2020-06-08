@@ -24,7 +24,7 @@ services:
   web:
     restart: "always"
     build: .
-    command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=DEBUG -f /code/celeryd.log -B -D && uwsgi --ini /code/scripts/uwsgi.ini"
+    command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D && uwsgi --ini /code/scripts/uwsgi.ini"
     environment:
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
@@ -135,11 +135,10 @@ services:
 
   rabbitmq:
     restart: "always"
-    image: rabbitmq:3.8.4-management-alpine
+    image: rabbitmq
     ports:
       - "24301:4369"
-      - "45601:15672"
-      - "15672:15672"
+      - "45601:25672"
 
   nginx:
     restart: "always"
@@ -155,7 +154,7 @@ services:
   flower:
     restart: "always"
     image: mher/flower
-    command: --broker=amqp://guest:guest@rabbitmq:15672// --broker_api=http://guest:guest@rabbitmq:15671/api/
+    command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
     ports:
       - "5501:5555"
     links:
