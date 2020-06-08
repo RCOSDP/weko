@@ -146,7 +146,7 @@ def get_tree_json(index_list, root_id):
             'position': index_element.position,
             'emitLoadNextLevel': False,
             'settings': {
-                'isCollapsedOnInit': not is_expand_on_init,
+                'isCollapsedOnInit': is_expand_on_init,
                 'checked': False
             }
         })
