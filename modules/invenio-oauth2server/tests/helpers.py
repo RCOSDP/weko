@@ -10,12 +10,11 @@
 
 from __future__ import absolute_import, print_function
 
-import invenio_oauth2server._compat  # noqa isort:skip
-
-from flask import Blueprint, abort, jsonify, request, session, url_for  # noqa isort:skip
-from flask_oauthlib.client import OAuth, prepare_request  # noqa isort:skip
-from six.moves.urllib.parse import urlparse  # noqa isort:skip
-from werkzeug.urls import url_decode, url_parse, url_unparse  # noqa isort:skip
+from flask import Blueprint, abort, jsonify, request, session, url_for
+from flask_oauthlib.client import OAuth, prepare_request
+from mock import MagicMock
+from six.moves.urllib.parse import urlparse
+from werkzeug.urls import url_decode, url_parse, url_unparse
 
 
 def patch_request(app):

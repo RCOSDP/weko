@@ -10,10 +10,9 @@
 
 from datetime import datetime, timedelta
 
-from flask import _request_ctx_stack, current_app
+from flask import current_app
 from flask_login import current_user
 from flask_oauthlib.provider import OAuth2Provider
-from flask_principal import Identity, identity_changed
 from flask_security.utils import verify_password
 from invenio_db import db
 from werkzeug.local import LocalProxy
@@ -54,6 +53,12 @@ def get_token(access_token=None, refresh_token=None):
     """
     if access_token:
         t = Token.query.filter_by(access_token=access_token).first()
+        if t and t.is_personal and t.user.active:
+            t.expires = datetime.utcnow() + timedelta(
+                seconds=int(current_app.config.get(
+                    'OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'
+                ))
+            )
     elif refresh_token:
         t = Token.query.join(Token.client).filter(
             Token.refresh_token == refresh_token,
@@ -133,14 +138,3 @@ def save_token(token, request, *args, **kwargs):
     db.session.add(tok)
     db.session.commit()
     return tok
-
-
-@oauth2.after_request
-def login_oauth2_user(valid, oauth):
-    """Log in a user after having been verified."""
-    if valid:
-        oauth.user.login_via_oauth2 = True
-        _request_ctx_stack.top.user = oauth.user
-        identity_changed.send(current_app._get_current_object(),
-                              identity=Identity(oauth.user.id))
-    return valid, oauth

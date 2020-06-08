@@ -166,6 +166,7 @@ class WekoIndexer(RecordIndexer):
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(version.get('id')),
+            retry_on_conflict=3,
             body=body
         )
 

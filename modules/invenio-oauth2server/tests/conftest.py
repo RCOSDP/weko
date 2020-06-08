@@ -17,7 +17,6 @@ import tempfile
 
 import pytest
 from flask import Flask, url_for
-from flask.cli import ScriptInfo
 from flask.views import MethodView
 from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
@@ -32,19 +31,13 @@ from mock import MagicMock
 from six import get_method_self
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
+from werkzeug.wsgi import DispatcherMiddleware
 
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.decorators import require_api_auth, \
     require_oauth_scopes
 from invenio_oauth2server.models import Client, Scope, Token
 from invenio_oauth2server.views import server_blueprint, settings_blueprint
-
-import invenio_oauth2server._compat  # noqa isort:skip
-
-try:
-    from werkzeug.middleware.dispatcher import DispatcherMiddleware
-except ImportError:
-    from werkzeug.wsgi import DispatcherMiddleware
 
 
 @pytest.fixture()
@@ -124,12 +117,6 @@ def api_app(app):
 def api_app_with_test_view(api_app):
     api_app.add_url_rule('/test', 'test', view_func=lambda: 'OK')
     return api_app
-
-
-@pytest.fixture
-def script_info(app):
-    """Get ScriptInfo object for testing CLI."""
-    return ScriptInfo(create_app=lambda info: app)
 
 
 @pytest.fixture
@@ -346,6 +333,15 @@ def provider_fixture(app):
         app.personal_token = personal_token.access_token
         app.personal_token3 = personal_token3.access_token
     return app
+
+
+@pytest.fixture
+def expiration_fixture(provider_fixture):
+    """Fixture for testing expiration."""
+    provider_fixture.config.update(
+        OAUTH2_PROVIDER_TOKEN_EXPIRES_IN=1,
+    )
+    return provider_fixture
 
 
 @pytest.fixture

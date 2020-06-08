@@ -7,7 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 from flask import Flask, url_for
-from flask_admin import Admin
+from flask.ext.admin import Admin
 from invenio_db import db
 
 from invenio_oauth2server import InvenioOAuth2Server

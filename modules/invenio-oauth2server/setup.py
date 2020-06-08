@@ -27,7 +27,7 @@ tests_require = [
     'pydocstyle>=1.0.0',
     'pytest-cov>=1.8.0',
     'pytest-pep8>=1.0.6',
-    'pytest>=3.8.0,<5.0.0',
+    'pytest>=2.8.3',
 ]
 
 extras_require = {
@@ -64,18 +64,17 @@ setup_requires = [
 ]
 
 install_requires = [
-    # package needed to patch flask-oauthlib
-    'cachelib>=0.1',
+    'Flask-BabelEx>=0.9.2',
     'Flask-Breadcrumbs>=0.4.0',
-    'Flask-OAuthlib>=0.9.5',
-    'Flask-WTF>=0.14.3',
+    'Flask-Login>=0.3.0',
+    'Flask-OAuthlib>=0.9.3',
+    'Flask-WTF>=0.13.1',
+    'Flask>=0.11.1',
     'future>=0.16.0',
-    'invenio-accounts>=1.2.0',
-    'invenio-base>=1.2.2',
-    'invenio-i18n>=1.2.0',
-    'oauthlib>=1.1.2,<3.0.0',
+    'invenio-accounts>=1.0.0',
+    'oauthlib>=1.1.2,!=2.0.0,!=2.0.3,!=2.0.4,!=2.0.5',
     'pyjwt>=1.5.0',
-    'requests-oauthlib>=1.1.0,<1.2.0',
+    'six>=1.10.0',
     'SQLAlchemy-Utils[encrypted]>=0.33.0',
     'WTForms-Alchemy>=0.15.0',
 ]
@@ -103,9 +102,6 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
-        'flask.commands': [
-            'tokens = invenio_oauth2server.cli:tokens',
-        ],
         'invenio_admin.views': [
             'invenio_oauth2server_clients_adminview = '
             'invenio_oauth2server.admin:oauth2server_clients_adminview',

@@ -12,7 +12,8 @@ addons:
 notifications:
   email: false
 
-dist: xenial
+dist: trusty
+sudo: false
 
 language: python
 
@@ -37,14 +38,14 @@ env:
   - REQUIREMENTS=lowest EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
   - REQUIREMENTS=release EXTRAS=all,sqlite SQLALCHEMY_DATABASE_URI="sqlite:///test.db"
   - REQUIREMENTS=release EXTRAS=all,mysql SQLALCHEMY_DATABASE_URI="mysql+pymysql://root@localhost:3306/invenio"
-  - REQUIREMENTS=release EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio" DEPLOY=true
+  - REQUIREMENTS=release EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
   - REQUIREMENTS=devel EXTRAS=all,sqlite SQLALCHEMY_DATABASE_URI="sqlite:///test.db"
   - REQUIREMENTS=devel EXTRAS=all,mysql SQLALCHEMY_DATABASE_URI="mysql+pymysql://root@localhost:3306/invenio"
   - REQUIREMENTS=devel EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
 
 python:
-  - "3.6"
-  - "3.7"
+  - "2.7"
+  - "3.5"
 
 before_install:
   - "travis_retry pip install --upgrade pip setuptools py"
@@ -73,5 +74,4 @@ deploy:
   distributions: "compile_catalog sdist bdist_wheel"
   on:
     tags: true
-    python: "3.6"
-    condition: $DEPLOY = true
+    python: "2.7"

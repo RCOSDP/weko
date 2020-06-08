@@ -37,8 +37,6 @@ def test_personal_token_management(settings_fixture):
             )
             resp.status_code == 200
             assert _('New personal access token') in str(resp.get_data())
-            assert '<label for="scopes-test:scope"' in str(resp.get_data())
-            assert '<label for="scopes-test:scope2"' in str(resp.get_data())
 
             # Create a new token with invalid form data
             resp = client.post(

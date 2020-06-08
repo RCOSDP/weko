@@ -111,13 +111,10 @@ For more information about access control in Invenio you can visit
 
 from __future__ import absolute_import, print_function
 
-from invenio_oauth2server._compat import monkey_patch_werkzeug  # noqa isort:skip
-monkey_patch_werkzeug()  # noqa isort:skip
-
-from .decorators import require_api_auth, require_oauth_scopes  # noqa isort:skip
-from .ext import InvenioOAuth2Server, InvenioOAuth2ServerREST  # noqa isort:skip
-from .proxies import current_oauth2server   # noqa isort:skip
-from .version import __version__   # noqa isort:skip
+from .ext import InvenioOAuth2Server, InvenioOAuth2ServerREST
+from .proxies import current_oauth2server
+from .version import __version__
+from .decorators import require_api_auth, require_oauth_scopes
 
 __all__ = (
     '__version__',

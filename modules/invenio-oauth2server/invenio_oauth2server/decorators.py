@@ -40,7 +40,7 @@ def require_api_auth(allow_anonymous=False):
                     abort(401)
                 if current_app.config['ACCOUNTS_JWT_ENABLE']:
                     # Verify the token
-                    current_oauth2server.jwt_verification_factory(
+                    current_oauth2server.jwt_veryfication_factory(
                         request.headers)
                 # fully logged in with normal session
                 return f(*args, **kwargs)

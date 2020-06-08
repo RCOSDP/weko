@@ -9,9 +9,6 @@
  Invenio-OAuth2Server
 ======================
 
-.. image:: https://img.shields.io/github/license/inveniosoftware/invenio-oauth2server.svg
-        :target: https://github.com/inveniosoftware/invenio-oauth2server/blob/master/LICENSE
-
 .. image:: https://img.shields.io/travis/inveniosoftware/invenio-oauth2server.svg
         :target: https://travis-ci.org/inveniosoftware/invenio-oauth2server
 

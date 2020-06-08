@@ -46,7 +46,7 @@ def scopes_multi_checkbox(field, **kwargs):
 
         html.append(u'<div class="col-md-3">')
         html.append(u'<label for="{0}" class="checkbox-inline">'.format(
-            choice_id
+            field_id
         ))
         html.append(u'<input {0} /> '.format(widgets.html_params(**options)))
         html.append(u'{0} <br/><small class="text-muted">{1}</small>'.format(

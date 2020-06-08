@@ -16,17 +16,15 @@ import warnings
 import oauthlib.common as oauthlib_commmon
 import pkg_resources
 import six
-from flask import abort, request
+from flask import abort, current_app, request, session
+from flask_kvsession import KVSessionInterface
 from flask_login import current_user
+from flask_oauthlib.contrib.oauth2 import bind_cache_grant
 from werkzeug.utils import cached_property, import_string
 
 from . import config
 from .models import OAuthUserProxy, Scope
 from .provider import oauth2
-
-from invenio_oauth2server._compat import monkey_patch_werkzeug  # noqa isort:skip
-monkey_patch_werkzeug()  # noqa isort:skip
-from flask_oauthlib.contrib.oauth2 import bind_cache_grant  # noqa isort:skip
 
 
 class _OAuth2ServerState(object):
@@ -104,10 +102,10 @@ class _OAuth2ServerState(object):
             return imp
 
     @cached_property
-    def jwt_verification_factory(self):
-        """Load default JWT verification factory."""
+    def jwt_veryfication_factory(self):
+        """Load default JWT veryfication factory."""
         return self.load_obj_or_import_string(
-            'OAUTH2SERVER_JWT_VERIFICATION_FACTORY'
+            'OAUTH2SERVER_JWT_VERYFICATION_FACTORY'
         )
 
 
@@ -131,6 +129,7 @@ class InvenioOAuth2Server(object):
             (Default: ``'invenio_oauth2server.scopes'``)
         """
         self.init_config(app)
+
         state = _OAuth2ServerState(app, entry_point_group=entry_point_group)
 
         app.extensions['invenio-oauth2server'] = state
@@ -182,15 +181,15 @@ def verify_oauth_token_and_set_current_user():
             req = request
             if 'Authorization' in request.headers:
                 header = request.headers['Authorization']
-                if header.split(' ')[0].lower() == 'basic':
+                authType = header.split(' ')[0].lower()
+                if authType == 'basic':
                     valid = False
-                elif header.split(' ')[0].lower() == 'digest':
+                elif authType == 'digest':
                     valid = False
                 else:
                     valid, req = oauth2.verify_request(scopes)
             else:
                 valid, req = oauth2.verify_request(scopes)
-         
         except ValueError:
             abort(400, 'Error trying to decode a non urlencoded string.')
 
