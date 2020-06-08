@@ -19,7 +19,78 @@
 # MA 02111-1307, USA.
 
 # Use Python-3.5:
-FROM python:3.5-slim
+#FROM ubuntu:18.04
+FROM python:3.5 as web_base
+
+
+
+# Install Weko web node pre-requisites:
+# OPY scripts/provision-web.sh /tmp/
+# RUN /tmp/provision-web.sh
+
+RUN apt-get -y update --allow-releaseinfo-change && apt-get -y upgrade && apt-get -y install \
+         curl \
+         git \
+         rlwrap \
+         screen \
+         vim \
+         gnupg \
+         gcc \
+         g++ \
+         make \
+         libffi-dev \
+         libfreetype6-dev \
+         libjpeg-dev \
+         libmsgpack-dev \
+         libssl-dev \
+         libtiff-dev \
+         libxml2-dev \
+         libxslt-dev \
+         libzip-dev \
+         libjpeg-dev \
+         libtiff-dev \
+         imagemagick \
+         libopenjp2-7-dev \
+         libimagequant-dev \
+         libmagickwand-dev \
+         libwebp-dev \
+         libraqm-dev \
+         zlib1g-dev \
+         libpng-dev \
+         python3-dev \
+         python3-pip \
+         libpq-dev \
+         fonts-ipafont \
+         fonts-ipaexfont \
+         openjdk-11-jre-headless
+RUN apt-get -y update --allow-releaseinfo-change && apt-get -y upgrade && apt-get -y install libreoffice-core --no-install-recommends
+
+RUN bash -c "if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then curl -sL https://deb.nodesource.com/setup_4.x |bash -;fi"
+#RUN bash -c "if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then curl -sL https://deb.nodesource.com/setup_12.x |bash -;fi"
+RUN apt-get -y update && apt-get -y install nodejs npm
+RUN printf "\nPackage: *\nPin: origin deb.nodesource.com\nPin-Priority: 600" >> /etc/apt/preferences.d/nodesource
+RUN npm config set user 0
+RUN npm config set unsafe-perm true
+RUN npm install -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js
+RUN pip install -U setuptools pip
+RUN pip install -U virtualenvwrapper
+RUN if ! grep -q virtualenvwrapper ~/.bashrc; then mkdir -p "$HOME/.virtualenvs" & echo "export WORKON_HOME=$HOME/.virtualenvs" >> "$HOME/.bashrc" & echo "source $(which virtualenvwrapper.sh)" >> "$HOME/.bashrc" ;fi
+RUN export WORKON_HOME=$HOME/.virtualenvs
+RUN bash -c "source \"$(which virtualenvwrapper.sh)\""
+RUN apt-get -y autoremove && $sudo apt-get -y clean
+
+
+#FROM python:3.5-slim
+#COPY --from=web_base /usr/ /usr/
+#COPY --from=web_base /lib/ /lib/
+#COPY --from=web_base /lib/ /lib/
+
+#COPY --from=web_base /usr/bin /usr/bin
+#COPY --from=web_base /usr/lib /usr/lib
+#COPY --from=web_base /usr/share /usr/share
+#COPY --from=web_base /usr/include /usr/include
+#COPY --from=web_base /usr/local/bin /usr/local/bin
+#COPY --from=web_base /usr/local/lib /usr/local/lib
 
 # Configure Weko instance:
 ENV INVENIO_WEB_HOST=127.0.0.1
@@ -36,10 +107,6 @@ ENV INVENIO_ELASTICSEARCH_HOST=elasticsearch
 ENV INVENIO_RABBITMQ_HOST=rabbitmq
 ENV INVENIO_WORKER_HOST=127.0.0.1
 ENV SEARCH_INDEX_PREFIX=tenant1
- 
-# Install Weko web node pre-requisites:
-COPY scripts/provision-web.sh /tmp/
-RUN /tmp/provision-web.sh
 
 # Add Weko sources to `code` and work there:
 WORKDIR /code
@@ -59,6 +126,10 @@ ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/
 ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
 RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
 RUN echo "workon invenio" >> ~/.bashrc
+
+
+#WORKDIR /code
+#ADD . /code
 
 # Start the Weko application:
 CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
