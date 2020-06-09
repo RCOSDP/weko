@@ -451,11 +451,15 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     error_list = json.loads(session_data.decode('utf-8'))
 
     if error_list:
+        if not json_data.get('required'):
+            json_data['required'] = []
         for item in error_list['required']:
             sub_item = item.split('.')
             if len(sub_item) == 1:
                 json_data['required'] = sub_item
             else:
+                if sub_item[0] not in json_data['required']:
+                    json_data['required'].append(sub_item[0])
                 if json_data['properties'][sub_item[0]].get('items'):
                     if not json_data['properties'][sub_item[0]]['items'].get(
                             'required'):
