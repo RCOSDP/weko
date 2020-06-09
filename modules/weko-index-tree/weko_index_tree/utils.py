@@ -140,6 +140,8 @@ def get_tree_json(index_list, root_id):
 
         list_index_expand = get_user_list_expand()
         is_expand_on_init = str(index_element.cid) in list_index_expand
+        # temp
+        is_expand_on_init = True
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_element.name,
