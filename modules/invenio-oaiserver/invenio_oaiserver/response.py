@@ -305,6 +305,7 @@ def getrecord(**kwargs):
                             etree.QName(NS_OAIPMH, 'metadata'))
 
     etree_record = copy.deepcopy(record)
+    etree_record['system_identifier_doi'] = get_identifier(record)
     if check_correct_system_props_mapping(
             pid.object_uuid,
             current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
@@ -357,6 +358,8 @@ def listrecords(**kwargs):
             datestamp=record['updated'],
             sets=record['json']['_source'].get('_oai', {}).get('sets', []),
         )
+        temp = WekoRecord.get_record_by_id(record['id'])
+        record['json']['_source']['_item_metadata']['system_identifier_doi'] = get_identifier(temp)
         e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
         e_metadata.append(record_dumper(pid, record['json']))
 
@@ -478,3 +481,35 @@ def create_files_url(root_url, record_id, filename):
         root_url,
         record_id,
         filename)
+
+
+def get_identifier(record):
+    """Get Identifier of record(DOI or HDL), if not set URL as default.
+
+    @param record:
+    @return:
+    """
+    result = {
+        "attribute_name": "Identifier",
+        "attribute_value_mlt": [
+            {
+                "subitem_systemidt_identifier": "",
+                "subitem_systemidt_identifier_type": ""
+            }
+        ]
+    }
+    if record.pid_doi:
+        identifier = record.pid_doi.pid_value
+        identifier_type = record.pid_doi.pid_type.upper()
+    elif record.pid_cnri:
+        identifier = record.pid_cnri.pid_value
+        identifier_type = record.pid_cnri.pid_type.upper()
+    else:
+        identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
+            request.url_root, record['_deposit']['id'])
+        identifier_type = 'URI'
+    result['attribute_value_mlt'][0][
+        'subitem_systemidt_identifier'] = identifier
+    result['attribute_value_mlt'][0][
+        'subitem_systemidt_identifier_type'] = identifier_type
+    return result

@@ -65,8 +65,7 @@ def dumps_etree(records, schema_type):
             records['metadata'] = records['metadata'].get('_item_metadata', {})
         scname = schema_type if re.search(
             r'.*_mapping', schema_type) else schema_type + "_mapping"
-        identifier = get_identifier(records)
-        stree = SchemaTree(records, scname, identifier=identifier)
+        stree = SchemaTree(records, scname)
         return stree.create_xml()
 
 

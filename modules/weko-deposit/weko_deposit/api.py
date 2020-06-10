@@ -1075,6 +1075,11 @@ class WekoRecord(Record):
         return cls.get_record(id_=pid.object_uuid)
 
     @classmethod
+    def get_record_by_id(cls, idx):
+        """Get record by pid."""
+        return cls.get_record(id_=idx)
+
+    @classmethod
     def get_record_with_hps(cls, uuid):
         """Get record with hps."""
         record = cls.get_record(id_=uuid)

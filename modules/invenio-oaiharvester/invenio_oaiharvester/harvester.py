@@ -388,7 +388,7 @@ def add_identifier(schema, res, identifier_list):
             item['identifier'] = it.get('#text')
             if it.get('@identifierType'):
                 item['type'] = it.get('@identifierType')
-        res.append(item)
+        res.append(1)
 
 
 def add_identifier_registration(schema, res, identifierRegistration):
@@ -644,6 +644,67 @@ def add_creator_dc(schema, res, creator_name, lang=''):
     res[creator_field].append(item)
 
 
+def add_source_dc(schema, res, source_list):
+    """Add description."""
+    if not isinstance(source_list, list):
+        source_list = [source_list]
+    root_key = map_field(schema).get('Description')
+    if not root_key:
+        return
+    if not res.get(root_key, None):
+        res[root_key] = []
+    description = map_field(schema['properties'][root_key]['items'])[
+        'Description']
+    language = map_field(schema['properties'][root_key]['items'])['Language']
+    for it in source_list:
+        item = {}
+        if isinstance(it, str):
+            item[description] = it
+        elif isinstance(it, OrderedDict):
+            item[description] = it.get('#text')
+            if it.get('@xml:lang'):
+                item[language] = it.get('@xml:lang')
+        res[root_key].append(item)
+
+
+def add_coverage_dc(schema, res, coverage_list):
+    """Add temporal."""
+    if not isinstance(coverage_list, list):
+        coverage_list = [coverage_list]
+    root_key = map_field(schema).get('Temporal')
+    if not root_key:
+        return
+    if not res.get(root_key,None):
+        res[root_key] = []
+    temporal = map_field(schema['properties'][root_key]['items'])['Temporal']
+    language = map_field(schema['properties'][root_key]['items'])['Language']
+    for it in coverage_list:
+        item = {}
+        if isinstance(it, str):
+            item[temporal] = it
+        elif isinstance(it, OrderedDict):
+            item[temporal] = it.get('#text')
+            item[language] = it.get('@xml:lang')
+        res[root_key].append(item)
+
+
+def add_format_dc(schema, res, file_list):
+    """Add file."""
+    if not isinstance(file_list, list):
+        file_list = [file_list]
+    root_key = map_field(schema).get('File')
+    if not res.get(root_key,None):
+        res[root_key] = []
+    format_key = map_field(schema['properties'][root_key]['items'])['Format']
+    for it in file_list:
+        item = {}
+        if isinstance(it, str):
+            item[format_key] = it
+        elif isinstance(it, OrderedDict):
+            item[format_key] = it.get('#text')
+        res[root_key].append(item)
+
+
 def add_contributor_dc(schema, res, contributor_name, lang=''):
     """Add contributor."""
     contributor_field = map_field(schema)['Contributor']
@@ -707,16 +768,15 @@ def add_rights_dc(schema, res, rights, lang='', rights_resource=''):
     res[rights_field].append(item)
 
 
-def add_identifier_dc(schema, res, identifier, identifier_type=''):
+def add_identifier_dc(schema, res, identifier):
     """Add identifier."""
     identifier_field = map_field(schema)['Identifier']
     subitems = map_field(schema['properties'][identifier_field]['items'])
     identifier_item_name = subitems['Identifier']
-    identifier_type_item_name = subitems['Identifier Type']
     if identifier_field not in res:
         res[identifier_field] = []
     res[identifier_field].append(
-        {identifier_item_name: identifier, identifier_type_item_name: identifier_type})
+        {identifier_item_name: identifier})
 
 
 def add_description_dc(schema, res, description, description_type='', lang=''):
@@ -1603,10 +1663,14 @@ class DCMapper(BaseMapper):
                                    res),
             'publisher': partial(add_publisher_dc, self.itemtype.schema, res),
             'date': partial(add_date_dc, self.itemtype.schema, res),
-            'identifier': partial(add_identifier_dc, self.itemtype.schema, res),
+            # 'identifier': partial(add_identifier_dc, self.itemtype.schema, res),
             'language': partial(add_language_dc, self.itemtype.schema, res),
             'relation': partial(add_relation_dc, self.itemtype.schema, res),
-            'rights': partial(add_rights_dc, self.itemtype.schema, res)}
+            'rights': partial(add_rights_dc, self.itemtype.schema, res),
+            'coverage': partial(add_coverage_dc, self.itemtype.schema, res),
+            'source': partial(add_description_dc, self.itemtype.schema, res),
+            'format': partial(add_format_dc, self.itemtype.schema, res)
+        }
         for tag in dc_tags:
             if tag in add_funcs:
                 m = '<dc:{0}.*>(.+?)</dc:{0}>'.format(tag)
