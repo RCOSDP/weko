@@ -21,9 +21,6 @@
 
 trap "exit" INT
 
-pip install -U pytest
-pip install pytest-cov pytest-invenio mock
-
 for module_path in modules/*/; do
   if [[ ${module_path} =~ ^modules/(invenio-|weko-).+$ ]] && [[ -d ${module_path}tests ]]; then
     echo "### Running tests for ${module_path%?} ###"
