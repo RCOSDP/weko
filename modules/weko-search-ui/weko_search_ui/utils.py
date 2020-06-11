@@ -56,9 +56,7 @@ from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
-from weko_logging.utils import my_profiler
 
-@my_profiler
 def get_tree_items(index_tree_id):
     """Get tree items."""
     records_search = RecordsSearch()
@@ -71,7 +69,6 @@ def get_tree_items(index_tree_id):
     rd = search_result.to_dict()
     return rd.get('hits').get('hits')
 
-@my_profiler
 def delete_records(index_tree_id):
     """Bulk delete records."""
     hits = get_tree_items(index_tree_id)
@@ -105,7 +102,6 @@ def delete_records(index_tree_id):
                     db.session.commit()  # terminate the transaction
 
 
-@my_profiler
 def get_journal_info(index_id=0):
     """Get journal information.
 
@@ -150,7 +146,6 @@ def get_journal_info(index_id=0):
     return result
 
 
-@my_profiler
 def get_feedback_mail_list():
     """Get tree items."""
     records_search = RecordsSearch()
@@ -164,7 +159,6 @@ def get_feedback_mail_list():
         .get('email_list').get('buckets')
 
 
-@my_profiler
 def parse_feedback_mail_data(data):
     """Parse data."""
     result = {}
@@ -185,7 +179,6 @@ def parse_feedback_mail_data(data):
     return result
 
 
-@my_profiler
 def check_permission():
     """Check user login is repo_user or sys_user."""
     from flask_security import current_user
@@ -197,7 +190,6 @@ def check_permission():
     return is_permission_user
 
 
-@my_profiler
 def get_content_workflow(item):
     """Get content workflow.
 
@@ -219,7 +211,6 @@ def get_content_workflow(item):
     return result
 
 
-@my_profiler
 def set_nested_item(data_dict, map_list, val):
     """Set item in nested dictionary."""
     reduce(getitem, map_list[:-1], data_dict)[map_list[-1]] = val
@@ -227,7 +218,6 @@ def set_nested_item(data_dict, map_list, val):
     return data_dict
 
 
-@my_profiler
 def convert_nested_item_to_list(data_dict, map_list):
     """Set item in nested dictionary."""
     a = reduce(getitem, map_list[:-1], data_dict)[map_list[-1]]
@@ -237,7 +227,6 @@ def convert_nested_item_to_list(data_dict, map_list):
     return data_dict
 
 
-@my_profiler
 def define_default_dict():
     """Define nested dict.
 
@@ -247,7 +236,6 @@ def define_default_dict():
     return defaultdict(define_default_dict)
 
 
-@my_profiler
 def defaultify(d: dict) -> dict:
     """Create default dict.
 
@@ -265,7 +253,6 @@ def defaultify(d: dict) -> dict:
     )
 
 
-@my_profiler
 def handle_generate_key_path(key) -> list:
     """Handle generate key path.
 
@@ -295,7 +282,6 @@ def handle_generate_key_path(key) -> list:
     return key_path
 
 
-@my_profiler
 def parse_to_json_form(data: list) -> dict:
     """Parse set argument to json object.
 
@@ -341,7 +327,6 @@ def parse_to_json_form(data: list) -> dict:
     return result
 
 
-@my_profiler
 def check_import_items(file_content: str):
     """Validation importing zip file.
 
@@ -393,7 +378,6 @@ def check_import_items(file_content: str):
         temp_path.cleanup()
 
 
-@my_profiler
 def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     """Getting record data from TSV file.
 
@@ -411,7 +395,6 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     return list_record
 
 
-@my_profiler
 def read_stats_tsv(tsv_file_path: str) -> dict:
     """Read importing TSV file.
 
@@ -477,7 +460,6 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     return result
 
 
-@my_profiler
 def handle_validate_item_import(list_recond, schema) -> list:
     """Validate item import.
 
@@ -511,7 +493,6 @@ def handle_validate_item_import(list_recond, schema) -> list:
     return result
 
 
-@my_profiler
 def represents_int(s):
     """Handle check string is int.
 
@@ -528,7 +509,6 @@ def represents_int(s):
         return False
 
 
-@my_profiler
 def handle_check_index(list_index: list) -> bool:
     """Handle check index.
 
@@ -554,7 +534,6 @@ def handle_check_index(list_index: list) -> bool:
     return result
 
 
-@my_profiler
 def get_item_type(item_type_id=0) -> dict:
     """Get item type.
 
@@ -578,7 +557,6 @@ def get_item_type(item_type_id=0) -> dict:
     return result
 
 
-@my_profiler
 def handle_check_exist_record(list_recond) -> list:
     """Check record is exist in system.
 
@@ -631,7 +609,6 @@ def handle_check_exist_record(list_recond) -> list:
     return result
 
 
-@my_profiler
 def handle_check_identifier(name) -> str:
     """Check data is Identifier of Identifier Registration.
 
@@ -647,7 +624,6 @@ def handle_check_identifier(name) -> str:
     return result
 
 
-@my_profiler
 def handle_remove_identifier(item) -> dict:
     """Remove Identifier of Identifier Registration.
 
@@ -668,7 +644,6 @@ def handle_remove_identifier(item) -> dict:
     return item
 
 
-@my_profiler
 def compare_identifier(item, item_exist):
     """Compare data is Identifier.
 
@@ -715,7 +690,6 @@ def compare_identifier(item, item_exist):
     return item
 
 
-@my_profiler
 def make_stats_tsv(raw_stats, list_name):
     """Make TSV report file for stats."""
     import csv
@@ -735,14 +709,12 @@ def make_stats_tsv(raw_stats, list_name):
     return tsv_output
 
 
-@my_profiler
 def difference(list1, list2):
     """Make TSV report file for stats."""
     list_dif = [i for i in list1 + list2 if i not in list1 or i not in list2]
     return list_dif
 
 
-@my_profiler
 def check_identifier_new(item):
     """Check data Identifier.
 
@@ -771,7 +743,6 @@ def check_identifier_new(item):
     return item
 
 
-@my_profiler
 def create_deposit(item_id):
     """Create deposit.
 
@@ -792,7 +763,6 @@ def create_deposit(item_id):
         db.session.rollback()
 
 
-@my_profiler
 def up_load_file_content(record, root_path):
     """Upload file content.
 
@@ -822,7 +792,6 @@ def up_load_file_content(record, root_path):
         db.session.rollback()
 
 
-@my_profiler
 def get_file_name(file_path):
     """Get file name.
 
@@ -834,7 +803,6 @@ def get_file_name(file_path):
     return file_path.split('/')[-1] if file_path.split('/')[-1] else ''
 
 
-@my_profiler
 def register_item_metadata(item):
     """Upload file content.
 
@@ -895,7 +863,6 @@ def register_item_metadata(item):
     }
 
 
-@my_profiler
 def handle_get_title(title) -> str:
     """Handle get title.
 
@@ -912,7 +879,6 @@ def handle_get_title(title) -> str:
             and isinstance(title[0], dict) else ''
 
 
-@my_profiler
 def handle_workflow(item: dict):
     """Handle workflow.
 
@@ -939,7 +905,6 @@ def handle_workflow(item: dict):
             create_work_flow(item.get('item_type_id'))
 
 
-@my_profiler
 def create_work_flow(item_type_id):
     """Handle create work flow.
 
@@ -967,7 +932,6 @@ def create_work_flow(item_type_id):
             current_app.logger.error(ex)
 
 
-@my_profiler
 def create_flow_define():
     """Handle create flow_define."""
     flow_define = FlowDefine.query.filter_by(
@@ -982,7 +946,6 @@ def create_flow_define():
                                      WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-@my_profiler
 def import_items_to_system(item: dict):
     """Validation importing zip file.
 
@@ -1005,7 +968,6 @@ def import_items_to_system(item: dict):
         return response
 
 
-@my_profiler
 def remove_temp_dir(path):
     """Validation importing zip file.
 
@@ -1017,7 +979,6 @@ def remove_temp_dir(path):
     shutil.rmtree(str(path.replace("/data", "")))
 
 
-@my_profiler
 def handle_replace_new_index() -> list:
     """Validation importing zip file.
 

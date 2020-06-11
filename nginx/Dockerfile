@@ -39,10 +39,12 @@ COPY --from=nginx-with-shib /tmp/nginx_1.18.0-1~eoan_amd64.deb .
 COPY --from=nginx-with-shib /tmp/nginx-dbg_1.18.0-1~eoan_amd64.deb .
 RUN dpkg -i nginx_1.18.0-1~eoan_amd64.deb
 
-ADD shibboleth.conf /etc/supervisor/conf.d/shibboleth.conf
+ADD supervisord/supervisord.conf /etc/supervisor/supervisord.conf
 ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD attribute-map.xml /etc/shibboleth/attribute-map.xml
 ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml
+RUN sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.3/fpm/php-fpm.conf 
+RUN sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.3/fpm/pool.d/www.conf
 
 ADD ./keys/server.crt /etc/shibboleth/server.crt
 ADD ./keys/server.key /etc/shibboleth/server.key
@@ -69,5 +71,5 @@ ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
 ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params
 
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/shibboleth.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
 

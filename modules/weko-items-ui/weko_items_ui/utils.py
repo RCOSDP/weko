@@ -56,10 +56,8 @@ from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import Action as _Action
 
-from weko_logging.utils import my_profiler
 
 
-@my_profiler
 def get_list_username():
     """Get list username.
 
@@ -82,7 +80,6 @@ def get_list_username():
     return result
 
 
-@my_profiler
 def get_list_email():
     """Get list email.
 
@@ -110,7 +107,6 @@ def get_list_email():
     return result
 
 
-@my_profiler
 def get_user_info_by_username(username):
     """Get user information by username.
 
@@ -147,7 +143,6 @@ def get_user_info_by_username(username):
         result['error'] = str(e)
 
 
-@my_profiler
 def validate_user(username, email):
     """Validate user information.
 
@@ -201,7 +196,6 @@ def validate_user(username, email):
     return result
 
 
-@my_profiler
 def get_user_info_by_email(email):
     """
     Get user information by email.
@@ -239,7 +233,6 @@ def get_user_info_by_email(email):
         result['error'] = str(e)
 
 
-@my_profiler
 def get_user_information(user_id):
     """
     Get user information user_id.
@@ -277,7 +270,6 @@ def get_user_information(user_id):
     return result
 
 
-@my_profiler
 def get_user_permission(user_id):
     """
     Get user permission user_id.
@@ -296,7 +288,6 @@ def get_user_permission(user_id):
     return False
 
 
-@my_profiler
 def get_current_user():
     """
     Get user id of user currently login.
@@ -308,7 +299,6 @@ def get_current_user():
     return current_id
 
 
-@my_profiler
 def get_actionid(endpoint):
     """
     Get action_id by action_endpoint.
@@ -325,7 +315,6 @@ def get_actionid(endpoint):
             return None
 
 
-@my_profiler
 def parse_ranking_results(results,
                           display_rank,
                           list_name='all',
@@ -382,7 +371,6 @@ def parse_ranking_results(results,
                 break
     return ranking_list
 
-@my_profiler
 def parse_ranking_new_items(result_data):
     """Parse ranking new items.
 
@@ -406,7 +394,6 @@ def parse_ranking_new_items(result_data):
     return data_list
 
 
-@my_profiler
 def validate_form_input_data(result: dict, item_id: str, data: dict):
     """Validate input data.
 
@@ -443,7 +430,6 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
         result['error'] = _(error.message)
 
 
-@my_profiler
 def update_json_schema_by_activity_id(json_data, activity_id):
     """Update json schema by activity id.
 
@@ -499,7 +485,6 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     return json_data
 
 
-@my_profiler
 def package_export_file(item_type_data):
     """Export TSV Files.
 
@@ -540,7 +525,6 @@ def package_export_file(item_type_data):
     return tsv_output
 
 
-@my_profiler
 def make_stats_tsv(item_type_id, recids, list_item_role):
     """Prepare TSV data for each Item Types.
 
@@ -576,7 +560,6 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         attr_data = {}
         attr_output = {}
 
-        @my_profiler
         def __init__(self, record_ids):
             """Class initialization."""
             self.recids = record_ids
@@ -586,7 +569,6 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 self.records[record_id] = record
                 self.attr_output[record_id] = []
 
-        @my_profiler
         def get_max_ins(self, attr):
             """Get max data each main property in all exporting records."""
             largest_size = 1
@@ -610,7 +592,6 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
             return self.attr_data[attr]['max_size']
 
-        @my_profiler
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             list_attr = item_attrs.split('.')
@@ -656,7 +637,6 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                                 max_length = cur_len
             return max_length
 
-        @my_profiler
         def get_subs_item(self,
                           item_key,
                           item_label,
@@ -829,7 +809,6 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     return ret, ret_label, records.attr_output
 
 
-@my_profiler
 def get_list_file_by_record_id(recid):
     """Get file buckets by record id.
 
@@ -873,7 +852,6 @@ def get_list_file_by_record_id(recid):
     return list_file_name
 
 
-@my_profiler
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
@@ -967,7 +945,6 @@ def export_items(post_data):
     return send_file(export_path + '.zip')
 
 
-@my_profiler
 def export_item_custorm(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
@@ -1044,7 +1021,6 @@ def export_item_custorm(post_data):
     return send_file(export_path + '.zip')
 
 
-@my_profiler
 def _get_max_export_items():
     """Get max amount of items to export."""
     max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
@@ -1068,7 +1044,6 @@ def _get_max_export_items():
     return current_max
 
 
-@my_profiler
 def _export_item(record_id,
                  export_format,
                  include_contents,
@@ -1125,7 +1100,6 @@ def _export_item(record_id,
     return exported_item, list_item_role
 
 
-@my_profiler
 def get_new_items_by_date(start_date: str, end_date: str) -> dict:
     """Get ranking new item by date.
 
@@ -1149,7 +1123,6 @@ def get_new_items_by_date(start_date: str, end_date: str) -> dict:
 
     return result
 
-@my_profiler
 def get_latest_items(size: int ) -> dict:
     """Get latest publication items.
 
@@ -1171,7 +1144,6 @@ def get_latest_items(size: int ) -> dict:
     return result
 
 
-@my_profiler
 def update_schema_remove_hidden_item(schema, render, items_name):
     """Update schema: remove hidden items.
 
@@ -1193,7 +1165,6 @@ def update_schema_remove_hidden_item(schema, render, items_name):
     return schema
 
 
-@my_profiler
 def to_files_js(record):
     """List files in a deposit."""
     res = []
@@ -1227,7 +1198,6 @@ def to_files_js(record):
     return res
 
 
-@my_profiler
 def update_sub_items_by_user_role(item_type_id, schema_form):
     """Update sub item by user role.
 
@@ -1248,7 +1218,6 @@ def update_sub_items_by_user_role(item_type_id, schema_form):
         schema_form.remove(item)
 
 
-@my_profiler
 def remove_excluded_items_in_json_schema(item_id, json_schema):
     """Remove excluded items in json_schema.
 
@@ -1280,7 +1249,6 @@ def remove_excluded_items_in_json_schema(item_id, json_schema):
                 del properties[item]
 
 
-@my_profiler
 def get_excluded_sub_items(item_type_name):
     """Get excluded sub items by role.
 
@@ -1300,7 +1268,6 @@ def get_excluded_sub_items(item_type_name):
     return item_type_role
 
 
-@my_profiler
 def get_current_user_role():
     """Get current user roles."""
     current_user_role = ''
@@ -1311,7 +1278,6 @@ def get_current_user_role():
     return current_user_role
 
 
-@my_profiler
 def is_need_to_show_agreement_page(item_type_name):
     """Check need to show Terms and Conditions or not."""
     current_user_role = get_current_user_role()
@@ -1324,7 +1290,6 @@ def is_need_to_show_agreement_page(item_type_name):
     return True
 
 
-@my_profiler
 def update_index_tree_for_record(pid_value, index_tree_id):
     """Update index tree for record.
 
@@ -1343,7 +1308,6 @@ def update_index_tree_for_record(pid_value, index_tree_id):
     db.session.commit()
 
 
-@my_profiler
 def validate_user_mail(email):
     """Validate user mail.
 
@@ -1377,7 +1341,6 @@ def validate_user_mail(email):
     return result
 
 
-@my_profiler
 def update_action_handler(activity_id, action_id, user_id):
     """Update action handler for each action of activity.
 
@@ -1397,7 +1360,6 @@ def update_action_handler(activity_id, action_id, user_id):
     db.session.commit()
 
 
-@my_profiler
 def validate_user_mail_and_index(request_data):
     """Validate user's mail,index tree.
 
@@ -1431,7 +1393,6 @@ def validate_user_mail_and_index(request_data):
     return result
 
 
-@my_profiler
 def recursive_form(schema_form):
     """
     Recur the all the child form to set value for specific property.
@@ -1459,7 +1420,6 @@ def recursive_form(schema_form):
                     form['titleMap'] = dict_data
 
 
-@my_profiler
 def set_multi_language_name(item, cur_lang):
     """Set multi language name: Get corresponding language and set to json.
 
@@ -1474,7 +1434,6 @@ def set_multi_language_name(item, cur_lang):
                 value['name'] = value['name_i18n'][cur_lang]
 
 
-@my_profiler
 def validate_save_title_and_share_user_id(result, data):
     """Save title and shared user id for activity.
 
@@ -1496,7 +1455,6 @@ def validate_save_title_and_share_user_id(result, data):
     return result
 
 
-@my_profiler
 def get_data_authors_prefix_settings():
     """Get all authors prefix settings."""
     from weko_authors.models import AuthorsPrefixSettings
@@ -1507,7 +1465,6 @@ def get_data_authors_prefix_settings():
         return None
 
 
-@my_profiler
 def hide_meta_data_for_role(record):
     """
     Show hide metadate for curent user role.
@@ -1541,7 +1498,6 @@ def hide_meta_data_for_role(record):
     return is_hidden
 
 
-@my_profiler
 def get_ignore_item_from_mapping(_item_type_id):
     """Get ignore item from mapping.
 
@@ -1558,7 +1514,6 @@ def get_ignore_item_from_mapping(_item_type_id):
     return ignore_list
 
 
-@my_profiler
 def get_mapping_name_item_type_by_key(key, item_type_mapping):
     """Get mapping name item type by key.
 
@@ -1575,7 +1530,6 @@ def get_mapping_name_item_type_by_key(key, item_type_mapping):
     return key
 
 
-@my_profiler
 def get_item_from_option(_item_type_id):
     """Get all keys of properties that is set Hide option on metadata."""
     ignore_list = []
@@ -1587,7 +1541,6 @@ def get_item_from_option(_item_type_id):
     return ignore_list
 
 
-@my_profiler
 def get_options_list(item_type_id):
     """Get Options by item type id.
 
@@ -1600,7 +1553,6 @@ def get_options_list(item_type_id):
     return meta_options
 
 
-@my_profiler
 def get_options_and_order_list(item_type_id):
     """Get Options by item type id.
 
@@ -1613,7 +1565,6 @@ def get_options_and_order_list(item_type_id):
     return meta_options, item_type_mapping
 
 
-@my_profiler
 def hide_table_row_for_tsv(table_row, hide_key):
     """Get Options by item type id.
 
@@ -1627,7 +1578,6 @@ def hide_table_row_for_tsv(table_row, hide_key):
     return table_row
 
 
-@my_profiler
 def is_schema_include_key(schema):
     """Check if schema have filename/billing_filename key."""
     properties = schema.get('properties')
@@ -1652,7 +1602,6 @@ def is_schema_include_key(schema):
     return need_file, need_billing_file
 
 
-@my_profiler
 def isExistKeyInDict(_key, _dict):
     """Check key exist in dict and value of key is dict type.
 
@@ -1664,7 +1613,6 @@ def isExistKeyInDict(_key, _dict):
     return isinstance(_dict, dict) and isinstance(_dict.get(_key), dict)
 
 
-@my_profiler
 def set_validation_message(item, cur_lang):
     """Set validation message.
 
@@ -1678,7 +1626,6 @@ def set_validation_message(item, cur_lang):
         item[message_attr] = item[i18n][cur_lang]
 
 
-@my_profiler
 def translate_validation_message(item_property, cur_lang):
     """Recursive in order to set translate language validation message.
 

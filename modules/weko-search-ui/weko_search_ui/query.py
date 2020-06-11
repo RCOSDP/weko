@@ -36,9 +36,7 @@ from . import config
 from .api import SearchSetting
 from .permissions import search_permission
 
-from weko_logging.utils import my_profiler
 
-@my_profiler
 def get_item_type_aggs(search_index):
     """Get item types aggregations.
 
@@ -48,7 +46,6 @@ def get_item_type_aggs(search_index):
         get(search_index).get("aggs", {})
 
 
-@my_profiler
 def get_permission_filter(comm_id=None):
     """Get permission filter."""
     # check permission
@@ -126,7 +123,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
               fields=['search_*', 'search_*.ja']) if qs else None
         return q
 
-    @my_profiler
     def _get_detail_keywords_query():
         """Get keywords query.
 
@@ -253,7 +249,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             return Q('bool', should=shuld) if shuld else None
 
-        @my_profiler
         def _get_date_query(k, v):
             # text value
             qry = None
@@ -334,7 +329,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 'Detail search query parser failed. err:{0}'.format(e))
         return mut
 
-    @my_profiler
     def _get_simple_search_query(qs=None):
         """Query parser for simple search.
 
@@ -349,7 +343,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         mt.extend(_get_detail_keywords_query())
         return Q('bool', must=mt) if mt else Q()
 
-    @my_profiler
     def _get_simple_search_community_query(community_id, qs=None):
         """Query parser for simple search.
 
@@ -368,7 +361,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         mt.extend(_get_detail_keywords_query())
         return Q('bool', must=mt) if mt else Q()
 
-    @my_profiler
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
         multi_cont_q = Q('multi_match', query=qstr, operator='and',
@@ -381,7 +373,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         nested_content = Q('nested', query=multi_cont_q, path='content')
         return Q('bool', should=[nested_content, multi_q])
 
-    @my_profiler
     def _default_parser(qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
 
@@ -409,7 +400,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 mt.append(q_s)
         return Q('bool', must=mt) if mt else Q()
 
-    @my_profiler
     def _default_parser_community(community_id, qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
 
@@ -514,7 +504,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     urlkwargs.add('q', query_q)
     return search, urlkwargs
 
-@my_profiler
 def item_path_search_factory(self, search, index_id=None):
     """Parse query using Weko-Query-Parser.
 
@@ -798,7 +787,6 @@ def item_path_search_factory(self, search, index_id=None):
 
     return search, urlkwargs
 
-@my_profiler
 def check_admin_user():
     """
     Check administrator role user.
@@ -821,7 +809,6 @@ weko_search_factory = item_path_search_factory
 es_search_factory = default_search_factory
 
 
-@my_profiler
 def opensearch_factory(self, search, query_parser=None):
     """Factory for opensearch.
 
@@ -842,7 +829,6 @@ def opensearch_factory(self, search, query_parser=None):
                                       query_parser,
                                       search_type=search_type)
 
-@my_profiler
 def item_search_factory(self,
                         search,
                         start_date,
@@ -918,7 +904,6 @@ def item_search_factory(self,
 
     return search, urlkwargs
 
-@my_profiler
 def item_search_with_limit(self,
                         search,
                         list_index_id=None,
@@ -991,7 +976,6 @@ def item_search_with_limit(self,
     return search, urlkwargs
 
 
-@my_profiler
 def feedback_email_search_factory(self, search):
     """Factory for search feedback email list.
 

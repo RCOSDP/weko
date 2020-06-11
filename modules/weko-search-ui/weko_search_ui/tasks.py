@@ -28,10 +28,8 @@ from weko_admin.models import SessionLifetime
 from .config import WEKO_ADMIN_LIFETIME_DEFAULT
 from .utils import import_items_to_system, remove_temp_dir
 
-from weko_logging.utils import my_profiler
 
 @shared_task
-@my_profiler
 def import_item(item):
     """Import Item ."""
     start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -41,7 +39,6 @@ def import_item(item):
 
 
 @shared_task
-@my_profiler
 def remove_temp_dir_task(path):
     """Import Item ."""
     try:

@@ -54,13 +54,11 @@ from weko_index_tree.api import Indexes
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
 
-from weko_logging.utils import my_profiler
 
 
 from . import config
 
 
-@my_profiler
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
 
@@ -154,7 +152,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
     view_name = '{0}_index'
 
-    @my_profiler
     def __init__(self, ctx, search_serializers=None,
                  record_serializers=None,
                  default_media_type=None, **kwargs):
@@ -176,7 +173,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
         self.pid_fetcher = current_pidstore.fetchers[self.pid_fetcher]
 
-    @my_profiler
     def get(self, **kwargs):
         """Search records.
 
@@ -359,7 +355,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             item_links_factory=self.links_factory,
         )
 
-@my_profiler
 def get_heading_info(data, lang, item_type):
     """Get heading info."""
     heading_id = None

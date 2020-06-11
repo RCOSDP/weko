@@ -46,7 +46,6 @@ from .config import WEKO_SEARCH_TYPE_DICT
 from .utils import check_permission, get_feedback_mail_list, \
     get_journal_info, parse_feedback_mail_data
 
-from weko_logging.utils import my_profiler
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -67,7 +66,6 @@ blueprint_api = Blueprint(
 
 
 @blueprint.route("/search/index")
-@my_profiler
 def search():
     """Index Search page ui."""
     search_type = request.args.get('search_type', WEKO_SEARCH_TYPE_DICT[
@@ -195,7 +193,6 @@ def search():
 
 
 @blueprint_api.route('/opensearch/description.xml', methods=['GET'])
-@my_profiler
 def opensearch_description():
     """Returns WEKO3 opensearch description document.
 
@@ -243,7 +240,6 @@ def opensearch_description():
 
 
 @blueprint.route("/journal_info/<int:index_id>", methods=['GET'])
-@my_profiler
 def journal_detail(index_id=0):
     """Render a check view."""
     result = get_journal_info(index_id)
@@ -251,7 +247,6 @@ def journal_detail(index_id=0):
 
 
 @blueprint.route("/search/feedback_mail_list", methods=['GET'])
-@my_profiler
 def search_feedback_mail_list():
     """Render a check view."""
     data = get_feedback_mail_list()
@@ -262,7 +257,6 @@ def search_feedback_mail_list():
 
 
 @blueprint.route("/get_child_list/<int:index_id>", methods=['GET'])
-@my_profiler
 def get_child_list(index_id=0):
     """Get child id list to index list display."""
     return jsonify(Indexes.get_child_id_list(index_id))
