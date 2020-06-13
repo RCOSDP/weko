@@ -1,0 +1,248 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_itemtypes_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  <script src="/static/node_modules/react/dist/react.js"></script>
+  <script src="/static/node_modules/react-dom/dist/react-dom.js"></script>
+  <script src="/static/js/weko_itemtypes_ui/jsonschemaeditor.js"></script>
+  {{ super() }}
+  {% assets "weko_itemtypes_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+  <input id="lang-code" type="hidden" value="{{lang_code}}" />
+  <div class="row">
+    <div class="col-sm-12 col-md-12 col-lg-11">
+      <div class="panel panel-info  gray-color-class">
+        <div class="panel-body">
+          <div class="form-group mr-5">
+          <label class="radio-inline"><input type="radio" name="item_type" value="normal">{{_('Standard Item Type')}}</label>
+          <label class="radio-inline"><input type="radio" name="item_type" value="harvesting">{{_('Item Type for Harvesting')}}</label>
+          {%- if is_sys_admin -%}
+          <label class="radio-inline"><input type="radio" name="item_type" value="deleted">{{_('Deleted Item Type')}}</label>
+          {%- endif -%}
+          </div>
+          <div class="form-inline col-sm-12 col-md-12">
+              <div class="input-group col-sm-10">
+                <label class="sr-only" for="item-type-lists"></label>
+                <select class="form-control" id="item-type-lists">
+                  <option value=""></option>
+                  {% for list in lists %}
+                  <option value="{{ list.item_type.0.id }}"
+                          class="{% if list.item_type.0.harvesting_type %}harvesting_type {% elif list.item_type.0.is_deleted %}deleted_type {% else %}normal_type {% endif %}{% if list.belonging_item_flg %}belonging_item{% endif %}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+                  {% endfor %}
+                </select>
+               </div>
+
+            <!-- <div class="pull-right twentyfive-pixel-bottom-margin">-->
+              {%- set delete_button_class = 'disabled' -%}
+              {%- if id -%}
+              {%- set delete_button_class = '' -%}
+              {%- endif -%}
+
+              <div id="item_type_delete_confirmation" class="modal fade" tabindex="-1"
+                   role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                      <h4 class="modal-title" id="deleteHeader">WEKO</h4>
+                    </div>
+                    <div class="modal-body" style="overflow-x: auto;">
+                      <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
+                      <span style="margin: 0 10px">{{_('Are you sure you want to delete this Item type?')}}</span>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-primary" id="item_type_delete_continue">{{_('Continue')}} </button>
+                      <button type="button" class="btn btn-default" data-dismiss="modal">{{_('Cancel')}}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" value="{{_('Cannot delete item type for harvesting.')}}" id="msg_for_harvesting">
+              <input type="hidden" value="{{_('Cannot delete due to child existing item types.')}}" id="msg_for_belonging_item">
+              <!-- </div>-->
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12 col-md-12 col-lg-11 metadata-content">
+      <div class="row">
+        <div id="alerts"></div>
+        <div class="alert alert-danger hide" role="alert" id="itemtype_name_warning">
+          <strong>{{_(Warning)}}:</strong> {{_('Item type name is blank.')}}
+        </div>
+        <form class="form-inline">
+          <div class="form-group col-sm-12">
+            <label for="itemtype_name">{{_('Item Type')}}:</label>
+            <input type="text" class="form-control width_60" id="itemtype_name"
+            placeholder="{{_('Input Type Name')}}" value="">*
+            <label class="radio-inline">
+              <input type="radio" name="radio_versionup" class="radio_versionup" id="upt_version" value="upt">{{_('Version Upgrade')}}
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="radio_versionup" class="radio_versionup" id="new_version" value="new" checked>{{_('New Registration')}}
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="row table-responsive">
+        <div class="checkbox media-right hide">
+          <label><input type="checkbox" id="chk_upload_file" value="filemeta">{{_('Do you want to register the content?')}}</label>
+        </div>
+        <table class="table table-striped table-bordered table-hover table-condensed">
+          <thead>
+            <tr class="info">
+              <th class="width-150">{{_('Item Name')}}</th>
+              <th>{{_('Attribute')}}</th>
+              <th class="width-150">{{_('Option')}}</th>
+              <th class="width-150">{{_('Notes')}}</th>
+              <th class="width-50">{{_('Replacement')}}</th>
+              <th class="width-71">{{_('Delete')}}</th>
+            </tr>
+          </thead>
+          <tbody id="tbody_itemtype">
+            <tr>
+              <td>{{_('Publish Date')}}</td>
+              <td>{{_('Date')}}</td>
+              <td>
+                <fieldset disabled>
+                <div class="checkbox">
+                  <label><input type="checkbox" id="chk_pubdate_0" value="required" checked disabled>{{_('Required')}}</label>
+                </div>
+                <div class="checkbox">
+                  <label><input type="checkbox" id="chk_pubdate_1" value="multiple">{{_('Multiple')}}</label>
+                </div>
+                <div class="checkbox">
+                  <label><input type="checkbox" id="chk_pubdate_2" value="showlist">{{_('List Display')}}</label>
+                </div>
+                <div class="checkbox">
+                  <label><input type="checkbox" id="chk_pubdate_3" value="crtf">{{_('Specify Newline')}}</label>
+                </div>
+                <div class="checkbox">
+                  <label><input type="checkbox" id="chk_pubdate_4" value="hidden">{{_('Hide')}}</label>
+                </div>
+                </fieldset>
+              </td>
+              <td> </td>
+              <td> </td>
+              <td> </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="col-sm-3 col-md-3 col-lg-3">
+          <button type="button" class="btn btn-success" id="btn_new_itemtype_meta">
+              <span class="glyphicon glyphicon-plus"></span>&nbsp
+                   {{_('Add Metadata')}}</button>
+        </div>
+        <div class="col-sm-6 col-md-6 col-lg-5 pull-right">
+          {%- if is_sys_admin -%}
+          <button type="button" class="btn btn-primary pull-right" id="btn_restore_itemtype_schema">
+              <span class="glyphicon glyphicon-repeat"></span>
+               {{_('Restore')}}</button>
+          {%- endif -%}
+          <button type="button" class="btn btn-danger pull-right ten-pixel-right-margin" id="btn_delete_item">
+              <span class="glyphicon glyphicon-trash"></span>&nbsp
+              {{ _('Delete') }}</button>
+          <button type="button" class="btn btn-primary pull-right ten-pixel-right-margin" id="btn_create_itemtype_schema">
+              <span class="glyphicon glyphicon-save"></span>&nbsp
+              {{_('Save')}}</button>
+        </div>
+      </div>
+      <div class="panel panel-default hide">
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-sm-12 col-md-6 col-lg-6">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h3 class="panel-title">Json Schema</h3>
+                </div>
+                <div class="panel-body">
+                  <pre class="pre-scrollable" id="schema_json"></pre>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-12 col-md-6 col-lg-6">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h3 class="panel-title">Json Form</h3>
+                </div>
+                <div class="panel-body">
+                  <pre class="pre-scrollable" id="form_json"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row hide">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h3 class="panel-title">Json Render</h3>
+                </div>
+                <div class="panel-body">
+                  <pre class="pre-scrollable" id="render_json"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TODO: Use the modal confirm macro in weko-theme -- see /admin/report -->
+<!-- modal start -->
+<div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{{_('Result')}}</h4>
+      </div>
+      <div class="modal-body">
+        <p>One fine body&hellip;</p>
+      </div>
+      <div class="modal-footer">
+        <button id="result_modal_close_btn" type="button" class="btn btn-info"
+        data-dismiss="modal">
+             <span class="glyphicon glyphicon-remove"></span>&nbsp
+                {{_('Close')}}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{%- endblock body %}

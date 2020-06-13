@@ -1,0 +1,16 @@
+{
+    "Metadata": {
+        "LANG"      : "Language",
+        "PUBLISHER" : "Publisher",
+        "PUBLICDATE": "Date of Publication",
+        "KEY"       : "Keywords",
+        "AUTHOR"    : "Author",
+        "EMAIL"     : "E-mail",
+        "AFFILIATED": "Affiliation"
+    },
+    "Title": {
+        "METADATA"  : "Metadata",
+        "URL"       : "URL",
+        "OAPOLICY"  : "OA Policy"
+    }
+}

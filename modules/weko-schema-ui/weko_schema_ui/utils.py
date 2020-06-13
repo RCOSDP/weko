@@ -20,28 +20,30 @@
 
 """Utilities for convert XML."""
 
+import itertools
 import re
+from functools import reduce
 
-from invenio_oaiserver.response import (
-    NS_OAIPMH, NS_OAIPMH_XSD, NS_XSI, NSMAP, header, verb)
+from invenio_oaiserver.response import NS_OAIPMH, NS_OAIPMH_XSD, NS_XSI, \
+    NSMAP, header, verb
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 
 from .schema import SchemaTree
-import itertools
-from functools import reduce
 
 MISSING = object()
 
 
 def dumps_oai_etree(pid, records, **kwargs):
     """Dump records into a etree.
+
     :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
         instance.
     :param records: The :class:`invenio_records.api.Record` instance.
     :param schema_type: schema type
     :returns: A LXML Element instance.
+
     """
     serializer = obj_or_import_string(
         "weko_schema_ui.serializers.WekoCommonSchema")
@@ -50,26 +52,30 @@ def dumps_oai_etree(pid, records, **kwargs):
 
 def dumps_etree(records, schema_type):
     """Dump records into a etree.
+
     :param records: The :class:`invenio_records.api.Record` instance.
     :param schema_type: schema type
     :returns: A LXML Element instance.
+
     """
     if schema_type:
         if records.get('metadata', {}).get('_item_metadata'):
             records['metadata'] = records['metadata'].get('_item_metadata', {})
         scname = schema_type if re.search(
-            "\*?_mapping", schema_type) else schema_type + "_mapping"
+            r'.*_mapping', schema_type) else schema_type + "_mapping"
         stree = SchemaTree(records, scname)
         return stree.create_xml()
 
 
 def dumps(records, schema_type=None, **kwargs):
     """
+    Dumps.
 
     :param records:
     :param schema_type:
     :param kwargs:
     :return: xml string
+
     """
     if records["metadata"].get("@export_schema_type"):
         est = records["metadata"].pop("@export_schema_type")
@@ -122,6 +128,7 @@ def export_tree(record, **kwargs):
 
 
 def json_merge_all(json_lst):
+    """Json_merge_all."""
     merged = reduce(json_merge, json_lst, MISSING)
     if merged == MISSING:
         raise ValueError("json_lst was empty")
@@ -129,6 +136,7 @@ def json_merge_all(json_lst):
 
 
 def json_merge(a, b):
+    """Json_merge."""
     if isinstance(a, dict) and isinstance(b, dict):
         return dict(
             (k, json_merge(a_val, b_val))
@@ -144,6 +152,7 @@ def json_merge(a, b):
 
 
 def dict_zip(*dicts, **kwargs):
+    """Dict_zip."""
     fillvalue = kwargs.get("fillvalue", None)
     keys = reduce(set.union, [set(d.keys()) for d in dicts], set())
     return [tuple([k] + [d.get(k, fillvalue) for d in dicts]) for k in keys]

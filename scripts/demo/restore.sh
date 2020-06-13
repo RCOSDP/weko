@@ -33,6 +33,11 @@ docker-compose exec postgresql psql -U invenio -d invenio -f weko.sql
 # postgresql-restore-end
 
 # elasticsearch-restore-begin
+docker-compose stop
+docker-compose start elasticsearch
+sleep 10
+docker-compose exec elasticsearch \
+    curl -XDELETE http://localhost:9200/*
 docker-compose exec elasticsearch \
     curl -X PUT \
     http://localhost:9200/_snapshot/weko_backup \
@@ -46,10 +51,10 @@ docker-compose exec elasticsearch \
         }'
 docker cp ./scripts/demo/elasticsearch/backups $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/
 docker-compose exec elasticsearch chown -R elasticsearch:elasticsearch ./backups
-docker-compose exec web invenio index destroy --yes-i-know --force
 docker-compose exec elasticsearch \
     curl -X POST \
     http://localhost:9200/_snapshot/weko_backup/snapshot_all/_restore?wait_for_completion=true
+docker-compose start
 # elasticsearch-restore-end
 
 # contents-restore-begin

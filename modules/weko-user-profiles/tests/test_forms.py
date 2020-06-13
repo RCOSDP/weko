@@ -46,7 +46,7 @@ def test_register_form_factory_csrf(app_with_csrf):
 
 
 def test_force_disable_csrf_register_form(app_with_csrf):
-    """Test force disable CSRF for reg. form"""
+    """Test force disable CSRF for reg. form."""
     security = app_with_csrf.extensions['security']
     rf = _get_form(app_with_csrf, security.register_form,
                    register_form_factory, force_disable_csrf=True)
@@ -54,8 +54,7 @@ def test_force_disable_csrf_register_form(app_with_csrf):
 
 
 def test_confirm_register_form_factory_no_csrf(app):
-    """Test CSRF token is not in confirm form and not in profil
-e inner form."""
+    """Test CSRF token is not in confirm form and not in profile inner form."""
     security = app.extensions['security']
     rf = _get_form(app, security.confirm_register_form,
                    confirm_register_form_factory)
@@ -73,7 +72,7 @@ def test_confirm_register_form_factory_csrf(app_with_csrf):
 
 
 def test_force_disable_csrf_confirm_form(app_with_csrf):
-    """Test force disable CSRF for confirm. form"""
+    """Test force disable CSRF for confirm form."""
     security = app_with_csrf.extensions['security']
     rf = _get_form(app_with_csrf, security.confirm_register_form,
                    confirm_register_form_factory, force_disable_csrf=True)
@@ -100,7 +99,6 @@ def _assert_no_csrf_token(form):
 
 def _get_form(app, parent_form, factory_method, force_disable_csrf=False):
     """Create and fill a form."""
-
     class AForm(parent_form):
         pass
 

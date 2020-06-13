@@ -23,15 +23,23 @@
   <link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
   <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
 {% endblock %}
-
-<header id="header">
+{%- if render_header_footer %}
+  <div id="header"class="hidden">
+{% else -%}
+  <div id="header" {% if render_widgets or page %}class="hidden"{% endif %}>
+{% endif %}
   {%- block navbar %}
-  <nav class="navbar navbar-default navbar-static-top">
+  <nav class="navbar-default navbar-static-top full-height" id="header_nav">
     <div class="container-fluid">
       {%- block navbar_header %}
-      {% include "weko_theme/header_wysiwyg.html" %}
+        {% if not render_widgets and not page and not render_header_footer %}
+          {% include "weko_theme/header_wysiwyg.html" %}
+        {% else %}
+        <div id="header_content" class="navbar-form navbar-left ql-editor">
+        </div>
+        {% endif %}
       {%- block navbar_right %}
-{%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
+        {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
       {%- endblock navbar_right %}
       <div class="navbar-form navbar-right">
         {%- if config.I18N_LANGUAGES %}
@@ -50,13 +58,7 @@
   {%- block breadcrumbs %}
 {%- include "invenio_theme/breadcrumbs.html" %}
   {%- endblock breadcrumbs %}
-</header>
+</div>
 
 {% block tail %}
-<script src="//code.jquery.com/jquery-3.2.1.min.js"></script>
-<script>
-  $(document).ready(function() {
-    $('#header').find('.ql-editor').attr('contenteditable', 'false')
-  })
-</script>
 {% endblock %}

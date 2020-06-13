@@ -23,6 +23,7 @@
 import uuid
 from datetime import datetime
 
+from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.sql.expression import desc
@@ -91,6 +92,10 @@ class ItemType(db.Model, Timestamp):
     )
     """Name information from ItemTypeName class."""
 
+    harvesting_type = db.Column(db.Boolean(name='harvesting_type'),
+                                nullable=False,
+                                default=False)
+
     schema = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
@@ -105,9 +110,9 @@ class ItemType(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema in JSON format. When you create a new ``item type`` the 
-    ``schema`` field value should never be ``NULL``. Default value is an 
-    empty dict. ``NULL`` value means that the record metadata has been 
+    """Store schema in JSON format. When you create a new ``item type`` the
+    ``schema`` field value should never be ``NULL``. Default value is an
+    empty dict. ``NULL`` value means that the record metadata has been
     deleted. """
 
     form = db.Column(
@@ -125,8 +130,8 @@ class ItemType(db.Model, Timestamp):
         nullable=True
     )
     """Store schema form in JSON format.
-    When you create a new ``item type`` the ``form`` field value should never be
-    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
+    When you create a new ``item type`` the ``form`` field value should never
+    be ``NULL``. Default value is an empty dict. ``NULL`` value means that the
     record metadata has been deleted.
     """
 
@@ -144,9 +149,9 @@ class ItemType(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store page render information in JSON format. When you create a new 
-    ``item type`` the ``render`` field value should never be ``NULL``. 
-    Default value is an empty dict. ``NULL`` value means that the record 
+    """Store page render information in JSON format. When you create a new
+    ``item type`` the ``render`` field value should never be ``NULL``.
+    Default value is an empty dict. ``NULL`` value means that the record
     metadata has been deleted. """
 
     tag = db.Column(db.Integer, nullable=False)
@@ -155,9 +160,78 @@ class ItemType(db.Model, Timestamp):
     version_id = db.Column(db.Integer, nullable=False)
     """Used by SQLAlchemy for optimistic concurrency control."""
 
+    edit_notes = db.relationship('ItemTypeEditHistory',
+                                 order_by='ItemTypeEditHistory.created',
+                                 backref='item_type')
+    """Used to reference whole edit history."""
+
+    is_deleted = db.Column(
+        db.Boolean(name='deleted'),
+        nullable=False,
+        default=False
+    )
+    """Status of item type."""
+
     __mapper_args__ = {
         'version_id_col': version_id
     }
+
+    @property
+    def latest_edit_history(self):
+        """Get latest edit note of self."""
+        return self.edit_notes[-1].notes if self.edit_notes else {}
+
+
+class ItemTypeEditHistory(db.Model, Timestamp):
+    """Represent an item type edit history.
+
+    The ItemTypeEditHistory object contains a ``created`` and  a ``updated``
+    properties that are automatically updated.
+    """
+
+    __tablename__ = 'item_type_edit_history'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+    """Identifier of item type edit history."""
+
+    item_type_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(ItemType.id),
+        nullable=False
+    )
+    """Identifier for item type."""
+
+    user_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(User.id),
+        nullable=False
+    )
+    """Identifier for author of item type."""
+
+    notes = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Edit notes for item type."""
+
+    @classmethod
+    def get_latest_by_item_type_id(cls, item_type_id=0):
+        """Get latest notes for item type."""
+        pass
 
 
 class ItemTypeName(db.Model, Timestamp):
@@ -169,6 +243,13 @@ class ItemTypeName(db.Model, Timestamp):
 
     __tablename__ = 'item_type_name'
 
+    __table_args__ = (
+        db.Index('uq_item_type_name_name', 'name',
+                 unique=True,
+                 postgresql_where=db.Column('is_active')
+                 ),
+    )
+
     id = db.Column(
         db.Integer(),
         primary_key=True,
@@ -178,14 +259,20 @@ class ItemTypeName(db.Model, Timestamp):
 
     name = db.Column(
         db.Text,
-        nullable=False,
-        unique=True
+        nullable=False
     )
     """Name of item type."""
 
     has_site_license = db.Column(db.Boolean(name='has_site_license'),
                                  default=True, nullable=False)
     """site license identify."""
+
+    is_active = db.Column(
+        db.Boolean(name='active'),
+        nullable=False,
+        default=True
+    )
+    """Status of item type."""
 
 
 class ItemTypeMapping(db.Model, Timestamp):
@@ -388,9 +475,9 @@ class ItemTypeProperty(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema in JSON format. When you create a new 
-    ``ItemTypeProperty`` the ``schema`` field value should never be ``NULL``. 
-    Default value is an empty dict. ``NULL`` value means that the record 
+    """Store schema in JSON format. When you create a new
+    ``ItemTypeProperty`` the ``schema`` field value should never be ``NULL``.
+    Default value is an empty dict. ``NULL`` value means that the record
     metadata has been deleted. """
 
     form = db.Column(
@@ -407,9 +494,9 @@ class ItemTypeProperty(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema form (single) in JSON format. When you create a new 
-    ``ItemTypeProperty`` the ``form`` field value should never be ``NULL``. 
-    Default value is an empty dict. ``NULL`` value means that the record 
+    """Store schema form (single) in JSON format. When you create a new
+    ``ItemTypeProperty`` the ``form`` field value should never be ``NULL``.
+    Default value is an empty dict. ``NULL`` value means that the record
     metadata has been deleted. """
 
     forms = db.Column(
@@ -426,15 +513,17 @@ class ItemTypeProperty(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema form (array) in JSON format. When you create a new 
-    ``ItemTypeProperty`` the ``forms`` field value should never be ``NULL``. 
-    Default value is an empty dict. ``NULL`` value means that the record 
+    """Store schema form (array) in JSON format. When you create a new
+    ``ItemTypeProperty`` the ``forms`` field value should never be ``NULL``.
+    Default value is an empty dict. ``NULL`` value means that the record
     metadata has been deleted. """
 
     delflg = db.Column(db.Boolean(name='delFlg'),
                        default=False, nullable=False)
-    """record delete flag
-    """
+    """record delete flag"""
+
+    sort = db.Column(db.Integer, nullable=True, unique=True)
+    """Sort number of itemtype property."""
 
 
 class SiteLicenseInfo(db.Model, Timestamp):
@@ -443,6 +532,7 @@ class SiteLicenseInfo(db.Model, Timestamp):
     The SiteLicenseInfo object contains a ``created`` and  a ``updated``
     properties that are automatically updated.
     """
+
     __tablename__ = 'sitelicense_info'
 
     organization_id = db.Column(
@@ -466,12 +556,19 @@ class SiteLicenseInfo(db.Model, Timestamp):
         nullable=True
     )
 
+    receive_mail_flag = db.Column(
+        db.String(1),
+        default='F',
+        nullable=False
+    )
+
     # Relationships definitions
     addresses = db.relationship(
         'SiteLicenseIpAddress', backref='SiteLicenseInfo')
     """Relationship to SiteLicenseIpAddress."""
 
     def __iter__(self):
+        """TODO: __iter__."""
         sl = {}
         for name in dir(SiteLicenseInfo):
             if not name.startswith('__') and not name.startswith('_'):
@@ -492,6 +589,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
     The SiteLicenseIpAddress object contains a ``created`` and  a
     ``updated`` properties that are automatically updated.
     """
+
     __tablename__ = 'sitelicense_ip_address'
 
     organization_id = db.Column(
@@ -517,6 +615,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
     )
 
     def __iter__(self):
+        """TODO: __iter__."""
         for name in dir(SiteLicenseIpAddress):
             if not name.startswith('__') and not name.startswith('_'):
                 value = getattr(self, name)
@@ -524,9 +623,99 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
                     yield (name, value)
 
 
+class FeedbackMailList(db.Model, Timestamp):
+    """Represent an feedback mail list.
+
+    Stored table stored list email address base on item_id
+    """
+
+    __tablename__ = 'feedback_mail_list'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+    """Feedback mail list identifier."""
+
+    item_id = db.Column(
+        UUIDType,
+        nullable=False,
+        default=uuid.uuid4,
+    )
+    """Item identifier."""
+
+    mail_list = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """List of feedback mail in json format."""
+
+
+class ItemReference(db.Model, Timestamp):
+    """Model of item reference relations."""
+
+    __tablename__ = 'item_reference'
+
+    src_item_pid = db.Column(
+        db.Integer(),
+        nullable=True,
+        primary_key=True
+    )
+    """PID of source item."""
+
+    dst_item_pid = db.Column(
+        db.Integer(),
+        nullable=True,
+        primary_key=True
+    )
+    """PID for destination item."""
+
+    reference_type = db.Column(
+        db.String(50),
+        nullable=False
+    )
+    """参照元と参照先のアイテム間の関連内容。"""
+
+    def __repr__(self):
+        """Text representation of a ItemReference relation."""
+        return "<ItemReference Relation: (records/{r.src_item_pid}) -> " \
+               "(records/{r.dst_item_pid}) " \
+               "(Type: {r.reference_type})>".format(r=self)
+
+    @classmethod
+    def get_src_references(cls, pid):
+        """Get all relations where given PID is a src."""
+        return cls.query.filter(cls.src_item_pid == pid)
+
+    @classmethod
+    def get_dst_references(cls, pid):
+        """Get all relations where given PID is a dst."""
+        return cls.query.filter(cls.dst_item_pid == pid)
+
+    @classmethod
+    def relation_exists(cls, src_pid, dst_pid, reference_type):
+        """Determine if given relation already exists."""
+        return ItemReference.query.filter_by(
+            src_item_pid=src_pid,
+            dst_item_pid=dst_pid,
+            reference_type=reference_type).count() > 0
+
+
 __all__ = (
     'Timestamp',
     'ItemType',
+    'ItemTypeEditHistory',
     'ItemTypeName',
     'ItemTypeMapping',
     'ItemTypeProperty',
@@ -534,4 +723,6 @@ __all__ = (
     'FileMetadata',
     'SiteLicenseInfo',
     'SiteLicenseIpAddress',
+    'FeedbackMailList',
+    'ItemReference'
 )

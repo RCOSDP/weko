@@ -23,9 +23,9 @@
 WEKO_SCHEMA_UI_BASE_TEMPLATE = 'weko_schema_ui/base.html'
 """Default base template for the demo page."""
 
-WEKO_SCHEMA_UI_UPLOAD = 'weko_schema_ui/upload.html'
+WEKO_SCHEMA_UI_ADMIN_UPLOAD = 'weko_schema_ui/admin/upload.html'
 
-WEKO_SCHEMA_UI_LIST = 'weko_schema_ui/list.html'
+WEKO_SCHEMA_UI_ADMIN_LIST = 'weko_schema_ui/admin/list.html'
 
 WEKO_SCHEMA_UI_SEARCH_API = '/api/schemas/'
 """URL of search endpoint for schemas."""
@@ -74,3 +74,16 @@ WEKO_SCHEMA_CACHE_PREFIX = 'cache_{schema_name}'
 #
 # WEKO_SCHEMA_UI_FORMAT_SCHEMAFORM = 'json/weko_schema_ui/format_form.json'
 # WEKO_SCHEMA_UI_FORMAT_FORM_JSONSCHEMA = 'json/weko_schema_ui/format_schema.json'
+
+WEKO_SCHEMA_DDI_VERSION = "2.5"
+"""DDI Schema version"""
+
+WEKO_SCHEMA_DDI_SCHEMA_NAME = "ddi_mapping"
+"""DDI schema name"""
+
+WEKO_SCHEMA_UI_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
+                              'Kakenhi', 'Ringgolf', 'GRID']
+""" List of scheme """
+
+WEKO_SCHEME_FIRST_INDEX = 0
+""" Name Identifior Item first index """

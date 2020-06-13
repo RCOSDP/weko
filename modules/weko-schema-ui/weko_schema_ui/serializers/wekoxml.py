@@ -44,6 +44,7 @@ class WekoXMLSerializer(MarshmallowSerializer):
             xslt_filename else {}
 
         self.schema_class = schema_class
+
         super(WekoXMLSerializer, self).__init__(replace_refs=replace_refs)
 
     def serialize(self, pid, record, links_factory=None):

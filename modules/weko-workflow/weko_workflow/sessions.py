@@ -21,19 +21,21 @@
 """WEKO3 module docstring."""
 
 import os
-import redis
 
+import redis
 from flask import current_app, session
 from simplekv.memory.redisstore import RedisStore
 
 from .api import WorkActivity
 
 
-def upt_activity_item(app, item_id):
-    """
-    Connect to the item_created signal.
+def upt_activity_item(app, user_id, item_id, item_title):
+    """Connect to the item_created signal.
+
     :param app:
+    :param user_id:
     :param item_id:
+    :param item_title
     :return:
     """
     if 'activity_info' in session:

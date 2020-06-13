@@ -19,7 +19,6 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-theme."""
-
 BASE_PAGE_TEMPLATE = 'weko_theme/page.html'
 """Base template for user facing pages."""
 
@@ -31,6 +30,7 @@ embedding header metadata and define basic template blocks. All other user
 facing templates usually extends from this template and thus changing this
 template allows to change design and layout of WEKO3.
 """
+
 THEME_HEADER_TEMPLATE = 'weko_theme/header.html'
 """Header template which is normally included in :data:`BASE_TEMPLATE`."""
 
@@ -52,6 +52,9 @@ THEME_LOGO = 'images/weko-logo.png'
 THEME_LOGO_ADMIN = 'images/weko-logo.png'
 """The logo to be used on the admin views header."""
 
+THEME_URL_LOGO_ADMIN = '/'
+"""The url of admin logo"""
+
 THEME_FOOTER_TEMPLATE = 'weko_theme/footer.html'
 """Footer template which is normally included in :data:`BASE_TEMPLATE`."""
 
@@ -64,8 +67,28 @@ THEME_FOOTER_WYSIWYG_TEMPLATE = 'weko_theme/footer_wysiwyg.html'
 THEME_SITENAME = 'WEKO3'
 """The name of the site to be used on the header and as a title."""
 
+THEME_SITEURL = 'https://localhost'
+"""The URL displayed in the sitemap. Change it to self domain name."""
+
 THEME_SEARCHBAR = True
 """Enable or disable the search bar."""
 
 THEME_FRONTPAGE_TEMPLATE = 'weko_theme/frontpage.html'
 """Template for front page."""
+
+WEKO_THEME_DEFAULT_COMMUNITY = 'Root Index'
+"""Default community identifier."""
+
+WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE = \
+    'weko_theme/admin/item_management_init.html'
+"""Template for Item Management."""
+
+WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE = \
+    'weko_theme/admin/item_management_display.html'
+"""Template for Admin Item Management."""
+
+ADMIN_BASE_TEMPLATE = 'weko_theme/page_admin.html'
+
+SETTINGS_TEMPLATE = 'weko_theme/page_setting.html'
+
+COVER_TEMPLATE = 'weko_theme/page_cover.html'

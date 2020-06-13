@@ -1,0 +1,113 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+  {% assets "weko_indextree_journal_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  <style>
+    body {
+    overflow-x:hidden;
+    }
+  </style>
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {% assets "weko_indextree_journal_view" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_indextree_journal_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+<input id="lang-code" type="hidden" value="{{lang_code}}" />
+<div class="row">
+  <div class="hide" id="get_tree_json">{{ get_tree_json }}</div>
+  <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
+  <div class="hide" id="mod_tree_detail">{{ mod_tree_detail }}</div>
+  <app-root-tree-hensyu journalDisplayFlg="1"></app-root-tree-hensyu>
+  <div class="col-sm-8 col-md-8 col-lg-8">
+    <br>
+    {% if index_id > 0 %}
+    <fieldset>
+    {% else %}
+    <fieldset disabled>
+    {% endif %}
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+          <span class="panel-title">
+            {{_('Journal')}}
+          </span>
+        </div>
+        <div class="panel-body">
+          <div id="weko-records">
+            <invenio-records
+              {%- if pid %}
+                initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+                links='{{links|tojson}}'
+              {%- else %}
+                initialization="{{ config.DEPOSIT_SEARCH_API }}"
+              {%- endif %}
+              response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
+              extra-params='{"headers":{"Content-Type": "application/json"}}'
+              form="{{ schemaform }}"
+              record='{{ record | tojson }}'
+              schema="{{ jsonschema }}">
+              <invenio-records-loading
+                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+              </invenio-records-loading>
+              <invenio-records-alert
+                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+              </invenio-records-alert>
+              <div ng-controller="WekoRecordsCtrl">
+                <div ng-show="false" type="text" id="btn_id" ></div>
+                <div ng-show="false" type="text" id="author_info" ></div>
+                <div ng-show="false" type="text" id="array_flg" ></div>
+                <div ng-show="false" type="text" id="array_index" ></div>
+                <div ng-show="false" type="text" id="weko_id" ></div>
+                <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
+                <input type="hidden" id="journal_id" value="{{journal_id}}">
+                <input type="hidden" id="right_index_id" value="{{index_id}}">
+                <invenio-records-form
+                  form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+                  form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
+                  template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
+                </invenio-records-form>
+                <div class="row">
+                  <div class="col-sm-9 col-sm-offset-4 text-center">
+                    <button id="index-journal-submit" class="btn btn-primary" ng-click="saveData();">
+                    <span class="glyphicon glyphicon-save"></span>&nbsp
+                    {{_('Save')}}</button>
+                  </div>
+                </div>
+              </div>
+            </invenio-records>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+</div>
+{%- endblock body %}

@@ -15,7 +15,7 @@
         null,
         "インデックス"
     ],
-    "Janpanese": [
+    "Japanese": [
         null,
         "日本語"
     ],
@@ -139,8 +139,28 @@
         null,
         "親インデックスへ移動"
     ],
-     "Cancle": [
+    "Cancel": [
         null,
         "キャンセル"
-     ]
+    ],
+    "Index_Link": [
+        null,
+        "インデックスリンク"
+    ],
+    "CoverPage_Function": [
+        null,
+        "PDF Cover Page (JA)"
+    ],
+    "Set_CoverPage_Recursively": [
+        null,
+        "Also reflect recursively on child index. (JA)"
+    ],
+    "RSS_Icon": [
+        null,
+        "RSSアイコン"
+    ],
+    "Display": [
+        null,
+        "表示する"
+    ]
 }

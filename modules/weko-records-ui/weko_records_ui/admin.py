@@ -21,49 +21,199 @@
 """WEKO3 module docstring."""
 
 import sys
+import unicodedata
+from datetime import datetime
 
-from flask import abort, current_app, flash, request
+from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
+from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
+from flask_login import current_user
+from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier
+from sqlalchemy.orm import load_only
+from weko_admin.models import AdminSettings
+from weko_deposit.api import WekoRecord
+from weko_records.api import ItemsMetadata
+from weko_search_ui.api import get_search_detail_keyword
 from werkzeug.local import LocalProxy
 
 from . import config
+from .models import InstitutionName, PDFCoverPageSettings
+from .utils import check_items_settings
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
 
 class ItemSettingView(BaseView):
+    """Item setting view."""
+
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        """Index."""
         try:
+            check_items_settings()
             email_display_flg = '0'
             search_author_flg = 'name'
+            open_date_display_flg = current_app.config.get(
+                'OPEN_DATE_HIDE_VALUE')
             if current_app.config['EMAIL_DISPLAY_FLG']:
                 email_display_flg = '1'
             if 'ITEM_SEARCH_FLG' in current_app.config:
                 search_author_flg = current_app.config['ITEM_SEARCH_FLG']
+            if current_app.config.get('OPEN_DATE_DISPLAY_FLG'):
+                open_date_display_flg = current_app.config.get(
+                    'OPEN_DATE_DISPLAY_VALUE')
 
             if request.method == 'POST':
                 # Process forms
                 form = request.form.get('submit', None)
                 if form == 'set_search_author_form':
+                    settings = AdminSettings.get('items_display_settings')
                     search_author_flg = request.form.get(
                         'searchRadios', 'name')
-                    _app.config['ITEM_SEARCH_FLG'] = search_author_flg
+                    settings.items_search_author = search_author_flg
                     email_display_flg = request.form.get('displayRadios', '0')
                     if email_display_flg == '1':
-                        _app.config['EMAIL_DISPLAY_FLG'] = True
+                        settings.items_display_email = True
                     else:
-                        _app.config['EMAIL_DISPLAY_FLG'] = False
+                        settings.items_display_email = False
+                    open_date_display_flg = request.form.get(
+                        'openDateDisplayRadios', '0')
+                    if open_date_display_flg == '1':
+                        settings.item_display_open_date = True
+                    else:
+                        settings.item_display_open_date = False
+                    AdminSettings.update('items_display_settings',
+                                         settings.__dict__)
                     flash(_('Author flag was updated.'), category='success')
 
             return self.render(config.ADMIN_SET_ITEM_TEMPLATE,
                                search_author_flg=search_author_flg,
-                               email_display_flg=email_display_flg)
-        except:
+                               email_display_flg=email_display_flg,
+                               open_date_display_flg=open_date_display_flg)
+        except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 
+
+class PdfCoverPageSettingView(BaseView):
+    """PdfCover Page settings."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Index."""
+        db.create_all()
+        record = PDFCoverPageSettings.find(1)
+        try:
+            header_output_image = record.header_output_image
+            if header_output_image:
+                header_output_image = header_output_image.replace(
+                    current_app.instance_path, "")
+            return self.render(
+                current_app.config["WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE"],
+                avail=record.avail,
+                header_display_type=record.header_display_type,
+                header_output_string=record.header_output_string,
+                header_output_image=header_output_image,
+                header_display_position=record.header_display_position
+            )
+        except AttributeError:
+            makeshift = PDFCoverPageSettings(
+                avail='disable',
+                header_display_type=None,
+                header_output_string=None,
+                header_output_image=None,
+                header_display_position=None)
+            db.session.add(makeshift)
+            db.session.commit()
+            record = PDFCoverPageSettings.find(1)
+            return self.render(
+                current_app.config["WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE"],
+                avail=record.avail,
+                header_display_type=record.header_display_type,
+                header_output_string=record.header_output_string,
+                header_output_image=record.header_output_image,
+                header_display_position=record.header_display_position
+            )
+
+
+class InstitutionNameSettingView(BaseView):
+    """Institution Names Setting."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Index."""
+        if request.method == 'POST':
+            rf = request.form.to_dict()
+            InstitutionName.set_institution_name(rf['institution_name'])
+            flash(_('Institution Name was updated.'), category='success')
+        institution_name = InstitutionName.get_institution_name()
+        return self.render(config.INSTITUTION_NAME_SETTING_TEMPLATE,
+                           institution_name=institution_name)
+
+
+class ItemManagementBulkUpdate(BaseView):
+    """Item Management - Bulk Update view."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Render view."""
+        detail_condition = get_search_detail_keyword('')
+        return self.render(
+            current_app.config['WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE'],
+            fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS'][
+                'fields'],
+            licences=current_app.config['WEKO_RECORDS_UI_LICENSE_DICT'],
+            management_type='update',
+            detail_condition=detail_condition)
+
+    @expose('/items_metadata', methods=['GET'])
+    def get_items_metadata(self):
+        """Get the metadata of items to bulk update."""
+        def get_file_data(meta):
+            file_data = {}
+            for key in meta:
+                if isinstance(meta.get(key), list):
+                    for item in meta.get(key):
+                        if isinstance(item, dict) and 'filename' in item:
+                            file_data[key] = meta.get(key)
+                            break
+            return file_data
+
+        pids = request.values.get('pids')
+        pid_list = []
+        if pids is not None:
+            pid_list = pids.split('/')
+
+        data = {}
+        for pid in pid_list:
+            record = WekoRecord.get_record_by_pid(pid)
+            indexes = []
+            if isinstance(record.get('path'), list):
+                for path in record.get('path'):
+                    indexes.append(path.split('/')[-1])
+
+            pidObject = PersistentIdentifier.get('recid', pid)
+            meta = ItemsMetadata.get_record(pidObject.object_uuid)
+
+            if meta:
+                data[pid] = {}
+                data[pid]['meta'] = meta
+                data[pid]['index'] = {"index": indexes}
+                data[pid]['contents'] = get_file_data(meta)
+
+        return jsonify(data)
+
+
+institution_adminview = {
+    'view_class': InstitutionNameSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Others'),
+        'endpoint': 'others'
+    }
+}
 
 item_adminview = {
     'view_class': ItemSettingView,
@@ -74,7 +224,29 @@ item_adminview = {
     }
 }
 
+pdfcoverpage_adminview = {
+    'view_class': PdfCoverPageSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('PDF Cover Page'),
+        'endpoint': 'pdfcoverpage'
+    }
+}
+
+item_management_bulk_update_adminview = {
+    'view_class': ItemManagementBulkUpdate,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Bulk Update'),
+        'endpoint': 'items/bulk/update'
+    }
+}
+
 __all__ = (
+    'pdfcoverpage_adminview',
+    'PdfCoverPageSettingView',
     'item_adminview',
     'ItemSettingView',
+    'institution_adminview',
+    'InstitutionNameSettingView'
 )

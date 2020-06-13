@@ -1,0 +1,64 @@
+<div ng-controller="itemExportCtrl">
+  {%- if not enable_contents_exporting %}
+    <div class="col-xs-9 col-xs-offset-3">
+      <div class="col-xs-6 col-xs-offset-2">
+        <h6 class="text-danger">{{ _('File contents cannot be exported.') }}</h6>
+      </div>
+    </div>
+  {% endif %}
+  <form method="POST" name="export_items_form" id="export_items_form"
+    action={{url_for('weko_items_ui.export')}}>
+    <div class="col-xs-9 col-xs-offset-3">
+      <p class="col-xs-2">{{_('File Contents')}}</p>
+      <div class="col-xs-6">
+        <div class="form-group">
+          <label class="radio-inline {{ 'text-muted' if not enable_contents_exporting else '' }}" for="item_export_radio_off">
+            <input type="radio" name="export_file_contents_radio"
+              id="item_export_radio_off" value="False"
+              {{ 'checked' if enable_contents_exporting else 'checked disabled' }}>
+            {{_('Do Not Export File Contents')}}
+          </label>
+          <label class="radio-inline {{ 'text-muted' if not enable_contents_exporting else '' }}" for="export_file_contents_radio_on">
+            <input type="radio" name="export_file_contents_radio"
+              id="export_file_contents_radio_on" value="True"
+              {{ '' if enable_contents_exporting else 'disabled' }}>
+            {{_('Export File Contents')}}
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-9 col-xs-offset-3">
+      <p class="col-xs-2">{{_('Export Format')}}</p>
+      <div class="col-xs-3">
+        <div class="form-group">
+          <label class="radio-inline" for="export_format_radio_json">
+            <input type="radio" name="export_format_radio"
+              id="export_format_radio_json" value="JSON"
+              {{ 'checked' if  True else '' }}>
+            {{_('JSON')}}
+          </label>
+          <label class="radio-inline" for="export_format_radio_bibtex">
+            <input type="radio" name="export_format_radio"
+              id="export_format_radio_bibtex" value="BIBTEX"
+              {{ 'checked' if False else '' }} >
+            {{_('BIBTEX')}}
+          </label>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="record_ids" name="record_ids" value="">
+    <input type="hidden" id="record_metadata" name="record_metadata" value="">
+  </form>
+  <div class="col-xs-8 col-xs-offset-4">
+    <div class="col-xs-4 text-center">
+      <h6 class="text-info">{{ _('Max number of items able to export') }}:{{ max_export_num }}</h6>
+    </div>
+    <div class="col-xs-2">
+      <button class="btn btn-primary" id="item_export_button" ng-click="exportItems()"
+        ng-disabled="item_export_checkboxes.length > max_export_num">
+        <span class="glyphicon glyphicon-save"></span>
+        {{_('Export')}}
+      </button>
+    </div>
+  </div>
+</div>

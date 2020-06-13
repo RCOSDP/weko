@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:55+0900\n"
+"POT-Creation-Date: 2019-04-25 18:57+0900\n"
 "PO-Revision-Date: 2018-04-12 18:06+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -19,91 +19,1122 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:25
+#: weko_records_ui/admin.py:73
+msgid "Author flag was updated."
+msgstr ""
+
+#: weko_records_ui/admin.py:137 weko_records_ui/admin.py:146
+#: weko_records_ui/admin.py:155 weko_records_ui/admin.py:353
+msgid "Setting"
+msgstr ""
+
+#: weko_records_ui/admin.py:138
+msgid "Others"
+msgstr ""
+
+#: weko_records_ui/admin.py:147
+msgid "Items"
+msgstr ""
+
+#: weko_records_ui/admin.py:156
+#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:98
+msgid "PDF Cover Page"
+msgstr ""
+
+#: weko_records_ui/admin.py:196
+msgid "Prefix"
+msgstr ""
+
+#: weko_records_ui/admin.py:202
+msgid "Suffix"
+msgstr ""
+
+#: weko_records_ui/admin.py:204
+msgid "Enable/Disable"
+msgstr ""
+
+#: weko_records_ui/admin.py:214
+msgid "Repository"
+msgstr ""
+
+#: weko_records_ui/admin.py:214
+msgid "JaLC DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:215
+msgid "JaLC CrossRef DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:216
+msgid "JaLC DataCite DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:829
+msgid "NDL JaLC DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:217
+msgid "CNRI"
+msgstr ""
+
+#: weko_records_ui/admin.py:218
+msgid "Semi-automatic Suffix"
+msgstr ""
+
+#: weko_records_ui/admin.py:235
+msgid "Only allow halfwith 1-bytes character in input"
+msgstr ""
+
+#: weko_records_ui/admin.py:354
+msgid "Identifier"
+msgstr ""
+
+#: weko_records_ui/config.py:46
+msgid "write your own license"
+msgstr ""
+
+#: weko_records_ui/config.py:47 weko_records_ui/views.py:178
+msgid "Creative Commons : Attribution"
+msgstr ""
+
+#: weko_records_ui/config.py:48 weko_records_ui/views.py:179
+msgid "Creative Commons : Attribution - ShareAlike"
+msgstr ""
+
+#: weko_records_ui/config.py:49 weko_records_ui/views.py:180
+msgid "Creative Commons : Attribution - NoDerivatives"
+msgstr ""
+
+#: weko_records_ui/config.py:50 weko_records_ui/views.py:181
+msgid "Creative Commons : Attribution - NonCommercial"
+msgstr ""
+
+#: weko_records_ui/config.py:51 weko_records_ui/views.py:182
+msgid "Creative Commons : Attribution - NonCommercial - ShareAlike"
+msgstr ""
+
+#: weko_records_ui/config.py:52 weko_records_ui/views.py:183
+msgid "Creative Commons : Attribution - NonCommercial - NoDerivatives"
+msgstr ""
+
+#: weko_records_ui/views.py:479
+msgid "PDF cover page settings have been updated."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:34
 msgid "Index"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:46
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:60
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:29
 msgid "Item"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:52
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:63
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:32
 msgid "No title"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:65
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:85
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:48
 msgid "Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:65
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:85
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:53
 msgid "File"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:66
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:86
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:54
 msgid "License"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:106
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:128
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:98
+msgid "Detail"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:127
+msgid "Restricted Access"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:136
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:77
+msgid "Original"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:147
+msgid "Plagiarism Check"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:161
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:188
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:34
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:61
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:114
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:139
 msgid "Preview"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:163
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:226
 msgid "item type"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:192
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:289
+msgid "Link"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:299
 msgid "Publish Status"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:208
-msgid "Privating"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:312
+msgid "Public"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:209
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:216
-msgid "Publish"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:314
+msgid "Change to Private"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:212
-msgid "Publishing"
-msgstr ""
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:213
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:216
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:317
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:323
 msgid "Private"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:237
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:319
+msgid "Change to Public"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:323
+msgid "Publish"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:343
 msgid "Back"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:240
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:347
 msgid "Edit"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:242
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:352
 msgid "Delete"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:252
-msgid "Control number"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:359
+msgid "Confirm"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:258
-msgid "Publication date"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:349
+msgid "The workflow is being edited."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:264
-msgid "Schema"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:362
+msgid "Are you sure you want to delete this item?"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:365
+msgid "OK"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:366
+msgid "Cancel"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:34
+msgid "Fields For Update"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:65
+msgid "Open Access"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:68
+msgid "Open Access Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:72
+msgid "Login User Only"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:83
+msgid "Add Field"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:91
+msgid "Search"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:119
+msgid "Item list"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:132
+msgid "Export Checked Items"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:133
+msgid "Export All Displayed Items"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:134
+msgid "Export All Items Of This Index"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:135
+msgid "Print Checked Items"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:136
+msgid "Print All Displayed Items"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:137
+msgid "Print All Items Of This Index"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:139
+msgid "Execution"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:142
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:169
+msgid "Display order"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:144
+msgid "Title(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:145
+msgid "Title(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:146
+msgid "Registrant(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:147
+msgid "Registrant(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:148
+msgid "Item Types(Asending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:149
+msgid "Item Types(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:150
+msgid "ID(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:151
+msgid "ID(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:152
+msgid "Modified Date and Time(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:153
+msgid "Modified Date and Time(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:154
+msgid "Created Date and Time(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:155
+msgid "Created Date and Time(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:156
+msgid "Review Date and Time(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:157
+msgid "Review Date and Time(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:158
+msgid "Published Year(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:159
+msgid "Published Year(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:160
+msgid "Custom(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:161
+msgid "Custom(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:188
+msgid "The number of display"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:204
+msgid "Select All"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:208
+msgid "Search failed."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:214
+msgid "Loading..."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:57
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:89
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:243
+msgid "Update"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/export.html:25
 #: weko_records_ui/templates/weko_records_ui/export_well.html:24
 msgid "OAI-PMH"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/box/export.html:39
 #: weko_records_ui/templates/weko_records_ui/export_well.html:38
 msgid "Export"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:101
+msgid "Plagarism Check"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:177
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:194
+msgid "Version"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/stats.html:4
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:178
+msgid "Stats"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:186
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
+msgid "Show"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:187
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
+msgid "Hide"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:195
+msgid "Date Modified"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:196
+msgid "Object File Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:197
+msgid "File Size"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:198
+msgid "File Hash Value"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:199
+msgid "Contributor Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:220
+msgid "Downloads"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:228
+msgid "Plays"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/stats.html:22
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:238
+msgid "See details"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:29
+msgid "Life Time"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:46
+msgid "Institution Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:34
+msgid "Search Author"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:40
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:49
+msgid "Search by Author Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:44
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:53
+msgid "Search by Author ID"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:60
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:66
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:75
+msgid "Display Email"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:70
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:79
+msgid "Hide Email"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:137
+msgid "Header Settings"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:241
+msgid " Update"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/meta.html:42
+msgid "Publication date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/meta.html:48
+msgid "Schema"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:49
+msgid "Size"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:58
+msgid ""
+"This is the file fingerprint (MD5 checksum), which can be used to verify "
+"the file integrity."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:61
+msgid "Download"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/share.html:23
+msgid "Share"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/share.html:41
+msgid "Your record could not be processed by the citation formatter"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/stats.html:29
+msgid "Views"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/versions.html:2
+msgid "Versions"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
+msgid "Are you sure you want to withdraw DOI?"
+msgstr ""
+
+#~ msgid "Privating"
+#~ msgstr ""
+
+#~ msgid "Publishing"
+#~ msgstr ""
+
+#~ msgid "Control number"
+#~ msgstr ""
+
+#~ msgid "Ok"
+#~ msgstr ""
+
+#~ msgid "Published"
+#~ msgstr ""
+
+#~ msgid "Published/"
+#~ msgstr ""
+
+#~ msgid "Period"
+#~ msgstr ""
+
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/body_contents.html:146
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details_contents.html:86
+msgid "The file cannot be downloaded because you do not have permission to view this file."
+msgstr ""
+
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/body_contents.html:436
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details.html:112
+msgid "This file is a Billing file. (Price: XXXXX). Do you want to download it?"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "There is a"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "newer version"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "of this record available."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "User Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Corresponding Usage Application ID"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Annual Report"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Corresponding Output ID"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Data Type"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Content File"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliated Institution"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "User Information"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "FullName"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Usage location"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Affiliation"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Mail Address"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Phone Number"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Research Title"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Research Plan"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Affiliation"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Mail Address"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Item Title"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Position(Other)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliation"
+msgstr ""
+
+msgid "PubDate"
+msgstr ""
+
+msgid "life"
+msgstr ""
+
+msgid "accumulation"
+msgstr ""
+
+msgid "combinational_analysis"
+msgstr ""
+
+msgid "perfectures"
+msgstr ""
+
+msgid "location_information"
+msgstr ""
+
+msgid "Output Type"
+msgstr ""
+
+msgid "Published Media Name"
+msgstr ""
+
+msgid "Published URL (DOI)"
+msgstr ""
+
+msgid "Published Date"
+msgstr ""
+
+msgid "Field"
+msgstr ""
+
+msgid "Member"
+msgstr ""
+
+msgid "Dataset Usage"
+msgstr ""
+
+msgid "Stop"
+msgstr ""
+
+msgid "Position(Others)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "write your own license"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-NC-ND 3.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)"
+msgstr ""
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+msgstr ""
+
+# WEKO_RECORDS_UI_ITEM_DETAIL
+msgid "Date (ISO-8601)"
+msgstr ""
+
+msgid "Subject"
+msgstr ""
+
+msgid "Subject Scheme"
+msgstr ""
+
+msgid "Subject URI"
+msgstr ""
+
+msgid "Alternative Title"
+msgstr ""
+
+msgid "Creator"
+msgstr ""
+
+msgid "Creator Name Identifier"
+msgstr ""
+
+msgid "Creator Name Identifier Scheme"
+msgstr ""
+
+msgid "Creator Name Identifier URI"
+msgstr ""
+
+msgid "Creator Name"
+msgstr ""
+
+msgid "Name_"
+msgstr "Name"
+
+msgid "Creator Family Name"
+msgstr ""
+
+msgid "Family Name"
+msgstr ""
+
+msgid "Creator Given Name"
+msgstr ""
+
+msgid "Given Name"
+msgstr ""
+
+msgid "Creator Alternative Name"
+msgstr ""
+
+msgid "Alternative Name"
+msgstr ""
+
+msgid "Affiliation Name Identifier"
+msgstr ""
+
+msgid "Affiliation Name Identifier Scheme"
+msgstr ""
+
+msgid "Affiliation Name Identifier URI"
+msgstr ""
+
+msgid "Affiliation Name"
+msgstr ""
+
+msgid "Creator Email Address"
+msgstr ""
+
+msgid "Description Type"
+msgstr ""
+
+msgid "Bibliographic Information"
+msgstr ""
+
+msgid "Journal Title"
+msgstr ""
+
+msgid "Volume Number"
+msgstr ""
+
+msgid "Issue Number"
+msgstr ""
+
+msgid "Page Start"
+msgstr ""
+
+msgid "Page End"
+msgstr ""
+
+msgid "Publication year"
+msgstr ""
+
+msgid "Date Type"
+msgstr ""
+
+msgid "Publisher"
+msgstr ""
+
+msgid "Source Identifier"
+msgstr ""
+
+msgid "Source Identifier Type"
+msgstr ""
+
+msgid "Source Identifier"
+msgstr ""
+
+msgid "Relation"
+msgstr ""
+
+msgid "Relation Type"
+msgstr ""
+
+msgid "Related Identifier"
+msgstr ""
+
+msgid "Related Identifier Type"
+msgstr ""
+
+msgid "Identifier Type"
+msgstr ""
+
+msgid "Related Title"
+msgstr ""
+
+msgid "Rights"
+msgstr ""
+
+msgid "Resource"
+msgstr ""
+
+msgid "Fileinfo"
+msgstr ""
+
+msgid "Text"
+msgstr ""
+
+msgid "Version Type"
+msgstr ""
+
+msgid "URI"
+msgstr ""
+
+msgid "Label"
+msgstr ""
+
+msgid "Mime Type"
+msgstr ""
+
+msgid "Heading"
+msgstr ""
+
+msgid "Headline"
+msgstr ""
+
+msgid "Subheading"
+msgstr ""
+
+msgid "Access Right"
+msgstr ""
+
+msgid "Access Rights URI"
+msgstr ""
+
+msgid "Contributor"
+msgstr ""
+
+msgid "Contributor Type"
+msgstr ""
+
+msgid "Contributor Name Identifier"
+msgstr ""
+
+msgid "Contributor Name Identifier Scheme"
+msgstr ""
+
+msgid "Contributor Name Identifier URI"
+msgstr ""
+
+msgid "Contributor_Name"
+msgstr "Contributor Name"
+
+msgid "Contributor Family Name"
+msgstr ""
+
+msgid "Contributor Given Name"
+msgstr ""
+
+msgid "Contributor Alternative Name"
+msgstr ""
+
+msgid "Contributor Alternative"
+msgstr ""
+
+msgid "Contributor Email Address"
+msgstr ""
+
+msgid "Degree Name"
+msgstr ""
+
+msgid "Degree Grantor"
+msgstr ""
+
+msgid "Degree Grantor Name Identifier"
+msgstr ""
+
+msgid "Degree Grantor Name"
+msgstr ""
+
+msgid "Date Granted"
+msgstr ""
+
+msgid "Dissertation Number"
+msgstr ""
+
+msgid "Contributor ID"
+msgstr ""
+
+msgid "Funding Reference"
+msgstr ""
+
+msgid "Funder Name"
+msgstr ""
+
+msgid "Award Number"
+msgstr ""
+
+msgid "Book Name"
+msgstr ""
+
+msgid "Date Reported"
+msgstr ""
+
+msgid "Name Identifier"
+msgstr ""
+
+msgid "Name Identifier Scheme"
+msgstr ""
+
+msgid "Description_"
+msgstr "Description"
+
+msgid "Rights Resource"
+msgstr ""
+
+msgid "Rights Holder"
+msgstr ""
+
+msgid "Rights Holder Name Identifier"
+msgstr ""
+
+msgid "Rights Holder Name Identifier Scheme"
+msgstr ""
+
+msgid "Rights Holder Name Identifier URI"
+msgstr ""
+
+msgid "Rights Holder Name"
+msgstr ""
+
+msgid "Resource Type"
+msgstr ""
+
+msgid "Temporal"
+msgstr ""
+
+msgid "Geo Location"
+msgstr ""
+
+msgid "Geo Location Point"
+msgstr ""
+
+msgid "Point Longitude"
+msgstr ""
+
+msgid "Point Latitude"
+msgstr ""
+
+msgid "Geo Location Box"
+msgstr ""
+
+msgid "West Bound Longitude"
+msgstr ""
+
+msgid "East Bound Longitude"
+msgstr ""
+
+msgid "South Bound Latitude"
+msgstr ""
+
+msgid "North Bound Latitude"
+msgstr ""
+
+msgid "Geo Location Place"
+msgstr ""
+
+msgid "Funder Identifier"
+msgstr ""
+
+msgid "Funder Identifier Type"
+msgstr ""
+
+msgid "Award Number URI"
+msgstr ""
+
+msgid "Award Title"
+msgstr ""
+
+msgid "Source Title"
+msgstr ""
+
+msgid "Number of Pages"
+msgstr ""
+
+msgid "Degree Grantor Name Identifier Scheme"
+msgstr ""
+
+msgid "Conference"
+msgstr ""
+
+msgid "Conference Name"
+msgstr ""
+
+msgid "Conference Sequence"
+msgstr ""
+
+msgid "Conference Place"
+msgstr ""
+
+msgid "Conference Country"
+msgstr ""
+
+msgid "URI Object Type"
+msgstr ""
+
+msgid "URI Label"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Extent"
+msgstr ""
+
+msgid "Issued Date"
+msgstr ""
+
+msgid "Issue"
+msgstr ""
+
+msgid "Volume"
+msgstr ""
+
+msgid "Search repository"
+msgstr ""
+
+msgid "Content File"
+msgstr ""
+
+msgid "Billing File"
+msgstr ""

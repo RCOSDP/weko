@@ -24,13 +24,32 @@ import json
 
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_pidstore import current_pidstore
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
+from invenio_records.models import RecordMetadata
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
 
+from .api import WekoDeposit
+
 # from copy import deepcopy
+
+
+def publish(**kwargs):
+    """Publish item."""
+    try:
+        pid_value = kwargs.get('pid_value').value
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=pid_value).first()
+        r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+        dep = WekoDeposit(r.json, r)
+        dep.publish()
+    except BaseException:
+        abort(400, "Failed to publish item")
+
+    return jsonify({'status': 'success'})
 
 
 def create_blueprint(app, endpoints):
@@ -119,11 +138,18 @@ def create_blueprint(app, endpoints):
             methods=['PUT', 'POST'],
         )
 
+        blueprint.add_url_rule(
+            options.pop('pub_route'),
+            view_func=publish,
+            methods=['PUT'],
+        )
+
     return blueprint
 
 
 class ItemResource(ContentNegotiatedMethodView):
-    """redirect to next page(index select) """
+    """Redirect to next page(index select)."""
+
     view_name = '{0}_item'
 
     def __init__(self, ctx, search_serializers=None,
@@ -151,14 +177,14 @@ class ItemResource(ContentNegotiatedMethodView):
 
     @pass_record
     def post(self, pid, record, **kwargs):
-        """"""
+        """Post."""
         from weko_deposit.links import base_factory
         response = self.make_response(pid, record, 201,
                                       links_factory=base_factory)
         return response
 
     def put(self, **kwargs):
-        """"""
+        """Put."""
         try:
             data = request.get_json()
             pid = kwargs.get('pid_value').value
@@ -171,7 +197,10 @@ class ItemResource(ContentNegotiatedMethodView):
             cache_key = current_app.config[
                 'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
-            datastore.put(cache_key, json.dumps(data), ttl_secs=ttl_sec)
+            datastore.put(
+                cache_key,
+                json.dumps(data).encode('utf-8'),
+                ttl_secs=ttl_sec)
         except BaseException:
             abort(400, "Failed to register item")
 

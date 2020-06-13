@@ -36,7 +36,7 @@ if [ "${INVENIO_WEB_VENV}" = "" ]; then
 fi
 if [ "${INVENIO_USER_EMAIL}" = "" ]; then
     echo "[ERROR] Please set environment variable INVENIO_USER_EMAIL before runnning this script."
-    echo "[ERROR] Example: export INVENIO_USER_EMAIL=info@inveniosoftware.org"
+    echo "[ERROR] Example: export INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp"
     exit 1
 fi
 if [ "${INVENIO_USER_PASS}" = "" ]; then
@@ -103,10 +103,34 @@ ${INVENIO_WEB_INSTANCE} db create -v
 # sphinxdoc-create-database-end
 
 # sphinxdoc-index-initialisation-begin
+#${INVENIO_WEB_INSTANCE} index destroy --yes-i-know
 ${INVENIO_WEB_INSTANCE} index init
 sleep 20
 ${INVENIO_WEB_INSTANCE} index queue init
 # sphinxdoc-index-initialisation-end
+
+# sphinxdoc-pipeline-registration-begin
+curl -XPUT 'http://elasticsearch:9200/_ingest/pipeline/item-file-pipeline' -H 'Content-Type: application/json' -d '{
+ "description" : "Index contents of each file.",
+ "processors" : [
+   {
+     "foreach": {
+       "field": "content",
+       "processor": {
+         "attachment": {
+           "indexed_chars" : -1,
+           "target_field": "_ingest._value.attachment",
+           "field": "_ingest._value.file",
+           "properties": [
+             "content"
+           ]
+         }
+       }
+     }
+   }
+ ]
+}'
+# sphinxdoc-pipeline-registration-end
 
 # sphinxdoc-populate-with-demo-records-begin
 #${INVENIO_WEB_INSTANCE} demo init
@@ -130,6 +154,7 @@ ${INVENIO_WEB_INSTANCE} users create \
 ${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_SYSTEM}"
 ${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_REPOSITORY}"
 ${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_CONTRIBUTOR}"
+${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_COMMUNITY}"
 # sphinxdoc-create-roles-end
 
 # sphinxdoc-set-user-role-begin
@@ -145,7 +170,8 @@ ${INVENIO_WEB_INSTANCE} access \
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "admin-access" \
-       role "${INVENIO_ROLE_REPOSITORY}"
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "schema-access" \
@@ -153,7 +179,13 @@ ${INVENIO_WEB_INSTANCE} access \
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "index-tree-access" \
-       role "${INVENIO_ROLE_REPOSITORY}"
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "indextree-journal-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "item-type-access" \
@@ -162,60 +194,189 @@ ${INVENIO_WEB_INSTANCE} access \
 ${INVENIO_WEB_INSTANCE} access \
        allow "item-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "files-rest-bucket-update" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "files-rest-object-delete" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "files-rest-object-delete-version" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "search-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "detail-page-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "download-original-pdf-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "author-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "items-autofill" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 # sphinxdoc-set-role-access-end
 
+#### sphinxdoc-create-language-data-begin
+${INVENIO_WEB_INSTANCE} language create \
+        --active --registered "en" "English" 001
+
+${INVENIO_WEB_INSTANCE} language create \
+        --active "zh" "中文" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+        --active "id" "Indonesia" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+        --active "vi" "Tiếng Việt" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+         --active "ms" "Bahasa Melayu" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+         --active "fil" "Filipino (Pilipinas)" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+         --active "th" "ไทย" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+         --active "hi" "हिन्दी" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+         --active --registered "ja" "日本語" 002
+#### sphinxdoc-create-language-data-end
+
 ##### sphinxdoc-create-test-data-begin
 ${INVENIO_WEB_INSTANCE} users create \
-       "test01@hitachi.com" \
+       "repoadmin@example.org" \
        --password "${INVENIO_USER_PASS}" \
        --active
 
 ${INVENIO_WEB_INSTANCE} roles add \
-       "test01@hitachi.com" \
+       "repoadmin@example.org" \
        "${INVENIO_ROLE_REPOSITORY}"
 
 ${INVENIO_WEB_INSTANCE} users create \
-       "test02@hitachi.com" \
+       "contributor@example.org" \
        --password "${INVENIO_USER_PASS}" \
        --active
 
 ${INVENIO_WEB_INSTANCE} roles add \
-        "test02@hitachi.com" \
+        "contributor@example.org" \
        "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} users create \
-       "test03@hitachi.com" \
+       "user@example.org" \
        --password "${INVENIO_USER_PASS}" \
        --active
+
+${INVENIO_WEB_INSTANCE} users create \
+      "comadmin@example.org" \
+      --password "${INVENIO_USER_PASS}" \
+      --active
+
+${INVENIO_WEB_INSTANCE} roles add \
+        "comadmin@example.org" \
+       "${INVENIO_ROLE_COMMUNITY}"
+
 ##### sphinxdoc-create-test-data-end
+
+# sphinxdoc-set-web-api-account-combobox-begin
+${INVENIO_WEB_INSTANCE} cert insert crf CrossRef
+# sphinxdoc-set-web-api-account-combobox-end
+
+#### sphinxdoc-create-widget_type-data-begin
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Free description" "Free description"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Access counter" "Access counter"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Notice" "Notice"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "New arrivals" "New arrivals"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Main contents" "Main contents"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Menu" "Menu"
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Header" "Header"
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Footer" "Footer"
+### sphinxdoc-create-widget_type-data-end
+
+# sphinxdoc-set-report-unit-and-target-begin
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "1" "Day"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "2" "Week"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "3" "Year"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "4" "Item"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "5" "Host"
+${INVENIO_WEB_INSTANCE} report create_target \
+       "1" "Item registration report" "1,2,3,5"
+${INVENIO_WEB_INSTANCE} report create_target \
+       "2" "Item detail view report" "1,2,3,4,5"
+${INVENIO_WEB_INSTANCE} report create_target \
+       "3" "Contents download report" "1,2,3,4,5"
+# sphinxdoc-set-report-unit-and-target-end
+
+${INVENIO_WEB_INSTANCE} billing create \
+       --active 1
+
+# create-admin-settings-begin
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       1 "items_display_settings" \
+       "{'items_search_author': 'name', 'items_display_email': True}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       2 "storage_check_settings" \
+       "{'threshold_rate': 80, 'cycle': 'weekly', 'day': 0}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       3 "site_license_mail_settings" \
+       "{'auto_send_flag': False}"
+# create-admin-settings-end
+
+# create-default-authors-prefix-settings-begin
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "ORCID" "ORCID" "https://orcid.org/"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "CiNii" "CiNii" "https://ci.nii.ac.jp/"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "KAKEN2" "KAKEN2" "https://kaken.nii.ac.jp/"
+# create-default-authors-prefix-settings-end

@@ -18,32 +18,33 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-'''
-    Extends the FeedGenerator to add PRISM Elements to the feeds.
+"""Extends the FeedGenerator to add PRISM Elements to the feeds.
 
-    prism partly taken from
-    http://prismstandard.org/namespaces/basic/2.0/
-
-'''
+prism partly taken from
+http://prismstandard.org/namespaces/basic/2.0/
+"""
 
 import sys
 from datetime import datetime
 
 import dateutil.parser
 import dateutil.tz
-from lxml import etree
-
 import feedgen.version
 from feedgen.compat import string_types
-from .entry import WekoFeedEntry
-from feedgen.util import ensure_format, formatRFC2822
 from feedgen.feed import FeedGenerator
+from feedgen.util import ensure_format, formatRFC2822
+from lxml import etree
+
+from .entry import WekoFeedEntry
 
 _feedgen_version = feedgen.version.version_str
 
+
 class WekoFeedGenerator(FeedGenerator):
+    """WekoFeedGenerator."""
 
     def __init__(self):
+        """__init__."""
         self.__feed_entries = []
 
         # ATOM
@@ -61,9 +62,9 @@ class WekoFeedGenerator(FeedGenerator):
         self.__atom_category = None  # {term*, scheme, label}
         self.__atom_contributor = None
         self.__atom_generator = {
-                'value': 'python-feedgen',
-                'uri': 'http://lkiesow.github.io/python-feedgen',
-                'version': feedgen.version.version_str}  # {value*,uri,version}
+            'value': 'python-feedgen',
+            'uri': 'http://lkiesow.github.io/python-feedgen',
+            'version': feedgen.version.version_str}  # {value*,uri,version}
         self.__atom_icon = None
         self.__atom_logo = None
         self.__atom_rights = None
@@ -95,14 +96,17 @@ class WekoFeedGenerator(FeedGenerator):
         self.__rss_ttl = None
         self.__rss_webMaster = None
 
+        self.__rss_request_url = None
+        self.__rss_items = None
+
         # Extension list:
         self.__extensions = {}
 
     def _create_atom(self, extensions=True):
-        '''Create a ATOM feed xml structure containing all previously set
-        fields.
+        """Create a ATOM feed xml structure Contains all previously set fields.
+
         :returns: Tuple containing the feed root element and the element tree.
-        '''
+        """
         nsmap = dict()
         if extensions:
             for ext in self.__extensions.values() or []:
@@ -114,7 +118,7 @@ class WekoFeedGenerator(FeedGenerator):
                              nsmap=nsmap)
         if self.__atom_feed_xml_lang:
             feed.attrib['{http://www.w3.org/XML/1998/namespace}lang'] = \
-                    self.__atom_feed_xml_lang
+                self.__atom_feed_xml_lang
 
         if not (self.__atom_id and self.__atom_title and self.__atom_updated):
             missing = ([] if self.__atom_title else ['title']) + \
@@ -217,7 +221,8 @@ class WekoFeedGenerator(FeedGenerator):
 
     def atom_str(self, pretty=False, extensions=True, encoding='UTF-8',
                  xml_declaration=True):
-        '''Generates an ATOM feed and returns the feed XML as string.
+        """Generates an ATOM feed and returns the feed XML as string.
+
         :param pretty: If the feed should be split into multiple lines and
             properly indented.
         :param extensions: Enable or disable the loaded extensions for the xml
@@ -230,14 +235,15 @@ class WekoFeedGenerator(FeedGenerator):
         versions and your encoding parameters passed to this method. For
         details have a look at the `lxml documentation
         <https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.tostring>`_
-        '''
+        """
         feed, doc = self._create_atom(extensions=extensions)
         return etree.tostring(feed, pretty_print=pretty, encoding=encoding,
                               xml_declaration=xml_declaration)
 
     def atom_file(self, filename, extensions=True, pretty=False,
                   encoding='UTF-8', xml_declaration=True):
-        '''Generates an ATOM feed and write the resulting XML to a file.
+        """Generates an ATOM feed and write the resulting XML to a file.
+
         :param filename: Name of file to write or a file-like object or a URL.
         :param extensions: Enable or disable the loaded extensions for the xml
             generation (default: enabled).
@@ -246,47 +252,62 @@ class WekoFeedGenerator(FeedGenerator):
         :param encoding: Encoding used in the  XML file (default: UTF-8).
         :param xml_declaration: If an XML declaration should be added to the
             output (Default: enabled).
-        '''
+        """
         feed, doc = self._create_atom(extensions=extensions)
         doc.write(filename, pretty_print=pretty, encoding=encoding,
                   xml_declaration=xml_declaration)
 
     def _create_rss(self, extensions=True):
-        '''Create an RSS feed xml structure containing all previously set
-        fields.
+        """Create an RSS feed xml structure.
+
+        Contains all previously set fields.
         :returns: Tuple containing the feed root element and the element tree.
-        '''
+        """
         nsmap = dict()
         if extensions:
             for ext in self.__extensions.values() or []:
                 if ext.get('rss'):
                     nsmap.update(ext['inst'].extend_ns())
 
-        nsmap.update({'atom':  'http://www.w3.org/2005/Atom',
-                      'content': 'http://purl.org/rss/1.0/modules/content/'})
+        # nsmap.update({'atom':  'http://www.w3.org/2005/Atom',
+        #               'content': 'http://purl.org/rss/1.0/modules/content/'})
 
-        feed = etree.Element('rss', version='2.0', nsmap=nsmap)
+        nsmap.update({'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+                      'rdfs': 'http://www.w3.org/2000/01/rdf-schema#'})
+
+        feed = etree.Element(
+            '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}RDF',
+            xmlns='http://purl.org/rss/1.0/',
+            nsmap=nsmap)
+
+        if self.__rss_language:
+            feed.attrib['{http://www.w3.org/XML/1998/namespace}lang'] = \
+                self.__rss_language
+
         channel = etree.SubElement(feed, 'channel')
-        if not (self.__rss_title and
-                self.__rss_link and
-                self.__rss_description):
+        if self.__rss_request_url:
+            channel.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
+                self.__rss_request_url
+
+        if not (self.__rss_title
+                and self.__rss_link):
             missing = ([] if self.__rss_title else ['title']) + \
-                      ([] if self.__rss_link else ['link']) + \
-                      ([] if self.__rss_description else ['description'])
+                      ([] if self.__rss_link else ['link'])
+            # ([] if self.__rss_description else ['description'])
             missing = ', '.join(missing)
             raise ValueError('Required fields not set (%s)' % missing)
         title = etree.SubElement(channel, 'title')
         title.text = self.__rss_title
         link = etree.SubElement(channel, 'link')
         link.text = self.__rss_link
-        desc = etree.SubElement(channel, 'description')
-        desc.text = self.__rss_description
+        # desc = etree.SubElement(channel, 'description')
+        # desc.text = self.__rss_description
         for ln in self.__atom_link or []:
-            # It is recommended to include a atom self link in rss documents…
+            # It is recommended to include a atom self link in rss documents
             if ln.get('rel') == 'self':
                 selflink = etree.SubElement(
-                        channel, '{http://www.w3.org/2005/Atom}link',
-                        href=ln['href'], rel='self')
+                    channel, '{http://www.w3.org/2005/Atom}link',
+                    href=ln['href'], rel='self')
                 if ln.get('type'):
                     selflink.attrib['type'] = ln['type']
                 if ln.get('hreflang'):
@@ -308,7 +329,7 @@ class WekoFeedGenerator(FeedGenerator):
             cloud.attrib['port'] = self.__rss_cloud.get('port')
             cloud.attrib['path'] = self.__rss_cloud.get('path')
             cloud.attrib['registerProcedure'] = self.__rss_cloud.get(
-                    'registerProcedure')
+                'registerProcedure')
             cloud.attrib['protocol'] = self.__rss_cloud.get('protocol')
         if self.__rss_copyright:
             copyright = etree.SubElement(channel, 'copyright')
@@ -339,6 +360,17 @@ class WekoFeedGenerator(FeedGenerator):
         if self.__rss_language:
             language = etree.SubElement(channel, 'language')
             language.text = self.__rss_language
+        if self.__rss_items:
+            items = etree.SubElement(channel, 'items')
+            seq = etree.SubElement(
+                items, '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Seq')
+            for item in self.__rss_items:
+                li = etree.SubElement(
+                    seq, '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}li')
+
+                li.attrib[
+                    '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource'] = item
+
         if self.__rss_lastBuildDate:
             lastBuildDate = etree.SubElement(channel, 'lastBuildDate')
 
@@ -383,14 +415,15 @@ class WekoFeedGenerator(FeedGenerator):
 
         for entry in self.__feed_entries:
             item = entry.rss_entry()
-            channel.append(item)
+            feed.append(item)
 
         doc = etree.ElementTree(feed)
         return feed, doc
 
     def rss_str(self, pretty=False, extensions=True, encoding='UTF-8',
                 xml_declaration=True):
-        '''Generates an RSS feed and returns the feed XML as string.
+        """Generates an RSS feed and returns the feed XML as string.
+
         :param pretty: If the feed should be split into multiple lines and
             properly indented.
         :param extensions: Enable or disable the loaded extensions for the xml
@@ -403,14 +436,15 @@ class WekoFeedGenerator(FeedGenerator):
         versions and your encoding parameters passed to this method. For
         details have a look at the `lxml documentation
         <https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.tostring>`_
-        '''
+        """
         feed, doc = self._create_rss(extensions=extensions)
         return etree.tostring(feed, pretty_print=pretty, encoding=encoding,
                               xml_declaration=xml_declaration)
 
     def rss_file(self, filename, extensions=True, pretty=False,
                  encoding='UTF-8', xml_declaration=True):
-        '''Generates an RSS feed and write the resulting XML to a file.
+        """Generates an RSS feed and write the resulting XML to a file.
+
         :param filename: Name of file to write or a file-like object or a URL.
         :param extensions: Enable or disable the loaded extensions for the xml
             generation (default: enabled).
@@ -419,39 +453,102 @@ class WekoFeedGenerator(FeedGenerator):
         :param encoding: Encoding used in the  XML file (default: UTF-8).
         :param xml_declaration: If an XML declaration should be added to the
             output (Default: enabled).
-        '''
+        """
         feed, doc = self._create_rss(extensions=extensions)
         doc.write(filename, pretty_print=pretty, encoding=encoding,
                   xml_declaration=xml_declaration)
 
+    def _create_jpcoar(self, extensions=True):
+        """Create an JPCOAR feed xml structure.
+
+        Contains all previously set fields.
+        :returns: Tuple containing the feed root element and the element tree.
+        """
+        nsmap = dict()
+        if extensions:
+            for ext in self.__extensions.values() or []:
+                if ext.get('jpcoar'):
+                    nsmap.update(ext['inst'].extend_ns())
+
+        nsmap.update({'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+                      'xsi': 'http://www.w3.org/2001/XMLSchema-instance'})
+
+        feed = etree.Element(
+            '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}RDF',
+            nsmap=nsmap)
+
+        header = etree.SubElement(feed, 'header')
+
+        if extensions:
+            for ext in self.__extensions.values() or []:
+                if ext.get('jpcoar'):
+                    ext['inst'].extend_jpcoar(feed)
+
+        if self.__feed_entries:
+            items = etree.SubElement(feed, 'items')
+            for entry in self.__feed_entries:
+                item = entry.jpcoar_entry()
+                items.append(item)
+
+        doc = etree.ElementTree(feed)
+        return feed, doc
+
+    def jpcoar_str(self, pretty=False, extensions=True, encoding='UTF-8',
+                   xml_declaration=True):
+        """Generates an JPCOAR feed and returns the feed XML as string.
+
+        :param pretty: If the feed should be split into multiple lines and
+            properly indented.
+        :param extensions: Enable or disable the loaded extensions for the xml
+            generation (default: enabled).
+        :param encoding: Encoding used in the  XML file (default: UTF-8).
+        :param xml_declaration: If an XML declaration should be added to the
+            output (Default: enabled).
+        :returns: String representation of the JPCOAR feed.
+        **Return type:** The return type may vary between different Python
+        versions and your encoding parameters passed to this method. For
+        details have a look at the `lxml documentation
+        <https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.tostring>`_
+        """
+        feed, doc = self._create_jpcoar(extensions=extensions)
+        return etree.tostring(feed, pretty_print=pretty, encoding=encoding,
+                              xml_declaration=xml_declaration)
+
     def title(self, title=None):
-        '''Get or set the title value of the feed. It should contain a human
-        readable title for the feed. Often the same as the title of the
-        associated website. Title is mandatory for both ATOM and RSS and should
+        """Get or set the title value of the feed.
+
+        It should contain a human readable title for the feed.
+        Often the same as the title of the associated website.
+        Title is mandatory for both ATOM and RSS and should
         not be blank.
         :param title: The new title of the feed.
         :returns: The feeds title.
-        '''
+        """
         if title is not None:
             self.__atom_title = title
             self.__rss_title = title
         return self.__atom_title
 
     def id(self, id=None):
-        '''Get or set the feed id which identifies the feed using a universally
+        """Get or set the feed id.
+
+        Which identifies the feed using a universally
         unique and permanent URI. If you have a long-term, renewable lease on
         your Internet domain name, then you can feel free to use your website's
         address. This field is for ATOM only. It is mandatory for ATOM.
+
         :param id: New Id of the ATOM feed.
         :returns: Id of the feed.
-        '''
 
+        """
         if id is not None:
             self.__atom_id = id
         return self.__atom_id
 
     def updated(self, updated=None):
-        '''Set or get the updated value which indicates the last time the feed
+        """Set or get the updated value.
+
+        Which indicates the last time the feed
         was modified in a significant way.
         The value can either be a string which will automatically be parsed or
         a datetime.datetime object. In any case it is necessary that the value
@@ -461,7 +558,7 @@ class WekoFeedGenerator(FeedGenerator):
             If not set, updated has as value the current date and time.
         :param updated: The modification date.
         :returns: Modification date as datetime.datetime
-        '''
+        """
         if updated is not None:
             if isinstance(updated, string_types):
                 updated = dateutil.parser.parse(updated)
@@ -475,7 +572,9 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__atom_updated
 
     def lastBuildDate(self, lastBuildDate=None):
-        '''Set or get the lastBuildDate value which indicates the last time the
+        """Set or get the lastBuildDate value.
+
+        which indicates the last time the
         content of the channel changed.
         The value can either be a string which will automatically be parsed or
         a datetime.datetime object. In any case it is necessary that the value
@@ -485,11 +584,13 @@ class WekoFeedGenerator(FeedGenerator):
             If not set, lastBuildDate has as value the current date and time.
         :param lastBuildDate: The modification date.
         :returns: Modification date as datetime.datetime
-        '''
+        """
         return self.updated(lastBuildDate)
 
     def author(self, author=None, replace=False, **kwargs):
-        '''Get or set author data. An author element is a dictionary containing
+        """Get or set author data.
+
+        An author element is a dictionary containing
         a name, an email address and a URI. Name is mandatory for ATOM, email
         is mandatory for RSS.
         This method can be called with:
@@ -512,7 +613,7 @@ class WekoFeedGenerator(FeedGenerator):
             >>> feedgen.author(name='John Doe', email='jdoe@example.com',
                                replace=True)
             [{'name':'John Doe','email':'jdoe@example.com'}]
-        '''
+        """
         if author is None and kwargs:
             author = kwargs
         if author is not None:
@@ -528,7 +629,9 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__atom_author
 
     def link(self, link=None, replace=False, **kwargs):
-        '''Get or set link data. An link element is a dict with the fields
+        """Get or set link data.
+
+        An link element is a dict with the fields
         href, rel, type, hreflang, title, and length. Href is mandatory for
         ATOM.
         This method can be called with:
@@ -560,7 +663,7 @@ class WekoFeedGenerator(FeedGenerator):
         Example::
             >>> feedgen.link( href='http://example.com/', rel='self')
             [{'href':'http://example.com/', 'rel':'self'}]
-        '''
+        """
         if link is None and kwargs:
             link = kwargs
         if link is not None:
@@ -587,7 +690,7 @@ class WekoFeedGenerator(FeedGenerator):
                     'stylesheet', 'subsection', 'successor-version', 'tag',
                     'terms-of-service', 'timegate', 'timemap', 'type', 'up',
                     'version-history', 'via', 'working-copy', 'working-copy-of'
-                    ]})
+                ]})
             # RSS only needs one URL. We use the first link for RSS:
             if len(self.__atom_link) > 0:
                 self.__rss_link = self.__atom_link[-1]['href']
@@ -595,7 +698,8 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__atom_link
 
     def category(self, category=None, replace=False, **kwargs):
-        '''Get or set categories that the feed belongs to.
+        """Get or set categories that the feed belongs to.
+
         This method can be called with:
         - the fields of a category as keyword arguments
         - the fields of a category as a dictionary
@@ -609,16 +713,16 @@ class WekoFeedGenerator(FeedGenerator):
         :param link:    Dict or list of dicts with data.
         :param replace: Add or replace old data.
         :returns: List of category data.
-        '''
+        """
         if category is None and kwargs:
             category = kwargs
         if category is not None:
             if replace or self.__atom_category is None:
                 self.__atom_category = []
             self.__atom_category += ensure_format(
-                    category,
-                    set(['term', 'scheme', 'label']),
-                    set(['term']))
+                category,
+                set(['term', 'scheme', 'label']),
+                set(['term']))
             # Map the ATOM categories to RSS categories. Use the atom:label as
             # name or if not present the atom:term. The atom:scheme is the
             # rss:domain.
@@ -633,7 +737,8 @@ class WekoFeedGenerator(FeedGenerator):
 
     def cloud(self, domain=None, port=None, path=None, registerProcedure=None,
               protocol=None):
-        '''Set or get the cloud data of the feed. It is an RSS only attribute.
+        """Set or get the cloud data of the feed. It is an RSS only attribute.
+
         It specifies a web service that supports the rssCloud interface which
         can be implemented in HTTP-POST, XML-RPC or SOAP 1.1.
         :param domain: The domain where the webservice can be found.
@@ -642,7 +747,7 @@ class WekoFeedGenerator(FeedGenerator):
         :param registerProcedure: The procedure to call.
         :param protocol: Can be either HTTP-POST, XML-RPC or SOAP 1.1.
         :returns: Dictionary containing the cloud data.
-        '''
+        """
         if domain is not None:
             self.__rss_cloud = {'domain': domain, 'port': port, 'path': path,
                                 'registerProcedure': registerProcedure,
@@ -650,8 +755,9 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__rss_cloud
 
     def contributor(self, contributor=None, replace=False, **kwargs):
-        '''Get or set the contributor data of the feed. This is an ATOM only
-        value.
+        """Get or set the contributor data of the feed.
+
+        This is an ATOM only value.
         This method can be called with:
         - the fields of an contributor as keyword arguments
         - the fields of an contributor as a dictionary
@@ -664,25 +770,27 @@ class WekoFeedGenerator(FeedGenerator):
                             data.
         :param replace: Add or replace old data.
         :returns: List of contributors as dictionaries.
-        '''
+        """
         if contributor is None and kwargs:
             contributor = kwargs
         if contributor is not None:
             if replace or self.__atom_contributor is None:
                 self.__atom_contributor = []
             self.__atom_contributor += ensure_format(
-                    contributor, set(['name', 'email', 'uri']), set(['name']))
+                contributor, set(['name', 'email', 'uri']), set(['name']))
         return self.__atom_contributor
 
     def generator(self, generator=None, version=None, uri=None):
-        '''Get or set the generator of the feed which identifies the software
+        """Get or set the generator of the feed.
+
+        Which identifies the software
         used to generate the feed, for debugging and other purposes. Both the
         uri and version attributes are optional and only available in the ATOM
         feed.
         :param generator: Software used to create the feed.
         :param version: Version of the software.
         :param uri: URI the software can be found.
-        '''
+        """
         if generator is not None:
             self.__atom_generator = {'value': generator}
             if version is not None:
@@ -693,24 +801,28 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__atom_generator
 
     def icon(self, icon=None):
-        '''Get or set the icon of the feed which is a small image which
+        """Get or set the icon of the feed.
+
+        Which is a small image which
         provides iconic visual identification for the feed. Icons should be
         square. This is an ATOM only value.
         :param icon: URI of the feeds icon.
         :returns: URI of the feeds icon.
-        '''
+        """
         if icon is not None:
             self.__atom_icon = icon
         return self.__atom_icon
 
     def logo(self, logo=None):
-        '''Get or set the logo of the feed which is a larger image which
+        """Get or set the logo of the feed.
+
+        Which is a larger image which
         provides visual identification for the feed. Images should be twice as
         wide as they are tall. This is an ATOM value but will also set the
         rss:image value.
         :param logo: Logo of the feed.
         :returns: Logo of the feed.
-        '''
+        """
         if logo is not None:
             self.__atom_logo = logo
             self.__rss_image = {'url': logo}
@@ -718,8 +830,9 @@ class WekoFeedGenerator(FeedGenerator):
 
     def image(self, url=None, title=None, link=None, width=None, height=None,
               description=None):
-        '''Set the image of the feed. This element is roughly equivalent to
-        atom:logo.
+        """Set the image of the feed.
+
+        This element is roughly equivalent to atom:logo.
         :param url: The URL of a GIF, JPEG or PNG image.
         :param title: Describes the image. The default value is the feeds
                       title.
@@ -729,7 +842,7 @@ class WekoFeedGenerator(FeedGenerator):
         :param height: The height of the image. The maximum is 400.
         :param description: Title of the link.
         :returns: Data of the image as dictionary.
-        '''
+        """
         if url is not None:
             self.__rss_image = {'url': url}
             if title is not None:
@@ -744,98 +857,134 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__rss_image
 
     def rights(self, rights=None):
-        '''Get or set the rights value of the feed which conveys information
-        about rights, e.g. copyrights, held in and over the feed. This ATOM
-        value will also set rss:copyright.
+        """Get or set the rights value of the feed.
+
+        Which conveys information about rights, e.g. copyrights,
+        held in and over the feed. This ATOM value will also set rss:copyright.
         :param rights: Rights information of the feed.
-        '''
+        """
         if rights is not None:
             self.__atom_rights = rights
             self.__rss_copyright = rights
         return self.__atom_rights
 
     def copyright(self, copyright=None):
-        '''Get or set the copyright notice for content in the channel. This RSS
-        value will also set the atom:rights value.
+        """Get or set the copyright notice for content in the channel.
+
+        This RSS value will also set the atom:rights value.
         :param copyright: The copyright notice.
         :returns: The copyright notice.
-        '''
+        """
         return self.rights(copyright)
 
     def subtitle(self, subtitle=None):
-        '''Get or set the subtitle value of the cannel which contains a
-        human-readable description or subtitle for the feed. This ATOM property
-        will also set the value for rss:description.
+        """Get or set the subtitle value of the cannel.
+
+        Which contains a human-readable description or subtitle for the feed.
+        This ATOM property will also set the value for rss:description.
         :param subtitle: The subtitle of the feed.
         :returns: The subtitle of the feed.
-        '''
+        """
         if subtitle is not None:
             self.__atom_subtitle = subtitle
             self.__rss_description = subtitle
         return self.__atom_subtitle
 
     def description(self, description=None):
-        '''Set and get the description of the feed. This is an RSS only element
-        which is a phrase or sentence describing the channel. It is mandatory
-        for RSS feeds. It is roughly the same as atom:subtitle. Thus setting
-        this will also set atom:subtitle.
+        """Set and get the description of the feed.
+
+        This is an RSS only element
+        which is a phrase or sentence describing the channel.
+        It is mandatory for RSS feeds. It is roughly the same as atom:subtitle.
+        Thus setting this will also set atom:subtitle.
         :param description: Description of the channel.
         :returns: Description of the channel.
-        '''
+        """
         return self.subtitle(description)
 
     def docs(self, docs=None):
-        '''Get or set the docs value of the feed. This is an RSS only value. It
-        is a URL that points to the documentation for the format used in the
-        RSS file. It is probably a pointer to [1]. It is for people who might
-        stumble across an RSS file on a Web server 25 years from now and wonder
-        what it is.
+        """Get or set the docs value of the feed.
+
+        This is an RSS only value. It is a URL that points to the documentation
+        for the format used in the RSS file. It is probably a pointer to [1].
+        It is for people who might stumble across an RSS file on a
+        Web server 25 years from now and wonder what it is.
         [1]: http://www.rssboard.org/rss-specification
         :param docs: URL of the format documentation.
         :returns: URL of the format documentation.
-        '''
+        """
         if docs is not None:
             self.__rss_docs = docs
         return self.__rss_docs
 
     def language(self, language=None):
-        '''Get or set the language of the feed. It indicates the language the
-        channel is written in. This allows aggregators to group all Italian
+        """Get or set the language of the feed.
+
+        It indicates the language the channel is written in.
+        This allows aggregators to group all Italian
         language sites, for example, on a single page. This is an RSS only
         field.  However, this value will also be used to set the xml:lang
         property of the ATOM feed node.
         The value should be an IETF language tag.
         :param language: Language of the feed.
         :returns: Language of the feed.
-        '''
+        """
         if language is not None:
             self.__rss_language = language
             self.__atom_feed_xml_lang = language
         return self.__rss_language
 
+    def requestUrl(self, url=None):
+        """Get or set the url of the feed.
+
+        This is an RSS only field.
+        However, this value will also be used to set the rdf:about
+        property of the RSS channel node.
+        :param url: url of the channel.
+        :returns: url of the channel.
+        """
+        if url is not None:
+            self.__rss_request_url = url
+        return self.__rss_request_url
+
+    def items(self, items=None):
+        """Get or set the items of the feed.
+
+        This is an RSS only field.
+        However, this value will also be used to set the rdf:resource
+        property of the RSS channel node.
+        :param items: items of the channel.
+        :returns: items of the channel.
+        """
+        if items is not None and len(items) != 0:
+            self.__rss_items = items
+        return self.__rss_items
+
     def managingEditor(self, managingEditor=None):
-        '''Set or get the value for managingEditor which is the email address
-        for person responsible for editorial content.    This is a RSS only
-        value.
+        """Set or get the value for managingEditor.
+
+        Which is the email address for person responsible for
+        editorial content. This is a RSS only value.
         :param managingEditor: Email address of the managing editor.
         :returns: Email address of the managing editor.
-        '''
+        """
         if managingEditor is not None:
             self.__rss_managingEditor = managingEditor
         return self.__rss_managingEditor
 
     def pubDate(self, pubDate=None):
-        '''Set or get the publication date for the content in the channel. For
-        example, the New York Times publishes on a daily basis, the publication
-        date flips once every 24 hours. That's when the pubDate of the channel
-        changes.
+        """Set or get the publication date for the content in the channel.
+
+        For example, the New York Times publishes on a daily basis,
+        the publication date flips once every 24 hours.
+        That's when the pubDate of the channel changes.
         The value can either be a string which will automatically be parsed or
         a datetime.datetime object. In any case it is necessary that the value
         include timezone information.
         This will set both atom:updated and rss:lastBuildDate.
         :param pubDate: The publication date.
         :returns: Publication date as datetime.datetime
-        '''
+        """
         if pubDate is not None:
             if isinstance(pubDate, string_types):
                 pubDate = dateutil.parser.parse(pubDate)
@@ -848,22 +997,25 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__rss_pubDate
 
     def rating(self, rating=None):
-        '''Set and get the PICS rating for the channel.    It is an RSS only
-        value.
-        '''
+        """Set and get the PICS rating for the channel.
+
+        It is an RSS only value.
+        """
         if rating is not None:
             self.__rss_rating = rating
         return self.__rss_rating
 
     def skipHours(self, hours=None, replace=False):
-        '''Set or get the value of skipHours, a hint for aggregators telling
-        them which hours they can skip. This is an RSS only value.
+        """Set or get the value of skipHours.
+
+        A hint for aggregators telling them which hours they can skip.
+        This is an RSS only value.
         This method can be called with an hour or a list of hours. The hours
         are represented as integer values from 0 to 23.
         :param hours: List of hours the feedreaders should not check the feed.
         :param replace: Add or replace old data.
         :returns: List of hours the feedreaders should not check the feed.
-        '''
+        """
         if hours is not None:
             if not (isinstance(hours, list) or isinstance(hours, set)):
                 hours = [hours]
@@ -876,14 +1028,16 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__rss_skipHours
 
     def skipDays(self, days=None, replace=False):
-        '''Set or get the value of skipDays, a hint for aggregators telling
-        them which days they can skip This is an RSS only value.
+        """Set or get the value of skipDays.
+
+        A hint for aggregators telling them which days they can skip.
+        This is an RSS only value.
         This method can be called with a day name or a list of day names. The
         days are represented as strings from 'Monday' to 'Sunday'.
         :param hours:   List of days the feedreaders should not check the feed.
         :param replace: Add or replace old data.
         :returns:       List of days the feedreaders should not check the feed.
-        '''
+        """
         if days is not None:
             if not (isinstance(days, list) or isinstance(days, set)):
                 days = [days]
@@ -897,17 +1051,18 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__rss_skipDays
 
     def textInput(self, title=None, description=None, name=None, link=None):
-        '''Get or set the value of textInput. This is an RSS only field.  The
-        purpose of the <textInput> element is something of a mystery. You can
-        use it to specify a search engine box. Or to allow a reader to provide
-        feedback. Most aggregators ignore it.
+        """Get or set the value of textInput.
+
+        This is an RSS only field.  The purpose of the <textInput> element is
+        something of a mystery. You can use it to specify a search engine box.
+        Or to allow a reader to provide feedback. Most aggregators ignore it.
         :param title: The label of the Submit button in the text input area.
         :param description: Explains the text input area.
         :param name: The name of the text object in the text input area.
         :param link: The URL of the CGI script that processes text input
                      requests.
         :returns: Dictionary containing textInput values.
-        '''
+        """
         if title is not None:
             self.__rss_textInput = {}
             self.__rss_textInput['title'] = title
@@ -917,32 +1072,38 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__rss_textInput
 
     def ttl(self, ttl=None):
-        '''Get or set the ttl value. It is an RSS only element. ttl stands for
-        time to live. It's a number of minutes that indicates how long a
+        """Get or set the ttl value. It is an RSS only element.
+
+        ttl stands for time to live.
+        It's a number of minutes that indicates how long a
         channel can be cached before refreshing from the source.
         :param ttl: Integer value indicating how long the channel may be
                     cached.
         :returns: Time to live.
-        '''
+        """
         if ttl is not None:
             self.__rss_ttl = int(ttl)
         return self.__rss_ttl
 
     def webMaster(self, webMaster=None):
-        '''Get and set the value of webMaster, which represents the email
-        address for the person responsible for technical issues relating to the
-        feed.  This is an RSS only value.
+        """Get and set the value of webMaster.
+
+        Which represents the email address for the person responsible for
+        technical issues relating to the feed.
+        This is an RSS only value.
         :param webMaster: Email address of the webmaster.
         :returns: Email address of the webmaster.
-        '''
+        """
         if webMaster is not None:
             self.__rss_webMaster = webMaster
         return self.__rss_webMaster
 
     def add_entry(self, feedEntry=None, order='prepend'):
-        '''This method will add a new entry to the feed. If the feedEntry
-        argument is omittet a new Entry object is created automatically. This
-        is the preferred way to add new entries to a feed.
+        """This method will add a new entry to the feed.
+
+        If the feedEntry argument is omittet a new Entry object is
+        created automatically.
+        This is the preferred way to add new entries to a feed.
         :param feedEntry: FeedEntry object to add.
         :param order: If `prepend` is chosen, the entry will be inserted
                       at the beginning of the feed. If `append` is chosen,
@@ -953,7 +1114,7 @@ class WekoFeedGenerator(FeedGenerator):
             ...
             >>> entry = feedgen.add_entry()
             >>> entry.title('First feed entry')
-        '''
+        """
         if feedEntry is None:
             feedEntry = WekoFeedEntry()
 
@@ -981,19 +1142,23 @@ class WekoFeedGenerator(FeedGenerator):
         return feedEntry
 
     def add_item(self, item=None):
-        '''This method will add a new item to the feed. If the item argument is
-        omittet a new FeedEntry object is created automatically. This is just
+        """This method will add a new item to the feed.
+
+        If the item argument is omittet a new FeedEntry object
+        is created automatically. This is just
         another name for add_entry(...)
-        '''
+        """
         return self.add_entry(item)
 
     def entry(self, entry=None, replace=False):
-        '''Get or set feed entries. Use the add_entry() method instead to
-        automatically create the FeedEntry objects.
+        """Get or set feed entries.
+
+        Use the add_entry() method instead to automatically create
+        the FeedEntry objects.
         This method takes both a single FeedEntry object or a list of objects.
         :param entry: FeedEntry object or list of FeedEntry objects.
         :returns: List ob all feed entries.
-        '''
+        """
         if entry is not None:
             if not isinstance(entry, list):
                 entry = [entry]
@@ -1021,32 +1186,36 @@ class WekoFeedGenerator(FeedGenerator):
         return self.__feed_entries
 
     def item(self, item=None, replace=False):
-        '''Get or set feed items. This is just another name for entry(...)
-        '''
+        """Get or set feed items. This is just another name for entry."""
         return self.entry(item, replace)
 
     def remove_entry(self, entry):
-        '''Remove a single entry from the feed. This method accepts both the
-        FeedEntry object to remove or the index of the entry as argument.
+        """Remove a single entry from the feed.
+
+        This method accepts both the FeedEntry object to remove or the index of
+        the entry as argument.
         :param entry: Entry or index of entry to remove.
-        '''
+        """
         if isinstance(entry, WekoFeedEntry):
             self.__feed_entries.remove(entry)
         else:
             self.__feed_entries.pop(entry)
 
     def remove_item(self, item):
-        '''Remove a single item from the feed. This is another name for
-        remove_entry.
-        '''
+        """Remove a single item from the feed.
+
+        This is another name for remove_entry.
+        :param item:
+        """
         self.remove_entry(item)
 
     def load_extension(self, name, atom=True, rss=True):
-        '''Load a specific extension by name.
+        """Load a specific extension by name.
+
         :param name: Name of the extension to load.
         :param atom: If the extension should be used for ATOM feeds.
         :param rss: If the extension should be used for RSS feeds.
-        '''
+        """
         # Check loaded extensions
         if not isinstance(self.__extensions, dict):
             self.__extensions = {}
@@ -1072,14 +1241,17 @@ class WekoFeedGenerator(FeedGenerator):
         self.register_extension(name, feedext, entryext, atom, rss)
 
     def register_extension(self, namespace, extension_class_feed=None,
-                           extension_class_entry=None, atom=True, rss=True):
-        '''Registers an extension by class.
+                           extension_class_entry=None, atom=True, rss=True,
+                           jpcoar=True):
+        """Registers an extension by class.
+
         :param namespace: namespace for the extension
         :param extension_class_feed: Class of the feed extension to load.
         :param extension_class_entry: Class of the entry extension to load
         :param atom: If the extension should be used for ATOM feeds.
         :param rss: If the extension should be used for RSS feeds.
-        '''
+        :param rss: If the extension should be used for JPCOAR feeds.
+        """
         # Check loaded extensions
         # `load_extension` ignores the "Extension" suffix.
         if not isinstance(self.__extensions, dict):
@@ -1093,12 +1265,13 @@ class WekoFeedGenerator(FeedGenerator):
 
         # `load_extension` registry
         self.__extensions[namespace] = {
-                'inst': extinst,
-                'extension_class_feed': extension_class_feed,
-                'extension_class_entry': extension_class_entry,
-                'atom': atom,
-                'rss': rss
-                }
+            'inst': extinst,
+            'extension_class_feed': extension_class_feed,
+            'extension_class_entry': extension_class_entry,
+            'atom': atom,
+            'rss': rss,
+            'jpcoar': jpcoar
+        }
 
         # Try to load the extension for already existing entries:
         for entry in self.__feed_entries:
@@ -1106,6 +1279,7 @@ class WekoFeedGenerator(FeedGenerator):
                 entry.register_extension(namespace,
                                          extension_class_entry,
                                          atom,
-                                         rss)
+                                         rss,
+                                         jpcoar)
             except ImportError:
                 pass

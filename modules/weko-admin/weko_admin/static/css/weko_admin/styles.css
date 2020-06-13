@@ -1,3 +1,6 @@
+.width_400px{
+  width:400px !important;
+}
 .width_100{
   width:100% !important;
 }
@@ -6,6 +9,9 @@
 }
 .width_50{
   width:50% !important;
+}
+.width_60{
+  width:60% !important;
 }
 .width_15{
   width:15% !important;
@@ -22,4 +28,19 @@
 }
 .height_70{
    height:70% !important;
+}
+.page > li {
+  cursor: pointer;
+}
+.page > li:disabled {
+  cursor: pointer;
+}
+.margin_0 {
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+}
+.alert-info {
+  background-color: #00a65a !important;
+  border-color: #008d4c !important;
+  border-radius: 3px;
 }

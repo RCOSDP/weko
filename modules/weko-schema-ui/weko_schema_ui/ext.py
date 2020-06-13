@@ -21,9 +21,8 @@
 """Flask extension for weko-schema-ui."""
 
 from . import config
-from .views import blueprint
 from .rest import create_blueprint
-from .schema import reset_oai_metadata_formats
+from .views import blueprint
 
 
 class WekoSchemaUI(object):
@@ -60,7 +59,6 @@ class WekoSchemaUI(object):
         for k in dir(config):
             if k.startswith('WEKO_SCHEMA_'):
                 app.config.setdefault(k, getattr(config, k))
-        reset_oai_metadata_formats(app)
 
 
 class WekoSchemaREST(object):

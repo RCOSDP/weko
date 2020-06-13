@@ -85,6 +85,10 @@ setup(
         'invenio_base.apps': [
             'weko_authors = weko_authors:WekoAuthors',
         ],
+        'invenio_admin.views': [
+            'weko_authors_management = '
+            'weko_authors.admin:authors_list_adminview',
+        ],
         'invenio_base.blueprints': [
             'weko_authors = weko_authors.views:blueprint',
         ],
@@ -108,6 +112,8 @@ setup(
             'weko_authors_js = weko_authors.bundles:js',
             'weko_authors_search_css = weko_authors.bundles:author_search_css',
             'weko_authors_search_js = weko_authors.bundles:author_search_js',
+            'weko_authors_prefix_css = weko_authors.bundles:author_prefix_css',
+            'weko_authors_prefix_js = weko_authors.bundles:author_prefix_js',
         ],
         'invenio_access.actions': [
             'author_access = weko_authors.permissions:action_author_access',

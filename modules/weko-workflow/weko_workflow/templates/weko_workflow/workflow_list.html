@@ -19,7 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{%- from "invenio_communities/macros.html" import community_header %}
 
 {%- block css %}
 {{ super() }}
@@ -28,10 +28,11 @@
 {%- block javascript %}
 {{ super() }}
 {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('flow', community_id) }}
 {%- endblock page_body_tabs %}
 
@@ -48,20 +49,23 @@
 {%- endblock page_footer %}
 
 {% block page_body %}
-{%-if not community %}
-{{super()}}
-{%- else%}
-<div class="communities">
-<div id="community-id" name="community-id" hidden>{{ community.id }}</div>
-{{ community_header(community, subtitle='') }}
-{{super()}}
-{{ community_footer(community, link=False, subtitle='') }}
-</div>
-<div class="communities">
-</div>
-{%- endif%}
+  {%-if not community %}
+    {{ super() }}
+  {%- else%}
+    <div class="communities">
+      <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
+      {{ community_header(community, subtitle='') }}
+      <div id="page_body" class="grid-stack hidden" {%- if render_widgets %}style="display: None;"{%- endif %}>
+        <div id="main_contents">
+        {{ super() }}
+        </div>
+      </div>
+      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+      {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
+    </div>
+    <div class="communities"></div>
+  {%- endif%}
 {% endblock page_body %}
-
 
 {%- block page_body_main %}
 <div class="row">
@@ -71,9 +75,9 @@
       <tr>
         <th>{{_('No.')}}</th>
         <th>{{_('WorkFlow')}}</th>
-        <th>{{_('Begin')}}</th>
-        <th>{{_('ItemType')}}</th>
+        <th>{{_('Item Type')}}</th>
         <th>{{_('Flow')}}</th>
+        <th></th>
         <th class="hide">{{_('Next Flow')}}</th>
       </tr>
     </thead>
@@ -82,20 +86,35 @@
       <tr>
         <th scope="row">{{loop.index}}</th>
         <td>{{workflow.flows_name}}</td>
-        {%-if community%}
-        <td><a href="#" class="btn btn-primary btn-begin" id="btn-begin-{{workflow.id}}" data-workflow-id="{{workflow.id}}" data-community="{{community.id}}">{{_('Begin')}}</a></td>
-        {%- else%}
-        <td><a href="#" class="btn btn-primary btn-begin" id="btn-begin-{{workflow.id}}" data-workflow-id="{{workflow.id}}" data-community="">{{_('Begin')}}</a></td>
-        {%- endif%}
         <td><span id="item_type_{{workflow.id}}" data-itemtype-id="{{workflow.itemtype_id}}">{{_(workflow.itemtype.item_type_name.name)}}</span></td>
         <td><span id="flow_{{workflow.id}}" data-flow-id="{{workflow.flow_id}}">{{_(workflow.flow_define.flow_name)}}</span></td>
+        {%-if community%}
+        <td class="text-center"><a href="#" class="btn btn-primary btn-begin align-middle"
+                id="btn-begin-{{workflow.id}}"
+                data-workflow-id="{{workflow.id}}"
+        data-community="{{community.id}}">{{_('New')}}</a></td>
+        {%- else%}
+        <td class="text-center"><a href="#" class="btn btn-success btn-begin"
+                id="btn-begin-{{workflow.id}}"
+                data-workflow-id="{{workflow.id}}" data-community="">
+                <span class="glyphicon glyphicon-plus"></span>&nbsp
+                {{_('New')}}</a></td>
+        {%- endif%}
         <td class="hide"> </td>
       </tr>
     {%- endfor %}
     </tbody>
   </table>
   <div class="hide" id="post_uri">{{url_for('weko_workflow.init_activity')}}</div>
-  <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
+    {%-if community%}
+      {%- set back_url = url_for('weko_workflow.index',community=community.id) -%}
+    {%- else%}
+      {%- set back_url = url_for('weko_workflow.index') -%}
+    {%- endif%}
+       <a class="btn btn-default pull-left" href="{{back_url}}">
+           <span class="glyphicon glyphicon-chevron-left"></span>&nbsp
+             {{_('Back')}}
+       </a>
   </div>
 </div>
 {%- endblock page_body_main %}

@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""weko records basic service support"""
+"""weko records basic service support."""
 
 import os
 
@@ -63,6 +63,7 @@ install_requires = [
     'invenio-access>=1.0.0b1',
     'invenio-i18n>=1.0.0b4',
     'invenio-db>=1.0.0b4',
+    'invenio-pidrelations>=1.0.0a3',
     'invenio-records>=1.0.0b4',
 ]
 

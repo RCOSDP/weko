@@ -21,8 +21,8 @@
 
 """Groups Settings Blueprint."""
 
-from flask import (
-    Blueprint, flash, jsonify, redirect, render_template, request, url_for)
+from flask import Blueprint, flash, jsonify, redirect, render_template, \
+    request, url_for
 from flask_babelex import gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -137,7 +137,7 @@ def requests():
     """List all pending memberships, listed only for group admins."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 5, type=int)
-    memberships = Membership.query_requests(current_user, eager=True).all()
+    memberships = Membership.query_requests(current_user).all()
 
     return render_template(
         'weko_groups/pending.html',

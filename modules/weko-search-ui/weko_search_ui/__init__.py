@@ -20,7 +20,7 @@
 
 """Module for displaying search results."""
 
-from .ext import WekoSearchUI, WekoSearchREST
+from .ext import WekoSearchREST, WekoSearchUI
 from .version import __version__
 
 __all__ = ('__version__', 'WekoSearchUI', 'WekoSearchREST')

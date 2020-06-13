@@ -15,9 +15,9 @@
         null,
         "Index"
     ],
-    "Janpanese": [
+    "Japanese": [
         null,
-        "Janpanese"
+        "Japanese"
     ],
     "English": [
         null,
@@ -133,14 +133,34 @@
     ],
      "Delete_all": [
         null,
-        "Delete all"
+        "Delete All"
     ],
      "Move_items_to_parent_Index": [
         null,
-        "Move items to parent Index"
+        "Move Items To Parent Index"
     ],
-     "Cancle": [
+     "Cancel": [
         null,
-        "Cancle"
-     ]
+        "Cancel"
+    ],
+     "Index_Link": [
+        null,
+        "Index Link"
+    ],
+    "CoverPage_Function": [
+        null,
+        "PDF Cover Page"
+    ],
+    "Set_CoverPage_Recursively": [
+        null,
+        "Also reflect recursively on child index."
+    ],
+    "RSS_Icon": [
+        null,
+        "RSS Icon"
+    ],
+    "Display": [
+        null,
+        "Display"
+    ]
 }

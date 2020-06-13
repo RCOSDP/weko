@@ -1,3 +1,4 @@
+
 {#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
@@ -29,8 +30,9 @@ Data submitted will occure as `q` in query string.
       <form  method="get" class="input-group input-group-sm">
         <input name="q" class="form-control" type="text" value="{{ q }}">
         <span class="input-group-btn">
-          <button class="btn btn-primary" type=submit>
-            <i class="fa fa-fw fa-search"></i><span>&nbsp;{{ _("Search") }}</span>
+          <button class="btn btn-primary search-button" type=submit>
+            <i class="fa fa-search"></i><span>
+                {{ _("Search") }}</span>
           </button>
         </span>
       </form>
@@ -57,7 +59,7 @@ used to create data.
         {{ content }}
       </p>
       <div>
-        <a href="{{ btn_href }}" class="btn btn-default btn-lg"><i class="{{ btn_icon }}"></i> {{ btn }}</a>
+        <a href="{{ btn_href }}" class="btn btn-light add-big-button"><i class="{{ btn_icon }}"></i> {{ btn }}</a>
       </div>
     </div>
   </div>

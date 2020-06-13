@@ -1,0 +1,159 @@
+{#
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+
+<div class="row">
+  <div id="item_link" class="hide">{{ activity.activity_id }}</div>
+  <div class="col-sm-3 col-md-3 col-lg-3">
+    <br>
+    <div class="panel panel-default">
+      <div class="panel-heading clearfix">
+        <h3 class="panel-title">{{_('Index Tree')}}</h3>
+      </div>
+      <div class="panel-body index-body table-responsive" style="overflow: auto;">
+        <app-tree-items></app-tree-items>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-9 col-md-9 col-lg-9">
+    <div id="invenio-search">
+      <!--<div id="item_management"class="hide">item_management</div>-->
+      <br>
+      <invenio-search {%- if index_id %} search-endpoint="{{ config.WEKO_SEARCH_UI_SEARCH_INDEX_API }}" {%- else %}
+        search-endpoint="" {%- endif %} search-extra-params=''
+        search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
+        search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'>
+        <div class="panel panel-default">
+          <div class="panel-heading clearfix">
+            <h3 class="panel-title">{{_('Designate Index')}}</h3>
+          </div>
+          <div class="panel-body index-body">
+            {%- if index_id %}
+            <invenio-search-results
+              template="{{ url_for('static', filename=config.WEKO_ITEM_MANAGEMENT_JSTEMPLATE_BREAD) }}">
+            </invenio-search-results>
+            {%- endif %}
+          </div>
+        </div>
+        <br>
+        <div id="search_res_itemLink" ng-controller="searchResItemLinkCtrl">
+          <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+              <span class="panel-title">
+                {{_('Item Link')}}
+              </span>
+            </div>
+            <div class="panel-body">
+              <div class="panel panel-default">
+                <div class="panel-body index-body">
+                  {% if item_link %}
+                    <input type="hidden" id="ex_item_links" value='{{ item_link|tojson }}'>
+                  {% endif %}
+                  <div class="row" ng-repeat="sub_link_item in link_item_list track by $index">
+                    <div class="col-sm-4 col-md-4 col-lg-4">
+                      <select class="form-control" ng-model="sub_link_item.sele_id">
+                        <option ng-repeat="option in sub_link_item.seleOption" value="{[ option.id ]}">{[
+                          option.content]}</option>
+                      </select>
+                    </div>
+                    <div class="col-sm-5 col-md-5 col-lg-5">
+                      {[sub_link_item.item_title]}
+                    </div>
+                    <div class="col-sm-3 col-md-3 col-lg-3 text-center">
+                      <button type="button" class="btn btn-danger delete-button" ng-click="del_link($index)">
+                        <span class="glyphicon glyphicon-trash"></span>
+                        {{_('Delete')}}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="index_item_list">
+                {%- if not page_id %}
+                <br>
+                <div class="panel-group m-top-5">
+                  <div class="panel panel-default">
+                    <div class="panel-body">
+                      <div class="row">
+                        {%- block search_item_result %}
+                        <div class="col-xs-12 col-md-12">
+                          {%- block search_error %}
+                          <invenio-search-error
+                            template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
+                            message="{{ _('Search failed.') }}">
+                          </invenio-search-error>
+                          {%- endblock search_error %}
+                          {%- block search_loading %}
+                          <invenio-search-loading
+                            template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
+                            message="{{ _('Loading...') }}">
+                          </invenio-search-loading>
+                          {%- endblock search_loading %}
+                          {%- block search_results %}
+                          <invenio-search-results
+                            template="{{ url_for('static', filename=config.WEKO_ITEM_WORKFLOW_JSTEMPLATE_RESULTS_EDIT) }}">
+                          </invenio-search-results>
+                          {%- endblock search_results %}
+                        </div>
+                        {%- endblock search_item_result %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {%- endif %}
+              </div>
+              <div class="text-center">
+                {%- block search_pagination_top %}
+                <invenio-search-pagination
+                  template="{{ url_for('static', filename=config.SEARCH_UI_ITEM_MANAGEMENT_JSTEMPLATE_PAGINATION) }}">
+                </invenio-search-pagination>
+                {%- endblock search_pagination_top %}
+              </div>
+              <div class="row">
+                <div class="col-sm-9 col-md-9">
+                </div>
+                <div class="col-sm-3 col-md-3">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
+            <div class="input-group">
+              <div class="input-group-addon">{{_('Comment')}}</div>
+              <textarea class="form-control" rows="5" id="input-comment" placeholder=""
+                ng-model="comment_data">{{temporary_comment if temporary_comment else ''}}</textarea>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary save-button" ng-click="btn_save()">
+            <span class="glyphicon glyphicon-saved"></span>
+            {{_('Save')}}
+          </button>
+
+      <button type="button" class="btn btn-primary done-button"
+          ng-click="btn_run()">{{_('Done')}}</button>
+      <button class="btn btn-danger done-button pull-right" id="btn_quit">
+        <i class="fa fa-sign-out"></i>
+        {{_('Quit')}}</button>
+      </div>
+      </invenio-search>
+    </div>
+  </div>
+</div>
+<br>

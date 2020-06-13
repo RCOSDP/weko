@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:55+0900\n"
+"POT-Creation-Date: 2019-07-02 04:41+0000\n"
 "PO-Revision-Date: 2015-10-09 17:08+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,138 +19,372 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:41
-msgid "Index List"
-msgstr "インデクスリスト"
+#: weko_search_ui/admin.py:223 weko_search_ui/admin.py:232
+msgid "Items"
+msgstr "アイテム"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:41
+#: weko_search_ui/admin.py:224
+msgid "Bulk Delete"
+msgstr "一括削除"
+
+#: weko_search_ui/admin.py:233
+msgid "Custom Sort"
+msgstr "カスタムソート"
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:27
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:66
+msgid "Title"
+msgstr "タイトル"
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:38
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:67
+msgid "Details"
+msgstr "詳細"
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:90
 msgid "Item Lists"
 msgstr "アイテムリスト"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:43
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:92
 msgid "Search Results"
 msgstr "検索結果"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:63
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:112
 msgid "Export Checked Items"
-msgstr "チェックしたアイテムをExport"
+msgstr "チェックしたアイテムをエクスポート"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:64
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:113
 msgid "Export All Displayed Items"
-msgstr "表示中の全てのアイテムをExport"
+msgstr "表示中のアイテムをエクスポート"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:65
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:114
 msgid "Export All Items Of This Index"
-msgstr "このインデックスの全てのアイテムをExport"
+msgstr "このインデックス全てのアイテムをエクスポート"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:66
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:115
 msgid "Print Checked Items"
 msgstr "チェックしたアイテムを印刷"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:67
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:116
 msgid "Print All Displayed Items"
-msgstr "表示中の全てのアイテムを印刷"
+msgstr "表示中のアイテムを印刷"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:68
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:117
 msgid "Print All Items Of This Index"
-msgstr "このインデックスの全てのアイテムを印刷"
+msgstr "このインデックス全てのアイテムを印刷"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:70
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:119
 msgid "Execution"
 msgstr "実行"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:73
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:100
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:122
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:149
 msgid "Display Order"
 msgstr "表示順"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:75
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:124
 msgid "Title(Ascending)"
 msgstr "タイトル（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:76
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:125
 msgid "Title(Descending)"
 msgstr "タイトル（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:77
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:126
 msgid "Registrant(Ascending)"
 msgstr "登録者（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:78
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:127
 msgid "Registrant(Descending)"
 msgstr "登録者（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:79
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:128
 msgid "Item Types(Asending)"
 msgstr "アイテムタイプ（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:80
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:129
 msgid "Item Types(Descending)"
 msgstr "アイテムタイプ（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:81
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:130
 msgid "ID(Ascending)"
 msgstr "ID（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:82
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:131
 msgid "ID(Descending)"
 msgstr "ID（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:83
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:132
 msgid "Modified Date and Time(Ascending)"
 msgstr "更新日時（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:84
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:133
 msgid "Modified Date and Time(Descending)"
 msgstr "更新日時（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:85
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:134
 msgid "Created Date and Time(Ascending)"
 msgstr "作成日時（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:86
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:135
 msgid "Created Date and Time(Descending)"
 msgstr "作成日時（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:87
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:136
 msgid "Review Date and Time(Ascending)"
 msgstr "査読日時（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:88
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:137
 msgid "Review Date and Time(Descending)"
 msgstr "査読日時（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:89
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:138
 msgid "Published Year(Ascending)"
 msgstr "出版年（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:90
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:139
 msgid "Published Year(Descending)"
 msgstr "出版年（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:91
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:140
 msgid "Custom(Ascending)"
 msgstr "カスタム（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:92
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:141
 msgid "Custom(Descending)"
 msgstr "カスタム（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:119
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:168
 msgid "Display Number"
 msgstr "表示数"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:138
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:58
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:187
 msgid "Search failed."
-msgstr "検索に失敗しました。"
+msgstr "検索に失敗しました"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:144
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:64
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:193
 msgid "Loading..."
-msgstr "読み込み中"
+msgstr "読み込み中..."
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:36
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:37
+msgid "Target Index"
+msgstr "ターゲットインデックス"
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:49
+msgid "Delete items of child recursively"
+msgstr "子のアイテムを再帰的に削除します"
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:61
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:65
+msgid "Delete"
+msgstr "削除"
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:79
+msgid "Are you sure you want to delete it?"
+msgstr "削除してよろしいですか？"
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:82
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:117
+msgid "Continue"
+msgstr "継続"
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:84
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:99
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:118
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:91
+msgid "Edit"
+msgstr "編集"
+
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:96
+msgid "Save"
+msgstr "保存"
+
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:114
+msgid "Is the input contents discarded ?"
+msgstr "入力内容を破棄してもよろしいですか？"
 
 #~ msgid "Search"
 #~ msgstr "キーワード検索"
 
 #~ msgid "DetailSearch"
 #~ msgstr "詳細検索"
+
+#~ msgid "Index List"
+#~ msgstr "インデクスリスト"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Summary"
+msgstr "サマリー"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Total"
+msgstr "総計"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "New Item"
+msgstr "新規登録アイテム"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Update Item"
+msgstr "更新アイテム"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Check Error"
+msgstr "チェックエラー"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Download"
+msgstr "ダウンロード"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "No."
+msgstr "No."
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Item Id"
+msgstr "アイテムID"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Title"
+msgstr "タイトル"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Check Result"
+msgstr "チェック結果"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Error"
+msgstr "エラー"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Update"
+msgstr "更新"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Not match"
+msgstr "一致しない"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Register"
+msgstr "登録"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Start Date"
+msgstr "開始日"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "End Date"
+msgstr "終了日"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Action"
+msgstr "アクション"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "End"
+msgstr "End"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Work Flow Status"
+msgstr "ワークフローステータス"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Done"
+msgstr "作業済"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "To Do"
+msgstr ""
+
+#: weko_search_ui/config.py:
+msgid "Access"
+msgstr "アクセス制限"
+
+#: weko_search_ui/config.py:
+msgid "Open access"
+msgstr "オープンアクセス"
+
+#: weko_search_ui/config.py:
+msgid "Restricted access"
+msgstr "制約付きアクセス"
+
+#: weko_search_ui/config.py:
+msgid "Metadata only access"
+msgstr "メタデータのみ"
+
+#: weko_search_ui/config.py:
+msgid "Embargoed access"
+msgstr "エンバーゴ期間中"
+
+#: weko_search_ui/config.py:
+msgid "Data Language"
+msgstr "データの言語"
+
+#: weko_search_ui/config.py:
+msgid "Distributor"
+msgstr "配布者"
+
+#: weko_search_ui/config.py:
+msgid "Data Type"
+msgstr "データタイプ"
+
+#: weko_search_ui/config.py:
+msgid "Chinese"
+msgstr "中国語"
+
+#: weko_search_ui/config.py:
+msgid "Mandarin Chinese"
+msgstr "北京語"
+
+#: weko_search_ui/config.py:
+msgid "English"
+msgstr "英語"
+
+#: weko_search_ui/config.py:
+msgid "French"
+msgstr "フランス語"
+
+#: weko_search_ui/config.py:
+msgid "German"
+msgstr "ドイツ語"
+
+#: weko_search_ui/config.py:
+msgid "Japanese"
+msgstr "日本語"
+
+#: weko_search_ui/config.py:
+msgid "Korean"
+msgstr "韓国語"
+
+#: weko_search_ui/config.py:
+msgid "Russian"
+msgstr "ロシア語"
+
+#: weko_search_ui/config.py:
+msgid "Center for Social Research and Data Archives, Institute of Social Science, University of Tokyo"
+msgstr "東京大学 社会科学研究所附属社会調査・データアーカイブ研究センター"
+
+#: weko_search_ui/config.py:
+msgid "Institute of Economic Research, Hitotsubashi University"
+msgstr "一橋大学 経済研究所"
+
+#: weko_search_ui/config.py:
+msgid "Panel Data Research Center at Keio University"
+msgstr "慶應義塾大学 経済学部附属経済研究所パネルデータ設計・解析センター"
+
+#: weko_search_ui/config.py:
+msgid "Japanese General Social Surveys, Osaka University of Commerce"
+msgstr "大阪商業大学 ＪＧＳＳ研究センター"
+
+#: weko_search_ui/config.py:
+msgid "Historiographical Institute The University of Tokyo"
+msgstr "東京大学 史料編纂所"
+
+
 

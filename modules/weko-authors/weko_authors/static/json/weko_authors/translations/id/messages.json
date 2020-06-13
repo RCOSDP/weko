@@ -1,0 +1,98 @@
+{
+    "Author_Add_New_Author": [
+        null,
+        "Author"
+    ],
+    "Author_Name": [
+        null,
+        "Name"
+    ],
+    "Author_Display": [
+        null,
+        "Display"
+    ],
+    "Author_Hide": [
+        null,
+        "Hide"
+    ],
+    "Author_Add_Author_Item": [
+        null,
+        "Add author item"
+    ],
+    "Author_ID": [
+        null,
+        "Author ID"
+    ],
+    "Author_Placeholder_authorId": [
+        null,
+        "Author ID"
+    ],
+    "Author_Confirm": [
+        null,
+        "Confirm"
+    ],
+    "Author_Add_Author_ID": [
+        null,
+        "Add a new ID"
+    ],
+    "Author_EMail": [
+        null,
+        "E-Mail"
+    ],
+    "Author_Add_EMail": [
+        null,
+        "Add E-mail"
+    ],
+    "Author_Button_Clear": [
+        null,
+        "Clear"
+    ],
+    "Author_Button_Save": [
+        null,
+        "Save"
+    ],
+    "Author_familyNmAndNm": [
+        null,
+        "First and Last Name"
+    ],
+    "Author_fullNm": [
+        null,
+        "Full Name"
+    ],
+    "Author_Add_Organization": [
+        null,
+        "Add Organization"
+    ],
+    "Author_Add_Author": [
+        null,
+        "Add Author"
+    ],
+    "Author_Search": [
+        null,
+        "Search"
+    ],
+    "Author_Mail_Address": [
+        null,
+        "Mail Address"
+    ],
+    "Author_Edit": [
+        null,
+        "Edit"
+    ],
+    "Author_Search_No_Result": [
+        null,
+        "Sorry，No results."
+    ],
+    "Author_Page_Previous": [
+        null,
+        "Previous"
+    ],
+    "Author_Page_Next": [
+        null,
+        "Next"
+    ],
+    "Author_On_1_Page": [
+        null,
+        "On 1 Page:"
+    ]
+}

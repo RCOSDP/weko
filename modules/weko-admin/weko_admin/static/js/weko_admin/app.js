@@ -1,4 +1,10 @@
 (function (angular) {
+ function addAlert(message) {
+    $('#alerts').html(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }
   // Bootstrap it!
   angular.element(document).ready(function() {
     angular.module('siteLicense.controllers', []);
@@ -7,6 +13,7 @@
                             organization_name:"",
                             mail_address:"",
                             domain_name:"",
+                            receive_mail_flag:"F",
                             addresses:[{start_ip_address:[],finish_ip_address:[]}]
                             }],
                      item_type:{
@@ -54,6 +61,7 @@
                             organization_name:"",
                             mail_address:"",
                             domain_name:"",
+                            receive_mail_flag:"F",
                             addresses:[{start_ip_address:[],finish_ip_address:[]}]
                             };
         $scope.dbJson.site_license.push(siteLicenseJson);
@@ -95,25 +103,37 @@
              var saddr = "";
              var faddr = "";
              for(var i=0; i<4; i++){
-                saddr += ("00" + dbjosn.site_license[chk1].addresses[chk2].start_ip_address[i]).slice(-3);
-                faddr += ("00" + dbjosn.site_license[chk1].addresses[chk2].finish_ip_address[i]).slice(-3);
+                tmp_s=dbjosn.site_license[chk1].addresses[chk2].start_ip_address[i];
+                if (typeof tmp_s!=='undefined' && tmp_s.length > 0) {
+                  saddr += ("00" + tmp_s).slice(-3);
+                }
+                tmp_f=dbjosn.site_license[chk1].addresses[chk2].finish_ip_address[i]
+                if (typeof tmp_f!=='undefined' && tmp_f.length > 0) {
+                  faddr += ("00" + tmp_f).slice(-3);
+                }
              }
 
-             if (parseInt(saddr) > parseInt(faddr)){
+             if (!saddr || !faddr){
+                $scope.ipCheckFlgArry[chk1].ipCheckFlg = true;
+             }
+             else if (parseInt(saddr) > parseInt(faddr)){
                 $scope.ipCheckFlgArry[chk1].ipRangeCheck = true;
                 return;
              }
            }
            $scope.ipCheckFlgArry[chk1].ipRangeCheck = false;
         }
-          //
+        isError = $scope.ipCheckFlgArry.find(item => item.ipCheckFlg === true || item.ipRangeCheck === true);
+        if (!isError) {
           var url = $location.path();
           dbJson = $scope.dbJson;
           $http.post(url, dbJson).then(function successCallback(response) {
-             alert(response.data.message);
+             $('html,body').scrollTop(0);
+             addAlert(response.data.message);
           }, function errorCallback(response) {
              alert(response.data.message);
           });
+        }
       }
 
       //入力チェック
@@ -142,10 +162,9 @@
      angular.module('siteLicenseModule', ['siteLicense.controllers']).config(['$interpolateProvider', function($interpolateProvider) {
       $interpolateProvider.startSymbol('[[');
       $interpolateProvider.endSymbol(']]');
-　　}]);
+    }]);
 
     angular.bootstrap(
       document.getElementById('siteLicense'), ['siteLicenseModule']);
   });
 })(angular);
-

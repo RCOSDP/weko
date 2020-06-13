@@ -1,0 +1,122 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{% extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
+
+{%- from "invenio_communities/macros.html" import community_header %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <!-- {% assets "weko_records_ui_cites_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %} -->
+  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_records_ui/file_stats.js')}}"></script>
+<!-- start demo block-->
+
+<script type="text/javascript">var addthis_config = {"data_track_addressbar": true};</script>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5d8af23e9a3a2633"></script>
+<!-- end demo block -->
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
+  {{ tabs_selector('top',community_id) }}
+{%- endblock page_body_tabs%}
+
+{%- block page_header %}
+{%-if not community_id %}
+{{ super() }}
+{%- else%}
+
+{%- endif%}
+{%- endblock page_header %}
+
+{%- block page_footer %}
+{%-if not community_id%}
+{{ super() }}
+{%- endif%}
+{%- endblock page_footer %}
+
+
+{% block page_body %}
+{%-if not community_id %}
+{{super()}}
+{%- else%}
+<div class="communities">
+<div id="community-id" name="community-id" hidden>{{ community_id }}</div>
+{{ community_header(community, subtitle='') }}
+  <div id="page_body" class="grid-stack hidden" {%- if render_widgets %}style="display: None;"{%- endif %}>
+  <div id="main_contents">
+{{super()}}
+  </div>
+  </div>
+  {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+  {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
+</div>
+<div class="communities">
+</div>
+{%- endif%}
+{% endblock page_body %}
+
+{%- block page_body_main %}
+  <div class="row">
+    <div class="col-sm-12 col-md-12 col-lg-12">
+      {% include "weko_theme/body_search.html" %}
+    </div>
+  </div>
+  <div class="row">
+    <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
+      {% include "weko_theme/body_index.html" %}
+    </div>
+    <div id="detail-item" class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}}">
+      {% include "weko_records_ui/file_details_contents.html" %}
+    </div>
+  </div>
+  <div class="modal fade" id="confirm_download" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>{{_('Confirm')}}</h3>
+          </div>
+          <div class="modal-body">
+            <input id="download_confirm_message" type="hidden" value="{{_('This file is a Billing file. (Price: XXXXX). Do you want to download it?')}}" />
+            <p id="download_confirm_content"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="confirm_download_button" class="btn btn-primary">{{_('Yes')}}</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">{{_('No')}}</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+{%- endblock page_body_main %}

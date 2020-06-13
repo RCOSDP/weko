@@ -20,6 +20,7 @@
 
 """Blueprint for Index Search rest."""
 
+import copy
 import json
 import os.path
 import shutil
@@ -27,29 +28,33 @@ import uuid
 # from copy import deepcopy
 from functools import partial
 
-from flask import (
-    Blueprint, abort, current_app, jsonify, redirect, request, url_for)
+from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
+    url_for
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
+from invenio_i18n.ext import current_i18n
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records.api import Record
-from invenio_records_rest.errors import (
-    InvalidDataRESTError, MaxResultWindowRESTError, UnsupportedMediaRESTError)
+from invenio_records_rest.errors import InvalidDataRESTError, \
+    MaxResultWindowRESTError, UnsupportedMediaRESTError
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
-from invenio_records_rest.views import (
-    create_url_rules, need_record_permission, pass_record)
+from invenio_records_rest.views import create_url_rules, \
+    need_record_permission, pass_record
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from webargs import fields
 from webargs.flaskparser import use_kwargs
+from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
+from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
-from invenio_i18n.ext import current_i18n
+
+from . import config
 
 
 def create_blueprint(app, endpoints):
@@ -141,9 +146,8 @@ def create_blueprint(app, endpoints):
 
 
 class IndexSearchResource(ContentNegotiatedMethodView):
-    """
-     Index aggs Seach API
-    """
+    """Index aggs Seach API."""
+
     view_name = '{0}_index'
 
     def __init__(self, ctx, search_serializers=None,
@@ -173,21 +177,48 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         :returns: the search result containing hits and aggregations as
         returned by invenio-search.
         """
-
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
+        community_id = request.values.get('community')
+
+        params = {}
+        if current_app.config['RECORDS_REST_FACETS'] and \
+            current_app.config['SEARCH_UI_SEARCH_INDEX'] and \
+                'post_filters' in current_app.config[
+            'RECORDS_REST_FACETS'
+        ][current_app.config[
+            'SEARCH_UI_SEARCH_INDEX'
+        ]]:
+            post_filters = current_app.config[
+                'RECORDS_REST_FACETS'
+            ][current_app.config[
+                'SEARCH_UI_SEARCH_INDEX'
+            ]]['post_filters']
+
+            for param in post_filters:
+                value = request.args.getlist(param)
+                if value:
+                    params[param] = value
+
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
-
         urlkwargs = dict()
         search_obj = self.search_class()
         search = search_obj.with_preference_param().params(version=True)
         search = search[(page - 1) * size:page * size]
-
         search, qs_kwargs = self.search_factory(self, search)
-        urlkwargs.update(qs_kwargs)
+
+        query = request.values.get('q')
+        if query:
+            urlkwargs['q'] = query
 
         # Execute search
+
+        for param in params:
+            query_key = current_app.config[
+                'WEKO_FACETED_SEARCH_MAPPING'][param]
+            search = search.post_filter({'terms': {query_key: params[param]}})
+
         search_result = search.execute()
 
         # Generate links for prev/next
@@ -207,57 +238,187 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 size * page < self.max_result_window:
             links['next'] = url_for('weko_search_rest.recid_index',
                                     page=page + 1, **urlkwargs)
-
         # aggs result identify
         rd = search_result.to_dict()
-        q = request.values.get('q')
+        q = request.values.get('q') or '0'
         lang = current_i18n.language
 
-        if q:
-            try:
-                paths = Indexes.get_self_list(q)
-            except BaseException:
-                paths = []
-            agp = rd["aggregations"]["path"]["buckets"]
-            nlst = []
-
-            for p in paths:
-                m = 0
-                for k in range(len(agp)):
-                    if p.path == agp[k].get("key"):
-                        agp[k]["name"] = p.name if lang == "ja" else p.name_en
-                        date_range = agp[k].pop("date_range")
-                        no_available = agp[k].pop("no_available")
-                        pub = dict()
-                        bkt = date_range['available']['buckets']
-                        if bkt:
-                            for d in bkt:
-                                pub["pub_cnt" if d.get("to") else "un_pub_cnt"] = d.get(
-                                    "doc_count")
-                            pub["un_pub_cnt"] += no_available['doc_count']
-                            agp[k]["date_range"] = pub
-                            nlst.append(agp.pop(k))
-                            m = 1
-                        break
-                if m == 0:
-                    nd = {'doc_count': 0, 'key': p.path, 'name': p.name if lang == "ja" else p.name_en,
-                          'date_range': {'pub_cnt': 0, 'un_pub_cnt': 0}}
-                    nlst.append(nd)
-            agp.clear()
-            # process index tree image info
-            if len(nlst):
-                index_id = nlst[0].get('key')
-                index_id = index_id if '/' not in index_id \
-                    else index_id.split('/').pop()
+        try:
+            paths = Indexes.get_self_list(q, community_id)
+        except BaseException:
+            paths = []
+        agp = rd["aggregations"]["path"]["buckets"]
+        nlst = []
+        for p in paths:
+            m = 0
+            for k in range(len(agp)):
+                if p.path == agp[k].get("key"):
+                    agp[k]["name"] = p.name if lang == "ja" else p.name_en
+                    date_range = agp[k].pop("date_range")
+                    no_available = agp[k].pop("no_available")
+                    pub = dict()
+                    bkt = date_range['available']['buckets']
+                    if bkt:
+                        for d in bkt:
+                            pub["pub_cnt" if d.get(
+                                "to") else "un_pub_cnt"] = d.get(
+                                "doc_count")
+                        pub["un_pub_cnt"] += no_available['doc_count']
+                        agp[k]["date_range"] = pub
+                        comment = p.comment
+                        agp[k]["comment"] = comment,
+                        result = agp.pop(k)
+                        result["comment"] = comment
+                        nlst.append(result)
+                        m = 1
+                    break
+            if m == 0:
+                index_id = p.path if '/' not in p.path \
+                    else p.path.split('/').pop()
                 index_info = Indexes.get_index(index_id=index_id)
-                if index_info.display_format == '2' \
-                    and len(index_info.image_name) > 0:
-                    nlst[0]['img'] = index_info.image_name
-            agp.append(nlst)
-        current_app.logger.debug(rd)
+                rss_status = index_info.rss_status
+                nd = {
+                    'doc_count': 0,
+                    'key': p.path,
+                    'name': p.name if lang == "ja" else p.name_en,
+                    'date_range': {
+                        'pub_cnt': 0,
+                        'un_pub_cnt': 0},
+                    'rss_status': rss_status,
+                    'comment': p.comment,
+                }
+                nlst.append(nd)
+        agp.clear()
+        # process index tree image info
+        if len(nlst):
+            index_id = nlst[0].get('key')
+            index_id = index_id if '/' not in index_id \
+                else index_id.split('/').pop()
+            index_info = Indexes.get_index(index_id=index_id)
+            # update by weko_dev17 at 2019/04/04
+            if len(index_info.image_name) > 0:
+                nlst[0]['img'] = index_info.image_name
+            nlst[0]['display_format'] = index_info.display_format
+            nlst[0]['rss_status'] = index_info.rss_status
+        # Update rss_status for index child
+        for idx in range(0, len(nlst)):
+            index_id = nlst[idx].get('key')
+            index_id = index_id if '/' not in index_id \
+                else index_id.split('/').pop()
+            index_info = Indexes.get_index(index_id=index_id)
+            nlst[idx]['rss_status'] = index_info.rss_status
+        agp.append(nlst)
+        for hit in rd['hits']['hits']:
+            try:
+                # Register comment
+                _comment = list()
+                _comment.append(hit['_source']['title'][0])
+                hit['_source']['_comment'] = _comment
+                # Register custom_sort
+                cn = hit['_source']['control_number']
+                if index_info.item_custom_sort.get(cn):
+                    hit['_source']['custom_sort'] = {
+                        str(index_info.id):
+                            str(index_info.item_custom_sort.get(cn))}
+            except Exception:
+                pass
+
+        # add info (headings & page info)
+        try:
+            item_type_list = {}
+            for hit in rd['hits']['hits']:
+                # get item type schema
+                item_type_id = \
+                    hit['_source']['_item_metadata']['item_type_id']
+                if item_type_id in item_type_list:
+                    item_type = copy.deepcopy(item_type_list[item_type_id])
+                else:
+                    item_type = ItemType.query.filter_by(
+                        id=item_type_id).first()
+                    item_type_list[item_type_id] = copy.deepcopy(item_type)
+                # heading
+                heading = get_heading_info(hit, lang, item_type)
+                hit['_source']['heading'] = heading
+                # page info
+                if 'pageStart' not in hit['_source']:
+                    hit['_source']['pageStart'] = []
+                if 'pageEnd' not in hit['_source']:
+                    hit['_source']['pageEnd'] = []
+        except Exception as ex:
+            current_app.logger.error(ex)
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,
             links=links,
             item_links_factory=self.links_factory,
         )
+
+
+def get_heading_info(data, lang, item_type):
+    """Get heading info."""
+    heading_id = None
+    lheading_id = None
+    sheading_id = None
+    lang_id = None
+    # get item id of heading
+    if item_type and 'properties' in item_type.schema:
+        for key, value in item_type.schema['properties'].items():
+            flag = False
+            if 'properties' in value and value['type'] == 'object':
+                for k, v in value['properties'].items():
+                    if v['title'] == 'Banner Headline':
+                        lheading_id = k
+                        flag = True
+                    elif v['title'] == 'Subheading':
+                        sheading_id = k
+                        flag = True
+                    elif v['title'] == 'Language':
+                        lang_id = k
+            elif 'items' in value \
+                    and value['type'] == 'array' \
+                    and 'properties' in value['items']:
+                for k, v in value['items']['properties'].items():
+                    if v['title'] == 'Banner Headline':
+                        lheading_id = k
+                        flag = True
+                    elif v['title'] == 'Subheading':
+                        sheading_id = k
+                        flag = True
+                    elif v['title'] == 'Language':
+                        lang_id = k
+            if flag:
+                heading_id = key
+                break
+            else:
+                lang_id = None
+
+    # get heading data
+    lheading = ''
+    sheading = ''
+    if heading_id \
+            and heading_id in data['_source']['_item_metadata']:
+        temp = \
+            data['_source']['_item_metadata'][heading_id]['attribute_value_mlt']
+        if len(temp) > 1:
+            for v in temp:
+                lheading_tmp = ''
+                sheading_tmp = ''
+                if lheading_id in v:
+                    lheading_tmp = v[lheading_id]
+                if sheading_id in v:
+                    sheading_tmp = v[sheading_id]
+                if lang and lang_id in v and v[lang_id] == lang:
+                    lheading = lheading_tmp
+                    sheading = sheading_tmp
+                    break
+        elif len(temp) == 1 or (lheading and sheading):
+            if lheading_id in temp[0]:
+                lheading = temp[0][lheading_id]
+            if sheading_id in temp[0]:
+                sheading = temp[0][sheading_id]
+    if sheading:
+        heading = lheading + ' : ' + sheading
+    else:
+        heading = lheading
+
+    return heading

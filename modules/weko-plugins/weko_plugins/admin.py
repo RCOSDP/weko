@@ -31,9 +31,10 @@ from .proxies import current_plugins
 class PluginSettingView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
-        """
-        Get plugins list info
+        """Get plugins list info.
+
         :return:
+
         """
         # current_plugins.plugin_manager.load_plugins()
         return self.render(
@@ -44,9 +45,11 @@ class PluginSettingView(BaseView):
     @expose('/<plugin>', methods=['GET'])
     def detail(self, plugin):
         """
-        Get plugin base info
+        Get plugin base info.
+
         :param plugin:
         :return:
+
         """
         plugin = get_plugin(plugin)
         return self.render(
@@ -57,9 +60,11 @@ class PluginSettingView(BaseView):
     @expose('/setting/<plugin>', methods=['GET'])
     def setting(self, plugin):
         """
-        Set plugin base info
+        Set plugin base info.
+
         :param plugin:
         :return:
+
         """
         plugin = get_plugin(plugin)
         return self.render(
@@ -70,9 +75,11 @@ class PluginSettingView(BaseView):
     @expose('/disable/<plugin>', methods=['GET'])
     def disable(self, plugin):
         """
-        Disable the plugin
+        Disable the plugin.
+
         :param plugin:
         :return:
+
         """
         plugin = get_plugin(plugin)
         current_plugins.plugin_manager.disable_plugins([plugin])
@@ -86,9 +93,11 @@ class PluginSettingView(BaseView):
     @expose('/enable/<plugin>', methods=['GET'])
     def enable(self, plugin):
         """
-        Enable the plugin
+        Enable the plugin.
+
         :param plugin:
         :return:
+
         """
         plugin = get_plugin(plugin)
         current_plugins.plugin_manager.enable_plugins([plugin])
@@ -102,9 +111,11 @@ class PluginSettingView(BaseView):
     @expose('/delete/<plugin>', methods=['GET'])
     def delete(self, plugin):
         """
-        Delete the plugin
+        Delete the plugin.
+
         :param plugin:
         :return:
+
         """
         plugin = get_plugin(plugin)
         if plugin is not None:

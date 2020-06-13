@@ -19,55 +19,73 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_RECORDS_UI_BASE_TEMPLATE %}
+{% extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
 
-{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{%- from "invenio_communities/macros.html" import community_header %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_records_ui_bootstrap_popover_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
 
 {%- block javascript %}
+<!--   {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL
+    }}"></script>{% endassets %} -->
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
   {{ super() }}
   {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-<!-- start demo block-->
-<script type="text/javascript">var addthis_config = {"data_track_addressbar": true};</script>
-<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5137aff66ad9c2a1"></script>
-<!-- end demo block -->
+  <script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}"></script>
+  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
+  <!-- start demo block-->
+  <script type="text/javascript">var addthis_config = {"data_track_addressbar": true};</script>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5d8af23e9a3a2633"></script>
+  <!-- end demo block -->
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('top',community_id) }}
 {%- endblock page_body_tabs%}
 
 {%- block page_header %}
-{%-if not community_id %}
-{{ super() }}
-{%- else%}
-
-{%- endif%}
+  {%- if not community_id %}
+    {{ super() }}
+  {%- else%}
+  {%- endif%}
 {%- endblock page_header %}
 
 {%- block page_footer %}
-{%-if not community_id%}
-{{ super() }}
-{%- endif%}
+  {%- if not community_id%}
+    {{ super() }}
+  {%- endif%}
 {%- endblock page_footer %}
 
-
 {% block page_body %}
-{%-if not community_id %}
-{{super()}}
-{%- else%}
-<div class="communities">
-<div id="community-id" name="community-id" hidden>{{ community_id }}</div>
-{{ community_header(community, subtitle='') }}
-{{super()}}
-{{ community_footer(community, link=False, subtitle='') }}
-</div>
-<div class="communities">
-</div>
-{%- endif%}
+  {%-if not community_id %}
+    {{ super() }}
+  {%- else%}
+    <div class="communities" >
+      <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
+      {{ community_header(community, subtitle='') }}
+      <div id="page_body" class="grid-stack hidden" {%- if render_widgets %}style="display: None;"{%- endif %}>
+        <div id="main_contents">
+          {{ super() }}
+        </div>
+      </div>
+      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+      {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
+    </div>
+    <div class="communities"></div>
+  {%- endif%}
 {% endblock page_body %}
 
 {%- block page_body_main %}
@@ -76,11 +94,12 @@
       {% include "weko_theme/body_search.html" %}
     </div>
   </div>
-  <div class="row">
-    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
+  <div class="row" style="height:100%">
+    <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}" style="height:100%">
       {% include "weko_theme/body_index.html" %}
+      {% include "weko_search_ui/body_facet_search.html" %}
     </div>
-    <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}} m-top-20">
+    <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}}">
       {% include "weko_records_ui/body_contents.html" %}
     </div>
   </div>

@@ -61,7 +61,12 @@ dl dd {
 
 .break-word {
     word-wrap: break-word;
-    word-break: break-word;
+    word-break: break-all;
+}
+
+.table-bordered th,
+.table-bordered td {
+    word-break: break-all;
 }
 
 .panel_bread .breadcrumb {
@@ -148,4 +153,55 @@ td .list-group {
     font-size: 100%;
     height: 100%;
   }
+}
+
+/* For weko index tree */
+tree-internal .tree .folding.weko-node-leaf {display: none;}
+tree-internal .tree .folding.weko-node-empty:before {
+  content: '\25B7';
+  color: #757575;
+}
+tree-internal ul .more {
+  -webkit-text-fill-color: #337ab7;
+  text-decoration: underline;
+}
+tree-internal ul .value-container {
+  font-size: 14px;
+}
+tree-internal ul .tree {
+  margin-left: 0;
+  padding-left: 1em;
+  text-indent: 0;
+  padding-inline-start: 1em;
+}
+tree-internal .rootless {
+  margin: -1em;
+  padding: -1em;
+  text-indent: 0;
+  padding-inline-start: -1em;
+}
+
+
+
+
+/* For Bootstrap collapse arrow */
+.hide-on-collapsed {
+  display:block
+}
+.panel-toggle.collapsed .hide-on-collapsed,.show-on-collapsed {
+  display:none
+}
+.panel-toggle.collapsed .show-on-collapsed {
+  display:block
+}
+
+/* For weko search ui*/
+.rss_icon {
+    background-color: orange;
+    padding: 5px;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+    text-decoration: none;
+    border-radius: 25%;
+    color: white;
 }

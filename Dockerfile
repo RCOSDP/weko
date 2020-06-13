@@ -25,7 +25,7 @@ FROM python:3.5-slim
 ENV INVENIO_WEB_HOST=127.0.0.1
 ENV INVENIO_WEB_INSTANCE=invenio
 ENV INVENIO_WEB_VENV=invenio
-ENV INVENIO_USER_EMAIL=info@inveniosoftware.org
+ENV INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
 ENV INVENIO_USER_PASS=uspass123
 ENV INVENIO_POSTGRESQL_HOST=postgresql
 ENV INVENIO_POSTGRESQL_DBNAME=invenio
@@ -35,7 +35,8 @@ ENV INVENIO_REDIS_HOST=redis
 ENV INVENIO_ELASTICSEARCH_HOST=elasticsearch
 ENV INVENIO_RABBITMQ_HOST=rabbitmq
 ENV INVENIO_WORKER_HOST=127.0.0.1
-
+ENV SEARCH_INDEX_PREFIX=tenant1
+ 
 # Install Weko web node pre-requisites:
 COPY scripts/provision-web.sh /tmp/
 RUN /tmp/provision-web.sh

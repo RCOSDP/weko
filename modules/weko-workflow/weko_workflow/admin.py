@@ -21,21 +21,22 @@
 """WEKO3 module docstring."""
 
 import uuid
+
 from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
-
 from weko_records.api import ItemTypes
 
 from .api import Action, Flow, WorkFlow
+from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 
 
 class FlowSettingView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
-        """
-        Get flow list info
+        """Get flow list info.
+
         :return:
         """
         workflow = Flow()
@@ -47,8 +48,8 @@ class FlowSettingView(BaseView):
 
     @expose('/<string:flow_id>', methods=['GET'])
     def flow_detail(self, flow_id='0'):
-        """
-        Get flow detail info
+        """Get flow detail info.
+
         :param flow_id:
         :return:
         """
@@ -97,11 +98,11 @@ class FlowSettingView(BaseView):
                                    flow_id=flow.flow_id)
                            })
         workflow.upt_flow(flow_id, post_data)
-        return jsonify(code=0, msg=_('Update flow successfully.'))
+        return jsonify(code=0, msg=_('Updated flow successfully.'))
 
     @expose('/<string:flow_id>', methods=['DELETE'])
     def del_flow(self, flow_id='0'):
-        """Delete Flow info"""
+        """Delete Flow info."""
         workflow = Flow()
         workflow.del_flow(flow_id)
         return jsonify(code=0, msg='',
@@ -109,8 +110,8 @@ class FlowSettingView(BaseView):
 
     @expose('/action', methods=['GET'])
     def action(self):
-        """
-        Get Action list info
+        """Get Action list info.
+
         :return:
         """
         action = Action()
@@ -122,8 +123,8 @@ class FlowSettingView(BaseView):
 
     @expose('/action/<string:action_id>', methods=['GET'])
     def action_detail(self, action_id):
-        """
-        Get Action detail info
+        """Get Action detail info.
+
         :param action_id:
         :return:
         """
@@ -131,18 +132,18 @@ class FlowSettingView(BaseView):
 
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
-        """Update FlowAction Info"""
+        """Update FlowAction Info."""
         actions = request.get_json()
         workflow = Flow()
         workflow.upt_flow_action(flow_id, actions)
-        return jsonify(code=0, msg=_('Update flow action successfully'))
+        return jsonify(code=0, msg=_('Updated flow action successfully'))
 
 
 class WorkFlowSettingView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
-        """
-        Get flow list info
+        """Get flow list info.
+
         :return:
         """
         workflow = WorkFlow()
@@ -154,11 +155,14 @@ class WorkFlowSettingView(BaseView):
 
     @expose('/<string:workflow_id>', methods=['GET'])
     def workflow_detail(self, workflow_id='0'):
-        """
-        Get workflow info
+        """Get workflow info.
+
         :return:
         """
-        itemtype_list = ItemTypes.get_latest()
+        if WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS:
+            itemtype_list = ItemTypes.get_latest()
+        else:
+            itemtype_list = ItemTypes.get_latest_custorm_harvesting()
         flow_api = Flow()
         flow_list = flow_api.get_flow_list()
         if '0' == workflow_id:
@@ -181,8 +185,8 @@ class WorkFlowSettingView(BaseView):
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
     def update_workflow(self, workflow_id='0'):
-        """
-        Update workflow info
+        """Update workflow info.
+
         :return:
         """
         json_data = request.get_json()
@@ -210,8 +214,8 @@ class WorkFlowSettingView(BaseView):
 
     @expose('/<string:workflow_id>', methods=['DELETE'])
     def delete_workflow(self, workflow_id='0'):
-        """
-        Update workflow info
+        """Update workflow info.
+
         :return:
         """
         workflow = WorkFlow()

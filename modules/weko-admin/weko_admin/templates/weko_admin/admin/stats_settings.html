@@ -1,0 +1,78 @@
+{# -*- coding: utf-8 -*-
+  #
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+{%- endblock javascript %}
+
+{%- block body %}
+<style>
+  .content-font {
+    font-size: 16px;
+  }
+</style>
+
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('Statistics Settings')}}</h4>
+  </div>
+</div>
+
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11">
+    <form class="form-inline" method="POST" name="record_stats_form" id="show_hide_record_stats"
+      action={{url_for('statssettings.index')}}>
+      <p class="col-xs-4 text-right">{{_('Show/Hide Record Stats')}}</p>
+      <div class="col-xs-2">
+        <div class="form-group">
+          <label class="radio-inline" for="record_stats_radio_on">
+            <input type="radio" name="record_stats_radio" id="record_stats_radio_on" value="True"
+              {{ 'checked' if display_stats else '' }}>
+            {{_('On')}}
+          </label>
+          <label class="radio-inline" for="record_stats_radio_off">
+            <input type="radio" name="record_stats_radio" id="record_stats_radio_off" value="False"
+              {{ 'checked' if not display_stats else '' }} >
+            {{_('Off')}}
+          </label>
+        </div>
+      </div>
+      <div class="col-xs-2">
+        <button type="submit" id="downloadReport" class="btn btn-primary">
+            <span class="glyphicon glyphicon-save"></span>&nbsp
+            {{_('Save')}}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<hr>
+{%- endblock body %}

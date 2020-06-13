@@ -1,0 +1,73 @@
+{#
+# This file is part of Invenio.
+# Copyright (C) 2013, 2014, 2015, 2016 CERN.
+#
+# Invenio is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+#}
+
+{% extends config.SEARCH_UI_SEARCH_TEMPLATE %}
+
+{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+
+<!--{% set title = community.title + " | " + config.THEME_SITENAME %}-->
+<!--{% set search_hidden_params = {"provisional_communities": community.id} %}-->
+
+{%- block page_header %}{%- endblock page_header %}
+
+{%- block javascript -%}
+  {{ super() }}
+  {% assets "invenio_communities_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript -%}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "invenio_communities_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block body_inner %}
+<div id="invenio-communities-search">
+  {{super()}}
+</div>
+{%- endblock body_inner %}
+
+{%- block page_footer %}{%- endblock page_footer %}
+
+<!--{%- block search_results %}-->
+<!--<invenio-search-results-provisional-->
+ <!--template="{{ url_for('static', filename=config.COMMUNITIES_JSTEMPLATE_RESULTS_CURATE) }}"-->
+ <!--community-curation-endpoint="{{ url_for('invenio_communities.curate', community_id=community.id) }}">-->
+<!--</invenio-search-results-provisional>-->
+<!--{%- endblock search_results %}-->
+
+
+{%- block page_body_main %}
+  <div class="hide" id="cur_index_id">{{index_id}}</div>
+  <div class="row">
+    <div class="col-sm-12 col-md-12 col-lg-12">
+      {% include "weko_theme/body_search.html" %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
+      {% include "weko_theme/body_index.html" %}
+    </div>
+    <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}} m-top-20">
+    </div>
+  </div>
+{%- endblock page_body_main %}

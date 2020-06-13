@@ -24,6 +24,7 @@
 
 """Index errors."""
 from invenio_rest.errors import RESTException
+
 # from flask_babelex import gettext as _
 
 
@@ -59,15 +60,21 @@ class IndexNotFoundRESTError(RESTException):
 
 
 class IndexUpdatedRESTError(RESTException):
+    """Index ujpdated rest error."""
+
     code = 400
     description = 'Could not update data.'
 
 
 class IndexAddedRESTError(RESTException):
+    """Index added REST error."""
+
     code = 400
     description = 'Could not add data.'
 
 
 class IndexMovedRESTError(RESTException):
+    """Index moved rest error."""
+
     code = 400
     description = 'Could not move data.'

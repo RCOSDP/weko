@@ -20,15 +20,17 @@
 
 """Blueprint for weko-index-tree."""
 
+from datetime import date, timedelta
 
-import os
+from flask import Blueprint, current_app, jsonify, request, session
+from flask_login import current_user
 
-from flask import Blueprint, abort, current_app, \
-    flash, jsonify, render_template, request, url_for,session
-from flask_babelex import gettext as _
-from flask_login import login_required
-
-from .permissions import index_tree_permission
+from .api import Indexes
+from .config import WEKO_INDEX_TREE_RSS_COUNT_LIMIT, \
+    WEKO_INDEX_TREE_RSS_DEFAULT_COUNT, WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID, \
+    WEKO_INDEX_TREE_RSS_DEFAULT_LANG, WEKO_INDEX_TREE_RSS_DEFAULT_PAGE, \
+    WEKO_INDEX_TREE_RSS_DEFAULT_TERM, WEKO_INDEX_TREE_STATE_PREFIX
+from .utils import generate_path, get_elasticsearch_records_data_by_indexes
 
 blueprint = Blueprint(
     'weko_index_tree',
@@ -38,36 +40,76 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
+blueprint_api = Blueprint(
+    'weko_index_tree',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+)
 
-@blueprint.route('/')
-@login_required
-@index_tree_permission.require(http_exception=403)
-def index():
-    """Render the index tree edit page."""
 
-    return render_template(
-        current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'],
-        get_tree_json=current_app.config['WEKO_INDEX_TREE_LIST_API'],
-        upt_tree_json='',
-        mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API']
+@blueprint_api.route('/rss.xml', methods=['GET'])
+def get_rss_data():
+    """Get rss data based on term.
+
+    Returns:
+        xml -- RSS data
+
+    """
+    from weko_gridlayout.utils import build_rss_xml
+
+    data = request.args
+
+    index_id = int(data.get('index_id'))
+    if index_id < WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID:
+        index_id = WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID
+    page = int(data.get('page') or WEKO_INDEX_TREE_RSS_DEFAULT_PAGE)
+    if page < WEKO_INDEX_TREE_RSS_DEFAULT_PAGE:
+        page = WEKO_INDEX_TREE_RSS_DEFAULT_PAGE
+    count = int(data.get('count') or WEKO_INDEX_TREE_RSS_DEFAULT_COUNT)
+    if count < 0 or count > WEKO_INDEX_TREE_RSS_COUNT_LIMIT:
+        count = WEKO_INDEX_TREE_RSS_DEFAULT_COUNT
+    term = int(data.get('term') or WEKO_INDEX_TREE_RSS_DEFAULT_TERM)
+    if term <= 0:
+        term = WEKO_INDEX_TREE_RSS_DEFAULT_TERM
+    lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
+
+    idx_tree_ids = generate_path(Indexes.get_recursive_tree(index_id))
+    current_date = date.today()
+    end_date = current_date.strftime("%Y-%m-%d")
+    start_date = (current_date - timedelta(days=term)).strftime("%Y-%m-%d")
+    records_data = get_elasticsearch_records_data_by_indexes(idx_tree_ids,
+                                                             start_date,
+                                                             end_date)
+
+    hits = records_data.get('hits')
+    rss_data = hits.get('hits')
+
+    return build_rss_xml(data=rss_data,
+                         index_id=index_id,
+                         page=page,
+                         count=count,
+                         term=term,
+                         lang=lang)
+
+
+@blueprint_api.route('/indextree/set_expand', methods=['POST'])
+def set_expand():
+    """Set expand list index tree id."""
+    data = request.get_json(force=True)
+    index_id = data.get("index_id")
+    key = current_app.config.get(
+        "WEKO_INDEX_TREE_STATE_PREFIX",
+        WEKO_INDEX_TREE_STATE_PREFIX
     )
+    session_data = session.get(key, [])
+    if session_data:
+        if index_id in session_data:
+            session_data.remove(index_id)
+        else:
+            session_data.append(index_id)
+    else:
+        session_data.append(index_id)
+    session[key] = session_data
 
-
-@blueprint.route('/upload', methods=['GET', 'POST'])
-def upload_image():
-
-    if 'uploadFile' not in request.files:
-        current_app.logger.debug('No file part')
-        flash(_('No file part'))
-        return abort(400)
-    fp = request.files['uploadFile']
-    if '' == fp.filename:
-        current_app.logger.debug('No selected file')
-        flash(_('No selected file'))
-        return abort(400)
-
-    filename = os.path.join(
-        current_app.static_folder, 'indextree', fp.filename)
-    file_uri = url_for('static', filename='indextree/'+fp.filename)
-    fp.save(filename)
-    return jsonify({'code': 0, 'msg': 'file upload success', 'data': {'path': file_uri}})
+    return jsonify(success=True)

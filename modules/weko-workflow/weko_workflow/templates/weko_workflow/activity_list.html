@@ -19,20 +19,25 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{%- from "invenio_communities/macros.html" import community_header %}
 
 {%- block css %}
-  {{ super() }}
+{{ super() }}
+{% assets "workflow_datepicker_css" %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
-  {{ super() }}
-  {%- assets "workflow_activity_list_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{{ super() }}
+{%- assets "workflow_activity_list_js" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_theme_js_widget" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('flow',community_id) }}
+{% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
+{{ tabs_selector('flow',community_id) }}
 {%- endblock page_body_tabs %}
 
 {%- block page_header %}
@@ -49,73 +54,200 @@
 
 {% block page_body %}
 {%-if not community %}
-{{super()}}
+{{ super() }}
 {%- else%}
 <div class="communities">
-<div id="community-id" name="community-id" hidden>{{ community.id }}</div>
-{{ community_header(community, subtitle='') }}
-{{super()}}
-{{ community_footer(community, link=False, subtitle='') }}
+  <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
+  {{ community_header(community, subtitle='') }}
+  <div id="page_body" class="grid-stack hidden" {%- if render_widgets %}style="display: None;" {%- endif %}>
+    <div id="main_contents">
+      {{ super() }}
+    </div>
+  </div>
+  {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+  {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
 </div>
-<div class="communities">
-</div>
+<div class="communities"></div>
 {%- endif%}
 {% endblock page_body %}
-
 
 {%- block page_body_main %}
 <div role="navigation">
   <ul class="nav nav-tabs">
-    <li role="presentation" class="active activity_li">
-      <a href="javascript:void();" class="activity_tab" data-show-tab="todo">{{_('ToDo')}}</a></li>
-    <li role="presentation" class="activity_li">
-      <a href="javascript:void();" class="activity_tab" data-show-tab="wait">{{_('Wait')}}</a></li>
-    <li role="presentation" class="activity_li">
-      <a href="javascript:void();" class="activity_tab" data-show-tab="all">{{_('All')}}</a></li>
+    <li role="presentation" {%-if tab == 'todo' %} class="active" {%- endif%}>
+      <a href="javascript:void(0);" class="activity_tab" data-tab="todo">{{_('ToDo')}}</a></li>
+
+    <li role="presentation" {%-if tab == 'wait' %} class="active" {%- endif%}>
+      <a href="javascript:void(0);" class="activity_tab" data-tab="wait">{{_('Wait')}}</a></li>
+
+    <li role="presentation" {%-if tab == 'all' %} class="active" {%- endif%}>
+      <a href="javascript:void(0);" class="activity_tab" data-tab="all">{{_('All')}}</a></li>
+    <li class="dropdown">
+      <a class="btn dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)"
+        aria-expanded="false">{{_('Add Filter')}}<strong class="caret"></strong></a>
+      <ul class="dropdown-menu">
+        <li>
+          <a href="javascript:void(0)" class="filter_option" id="workflow" data-name="workflow">{{_('WorkFlow')}}</a>
+        </li>
+        <li>
+          <a href="javascript:void(0)" class="filter_option" id="user" data-name="user">{{_('User')}}</a>
+        </li>
+        <li>
+          <a href="javascript:void(0)" class="filter_option" id="item" data-name="item">{{_('Item')}}</a>
+        </li>
+        <li>
+          <a href="javascript:void(0)" class="filter_option" id="status" data-name="status">{{_('Status')}}</a>
+        </li>
+      </ul>
+    </li>
   </ul>
+</div>
+<br>
+<div class="row">
+  <form class="form-horizontal col-sm-7" action="javascript:void(0);" id="filter_form">
+    <div class="col-sm-12">
+      <div class="form-group">
+        <label class="col-sm-2" for="created">{{_('Created')}}</label>
+        <div class="col-sm-7" id="create">
+          <div class="input-group col-sm-10">
+            <input type="text" class="form-control" name="createdfrom" id="createdfrom"
+               maxlength="10" placeholder="yyyy-mm-dd">
+            <span class="input-group-addon">-</span>
+            <input type="text" class="form-control" maxlength="10" name="createdto" id="createdto"
+               placeholder="yyyy-mm-dd">
+          </div>
+        </div>
+      </div>
+      <div id="workflow_group">
+      </div>
+      <div id="user_group">
+      </div>
+      <div id="item_group">
+      </div>
+      <div id="status_group">
+      </div>
+    </div>
+  </form>
+  <input type="hidden" id="action_doing" name="action_doing" value="{{_('action_doing')}}">
+  <input type="hidden" id="action_done" name="action_done" value="{{_('action_done')}}">
+  <input type="hidden" id="action_cancel" name="action_cancel" value="{{_('action_canceled')}}">
+  {%-if name_param != '' %}
+  <input type="hidden" id="change_page_param" value="{{name_param}}">
+  {%- endif%}
+
+</div>
+<div class="form-inline flow-root">
+  <button type="submit" id="filter_form_submit" class="btn btn-primary">{{_('Apply')}}</button>
+  <div class="pull-right">
+    <div class="form-group">
+      <label for="page_count">{{_('Display Number')}}</label>
+      <select class="form-control" id="page_count">
+        <option value="20" {% if size=='20' %} selected="selected" {% endif %}>20</option>
+        <option value="50" {% if size=='50' %} selected="selected" {% endif %}>50</option>
+        <option value="75" {% if size=='75' %} selected="selected" {% endif %}>75</option>
+        <option value="100" {% if size=='100' %} selected="selected" {% endif %}>100</option>
+      </select>
+    </div>
+  </div>
 </div>
 <div class="row">
   <div class="col-sm-12">
-    <table class="table table-striped table-bordered">
-    <thead>
-      <tr>
-        <th>{{ _('No.') }}</th>
-        <th>{{ _('Updated') }}</th>
-        <th>{{ _('Activity') }}</th>
-        <th>{{_('Item')}}</th>
-        <th>{{_('WorkFlow')}}</th>
-        <th>{{_('Action')}}</th>
-        <th>{{_('Status')}}</th>
-        <th>{{_('User')}}</th>
-      </tr>
-    </thead>
-    <tbody>
-    {%- for activity in activities %}
-      <tr class="hide tb-all {%- if 'ToDo' == activity.type %} tb-todo {%- elif 'Wait' == activity.type %} tb-wait {%- endif %}">
-        <th scope="row">{{loop.index}}</th>
-        <td>{{activity.updated.date()}}</td>
-        {%-if community%}
-        <td><a href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id)}}">{{activity.activity_id}}</a></td>
-        {%-else%}
-        <td><a href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type)}}">{{activity.activity_id}}</a></td>
-        {%- endif%}
-        <td>{{activity.ItemName}}</td>
-        <td>{{activity.workflow.flows_name}}</td>
-        <td>{{activity.action.action_name}}</td>
-        <td>{{_(activity.StatusDesc)}}</td>
-        <td>{{activity.User.email}}</td>
-      </tr>
-    {%- endfor %}
-    </tbody>
-    </table>
-    {%-if community%}
-      <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.new_activity', community=community.id)}}">{{_('New Activity')}}</a>
-    {%-else%}
-      <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.new_activity')}}">{{_('New Activity')}}</a>
-    {%- endif%}
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered table-responsive">
+        <thead>
+          <tr>
+            <th>{{ _('No.') }}</th>
+            <th>{{ _('Created') }}</th>
+            <th>{{ _('Updated') }}</th>
+            <th>{{ _('Activity') }}</th>
+            <th>{{_('Item')}}</th>
+            <th>{{_('WorkFlow')}}</th>
+            <th>{{_('Action')}}</th>
+            <th>{{_('Status')}}</th>
+            <th>{{_('User')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {%- for activity in activities %}
+          <tr class="">
+            <th scope="row">{{loop.index + size|int * ( pages|int - 1)}}</th>
+            <td>{{activity.updated.date()}}</td>
+            <td>{{activity.created.date()}}</td>
+            {%-if community%}
+            <td><a
+                href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id)}}">{{activity.activity_id}}</a>
+            </td>
+            {%-else%}
+            <td><a
+                href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type)}}">{{activity.activity_id}}</a>
+            </td>
+            {%- endif%}
+            {%-if activity.title -%}
+            <td>{{activity.title}}</td>
+            {%- else -%}
+            <td></td>
+            {%- endif-%}
+            <td>{{activity.workflow.flows_name}}</td>
+            <td>{{activity.action.action_name}}</td>
+            <td>{{_(activity.StatusDesc)}}</td>
+            <td>{{activity.User.email}}</td>
+          </tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if maxpage|int >= 1 %}
+    <div class="row">
+      <div class="text-center">
+        <ul class="pagination">
+          {%-if pages|int <= 1 %}
+          <li class="disabled">
+            <a href="javascript:void(0)">&lt;</a>
+          </li>
+          {%-else%}
+          {% set pagePrevious = pages|int - 1 %}
+          <li>
+            <a href="javascript:void(0)" class="get-pages" data-pages="{{pagePrevious}}">&lt;</a>
+          </li>
+          {%- endif%}
+          {%- for index in range(maxpage|int) %}
 
+          {%-if index+1 == pages|int %}
+          <li class="active">
+            <a href="javascript:void(0)">{{index+1}}</a>
+          </li>
+          {%-else%}
+          {% set pagecurrent = index|int +1 %}
+          <li>
+            <a href="javascript:void(0)" class="get-pages" data-pages="{{pagecurrent}}">{{index+1}}</a>
+          </li>
+          {%- endif%}
+          {%- endfor %}
+          {%-if maxpage|int <= pages|int %}
+          <li class="disabled">
+            <a href="javascript:void(0)">&gt;</a>
+          </li>
+          {%-else%}
+          {% set pageNext = pages|int + 1 %}
+          <li>
+            <a href="javascript:void(0)" class="get-pages" data-pages="{{pageNext}}">&gt;</a>
+          </li>
+          {%- endif%}
+        </ul>
+      </div>
+    </div>
+    {%- endif%}
+    <div class="row">
+      {%-if community%}
+      <a class="btn btn-success pull-right" href="{{url_for('weko_workflow.new_activity', community=community.id)}}">
+        <span class="glyphicon glyphicon-plus"></span>&nbsp
+        {{_('New Activity')}}</a>
+      {%-else%}
+      <a class="btn btn-success pull-right" href="{{url_for('weko_workflow.new_activity')}}">
+        <span class="glyphicon glyphicon-plus"></span>&nbsp
+        {{_('New Activity')}}</a>
+      {%- endif%}
+    </div>
   </div>
 </div>
 {%- endblock page_body_main %}
-
-

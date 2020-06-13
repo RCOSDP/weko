@@ -1,0 +1,117 @@
+.container-modal {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.feedback-mail-modal {
+  width: 70%;
+}
+
+.resend-mail-modal {
+  width: 50%;
+}
+
+.resend-mail-table {
+  width: 94%;
+  margin-left: 3%;
+}
+
+.label-resend-email {
+  font-weight: 600;
+  margin-left: 15px;
+}
+
+.my-pagination-disabled {
+  cursor: not-allowed;
+}
+
+.style-component {
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.margin-left {
+  margin-left: 10%;
+}
+
+.style-radioBtn {
+  width: 13px;
+  height: 13px;
+}
+
+.style-selected-box {
+  margin: 15px 0px;
+  width: 60%;
+  height: 150px;
+  border: 1px solid #ddd;
+  display: inline-block;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  border-radius: 4px;
+}
+
+.style-full-size {
+  width: 100% !important;
+}
+
+.style-deleteBtn {
+  margin-left: 15px;
+  min-width: 120px;
+  height: 40px;
+}
+
+.style-table-modal {
+  width: 100%;
+}
+
+.style-column {
+  width: 45%;
+}
+
+.style-button {
+  min-width: 120px;
+  height: 40px;
+  font-size: 14px;
+}
+
+.alert-boder {
+  border-radius: 3px;
+}
+
+.style-table-send-logs {
+  width: 80%;
+  margin-left: 3%;
+}
+
+.width-small {
+  width: 4%;
+}
+
+.width-medium {
+  width: 10%;
+}
+
+.width-long {
+  width: 33%;
+}
+
+.text-white {
+  color: white;
+}
+
+.left-align {
+  float: left;
+}
+
+.no-data-message {
+  margin-left: 3%;
+  margin-top: 15px;
+}
+
+.button-container {
+  width: 40%;
+  right: 0px;
+  bottom: 0px;
+  position: absolute;
+  padding-bottom: 20px;
+}

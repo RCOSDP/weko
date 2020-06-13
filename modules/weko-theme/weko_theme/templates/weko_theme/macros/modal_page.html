@@ -1,0 +1,100 @@
+{#
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+ 
+{% macro all_modal() %}
+<!-- Modal Start -->
+<div id="allModal" class="modal fade"  tabindex="-1" role="dialog" aria-labelledby="updateHeader" aria-hidden="true">
+   <div class="modal-dialog modal-dialog-centered" role="document"
+       style="display: table; width: 320px;">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                 </button>
+                 <h4 class="modal-title">{{_('WEKO')}}</h4>
+             </div>
+             <div class="modal-body">
+                  <p id="inputModal">One fine body&hellip;</p>
+             </div>
+             <div class="modal-footer">
+                 <button type="button" class="btn btn-info cancel-button" data-dismiss="modal">
+                    <span class="glyphicon glyphicon-remove"></span>
+                        {{_('Cancel')}}
+                 </button>
+             </div>
+         </div>
+     </div>
+ </div>
+<!-- Modal End -->
+{% endmacro %}
+
+<!-- Confirm Modal -->
+{% macro confirm_modal(modal_id="", button_id="", button_text="", title="", body="") %}
+<div class="modal fade" tabindex="-1" role="dialog" id="{{modal_id}}">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{{title}}</h4>
+      </div>
+      <div class="modal-body">
+        <p class="text-center">{{body}}</p>
+      </div>
+      <div class="modal-footer">
+        <button id="{{button_id}}" class="btn btn-primary save-button">
+          <span class="glyphicon glyphicon-check"></span>
+          {{button_text}}
+        </button>
+        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+          <span class="glyphicon glyphicon-remove"></span>
+          {{_('Close')}}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{%- endmacro %}
+
+<!--Approval Confirm Modal -->
+{% macro approval_modal(modal_id="", button_id="", button_text="", title="", body="") %}
+<div class="modal fade" tabindex="-1" role="dialog" id="{{modal_id}}">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{{title}}</h4>
+      </div>
+      <div class="modal-body">
+        <p class="text-center">{{body}}</p>
+      </div>
+      <div class="modal-footer">
+        <button id="{{button_id}}" class="btn btn-primary save-button">
+          <span class="glyphicon glyphicon-check"></span>
+          {{button_text}}
+        </button>
+        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+          <span class="glyphicon glyphicon-remove"></span>
+          {{_('Cancel')}}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{%- endmacro %}

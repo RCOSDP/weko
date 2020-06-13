@@ -20,9 +20,11 @@
 
 """Flask extension for weko-theme."""
 
+from weko_records.utils import get_keywords_data_load
+from weko_search_ui.api import get_search_detail_keyword
+
 from . import config
 from .views import blueprint
-from weko_records.utils import get_keywords_data_load
 
 
 class WekoTheme(object):
@@ -45,6 +47,9 @@ class WekoTheme(object):
         app.register_blueprint(blueprint)
         app.extensions['weko-theme'] = self
         app.add_template_filter(get_keywords_data_load, name='item_type_all')
+        app.add_template_filter(
+            get_search_detail_keyword,
+            name='detail_conditions')
 
     def init_config(self, app):
         """Initialize configuration.
@@ -52,7 +57,7 @@ class WekoTheme(object):
         :param app: The Flask application.
         """
         for k in dir(config):
-            app.config[k] = getattr(config, k)
+            app.config.setdefault(k, getattr(config, k))
         if "ADMIN_UI_SKIN" in app.config:
             app.config.update(
                 ADMIN_UI_SKIN='skin-red',

@@ -1,0 +1,66 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {% endblock %}
+{% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
+
+{% set panel_title = _("Life Time") %}
+{% set panel_icon = "fa fa-user" %}
+
+{%- block body %}
+{%- set cur_lifetime = current_lifetime %}
+{%- set lifetime_map = map_lifetime %}
+<div id="alerts"></div>
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <div class="panel-title">
+      <h4>Institution Name<h4>
+    </div>
+  </div>
+  <div class="panel-body">
+<form method="POST" name="institution_name_form" action={{url_for('others.index')}}>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Institution Name")}}</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="text" class="form-control" name="institution_name"
+      id="institution_name" placeholder="Institution Name"  value={{institution_name}}>
+    </div>
+  </div>
+  <div class="col-sm-offset-3 col-sm-10">
+      <button id="institution_name_update" type="submit" name="submit" value="institution_name_form"
+          class="btn btn-primary ten-pixel-margin">
+             <i class="glyphicon glyphicon-save"></i>&nbsp
+                 {{ _('Save') }}</button>
+  </div>
+    </div>
+  </div>
+</form>
+  </div>
+</div>
+{%- endblock body %}
+{% block tail %}
+{% endblock %}

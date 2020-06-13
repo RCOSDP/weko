@@ -1,0 +1,133 @@
+{#
+ # This file is part of WEKO3.
+ # Copyright (C) 2017 National Institute of Informatics.
+ #
+ # WEKO3 is free software; you can redistribute it
+ # and/or modify it under the terms of the GNU General Public License as
+ # published by the Free Software Foundation; either version 2 of the
+ # License, or (at your option) any later version.
+ #
+ # WEKO3 is distributed in the hope that it will be
+ # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ # General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with WEKO3; if not, write to the
+ # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ # MA 02111-1307, USA.
+ #}
+
+{% macro output_creator_data(attribute_value_mlt) %}
+  {%- set random1 = range(1, 100) | random | int -%}
+  {%- set random2 = range(1, 100) | random | int -%}
+  {%- set random3 = range(1, 100) | random | int -%}
+  {%- set index = random1 + random2 + random3 -%}
+  {%- for attribute_data in attribute_value_mlt -%}
+    {%- set index = index + loop.index -%}
+    {%- if 'name' in  attribute_data -%}
+      <a class='creator-name' href="javascript:void(0)" data-toggle="popover-x"
+         data-target="#creator_{{ index }}" data-placement="auto"
+         data-toggle="popover">
+        {%- for name in attribute_data['name'] -%}
+          {{ name }}<span> </span>
+        {%- endfor -%}
+      </a><br>
+    {%- endif -%}
+    <div id="creator_{{ index }}" class="popover popover-x popover-default">
+      <div class="arrow"></div>
+      <h1 class="popover-header popover-title"><strong><span
+              class="close pull-right" data-dismiss="popover-x">&times;</span>
+        {%- if 'name' in  attribute_data -%}
+          {%- for name in attribute_data['name'] -%}
+            {{ name }}<span> </span>
+          {%- endfor -%}
+        {%- endif -%}
+      </strong></h1>
+      <div class="popover-body popover-content">
+        {%- if 'nameIdentifiers' in attribute_data and attribute_data['nameIdentifiers'][0]-%}
+          <p>
+            {%- for i in attribute_data['nameIdentifiers'] -%}
+              {%- if 'nameIdentifierScheme' in i -%}
+                {{ i['nameIdentifierScheme'] }}
+                <span> </span>
+              {%- endif -%}
+              {%- if 'nameIdentifier' in i -%}
+                <a href='{%- if "nameIdentifierURI" in i -%} {{ i["nameIdentifierURI"] }} {%- endif -%}'>
+                  {{ i['nameIdentifier'] }}
+                </a>
+              {%- endif -%}
+              <br>
+            {%- endfor -%}
+          </p>
+        {%- endif -%}
+        {%- if 'order_lang' in  attribute_data -%}
+          <table class="table table-borderless">
+            <tbody>
+            {%- for creator_data in attribute_data['order_lang'] -%}
+              {{ _build_creator_popup_data(creator_data) }}
+            {%- endfor -%}
+            </tbody>
+          </table>
+        {%- endif -%}
+        <a href='/search?creator={{ attribute_data.get("name")[0] }}'>{{ _('Search repository') }}</a>
+      </div>
+    </div>
+  {%- endfor -%}
+{% endmacro %}
+
+{% macro _build_creator_popup_data(creator_data) %}
+  {%- for key, value in creator_data.items() -%}
+    {%- if value -%}
+      <tr>
+        <th scope="row" class='key' class='key_lang'>
+          {%- if key == 'NoLanguage' -%}
+            <span></span>
+          {%- else -%}
+            <span>{{ key }}</span>
+          {%- endif -%}
+        </th>
+        <td class='key_lang'>
+          {# Creator name #}
+          {%- if key == 'NoLanguage' -%}
+            {{ _fill_data(value['creatorName']) }}
+            {{ _fill_data(value['familyName']) }}
+            {{ _fill_data(value['givenName']) }}
+          {%- else -%}
+            {{ _fill_data(value['creatorName']) }}
+          {%- endif -%}
+
+          {# Creator alternative #}
+          {{ _fill_data(value['creatorAlternative']) }}
+
+          {# Creator affiliation #}
+          {{ _fill_affiliation(value['affiliationName'], value['affiliationNameIdentifier']) }}
+          <br>
+        </td>
+      </tr>
+    {%- endif -%}
+  {%- endfor -%}
+{% endmacro %}
+
+{% macro _fill_data(data_list) %}
+  {% if data_list %}
+    {% for detail_data in data_list %}
+      {{ detail_data }}<br>
+    {% endfor %}
+  {% endif %}
+{% endmacro %}
+
+{% macro _fill_affiliation(affiliation_name, identifier) %}
+  {% if affiliation_name %}
+    {% for name in affiliation_name %}
+      {{ name }}
+      {% set identifier_data = identifier[loop.index - 1] %}
+      {% if identifier_data and identifier_data['identifier'] %}
+        <a href='{{ identifier_data['uri'] or "javascript:void(0)" }}'>
+          {{ identifier_data['identifier'] }}
+        </a>
+      {% endif %}
+      <br>
+    {% endfor %}
+  {% endif %}
+{% endmacro %}

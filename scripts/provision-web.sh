@@ -50,7 +50,7 @@ provision_web_common_ubuntu14 () {
 
     # sphinxdoc-install-useful-system-tools-ubuntu14-begin
     # update list of available packages:
-    $sudo apt-get -y update
+    $sudo apt-get -y update --allow-releaseinfo-change
 
     # install useful system tools:
     $sudo apt-get -y install \
@@ -68,6 +68,11 @@ provision_web_common_ubuntu14 () {
     fi
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-end
 
+
+    # Added in order to accomidate Debians Version 9 -> 10 update
+    # See: https://github.com/nodesource/distributions/issues/866
+    $sudo printf "\nPackage: *\nPin: origin deb.nodesource.com\nPin-Priority: 600" >> /etc/apt/preferences.d/nodesource
+
     # sphinxdoc-install-web-common-ubuntu14-begin
     $sudo apt-get -y install \
          libffi-dev \
@@ -78,6 +83,8 @@ provision_web_common_ubuntu14 () {
          libtiff-dev \
          libxml2-dev \
          libxslt-dev \
+         libzip-dev \
+         libjpeg-dev \
          nodejs \
          python-dev \
          python-pip
@@ -122,6 +129,8 @@ provision_web_common_centos7 () {
          libxml2-devel \
          libxslt-devel \
          openssl-devel \
+         libzip-devel \
+         libjpeg-turbo-devel \
          policycoreutils-python \
          python-devel \
          python-pip
@@ -224,6 +233,24 @@ setup_nginx_centos7 () {
     # sphinxdoc-install-web-nginx-centos7-end
 }
 
+setup_libreoffice_ubuntu14 () {
+    # sphinxdoc-install-web-libreoffice-ubuntu14-begin
+    set +o errexit
+    $sudo apt-get install -y libreoffice
+    $sudo apt-get install -y fonts-ipafont fonts-ipaexfont # japanese fonts
+    set -o errexit
+    # sphinxdoc-install-web-libreoffice-ubuntu14-end
+}
+
+setup_libreoffice_centos7 () {
+    # sphinxdoc-install-web-libreoffice-centos7-begin
+    set +o errexit
+    $sudo yum install -y libreoffice
+    $sudo yum install -y fonts-ipafont fonts-ipaexfont # japanese fonts
+    set -o errexit
+    # sphinxdoc-install-web-libreoffice-centos7-end
+}
+
 cleanup_web_ubuntu14 () {
     # sphinxdoc-install-web-cleanup-ubuntu14-begin
     $sudo apt-get -y autoremove && $sudo apt-get -y clean
@@ -258,6 +285,7 @@ main () {
         setup_npm_and_css_js_filters
         setup_virtualenvwrapper
         cleanup_web_ubuntu14
+        setup_libreoffice_ubuntu14
     elif [ "$os_distribution" = "Ubuntu" ]; then
         if [ "$os_release" = "14" ]; then
             provision_web_common_ubuntu14
@@ -265,6 +293,7 @@ main () {
             setup_npm_and_css_js_filters
             setup_virtualenvwrapper
             setup_nginx_ubuntu14
+            setup_libreoffice_ubuntu14
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1
@@ -276,6 +305,7 @@ main () {
             setup_npm_and_css_js_filters
             setup_virtualenvwrapper
             setup_nginx_centos7
+            setup_libreoffice_centos7
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1

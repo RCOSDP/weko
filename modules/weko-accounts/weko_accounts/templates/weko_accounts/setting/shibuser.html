@@ -19,6 +19,10 @@
 # MA 02111-1307, USA.
 #}
 {%- extends admin_base_template %}
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
 
 {% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
 
@@ -33,31 +37,35 @@
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios1" value="1" checked>
-      {{_("allow shibboleth user")}}
+      {{_("Allow shibboleth user")}}
     </label>
   </div>
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios0" value="0">
-      {{_("deny shibboleth user")}}
+      {{_("Deny shibboleth user")}}
     </label>
   </div>
 {%- else %}
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios1" value="1">
-      {{_("allow shibboleth user")}}
+      {{_("Allow shibboleth user")}}
     </label>
   </div>
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios0" value="0" checked>
-      {{_("deny shibboleth user")}}
+      {{_("Deny shibboleth user")}}
     </label>
   </div>
 {%- endif %}
 <div class="form-actions">
-  <button type="submit" name="submit" value="shib_form" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Update') }}</button>
+<div class="col-sm-offset-2 col-sm-10">
+  <button type="submit" name="submit" value="shib_form" class="btn btn-primary">
+      <span class="glyphicon glyphicon-save"></span>&nbsp
+          {{ _('Save') }}</button>
+</div>
 </div>
 </form>
 {%- endblock body %}

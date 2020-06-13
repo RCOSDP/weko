@@ -138,8 +138,7 @@ html_theme_options = {
     'extra_nav_links': {
         'weko-items-ui@GitHub': 'https://github.com/wekosoftware/weko-items-ui',
         'weko-items-ui@PyPI': 'https://pypi.python.org/pypi/weko-items-ui/',
-    }
-}
+    }}
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.

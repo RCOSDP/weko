@@ -157,7 +157,7 @@ var SchemaCheckboxes = React.createClass({
 		return this.propsToState(this.props);
 	},
 	propsToState: function propsToState(props) {
-		var data = props.data;
+        var data = props.data; //get enum for checkboxes
 		if (data.hasOwnProperty('enum') && data.enum.length > 0) {
 			data.enum = data.enum.join('|');
 		} else {
@@ -189,7 +189,7 @@ var SchemaCheckboxes = React.createClass({
 			arr = this.state.enum.split('|');
 		}
 		return {
-			type: "string",
+			type: "array",
 			format: "checkboxes",
 			enum: arr
 		};
@@ -202,7 +202,7 @@ var SchemaCheckboxes = React.createClass({
 			React.createElement(
 				'div',
 				{ className: 'col-md-10 col-lg-10' },
-				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: '\u9078\u629E\u80A2\u3092\u300C|\u300D\u533A\u5207\u308A\u3067\u5165\u529B\u3057\u3066\u4E0B\u3055\u3044' })
+				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: 'Separate options with the | character ' })
 			)
 		);
 	}
@@ -260,7 +260,7 @@ var SchemaRadios = React.createClass({
 			React.createElement(
 				'div',
 				{ className: 'col-md-10 col-lg-10' },
-				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: '\u9078\u629E\u80A2\u3092\u300C|\u300D\u533A\u5207\u308A\u3067\u5165\u529B\u3057\u3066\u4E0B\u3055\u3044' })
+				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: 'Separate options with the | character ' })
 			)
 		);
 	}
@@ -275,6 +275,7 @@ var SchemaSelect = React.createClass({
 	propsToState: function propsToState(props) {
 		var data = props.data;
 		if (data.hasOwnProperty('enum') && data.enum.length > 0) {
+			data.enum_original = data.enum;
 			data.enum = data.enum.join('|');
 		} else {
 			data.enum = '';
@@ -300,14 +301,10 @@ var SchemaSelect = React.createClass({
 		return titleMap;
 	},
 	export: function _export() {
-		var arr = [];
-		if (this.state.enum.length > 0) {
-			arr = this.state.enum.split('|');
-		}
 		return {
-			type: "string",
+			type: this.state.type,
 			format: "select",
-			enum: arr
+			enum: this.state.enum_original ? this.state.enum_original : this.state.enum.length > 0 ? this.state.enum.split('|') : []
 		};
 	},
 	render: function render() {
@@ -318,7 +315,7 @@ var SchemaSelect = React.createClass({
 			React.createElement(
 				'div',
 				{ className: 'col-md-10 col-lg-10' },
-				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: '\u9078\u629E\u80A2\u3092\u300C|\u300D\u533A\u5207\u308A\u3067\u5165\u529B\u3057\u3066\u4E0B\u3055\u3044' })
+				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: 'Separate options with the | character ' })
 			)
 		);
 	}
@@ -490,11 +487,16 @@ var SchemaObject = React.createClass({
 		var parentkey = parent_Key;
 		var form = [];
 		var forms = [];
+		var rename_subitem_config = false;
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
+				let subKey = itemKey.split("_");
+				if (rename_subitem_config && subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+					itemKey = self.createSubItemName(value.title);
+				}
 				var sub_form = {};
 				if ('text' === value.format || 'textarea' === value.format) {
 					sub_form = {
@@ -510,14 +512,31 @@ var SchemaObject = React.createClass({
 						templateUrl: "/static/templates/weko_deposit/datepicker.html",
 						title: value.title
 					};
-				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
+				} else if ('checkboxes' === value.format) {
+          sub_form = {
+            key: parentkey + itemKey,
+            type: "template",
+            templateUrl: "/static/templates/weko_deposit/checkboxes.html",
+            title: value.title,
+            titleMap: self.refs['subitem' + index].exportTitleMap()
+          };
+				}else if ('select' === value.format) {
 					sub_form = {
 						key: parentkey + itemKey,
 						type: value.format,
 						title: value.title,
 						titleMap: self.refs['subitem' + index].exportTitleMap()
 					};
-				} else if ('array' === value.format) {
+				}
+				 else if ('radios' === value.format ) {
+					sub_form = {
+						key: parentkey + itemKey,
+						type: "template",
+						title: value.title,
+						templateUrl: "/static/templates/weko_deposit/datepicker.html",
+						titleMap: self.refs['subitem' + index].exportTitleMap()
+					};
+				}  else if ('array' === value.format) {
 					sub_form = {
 						key: parentkey + itemKey,
 						add: "New",
@@ -548,16 +567,24 @@ var SchemaObject = React.createClass({
 
 		var self = this;
 		var properties = {};
+		var rename_subitem_config = false;
 
 		self.state.propertyNames.map(function (value, index) {
 			if (_this2.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
+				let subKey = itemKey.split("_");
+				if (rename_subitem_config && subKey.length > 1 && !isNaN(Number(subKey[1]))) {
+					itemKey = self.createSubItemName(value.title);
+				}
 				if ('text' === value.format || 'textarea' === value.format || 'datetime' === value.format) {
 					properties[itemKey] = value;
 				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
 					properties[itemKey] = self.refs['subitem' + index].export();
 					properties[itemKey].title = value.title;
+					if (typeof value.default != 'undefined') {
+						properties[itemKey].default = value.default;
+					}
 				} else if ('array' === value.format) {
 					properties[itemKey] = { type: "array", format: "array", items: {}, title: value.title };
 					properties[itemKey].items = self.refs['subitem' + index].export();
@@ -571,12 +598,30 @@ var SchemaObject = React.createClass({
 			}
 		});
 
-		return {
+		let result = {
 			type: 'object',
 			format: 'object',
 			properties: properties,
-			required: this.state.required.length ? this.state.required : []
+			required: this.state.required
 		};
+
+		if(!result.required.length){
+			delete result.required;
+		}
+
+		return result;
+	},
+	// Defined prefix for sub item name
+	prefixSubitemname: 'subitem_',
+	customSuffixSubItemName: function customSuffixSubItemName(suffix){
+		// Replace all space to _
+		suffix = suffix.replace(/ /g, '_');
+		// convert to lower case character
+		suffix = suffix.toLowerCase();
+		return suffix;
+	},
+	createSubItemName: function createSubItemName(suffix){
+		return this.prefixSubitemname + this.customSuffixSubItemName(suffix);
 	},
 	on: function on(event, callback) {
 		this.callbacks = this.callbacks || {};
@@ -639,42 +684,42 @@ var SchemaObject = React.createClass({
 									React.createElement(
 										'option',
 										{ value: 'text' },
-										'\u30C6\u30AD\u30B9\u30C8'
+										'Text'
 									),
 									React.createElement(
 										'option',
 										{ value: 'textarea' },
-										'\u30C6\u30AD\u30B9\u30C8\u30A8\u30EA\u30A2'
+										'Textarea'
 									),
 									React.createElement(
 										'option',
 										{ value: 'checkboxes' },
-										'\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9'
+										'Checkboxes'
 									),
 									React.createElement(
 										'option',
 										{ value: 'radios' },
-										'\u30E9\u30B8\u30AA'
+										'Radios'
 									),
 									React.createElement(
 										'option',
 										{ value: 'select' },
-										'\u30D7\u30EB\u30C0\u30A6\u30F3'
+										'Select'
 									),
 									React.createElement(
 										'option',
 										{ value: 'datetime' },
-										'\u65E5\u4ED8'
+										'Datetime'
 									),
 									React.createElement(
 										'option',
 										{ value: 'array' },
-										'\u30EA\u30B9\u30C8'
+										'List'
 									),
 									React.createElement(
 										'option',
 										{ value: 'object' },
-										'\u30AA\u30D6\u30B8\u30A7\u30AF\u30C8'
+										'Object'
 									)
 								)
 							),
@@ -724,8 +769,13 @@ var SchemaObject = React.createClass({
 						{ className: self.state.editor ? "col-md-6 col-lg-6" : "hide" },
 						React.createElement(
 							'button',
-							{ className: 'btn btn-default navbar-text', onClick: self.add },
-							'\u8FFD\u52A0'
+							{ className: 'btn btn-light pull-right add-button', onClick: self.add },
+                            React.createElement(
+                                'span',
+                                { className: 'glyphicon glyphicon-plus' },
+                                ''
+                            ),
+                            ' Add'
 						)
 					)
 				)
@@ -743,11 +793,16 @@ var SchemaObject = React.createClass({
 						this.expandProp(),
 						React.createElement(
 							'div',
-							{ className: self.state.editor ? "col-md-6 col-lg-6" : "hide" },
+                            { className: self.state.editor ? "col-md-6 col-lg-6" : "hide" },
 							React.createElement(
 								'button',
-								{ className: 'btn btn-default navbar-text', onClick: self.add },
-								'\u8FFD\u52A0'
+                                { className: 'btn btn-light pull-right add-button', onClick: self.add },
+                                React.createElement(
+                                    'span',
+                                    { className: 'glyphicon glyphicon-plus' },
+                                    ''
+                                ),
+                                ' Add'
 							)
 						)
 					)

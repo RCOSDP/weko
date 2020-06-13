@@ -10,7 +10,7 @@
 #
 # WEKO3 is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -28,6 +28,7 @@ item_permission = Permission(action_item_access)
 
 
 def edit_permission_factory(record, **kwargs):
+    """Edit permission factory."""
     def can(self):
         return page_permission_factory(record, flg='Edit').can()
     return type('EditPermissionChecker', (), {'can': can})()

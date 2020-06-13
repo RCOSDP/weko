@@ -31,7 +31,7 @@ from weko_user_profiles import current_userprofile
 
 
 def test_logged_out_user_has_anonymous_profile(app):
-    """AnonymousUser should have AnonymousUserProfile."""
+    """Anonymoususer should have AnonymousUserProfile."""
     with app.test_request_context():
         profile_url = url_for('invenio_userprofiles.profile')
 

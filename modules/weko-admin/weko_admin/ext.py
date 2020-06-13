@@ -21,17 +21,49 @@
 """Extensions for weko-admin."""
 
 from datetime import timedelta
+from functools import partial
 
-from flask import session
+from babel.core import Locale
+from flask import _request_ctx_stack, current_app, request, session
 from flask_babelex import gettext as _
+from flask_login import current_user
+from invenio_accounts.models import Role, userrole
+from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from invenio_i18n.views import set_lang
 
 from . import config
-from .models import SessionLifetime
+from .models import AdminLangSettings, SessionLifetime
 from .views import blueprint
 
 
 class WekoAdmin(object):
     """WEKO-Admin extension."""
+
+    @staticmethod
+    def role_has_access(endpoint=None):
+        """Check if user's role has access to view endpoint."""
+        endpoint = endpoint or request.url_rule.endpoint.split('.')[0]
+
+        def _role_endpoint_viewable(endpoint):
+            """Check whether the current user role can view the endpoint - util."""
+            conf = current_app.config
+            access_table = conf['WEKO_ADMIN_ACCESS_TABLE']
+            system_admin = conf['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            try:
+                roles = db.session.query(Role).join(userrole).filter_by(
+                    user_id=current_user.get_id()).all()
+            except Exception as e:
+                current_app.logger.error(
+                    'Could not determine roles - returning False: ', e)
+                roles = []
+            for role in roles:  # Check if role can view endpoint
+                access_list = access_table[role.name] if role.name in access_table \
+                    else []
+                if endpoint in access_list or role.name == system_admin:
+                    return True
+            return False
+        return _role_endpoint_viewable(endpoint)
 
     def __init__(self, app=None):
         """
@@ -54,6 +86,37 @@ class WekoAdmin(object):
         self.init_config(app)
         app.register_blueprint(blueprint)
         app.extensions['weko-admin'] = self
+
+        @app.before_request  # Add extra access control for roles
+        def is_accessible_to_role():
+            """Check if current user's role has access to view."""
+            for view in app.extensions['admin'][0]._views:
+                setattr(view, 'is_accessible', self.role_has_access)
+                new_views = []
+                is_visible_fn = partial(self.role_has_access, view.endpoint)
+                setattr(view, 'is_visible', is_visible_fn)
+                new_views.append(view)
+            app.extensions['admin'][0]._views = new_views  # Overwrite views
+
+        @app.before_request
+        def set_default_language():
+            """Set default language from admin language settings.
+
+            In case user opens the web for the first time,
+            set default language base on Admin language setting
+            """
+            if "selected_language" not in session:
+                registered_languages = AdminLangSettings\
+                    .get_registered_language()
+                if registered_languages:
+                    default_language = registered_languages[0].get('lang_code')
+                    session['selected_language'] = default_language
+                    set_lang(default_language)
+                    ctx = _request_ctx_stack.top
+                    if ctx is not None and hasattr(ctx, 'babel_locale'):
+                        setattr(ctx, 'babel_locale', Locale(default_language))
+            else:
+                session['selected_language'] = current_i18n.language
 
     def init_config(self, app):
         """

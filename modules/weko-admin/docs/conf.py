@@ -308,8 +308,12 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'weko-admin', u'WEKO-Admin Documentation',
-     author, 'weko-admin', 'Invenio module that adds more fun to the platform.',
+    (master_doc,
+     'weko-admin',
+     u'WEKO-Admin Documentation',
+     author,
+     'weko-admin',
+     'Invenio module that adds more fun to the platform.',
      'Miscellaneous'),
 ]
 

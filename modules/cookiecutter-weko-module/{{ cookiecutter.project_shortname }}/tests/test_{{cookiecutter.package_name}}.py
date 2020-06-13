@@ -1,6 +1,8 @@
 {% include 'misc/header.py' %}
 """Module tests."""
 
+from __future__ import absolute_import, print_function
+
 from flask import Flask
 
 from {{ cookiecutter.package_name }} import {{ cookiecutter.extension_class }}
@@ -25,10 +27,8 @@ def test_init():
     assert '{{ cookiecutter.project_shortname}}' in app.extensions
 
 
-def test_view(app):
+def test_view(base_client):
     """Test view."""
-    {{ cookiecutter.extension_class}}(app)
-    with app.test_client() as client:
-        res = client.get("/")
-        assert res.status_code == 200
-        assert 'Welcome to {{ cookiecutter.project_name | lower }}' in str(res.data)
+    res = base_client.get("/")
+    assert res.status_code == 200
+    assert 'Welcome to {{ cookiecutter.project_name}}' in str(res.data)

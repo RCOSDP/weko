@@ -1,0 +1,68 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{% extends 'admin/model/edit.html' %}
+{% import 'admin/lib.html' as lib with context %}
+{% from 'admin/lib.html' import extra with context %} {# backward compatible #}
+
+{% block css %}
+  {{ super() }}
+  <link href="{{ url_for('static', filename='css/weko_records_ui/pidstore_identifier.css') }}" rel="stylesheet">
+{% endblock css%}
+
+{% block edit_form %}
+  {% call lib.form_tag(None) %}
+      {{ lib.render_form_fields(form, form_opts) }}      
+      {% block toggle_from %}
+      {% endblock %}
+      <div class="form-group">
+          <div class="row-line-space"></div>
+      </div>
+      <div class="form-group">
+        <div class="col-md-2"></div>
+        <span class="col-md-10 query-columns">
+          <span>
+            <label>{{'Disable'}}</label>
+            <select id="leftSelect" multiple="multiple"></select>
+          </span>
+          <span class="buttons">
+           <!-- <input type="button" id="moveRight" value="→" class="move-right">
+            <input type="button" id="moveLeft" value="←" class="move-left">-->
+           <button type="button" id="moveRight" class="btn btn-default icon-button">
+                 <i class="fa fa-angle-right"></i>
+           </button><br/><br/>
+           <button type="button" id="moveLeft" class="btn btn-default icon-button">
+                  <i class="fa fa-angle-left"></i>
+           </button>
+          </span>
+          <span>
+            <label>{{'Enable'}}</label>
+            <select id="rightSelect" multiple="multiple"></select>
+          </span>
+        </span>
+      </div>
+      {{ lib.render_form_buttons(return_url, extra()) }}
+  {% endcall %}
+{% endblock %}
+
+{% block tail %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/weko_records_ui/pidstore_identifier.js') }}"></script>
+{% endblock tail %}

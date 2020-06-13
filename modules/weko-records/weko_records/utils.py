@@ -20,7 +20,6 @@
 
 """Item API."""
 
-import re
 from collections import OrderedDict
 
 import pytz
@@ -28,14 +27,14 @@ from flask import current_app
 from flask_security import current_user
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.ext import pid_exists
+from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
-from weko_schema_ui.schema import SchemaTree
 
 
 def json_loader(data, pid):
-    """
-    Convert the item data and mapping to jpcoar
+    """Convert the item data and mapping to jpcoar.
+
     :param data: json from item form post.
     :param pid: pid value.
     :return: dc, jrc, is_edit
@@ -44,6 +43,7 @@ def json_loader(data, pid):
     jpcoar = OrderedDict()
     item = dict()
     ar = []
+    pubdate = None
 
     if not isinstance(data, dict) or data.get("$schema") is None:
         return
@@ -68,8 +68,17 @@ def json_loader(data, pid):
                     continue
 
             item.clear()
-            item["attribute_name"] = ojson["properties"][k]["title"] \
-                if ojson["properties"][k].get("title") is not None else k
+            try:
+                item["attribute_name"] = ojson["properties"][k]["title"] \
+                    if ojson["properties"][k].get("title") is not None else k
+            except Exception:
+                pub_date_setting = {
+                    "type": "string",
+                    "title": "Publish Date",
+                    "format": "datetime"
+                }
+                ojson["properties"]["pubdate"] = pub_date_setting
+                item["attribute_name"] = 'Publish Date'
             # set a identifier to add a link on detail page when is a creator field
             # creator = mp.get(k, {}).get('jpcoar_mapping', {})
             # creator = creator.get('creator') if isinstance(
@@ -86,6 +95,12 @@ def json_loader(data, pid):
                     iscreator = True
             if iscreator:
                 item["attribute_type"] = 'creator'
+
+            item_data = ojson["properties"][k]
+            if 'array' == item_data.get('type'):
+                properties_data = item_data['items']['properties']
+                if 'filename' in properties_data:
+                    item["attribute_type"] = 'file'
 
             if isinstance(v, list):
                 if len(v) > 0 and isinstance(v[0], dict):
@@ -106,9 +121,18 @@ def json_loader(data, pid):
                 pubdate = v
             jpcoar[k] = item.copy()
 
+    # convert to es jpcoar mapping data
+    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+    list_key = []
+    for k, v in jrc.items():
+        if not v:
+            list_key.append(k)
+    if list_key:
+        for key in list_key:
+            del jrc[key]
     if dc:
         # get the tile name to detail page
-        title = data.get("title_ja") or data.get("title_en")
+        title = data.get("title")
 
         if 'control_number' in dc:
             del dc['control_number']
@@ -117,16 +141,16 @@ def json_loader(data, pid):
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
 
-        # convert to es jpcoar mapping data
-        jrc = SchemaTree.get_jpcoar_json(jpcoar)
-
         oai_value = current_app.config.get(
             'OAISERVER_ID_PREFIX', '') + str(pid)
         is_edit = pid_exists(oai_value, 'oai')
         if not is_edit:
             oaid = current_pidstore.minters['oaiid'](item_id, dc)
             oai_value = oaid.pid_value
-
+        # relation_ar = []
+        # relation_ar.append(dict(value="", item_links="", item_title=""))
+        # jrc.update(dict(relation=dict(relationType=relation_ar)))
+        # dc.update(dict(relation=dict(relationType=relation_ar)))
         jrc.update(dict(control_number=pid))
         jrc.update(dict(_oai={"id": oai_value}))
         jrc.update(dict(_item_metadata=dc))
@@ -134,15 +158,46 @@ def json_loader(data, pid):
         jrc.update(dict(publish_date=pubdate))
 
         # save items's creator to check permission
-        user_id = current_user.get_id()
-        if user_id:
-            jrc.update(dict(weko_creator_id=user_id))
+        if current_user:
+            current_user_id = current_user.get_id()
+        else:
+            current_user_id = '1'
+        if current_user_id:
+            # jrc is saved on elastic
+            jrc_weko_shared_id = jrc.get("weko_shared_id", None)
+            jrc_weko_creator_id = jrc.get("weko_creator_id", None)
+            if not jrc_weko_creator_id:
+                # in case first time create record
+                jrc.update(dict(weko_creator_id=current_user_id))
+                jrc.update(dict(weko_shared_id=data.get('shared_user_id',
+                                                        None)))
+            else:
+                # incase record is end and someone is updating record
+                if current_user_id == int(jrc_weko_creator_id):
+                    # just allow owner update shared_user_id
+                    jrc.update(dict(weko_shared_id=data.get('shared_user_id',
+                                                            None)))
+
+            # dc js saved on postgresql
+            dc_owner = dc.get("owner", None)
+            if not dc_owner:
+                dc.update(
+                    dict(
+                        weko_shared_id=data.get(
+                            'shared_user_id',
+                            None)))
+                dc.update(dict(owner=current_user_id))
+            else:
+                if current_user_id == int(dc_owner):
+                    dc.update(dict(weko_shared_id=data.get('shared_user_id',
+                                                           None)))
 
     del ojson, mjson, item
     return dc, jrc, is_edit
 
 
 def set_timestamp(jrc, created, updated):
+    """Set timestamp."""
     jrc.update(
         {"_created": pytz.utc.localize(created)
             .isoformat() if created else None})
@@ -153,6 +208,7 @@ def set_timestamp(jrc, created, updated):
 
 
 def make_itemlist_desc(es_record):
+    """Make itemlist description."""
     rlt = ""
     src = es_record
     op = src.pop("_options", {})
@@ -179,7 +235,7 @@ def make_itemlist_desc(es_record):
                         # list index value
                         if is_show:
                             rlt = rlt + ((vals[i] + ",") if not crtf
-                            else vals[i] + "\n")
+                                         else vals[i] + "\n")
             elif isinstance(vals, str):
                 crtf = v.get("crtf")
                 showlist = v.get("showlist")
@@ -187,7 +243,7 @@ def make_itemlist_desc(es_record):
                 is_show = False if hidden else showlist
                 if is_show:
                     rlt = rlt + ((vals + ",") if not crtf
-                    else vals + "\n")
+                                 else vals + "\n")
         if len(rlt) > 0:
             if rlt[-1] == ',':
                 rlt = rlt[:-1]
@@ -197,8 +253,8 @@ def make_itemlist_desc(es_record):
 
 
 def sort_records(records, form):
-    """
-    sort records
+    """Sort records.
+
     :param records:
     :param form:
     :return:
@@ -218,8 +274,8 @@ def sort_records(records, form):
 
 
 def sort_op(record, kd, form):
-    """
-    sort options dict
+    """Sort options dict.
+
     :param record:
     :param kd:
     :param form:
@@ -245,8 +301,8 @@ def sort_op(record, kd, form):
 
 
 def find_items(form):
-    """
-    find sorted items into a list
+    """Find sorted items into a list.
+
     :param form:
     :return: lst
     """
@@ -275,9 +331,59 @@ def find_items(form):
     return lst
 
 
-def get_all_items(nlst, klst):
+def get_all_items(nlst, klst, is_get_name=False):
+    """Convert and sort item list.
+
+    :param nlst:
+    :param klst:
+    :param is_get_name:
+    :return: alst
     """
-    convert and sort item list
+    def get_name(key):
+        for lst in klst:
+            key_arr = lst[0].split('.')
+            k = key_arr[-1]
+            if key != k:
+                continue
+            item_name = lst[1]
+            if len(key_arr) >= 3:
+                parent_key = key_arr[-2].replace('[]', '')
+                parent_key_name = get_name(parent_key)
+                if item_name and parent_key_name:
+                    item_name = item_name + '.' + get_name(parent_key)
+
+            return item_name
+
+    def get_items(nlst):
+        _list = []
+
+        if isinstance(nlst, list):
+            for lst in nlst:
+                _list.append(get_items(lst))
+        if isinstance(nlst, dict):
+            d = {}
+            for k, v in nlst.items():
+                if isinstance(v, str):
+                    d[k] = v
+                    if is_get_name:
+                        item_name = get_name(k)
+                        if item_name:
+                            d[k + '.name'] = item_name
+                else:
+                    _list.append(get_items(v))
+            _list.append(d)
+
+        return _list
+
+    to_orderdict(nlst, klst)
+    alst = get_items(nlst)
+
+    return alst
+
+
+def get_all_items2(nlst, klst):
+    """Convert and sort item list(original).
+
     :param nlst:
     :param klst:
     :return: alst
@@ -306,8 +412,8 @@ def get_all_items(nlst, klst):
 
 
 def to_orderdict(alst, klst):
-    """
-    sort item list
+    """Sort item list.
+
     :param alst:
     :param klst:
     """
@@ -338,28 +444,46 @@ def to_orderdict(alst, klst):
 
 
 def get_options_and_order_list(item_type_id):
-    """
-     Get Options by item type id
+    """Get Options by item type id.
+
     :param item_type_id:
     :return: options dict and sorted list
     """
     ojson = ItemTypes.get_record(item_type_id)
     solst = find_items(ojson.model.form)
-    meta_options = ojson.model.render.pop('meta_fix')
-    meta_options.update(ojson.model.render.pop('meta_list'))
+    meta_options = ojson.model.render.get('meta_fix')
+    meta_options.update(ojson.model.render.get('meta_list'))
     return solst, meta_options
 
 
 def sort_meta_data_by_options(record_hit):
-    """
-    reset metadata by '_options'
+    """Reset metadata by '_options'.
+
     :param record_hit:
     """
+    def get_meta_values(v):
+        """Get values from metadata."""
+        data_list = []
+
+        def get_values(v):
+            """Get value by recursive."""
+            if isinstance(v, list):
+                for temp in v:
+                    get_values(temp)
+            elif isinstance(v, dict):
+                for temp in v.values():
+                    data_list.append(temp)
+            elif isinstance(v, str):
+                data_list.append(v)
+
+        get_values(v)
+        return data_list
+
     try:
 
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
-                       or src.get('item_type_id')
+            or src.get('item_type_id')
         if not item_type_id:
             return
 
@@ -386,8 +510,8 @@ def sort_meta_data_by_options(record_hit):
 
             mlt = val.get('attribute_value_mlt')
             if mlt:
-                data = list(map(lambda x: ''.join(x.values()),
-                                get_all_items(mlt, solst)))
+                meta_data = get_all_items(mlt, solst)
+                data = get_meta_values(meta_data)
             else:
                 data = val.get('attribute_value')
 
@@ -413,12 +537,215 @@ def sort_meta_data_by_options(record_hit):
 
 
 def get_keywords_data_load(str):
-    """
-     Get a json of item type info
+    """Get a json of item type info.
+
     :return: dict of item type info
     """
     try:
         return [(x.name, x.id) for x in ItemTypes.get_latest()]
-    except:
+    except BaseException:
         pass
     return []
+
+
+def is_valid_openaire_type(resource_type, communities):
+    """Check if the OpenAIRE subtype is corresponding with other metadata.
+
+    :param resource_type: Dictionary corresponding to 'resource_type'.
+    :param communities: list of communities identifiers
+    :returns: True if the 'openaire_subtype' (if it exists) is valid w.r.t.
+        the `resource_type.type` and the selected communities, False otherwise.
+    """
+    if 'openaire_subtype' not in resource_type:
+        return True
+    oa_subtype = resource_type['openaire_subtype']
+    prefix = oa_subtype.split(':')[0] if ':' in oa_subtype else ''
+
+    cfg = current_openaire.openaire_communities
+    defined_comms = [c for c in cfg.get(prefix, {}).get('communities', [])]
+    type_ = resource_type['type']
+    subtypes = cfg.get(prefix, {}).get('types', {}).get(type_, [])
+    # Check if the OA subtype is defined in config and at least one of its
+    # corresponding communities is present
+    is_defined = any(t['id'] == oa_subtype for t in subtypes)
+    comms_match = len(set(communities) & set(defined_comms))
+    return is_defined and comms_match
+
+
+def check_has_attribute_value(node):
+    """Check has value in items.
+
+    :param node:
+    :return: boolean
+    """
+    try:
+        if isinstance(node, list):
+            for lst in node:
+                return check_has_attribute_value(lst)
+        elif isinstance(node, dict) and bool(node):
+            for val in node.values():
+                if val:
+                    if isinstance(val, str):
+                        return True
+                    else:
+                        return check_has_attribute_value(val)
+        return False
+    except BaseException as e:
+        current_app.logger.error('Function check_has_attribute_value error:', e)
+        return False
+
+
+def get_attribute_value_all_items(nlst, klst, is_author=False):
+    """Convert and sort item list.
+
+    :param nlst:
+    :param klst:
+    :param is_author:
+    :return: alst
+    """
+    def get_name(key):
+        for lst in klst:
+            if key == lst[0].split('.')[-1]:
+                return lst[1] if not is_author else '{}.{}'. format(key, lst[1])
+
+    def to_sort_dict(alst, klst):
+        """Sort item list.
+
+        :param alst:
+        :param klst:
+        """
+        if isinstance(klst, list):
+            result = []
+            try:
+                if isinstance(alst, list):
+                    for a in alst:
+                        result.append(to_sort_dict(a, klst))
+                else:
+                    for lst in klst:
+                        key = lst[0].split('.')[-1]
+                        val = alst.pop(key, {})
+                        if val and (isinstance(val, str)
+                                    or (key == 'nameIdentifier')):
+                            result.append({key: val})
+                        elif isinstance(val, list) and len(
+                                val) > 0 and isinstance(val[0], str):
+                            result.append({key: val})
+                        else:
+                            if check_has_attribute_value(val):
+                                res = to_sort_dict(val, klst)
+                                result.append({key: res})
+                        if not alst:
+                            break
+                return result
+            except BaseException as e:
+                current_app.logger.error('Function to_sort_dict error: ', e)
+                return result
+
+    def set_attribute_value(nlst):
+        _list = []
+        try:
+            if isinstance(nlst, list):
+                for lst in nlst:
+                    _list.append(set_attribute_value(lst))
+            # check OrderedDict is dict and not empty
+            elif isinstance(nlst, dict) and bool(nlst):
+                d = {}
+                for key, val in nlst.items():
+                    item_name = get_name(key) or ''
+                    if val and (isinstance(val, str)
+                                or (key == 'nameIdentifier')):
+                        # the last children level
+                        d[item_name] = val
+                    elif isinstance(val, list) and len(val) > 0 and isinstance(
+                            val[0], str):
+                        d[item_name] = ', '.join(val)
+                    else:
+                        # parents level
+                        # check if have any child
+                        if check_has_attribute_value(val):
+                            d[item_name] = set_attribute_value(val)
+                _list.append(d)
+            return _list
+        except BaseException as e:
+            current_app.logger.error('Function set_node error: ', e)
+            return _list
+
+    orderdict = to_sort_dict(nlst, klst)
+    alst = set_attribute_value(orderdict)
+
+    return alst
+
+
+def check_input_value(old, new):
+    """Check different between old and new data.
+
+    @param old:
+    @param new:
+    @return:
+    """
+    diff = False
+    for k in old.keys():
+        if old[k]['input_value'] != new[k]['input_value']:
+            diff = True
+            break
+    return diff
+
+
+def remove_key(removed_key, item_val):
+    """Remove removed_key out of item_val.
+
+    @param removed_key:
+    @param item_val:
+    @return:
+    """
+    if not isinstance(item_val, dict):
+        return
+    if removed_key in item_val.keys():
+        del item_val[removed_key]
+    for k, v in item_val.items():
+        remove_key(removed_key, v)
+
+
+def remove_multiple(schema):
+    """Remove multiple of schema.
+
+    @param schema:
+    @return:
+    """
+    for k in schema['properties'].keys():
+        if 'maxItems' and 'minItems' in schema['properties'][k].keys():
+            del schema['properties'][k]['maxItems']
+            del schema['properties'][k]['minItems']
+        if 'items' in schema['properties'][k].keys():
+            schema['properties'][k] = schema['properties'][k]['items']
+
+
+def check_to_upgrade_version(old_render, new_render):
+    """Check upgrade or keep version by checking different renders data.
+
+    @param old_render:
+    @param new_render:
+    @return:
+    """
+    if old_render.get('meta_list').keys() != \
+            new_render.get('meta_list').keys():
+        return True
+    # Check diff input value:
+    if check_input_value(old_render.get('meta_list'),
+                         new_render.get('meta_list')):
+        return True
+    # Check diff schema
+    old_schema = old_render.get('table_row_map').get('schema')
+    new_schema = new_render.get('table_row_map').get('schema')
+
+    remove_key('required', old_schema)
+    remove_key('required', new_schema)
+
+    remove_key('title', old_schema['properties'])
+    remove_key('title', new_schema['properties'])
+
+    remove_multiple(old_schema)
+    remove_multiple(new_schema)
+    if old_schema != new_schema:
+        return True
+    return False

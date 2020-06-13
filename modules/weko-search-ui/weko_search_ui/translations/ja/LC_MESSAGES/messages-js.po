@@ -1,0 +1,29 @@
+# Translations template for weko-search-ui.
+# Copyright (C) 2016 CERN
+# This file is distributed under the same license as the weko-search-ui
+# project.
+#
+# Translators:
+msgid ""
+msgstr ""
+"Project-Id-Version: weko\n"
+"Report-Msgid-Bugs-To: info@wekosoftware.org\n"
+"POT-Creation-Date: 2016-10-12 15:32+0200\n"
+"PO-Revision-Date: 2016-10-20 07:42+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Japanese (http://www.transifex.com/wekosoftware/weko/language/ja/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+"Language: ja\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+
+#: weko_search_ui/static/templates/weko_search_ui/togglebutton.html:2
+msgid "asc"
+msgstr "昇順"
+
+#: weko_search_ui/static/templates/weko_search_ui/togglebutton.html:3
+msgid "desc"
+msgstr "降順"

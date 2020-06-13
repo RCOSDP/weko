@@ -1,0 +1,83 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+<div>
+  <div ng-app="myApp" ng-controller="mp" ng-csp>
+    <div class="row">
+      <div class="body col-sm-offset-1 col-sm-10 col-md-9">
+        <a class="btn btn-success pull-right" href="{{ url_for('schemasettings.add') }}">
+          <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp
+          {{_('Add Schema')}}
+        </a><br/><br/>
+        {% if not records %} No Schema .. Please add your greatest schema {% endif %}
+        {%- if records -%}
+        <table class="table table-bordered table-striped">
+          <thead>
+          <tr class="">
+            <th>{{_('Schema Mapping Name')}}</th>
+            <th>{{_('Root Name')}}</th>
+            <th>{{_('Operation')}}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <form class="form form-inline" action="{{ url_for('schemasettings.delete')}}" method="POST">
+            <div class="form-group">
+              {%- for r in records -%}
+              {% if r.dis == 'disabled' %}{% set pid = '#' %}{% else %}{% set pid = r.pid %}{% endif %}
+              <tr class="">
+                <td class="nowrap">{{ r.schema_name }}</td>
+                <td class="nowrap">{{ r.root_name }}</td>
+                <td class="forcewrap">
+                  <span class="pull-left">
+                    <button class="btn btn-danger" name="pid" type="submit" value="{{pid}}" {{r.dis}}>
+                         <span class="glyphicon glyphicon-trash"></span>&nbsp
+                               {{_("Delete")}}</a>
+                    </button>
+                  </span>
+                </td>
+              </tr>
+              {%- endfor -%}
+            </div>
+          </form>
+          </tbody>
+        </table>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{%- endblock body %}

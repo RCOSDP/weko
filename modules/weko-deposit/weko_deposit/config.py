@@ -20,19 +20,31 @@
 
 """Configuration for weko-deposit."""
 
-# WEKO_DEPOSIT_BASE_TEMPLATE = 'weko_deposit/base.html'
-# """Default base template for the demo page."""
-
 import copy
 
-WEKO_BUCKET_QUOTA_SIZE = 50 * 1000 * 1000 * 1000  # 50 GB
+WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024  # 50 GB
 """Maximum quota per bucket."""
 
 WEKO_MAX_FILE_SIZE = WEKO_BUCKET_QUOTA_SIZE
+WEKO_MAX_FILE_SIZE_FOR_ES = 1 * 1024 * 1024  # 1MB
 """Maximum file size accepted."""
+
+WEKO_MIMETYPE_WHITELIST_FOR_ES = [
+    'text/plain',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/pdf',
+]
 
 FILES_REST_STORAGE_FACTORY = 'weko_deposit.storage.pyfs_storage_factory'
 """Import path of factory used to create a storage instance."""
+
+FILES_REST_UPLOAD_OWNER_FACTORIES = 'weko_deposit.serializer.file_uploaded_owner'
+"""file update version"""
 
 WEKO_DEPOSIT_ITEMS_CACHE_PREFIX = 'cache_itemsIndex_{pid_value}'
 """ cache items prifix info"""
@@ -87,6 +99,8 @@ DEPOSIT_REST_ENDPOINTS = dict(
 WEKO_DEPOSIT_REST_ENDPOINTS = copy.deepcopy(DEPOSIT_REST_ENDPOINTS)
 WEKO_DEPOSIT_REST_ENDPOINTS['depid']['rdc_route'] = '/deposits/redirect/<{0}:pid_value>'.format(
     _PID)
+WEKO_DEPOSIT_REST_ENDPOINTS['depid']['pub_route'] = '/deposits/publish/<{0}:pid_value>'.format(
+    _PID)
 
 DEPOSIT_RECORDS_UI_ENDPOINTS = {
     'depid': {
@@ -110,3 +124,54 @@ DEPOSIT_RECORDS_UI_ENDPOINTS = {
 RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY = None
 RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY = None
 RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY = None
+DEPOSIT_JSONSCHEMAS_PREFIX = ''
+
+WEKO_DEPOSIT_SYS_CREATOR_KEY = {
+    'creator_names': 'creatorNames',
+    'creator_name': 'creatorName',
+    'creator_lang': 'creatorNameLang',
+    'family_names': 'familyNames',
+    'family_name': 'familyName',
+    'family_lang': 'familyNameLang',
+    'given_names': 'givenNames',
+    'given_name': 'givenName',
+    'given_lang': 'givenNameLang',
+    'alternative_names': 'creatorAlternatives',
+    'alternative_name': 'creatorAlternative',
+    'alternative_lang': 'creatorAlternativeLang',
+    'identifiers': 'nameIdentifiers',
+    'creator_mails': 'creatorMails',
+    'affiliation_name_identifier_scheme': 'affiliationNameIdentifierScheme',
+    'affiliation_name': 'affiliationName',
+    'affiliation_name_identifier': 'affiliationNameIdentifier',
+    'affiliation_name_identifier_URI': 'affiliationNameIdentifierURI',
+}
+"""Key of Bibliographic information."""
+
+WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY = [
+    'bibliographicVolumeNumber',
+    'bibliographicIssueNumber',
+    'p.',
+    'bibliographicNumberOfPages',
+    'bibliographicIssueDates'
+]
+"""Key of Bibliographic information."""
+
+WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO = {
+    'bibliographicVolumeNumber': 'Volume',
+    'bibliographicIssueNumber': 'Issue',
+    'bibliographicNumberOfPages': 'Number of Pages',
+    'bibliographicIssueDates': 'Issued Date'
+}
+"""Bibliographic information key and value."""
+
+WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = [
+    'bibliographic_titles',
+    'bibliographicPageEnd',
+    'bibliographicIssueNumber',
+    'bibliographicPageStart',
+    'bibliographicVolumeNumber',
+    'bibliographicNumberOfPages',
+    'bibliographicIssueDates'
+]
+"""Bibliographic information sys key."""

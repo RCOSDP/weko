@@ -28,16 +28,18 @@
 {%- block javascript %}
   {{ super() }}
   {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('item') }}
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
-  <div class="row">
+  <div class="row" style="height:100%">
     <div class="hide" id="post_url">{{ config.DEPOSIT_RECORDS_API.format(pid_value=pid_value) }}</div>
+    <div class="hide" id="pub_status">{{ action }}</div>
     <div class="hide" id="post_success_url"></div>
     <div class="hide" id="post_error_url"></div>
     <app-root-tree></app-root-tree>

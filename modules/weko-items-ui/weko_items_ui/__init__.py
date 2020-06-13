@@ -21,7 +21,7 @@
 """UI for creating items."""
 
 from .ext import WekoItemsUI
-from .version import __version__
 from .proxies import current_weko_items_ui
+from .version import __version__
 
 __all__ = ('__version__', 'WekoItemsUI', 'current_weko_items_ui')

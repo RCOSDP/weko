@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:50+0900\n"
+"POT-Creation-Date: 2019-07-01 05:51+0000\n"
 "PO-Revision-Date: 2018-01-19 13:59+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,19 +19,121 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+#: weko_accounts/admin.py:56
+msgid "Shibboleth flag was updated."
+msgstr "シボレスフラグが更新されました"
+
+#: weko_accounts/admin.py:69
+msgid "Setting"
+msgstr "設定"
+
+#: weko_accounts/admin.py:70
+msgid "Shibboleth"
+msgstr "シボレス"
+
 #. NOTE: This is a note to a translator.
 #: weko_accounts/ext.py:41
 msgid "A translation string"
 msgstr "翻訳文字列"
 
-#: weko_accounts/views.py:46
+#: weko_accounts/views.py:66
 msgid "WEKO-Accounts"
 msgstr "WEKOアカウント"
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:28
+msgid "confirm for account"
+msgstr "アカウント認証"
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:46
+msgid "Login (Visitors with a WEKO-ID)"
+msgstr "ログイン (WEKO-IDをお持ちの方）"
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:49
+msgid "Login (New WEKO users)"
+msgstr "ログイン (WEKO初回ログインの方）"
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:58
+#: weko_accounts/templates/weko_accounts/login_user.html:52
+#: weko_accounts/templates/weko_accounts/shib_user.html:76
+#, python-format
+msgid "New to %(sitename)s?"
+msgstr "%(sitename)s が初めての方ですか?"
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:59
+#: weko_accounts/templates/weko_accounts/login_user.html:52
+#: weko_accounts/templates/weko_accounts/shib_user.html:76
+msgid "Sign Up"
+msgstr "サインアップ"
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:66
+#: weko_accounts/templates/weko_accounts/login_user.html:59
+#: weko_accounts/templates/weko_accounts/shib_user.html:83
+msgid "Forgot password?"
+msgstr "パスワードをお忘れの方はこちら"
 
 #: weko_accounts/templates/weko_accounts/index.html:24
 msgid "Welcome to"
 msgstr "ようこそ"
 
+#: weko_accounts/templates/weko_accounts/login_user.html:29
+msgid "Log in to account"
+msgstr "アカウントにログイン"
+
+#: weko_accounts/templates/weko_accounts/login_user.html:38
+msgid "Log In"
+msgstr "ログイン"
+
+#: weko_accounts/templates/weko_accounts/shib_user.html:27
+msgid "test commit shibboleth account"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:29
+msgid "Life Time"
+msgstr "有効期限"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:40
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:53
+msgid "Allow shibboleth user"
+msgstr "シボレスユーザーを許可する"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:46
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:59
+msgid "Deny shibboleth user"
+msgstr "シボレスユーザーを拒否する"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
+msgid "Save"
+msgstr "保存"
+
+#: weko_accounts/api.py:202
+msgid "属性値の取得に失敗しました。"
+msgstr ""
+
+#: weko_accounts/api.py:209
+msgid "Invalid attribute."
+msgstr "属性値が不正です。"
+
+#: weko_accounts/api.py:223
+msgid "Invalid attribute."
+msgstr "ログインに失敗しました。"
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
+msgid "Institutional Login for institutions in Japan."
+msgstr "所属機関の学内認証システムでログインする方"
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
+msgid "Users who belongs to institution outside Japan, please choose your institution's location."
+msgstr "海外機関所属で、機関の学内認証システムでログインする方は下から地域を選択してください。"
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html
+msgid "Select Institution"
+msgstr "所属機関の選択"
+
+msgid "login_pattern_2_description_header"
+msgstr "WEKO3を利用するため、所属機関で認証する必要があります。所属機関を選択してください。<br>※このページを表示して時間が経過している場合は、再読み込みしてから所属機関を選択してください。<br>正しいページに戻れない場合があります。"
+
 #~ msgid "%(module_name)s"
 #~ msgstr ""
 
+msgid "Back to Top Page"
+msgstr "トップページに戻る"

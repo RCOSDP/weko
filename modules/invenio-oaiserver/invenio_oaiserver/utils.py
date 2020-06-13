@@ -16,6 +16,7 @@ from flask import current_app
 from lxml import etree
 from lxml.builder import E
 from lxml.etree import Element
+from weko_schema_ui.schema import get_oai_metadata_formats
 from werkzeug.utils import import_string
 
 try:
@@ -54,7 +55,7 @@ def serializer(metadata_prefix):
     :param metadata_prefix: One of the metadata identifiers configured in
         ``OAISERVER_METADATA_FORMATS``.
     """
-    metadataFormats = current_app.config['OAISERVER_METADATA_FORMATS']
+    metadataFormats = get_oai_metadata_formats(current_app)
     serializer_ = metadataFormats[metadata_prefix]['serializer']
     if isinstance(serializer_, tuple):
         return partial(import_string(serializer_[0]), **serializer_[1])

@@ -20,16 +20,16 @@
 
 """Views for weko-authors."""
 
-from flask import (
-    Blueprint, current_app, json, jsonify, render_template, request)
+from flask import Blueprint, current_app, json, jsonify, request
 from flask_babelex import gettext as _
 from flask_login import login_required
-from invenio_indexer.api import RecordIndexer
-
-from .permissions import author_permission
 from invenio_db import db
-from .models import Authors
+from invenio_indexer.api import RecordIndexer
 from weko_records.models import ItemMetadata
+
+from .models import Authors, AuthorsPrefixSettings
+from .permissions import author_permission
+from .utils import get_author_setting_obj
 
 blueprint = Blueprint(
     'weko_authors',
@@ -48,34 +48,6 @@ blueprint_api = Blueprint(
 )
 
 
-@blueprint.route("/")
-@login_required
-@author_permission.require(http_exception=403)
-def index():
-    """Render a basic view."""
-    return render_template(
-        current_app.config['WEKO_AUTHORS_LIST_TEMPLATE'])
-
-
-@blueprint.route("/add", methods=['GET'])
-@login_required
-@author_permission.require(http_exception=403)
-def add():
-    """Render an adding author view."""
-    return render_template(
-        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
-
-
-# add by ryuu at 20180808 start
-@blueprint.route("/edit", methods=['GET'])
-@login_required
-@author_permission.require(http_exception=403)
-def edit():
-    """Render an adding author view."""
-    return render_template(
-        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
-# add by ryuu at 20180808 end
-
 @blueprint_api.route("/add", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -85,16 +57,18 @@ def create():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-    data["gather_flg"]=0
+    data["gather_flg"] = 0
     indexer = RecordIndexer()
-    indexer.client.index(index="authors",
-                         doc_type="author",
-                         body=data,)
+    indexer.client.index(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+        body=data,
+    )
 
     author_data = dict()
 
-    author_data["id"]= json.loads(json.dumps(data))["pk_id"]
-    author_data["json"]= json.dumps(data)
+    author_data["id"] = json.loads(json.dumps(data))["pk_id"]
+    author_data["json"] = json.dumps(data)
 
     with db.session.begin_nested():
         author = Authors(**author_data)
@@ -116,19 +90,21 @@ def update_author():
     indexer = RecordIndexer()
     body = {'doc': data}
     indexer.client.update(
-        index="authors",
-        doc_type="author",
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         id=json.loads(json.dumps(data))["id"],
         body=body
     )
 
     with db.session.begin_nested():
-        author_data = Authors.query.filter_by(id=json.loads(json.dumps(data))["pk_id"]).one()
+        author_data = Authors.query.filter_by(
+            id=json.loads(json.dumps(data))["pk_id"]).one()
         author_data.json = json.dumps(data)
         db.session.merge(author_data)
     db.session.commit()
 
     return jsonify(msg=_('Success'))
+
 
 @blueprint_api.route("/delete", methods=['post'])
 @login_required
@@ -141,12 +117,14 @@ def delete_author():
 
     data = request.get_json()
     indexer = RecordIndexer()
-    indexer.client.delete(id=json.loads(json.dumps(data))["Id"],
-                          index="authors",
-                          doc_type="author",)
+    indexer.client.delete(
+        id=json.loads(json.dumps(data))["Id"],
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],)
 
     with db.session.begin_nested():
-        author_data = Authors.query.filter_by(id=json.loads(json.dumps(data))["pk_id"]).one()
+        author_data = Authors.query.filter_by(
+            id=json.loads(json.dumps(data))["pk_id"]).one()
         db.session.delete(author_data)
     db.session.commit()
 
@@ -163,31 +141,13 @@ def get():
     data = request.get_json()
 
     search_key = data.get('searchKey') or ''
-    query = {"match": {"gather_flg":0}}
+    match = [{"term": {"gather_flg": 0}}]
 
     if search_key:
-        search_keys = search_key.split(" ")
-        match = []
-        for key in search_keys:
-            if key:
-                match.append({"match": {"_all": key}})
-        # query = {"bool": {"should": match},"filter":{"term":{"gather_flg":0}}}
-        query = {
-            "filtered":{
-                "filter":{
-                    "bool":{
-                        "should":match,
-                        "must":{
-                            "term":{"gather_flg":0}
-                        }
-                    }
-                }
-            }
-        }
-
-
-    size = (data.get('numOfPage') or
-            current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
+        match.append({"multi_match": {"query": search_key, "type": "phrase"}})
+    query = {"bool": {"must": match}}
+    size = int(data.get('numOfPage')
+               or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
     num = data.get('pageNumber') or 1
     offset = (int(num) - 1) * size if int(num) > 1 else 0
 
@@ -203,33 +163,41 @@ def get():
         "size": size,
         "sort": sort
     }
-    query_item={
-      "size": 0,
-      "query": {
-          "bool": {
-              "must_not": {
-                  "match": {
-                      "weko_id": "",
-                  }
-              }
-          }
-      },"aggs":{
-          "item_count": {
-              "terms": {
-                "field": "weko_id"
-               }
-          }
-       }
+    query_item = {
+        "size": 0,
+        "query": {
+            "bool": {
+                "must_not": {
+                    "match": {
+                        "weko_id": "",
+                    }
+                }
+            }
+        }, "aggs": {
+            "item_count": {
+                "terms": {
+                    "field": "weko_id"
+                }
+            }
+        }
     }
 
-    current_app.logger.debug(body)
     indexer = RecordIndexer()
-    result = indexer.client.search(index="authors", body=body)
-    result_itemCnt = indexer.client.search(index="weko", body=query_item)
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+        body=body
+    )
+    result_itemCnt = indexer.client.search(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+        body=query_item
+    )
 
     result['item_cnt'] = result_itemCnt
 
     return jsonify(result)
+
 
 @blueprint_api.route("/search_edit", methods=['POST'])
 @login_required
@@ -247,9 +215,13 @@ def getById():
     body = {
         "query": query
     }
-    current_app.logger.debug(body)
+
     indexer = RecordIndexer()
-    result = indexer.client.search(index="authors", body=body)
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+        body=body
+    )
     return json.dumps(result)
 
 
@@ -258,40 +230,73 @@ def getById():
 @author_permission.require(http_exception=403)
 def mapping():
     """Transfer the author to JPCOAR format."""
+    def get_name_creator(res, _source):
+        name_info = _source.get('authorNameInfo')
+        for i in name_info:
+            if i.get('nameShowFlg') == 'true':
+                if i.get('nameFormat') == 'familyNmAndNm':
+                    tmp = {'familyName': i.get('familyName'),
+                           'familyNameLang': i.get('language')}
+                    res['familyNames'].append(tmp)
+                    tmp = {'givenName': i.get('firstName'),
+                           'givenNameLang': i.get('language')}
+                    res['givenNames'].append(tmp)
+                else:
+                    tmp = {'creatorName': i.get('fullName'),
+                           'creatorNameLang': i.get('language')}
+                    res['creatorNames'].append(tmp)
+
+    def get_identifier_creator(res, _source):
+        def get_info_author_id(idTtype):
+            prefix_settings = AuthorsPrefixSettings.query.all()
+            scheme = uri = ''
+            for prefix in prefix_settings:
+                if prefix.id == idTtype:
+                    scheme = prefix.name
+                    if scheme == 'KAKEN2':
+                        scheme = 'kakenhi'
+                    uri = prefix.url
+                    return scheme, uri
+            return scheme, uri
+
+        id_info = _source.get('authorIdInfo')
+        for j in id_info:
+            if j.get('authorIdShowFlg') == 'true':
+                scheme, uri = get_info_author_id(int(j['idType']))
+                author_id = j.get('authorId')
+                tmp = {
+                    'nameIdentifier': author_id,
+                    'nameIdentifierScheme': scheme,
+                    'nameIdentifierURI': uri
+                }
+                res['nameIdentifiers'].append(tmp)
+
+    def get_email_creator(res, _source):
+        email_info = _source.get('emailInfo')
+        for item in email_info:
+            email = item.get('email')
+            email_json = {'creatorMail': email}
+            res['creatorMails'].append(email_json)
+
     data = request.get_json()
-    current_app.logger.debug(data)
 
     # get author data
-    author_id = data.get('id') or ''
+    author_id = data.get('id', '')
     indexer = RecordIndexer()
-    result = indexer.client.get(index="authors", id=author_id)
+    result = indexer.client.get(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+        id=author_id
+    )
+    _source = result.get('_source')
 
     # transfer to JPCOAR format
     res = {'familyNames': [], 'givenNames': [], 'creatorNames': [],
-           'nameIdentifiers': []}
+           'nameIdentifiers': [], 'creatorAlternative': [], 'creatorMails': []}
 
-    name_info = result.get('_source').get('authorNameInfo')
-    for i in name_info:
-        if i.get('nameShowFlg') == 'true':
-            if i.get('nameFormat') == 'familyNmAndNm':
-                tmp = {'familyName': i.get('familyName'),
-                       'lang': i.get('language')}
-                res['familyNames'].append(tmp)
-                tmp = {'givenName': i.get('firstName'),
-                       'lang': i.get('language')}
-                res['givenNames'].append(tmp)
-            else:
-                tmp = {'creatorName': i.get('fullName'),
-                       'lang': i.get('language')}
-                res['creatorNames'].append(tmp)
-
-    id_info = result.get('_source').get('authorIdInfo')
-    for j in id_info:
-        if j.get('authorIdShowFlg') == 'true':
-            tmp = {'nameIdentifier': j.get('authorId'),
-                   'nameIdentifierScheme': j.get('idType'),
-                   'nameIdentifierURI': ''}
-            res['nameIdentifiers'].append(tmp)
+    get_name_creator(res, _source)
+    get_identifier_creator(res, _source)
+    get_email_creator(res, _source)
 
     # remove empty element
     last = {}
@@ -300,25 +305,24 @@ def mapping():
             last[k] = v
 
     current_app.logger.debug([last])
+
     return json.dumps([last])
+
 
 @blueprint_api.route("/gather", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
 def gatherById():
-    """gather author."""
+    """Gather author."""
     data = request.get_json()
     gatherFrom = data["idFrom"]
     gatherFromPkId = data["idFromPkId"]
     gatherTo = data["idTo"]
-    current_app.logger.debug(gatherFrom)
-    current_app.logger.debug(gatherFromPkId)
-    current_app.logger.debug(gatherTo)
 
-    #update DB of Author
+    # update DB of Author
     try:
         with db.session.begin_nested():
-            for j in gatherFromPkId :
+            for j in gatherFromPkId:
                 author_data = Authors.query.filter_by(id=j).one()
                 author_data.gather_flg = 1
                 db.session.merge(author_data)
@@ -340,21 +344,24 @@ def gatherById():
     for t in gatherFrom:
         q = json.dumps(update_author_q).replace("@id", t)
         q = json.loads(q)
-        res = indexer.client.search(index="authors", body=q)
+        res = indexer.client.search(
+            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            body=q
+        )
         for h in res.get("hits").get("hits"):
             body = {
-                'doc':{
-                    'gather_flg':1
+                'doc': {
+                    'gather_flg': 1
                 }
             }
             indexer.client.update(
-                index="authors",
-                doc_type="author",
+                index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+                doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
                 id=h.get("_id"),
                 body=body
             )
 
-    update_q ={
+    update_q = {
         "query": {
             "match": {
                 "weko_id": "@id"
@@ -362,24 +369,27 @@ def gatherById():
         }
     }
     indexer = RecordIndexer()
-    item_pk_id =[]
+    item_pk_id = []
     for t in gatherFrom:
         q = json.dumps(update_q).replace("@id", t)
         q = json.loads(q)
-        res = indexer.client.search(index="weko", body=q)
+        res = indexer.client.search(
+            index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+            body=q
+        )
         current_app.logger.debug(res.get("hits").get("hits"))
         for h in res.get("hits").get("hits"):
-            sub = {"id":h.get("_id"),"weko_id":t}
+            sub = {"id": h.get("_id"), "weko_id": t}
             item_pk_id.append(sub)
             body = {
-                'doc':{
-                    "weko_id":gatherTo,
-                    "weko_id_hidden":gatherTo
+                'doc': {
+                    "weko_id": gatherTo,
+                    "weko_id_hidden": gatherTo
                 }
             }
             indexer.client.update(
-                index="weko",
-                doc_type="item",
+                index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+                doc_type=current_app.config['INDEXER_DEFAULT_DOCTYPE'],
                 id=h.get("_id"),
                 body=body
             )
@@ -389,7 +399,7 @@ def gatherById():
             for j in item_pk_id:
                 itemData = ItemMetadata.query.filter_by(id=j.get("id")).one()
                 itemJson = json.dumps(itemData.json)
-                itemJson = itemJson.replace(j.get("weko_id"),gatherTo)
+                itemJson = itemJson.replace(j.get("weko_id"), gatherTo)
                 itemData.json = json.loads(itemJson)
                 db.session.merge(itemData)
         db.session.commit()
@@ -401,7 +411,75 @@ def gatherById():
     return jsonify({'code': 0, 'msg': 'Success'})
 
 
+@blueprint_api.route("/search_prefix", methods=['get'])
+@login_required
+@author_permission.require(http_exception=403)
+def get_prefix_list():
+    """Get all authors prefix settings."""
+    settings = AuthorsPrefixSettings.query.order_by(
+        AuthorsPrefixSettings.id).all()
+    data = []
+    if settings:
+        for s in settings:
+            tmp = s.__dict__
+            if '_sa_instance_state' in tmp:
+                tmp.pop('_sa_instance_state')
+            data.append(tmp)
+    return jsonify(data)
 
 
+@blueprint_api.route("/list_vocabulary", methods=['get'])
+@login_required
+@author_permission.require(http_exception=403)
+def get_list_schema():
+    """Get all scheme items config.py."""
+    data = {
+        "list": current_app.config['WEKO_AUTHORS_LIST_SCHEME'],
+        "index": current_app.config['WEKO_AUTHORS_INDEX_ITEM_OTHER']
+    }
+    return jsonify(data)
 
 
+@blueprint_api.route("/edit_prefix", methods=['post'])
+@login_required
+@author_permission.require(http_exception=403)
+def update_prefix():
+    """Update authors prefix settings."""
+    try:
+        data = request.get_json()
+        check = get_author_setting_obj(data['scheme'])
+        if check is None or check.id == data['id']:
+            AuthorsPrefixSettings.update(**data)
+            return jsonify({'code': 200, 'msg': 'Success'})
+        else:
+            return jsonify(
+                {'code': 400, 'msg': 'Specified scheme is already exist.'})
+    except Exception:
+        return jsonify({'code': 204, 'msg': 'Failed'})
+
+
+@blueprint_api.route("/delete_prefix/<id>", methods=['delete'])
+@login_required
+@author_permission.require(http_exception=403)
+def delete_prefix(id):
+    """Delete authors prefix settings."""
+    AuthorsPrefixSettings.delete(id)
+    return jsonify(msg=_('Success'))
+
+
+@blueprint_api.route("/add_prefix", methods=['put'])
+@login_required
+@author_permission.require(http_exception=403)
+def create_prefix():
+    """Add new authors prefix settings."""
+    try:
+        data = request.get_json()
+        check = get_author_setting_obj(data['scheme'])
+        if check is None:
+            AuthorsPrefixSettings.create(**data)
+            return jsonify({'code': 200, 'msg': 'Success'})
+        else:
+            return jsonify(
+                {'code': 400, 'msg': 'Specified scheme is already exist.'})
+    except Exception:
+        return jsonify({'code': 204, 'msg': 'Failed'})

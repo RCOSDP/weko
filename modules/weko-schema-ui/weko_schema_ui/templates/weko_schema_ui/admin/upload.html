@@ -1,0 +1,118 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+  <div>
+    <div class="row">
+      <div class="col-md-offset-1 col-md-10">
+        <div id="invenio-records">
+          <invenio-files-uploader
+            method="PUT"
+            endpoint="{{ config.WEKO_SCHEMA_UI_FILES_API }}"
+            {% if pid %}
+              action="{{ config.WEKO_SCHEMA_UI_RECORD_API|format(pid_value=pid.pid_value) }}"
+            {% else %}
+              initialization="{{ config.WEKO_SCHEMA_UI_SEARCH_API }}"
+            {% endif %}
+            extra-params='{"headers":{"Content-Type": "application/json"}}'
+          >
+            <invenio-records
+              initialization="{{ config.WEKO_SCHEMA_UI_SEARCH_API }}"
+              response-params='{{ config.WEKO_SCHEMA_UI_RESPONSE_MESSAGES | tojson }}'
+              extra-params='{"headers":{"Content-Type": "application/json"}}'
+              form="{{ url_for('static', filename=config.WEKO_SCHEMA_UI_DEFAULT_SCHEMAFORM) }}"
+              schema="{{ url_for('static', filename=config.WEKO_SCHEMA_UI_FORM_JSONSCHEMA) }}"
+              record='{{record}}'>
+              <invenio-records-loading
+                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+              </invenio-records-loading>
+              <invenio-records-alert
+                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+              </invenio-records-alert>
+              <div ng-hide="false">
+             <!--   <div ng-show="true">
+                  <ul class="list-inline text-right">
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
+                            class="btn btn-primary save-button"
+                            ng-click="recordsVM.actionHandler(['self',
+                            'POST'])"><span class="glyphicon glyphicon-download-alt"></span>
+                         {{_('Save')}}
+                        </button></li>
+                    <li>
+                        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                            ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
+                            class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">
+                            <span class="glyphicon glyphicon-trash"></span>
+                               {{_('Delete')}}
+                        </button>
+                   </li>
+                  </ul>
+</div>-->
+              </div>
+              <invenio-files-error
+                template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+              </invenio-files-error>
+              <invenio-files-upload-zone
+                template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+              </invenio-files-upload-zone>
+              <invenio-files-list
+                template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
+              ></invenio-files-list>
+              <invenio-records-form
+                form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+                form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
+                template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
+              </invenio-records-form>
+              <div ng-hide="false">
+                <div ng-show="true">
+                  <ul class="list-inline text-center">
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
+                            class="btn btn-primary"
+                            ng-click="recordsVM.actionHandler(['self',
+                            'POST'], '{{ url_for('schemasettings.list')
+                            }}')"><span class="glyphicon glyphicon-save"></span>&nbsp
+                            {{_('Save')}}
+                        </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </invenio-records>
+          </invenio-files-uploader>
+        </div>
+      </div>
+    </div>
+  </div>
+{%- endblock body %}

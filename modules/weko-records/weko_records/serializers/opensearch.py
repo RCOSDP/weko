@@ -18,30 +18,28 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+"""Extends the FeedGenerator to add Opensearch Elements to the feeds.
+
+opensearch partly taken from
+http://a9.com/-/spec/opensearch/1.1/
 """
-    Extends the FeedGenerator to add Opensearch Elements to the feeds.
-
-    opensearch partly taken from
-    http://a9.com/-/spec/opensearch/1.1/
-
-"""
-
-from lxml import etree
 
 from feedgen.ext.base import BaseExtension
+from lxml import etree
 
 
 class OpensearchBaseExtension(BaseExtension):
-    """Opensearch Elements extension.
-    """
+    """Opensearch Elements extension."""
 
     def __init__(self):
+        """Init."""
         # http://a9.com/-/spec/opensearch/1.1/
         self._oselem_totalResults = None
         self._oselem_startIndex = None
         self._oselem_itemsPerPage = None
 
     def extend_ns(self):
+        """Extends ns."""
         return {'opensearch': 'http://a9.com/-/spec/opensearch/1.1/'}
 
     def _extend_xml(self, xml_elem):
@@ -54,8 +52,9 @@ class OpensearchBaseExtension(BaseExtension):
         for elem in ['totalResults', 'startIndex', 'itemsPerPage']:
             if hasattr(self, '_oselem_%s' % elem):
                 for val in getattr(self, '_oselem_%s' % elem) or []:
-                    node = etree.SubElement(xml_elem,
-                                            '{%s}%s' % (OPENSEARCHELEMENTS_NS, elem))
+                    node = etree.SubElement(
+                        xml_elem, '{%s}%s' %
+                        (OPENSEARCHELEMENTS_NS, elem))
                     node.text = val
 
     def extend_atom(self, atom_feed):
@@ -64,7 +63,6 @@ class OpensearchBaseExtension(BaseExtension):
         :param atom_feed: The feed root element
         :returns: The feed root element
         """
-
         self._extend_xml(atom_feed)
 
         return atom_feed
@@ -80,10 +78,21 @@ class OpensearchBaseExtension(BaseExtension):
 
         return rss_feed
 
-    def totalResults(self, totalResults=None, replace=False):
-        """Get or set the opensearch:totalResults which is an entity responsible for
-        making totalResults to the resource.
+    def extend_jpcoar(self, jpcoar_feed):
+        """Extend a JPCOAR feed with the set opensearch fields.
 
+        :param jpcoar_feed: The feed root element
+        :returns: The feed root element.
+        """
+        header = jpcoar_feed[0]
+        self._extend_xml(header)
+
+        return jpcoar_feed
+
+    def totalResults(self, totalResults=None, replace=False):
+        """Get or set the opensearch:totalResults.
+
+        Which is an entity responsible for making totalResults to the resource.
         :param totalResults: totalResults.
         :param replace: Replace alredy set contributors (deault: False).
         :returns: List of contributors.
@@ -97,9 +106,9 @@ class OpensearchBaseExtension(BaseExtension):
         return self._oselem_totalResults
 
     def startIndex(self, startIndex=None, replace=False):
-        """Get or set the opensearch:startIndex which is an entity responsible for
-        making startIndex to the resource.
+        """Get or set the opensearch:startIndex.
 
+        Which is an entity responsible for making startIndex to the resource.
         :param startIndex: startIndex.
         :param replace: Replace alredy set contributors (deault: False).
         :returns: List of contributors.
@@ -113,9 +122,9 @@ class OpensearchBaseExtension(BaseExtension):
         return self._oselem_startIndex
 
     def itemsPerPage(self, itemsPerPage=None, replace=False):
-        """Get or set the opensearch:itemsPerPage which is an entity responsible for
-        making itemsPerPage to the resource.
+        """Get or set the opensearch:itemsPerPage.
 
+        Which is an entity responsible for making itemsPerPage to the resource.
         :param itemsPerPage: totalResults.
         :param replace: Replace alredy set contributors (deault: False).
         :returns: List of contributors.
@@ -128,14 +137,14 @@ class OpensearchBaseExtension(BaseExtension):
             self._oselem_itemsPerPage += itemsPerPage
         return self._oselem_itemsPerPage
 
+
 class OpensearchExtension(OpensearchBaseExtension):
-    """Opensearch Elements extension.
-    """
+    """Opensearch Elements extension."""
 
 
 class OpensearchEntryExtension(OpensearchBaseExtension):
-    """Opensearch Elements extension.
-    """
+    """Opensearch Elements extension."""
+
     def extend_atom(self, entry):
         """Add Opensearch elements to an atom item. Alters the item itself.
 

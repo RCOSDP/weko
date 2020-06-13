@@ -1,0 +1,16 @@
+{
+    "Metadata": {
+        "LANG"      : "言語",
+        "PUBLISHER" : "出版者",
+        "PUBLICDATE": "公開日",
+        "KEY"       : "キーワード",
+        "AUTHOR"    : "作成者",
+        "EMAIL"     : "メールアドレス",
+        "AFFILIATED": "所属"
+    },
+    "Title": {
+        "METADATA"  : "メタデータ",
+        "URL"       : "URL",
+        "OAPOLICY"  : "OAポリシー"
+    }
+}

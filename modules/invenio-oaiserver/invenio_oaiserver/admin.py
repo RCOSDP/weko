@@ -10,11 +10,8 @@
 
 from flask_admin.contrib.sqla import ModelView
 
-from .models import OAISet
-
-from .models import Identify
-
 from .api import OaiIdentify
+from .models import Identify, OAISet
 
 
 def _(x):
@@ -36,7 +33,6 @@ class OAISetModelView(ModelView):
     column_default_sort = ('updated', True)
     column_searchable_list = ['spec', 'name', 'description']
     page_size = 25
-
 
     def edit_form(self, obj):
         """Customize edit form."""
@@ -60,26 +56,36 @@ class IdentifyModelView(ModelView):
     can_edit = True
     can_delete = False
     can_view_details = False
-    column_list = ('outPutSetting', 'emails', 'repositoryName', 'earliestDatastamp')
-    column_details_list = ('outPutSetting', 'emails', 'repositoryName', 'earliestDatastamp')
+    column_list = (
+        'outPutSetting',
+        'emails',
+        'repositoryName',
+        'earliestDatastamp')
+    column_details_list = (
+        'outPutSetting',
+        'emails',
+        'repositoryName',
+        'earliestDatastamp')
     column_labels = dict(
-        outPutSetting=_('outPutSet'),
-        emails= _('Emails'),
-        repositoryName= _('RepositoryName'),
-        earliestDatastamp= _('EarliestDatastamp'),
+        outPutSetting=_('Output Set'),
+        emails=_('Emails'),
+        repositoryName=_('Repository Name'),
+        earliestDatastamp=_('Earliest Datastamp'),
     )
-    form_columns = ('outPutSetting', 'emails', 'repositoryName', 'earliestDatastamp')
+    form_columns = (
+        'outPutSetting',
+        'emails',
+        'repositoryName',
+        'earliestDatastamp')
     page_size = 25
-
 
     def edit_form(self, obj):
         """Customize edit form."""
         form = super(IdentifyModelView, self).edit_form(obj)
         return form
 
-
-    def after_model_change(self,form,Identify,true):
-        """Set Create button Hidden"""
+    def after_model_change(self, form, Identify, true):
+        """Set Create button Hidden."""
         IdentifyModelView.can_create = False
 
 

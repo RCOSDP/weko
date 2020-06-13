@@ -25,7 +25,7 @@ from invenio_db import db
 
 
 class ShibbolethUser(db.Model):
-    """Shibboleth User Model"""
+    """Shibboleth User Model."""
 
     __tablename__ = "shibboleth_user"
 
@@ -64,11 +64,12 @@ class ShibbolethUser(db.Model):
 
     @classmethod
     def create(cls, weko_user, **kwargs):
-        """
-        create shibboleth user
+        """Create shibboleth user.
+
         :param weko_user: The :class:`invenio_accounts.models.User` instance.
         :param kwargs: Dict of shibboleth user attr info
         :return:
+
         """
         with db.session.begin_nested():
             obj = cls(

@@ -23,14 +23,19 @@
 WEKO_INDEX_TREE_BASE_TEMPLATE = 'weko_index_tree/base.html'
 """Default base template for the index tree page."""
 
-WEKO_INDEX_TREE_INDEX_TEMPLATE = 'weko_index_tree/index.html'
+WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = \
+    'weko_index_tree/admin/index_edit_setting.html'
 """Index template for the index tree page."""
 
-WEKO_INDEX_TREE_EDIT_TEMPLATE = 'weko_index_tree/tree_edit.html'
+WEKO_INDEX_TREE_EDIT_ADMIN_TEMPLATE = 'weko_index_tree/admin/tree_edit.html'
 """Index template for the index tree page."""
 
-WEKO_INDEX_TREE_ADMIN_TEMPLATE = 'weko_index_tree/setting/index_setting.html'
+WEKO_INDEX_TREE_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_setting.html'
 """Index area setting page."""
+
+WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE = \
+    'weko_index_tree/admin/index_link_setting.html'
+"""Index link setting page."""
 
 WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'id': 'weko',
@@ -38,6 +43,7 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
 }
 
 WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER = 5
+"""Default display number of the index."""
 
 WEKO_INDEX_TREE_API = "/api/tree/index/"
 
@@ -50,19 +56,39 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
         record_class='weko_index_tree.api:Indexes',
         index_route='/tree/index/<int:index_id>',
         tree_route='/tree',
-        item_tree_route='/tree/<int:pid_value>',
+        item_tree_route='/tree/<string:pid_value>',
         index_move_route='/tree/move/<int:index_id>',
         default_media_type='application/json',
-        create_permission_factory_imp=
-        'weko_index_tree.permissions:index_tree_permission',
-        read_permission_factory_imp=
-        'weko_index_tree.permissions:index_tree_permission',
-        update_permission_factory_imp=
-        'weko_index_tree.permissions:index_tree_permission',
-        delete_permission_factory_imp=
-        'weko_index_tree.permissions:index_tree_permission',
+        create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+        read_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+        update_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+        delete_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
     )
 )
 
 WEKO_INDEX_TREE_UPDATED = True
 """For index tree cache."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID = 0
+"""Default number of the index_id in RSS."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_PAGE = 1
+"""Default number of the page in RSS."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_COUNT = 20
+"""Default number of the count in RSS."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_TERM = 14
+"""Default number of the term in RSS."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_LANG = 'en'
+"""Default number of the language in RSS."""
+
+WEKO_INDEX_TREE_RSS_COUNT_LIMIT = 100
+"""Default number of count upper limit in RSS."""
+
+WEKO_INDEX_TREE_STATE_PREFIX = "index_tree_expand_state"
+"""Default number of count upper limit in RSS."""
+
+WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS = 60
+"""Default index tree state time life."""

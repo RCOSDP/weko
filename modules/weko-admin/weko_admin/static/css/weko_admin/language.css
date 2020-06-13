@@ -1,0 +1,28 @@
+.query-columns>span {
+    display:inline-block;
+    height:100%;
+    vertical-align: middle;
+}
+.query-columns label {
+    display:block;
+}
+.query-columns .buttons input[type=button] {
+    width:35px;
+    display:block;
+    margin: 10px;
+}
+
+.query-columns .buttons input[type=button]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.query-columns select {
+    width:150px;
+    height: calc(100vh - 350px);
+}
+
+#btn_commit_lg {
+    margin-top: 10px;
+}
+

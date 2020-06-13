@@ -13,10 +13,9 @@
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with Cookiecutter - Invenio Module Template; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307, USA.
+# You should have received a copy of the GNU General Public License along with
+# Cookiecutter - Invenio Module Template; if not, see
+# <http://www.gnu.org/licenses>.
 #
 # In applying this license, CERN does not waive the privileges and immunities
 # granted to it by virtue of its status as an Intergovernmental Organization
@@ -185,8 +184,6 @@ def run(repo_dir, cookiecutter_output_dir):
     click.secho('Checking identical files...', fg='green')
     check_identical_files(repo_dir, cookiecutter_output_dir, identical_files)
     click.secho('Please check following files manually:', fg='yellow')
-    for f in manual_diff:
-        print(f)
     click.secho('Checking identical setup.py attributes...', fg='green')
     check_setupy(repo_dir, cookiecutter_output_dir, identical_setuppy_attrs)
 

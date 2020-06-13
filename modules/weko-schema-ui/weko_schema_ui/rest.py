@@ -31,8 +31,8 @@ from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDInvalidAction
-from invenio_records_rest.errors import (
-    InvalidDataRESTError, UnsupportedMediaRESTError)
+from invenio_records_rest.errors import InvalidDataRESTError, \
+    UnsupportedMediaRESTError
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \
@@ -40,7 +40,7 @@ from invenio_records_rest.views import \
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 
-from .schema import SchemaConverter
+from .schema import SchemaConverter, get_oai_metadata_formats
 
 # from copy import deepcopy
 # from functools import partial
@@ -175,16 +175,16 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
     # @pass_record
     # @need_record_permission('read_permission_factory')
     def get(self, pid, record):
+        """Get Method."""
         pass
 
     # @need_record_permission('create_permission_factory')
     def post(self, **kwargs):
-        """Create a uuid and return a links dict. file upload step is below
-        create a uuuid.
+        """Create a uuid and return a links dict. file upload step is below create a uuuid.
 
         :returns: Json Response have a links dict.
-        """
 
+        """
         if request.mimetype not in self.loaders:
             raise UnsupportedMediaRESTError(request.mimetype)
 
@@ -210,14 +210,16 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
                 sn = sn + '_mapping'
 
             if not os.path.exists(furl):
-                return jsonify({'status': 'Please upload file first.'})
+                abort(400, 'Please upload file first')
+            if not data.get('file_name'):
+                abort(400, 'File Name is empty.')
 
-            fn = data.get('file_name') if 'file_name' in data else None
+            fn = data.get('file_name')
             zip_file = data.get('zip_name') if 'zip_name' in data else None
             fn = os.path.join(furl, (fn if '.' in fn else fn + '.xsd'))
 
             # if zip file unzip first
-            if not zip_file is None and zip_file.endswith('.zip'):
+            if zip_file is not None and zip_file.endswith('.zip'):
                 with zipfile.ZipFile(os.path.join(furl, zip_file)) as fp:
                     fp.extractall(furl)
 
@@ -225,7 +227,8 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             try:
                 self.record_class.create(pid, sn.lower(), data,
                                          xsd.to_dict(), data.get('xsd_file'),
-                                         xsd.namespaces)
+                                         xsd.namespaces,
+                                         target_namespace=xsd.target_namespace)
                 db.session.commit()
             except BaseException:
                 abort(400, 'Schema of the same name already exists.')
@@ -242,7 +245,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             #                 break
 
             # update oai metadata formats
-            oad = current_app.config.get('OAISERVER_METADATA_FORMATS', {})
+            oad = get_oai_metadata_formats(current_app)
             sel = list(oad.values())[0].get('serializer')
             scm = dict()
             if isinstance(xsd.namespaces, dict):
@@ -276,10 +279,10 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
 
     # @need_record_permission('create_permission_factory')
     def put(self, **kwargs):
-        """Create a uuid and return a links dict. file upload step is below ②
-        upload file to server.
+        """Create a uuid and return a links dict. file upload step is below upload file to server.
 
         :returns: Json Response have a links dict.
+
         """
         fn = request.view_args['key']
 
@@ -309,6 +312,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
 
 class SchemaFormatEditResource(ContentNegotiatedMethodView):
     """Edit metadata formats for OAI ListMetadataFormats."""
+
     view_name = '{0}_formats_edit'
 
     def __init__(self, ctx, *args, **kwargs):
@@ -322,9 +326,11 @@ class SchemaFormatEditResource(ContentNegotiatedMethodView):
 
     def post(self, **kwargs):
         """
+        Post Method.
 
         :param kwargs:
         :return:
+
         """
         if request.mimetype not in self.loaders:
             raise UnsupportedMediaRESTError(request.mimetype)

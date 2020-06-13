@@ -79,12 +79,12 @@ def get_records(**kwargs):
 
     if scroll_id is None:
         search = OAIServerSearch(
-            index=current_app.config['OAISERVER_RECORD_INDEX'],
+            index=current_app.config['INDEXER_DEFAULT_INDEX'],
         ).params(
             scroll='{0}s'.format(scroll),
         ).extra(
-            version=True,
-        )[(page_-1)*size_:page_*size_]
+            version='true',
+        )[(page_ - 1) * size_:page_ * size_]
 
         if 'set' in kwargs:
             search = search.query('match', **{'_oai.sets': kwargs['set']})

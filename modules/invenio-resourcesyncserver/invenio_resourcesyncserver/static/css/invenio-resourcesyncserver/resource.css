@@ -1,0 +1,40 @@
+.text-right{
+  text-align: right;
+}
+
+.create-resource .flex-baseline{
+  display: flex;
+  align-items: baseline;
+}
+
+.create-resource .btn{
+  margin-right: 10px;
+}
+
+.create-resource {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.list_resource {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.list_resource p{
+  padding: 0;
+  margin: 0;
+}
+
+a.icon {
+    color: black;
+    cursor: pointer;
+}
+
+.flex{
+  display: flex;
+}
+
+.p-l-10{
+  padding-left: 10px;
+}

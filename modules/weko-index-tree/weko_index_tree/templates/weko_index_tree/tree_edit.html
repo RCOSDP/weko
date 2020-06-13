@@ -31,7 +31,7 @@
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('edit_tree') }}
 {%- endblock page_body_tabs%}
 
@@ -49,7 +49,10 @@
         <textarea class="form-control" rows="30" id="index-tree">{{ index_tree }}</textarea>
       </div>
       <div class="panel-footer">
-        <button id="index-tree-submit" class="btn btn-default">{{_('sending')}}</button>
+        <button id="index-tree-submit" class="btn btn-light send-button">
+            <span class="glyphicon glyphicon-send"></span> 
+               {{_('Send')}}
+        </button>
       </div>
     </div>
   </div>
@@ -69,7 +72,10 @@
         <p>One fine body&hellip;</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">{{_('Close')}}</button>
+        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+               <span class="glyphicon glyphicon-remove"></span>
+                   {{_('Close')}}
+        </button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

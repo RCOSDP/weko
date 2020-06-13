@@ -20,6 +20,11 @@
 #}
 {%- extends admin_base_template %}
 
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
 {%- block body %}
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
@@ -76,9 +81,40 @@
       {%- endif %}
     </div>
   </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_('Open Date')}}</label>
+    </div>
+    <div class="col-sm-8">
+      {%- if open_date_display_flg == '1' %}
+        <label class="radio-inline">
+          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios1" value="1" checked>
+          {{_("Display")}}
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios0" value="0">
+          {{_("Hide Open Date")}}
+        </label>
+      {%- else %}
+        <label class="radio-inline">
+          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios1" value="1">
+          {{_("Display")}}
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="openDateDisplayRadios" id="openDateDisplayRadios0" value="0" checked>
+          {{_("Hide Open Date")}}
+        </label>
+      {%- endif %}
+    </div>
+  </div>
   <div class="form-actions">
-    <button type="submit" name="submit" value="set_search_author_form" class="btn btn-primary">
-      <i class="fa fa-check"></i> {{ _('Update') }}</button>
+   <div class="col-sm-offset-3 col-sm-10">
+    <button type="submit" name="submit" value="set_search_author_form"
+        class="btn btn-primary ten-pixel-margin">
+      <span class="glyphicon glyphicon-save"></span>&nbsp
+         {{ _('Save') }}
+    </button>
+   </div>
   </div>
 </form>
 {%- endblock body %}

@@ -22,6 +22,11 @@
 
 {% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
 
+ {% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {% endblock %}
+
 {% set panel_title = _("Life Time") %}
 {% set panel_icon = "fa fa-user" %}
 
@@ -47,8 +52,11 @@
     {%- endif %}
   {%- endfor %}
 <div class="form-actions">
-  <a href="." class="btn btn-default"><i class="fa fa-times"></i> {{ _('Cancel') }}</a>
-  <button type="submit" name="submit" value="lifetime" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Update') }}</button>
+  <a href="." class="btn btn-default"><i class="fa fa-times"></i> {{_('Cancel') }}</a>&nbsp
+  <button type="submit" name="submit" value="lifetime" class="btn btn-primary pull-right">
+      <span class="glyphicon glyphicon-save"></span>&nbsp
+            {{ _('Update') }}
+  </button>
 </div>
 </form>
 {%- endblock settings_form %}

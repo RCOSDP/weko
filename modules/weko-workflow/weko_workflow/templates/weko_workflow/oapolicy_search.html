@@ -1,0 +1,49 @@
+<div class="row">
+  <br><br><br><br><br>
+  <label for="search-key" class="col-md-offset-2 col-md-1 text-right">{{_('Journal')}}</label>
+  <div class="col-md-5">
+    <input type="search" id="search-key" class="form-control" name="journal_name" list="journal-list" value="{{temporary_journal.keywords if temporary_journal else ''}}">
+    <datalist id="journal-list"></datalist>
+  </div>
+</div>
+<br><br>
+{% if temporary_journal and temporary_journal|length > 1 %}
+<div class="row" id="journal-info">
+{%- else %}
+<div class="row" id="journal-info" hidden>
+{%- endif %}
+  <div class="row">
+    <label for="journal-title" class="col-md-offset-3 col-md-1 text-right">{{_('Journal:')}}</label>
+    <div id="journal-title" class="col-md-5">
+      {% if temporary_journal %}
+        {%- if temporary_journal.keywords %}
+          {{ temporary_journal.keywords }}
+        {%- else %}
+          {{ 'Unknown' }}
+        {%- endif %}
+        {{ ' (ISSN: ' }} {{ temporary_journal.issn if temporary_journal.issn else '' }} {{ ')' }}
+        {%- if temporary_journal.href %}
+          &nbsp;&nbsp;<a href="{{ temporary_journal.href }}" target="_blank">Detail</a>
+        {%- endif %}
+      {%- endif %}
+    </div>
+  </div>
+  <div class="row">
+    <label for="romeo-color" class="col-md-offset-3 col-md-1 text-right">{{_('RoMEO:')}}</label>
+    <div id="romeo-color" class="col-md-5">
+      {% if temporary_journal and temporary_journal.romeo_msg %}
+        {{ temporary_journal.romeo_msg }}
+      {%- endif %}
+    </div>
+  </div>
+  <div class="row">
+    <label for="paid-msg" class="col-md-offset-3 col-md-1 text-right">{{_('Paid OA:')}}</label>
+    <div id="paid-msg" class="col-md-5">
+      {% if temporary_journal and temporary_journal.paid_msg %}
+        {{ temporary_journal.paid_msg }}
+      {%- endif %}
+    </div>
+  </div>
+  <div class="hide" id="action-journal"></div>
+</div>
+<br><br><br>

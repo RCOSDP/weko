@@ -22,11 +22,12 @@
 
 from datetime import datetime
 
-from flask import current_app
+from flask import current_app, flash
 from invenio_db import db
-from sqlalchemy.dialects import mysql
-from sqlalchemy.event import listen
+from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy_utils.types import JSONType, UUIDType
 from weko_records.models import Timestamp
+
 # from sqlalchemy_utils.types import UUIDType
 # from invenio_records.models import RecordMetadata
 
@@ -60,11 +61,27 @@ class Index(db.Model, Timestamp):
     index_name_english = db.Column(db.Text, nullable=False, default='')
     """English Name of the index."""
 
+    index_link_name = db.Column(db.Text, nullable=True, default='')
+    """Name of the index link."""
+
+    index_link_name_english = db.Column(db.Text, nullable=False, default='')
+    """English Name of the index link."""
+
+    harvest_spec = db.Column(db.Text, nullable=True, default='')
+    """Harvest Spec."""
+
+    index_link_enabled = db.Column(
+        db.Boolean(
+            name='index_link_enabled'),
+        nullable=False,
+        default=False)
+    """Index link enable flag."""
+
     comment = db.Column(db.Text, nullable=True, default='')
     """Comment of the index."""
 
     more_check = db.Column(db.Boolean(name='more_check'), nullable=False,
-                             default=False)
+                           default=False)
     """More Status of the index."""
 
     display_no = db.Column(db.Integer, nullable=False, default=0)
@@ -74,10 +91,10 @@ class Index(db.Model, Timestamp):
                                      nullable=False, default=True)
     """Harvest public State of the index."""
 
-    display_format = db.Column(db.Text,nullable=True, default='1')
+    display_format = db.Column(db.Text, nullable=True, default='1')
     """The Format of Search Resault."""
 
-    image_name = db.Column(db.Text, nullable=False,default='')
+    image_name = db.Column(db.Text, nullable=False, default='')
     """The Name of upload image."""
 
     public_state = db.Column(db.Boolean(name='public_state'), nullable=False,
@@ -92,6 +109,24 @@ class Index(db.Model, Timestamp):
     recursive_public_state = db.Column(
         db.Boolean(name='recs_public_state'), nullable=True, default=False)
     """Recursive Public State of the index."""
+
+    rss_status = db.Column(
+        db.Boolean(name='rss_status'), nullable=True, default=False)
+    """RSS Icon Status of the index."""
+
+    coverpage_state = db.Column(
+        db.Boolean(
+            name='coverpage_state'),
+        nullable=True,
+        default=False)
+    """PDF Cover Page State of the index."""
+
+    recursive_coverpage_check = db.Column(
+        db.Boolean(
+            name='recursive_coverpage_check'),
+        nullable=True,
+        default=False)
+    """Recursive PDF Cover Page State of the index."""
 
     browsing_role = db.Column(db.Text, nullable=True)
     """Browsing Role of the  ."""
@@ -124,12 +159,31 @@ class Index(db.Model, Timestamp):
     owner_user_id = db.Column(db.Integer, nullable=True, default=0)
     """Owner user id of the index."""
 
+    # item_custom_sort = db.Column(db.Text, nullable=True, default='')
+
+    item_custom_sort = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """The sort of item by custom setting"""
+
     # index_items = db.relationship('IndexItems', back_populates='index', cascade='delete')
 
     def __iter__(self):
+        """Iter."""
         for name in dir(Index):
             if not name.startswith('__') and not name.startswith('_') \
-                 and name not in dir(Timestamp):
+                    and name not in dir(Timestamp):
                 value = getattr(self, name)
                 if value is None:
                     value = ""
@@ -141,7 +195,28 @@ class Index(db.Model, Timestamp):
 
     def __str__(self):
         """Representation."""
-        return 'Index <id={0.id}, index_name={0.index_name_english}>'.format(self)
+        return 'Index <id={0.id}, index_name={0.index_name_english}>'.format(
+            self)
+
+    @classmethod
+    def have_children(cls, id):
+        """Have Children."""
+        children = cls.query.filter_by(parent=id).all()
+        return False if (children is None or len(children) == 0) else True
+
+    @classmethod
+    def get_all(cls):
+        """Get all Indexes."""
+        query_result = cls.query.all()
+        result = []
+        if query_result:
+            for index in query_result:
+                data = {
+                    'id': index.id,
+                    'index_name': index.index_name
+                }
+                result.append(data)
+        return [] if (result is None or len(result) == 0) else result
 
 # class IndexItems(db.Model):
 #     """"""
@@ -161,15 +236,8 @@ class Index(db.Model, Timestamp):
 #     index = db.relationship(Index, back_populates='index_item')
 
 
-def index_removed_or_inserted(mapper, connection, target):
-    current_app.config['WEKO_INDEX_TREE_UPDATED'] = True
-
-
-listen(Index, 'after_insert', index_removed_or_inserted)
-listen(Index, 'after_delete', index_removed_or_inserted)
-listen(Index, 'after_update', index_removed_or_inserted)
-
 class IndexStyle(db.Model, Timestamp):
+    """Index style."""
 
     __tablename__ = 'index_style'
 
@@ -179,8 +247,15 @@ class IndexStyle(db.Model, Timestamp):
     width = db.Column(db.Text, nullable=False, default='')
     """Index area width."""
 
+    height = db.Column(db.Text, nullable=False, default='')
+    """Index area height."""
+
+    index_link_enabled = db.Column(db.Boolean(name='index_link_enabled'),
+                                   nullable=False, default=False)
+
     @classmethod
     def create(cls, community_id, **data):
+        """Create."""
         try:
             with db.session.begin_nested():
                 obj = cls(id=community_id, **data)
@@ -213,7 +288,7 @@ class IndexStyle(db.Model, Timestamp):
                     return
 
                 for k, v in data.items():
-                    if "width" in k:
+                    if "width" in k or "height" in k:
                         setattr(style, k, v)
                 db.session.merge(style)
             db.session.commit()

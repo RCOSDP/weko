@@ -1,0 +1,265 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+{{ super() }}
+{% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+<style>
+  /* Fixes for IE < 8 */
+  @media screen\9 {
+    .fileinput-button input {
+      filter: alpha(opacity=0);
+      font-size: 100%;
+      height: 100%;
+    }
+  }
+
+  .panel-info {
+    margin-top: 20px;
+  }
+
+  .pull-left{
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  .form-group-label{
+    float: left;
+    width: 35%;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .form-group-item{
+    margin-top:10px;
+    margin-bottom: 10px;
+  }
+
+  .form-group-content{
+    float: left;
+    width: 65%;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .form-group-content input{
+    margin-right: 0.5rem;
+    vertical-align: -0.2em;
+  }
+
+  .clear{
+    clear: left;
+  }
+
+  #image{
+    height: 150px;
+  }
+
+  #present-image{
+    height: 150px;
+  }
+
+</style>
+{%- endblock css %}
+
+{%- block body %}
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="panel-group">
+        <div class="panel panel-default">
+          <div class="panel-body" id="color_setting">
+              <form action="{{ url_for('weko_records_ui.set_pdfcoverpage_header') }}" method="post" id="form1" enctype="multipart/form-data" >
+            <!-- write the correct link later -->
+              <!--enctype="multipart/form-data"-->
+              <div class="row">
+              <div class="col-sm-10">
+                  <div class="panel panel-info">
+                    <div class="panel-heading">
+                      <div class="panel-title">
+                        <h4>{{_('PDF Cover Page')}}</h4>
+                      </div>
+                    </div>
+                    <div class="panel-body">
+                      <div class="row">
+                        <div class="form-group form-group-item">
+                          <div class="form-group-label">
+                          <label>ON/OFF</label>
+                          </div>
+                          <div class="form-group-content">
+                            <p>
+                              {% if avail == 'enable' %}
+                              <input type="radio" name="availability" value="enable" checked required />
+                              {% else %}
+                              <input type="radio" name="availability" value="enable" required />
+                              {% endif %}
+                              Enable
+                          </p>
+                            <p>
+                              {% if avail == 'disable' %}
+                              <input type="radio" name="availability" value="disable" checked required />
+                              {% else %}
+                              <input type="radio" name="availability" value="disable" required />
+                              {% endif %}
+                              Disable
+                            </p>
+                          </div>
+                        </div>
+                        <div class="clear"></div>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-10">
+                  <div class="panel panel-info">
+                    <div class="panel-heading">
+                      <div class="panel-title">
+                        <h4>{{_('Header Settings')}}</h4>
+                      </div>
+                    </div>
+                    <div class="panel-body">
+
+                      <div class="row">
+                        <div class="form-group form-group-item">
+                          <div class="form-group-label">
+                          <label>Header Display Setting</label>
+                          </div>
+                          <div class="form-group-content horizontal">
+                            <p>
+                              {% if header_display_type == 'string' %}
+                              <input type="radio" name="header-display" value="string" checked />
+                              {% else %}
+                              <input type="radio" name="header-display" value="string" />
+                              {% endif %}
+                              String
+                            </p>
+                            <p>
+                              {% if header_display_type == 'image' %}
+                              <input type="radio" name="header-display" value="image" checked />
+                              {% else %}
+                              <input type="radio" name="header-display" value="image" />
+                              {% endif %}
+                              Image
+                            </p>
+                          </div>
+                        </div>
+                        <div class="clear"></div>
+                        <hr>
+
+                        <div class="form-group form-group-item">
+                          <div class="form-group-label">
+                          <label>Header Output String Setting</label>
+                          </div>
+                          <div class="form-group-content">
+                            <p>Please enter within 100 half-width characters/50 full-width characters</p>
+                            <p><input type="text" name="header-output-string" placeholder="ex: Weko University" value="{{ header_output_string }}" maxlength="100" /></p>
+                          </div>
+                        </div>
+                        <div class="clear"></div>
+                        <hr>
+
+                        <div class="form-group form-group-item">
+                          <div class="form-group-label">
+                          <label>Header Output Image Setting</label>
+                          </div>
+                          <div class="form-group-content">
+                            <p>Images of jpg, png, gif can be set.</p>
+                            <p>
+                              {% if not header_output_image == '' or header_output_image == None %}
+                              <img src="{{ header_output_image }}" alt="" id="present-image"  >
+                              {% else %}
+                              <span>No header image set</span>
+                              {% endif %}
+                            </p>
+                            <p><input type="file" name="header-output-image" id="files" /></p>
+                            <p><img id="image" alt=""/></p>
+                        </div>
+                        <div class="clear"></div>
+                        <hr>
+
+                        <div class="form-group form-group-item">
+                          <div class="form-group-label">
+                          <label>Header Display Position Setting</label>
+                          </div>
+                          <div class="form-group-content">
+                            <p>
+                              {% if header_display_position == 'left' %}
+                              <input type="radio" name="header-display-position" value="left" checked />
+                              {% else %}
+                              <input type="radio" name="header-display-position" value="left" />
+                              {% endif %}
+                              Left justified
+                            </p>
+                            <p>
+                              {% if header_display_position == 'center' %}
+                              <input type="radio" name="header-display-position" value="center" checked />
+                              {% else %}
+                              <input type="radio" name="header-display-position" value="center" />
+                              {% endif %}
+                              Center justified
+                            </p>
+                            <p>
+                              {% if header_display_position == 'right' %}
+                              <input type="radio" name="header-display-position" value="right" checked />
+                              {% else %}
+                              <input type="radio" name="header-display-position" value="right" />
+                              {% endif %}
+                              Right justified</p>
+                          </div>
+                        </div>
+                        <div class="clear"></div>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+            </div>
+            </div>
+            <div class="col-sm-offset-9 col-sm-10">
+              <button type="submit" name="pdfcoverpage_form"
+                  id="btn_commit_header" class="btn btn-primary ten-pixel-margin">
+                <span class="glyphicon glyphicon-save"></span>&nbsp
+                   {{_('Save')}}
+              </button>
+            </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script type="text/javascript">
+document.getElementById("files").onchange = function () {
+    var reader = new FileReader();
+
+    reader.onload = function (e) {
+        // get loaded data and render thumbnail.
+        document.getElementById("image").src = e.target.result;
+    };
+
+    // read the image file as a data URL.
+    reader.readAsDataURL(this.files[0]);
+};
+</script>
+
+{%- endblock body %}

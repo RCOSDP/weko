@@ -30,7 +30,7 @@ from invenio_files_rest.storage.pyfs import PyFSFileStorage
 
 
 class WekoFileStorage(PyFSFileStorage):
-    """"""
+    """Weko file storage."""
 
     def _init_hash(self):
         """Initialize message digest object.
@@ -41,7 +41,7 @@ class WekoFileStorage(PyFSFileStorage):
         return 'sha256', hashlib.sha256()
 
     def upload_file(self, fjson):
-        """"""
+        """Upload file."""
         if fjson is None or len(fjson) == 0:
             return
 
@@ -72,7 +72,7 @@ def make_path(base_uri, path, filename, path_dimensions, split_length):
 
     :param base_uri: The base URI.
     :param path: The relative path.
-    :param path_dimensions: Number of chunks the path should be split into.
+    :param path_dimensions: Number of widgets the path should be split into.
     :param split_length: The length of any chunk.
     :returns: A string representing the full path.
     """

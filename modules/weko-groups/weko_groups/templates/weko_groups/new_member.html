@@ -20,36 +20,38 @@
 
 {%- extends "weko_groups/settings/base.html" %}
 
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
 {%- import "weko_groups/settings/helpers.html" as helpers with context -%}
 {%- from "weko_groups/_macros.html" import render_field with context %}
 
-{%- set header = (group.name + " <small class='text-muted'>New member</small>") -%}
+{% set header = (group.name + " <small class='text-muted'>New member</small>") -%}
 {% set panel_title = _("Groups") %}
 {% set panel_icon = "fa fa-group fa-fw" %}
 
 {%- block settings_body %}
-{{ helpers.panel_start(
-    _(header),
-    with_body=False,
-    icon='fa fa-users fa-fw',
-   ) }}
-<div class="panel-body">
-  {%- block description %}
-  {{ _('Specifies email addresses of the users you would like to add to your group. Each user will be sent invitation.') }}
-  {%- endblock %}
-</div>
-<form id="new_member_form" role="form" method="POST" class="list-group-item">
-  {%- for field in form %}
-    {{ render_field(field, show_description=True) }}
-  {%- endfor %}
- <div class="btn-toolbar">
-    <a href="{{ url_for('.members', group_id=group.id) }}" class="btn btn-default">
-      <i class="fa fa-times"></i> {{ _('Cancel') }}
-    </a>
-    <button type="submit" class="btn btn-primary">
-      <i class="fa fa-check"></i> {{ _('Invite') }}
-    </button>
+  {{ helpers.panel_start(_(header), with_body=False, icon='fa fa-users fa-fw',) }}
+  <div class="panel-body">
+    {%- block description %}
+    {{ _('Specifies email addresses of the users you would like to add to your group. Each user will be sent invitation.') }}
+    {%- endblock %}
   </div>
-</form>
-{{ helpers.panel_end() }}
+  <form id="new_member_form" role="form" method="POST" class="list-group-item">
+    {%- for field in form %}
+      {{ render_field(field, show_description=True) }}
+    {%- endfor %}
+    <div class="btn-toolbar">
+      <a href="{{ url_for('.members', group_id=group.id) }}" class="btn btn-info
+          cancel-button">
+        <i class="fa fa-times"></i> {{ _('Cancel') }}
+      </a>
+      <button type="submit" class="btn btn-primary pull-right action-button">
+        <i class="fa fa-check"></i> {{ _('Invite') }}
+      </button>
+    </div>
+  </form>
+  {{ helpers.panel_end() }}
 {%- endblock %}

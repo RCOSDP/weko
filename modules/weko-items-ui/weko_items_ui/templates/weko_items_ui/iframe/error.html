@@ -22,6 +22,7 @@
 
 {%- block css %}
   {{ super() }}
+  <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
 {%- endblock css %}
 
 {%- block page_header %}
@@ -37,8 +38,7 @@
       <div class="panel panel-warning">
         {%- if 'no_itemtype' == error_type %}
         <div class="panel-body">
-          {{_('You do not even have an itemtype.')}}<br>
-          {{_('Go to')}} <a href="{{ url_for('weko_itemtypes_ui.index') }}">{{_('Register Itemtype')}}</a>!
+          {{_('No itemtype to register.')}}<br>
         </div>
         {%- endif %}
         {%- if 'item_login_success' == error_type %}

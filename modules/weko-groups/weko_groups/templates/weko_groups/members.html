@@ -72,10 +72,10 @@
       <td>{{ "{0:%Y-%m-%d %H:%M:%S}".format(member.modified) }}</td>
       <td class="text-center btn-toolbar vcenter">
         {%- if group.is_admin(current_user) and not group.is_admin(member.user) and member.is_active() %}
-        <button class="btn btn-xs btn-danger" type="submit" form="remove-form" formaction="{{ url_for('.remove', group_id=group.id, user_id=member.user.id) }}" formmethod="POST">
+        <button class="btn btn-danger action-button" type="submit" form="remove-form" formaction="{{ url_for('.remove', group_id=group.id, user_id=member.user.id) }}" formmethod="POST">
           <i class="fa fa-fw fa-chain-broken"></i>{{ _("Remove") }}
         {%- elif not member.is_active() %}
-        <button class="btn btn-xs btn-danger" type="submit" form="remove-form" formaction="{{ url_for('.remove', group_id=group.id, user_id=member.user.id) }}" formmethod="POST">
+        <button class="btn btn-danger action-button" type="submit" form="remove-form" formaction="{{ url_for('.remove', group_id=group.id, user_id=member.user.id) }}" formmethod="POST">
           <i class="fa fa-fw fa-chain-broken"></i>{{ _("Revoke") }}
         {%- endif %}
         </button>

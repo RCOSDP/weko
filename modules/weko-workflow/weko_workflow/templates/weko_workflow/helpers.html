@@ -1,0 +1,68 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{#
+ # Render input/select fields for each identifier link
+ # :param str id: index number of radio button
+ # :param str label: label of radio button
+ # :param str link: link of doi or hdl
+ # :param str method: suffix input method
+ # :param str prefix: prefix value of identifier
+ # :param str suffix: semi-automatic suffix
+ # :param obj item: item registration
+ # :param str item_id: item id
+ #}
+
+{%- macro render_identifier_link(id, label, link, method, prefix, suffix, item, item_id) %}
+<TR>
+  <td height="35">
+    <label>
+      <input type="radio" name="identifier_grant" value="{{ id }}"
+        {%- if id == temporary_idf_grant %}checked{%- endif %}>
+      {{ label }}
+    </label>
+  </td>
+  <td height="35">
+    {%- if method == 0 %}
+    {%- if item %}
+    <label>
+      <span name="idf_grant_link_{{ id }}">{{ link + '/' + prefix + '/'}}{{ item_id }}</span>
+    </label>
+    {%- else %}
+    <label>
+      <span name="idf_grant_link_{{ id }}">{{ link  + '/' + prefix + '/' + '<No registration item>' }}</span>
+    </label>
+    {%- endif %}
+    {%- elif method == 1 %}
+    <label for="idf_grant_input_{{ id }}">
+      <span name="idf_grant_link_{{ id }}">{{ link + '/' + prefix + '/' + suffix }}</span>
+      <input type="text" name="idf_grant_input_{{ id }}" value="{{
+      temporary_idf_grant_suffix[id - 1] }}" placeholder="{{_('Input Field')}}">
+    </label>
+    {%- else %}
+    <label for="idf_grant_input_{{ id }}">
+      <span name="idf_grant_link_{{ id }}">{{ link + '/' + prefix + '/' }}</span>
+      <input type="text" name="idf_grant_input_{{ id }}" value="{{
+      temporary_idf_grant_suffix[id - 1] }}" placeholder="{{_('Input Field')}}">
+    </label>
+    {%- endif %}
+  </td>
+</TR>
+{%- endmacro %}

@@ -10,6 +10,7 @@
 
 from datetime import datetime
 
+import sqlalchemy as sa
 from flask_babelex import lazy_gettext as _
 from invenio_db import db
 from sqlalchemy.event import listen
@@ -19,7 +20,6 @@ from sqlalchemy_utils import Timestamp
 from .errors import OAISetSpecUpdateError
 from .proxies import current_oaiserver
 from .utils import datetime_to_datestamp
-import sqlalchemy as sa
 
 
 class OAISet(db.Model, Timestamp):
@@ -129,6 +129,7 @@ __all__ = ('OAISet', )
 
 # OAI-PMH
 
+
 class Identify(db.Model, Timestamp):
     """Information about OAI set."""
 
@@ -178,7 +179,6 @@ class Identify(db.Model, Timestamp):
     )
 
     """The earliest data of OAI-PMH."""
-
 
 
 __all__ = ('Identify', )

@@ -1,0 +1,150 @@
+{
+    "Add": [
+        null,
+        "Add"
+    ],
+    "Delete": [
+        null,
+        "Delete"
+    ],
+    "Index_Edit": [
+        null,
+        "Index Edit"
+    ],
+    "Index": [
+        null,
+        "Index"
+    ],
+    "Janpanese": [
+        null,
+        "Janpanese"
+    ],
+    "English": [
+        null,
+        "English"
+    ],
+    "Comment": [
+        null,
+        "Comment"
+    ],
+    "More_Function": [
+        null,
+        "More Function"
+    ],
+    "More_Check": [
+        null,
+        "Limit the number of child indexes to show."
+    ],
+    "More_No": [
+        null,
+        "Set display index number."
+    ],
+    "Publish": [
+        null,
+        "Publish"
+    ],
+    "Open_To_Public": [
+        null,
+        "Open to public"
+    ],
+    "Date": [
+        null,
+        "Date"
+    ],
+    "Set_Publish_Date_Recursively": [
+        null,
+        "Set the publication date of child indexes recursively"
+    ],
+    "Harvest_Publish": [
+        null,
+        "Harvest Publish"
+    ],
+    "Harvest_Message": [
+        null,
+        "Please turn off the check if you do not want to open the metadata of the belonging items to public"
+    ],
+    "Browsing_Privilege": [
+        null,
+        "Browsing Privilege"
+    ],
+    "Role": [
+        null,
+        "Role"
+    ],
+    "Set_Role_Recursively": [
+        null,
+        "Set the base authorities of child indexes recursively"
+    ],
+    "Authorized": [
+        null,
+        "Authorized"
+    ],
+    "Unauthorized": [
+        null,
+        "Unauthorized"
+    ],
+    "Group": [
+        null,
+        "Group"
+    ],
+    "Set_Group_Recursively": [
+        null,
+        "Set the group authorities of child indexes recursively"
+    ],
+    "Deposit_Privilege": [
+        null,
+        "Deposit Privilege"
+    ],
+    "Display_Format": [
+        null,
+        "Display Format"
+    ],
+    "Search_Results": [
+        null,
+        "Search Results"
+    ],
+    "List": [
+        null,
+        "List"
+    ],
+    "Contents_Table": [
+        null,
+        "Table Of Contents"
+    ],
+    "File_Size": [
+        null,
+        "File Size"
+    ],
+    "Image_Size": [
+        null,
+        "Image Size"
+    ],
+    "File_Type": [
+        null,
+        "File Type"
+    ],
+    "Send": [
+        null,
+        "Send"
+    ],
+    "Choose_Processing":[
+      null,
+      "Please choose processing about index and items!"
+    ],
+     "Delete_all": [
+        null,
+        "Delete all"
+    ],
+     "Move_items_to_parent_Index": [
+        null,
+        "Move items to parent Index"
+    ],
+     "Cancle": [
+        null,
+        "Cancle"
+     ],
+     "Index_Link": [
+        null,
+        "Index Link"
+     ]
+}

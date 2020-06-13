@@ -72,3 +72,16 @@ scripts/demo/postgresql/
 docker-compose.dev.yml
 *.bak
 
+#PDF cover page-related files
+header-icons/*
+combined-pdfs/*
+!.gitkeep
+
+# pyenv
+.python-version
+# celery
+celerybeat-schedule
+celeryd.pid
+# demo data
+weko-demodata/
+

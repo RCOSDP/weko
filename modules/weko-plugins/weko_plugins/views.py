@@ -36,7 +36,6 @@ blueprint = Blueprint(
 @blueprint.route('/')
 def index():
     """Render a basic view."""
-
     return render_template(
         'weko_plugins/index.html',
         module_name=_('weko-plugins')
@@ -46,9 +45,11 @@ def index():
 @blueprint.route('/setting/<plugin>', methods=['GET'])
 def setting(plugin):
     """
-    Set plugin base info
+    Set plugin base info.
+
     :param plugin:
     :return:
+
     """
     plugin = get_plugin(plugin)
     return render_template(

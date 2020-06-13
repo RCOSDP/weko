@@ -22,7 +22,11 @@
   <div class="form-group {% if icon %} has-feedback{% endif %}{% if field.errors %} has-error{% endif %}">
     {{ field.label }}
     {%- set extras = dict(autofocus="") if autofocus else dict() %}
-    {{field(class_="form-control", placeholder=placeholder, **extras)}}
+    {%- if placeholder -%}
+      {{field(class_="form-control", placeholder=placeholder, **extras)}}
+    {%- else %}
+      {{field(class_="form-control", **extras)}}
+    {%- endif %}
     {%- if icon %}
     <i class="{{icon}} form-control-feedback" aria-hidden="true" ></i>
     {%- endif %}

@@ -51,6 +51,7 @@ def test_userprofiles(app):
 
 
 def test_profile_updating(base_app):
+    """Test profile updating."""
     base_app.config.update(USERPROFILES_EXTEND_SECURITY_FORMS=True)
     WekoUserProfiles(base_app)
     app = base_app

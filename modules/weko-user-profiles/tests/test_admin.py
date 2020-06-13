@@ -21,8 +21,10 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+"""Admin api tests."""
+
 from flask import Flask, url_for
-from flask.ext.admin import Admin
+from flask_admin import Admin
 from invenio_admin import InvenioAdmin
 from invenio_db import db
 

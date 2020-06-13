@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-12 18:34+0900\n"
+"POT-Creation-Date: 2019-07-02 05:35+0000\n"
 "PO-Revision-Date: 2018-01-22 15:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,97 +19,1105 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:25
+#: weko_records_ui/admin.py:77
+msgid "Author flag was updated."
+msgstr "著者フラグが更新されました"
+
+#: weko_records_ui/admin.py:195 weko_records_ui/admin.py:204
+#: weko_records_ui/admin.py:213 weko_records_ui/admin.py:420
+msgid "Setting"
+msgstr "設定"
+
+#: weko_records_ui/admin.py:196
+msgid "Others"
+msgstr "その他"
+
+#: weko_records_ui/admin.py:205 weko_records_ui/admin.py:222
+msgid "Items"
+msgstr "アイテム"
+
+#: weko_records_ui/admin.py:214
+#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:98
+msgid "PDF Cover Page"
+msgstr "PDFカバーページ"
+
+#: weko_records_ui/admin.py:223
+#, fuzzy
+msgid "Bulk Update"
+msgstr "一括更新"
+
+#: weko_records_ui/admin.py:263
+msgid "Prefix"
+msgstr "プレフィックス"
+
+#: weko_records_ui/admin.py:269
+msgid "Suffix"
+msgstr "サフィックス"
+
+#: weko_records_ui/admin.py:271
+msgid "Enable/Disable"
+msgstr "有効/無効"
+
+#: weko_records_ui/admin.py:281
+msgid "Repository"
+msgstr "リポジトリ"
+
+#: weko_records_ui/admin.py:281
+msgid "JaLC DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:282
+msgid "JaLC CrossRef DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:283
+msgid "JaLC DataCite DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:829
+msgid "NDL JaLC DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:284
+msgid "CNRI"
+msgstr ""
+
+#: weko_records_ui/admin.py:285
+msgid "Semi-automatic Suffix"
+msgstr "半自動式のサフィックス"
+
+#: weko_records_ui/admin.py:302
+msgid "Only allow half with 1-bytes character in input"
+msgstr "半角1バイトの文字のみ入力可能です"
+
+#: weko_records_ui/admin.py:421
+msgid "Identifier"
+msgstr "識別子"
+
+#: weko_records_ui/config.py:46
+msgid "write your own license"
+msgstr "自由入力"
+
+#: weko_records_ui/config.py:47 weko_records_ui/views.py:183
+msgid "Creative Commons : Attribution"
+msgstr "Creative Commons : 表示"
+
+#: weko_records_ui/config.py:49 weko_records_ui/views.py:184
+msgid "Creative Commons : Attribution - ShareAlike"
+msgstr "Creative Commons : 表示 - 継承"
+
+#: weko_records_ui/config.py:51 weko_records_ui/views.py:185
+msgid "Creative Commons : Attribution - NoDerivatives"
+msgstr "Creative Commons : 表示 - 改変禁止"
+
+#: weko_records_ui/config.py:53 weko_records_ui/views.py:186
+msgid "Creative Commons : Attribution - NonCommercial"
+msgstr "Creative Commons : 表示 - 非営利"
+
+#: weko_records_ui/config.py:55 weko_records_ui/views.py:187
+msgid "Creative Commons : Attribution - NonCommercial - ShareAlike"
+msgstr "Creative Commons : 表示 - 非営利 - 継承"
+
+#: weko_records_ui/config.py:57 weko_records_ui/views.py:188
+msgid "Creative Commons : Attribution - NonCommercial - NoDerivatives"
+msgstr "Creative Commons : 表示 - 非営利 - 改変禁止"
+
+#: weko_records_ui/views.py:449
+msgid "PDF cover page settings have been updated."
+msgstr "PDFカバーページの設定が更新されました"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:38
 msgid "Index"
 msgstr "インデックス"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:46
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:67
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:28
 msgid "Item"
 msgstr "アイテム"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:52
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:71
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:31
 msgid "No title"
 msgstr "タイトルなし"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:65
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:94
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:48
 msgid "Name"
 msgstr "名前"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:65
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:94
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:52
 msgid "File"
 msgstr "ファイル"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:66
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:95
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:53
 msgid "License"
 msgstr "ライセンス"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:106
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:128
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:108
+msgid "Detail"
+msgstr "詳細"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:137
+msgid "Restricted Access"
+msgstr "アクセス制限"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:145
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:75
+msgid "Original"
+msgstr "オリジナル"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:156
+msgid "Plagiarism Check"
+msgstr "剽窃チェック"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:170
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:197
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:34
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:61
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:112
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:137
 msgid "Preview"
 msgstr "プレビュー"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:163
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:236
 msgid "item type"
 msgstr "アイテムタイプ"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:192
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:299
+msgid "Link"
+msgstr "リンク"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:309
 msgid "Publish Status"
 msgstr "公開ステータス"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:208
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:213
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:216
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:321
+msgid "Public"
+msgstr "公開"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:323
+msgid "Change to Private"
+msgstr "非公開に変更"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:326
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:332
 msgid "Private"
 msgstr "非公開"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:209
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:212
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:216
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:328
+msgid "Change to Public"
+msgstr "公開に変更"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:332
 msgid "Publish"
 msgstr "公開"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:237
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:352
 msgid "Back"
 msgstr "戻る"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:240
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:357
 msgid "Edit"
 msgstr "編集"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:242
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:362
 msgid "Delete"
 msgstr "削除"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:252
-msgid "Control number"
-msgstr "管理番号"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:366
+msgid "The workflow is being edited."
+msgstr "ワークフローを編集中です"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:258
-msgid "Publication date"
-msgstr "公開日"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:374
+msgid "Confirm"
+msgstr "確認"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:264
-msgid "Schema"
-msgstr "スキーマ"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:377
+msgid "Are you sure you want to delete this item?"
+msgstr "このアイテムを削除してもよろしいですか？"
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:380
+msgid "OK"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:381
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: weko_records_ui/templates/weko_records_ui/box/export.html:25
 #: weko_records_ui/templates/weko_records_ui/export_well.html:24
 msgid "OAI-PMH"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/box/export.html:39
 #: weko_records_ui/templates/weko_records_ui/export_well.html:38
 msgid "Export"
 msgstr "エクスポート"
 
-#~ msgid "Size"
-#~ msgstr "サイズ"
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:99
+msgid "Plagarism Check"
+msgstr "剽窃チェック"
 
-#~ msgid "Download"
-#~ msgstr "ダウンロード"
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:175
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:192
+msgid "Version"
+msgstr "バージョン"
 
-#~ msgid "Privating"
-#~ msgstr "非公開"
+#: weko_records_ui/templates/weko_records_ui/box/stats.html:4
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:176
+msgid "Stats"
+msgstr "統計"
 
-#~ msgid "Publishing"
-#~ msgstr "公開"
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:184
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:198
+msgid "Show"
+msgstr "表示"
 
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:185
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:198
+msgid "Hide"
+msgstr "非表示"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:193
+msgid "Date Modified"
+msgstr "更新日時"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:194
+msgid "Object File Name"
+msgstr "オブジェクトファイル名"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:195
+msgid "File Size"
+msgstr "ファイル容量"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:196
+msgid "File Hash Value"
+msgstr "ファイルハッシュ値"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:197
+msgid "Contributor Name"
+msgstr "投稿者名"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:219
+msgid "Downloads"
+msgstr "ダウンロード数"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:227
+msgid "Plays"
+msgstr "再生回数"
+
+#: weko_records_ui/templates/weko_records_ui/box/stats.html:22
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:237
+msgid "See details"
+msgstr "詳細を確認"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:25
+msgid "Fields For Update"
+msgstr "更新用のフィールド"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:56
+msgid "Open Access"
+msgstr "オープンアクセス"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:59
+msgid "Open Access Date"
+msgstr "オープンアクセス日時"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:63
+msgid "Login User Only"
+msgstr "ログインユーザのみ"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:74
+msgid "Add Field"
+msgstr "フィールド追加"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:82
+msgid "Search"
+msgstr "検索"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:110
+msgid "Item list"
+msgstr "アイテムリスト"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:123
+msgid "Export Checked Items"
+msgstr "チェックしたアイテムをエクスポート"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:124
+msgid "Export All Displayed Items"
+msgstr "表示中のアイテムをエクスポート"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:125
+msgid "Export All Items Of This Index"
+msgstr "このインデックス全てのアイテムをエクスポート"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:126
+msgid "Print Checked Items"
+msgstr "チェックしたアイテムを印刷"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:127
+msgid "Print All Displayed Items"
+msgstr "表示中のアイテムを印刷"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:128
+msgid "Print All Items Of This Index"
+msgstr "このインデックス全てのアイテムを印刷"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:130
+msgid "Execution"
+msgstr "実行"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:133
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:160
+msgid "Display order"
+msgstr "表示順"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:135
+msgid "Title(Ascending)"
+msgstr "タイトル（昇順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:136
+msgid "Title(Descending)"
+msgstr "タイトル（降順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:137
+msgid "Registrant(Ascending)"
+msgstr "登録者（昇順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:138
+msgid "Registrant(Descending)"
+msgstr "登録者（降順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:139
+msgid "Item Types(Asending)"
+msgstr "アイテムタイプ(昇順)"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:140
+msgid "Item Types(Descending)"
+msgstr "アイテムタイプ（降順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:141
+msgid "ID(Ascending)"
+msgstr "ID（昇順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:142
+msgid "ID(Descending)"
+msgstr "ID（降順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:143
+msgid "Modified Date and Time(Ascending)"
+msgstr "更新日時（昇順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:144
+msgid "Modified Date and Time(Descending)"
+msgstr "更新日時（降順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:145
+msgid "Created Date and Time(Ascending)"
+msgstr "作成日時（昇順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:146
+msgid "Created Date and Time(Descending)"
+msgstr "作成日時（降順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:147
+msgid "Review Date and Time(Ascending)"
+msgstr "査読日時（昇順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:148
+msgid "Review Date and Time(Descending)"
+msgstr "査読日時（降順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:149
+msgid "Published Year(Ascending)"
+msgstr "出版年（昇順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:150
+msgid "Published Year(Descending)"
+msgstr "出版年（降順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:151
+msgid "Custom(Ascending)"
+msgstr "カスタム（昇順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:152
+msgid "Custom(Descending)"
+msgstr "カスタム（降順）"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:179
+msgid "The number of display"
+msgstr "表示数"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:195
+msgid "Select All"
+msgstr "全選択"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:199
+msgid "Search failed."
+msgstr "検索に失敗しました"
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:205
+msgid "Loading..."
+msgstr "読み込み中..."
+
+#: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:234
+msgid "Update"
+msgstr "更新"
+
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:29
+msgid "Life Time"
+msgstr "ライフタイム"
+
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:46
+msgid "Institution Name"
+msgstr "機関名"
+
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:57
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:89
+#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:241
+msgid "Save"
+msgstr "保存"
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:34
+msgid "Search Author"
+msgstr "著者検索"
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:40
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:49
+msgid "Search by Author Name"
+msgstr "著者名で検索"
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:44
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:53
+msgid "Search by Author ID"
+msgstr "著者名IDで検索"
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:60
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:66
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:75
+msgid "Display Email"
+msgstr "メールを表示"
+
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:70
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:79
+msgid "Hide Email"
+msgstr "メールを非表示"
+
+#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:137
+msgid "Header Settings"
+msgstr "ヘッダ設定"
+
+#: weko_records_ui/templates/weko_records_ui/box/meta.html:42
+msgid "Publication date"
+msgstr "公開日"
+
+#: weko_records_ui/templates/weko_records_ui/box/meta.html:48
+msgid "Schema"
+msgstr "スキーマ"
+
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:49
+msgid "Size"
+msgstr "容量"
+
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:58
+msgid ""
+"This is the file fingerprint (MD5 checksum), which can be used to verify "
+"the file integrity."
+msgstr "ファイルの整合性を検証するためにファイルフィンガープリント(MD5チェックサム)が使用できます"
+
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:61
+msgid "Download"
+msgstr "ダウンロード"
+
+#: weko_records_ui/templates/weko_records_ui/box/share.html:23
+msgid "Share"
+msgstr "共有"
+
+#: weko_records_ui/templates/weko_records_ui/box/share.html:41
+msgid "Your record could not be processed by the citation formatter"
+msgstr "引用フォーマットでは登録できません"
+
+#: weko_records_ui/templates/weko_records_ui/box/stats.html:29
+msgid "Views"
+msgstr "ビュー"
+
+#: weko_records_ui/templates/weko_records_ui/box/versions.html:2
+msgid "Versions"
+msgstr "バージョン"
+
+#~ msgid "Only allow halfwith 1-bytes character in input"
+#~ msgstr ""
+
+#~ msgid "Are you sure you want to withdraw DOI?"
+#~ msgstr "DOIを取り下げてよろしいでしょうか。"
+
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/body_contents.html:146
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details_contents.html:86
+msgid "The file cannot be downloaded because you do not have permission to view this file."
+msgstr "本ファイルの参照権限がないためダウンロードできません。"
+
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/body_contents.html:436
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details.html:112
+msgid "This file is a Billing file. (Price: XXXXX). Do you want to download it?"
+msgstr "本ファイルは課金ファイルです。（価格：XXXXX）。 ダウンロードしますか。"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "There is a"
+msgstr "このレコードの"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "newer version"
+msgstr "新しいバージョン"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "of this record available."
+msgstr "があります。"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "User Name"
+msgstr "ユーザ名"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Corresponding Usage Application ID"
+msgstr "対応する利用申請のID"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Annual Report"
+msgstr "年次報告"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Corresponding Output ID"
+msgstr "対応する成果物のID"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Data Type"
+msgstr "データタイプ"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Content File"
+msgstr "コンテンツファイル"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliated Institution"
+msgstr "所属学会"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "User Information"
+msgstr "登録者の情報"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "FullName"
+msgstr "氏名"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Usage location"
+msgstr "利用場所"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Name"
+msgstr "指導教員氏名"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Affiliation"
+msgstr "指導教員所属"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Mail Address"
+msgstr "指導教員メールアドレス"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Advisor Phone Number"
+msgstr "指導教員電話番号"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Research Title"
+msgstr "研究題目"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Research Plan"
+msgstr "研究計画"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Name"
+msgstr "保証人氏名"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Affiliation"
+msgstr "保証人所属"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Guarantor Mail Address"
+msgstr "保証人メールアドレス"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Item Title"
+msgstr "アイテムタイトル"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Position(Other)"
+msgstr "役職（その他）"
+
+#: weko_records_ui/templates/weko_records_ui/box/head.html:6
+msgid "Affiliation"
+msgstr "所属"
+
+msgid "PubDate"
+msgstr "公開日"
+
+msgid "life"
+msgstr "ライフ"
+
+msgid "accumulation"
+msgstr "累積"
+
+msgid "combinational_analysis"
+msgstr "組合せ分析"
+
+msgid "perfectures"
+msgstr "都道府県"
+
+msgid "location_information"
+msgstr "地点情報"
+
+msgid "Output Type"
+msgstr "成果物のタイプ"
+
+msgid "Published Media Name"
+msgstr "公表媒体名"
+
+msgid "Published URL (DOI)"
+msgstr "公表URL（DOI）"
+
+msgid "Published Date"
+msgstr "公表年月日"
+
+msgid "Field"
+msgstr "分野"
+
+msgid "Member"
+msgstr "会員"
+
+msgid "Dataset Usage"
+msgstr "データ名"
+
+msgid "Stop"
+msgstr "終了"
+
+msgid "Position(Others)"
+msgstr "役職（その他）"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "write your own license"
+msgstr "自由入力"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+msgstr "Creative Commons 表示 3.0 非移植 (CC BY 3.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
+msgstr "Creative Commons 表示 - 継承 3.0 非移植 (CC BY-SA 3.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+msgstr "Creative Commons 表示 - 改変禁止 3.0 非移植 (CC BY-ND 3.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+msgstr "Creative Commons 表示 - 非営利 3.0 非移植 (CC BY-NC 3.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)"
+msgstr "Creative Commons 表示 - 非営利 - 継承 3.0 非移植 (CC BY-NC-SA 3.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-NC-ND 3.0)"
+msgstr "Creative Commons 表示 - 非営利 - 改変禁止 3.0 非移植 (CC BY-NC-ND 3.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+msgstr "Creative Commons 表示 4.0 国際 (CC BY 4.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+msgstr "Creative Commons 表示 - 継承 4.0 国際 (CC BY-SA 4.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)"
+msgstr "Creative Commons 表示 - 改変禁止 4.0 国際 (CC BY-ND 4.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)"
+msgstr "Creative Commons 表示 - 非営利 4.0 国際 (CC BY-NC 4.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
+msgstr "Creative Commons 表示 - 非営利 - 継承 4.0 国際 (CC BY-NC-SA 4.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)"
+msgstr "Creative Commons 表示 - 非営利 - 改変禁止 4.0 国際 (CC BY-NC-ND 4.0)"
+
+# WEKO_RECORDS_UI_LICENSE_DICT
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+msgstr "Creative Commons CC0 1.0 全世界 パブリック・ドメイン提供"
+
+# WEKO_RECORDS_UI_ITEM_DETAIL
+msgid "Date (ISO-8601)"
+msgstr "日付（ISO-8601）"
+
+msgid "Subject"
+msgstr "主題"
+
+msgid "Subject Scheme"
+msgstr "主題Scheme"
+
+msgid "Subject URI"
+msgstr "主題URI"
+
+msgid "Alternative Title"
+msgstr "その他（別言語等）のタイトル"
+
+msgid "Creator"
+msgstr "作成者"
+
+msgid "Creator Name Identifier"
+msgstr "作成者識別子"
+
+msgid "Creator Name Identifier Scheme"
+msgstr "作成者識別子Scheme"
+
+msgid "Creator Name Identifier URI"
+msgstr "作成者識別子URI"
+
+msgid "Creator Name"
+msgstr "作成者姓名"
+
+msgid "Name_"
+msgstr "姓名"
+
+msgid "Creator Family Name"
+msgstr "作成者姓"
+
+msgid "Family Name"
+msgstr "姓"
+
+msgid "Creator Given Name"
+msgstr "作成者名"
+
+msgid "Given Name"
+msgstr "名"
+
+msgid "Creator Alternative Name"
+msgstr "作成者別名"
+
+msgid "Alternative Name"
+msgstr "別名"
+
+msgid "Affiliation Name Identifier"
+msgstr "所属機関識別子"
+
+msgid "Affiliation Name Identifier Scheme"
+msgstr "所属機関識別子Scheme"
+
+msgid "Affiliation Name Identifier URI"
+msgstr "所属機関識別子URI"
+
+msgid "Affiliation Name"
+msgstr "所属機関名"
+
+msgid "Creator Email Address"
+msgstr "作成者メールアドレス"
+
+msgid "Description Type"
+msgstr "内容記述タイプ"
+
+msgid "Bibliographic Information"
+msgstr "書誌情報"
+
+msgid "Journal Title"
+msgstr "雑誌名"
+
+msgid "Volume Number"
+msgstr "巻"
+
+msgid "Issue Number"
+msgstr "号"
+
+msgid "Page Start"
+msgstr "開始ページ"
+
+msgid "Page End"
+msgstr "終了ページ"
+
+msgid "Publication Year"
+msgstr "発行年"
+
+msgid "Date Type"
+msgstr "日付タイプ"
+
+msgid "Publisher"
+msgstr "出版者"
+
+msgid "Source Identifier"
+msgstr "収録物識別子"
+
+msgid "Source Identifier Type"
+msgstr "収録物識別子タイプ"
+
+msgid "Relation"
+msgstr "関連情報"
+
+msgid "Relation Type"
+msgstr "関連タイプ"
+
+msgid "Related Identifier"
+msgstr "関連識別子"
+
+msgid "Related Identifier Type"
+msgstr "関連識別子タイプ"
+
+msgid "Identifier Type"
+msgstr "識別子タイプ"
+
+msgid "Related Title"
+msgstr "関連名称"
+
+msgid "Rights"
+msgstr "権利情報"
+
+msgid "Resource"
+msgstr "URI"
+
+msgid "Fileinfo"
+msgstr "ファイル情報"
+
+msgid "Text"
+msgstr "テキスト"
+
+msgid "Version Type"
+msgstr "出版タイプ"
+
+msgid "URI"
+msgstr "本文URL"
+
+msgid "Label"
+msgstr "ラベル"
+
+msgid "Mime Type"
+msgstr "フォーマット"
+
+msgid "Heading"
+msgstr "見出し"
+
+msgid "Headline"
+msgstr "大見出し"
+
+msgid "Subheading"
+msgstr "小見出し"
+
+msgid "Access Rights"
+msgstr "アクセス権"
+
+msgid "Access Rights URI"
+msgstr "アクセス権URI"
+
+msgid "Contributor"
+msgstr "寄与者"
+
+msgid "Contributor Type"
+msgstr "寄与者タイプ"
+
+msgid "Contributor Name Identifier"
+msgstr "寄与者識別子"
+
+msgid "Contributor Name Identifier Scheme"
+msgstr "寄与者識別子Scheme"
+
+msgid "Contributor Name Identifier URI"
+msgstr "寄与者識別子URI"
+
+msgid "Contributor_Name"
+msgstr "寄与者姓名"
+
+msgid "Contributor Family Name"
+msgstr "寄与者姓"
+
+msgid "Contributor Given Name"
+msgstr "寄与者名"
+
+msgid "Contributor Alternative Name"
+msgstr "寄与者別名"
+
+msgid "Contributor Alternative"
+msgstr "研究分担者別名"
+
+msgid "Contributor Email Address"
+msgstr "作成者メールアドレス"
+
+msgid "Degree Name"
+msgstr "学位名"
+
+msgid "Degree Grantor"
+msgstr "学位授与機関"
+
+msgid "Degree Grantor Name Identifier"
+msgstr "学位授与機関識別子"
+
+msgid "Degree Grantor Name"
+msgstr "学位授与機関名"
+
+msgid "Date Granted"
+msgstr "学位授与年月日"
+
+msgid "Dissertation Number"
+msgstr "学位授与番号"
+
+msgid "Contributor ID"
+msgstr "研究分担者ID"
+
+msgid "Funding Reference"
+msgstr "助成情報"
+
+msgid "Funder Name"
+msgstr "助成機関名"
+
+msgid "Award Number"
+msgstr "研究課題番号"
+
+msgid "Book Name"
+msgstr "図書名"
+
+msgid "Date Reported"
+msgstr "報告年度"
+
+msgid "Name Identifier"
+msgstr "学位授与機関識別子"
+
+msgid "Name Identifier Scheme"
+msgstr "学位授与機関識別子Scheme"
+
+msgid "Description_"
+msgstr "内容記述"
+
+msgid "Rights Resource"
+msgstr "権利情報Resource"
+
+msgid "Rights Holder"
+msgstr "権利者情報"
+
+msgid "Rights Holder Name Identifier"
+msgstr "権利者識別子"
+
+msgid "Rights Holder Name Identifier Scheme"
+msgstr "権利者識別子Scheme"
+
+msgid "Rights Holder Name Identifier URI"
+msgstr "権利者識別子URI"
+
+msgid "Rights Holder Name"
+msgstr "権利者名"
+
+msgid "Resource Type"
+msgstr "資源タイプ"
+
+msgid "Temporal"
+msgstr "時間的範囲"
+
+msgid "Geo Location"
+msgstr "位置情報"
+
+msgid "Geo Location Point"
+msgstr "位置情報（点）"
+
+msgid "Point Longitude"
+msgstr "経度"
+
+msgid "Point Latitude"
+msgstr "緯度"
+
+msgid "Geo Location Box"
+msgstr "位置情報（空間）"
+
+msgid "West Bound Longitude"
+msgstr "西部経度"
+
+msgid "East Bound Longitude"
+msgstr "東部経度"
+
+msgid "South Bound Latitude"
+msgstr "南部緯度"
+
+msgid "North Bound Latitude"
+msgstr "北部緯度"
+
+msgid "Geo Location Place"
+msgstr "位置情報（自由記述）"
+
+msgid "Funder Identifier"
+msgstr "助成機関識別子"
+
+msgid "Funder Identifier Type"
+msgstr "助成機関識別子タイプ"
+
+msgid "Award Number URI"
+msgstr "研究課題番号URI"
+
+msgid "Award Title"
+msgstr "研究課題名"
+
+msgid "Source Title"
+msgstr "収録物名"
+
+msgid "Number of Pages"
+msgstr "ページ数"
+
+msgid "Degree Grantor Name Identifier Scheme"
+msgstr "学位授与機関識別子Scheme"
+
+msgid "Conference"
+msgstr "会議記述"
+
+msgid "Conference Name"
+msgstr "会議名"
+
+msgid "Conference Sequence"
+msgstr "回次"
+
+msgid "Conference Place"
+msgstr "開催地"
+
+msgid "Conference Country"
+msgstr "開催国"
+
+msgid "URI Object Type"
+msgstr "オブジェクトタイプ"
+
+msgid "URI Label"
+msgstr "ラベル"
+
+msgid "Format"
+msgstr "フォーマット"
+
+msgid "Extent"
+msgstr "サイズ"
+
+msgid "Issued Date"
+msgstr "発行日"
+
+msgid "Issue"
+msgstr "号"
+
+msgid "Volume"
+msgstr "巻"
+
+msgid "Search repository"
+msgstr "リポジトリを検索する"
+
+msgid "Content File"
+msgstr "コンテンツ本体"
+
+msgid "Billing File"
+msgstr "課金ファイル"

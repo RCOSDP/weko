@@ -1,0 +1,85 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2015, 2016 CERN.
+#
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+
+addons:
+  apt:
+    packages:
+      - nodejs
+
+notifications:
+  email: false
+
+sudo: false
+
+language: python
+
+cache:
+  - pip
+
+env:
+  - REQUIREMENTS=lowest
+  - REQUIREMENTS=release
+  - REQUIREMENTS=devel
+
+python:
+  - "2.7"
+  - "3.5"
+  - "pypy"
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - python: pypy
+
+before_install:
+  - "travis_retry pip install --upgrade pip setuptools py"
+  # Bug in pkginfo wheel 1.3.0 (remove once fixed in pkginfo)
+  - "travis_retry pip install --upgrade --no-binary=:all: pkginfo"
+  - "travis_retry pip install twine wheel coveralls requirements-builder"
+  - "requirements-builder --level=min setup.py > .travis-lowest-requirements.txt"
+  - "requirements-builder --level=pypi setup.py > .travis-release-requirements.txt"
+  - "requirements-builder --level=dev --req requirements-devel.txt setup.py > .travis-devel-requirements.txt"
+  - "npm update && npm install --silent -g node-sass clean-css uglify-js requirejs"
+
+install:
+  - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
+  - "travis_retry pip install -r requirements-devel.txt"
+  - "travis_retry pip install -e .[all]"
+
+script:
+  - "./run-tests.sh"
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: lnielsen
+  password:
+    secure: J0zG6fiWaGAo6E8DkAQ2CP4bSxDCHHd3lYz3T784APcP7PtNpGflWihgcsJJy9QL22F7kRmkgFuGBsjpAEhUU35J5KVg7NswLPOtUpsTNBjQ75UClfrQSEJHtuPkxXjdteWEOMjE+CcpFO02kXPU12dXyS0X0e091jduQxezUHJWAlM22A7IFzldMb9FoKzL1vwXv/BV6JCaQA9R9/zqvbYz8kPm/rob9Vm1N8lnQV9wA3E98NUFvMNAv0mZkSq9K2v2SZC06CVCy8gD+PTrUu/E4x7bbwOlrp4ZAb7pZGhjbE8q/8O+1CEpIbZLExn00PFJ4nW1tjrhI14hIabc2DQ3+MR1q4RC0UKDo8sg/9PjqCQY1ayp6jgzxETLKAeck/FZ3n+D69N9IUdNqZptmRfePkGaZsOmS3r/3s1Ct+kgpCvu37oaxRperU0rG9jB4Vea+ZHS6NETSUA6gMJxFAqIJLYggIhdxs1wmdcZ2zxDg3qfkSXq0C5fiyCSYVhfe3lMZhCXp4Ly8iivibDquDXdlblLnykh+8mN88Ll0KO8ZLQ+9awSaS7jalzgjgHZXox8HRA3zg0Q5xtVoTaLdOl0U1fuGfhBJfCHLHZjqnTElJx1cahgDtJ+jI6KizCdBCVPLdMfsbITHDiomoa5SmU3gGMc95Nxa8z6I2ntwsQ=
+  distributions: "compile_catalog sdist bdist_wheel"
+  on:
+    tags: true
+    python: "2.7"
+    condition: $REQUIREMENTS = release

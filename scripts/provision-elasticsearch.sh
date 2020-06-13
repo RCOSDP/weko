@@ -131,10 +131,19 @@ provision_elasticsearch_docker () {
 
 install_plugins () {
     # sphinxdoc-install-elasticsearch-plugins-begin
-    $sudo /usr/share/elasticsearch/bin/plugin install -b mapper-attachments
-    $sudo /usr/share/elasticsearch/bin/plugin install analysis-kuromoji
+    $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch ingest-attachment
+    $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install analysis-kuromoji
     # sphinxdoc-install-elasticsearch-plugins-end
 }
+
+#settings_script () {
+#    # sphinxdoc-settings-elasticsearch-script-begin
+#    echo 'script.inline: true' | \
+#        tee -a /usr/share/elasticsearch/config/elasticsearch.yml
+#    echo 'script.indexed: true' | \
+#        tee -a /usr/share/elasticsearch/config/elasticsearch.yml
+#    # sphinxdoc-settings-elasticsearch-script-end
+#}
 
 cleanup_elasticsearch_ubuntu14 () {
     # sphinxdoc-install-elasticsearch-cleanup-ubuntu14-begin
@@ -172,15 +181,18 @@ main () {
             check_environment_variables
             provision_elasticsearch_ubuntu14
             install_plugins
+            # settings_script
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1
         fi
     elif [ "$os_distribution" = "CentOS" ]; then
         if [ "$os_release" = "7" ]; then
-            check_environment_variables
-            provision_elasticsearch_centos7
+            # check_environment_variables
+            # provision_elasticsearch_centos7
+            provision_elasticsearch_docker
             install_plugins
+            # settings_script
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1
@@ -188,6 +200,7 @@ main () {
     elif [ "$os_distribution" = "Docker" ]; then
         provision_elasticsearch_docker
         install_plugins
+        # settings_script
     else
         echo "[ERROR] Sorry, unsupported distribution ${os_distribution}."
         exit 1

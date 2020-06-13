@@ -21,7 +21,7 @@
 {%- extends config.WEKO_PLUGINS_BASE_TEMPLATE %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector(plugin.identifier) }}
 {%- endblock page_body_tabs%}
 
@@ -33,8 +33,14 @@
         {% from "weko_plugins/macros/display_plugin.html" import setting_info %}
         {{ setting_info(plugin) }}
         <div class=" media form-inline pull-right">
-          <button class="btn btn-success" href="#">{{_('Sending')}}</button>
-          <button class="btn btn-info" href="#" id="btn_reset">{{_('Reset')}}</button>
+          <button class="btn btn-light send-button" href="#">
+                 <span class="glyphicon glyphicon-send"></span>
+                  {{_('Sending')}}
+          </button>
+          <button class="btn btn-primary action-button" href="#" id="btn_reset">
+               <span class="glyphicon glyphicon-hand-right"></span>
+                  {{_('Reset')}}
+          </button>
         </div>
       </div>
     </div>

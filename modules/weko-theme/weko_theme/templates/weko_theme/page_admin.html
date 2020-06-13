@@ -1,0 +1,122 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+{%- import 'invenio_theme/admin_layout.html' as layout_overwrite with context -%}
+{%- import 'admin/layout.html' as layout with context -%}
+{%- import 'admin/static.html' as admin_static with context -%}
+
+<!DOCTYPE html>
+<html{% if html_css_classes %} class="{{ html_css_classes|join(' ') }}"{% endif %}{%- if g.ln %}
+                               lang="{{ g.ln|safe }}"{% endif %} dir="{{ current_i18n.locale.text_direction }}">
+  <head>
+    {%- block head %}
+
+      {%- block head_meta %}
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        {%- if description %}
+          <meta name="description" content="{{ description }}"/>{% endif %}
+        {%- if keywords %}
+          <meta name="keywords" content="{{ keywords }}"/>{% endif %}
+        {%- if config.get('THEME_GOOGLE_SITE_VERIFICATION', None) %}
+          {%- for google_id in config.THEME_GOOGLE_SITE_VERIFICATION %}
+            <meta name="google-site-verification" content="{{ google_id }}"/>
+          {%- endfor %}
+        {%- endif %}
+      {%- endblock head_meta %}
+      {%- block site_info %}
+        {%- from "weko_theme/macros/site_info.html" import site_info %}
+        {{ site_info() }}
+      {%- endblock %}
+
+      {%- block header %}{% endblock header %}
+      {%- block css %}
+        {% assets "invenio_theme_css" %}
+          <link href="{{ ASSET_URL }}" rel="stylesheet">
+        {% endassets %}
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
+        {% assets "invenio_theme_admin_lte_css" %}
+          <link href="{{ ASSET_URL }}" rel="stylesheet">
+        {% endassets %}
+        {% assets "invenio_theme_admin_css" %}
+          <link href="{{ ASSET_URL }}" rel="stylesheet">
+        {% endassets %}
+        <link href="{{ admin_static.url(filename='admin/css/bootstrap3/admin.css', v='1.1.1') }}" rel="stylesheet">
+      {%- endblock css %}
+    {%- endblock head %}
+  </head>
+
+  <body{% if body_css_classes %} class="{{ body_css_classes|join(' ') }}"{% endif %}{% if g.ln %}
+                                 lang="{{ g.ln.split('_', 1)[0]|safe }}"{% if rtl_direction %} {{ rtl_direction|safe }}
+      {% endif %}{% endif %} itemscope itemtype="http://schema.org/WebPage" data-spy="scroll"
+                                 data-target=".scrollspy-target">
+  {%- block browserupgrade %}
+    <!--[if lt IE 8]>
+      <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+  {%- endblock browserupgrade %}
+
+  <div class="wrapper {{ config.get('ADMIN_UI_SKIN') }}" data-sidebar="sidebar-collapse">
+    {% include 'weko_theme/admin_header.html' %}
+
+    <aside class="main-sidebar">
+      <section class="sidebar">
+        <ul class="sidebar-menu">
+          {{ layout_overwrite.menu_overwrite() }}
+        </ul>
+      </section>
+    </aside>
+    <div class="content-wrapper">
+      {% if admin_view.name %}
+        <section class="content-header">
+          {{ layout.messages() }}
+          <h4>{{ admin_view.name }}</h4>
+        </section>
+      {% elif header %}
+        <section class="content-header">
+          {{ layout.messages() }}
+          <h4>{{ header }}</h4>
+        </section>
+      {% endif %}
+      <section class="content">
+        {% set render_ctx = h.resolve_ctx() %}
+        {% block body %}{% endblock %}
+      </section>
+    </div>
+    {%- include config.THEME_FOOTER_TEMPLATE -%}
+  </div>
+
+  {%- block javascript %}
+    {% assets "invenio_theme_admin_js" %}
+      <script src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+  {%- endblock javascript %}
+
+  {%- block trackingcode %}
+    {% include config.THEME_TRACKINGCODE_TEMPLATE %}
+  {%- endblock %}
+
+  {% block tail %}{% endblock %}
+  </body>
+</html>

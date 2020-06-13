@@ -1,0 +1,28 @@
+# English translations for weko-search-ui.
+# Copyright (C) 2017 National Institute of Informatics
+# This file is distributed under the same license as the
+# weko-search-ui project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2016-08-25 11:14+0200\n"
+"PO-Revision-Date: 2015-10-09 17:08+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+
+#: weko_search_ui/static/templates/weko_search_ui/togglebutton.html:2
+msgid "asc"
+msgstr "Asc"
+
+#: weko_search_ui/static/templates/weko_search_ui/togglebutton.html:3
+msgid "desc"
+msgstr "Desc"

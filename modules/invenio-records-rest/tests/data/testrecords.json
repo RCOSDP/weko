@@ -1,0 +1,22 @@
+[
+  {
+    "year": 2015,
+    "stars": 4,
+    "title": "Back to the Future"
+  },
+  {
+    "year": 2042,
+    "stars": 3,
+    "title": "Back to the Past"
+  },
+  {
+    "year": 1985,
+    "stars": 4,
+    "title": "The Hitchhiker's Guide to the Galaxy"
+  },
+  {
+    "year": 4242,
+    "stars": 5,
+    "title": "Unknown film"
+  }
+]

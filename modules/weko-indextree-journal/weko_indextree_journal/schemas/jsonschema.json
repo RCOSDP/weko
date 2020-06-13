@@ -1,0 +1,397 @@
+{
+  "type": "object",
+  "title": "OutputItemList",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "required": [
+    "publication_title",
+    "coverage_depth",
+    "publication_type",
+    "access_type",
+    "language"
+  ],
+  "properties": {
+    "is_output": {
+      "type": "boolean",
+      "title": " ",
+      "default": true
+    },
+    "publication_title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "print_identifier": {
+      "type": "string",
+      "title": "Print-format identifier",
+      "maxLength": 20,
+      "pattern": "^[0-9]{4}-?[0-9]{3}[0-9X]$|^[0-9]{9}[0-9X]$|^[0-9]+-[0-9]+-[0-9]+-[0-9X]$|^97[8-9][0-9]{9}[0-9X]$|^97[8-9]-[0-9]+-[0-9]+-[0-9]+-[0-9X]$",
+      "validationMessage_i18n": {
+        "202": {
+          "en": "Print-format identifier format is wrong",
+          "ja": "「プリント版ISSN / プリント版ISBN」のフォーマットが正しくない。"
+        }
+      }
+    },
+    "online_identifier": {
+      "type": "string",
+      "title": "Online-format identifier",
+      "maxLength": 20,
+      "pattern": "^[0-9]{4}-?[0-9]{3}[0-9X]$|^[0-9]{9}[0-9X]$|^[0-9]+-[0-9]+-[0-9]+-[0-9X]$|^97[8-9][0-9]{9}[0-9X]$|^97[8-9]-[0-9]+-[0-9]+-[0-9]+-[0-9X]$",
+      "validationMessage_i18n": {
+        "202": {
+          "en": "Online-format identifier format is wrong",
+          "ja": "「eISSN/eISBN」のフォーマットが正しくない。"
+        }
+      }
+    },
+    "date_first_issue_online": {
+      "type": "string",
+      "title": "Date of first issue available online",
+      "maxLength": 10,
+      "pattern": "^(1[7-9][0-9][0-9]|20[0-2][0-9]|2030)[-](0[1-9]|1[0-2])[-](0[1-9]|[12][0-9]|3[01])$|^(1[7-9][0-9][0-9]|20[0-2][0-9]|2030)[-](0[1-9]|1[0-2])$|^(1[7-9][0-9][0-9]|20[0-2][0-9]|2030)$",
+      "validationMessage_i18n": {
+        "302": {
+          "en": "Required",
+          "ja": "Required"
+        },
+        "202": {
+          "en": "Date of first issue available online format is wrong",
+          "ja": "「最古オンライン巻号の出版年月日」のフォーマットが正しくない。"
+        }
+      }
+    },
+    "num_first_vol_online": {
+      "type": "string",
+      "title": "Number of first volume available online"
+    },
+    "num_first_issue_online": {
+      "type": "string",
+      "title": "Number of first issue available online"
+    },
+    "date_last_issue_online": {
+      "type": "string",
+      "title": "Date of last issue available online",
+      "maxLength": 10,
+      "pattern": "^(1[7-9][0-9][0-9]|20[0-2][0-9]|2030)[-](0[1-9]|1[0-2])[-](0[1-9]|[12][0-9]|3[01])$|^(1[7-9][0-9][0-9]|20[0-2][0-9]|2030)[-](0[1-9]|1[0-2])$|^(1[7-9][0-9][0-9]|20[0-2][0-9]|2030)$",
+      "validationMessage_i18n": {
+        "202": {
+          "en": "Date of last issue available online format is wrong",
+          "ja": "「最新オンライン巻号の出版年月日」のフォーマットが正しくない。"
+        }
+      }
+    },
+    "num_last_vol_online": {
+      "type": "string",
+      "title": "Number of last volume available online"
+    },
+    "num_last_issue_online": {
+      "type": "string",
+      "title": "Number of last issue available online"
+    },
+    "embargo_info": {
+      "type": "string",
+      "title": "Embargo information",
+      "pattern": "^[PR]([0-9]+)[DMY]$|^[PR]([0-9]+)[DMY];[PR]([0-9]+)[DMY]$",
+      "validationMessage_i18n": {
+        "202": {
+          "en": "Embargo information format is wrong",
+          "ja": "「エンバーゴ情報」のフォーマットが正しくない。"
+        }
+      }
+    },
+    "coverage_depth": {
+      "enum": [
+        "abstract",
+        "fulltext",
+        "selectedArticles"
+      ],
+      "default": "abstract",
+      "type": "string",
+      "title": "Coverage depth"
+    },
+    "coverage_notes": {
+      "type": "string",
+      "title": "Coverage notes"
+    },
+    "publisher_name": {
+      "type": "string",
+      "title": "Publisher name"
+    },
+    "publication_type": {
+      "enum": [
+        "serial"
+      ],
+      "default": "serial",
+      "type": "string",
+      "title": "Publication type"
+    },
+    "parent_publication_title_id": {
+      "type": "string",
+      "title": "Parent publication identifier",
+      "pattern": "^[1-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]$",
+      "validationMessage_i18n": {
+        "202": {
+          "en": "Parent publication identifier format is wrong",
+          "ja": "「シリーズのタイトルID」のフォーマットが正しくない。"
+        }
+      }
+    },
+    "preceding_publication_title_id": {
+      "type": "string",
+      "title": "Preceding publication identifier",
+      "pattern": "^[1-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]$",
+      "validationMessage_i18n": {
+        "202": {
+          "en": "Preceding publication identifier format is wrong",
+          "ja": "「変遷前誌のタイトルID」のフォーマットが正しくない。"
+        }
+      }
+    },
+    "access_type": {
+      "enum": [
+        "F",
+        "P"
+      ],
+      "default": "F",
+      "type": "string",
+      "title": "Access type"
+    },
+    "language": {
+      "enum": [
+        "jpn",
+        "eng",
+        "chi",
+        "kor",
+        "aar",
+        "abk",
+        "afr",
+        "aka",
+        "alb",
+        "amh",
+        "ara",
+        "arg",
+        "arm",
+        "asm",
+        "ava",
+        "ave",
+        "aym",
+        "aze",
+        "bak",
+        "bam",
+        "bel",
+        "baq",
+        "ben",
+        "bih",
+        "bis",
+        "bos",
+        "bre",
+        "bul",
+        "bur",
+        "cat",
+        "cha",
+        "che",
+        "chu",
+        "chv",
+        "cor",
+        "cos",
+        "cre",
+        "cze",
+        "dan",
+        "div",
+        "dut",
+        "dzo",
+        "epo",
+        "est",
+        "ewe",
+        "fao",
+        "fij",
+        "fin",
+        "fre",
+        "fry",
+        "ful",
+        "geo",
+        "ger",
+        "gla",
+        "gle",
+        "glg",
+        "glv",
+        "gre",
+        "grn",
+        "guj",
+        "hat",
+        "hau",
+        "heb",
+        "her",
+        "hin",
+        "hmo",
+        "hrv",
+        "hun",
+        "ibo",
+        "ice",
+        "ido",
+        "iii",
+        "iku",
+        "ile",
+        "ina",
+        "ind",
+        "ipk",
+        "ita",
+        "jav",
+        "kal",
+        "kan",
+        "kas",
+        "kau",
+        "kaz",
+        "khm",
+        "kik",
+        "kin",
+        "kir",
+        "kom",
+        "kon",
+        "kua",
+        "kur",
+        "lao",
+        "lat",
+        "lav",
+        "lim",
+        "lin",
+        "lit",
+        "ltz",
+        "lub",
+        "lug",
+        "mac",
+        "mah",
+        "mal",
+        "mao",
+        "mar",
+        "may",
+        "mlg",
+        "mlt",
+        "mon",
+        "nau",
+        "nav",
+        "nbl",
+        "nde",
+        "ndo",
+        "nep",
+        "nno",
+        "nob",
+        "nor",
+        "nya",
+        "oci",
+        "oji",
+        "ori",
+        "orm",
+        "oss",
+        "pan",
+        "per",
+        "pli",
+        "pol",
+        "por",
+        "pus",
+        "que",
+        "roh",
+        "rum",
+        "run",
+        "rus",
+        "sag",
+        "san",
+        "sin",
+        "slo",
+        "slv",
+        "sme",
+        "smo",
+        "sna",
+        "snd",
+        "som",
+        "sot",
+        "spa",
+        "srd",
+        "srp",
+        "ssw",
+        "sun",
+        "swa",
+        "swe",
+        "tah",
+        "tam",
+        "tat",
+        "tel",
+        "tgk",
+        "tgl",
+        "tha",
+        "tib",
+        "tir",
+        "ton",
+        "tsn",
+        "tso",
+        "tuk",
+        "tur",
+        "twi",
+        "uig",
+        "ukr",
+        "urd",
+        "uzb",
+        "ven",
+        "vie",
+        "vol",
+        "wel",
+        "wln",
+        "wol",
+        "xho",
+        "yid",
+        "yor",
+        "zha",
+        "zul"
+      ],
+      "default": "jpn",
+      "type": "string",
+      "title": "Language"
+    },
+    "title_alternative": {
+      "type": "string",
+      "title": "Title alternative"
+    },
+    "title_transcription": {
+      "type": "string",
+      "title": "Title transcription"
+    },
+    "ncid": {
+      "type": "string",
+      "title": "NCID",
+      "maxLength": 10,
+      "pattern": "^[A-Z]{2}[0-9]{7}[0-9X]$",
+      "validationMessage_i18n": {
+        "202": {
+          "en": "NCID format is wrong",
+          "ja": "「NCID」のフォーマットが正しくない。"
+        }
+      }
+    },
+    "ndl_callno": {
+      "type": "string",
+      "title": "NDL Call No.",
+      "maxLength": 20
+    },
+    "ndl_bibid": {
+      "type": "string",
+      "title": "NDL Bibliographic ID"
+    },
+    "jstage_code": {
+      "type": "string",
+      "title": "J-STAGE CDJOURNAL",
+      "maxLength": 20
+    },
+    "ichushi_code": {
+      "type": "string",
+      "title": "Ichushi Code",
+      "maxLength": 6,
+      "pattern": "^J[0-9]{5}$",
+      "validationMessage_i18n": {
+        "202": {
+          "en": "Ichushi Code format is wrong",
+          "ja": "「医中誌ジャーナルコード」のフォーマットが正しくない。"
+        }
+      }
+    }
+  },
+  "description": ""
+}

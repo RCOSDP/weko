@@ -20,25 +20,44 @@
 
 {% extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
 
-{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{%- from "invenio_communities/macros.html" import community_header %}
 
 {%- block css %}
   {{ super() }}
   {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  <style>
+    a.collapsed-link {
+      color: inherit;
+      text-decoration: none;
+    }
+    a.collapsed-link span{
+      padding-right: 5px;
+    }
+    a.collapsed-link span.icon-right:before {
+      content: '\25B7';
+      color: #757575;
+    }
+    a.collapsed-link span.icon-down:before {
+      content: "\25BC";
+      color: #757575;
+    }
+  </style>
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
   {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('top',community_id) }}
 {%- endblock page_body_tabs%}
 
@@ -62,9 +81,14 @@
 {%- else%}
 <div class="communities">
 <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
-{{ community_header(community, subtitle='') }}
-{{super()}}
-{{ community_footer(community, link=False, subtitle='') }}
+  {{ community_header(community, subtitle='') }}
+  <div id="page_body" class="grid-stack hidden" {%- if render_widgets %}style="display: None;"{%- endif %}>
+  <div id="main_contents">
+  {{ super() }}
+  </div>
+  </div>
+  {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+  {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
 </div>
 <div class="communities">
 </div>
@@ -78,11 +102,13 @@
       {% include "weko_theme/body_search.html" %}
     </div>
   </div>
-  <div class="row">
-    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
+  <div class="row" style="height: 100%">
+    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}" style="height: 80%">
       {% include "weko_theme/body_index.html" %}
+      {% include "weko_search_ui/body_facet_search.html" %}
+
     </div>
-    <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}} m-top-20">
+    <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}}">
       {% include "weko_search_ui/body_contents.html" %}
     </div>
   </div>

@@ -1,0 +1,201 @@
+{# -*- coding: utf-8 -*-
+  #
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_admin_log_analysis_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+<style>
+  .content-font {
+    font-size: 16px;
+  }
+</style>
+
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('Log Analysis')}}</h4>
+  </div>
+</div>
+
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11">
+    <div id="logAnalysis" class="table-responsive">
+      <form id="log_analysis_form"  method="POST" action="{{url_for('loganalysissetting.index')}}" class="form-inline">
+        <table class="table table-bordered table-striped">
+          <tr>
+            <th class="column-header" colspan=2>{{_('Addresses to Filter')}}</th>
+          </tr>
+          <tr>
+            <td colspan="2">
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <tr>
+                    <th colspan=2>
+                      {{_('Enter the IP Addresses to Filter')}}
+                    </th>
+                    <td>
+                      <input type="hidden" id="ip_addresses_length"
+                        value="{{(restricted_ip_addresses | length) if restricted_ip_addresses else 1}}">
+                      <div id="ip_addresses">
+                        {%- if not restricted_ip_addresses %}
+                          <input name="ip_address_0_id" type="hidden" value="0">
+                          <div id="ip_address_0" class="form-group">
+                            <input name="address_list_0" type="text"
+                              class="ip-address-input form-control input-sm"
+                              size="1" maxlength="3" placeholder="0" value="" id="ip_address_0_0"> .
+                            <input name="address_list_0" type="text"
+                              class="ip-address-input form-control input-sm"
+                              size="1" maxlength="3" placeholder="0" value="" id="ip_address_0_1"> .
+                            <input name="address_list_0" type="text"
+                              class="ip-address-input form-control input-sm"
+                              size="1" maxlength="3" placeholder="0" value="" id="ip_address_0_2"> .
+                            <input name="address_list_0" type="text"
+                              class="ip-address-input form-control input-sm"
+                              size="1" maxlength="3" placeholder="0" value="" id="ip_address_0_3">
+                          </div>
+                        {%- endif %}
+                        {%- for address in restricted_ip_addresses %}
+                          {%- set address_id = 'ip_address_' + loop.index0 | string %}
+                          {%- set curr_address_lst = address.ip_address.split('.') %}
+                          <div id="{{address_id}}" class="form-group">
+                            <input name="{{address_id}}_id" type="hidden" value="{{address.id}}">
+                            <input name="address_list_{{loop.index0}}" type="text"
+                              class="ip-address-input form-control input-sm"
+                              size="1" maxlength="3" placeholder="0" value="{{ curr_address_lst[0] }}"
+                              id="{{ address_id + '_0' }}"> .
+                            <input name="address_list_{{loop.index0}}" type="text"
+                              class="ip-address-input form-control input-sm"
+                              size="1" maxlength="3" placeholder="0" value="{{ curr_address_lst[1] }}"
+                              id="{{ address_id + '_1' }}"> .
+                            <input name="address_list_{{loop.index0}}" type="text"
+                              class="ip-address-input form-control input-sm"
+                              size="1" maxlength="3" placeholder="0"
+                              value="{{ curr_address_lst[2] }}"
+                              id="{{ address_id + '_2' }}"> .
+                            <input name="address_list_{{loop.index0}}" type="text"
+                              class="ip-address-input form-control input-sm"
+                              size="1" maxlength="3" placeholder="0"
+                              value="{{ curr_address_lst[3] }}"
+                              id="{{ address_id + '_3' }}">
+                          </div>
+                          {%- if not loop.last %}
+                            <p></p>
+                            <br/>
+                          {%- endif %}
+                        {%- endfor %}
+                        <a id="remove_row" class="btn btn-danger btn-sm">
+                           <span class="glyphicon glyphicon-remove"></span>
+                        </a>
+                        <a id="add_row" class="btn btn-success btn-sm">
+                           <span class="glyphicon glyphicon-plus"></span>
+                        </a>
+                      </div>
+                      <p></p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th colspan=2>
+                      {{_('Shared Crawler Lists')}}<br/>
+                    </th>
+                    <td id="crawler_lists">
+                      <div id="shared_crawlers" class="form-inline">
+                        {%- if not shared_crawlers %}
+                          <div class="form-group">
+                            <input type="hidden" name="shared_crawler_0_id" value="0">
+                            <input type="checkbox" name="shared_crawler_0_check" checked>
+                            <input name="shared_crawler_0" type="text"
+                              class="form-control width_400px" placeholder="http://" value="">
+                          </div>
+                          <div class="form-group">
+                            <input type="hidden" name="shared_crawler_1_id" value="0">
+                            <input type="checkbox" name="shared_crawler_1_check" checked>
+                            <input name="shared_crawler_1" type="text"
+                              class="form-control width_400px" placeholder="http://" value="">
+                          </div>
+                        {%- endif %}
+                        {%- for crawler in shared_crawlers %}
+                        <div class="form-group">
+                          <input type="hidden" name="shared_crawler_{{loop.index0}}_id" value="{{crawler.id}}">
+                          <label class="checkbox">
+                            <input type="checkbox" name="shared_crawler_{{loop.index0}}_check"
+                               {{'checked' if  crawler.is_active else ''}}>
+                          </label>
+                          <input name="shared_crawler_{{loop.index0}}" type="text"
+                            class="form-control width_400px" placeholder="http://" value="{{crawler.list_url}}">
+                        </div>
+                        <p></p>
+                        {%- endfor %}
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+          </tr>
+        </table>
+        <div class="form-group col-sm-3 col-sm-offset-4">
+          <a id="confirm_button" class="btn btn-primary" data-toggle="modal" data-target="#confirm_modal">
+            <span class="glyphicon glyphicon-save"></span>&nbsp
+            {{_('Save')}}
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="confirm_modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{{_('Confirmation')}}</h4>
+      </div>
+      <div class="modal-body">
+        <p class="text-center">{{_('Are you sure you want to block the given addresses?')}}</p>
+      </div>
+      <div class="modal-footer">
+        <button id="submit_button" class="btn btn-primary">
+            <span class="glyphicon glyphicon-save"></span>&nbsp
+          {{_('Save')}}
+        </button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          <span class="glyphicon glyphicon-remove"></span>&nbsp
+          {{_('Close')}}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{%- endblock body %}

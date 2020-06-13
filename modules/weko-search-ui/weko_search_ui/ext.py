@@ -21,8 +21,8 @@
 """Flask extension for weko-search-ui."""
 
 from . import config
-from .views import blueprint
 from .rest import create_blueprint
+from .views import blueprint
 
 
 class WekoSearchUI(object):
@@ -61,15 +61,18 @@ class WekoSearchUI(object):
                 app.config['BASE_PAGE_TEMPLATE'],
             )
 
-        app.config.setdefault( 'INDEX_IMG', app.config['INDEX_IMG'])
+        app.config.setdefault('INDEX_IMG', app.config['INDEX_IMG'])
 
         app.config.update(
             SEARCH_UI_SEARCH_TEMPLATE=getattr(
                 config,
                 'WEKO_SEARCH_UI_SEARCH_TEMPLATE'),
-            SEARCH_UI_JSTEMPLATE_RESULTS=getattr(
+            SEARCH_UI_JSTEMPLATE_LIST_RESULTS=getattr(
                 config,
-                'WEKO_SEARCH_UI_JSTEMPLATE_RESULTS'),
+                'WEKO_SEARCH_UI_JSTEMPLATE_LIST_RESULTS'),
+            SEARCH_UI_JSTEMPLATE_TABLE_RESULTS=getattr(
+                config,
+                'WEKO_SEARCH_UI_JSTEMPLATE_TABLE_RESULTS'),
             SEARCH_UI_JSTEMPLATE_RESULTS_BASIC=getattr(
                 config,
                 'WEKO_SEARCH_UI_JSTEMPLATE_RESULTS_BASIC'),
@@ -77,15 +80,14 @@ class WekoSearchUI(object):
                 config,
                 'WEKO_SEARCH_UI_JSTEMPLATE_COUNT'),
         )
+
         for k in dir(config):
             if k.startswith('WEKO_SEARCH_UI_'):
                 app.config.setdefault(k, getattr(config, k))
 
 
 class WekoSearchREST(object):
-    """
-      Index Search Rest Obj
-    """
+    """Index Search Rest Obj."""
 
     def __init__(self, app=None):
         """Extension initialization.

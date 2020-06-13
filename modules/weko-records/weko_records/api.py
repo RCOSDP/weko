@@ -25,20 +25,24 @@ from copy import deepcopy
 from flask import current_app
 from flask_babelex import gettext as _
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
-from invenio_records.signals import (
-    after_record_delete, after_record_insert, after_record_revert,
-    after_record_update, before_record_delete, before_record_insert,
-    before_record_revert, before_record_update)
+from invenio_records.signals import after_record_delete, after_record_insert, \
+    after_record_revert, after_record_update, before_record_delete, \
+    before_record_insert, before_record_revert, before_record_update
 from jsonpatch import apply_patch
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
 
-from .models import (
-    FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, ItemTypeName,
-    ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress)
+from .fetchers import weko_record_fetcher
+from .models import FeedbackMailList as _FeedbackMailList
+from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
+from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
+from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
+    SiteLicenseInfo, SiteLicenseIpAddress
 
 _records_state = LocalProxy(
     lambda: current_app.extensions['invenio-records'])
@@ -156,7 +160,7 @@ class ItemTypeNames(RecordBase):
 
     @classmethod
     def update(cls, obj):
-
+        """Update method."""
         def commit(olst, flg):
             with db.session.begin_nested():
                 for lst in olst:
@@ -176,14 +180,83 @@ class ItemTypeNames(RecordBase):
                     commit(olst, True if 'allow' in k else False)
 
     @classmethod
-    def get_all_by_id(cls, ids):
+    def get_all_by_id(cls, ids, with_deleted=False):
         """Retrieve item types by ids.
 
         :param ids: List of item type IDs.
         :returns: A list of :class:`ItemTypeName` instances.
         """
         with db.session.no_autoflush:
-            return ItemTypeName.query.filter(ItemTypeName.id.in_(ids)).all()
+            query = ItemTypeName.query.filter(ItemTypeName.id.in_(ids))
+            if not with_deleted:
+                query = query.filter_by(is_active=True)
+            return query.all()
+
+    @classmethod
+    def get_record(cls, id_, with_deleted=False):
+        """Retrieve the item type name by id.
+
+        :param id_: Identifier of item type name.
+        :param with_deleted: If `True` then it includes deleted item type name.
+        :returns: The :class:`ItemTypeName` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemTypeName.query.filter_by(id=id_)
+            if not with_deleted:
+                query = query.filter_by(is_active=True)  # noqa
+            return query.one_or_none()
+
+    def delete(self, force=False):
+        """Delete an item type name.
+
+        If `force` is ``False``, the record is soft-deleted: record data will
+        be deleted but the record identifier and the history of the record will
+        be kept. This ensures that the same record identifier cannot be used
+        twice, and that you can still retrieve its history. If `force` is
+        ``True``, then the record is completely deleted from the database.
+
+        #. Send a signal :data:`weko_records.signals.before_record_delete`
+           with the current record as parameter.
+
+        #. Delete or soft-delete the current record.
+
+        #. Send a signal :data:`weko_records.signals.after_record_delete`
+           with the current deleted record as parameter.
+
+        :param force: if ``True``, deletes the current item type name
+               from the database, otherwise soft-deletes it.
+        :returns: The deleted :class:`ItemTypeName` instance.
+        """
+        with db.session.begin_nested():
+            before_record_delete.send(
+                current_app._get_current_object(),
+                record=self
+            )
+
+            if force:
+                db.session.delete(self)
+            else:
+                self.is_active = False
+                db.session.merge(self)
+
+        after_record_delete.send(
+            current_app._get_current_object(),
+            record=self
+        )
+        return self
+
+    def restore(self):
+        """Restore an logically deleted item type name.
+
+        #. Restore the current record.
+
+        :returns: The restored :class:`ItemTypeName` instance.
+        """
+        with db.session.begin_nested():
+            self.is_active = True
+            db.session.merge(self)
+
+        return self
 
 
 class ItemTypes(RecordBase):
@@ -262,7 +335,12 @@ class ItemTypes(RecordBase):
         """
         assert name
         item_type_name = None
-        if id_ > 0:
+        # Create a new record
+        if not id_ or id_ <= 0:
+            return cls.create(item_type_name=item_type_name, name=name,
+                              schema=schema, form=form, render=render, tag=tag)
+        # Update for existed record
+        else:
             with db.session.no_autoflush:
                 # Get the item type by identifier
                 result = cls.get_by_id(id_=id_)
@@ -272,21 +350,35 @@ class ItemTypes(RecordBase):
 
                 # Get the latest tag of item type by name identifier
                 result = cls.get_by_name_id(name_id=result.name_id)
+                old_render = deepcopy(result[0].render)
+                new_render = deepcopy(render)
+                from weko_records.utils import check_to_upgrade_version
+                upgrade_version = True if \
+                    check_to_upgrade_version(old_render, new_render) else False
+                updated_name = False
                 tag = result[0].tag + 1
-
                 # Check if the name has been changed
                 item_type_name = result[0].item_type_name
                 if name != item_type_name.name:
                     # Check if the new name has been existed
                     result = ItemTypeName.query.filter_by(
-                        name=name).one_or_none()
+                        name=name).filter_by(is_active=True).one_or_none()
                     if result is not None:
                         current_app.logger.debug(
                             'Invalid name: {}'.format(name))
                         raise ValueError(_('Invalid name.'))
                     item_type_name.name = name
-        return cls.create(item_type_name=item_type_name, name=name,
-                          schema=schema, form=form, render=render, tag=tag)
+                    updated_name = True
+                if upgrade_version or updated_name:
+                    return cls.create(item_type_name=item_type_name, name=name,
+                                      schema=schema, form=form, render=render,
+                                      tag=tag)
+                else:
+                    current_record = cls.get_record(id_)
+                    current_record.model.schema = schema
+                    current_record.model.form = form
+                    current_record.model.render = render
+                    return current_record.commit()
 
     @classmethod
     def get_record(cls, id_, with_deleted=False):
@@ -299,7 +391,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(id=id_)
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             obj = query.one_or_none()
             if obj is None:
                 return None
@@ -316,7 +408,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter(ItemType.id.in_(ids))
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return [cls(obj.json, model=obj) for obj in query.all()]
 
     @classmethod
@@ -330,7 +422,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(id=id_)
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return query.one_or_none()
 
     @classmethod
@@ -344,8 +436,22 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(name_id=name_id)
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return query.order_by(desc(ItemType.tag)).all()
+
+    @classmethod
+    def get_records_by_name_id(cls, name_id, with_deleted=False):
+        """Retrieve multiple item types by name identifier.
+
+        :param name_id: Name identifier of item type.
+        :param with_deleted: If `True` then it includes deleted item types.
+        :returns: A list of :class:`ItemTypes` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemType.query.filter_by(name_id=name_id)
+            if not with_deleted:
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
+            return [cls(obj.schema, model=obj) for obj in query.all()]
 
     @classmethod
     def get_latest(cls, with_deleted=False):
@@ -355,7 +461,30 @@ class ItemTypes(RecordBase):
         :returns: A list of :class:`ItemTypes` instances.
         """
         with db.session.no_autoflush:
-            return ItemTypeName.query.order_by(ItemTypeName.id).all()
+            query = ItemTypeName.query
+            if not with_deleted:
+                query = query.join(ItemType).filter(
+                    ItemType.is_deleted.is_(False))
+            return query.order_by(ItemTypeName.id).all()
+
+    @classmethod
+    def get_latest_custorm_harvesting(cls, with_deleted=False,
+                                      harvesting_type=False):
+        """Retrieve the latest item types.
+
+        :param
+        with_deleted: If `True` then it includes deleted item types.
+        harvesting_type: If `True` then it includes multy item types.
+        :returns: A list of :class:`ItemTypes` instances.
+        """
+        with db.session.no_autoflush:
+            query = ItemTypeName.query
+            if not with_deleted:
+                query = query.join(ItemType).filter(
+                    ItemType.is_deleted.is_(False),
+                    ItemType.harvesting_type.is_(harvesting_type)
+                )
+            return query.order_by(ItemTypeName.id).all()
 
     @classmethod
     def get_all(cls, with_deleted=False):
@@ -367,7 +496,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return query.order_by(ItemType.name_id, ItemType.tag).all()
 
     def patch(self, patch):
@@ -405,7 +534,7 @@ class ItemTypes(RecordBase):
 
         :returns: The :class:`ItemTypes` instance.
         """
-        if self.model is None or self.model.json is None:
+        if self.model is None:
             raise MissingModelError()
 
         with db.session.begin_nested():
@@ -414,10 +543,10 @@ class ItemTypes(RecordBase):
                 record=self
             )
 
-            self.validate(**kwargs)
+            # self.validate(**kwargs)
 
-            self.model.json = dict(self)
-            flag_modified(self.model, 'json')
+            # self.model.json = dict(self)
+            # flag_modified(self.model, 'json')
 
             db.session.merge(self.model)
 
@@ -444,7 +573,7 @@ class ItemTypes(RecordBase):
         #. Send a signal :data:`weko_records.signals.after_record_delete`
            with the current deleted record as parameter.
 
-        :param force: if ``True``, completely deletes the current item type from
+        :param force: if ``True``, deletes the current item type from
                the database, otherwise soft-deletes it.
         :returns: The deleted :class:`ItemTypes` instance.
         """
@@ -460,7 +589,7 @@ class ItemTypes(RecordBase):
             if force:
                 db.session.delete(self.model)
             else:
-                self.model.json = None
+                self.model.is_deleted = True
                 db.session.merge(self.model)
 
         after_record_delete.send(
@@ -481,7 +610,8 @@ class ItemTypes(RecordBase):
            with the reverted record as parameter.
 
         :param revision_id: Specify the item type revision id
-        :returns: The :class:`ItemTypes` instance corresponding to the revision id
+        :returns: The :class:`ItemTypes` instance corresponding to the revision
+        id
         """
         if self.model is None:
             raise MissingModelError()
@@ -504,6 +634,22 @@ class ItemTypes(RecordBase):
         )
         return self.__class__(self.model.json, model=self.model)
 
+    def restore(self):
+        """Restore an logically deleted item type.
+
+        #. Restore the current record.
+
+        :returns: The restored :class:`ItemTypes` instance.
+        """
+        if self.model is None:
+            raise MissingModelError()
+
+        with db.session.begin_nested():
+            self.model.is_deleted = False
+            db.session.merge(self.model)
+
+        return self
+
     @property
     def revisions(self):
         """Get revisions iterator."""
@@ -511,6 +657,46 @@ class ItemTypes(RecordBase):
             raise MissingModelError()
 
         return RevisionsIterator(self.model)
+
+
+class ItemTypeEditHistory(object):
+    """Define API for Itemtype Property creation and manipulation."""
+
+    @classmethod
+    def create_or_update(cls, id=0, item_type_id=None, user_id=None,
+                         notes={}):
+        r"""Create or update ItemTypeEditHistory and store it in the database.
+
+        :param id: ID of Itemtype property.
+        :param item_type_id: Existing ItemType model id.
+        :param user_id: Existing user format.
+        :param notes: map of notes in JSON format.
+        :returns: A new :class:`` instance.
+        """
+        with db.session.begin_nested():
+            existing = ItemTypeEditHistoryModel.query \
+                .filter_by(id=id).one_or_none()
+            new_edit_history = existing or \
+                ItemTypeEditHistoryModel(
+                    item_type_id=item_type_id,
+                    user_id=user_id,
+                )
+
+            if new_edit_history.notes != notes:
+                new_edit_history.notes = notes
+                db.session.add(new_edit_history)
+        return new_edit_history
+
+    @classmethod
+    def get_by_item_type_id(cls, item_type_id):
+        """Retrieve record by id.
+
+        :param item_type_id: ItemType id.
+        :returns: ItemTypeEditHistory record or None.
+        """
+        with db.session.no_autoflush:
+            return ItemTypeEditHistoryModel.query \
+                .filter_by(item_type_id=item_type_id).one_or_none()
 
 
 class Mapping(RecordBase):
@@ -749,7 +935,7 @@ class ItemTypeProps(RecordBase):
     @classmethod
     def create(cls, property_id=None, name=None, schema=None, form_single=None,
                form_array=None):
-        r"""Create a new ItemTypeProperty instance and store it in the database.
+        """Create a new ItemTypeProperty instance and store it in the database.
 
         :param property_id: ID of Itemtype property.
         :param name: Property name.
@@ -804,7 +990,22 @@ class ItemTypeProps(RecordBase):
                                                    delflg=False).first()
             if obj is None:
                 return None
+            cls.helper_remove_empty_required(obj.schema)
             return obj
+
+    @classmethod
+    def helper_remove_empty_required(cls, data):
+        """Help to remove required key if it is empty.
+
+        Arguments:
+            data {dict} -- schema to remove required key
+        """
+        if "required" in data and not data.get("required"):
+            data.pop("required", None)
+        if "properties" in data:
+            for k, v in data.get("properties").items():
+                if v.get("items"):
+                    cls.helper_remove_empty_required(v.get("items"))
 
     @classmethod
     def get_records(cls, ids):
@@ -821,6 +1022,7 @@ class ItemTypeProps(RecordBase):
                 query = query.filter_by(delflg=False)  # noqa
             else:
                 query = ItemTypeProperty.query.filter_by(delflg=False)
+
             return query.all()
 
     @property
@@ -920,6 +1122,32 @@ class ItemsMetadata(RecordBase):
                 query = query.filter(ItemMetadata.json != None)  # noqa
 
             return [cls(obj.json, model=obj) for obj in query.all()]
+
+    @classmethod
+    def get_by_item_type_id(cls, item_type_id, with_deleted=False):
+        """Retrieve multiple records by item types identifier.
+
+        :param item_type_id: Identifier of item type.
+        :param with_deleted: If `True` then it includes deleted records.
+        :returns: A list of :class:`Record` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemMetadata.query.filter_by(item_type_id=item_type_id)
+            if not with_deleted:
+                query = query.filter(ItemMetadata.json != None)  # noqa
+            return query.all()
+
+    @classmethod
+    def get_by_object_id(cls, object_id):
+        """Retrieve ItemMetadata data by item identifier.
+
+        :param object_id: Pidstore Identifier of item.
+        :returns: A :class:`Record` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemMetadata.query.filter_by(id=object_id)
+
+            return query.one_or_none()
 
     def patch(self, patch):
         """Patch record metadata.
@@ -1330,14 +1558,14 @@ class SiteLicense(RecordBase):
 
     @classmethod
     def update(cls, obj):
-
+        """Update method."""
         def get_addr(lst, id_):
             if lst and isinstance(lst, list):
                 sld = []
                 for j in range(len(lst)):
                     sl = SiteLicenseIpAddress(
                         organization_id=id_,
-                        organization_no=j+1,
+                        organization_no=j + 1,
                         start_ip_address='.'.join(
                             lst[j].get('start_ip_address')),
                         finish_ip_address='.'.join(
@@ -1349,23 +1577,31 @@ class SiteLicense(RecordBase):
         # update has_site_license field on item type name tbl
         ItemTypeNames.update(obj.get('item_type'))
         site_license = obj.get('site_license')
-        if site_license and isinstance(site_license, list):
-            sif = []
-            for i in range(len(site_license)):
-                lst = site_license[i]
-                slif = SiteLicenseInfo(organization_id=i+1,
-                                       organization_name=lst.get(
-                                           'organization_name'),
-                                       mail_address=lst.get('mail_address'),
-                                       domain_name=lst.get('domain_name'),
-                                       addresses=get_addr(lst.get('addresses'), i))
-                sif.append(slif)
-
+        if isinstance(site_license, list):
             # delete all rows first
             SiteLicenseIpAddress.query.delete()
             SiteLicenseInfo.query.delete()
             # add new rows
-            db.session.add_all(sif)
+            if site_license:
+                sif = []
+                for i in range(len(site_license)):
+                    lst = site_license[i]
+                    if lst.get('mail_address'):
+                        receive_mail_flag = lst.get('receive_mail_flag')
+                    else:
+                        receive_mail_flag = 'F'
+                    slif = SiteLicenseInfo(
+                        organization_id=i + 1,
+                        organization_name=lst.get('organization_name'),
+                        receive_mail_flag=receive_mail_flag,
+                        mail_address=lst.get('mail_address'),
+                        domain_name=lst.get('domain_name'),
+                        addresses=get_addr(
+                            lst.get('addresses'),
+                            i))
+                    sif.append(slif)
+                # add new rows
+                db.session.add_all(sif)
         db.session.commit()
 
 
@@ -1416,6 +1652,8 @@ class RevisionsIterator(object):
 class WekoRecord(Record):
     """Weko Record."""
 
+    record_fetcher = staticmethod(weko_record_fetcher)
+
     @classmethod
     def get_record(cls, pid, id_, with_deleted=False):
         """Retrieve the record by id.
@@ -1434,3 +1672,192 @@ class WekoRecord(Record):
                 query = query.filter(FileMetadata.contents != None)  # noqa
 
             return [cls(obj.json, model=obj) for obj in query.all()]
+
+    @property
+    def pid(self):
+        """Return an instance of record PID."""
+        pid = self.record_fetcher(self.id, self)
+        return PersistentIdentifier.get(pid.pid_type, pid.pid_value)
+
+    @property
+    def depid(self):
+        """Return depid of the record."""
+        return PersistentIdentifier.get(
+            pid_type='depid',
+            pid_value=self.get('_deposit', {}).get('id')
+        )
+
+
+class FeedbackMailList(object):
+    """Feedback-Mail List API."""
+
+    @classmethod
+    def update(cls, item_id, feedback_maillist):
+        """Create a new instance feedback_mail_list.
+
+        :param item_id: Item Identifier
+        :param feedback_maillist: list mail feedback
+        :return boolean: True if success
+        """
+        try:
+            with db.session.begin_nested():
+                query_object = _FeedbackMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if not query_object:
+                    query_object = _FeedbackMailList(
+                        item_id=item_id,
+                        mail_list=feedback_maillist
+                    )
+                    db.session.add(query_object)
+                else:
+                    query_object.mail_list = feedback_maillist
+                    db.session.merge(query_object)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def get_mail_list_by_item_id(cls, item_id):
+        """Get a FeedbackMail list by item_id.
+
+        :param item_id:
+        :return feedback_mail_list
+
+        """
+        try:
+            with db.session.no_autoflush:
+                query_object = _FeedbackMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if query_object and query_object.mail_list:
+                    return query_object.mail_list
+                else:
+                    return []
+        except SQLAlchemyError:
+            return []
+
+    @classmethod
+    def delete(cls, item_id):
+        """Delete a feedback_mail_list by item_id.
+
+        :param item_id: item_id of target feed_back_mail_list
+        :return: bool: True if success
+        """
+        try:
+            with db.session.begin_nested():
+                _FeedbackMailList.query.filter_by(
+                    item_id=item_id).delete()
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+
+class ItemLink(object):
+    """Get Community Info."""
+
+    org_item_id = 0
+
+    def __init__(self, pid):
+        """Constructor."""
+        self.org_item_id = int(pid)
+
+    @classmethod
+    def get_item_link_info(cls, pid):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        from weko_deposit.api import WekoRecord
+
+        dst_relations = ItemReference.get_src_references(pid).all()
+        ret = []
+
+        for relation in dst_relations:
+            record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
+            ret.append(dict(
+                item_links=relation.dst_item_pid,
+                item_title=record.get('item_title'),
+                value=relation.reference_type
+            ))
+
+        return ret
+
+    def update(self, items):
+        """Record publish  status change view.
+
+        Change record publish status with given status and renders record
+        export template.
+
+        :param items: PID object.
+        :return: The rendered template.
+        """
+        dst_relations = ItemReference.get_src_references(
+            self.org_item_id).all()
+        dst_ids = [dst_item.dst_item_pid for dst_item in dst_relations]
+        updated = []
+        created = []
+        for item in items:
+            item_id = item['item_id']
+            if item_id in dst_ids:
+                updated.extend(item for dst_item in dst_relations if
+                               dst_item.reference_type != item['sele_id'])
+                dst_ids.remove(item_id)
+            else:
+                created.append(item)
+
+        deleted = dst_ids
+        try:
+            with db.session.begin_nested():
+                if created:
+                    self.bulk_create(created)
+                if updated:
+                    self.bulk_update(updated)
+                if deleted:
+                    self.bulk_delete(deleted)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+            return ex
+        return None
+
+    def bulk_create(self, dst_items):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        objects = [ItemReference(
+            src_item_pid=self.org_item_id,
+            dst_item_pid=cr['item_id'],
+            reference_type=cr['sele_id']) for cr in dst_items]
+        db.session.bulk_save_objects(objects)
+
+    def bulk_update(self, dst_items):
+        """Record publish  status change view.
+
+        :param dst_items: PID object.
+        :return: The rendered template.
+        """
+        objects = [ItemReference(
+            src_item_pid=self.org_item_id,
+            dst_item_pid=cr['item_id'],
+            reference_type=cr['sele_id']) for cr in dst_items]
+        for obj in objects:
+            db.session.merge(obj)
+
+    def bulk_delete(self, dst_item_ids):
+        """Record publish  status change view.
+
+        :param pid: PID object.
+        :return: The rendered template.
+        """
+        for dst_item_id in dst_item_ids:
+            db.session.query(ItemReference).filter(
+                ItemReference.src_item_pid == self.org_item_id,
+                ItemReference.dst_item_pid == dst_item_id
+            ).delete(synchronize_session='fetch')

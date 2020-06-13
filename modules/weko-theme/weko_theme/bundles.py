@@ -39,16 +39,19 @@ from invenio_assets import NpmBundle
 
 css_bootstrap = NpmBundle(
     'css/weko_theme/styles.scss',
-    depends=('scss/invenio_theme/*.scss', 'css/weko_theme/_variables.scss', 'scss/invenio_communities/variables.scss', 'scss/invenio_communities/communities/*.scss',),
+    depends=(
+        'scss/invenio_theme/*.scss',
+        'css/weko_theme/_variables.scss',
+        'scss/invenio_communities/variables.scss',
+        'scss/invenio_communities/communities/*.scss',
+    ),
     filters='node-scss,cleancssurl',
     output='gen/weko_styles.%(version)s.css',
     npm={
-        'almond': '~0.3.1',
-        'bootstrap-sass': '~3.3.5',
-        'font-awesome': '~4.4.0',
-        'jquery': '~1.9.1',
-    }
-)
+            'almond': '~0.3.1',
+            'bootstrap-sass': '~3.3.5',
+            'font-awesome': '~4.4.0',
+    })
 """Default CSS bundle with Bootstrap and Font-Awesome."""
 
 css = Bundle(
@@ -58,6 +61,20 @@ css = Bundle(
     output='gen/weko_theme.%(version)s.css',
 )
 """Default CSS bundle ."""
+
+css_buttons = Bundle(
+    'css/weko_theme/styling.css',
+    output='gen/weko_theme_buttons.%(version)s.css',
+)
+""" Button Styling CSS File. """
+
+css_widget = Bundle(
+    'css/weko_theme/gridstack.min.css',
+    'css/weko_theme/widget.css',
+    'css/weko_gridlayout/trumbowyg.min.css',
+    output='gen/weko_theme_widget.%(version)s.css',
+)
+"""Widget CSS."""
 
 js_treeview = Bundle(
     'js/weko_theme/inline.bundle.js',
@@ -76,4 +93,26 @@ js_top_page = Bundle(
     'js/weko_theme/top_page.js',
     filters='requirejs',
     output="gen/weko_top_page.%(version)s.js",
+)
+
+js_detail_search = Bundle(
+    'js/weko_theme/search_detail.js',
+    filters='requirejs',
+    output="gen/weko_detail_search.%(version)s.js",
+)
+
+
+js_widget_lib = Bundle(
+    'js/weko_theme/lodash.js',
+    'js/weko_theme/gridstack.js',
+    'js/weko_theme/ResizeSensor.js',
+    filters='jsmin',
+    output="gen/widget_lib.%(version)s.js",
+)
+
+widget_js = Bundle(
+    js_widget_lib,
+    'js/weko_theme/widget.js',
+    filters='jsmin',
+    output="gen/widget.%(version)s.js",
 )

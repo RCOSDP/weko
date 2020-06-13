@@ -20,11 +20,13 @@
 
 """API for user profiles."""
 
-from flask import g
+import pytz
+from flask import current_app, g
 from flask_security import current_user
 from werkzeug.local import LocalProxy
 
-from .config import USERPROFILES_LANGUAGE_DEFAULT, USERPROFILES_TIMEZONE_DEFAULT
+from .config import USERPROFILES_LANGUAGE_DEFAULT, \
+    USERPROFILES_TIMEZONE_DEFAULT
 from .models import AnonymousUserProfile, UserProfile
 
 
@@ -51,5 +53,21 @@ def _get_current_userprofile():
         g.userprofile = profile
     return profile
 
+
 current_userprofile = LocalProxy(lambda: _get_current_userprofile())
 """Proxy to the user profile of the currently login user."""
+
+
+def localize_time(dtime):
+    """Get localize time."""
+    try:
+        if current_userprofile:
+            tz = pytz.timezone(current_userprofile.timezone)
+            return pytz.utc.localize(dtime).astimezone(tz)
+        elif 'BABEL_DEFAULT_TIMEZONE' in current_app.config:
+            tz = pytz.timezone(current_app.config['BABEL_DEFAULT_TIMEZONE'])
+            return pytz.utc.localize(dtime).astimezone(tz)
+        else:
+            return pytz.utc.localize(dtime)
+    except BaseException:
+        return pytz.utc.localize(dtime)

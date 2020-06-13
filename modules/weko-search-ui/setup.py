@@ -58,11 +58,13 @@ install_requires = [
     'Flask-BabelEx>=0.9.2',
     'Flask-Assets>=0.12',
     'ipaddress>=1.0.19',
-    'elasticsearch_dsl<3.0.0,>=2.0.0',
+    'angular-gettext-babel>=0.3',
+    'elasticsearch_dsl<6.2.0,>=6.0.0',
     'invenio-assets>=1.0.0b7',
     'invenio-db>=1.0.0b9',
-    'invenio-records-rest==1.0.0b3',
+    'invenio-records-rest>=1.0.0b3',
     'invenio-search>=1.0.0b4',
+    'bagit>=1.7.0',
 ]
 
 packages = find_packages()
@@ -89,26 +91,49 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'babel.extractors': [
+            'angular_gettext = angular_gettext_babel.extract:extract_angular',
+        ],
         'invenio_base.apps': [
             'weko_search_ui = weko_search_ui:WekoSearchUI',
         ],
         'invenio_base.api_apps': [
             'weko_search_rest = weko_search_ui:WekoSearchREST',
         ],
+        'invenio_celery.tasks': [
+            'weko_search_ui = weko_search_ui.tasks'
+        ],
+        'invenio_admin.views': [
+            'weko_search_ui_bulk_delete = weko_search_ui.admin:item_management_bulk_delete_adminview',
+            'weko_search_ui_custom_sort = weko_search_ui.admin:item_management_custom_sort_adminview',
+            'weko_search_ui_bulk_search = weko_search_ui.admin:item_management_bulk_search_adminview',
+            'weko_search_ui_import = weko_search_ui.admin:item_management_import_adminview',
+        ],
         'invenio_base.api_blueprints': [
             'weko_search_ui = weko_search_ui.views:blueprint_api',
-        ],
-        'invenio_i18n.translations': [
-            'messages = weko_search_ui',
         ],
         'invenio_config.module': [
             'weko_search_ui = weko_search_ui.config',
         ],
         'invenio_assets.bundles': [
             'weko_search_ui_css = weko_search_ui.bundles:css',
+            'weko_search_ui_search_i18n = weko_search_ui.bundles:i18n',
             'weko_search_ui_js = weko_search_ui.bundles:js',
             'weko_search_ui_dependencies_js = weko_search_ui.bundles:'
             'js_dependecies',
+            'weko_admin_item_import_js = '
+            'weko_search_ui.bundles:weko_admin_item_import_js',
+            'weko_admin_item_import_css = '
+            'weko_search_ui.bundles:weko_admin_item_import_css',
+            'weko_moment_js = '
+            'weko_search_ui.bundles:weko_moment_js',
+            'weko_facet_search_css = '
+            'weko_search_ui.bundles:weko_facet_search_css',
+            'weko_facet_search_js = '
+            'weko_search_ui.bundles:weko_facet_search_js',
+        ],
+        'invenio_i18n.translations': [
+            'messages = weko_search_ui',
         ],
         'invenio_access.actions': [
             'search_access = weko_search_ui.permissions:action_search_access',
