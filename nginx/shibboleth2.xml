@@ -3,7 +3,7 @@
     clockSkew="180">
 
     <OutOfProcess tranLogFormat="%u|%s|%IDP|%i|%ac|%t|%attr|%n|%b|%E|%S|%SS|%L|%UA|%a" />
-  
+    <UnixListener address="/tmp/shibd.sock"/>  
     <!--
     By default, in-memory StorageService, ReplayCache, ArtifactMap, and SessionCache
     are used. See example-shibboleth2.xml for samples of explicitly configuring them.
@@ -128,5 +128,6 @@
 
     <!-- Low-level configuration about protocols and bindings available for use. -->
     <ProtocolProvider type="XML" validate="true" reloadChanges="false" path="protocols.xml"/>
+
 
 </SPConfig>
