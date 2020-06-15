@@ -20,6 +20,7 @@
 
 """Module of weko-items-ui utils.."""
 
+import copy
 import csv
 import json
 import os
@@ -427,7 +428,43 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     except Exception as ex:
         current_app.logger.error(ex)
         result["is_valid"] = False
-        result['error'] = _(error.message)
+        result['error'] = _(str(ex))
+
+
+def parse_node_str_to_json_schema(node_str: str):
+    """Parse node_str to json schema.
+
+    :param node_str: node string
+    :return: json schema
+    """
+    json_node = {}
+    nodes = node_str.split('.')
+    if len(nodes) > 0:
+        json_node["item"] = nodes[len(nodes) - 1]
+        for x in reversed(range(len(nodes) - 1)):
+            json_node["child"] = copy.deepcopy(json_node)
+            json_node["item"] = nodes[x]
+
+    return json_node
+
+
+def update_json_schema_with_required_items(node: dict, json_data: dict):
+    """Update json schema with the required items.
+
+    :param node: json schema return from def parse_node_str_to_json_schema
+    :param json_data: The json schema
+    """
+    if not node.get('child'):
+        if not json_data.get('required'):
+            json_data['required'] = []
+        json_data['required'].append(node['item'])
+    else:
+        if json_data['properties'][node['item']].get('items'):
+            update_json_schema_with_required_items(
+                node['child'], json_data['properties'][node['item']]['items'])
+        else:
+            update_json_schema_with_required_items(
+                node['child'], json_data['properties'][node['item']])
 
 
 def update_json_schema_by_activity_id(json_data, activity_id):
@@ -451,28 +488,10 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     error_list = json.loads(session_data.decode('utf-8'))
 
     if error_list:
-        if not json_data.get('required'):
-            json_data['required'] = []
         for item in error_list['required']:
-            sub_item = item.split('.')
-            if len(sub_item) == 1:
-                json_data['required'] = sub_item
-            else:
-                if sub_item[0] not in json_data['required']:
-                    json_data['required'].append(sub_item[0])
-                if json_data['properties'][sub_item[0]].get('items'):
-                    if not json_data['properties'][sub_item[0]]['items'].get(
-                            'required'):
-                        json_data['properties'][sub_item[0]][
-                            'items']['required'] = []
-                    json_data['properties'][sub_item[0]]['items'][
-                        'required'].append(sub_item[1])
-                else:
-                    if not json_data[
-                            'properties'][sub_item[0]].get('required'):
-                        json_data['properties'][sub_item[0]]['required'] = []
-                    json_data['properties'][sub_item[0]]['required'].append(
-                        sub_item[1])
+            node = parse_node_str_to_json_schema(item)
+            if node:
+                update_json_schema_with_required_items(node, json_data)
         for item in error_list['pattern']:
             sub_item = item.split('.')
             if len(sub_item) == 2:
