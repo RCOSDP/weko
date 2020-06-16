@@ -180,18 +180,43 @@ class TableUserEmailComponent extends React.Component {
   }
 
   generateBodyTableUser() {
-    let tBodyElement = this.state.listUser.map((row) => (
-      <tr key={row._source.pk_id.toString()}>
-        <td>{row._source.authorNameInfo[0].fullName}</td>
-        <td>{row._source.emailInfo[0].email}</td>
-        <td className="text-right">
-          <button className="btn btn-info"
-            onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
-              &nbsp;&nbsp;Import&nbsp;&nbsp;
-          </button>
-        </td>
-      </tr>
-    )
+    let tBodyElement = this.state.listUser.map((row) => {
+      let name = "";
+      if (row._source.authorNameInfo[0]) {
+        name = row._source.authorNameInfo[0].fullName;
+        if (!name) {
+          let familyName = row._source.authorNameInfo[0].familyName || "";
+          let firstName = row._source.authorNameInfo[0].firstName || "";
+          name = familyName + firstName;
+        }
+      }
+      if (row._source.emailInfo.length == 1) {
+        return (
+          <tr key={row._source.pk_id.toString()}>
+                <td>{name}</td>
+            <td>{row._source.emailInfo[0].email}</td>
+            <td className="text-right">
+              <button className="btn btn-info"
+                onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
+                  &nbsp;&nbsp;Import&nbsp;&nbsp;
+              </button>
+            </td>
+          </tr>
+        )
+      } else {
+        return (
+          <tr key={row._source.pk_id.toString()}>
+            <td>{name}</td>
+            <td></td>
+            <td className="text-right">
+              <button disabled className="btn btn-info">
+                  &nbsp;&nbsp;Import&nbsp;&nbsp;
+              </button>
+            </td>
+          </tr>
+        )
+      }
+    }
     )
     return (
       <tbody >

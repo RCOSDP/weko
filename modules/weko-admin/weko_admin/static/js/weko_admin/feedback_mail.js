@@ -292,14 +292,33 @@ class TableUserEmailComponent extends React.Component {
           name = familyName + firstName;
         }
       }
-      return (
+      if (row._source.emailInfo.length == 1) {
+        return (
           <tr key = {row._source.pk_id.toString()}>
             <td>{name}</td>
             <td>{row._source.emailInfo[0].email}</td>
-            <td className="text-right"><button className="btn btn-info" onClick = {(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
+            <td className="text-right">
+              <button className="btn btn-info"
+                onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
+                &nbsp;&nbsp;Import&nbsp;&nbsp;
+              </button>
+            </td>
+          </tr>
+        )
+      } else {
+        return (
+          <tr key={row._source.pk_id.toString()}>
+            <td>{name}</td>
+            <td></td>
+            <td className="text-right">
+              <button disabled className="btn btn-info">
+                  &nbsp;&nbsp;Import&nbsp;&nbsp;
+              </button>
+            </td>
           </tr>
         )
       }
+    }
     )
     return (
       <tbody >
