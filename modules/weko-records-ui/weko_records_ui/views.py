@@ -455,7 +455,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     record['permalink_uri'] = None
     permalink = get_record_permalink(record)
     if not permalink:
-        record['permalink_uri'] = request.url
+        if record.get('system_identifier_doi') and record.get('system_identifier_doi').get('attribute_value_mlt')[0]:
+            record['permalink_uri'] = record['system_identifier_doi']['attribute_value_mlt'][0][
+                'subitem_systemidt_identifier']
+        else:
+            record['permalink_uri'] = request.url
     else:
         record['permalink_uri'] = permalink
 
