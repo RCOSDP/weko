@@ -276,33 +276,35 @@
                   {%- endblock feedback_mail_list %}
                 </div>
                 <div class="row">
-                  <div class="col-sm-9">
-                    <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                      {%- if pid %}
-                      <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="true" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
-                            <span class="glyphicon glyphicon-trash"></span>&nbsp
-                            {{_('Delete')}}
-                          </button>
-                      {%- endif %}
-                      <button ng-disabled="recordsVM.invenioRecordsLoading"
-                              class="btn btn-primary"
-                              ng-click="saveDataJson('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}');">
-                            <span class="glyphicon glyphicon-save"></span>&nbsp
-                            {{_('Save')}}
-                      </button>
-                      <button ng-disabled="recordsVM.invenioRecordsLoading"
-                              class="btn btn-info"
-                              ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
-                      <span class="glyphicon glyphicon-chevron-right"></span>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="col-sm-3" style="padding-right: 0;">
-                    <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  <div class="col-sm-12">
+                    <div class="col-sm-offset-3 col-sm-6">
+                      <div class="list-inline text-center" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                        {%- if pid %}
+                        <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="true" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
+                              <span class="glyphicon glyphicon-trash"></span>&nbsp
+                              {{_('Delete')}}
+                            </button>
+                        {%- endif %}
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
-                                class="btn btn-danger" id="btn_quit">
-                          <i class="fa fa-sign-out"></i>
-                          {{_('Quit')}}</button>&nbsp
+                                class="btn btn-primary"
+                                ng-click="saveDataJson('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}');">
+                              <span class="glyphicon glyphicon-save"></span>&nbsp
+                              {{_('Save')}}
+                        </button>
+                        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                class="btn btn-info"
+                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
+                        <span class="glyphicon glyphicon-chevron-right"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-sm-3" style="padding-right: 10px;">
+                      <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                          <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                  class="btn btn-danger" id="btn_quit">
+                            <i class="fa fa-sign-out"></i>
+                            {{_('Quit')}}</button>&nbsp
+                      </div>
                     </div>
                   </div>
                 </div>
