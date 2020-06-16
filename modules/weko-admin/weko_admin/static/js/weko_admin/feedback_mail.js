@@ -310,7 +310,11 @@ class TableUserEmailComponent extends React.Component {
           <tr key={row._source.pk_id.toString()}>
             <td>{name}</td>
             <td></td>
-            <td className="text-right"></td>
+            <td className="text-right">
+              <button disabled className="btn btn-info">
+                  &nbsp;&nbsp;Import&nbsp;&nbsp;
+              </button>
+            </td>
           </tr>
         )
       }
