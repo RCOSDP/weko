@@ -2086,6 +2086,9 @@ function toObject(arr) {
         // add by ryuu. end 20180410
         $('#myModal').modal('show');
       }
+      $('#myModal').on('shown.bs.modal', function (e) {
+        window.appAuthorSearch.namespace.resetSearchData();
+      })
       // add by ryuu. start 20180410
       $scope.setAuthorInfo = function () {
         var authorInfo = $('#author_info').text();
