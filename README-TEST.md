@@ -52,7 +52,7 @@ chmod g+w .
 Run the following command to install test packages inside your docker container.
 
 ```shell
-docker-compose exec web sh -c 'pip install -U pytest && pip install pytest-cov pytest-invenio mock'
+docker-compose exec web sh -c 'pip install -U pytest && pip install coverage==4.5.4 pytest==5.4.3 pytest-cov pytest-invenio mock'
 ```
 
 ### Run the tests
