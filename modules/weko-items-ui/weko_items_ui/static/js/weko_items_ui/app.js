@@ -7,8 +7,8 @@ require([
     window.location.href = '/items/' + $(this).val();
   });
   $("#btnModalClose").click(function () {
-    $('#myModal').modal('toggle');
-    $("div.modal-backdrop").remove();
+    //Process close 'Add Author' or 'Import Author' modal.
+    window.appAuthorSearch.namespace.isCloseAuthorModal();
   });
   $("#meta-search-close").click(function () {
     $('#meta-search').modal('toggle');
