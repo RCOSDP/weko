@@ -25,6 +25,7 @@ const RESEND_BUTTON_NAME = document.getElementById("resend-button-name").value;
 const CLOSE_BUTTON_NAME = document.getElementById("close-button-name").value;
 const NO_DATA_LABEL = document.getElementById("no-data-label").value;
 const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
+const IMPORT_BUTTON_NAME = document.getElementById("import-button-name").value;
 const GET_FAILED_MAIL_URL = "/api/admin/get_failed_mail";
 const UPDATE_FEEDBACK_MAIL_URL = "/api/admin/update_feedback_mail";
 const GET_SEND_MAIL_HISTORY_URL = "/api/admin/get_send_mail_history";
@@ -300,7 +301,7 @@ class TableUserEmailComponent extends React.Component {
             <td className="text-right">
               <button className="btn btn-info"
                 onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
-                &nbsp;&nbsp;Import&nbsp;&nbsp;
+                &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
               </button>
             </td>
           </tr>
@@ -312,7 +313,7 @@ class TableUserEmailComponent extends React.Component {
             <td></td>
             <td className="text-right">
               <button disabled className="btn btn-info">
-                  &nbsp;&nbsp;Import&nbsp;&nbsp;
+                  &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
               </button>
             </td>
           </tr>
