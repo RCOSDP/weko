@@ -162,7 +162,7 @@
                   </div>
                 </div>
               {%- endif %}
-              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading"> 
+              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 {%- if show_automatic_metadata_input %}
                 <div class="row">
                   <div class="col-sm-12">
@@ -279,7 +279,7 @@
                   <div class="col-sm-9">
                     <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                       {%- if pid %}
-                      <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
+                      <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="true" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
                             <span class="glyphicon glyphicon-trash"></span>&nbsp
                             {{_('Delete')}}
                           </button>
