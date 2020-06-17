@@ -310,3 +310,6 @@ msgstr ""
 
 msgid "Required item is not inputted"
 msgstr ""
+
+msgid "Feedback Mail Import"
+msgstr "Import"
