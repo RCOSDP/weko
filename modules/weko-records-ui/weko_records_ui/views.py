@@ -40,7 +40,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
-from weko_deposit.api import WekoIndexer, WekoRecord
+from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
@@ -721,20 +721,3 @@ def init_permission(recid):
     except Exception as ex:
         current_app.logger.debug(ex)
         abort(500)
-
-
-@blueprint.app_template_filter('translate_content')
-def translate_content(content):
-    """Translate record detail content.
-
-    @param content:
-    @return:
-    """
-    try:
-        if content:
-            return _(content)
-        else:
-            return content
-    except Exception as ex:
-        current_app.logger.debug(ex)
-        return content

@@ -995,9 +995,10 @@ class WekoRecord(Record):
 
                 mlt = val.get('attribute_value_mlt')
                 if mlt is not None:
-
                     nval = dict()
                     nval['attribute_name'] = val.get('attribute_name')
+                    nval['attribute_name_i18n'] = lst[2] or val.get(
+                        'attribute_name')
                     nval['attribute_type'] = val.get('attribute_type')
                     if nval['attribute_name'] == 'Reference' \
                             or nval['attribute_type'] == 'file':
@@ -1027,6 +1028,8 @@ class WekoRecord(Record):
                                     is_author)
                     items.append(nval)
                 else:
+                    val['attribute_name_i18n'] = lst[2] or val.get(
+                        'attribute_name')
                     items.append(val)
 
             return items
