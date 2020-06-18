@@ -426,3 +426,6 @@ msgstr "規定の数を超えています。選択できるのは２つまでで
 
 msgid "Required item is not inputted"
 msgstr "必須項目がありません。"
+
+msgid "Feedback Mail Import"
+msgstr "入力"
