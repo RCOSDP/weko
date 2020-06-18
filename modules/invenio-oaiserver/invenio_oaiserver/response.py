@@ -276,6 +276,7 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
+
     def get_error_code_msg():
         code = 'noRecordsMatch'
         msg = 'The combination of the values of the from, until, ' \
@@ -305,10 +306,11 @@ def getrecord(**kwargs):
                             etree.QName(NS_OAIPMH, 'metadata'))
 
     etree_record = copy.deepcopy(record)
-    etree_record['system_identifier_doi'] = get_identifier(record)
+    if not etree_record.get('system_identifier_doi', None):
+        etree_record['system_identifier_doi'] = get_identifier(record)
     if check_correct_system_props_mapping(
-            pid.object_uuid,
-            current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
+        pid.object_uuid,
+        current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
         etree_record = combine_record_file_urls(etree_record, pid.object_uuid)
 
     root = record_dumper(pid, {'_source': etree_record})
@@ -358,8 +360,10 @@ def listrecords(**kwargs):
             datestamp=record['updated'],
             sets=record['json']['_source'].get('_oai', {}).get('sets', []),
         )
+        from weko_deposit.api import WekoRecord
         temp = WekoRecord.get_record_by_id(record['id'])
-        record['json']['_source']['_item_metadata']['system_identifier_doi'] = get_identifier(temp)
+        if not record['json']['_source']['_item_metadata']['system_identifier_doi']:
+            record['json']['_source']['_item_metadata']['system_identifier_doi'] = get_identifier(temp)
         e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
         e_metadata.append(record_dumper(pid, record['json']))
 
@@ -386,7 +390,7 @@ def create_identifier_index(root, **kwargs):
                                   etree.QName(NS_JPCOAR, 'identifier'),
                                   attrib={
                                       'identifierType':
-                                      kwargs['pid_type'].upper()})
+                                          kwargs['pid_type'].upper()})
         e_identifier.text = kwargs['pid_value']
         e_identifier_registration = root.find(
             'jpcoar:identifierRegistration',
@@ -417,7 +421,7 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
     if system_mapping_config:
         for key in system_mapping_config:
             if key not in item_map or key in item_map and \
-                    system_mapping_config[key] not in item_map[key]:
+                system_mapping_config[key] not in item_map[key]:
                 return False
     else:
         return False

@@ -27,13 +27,10 @@ from json import dumps, loads
 import dateutil
 import requests
 import xmltodict
-from celery import shared_task
-from invenio_db import db
+from flask import current_app
 from lxml import etree
-from weko_deposit.api import WekoDeposit
-from weko_records.models import ItemType
 
-from .models import HarvestSettings
+from weko_records.models import ItemType
 
 DEFAULT_FIELD = [
     'title',
@@ -768,15 +765,19 @@ def add_rights_dc(schema, res, rights, lang='', rights_resource=''):
     res[rights_field].append(item)
 
 
-def add_identifier_dc(schema, res, identifier):
+def add_identifier_dc(schema, res,self_identifier, identifier):
     """Add identifier."""
-    identifier_field = map_field(schema)['Identifier']
-    subitems = map_field(schema['properties'][identifier_field]['items'])
-    identifier_item_name = subitems['Identifier']
-    if identifier_field not in res:
-        res[identifier_field] = []
-    res[identifier_field].append(
-        {identifier_item_name: identifier})
+    current_app.logger.error(identifier)
+    self_identifier.clear()
+    # if len(identifier)>0:
+    if identifier.startswith('https://doi.org'):
+        self_identifier.append({'type': 'DOI', 'identifier': identifier})
+    elif identifier.startswith('http://hdl.handle.net'):
+        self_identifier.append({'type': 'HDL', 'identifier': identifier})
+    else:
+        res['system_identifier_doi'] = []
+        res['system_identifier_doi'].append(
+            {'subitem_systemidt_identifier': identifier})
 
 
 def add_description_dc(schema, res, description, description_type='', lang=''):
@@ -861,6 +862,18 @@ def add_publisher_dc(schema, res, publisher, lang=''):
         res[publisher_field] = []
     res[publisher_field].append(
         {publisher_item_name: publisher, language_item_name: lang})
+
+
+def add_resource_type_dc(schema, res, dc_type):
+    """Add publisher."""
+    resource_type_field = map_field(schema)['Resource Type']
+    subitems = map_field(schema['properties'][resource_type_field])
+    type_item = subitems['Type']
+    resource_item = subitems['Resource']
+    if resource_type_field not in res:
+        res[resource_type_field] = []
+    res[resource_type_field].append(
+        {type_item: dc_type, resource_item: RESOURCE_TYPE_URI[dc_type]})
 
 
 def add_titl_stmt_ddi(schema, res, list_stdy_dscr):
@@ -1566,6 +1579,91 @@ RESOURCE_TYPE_MAP = {
     'other': 'Multiple',
 }
 
+RESOURCE_TYPE_URI = {
+    'interactive resource':
+        "http://purl.org/coar/resource_type/c_e9a0",
+    'learning material':
+        "http://purl.org/coar/resource_type/c_1843",
+    'musical notation':
+        "http://purl.org/coar/resource_type/c_18cw",
+    'research proposal':
+        "http://purl.org/coar/resource_type/c_baaf",
+    'software':
+        "http://purl.org/coar/resource_type/c_5ce6",
+    'technical documentation':
+        "http://purl.org/coar/resource_type/c_71bd",
+    'workflow':
+        "http://purl.org/coar/resource_type/c_393c", 'other（その他）':
+        "http://purl.org/coar/resource_type/c_1843",
+    'other（プレプリント）':
+        "",
+    'conference object':
+        "http://purl.org/coar/resource_type/c_c94f",
+    'conference proceedings':
+        "http://purl.org/coar/resource_type/c_f744",
+    'conference poster':
+        "http://purl.org/coar/resource_type/c_6670", 'patent':
+        "http://purl.org/coar/resource_type/c_15cd",
+    'lecture':
+        "http://purl.org/coar/resource_type/c_8544"
+, 'book':
+        "http://purl.org/coar/resource_type/c_2f33",
+    'book part':
+        "http://purl.org/coar/resource_type/c_3248",
+    'dataset':
+        "http://purl.org/coar/resource_type/c_ddb1",
+    'conference paper':
+        "http://purl.org/coar/resource_type/c_5794",
+    'data paper':
+        "http://purl.org/coar/resource_type/c_beb9",
+    'departmental bulletin paper':
+        "http://purl.org/coar/resource_type/c_6501",
+    'editorial':
+        "http://purl.org/coar/resource_type/c_b239", 'journal article':
+        "http://purl.org/coar/resource_type/c_6501"
+, 'periodical':
+        "http://purl.org/coar/resource_type/c_2659",
+    'review article':
+        "http://purl.org/coar/resource_type/c_dcae04bc",
+    'article':
+        "http://purl.org/coar/resource_type/c_6501",
+    'image':
+        "http://purl.org/coar/resource_type/c_c513",
+    'still image':
+        "http://purl.org/coar/resource_type/c_ecc8",
+    'moving image':
+        "http://purl.org/coar/resource_type/c_8a7e",
+    'video':
+        "http://purl.org/coar/resource_type/c_12ce",
+    'cartographic material':
+        "http://purl.org/coar/resource_type/c_12cc",
+    'map':
+        "http://purl.org/coar/resource_type/c_12cd",
+    'sound':
+        "http://purl.org/coar/resource_type/c_18cc",
+    'internal report':
+        "http://purl.org/coar/resource_type/c_18ww",
+    'report':
+        "http://purl.org/coar/resource_type/c_93fc",
+    'research report':
+        "http://purl.org/coar/resource_type/c_18ws"
+, 'technical report':
+        "http://purl.org/coar/resource_type/c_18gh",
+    'policy report':
+        "http://purl.org/coar/resource_type/c_186u", 'report part':
+        "http://purl.org/coar/resource_type/c_ba1f",
+    'working paper':
+        "http://purl.org/coar/resource_type/c_8042",
+    'thesis':
+        "http://purl.org/coar/resource_type/c_46ec",
+    'bachelor thesis':
+        "http://purl.org/coar/resource_type/c_7a1f",
+    'master thesis':
+        "http://purl.org/coar/resource_type/c_bdcc",
+    'doctoral thesis':
+        "http://purl.org/coar/resource_type/c_db06"
+}
+
 
 def map_sets(sets, encoding='utf-8'):
     """Get sets map."""
@@ -1662,8 +1760,9 @@ class DCMapper(BaseMapper):
             'description': partial(add_description_dc, self.itemtype.schema,
                                    res),
             'publisher': partial(add_publisher_dc, self.itemtype.schema, res),
+            'type': partial(add_resource_type_dc, self.itemtype.schema, res),
             'date': partial(add_date_dc, self.itemtype.schema, res),
-            # 'identifier': partial(add_identifier_dc, self.itemtype.schema, res),
+            'identifier': partial(add_identifier_dc, self.itemtype.schema, res, self.identifiers),
             'language': partial(add_language_dc, self.itemtype.schema, res),
             'relation': partial(add_relation_dc, self.itemtype.schema, res),
             'rights': partial(add_rights_dc, self.itemtype.schema, res),
