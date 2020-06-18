@@ -277,10 +277,34 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
     def get_error_code_msg():
-        code = 'noRecordsMatch'
-        msg = 'The combination of the values of the from, until, ' \
-              'set and metadataPrefix arguments results in an empty list.'
+        """Get error by type."""
+        code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
+        msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
         return [(code, msg)]
+
+    def is_deleted_workflow(pid):
+        """Check workflow is deleted."""
+        deleted_status = "D"
+        return pid.status == deleted_status
+
+    def is_private_workflow(record):
+        """Check publish status of workflow is private."""
+        private_status = 1
+        return int(record.get("publish_status")) == private_status
+
+    def is_private_index(record):
+        """Check index of workflow is private."""
+        from weko_index_tree.api import Indexes
+        indexes = Indexes.get_path_list(record.get("path"))
+        publish_state = 6
+        for index in indexes:
+            if len(indexes) == 1:
+                if not index[publish_state]:
+                    return True
+            else:
+                if index[publish_state]:
+                    return False
+        return False
 
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
@@ -289,11 +313,28 @@ def getrecord(**kwargs):
     identify = OaiIdentify.get_all()
     harvest_public_state, record = WekoRecord.get_record_with_hps(
         pid.object_uuid)
-    if (identify and not identify.outPutSetting) or not harvest_public_state:
-        return error(get_error_code_msg(), **kwargs)
 
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
+
+    # Harvest is private
+    if not harvest_public_state or \
+            (identify and not identify.outPutSetting):
+        return error(get_error_code_msg(), **kwargs)
+    # Item is deleted
+    # or Harvest is public & Item is private
+    # or Harvest is public & Index is private
+    elif is_deleted_workflow(pid) or (
+        harvest_public_state and is_private_workflow(record)) or (
+            harvest_public_state and is_private_index(record)):
+        header(
+            e_record,
+            identifier=pid.pid_value,
+            datestamp=record.updated,
+            sets=record.get('_oai', {}).get('sets', []),
+            deleted=True
+        )
+        return e_tree
 
     header(
         e_record,
