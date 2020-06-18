@@ -149,7 +149,7 @@ def identify(**kwargs):
 
     e_deletedRecord = SubElement(e_identify,
                                  etree.QName(NS_OAIPMH, 'deletedRecord'))
-    e_deletedRecord.text = 'no'
+    e_deletedRecord.text = 'transient'
 
     e_granularity = SubElement(e_identify,
                                etree.QName(NS_OAIPMH, 'granularity'))
