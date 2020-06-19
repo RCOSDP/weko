@@ -27,9 +27,9 @@ from json import dumps, loads
 import dateutil
 import requests
 import xmltodict
-from flask import current_app
 from lxml import etree
 from weko_records.models import ItemType
+from .config import OAIHARVESTER_DOI_PREFIX, OAIHARVESTER_HDL_PREFIX
 
 DEFAULT_FIELD = [
     'title',
@@ -640,41 +640,25 @@ def add_creator_dc(schema, res, creator_name, lang=''):
     res[creator_field].append(item)
 
 
-def add_source_dc(schema, res, source_list):
-    """Add description."""
-    if not isinstance(source_list, list):
-        source_list = [source_list]
-    root_key = map_field(schema).get('Description')
+def add_data_by_key(schema, res, resource_list, key):
+    """Add data by parent key.
+
+    :param schema:
+    :param res:
+    :param resource_list:
+    :param key:
+    :return:
+    """
+    if not isinstance(resource_list, list):
+        resource_list = [resource_list]
+    root_key = map_field(schema).get(key)
     if not root_key:
         return
-    if not res.get(root_key, None):
+    if not res.get(root_key):
         res[root_key] = []
-    description = map_field(schema['properties'][root_key]['items'])[
-        'Description']
+    temporal = map_field(schema['properties'][root_key]['items'])[key]
     language = map_field(schema['properties'][root_key]['items'])['Language']
-    for it in source_list:
-        item = {}
-        if isinstance(it, str):
-            item[description] = it
-        elif isinstance(it, OrderedDict):
-            item[description] = it.get('#text')
-            if it.get('@xml:lang'):
-                item[language] = it.get('@xml:lang')
-        res[root_key].append(item)
-
-
-def add_coverage_dc(schema, res, coverage_list):
-    """Add temporal."""
-    if not isinstance(coverage_list, list):
-        coverage_list = [coverage_list]
-    root_key = map_field(schema).get('Temporal')
-    if not root_key:
-        return
-    if not res.get(root_key, None):
-        res[root_key] = []
-    temporal = map_field(schema['properties'][root_key]['items'])['Temporal']
-    language = map_field(schema['properties'][root_key]['items'])['Language']
-    for it in coverage_list:
+    for it in resource_list:
         item = {}
         if isinstance(it, str):
             item[temporal] = it
@@ -684,12 +668,22 @@ def add_coverage_dc(schema, res, coverage_list):
         res[root_key].append(item)
 
 
+def add_source_dc(schema, res, source_list):
+    """Add description."""
+    add_data_by_key(schema, res, source_list, 'Description')
+
+
+def add_coverage_dc(schema, res, coverage_list):
+    """Add temporal."""
+    add_data_by_key(schema, res, coverage_list, 'Temporal')
+
+
 def add_format_dc(schema, res, file_list):
     """Add file."""
     if not isinstance(file_list, list):
         file_list = [file_list]
     root_key = map_field(schema).get('File')
-    if not res.get(root_key, None):
+    if not res.get(root_key):
         res[root_key] = []
     format_key = map_field(schema['properties'][root_key]['items'])['Format']
     for it in file_list:
@@ -767,12 +761,10 @@ def add_rights_dc(schema, res, rights, lang='', rights_resource=''):
 def add_identifier_dc(schema, res, self_identifier, identifier):
     """Add identifier."""
 
-    current_app.logger.error(identifier)
     self_identifier.clear()
-    # if len(identifier)>0:
-    if identifier.startswith('https://doi.org'):
+    if identifier.startswith(OAIHARVESTER_DOI_PREFIX):
         self_identifier.append({'type': 'DOI', 'identifier': identifier})
-    elif identifier.startswith('http://hdl.handle.net'):
+    elif identifier.startswith(OAIHARVESTER_HDL_PREFIX):
         self_identifier.append({'type': 'HDL', 'identifier': identifier})
     else:
         res['system_identifier_doi'] = []

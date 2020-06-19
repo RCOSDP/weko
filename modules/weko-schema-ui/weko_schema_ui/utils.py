@@ -24,13 +24,11 @@ import itertools
 import re
 from functools import reduce
 
-from flask import current_app, request
 from invenio_oaiserver.response import NS_OAIPMH, NS_OAIPMH_XSD, NS_XSI, \
     NSMAP, header, verb
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
-from weko_deposit.api import WekoRecord
 
 from .schema import SchemaTree
 
