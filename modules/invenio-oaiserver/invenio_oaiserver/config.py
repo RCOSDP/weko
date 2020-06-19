@@ -207,3 +207,6 @@ OAISERVER_SYSTEM_FILE_MAPPING = {
 
 OAISERVER_FILE_PROPS_MAPPING = "file.URI.@value"
 """Config used to specify system file mapping of jpcoar"""
+
+OAISERVER_FILE_PROPS_MAPPING_DDI = 'stdyDscr.dataAccs.setAvail.accsPlac.@value'
+"""Config used to specify system file mapping of DDI"""

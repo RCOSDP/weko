@@ -873,7 +873,7 @@ def add_resource_type_dc(schema, res, dc_type):
     if resource_type_field not in res:
         res[resource_type_field] = []
     res[resource_type_field].append(
-        {type_item: dc_type, resource_item: RESOURCE_TYPE_URI[dc_type]})
+        {type_item: dc_type, resource_item: RESOURCE_TYPE_URI.get(dc_type, '')})
 
 
 def add_titl_stmt_ddi(schema, res, list_stdy_dscr):

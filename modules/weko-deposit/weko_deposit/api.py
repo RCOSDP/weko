@@ -1076,7 +1076,7 @@ class WekoRecord(Record):
 
     @classmethod
     def get_record_by_id(cls, idx):
-        """Get record by pid."""
+        """Get record by id."""
         return cls.get_record(id_=idx)
 
     @classmethod

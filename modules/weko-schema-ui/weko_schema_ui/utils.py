@@ -69,44 +69,6 @@ def dumps_etree(records, schema_type):
         return stree.create_xml()
 
 
-def get_identifier(record):
-    """Get Identifier of record(DOI or HDL), if not set URL as default.
-
-    @param record:
-    @return:
-    """
-    result = {
-        "attribute_name": "Identifier",
-        "attribute_value_mlt": [
-            {
-                "subitem_systemidt_identifier": "",
-                "subitem_systemidt_identifier_type": ""
-            }
-        ]
-    }
-    record_deposit = record.get('metadata').get('_deposit')
-    if record_deposit:
-        record_id = record_deposit.get('id')
-        record = WekoRecord.get_record_by_pid(record_id)
-        if record.pid_doi:
-            identifier = record.pid_doi.pid_value
-            identifier_type = record.pid_doi.pid_type.upper()
-        elif record.pid_cnri:
-            identifier = record.pid_cnri.pid_value
-            identifier_type = record.pid_cnri.pid_type.upper()
-        else:
-            identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
-                request.url_root, record_id)
-            identifier_type = 'URI'
-        result['attribute_value_mlt'][0][
-            'subitem_systemidt_identifier'] = identifier
-        result['attribute_value_mlt'][0][
-            'subitem_systemidt_identifier_type'] = identifier_type
-    else:
-        result = {}
-    return result
-
-
 def dumps(records, schema_type=None, **kwargs):
     """
     Dumps.

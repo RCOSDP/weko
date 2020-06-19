@@ -443,11 +443,11 @@ def combine_record_file_urls(record, object_uuid):
     item_map_ddi = get_mapping(type_mapping, "ddi_mapping")
 
     if item_map_ddi:
-        file_keys = item_map_ddi.get(
-            "stdyDscr.dataAccs.setAvail.accsPlac.@value")
+        file_keys = item_map_ddi.get(current_app.config[
+                                         "OAISERVER_FILE_PROPS_MAPPING_DDI"])
     else:
         file_keys = item_map.get(current_app.config[
-            "OAISERVER_FILE_PROPS_MAPPING"])
+                                     "OAISERVER_FILE_PROPS_MAPPING"])
 
     if not file_keys:
         return record
@@ -510,7 +510,7 @@ def get_identifier(record):
         identifier_type = record.pid_cnri.pid_type.upper()
     else:
         identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
-            request.url_root, record['_deposit']['id'])
+            request.url_root, record['_deposit']['id'].split('.')[0])
         identifier_type = 'URI'
     result['attribute_value_mlt'][0][
         'subitem_systemidt_identifier'] = identifier
