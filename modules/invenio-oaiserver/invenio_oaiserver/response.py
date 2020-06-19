@@ -362,8 +362,10 @@ def listrecords(**kwargs):
         )
         from weko_deposit.api import WekoRecord
         db_record = WekoRecord.get_record_by_id(record['id'])
-        if not record['json']['_source']['_item_metadata']['system_identifier_doi']:
-            record['json']['_source']['_item_metadata']['system_identifier_doi'] = get_identifier(db_record)
+        if not record['json']['_source']['_item_metadata'][
+            'system_identifier_doi']:
+            record['json']['_source']['_item_metadata'][
+                'system_identifier_doi'] = get_identifier(db_record)
         e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
         e_metadata.append(record_dumper(pid, record['json']))
 
