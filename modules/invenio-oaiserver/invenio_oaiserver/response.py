@@ -361,9 +361,9 @@ def listrecords(**kwargs):
             sets=record['json']['_source'].get('_oai', {}).get('sets', []),
         )
         from weko_deposit.api import WekoRecord
-        temp = WekoRecord.get_record_by_id(record['id'])
+        db_record = WekoRecord.get_record_by_id(record['id'])
         if not record['json']['_source']['_item_metadata']['system_identifier_doi']:
-            record['json']['_source']['_item_metadata']['system_identifier_doi'] = get_identifier(temp)
+            record['json']['_source']['_item_metadata']['system_identifier_doi'] = get_identifier(db_record)
         e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
         e_metadata.append(record_dumper(pid, record['json']))
 

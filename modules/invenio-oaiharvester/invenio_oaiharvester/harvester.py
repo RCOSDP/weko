@@ -384,7 +384,7 @@ def add_identifier(schema, res, identifier_list):
             item['identifier'] = it.get('#text')
             if it.get('@identifierType'):
                 item['type'] = it.get('@identifierType')
-        res.append(1)
+        res.append(item)
 
 
 def add_identifier_registration(schema, res, identifierRegistration):
