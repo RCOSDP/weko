@@ -23,7 +23,7 @@
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
 {% macro output_item_detail(record, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true) %}
   <table class="table table-bordered table-striped detail-table">
-      {% if record.item_type_info %}
+      {% if record.item_type_info and is_logged_in %}
         <tr>
           <th scope="row" colspan="6">{{ _('item type') }}</th>
           <td>{{ record.item_type_info }}</td>
