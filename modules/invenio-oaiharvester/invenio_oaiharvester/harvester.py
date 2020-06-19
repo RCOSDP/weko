@@ -760,7 +760,6 @@ def add_rights_dc(schema, res, rights, lang='', rights_resource=''):
 
 def add_identifier_dc(schema, res, self_identifier, identifier):
     """Add identifier."""
-
     self_identifier.clear()
     if identifier.startswith(OAIHARVESTER_DOI_PREFIX):
         self_identifier.append({'type': 'DOI', 'identifier': identifier})
