@@ -162,7 +162,7 @@
                   </div>
                 </div>
               {%- endif %}
-              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading"> 
+              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 {%- if show_automatic_metadata_input %}
                 <div class="row">
                   <div class="col-sm-12">
@@ -268,41 +268,48 @@
                   {%- block feedback_mail_list %}
                     <div id="react"></div>
                     <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
-                    <input id="search-button-name" type="hidden" value="{{_('From author DB')}}" />
+                    <input id="open-modal-search-button-name" type="hidden" value="{{_('From author DB')}}" />
                     <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
                     <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
                     <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
                     <input id="invalid-email-format" type="hidden" value="{{_('Invalid email format.')}}" />
+                    <input id="close-button-name" type="hidden" value="{{_('Close')}}" />
+                    <input id="search-button-name" type="hidden" value="{{_('Search')}}" />
+                    <input id="name-label" type="hidden" value="{{_('Name')}}" />
+                    <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
+                    <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
                   {%- endblock feedback_mail_list %}
                 </div>
                 <div class="row">
-                  <div class="col-sm-9">
-                    <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                      {%- if pid %}
-                      <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
-                            <span class="glyphicon glyphicon-trash"></span>&nbsp
-                            {{_('Delete')}}
-                          </button>
-                      {%- endif %}
-                      <button ng-disabled="recordsVM.invenioRecordsLoading"
-                              class="btn btn-primary"
-                              ng-click="saveDataJson('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}');">
-                            <span class="glyphicon glyphicon-save"></span>&nbsp
-                            {{_('Save')}}
-                      </button>
-                      <button ng-disabled="recordsVM.invenioRecordsLoading"
-                              class="btn btn-info"
-                              ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
-                      <span class="glyphicon glyphicon-chevron-right"></span>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="col-sm-3" style="padding-right: 0;">
-                    <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  <div class="col-sm-12">
+                    <div class="col-sm-offset-3 col-sm-6">
+                      <div class="list-inline text-center" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                        {%- if pid %}
+                        <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="true" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
+                              <span class="glyphicon glyphicon-trash"></span>&nbsp
+                              {{_('Delete')}}
+                            </button>
+                        {%- endif %}
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
-                                class="btn btn-danger" id="btn_quit">
-                          <i class="fa fa-sign-out"></i>
-                          {{_('Quit')}}</button>&nbsp
+                                class="btn btn-primary"
+                                ng-click="saveDataJson('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}');">
+                              <span class="glyphicon glyphicon-save"></span>&nbsp
+                              {{_('Save')}}
+                        </button>
+                        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                class="btn btn-info"
+                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
+                        <span class="glyphicon glyphicon-chevron-right"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-sm-3" style="padding-right: 10px;">
+                      <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                          <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                  class="btn btn-danger" id="btn_quit">
+                            <i class="fa fa-sign-out"></i>
+                            {{_('Quit')}}</button>&nbsp
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -317,13 +324,13 @@
     </div>
   </div>
   <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xlg" role="document">
       <div class="modal-content">
         <div class="modal-body">
           <app-author-search></app-author-search>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">
+          <button type="button" class="btn btn-default" id="btnModalClose">
                <span class="glyphicon glyphicon-remove"></span>&nbsp
                    {{_('Close')}}
           </button>

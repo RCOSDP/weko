@@ -1,0 +1,91 @@
+name: Continuous Testing
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: docker-compose build
+      - name: Start
+        run: docker-compose up -d
+      - name: Container status
+        run: docker-compose ps
+  unit-test:
+    name: Unit Test
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - invenio-communities
+          - invenio-deposit
+          - invenio-files-rest
+          - invenio-mail
+          - invenio-oaiharvester
+          - invenio-oaiserver
+          - invenio-oauth2server
+          - invenio-previewer
+          - invenio-records
+          - invenio-records-rest
+          - invenio-resourcesyncclient
+          - invenio-resourcesyncserver
+          - invenio-s3
+          - invenio-stats
+          - weko-accounts
+          - weko-admin
+          - weko-authors
+          - weko-bulkupdate
+          - weko-deposit
+          - weko-gridlayout
+          - weko-groups
+          - weko-handle
+          - weko-index-tree
+          - weko-indextree-journal
+          - weko-items-autofill
+          - weko-items-ui
+          - weko-itemtypes-ui
+          - weko-logging
+          - weko-plugins
+          - weko-records
+          - weko-records-ui
+          - weko-schema-ui
+          - weko-search-ui
+          - weko-sitemap
+          - weko-theme
+          - weko-user-profiles
+          - weko-workflow
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: unit-test
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install python3-setuptools libpq-dev libedit-dev libsqlite3-dev
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.5.9
+      - name: Install python dependencies
+        run: |
+          sed -i 's/\/code\///g' packages-invenio.txt
+          sed -i 's/\/code\///g' requirements-weko-modules.txt
+          python -m pip install -r packages.txt
+          python -m pip install -r packages-invenio.txt
+          python -m pip install -r requirements-weko-modules.txt
+          python -m pip install pytest==5.4.3 pytest-cov pytest-invenio mock responses coveralls PyYAML moto
+      - name: Run tests
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: |
+          python -m pytest -v modules/${{ matrix.module }} || coveralls; false
+          coveralls

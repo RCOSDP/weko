@@ -70,7 +70,7 @@ provision_web_common_ubuntu14 () {
 
 
     # Added in order to accomidate Debians Version 9 -> 10 update
-    # See: https://github.com/nodesource/distributions/issues/866 
+    # See: https://github.com/nodesource/distributions/issues/866
     $sudo printf "\nPackage: *\nPin: origin deb.nodesource.com\nPin-Priority: 600" >> /etc/apt/preferences.d/nodesource
 
     # sphinxdoc-install-web-common-ubuntu14-begin
@@ -83,6 +83,8 @@ provision_web_common_ubuntu14 () {
          libtiff-dev \
          libxml2-dev \
          libxslt-dev \
+         libzip-dev \
+         libjpeg-dev \
          nodejs \
          python-dev \
          python-pip
@@ -127,6 +129,8 @@ provision_web_common_centos7 () {
          libxml2-devel \
          libxslt-devel \
          openssl-devel \
+         libzip-devel \
+         libjpeg-turbo-devel \
          policycoreutils-python \
          python-devel \
          python-pip
@@ -228,7 +232,7 @@ setup_nginx_centos7 () {
     fi
     # sphinxdoc-install-web-nginx-centos7-end
 }
- 
+
 setup_libreoffice_ubuntu14 () {
     # sphinxdoc-install-web-libreoffice-ubuntu14-begin
     set +o errexit

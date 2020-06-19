@@ -1,0 +1,64 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2017-2018 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+{%- extends 'invenio_theme/page.html' %}
+
+{%- block javascript %}
+  {{ super() }}
+  <script type="text/javascript">
+    jQuery(document).ready(function() {
+      jQuery('.hideme').hide();
+      jQuery('#correct').on('click', function() {
+        jQuery('.hideme').hide();
+        var $btn = jQuery(this).button('loading');
+        jQuery.ajax({
+          url: '/',
+          method: 'POST',
+          beforeSend: function(request) {
+           request.setRequestHeader("Authorization", 'Bearer ' + jQuery('[name=authorized_token]').val());
+         },
+       }).success(function(response) {
+          jQuery('.alert-success').text(response);
+          jQuery('.alert-success').show();
+          $btn.button('reset');
+       })
+     });
+     jQuery('#wrong').on('click', function() {
+      jQuery('.hideme').hide();
+       var $btn = jQuery(this).button('loading');
+       jQuery.ajax({
+         dataType: 'json',
+         url: '/',
+      }).error(function(response) {
+        var data = jQuery.parseJSON(response.responseText)
+         jQuery('.alert-danger').text(data.message);
+         jQuery('.alert-danger').show();
+         $btn.button('reset');
+      })
+     })
+    })
+</script>
+{%- endblock %}
+{%- block page_body %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <a class="btn btn-success" href="javascript:void(0)" id="correct">Call API with JWT</a>
+      <a class="btn btn-danger" href="javascript:void(0)" id="wrong">Call API witouth JWT</a>
+    </div>
+    <div class="col-md-12">
+      <hr />
+      <div class="hideme alert alert-danger"></div>
+      <div class="hideme alert alert-success"></div>
+      {% if current_user.is_authenticated %}
+        {{ jwt() | safe }}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{%- endblock %}

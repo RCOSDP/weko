@@ -103,7 +103,7 @@
                   {%- if pid %}
                   <li>
                     <button ng-disabled="recordsVM.invenioRecordsLoading"
-                      ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger delete-button"
+                      ng-hide="true" class="btn btn-danger delete-button"
                       ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">
                       <span class="glyphicon glyphicon-trash"></span>
                       {{_('Delete')}}
@@ -247,7 +247,7 @@
                     {%- if pid %}
                     <li>
                       <button ng-disabled="recordsVM.invenioRecordsLoading"
-                        ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger delete-button"
+                        ng-hide="true" class="btn btn-danger delete-button"
                         ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
                         <span class="glyphicon glyphicon-trash"></span>
                         {{_('Delete')}}

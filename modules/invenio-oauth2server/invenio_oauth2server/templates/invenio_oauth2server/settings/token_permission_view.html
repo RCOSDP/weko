@@ -1,0 +1,52 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2017-2018 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- extends "invenio_oauth2server/settings/index.html" %}
+
+{%- import "invenio_oauth2server/settings/helpers.html" as helpers with context %}
+
+{% block settings_content %}
+  {{ helpers.panel_start(
+      _('Authorized application: %(client_name)s',
+      client_name=token.client.name), with_body=False,
+      btn_href2=url_for('.token_revoke', token_id=token.id),
+      btn_icon2='fa fa-times-circle', btn2='Revoke'
+  ) }}
+  <div class="panel-body">
+    <div class="row">
+      <div class="col-md-12 col-lg-9">
+        <p>{{token.client.description}}</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-8">
+        <h4>{{ _('Review permissions') }}</h4>
+        {%- for group in scopes|groupby('group') %}
+          {%- if loop.first %}<table class="table table-striped table-bordered"><tbody>{% endif %}
+          <tr>
+            <td><strong>{{group.grouper}}</strong></td>
+            <td><ul>{% for scope in group.list %}<li>{{scope.help_text}}</li>{% endfor %}</ul></td>
+          </tr>
+          {%- if loop.last %}</tbody></table>{% endif %}
+        {%- else %}
+          <p><em>No permissions granted.</em></p>
+        {%- endfor %}
+      </div>
+      <div class="col-md-4">
+        <div class="well">
+          <span class="text-muted">{{ _('Application') }}</span>
+          <h4>{{token.client.name}}</h4>
+          {%- if token.client.description %}<p>{{token.client.description}}</p>{% endif %}
+          {%- if token.client.website %}<p><a href="{{token.client.website}}">{{ _('Visit application website') }}</a></p>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {{helpers.panel_end(with_body=False)}}
+{% endblock %}
