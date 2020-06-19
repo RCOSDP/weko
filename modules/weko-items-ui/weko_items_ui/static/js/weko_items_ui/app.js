@@ -1615,7 +1615,11 @@ function toObject(arr) {
       */
       $scope.recursiveSetCollapsedForForm = function (isCollapsed, forms) {
         angular.forEach(forms, function(val, key){
-          val["collapsed"] = isCollapsed && !$scope.required_list.includes(val.key.split(".").pop());
+          if ("key" in val) {
+            val["collapsed"] = isCollapsed && !$scope.required_list.includes(val.key.split(".").pop());
+          } else {
+            val["collapsed"] = isCollapsed;
+          }
           if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
             $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
           }
@@ -2712,10 +2716,37 @@ function toObject(arr) {
         return result;
       }
 
+      $scope.checkEitherRequired = function(depositionForm) {
+        let eitherRequireds = [];
+        if ($scope.error_list) {
+          eitherRequireds = $scope.error_list['either'];
+        }
+        
+        if (!eitherRequireds) {
+          return true;
+        }
+
+        for (let i = 0; i < eitherRequireds.length; i++) {
+          let sub_item = eitherRequireds[i].split('.').pop();
+          if (sub_item in depositionForm && depositionForm[sub_item].$viewValue) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
       $scope.validateRequiredItem = function () {
         let schemaForm = $rootScope.recordsVM.invenioRecordsForm;
         let depositionForm = $scope.depositionForm;
-        let listItemErrors = []
+        let listItemErrors = [];
+        let eitherRequired = [];
+        let noEitherError = $scope.checkEitherRequired(depositionForm);
+        if (noEitherError && $scope.error_list && $scope.error_list['either']) {
+          eitherRequired = $scope.error_list['either'].map(function(x) {
+            return x.split('.').pop();
+          });
+        }
         for (let i = 0; i < schemaForm.length; i++) {
           let listSubItem = $scope.findRequiredItemInSchemaForm(schemaForm[i])
           if (listSubItem.length == 0) {
@@ -2728,7 +2759,13 @@ function toObject(arr) {
               } else {
                 depositionForm[listSubItem[j].id].$setViewValue("");
               }
-              listItemErrors.push(listSubItem[j].title);
+              if (noEitherError && eitherRequired) {
+                if (!eitherRequired.includes(listSubItem[j].id)) {
+                  listItemErrors.push(listSubItem[j].title);
+                }
+              } else {
+                listItemErrors.push(listSubItem[j].title);
+              }
             }
           }
         }

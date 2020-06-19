@@ -392,6 +392,7 @@ def display_activity(activity_id=0):
             and sessionstore.get(
                 'updated_json_schema_{}'.format(activity_id)):
             json_schema = (json_schema + "/{}").format(activity_id)
+            schema_form = (schema_form + "/{}").format(activity_id)
 
     # if 'approval' == action_endpoint:
     if item:

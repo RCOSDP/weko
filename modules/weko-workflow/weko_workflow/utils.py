@@ -182,6 +182,7 @@ def item_metadata_validation(item_id, identifier_type):
         return {
             'required': [],
             'pattern': [],
+            'either': [],
             'pmid': '',
             'doi': '',
             'url': '',
@@ -192,11 +193,17 @@ def item_metadata_validation(item_id, identifier_type):
 
     if not item_type or not resource_type and type_check:
         error_list = {'required': [], 'pattern': [], 'pmid': '',
-                      'doi': '', 'url': ''}
+                      'doi': '', 'url': '', 'either': []}
         error_list['required'].append(type_key)
         return error_list
     resource_type = resource_type.pop()
-    properties = []
+    properties = {}
+    # 必須
+    required_properties = []
+    # いずれか必須
+    either_properties = []
+    # あれば必須
+    if_present_properties = []
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
@@ -210,29 +217,45 @@ def item_metadata_validation(item_id, identifier_type):
             or (resource_type in elearning_type) \
             or (item_type.name_id in datageneral_nameid
                 or resource_type in datageneral_types):
-            properties = ['title']
+            required_properties = ['title']
+            either_properties = ['version',
+                                 'versionType',
+                                 'mimeType']
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
-            properties = ['title',
-                          'creator']
+            required_properties = ['title',
+                                   'creator']
+            either_properties = ['version',
+                                 'versionType',
+                                 'mimeType']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
                 or resource_type in dataset_type:
-            properties = ['title',
-                          'givenName']
+            required_properties = ['title',
+                                   'givenName']
+            either_properties = ['geoLocationPoint',
+                                 'geoLocationBox',
+                                 'geoLocationPlace']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if item_type.name_id in journalarticle_nameid or resource_type in \
                 journalarticle_type:
-            properties = ['title',
-                          'publisher',
-                          'sourceIdentifier',
-                          'sourceTitle']
+            required_properties = ['title',
+                                   'publisher',
+                                   'sourceIdentifier',
+                                   'sourceTitle']
         elif resource_type in report_types:
-            properties = ['title']
+            required_properties = ['title']
         elif resource_type in thesis_types:
-            properties = ['title',
-                          'creator']
+            required_properties = ['title',
+                                   'creator']
+
+    if required_properties:
+        properties['required'] = required_properties
+    if either_properties:
+        properties['either'] = either_properties
+    if if_present_properties:
+        properties['if_present'] = if_present_properties
 
     if properties:
         return validation_item_property(metadata_item,
@@ -253,7 +276,40 @@ def validation_item_property(mapping_data, identifier_type, properties):
     :return: error_list or None
     """
     error_list = {'required': [], 'pattern': [], 'pmid': '',
-                  'doi': '', 'url': ''}
+                  'doi': '', 'url': '', 'either': []}
+    empty_list = deepcopy(error_list)
+
+    if properties.get('required'):
+        error_list_required = validattion_item_property_required(
+            mapping_data, identifier_type, properties['required'])
+        if error_list_required:
+            error_list['required'] += error_list_required['required']
+            error_list['pattern'] += error_list_required['pattern']
+
+    if properties.get('either'):
+        error_list_either = validattion_item_property_either_required(
+            mapping_data, identifier_type, properties['either'])
+        if error_list_either:
+            error_list['either'] += error_list_either
+
+    if error_list == empty_list:
+        return None
+    else:
+        error_list['required'] = list(set(error_list['required']))
+        return error_list
+
+
+def validattion_item_property_required(
+        mapping_data, identifier_type, properties):
+    """
+    Validate item property is required.
+
+    :param mapping_data: Mapping Data contain record and item_map
+    :param identifier_type: Selected identifier
+    :param properties: Property's keywords
+    :return: error_list or None
+    """
+    error_list = {'required': [], 'pattern': []}
     empty_list = deepcopy(error_list)
     # check タイトル dc:title
     if 'title' in properties:
@@ -376,6 +432,101 @@ def validation_item_property(mapping_data, identifier_type, properties):
         return None
     else:
         error_list['required'] = list(set(error_list['required']))
+        return error_list
+
+
+def validattion_item_property_either_required(
+        mapping_data, identifier_type, properties):
+    """
+    Validate item property is either required.
+
+    :param mapping_data: Mapping Data contain record and item_map
+    :param identifier_type: Selected identifier
+    :param properties: Property's keywords
+    :return: error_list or None
+    """
+    error_list = []
+    # check バージョン datacite:version
+    if 'version' in properties:
+        data, key = mapping_data.get_data_by_property(
+            "version.@value")
+
+        requirements = check_required_data(data, key)
+        if not requirements:
+            return None
+        else:
+            error_list += requirements
+
+    # check 出版タイプ oaire:version
+    if 'versionType' in properties:
+        data, key = mapping_data.get_data_by_property(
+            "versionType.@value")
+
+        requirements = check_required_data(data, key)
+        if not requirements:
+            return None
+        else:
+            error_list += requirements
+
+    # check フォーマット jpcoar:mimeType
+    if 'mimeType' in properties:
+        _, key = mapping_data.get_data_by_property(
+            "file.mimeType.@value")
+        data = []
+        item_file = mapping_data.record.get(key.split('.')[0])
+        if key and item_file:
+            given_name_data = get_sub_item_value(
+                item_file.get("attribute_value_mlt"), key.split('.')[-1])
+            if given_name_data:
+                for value in given_name_data:
+                    data.append(value)
+            data.append(given_name_data)
+
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        if not requirements:
+            return None
+        else:
+            error_list += requirements
+
+    # check 位置情報（点） detacite:geoLocationPoint
+    if 'geolocationPoint' in properties:
+        data, key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPlace.@value")
+
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        if not requirements:
+            return None
+        else:
+            error_list += requirements
+
+    # check 位置情報（空間） datacite:geoLocationBox
+    if 'geoLocationBox' in properties:
+        data, key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.@value")
+
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        if not requirements:
+            return None
+        else:
+            error_list += requirements
+
+    # check 位置情報（自由記述） datacite:geoLocationPlace
+    if 'geoLocationPlace' in properties:
+        data, key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPlace.@value")
+
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        if not requirements:
+            return None
+        else:
+            error_list += requirements
+
+    error_list = list(filter(None, error_list))
+    if error_list:
         return error_list
 
 

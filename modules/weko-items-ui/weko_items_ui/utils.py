@@ -508,6 +508,61 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     return json_data
 
 
+def update_schema_form_by_activity_id(schema_form, activity_id):
+    """Update schema form by activity id.
+
+    :param schema_form: The schema form
+    :param activity_id: Activity ID
+    :return: schema form
+    """
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    if not sessionstore.redis.exists(
+        'updated_json_schema_{}'.format(activity_id)) \
+        and not sessionstore.get(
+            'updated_json_schema_{}'.format(activity_id)):
+        return None
+    session_data = sessionstore.get(
+        'updated_json_schema_{}'.format(activity_id))
+    error_list = json.loads(session_data.decode('utf-8'))
+
+    if error_list and error_list['either']:
+        condition_required = []
+        condition_not_required = []
+        for item in error_list['either']:
+            condition_required.append('!model.' + item)
+            condition_not_required.append('model.' + item)
+
+        for elem in schema_form:
+            if 'items' in elem:
+                items = elem['items']
+                schema_form_condition = []
+                for index, item in enumerate(items):
+                    if item.get('key') and item['key'] in error_list['either']:
+                        condition_item = copy.deepcopy(item)
+                        condition_item['required'] = True
+                        condition_item['condition'] = ' && '.join(list(filter(
+                            lambda x: x != '!model.' + item['key'],
+                            condition_required
+                        )))
+                        schema_form_condition.append(
+                            {'index': index, 'item': condition_item})
+
+                        item['condition'] = ' || '.join(list(filter(
+                            lambda x: x != 'model.' + item['key'],
+                            condition_not_required
+                        )))
+
+                for index, condition_item in enumerate(schema_form_condition):
+                    items.insert(
+                        condition_item['index'] + index + 1,
+                        condition_item['item'])
+
+    return schema_form
+
+
 def package_export_file(item_type_data):
     """Export TSV Files.
 
