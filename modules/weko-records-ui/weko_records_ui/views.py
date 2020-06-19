@@ -462,6 +462,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 record['system_identifier_doi'][
                     'attribute_value_mlt'][0][
                     'subitem_systemidt_identifier']
+        else:
+            record['permalink_uri'] = request.url
     else:
         record['permalink_uri'] = permalink
 
