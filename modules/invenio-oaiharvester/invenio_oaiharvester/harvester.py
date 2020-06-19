@@ -29,7 +29,6 @@ import requests
 import xmltodict
 from flask import current_app
 from lxml import etree
-
 from weko_records.models import ItemType
 
 DEFAULT_FIELD = [
@@ -671,7 +670,7 @@ def add_coverage_dc(schema, res, coverage_list):
     root_key = map_field(schema).get('Temporal')
     if not root_key:
         return
-    if not res.get(root_key,None):
+    if not res.get(root_key, None):
         res[root_key] = []
     temporal = map_field(schema['properties'][root_key]['items'])['Temporal']
     language = map_field(schema['properties'][root_key]['items'])['Language']
@@ -690,7 +689,7 @@ def add_format_dc(schema, res, file_list):
     if not isinstance(file_list, list):
         file_list = [file_list]
     root_key = map_field(schema).get('File')
-    if not res.get(root_key,None):
+    if not res.get(root_key, None):
         res[root_key] = []
     format_key = map_field(schema['properties'][root_key]['items'])['Format']
     for it in file_list:
@@ -765,8 +764,9 @@ def add_rights_dc(schema, res, rights, lang='', rights_resource=''):
     res[rights_field].append(item)
 
 
-def add_identifier_dc(schema, res,self_identifier, identifier):
+def add_identifier_dc(schema, res, self_identifier, identifier):
     """Add identifier."""
+
     current_app.logger.error(identifier)
     self_identifier.clear()
     # if len(identifier)>0:
@@ -1593,7 +1593,8 @@ RESOURCE_TYPE_URI = {
     'technical documentation':
         "http://purl.org/coar/resource_type/c_71bd",
     'workflow':
-        "http://purl.org/coar/resource_type/c_393c", 'other（その他）':
+        "http://purl.org/coar/resource_type/c_393c",
+    'other（その他）':
         "http://purl.org/coar/resource_type/c_1843",
     'other（プレプリント）':
         "",
@@ -1602,11 +1603,12 @@ RESOURCE_TYPE_URI = {
     'conference proceedings':
         "http://purl.org/coar/resource_type/c_f744",
     'conference poster':
-        "http://purl.org/coar/resource_type/c_6670", 'patent':
+        "http://purl.org/coar/resource_type/c_6670",
+    'patent':
         "http://purl.org/coar/resource_type/c_15cd",
     'lecture':
-        "http://purl.org/coar/resource_type/c_8544"
-, 'book':
+        "http://purl.org/coar/resource_type/c_8544",
+    'book':
         "http://purl.org/coar/resource_type/c_2f33",
     'book part':
         "http://purl.org/coar/resource_type/c_3248",
@@ -1619,9 +1621,10 @@ RESOURCE_TYPE_URI = {
     'departmental bulletin paper':
         "http://purl.org/coar/resource_type/c_6501",
     'editorial':
-        "http://purl.org/coar/resource_type/c_b239", 'journal article':
-        "http://purl.org/coar/resource_type/c_6501"
-, 'periodical':
+        "http://purl.org/coar/resource_type/c_b239",
+    'journal article':
+        "http://purl.org/coar/resource_type/c_6501",
+    'periodical':
         "http://purl.org/coar/resource_type/c_2659",
     'review article':
         "http://purl.org/coar/resource_type/c_dcae04bc",
@@ -1646,11 +1649,12 @@ RESOURCE_TYPE_URI = {
     'report':
         "http://purl.org/coar/resource_type/c_93fc",
     'research report':
-        "http://purl.org/coar/resource_type/c_18ws"
-, 'technical report':
+        "http://purl.org/coar/resource_type/c_18ws",
+    'technical report':
         "http://purl.org/coar/resource_type/c_18gh",
     'policy report':
-        "http://purl.org/coar/resource_type/c_186u", 'report part':
+        "http://purl.org/coar/resource_type/c_186u",
+    'report part':
         "http://purl.org/coar/resource_type/c_ba1f",
     'working paper':
         "http://purl.org/coar/resource_type/c_8042",

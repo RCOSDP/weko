@@ -310,7 +310,7 @@ def getrecord(**kwargs):
         etree_record['system_identifier_doi'] = get_identifier(record)
     if check_correct_system_props_mapping(
         pid.object_uuid,
-        current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
+            current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
         etree_record = combine_record_file_urls(etree_record, pid.object_uuid)
 
     root = record_dumper(pid, {'_source': etree_record})
@@ -421,7 +421,7 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
     if system_mapping_config:
         for key in system_mapping_config:
             if key not in item_map or key in item_map and \
-                system_mapping_config[key] not in item_map[key]:
+                    system_mapping_config[key] not in item_map[key]:
                 return False
     else:
         return False
@@ -444,10 +444,10 @@ def combine_record_file_urls(record, object_uuid):
 
     if item_map_ddi:
         file_keys = item_map_ddi.get(current_app.config[
-                                         "OAISERVER_FILE_PROPS_MAPPING_DDI"])
+            "OAISERVER_FILE_PROPS_MAPPING_DDI"])
     else:
         file_keys = item_map.get(current_app.config[
-                                     "OAISERVER_FILE_PROPS_MAPPING"])
+            "OAISERVER_FILE_PROPS_MAPPING"])
 
     if not file_keys:
         return record
