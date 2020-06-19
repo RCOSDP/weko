@@ -80,7 +80,7 @@ js_treeview = Bundle(
     'js/weko_theme/inline.bundle.js',
     'js/weko_theme/polyfills.bundle.js',
     'js/weko_theme/main.bundle.js',
-    output="gen/top_page_tree_view.js"
+    output="gen/weko_theme_tree_view.js"
 )
 
 js = Bundle(
