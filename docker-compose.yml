@@ -55,7 +55,7 @@ services:
       - type: bind
         source: .
         target: /code
-      - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info 
+      - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info
       - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
       - /code/modules/invenio-s3/invenio_s3.egg-info
       - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
@@ -165,7 +165,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    command: ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"] 
+    command: ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
     links:
@@ -212,7 +212,7 @@ services:
     ports:
       - "2641:2641/udp"
       - "2641:2641/tcp"
-      - "8000:8000/tcp"
+      - "127.0.0.1:8000:8000/tcp"
     environment:
  #     HANDLE_HOST_IP: "172.16.9.2"
       SERVER_ADMINS: "300:0.NA/YOUR_PREFIX"
