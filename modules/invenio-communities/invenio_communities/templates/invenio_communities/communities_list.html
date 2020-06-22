@@ -94,7 +94,8 @@
         <div class="col-sm-12 col-md-6">
           <div class="well">
             <h5>
-              <a href="{{url_for('.view', community_id=obj.id, view='weko')}}&root_index=true">{{ obj.title }}</a>
+              <!--<a href="{{url_for('.view', community_id=obj.id, view='weko')}}">{{ obj.title }}</a>--> 
+	      <a href="/search?page=1&size=20&search_type=2&root_index=true&q={{ obj.index.id }}&community={{obj.id}}">{{ obj.title }}</a>
             </h5>
           </div>
         </div>
