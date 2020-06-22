@@ -529,38 +529,115 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     error_list = json.loads(session_data.decode('utf-8'))
 
     if error_list and error_list['either']:
-        condition_required = []
-        condition_not_required = []
-        for item in error_list['either']:
+        either_required_list = error_list['either']
+        recursive_prepare_either_required_list(
+            schema_form, either_required_list)
+
+        recursive_update_schema_form_with_condition(
+            schema_form, either_required_list)
+
+    return schema_form
+
+
+def prepare_either_condition_requried(either_required_list):
+    """Prepare either condition required list.
+
+    :param either_required_list: List return from
+    recursive_prepare_either_required_list
+    """
+    condition_required = []
+    condition_not_required = []
+    for item in either_required_list:
+        if isinstance(item, list):
+            sub_condition_required = []
+            sub_condition_not_required = []
+            for sub_item in item:
+                sub_condition_required.append('!model.' + sub_item)
+                sub_condition_not_required.append('model.' + sub_item)
+
+            condition_required.append(
+                '(' + (' || '.join(sub_condition_required)) + ')')
+            condition_not_required.append(
+                '(' + (' && '.join(sub_condition_not_required)) + ')')
+        else:
             condition_required.append('!model.' + item)
             condition_not_required.append('model.' + item)
 
-        for elem in schema_form:
-            if 'items' in elem:
-                items = elem['items']
-                schema_form_condition = []
-                for index, item in enumerate(items):
-                    if item.get('key') and item['key'] in error_list['either']:
-                        condition_item = copy.deepcopy(item)
-                        condition_item['required'] = True
-                        condition_item['condition'] = ' && '.join(list(filter(
-                            lambda x: x != '!model.' + item['key'],
-                            condition_required
-                        )))
-                        schema_form_condition.append(
-                            {'index': index, 'item': condition_item})
+    return [
+        ' && '.join(condition_required).replace('[]', '[arrayIndex]'),
+        ' || '.join(condition_not_required).replace('[]', '[arrayIndex]')]
 
-                        item['condition'] = ' || '.join(list(filter(
-                            lambda x: x != 'model.' + item['key'],
-                            condition_not_required
-                        )))
 
-                for index, condition_item in enumerate(schema_form_condition):
-                    items.insert(
-                        condition_item['index'] + index + 1,
-                        condition_item['item'])
+def recursive_prepare_either_required_list(schema_form, either_required_list):
+    """Recursive prepare either required list.
 
-    return schema_form
+    :param schema_form: The schema form
+    :param either_required_list: Either required list
+    """
+    for elem in schema_form:
+        if elem.get('items'):
+            recursive_prepare_either_required_list(
+                elem.get('items'), either_required_list)
+        else:
+            if elem.get('key') and '[]' in elem['key']:
+                for i, ids in enumerate(either_required_list):
+                    if isinstance(ids, list):
+                        for y, _id in enumerate(ids):
+                            if elem['key'].replace('[]', '') == _id:
+                                either_required_list[i][y] = elem['key']
+                                break
+                    elif isinstance(ids, str):
+                        if elem['key'].replace('[]', '') == ids:
+                            either_required_list[i] = elem['key']
+                            break
+
+
+def recursive_update_schema_form_with_condition(
+        schema_form, either_required_list):
+    """Update chema form with condition.
+
+    :param schema_form: The schema form
+    :param either_required_list: Either required list
+    """
+    schema_form_condition = []
+    for index, elem in enumerate(schema_form):
+        if elem.get('items'):
+            recursive_update_schema_form_with_condition(
+                elem.get('items'), either_required_list)
+        else:
+            if elem.get('key'):
+                for ids in either_required_list:
+                    condition_required, condition_not_required = \
+                        prepare_either_condition_requried(list(
+                            filter(
+                                lambda x: x != ids,
+                                either_required_list
+                            )
+                        ))
+                    if isinstance(ids, list):
+                        for _id in ids:
+                            if elem['key'] == _id:
+                                condition_item = copy.deepcopy(elem)
+                                condition_item['required'] = True
+                                condition_item['condition'] = condition_required
+                                schema_form_condition.append(
+                                    {'index': index, 'item': condition_item})
+
+                                elem['condition'] = condition_not_required
+                    elif isinstance(ids, str):
+                        if elem['key'] == ids:
+                            condition_item = copy.deepcopy(elem)
+                            condition_item['required'] = True
+                            condition_item['condition'] = condition_required
+                            schema_form_condition.append(
+                                {'index': index, 'item': condition_item})
+
+                            elem['condition'] = condition_not_required
+
+    for index, condition_item in enumerate(schema_form_condition):
+        schema_form.insert(
+            condition_item['index'] + index + 1,
+            condition_item['item'])
 
 
 def package_export_file(item_type_data):

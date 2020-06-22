@@ -1615,8 +1615,14 @@ function toObject(arr) {
       */
       $scope.recursiveSetCollapsedForForm = function (isCollapsed, forms) {
         angular.forEach(forms, function(val, key){
-          if ("key" in val) {
-            val["collapsed"] = isCollapsed && !$scope.required_list.includes(val.key.split(".").pop());
+          if ("key" in val && val.key) {
+            let sub_item;
+            if (val.key instanceof Array) {
+              sub_item = val.key.pop();
+            } else if (typeof(val.key) === 'string') {
+              sub_item = val.key.split(".").pop()
+            }
+            val["collapsed"] = isCollapsed && !$scope.required_list.includes(sub_item);
           } else {
             val["collapsed"] = isCollapsed;
           }
@@ -1643,7 +1649,7 @@ function toObject(arr) {
       }
 
       /**
-      * Prepare required list.
+      * Prepare required list for expand/collapse panel.
       */
       $scope.prepareRequiredList = function () {
         let prepareRequiredList = function (json_data) {
@@ -1679,6 +1685,26 @@ function toObject(arr) {
         let json_data = $rootScope.recordsVM.invenioRecordsSchema;
         if (json_data.required) {
           $scope.required_list = $scope.required_list.concat(json_data.required);
+        }
+
+        if ($scope.error_list && $scope.error_list['either']) {
+          angular.forEach($scope.error_list['either'], function (val, key) {
+            let ids = [];
+            if (val instanceof Array) {
+              val.map(function(x) {
+                return x.split('.');
+              }).forEach(function(x) {
+                ids = ids.concat(x);
+              });
+            } else {
+              ids = val.split('.');
+            }
+            angular.forEach(ids, function (_val, _key) {
+              if (!$scope.required_list.includes(_val)) {
+                $scope.required_list.push(_val);
+              }
+            });
+          });
         }
 
         prepareRequiredList(json_data.properties);
@@ -2440,10 +2466,24 @@ function toObject(arr) {
           // Call API to validate input data base on json schema define
           let validateURL = '/api/items/validate';
           let isValid = false;
+          // Remove select value empty
+          let model = angular.copy($rootScope.recordsVM.invenioRecordsModel);
+          angular.forEach($rootScope.recordsVM.invenioRecordsModel, function (value, key) {
+            if (value instanceof Object) {
+              angular.forEach(value, function (_value, _key) {
+                if (_value == '') {
+                  delete model[key][_key];
+                }
+              });
+              if (angular.equals(model[key], {})) {
+                delete model[key];
+              }
+            }
+          });
           let request = InvenioRecordsAPI.prepareRequest(
             validateURL,
             'POST',
-            $rootScope.recordsVM.invenioRecordsModel,
+            model,
             $rootScope.recordsVM.invenioRecordsArgs,
             $rootScope.recordsVM.invenioRecordsEndpoints
           );
@@ -2727,9 +2767,25 @@ function toObject(arr) {
         }
 
         for (let i = 0; i < eitherRequireds.length; i++) {
-          let sub_item = eitherRequireds[i].split('.').pop();
-          if (sub_item in depositionForm && depositionForm[sub_item].$viewValue) {
-            return true;
+          if (eitherRequireds[i] instanceof Array) {
+            let check = true;
+            for (let y = 0; y < eitherRequireds[i].length; y++) {
+              let sub_item = eitherRequireds[i][y].split('.').pop();
+              if (sub_item in depositionForm && depositionForm[sub_item].$viewValue) {
+                check = check && true;
+              } else {
+                check = check && false;
+              }
+            }
+
+            if (check) {
+              return true;
+            }
+          } else {
+            let sub_item = eitherRequireds[i].split('.').pop();
+            if (sub_item in depositionForm && depositionForm[sub_item].$viewValue) {
+              return true;
+            }
           }
         }
 
@@ -2743,8 +2799,15 @@ function toObject(arr) {
         let eitherRequired = [];
         let noEitherError = $scope.checkEitherRequired(depositionForm);
         if (noEitherError && $scope.error_list && $scope.error_list['either']) {
-          eitherRequired = $scope.error_list['either'].map(function(x) {
-            return x.split('.').pop();
+          eitherRequired = [];
+          $scope.error_list['either'].forEach(function(item) {
+            if (item instanceof Array) {
+              item.forEach(function(i) {
+                eitherRequired.push(i.split('.').pop());
+              });
+            } else {
+              eitherRequired.push(item.split('.').pop());
+            }
           });
         }
         for (let i = 0; i < schemaForm.length; i++) {

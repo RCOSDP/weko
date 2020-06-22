@@ -333,14 +333,15 @@ def validattion_item_property_required(
         _, key = mapping_data.get_data_by_property(
             "creator.givenName.@value")
         data = []
-        creators = mapping_data.record.get(key.split('.')[0])
         if key:
-            given_name_data = get_sub_item_value(
-                creators.get("attribute_value_mlt"), key.split('.')[-1])
-            if given_name_data:
-                for value in given_name_data:
-                    data.append(value)
-            data.append(given_name_data)
+            creators = mapping_data.record.get(key.split('.')[0])
+            if creators:
+                given_name_data = get_sub_item_value(
+                    creators.get("attribute_value_mlt"), key.split('.')[-1])
+                if given_name_data:
+                    for value in given_name_data:
+                        data.append(value)
+                data.append(given_name_data)
 
         repeatable = True
         requirements = check_required_data(data, key, repeatable)
@@ -490,28 +491,66 @@ def validattion_item_property_either_required(
             error_list += requirements
 
     # check 位置情報（点） detacite:geoLocationPoint
-    if 'geolocationPoint' in properties:
-        data, key = mapping_data.get_data_by_property(
-            "geoLocation.geoLocationPlace.@value")
+    if 'geoLocationPoint' in properties:
+        latitude_data, latitude_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPoint.pointLatitude.@value")
+        longitude_data, longitude_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPoint.pointLongitude.@value")
 
         repeatable = True
-        requirements = check_required_data(data, key, repeatable)
+        requirements = []
+        latitude_requirement = check_required_data(
+            latitude_data, latitude_key, repeatable)
+        if latitude_requirement:
+            requirements += latitude_requirement
+
+        longitude_requirement = check_required_data(
+            longitude_data, longitude_key, repeatable)
+        if longitude_requirement:
+            requirements += longitude_requirement
+
         if not requirements:
             return None
         else:
-            error_list += requirements
+            error_list.append(requirements)
 
     # check 位置情報（空間） datacite:geoLocationBox
     if 'geoLocationBox' in properties:
-        data, key = mapping_data.get_data_by_property(
-            "geoLocation.geoLocationBox.@value")
+        east_data, east_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.eastBoundLongitude.@value")
+        north_data, north_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.northBoundLatitude.@value")
+        south_data, south_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.southBoundLatitude.@value")
+        west_data, west_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.westBoundLongitude.@value")
 
         repeatable = True
-        requirements = check_required_data(data, key, repeatable)
+        requirements = []
+        east_requirement = check_required_data(
+            east_data, east_key, repeatable)
+        if east_requirement:
+            requirements += east_requirement
+
+        north_requirement = check_required_data(
+            north_data, north_key, repeatable)
+        if north_requirement:
+            requirements += north_requirement
+
+        south_requirement = check_required_data(
+            south_data, south_key, repeatable)
+        if south_requirement:
+            requirements += south_requirement
+
+        west_requirement = check_required_data(
+            west_data, west_key, repeatable)
+        if west_requirement:
+            requirements += west_requirement
+
         if not requirements:
             return None
         else:
-            error_list += requirements
+            error_list.append(requirements)
 
     # check 位置情報（自由記述） datacite:geoLocationPlace
     if 'geoLocationPlace' in properties:
