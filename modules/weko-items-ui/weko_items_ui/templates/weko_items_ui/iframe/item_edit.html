@@ -268,11 +268,16 @@
                   {%- block feedback_mail_list %}
                     <div id="react"></div>
                     <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
-                    <input id="search-button-name" type="hidden" value="{{_('From author DB')}}" />
+                    <input id="open-modal-search-button-name" type="hidden" value="{{_('From author DB')}}" />
                     <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
                     <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
                     <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
                     <input id="invalid-email-format" type="hidden" value="{{_('Invalid email format.')}}" />
+                    <input id="close-button-name" type="hidden" value="{{_('Close')}}" />
+                    <input id="search-button-name" type="hidden" value="{{_('Search')}}" />
+                    <input id="name-label" type="hidden" value="{{_('Name')}}" />
+                    <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
+                    <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
                   {%- endblock feedback_mail_list %}
                 </div>
                 <div class="row">
@@ -319,13 +324,13 @@
     </div>
   </div>
   <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xlg" role="document">
       <div class="modal-content">
         <div class="modal-body">
           <app-author-search></app-author-search>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">
+          <button type="button" class="btn btn-default" id="btnModalClose">
                <span class="glyphicon glyphicon-remove"></span>&nbsp
                    {{_('Close')}}
           </button>

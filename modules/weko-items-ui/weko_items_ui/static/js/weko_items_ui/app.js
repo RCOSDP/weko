@@ -7,8 +7,8 @@ require([
     window.location.href = '/items/' + $(this).val();
   });
   $("#btnModalClose").click(function () {
-    $('#myModal').modal('toggle');
-    $("div.modal-backdrop").remove();
+    //Process close 'Add Author' or 'Import Author' modal.
+    window.appAuthorSearch.namespace.isCloseAuthorModal();
   });
   $("#meta-search-close").click(function () {
     $('#meta-search').modal('toggle');
@@ -2084,6 +2084,8 @@ function toObject(arr) {
         $("#array_flg").text(arrayFlg);
         $("#array_index").text(form.key[1]);
         // add by ryuu. end 20180410
+        //Reset data before show modal 'myModal'.
+        window.appAuthorSearch.namespace.resetSearchData();
         $('#myModal').modal('show');
       }
       // add by ryuu. start 20180410
