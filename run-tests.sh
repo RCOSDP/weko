@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/bash
 # -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
@@ -19,8 +19,12 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-pydocstyle weko tests docs && \
-isort -rc -c -df && \
-check-manifest --ignore ".travis-*" && \
-sphinx-build -qnNW docs docs/_build/html && \
-python setup.py test
+trap "exit" INT
+
+for module_path in modules/*/; do
+  if [[ ${module_path} =~ ^modules/(invenio-|weko-).+$ ]] && [[ -d ${module_path}tests ]]; then
+    echo "### Running tests for ${module_path%?} ###"
+    pytest ${module_path}
+    echo
+  fi
+done

@@ -1,0 +1,32 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2018 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+
+{%- extends "invenio_oauth2server/settings/index.html" %}
+
+{%- import "invenio_oauth2server/settings/helpers.html" as helpers with context %}
+{%- from "invenio_oauth2server/settings/_macros.html" import render_field with context %}
+
+{% block settings_content %}
+{{ helpers.panel_start(
+    _('New personal access token'),
+) }}
+<form role="form" method="POST">
+{%- for field in form %}
+{{ render_field(field) }}
+{%- endfor %}
+<div class="form-group">
+    <div class="">
+      <a href="{{url_for('.index')}}" class="btn btn-default"><i class="fa fa-times"></i> {{ _('Cancel') }}</a>
+      <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Create') }}</button>
+    </div>
+  </div>
+</form>
+{{helpers.panel_end()}}
+{% endblock %}
