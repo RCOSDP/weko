@@ -28,7 +28,7 @@ from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from weko_records.api import ItemTypes
 
-from .api import Action, Flow, WorkFlow
+from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 
 
@@ -103,9 +103,28 @@ class FlowSettingView(BaseView):
     @expose('/<string:flow_id>', methods=['DELETE'])
     def del_flow(self, flow_id='0'):
         """Delete Flow info."""
-        workflow = Flow()
-        workflow.del_flow(flow_id)
-        return jsonify(code=0, msg='',
+        if '0' == flow_id:
+            return jsonify(code=500, msg='No data to delete.',
+                       data={'redirect': url_for('flowsetting.index')})
+
+        code = 0
+        msg = ''
+
+        flow = Flow()
+        flow_detail = flow.get_flow_detail(flow_id)
+        if flow_detail:
+            workflow = WorkFlow()
+            workflows = workflow.get_workflow_by_flow_id(flow_detail.id)
+            if workflows and len(workflows) > 0:
+                code = 500
+                msg = 'Cannot be deleted because flow is used.'
+            else:
+                """Delete flow"""
+                result = flow.del_flow(flow_id)
+                code = result.get('code')
+                msg = result.get('msg')
+
+        return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('flowsetting.index')})
 
     @expose('/action', methods=['GET'])
@@ -219,10 +238,34 @@ class WorkFlowSettingView(BaseView):
         :return:
         """
         workflow = WorkFlow()
-        if '0' != workflow_id:
-            """Delete new workflow"""
-            workflow.del_workflow(workflow_id)
-        return jsonify(code=0, msg='',
+        if '0' == workflow_id:
+            return jsonify(code=500, msg='No data to delete.',
+                       data={'redirect': url_for('workflowsetting.index')})
+
+        code = 0
+        msg = ''
+        delete_flag = True
+
+        workflow_detail = workflow.get_workflow_by_flows_id(workflow_id)
+        if workflow_detail:
+            activity = WorkActivity()
+            activitys = activity.get_activity_by_workflow_id(workflow_detail.id)
+            if activitys and len(activitys) > 0:
+                for i in activitys:
+                    if i.activity_status != 'F':
+                        delete_flag = False
+                        break
+
+            if delete_flag:
+                """Delete new workflow"""
+                result = workflow.del_workflow(workflow_id)
+                code = result.get('code')
+                msg = result.get('msg')
+            else:
+                code = 500
+                msg = 'Cannot be deleted because workflow is used.'
+
+        return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('workflowsetting.index')})
 
 

@@ -494,6 +494,9 @@ class FlowDefine(db.Model, TimestampMixin):
     flow_actions = db.relationship('FlowAction', backref=db.backref('flow'))
     """flow action relationship."""
 
+    is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
+    """flow define delete flag."""
+
 
 class FlowAction(db.Model, TimestampMixin):
     """Action list belong to Flow."""
@@ -628,6 +631,9 @@ class WorkFlow(db.Model, TimestampMixin):
         FlowDefine,
         backref=db.backref('workflow', lazy='dynamic')
     )
+
+    is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
+    """workflow delete flag."""
 
 
 class Activity(db.Model, TimestampMixin):
