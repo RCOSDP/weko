@@ -1744,25 +1744,42 @@ function toObject(arr) {
         //Set required and collapsed for all root and sub item.
         $scope.setCollapsedAndRequiredForForm();
 
-        // Delay 1s after page render
-        setTimeout(function () {
+        // Delay 0.5s after page render
+        $scope.changePositionFileInterval = setInterval(function () {
           // Change position of File and Billing File
           $scope.changePositionFileName();
-        }, 1000);
+        }, 500);
       });
 
       $scope.changePositionFileName = function () {
         let records = $rootScope.recordsVM.invenioRecordsForm;
         let depositionForm = $('invenio-records-form').find('form[name="depositionForm"]');
         $scope.searchFilemetaKey();
+        let fileFormElements = [];
+        let isClearInterval = false;
         $scope.filemeta_keys.forEach(function (filemeta_key) {
-          records.forEach(function(item,i){
-            if(item.key == filemeta_key){
-              // Move to top
-              depositionForm.find('bootstrap-decorator[form="schemaForm.form['+ i + ']"]').prependTo(depositionForm);
+          records.forEach(function (item, i) {
+            if (item.key == filemeta_key) {
+              let fileElement = depositionForm
+                .find('bootstrap-decorator[form="schemaForm.form[' + i + ']"]');
+              if (fileElement.length) {
+                fileFormElements.push(fileElement);
+              }
             }
           });
         });
+        if ($scope.filemeta_keys.length === 0) {
+          isClearInterval = true;
+        } else if (fileFormElements.length) {
+          fileFormElements.forEach(function (element) {
+            // Move to top
+            element.prependTo(depositionForm);
+          });
+          isClearInterval = true;
+        }
+        if (isClearInterval) {
+          clearInterval($scope.changePositionFileInterval);
+        }
       }
 
       $scope.addFileFormAndFill = function () {

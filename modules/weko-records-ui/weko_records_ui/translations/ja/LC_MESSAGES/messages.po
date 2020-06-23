@@ -1214,7 +1214,7 @@ msgid "Topic Vocab URI"
 msgstr "統制語彙参照URI"
 
 msgid "Date Of Collection"
-msgstr "調査開始"
+msgstr "調査日"
 
 msgid "Event"
 msgstr "終了"
@@ -1314,3 +1314,6 @@ msgstr "関連研究識別子タイプ"
 
 msgid "Grant No"
 msgstr "研究課題番号"
+
+msgid "Summary DDI"
+msgstr "調査概要"

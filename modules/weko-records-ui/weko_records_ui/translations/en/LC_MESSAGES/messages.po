@@ -1327,3 +1327,6 @@ msgstr ""
 
 msgid "Grant No"
 msgstr ""
+
+msgid "Summary DDI"
+msgstr "Summary"
