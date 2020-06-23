@@ -493,18 +493,9 @@ def update_json_schema_by_activity_id(json_data, activity_id):
             if node:
                 update_json_schema_with_required_items(node, json_data)
         for item in error_list['pattern']:
-            sub_item = item.split('.')
-            if len(sub_item) == 2:
-                creators = json_data['properties'][sub_item[0]].get('items')
-                if not creators:
-                    break
-                for creator in creators.get('properties'):
-                    if creators['properties'][creator].get('items'):
-                        givename = creators['properties'][creator]['items']
-                        if givename['properties'].get(sub_item[1]):
-                            if not givename.get('required'):
-                                givename['required'] = []
-                            givename['required'].append(sub_item[1])
+            node = parse_node_str_to_json_schema(item)
+            if node:
+                update_json_schema_with_required_items(node, json_data)
     return json_data
 
 

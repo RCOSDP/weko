@@ -202,8 +202,6 @@ def item_metadata_validation(item_id, identifier_type):
     required_properties = []
     # いずれか必須
     either_properties = []
-    # あれば必須
-    if_present_properties = []
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
@@ -217,22 +215,19 @@ def item_metadata_validation(item_id, identifier_type):
             or (resource_type in elearning_type) \
             or (item_type.name_id in datageneral_nameid
                 or resource_type in datageneral_types):
-            required_properties = ['title']
-            either_properties = ['version',
-                                 'versionType',
-                                 'mimeType']
+            required_properties = ['title',
+                                   'fileURI']
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
             required_properties = ['title',
-                                   'creator']
-            either_properties = ['version',
-                                 'versionType',
-                                 'mimeType']
+                                   'creator',
+                                   'fileURI']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
                 or resource_type in dataset_type:
             required_properties = ['title',
-                                   'givenName']
+                                   'givenName',
+                                   'fileURI']
             either_properties = ['geoLocationPoint',
                                  'geoLocationBox',
                                  'geoLocationPlace']
@@ -243,19 +238,20 @@ def item_metadata_validation(item_id, identifier_type):
             required_properties = ['title',
                                    'publisher',
                                    'sourceIdentifier',
-                                   'sourceTitle']
+                                   'sourceTitle',
+                                   'fileURI']
         elif resource_type in report_types:
-            required_properties = ['title']
+            required_properties = ['title',
+                                   'fileURI']
         elif resource_type in thesis_types:
             required_properties = ['title',
-                                   'creator']
+                                   'creator',
+                                   'fileURI']
 
     if required_properties:
         properties['required'] = required_properties
     if either_properties:
         properties['either'] = either_properties
-    if if_present_properties:
-        properties['if_present'] = if_present_properties
 
     if properties:
         return validation_item_property(metadata_item,
@@ -311,6 +307,26 @@ def validattion_item_property_required(
     """
     error_list = {'required': [], 'pattern': []}
     empty_list = deepcopy(error_list)
+    # check jpcoar:URI
+    if 'fileURI' in properties:
+        _, key = mapping_data.get_data_by_property(
+            "file.mimeType.@value")
+        data = []
+        if key:
+            key = key.split('.')[0]
+            item_file = mapping_data.record.get(key)
+            if item_file:
+                given_name_data = get_sub_item_value(
+                    item_file.get("attribute_value_mlt"), 'filename')
+                if given_name_data:
+                    for value in given_name_data:
+                        data.append(value)
+                data.append(given_name_data)
+
+        repeatable = True
+        requirements = check_required_data(data, key + '.filename', repeatable)
+        if requirements:
+            error_list['required'] += requirements
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property(
@@ -447,49 +463,6 @@ def validattion_item_property_either_required(
     :return: error_list or None
     """
     error_list = []
-    # check バージョン datacite:version
-    if 'version' in properties:
-        data, key = mapping_data.get_data_by_property(
-            "version.@value")
-
-        requirements = check_required_data(data, key)
-        if not requirements:
-            return None
-        else:
-            error_list += requirements
-
-    # check 出版タイプ oaire:version
-    if 'versionType' in properties:
-        data, key = mapping_data.get_data_by_property(
-            "versionType.@value")
-
-        requirements = check_required_data(data, key)
-        if not requirements:
-            return None
-        else:
-            error_list += requirements
-
-    # check フォーマット jpcoar:mimeType
-    if 'mimeType' in properties:
-        _, key = mapping_data.get_data_by_property(
-            "file.mimeType.@value")
-        data = []
-        item_file = mapping_data.record.get(key.split('.')[0])
-        if key and item_file:
-            given_name_data = get_sub_item_value(
-                item_file.get("attribute_value_mlt"), key.split('.')[-1])
-            if given_name_data:
-                for value in given_name_data:
-                    data.append(value)
-            data.append(given_name_data)
-
-        repeatable = True
-        requirements = check_required_data(data, key, repeatable)
-        if not requirements:
-            return None
-        else:
-            error_list += requirements
-
     # check 位置情報（点） detacite:geoLocationPoint
     if 'geoLocationPoint' in properties:
         latitude_data, latitude_key = mapping_data.get_data_by_property(
