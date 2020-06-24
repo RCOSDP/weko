@@ -99,7 +99,7 @@ class WekoFeedEntry(FeedEntry):
         # element.
         if not self.__atom_content:
             links = self.__atom_link or []
-            if not [l for l in links if l.get('rel') == 'alternate']:
+            if not [link for link in links if link.get('rel') == 'alternate']:
                 raise ValueError('Entry must contain an alternate link or '
                                  + 'a content element.')
 
@@ -154,18 +154,18 @@ class WekoFeedEntry(FeedEntry):
             if lang:
                 content.set('{%s}lang' % XMLELEMENTS_NS, lang)
 
-        for l in self.__atom_link or []:
-            link = etree.SubElement(entry, 'link', href=l['href'])
-            if l.get('rel'):
-                link.attrib['rel'] = l['rel']
-            if l.get('type'):
-                link.attrib['type'] = l['type']
-            if l.get('hreflang'):
-                link.attrib['hreflang'] = l['hreflang']
-            if l.get('title'):
-                link.attrib['title'] = l['title']
-            if l.get('length'):
-                link.attrib['length'] = l['length']
+        for link in self.__atom_link or []:
+            link = etree.SubElement(entry, 'link', href=link['href'])
+            if link.get('rel'):
+                link.attrib['rel'] = link['rel']
+            if link.get('type'):
+                link.attrib['type'] = link['type']
+            if link.get('hreflang'):
+                link.attrib['hreflang'] = link['hreflang']
+            if link.get('title'):
+                link.attrib['title'] = link['title']
+            if link.get('length'):
+                link.attrib['length'] = link['length']
 
         if self.__atom_summary:
             summary = etree.SubElement(entry, 'summary')
@@ -529,13 +529,13 @@ class WekoFeedEntry(FeedEntry):
                 {'rel': ['alternate', 'enclosure', 'related', 'self', 'via']},
                 {'rel': 'alternate'})
             # RSS only needs one URL. We use the first link for RSS:
-            for l in self.__atom_link:
-                if l.get('rel') == 'alternate':
-                    self.__rss_link = l['href']
-                elif l.get('rel') == 'enclosure':
-                    self.__rss_enclosure = {'url': l['href']}
-                    self.__rss_enclosure['type'] = l.get('type')
-                    self.__rss_enclosure['length'] = l.get('length') or '0'
+            for at_link in self.__atom_link:
+                if at_link.get('rel') == 'alternate':
+                    self.__rss_link = at_link['href']
+                elif at_link.get('rel') == 'enclosure':
+                    self.__rss_enclosure = {'url': at_link['href']}
+                    self.__rss_enclosure['type'] = at_link.get('type')
+                    self.__rss_enclosure['length'] = at_link.get('length') or '0'
         # return the set with more information (atom)
         return self.__atom_link
 
