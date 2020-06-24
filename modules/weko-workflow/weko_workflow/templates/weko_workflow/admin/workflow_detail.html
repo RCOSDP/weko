@@ -144,8 +144,9 @@
           if(0 != data.code) {
             $("#inputModal").html(data.msg);
             $("#allModal").modal("show");
+          } else {
+            document.location.href=data.data.redirect;
           }
-          document.location.href=data.data.redirect;
         },
         error: function(jqXHE, status) {
           var modalcontent =  "Delete Failed";

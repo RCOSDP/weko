@@ -155,11 +155,11 @@ class Flow(object):
                     flow.is_deleted=True
                     db.session.merge(flow)
             db.session.commit()
-            return {code=0, msg=str(ex)}
+            return {'code': 0, 'msg': ''}
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
-            retrun {code=500, msg=str(ex)}
+            return {'code': 500, 'msg': str(ex)}
 
     def upt_flow_action(self, flow_id, actions):
         """Update FlowAction Info."""
@@ -324,7 +324,7 @@ class WorkFlow(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = _WorkFlow.query.filter_ty(
+            query = _WorkFlow.query.filter_by(
                 is_deleted=False).order_by(asc(_WorkFlow.flows_id))
             return query.all()
 
@@ -354,7 +354,7 @@ class WorkFlow(object):
         """"Get workflow detail info by flows id.
 
         :param flows_id:
-        :retrun:
+        :return:
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
@@ -365,7 +365,7 @@ class WorkFlow(object):
         """"Get workflow detail info by flow id.
 
         :param flow_id:
-        :retrun:
+        :return:
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
@@ -386,11 +386,11 @@ class WorkFlow(object):
                     workflow.is_deleted=True
                     db.session.merge(workflow)
             db.session.commit()
-            return {code=0, msg=''}
+            return {'code': 0, 'msg': ''}
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
-            retrun {code=500, msg=str(ex)}
+            return {'code': 500, 'msg': str(ex)}
 
     def find_workflow_by_name(self, workflow_name):
         """Find workflow by name.
