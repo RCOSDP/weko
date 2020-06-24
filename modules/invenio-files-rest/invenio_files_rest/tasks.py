@@ -280,17 +280,17 @@ def check_send_alert_mail():
     if settings:
         now = datetime.utcnow()
         locations = Location.all()
-        for l in locations:
-            if l.quota_size and l.quota_size > 0 \
-                    and l.size / l.quota_size * 100 >= settings.threshold_rate:
+        for location in locations:
+            if location.quota_size and location.quota_size > 0 \
+                    and location.size / location.quota_size * 100 >= settings.threshold_rate:
                 if (settings.cycle == 'daily') or \
                         (settings.cycle == 'weekly'
                          and settings.day == now.weekday()) \
                         or (settings.cycle == 'monthly'
                             and settings.day == now.day):
-                    send_alert_mail(settings.threshold_rate, l.name,
-                                    l.size / l.quota_size,
-                                    l.size, l.quota_size)
+                    send_alert_mail(settings.threshold_rate, location.name,
+                                    location.size / location.quota_size,
+                                    location.size, location.quota_size)
 
 
 @shared_task(ignore_result=True)
