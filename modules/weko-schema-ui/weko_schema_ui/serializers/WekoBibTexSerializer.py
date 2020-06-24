@@ -520,7 +520,6 @@ class WekoBibTexSerializer():
         @param bibtex_type:
         @return:
         """
-
         def validate_by_att(attribute_name, expected_values):
             valid_date = False
             for element in elements:
@@ -615,7 +614,6 @@ class WekoBibTexSerializer():
         @param bibtex_type:
         @return:
         """
-
         def process_by_att(att, expected_val, existed_lst):
             date_type = element.get(att)
             if date_type and date_type.lower() == expected_val and \
