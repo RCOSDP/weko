@@ -1121,3 +1121,178 @@ msgstr "コンテンツ本体"
 
 msgid "Billing File"
 msgstr "課金ファイル"
+
+msgid "ID Agency"
+msgstr "調査番号付与機関"
+
+msgid "Series"
+msgstr "シリーズ"
+
+
+msgid "Version Date"
+msgstr "データファイルのバージョン更新日"
+
+msgid "DateType"
+msgstr "(JPCOAR対応用)日付けタイプ"
+
+msgid "Bibliographic Citation"
+msgstr "引用形式"
+
+msgid "Topic"
+msgstr "トピック"
+
+msgid "Topic"
+msgstr " 統制語彙"
+
+msgid "topic vocabURI"
+msgstr "統制語彙参照URI"
+
+msgid "subjectScheme"
+msgstr "統制語彙参照URI"
+
+msgid "Topic J"
+msgstr "トピック（日本語統制語彙）"
+
+msgid "Topic E"
+msgstr "トピック（英語統制語彙）"
+
+msgid "Time Period"
+msgstr "時間的範囲"
+
+msgid "Time Period Event"
+msgstr "調査時点（開始/終了）"
+
+msgid "Date Of Collection Event"
+msgstr "調査開始／終了"
+
+msgid "Geographic Coverage"
+msgstr "調査地域"
+
+msgid "Unit of Analysis"
+msgstr "調査地域"
+
+msgid "Unit of Analysis J"
+msgstr "観察単位（日本語統制語彙）"
+
+msgid "Unit of Analysis E"
+msgstr "観察単位（日本語統制語彙）"
+
+msgid "Sampling Procedure E"
+msgstr "抽出方法（英語統制語彙）"
+
+msgid "Sampling Procedure J"
+msgstr "抽出方法（英語統制語彙）"
+
+msgid "Collection Method"
+msgstr "抽出方法（英語統制語彙）"
+
+msgid "Collection Method J"
+msgstr "調査方法（日本語統制語彙）"
+
+msgid "Collection Method E"
+msgstr "調査方法（英語統制語彙）"
+
+msgid "Sampling Rate"
+msgstr "回収率"
+
+msgid "Access"
+msgstr "アクセス制限（英語統制語彙）"
+
+msgid "Access"
+msgstr "アクセス制限（英語統制語彙）"
+
+msgid "Rdf:Resource"
+msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Access E"
+msgstr "アクセス制限（英語統制語彙）"
+
+msgid "Access J"
+msgstr "アクセス制限（英語統制語彙）"
+
+msgid "Study ID"
+msgstr "調査番号"
+
+msgid "Copyright"
+msgstr "ライセンス"
+
+msgid "Topic Vocab"
+msgstr "統制語彙"
+
+msgid "Topic Vocab URI"
+msgstr "統制語彙参照URI"
+
+msgid "Date Of Collection"
+msgstr "調査開始"
+
+msgid "Event"
+msgstr "終了"
+
+msgid "Universe"
+msgstr "母集団"
+
+msgid "Data Type J"
+msgstr "観察単位（英語統制語彙）"
+
+msgid "Data Type E"
+msgstr "観察単位（英語統制語彙）"
+
+msgid "Sampling Procedure"
+msgstr "抽出方法"
+
+msgid "Identifier Registration Type"
+msgstr "(DOI登録用)登録機関"
+
+msgid "Identifier Registration"
+msgstr "識別子の登録"
+
+msgid "Related Study"
+msgstr "関連研究"
+
+msgid "Related Study DOI"
+msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Related Publications"
+msgstr "関連文献"
+
+msgid "Related Publications DOI"
+msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Related Study"
+msgstr "関連研究"
+
+msgid "Related Study DOI"
+msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Related Publications"
+msgstr "関連文献"
+
+msgid "Related Publications DOI"
+msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Fund Agency"
+msgstr "研究費拠出機関名"
+
+msgid "Fund Agency ID"
+msgstr "研究費拠出機関 ID"
+
+msgid "Funder Identifier Type"
+msgstr "(JPCOAR対応用)ID付与機関"
+
+msgid "Grant No"
+msgstr "研究課題番号"
+
+msgid "Award Title"
+msgstr "(JPCOAR対応用)研究課題タイトル"
+
+msgid "Distributor Abbreviation"
+msgstr "配布機関略称"
+
+msgid "Distributor Affiliation"
+msgstr "配布者の所属"
+
+msgid "Distributor URI"
+msgstr "配布機関URI"
+
+msgid "Contributor IdentifierType"
+msgstr "(JPCOAR対応用)寄与者属性"

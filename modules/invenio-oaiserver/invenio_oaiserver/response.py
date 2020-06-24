@@ -276,6 +276,7 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
+
     def get_error_code_msg():
         """Get error by type."""
         code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
@@ -346,24 +347,14 @@ def getrecord(**kwargs):
                             etree.QName(NS_OAIPMH, 'metadata'))
 
     etree_record = copy.deepcopy(record)
+    if not etree_record.get('system_identifier_doi', None):
+        etree_record['system_identifier_doi'] = get_identifier(record)
     if check_correct_system_props_mapping(
-            pid.object_uuid,
+        pid.object_uuid,
             current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
         etree_record = combine_record_file_urls(etree_record, pid.object_uuid)
 
     root = record_dumper(pid, {'_source': etree_record})
-
-    if check_correct_system_props_mapping(
-            pid.object_uuid,
-            current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING')):
-        if record.pid_doi:
-            root = create_identifier_index(root,
-                                           pid_type=record.pid_doi.pid_type,
-                                           pid_value=record.pid_doi.pid_value)
-        if record.pid_cnri:
-            root = create_identifier_index(root,
-                                           pid_type=record.pid_cnri.pid_type,
-                                           pid_value=record.pid_cnri.pid_value)
 
     e_metadata.append(root)
     return e_tree
@@ -410,6 +401,12 @@ def listrecords(**kwargs):
             datestamp=record['updated'],
             sets=record['json']['_source'].get('_oai', {}).get('sets', []),
         )
+        from weko_deposit.api import WekoRecord
+        db_record = WekoRecord.get_record(record['id'])
+        if not record['json']['_source']['_item_metadata'].get\
+                ('system_identifier_doi'):
+            record['json']['_source']['_item_metadata'][
+                'system_identifier_doi'] = get_identifier(db_record)
         e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
         e_metadata.append(record_dumper(pid, record['json']))
 
@@ -436,7 +433,7 @@ def create_identifier_index(root, **kwargs):
                                   etree.QName(NS_JPCOAR, 'identifier'),
                                   attrib={
                                       'identifierType':
-                                      kwargs['pid_type'].upper()})
+                                          kwargs['pid_type'].upper()})
         e_identifier.text = kwargs['pid_value']
         e_identifier_registration = root.find(
             'jpcoar:identifierRegistration',
@@ -486,9 +483,14 @@ def combine_record_file_urls(record, object_uuid):
     item_type_id = item_type.item_type_id
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
+    item_map_ddi = get_mapping(type_mapping, "ddi_mapping")
 
-    file_keys = item_map.get(current_app.config[
-        "OAISERVER_FILE_PROPS_MAPPING"])
+    if item_map_ddi:
+        file_keys = item_map_ddi.get(current_app.config[
+            "OAISERVER_FILE_PROPS_MAPPING_DDI"])
+    else:
+        file_keys = item_map.get(current_app.config[
+            "OAISERVER_FILE_PROPS_MAPPING"])
 
     if not file_keys:
         return record
@@ -526,3 +528,35 @@ def create_files_url(root_url, record_id, filename):
         root_url,
         record_id,
         filename)
+
+
+def get_identifier(record):
+    """Get Identifier of record(DOI or HDL), if not set URL as default.
+
+    @param record:
+    @return:
+    """
+    result = {
+        "attribute_name": "Identifier",
+        "attribute_value_mlt": [
+            {
+                "subitem_systemidt_identifier": "",
+                "subitem_systemidt_identifier_type": ""
+            }
+        ]
+    }
+    if record.pid_doi:
+        identifier = record.pid_doi.pid_value
+        identifier_type = record.pid_doi.pid_type.upper()
+    elif record.pid_cnri:
+        identifier = record.pid_cnri.pid_value
+        identifier_type = record.pid_cnri.pid_type.upper()
+    else:
+        identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
+            request.url_root, record['_deposit']['id'].split('.')[0])
+        identifier_type = 'URI'
+    result['attribute_value_mlt'][0][
+        'subitem_systemidt_identifier'] = identifier
+    result['attribute_value_mlt'][0][
+        'subitem_systemidt_identifier_type'] = identifier_type
+    return result
