@@ -252,7 +252,7 @@ class WorkFlowSettingView(BaseView):
             activitys = activity.get_activity_by_workflow_id(workflow_detail.id)
             if activitys and len(activitys) > 0:
                 for i in activitys:
-                    if i.activity_status != 'F':
+                    if i.activity_status not in ['F', 'C']:
                         delete_flag = False
                         break
 

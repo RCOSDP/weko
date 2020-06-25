@@ -369,7 +369,7 @@ class WorkFlow(object):
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
-                flow_id=flow_id)
+                flow_id=flow_id, is_deleted=False)
             return query.all()
 
     def del_workflow(self, workflow_id):
