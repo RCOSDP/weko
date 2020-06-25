@@ -530,7 +530,7 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     return schema_form
 
 
-def prepare_either_condition_requried(either_required_list):
+def prepare_either_condition_required(either_required_list):
     """Prepare either condition required list.
 
     :param either_required_list: List return from
@@ -599,7 +599,7 @@ def recursive_update_schema_form_with_condition(
             if elem.get('key'):
                 for ids in either_required_list:
                     condition_required, condition_not_required = \
-                        prepare_either_condition_requried(list(
+                        prepare_either_condition_required(list(
                             filter(
                                 lambda x: x != ids,
                                 either_required_list

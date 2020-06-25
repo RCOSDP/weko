@@ -254,20 +254,17 @@ def item_metadata_validation(item_id, identifier_type):
         properties['either'] = either_properties
 
     if properties:
-        return validation_item_property(metadata_item,
-                                        identifier_type,
-                                        properties)
+        return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
 
 
-def validation_item_property(mapping_data, identifier_type, properties):
+def validation_item_property(mapping_data, properties):
     """
     Validate item property.
 
     :param mapping_data: Mapping Data contain record and item_map
-    :param identifier_type: Selected identifier
     :param properties: Property's keywords
     :return: error_list or None
     """
@@ -277,31 +274,29 @@ def validation_item_property(mapping_data, identifier_type, properties):
 
     if properties.get('required'):
         error_list_required = validattion_item_property_required(
-            mapping_data, identifier_type, properties['required'])
+            mapping_data, properties['required'])
         if error_list_required:
-            error_list['required'] += error_list_required['required']
-            error_list['pattern'] += error_list_required['pattern']
+            error_list['required'] = error_list_required['required']
+            error_list['pattern'] = error_list_required['pattern']
 
     if properties.get('either'):
         error_list_either = validattion_item_property_either_required(
-            mapping_data, identifier_type, properties['either'])
+            mapping_data, properties['either'])
         if error_list_either:
-            error_list['either'] += error_list_either
+            error_list['either'] = error_list_either
 
     if error_list == empty_list:
         return None
     else:
-        error_list['required'] = list(set(error_list['required']))
         return error_list
 
 
 def validattion_item_property_required(
-        mapping_data, identifier_type, properties):
+        mapping_data, properties):
     """
     Validate item property is required.
 
     :param mapping_data: Mapping Data contain record and item_map
-    :param identifier_type: Selected identifier
     :param properties: Property's keywords
     :return: error_list or None
     """
@@ -316,12 +311,12 @@ def validattion_item_property_required(
             key = key.split('.')[0]
             item_file = mapping_data.record.get(key)
             if item_file:
-                given_name_data = get_sub_item_value(
+                file_name_data = get_sub_item_value(
                     item_file.get("attribute_value_mlt"), 'filename')
-                if given_name_data:
-                    for value in given_name_data:
+                if file_name_data:
+                    for value in file_name_data:
                         data.append(value)
-                data.append(given_name_data)
+                data.append(file_name_data)
 
         repeatable = True
         requirements = check_required_data(data, key + '.filename', repeatable)
@@ -449,16 +444,16 @@ def validattion_item_property_required(
         return None
     else:
         error_list['required'] = list(set(error_list['required']))
+        error_list['pattern'] = list(set(error_list['pattern']))
         return error_list
 
 
 def validattion_item_property_either_required(
-        mapping_data, identifier_type, properties):
+        mapping_data, properties):
     """
     Validate item property is either required.
 
     :param mapping_data: Mapping Data contain record and item_map
-    :param identifier_type: Selected identifier
     :param properties: Property's keywords
     :return: error_list or None
     """
