@@ -105,7 +105,7 @@ class FlowSettingView(BaseView):
         """Delete Flow info."""
         if '0' == flow_id:
             return jsonify(code=500, msg='No data to delete.',
-                       data={'redirect': url_for('flowsetting.index')})
+                           data={'redirect': url_for('flowsetting.index')})
 
         code = 0
         msg = ''
@@ -240,7 +240,7 @@ class WorkFlowSettingView(BaseView):
         workflow = WorkFlow()
         if '0' == workflow_id:
             return jsonify(code=500, msg='No data to delete.',
-                       data={'redirect': url_for('workflowsetting.index')})
+                           data={'redirect': url_for('workflowsetting.index')})
 
         code = 0
         msg = ''

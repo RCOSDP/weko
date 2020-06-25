@@ -152,7 +152,7 @@ class Flow(object):
                 flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if flow:
-                    flow.is_deleted=True
+                    flow.is_deleted = True
                     db.session.merge(flow)
             db.session.commit()
             return {'code': 0, 'msg': ''}
@@ -351,7 +351,7 @@ class WorkFlow(object):
             return query.one_or_none()
 
     def get_workflow_by_flows_id(self, flows_id):
-        """"Get workflow detail info by flows id.
+        """Get workflow detail info by flows id.
 
         :param flows_id:
         :return:
@@ -362,7 +362,7 @@ class WorkFlow(object):
             return query.one_or_none()
 
     def get_workflow_by_flow_id(self, flow_id):
-        """"Get workflow detail info by flow id.
+        """Get workflow detail info by flow id.
 
         :param flow_id:
         :return:
@@ -383,7 +383,7 @@ class WorkFlow(object):
                 workflow = _WorkFlow.query.filter_by(
                     flows_id=workflow_id).one_or_none()
                 if workflow:
-                    workflow.is_deleted=True
+                    workflow.is_deleted = True
                     db.session.merge(workflow)
             db.session.commit()
             return {'code': 0, 'msg': ''}
