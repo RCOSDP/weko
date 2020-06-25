@@ -45,3 +45,9 @@ OAIHARVESTER_DEFAULT_AUTO_DISTRIBUTION = '0'
 
 OAIHARVESTER_NUMBER_OF_HISTORIES = 20
 """Default display number of histories."""
+
+OAIHARVESTER_DOI_PREFIX = 'https://doi.org'
+"""Prefix of record that registered DOI"""
+
+OAIHARVESTER_HDL_PREFIX = 'http://hdl.handle.net'
+"""Prefix of record that registered HDL"""
