@@ -15,17 +15,15 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'check-manifest>=0.25',
-    'coverage>=4.0',
-    'invenio-db[all]>=1.0.2',
-    'isort>=4.3.3',
-    'moto>=1.3.5',
-    'pydocstyle>=1.0.0',
-    'pytest-cache>=1.0',
-    'pytest-cov>=1.8.0',
-    'pytest-invenio>=1.0.4,<1.1.0',
-    'pytest-pep8>=1.0.6',
-    'pytest>=2.8.0',
+    'coverage>=4.5.3,<5.0.0',
+    'mock>=3.0.0,<4.0.0',
+    'moto==1.3.5',
+    'pytest>=4.6.4,<5.0.0',
+    'pytest-cache',
+    'pytest-cov',
+    'pytest-pep8',
+    'pytest-invenio',
+    'responses',
 ]
 
 extras_require = {
@@ -44,7 +42,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'boto3==1.7.84', # See https://github.com/spulec/moto/issues/1793
+    'boto3==1.7.84',  # See https://github.com/spulec/moto/issues/1793
     's3fs>=0.1.5',
     'invenio-files-rest>=1.0.0a23'
 ]
