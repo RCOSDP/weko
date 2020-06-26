@@ -16,21 +16,14 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'check-manifest>=0.25',
-    'coverage>=4.0',
-    'elasticsearch-dsl<5,>=2.0.0',
-    'elasticsearch<5,>=2.0.0',
-    'invenio-accounts>=1.0.1',
-    'invenio-db>=1.0.2',
-    'invenio-oauth2server>=1.0.1',
-    'invenio-records>=1.0.0',
-    'isort>=4.2.15',
-    'mock>=1.0.0',
-    'pydocstyle>=1.0.0',
-    'pytest-cov>=1.8.0',
-    'pytest-pep8>=1.0.6',
-    'pytest>=2.8.0',
-    'python-dateutil>=2.6.0',
+    'coverage>=4.5.3,<5.0.0',
+    'mock>=3.0.0,<4.0.0',
+    'pytest>=4.6.4,<5.0.0',
+    'pytest-cache',
+    'pytest-cov',
+    'pytest-pep8',
+    'pytest-invenio',
+    'responses',
 ]
 
 invenio_search_version = '1.0.0'

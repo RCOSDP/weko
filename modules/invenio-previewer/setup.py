@@ -34,17 +34,14 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'check-manifest>=0.25',
-    'coverage>=4.0',
-    'invenio-db[versioning]>=1.0.0b3',
-    'invenio-records-files>=1.0.0a3',
-    'isort>=4.2.2',
-    'mock>=1.3.0',
-    'pydocstyle>=1.0.0',
-    'pytest-cache>=1.0',
-    'pytest-cov>=1.8.0',
-    'pytest-pep8>=1.0.6',
-    'pytest>=2.8.0',
+    'coverage>=4.5.3,<5.0.0',
+    'mock>=3.0.0,<4.0.0',
+    'pytest>=4.6.4,<5.0.0',
+    'pytest-cache',
+    'pytest-cov',
+    'pytest-pep8',
+    'pytest-invenio',
+    'responses',
 ]
 
 extras_require = {
