@@ -24,7 +24,7 @@ trap "exit" INT
 for module_path in modules/*/; do
   if [[ ${module_path} =~ ^modules/(invenio-|weko-).+$ ]] && [[ -d ${module_path}tests ]]; then
     echo "### Running tests for ${module_path%?} ###"
-    pytest ${module_path}
+    (cd ${module_path} && python -m pip install . && python setup.py test)
     echo
   fi
 done

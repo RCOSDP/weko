@@ -594,8 +594,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
 
     organization_id = db.Column(
         db.Integer(),
-        db.ForeignKey(SiteLicenseInfo.organization_id, ondelete='RESTRICT'),
-        primary_key=True
+        db.ForeignKey(SiteLicenseInfo.organization_id, ondelete='RESTRICT')
     )
 
     organization_no = db.Column(

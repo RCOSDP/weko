@@ -441,7 +441,8 @@ class Action(db.Model, TimestampMixin):
         db.DateTime, nullable=False, default=datetime.now)
     """the last update date of action."""
 
-    action_is_need_agree = db.Column(db.Boolean, nullable=True, default=False)
+    action_is_need_agree = db.Column(db.Boolean(name='action_is_need_agree'),
+                                     nullable=True, default=False)
 
 
 class FlowDefine(db.Model, TimestampMixin):
@@ -736,8 +737,9 @@ class Activity(db.Model, TimestampMixin):
     activity_community_id = db.Column(db.Text, nullable=True)
     """activity community id"""
 
-    activity_confirm_term_of_use = db.Column(db.Boolean, nullable=True,
-                                             default=True)
+    activity_confirm_term_of_use = db.Column(
+        db.Boolean(name='activity_confirm_term_of_use'), nullable=True,
+        default=True)
 
     title = db.Column(db.Text, nullable=True)
 
