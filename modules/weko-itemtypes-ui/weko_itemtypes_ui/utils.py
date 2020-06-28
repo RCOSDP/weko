@@ -279,6 +279,10 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
             lst_all_des = [i for i in item_des_val if
                            i.startswith(overlap_key)]
             if lst_all_src != lst_all_des:
+                item_src_name = item_type.schema.get(
+                    'properties').get(item_src_key).get('title')
+                item_des_name = item_type.schema.get(
+                    'properties').get(item_des_key).get('title')
                 lst_duplicate.append([item_src_name, item_des_name])
 
     lst_temporary = {}
@@ -291,20 +295,16 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
     for i in range(len(lst_mapping_detail)):
         item_src_key, item_src_val, lst_values_src = get_detail_node(
             lst_mapping_detail, i)
+        if item_src_key in meta_system:
+            continue
         for j in range(i + 1, len(lst_mapping_detail)):
             item_des_key, item_des_val, lst_values_des = get_detail_node(
                 lst_mapping_detail, j)
-            item_des_in_sys = item_des_key in meta_system
-            item_src_in_sys = item_src_key in meta_system
-            lst_overlap = list(set(lst_values_src).intersection(lst_values_des))
+            if item_des_key in meta_system:
+                continue
+            lst_overlap = list(
+                set(lst_values_src).intersection(lst_values_des))
             if lst_overlap:
-                item_src_name = item_type.schema.get('properties').get(item_src_key).get('title')
-                item_des_name = item_type.schema.get('properties').get(item_des_key).get('title')
-                if item_des_in_sys and item_src_in_sys:
-                    continue
-                elif (item_des_in_sys or item_src_in_sys) and lst_overlap:
-                    lst_duplicate.append([item_src_name, item_des_name])
-                else:
-                    process_overlap()
+                process_overlap()
 
     return lst_duplicate

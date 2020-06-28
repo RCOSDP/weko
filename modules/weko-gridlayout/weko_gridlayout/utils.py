@@ -23,7 +23,7 @@ import copy
 import gzip
 import json
 import xml.etree.ElementTree as Et
-from datetime import datetime, date, timedelta
+from datetime import datetime
 from io import BytesIO
 from xml.etree.ElementTree import tostring
 
@@ -766,7 +766,6 @@ def get_elasticsearch_result_by_date(start_date, end_date):
         version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
     result = None
-
     try:
         search_instance, _qs_kwargs = item_search_factory(
             None, records_search, start_date, end_date)

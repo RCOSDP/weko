@@ -20,7 +20,7 @@ import pytest
 from flask import Flask
 from flask_babelex import Babel
 
-from weko_gridlayout import wekogridlayout
+from weko_gridlayout import WekoGridLayout
 from weko_gridlayout.views import blueprint
 
 
@@ -40,7 +40,7 @@ def create_app(instance_path):
         app = Flask('testapp', instance_path=instance_path)
         app.config.update(**config)
         Babel(app)
-        wekogridlayout(app)
+        WekoGridLayout(app)
         app.register_blueprint(blueprint)
         return app
     return factory

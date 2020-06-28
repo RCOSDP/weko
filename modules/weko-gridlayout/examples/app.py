@@ -46,11 +46,11 @@ from __future__ import absolute_import, print_function
 from flask import Flask
 from flask_babelex import Babel
 
-from weko_gridlayout import wekogridlayout
+from weko_gridlayout import WekoGridLayout
 from weko_gridlayout.views import blueprint
 
 # Create Flask application
 app = Flask(__name__)
 Babel(app)
-wekogridlayout(app)
+WekoGridLayout(app)
 app.register_blueprint(blueprint)

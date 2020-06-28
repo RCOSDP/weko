@@ -294,7 +294,7 @@ $(document).ready(function () {
             accessrole: {
               type: "string",
               title: "Access",
-              enum: ["open_access","open_date","open_login","open_no"]
+              enum: ["open_access","open_date","open_login","open_no","open_restricted"]
             },
             accessdate: {
               type: "string",
@@ -1168,7 +1168,9 @@ $(document).ready(function () {
 
   if($('#item-type-lists').val().length > 0) {
     $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
-      Object.assign(src_render ,data);
+      Object.keys(data).forEach(function(key) {
+        src_render[key] = data[key];
+      });
       page_global.upload_file = false;    // data.upload_file;
       $('#chk_upload_file').attr('checked', data.upload_file);
       $.each(data.table_row, function(idx, row_id){
@@ -1229,7 +1231,9 @@ $(document).ready(function () {
       }
     });
     $.get('/api/itemtypes/' + $('#item-type-lists').val() + '/mapping', function(data, status){
-      Object.assign(src_mapping, data);
+      Object.keys(data).forEach(function(key){
+        src_mapping[key] = data[key];
+      });
     });
   }
   $('input[type=radio][name=item_type][value=normal]').click()
@@ -1331,7 +1335,7 @@ $(document).ready(function () {
       let row_id = list_key[i]
       let item = new Object()
       if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
-        item = {...properties_obj[meta_system_info[row_id].input_type.substr(4)].form};
+        item = JSON.parse(JSON.stringify(properties_obj[meta_system_info[row_id].input_type.substr(4)].form));
         item.title = meta_system_info[row_id].title
         item.title_i18n = meta_system_info[row_id].title_i18n
         item.key = row_id
@@ -1342,7 +1346,6 @@ $(document).ready(function () {
         item.key = row_id
       }
       result.push(item)
-      item = {}
 
     }
     return result
@@ -1350,19 +1353,18 @@ $(document).ready(function () {
 
   function add_system_schema_property() {
     let list_key = Object.keys(meta_system_info)
-    for(i = 0; i< list_key.length; ++i){
+    for(let i = 0; i< list_key.length; ++i){
       let row_id = list_key[i]
-      let item = new Object()
+      let item = {};
       if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
-        item = {...properties_obj[meta_system_info[row_id].input_type.substr(4)].schema};
+        item = JSON.parse(JSON.stringify(properties_obj[meta_system_info[row_id].input_type.substr(4)].schema));
         item.title = meta_system_info[row_id].title
       } else {
         item.type = ''
         item.title = meta_system_info[row_id].title
         item.format = ''
       }
-      page_global.table_row_map.schema.properties[row_id] = {...item}
-      item = {}
+      page_global.table_row_map.schema.properties[row_id] = JSON.parse(JSON.stringify(item))
     }
   }
 

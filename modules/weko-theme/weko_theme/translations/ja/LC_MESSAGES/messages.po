@@ -595,14 +595,14 @@ msgstr "トップページ"
 #: weko_theme/templates/weko_theme/footer_editor.html:27
 #, python-format
 msgid "<p>Powered by <a href=\"%(link)s\">CERN Data Centre & Invenio</a><p>"
-msgstr "<p>Powered by <a href=\"%(link)s\">MERAL Portal</a><p>"
+msgstr ""
 
 #: weko_theme/templates/weko_theme/footer_wysiwyg.html:27
 #, python-format
 msgid ""
-"<p>Powered by <a href=\"%(link)s\" style=\"color: #ffffff;\">CERN Data Centre & Invenio</a><p>"
+"<p>Powered by <a href=\"%(link)s\" style=\"color: #ffffff;\">CERN Data "
+"Centre & Invenio</a><p>"
 msgstr ""
-"<p>Powered by <a href=\"%(link)s\" style=\"color: #ffffff;\">MERAL Portal</a><p>"
 
 #: weko_theme/templates/weko_theme/header_editor.html:23
 #: weko_theme/templates/weko_theme/header_wysiwyg.html:23

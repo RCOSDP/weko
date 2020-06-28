@@ -341,7 +341,7 @@ let PageBodyGrid = function () {
                   }
                   navbarHeader =
                     '<div class="navbar-header">' +
-                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
+                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false" id="data'+navbarID+'">' +
                     '        <span class="icon-bar"></span>' +
                     '        <span class="icon-bar"></span>' +
                     '        <span class="icon-bar"></span>' +
@@ -384,11 +384,13 @@ let PageBodyGrid = function () {
                 '  <div class="container-fluid">' +
                     navbarHeader +
                 '    <div class="collapse navbar-collapse" id="' + navbarID + '">' +
-                '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
+                '      <ul class="' + navbarClass + '" aria-labelledby="data'+navbarID+'">';  // Use id to make unique class names
 
                 navbar += childNavBar;
                 navbar +='</ul></div></div></nav>';
+                //$("#" + menuID).prepend(navbar);
                 $("#" + menuID).append(navbar);
+                $("#" + menuID).after('#header');
                 $("#" + menuID).css('height', '100%');
             }
         });

@@ -104,6 +104,12 @@
           "type": "date",
           "format": "yyyy-MM-dd||yyyy-MM||yyyy"
         },
+        "_created": {
+            "type": "date"
+        },
+        "_updated": {
+            "type": "date"
+        },
         "_oai": {
           "type": "object",
           "properties": {
@@ -339,6 +345,7 @@
           "properties": {
             "value": {
               "type": "keyword",
+              "ignore_above": 256,
               "copy_to": [
                 "search_des"
               ]
@@ -365,8 +372,7 @@
               ]
             },
             "value": {
-              "type": "date",
-              "format": "yyyy-MM-dd||yyyy-MM||yyyy"
+              "type": "text"
             }
           }
         },
@@ -620,8 +626,7 @@
           ]
         },
         "dateGranted": {
-          "type": "date",
-          "format": "yyyy-MM-dd||yyyy-MM||yyyy"
+          "type": "text"
         },
         "degreeGrantor": {
           "type": "object",
@@ -707,8 +712,7 @@
                   "index": true
                 },
                 "value": {
-                  "type": "date",
-                  "format": "yyyy-MM-dd||yyyy-MM||yyyy"
+                  "type": "text"
                 }
               }
             },
@@ -855,18 +859,6 @@
       },
       "dynamic_templates": [
         {
-          "other_text": {
-            "match_mapping_type": "string",
-            "match_pattern": "regex",
-            "match": ".*?",
-            "unmatch": "^((subitem|item)_\\d+)|weko_id|attribute_value$$",
-            "mapping": {
-              "type": "text",
-              "index": false
-            }
-          }
-        },
-        {
           "weko_id": {
             "match_mapping_type": "string",
             "match_pattern": "regex",
@@ -882,42 +874,32 @@
         {
           "string": {
             "match_mapping_type": "string",
-            "match_pattern": "regex",
-            "match": "^((subitem|item)_\\d+)|attribute_value$",
             "mapping": {
               "type": "text",
               "index": false,
-              "copy_to": "search_string"
+              "copy_to": "search_string",
+              "fields": {
+                "raw": {
+                  "type":  "keyword",
+                  "ignore_above": 256
+                }
+              }
             }
           }
         },
         {
-          "date": {
+          "date_string": {
             "match_mapping_type": "date",
-            "match_pattern": "regex",
-            "match": "^(subitem|item)_\\d+$",
             "mapping": {
-              "type": "date",
+              "type": "text",
               "index": false,
-              "copy_to": "date_search"
-            }
-          }
-        },
-        {
-          "boolean": {
-            "match_mapping_type": "boolean",
-            "mapping": {
-              "type": "boolean",
-              "index": true
-            }
-          }
-        },
-        {
-          "object": {
-            "match_mapping_type": "object",
-            "mapping": {
-              "type": "object",
-              "index": false
+              "copy_to": "search_string",
+              "fields": {
+                "raw": {
+                  "type":  "keyword",
+                  "ignore_above": 256
+                }
+              }
             }
           }
         }

@@ -21,10 +21,11 @@
 """Blueprint for weko-theme."""
 
 
+import time
+
 from blinker import Namespace
 from flask import Blueprint, current_app, render_template, request
 from flask_security import current_user
-from flask_login import login_required
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import SiteInfo
 from weko_index_tree.models import IndexStyle
@@ -124,7 +125,8 @@ def get_site_info(site_info):
     title = get_site_name_for_current_language(site_name) \
         or current_app.config['THEME_SITENAME']
     login_instructions = get_notify_for_current_language(notify)
-    favicon = request.url_root + 'api/admin/favicon'
+    ts = time.time()
+    favicon = request.url_root + 'api/admin/favicon?timestamp=' + str(ts)
     prefix = ''
     if site_info and site_info.favicon:
         prefix = site_info.favicon.split(",")[0] == 'data:image/x-icon;base64'

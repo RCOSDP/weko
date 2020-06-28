@@ -919,10 +919,8 @@ var PreviewGrid = new function () {
             width: 12,
             float: true,
             removeTimeout: 100,
-            cellHeight: 1,
-            verticalMargin: 1,
-	    //oneColumnModeClass: false,
-	    // disableOneColumnMode: true,
+            cellHeight: 6,
+            verticalMargin: 10,
             acceptWidgets: '.grid-stack-item'
         };
 
@@ -935,8 +933,7 @@ var PreviewGrid = new function () {
 
     this.loadGrid = function (widgetListItems) {
         this.grid.removeAll();
-        //let items = GridStackUI.Utils.sort(widgetListItems);
-        let items = widgetListItems;
+        let items = GridStackUI.Utils.sort(widgetListItems);
         isHasMainContent = false;
         isHasHeader = false;
         isHasFooter = false;

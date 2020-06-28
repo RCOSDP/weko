@@ -1007,7 +1007,6 @@
             this.container.css('height', 'calc(' + ((height * (this.opts.cellHeight)) + this.opts.cellHeightUnit) +
                 ' + ' + ((height * (this.opts.verticalMargin - 1)) + this.opts.verticalMarginUnit) + ')');
         }
-
     };
 
     GridStack.prototype._isOneColumnMode = function() {
