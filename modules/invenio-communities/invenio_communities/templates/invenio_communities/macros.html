@@ -25,37 +25,34 @@
   <div class="{{ community.id }}-header">
     {%- block navbar_right %}
     {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
-  {%- endblock navbar_right %}
-  <div class="navbar-form navbar-right">
-    {%- if config.I18N_LANGUAGES %}
-    {% from "weko_theme/macros/language_selector.html" import language_selector_dropdown %}
-    {{ language_selector_dropdown() }}
-    {%- endif %}
-  </div>
+    {%- endblock navbar_right %}
+    <div class="navbar-form navbar-right">
+      {%- if config.I18N_LANGUAGES %}
+      {% from "weko_theme/macros/language_selector.html" import language_selector_dropdown %}
+      {{ language_selector_dropdown() }}
+      {%- endif %}
+    </div>
     <div class="row">
-      <div class="col-md-12" style="padding: 0 15px 0;">
-        <h1 style="margin: 0">
-          <a href="/" style="color: #ffffff;padding-left: 15px;">MERAL /</a></br>
-        </h1>
-      </div>
-      {%- if community.community_header %}
+      <div class="col-md-12" style="margin: 0; padding: 0px 15px 0px 15px; width: calc(100vw - 490px); position: relative;">
+        {%- if community.community_header %}
         <div id="wysiwyg_header" class="col-md-12">{{ community.community_header|safe }}</div>
-      {% else %}
-        <div class="col-md-12">
-          <h1>
-            {%- if link %}
-	    <a href="{{url_for('invenio_communities.view', community_id=community.id, view='weko')}}" style="color: #ffffff; padding-left: 15px;">{{community.title}}</a>
-	    <!--
+        {% else %}
+        <div class="container-fluid">
+          <a href="/"><h1 style="color: rgb(255, 255, 255);margin: 0px 0px 5px 0px; padding: 0;">MERAL</h1></a>
+          {%- if link %}
+          <a href="{{url_for('invenio_communities.view', community_id=community.id, view='weko')}}">
+            <h1 style="color: #ffffff; margin: 0px 0px 15px 0px; padding: 0px 15px 0px 0px ;">{{community.title}}</h1></a>
+          <!--
             <a href="{{ url_for('invenio_communities.detail', community_id=community.id) }}" style="color: #ffffff;">{{community.title}}</a>
-	    -->
-	    {% else %}
-            {{community.title}}
-            {%- endif %}
-            {%- if subtitle %}
-            <small>{{subtitle}}</small>
-            {%- endif %}
-          </h1>
+      -->
         </div>
+        {% else %}
+        {{community.title}}
+        {%- endif %}
+        {%- if subtitle %}
+        <small>{{subtitle}}</small>
+        {%- endif %}
+      </div>
       {%- endif %}
 
     </div>
@@ -72,11 +69,14 @@
     </div>
     {% else %}
     <div class="row">
-      <div class="col-xs-12"><hr /></div>
+      <div class="col-xs-12">
+        <hr />
+      </div>
     </div>
     <div class="row">
       <div class="col-xs-12 col-sm-12 text-center-xs" style="color: #ffffff;">
-        <p> Back to <a href="/" style="color: #ffffff;">MERAL Portal</a><p>
+        <p> Back to <a href="/" style="color: #ffffff;">MERAL Portal</a>
+        <p>
       </div>
     </div>
     {%- endif %}
