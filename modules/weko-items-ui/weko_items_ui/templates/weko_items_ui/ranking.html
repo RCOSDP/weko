@@ -48,7 +48,7 @@
 
     <!-- Most viewed items -->
     {% if (rankings['most_reviewed_items'] if 'most_reviewed_items' in rankings else False) %}
-      {{ ranking_list(panel_title=_('The Most Reviewed Items'),
+      {{ ranking_list(panel_title=_('The Most Viewed Items'),
                       rankings=rankings['most_reviewed_items']) }}
     {% endif %}
 

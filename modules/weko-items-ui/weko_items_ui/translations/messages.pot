@@ -163,7 +163,7 @@ msgid "Aggregation Period"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:51
-msgid "The Most Reviewed Items"
+msgid "The Most Viewed Items"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:57

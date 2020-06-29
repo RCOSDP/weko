@@ -166,7 +166,7 @@ msgid "Aggregation Period"
 msgstr "統計期間"
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:51
-msgid "The Most Reviewed Items"
+msgid "The Most Viewed Items"
 msgstr "最も閲覧されたアイテム"
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:57
