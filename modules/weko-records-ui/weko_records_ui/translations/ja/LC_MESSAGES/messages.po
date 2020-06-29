@@ -772,7 +772,7 @@ msgid "Subject"
 msgstr "主題"
 
 msgid "Subject Scheme"
-msgstr "主題Scheme"
+msgstr "(JPCOAR対応用)主題スキーム"
 
 msgid "Subject URI"
 msgstr "主題URI"
@@ -832,7 +832,7 @@ msgid "Creator Email Address"
 msgstr "作成者メールアドレス"
 
 msgid "Description Type"
-msgstr "内容記述タイプ"
+msgstr "(JPCOAR対応用)記述タイプ"
 
 msgid "Bibliographic Information"
 msgstr "書誌情報"
@@ -870,8 +870,8 @@ msgstr "収録物識別子タイプ"
 msgid "Relation"
 msgstr "関連情報"
 
-msgid "Relation Type"
-msgstr "関連タイプ"
+msgid "RelationType"
+msgstr "(JPCOAR対応用)関連タイプ"
 
 msgid "Related Identifier"
 msgstr "関連識別子"
@@ -1056,17 +1056,14 @@ msgstr "北部緯度"
 msgid "Geo Location Place"
 msgstr "位置情報（自由記述）"
 
-msgid "Funder Identifier"
+msgid "funder Identifier"
 msgstr "助成機関識別子"
-
-msgid "Funder Identifier Type"
-msgstr "助成機関識別子タイプ"
 
 msgid "Award Number URI"
 msgstr "研究課題番号URI"
 
-msgid "Award Title"
-msgstr "研究課題名"
+msgid "AwardTitle"
+msgstr "研究課題タイトル"
 
 msgid "Source Title"
 msgstr "収録物名"
@@ -1139,10 +1136,7 @@ msgid "Bibliographic Citation"
 msgstr "引用形式"
 
 msgid "Topic"
-msgstr "トピック"
-
-msgid "Topic"
-msgstr " 統制語彙"
+msgstr "トピック（自由記述）"
 
 msgid "topic vocabURI"
 msgstr "統制語彙参照URI"
@@ -1151,16 +1145,16 @@ msgid "subjectScheme"
 msgstr "統制語彙参照URI"
 
 msgid "Topic J"
-msgstr "トピック（日本語統制語彙）"
+msgstr "トピック（CESSDATC日本語）"
 
 msgid "Topic E"
-msgstr "トピック（英語統制語彙）"
+msgstr "トピック（CESSDATC英語）"
 
 msgid "Time Period"
 msgstr "時間的範囲"
 
 msgid "Time Period Event"
-msgstr "調査時点（開始/終了）"
+msgstr "開始時点/終了時点"
 
 msgid "Date Of Collection Event"
 msgstr "調査開始／終了"
@@ -1169,22 +1163,22 @@ msgid "Geographic Coverage"
 msgstr "調査地域"
 
 msgid "Unit of Analysis"
-msgstr "調査地域"
+msgstr "観察単位"
 
 msgid "Unit of Analysis J"
 msgstr "観察単位（日本語統制語彙）"
 
 msgid "Unit of Analysis E"
-msgstr "観察単位（日本語統制語彙）"
+msgstr "観察単位（統制語彙英語）"
 
 msgid "Sampling Procedure E"
 msgstr "抽出方法（英語統制語彙）"
 
 msgid "Sampling Procedure J"
-msgstr "抽出方法（英語統制語彙）"
+msgstr "抽出方法（日本語統制語彙）"
 
 msgid "Collection Method"
-msgstr "抽出方法（英語統制語彙）"
+msgstr "調査方法"
 
 msgid "Collection Method J"
 msgstr "調査方法（日本語統制語彙）"
@@ -1196,19 +1190,16 @@ msgid "Sampling Rate"
 msgstr "回収率"
 
 msgid "Access"
-msgstr "アクセス制限（英語統制語彙）"
-
-msgid "Access"
-msgstr "アクセス制限（英語統制語彙）"
+msgstr "アクセス制限"
 
 msgid "Rdf:Resource"
-msgstr "(JPCOAR対応用)寄与者属性"
+msgstr "(JPCOAR対応用)rdf:resource"
 
 msgid "Access E"
 msgstr "アクセス制限（英語統制語彙）"
 
 msgid "Access J"
-msgstr "アクセス制限（英語統制語彙）"
+msgstr "アクセス制限（日本語統制語彙）"
 
 msgid "Study ID"
 msgstr "調査番号"
@@ -1223,7 +1214,7 @@ msgid "Topic Vocab URI"
 msgstr "統制語彙参照URI"
 
 msgid "Date Of Collection"
-msgstr "調査開始"
+msgstr "調査日"
 
 msgid "Event"
 msgstr "終了"
@@ -1232,10 +1223,10 @@ msgid "Universe"
 msgstr "母集団"
 
 msgid "Data Type J"
-msgstr "観察単位（英語統制語彙）"
+msgstr "データタイプ（日本語統制語彙）"
 
 msgid "Data Type E"
-msgstr "観察単位（英語統制語彙）"
+msgstr "データタイプ（英語統制語彙）"
 
 msgid "Sampling Procedure"
 msgstr "抽出方法"
@@ -1279,11 +1270,8 @@ msgstr "研究費拠出機関 ID"
 msgid "Funder Identifier Type"
 msgstr "(JPCOAR対応用)ID付与機関"
 
-msgid "Grant No"
+msgid "GrantNo"
 msgstr "研究課題番号"
-
-msgid "Award Title"
-msgstr "(JPCOAR対応用)研究課題タイトル"
 
 msgid "Distributor Abbreviation"
 msgstr "配布機関略称"
@@ -1296,3 +1284,36 @@ msgstr "配布機関URI"
 
 msgid "Contributor IdentifierType"
 msgstr "(JPCOAR対応用)寄与者属性"
+
+msgid "Distributor Name"
+msgstr "配布者、配布機関名"
+
+msgid "Award Title"
+msgstr "(JPCOAR対応用)研究課題タイトル"
+
+msgid "Related Study Title"
+msgstr "関連研究タイトル"
+
+msgid "Related Study Identifier"
+msgstr "関連研究識別子"
+
+msgid "Related Publications Title"
+msgstr "関連文献タイトル"
+
+msgid "Related Publications Identifier"
+msgstr "関連文献識別子"
+
+msgid "Related Publications Identifier Type"
+msgstr "関連文献識別子タイプ"
+
+msgid "GrantURI"
+msgstr "研究課題URI"
+
+msgid "Related Study Identifier Type"
+msgstr "関連研究識別子タイプ"
+
+msgid "Grant No"
+msgstr "研究課題番号"
+
+msgid "Summary DDI"
+msgstr "調査概要"

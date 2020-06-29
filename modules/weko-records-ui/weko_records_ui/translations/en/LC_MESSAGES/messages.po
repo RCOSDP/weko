@@ -887,7 +887,7 @@ msgstr ""
 msgid "Relation"
 msgstr ""
 
-msgid "Relation Type"
+msgid "RelationType"
 msgstr ""
 
 msgid "Related Identifier"
@@ -1073,7 +1073,7 @@ msgstr ""
 msgid "Geo Location Place"
 msgstr ""
 
-msgid "Funder Identifier"
+msgid "funder Identifier"
 msgstr ""
 
 msgid "Funder Identifier Type"
@@ -1082,7 +1082,7 @@ msgstr ""
 msgid "Award Number URI"
 msgstr ""
 
-msgid "Award Title"
+msgid "AwardTitle"
 msgstr ""
 
 msgid "Source Title"
@@ -1283,10 +1283,7 @@ msgstr ""
 msgid "Funder Identifier Type"
 msgstr ""
 
-msgid "Grant No"
-msgstr ""
-
-msgid "Award Title"
+msgid "GrantNo"
 msgstr ""
 
 msgid "Distributor Abbreviation"
@@ -1300,3 +1297,36 @@ msgstr ""
 
 msgid "Contributor IdentifierType"
 msgstr ""
+
+msgid "Distributor Name"
+msgstr ""
+
+msgid "Award Title"
+msgstr ""
+
+msgid "Related Study Title"
+msgstr ""
+
+msgid "Related Study Identifier"
+msgstr ""
+
+msgid "Related Publications Title"
+msgstr ""
+
+msgid "Related Publications Identifier"
+msgstr ""
+
+msgid "Related Publications Identifier Type"
+msgstr ""
+
+msgid "GrantURI"
+msgstr ""
+
+msgid "Related Study Identifier Type"
+msgstr ""
+
+msgid "Grant No"
+msgstr ""
+
+msgid "Summary DDI"
+msgstr "Summary"

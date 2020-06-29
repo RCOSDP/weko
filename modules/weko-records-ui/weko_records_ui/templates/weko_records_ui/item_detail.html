@@ -49,7 +49,7 @@
               {%- elif lst['attribute_type'] == 'creator' -%}
                  {%- if lst['attribute_value_mlt'][0].get('name') -%}
                      <tr>
-                       <th scope="row" colspan="6">{{ lst['attribute_name'] }}</th>
+                       <th scope="row" colspan="6">{{ _(lst['attribute_name']) }}</th>
                        <td>{{output_creator_data(lst['attribute_value_mlt'])}}
                        </td>
                      </tr>
