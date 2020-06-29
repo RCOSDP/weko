@@ -470,7 +470,7 @@ class WidgetDesignPage(db.Model):
         nullable=True
     )
 
-    is_main_layout = db.Column(db.Boolean('is_main_layout'), nullable=True)
+    is_main_layout = db.Column(db.Boolean(name='is_main_layout'), nullable=True)
 
     multi_lang_data = db.relationship(
         'WidgetDesignPageMultiLangData',
