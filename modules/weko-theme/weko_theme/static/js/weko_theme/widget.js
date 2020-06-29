@@ -390,7 +390,8 @@ let PageBodyGrid = function () {
                 navbar +='</ul></div></div></nav>';
                 //$("#" + menuID).prepend(navbar);
                 $("#" + menuID).append(navbar);
-                $("#" + menuID).after('#header');
+                // temporary solution
+                $("#" + menuID).insertAfter('#header');
                 $("#" + menuID).css('height', '100%');
             }
         });
