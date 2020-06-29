@@ -121,7 +121,8 @@ class Flow(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = _Flow.query.order_by(asc(_Flow.flow_id))
+            query = _Flow.query.filter_by(
+                is_deleted=False).order_by(asc(_Flow.flow_id))
             return query.all()
 
     def get_flow_detail(self, flow_id):
@@ -146,13 +147,19 @@ class Flow(object):
         :param flow_id:
         :return:
         """
-        with db.session.begin_nested():
-            _FlowAction.query.filter_by(
-                flow_id=flow_id).delete(synchronize_session=False)
-            _Flow.query.filter_by(
-                flow_id=flow_id).delete(synchronize_session=False)
-        db.session.commit()
-        return True
+        try:
+            with db.session.begin_nested():
+                flow = _Flow.query.filter_by(
+                    flow_id=flow_id).one_or_none()
+                if flow:
+                    flow.is_deleted = True
+                    db.session.merge(flow)
+            db.session.commit()
+            return {'code': 0, 'msg': ''}
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return {'code': 500, 'msg': str(ex)}
 
     def upt_flow_action(self, flow_id, actions):
         """Update FlowAction Info."""
@@ -317,7 +324,8 @@ class WorkFlow(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = _WorkFlow.query.order_by(asc(_WorkFlow.flows_id))
+            query = _WorkFlow.query.filter_by(
+                is_deleted=False).order_by(asc(_WorkFlow.flows_id))
             return query.all()
 
     def get_workflow_detail(self, workflow_id):
@@ -332,7 +340,7 @@ class WorkFlow(object):
             return query.one_or_none()
 
     def get_workflow_by_id(self, workflow_id):
-        """Get workflow detail info.
+        """Get workflow detail info by workflow id.
 
         :param workflow_id:
         :return:
@@ -342,17 +350,47 @@ class WorkFlow(object):
                 id=workflow_id)
             return query.one_or_none()
 
+    def get_workflow_by_flows_id(self, flows_id):
+        """Get workflow detail info by flows id.
+
+        :param flows_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                flows_id=flows_id)
+            return query.one_or_none()
+
+    def get_workflow_by_flow_id(self, flow_id):
+        """Get workflow detail info by flow id.
+
+        :param flow_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                flow_id=flow_id, is_deleted=False)
+            return query.all()
+
     def del_workflow(self, workflow_id):
         """Delete flow info.
 
         :param workflow_id:
         :return:
         """
-        with db.session.no_autoflush:
-            query = _WorkFlow.query.filter_by(
-                flows_id=workflow_id)
-            query.delete(synchronize_session=False)
-        db.session.commit()
+        try:
+            with db.session.begin_nested():
+                workflow = _WorkFlow.query.filter_by(
+                    flows_id=workflow_id).one_or_none()
+                if workflow:
+                    workflow.is_deleted = True
+                    db.session.merge(workflow)
+            db.session.commit()
+            return {'code': 0, 'msg': ''}
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return {'code': 500, 'msg': str(ex)}
 
     def find_workflow_by_name(self, workflow_name):
         """Find workflow by name.
@@ -1581,6 +1619,17 @@ class WorkActivity(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
+
+    def get_activity_by_workflow_id(self, workflow_id):
+        """Get workflow activity by workflow ID."""
+        try:
+            with db.session.no_autoflush:
+                activitys = _Activity.query.filter_by(
+                    workflow_id=workflow_id).all()
+                return activitys
+        except Exception as ex:
+            current_app.logger.error(ex)
+            return None
 
 
 class WorkActivityHistory(object):

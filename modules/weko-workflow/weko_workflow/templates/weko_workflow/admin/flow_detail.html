@@ -390,11 +390,17 @@
         async: true,
         contentType: 'application/json',
         success: function(data, status) {
-          if(0 == data.code) {
+          if(0 != data.code) {
+            $("#inputModal").html(data.msg);
+            $("#allModal").modal("show");
+          } else {
             document.location.href=data.data.redirect;
           }
         },
         error: function(jqXHE, status) {
+          var modalcontent =  "Delete Failed";
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
         }
       });
     });
