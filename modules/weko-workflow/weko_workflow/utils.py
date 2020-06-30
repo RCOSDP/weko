@@ -247,13 +247,21 @@ def item_metadata_validation(item_id, identifier_type):
             required_properties = ['title',
                                    'creator',
                                    'fileURI']
+    # DataCite DOI identifier registration
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']:
+        required_properties = ['fileURI']
+    # NDL JaLC DOI identifier registration
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
+        required_properties = ['fileURI']
 
     if required_properties:
         properties['required'] = required_properties
     if either_properties:
         properties['either'] = either_properties
 
-    if properties:
+    if properties and \
+            identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
+            and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
         return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '

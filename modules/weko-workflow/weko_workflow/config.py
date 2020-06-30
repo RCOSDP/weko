@@ -83,7 +83,9 @@ ITEM_REGISTRATION_FLOW_ID = 3
 IDENTIFIER_GRANT_SELECT_DICT = {
     'NotGrant': '0',
     'JaLCDOI': '1',
-    'CrossRefDOI': '2'
+    'CrossRefDOI': '2',
+    'DataCiteDOI': '3',
+    'NDLJaLCDOI': '4'
 }
 """Identifier grant selected enum."""
 
