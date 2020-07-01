@@ -934,15 +934,15 @@ class LocationUsageAmountInfo(ContentNegotiatedMethodView):
         result = []
 
         locations = Location.query.order_by(Location.name.asc()).all()
-        for l in locations:
+        for location in locations:
             data = {}
-            data['name'] = l.name
-            data['default'] = l.default
-            data['size'] = l.size
-            data['quota_size'] = l.quota_size
+            data['name'] = location.name
+            data['default'] = location.default
+            data['size'] = location.size
+            data['quota_size'] = location.quota_size
             # number of registered files
             buckets = Bucket.query.with_entities(
-                Bucket.id).filter_by(location=l)
+                Bucket.id).filter_by(location=location)
             data['files'] = ObjectVersion.query.filter(
                 ObjectVersion.bucket_id.in_(buckets.subquery())).count()
 

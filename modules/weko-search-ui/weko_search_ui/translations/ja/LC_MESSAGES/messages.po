@@ -328,7 +328,7 @@ msgstr "データの言語"
 
 #: weko_search_ui/config.py:
 msgid "Distributor"
-msgstr "配布者"
+msgstr "配布者、配布機関"
 
 #: weko_search_ui/config.py:
 msgid "Data Type"

@@ -76,6 +76,7 @@ def create():
     db.session.commit()
     return jsonify(msg=_('Success'))
 
+
 # add by ryuu. at 20180820 start
 @blueprint_api.route("/edit", methods=['POST'])
 @login_required

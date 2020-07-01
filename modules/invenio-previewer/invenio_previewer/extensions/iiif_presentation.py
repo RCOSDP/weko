@@ -27,7 +27,6 @@ from __future__ import absolute_import, print_function
 
 import json
 import re
-
 from collections import OrderedDict
 
 from flask import current_app, render_template

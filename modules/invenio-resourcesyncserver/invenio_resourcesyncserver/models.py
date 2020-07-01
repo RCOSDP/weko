@@ -46,7 +46,7 @@ class ResourceListIndexes(db.Model, Timestamp):
     """Identifier of resource list."""
 
     status = db.Column(
-        db.Boolean(),
+        db.Boolean(name='status'),
         nullable=False,
         default=True
     )
@@ -60,7 +60,7 @@ class ResourceListIndexes(db.Model, Timestamp):
     """Index Identifier relation to resource list."""
 
     resource_dump_manifest = db.Column(
-        db.Boolean(),
+        db.Boolean(name='resource_dump_manifest'),
         nullable=False,
         default=True
     )
@@ -83,7 +83,7 @@ class ChangeListIndexes(db.Model, Timestamp):
     """Identifier of change list."""
 
     status = db.Column(
-        db.Boolean(),
+        db.Boolean(name='status'),
         nullable=False,
         default=True
     )
@@ -96,7 +96,7 @@ class ChangeListIndexes(db.Model, Timestamp):
     """Index Identifier relation to change list."""
 
     change_dump_manifest = db.Column(
-        db.Boolean(),
+        db.Boolean(name='change_dump_manifest'),
         nullable=True,
         default=True
     )

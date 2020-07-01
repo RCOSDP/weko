@@ -318,7 +318,7 @@ class Journal_export_processing(db.Model, Timestamp):
     end_time = db.Column(db.DateTime, default=datetime.now)
     """end time to export journal."""
 
-    status = db.Column(db.Boolean, nullable=True)
+    status = db.Column(db.Boolean(name='status'), nullable=True)
     """status of processing when export journal data."""
 
     @classmethod
