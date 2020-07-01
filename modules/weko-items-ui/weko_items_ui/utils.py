@@ -610,7 +610,8 @@ def recursive_update_schema_form_with_condition(
                             if elem['key'] == _id:
                                 condition_item = copy.deepcopy(elem)
                                 condition_item['required'] = True
-                                condition_item['condition'] = condition_required
+                                condition_item['condition'] \
+                                    = condition_required
                                 schema_form_condition.append(
                                     {'index': index, 'item': condition_item})
 
@@ -773,7 +774,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                     if self.records[record].get(item_attr):
                         attr_val = self.records[record][item_attr][
                             'attribute_value_mlt']
-                        if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
+                        if len(attr_val) > idx \
+                            and attr_val[idx].get(sub_attr) \
                             and len(attr_val[idx][sub_attr]) > idx_2 \
                             and attr_val[idx][sub_attr][idx_2].get(
                                 sub_attr_2):
