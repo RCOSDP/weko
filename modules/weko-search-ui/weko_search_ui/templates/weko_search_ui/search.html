@@ -62,37 +62,35 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_header %}
-{%-if not community_id %}
-{{ super() }}
-{%- else%}
-{{ super() }}
-{%- endif%}
+  {%-if not community_id %}
+  {{ super() }}
+  {%- else%}
+  {{ super() }}
+  {%- endif%}
 {%- endblock page_header %}
 
 {%- block page_footer %}
-{%-if not community_id%}
-{{ super() }}
-{%- endif%}
+  {%-if not community_id%}
+  {{ super() }}
+  {%- endif%}
 {%- endblock page_footer %}
 
 {% block page_body %}
-{%-if not community_id %}
-{{super()}}
-{%- else%}
-<div class="communities">
-<div id="community-id" name="community-id" hidden>{{ community_id }}</div>
-  {{ community_header(community, subtitle='') }}
-  <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
-  <div id="main_contents">
-  {{ super() }}
-  </div>
-  </div>
-  {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
-  {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
-</div>
-<div class="communities">
-</div>
-{%- endif%}
+  {%-if not community_id %}
+    {{super()}}
+  {%- else%}
+    <div class="communities">
+      <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
+      {{ community_header(community, subtitle='') }}
+      <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
+        <div id="main_contents">
+         {{ super() }}
+        </div>
+      </div>
+      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+      {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
+    </div>
+  {%- endif%}
 {% endblock page_body %}
 
 {%- block page_body_main %}

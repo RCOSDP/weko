@@ -20,7 +20,7 @@
 
 {%- extends config.BASE_PAGE_TEMPLATE %}
 
-{%- from "invenio_communities/macros.html" import community_header with context%}
+{%- from "invenio_communities/macros.html" import community_header with context %}
 
 {%- block css %}
   {{ super() }}
@@ -47,8 +47,6 @@
 {%- block page_header %}
   {%-if not community_id %}
     {{ super() }}
-  {%- else%}
-    {{ super() }}
   {%- endif%}
 {%- endblock page_header %}
 
@@ -66,15 +64,14 @@
     {{ super() }}
   {%- else%}
     <div class="communities">
-
-	    <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
+      <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
       {{ community_header(community, subtitle='') }}
-      <div id="page_body" class="grid-stack">
+      <div id="page_body" class="grid-stack collapse hidden">
         <div id="main_contents">
           {{ super() }}
         </div>
       </div>
-      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget with context %}
       {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
     </div>
   <div class="communities"></div>

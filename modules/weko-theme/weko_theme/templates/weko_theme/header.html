@@ -24,9 +24,9 @@
   <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
 {% endblock %}
 {%- if render_header_footer %}
-  <div id="header" class="hidden" data-gs-y="0">
+  <div id="header"class="hidden">
 {% else -%}
-  <div id="header" data-gs-y="0" {% if render_widgets or page %}class="hidden"{% endif %}>
+  <div id="header" {% if render_widgets or page %}class="hidden"{% endif %}>
 {% endif %}
   {%- block navbar %}
   <nav class="navbar-default navbar-static-top full-height" id="header_nav">

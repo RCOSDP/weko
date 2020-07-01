@@ -4173,7 +4173,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
   position: relative;
   min-height: 50px;
   margin-bottom: 20px;
-  border: 1px solid transparent;
+  border-style: none;
 }
 @media (min-width: 768px) {
   .navbar {
@@ -5462,7 +5462,7 @@ button.list-group-item-danger.active:focus {
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 .panel-body {
-  padding: 15px;
+  padding: 5px;
 }
 .panel-heading {
   padding: 10px 15px;

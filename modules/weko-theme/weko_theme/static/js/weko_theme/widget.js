@@ -26,10 +26,8 @@ let PageBodyGrid = function () {
         let options = {
             width: 12,
             float: true,
-            verticalMargin: 1,
-            cellHeight: 1,
-            //oneColumnModeClass: false,
-            //disableOneColumnMode: true,
+            verticalMargin: 4,
+            cellHeight: 10,
             acceptWidgets: '.grid-stack-item'
         };
         let widget = $('#page_body');
@@ -172,10 +170,7 @@ let PageBodyGrid = function () {
                 headerNav.css({"background-color": node.background_color});
             }
             if (node.multiLangSetting && node.multiLangSetting.description) {
-              if ($('#check-xs').is(':hidden')) {
-              }else{
-                headerContent.css({"width": "calc(100vw - 490px)"});
-              }
+                //headerContent.css({"width": "calc(100vw - 490px)"});
                 headerContent.html(node.multiLangSetting.description.description);
             }
             this.grid.update(headerElement, node.x, node.y, node.width, node.height);
@@ -184,8 +179,7 @@ let PageBodyGrid = function () {
     };
 
     this.loadGrid = function (widgetListItems) {
-        //let items = GridStackUI.Utils.sort(widgetListItems);
-        let items = widgetListItems;
+        let items = GridStackUI.Utils.sort(widgetListItems);
         let hasMainContent = false;
         items.forEach(function (node) {
             if (MAIN_CONTENT_TYPE === node.type) {
@@ -341,7 +335,7 @@ let PageBodyGrid = function () {
                   }
                   navbarHeader =
                     '<div class="navbar-header">' +
-                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false" id="data'+navbarID+'">' +
+                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
                     '        <span class="icon-bar"></span>' +
                     '        <span class="icon-bar"></span>' +
                     '        <span class="icon-bar"></span>' +
@@ -380,18 +374,15 @@ let PageBodyGrid = function () {
                 '    background-color: transparent;' +
                 '}' +
                 '</style>' +
-                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="background-color:' + settings.menu_bg_color + ';border-style: none;">' +
+                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="border-style: none; background-color:' + settings.menu_bg_color + ';">' +
                 '  <div class="container-fluid">' +
                     navbarHeader +
                 '    <div class="collapse navbar-collapse" id="' + navbarID + '">' +
-                '      <ul class="' + navbarClass + '" aria-labelledby="data'+navbarID+'">';  // Use id to make unique class names
+                '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
 
                 navbar += childNavBar;
                 navbar +='</ul></div></div></nav>';
-                //$("#" + menuID).prepend(navbar);
                 $("#" + menuID).append(navbar);
-                // temporary solution
-                $("#" + menuID).insertAfter('#header');
                 $("#" + menuID).css('height', '100%');
             }
         });
@@ -598,7 +589,7 @@ let WidgetTheme = function () {
         let result = '<div class="grid-stack-item widget-resize">' +
             '    <div class="' + setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 30px; padding-bottom: 0!important;'
+            '        <div class="'+ panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 0px; padding-bottom: 0!important;'
                         + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
                         + widget_data.body +
             '        </div>' +
@@ -759,6 +750,7 @@ function getWidgetDesignSetting() {
             $("#main_contents").addClass("grid-stack-item");
             $("#header").addClass("grid-stack-item no-scroll-bar");
             $("#footer").addClass("grid-stack-item no-scroll-bar");
+
             if (!document.hidden) {
               buildWidget();
             } else {
@@ -796,11 +788,13 @@ function buildWidget() {
     new ResizeSensor($(".widget-resize"), function () {
       $(".widget-resize").each(function () {
         let headerElementHeight = $(this).find(".panel-heading").height();
-        let plusHeight = 11;
+        //let plusHeight = 11;
+        let plusHeight = 0;
         if (isIE11()){
             plusHeight = 21;
           }
-        $(this).find(".panel-body").css("padding-top", String(headerElementHeight + plusHeight) + "px");
+        //$(this).find(".panel-body").css("padding-top", String(headerElementHeight + plusHeight) + "px");
+        //$(this).find(".panel-body").css("padding-top", String(headerElementHeight + plusHeight) + "px");
       });
     });
 
@@ -829,6 +823,7 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   let mainContentSensor = new ResizeSensor($('#main_contents'), function () {
     let mainContent = $('#main_contents');
     autoAdjustWidgetHeight(mainContent, pageBodyGrid);
+    $("#page_body").append(mainContent);
   });
 
   let headerSensor = new ResizeSensor($('#header_content'), function () {
