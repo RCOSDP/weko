@@ -59,8 +59,7 @@ from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
 
-from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO, \
-    WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
+from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
     WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY, WEKO_DEPOSIT_SYS_CREATOR_KEY
 from .pidstore import get_latest_version_id, get_record_without_version, \
     weko_deposit_fetcher, weko_deposit_minter
@@ -1127,9 +1126,10 @@ class WekoRecord(Record):
 
                 mlt = val.get('attribute_value_mlt')
                 if mlt is not None:
-
                     nval = dict()
                     nval['attribute_name'] = val.get('attribute_name')
+                    nval['attribute_name_i18n'] = lst[2] or val.get(
+                        'attribute_name')
                     nval['attribute_type'] = val.get('attribute_type')
                     if nval['attribute_name'] == 'Reference' \
                             or nval['attribute_type'] == 'file':
@@ -1139,7 +1139,9 @@ class WekoRecord(Record):
                     else:
                         is_author = nval['attribute_type'] == 'creator'
                         sys_bibliographic = _FormatSysBibliographicInformation(
-                            mlt)
+                            copy.deepcopy(mlt),
+                            copy.deepcopy(solst)
+                        )
                         if is_author:
                             language_list = []
                             from weko_gridlayout.utils import \
@@ -1159,6 +1161,8 @@ class WekoRecord(Record):
                                     is_author)
                     items.append(nval)
                 else:
+                    val['attribute_name_i18n'] = lst[2] or val.get(
+                        'attribute_name')
                     items.append(val)
 
             return items
@@ -1604,12 +1608,14 @@ class _FormatSysCreator:
 class _FormatSysBibliographicInformation:
     """Format system Bibliographic Information for detail page."""
 
-    def __init__(self, bibliographic_meta_data_lst):
+    def __init__(self, bibliographic_meta_data_lst, props_lst):
         """Initialize format system Bibliographic Information for detail page.
 
         :param bibliographic_meta_data_lst: bibliographic meta data list
+        :param props_lst: Property list
         """
         self.bibliographic_meta_data_lst = bibliographic_meta_data_lst
+        self.props_lst = props_lst
 
     def is_bibliographic(self):
         """Check bibliographic information."""
@@ -1658,13 +1664,23 @@ class _FormatSysBibliographicInformation:
             bibliographic)
         return title_data, bibliographic_info_lst, length
 
+    def _get_property_name(self, key):
+        """Get property name.
+
+        :param key: Property key
+        :return: Property Name.
+        """
+        for lst in self.props_lst:
+            if key == lst[0].split('.')[-1]:
+                return lst[2]
+        return key
+
     def _get_bibliographic_information(self, bibliographic):
         """Get magazine information data.
 
         :param bibliographic:
         :return:
         """
-        bibliographic_info = WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO
         bibliographic_info_list = []
         for key in WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY:
             if key == 'p.':
@@ -1675,14 +1691,14 @@ class _FormatSysBibliographicInformation:
                     bibliographic_info_list.append({key: page})
             elif key == 'bibliographicIssueDates':
                 dates = self._get_issue_date(
-                    bibliographic.get('bibliographicIssueDates'))
+                    bibliographic.get(key))
                 if dates:
                     bibliographic_info_list.append(
-                        {bibliographic_info.get(key): " ".join(
+                        {self._get_property_name(key): " ".join(
                             str(x) for x in dates)})
             elif bibliographic.get(key):
                 bibliographic_info_list.append(
-                    {bibliographic_info.get(key): bibliographic.get(key)})
+                    {self._get_property_name(key): bibliographic.get(key)})
         length = len(bibliographic_info_list) if len(
             bibliographic_info_list) else 0
         return bibliographic_info_list, length
