@@ -303,12 +303,12 @@ let PageBodyGrid = function () {
                 var repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
                 var navbarID = 'widgetNav_' + widgetID; // Re-use to build unique class ids
                 var navbarClass = settings.menu_orientation === 'vertical' ?
-                    'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
+                    'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav mr-auto';
                 let mainLayoutTitle = "";
                 let childNavBar = "";
                 let navbarHeader = "";
                 for (let i in endpoints) {  // Create links
-                  let liClass = '';
+                  let liClass = 'nav-item';
                   let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
                   let title = endpoints[i].title;
                   let endpointsURL = endpoints[i].url;
@@ -316,9 +316,9 @@ let PageBodyGrid = function () {
                     mainLayoutTitle = title;
                   } else {
                     if (window.location.pathname === endpointsURL) {
-                      liClass = 'class="active"';
+                      liClass +=' active';
                     }
-                    childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                    childNavBar += '<li class="' + liClass + '" ><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
                   }
                 }
 
@@ -334,8 +334,8 @@ let PageBodyGrid = function () {
                       mainLayoutActive = 'active';
                   }
                   navbarHeader =
-                    '<div class="navbar-header">' +
-                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
+                    '<div class="navbar-header" >' +
+                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" >' +
                     '        <span class="icon-bar"></span>' +
                     '        <span class="icon-bar"></span>' +
                     '        <span class="icon-bar"></span>' +
@@ -374,14 +374,17 @@ let PageBodyGrid = function () {
                 '    background-color: transparent;' +
                 '}' +
                 '</style>' +
-                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="border-style: none; background-color:' + settings.menu_bg_color + ';">' +
-                '  <div class="container-fluid">' +
+                '<nav class="widget-nav navbar navbar-expand ' + navbarID + '" style="border-style: none; background-color:' + settings.menu_bg_color + ';">' +
+                //'  <div class="container-fluid" >' +
                     navbarHeader +
-                '    <div class="collapse navbar-collapse" id="' + navbarID + '">' +
-                '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
+                // '    <div class="collapse navbar-collapse" id="' + navbarID + '" >' +
+                '    <div class="navbar-collapse" id="' + navbarID + '" >' +
+                '      <ul class="' + navbarClass + '" >';  // Use id to make unique class names
 
                 navbar += childNavBar;
-                navbar +='</ul></div></div></nav>';
+                navbar +='</ul></div>';
+                navbar += '</div>';
+                navbar +='</nav>';
                 $("#" + menuID).append(navbar);
                 $("#" + menuID).css('height', '100%');
             }
