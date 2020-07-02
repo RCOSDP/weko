@@ -54,7 +54,6 @@ from weko_records_ui.permissions import check_file_download_permission
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
-from weko_workflow.models import Action as _Action
 
 
 def get_list_username():
@@ -296,22 +295,6 @@ def get_current_user():
     """
     current_id = current_user.get_id()
     return current_id
-
-
-def get_actionid(endpoint):
-    """
-    Get action_id by action_endpoint.
-
-    parameter:
-    return: action_id
-    """
-    with db.session.no_autoflush:
-        action = _Action.query.filter_by(
-            action_endpoint=endpoint).one_or_none()
-        if action:
-            return action.id
-        else:
-            return None
 
 
 def parse_ranking_results(results,
@@ -1646,6 +1629,23 @@ def translate_validation_message(item_property, cur_lang):
         for _key, value in item_property.get(properties_attr).items():
             set_validation_message(value, cur_lang)
             translate_validation_message(value, cur_lang)
+
+
+def get_workflow_by_item_type_id(item_type_name_id, item_type_id):
+    """Get workflow settings by item type id."""
+    from weko_workflow.models import WorkFlow
+
+    workflow = WorkFlow.query.filter_by(
+        itemtype_id=item_type_id).first()
+    if not workflow:
+        item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
+        id_list = [x.id for x in item_type_list]
+        workflow = (
+            WorkFlow.query
+            .filter(WorkFlow.itemtype_id.in_(id_list))
+            .order_by(WorkFlow.itemtype_id.desc())
+            .order_by(WorkFlow.flow_id.asc()).first())
+    return workflow
 
 
 def validate_bibtex(record_ids):

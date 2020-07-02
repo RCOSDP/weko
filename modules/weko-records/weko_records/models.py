@@ -667,15 +667,15 @@ class ItemReference(db.Model, Timestamp):
     __tablename__ = 'item_reference'
 
     src_item_pid = db.Column(
-        db.Integer(),
-        nullable=True,
+        db.String(255),
+        nullable=False,
         primary_key=True
     )
     """PID of source item."""
 
     dst_item_pid = db.Column(
-        db.Integer(),
-        nullable=True,
+        db.String(255),
+        nullable=False,
         primary_key=True
     )
     """PID for destination item."""

@@ -35,8 +35,7 @@ from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    ITEM_REGISTRATION_FLOW_ID, WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, \
-    WEKO_WORKFLOW_WAIT_TAB
+    WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
 from .models import ActionCommentPolicy, ActionFeedbackMail, \
     ActionIdentifier, ActionJournal, ActionStatusPolicy
@@ -266,11 +265,12 @@ class Flow(object):
         :param flow_id: item_registration's flow id
         :return flow_action: flow action's object
         """
+        action_id = current_app.config.get(
+            "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
         with db.session.no_autoflush:
             flow_action = _FlowAction.query.filter_by(
                 flow_id=flow_id,
-                action_id=ITEM_REGISTRATION_FLOW_ID).all()
-            current_app.logger.debug(flow_action)
+                action_id=action_id).all()
             return flow_action
 
 
@@ -634,6 +634,7 @@ class WorkActivity(object):
 
         :param activity_id:
         :param action_id:
+        :param action_status:
         :return:
         """
         with db.session.begin_nested():
@@ -1587,12 +1588,13 @@ class WorkActivity(object):
     def get_workflow_activity_by_item_id(self, object_uuid):
         """Get workflow activity status by item ID.
 
-        :param item_id:
+        :param object_uuid:
         """
         try:
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
-                    item_id=object_uuid).one_or_none()
+                    item_id=object_uuid).order_by(
+                    _Activity.updated.desc()).first()
                 return activity
         except Exception as ex:
             current_app.logger.error(ex)

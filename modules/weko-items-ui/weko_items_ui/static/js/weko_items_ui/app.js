@@ -1693,14 +1693,31 @@ function toObject(arr) {
 
           let files = $rootScope.filesVM.files;
           $scope.filemeta_keys.forEach(function (filemeta_key) {
-            for (i = 0; i < model[filemeta_key].length; i++) {
-              if(model[filemeta_key][i] && files[i]){
-                model[filemeta_key][i].version_id = files[i].version_id;
+            for (let i = 0; i < model[filemeta_key].length; i++) {
+              if (model[filemeta_key][i]) {
+                let modelFile = model[filemeta_key][i];
+                files.forEach(function (file) {
+                  if (modelFile.filename === file.key
+                    && !$rootScope.isModelFileVersion(model[filemeta_key], file.version_id)) {
+                    modelFile.version_id = file.version_id;
+                  }
+                })
               }
             }
           });
 
         }, 3000);
+      }
+
+      $rootScope.isModelFileVersion = function (modelFileList, versionId) {
+        let rtnValue = false;
+        for (let i = 0; i < modelFileList.length; i++) {
+          if (modelFileList[i].version_id === versionId) {
+            rtnValue = true;
+            break;
+          }
+        }
+        return rtnValue;
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
@@ -2708,6 +2725,17 @@ function toObject(arr) {
             }
           }
         }
+
+        // Handle validate radio_version
+        if ($("#react-component-version").length != 0) {
+          let versionSelected = $("input[name='radioVersionSelect']:checked").val();
+          if (versionSelected == undefined) {
+            var versionHeader = $("#component-version-label").text().trim();
+            listItemErrors.push(versionHeader);
+            $("#react-component-version").addClass("has-error");
+          }
+        }
+
         if (listItemErrors.length > 0) {
           let message = $("#validate_error").val() + '<br/><br/>';
           message += listItemErrors[0];
@@ -2742,6 +2770,8 @@ function toObject(arr) {
           $scope.genTitleAndPubDate();
           this.mappingThumbnailInfor();
           let next_frame = $('#next-frame').val();
+          let next_frame_upgrade = $('#next-frame-upgrade').val();
+          let next_frame_edit = $('#next-frame-edit').val();
           if (enableContributor === 'True' && !this.registerUserPermission()) {
             // Do nothing
           } else if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
@@ -2768,7 +2798,25 @@ function toObject(arr) {
             $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
             sessionStorage.removeItem(activityId);
-            $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
+            let versionSelected = $("input[name='radioVersionSelect']:checked").val();
+            if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
+              if (versionSelected == "keep") {
+                $rootScope.recordsVM.actionHandler(
+                  ["edit", "PUT"],
+                  next_frame_edit
+                );
+              } else if (versionSelected == "update") {
+                $rootScope.recordsVM.actionHandler(
+                  [
+                    ["newversion", "PUT"],
+                    ["index_upgrade", "PUT"],
+                  ],
+                  next_frame_upgrade
+                );
+              }
+            } else {
+              $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
+            }
           }
         }
       };
@@ -2932,6 +2980,7 @@ function toObject(arr) {
           }
         );
       }
+
       $scope.saveFeedbackMailListCallback = function (cur_action_id) {
         const activityID = $("#activity_id").text();
         const actionID = cur_action_id;// Item Registration's Action ID

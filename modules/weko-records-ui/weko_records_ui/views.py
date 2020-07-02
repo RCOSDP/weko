@@ -436,8 +436,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     detail_condition = get_search_detail_keyword('')
 
     # Add Item Reference data to Record Metadata
-    pid_without_ver = record.get("recid").split('.')[0]
-    res = ItemLink.get_item_link_info(pid_without_ver)
+    res = ItemLink.get_item_link_info(record.get("recid"))
     if res:
         record["relation"] = res
     else:
@@ -500,7 +499,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     files_thumbnail = []
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
-            record.get('_buckets').get('deposit')).\
+            record.files.bucket.id).\
             filter_by(is_thumbnail=True).all()
     files = []
     for f in record.files:
