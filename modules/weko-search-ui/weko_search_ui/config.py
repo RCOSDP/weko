@@ -155,7 +155,21 @@ RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
             aggs=dict(
                 dataType=dict(
                     terms=dict(
-                        field=WEKO_FACETED_SEARCH_MAPPING['dataType']))
+                        script=dict(
+                            source='''
+                            ArrayList result = new ArrayList();
+                            int size = params._source.description.length;
+                            for (int i=0; i<size; i++) {
+                                String valueName = params._source.description[i].value;
+                                if(params._source.description[i].descriptionType.equals("Other")) {
+                                    result.add(valueName);
+                                }
+                            }
+                            return result;''',
+                            lang="painless"
+                        )
+                    )
+                )
             )
         )
     ),
