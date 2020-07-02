@@ -308,6 +308,18 @@ msgstr ""
 msgid "The specified number has been exceeded. You can only select up to two fields."
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Version Management"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Upgrade Version"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Keep Version"
+msgstr ""
+
 msgid "Required item is not inputted"
 msgstr ""
 

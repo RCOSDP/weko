@@ -1,7 +1,7 @@
 const currentTime = new Date().getTime();
 const urlLoadLang = '/api/admin/load_lang' + '?time=' + currentTime;
 const urlLoadSiteInfo = '/api/admin/get_site_info' + '?time=' + currentTime;
-const default_favicon = 'https://community.repo.nii.ac.jp/images/common/favicon.ico'
+const default_favicon = '/static/favicon.ico'
 const default_favicon_name = 'JAIRO Cloud icon'
 const site_name_label = document.getElementById("site_name_label").value;
 const favicon_label = document.getElementById("favicon_label").value;

@@ -1654,16 +1654,18 @@ class Identifier(db.Model):
     repository = db.Column(db.String(100), nullable=False)
     """ Repository of the community """
 
-    jalc_flag = db.Column(db.Boolean, default=True)
+    jalc_flag = db.Column(db.Boolean(name='jalc_flag'), default=True)
     """ Jalc_flag of the Identifier """
 
-    jalc_crossref_flag = db.Column(db.Boolean, default=True)
+    jalc_crossref_flag = db.Column(db.Boolean(name='jalc_crossref_flag'),
+                                   default=True)
     """ Jalc_crossref_flag of the Identifier """
 
-    jalc_datacite_flag = db.Column(db.Boolean, default=True)
+    jalc_datacite_flag = db.Column(db.Boolean(name='jalc_datacite_flag'),
+                                   default=True)
     """ Jalc_datacite_flag of the Identifier """
 
-    ndl_jalc_flag = db.Column(db.Boolean, default=True)
+    ndl_jalc_flag = db.Column(db.Boolean(name='ndl_jalc_flag'), default=True)
     """ Ndl_jalc_flag of the Identifier """
 
     jalc_doi = db.Column(db.String(100), nullable=True)

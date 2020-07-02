@@ -594,8 +594,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
 
     organization_id = db.Column(
         db.Integer(),
-        db.ForeignKey(SiteLicenseInfo.organization_id, ondelete='RESTRICT'),
-        primary_key=True
+        db.ForeignKey(SiteLicenseInfo.organization_id, ondelete='RESTRICT')
     )
 
     organization_no = db.Column(
@@ -668,15 +667,15 @@ class ItemReference(db.Model, Timestamp):
     __tablename__ = 'item_reference'
 
     src_item_pid = db.Column(
-        db.Integer(),
-        nullable=True,
+        db.String(255),
+        nullable=False,
         primary_key=True
     )
     """PID of source item."""
 
     dst_item_pid = db.Column(
-        db.Integer(),
-        nullable=True,
+        db.String(255),
+        nullable=False,
         primary_key=True
     )
     """PID for destination item."""

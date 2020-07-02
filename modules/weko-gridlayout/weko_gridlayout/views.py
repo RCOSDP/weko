@@ -16,6 +16,7 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_theme.utils import get_community_id, get_weko_contents
@@ -28,8 +29,6 @@ from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
     get_system_language, get_widget_design_setting, get_widget_type_list
-
-from invenio_oauth2server import require_api_auth, require_oauth_scopes
 
 blueprint = Blueprint(
     'weko_gridlayout',

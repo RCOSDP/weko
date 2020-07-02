@@ -861,7 +861,7 @@ msgstr ""
 msgid "Relation"
 msgstr ""
 
-msgid "Relation Type"
+msgid "RelationType"
 msgstr ""
 
 msgid "Related Identifier"
@@ -1047,16 +1047,13 @@ msgstr ""
 msgid "Geo Location Place"
 msgstr ""
 
-msgid "Funder Identifier"
+msgid "funder Identifier"
 msgstr ""
 
 msgid "Funder Identifier Type"
 msgstr ""
 
 msgid "Award Number URI"
-msgstr ""
-
-msgid "Award Title"
 msgstr ""
 
 msgid "Source Title"
@@ -1111,4 +1108,193 @@ msgid "Content File"
 msgstr ""
 
 msgid "Billing File"
+msgstr ""
+
+msgid "ID Agency"
+msgstr ""
+
+msgid "Series"
+msgstr ""
+
+msgid "Version Date"
+msgstr ""
+
+msgid "DateType"
+msgstr ""
+
+msgid "Bibliographic Citation"
+msgstr ""
+
+msgid "Topic"
+msgstr ""
+
+msgid "topic vocabURI"
+msgstr ""
+
+msgid "subjectScheme"
+msgstr ""
+
+msgid "Topic J"
+msgstr ""
+
+msgid "Topic E"
+msgstr ""
+
+msgid "Time Period"
+msgstr ""
+
+msgid "Time Period Event"
+msgstr ""
+
+msgid "Date Of Collection Event"
+msgstr ""
+
+msgid "Geographic Coverage"
+msgstr ""
+
+msgid "Unit of Analysis"
+msgstr ""
+
+msgid "Unit of Analysis J"
+msgstr ""
+
+msgid "Unit of Analysis E"
+msgstr ""
+
+msgid "Sampling Procedure E"
+msgstr ""
+
+msgid "Sampling Procedure J"
+msgstr ""
+
+msgid "Collection Method"
+msgstr ""
+
+msgid "Collection Method J"
+msgstr ""
+
+msgid "Collection Method E"
+msgstr ""
+
+msgid "Sampling Rate"
+msgstr ""
+
+msgid "Access"
+msgstr ""
+
+msgid "Rdf:Resource"
+msgstr ""
+
+msgid "Access E"
+msgstr ""
+
+msgid "Access J"
+msgstr ""
+
+msgid "Study ID"
+msgstr ""
+
+msgid "Copyright"
+msgstr ""
+
+msgid "Topic Vocab"
+msgstr ""
+
+msgid "Topic Vocab URI"
+msgstr ""
+
+msgid "Date Of Collection"
+msgstr ""
+
+msgid "Event"
+msgstr ""
+
+msgid "Universe"
+msgstr ""
+
+msgid "Data Type J"
+msgstr ""
+
+msgid "Data Type E"
+msgstr ""
+
+msgid "Sampling Procedure"
+msgstr ""
+
+msgid "Identifier Registration Type"
+msgstr ""
+
+msgid "Identifier Registration"
+msgstr ""
+
+msgid "Related Study"
+msgstr ""
+
+msgid "Related Study DOI"
+msgstr ""
+
+msgid "Related Publications"
+msgstr ""
+
+msgid "Related Publications DOI"
+msgstr ""
+
+msgid "Fund Agency"
+msgstr ""
+
+msgid "Fund Agency ID"
+msgstr ""
+
+msgid "Funder Identifier Type"
+msgstr ""
+
+msgid "GrantNo"
+msgstr ""
+
+msgid "Award Title"
+msgstr ""
+
+msgid "Distributor Abbreviation"
+msgstr ""
+
+msgid "Distributor Affiliation"
+msgstr ""
+
+msgid "Distributor URI"
+msgstr ""
+
+msgid "Contributor IdentifierType"
+msgstr ""
+
+msgid "Distributor Name"
+msgstr ""
+
+msgid "AwardTitle"
+msgstr ""
+
+msgid "Related Study Title"
+msgstr ""
+
+msgid "Related Study Identifier"
+msgstr ""
+
+msgid "Related Publications Title"
+msgstr ""
+
+msgid "Related Publications Identifier"
+msgstr ""
+
+msgid "Related Publications Identifier Type"
+msgstr ""
+
+msgid "GrantURI"
+msgstr ""
+
+msgid "Related Study Identifier Type"
+msgstr ""
+
+msgid "Grant No"
+msgstr ""
+
+msgid "Summary DDI"
 msgstr ""

@@ -613,14 +613,16 @@ class SchemaTree:
                 for k, v in dct.items():
                     if isinstance(v, dict):
                         # check if @value has value
-                        node_val = v.get('@value', None)
+                        ddi_schema = self._schema_name == current_app.config[
+                            'WEKO_SCHEMA_DDI_SCHEMA_NAME']
+                        node_val = v.get(self._v, None)
+                        node_att = v.get(self._atr, None)
                         if isinstance(node_val, list) and node_val[0]:
                             # get index of None value
                             lst_none_idx = [idx for idx, val in
                                             enumerate(node_val[0]) if
                                             val is None or val == '']
-                            if self._schema_name != current_app.config[
-                                    'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
+                            if not ddi_schema:
                                 if len(lst_none_idx) > 0:
                                     # delete all None element in @value
                                     for i in lst_none_idx:
@@ -634,6 +636,13 @@ class SchemaTree:
                                 if not v.get(self._atr, {}).items():
                                     for i in lst_none_idx:
                                         del node_val[0][i]
+                            clean[k] = v
+                        elif ddi_schema and not node_val and node_att and \
+                                node_att[next(iter(node_att))][0]:
+                            # Add len(node_att) None elements to value
+                            # in order to display att later
+                            v[self._v] = [
+                                [None] * len(node_att[next(iter(node_att))][0])]
                             clean[k] = v
                         else:
                             nested = clean_none_value(v)
@@ -755,7 +764,8 @@ class SchemaTree:
                 # get value of the combination between record and \
                 # mapping data that is inited at __init__ function
                 mpdic = value_item_parent.get(
-                    self._schema_name) if self._schema_name in value_item_parent else ''
+                    self._schema_name) \
+                    if self._schema_name in value_item_parent else ''
                 if mpdic is "" or (
                     self._ignore_list and key_item_parent
                         in self._ignore_list):
@@ -1273,7 +1283,6 @@ class SchemaTree:
                 nlst.append({k: nv})
         return nlst
         # end
-        # ---------------------------------------------------------------------------------------------------
 
 
 def cache_schema(schema_name, delete=False):

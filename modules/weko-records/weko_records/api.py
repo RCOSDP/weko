@@ -32,7 +32,7 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     after_record_revert, after_record_update, before_record_delete, \
     before_record_insert, before_record_revert, before_record_update
 from jsonpatch import apply_patch
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
@@ -999,6 +999,7 @@ class ItemTypeProps(RecordBase):
 
         Arguments:
             data {dict} -- schema to remove required key
+
         """
         if "required" in data and not data.get("required"):
             data.pop("required", None)
@@ -1756,24 +1757,24 @@ class FeedbackMailList(object):
 
 
 class ItemLink(object):
-    """Get Community Info."""
+    """Item Link API."""
 
     org_item_id = 0
 
-    def __init__(self, pid):
+    def __init__(self, recid: str):
         """Constructor."""
-        self.org_item_id = int(pid)
+        self.org_item_id = recid
 
     @classmethod
-    def get_item_link_info(cls, pid):
-        """Record publish  status change view.
+    def get_item_link_info(cls, recid):
+        """Get item link info of recid.
 
-        :param pid: PID object.
-        :return: The rendered template.
+        :param recid: Record Identifier.
+        :return ret: List destination records.
         """
         from weko_deposit.api import WekoRecord
 
-        dst_relations = ItemReference.get_src_references(pid).all()
+        dst_relations = ItemReference.get_src_references(recid).all()
         ret = []
 
         for relation in dst_relations:
@@ -1787,13 +1788,10 @@ class ItemLink(object):
         return ret
 
     def update(self, items):
-        """Record publish  status change view.
+        """Update list item link of current record.
 
-        Change record publish status with given status and renders record
-        export template.
-
-        :param items: PID object.
-        :return: The rendered template.
+        :param items: List record_d and relation type.
+        :return: Error or not.
         """
         dst_relations = ItemReference.get_src_references(
             self.org_item_id).all()
@@ -1810,6 +1808,7 @@ class ItemLink(object):
                 created.append(item)
 
         deleted = dst_ids
+
         try:
             with db.session.begin_nested():
                 if created:
@@ -1819,17 +1818,20 @@ class ItemLink(object):
                 if deleted:
                     self.bulk_delete(deleted)
             db.session.commit()
+        except IntegrityError as ex:
+            current_app.logger.error(ex.orig)
+            db.session.rollback()
+            return str(ex.orig)
         except SQLAlchemyError as ex:
             current_app.logger.error(ex)
             db.session.rollback()
-            return ex
+            return str(ex)
         return None
 
     def bulk_create(self, dst_items):
-        """Record publish  status change view.
+        """Create list of item links.
 
-        :param pid: PID object.
-        :return: The rendered template.
+        :param dst_items: List items.
         """
         objects = [ItemReference(
             src_item_pid=self.org_item_id,
@@ -1838,10 +1840,9 @@ class ItemLink(object):
         db.session.bulk_save_objects(objects)
 
     def bulk_update(self, dst_items):
-        """Record publish  status change view.
+        """Update list of item links.
 
-        :param dst_items: PID object.
-        :return: The rendered template.
+        :param dst_items: List items.
         """
         objects = [ItemReference(
             src_item_pid=self.org_item_id,
@@ -1851,10 +1852,9 @@ class ItemLink(object):
             db.session.merge(obj)
 
     def bulk_delete(self, dst_item_ids):
-        """Record publish  status change view.
+        """Delete list of item links.
 
-        :param pid: PID object.
-        :return: The rendered template.
+        :param dst_item_ids: List items.
         """
         for dst_item_id in dst_item_ids:
             db.session.query(ItemReference).filter(

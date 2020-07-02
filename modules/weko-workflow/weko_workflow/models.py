@@ -441,7 +441,8 @@ class Action(db.Model, TimestampMixin):
         db.DateTime, nullable=False, default=datetime.now)
     """the last update date of action."""
 
-    action_is_need_agree = db.Column(db.Boolean, nullable=True, default=False)
+    action_is_need_agree = db.Column(db.Boolean(name='action_is_need_agree'),
+                                     nullable=True, default=False)
 
 
 class FlowDefine(db.Model, TimestampMixin):
@@ -493,6 +494,9 @@ class FlowDefine(db.Model, TimestampMixin):
 
     flow_actions = db.relationship('FlowAction', backref=db.backref('flow'))
     """flow action relationship."""
+
+    is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
+    """flow define delete flag."""
 
 
 class FlowAction(db.Model, TimestampMixin):
@@ -629,6 +633,9 @@ class WorkFlow(db.Model, TimestampMixin):
         backref=db.backref('workflow', lazy='dynamic')
     )
 
+    is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
+    """workflow delete flag."""
+
 
 class Activity(db.Model, TimestampMixin):
     """Define Activety."""
@@ -736,8 +743,9 @@ class Activity(db.Model, TimestampMixin):
     activity_community_id = db.Column(db.Text, nullable=True)
     """activity community id"""
 
-    activity_confirm_term_of_use = db.Column(db.Boolean, nullable=True,
-                                             default=True)
+    activity_confirm_term_of_use = db.Column(
+        db.Boolean(name='activity_confirm_term_of_use'), nullable=True,
+        default=True)
 
     title = db.Column(db.Text, nullable=True)
 

@@ -138,7 +138,7 @@ class Identify(db.Model, Timestamp):
     id = db.Column(db.Integer, primary_key=True)
 
     outPutSetting = db.Column(
-        db.Boolean,
+        db.Boolean(name='outPutSetting'),
         nullable=False,
         unique=True,
         info=dict(

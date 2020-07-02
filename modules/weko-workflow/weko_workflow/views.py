@@ -44,28 +44,27 @@ from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit
+from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
-from weko_items_ui.utils import get_actionid, to_files_js
+from weko_items_ui.utils import to_files_js
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.utils import get_list_licence
 from werkzeug.utils import import_string
 
-from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
+from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
-from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    ITEM_REGISTRATION_ACTION_ID, WEKO_WORKFLOW_TODO_TAB
+from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
+    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, delete_unregister_buckets, \
-    filter_condition, get_activity_id_of_record_without_version, \
-    get_identifier_setting, is_hidden_pubdate, is_show_autofill_metadata, \
-    item_metadata_validation, merge_buckets_by_records, register_hdl, \
-    saving_doi_pidstore, set_bucket_default_size
+from .utils import IdentifierHandle, filter_condition, get_actionid, \
+    get_activity_id_of_record_without_version, get_identifier_setting, \
+    handle_finish_workflow, is_hidden_pubdate, is_show_autofill_metadata, \
+    item_metadata_validation, register_hdl, saving_doi_pidstore
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -343,7 +342,7 @@ def display_activity(activity_id=0):
     cur_step = action_endpoint
     step_item_login_url = None
     approval_record = []
-    pid = None
+    recid = None
     record = {}
     need_file = False
     need_billing_file = False
@@ -378,9 +377,6 @@ def display_activity(activity_id=0):
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
         if item:
-            # Remove the unused local variable
-            # _pid_identifier = PersistentIdentifier.get_by_object(
-            #     pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
 
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -392,44 +388,41 @@ def display_activity(activity_id=0):
             and sessionstore.get(
                 'updated_json_schema_{}'.format(activity_id)):
             json_schema = (json_schema + "/{}").format(activity_id)
+            schema_form = (schema_form + "/{}").format(activity_id)
 
     # if 'approval' == action_endpoint:
     if item:
         # get record data for the first time access to editing item screen
-        pid_identifier = PersistentIdentifier.get_by_object(
-            pid_type='depid', object_type='rec', object_uuid=item.id)
+        recid = PersistentIdentifier.get_by_object(
+            pid_type='recid', object_type='rec', object_uuid=item.id)
         record_class = import_string('weko_deposit.api:WekoRecord')
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
-        pid, approval_record = resolver.resolve(pid_identifier.pid_value)
-
-        files = to_files_js(approval_record)
+        recid, approval_record = resolver.resolve(recid.pid_value)
+        deposit = WekoDeposit.get_record(item.id)
 
         # get files data after click Save btn
         sessionstore = RedisStore(redis.StrictRedis.from_url(
             'redis://{host}:{port}/1'.format(
                 host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
                 port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
         if sessionstore.redis.exists('activity_item_' + str(activity_id)):
             item_str = sessionstore.get('activity_item_' + str(activity_id))
             item_json = json.loads(item_str.decode('utf-8'))
             if 'files' in item_json:
                 files = item_json.get('files')
-        if not files:
-            deposit = WekoDeposit.get_record(item.id)
-            if deposit:
-                files = to_files_js(deposit)
+        if deposit and not files:
+            files = to_files_js(deposit)
 
         if files and not files_thumbnail:
             files_thumbnail = [i for i in files
                                if 'is_thumbnail' in i.keys()
                                and i['is_thumbnail']]
 
-        from weko_deposit.links import base_factory
-        links = base_factory(pid)
+        links = base_factory(recid)
 
     res_check = check_authority_action(str(activity_id), str(action_id))
-
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
@@ -448,7 +441,7 @@ def display_activity(activity_id=0):
         session['itemlogin_record'] = approval_record
         session['itemlogin_histories'] = histories
         session['itemlogin_res_check'] = res_check
-        session['itemlogin_pid'] = pid
+        session['itemlogin_pid'] = recid
         session['itemlogin_community_id'] = community_id
 
     from weko_theme.utils import get_design_layout
@@ -457,7 +450,7 @@ def display_activity(activity_id=0):
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
     list_license = get_list_licence()
 
-    if item and item.get('pid'):
+    if action_endpoint == 'item_link' and item and item.get('pid'):
         pid_without_ver = item['pid']['value'].split('.')[0]
         item_link = ItemLink.get_item_link_info(pid_without_ver)
         ctx['item_link'] = item_link
@@ -493,7 +486,7 @@ def display_activity(activity_id=0):
         links=links,
         histories=histories,
         res_check=res_check,
-        pid=pid,
+        pid=recid,
         community_id=community_id,
         need_thumbnail=need_thumbnail,
         files_thumbnail=files_thumbnail,
@@ -633,27 +626,28 @@ def next_action(activity_id='0', action_id=0):
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
 
-    if action_endpoint == 'item_login':
-        register_hdl(activity_id)
-
     activity_detail = work_activity.get_activity_detail(activity_id)
     item_id = None
     recid = None
-    record = None
+    deposit = None
     pid_without_ver = None
+    current_pid = None
     if activity_detail and activity_detail.item_id:
         item_id = activity_detail.item_id
         current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
                                                          object_type='rec',
                                                          object_uuid=item_id)
         recid = get_record_identifier(current_pid.pid_value)
-        record = WekoDeposit.get_record(item_id)
-        if record:
+        deposit = WekoDeposit.get_record(item_id)
+        if deposit:
             pid_without_ver = get_record_without_version(current_pid)
-            deposit = WekoDeposit(record, record.model)
+
+    if action_endpoint == 'item_login' and current_pid and ".0" not in \
+            current_pid.pid_value:
+        register_hdl(activity_id)
 
     if post_json.get('temporary_save') == 1 \
-            and action_endpoint != 'identifier_grant':
+            and action_endpoint not in ['identifier_grant', 'item_link']:
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
@@ -685,7 +679,8 @@ def next_action(activity_id='0', action_id=0):
 
         action_feedbackmail = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
-            action_id=ITEM_REGISTRATION_ACTION_ID)
+            action_id=current_app.config.get(
+                "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
         if action_feedbackmail:
             FeedbackMailList.update(
                 item_id=item_id,
@@ -697,13 +692,13 @@ def next_action(activity_id='0', action_id=0):
                     feedback_maillist=action_feedbackmail.feedback_maillist
                 )
 
-        if record:
+        if deposit:
             deposit.update_feedback_mail()
             deposit.update_jpcoar_identifier()
         # TODO: Make private as default.
         # UpdateItem.publish(pid, approval_record)
 
-    if action_endpoint == 'item_link' and record:
+    if action_endpoint == 'item_link' and item_id:
         current_pid = PersistentIdentifier.get_by_object(
             pid_type='recid',
             object_type='rec',
@@ -713,12 +708,14 @@ def next_action(activity_id='0', action_id=0):
         if not pid_without_ver:
             pid_without_ver = get_record_without_version(current_pid)
 
-        item_link = ItemLink(pid_without_ver.pid_value)
+        item_link = ItemLink(current_pid.pid_value)
         relation_data = post_json.get('link_data')
         if relation_data:
-            errors = item_link.update(relation_data)
-            if errors:
-                return jsonify(code=-1, msg=_(errors))
+            err = item_link.update(relation_data)
+            if err:
+                return jsonify(code=-1, msg=_(err))
+        if post_json.get('temporary_save') == 1:
+            return jsonify(code=0, msg=_('success'))
 
     # save pidstore_identifier to ItemsMetadata
     identifier_select = post_json.get('identifier_grant')
@@ -778,7 +775,7 @@ def next_action(activity_id='0', action_id=0):
         if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant'] \
                 and item_id is not None:
             record_without_version = item_id
-            if record and pid_without_ver and not recid:
+            if deposit and pid_without_ver and not recid:
                 record_without_version = pid_without_ver.object_uuid
             saving_doi_pidstore(item_id, record_without_version, post_json,
                                 int(identifier_select))
@@ -802,48 +799,12 @@ def next_action(activity_id='0', action_id=0):
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
             new_activity_id = None
-            if record:
-                deposit.publish()
-                updated_item = UpdateItem()
-                # publish record without version ID when registering newly
-                if recid:
-                    # new record attached version ID
-                    ver_attaching_record = deposit.newversion(current_pid)
-                    new_activity_id = ver_attaching_record.model.id
-                    ver_attaching_deposit = WekoDeposit(
-                        ver_attaching_record,
-                        ver_attaching_record.model)
-                    ver_attaching_deposit.publish()
-                    record_bucket_id = merge_buckets_by_records(
-                        current_pid.object_uuid,
-                        ver_attaching_record.model.id,
-                        sub_bucket_delete=True
-                    )
-                    if not record_bucket_id:
-                        return jsonify(code=-1, msg=_('error'))
-                    # Record without version: Make status Public as default
-                    updated_item.publish(record)
-                else:
-                    # update to record without version ID when editing
-                    new_activity_id = record.model.id
-                    if pid_without_ver:
-                        record_without_ver = WekoDeposit.get_record(
-                            pid_without_ver.object_uuid)
-                        deposit_without_ver = WekoDeposit(
-                            record_without_ver,
-                            record_without_ver.model)
-                        deposit_without_ver['path'] = deposit.get('path', [])
-                        parent_record = deposit_without_ver.\
-                            merge_data_to_record_without_version(current_pid)
-                        deposit_without_ver.publish()
-
-                        set_bucket_default_size(new_activity_id)
-                        merge_buckets_by_records(
-                            new_activity_id,
-                            pid_without_ver.object_uuid
-                        )
-                        updated_item.publish(parent_record)
-                delete_unregister_buckets(new_activity_id)
+            if deposit:
+                new_activity_id = handle_finish_workflow(deposit,
+                                                         current_pid,
+                                                         recid)
+                if not new_activity_id:
+                    return jsonify(code=-1, msg=_('error'))
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
@@ -1010,7 +971,7 @@ def cancel_action(activity_id='0', action_id=0):
         action_status=ActionStatusPolicy.ACTION_CANCELED,
         commond=post_json.get('commond'))
 
-    # clear deposit
+    # Clear deposit
     activity_detail = work_activity.get_activity_detail(activity_id)
     if activity_detail:
         cancel_item_id = activity_detail.item_id
@@ -1021,17 +982,27 @@ def cancel_action(activity_id='0', action_id=0):
                 cancel_item_id = pid.object_uuid
         if cancel_item_id:
             cancel_record = WekoDeposit.get_record(cancel_item_id)
-            if cancel_record:
-                cancel_deposit = WekoDeposit(
-                    cancel_record, cancel_record.model)
-                cancel_deposit.clear()
-                # Remove draft child
-                cancel_pid = PersistentIdentifier.get_by_object(
-                    pid_type='recid', object_type='rec',
-                    object_uuid=cancel_item_id)
-                cancel_pv = PIDVersioning(child=cancel_pid)
-                if cancel_pv.exists:
-                    cancel_pv.remove_child(cancel_pid)
+            try:
+                with db.session.begin_nested():
+                    if cancel_record:
+                        cancel_deposit = WekoDeposit(
+                            cancel_record, cancel_record.model)
+                        cancel_deposit.clear()
+                        # Remove draft child
+                        cancel_pid = PersistentIdentifier.get_by_object(
+                            pid_type='recid',
+                            object_type='rec',
+                            object_uuid=cancel_item_id)
+                        cancel_pv = PIDVersioning(child=cancel_pid)
+                        if cancel_pv.exists:
+                            cancel_pv.remove_child(cancel_pid)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                current_app.logger.error(
+                    'Unexpected error: {}', sys.exc_info()[0])
+                return jsonify(code=-1,
+                               msg=sys.exc_info()[0])
 
     work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
@@ -1067,7 +1038,8 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         post_json = request.get_json()
         password = post_json.get('passwd', None)
         if not password:
-            return jsonify(code=-1, msg=_('Password not provided'))
+            return jsonify(code=-1,
+                           msg=_('Password not provided'))
         wekouser = ShibUser()
         if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
@@ -1080,7 +1052,8 @@ def withdraw_confirm(activity_id='0', action_id='0'):
 
             if identifier_handle.delete_pidstore_doi():
                 identifier['action_identifier_select'] = \
-                    IDENTIFIER_GRANT_IS_WITHDRAWING
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2)
                 if identifier:
                     activity.create_or_update_action_identifier(
                         activity_id,
@@ -1115,7 +1088,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
     except ValueError:
-        current_app.logger.error('Unexpected error: {}', sys.exc_info()[0])
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error!'))
 
 
@@ -1190,7 +1163,8 @@ def get_feedback_maillist(activity_id='0'):
         work_activity = WorkActivity()
         action_feedbackmail = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
-            action_id=ITEM_REGISTRATION_ACTION_ID)
+            action_id=current_app.config.get(
+                "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
         if action_feedbackmail:
             mail_list = action_feedbackmail.feedback_maillist
             for mail in mail_list:

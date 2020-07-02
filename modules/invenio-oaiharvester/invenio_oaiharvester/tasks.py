@@ -271,7 +271,7 @@ def is_harvest_running(id, task_id):
     for worker in actives:
         for task in actives[worker]:
             if task['name'] == 'invenio_oaiharvester.tasks.run_harvesting':
-                if eval(task['args'])[0] == str(id) and task['id'] != task_id:
+                if task['args'][0] == str(id) and task['id'] != task_id:
                     return True
     return False
 
