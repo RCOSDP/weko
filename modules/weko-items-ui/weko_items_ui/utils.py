@@ -20,6 +20,7 @@
 
 """Module of weko-items-ui utils.."""
 
+import copy
 import csv
 import json
 import os
@@ -410,7 +411,43 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     except Exception as ex:
         current_app.logger.error(ex)
         result["is_valid"] = False
-        result['error'] = _(error.message)
+        result['error'] = _(str(ex))
+
+
+def parse_node_str_to_json_schema(node_str: str):
+    """Parse node_str to json schema.
+
+    :param node_str: node string
+    :return: json schema
+    """
+    json_node = {}
+    nodes = node_str.split('.')
+    if len(nodes) > 0:
+        json_node["item"] = nodes[len(nodes) - 1]
+        for x in reversed(range(len(nodes) - 1)):
+            json_node["child"] = copy.deepcopy(json_node)
+            json_node["item"] = nodes[x]
+
+    return json_node
+
+
+def update_json_schema_with_required_items(node: dict, json_data: dict):
+    """Update json schema with the required items.
+
+    :param node: json schema return from def parse_node_str_to_json_schema
+    :param json_data: The json schema
+    """
+    if not node.get('child'):
+        if not json_data.get('required'):
+            json_data['required'] = []
+        json_data['required'].append(node['item'])
+    else:
+        if json_data['properties'][node['item']].get('items'):
+            update_json_schema_with_required_items(
+                node['child'], json_data['properties'][node['item']]['items'])
+        else:
+            update_json_schema_with_required_items(
+                node['child'], json_data['properties'][node['item']])
 
 
 def update_json_schema_by_activity_id(json_data, activity_id):
@@ -435,37 +472,147 @@ def update_json_schema_by_activity_id(json_data, activity_id):
 
     if error_list:
         for item in error_list['required']:
-            sub_item = item.split('.')
-            if len(sub_item) == 1:
-                json_data['required'] = sub_item
-            else:
-                if json_data['properties'][sub_item[0]].get('items'):
-                    if not json_data['properties'][sub_item[0]]['items'].get(
-                            'required'):
-                        json_data['properties'][sub_item[0]][
-                            'items']['required'] = []
-                    json_data['properties'][sub_item[0]]['items'][
-                        'required'].append(sub_item[1])
-                else:
-                    if not json_data[
-                            'properties'][sub_item[0]].get('required'):
-                        json_data['properties'][sub_item[0]]['required'] = []
-                    json_data['properties'][sub_item[0]]['required'].append(
-                        sub_item[1])
+            node = parse_node_str_to_json_schema(item)
+            if node:
+                update_json_schema_with_required_items(node, json_data)
         for item in error_list['pattern']:
-            sub_item = item.split('.')
-            if len(sub_item) == 2:
-                creators = json_data['properties'][sub_item[0]].get('items')
-                if not creators:
-                    break
-                for creator in creators.get('properties'):
-                    if creators['properties'][creator].get('items'):
-                        givename = creators['properties'][creator]['items']
-                        if givename['properties'].get(sub_item[1]):
-                            if not givename.get('required'):
-                                givename['required'] = []
-                            givename['required'].append(sub_item[1])
+            node = parse_node_str_to_json_schema(item)
+            if node:
+                update_json_schema_with_required_items(node, json_data)
     return json_data
+
+
+def update_schema_form_by_activity_id(schema_form, activity_id):
+    """Update schema form by activity id.
+
+    :param schema_form: The schema form
+    :param activity_id: Activity ID
+    :return: schema form
+    """
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    if not sessionstore.redis.exists(
+        'updated_json_schema_{}'.format(activity_id)) \
+        and not sessionstore.get(
+            'updated_json_schema_{}'.format(activity_id)):
+        return None
+    session_data = sessionstore.get(
+        'updated_json_schema_{}'.format(activity_id))
+    error_list = json.loads(session_data.decode('utf-8'))
+
+    if error_list and error_list['either']:
+        either_required_list = error_list['either']
+        recursive_prepare_either_required_list(
+            schema_form, either_required_list)
+
+        recursive_update_schema_form_with_condition(
+            schema_form, either_required_list)
+
+    return schema_form
+
+
+def prepare_either_condition_required(either_required_list):
+    """Prepare either condition required list.
+
+    :param either_required_list: List return from
+    recursive_prepare_either_required_list
+    """
+    condition_required = []
+    condition_not_required = []
+    for item in either_required_list:
+        if isinstance(item, list):
+            sub_condition_required = []
+            sub_condition_not_required = []
+            for sub_item in item:
+                sub_condition_required.append('!model.' + sub_item)
+                sub_condition_not_required.append('model.' + sub_item)
+
+            condition_required.append(
+                '(' + (' || '.join(sub_condition_required)) + ')')
+            condition_not_required.append(
+                '(' + (' && '.join(sub_condition_not_required)) + ')')
+        else:
+            condition_required.append('!model.' + item)
+            condition_not_required.append('model.' + item)
+
+    return [
+        ' && '.join(condition_required).replace('[]', '[arrayIndex]'),
+        ' || '.join(condition_not_required).replace('[]', '[arrayIndex]')]
+
+
+def recursive_prepare_either_required_list(schema_form, either_required_list):
+    """Recursive prepare either required list.
+
+    :param schema_form: The schema form
+    :param either_required_list: Either required list
+    """
+    for elem in schema_form:
+        if elem.get('items'):
+            recursive_prepare_either_required_list(
+                elem.get('items'), either_required_list)
+        else:
+            if elem.get('key') and '[]' in elem['key']:
+                for i, ids in enumerate(either_required_list):
+                    if isinstance(ids, list):
+                        for y, _id in enumerate(ids):
+                            if elem['key'].replace('[]', '') == _id:
+                                either_required_list[i][y] = elem['key']
+                                break
+                    elif isinstance(ids, str):
+                        if elem['key'].replace('[]', '') == ids:
+                            either_required_list[i] = elem['key']
+                            break
+
+
+def recursive_update_schema_form_with_condition(
+        schema_form, either_required_list):
+    """Update chema form with condition.
+
+    :param schema_form: The schema form
+    :param either_required_list: Either required list
+    """
+    schema_form_condition = []
+    for index, elem in enumerate(schema_form):
+        if elem.get('items'):
+            recursive_update_schema_form_with_condition(
+                elem.get('items'), either_required_list)
+        else:
+            if elem.get('key'):
+                for ids in either_required_list:
+                    condition_required, condition_not_required = \
+                        prepare_either_condition_required(list(
+                            filter(
+                                lambda x: x != ids,
+                                either_required_list
+                            )
+                        ))
+                    if isinstance(ids, list):
+                        for _id in ids:
+                            if elem['key'] == _id:
+                                condition_item = copy.deepcopy(elem)
+                                condition_item['required'] = True
+                                condition_item['condition'] \
+                                    = condition_required
+                                schema_form_condition.append(
+                                    {'index': index, 'item': condition_item})
+
+                                elem['condition'] = condition_not_required
+                    elif isinstance(ids, str):
+                        if elem['key'] == ids:
+                            condition_item = copy.deepcopy(elem)
+                            condition_item['required'] = True
+                            condition_item['condition'] = condition_required
+                            schema_form_condition.append(
+                                {'index': index, 'item': condition_item})
+
+                            elem['condition'] = condition_not_required
+
+    for index, condition_item in enumerate(schema_form_condition):
+        schema_form.insert(
+            condition_item['index'] + index + 1,
+            condition_item['item'])
 
 
 def package_export_file(item_type_data):
@@ -610,7 +757,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                     if self.records[record].get(item_attr):
                         attr_val = self.records[record][item_attr][
                             'attribute_value_mlt']
-                        if len(attr_val) > idx and attr_val[idx].get(sub_attr) \
+                        if len(attr_val) > idx \
+                            and attr_val[idx].get(sub_attr) \
                             and len(attr_val[idx][sub_attr]) > idx_2 \
                             and attr_val[idx][sub_attr][idx_2].get(
                                 sub_attr_2):

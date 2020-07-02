@@ -60,10 +60,10 @@ from .utils import _get_max_export_items, export_items, get_current_user, \
     is_schema_include_key, parse_ranking_results, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
     to_files_js, translate_validation_message, update_index_tree_for_record, \
-    update_json_schema_by_activity_id, update_schema_remove_hidden_item, \
-    update_sub_items_by_user_role, validate_form_input_data, \
-    validate_save_title_and_share_user_id, validate_user, \
-    validate_user_mail_and_index
+    update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
+    update_schema_remove_hidden_item, update_sub_items_by_user_role, \
+    validate_form_input_data, validate_save_title_and_share_user_id, \
+    validate_user, validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -277,12 +277,15 @@ def get_json_schema(item_type_id=0, activity_id=""):
 
 
 @blueprint.route('/schemaform/<int:item_type_id>', methods=['GET'])
+@blueprint.route('/schemaform/<int:item_type_id>/<string:activity_id>',
+                 methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
-def get_schema_form(item_type_id=0):
+def get_schema_form(item_type_id=0, activity_id=''):
     """Get schema form.
 
     :param item_type_id: Item type ID. (Default: 0)
+    :param activity_id: Activity ID.  (Default: Null)
     :return: The json object.
     """
     try:
@@ -364,6 +367,13 @@ def get_schema_form(item_type_id=0):
                                         sub_item['title_i18n'][cur_lang]) > 0:
                                     sub_item['title'] = sub_item['title_i18n'][
                                         cur_lang]
+
+        if activity_id:
+            updated_schema_form = update_schema_form_by_activity_id(
+                schema_form,
+                activity_id)
+            if updated_schema_form:
+                schema_form = updated_schema_form
 
         return jsonify(schema_form)
     except BaseException:

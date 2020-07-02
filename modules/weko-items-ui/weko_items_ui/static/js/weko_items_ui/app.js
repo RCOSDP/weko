@@ -533,6 +533,7 @@ function toObject(arr) {
       $scope.feedback_emails = []
       $scope.render_requirements = false;
       $scope.error_list = [];
+      $scope.required_list = [];
       $scope.usageapplication_keys = [];
       $scope.outputapplication_keys = [];
       $scope.authors_keys = [];
@@ -1614,8 +1615,17 @@ function toObject(arr) {
       */
       $scope.recursiveSetCollapsedForForm = function (isCollapsed, forms) {
         angular.forEach(forms, function(val, key){
-          val["collapsed"] = isCollapsed;
-          val["required"] = !isCollapsed;
+          if ("key" in val && val.key) {
+            let sub_item;
+            if (val.key instanceof Array) {
+              sub_item = val.key.pop();
+            } else if (typeof(val.key) === 'string') {
+              sub_item = val.key.split(".").pop()
+            }
+            val["collapsed"] = isCollapsed && !$scope.required_list.includes(sub_item);
+          } else {
+            val["collapsed"] = isCollapsed;
+          }
           if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
             $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
           }
@@ -1625,16 +1635,79 @@ function toObject(arr) {
       * Set required and collapsed for all root item.
       */
       $scope.setCollapsedAndRequiredForForm = function(){
+        $scope.prepareRequiredList();
         let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
         let forms = $rootScope.recordsVM.invenioRecordsForm;
         let isCollapsed;
         angular.forEach(forms, function(val, key){
           isCollapsed = requiredList.indexOf(val.key) == -1;
-          val["collapsed"] = isCollapsed;
+          val["collapsed"] = isCollapsed && !$scope.required_list.includes(val.key);
           if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
             $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
           }
         });
+      }
+
+      /**
+      * Prepare required list for expand/collapse panel.
+      */
+      $scope.prepareRequiredList = function () {
+        let prepareRequiredList = function (json_data) {
+          let temp_key;
+      
+          let pushToRequiredList = function (key) {
+              if (!$scope.required_list.includes(key)) {
+                $scope.required_list.push(key);
+              }
+      
+              temp_key = key;
+          };
+      
+          angular.forEach(json_data, function (val, key) {
+              if (val.required) {
+                  return pushToRequiredList(key);
+              } else if (val.items) {
+                  if (val.items.required) {
+                      return pushToRequiredList(key);
+                  } else if (prepareRequiredList(val.items.properties)) {
+                      return pushToRequiredList(key);
+                  }
+              } else if (val.properties) {
+                  if (prepareRequiredList(val.properties)) {
+                      return pushToRequiredList(key);
+                  }
+              }
+          });
+      
+          return temp_key;
+        }
+
+        let json_data = $rootScope.recordsVM.invenioRecordsSchema;
+        if (json_data.required) {
+          $scope.required_list = $scope.required_list.concat(json_data.required);
+        }
+
+        if ($scope.error_list && $scope.error_list['either']) {
+          angular.forEach($scope.error_list['either'], function (val, key) {
+            let ids = [];
+            if (val instanceof Array) {
+              val.map(function(x) {
+                return x.split('.');
+              }).forEach(function(x) {
+                ids = ids.concat(x);
+              });
+            } else {
+              ids = val.split('.');
+            }
+            angular.forEach(ids, function (_val, _key) {
+              if (!$scope.required_list.includes(_val)) {
+                $scope.required_list.push(_val);
+              }
+            });
+          });
+        }
+
+        prepareRequiredList(json_data.properties);
       }
 
       $scope.loadFilesFromSession = function () {
@@ -2429,10 +2502,24 @@ function toObject(arr) {
           // Call API to validate input data base on json schema define
           let validateURL = '/api/items/validate';
           let isValid = false;
+          // Remove select value empty
+          let model = angular.copy($rootScope.recordsVM.invenioRecordsModel);
+          angular.forEach($rootScope.recordsVM.invenioRecordsModel, function (value, key) {
+            if (value instanceof Object) {
+              angular.forEach(value, function (_value, _key) {
+                if (_value == '') {
+                  delete model[key][_key];
+                }
+              });
+              if (angular.equals(model[key], {})) {
+                delete model[key];
+              }
+            }
+          });
           let request = InvenioRecordsAPI.prepareRequest(
             validateURL,
             'POST',
-            $rootScope.recordsVM.invenioRecordsModel,
+            model,
             $rootScope.recordsVM.invenioRecordsArgs,
             $rootScope.recordsVM.invenioRecordsEndpoints
           );
@@ -2705,10 +2792,60 @@ function toObject(arr) {
         return result;
       }
 
+      $scope.checkEitherRequired = function(depositionForm) {
+        let eitherRequireds = [];
+        if ($scope.error_list) {
+          eitherRequireds = $scope.error_list['either'];
+        }
+        
+        if (!eitherRequireds) {
+          return true;
+        }
+
+        for (let i = 0; i < eitherRequireds.length; i++) {
+          if (eitherRequireds[i] instanceof Array) {
+            let check = true;
+            for (let y = 0; y < eitherRequireds[i].length; y++) {
+              let sub_item = eitherRequireds[i][y].split('.').pop();
+              if (sub_item in depositionForm && depositionForm[sub_item].$viewValue) {
+                check = check && true;
+              } else {
+                check = check && false;
+              }
+            }
+
+            if (check) {
+              return true;
+            }
+          } else {
+            let sub_item = eitherRequireds[i].split('.').pop();
+            if (sub_item in depositionForm && depositionForm[sub_item].$viewValue) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      }
+
       $scope.validateRequiredItem = function () {
         let schemaForm = $rootScope.recordsVM.invenioRecordsForm;
         let depositionForm = $scope.depositionForm;
-        let listItemErrors = []
+        let listItemErrors = [];
+        let eitherRequired = [];
+        let noEitherError = $scope.checkEitherRequired(depositionForm);
+        if (noEitherError && $scope.error_list && $scope.error_list['either']) {
+          eitherRequired = [];
+          $scope.error_list['either'].forEach(function(item) {
+            if (item instanceof Array) {
+              item.forEach(function(i) {
+                eitherRequired.push(i.split('.').pop());
+              });
+            } else {
+              eitherRequired.push(item.split('.').pop());
+            }
+          });
+        }
         for (let i = 0; i < schemaForm.length; i++) {
           let listSubItem = $scope.findRequiredItemInSchemaForm(schemaForm[i])
           if (listSubItem.length == 0) {
@@ -2721,7 +2858,13 @@ function toObject(arr) {
               } else {
                 depositionForm[listSubItem[j].id].$setViewValue("");
               }
-              listItemErrors.push(listSubItem[j].title);
+              if (noEitherError && eitherRequired) {
+                if (!eitherRequired.includes(listSubItem[j].id)) {
+                  listItemErrors.push(listSubItem[j].title);
+                }
+              } else {
+                listItemErrors.push(listSubItem[j].title);
+              }
             }
           }
         }
