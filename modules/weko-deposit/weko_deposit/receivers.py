@@ -2,6 +2,7 @@
 #
 # Deposit module receivers.
 
+from flask import current_app
 from .api import WekoDeposit
 from .pidstore import get_record_without_version
 from weko_records.models import ItemType
@@ -10,6 +11,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     """Append file content to ES record."""
     dep = WekoDeposit.get_record(record.id)
     pid = get_record_without_version(dep.pid)
+    current_app.logger.debug(dep)
     im = dep.copy()
     im.pop('_deposit')
     im.pop('_buckets')
@@ -49,7 +51,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
             if i.get('attribute_type') == 'creator':
                 values = i.get('attribute_value_mlt')[0]
                 creator = {}
-                cnames, fnames, gnames = [], [], []
+                # cnames, fnames, gnames = [], [], []
                 if 'creatorNames' in values:
                     creator['creatorName'] = [n['creatorName'] for n in values['creatorNames']]
                 if 'familyNames' in values:
@@ -59,6 +61,11 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
                 if 'creatorAlternative' in values:
                     creator['creatorAlternative'] = \
                         [n['creatorAlternative'] for n in values['creatorAlternatives']]
+                if 'affiliation' in values:
+                    affiliation = dict()
+                    affiliation['affiliationName'] = [n['affiliationName'] for n in values['affiliation']]
+                    affiliation['nameIdentifier'] = [n['affiliationNameIdentifier'] for n in values['affiliation']]
+                    creator['affiliation'] = affiliation
                 json['creator'] = creator
             elif i.get('attribute_type') == 'file':
                 values = i.get('attribute_value_mlt')
@@ -68,7 +75,12 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
                     date.append(v.get('date')) if 'date' in v else None
                     extent.append(v.get('filesize')[0]['value']) if 'filesize' in v else None
                     mimetype.append(v.get('format')) if 'format' in v else None
-                files['date'] = date if date else None
+                if date:
+                    files['date'] = [dict(
+                        dateType=n.get('dateType'),
+                        value=n.get('dateValue')) for n in date]
+                else:
+                    files['date'] = None
                 files['extent'] = extent if extent else None
                 files['mimetype'] = mimetype if mimetype else None
                 json['file'] = files
