@@ -44,7 +44,8 @@
       <div class="row">
         <div id="detail-item" class="col-sm-8 col-md-8 col-lg-8 col-left">
           <div id="record_id" class="hide">{{ record.id }}</div>
-          {%- block record_author %}
+	        <div id="bucket_id" class="hide">{{ record['_buckets']['deposit'] }}</div>
+	  {%- block record_author %}
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0-%}
 

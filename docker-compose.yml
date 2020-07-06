@@ -179,7 +179,7 @@ services:
     image: mher/flower
     command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
     ports:
-      - "127.0.0.1:5501:5555"
+      - "0.0.0.0:5501:5555"
     links:
       - rabbitmq
 #    networks:

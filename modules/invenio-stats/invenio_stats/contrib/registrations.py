@@ -507,6 +507,20 @@ def register_queries():
             )
         ),
         dict(
+            query_name='bucket-record-download-histogram',
+            query_class=ESDateHistogramQuery,
+            query_config=dict(
+                index='{}-stats-file-download'.format(search_index_prefix),
+                doc_type='file-download-day-aggregation',
+                copy_fields=dict(
+                    bucket_id='bucket_id',
+                ),
+                required_filters=dict(
+                    bucket_id='bucket_id',
+                ),
+            )
+        ),
+        dict(
             query_name='bucket-record-view-total',
             query_class=ESTermsQuery,
             query_config=dict(
@@ -517,6 +531,22 @@ def register_queries():
                 ),
                 required_filters=dict(
                     record_id='record_id',
+                ),
+                metric_fields=dict(
+                    count=('sum', 'count', {}),
+                    unique_count=('sum', 'unique_count', {}),
+                ),
+                aggregated_fields=['country'],
+            )
+        ),
+        dict(
+            query_name='bucket-record-download-total',
+            query_class=ESTermsQuery,
+            query_config=dict(
+                index='{}-stats-file-download'.format(search_index_prefix),
+                doc_type='file-download-day-aggregation',
+                required_filters=dict(
+                    bucket_id='bucket_id',
                 ),
                 metric_fields=dict(
                     count=('sum', 'count', {}),

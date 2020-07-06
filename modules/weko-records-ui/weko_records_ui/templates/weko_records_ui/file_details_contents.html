@@ -127,16 +127,18 @@
                         </td>
                       </tr>
                       <!-- demo -->
+                      {%- if config.PLAGARISM_CHECK_FLG -%}
                       {%- if record | check_permission -%}
                         {%- if 'pdf' in file.mimetype -%}
                           <tr>
                             <td colspan="2">
-                              <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
+                              <a class="btn btn-default" id="btn_check" href="{{ config.PLAGARISM_CHECK_URL }}" target="_blank">
                                 <span class="glyphicon glyphicon-edit"
                                       aria-hidden="true"></span>{{_('Plagarism Check')}}</a>
                             </td>
                           </tr>
                         {%- endif -%}
+                      {%- endif -%}
                       {%- endif -%}
                       <!-- demo -->
 
@@ -208,7 +210,7 @@
                     <div class="col-sm-3">
                       <p class="file-stats-data">
                         <i class="fa fa-play-circle" aria-hidden="true"></i>
-                        {{_('Plays')}}</p>
+                        {{_('Previews')}}</p>
                     </div>
                     <div class="col-sm-2" id="file_preview_num">
                       <p class="file-stats-data">0</p>

@@ -151,6 +151,7 @@ class QueryRecordViewCount(WekoQuery):
                 country[d['key']] = d['count']
                 unknown_view += d['count']
             result['country'] = country
+
             # period
             if get_period:
                 provide_year = int(getattr(config, 'PROVIDE_PERIOD_YEAR'))
@@ -173,6 +174,7 @@ class QueryRecordViewCount(WekoQuery):
         except Exception as e:
             current_app.logger.debug(e)
             result['total'] = 0
+            result['dl_total'] = 0
             result['country'] = country
             result['period'] = period
 
@@ -192,6 +194,113 @@ class QueryRecordViewCount(WekoQuery):
         else:
             date = d['date']
         return self.make_response(self.get_data(record_id, date))
+
+
+class QueryRecordDownloadCount(WekoQuery):
+    """REST API resource providing record download count."""
+
+    view_name = 'get_record_download_count'
+
+    def get_data(self, record_id, bucket_id,query_date=None, get_period=False):
+        """Get data."""
+        result = {}
+        period = []
+        country = {}
+        unknown_view = 0
+
+        try:
+            if not query_date:
+                params = {'record_id': record_id,
+                          'interval': 'month'}
+                params2 = {'bucket_id': bucket_id,
+                          'interval': 'month'}
+            else:
+                year = int(query_date[0: 4])
+                month = int(query_date[5: 7])
+                _, lastday = calendar.monthrange(year, month)
+                params = {'record_id' : record_id,
+                          'interval': 'month',
+                          'start_date': query_date + '-01',
+                          'end_date': query_date + '-' + str(lastday).zfill(2)
+                          + 'T23:59:59'}
+                params2 = {'bucket_id' : bucket_id,
+                          'interval': 'month',
+                          'start_date': query_date + '-01',
+                          'end_date': query_date + '-' + str(lastday).zfill(2)
+                          + 'T23:59:59'}
+            query_period_cfg = current_stats.queries[
+                'bucket-record-view-histogram']
+            query_period = query_period_cfg.query_class(
+                **query_period_cfg.query_config)
+            query_period_cfg2 = current_stats.queries[
+                'bucket-record-download-histogram']
+            query_period2 = query_period_cfg2.query_class(
+                **query_period_cfg2.query_config)
+
+            # total
+            query_total_cfg = current_stats.queries['bucket-record-view-total']
+            query_total = query_total_cfg.query_class(
+                **query_total_cfg.query_config)
+            res_total = query_total.run(**params)
+            result['total'] = res_total['count']
+            for d in res_total['buckets']:
+                country[d['key']] = d['count']
+                unknown_view += d['count']
+            result['country'] = country
+
+            # download total
+            query_dl_total_cfg = current_stats.queries['bucket-record-download-total']
+            query_dl_total = query_dl_total_cfg.query_class(
+                **query_dl_total_cfg.query_config)
+            res_dl_total = query_dl_total.run(**params2)
+            result['dl_total'] = res_dl_total['count']
+
+            # period
+            if get_period:
+                provide_year = int(getattr(config, 'PROVIDE_PERIOD_YEAR'))
+                sYear = datetime.now().year
+                sMonth = datetime.now().month
+                eYear = sYear - provide_year
+                start = datetime(sYear, sMonth, 15)
+                end = datetime(eYear, 1, 1)
+                while end < start:
+                    period.append(start.strftime('%Y-%m'))
+                    start -= timedelta(days=16)
+                    start = datetime(start.year, start.month, 15)
+                result['period'] = period
+
+            unknown_view = result['total'] - unknown_view
+
+            if unknown_view:
+                country[str(getattr(config, 'WEKO_STATS_UNKNOWN_LABEL'))] = \
+                    unknown_view
+                result['country'] = country
+
+        except Exception as e:
+            current_app.logger.debug(e)
+            result['total'] = 0
+            result['dl_total'] = 0
+            result['country'] = country
+            result['period'] = period
+
+        return result
+
+    def get(self, **kwargs):
+        """Get total record view count."""
+        record_id = kwargs.get('record_id')
+        bucket_id = kwargs.get('bucket_id')
+        return self.make_response(self.get_data(record_id,bucket_id, get_period=True))
+
+    def post(self, **kwargs):
+        """Get record view count with date."""
+        record_id = kwargs.get('record_id')
+        bucket_id = kwargs.get('bucket_id')
+        d = request.get_json(force=False)
+        if d['date'] == 'total':
+            date = None
+        else:
+            date = d['date']
+        return self.make_response(self.get_data(record_id,bucket_id, date))
 
 
 class QueryFileStatsCount(WekoQuery):
@@ -465,6 +574,10 @@ record_view_count = QueryRecordViewCount.as_view(
     QueryRecordViewCount.view_name,
 )
 
+record_download_count = QueryRecordDownloadCount.as_view(
+    QueryRecordDownloadCount.view_name,
+)
+
 file_stats_count = QueryFileStatsCount.as_view(
     QueryFileStatsCount.view_name,
 )
@@ -505,6 +618,11 @@ blueprint.add_url_rule(
 blueprint.add_url_rule(
     '/<string:record_id>',
     view_func=record_view_count,
+)
+
+blueprint.add_url_rule(
+    '/r/<string:record_id>/<string:bucket_id>',
+    view_func=record_download_count,
 )
 
 blueprint.add_url_rule(
