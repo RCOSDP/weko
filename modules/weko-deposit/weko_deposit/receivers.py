@@ -11,7 +11,6 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     """Append file content to ES record."""
     dep = WekoDeposit.get_record(record.id)
     pid = get_record_without_version(dep.pid)
-    current_app.logger.debug(dep)
     im = dep.copy()
     im.pop('_deposit')
     im.pop('_buckets')
@@ -24,7 +23,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         json.pop(key)
     json['_item_metadata'] = im
     json['_oai'] = im.get('_oai')
-    json['control_number'] = im.get('control_number')
+    json['control_number'] = im.get('recid')
     json['relation_version_is_last'] = True \
         if pid == get_record_without_version(pid) else False
     itemtype = ItemType.query.filter(ItemType.id==im.get('item_type_id')).first()
@@ -70,15 +69,16 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
             elif i.get('attribute_type') == 'file':
                 values = i.get('attribute_value_mlt')
                 files = {}
-                date, extent, mimetype = [], [], []
+                dates, extent, mimetype = [], [], []
                 for v in values:
-                    date.append(v.get('date')) if 'date' in v else None
+                    dates.append(v.get('date')) if 'date' in v else None
                     extent.append(v.get('filesize')[0]['value']) if 'filesize' in v else None
                     mimetype.append(v.get('format')) if 'format' in v else None
-                if date:
-                    files['date'] = [dict(
-                        dateType=n.get('dateType'),
-                        value=n.get('dateValue')) for n in date]
+                if dates:
+                    for date in dates:
+                        files['date'] = [dict(
+                            dateType=n.get('dateType'),
+                            value=n.get('dateValue')) for n in date]
                 else:
                     files['date'] = None
                 files['extent'] = extent if extent else None
