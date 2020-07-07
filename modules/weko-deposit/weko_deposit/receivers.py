@@ -42,13 +42,12 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     mimetypes = current_app.config[
         'WEKO_MIMETYPE_WHITELIST_FOR_ES']
     for f in files:
-        try:
-            if f.obj.file.size <= file_size_max and \
-                    f.obj.mimetype in mimetypes:
-                content = f.obj.file.json
-                content.update({"file": f.obj.file.read_file(content)})
-                if content['file']:
-                    contents.append(content)
+        if f.obj.file.size <= file_size_max and \
+                f.obj.mimetype in mimetypes:
+            content = f.obj.file.json
+            content.update({"file": f.obj.file.read_file(content)})
+            if content['file']:
+                contents.append(content)
     json['content'] = []
     if contents:
         kwargs['arguments']['pipeline'] = 'item-file-pipeline'
