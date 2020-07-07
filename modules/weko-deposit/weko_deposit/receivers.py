@@ -34,6 +34,8 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     json['_item_metadata'] = im
     json['_oai'] = im.get('_oai')
     json['control_number'] = im.get('recid')
+    im['control_number'] = im.get('recid')
+    im.pop('recid')
     json['relation_version_is_last'] = True \
         if pid == get_record_without_version(pid) else False
     itemtype = ItemType.query.filter(ItemType.id == im.get(
