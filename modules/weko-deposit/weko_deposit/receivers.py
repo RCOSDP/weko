@@ -37,12 +37,19 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     json['weko_creator_id'] = im.get('owner')
     files = [f for f in dep.files]
     contents = []
+    file_size_max = current_app.config[
+        'WEKO_MAX_FILE_SIZE_FOR_ES']
+    mimetypes = current_app.config[
+        'WEKO_MIMETYPE_WHITELIST_FOR_ES']
     for f in files:
-        content = f.obj.file.json
-        content.update({"file": f.obj.file.read_file(content)})
-        if content['file']:
-            contents.append(content)
-    json['content'] = contents
+        try:
+            if f.obj.file.size <= file_size_max and \
+                    f.obj.mimetype in mimetypes:
+                content = f.obj.file.json
+                content.update({"file": f.obj.file.read_file(content)})
+                if content['file']:
+                    contents.append(content)
+    json['content'] = []
     if contents:
         kwargs['arguments']['pipeline'] = 'item-file-pipeline'
     for i in im.values():
@@ -57,7 +64,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
                     creator['familyName'] = [n['familyName'] for n in values['familyNames']]
                 if 'givenNames' in values:
                     creator['givenName'] = [n['givenName'] for n in values['givenNames']]
-                if 'creatorAlternative' in values:
+                if 'creatorAlternatives' in values:
                     creator['creatorAlternative'] = \
                         [n['creatorAlternative'] for n in values['creatorAlternatives']]
                 if 'affiliation' in values:
@@ -65,6 +72,9 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
                     affiliation['affiliationName'] = [n['affiliationName'] for n in values['affiliation']]
                     affiliation['nameIdentifier'] = [n['affiliationNameIdentifier'] for n in values['affiliation']]
                     creator['affiliation'] = affiliation
+                if 'affiliation' in values:
+                    creator['nameIdentifier'] = \
+                        [n['nameIdentifier'] for n in values['nameIdentifiers']]
                 json['creator'] = creator
             elif i.get('attribute_type') == 'file':
                 values = i.get('attribute_value_mlt')
@@ -88,4 +98,3 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
                 json['language'] = [list(it.values())[0] for it in i.get('attribute_value_mlt')]
             elif i.get('attribute_name') == 'Resource Type':
                 json['type'] = [it.get('resourcetype') for it in i.get('attribute_value_mlt')]
-            
