@@ -1,11 +1,21 @@
 # -*- coding: utf-8 -*-
 #
-# Deposit module receivers.
+# Copyright (C) 2020 National Institute of Informatics.
+#
+# INVENIO-ResourceSyncClient is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
+"""Deposit module receivers."""
 
 from flask import current_app
+from weko_records.models import ItemType
+
 from .api import WekoDeposit
 from .pidstore import get_record_without_version
-from weko_records.models import ItemType
+
+ATTR_MLT = 'attribute_value_mlt'
+
 
 def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     """Append file content to ES record."""
@@ -26,7 +36,8 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     json['control_number'] = im.get('recid')
     json['relation_version_is_last'] = True \
         if pid == get_record_without_version(pid) else False
-    itemtype = ItemType.query.filter(ItemType.id==im.get('item_type_id')).first()
+    itemtype = ItemType.query.filter(ItemType.id == im.get(
+        'item_type_id')).first()
     if itemtype:
         json['itemtype'] = itemtype.item_type_name.name
     json['path'] = im.get('path')
@@ -54,38 +65,46 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     for i in im.values():
         if isinstance(i, dict):
             if i.get('attribute_type') == 'creator':
-                values = i.get('attribute_value_mlt')[0]
+                values = i.get(ATTR_MLT)[0]
                 creator = {}
-                # cnames, fnames, gnames = [], [], []
                 if 'creatorNames' in values:
-                    creator['creatorName'] = [n['creatorName'] for n in values['creatorNames']]
+                    creator['creatorName'] = \
+                        [n['creatorName'] for n in values['creatorNames']]
                 if 'familyNames' in values:
-                    creator['familyName'] = [n['familyName'] for n in values['familyNames']]
+                    creator['familyName'] = \
+                        [n['familyName'] for n in values['familyNames']]
                 if 'givenNames' in values:
-                    creator['givenName'] = [n['givenName'] for n in values['givenNames']]
+                    creator['givenName'] = \
+                        [n['givenName'] for n in values['givenNames']]
                 if 'creatorAlternatives' in values:
                     creator['creatorAlternative'] = \
-                        [n['creatorAlternative'] for n in values['creatorAlternatives']]
+                        [n['creatorAlternative'] for n in values[
+                            'creatorAlternatives']]
                 if 'affiliation' in values:
                     affiliation = dict()
-                    affiliation['affiliationName'] = [n['affiliationName'] for n in values['affiliation']]
-                    affiliation['nameIdentifier'] = [n['affiliationNameIdentifier'] for n in values['affiliation']]
+                    affiliation['affiliationName'] = \
+                        [n['affiliationName'] for n in values['affiliation']]
+                    affiliation['nameIdentifier'] = \
+                        [n['affiliationNameIdentifier'] for n in values[
+                            'affiliation']]
                     creator['affiliation'] = affiliation
                 if 'affiliation' in values:
                     creator['nameIdentifier'] = \
                         [n['nameIdentifier'] for n in values['nameIdentifiers']]
                 json['creator'] = creator
             elif i.get('attribute_type') == 'file':
-                values = i.get('attribute_value_mlt')
+                values = i.get(ATTR_MLT)
                 files = {}
                 dates, extent, mimetype = [], [], []
                 for v in values:
                     dates.append(v.get('date')) if 'date' in v else None
-                    extent.append(v.get('filesize')[0]['value']) if 'filesize' in v else None
+                    extent.append(v.get('filesize')[0]['value']) if \
+                        'filesize' in v else None
                     mimetype.append(v.get('format')) if 'format' in v else None
                 if dates:
+                    files['date'] = []
                     for date in dates:
-                        files['date'] = [dict(
+                        files['date'] += [dict(
                             dateType=n.get('dateType'),
                             value=n.get('dateValue')) for n in date]
                 else:
@@ -94,6 +113,8 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
                 files['mimetype'] = mimetype if mimetype else None
                 json['file'] = files
             elif i.get('attribute_name') == 'Language':
-                json['language'] = [list(it.values())[0] for it in i.get('attribute_value_mlt')]
+                json['language'] = [list(it.values())[0] for it in i.get(
+                    ATTR_MLT)]
             elif i.get('attribute_name') == 'Resource Type':
-                json['type'] = [it.get('resourcetype') for it in i.get('attribute_value_mlt')]
+                json['type'] = [it.get('resourcetype') for it in i.get(
+                    ATTR_MLT)]
