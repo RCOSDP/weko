@@ -110,7 +110,9 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
                 else:
                     files['date'] = None
                 files['extent'] = extent if extent else None
-                files['mimetype'] = mimetype if mimetype else None
+                files['mimeType'] = mimetype if mimetype else None
+                files['URI'] = []
+                files['version'] = []
                 json['file'] = files
             elif i.get('attribute_name') == 'Language':
                 json['language'] = [list(it.values())[0] for it in i.get(
