@@ -1622,7 +1622,7 @@ function toObject(arr) {
             } else if (typeof(val.key) === 'string') {
               sub_item = val.key.split(".").pop()
             }
-            val["collapsed"] = isCollapsed && !$scope.required_list.includes(sub_item);
+            val["collapsed"] = isCollapsed && $scope.required_list.indexOf(sub_item) === -1;
           } else {
             val["collapsed"] = isCollapsed;
           }
@@ -1641,7 +1641,7 @@ function toObject(arr) {
         let isCollapsed;
         angular.forEach(forms, function(val, key){
           isCollapsed = requiredList.indexOf(val.key) == -1;
-          val["collapsed"] = isCollapsed && !$scope.required_list.includes(val.key);
+          val["collapsed"] = isCollapsed && $scope.required_list.indexOf(val.key) === -1;
           if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
             $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
           }
@@ -1654,15 +1654,15 @@ function toObject(arr) {
       $scope.prepareRequiredList = function () {
         let prepareRequiredList = function (json_data) {
           let temp_key;
-      
+
           let pushToRequiredList = function (key) {
-              if (!$scope.required_list.includes(key)) {
+              if ($scope.required_list.indexOf(key) === -1) {
                 $scope.required_list.push(key);
               }
-      
+
               temp_key = key;
           };
-      
+
           angular.forEach(json_data, function (val, key) {
               if (val.required) {
                   return pushToRequiredList(key);
@@ -1678,7 +1678,7 @@ function toObject(arr) {
                   }
               }
           });
-      
+
           return temp_key;
         }
 
@@ -1700,7 +1700,7 @@ function toObject(arr) {
               ids = val.split('.');
             }
             angular.forEach(ids, function (_val, _key) {
-              if (!$scope.required_list.includes(_val)) {
+              if ($scope.required_list.indexOf(_val) === -1) {
                 $scope.required_list.push(_val);
               }
             });
@@ -1839,7 +1839,29 @@ function toObject(arr) {
           // Change position of File and Billing File
           $scope.changePositionFileName();
         }, 500);
+
+        // Resize main content widget after optional items are collapsed
+        setTimeout(function () {
+          $scope.resizeMainContentWidget();
+        }, 500)
       });
+
+      /**
+       * Resize main content widget after optional items are collapsed
+       */
+      $scope.resizeMainContentWidget = function () {
+        if (typeof widgetBodyGrid !== 'undefined') {
+          let mainContent = $('#main_contents');
+          let width = mainContent.data("gsWidth");
+          widgetBodyGrid.resizeWidget(mainContent, width, DEFAULT_WIDGET_HEIGHT);
+          if (typeof mainContentSensor !== 'undefined') {
+            setTimeout(function () {
+              //  Remove the sensor of the main content widget.
+              mainContentSensor.detach();
+            }, 500)
+          }
+        }
+      }
 
       $scope.changePositionFileName = function () {
         let records = $rootScope.recordsVM.invenioRecordsForm;
@@ -2797,7 +2819,7 @@ function toObject(arr) {
         if ($scope.error_list) {
           eitherRequireds = $scope.error_list['either'];
         }
-        
+
         if (!eitherRequireds) {
           return true;
         }
@@ -2859,7 +2881,7 @@ function toObject(arr) {
                 depositionForm[listSubItem[j].id].$setViewValue("");
               }
               if (noEitherError && eitherRequired) {
-                if (!eitherRequired.includes(listSubItem[j].id)) {
+                if (eitherRequired.indexOf(listSubItem[j].id) === -1) {
                   listItemErrors.push(listSubItem[j].title);
                 }
               } else {
