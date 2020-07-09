@@ -26,11 +26,8 @@ import gzip
 from datetime import datetime
 from functools import wraps
 from io import BytesIO
-from itertools import islice, zip_longest
-from urllib.parse import urlparse
 
-from flask import Blueprint, Response, current_app, render_template, request, \
-    url_for
+from flask import Blueprint, Response, current_app, render_template, url_for
 from flask_sitemap import Sitemap, sitemap_page_needed
 from invenio_cache import current_cache
 from invenio_db import db
@@ -48,8 +45,10 @@ class WekoSitemap(Sitemap):
     def create_page(app, page, urlset):
         """Create sitemap page and save to cache."""
         page_name = 'sitemap_' + str(page).zfill(4)  # Cache key
-        page_dic = dict(page=current_app.extensions['sitemap'].render_page(urlset=urlset),
-                        lastmod=datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'))
+        page_dic = dict(
+            page=current_app.extensions['sitemap'].render_page(urlset=urlset),
+            lastmod=datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z')
+        )
         current_app.extensions['weko-sitemap'].set_cache_page(
             page_name, page_dic)
 
@@ -75,7 +74,10 @@ class WekoSitemap(Sitemap):
         # Check if there is a set of keys, if not create one_or_none
         current_key_set = current_cache.get(self.cached_pages_set_key) or set()
         current_key_set.add(key)
-        current_cache.set(self.cached_pages_set_key, current_key_set)
+        current_cache.set(
+            self.cached_pages_set_key,
+            current_key_set,
+            timeout=current_app.config['WEKO_SITEMAP_CACHE_TIMEOUT'])
         current_cache.set(
             key, value,
             timeout=current_app.config['WEKO_SITEMAP_CACHE_TIMEOUT'])
@@ -96,7 +98,7 @@ class WekoSitemap(Sitemap):
         if sitemap_page:
             return self.gzip_response(sitemap_page['page'])
             # return sitemap_page['page']
-        return flask_sitemap.render_page(urlset=[None])
+        return self.render_page(urlset=[None])
 
     def gzip_response(self, data):
         """Override - Gzip response data and create new Response instance."""
@@ -116,8 +118,10 @@ class WekoSitemap(Sitemap):
         self.clear_cache_pages()  # Clear cache
         q = (db.session
                .query(PersistentIdentifier, RecordMetadata)
-               .join(RecordMetadata, RecordMetadata.id == PersistentIdentifier.object_uuid)
-               .filter(PersistentIdentifier.status == PIDStatus.REGISTERED, PersistentIdentifier.pid_type == 'recid')
+               .join(RecordMetadata,
+                     RecordMetadata.id == PersistentIdentifier.object_uuid)
+               .filter(PersistentIdentifier.status == PIDStatus.REGISTERED,
+                       PersistentIdentifier.pid_type == 'recid')
                .order_by(cast(PersistentIdentifier.pid_value, Float).asc())
                .limit(current_app.config['WEKO_SITEMAP_TOTAL_MAX_URL_COUNT']))
 
@@ -152,7 +156,8 @@ class WekoSitemap(Sitemap):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
-        self.cached_pages_set_key = 'sitemap_page_keys'  # Keep track of cached pages
+        # Keep track of cached pages
+        self.cached_pages_set_key = 'sitemap_page_keys'
         app.extensions['weko-sitemap'] = self
         app.config['SITEMAP_VIEW_DECORATORS'] = [self.load_page]
 
