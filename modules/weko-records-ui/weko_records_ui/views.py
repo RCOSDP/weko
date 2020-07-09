@@ -40,7 +40,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
-from weko_deposit.api import WekoIndexer, WekoRecord
+from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
@@ -436,8 +436,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     detail_condition = get_search_detail_keyword('')
 
     # Add Item Reference data to Record Metadata
-    pid_without_ver = record.get("recid").split('.')[0]
-    res = ItemLink.get_item_link_info(pid_without_ver)
+    res = ItemLink.get_item_link_info(record.get("recid"))
     if res:
         record["relation"] = res
     else:
@@ -500,7 +499,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     files_thumbnail = []
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
-            record.get('_buckets').get('deposit')).\
+            record.files.bucket.id).\
             filter_by(is_thumbnail=True).all()
     files = []
     for f in record.files:
@@ -729,20 +728,3 @@ def init_permission(recid):
     except Exception as ex:
         current_app.logger.debug(ex)
         abort(500)
-
-
-@blueprint.app_template_filter('translate_content')
-def translate_content(content):
-    """Translate record detail content.
-
-    @param content:
-    @return:
-    """
-    try:
-        if content:
-            return _(content)
-        else:
-            return content
-    except Exception as ex:
-        current_app.logger.debug(ex)
-        return content

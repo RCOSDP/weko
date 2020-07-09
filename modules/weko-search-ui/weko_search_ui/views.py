@@ -25,7 +25,6 @@ from xml.etree import ElementTree
 
 from blinker import Namespace
 from flask import Blueprint, current_app, jsonify, render_template, request
-from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -112,8 +111,7 @@ def search():
             community_id, ctx = workflow_activity.get_activity_index_search(
                 activity_id=activity_id)
 
-        # Get ex-Item Links
-        recid = item['pid'].get('value') if item.get('pid') else None
+        recid = approval_record.get('control_number', None)
         if recid:
             pid_without_ver = recid.split('.')[0]
             item_link = ItemLink.get_item_link_info(pid_without_ver)

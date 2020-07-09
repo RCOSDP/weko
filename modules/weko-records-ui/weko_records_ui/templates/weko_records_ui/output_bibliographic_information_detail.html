@@ -19,30 +19,30 @@
 #}
 
 {% macro output_bibliographic_information(lst) %}
-    <tr>
-        <th scope="row" colspan="6">{{ _(lst['attribute_name']) }}</th>
-        <td>
-            {%- for l in lst['attribute_value_mlt'] %}
-            {% for source_title in l.get('title_attribute_name') %}
-                {% if source_title != '' %}
-                    {{source_title}} <br>
-                {% endif %}
-            {% endfor %}
-            {% if not (l.get('title_attribute_name')|length == 1 and l.get('title_attribute_name')[0] == "") and l.get('magazine_attribute_name') |length > 0  %}
-                <br>
+  <tr>
+    <th scope="row" colspan="6">{{ lst['attribute_name_i18n'] }}</th>
+    <td>
+      {%- for l in lst['attribute_value_mlt'] %}
+        {% for source_title in l.get('title_attribute_name') %}
+          {% if source_title != '' %}
+            {{ source_title }} <br>
+          {% endif %}
+        {% endfor %}
+        {% if not (l.get('title_attribute_name')|length == 1 and l.get('title_attribute_name')[0] == "") and l.get('magazine_attribute_name') |length > 0 %}
+          <br>
+        {% endif %}
+        {% set count = [] %}
+        {% for magazine in l.get('magazine_attribute_name') %}
+          {% for key, value in magazine.items() %}
+            {% if count|length + 1 == l.get('length') %}
+              {{ key }} {{ value }}
+            {% else %}
+              {{ key }} {{ value }}{{ ', ' }}
             {% endif %}
-            {% set count = [] %}
-            {% for magazine in l.get('magazine_attribute_name') %}
-                {% for key, value in magazine.items() %}
-                {% if count|length + 1 == l.get('length')  %}
-                    {{_(key)}} {{value}}
-                {% else %}
-                    {{_(key)}} {{value}}{{', '}}
-                {% endif %}
-                {% set var = count.append(1) %}
-                {% endfor %}
-            {% endfor %}
-            {%- endfor -%}
-        </td>
-    </tr>
+            {% set var = count.append(1) %}
+          {% endfor %}
+        {% endfor %}
+      {%- endfor -%}
+    </td>
+  </tr>
 {% endmacro %}

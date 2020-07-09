@@ -113,8 +113,9 @@
                           </button>
                       </li> -->
                       <input type="hidden" id="next-frame" value="iframe_tree">
+                      <input type="hidden" id="next-frame-upgrade" value="iframe_tree_upgrade">
+                      <input type="hidden" id="next-frame-edit" value="iframe_tree_edit">
                     {%- if pid %}
-
                     <!-- <li>
                           <button ng-disabled="recordsVM.invenioRecordsLoading"
                           ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
@@ -279,6 +280,30 @@
                     <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
                     <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
                   {%- endblock feedback_mail_list %}
+
+                  {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
+                    {%- block radio_version_management %}
+                    <div id="react-component-version">
+                      <div class="row">
+                        <div class="form-group">
+                          <label id="component-version-label" class="control-label col-sm-3 text-right field-required">
+                            {{_('Version Management')}}
+                          </label>
+                          <div class="col-sm-9">
+                            <div class="col-sm-3">
+                              <input type="radio" name="radioVersionSelect" value="update" />
+                              {{_('Upgrade Version')}}
+                            </div>
+                            <div class="col-sm-3">
+                              <input type="radio" name="radioVersionSelect" value="keep" />
+                              {{_('Keep Version')}}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {%- endblock radio_version_management %}
+                  {% endif %}
                 </div>
                 <div class="row">
                   <div class="col-sm-12">

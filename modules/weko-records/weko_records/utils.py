@@ -25,6 +25,7 @@ from collections import OrderedDict
 import pytz
 from flask import current_app
 from flask_security import current_user
+from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.ext import pid_exists
 from weko_schema_ui.schema import SchemaTree
@@ -311,11 +312,12 @@ def find_items(form):
     def find_key(node):
         if isinstance(node, dict):
             key = node.get('key')
-            title = node.get('title')
-            # type = node.get('type')
+            title = node.get('title', '')
+            title_i18n = node.get('title_i18n', {})\
+                .get(current_i18n.language, title)
+
             if key:
-                # title = title[title.rfind('.')+1:]
-                yield [key, title or ""]
+                yield [key, title, title_i18n]
             for v in node.values():
                 if isinstance(v, list):
                     for k in find_key(v):
@@ -606,7 +608,7 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
     def get_name(key):
         for lst in klst:
             if key == lst[0].split('.')[-1]:
-                return lst[1] if not is_author else '{}.{}'. format(key, lst[1])
+                return lst[2] if not is_author else '{}.{}'. format(key, lst[2])
 
     def to_sort_dict(alst, klst):
         """Sort item list.
