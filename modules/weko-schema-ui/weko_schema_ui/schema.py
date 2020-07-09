@@ -625,17 +625,20 @@ class SchemaTree:
                             if not ddi_schema:
                                 if len(lst_none_idx) > 0:
                                     # delete all None element in @value
-                                    for i in lst_none_idx:
-                                        del node_val[0][i]
+                                    lst_val_idx = list(set(range(len(node_val[0]))) - set(lst_none_idx))
+                                    node_val[0] = [val for idx, val in enumerate(node_val[0])
+                                                   if idx in lst_val_idx]
                                     # delete all None element in all @attributes
                                     for key, val in v.get(self._atr,
                                                           {}).items():
-                                        for i in lst_none_idx:
-                                            del val[0][i]
+                                        temp_val = list(set(range(len(node_val[0]))) - set(lst_none_idx))
+                                        val[0] = [val for idx, val in enumerate(val[0])
+                                                  if idx in temp_val]
                             else:
                                 if not v.get(self._atr, {}).items():
-                                    for i in lst_none_idx:
-                                        del node_val[0][i]
+                                    lst_val_idx = list(set(range(len(node_val[0]))) - set(lst_none_idx))
+                                    node_val[0] = [v for idx, v in enumerate(node_val[0])
+                                                   if idx in lst_val_idx]
                             clean[k] = v
                         elif ddi_schema and not node_val and node_att and \
                                 node_att[next(iter(node_att))][0]:
