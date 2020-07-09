@@ -492,6 +492,7 @@ def validattion_item_property_either_required(
         if not requirements:
             return None
         else:
+            requirements = list(filter(None, requirements))
             error_list.append(requirements)
 
     # check 位置情報（空間） datacite:geoLocationBox
@@ -530,6 +531,7 @@ def validattion_item_property_either_required(
         if not requirements:
             return None
         else:
+            requirements = list(filter(None, requirements))
             error_list.append(requirements)
 
     # check 位置情報（自由記述） datacite:geoLocationPlace

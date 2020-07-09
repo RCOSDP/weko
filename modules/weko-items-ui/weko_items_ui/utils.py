@@ -591,23 +591,29 @@ def recursive_update_schema_form_with_condition(
                     if isinstance(ids, list):
                         for _id in ids:
                             if elem['key'] == _id:
+                                if len(either_required_list) != 1:
+                                    condition_item = copy.deepcopy(elem)
+                                    condition_item['required'] = True
+                                    condition_item['condition'] \
+                                        = condition_required
+                                    schema_form_condition.append(
+                                        {'index': index, 'item': condition_item})
+
+                                    elem['condition'] = condition_not_required
+                                else:
+                                    elem['required'] = True
+                    elif isinstance(ids, str):
+                        if elem['key'] == ids:
+                            if len(either_required_list) != 1:
                                 condition_item = copy.deepcopy(elem)
                                 condition_item['required'] = True
-                                condition_item['condition'] \
-                                    = condition_required
+                                condition_item['condition'] = condition_required
                                 schema_form_condition.append(
                                     {'index': index, 'item': condition_item})
 
                                 elem['condition'] = condition_not_required
-                    elif isinstance(ids, str):
-                        if elem['key'] == ids:
-                            condition_item = copy.deepcopy(elem)
-                            condition_item['required'] = True
-                            condition_item['condition'] = condition_required
-                            schema_form_condition.append(
-                                {'index': index, 'item': condition_item})
-
-                            elem['condition'] = condition_not_required
+                            else:
+                                elem['required'] = True
 
     for index, condition_item in enumerate(schema_form_condition):
         schema_form.insert(
