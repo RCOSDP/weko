@@ -418,8 +418,10 @@ def listrecords(**kwargs):
                     'system_identifier_doi'] = get_identifier(db_record)
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
             e_metadata.append(record_dumper(pid, record['json']))
-        except Exception as ex:
-            current_app.logger.error(str(ex))
+        except Exception:
+            import traceback
+            current_app.logger.error(traceback.print_exc())
+            current_app.logger.error('Error when exporting item id' + str(record['id']))
 
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree
