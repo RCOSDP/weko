@@ -75,7 +75,10 @@ class WekoSitemap(Sitemap):
         # Check if there is a set of keys, if not create one_or_none
         current_key_set = current_cache.get(self.cached_pages_set_key) or set()
         current_key_set.add(key)
-        current_cache.set(self.cached_pages_set_key, current_key_set)
+        current_cache.set(
+            self.cached_pages_set_key,
+            current_key_set,
+            timeout=current_app.config['WEKO_SITEMAP_CACHE_TIMEOUT'])
         current_cache.set(
             key, value,
             timeout=current_app.config['WEKO_SITEMAP_CACHE_TIMEOUT'])

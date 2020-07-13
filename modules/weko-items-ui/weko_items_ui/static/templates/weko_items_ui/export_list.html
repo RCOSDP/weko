@@ -27,6 +27,7 @@
             <td>
               <a target="_self" ng-href="/records/{{record.id}}{{commInfo}}">
                 <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+
                 {{ record.metadata.hasOwnProperty('title') ? record.metadata.title[0] : record.metadata['dc:title'][0] }}
               </a>
             </td>
