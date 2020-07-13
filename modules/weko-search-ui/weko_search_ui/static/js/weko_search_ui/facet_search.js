@@ -133,7 +133,7 @@ class MainLayout extends React.Component {
   }
 
   handleCheck(params, value) {
-    let search = window.location.search || "?"
+    let search = window.location.search.replace(',', '%2C') || "?"
     let pattern = encodeURIComponent(params) + "=" + encodeURIComponent(value)
     if (search.indexOf(pattern) >= 0) {
       search = search.replace("&"+ pattern ,"")
@@ -146,7 +146,7 @@ class MainLayout extends React.Component {
 
   render() {
     const { is_enable, list_facet } = this.state
-    const search = window.location.search
+    const search = window.location.search.replace(',', '%2C')
     const that = this
     return (
       <div>
