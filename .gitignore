@@ -38,6 +38,7 @@ pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
+.pytest_cache/
 .tox/
 .coverage
 .coverage.*
@@ -45,6 +46,8 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+*.db
+venv/
 
 # Translations
 # *.mo
@@ -84,15 +87,4 @@ celerybeat-schedule
 celeryd.pid
 # demo data
 weko-demodata/
-
-# nginx
-
-scripts/backup
-reload.trigger
-deposit.py
-download/*
-nginx/keys/server.crt
-nginx/keys/server.key
-
-reload.trigger
 
