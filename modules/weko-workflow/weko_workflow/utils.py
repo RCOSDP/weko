@@ -153,6 +153,7 @@ def item_metadata_validation(item_id, identifier_type):
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
+    ddi_item_type_name = 'DDI'
     journalarticle_nameid = [3, 5, 9]
     journalarticle_type = ['other（プレプリント）', 'conference paper',
                            'data paper', 'departmental bulletin paper',
@@ -219,19 +220,22 @@ def item_metadata_validation(item_id, identifier_type):
             or (resource_type in elearning_type) \
             or (item_type.name_id in datageneral_nameid
                 or resource_type in datageneral_types):
-            required_properties = ['title',
-                                   'fileURI']
+            required_properties = ['title']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
             required_properties = ['title',
-                                   'creator',
-                                   'fileURI']
+                                   'creator']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
                 or resource_type in dataset_type:
             required_properties = ['title',
-                                   'givenName',
-                                   'fileURI']
+                                   'givenName']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
             either_properties = ['geoLocationPoint',
                                  'geoLocationBox',
                                  'geoLocationPlace']
@@ -242,20 +246,25 @@ def item_metadata_validation(item_id, identifier_type):
             required_properties = ['title',
                                    'publisher',
                                    'sourceIdentifier',
-                                   'sourceTitle',
-                                   'fileURI']
+                                   'sourceTitle']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
         elif resource_type in report_types:
-            required_properties = ['title',
-                                   'fileURI']
+            required_properties = ['title']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
         elif resource_type in thesis_types:
             required_properties = ['title',
-                                   'creator',
-                                   'fileURI']
+                                   'creator']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
     # DataCite DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']:
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
+            and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
     # NDL JaLC DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI'] \
+            and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
 
     if required_properties:
@@ -317,7 +326,7 @@ def validattion_item_property_required(
     # check jpcoar:URI
     if 'fileURI' in properties:
         _, key = mapping_data.get_data_by_property(
-            "file.mimeType.@value")
+            "file.URI.@value")
         data = []
         if key:
             key = key.split('.')[0]
@@ -330,10 +339,11 @@ def validattion_item_property_required(
                         data.append(value)
                 data.append(file_name_data)
 
-        repeatable = True
-        requirements = check_required_data(data, key + '.filename', repeatable)
-        if requirements:
-            error_list['required'] += requirements
+            repeatable = True
+            requirements = check_required_data(
+                data, key + '.filename', repeatable)
+            if requirements:
+                error_list['required'] += requirements
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property(
