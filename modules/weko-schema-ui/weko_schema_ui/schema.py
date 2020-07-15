@@ -111,6 +111,8 @@ class SchemaConverter:
                                 atrb.name),
                             ref=None if not hasattr(atrb, 'ref') else atrb.ref,
                             use=None if not hasattr(atrb, 'use') else atrb.use)
+                        if is_get_only_target_namespace and attrd.get('name', None) == 'xml-lang':
+                            continue
                         if not isinstance(atrb, XsdAnyAttribute):
                             if 'lang' not in atrb.name:
                                 attrd.update(get_element_type(atrb.type))
