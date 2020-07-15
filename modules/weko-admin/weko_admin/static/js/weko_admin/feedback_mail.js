@@ -7,7 +7,8 @@ const SEND_RADIO_BUTTON_NAME = document.getElementById("first-radio-name").value
 const NOT_SEND_RADIO_BUTTON_NAME = document.getElementById("second-radio-name").value;
 const COMPONENT_SEARCH_EMAIL_NAME = document.getElementById("component-search-email-name").value;
 const OPEN_MODAL_SEARCH_BUTTON_NAME = document.getElementById("open-modal-search-button-name").value;
-const DELETE_BUTTON_NAME = document.getElementById("delete-button-name").value;
+//const DELETE_BUTTON_NAME = document.getElementById("delete-button-name").value;
+const DELETE_BUTTON_NAME = "Delete Feedback Mail";
 const SAVE_BUTTON_NAME = document.getElementById("save-button-name").value;
 const SEND_BUTTON_NAME = document.getElementById("manual-send-name").value;
 const MESSAGE_SUCCESS = document.getElementById("message-success").value;
@@ -25,6 +26,7 @@ const RESEND_BUTTON_NAME = document.getElementById("resend-button-name").value;
 const CLOSE_BUTTON_NAME = document.getElementById("close-button-name").value;
 const NO_DATA_LABEL = document.getElementById("no-data-label").value;
 const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
+const IMPORT_BUTTON_NAME = document.getElementById("import-button-name").value;
 const GET_FAILED_MAIL_URL = "/api/admin/get_failed_mail";
 const UPDATE_FEEDBACK_MAIL_URL = "/api/admin/update_feedback_mail";
 const GET_SEND_MAIL_HISTORY_URL = "/api/admin/get_send_mail_history";
@@ -292,14 +294,33 @@ class TableUserEmailComponent extends React.Component {
           name = familyName + firstName;
         }
       }
-      return (
+      if (row._source.emailInfo.length == 1) {
+        return (
           <tr key = {row._source.pk_id.toString()}>
             <td>{name}</td>
             <td>{row._source.emailInfo[0].email}</td>
-            <td className="text-right"><button className="btn btn-info" onClick = {(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
+            <td className="text-right">
+              <button className="btn btn-info"
+                onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
+                &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
+              </button>
+            </td>
+          </tr>
+        )
+      } else {
+        return (
+          <tr key={row._source.pk_id.toString()}>
+            <td>{name}</td>
+            <td></td>
+            <td className="text-right">
+              <button disabled className="btn btn-info">
+                  &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
+              </button>
+            </td>
           </tr>
         )
       }
+    }
     )
     return (
       <tbody >

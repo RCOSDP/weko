@@ -22,6 +22,7 @@
 
 import json
 
+import redis
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
@@ -31,6 +32,7 @@ from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
+from simplekv.memory.redisstore import RedisStore
 
 from .api import WekoDeposit
 
@@ -154,7 +156,8 @@ class ItemResource(ContentNegotiatedMethodView):
 
     def __init__(self, ctx, search_serializers=None,
                  record_serializers=None,
-                 default_media_type=None, **kwargs):
+                 default_media_type=None,
+                 **kwargs):
         """Constructor."""
         super(ItemResource, self).__init__(
             method_serializers={
@@ -189,9 +192,7 @@ class ItemResource(ContentNegotiatedMethodView):
             data = request.get_json()
             pid = kwargs.get('pid_value').value
 
-            # item metadata cached on Redis by pid
-            import redis
-            from simplekv.memory.redisstore import RedisStore
+            # Saving ItemMetadata cached on Redis by pid
             datastore = RedisStore(redis.StrictRedis.from_url(
                 current_app.config['CACHE_REDIS_URL']))
             cache_key = current_app.config[
@@ -202,6 +203,6 @@ class ItemResource(ContentNegotiatedMethodView):
                 json.dumps(data).encode('utf-8'),
                 ttl_secs=ttl_sec)
         except BaseException:
-            abort(400, "Failed to register item")
+            abort(400, "Failed to register item!")
 
         return jsonify({'status': 'success'})

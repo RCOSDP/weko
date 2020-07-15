@@ -100,10 +100,14 @@
                     </button>
                   </li>
                   <input type="hidden" id="next-frame" value="r">
+                  <!-- 
+                    <input type="hidden" id="next-frame-upgrade" value="iframe_tree_edit">
+                    <input type="hidden" id="next-frame-edit" value="iframe_tree_upgrade"> 
+                  -->
                   {%- if pid %}
                   <li>
                     <button ng-disabled="recordsVM.invenioRecordsLoading"
-                      ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger delete-button"
+                      ng-hide="true" class="btn btn-danger delete-button"
                       ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">
                       <span class="glyphicon glyphicon-trash"></span>
                       {{_('Delete')}}
@@ -229,7 +233,7 @@
                 <div id="react"></div>
                 <input id="component-search-email-name" type="hidden" value="{{_('フィードバックメール送信先')}}" />
                 <input id="search-button-name" type="hidden" value="{{_('From author DB')}}" />
-                <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
+                <input id="delete-button-name" type="hidden" value="{{_('Delete'}" />
                 <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
                 <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
                 <input id="invalid-email-format" type="hidden" value="{{_('Invalid email format.')}}" />
@@ -247,7 +251,7 @@
                     {%- if pid %}
                     <li>
                       <button ng-disabled="recordsVM.invenioRecordsLoading"
-                        ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger delete-button"
+                        ng-hide="true" class="btn btn-danger delete-button"
                         ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
                         <span class="glyphicon glyphicon-trash"></span>
                         {{_('Delete')}}

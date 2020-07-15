@@ -1,10 +1,15 @@
 const NUM_OF_RESULT = 10;
 const LIMIT_PAGINATION_NUMBER = 5;
 const COMPONENT_SEARCH_EMAIL_NAME = document.getElementById("component-search-email-name").value;
-const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
+const OPEN_MODAL_SEARCH_BUTTON_NAME = document.getElementById("open-modal-search-button-name").value;
 const DELETE_BUTTON_NAME = document.getElementById("delete-button-name").value;
 const DUPLICATE_ERROR_MESSAGE = document.getElementById("duplicate-error-message").value;
 const INPUT_TEXT_PLACEHOLDER = document.getElementById("input-text-placeholder").value;
+const CLOSE_BUTTON_NAME = document.getElementById("close-button-name").value;
+const NAME_LABEL = document.getElementById("name-label").value;
+const MAIL_ADDRESS_LABEL = document.getElementById("mail-address-label").value;
+const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
+const IMPORT_BUTTON_NAME = document.getElementById("import-button-name").value;
 
 class ComponentExclusionTarget extends React.Component {
   constructor(props) {
@@ -129,7 +134,7 @@ class ComponentExclusionTarget extends React.Component {
         <div className="controls col-xs-9">
           <div>
             <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
-              <i className="glyphicon glyphicon-search"></i>&nbsp;{SEARCH_BUTTON_NAME}
+              <i className="glyphicon glyphicon-search"></i>&nbsp;{OPEN_MODAL_SEARCH_BUTTON_NAME}
             </ReactBootstrap.Button>
           </div>
           <div className="style-full-size">
@@ -180,18 +185,43 @@ class TableUserEmailComponent extends React.Component {
   }
 
   generateBodyTableUser() {
-    let tBodyElement = this.state.listUser.map((row) => (
-      <tr key={row._source.pk_id.toString()}>
-        <td>{row._source.authorNameInfo[0].fullName}</td>
-        <td>{row._source.emailInfo[0].email}</td>
-        <td className="text-right">
-          <button className="btn btn-info"
-            onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
-              &nbsp;&nbsp;Import&nbsp;&nbsp;
-          </button>
-        </td>
-      </tr>
-    )
+    let tBodyElement = this.state.listUser.map((row) => {
+      let name = "";
+      if (row._source.authorNameInfo[0]) {
+        name = row._source.authorNameInfo[0].fullName;
+        if (!name) {
+          let familyName = row._source.authorNameInfo[0].familyName || "";
+          let firstName = row._source.authorNameInfo[0].firstName || "";
+          name = familyName + firstName;
+        }
+      }
+      if (row._source.emailInfo.length == 1) {
+        return (
+          <tr key={row._source.pk_id.toString()}>
+                <td>{name}</td>
+            <td>{row._source.emailInfo[0].email}</td>
+            <td className="text-right">
+              <button className="btn btn-info"
+                onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
+                  &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
+              </button>
+            </td>
+          </tr>
+        )
+      } else {
+        return (
+          <tr key={row._source.pk_id.toString()}>
+            <td>{name}</td>
+            <td></td>
+            <td className="text-right">
+              <button disabled className="btn btn-info">
+                  &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
+              </button>
+            </td>
+          </tr>
+        )
+      }
+    }
     )
     return (
       <tbody >
@@ -224,8 +254,8 @@ class TableUserEmailComponent extends React.Component {
           <caption ></caption>
           <thead >
             <tr className="success">
-              <th className="thWidth style-column">Name</th>
-              <th className="thWidth style-column">Mail Address</th>
+              <th className="thWidth style-column">{NAME_LABEL}</th>
+              <th className="thWidth style-column">{MAIL_ADDRESS_LABEL}</th>
               <th className="alignCenter" ></th>
             </tr>
           </thead>
@@ -280,7 +310,7 @@ class SearchComponent extends React.Component {
           <button class="btn btn-primary search-button" type="button" onClick={this.searchEmail}>&nbsp;&nbsp;
             <i class="fa fa-search-plus"></i>
             &nbsp;
-            Search &nbsp;&nbsp;
+            {SEARCH_BUTTON_NAME} &nbsp;&nbsp;
           </button>
         </div>
       </div>
@@ -459,7 +489,7 @@ class ModalFooterComponent extends React.Component {
   render() {
     return (
       <ReactBootstrap.Button variant="secondary" onClick={this.handleClose}>
-        <span className="glyphicon glyphicon-remove"></span> Close
+        <span className="glyphicon glyphicon-remove"></span> {CLOSE_BUTTON_NAME}
       </ReactBootstrap.Button>
     )
   }

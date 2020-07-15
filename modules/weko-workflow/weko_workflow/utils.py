@@ -26,6 +26,8 @@ from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
 from invenio_records.models import RecordMetadata
@@ -34,13 +36,15 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
-from weko_records.api import ItemsMetadata, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
+    Mapping
 from weko_records.serializers.utils import get_mapping
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
-from .api import WorkActivity
+from .api import UpdateItem, WorkActivity
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
+from .models import Action as _Action
 
 
 def get_identifier_setting(community_id):
@@ -182,6 +186,7 @@ def item_metadata_validation(item_id, identifier_type):
         return {
             'required': [],
             'pattern': [],
+            'either': [],
             'pmid': '',
             'doi': '',
             'url': '',
@@ -192,11 +197,15 @@ def item_metadata_validation(item_id, identifier_type):
 
     if not item_type or not resource_type and type_check:
         error_list = {'required': [], 'pattern': [], 'pmid': '',
-                      'doi': '', 'url': ''}
+                      'doi': '', 'url': '', 'either': []}
         error_list['required'].append(type_key)
         return error_list
     resource_type = resource_type.pop()
-    properties = []
+    properties = {}
+    # 必須
+    required_properties = []
+    # いずれか必須
+    either_properties = []
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
@@ -210,51 +219,121 @@ def item_metadata_validation(item_id, identifier_type):
             or (resource_type in elearning_type) \
             or (item_type.name_id in datageneral_nameid
                 or resource_type in datageneral_types):
-            properties = ['title']
+            required_properties = ['title',
+                                   'fileURI']
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
-            properties = ['title',
-                          'creator']
+            required_properties = ['title',
+                                   'creator',
+                                   'fileURI']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif item_type.name_id in dataset_nameid \
                 or resource_type in dataset_type:
-            properties = ['title',
-                          'givenName']
+            required_properties = ['title',
+                                   'givenName',
+                                   'fileURI']
+            either_properties = ['geoLocationPoint',
+                                 'geoLocationBox',
+                                 'geoLocationPlace']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if item_type.name_id in journalarticle_nameid or resource_type in \
                 journalarticle_type:
-            properties = ['title',
-                          'publisher',
-                          'sourceIdentifier',
-                          'sourceTitle']
+            required_properties = ['title',
+                                   'publisher',
+                                   'sourceIdentifier',
+                                   'sourceTitle',
+                                   'fileURI']
         elif resource_type in report_types:
-            properties = ['title']
+            required_properties = ['title',
+                                   'fileURI']
         elif resource_type in thesis_types:
-            properties = ['title',
-                          'creator']
+            required_properties = ['title',
+                                   'creator',
+                                   'fileURI']
+    # DataCite DOI identifier registration
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']:
+        required_properties = ['fileURI']
+    # NDL JaLC DOI identifier registration
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
+        required_properties = ['fileURI']
 
-    if properties:
-        return validation_item_property(metadata_item,
-                                        identifier_type,
-                                        properties)
+    if required_properties:
+        properties['required'] = required_properties
+    if either_properties:
+        properties['either'] = either_properties
+
+    if properties and \
+            identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
+            and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
+        return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
 
 
-def validation_item_property(mapping_data, identifier_type, properties):
+def validation_item_property(mapping_data, properties):
     """
     Validate item property.
 
     :param mapping_data: Mapping Data contain record and item_map
-    :param identifier_type: Selected identifier
     :param properties: Property's keywords
     :return: error_list or None
     """
     error_list = {'required': [], 'pattern': [], 'pmid': '',
-                  'doi': '', 'url': ''}
+                  'doi': '', 'url': '', 'either': []}
     empty_list = deepcopy(error_list)
+
+    if properties.get('required'):
+        error_list_required = validattion_item_property_required(
+            mapping_data, properties['required'])
+        if error_list_required:
+            error_list['required'] = error_list_required['required']
+            error_list['pattern'] = error_list_required['pattern']
+
+    if properties.get('either'):
+        error_list_either = validattion_item_property_either_required(
+            mapping_data, properties['either'])
+        if error_list_either:
+            error_list['either'] = error_list_either
+
+    if error_list == empty_list:
+        return None
+    else:
+        return error_list
+
+
+def validattion_item_property_required(
+        mapping_data, properties):
+    """
+    Validate item property is required.
+
+    :param mapping_data: Mapping Data contain record and item_map
+    :param properties: Property's keywords
+    :return: error_list or None
+    """
+    error_list = {'required': [], 'pattern': []}
+    empty_list = deepcopy(error_list)
+    # check jpcoar:URI
+    if 'fileURI' in properties:
+        _, key = mapping_data.get_data_by_property(
+            "file.mimeType.@value")
+        data = []
+        if key:
+            key = key.split('.')[0]
+            item_file = mapping_data.record.get(key)
+            if item_file:
+                file_name_data = get_sub_item_value(
+                    item_file.get("attribute_value_mlt"), 'filename')
+                if file_name_data:
+                    for value in file_name_data:
+                        data.append(value)
+                data.append(file_name_data)
+
+        repeatable = True
+        requirements = check_required_data(data, key + '.filename', repeatable)
+        if requirements:
+            error_list['required'] += requirements
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property(
@@ -277,14 +356,15 @@ def validation_item_property(mapping_data, identifier_type, properties):
         _, key = mapping_data.get_data_by_property(
             "creator.givenName.@value")
         data = []
-        creators = mapping_data.record.get(key.split('.')[0])
         if key:
-            given_name_data = get_sub_item_value(
-                creators.get("attribute_value_mlt"), key.split('.')[-1])
-            if given_name_data:
-                for value in given_name_data:
-                    data.append(value)
-            data.append(given_name_data)
+            creators = mapping_data.record.get(key.split('.')[0])
+            if creators:
+                given_name_data = get_sub_item_value(
+                    creators.get("attribute_value_mlt"), key.split('.')[-1])
+                if given_name_data:
+                    for value in given_name_data:
+                        data.append(value)
+                data.append(given_name_data)
 
         repeatable = True
         requirements = check_required_data(data, key, repeatable)
@@ -376,6 +456,96 @@ def validation_item_property(mapping_data, identifier_type, properties):
         return None
     else:
         error_list['required'] = list(set(error_list['required']))
+        error_list['pattern'] = list(set(error_list['pattern']))
+        return error_list
+
+
+def validattion_item_property_either_required(
+        mapping_data, properties):
+    """
+    Validate item property is either required.
+
+    :param mapping_data: Mapping Data contain record and item_map
+    :param properties: Property's keywords
+    :return: error_list or None
+    """
+    error_list = []
+    # check 位置情報（点） detacite:geoLocationPoint
+    if 'geoLocationPoint' in properties:
+        latitude_data, latitude_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPoint.pointLatitude.@value")
+        longitude_data, longitude_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPoint.pointLongitude.@value")
+
+        repeatable = True
+        requirements = []
+        latitude_requirement = check_required_data(
+            latitude_data, latitude_key, repeatable)
+        if latitude_requirement:
+            requirements += latitude_requirement
+
+        longitude_requirement = check_required_data(
+            longitude_data, longitude_key, repeatable)
+        if longitude_requirement:
+            requirements += longitude_requirement
+
+        if not requirements:
+            return None
+        else:
+            error_list.append(requirements)
+
+    # check 位置情報（空間） datacite:geoLocationBox
+    if 'geoLocationBox' in properties:
+        east_data, east_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.eastBoundLongitude.@value")
+        north_data, north_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.northBoundLatitude.@value")
+        south_data, south_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.southBoundLatitude.@value")
+        west_data, west_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.westBoundLongitude.@value")
+
+        repeatable = True
+        requirements = []
+        east_requirement = check_required_data(
+            east_data, east_key, repeatable)
+        if east_requirement:
+            requirements += east_requirement
+
+        north_requirement = check_required_data(
+            north_data, north_key, repeatable)
+        if north_requirement:
+            requirements += north_requirement
+
+        south_requirement = check_required_data(
+            south_data, south_key, repeatable)
+        if south_requirement:
+            requirements += south_requirement
+
+        west_requirement = check_required_data(
+            west_data, west_key, repeatable)
+        if west_requirement:
+            requirements += west_requirement
+
+        if not requirements:
+            return None
+        else:
+            error_list.append(requirements)
+
+    # check 位置情報（自由記述） datacite:geoLocationPlace
+    if 'geoLocationPlace' in properties:
+        data, key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPlace.@value")
+
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        if not requirements:
+            return None
+        else:
+            error_list += requirements
+
+    error_list = list(filter(None, error_list))
+    if error_list:
         return error_list
 
 
@@ -870,3 +1040,201 @@ def filter_condition(json, name, condition):
         json[name].append(condition)
     else:
         json[name] = [condition]
+
+
+def get_actionid(endpoint):
+    """
+    Get action_id by action_endpoint.
+
+    parameter:
+    return: action_id
+    """
+    with db.session.no_autoflush:
+        action = _Action.query.filter_by(
+            action_endpoint=endpoint).one_or_none()
+        if action:
+            return action.id
+        else:
+            return None
+
+
+def prepare_edit_workflow(post_activity, recid, deposit):
+    """
+    Prepare Workflow Activity for draft record.
+
+    Check and create draft record with id is "x.0".
+    Create new workflow activity.
+    Clone Identifier and Feedbackmail relation to last activity.
+
+    parameter:
+        post_activity: latest activity information.
+        recid: current record id.
+        deposit: current deposit data.
+    return:
+        rtn: new activity
+
+    """
+    # ! Check pid's version
+    community = post_activity['community']
+    post_workflow = post_activity['post_workflow']
+    activity = WorkActivity()
+
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(recid.pid_value)
+    ).one_or_none()
+
+    if not draft_pid:
+        draft_record = deposit.prepare_draft_item(recid)
+        rtn = activity.init_activity(post_activity,
+                                     community,
+                                     draft_record.model.id)
+    else:
+        with db.session.begin_nested():
+            draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            bucket = draft_deposit.files.bucket
+            bucket.locked = False
+            db.session.add(bucket)
+        db.session.commit()
+        rtn = activity.init_activity(post_activity,
+                                     community,
+                                     draft_pid.object_uuid)
+
+    if rtn:
+        # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
+        identifier_actionid = get_actionid('identifier_grant')
+        if post_workflow:
+            identifier = activity.get_action_identifier_grant(
+                post_workflow.activity_id, identifier_actionid)
+        else:
+            identifier = activity.get_action_identifier_grant(
+                '', identifier_actionid)
+
+        if identifier:
+            if identifier.get('action_identifier_select') > \
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0):
+                identifier['action_identifier_select'] = \
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
+            elif identifier.get('action_identifier_select') == \
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2):
+                identifier['action_identifier_select'] = \
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN", -3)
+            activity.create_or_update_action_identifier(
+                rtn.activity_id,
+                identifier_actionid,
+                identifier)
+
+        mail_list = FeedbackMailList.get_mail_list_by_item_id(
+            item_id=recid.object_uuid)
+        if mail_list:
+            action_id = current_app.config.get(
+                "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
+            activity.create_or_update_action_feedbackmail(
+                activity_id=rtn.activity_id,
+                action_id=action_id,
+                feedback_maillist=mail_list
+            )
+
+    return rtn
+
+
+def handle_finish_workflow(deposit, current_pid, recid):
+    """
+    Get user information by email.
+
+    parameter:
+        deposit:
+        recid:
+    return:
+        acitivity_item_id
+    """
+    if not deposit:
+        return None
+
+    item_id = None
+    try:
+        pid_without_ver = PersistentIdentifier.get(
+            "recid",
+            current_pid.pid_value.split(".")[0]
+        )
+        if ".0" in current_pid.pid_value:
+            deposit.commit()
+        deposit.publish()
+        updated_item = UpdateItem()
+        # publish record without version ID when registering newly
+        if recid:
+            # new record attached version ID
+            new_deposit = deposit.newversion(current_pid)
+            item_id = new_deposit.model.id
+            ver_attaching_deposit = WekoDeposit(
+                new_deposit,
+                new_deposit.model)
+            ver_attaching_deposit.publish()
+
+            weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
+            if weko_record:
+                weko_record.update_item_link(current_pid.pid_value)
+            updated_item.publish(deposit)
+        else:
+            # update to record without version ID when editing
+            if pid_without_ver:
+                record_without_ver = WekoDeposit.get_record(
+                    pid_without_ver.object_uuid)
+                deposit_without_ver = WekoDeposit(
+                    record_without_ver,
+                    record_without_ver.model)
+                deposit_without_ver['path'] = deposit.get('path', [])
+
+                parent_record = deposit_without_ver.\
+                    merge_data_to_record_without_version(current_pid)
+                deposit_without_ver.publish()
+
+                pv = PIDVersioning(child=pid_without_ver)
+                last_ver = PIDVersioning(parent=pv.parent).get_children(
+                    pid_status=PIDStatus.REGISTERED
+                ).filter(PIDRelation.relation_type == 2).order_by(
+                    PIDRelation.index.desc()).first()
+                # Handle Edit workflow
+                if ".0" in current_pid.pid_value:
+                    maintain_record = WekoDeposit.get_record(
+                        last_ver.object_uuid)
+                    maintain_deposit = WekoDeposit(
+                        maintain_record,
+                        maintain_record.model)
+                    maintain_deposit['path'] = deposit.get('path', [])
+                    new_parent_record = maintain_deposit.\
+                        merge_data_to_record_without_version(current_pid)
+                    maintain_deposit.publish()
+                    new_parent_record.commit()
+                else:   # Handle Upgrade workflow
+                    draft_pid = PersistentIdentifier.get(
+                        'recid',
+                        '{}.0'.format(pid_without_ver.pid_value)
+                    )
+                    draft_deposit = WekoDeposit.get_record(
+                        draft_pid.object_uuid)
+                    draft_deposit['path'] = deposit.get('path', [])
+                    new_draft_record = draft_deposit.\
+                        merge_data_to_record_without_version(current_pid)
+                    draft_deposit.publish()
+                    new_draft_record.commit()
+
+                weko_record = WekoRecord.get_record_by_pid(
+                    pid_without_ver.pid_value)
+                if weko_record:
+                    weko_record.update_item_link(current_pid.pid_value)
+                db.session.commit()
+                updated_item.publish(parent_record)
+                if ".0" in current_pid.pid_value and last_ver:
+                    item_id = last_ver.object_uuid
+                else:
+                    item_id = current_pid.object_uuid
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.exception(str(ex))
+        return item_id
+    return item_id

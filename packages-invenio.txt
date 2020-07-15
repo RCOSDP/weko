@@ -14,7 +14,6 @@ invenio-indexer==1.0.2
 invenio-jsonschemas==1.0.0
 invenio-logging==1.0.0b3
 invenio-marc21==1.0.0a8
--e /code/modules/invenio-oauth2server
 invenio-oauthclient==1.0.0
 invenio-pidrelations==1.0.0a4
 invenio-pidstore==1.0.0
@@ -27,6 +26,4 @@ invenio-search==1.1.0
 invenio-search-ui==1.0.0a9
 invenio-theme==1.0.0b4
 invenio-csl-rest==1.0.0a1
-flask-sitemap==0.1.0
-Flask-IIIF==0.6.1
 invenio-iiif==1.0.0a5

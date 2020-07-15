@@ -149,7 +149,7 @@ def identify(**kwargs):
 
     e_deletedRecord = SubElement(e_identify,
                                  etree.QName(NS_OAIPMH, 'deletedRecord'))
-    e_deletedRecord.text = 'no'
+    e_deletedRecord.text = 'transient'
 
     e_granularity = SubElement(e_identify,
                                etree.QName(NS_OAIPMH, 'granularity'))
@@ -277,10 +277,43 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
     def get_error_code_msg():
-        code = 'noRecordsMatch'
-        msg = 'The combination of the values of the from, until, ' \
-              'set and metadataPrefix arguments results in an empty list.'
+        """Get error by type."""
+        code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
+        msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
         return [(code, msg)]
+
+    def is_deleted_workflow(pid):
+        """Check workflow is deleted."""
+        deleted_status = "D"
+        return pid.status == deleted_status
+
+    def is_private_workflow(record):
+        """Check publish status of workflow is private."""
+        private_status = 1
+        return int(record.get("publish_status")) == private_status
+
+    def is_private_index(record):
+        """Check index of workflow is private."""
+        from weko_index_tree.api import Indexes
+        list_index = record.get("path")
+        index_lst = []
+        if list_index:
+            index_id_lst = []
+            for index in list_index:
+                indexes = str(index).split('/')
+                index_id_lst.append(indexes[len(indexes) - 1])
+            index_lst = index_id_lst
+
+        indexes = Indexes.get_path_list(index_lst)
+        publish_state = 6
+        for index in indexes:
+            if len(indexes) == 1:
+                if not index[publish_state]:
+                    return True
+            else:
+                if index[publish_state]:
+                    return False
+        return False
 
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
@@ -289,11 +322,28 @@ def getrecord(**kwargs):
     identify = OaiIdentify.get_all()
     harvest_public_state, record = WekoRecord.get_record_with_hps(
         pid.object_uuid)
-    if (identify and not identify.outPutSetting) or not harvest_public_state:
-        return error(get_error_code_msg(), **kwargs)
 
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
+
+    # Harvest is private
+    if not harvest_public_state or \
+            (identify and not identify.outPutSetting):
+        return error(get_error_code_msg(), **kwargs)
+    # Item is deleted
+    # or Harvest is public & Item is private
+    # or Harvest is public & Index is private
+    elif is_deleted_workflow(pid) or (
+        harvest_public_state and is_private_workflow(record)) or (
+            harvest_public_state and is_private_index(record)):
+        header(
+            e_record,
+            identifier=pid.pid_value,
+            datestamp=record.updated,
+            sets=record.get('_oai', {}).get('sets', []),
+            deleted=True
+        )
+        return e_tree
 
     header(
         e_record,
@@ -305,8 +355,10 @@ def getrecord(**kwargs):
                             etree.QName(NS_OAIPMH, 'metadata'))
 
     etree_record = copy.deepcopy(record)
+    if not etree_record.get('system_identifier_doi', None):
+        etree_record['system_identifier_doi'] = get_identifier(record)
     if check_correct_system_props_mapping(
-            pid.object_uuid,
+        pid.object_uuid,
             current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
         etree_record = combine_record_file_urls(etree_record, pid.object_uuid)
 
@@ -357,6 +409,12 @@ def listrecords(**kwargs):
             datestamp=record['updated'],
             sets=record['json']['_source'].get('_oai', {}).get('sets', []),
         )
+        from weko_deposit.api import WekoRecord
+        db_record = WekoRecord.get_record(record['id'])
+        if not record['json']['_source']['_item_metadata']\
+                .get('system_identifier_doi'):
+            record['json']['_source']['_item_metadata'][
+                'system_identifier_doi'] = get_identifier(db_record)
         e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
         e_metadata.append(record_dumper(pid, record['json']))
 
@@ -383,7 +441,7 @@ def create_identifier_index(root, **kwargs):
                                   etree.QName(NS_JPCOAR, 'identifier'),
                                   attrib={
                                       'identifierType':
-                                      kwargs['pid_type'].upper()})
+                                          kwargs['pid_type'].upper()})
         e_identifier.text = kwargs['pid_value']
         e_identifier_registration = root.find(
             'jpcoar:identifierRegistration',
@@ -433,9 +491,14 @@ def combine_record_file_urls(record, object_uuid):
     item_type_id = item_type.item_type_id
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
+    item_map_ddi = get_mapping(type_mapping, "ddi_mapping")
 
-    file_keys = item_map.get(current_app.config[
-        "OAISERVER_FILE_PROPS_MAPPING"])
+    if item_map_ddi:
+        file_keys = item_map_ddi.get(current_app.config[
+            "OAISERVER_FILE_PROPS_MAPPING_DDI"])
+    else:
+        file_keys = item_map.get(current_app.config[
+            "OAISERVER_FILE_PROPS_MAPPING"])
 
     if not file_keys:
         return record
@@ -473,3 +536,35 @@ def create_files_url(root_url, record_id, filename):
         root_url,
         record_id,
         filename)
+
+
+def get_identifier(record):
+    """Get Identifier of record(DOI or HDL), if not set URL as default.
+
+    @param record:
+    @return:
+    """
+    result = {
+        "attribute_name": "Identifier",
+        "attribute_value_mlt": [
+            {
+                "subitem_systemidt_identifier": "",
+                "subitem_systemidt_identifier_type": ""
+            }
+        ]
+    }
+    if record.pid_doi:
+        identifier = record.pid_doi.pid_value
+        identifier_type = record.pid_doi.pid_type.upper()
+    elif record.pid_cnri:
+        identifier = record.pid_cnri.pid_value
+        identifier_type = record.pid_cnri.pid_type.upper()
+    else:
+        identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
+            request.url_root, record['_deposit']['id'].split('.')[0])
+        identifier_type = 'URI'
+    result['attribute_value_mlt'][0][
+        'subitem_systemidt_identifier'] = identifier
+    result['attribute_value_mlt'][0][
+        'subitem_systemidt_identifier_type'] = identifier_type
+    return result

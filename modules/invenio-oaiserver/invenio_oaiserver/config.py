@@ -203,7 +203,19 @@ OAISERVER_SYSTEM_FILE_MAPPING = {
     "system_file.URI.@value":
         "subitem_systemfile_filename_uri"
 }
+
+OAISERVER_FILE_PROPS_MAPPING_DDI = 'stdyDscr.dataAccs.setAvail.accsPlac.@value'
+"""Config used to specify system file mapping of DDI"""
+
 """Config used to specify system file mapping of jpcoar"""
 
 OAISERVER_FILE_PROPS_MAPPING = "file.URI.@value"
 """Config used to specify system file mapping of jpcoar"""
+
+OAISERVER_CODE_NO_RECORDS_MATCH = "noRecordsMatch"
+"""Code of error when output xml error"""
+
+OAISERVER_MESSAGE_NO_RECORDS_MATCH = "The combination of the values of the " \
+                                     "from, until, set and metadataPrefix " \
+                                     "arguments results in an empty list."
+"""Message of error when output xml error"""

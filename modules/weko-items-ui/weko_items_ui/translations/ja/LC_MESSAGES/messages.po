@@ -166,7 +166,7 @@ msgid "Aggregation Period"
 msgstr "統計期間"
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:51
-msgid "The Most Viewed Items"
+msgid "The Most Reviewed Items"
 msgstr "最も閲覧されたアイテム"
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:57
@@ -423,6 +423,18 @@ msgstr "以下のメールアドレスがシステムに登録されていませ
 
 msgid "The specified number has been exceeded. You can only select up to two fields."
 msgstr "規定の数を超えています。選択できるのは２つまでです。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Version Management"
+msgstr "バージョン管理"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Upgrade Version"
+msgstr "バージョンを更新する"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Keep Version"
+msgstr "バージョンを維持する"
 
 msgid "Required item is not inputted"
 msgstr "必須項目がありません。"

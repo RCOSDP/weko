@@ -33,7 +33,7 @@
           {% if 'attribute_name_hidden' not in lst.keys() %}
               {% if lst['attribute_name'] == 'Reference' %}
                 <tr>
-                  <th scope="row" colspan="6">{{ lst['attribute_name'] }}</th>
+                  <th scope="row" colspan="6">{{ lst['attribute_name_i18n'] }}</th>
                   <td>
                       {%- for l in lst['attribute_value_mlt'] %}
                         <div>
@@ -49,7 +49,7 @@
               {%- elif lst['attribute_type'] == 'creator' -%}
                  {%- if lst['attribute_value_mlt'][0].get('name') -%}
                      <tr>
-                       <th scope="row" colspan="6">{{ lst['attribute_name'] }}</th>
+                       <th scope="row" colspan="6">{{ lst['attribute_name_i18n'] }}</th>
                        <td>{{output_creator_data(lst['attribute_value_mlt'])}}
                        </td>
                      </tr>
@@ -61,7 +61,7 @@
                     {%- if lst['attribute_value'] is string or lst['attribute_value'] or lst['attribute_value_mlt']|length > 0 -%}
                     <tr>
                       <th scope="row"
-                          colspan="6">{{ _(lst['attribute_name']) }}</th>
+                          colspan="6">{{ lst['attribute_name_i18n'] }}</th>
                       <td>
                         <pre class="hide">{{ lst|tojson }}</pre>
                           {% if lst['attribute_value'] is string %}

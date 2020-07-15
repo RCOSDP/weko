@@ -125,50 +125,61 @@ SEARCH_UI_SEARCH_INDEX = '{}-weko'.format(index_prefix)
 # set item type aggs
 RECORDS_REST_FACETS = dict()
 
-#WEKO_FACETED_SEARCH_MAPPING = {
-#    'accessRights': 'accessRights',
-#    'language': 'language',
-#    'distributor': 'contributor.contributorName',
-#    'dataType': 'description.value'
-#}
+WEKO_FACETED_SEARCH_MAPPING = {
+    'accessRights': 'accessRights',
+    'language': 'language',
+    'distributor': 'contributor.contributorName',
+    'dataType': 'description.value'
+}
 
-WEKO_FACETED_SEARCH_MAPPING = {}
-RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict()
-
-#RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
-#    aggs=dict(
-#        accessRights=dict(terms=dict(
-#            field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])),
-#        language=dict(terms=dict(
-#            field=WEKO_FACETED_SEARCH_MAPPING['language'])),
-#        distributor=dict(
-#            filter=dict(
-#                term={"contributor.@attributes.contributorType": "Distributor"}
-#            ),
-#            aggs=dict(
-#                distributor=dict(
-#                    terms=dict(
-#                        field=WEKO_FACETED_SEARCH_MAPPING['distributor']))
-#            )
-#        ),
-#        dataType=dict(
-#            filter=dict(
-#                term={"description.descriptionType": "Other"}
-#            ),
-#            aggs=dict(
-#                dataType=dict(
-#                    terms=dict(
-#                        field=WEKO_FACETED_SEARCH_MAPPING['dataType']))
-#            )
-#        )
-#    ),
-#    post_filters=dict(
-#        accessRights=terms_filter(WEKO_FACETED_SEARCH_MAPPING['accessRights']),
-#        language=terms_filter(WEKO_FACETED_SEARCH_MAPPING['language']),
-#        distributor=terms_filter(WEKO_FACETED_SEARCH_MAPPING['distributor']),
-#        dataType=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType']),
-#    )
-#)
+RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
+    aggs=dict(
+        accessRights=dict(terms=dict(
+            field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])),
+        language=dict(terms=dict(
+            field=WEKO_FACETED_SEARCH_MAPPING['language'])),
+        distributor=dict(
+            filter=dict(
+                term={"contributor.@attributes.contributorType": "Distributor"}
+            ),
+            aggs=dict(
+                distributor=dict(
+                    terms=dict(
+                        field=WEKO_FACETED_SEARCH_MAPPING['distributor']))
+            )
+        ),
+        dataType=dict(
+            filter=dict(
+                term={"description.descriptionType": "Other"}
+            ),
+            aggs=dict(
+                dataType=dict(
+                    terms=dict(
+                        script=dict(
+                            source='''
+                            ArrayList result = new ArrayList();
+                            int size = params._source.description.length;
+                            for (int i=0; i<size; i++) {
+                                String valueName = params._source.description[i].value;
+                                if(params._source.description[i].descriptionType.equals("Other")) {
+                                    result.add(valueName);
+                                }
+                            }
+                            return result;''',
+                            lang="painless"
+                        )
+                    )
+                )
+            )
+        )
+    ),
+    post_filters=dict(
+        accessRights=terms_filter(WEKO_FACETED_SEARCH_MAPPING['accessRights']),
+        language=terms_filter(WEKO_FACETED_SEARCH_MAPPING['language']),
+        distributor=terms_filter(WEKO_FACETED_SEARCH_MAPPING['distributor']),
+        dataType=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType']),
+    )
+)
 
 RECORDS_REST_SORT_OPTIONS = dict()
 RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(

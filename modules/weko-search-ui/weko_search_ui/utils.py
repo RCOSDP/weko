@@ -137,7 +137,7 @@ def get_journal_info(index_id=0):
                         data = res[0]
                     val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
                     result.update({value['key']: val})
-        open_search_uri = journal.get('title_url')
+        open_search_uri = request.host_url + journal.get('title_url')
         result.update({'openSearchUrl': open_search_uri})
 
     except BaseException:

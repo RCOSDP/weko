@@ -64,7 +64,9 @@
   {%- else%}
   {{ super() }}
   {%- endif%}
-{%- endblock page_header %}
+
+
+  {%- endblock page_header %}
 
 {%- block page_footer %}
   {%-if not community%}
@@ -375,6 +377,7 @@
 <div class="communities">
 </div>
 {%- endif %}
+
 {%- endblock page_body %}
 
 {% macro style_including(inStyle, step) -%}

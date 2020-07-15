@@ -19,8 +19,10 @@
 # MA 02111-1307, USA.
 
 """Link Factory weko-deposit."""
-# from flask import current_app, request
+
 from invenio_deposit.links import deposit_links_factory
+
+from .pidstore import get_latest_version_id
 
 
 def links_factory(pid, **kwargs):
@@ -33,9 +35,20 @@ def links_factory(pid, **kwargs):
 
 def base_factory(pid, **kwargs):
     """Deposit links factory."""
+    redirect_url = "/api/deposits/redirect/"
+    iframe_index_url = "/items/iframe/index/"
+    upgrade_pid_number = "{}.{}".format(
+        pid.pid_value.split(".")[0],
+        str(get_latest_version_id(pid.pid_value.split(".")[0])))
+
     links = dict()
-    links['index'] = "/api/deposits/redirect/" + pid.pid_value
+    links['index'] = redirect_url + pid.pid_value
     links['r'] = "/items/index/" + pid.pid_value
-    links['iframe_tree'] = "/items/iframe/index/" + pid.pid_value
+    links['iframe_tree'] = iframe_index_url + pid.pid_value
+    links['newversion'] = "/items/newversion/" + pid.pid_value
+    links['edit'] = redirect_url + pid.pid_value
+    links['iframe_tree_edit'] = iframe_index_url + pid.pid_value
+    links['index_upgrade'] = redirect_url + upgrade_pid_number
+    links['iframe_tree_upgrade'] = iframe_index_url + upgrade_pid_number
 
     return links

@@ -20,12 +20,13 @@
 
 """Weko Deposit API."""
 import copy
+import sys
 import uuid
 from datetime import datetime, timezone
 from typing import NoReturn, Union
 
 import redis
-from dictdiffer import patch
+from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from flask import abort, current_app, has_request_context, json, request, \
     session
@@ -39,6 +40,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -50,14 +52,14 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
-from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes
-from weko_records.models import ItemMetadata
+from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
+    ItemTypes
+from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
 
-from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO, \
-    WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
+from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
     WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY, WEKO_DEPOSIT_SYS_CREATOR_KEY
 from .pidstore import get_latest_version_id, get_record_without_version, \
     weko_deposit_fetcher, weko_deposit_minter
@@ -362,7 +364,68 @@ class WekoDeposit(Deposit):
             m.run()
         except UnresolvedConflictsException:
             raise MergeConflict()
-        return patch(m.unified_patches, lca)
+        return self._patch(m.unified_patches, lca)
+
+    @staticmethod
+    def _patch(diff_result, destination, in_place=False):
+        """Patch the diff result to the destination dictionary.
+
+        :param diff_result: Changes returned by ``diff``.
+        :param destination: Structure to apply the changes to.
+        :param in_place: By default, destination dictionary is deep copied
+                         before applying the patch, and the copy is returned.
+                         Setting ``in_place=True`` means that patch will apply
+                         the changes directly to and return the destination
+                         structure.
+        """
+        (ADD, REMOVE, CHANGE) = (
+            'add', 'remove', 'change')
+        if not in_place:
+            destination = copy.deepcopy(destination)
+
+        def add(node, changes):
+            for key, value in changes:
+                dest = dot_lookup(destination, node)
+                if isinstance(dest, list):
+                    dest.insert(key, value)
+                elif isinstance(dest, set):
+                    dest |= value
+                else:
+                    dest[key] = value
+
+        def change(node, changes):
+            dest = dot_lookup(destination, node, parent=True)
+            if isinstance(node, str):
+                last_node = node.split('.')[-1]
+            else:
+                last_node = node[-1]
+            if isinstance(dest, list):
+                last_node = int(last_node)
+            _, value = changes
+            dest[last_node] = value
+
+        def remove(node, changes):
+            for key, value in changes:
+                dest = dot_lookup(destination, node)
+                if isinstance(dest, set):
+                    dest -= value
+                else:
+                    if isinstance(dest, list) and isinstance(key, int) and len(
+                            dest) > key:
+                        del dest[key]
+                    elif isinstance(dest, dict) and dest.get(key):
+                        del dest[key]
+
+        patchers = {
+            REMOVE: remove,
+            ADD: add,
+            CHANGE: change
+        }
+
+        for action, node, changes in diff_result:
+            patchers[action](node, changes)
+
+        return destination
 
     def _publish_new(self, id_=None):
         """Override the publish new to avoid creating multiple pids."""
@@ -398,12 +461,14 @@ class WekoDeposit(Deposit):
             deposit = super(WekoDeposit, self).publish(pid, id_)
 
             # update relation version current to ES
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid', object_uuid=self.id).first()
-            relations = serialize_relations(pid)
+            recid = PersistentIdentifier.query.filter_by(
+                pid_type='recid',
+                object_uuid=self.id
+            ).one_or_none()
+            relations = serialize_relations(recid)
             if relations and 'version' in relations:
                 relations_ver = relations['version'][0]
-                relations_ver['id'] = pid.object_uuid
+                relations_ver['id'] = recid.object_uuid
                 relations_ver['is_last'] = relations_ver.get('index') == 0
                 self.indexer.update_relation_version_is_last(relations_ver)
             return deposit
@@ -446,6 +511,7 @@ class WekoDeposit(Deposit):
         else:
             deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
+        record_id = 0
         if data.get('_deposit'):
             record_id = str(data['_deposit']['id'])
         parent_pid = PersistentIdentifier.create(
@@ -567,7 +633,7 @@ class WekoDeposit(Deposit):
             flag_modified(record, 'json')
             db.session.merge(record)
 
-    def newversion(self, pid=None):
+    def newversion(self, pid=None, is_draft=False):
         """Create a new version deposit."""
         deposit = None
         try:
@@ -585,25 +651,28 @@ class WekoDeposit(Deposit):
                 if latest_record:
                     data = latest_record.dumps()
                     owners = data['_deposit']['owners']
-                    bucket = data['_buckets']
                     keys_to_remove = ('_deposit', 'doi', '_oai',
                                       '_files', '_buckets', '$schema')
                     for k in keys_to_remove:
                         data.pop(k, None)
 
-                    # attaching version ID
-                    recid = '{0}.{1}' . format(
-                        last_pid.pid_value,
-                        get_latest_version_id(last_pid.pid_value))
+                    # Attaching version ID, "{}.0" for draft record id.
+                    if is_draft:
+                        draft_id = '{0}.{1}' . format(
+                            last_pid.pid_value,
+                            0)
+                    else:
+                        draft_id = '{0}.{1}' . format(
+                            last_pid.pid_value,
+                            get_latest_version_id(last_pid.pid_value))
                     # NOTE: We call the superclass `create()` method, because
                     # we don't want a new empty bucket, but
                     # an unlocked snapshot of the old record's bucket.
                     deposit = super(WekoDeposit, self).create(data,
-                                                              recid=recid)
+                                                              recid=draft_id)
                     # Injecting owners is required in case of creating new
                     # version this outside of request context
                     deposit['_deposit']['owners'] = owners
-                    deposit['_buckets'] = {'deposit': bucket['deposit']}
 
                     recid = PersistentIdentifier.get(
                         'recid', str(data['_deposit']['id']))
@@ -614,6 +683,23 @@ class WekoDeposit(Deposit):
                         parent=pv.parent).insert_draft_child(
                         child=recid)
                     RecordDraft.link(recid, depid)
+
+                    if is_draft:
+                        with db.session.begin_nested():
+                            # Set relation type of draft record is 3: Draft
+                            parent_pid = PIDVersioning(child=recid).parent
+                            relation = PIDRelation.query.\
+                                filter_by(parent=parent_pid,
+                                          child=recid).one_or_none()
+                            relation.relation_type = 3
+                        db.session.merge(relation)
+
+                    snapshot = latest_record.files.bucket.\
+                        snapshot(lock=False)
+                    snapshot.locked = False
+                    deposit['_buckets'] = {'deposit': str(snapshot.id)}
+                    RecordsBuckets.create(record=deposit.model,
+                                          bucket=snapshot)
 
                     index = {'index': self.get('path', []),
                              'actions': self.get('publish_status')}
@@ -730,12 +816,14 @@ class WekoDeposit(Deposit):
                 cache_key = current_app.config[
                     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
                     pid_value=self.pid.pid_value)
-
-                data_str = datastore.get(cache_key)
-                datastore.delete(cache_key)
-                data = json.loads(data_str.decode('utf-8'))
+                # Check exist item cache before delete
+                if datastore.redis.exists(cache_key):
+                    data_str = datastore.get(cache_key)
+                    datastore.delete(cache_key)
+                    data = json.loads(data_str.decode('utf-8'))
         except BaseException:
-            abort(500, 'Failed to register item')
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            abort(500, 'Failed to register item!')
         # Get index path
         index_lst = index_obj.get('index', [])
         # Prepare index id list if the current index_lst is a path list
@@ -919,7 +1007,8 @@ class WekoDeposit(Deposit):
                 db.session.rollback()
 
     def merge_data_to_record_without_version(self, pid):
-        """Update changes from record attached version to without version."""
+        """Update changes to current record by record from PID."""
+        from weko_workflow.utils import delete_bucket
         with db.session.begin_nested():
             # update item_metadata
             index = {'index': self.get('path', []),
@@ -927,26 +1016,68 @@ class WekoDeposit(Deposit):
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
 
-            # Get draft bucket's data
-            record_bucket = RecordsBuckets.query.filter_by(
-                record_id=pid.object_uuid
-            ).first()
+            # Clone bucket
             bucket = {
                 "_buckets": {
-                    "deposit": str(record_bucket.bucket_id)
+                    "deposit": None
                 }
             }
+            if ".0" not in pid.pid_value:
+                draft_pid = PersistentIdentifier.get('recid', '{}.0'.format(
+                    pid.pid_value.split(".")[0]))
+                draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            else:
+                draft_deposit = WekoDeposit.get_record(pid.object_uuid)
+            # Get draft bucket's data
+            bucket = Bucket.get(draft_deposit.files.bucket.id)
+            if ".0" in self.pid.pid_value:
+                sync_bucket = RecordsBuckets.query.filter_by(
+                    record_id=pid.object_uuid
+                ).first()
+            else:
+                sync_bucket = RecordsBuckets.query.filter_by(
+                    record_id=self.id
+                ).first()
+            sync_bucket.bucket.locked = False
+            snapshot = bucket.snapshot(lock=False)
+            snapshot.locked = False
+            # ex_bucket_id = sync_bucket.bucket_id
+            sync_bucket.bucket = snapshot
+            # delete_bucket(old_bucket_id)
 
+            bucket = {
+                "_buckets": {
+                    "deposit": str(snapshot.id)
+                }
+            }
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
-            super(WekoDeposit, self).update(bucket)
+            if ".0" in self.pid.pid_value:
+                draft_deposit['_buckets'] = {"deposit": str(snapshot.id)}
+                draft_deposit.commit()
+            else:
+                super(WekoDeposit, self).update(bucket)
             self.commit()
             # update records_metadata
             flag_modified(self.model, 'json')
-            db.session.merge(self.model)
+            db.session.add(self.model)
+            db.session.add(sync_bucket)
 
         return self.__class__(self.model.json, model=self.model)
+
+    def prepare_draft_item(self, recid):
+        """
+        Create draft version of main record.
+
+        parameter:
+            recid: recid
+        return:
+            response
+        """
+        draft_deposit = self.newversion(recid, is_draft=True)
+
+        return draft_deposit
 
 
 class WekoRecord(Record):
@@ -1016,9 +1147,10 @@ class WekoRecord(Record):
 
                 mlt = val.get('attribute_value_mlt')
                 if mlt is not None:
-
                     nval = dict()
                     nval['attribute_name'] = val.get('attribute_name')
+                    nval['attribute_name_i18n'] = lst[2] or val.get(
+                        'attribute_name')
                     nval['attribute_type'] = val.get('attribute_type')
                     if nval['attribute_name'] == 'Reference' \
                             or nval['attribute_type'] == 'file':
@@ -1028,7 +1160,9 @@ class WekoRecord(Record):
                     else:
                         is_author = nval['attribute_type'] == 'creator'
                         sys_bibliographic = _FormatSysBibliographicInformation(
-                            mlt)
+                            copy.deepcopy(mlt),
+                            copy.deepcopy(solst)
+                        )
                         if is_author:
                             language_list = []
                             from weko_gridlayout.utils import \
@@ -1048,6 +1182,8 @@ class WekoRecord(Record):
                                     is_author)
                     items.append(nval)
                 else:
+                    val['attribute_name_i18n'] = lst[2] or val.get(
+                        'attribute_name')
                     items.append(val)
 
             return items
@@ -1085,9 +1221,12 @@ class WekoRecord(Record):
         """Return pid_value of doi identifier."""
         pid_ver = PIDVersioning(child=self.pid_recid)
         if pid_ver:
+            # Get pid parent of draft record
+            if ".0" in self.pid_recid.pid_value:
+                pid_ver.relation_type = 3
+                return pid_ver.parents.one_or_none()
             return pid_ver.parents.one_or_none()
-        else:
-            return None
+        return None
 
     @classmethod
     def get_record_by_pid(cls, pid):
@@ -1130,6 +1269,20 @@ class WekoRecord(Record):
         except PIDDoesNotExistError as pid_not_exist:
             current_app.logger.error(pid_not_exist)
         return None
+
+    def update_item_link(self, pid_value):
+        """Update current Item Reference base of IR of pid_value input."""
+        item_link = ItemLink(self.pid.pid_value)
+        items = ItemReference.get_src_references(pid_value).all()
+        relation_data = []
+
+        for item in items:
+            _item = dict(item_id=item.dst_item_pid,
+                         sele_id=item.reference_type)
+            relation_data.append(_item)
+
+        if relation_data:
+            item_link.update(relation_data)
 
 
 class _FormatSysCreator:
@@ -1204,7 +1357,8 @@ class _FormatSysCreator:
         else:
             for creator_data in creators:
                 self._get_creator_based_on_language(creator_data,
-                                                    creator_list_temp, language)
+                                                    creator_list_temp,
+                                                    language)
 
     @staticmethod
     def _get_creator_based_on_language(creator_data: dict,
@@ -1284,7 +1438,8 @@ class _FormatSysCreator:
         if isinstance(creators, list):
             for creator_data in creators:
                 creator_tmp = {}
-                self._format_creator_on_creator_popup(creator_data, creator_tmp)
+                self._format_creator_on_creator_popup(creator_data,
+                                                      creator_tmp)
                 des_creator.append(creator_tmp)
         elif isinstance(creators, dict):
             alternative_name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY[
@@ -1297,7 +1452,8 @@ class _FormatSysCreator:
                         alternative_name_key, [])
                 else:
                     des_creator[key] = value.copy()
-                self._format_creator_affiliation(value.copy(), des_creator[key])
+                self._format_creator_affiliation(value.copy(),
+                                                 des_creator[key])
 
     @staticmethod
     def _format_creator_name(creator_data: dict,
@@ -1343,8 +1499,8 @@ class _FormatSysCreator:
             :return: The max length of list.
             """
             max_data = max(
-                [len(identifier_schema), len(affiliation_name), len(identifier),
-                 len(identifier_uri)])
+                [len(identifier_schema), len(affiliation_name),
+                 len(identifier), len(identifier_uri)])
             return max_data
 
         identifier_schema_key = WEKO_DEPOSIT_SYS_CREATOR_KEY[
@@ -1473,12 +1629,14 @@ class _FormatSysCreator:
 class _FormatSysBibliographicInformation:
     """Format system Bibliographic Information for detail page."""
 
-    def __init__(self, bibliographic_meta_data_lst):
+    def __init__(self, bibliographic_meta_data_lst, props_lst):
         """Initialize format system Bibliographic Information for detail page.
 
         :param bibliographic_meta_data_lst: bibliographic meta data list
+        :param props_lst: Property list
         """
         self.bibliographic_meta_data_lst = bibliographic_meta_data_lst
+        self.props_lst = props_lst
 
     def is_bibliographic(self):
         """Check bibliographic information."""
@@ -1527,13 +1685,23 @@ class _FormatSysBibliographicInformation:
             bibliographic)
         return title_data, bibliographic_info_lst, length
 
+    def _get_property_name(self, key):
+        """Get property name.
+
+        :param key: Property key
+        :return: Property Name.
+        """
+        for lst in self.props_lst:
+            if key == lst[0].split('.')[-1]:
+                return lst[2]
+        return key
+
     def _get_bibliographic_information(self, bibliographic):
         """Get magazine information data.
 
         :param bibliographic:
         :return:
         """
-        bibliographic_info = WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO
         bibliographic_info_list = []
         for key in WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY:
             if key == 'p.':
@@ -1544,14 +1712,14 @@ class _FormatSysBibliographicInformation:
                     bibliographic_info_list.append({key: page})
             elif key == 'bibliographicIssueDates':
                 dates = self._get_issue_date(
-                    bibliographic.get('bibliographicIssueDates'))
+                    bibliographic.get(key))
                 if dates:
                     bibliographic_info_list.append(
-                        {bibliographic_info.get(key): " ".join(
+                        {self._get_property_name(key): " ".join(
                             str(x) for x in dates)})
             elif bibliographic.get(key):
                 bibliographic_info_list.append(
-                    {bibliographic_info.get(key): bibliographic.get(key)})
+                    {self._get_property_name(key): bibliographic.get(key)})
         length = len(bibliographic_info_list) if len(
             bibliographic_info_list) else 0
         return bibliographic_info_list, length

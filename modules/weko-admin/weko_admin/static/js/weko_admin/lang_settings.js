@@ -33,10 +33,10 @@ $(document).ready(function () {
       for (let index = 0; index < results.length; index++) {
         const element = results[index];
         if (element.is_registered) {
-          rightOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
+          rightOption += "<option value=" + element.lang_code + ">" + element.lang_name + "&nbsp;" + element.lang_code + "</option>";
           continue;
         }
-        leftOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
+        leftOption += "<option value=" + element.lang_code + ">" + element.lang_name + "&nbsp;" + element.lang_code + "</option>";
       }
       leftSelect.append(leftOption);
       rightSelect.append(rightOption);
@@ -116,15 +116,15 @@ $(document).ready(function () {
         '<div class="alert alert-light" id="alert-style">' +
         '<button type="button" class="close" data-dismiss="alert">' +
         '&times;</button>' + message + '</div>');
-         }  
+         }
 
  $('#btn_commit_lg').on('click', function () {
-        
+
     const children = $('#leftSelect').children();
     const selectedChildren = $('#rightSelect').children();
     const map = {};
-    for (let ele of results) {
-      map[ele.lang_code] = ele;
+    for (let index = 0; index < results.length; index++) {
+      map[results[index].lang_code] = results[index];
     }
     for (let index = 0; index < children.length; index++) {
       const element = map[children[index].value];

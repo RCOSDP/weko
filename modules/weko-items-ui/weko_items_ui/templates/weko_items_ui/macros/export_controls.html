@@ -47,6 +47,7 @@
       </div>
     </div>
     <input type="hidden" id="record_ids" name="record_ids" value="">
+    <input type="hidden" id="invalid_record_ids" name="invalid_record_ids" value="">
     <input type="hidden" id="record_metadata" name="record_metadata" value="">
   </form>
   <div class="col-xs-8 col-xs-offset-4">
@@ -55,7 +56,7 @@
     </div>
     <div class="col-xs-2">
       <button class="btn btn-primary" id="item_export_button" ng-click="exportItems()"
-        ng-disabled="item_export_checkboxes.length > max_export_num">
+      ng-disabled="item_export_checkboxes.length > max_export_num || item_export_checkboxes.length==0">
         <span class="glyphicon glyphicon-save"></span>
         {{_('Export')}}
       </button>

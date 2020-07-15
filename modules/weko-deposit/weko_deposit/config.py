@@ -157,14 +157,6 @@ WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY = [
 ]
 """Key of Bibliographic information."""
 
-WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO = {
-    'bibliographicVolumeNumber': 'Volume',
-    'bibliographicIssueNumber': 'Issue',
-    'bibliographicNumberOfPages': 'Number of Pages',
-    'bibliographicIssueDates': 'Issued Date'
-}
-"""Bibliographic information key and value."""
-
 WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = [
     'bibliographic_titles',
     'bibliographicPageEnd',
