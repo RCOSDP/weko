@@ -28,7 +28,7 @@
       <div class="col-sm-offset-2 col-sm-4">
         <div class="form-inline text-right">
           <div class="form-group">
-            <span class="text-muted" ng-bind="(filesVM.files | filter:fileSearch | filter:{is_thumbnail: 'true'}).length"></span>
+            <span class="text-muted" ng-bind="(model.thumbnailsInfor | filter:{is_thumbnail: 'true'}).length"></span>
             <span class="text-muted"> files </span>
           </div>
         </div>
@@ -42,7 +42,7 @@
       <th class="text-center">{{_('Progress')}}</th>
       <th class="text-center">{{_('Actions')}}</th>
     </tr>
-    <tr class="sel-file" ng-repeat="f in model.thumbnailsInfor | filter:{is_thumbnail: 'true'}">
+    <tr class="sel-file" ng-repeat="f in model.thumbnailsInfor | filter:{is_thumbnail: 'true'} track by f.version_id">
       <td>
         <span ng-bind="f.name || f.key | limitTo: 40"></span>
         <span ng-show="f.name.length > 50">...</span>

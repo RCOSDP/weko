@@ -1654,15 +1654,15 @@ function toObject(arr) {
       $scope.prepareRequiredList = function () {
         let prepareRequiredList = function (json_data) {
           let temp_key;
-      
+
           let pushToRequiredList = function (key) {
               if (!$scope.required_list.includes(key)) {
                 $scope.required_list.push(key);
               }
-      
+
               temp_key = key;
           };
-      
+
           angular.forEach(json_data, function (val, key) {
               if (val.required) {
                   return pushToRequiredList(key);
@@ -1678,7 +1678,7 @@ function toObject(arr) {
                   }
               }
           });
-      
+
           return temp_key;
         }
 
@@ -1874,20 +1874,24 @@ function toObject(arr) {
 
       $scope.addFileFormAndFill = function () {
         let model = $rootScope.recordsVM.invenioRecordsModel;
-        let schema = $rootScope.recordsVM.invenioRecordsSchema.properties;
         let filesUploaded = $rootScope.filesVM.files;
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           for (var i = $scope.previousNumFiles; i < filesUploaded.length; i++) {
-            var fileInfo = new Object();
+            let fileInfo = {};
+            let fileData = filesUploaded[i];
+            // Do not add the thumbnail file info to the form file.
+            if (fileData.hasOwnProperty('is_thumbnail') && fileData['is_thumbnail']) {
+              continue;
+            }
             // Fill filename
-            fileInfo['version_id'] = filesUploaded[i].version_id;
-            fileInfo['filename'] = filesUploaded[i].key;
+            fileInfo['version_id'] = fileData.version_id;
+            fileInfo['filename'] = fileData.key;
             // Fill size
             fileInfo.filesize = [{}]; // init array
-            fileInfo.filesize[0].value = $scope.bytesToReadableString(filesUploaded[i].size);
+            fileInfo.filesize[0].value = $scope.bytesToReadableString(fileData.size);
             // Fill format
-            fileInfo.format = filesUploaded[i].mimetype;
+            fileInfo.format = fileData.mimetype;
             // Fill Date and DateType
             fileInfo.date = [{}]; // init array
             fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
@@ -2797,7 +2801,7 @@ function toObject(arr) {
         if ($scope.error_list) {
           eitherRequireds = $scope.error_list['either'];
         }
-        
+
         if (!eitherRequireds) {
           return true;
         }
@@ -3268,11 +3272,23 @@ function toObject(arr) {
             allowMultiple: $("#allow-thumbnail-flg").val(),
         };
 
-        // set current data thumbnail if has
-        let thumbnailsInfor = $("form[name='uploadThumbnailForm']").data('files-thumbnail');
-        if (thumbnailsInfor.length > 0) {
-          $scope.model.thumbnailsInfor = thumbnailsInfor;
-        }
+
+        $scope.$on('invenio.records.loading.stop', function () {
+          let thumbnailsInfor;
+          let files = $rootScope.filesVM.files;
+          if (Array.isArray(files) && files.length > 0) {
+            thumbnailsInfor = files.filter(function (file) {
+              return (file.hasOwnProperty('is_thumbnail') && file['is_thumbnail'])
+            });
+          } else {
+            thumbnailsInfor = $("form[name='uploadThumbnailForm']").data('files-thumbnail');
+          }
+          // set current data thumbnail if has
+          if (thumbnailsInfor.length > 0) {
+            $scope.model.thumbnailsInfor = thumbnailsInfor;
+          }
+        })
+
         // click input upload files
         $scope.uploadThumbnail = function() {
           if ($rootScope.filesVM.invenioFilesEndpoints.bucket === undefined) {
