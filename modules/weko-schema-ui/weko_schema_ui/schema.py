@@ -627,11 +627,12 @@ class SchemaTree:
                                     # delete all None element in @value
                                     lst_val_idx = list(set(
                                         range(len(node_val[0])))
-                                                       - set(lst_none_idx))
+                                        - set(lst_none_idx))
                                     node_val[0] = [val for idx, val in
                                                    enumerate(node_val[0])
                                                    if idx in lst_val_idx]
-                                    # delete all None element in all @attributes
+                                    # delete all None element in all
+                                    # @attributes
                                     for key, val in v.get(self._atr,
                                                           {}).items():
                                         val[0] = [val for idx, val
@@ -943,10 +944,8 @@ class SchemaTree:
                             else:
                                 nodes = [node]
                                 if bool(node) and not [i for i in node.values()
-                                                       if i and (not i.get(
-                                                           self._v) or
-                                                              not i.get(
-                                                                  self._atr))]:
+                                                       if i and (not i.get(self._v)
+                                                                 or not i.get(self._atr))]:
                                     multi = max(
                                         [len(attr) for n in node.values()
                                          if n and n.get(self._atr)
@@ -957,7 +956,8 @@ class SchemaTree:
                                         multi_nodes = [copy.deepcopy(node)
                                                        for _ in
                                                        range(int(multi))]
-                                        for idx, item in enumerate(multi_nodes):
+                                        for idx, item in enumerate(
+                                                multi_nodes):
                                             for nd in item.values():
                                                 nd[self._v] = \
                                                     [nd[self._v][idx]]
