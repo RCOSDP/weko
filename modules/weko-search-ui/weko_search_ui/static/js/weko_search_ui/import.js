@@ -701,7 +701,7 @@ class TreeNode extends React.Component {
   constructor() {
     super()
     this.state = {
-      isCollabsed: false,
+      isCollabsed: true,
       defaultChecked: false
     }
     this.handleShow = this.handleShow.bind(this)

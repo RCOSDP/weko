@@ -141,8 +141,6 @@
 
 .navbar-nav > li > a {
   font-size: 14px;
-  padding-top: 5px !important;
-  padding-bottom: 5px !important;
 }
 
 .pull-left > li > a {
@@ -151,9 +149,9 @@
 
 .navbar-header > a.navbar-brand {
   font-size: 14px !important;
-  padding-top: 5px !important;
-  padding-bottom: 5px !important;
-  line-height: 14px !important;
+  padding-top: 20px !important;
+  padding-bottom: 20px !important;
+  line-height: 20px !important;
 }
 
 .trumbowyg-editor {
