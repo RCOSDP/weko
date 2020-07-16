@@ -26,9 +26,9 @@ require([
  *    if it none, pattern are yyyy-MM-dd, yyyy-MM, yyyy.
 */
 var Pattern = {
-  yyyy: '\\d{4}',
-  MM: '(((0)[1-9])|((1)[0-2]))',
-  dd: '([0-2][0-9]|(3)[0-1])',
+  yyyy: '(-)[0-9][0-9][0-9][0-9]',
+  MM: '(([0-9])|((1)[0-2])|[0][0]',
+  dd: '([0-2][0-9]|(3)[0-1]|[0][0])',
   sep: '(-)'
 }
 var Format = {
@@ -40,7 +40,9 @@ var Format = {
 var CustomBSDatePicker = {
   option: {
     element: undefined,
-    defaultFormat: Format.yyyyMMdd + '|' + Format.yyyyMM + '|' + Format.yyyy,
+    //defaultFormat: Format.yyyyMMdd + '|' + Format.yyyyMM + '|' + Format.yyyy,
+    // ISO8061
+    defaultFormat: '^(-?(?:[1-9][0-9]*)?[0-9]{4})(-(1[0-2]|0[1-9]|00))?(-(3[01]|0[1-9]|[12][0-9]|00))?(T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(.[0-9]+)?(Z|[+-]((2[0-3]|[01][0-9])|(2[0-3]|[01][0-9]):([0-5][0-9])))?)?$',
     cls: 'multi_date_format'
   },
   /**
@@ -1654,15 +1656,15 @@ function toObject(arr) {
       $scope.prepareRequiredList = function () {
         let prepareRequiredList = function (json_data) {
           let temp_key;
-      
+
           let pushToRequiredList = function (key) {
               if (!$scope.required_list.includes(key)) {
                 $scope.required_list.push(key);
               }
-      
+
               temp_key = key;
           };
-      
+
           angular.forEach(json_data, function (val, key) {
               if (val.required) {
                   return pushToRequiredList(key);
@@ -1678,7 +1680,7 @@ function toObject(arr) {
                   }
               }
           });
-      
+
           return temp_key;
         }
 
@@ -2797,7 +2799,7 @@ function toObject(arr) {
         if ($scope.error_list) {
           eitherRequireds = $scope.error_list['either'];
         }
-        
+
         if (!eitherRequireds) {
           return true;
         }
