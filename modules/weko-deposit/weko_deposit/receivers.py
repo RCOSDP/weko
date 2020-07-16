@@ -26,6 +26,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         im = dep.copy()
         im.pop('_deposit')
         im.pop('_buckets')
+        im['control_number'] = im.get('recid')
         holds = ['_created', '_updated']
         pops = []
         for key in json:
@@ -37,23 +38,24 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         dc, jrc, _ = json_loader(metadata, pid)
         dep.data = metadata
         dep.jrc = jrc
+        # Update data based on data from DB
         dep.jrc['weko_shared_id'] = im.get('weko_shared_id')
         dep.jrc['weko_creator_id'] = im.get('owner')
         dep.jrc['_item_metadata'] = im
         dep.jrc['control_number'] = im.get('recid')
-        im['control_number'] = im.get('recid')
         dep.jrc['_oai'] = im.get('_oai')
-        current_app.logger.info('Re-index record: {0}'.format(im['control_number']))
-        im.pop('recid')
         dep.jrc['relation_version_is_last'] = True \
             if pid == get_record_without_version(pid) else False
         dep._convert_description_to_object()
+        im.pop('recid')
         dep.get_content_files()
         dep.jrc.update(dict(path=dep.get('path')))
         ps = dict(publish_status=dep.get('publish_status'))
         dep.jrc.update(ps)
-        if dep.get('content'):
+        if dep.jrc.get('content', None):
             kwargs['arguments']['pipeline'] = 'item-file-pipeline'
         json.update(dep.jrc)
-    except Exception as exc :
-        current_app.logger.error(exc)
+        current_app.logger.info('Done re-index record: {0}'.format(im['control_number']))
+    except Exception:
+        import traceback
+        current_app.logger.error(traceback.print_exc())
