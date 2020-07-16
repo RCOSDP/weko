@@ -3298,7 +3298,10 @@ function toObject(arr) {
                 data: {},
                 headers: ($rootScope.filesVM.invenioFilesArgs.headers !== undefined) ? $rootScope.filesVM.invenioFilesArgs.headers : {}
             }).then(function success(response) {
-                $rootScope.filesVM.invenioFilesEndpoints = response.data.links;
+                $rootScope.filesVM.invenioFilesArgs.url = response.data.links.bucket;
+                $rootScope.$broadcast(
+                  'invenio.records.endpoints.updated', response.data.links
+                );
             }, function error(response) {
             });
           }
@@ -3306,6 +3309,15 @@ function toObject(arr) {
               document.getElementById('selectThumbnail').click();
           }, 0);
         };
+
+        $scope.updateFileList = function(removeFile) {
+          let model = $scope.model;
+          model['thumbnailsInfor'] = model['thumbnailsInfor'].filter(function(fileInfo) {
+            return !(fileInfo.lastModified === removeFile.lastModified
+              && fileInfo.key === removeFile.key);
+          });
+        }
+
         // remove file
         $scope.removeThumbnail = function(file) {
           if (angular.isUndefined(file.links)) {
@@ -3317,9 +3329,10 @@ function toObject(arr) {
               return;
             }
           }
+          $scope.updateFileList(file);
           $rootScope.filesVM.remove(file);
-          $scope.model.thumbnailsInfor.splice(indexOfFile || $scope.model.thumbnailsInfor.indexOf(file), 1);
         };
+
     }).$inject = [
       '$scope',
       '$rootScope',
