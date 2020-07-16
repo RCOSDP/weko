@@ -191,8 +191,8 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     var custom_sort_list =[]
     for (var x in data) {
       var sub = {"id":"", "custom_sort":""}
-      sub.id= x.id;
-      sub.custom_sort=x.metadata.custom_sort;
+      sub.id= data[x].id;
+      sub.custom_sort=data[x].metadata.custom_sort;
       custom_sort_list.push(sub);
     }
     var post_data = { "q_id": $rootScope.index_id_q, "sort": custom_sort_list, "es_data": data }
