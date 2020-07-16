@@ -917,7 +917,6 @@ var PreviewGrid = new function () {
     this.init = function () {
         let options = {
             width: 12,
-            float: true,
             removeTimeout: 100,
             cellHeight: 6,
             verticalMargin: 10,
