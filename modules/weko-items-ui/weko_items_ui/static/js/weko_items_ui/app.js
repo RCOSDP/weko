@@ -1854,12 +1854,6 @@ function toObject(arr) {
           let mainContent = $('#main_contents');
           let width = mainContent.data("gsWidth");
           widgetBodyGrid.resizeWidget(mainContent, width, DEFAULT_WIDGET_HEIGHT);
-          if (typeof mainContentSensor !== 'undefined') {
-            setTimeout(function () {
-              //  Remove the sensor of the main content widget.
-              mainContentSensor.detach();
-            }, 500)
-          }
         }
       }
 

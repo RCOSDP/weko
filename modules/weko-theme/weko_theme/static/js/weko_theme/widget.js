@@ -17,14 +17,24 @@ const BORDER_STYLE_NONE = "none";
 const INTERVAL_TIME = 60000; //one minute
 const DEFAULT_WIDGET_HEIGHT = 6;
 const MAIN_CONTENTS = "main_contents";
+const MIN_WIDTH = 768;
 
 (function () {
     getWidgetDesignSetting();
     window.lodash = _.noConflict();
 }());
+
 let widgetList;
 var mainContentSensor;
+var headerSensor;
+var otherSensor;
 var widgetBodyGrid;
+var widgetOtherList = {};
+var resizeWidgetTimeout;
+var isHeaderContent = false;
+var isRegenerate = false;
+var isClickMainContent = false;
+
 const PageBodyGrid = function () {
     this.init = function () {
         let options = {
@@ -173,8 +183,9 @@ const PageBodyGrid = function () {
                 headerNav.css({"background-color": node.background_color});
             }
             if (node.multiLangSetting && node.multiLangSetting.description) {
-                headerContent.css({"width": "calc(100vw - 490px)"});
-                headerContent.html(node.multiLangSetting.description.description);
+              isHeaderContent = true
+              updateWidthOfTheHeaderWidget();
+              headerContent.html(node.multiLangSetting.description.description);
             }
             this.grid.update(headerElement, node.x, node.y, node.width, node.height);
             headerElement.removeClass("hidden");
@@ -338,13 +349,8 @@ const PageBodyGrid = function () {
                   }
                   navbarHeader =
                     '<div class="navbar-header">' +
-                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
-                    '        <span class="icon-bar"></span>' +
-                    '        <span class="icon-bar"></span>' +
-                    '        <span class="icon-bar"></span>' +
-                    '      </button>' +
-                    '      <a class="navbar-brand '+ mainLayoutActive +'" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
-                    '    </div>';
+                    '  <a class="navbar-brand '+ mainLayoutActive +'" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
+                    '</div>';
                 }
 
                 let navbar =
@@ -380,7 +386,7 @@ const PageBodyGrid = function () {
                 '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="background-color:' + settings.menu_bg_color + ';">' +
                 '  <div class="container-fluid">' +
                     navbarHeader +
-                '    <div class="collapse navbar-collapse" id="' + navbarID + '">' +
+                '    <div class="collapse navbar-collapse in" aria-expanded="true" id="' + navbarID + '">' +
                 '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
 
                 navbar += childNavBar;
@@ -395,7 +401,7 @@ const PageBodyGrid = function () {
         let content = "";
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
-        let id = '';
+        let id = 'id="widget_body_' + index + '"';
 
         if (!$.isEmptyObject(multiLangSetting.description)) {
             languageDescription = multiLangSetting.description;
@@ -453,11 +459,9 @@ const PageBodyGrid = function () {
         }
         let widget_data = {
             'header': multiLangSetting.label,
-            'body': content
+            'body': content,
+            'id': id
         };
-        if (id !== '') {
-            widget_data['id'] = id
-        }
         return widgetTheme.buildTemplate(widget_data, node, dataTheme);
     };
 
@@ -660,6 +664,28 @@ function getNewWidgetHeight(pageBodyGrid, scrollHeight) {
 }
 
 /**
+ * Resize widget to default height
+ */
+function resizeWidgetToDefaultHeight() {
+  // Other widget
+  Object.keys(widgetOtherList).forEach(function (key) {
+    let widget = widgetOtherList[key]['widget'];
+    let parent = widgetOtherList[key]['parent'];
+    let width = parent.data("gsWidth");
+    widgetBodyGrid.resizeWidget(parent, width, DEFAULT_WIDGET_HEIGHT);
+    widget.data("isUpdated", false);
+  });
+  // Header widget
+  let headerWidget = $('#header');
+  let headerWidth = headerWidget.data("gsWidth");
+  widgetBodyGrid.resizeWidget(headerWidget, headerWidth, DEFAULT_WIDGET_HEIGHT);
+  // Main Content widget
+  let mainContentWidget = $("#" + MAIN_CONTENTS);
+  let mainContentWidth = mainContentWidget.data("gsWidth");
+  widgetBodyGrid.resizeWidget(mainContentWidget, mainContentWidth, DEFAULT_WIDGET_HEIGHT);
+}
+
+/**
  * Auto adjust widget height.
  * @param widgetElement: widget element (Main Content widget or Header widget)
  * @param pageBodyGrid: Widget body object.
@@ -685,20 +711,21 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
         let verticalMargin = pageBodyGrid.getVerticalMargin();
         let currentClientHeight = newHeight * (cellHeight + verticalMargin);
         if (currentClientHeight > scrollHeight) {
-          pageBodyGrid.resizeWidget(parent, width, widgetHeight - 1);
+          let height = DEFAULT_WIDGET_HEIGHT > widgetHeight - 1 ? DEFAULT_WIDGET_HEIGHT : widgetHeight - 1;
+          pageBodyGrid.resizeWidget(parent, width, height);
         } else {
-          pageBodyGrid.resizeWidget(parent, width, widgetHeight);
+          let height = DEFAULT_WIDGET_HEIGHT > widgetHeight ? DEFAULT_WIDGET_HEIGHT : widgetHeight;
+          pageBodyGrid.resizeWidget(parent, width, height);
         }
       } else {
         pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
         otherElement.data("isUpdated", true);
       }
-      // In case the browser is resized,
-      // The height of other widgets is set to default.
-      $(window).resize(function () {
-        pageBodyGrid.resizeWidget(parent, width, DEFAULT_WIDGET_HEIGHT);
-        otherElement.data("isUpdated", false);
-      });
+      let widgetId = otherElement.attr('id');
+      widgetOtherList[widgetId] = {
+        'parent': parent,
+        'widget': otherElement
+      }
     }
   } else {
     let scrollHeight = widgetElement.prop("scrollHeight");
@@ -711,13 +738,6 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
         pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
       } else if (newHeight === currentHeight) {
         pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
-      }
-      // In case the browser is resized,
-      // The height of the Main content widget or Header widget is set to default.
-      if (!(isItemRegistrationWorkFlow() && widgetElement.attr('id') === MAIN_CONTENTS)) {
-        $(window).resize(function () {
-          pageBodyGrid.resizeWidget(widgetElement, width, DEFAULT_WIDGET_HEIGHT);
-        });
       }
     }
   }
@@ -831,7 +851,69 @@ function buildWidget() {
     handleAutoAdjustWidget(widgetBodyGrid);
     // Remove event listener build widget.
     window.removeEventListener('focus', buildWidget);
+    // In case the browser is resized,
+    // The height of the widgets are set to default.
+    window.addEventListener('resize', function () {
+      fixBrowserResize();
+      clearTimeout(resizeWidgetTimeout);
+      resizeWidgetTimeout = setTimeout(resizeWidgetToDefaultHeight, 50);
+    });
   }
+}
+
+/**
+ * Remove resize sensor
+ * @param sensor
+ */
+function removeSensor(sensor) {
+  if (sensor !== 'undefined') {
+    sensor.detach();
+  }
+}
+
+/**
+ * Update width of the Header widget when the browser is resized.
+ */
+function updateWidthOfTheHeaderWidget() {
+  let headerContent = $("#header_content");
+  if (window.innerWidth < MIN_WIDTH) {
+    headerContent.css({"width": "100%"});
+  } else {
+    headerContent.css({"width": "calc(100vw - 490px)"});
+  }
+}
+
+/**
+ * Fix bug layout when the browser is resized.
+ */
+function fixBrowserResize() {
+  isClickMainContent = false;
+  if (window.innerWidth < MIN_WIDTH) {
+    if (isFireFox() && !isRegenerate) {
+      isRegenerate = true;
+      // Remove resize sensor.
+      removeSensor(otherSensor);
+      removeSensor(headerSensor);
+      removeSensor(mainContentSensor);
+      // Add  resize sensor.
+      handleAutoAdjustWidget(widgetBodyGrid);
+    }
+  } else {
+    isRegenerate = false;
+  }
+
+  if (isHeaderContent) {
+    updateWidthOfTheHeaderWidget();
+  }
+
+}
+
+/**
+ * Check if the current browser is Firefox.
+ * @returns {boolean}
+ */
+function isFireFox() {
+  return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 }
 
 /**
@@ -879,29 +961,41 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   }
 
   // Auto adjust Other widget
-  new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+  otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
     $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
-        if (!_this.hasClass("no-auto-height")) {
-          autoAdjustWidgetHeight("", pageBodyGrid, _this);
-        }
+      if (!_this.hasClass("no-auto-height")) {
+        autoAdjustWidgetHeight(null, pageBodyGrid, _this);
+      }
     });
   });
 
   // Auto adjust Header widget
-  new ResizeSensor($('#header_content'), function () {
+  headerSensor = new ResizeSensor($('#header_content'), function () {
     let headerContent = $('#header_content').closest(".grid-stack-item");
     autoAdjustWidgetHeight(headerContent, pageBodyGrid);
   });
 
   // Auto adjust Main Content widget
-  mainContentSensor = new ResizeSensor($('#' + MAIN_CONTENTS), function () {
-    let mainContent = $('#' + MAIN_CONTENTS);
-    autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
-  });
+  createMainContentSensor()
 
   // Fix widget display on IE 11
   fixWidgetIE11();
+}
+
+/**
+ * Create Main content sensor.
+ */
+function createMainContentSensor() {
+  mainContentSensor = new ResizeSensor($('#' + MAIN_CONTENTS), function () {
+    let mainContent = $('#' + MAIN_CONTENTS);
+    $("#weko-records").click(function () {
+      isClickMainContent = true;
+    });
+    if (!(isClickMainContent && isItemRegistrationWorkFlow())) {
+      autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
+    }
+  });
 }
 
 function toggleWidgetUI() {
