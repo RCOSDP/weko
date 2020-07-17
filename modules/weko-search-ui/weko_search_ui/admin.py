@@ -27,7 +27,6 @@ from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from invenio_db import db
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_workflow.api import WorkFlow
@@ -38,7 +37,8 @@ from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
-    get_content_workflow, get_tree_items, handle_workflow, make_stats_tsv
+    get_content_workflow, get_tree_items, handle_index_tree, handle_workflow, \
+    make_stats_tsv
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -68,7 +68,7 @@ class ItemManagementBulkDelete(BaseView):
                             and recursive_tree is not None:
                         # Delete recursively
                         direct_child_trees = []
-                        for index, obj in enumerate(recursive_tree):
+                        for obj in recursive_tree:
                             if obj[1] != current_tree.id:
                                 child_tree = Indexes.get_index(obj[1])
 
@@ -282,6 +282,7 @@ class ItemImportView(BaseView):
             'list_record', []) if not item.get(
             'errors')]
         for item in list_record:
+            handle_index_tree(item)
             item['root_path'] = data.get('root_path')
             create_flow_define()
             handle_workflow(item)

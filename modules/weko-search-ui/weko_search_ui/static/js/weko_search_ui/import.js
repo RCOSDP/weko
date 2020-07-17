@@ -29,6 +29,7 @@ const item_id = document.getElementById("item_id").value;
 const title = document.getElementById("title").value;
 const check_result = document.getElementById("check_result").value;
 const error = document.getElementById("error").value;
+const warning = document.getElementById("warning").value;
 const update = document.getElementById("update").value;
 const not_match = document.getElementById("not_match").value;
 const register = document.getElementById("register").value;
@@ -931,10 +932,17 @@ class CheckComponent extends React.Component {
                           </p>
 
                         </td>
-                        <td>{item['errors'] ? item['errors'][0] && (error + ': ' + item['errors'][0]) || error : item.status === 'new' ?
+                        <td>
+                          {item['errors'] ? item['errors'][0] && (error + ': ' + item['errors'][0]) || error : item.status === 'new' ?
                           register :
                           item.status === 'update' ?
-                            update : ''}</td>
+                            update : ''}
+                          {
+                            item['warnings'] && item['warnings'].map(e => {
+                              return <div>{warning + ': ' + e}</div>
+                            })
+                          }
+                        </td>
                       </tr>
                     )
                   })

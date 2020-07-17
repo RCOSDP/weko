@@ -63,7 +63,7 @@ def get_tree_items(index_tree_id):
     records_search = records_search.with_preference_param().params(
         version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    search_instance, qs_kwargs = item_path_search_factory(
+    search_instance, _ = item_path_search_factory(
         None, records_search, index_id=index_tree_id)
     search_result = search_instance.execute()
     rd = search_result.to_dict()
@@ -414,7 +414,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     tsv_data = []
     item_path = []
     item_path_name = []
-    check_item_type = {},
+    check_item_type = {}
     schema = ''
     with open(tsv_file_path, 'r') as tsvfile:
         for num, row in enumerate(tsvfile, start=1):
@@ -484,7 +484,6 @@ def handle_validate_item_import(list_recond, schema) -> list:
                 errors = errors + [error.message for error in a]
             else:
                 errors = errors = errors + ['ItemType is not exist']
-            record['metadata']['path'] = handle_replace_new_index()
 
         item_error = dict(**record, **{
             'errors': errors if len(errors) else None
@@ -576,6 +575,12 @@ def handle_check_exist_record(list_recond) -> list:
             try:
                 item_id = item.get('id')
                 if item_id:
+                    indexes, errors, warnings = check_and_prepare_index_id(
+                        item.get('IndexID'), item.get('pos_index'))
+                    item['indexes'] = indexes
+                    item['errors'] = errors if errors else None
+                    item['warnings'] = warnings if warnings else None
+
                     item_exist = WekoRecord.get_record_by_pid(item_id)
                     if item_exist:
                         if item_exist.pid.is_deleted():
@@ -1004,3 +1009,114 @@ def handle_replace_new_index() -> list:
             if index_import:
                 return [index_import.id]
         return []
+
+
+def check_and_prepare_index_id(index_ids: list, pos_indexs: list) -> list:
+    """Check index existed and prepare indexes data.
+
+    :argument
+        index_ids   -- {string[]} List IndexID.
+        pos_indexs   -- {string[]} List POST_INDEX.
+    :return
+        indexes   -- {object[]} List Index after prepare.
+        errors   -- {string[]} List error.
+        warnings   -- {string[]} List warning.
+
+    """
+    indexes = []
+    errors = []
+    warnings = []
+
+    def check(index_id, index_name, parent=None, isRoot=False):
+        index = Indexes.get_index(index_id)
+        if index and (
+            (isRoot and not index.parent)
+            or (not isRoot and parent and index.parent == parent['index_id'])
+        ):
+            if index.index_name != index_name:
+                warnings.append(
+                    'Index name not mapping with existed Index')
+        elif index_name:
+            index = Indexes.get_index_by_name(
+                index_name, parent['index_id'] if parent else 0)
+            if not (index and (
+                (isRoot and not index.parent) or
+                (not isRoot and parent and index.parent == parent['index_id'])
+            )):
+                index = None
+                warnings.append(
+                    'Index name not existed in system')
+
+        data = {
+            'index_id': index.id if index else None,
+            'index_name': index.index_name if index else index_name,
+            'parent_id': parent['index_id'] if parent else 0
+        }
+        if parent:
+            parent['child'] = data
+
+        return data
+
+    if not index_ids or not pos_indexs or len(index_ids) != len(pos_indexs):
+        errors.append('IndexID not mapping with POS_INDEX')
+    else:
+        for x, index_id in enumerate(index_ids):
+            tree_ids = [i.strip() for i in index_id.split('/')]
+            tree_names = [i.strip() for i in pos_indexs[x].split('/')]
+
+            root = None
+            temp = None
+            for i, tree_id in enumerate(tree_ids):
+                temp = check(tree_id, tree_names[i],
+                             temp if temp else root,
+                             True if i == 0 else False)
+                if not root:
+                    root = temp
+
+            if root:
+                indexes.append(root)
+
+    indexes = [i for n, i in enumerate(indexes) if i not in indexes[n + 1:]]
+    return indexes, list(set(errors)), list(set(warnings))
+
+
+def handle_index_tree(item):
+    """Handle get index_id of item need import to.
+
+    :argument
+        item     -- {object} record item.
+    :return
+
+    """
+    def check_and_create_index(index):
+        if not index['index_id']:
+            exist_index = Indexes.get_index_by_name(
+                index['index_name'], index['parent_id'])
+            if exist_index:
+                index['index_id'] = exist_index.id
+            else:
+                now = datetime.now()
+                index_id = int(datetime.timestamp(now) * 10 ** 3)
+                create_index = Indexes.create(
+                    pid=index['parent_id'],
+                    indexes={'id': index_id,
+                             'value': index['index_name']})
+                if create_index:
+                    index['index_id'] = index_id
+                    if index.get('child'):
+                        index['child']['parent_id'] = index_id
+
+        if index.get('child'):
+            return check_and_create_index(index['child'])
+        else:
+            return index['index_id'] # Return last child index_id
+
+    indexes = item['indexes']
+    if not indexes:
+        # Import to Index_import
+        item['metadata']['path'] = handle_replace_new_index()
+    else:
+        path = []
+        for index in indexes:
+            path.append(check_and_create_index(index))
+        item['metadata']['path'] = path
