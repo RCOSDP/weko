@@ -134,8 +134,8 @@ var CustomBSDatePicker = {
       //Data input is not match with defined pattern.
       if (!CustomBSDatePicker.isMatchRegex()) return false;
       //Check day by month and year.
-      let arr = val.split('-');
-      if (arr.length == 3 && !CustomBSDatePicker.isValidDate(arr[2], arr[1], arr[0])) return false;
+      //let arr = val.split('-');
+      //if (arr.length == 3 && !CustomBSDatePicker.isValidDate(arr[2], arr[1], arr[0])) return false;
     }
     return true;
   },
