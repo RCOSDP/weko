@@ -400,23 +400,30 @@ def listrecords(**kwargs):
         return error(get_error_code_msg(), **kwargs)
 
     for record in result.items:
-        pid = oaiid_fetcher(record['id'], record['json']['_source'])
-        e_record = SubElement(e_listrecords,
-                              etree.QName(NS_OAIPMH, 'record'))
-        header(
-            e_record,
-            identifier=pid.pid_value,
-            datestamp=record['updated'],
-            sets=record['json']['_source'].get('_oai', {}).get('sets', []),
-        )
-        from weko_deposit.api import WekoRecord
-        db_record = WekoRecord.get_record(record['id'])
-        if not record['json']['_source']['_item_metadata']\
-                .get('system_identifier_doi'):
-            record['json']['_source']['_item_metadata'][
-                'system_identifier_doi'] = get_identifier(db_record)
-        e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
-        e_metadata.append(record_dumper(pid, record['json']))
+        try:
+            pid = oaiid_fetcher(record['id'], record['json']['_source'])
+            e_record = SubElement(e_listrecords,
+                                  etree.QName(NS_OAIPMH, 'record'))
+            header(
+                e_record,
+                identifier=pid.pid_value,
+                datestamp=record['updated'],
+                sets=record['json']['_source'].get('_oai', {}).get('sets', []),
+            )
+            from weko_deposit.api import WekoRecord
+            db_record = WekoRecord.get_record(record['id'])
+            if not record['json']['_source']['_item_metadata']\
+                    .get('system_identifier_doi'):
+                record['json']['_source']['_item_metadata'][
+                    'system_identifier_doi'] = get_identifier(db_record)
+            e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
+                                                          'metadata'))
+            e_metadata.append(record_dumper(pid, record['json']))
+        except Exception:
+            import traceback
+            current_app.logger.error(traceback.print_exc())
+            current_app.logger.error('Error when exporting item id'
+                                     + str(record['id']))
 
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree

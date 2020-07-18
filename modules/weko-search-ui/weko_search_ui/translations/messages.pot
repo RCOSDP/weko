@@ -370,7 +370,7 @@ msgid "Russian"
 msgstr ""
 
 #: weko_search_ui/config.py:
-msgid "Center for Social Research and Data Archives, Institute of Social Science, University of Tokyo"
+msgid "Social Science Japan Data Archive (SSJDA)"
 msgstr ""
 
 #: weko_search_ui/config.py:
@@ -382,7 +382,7 @@ msgid "Panel Data Research Center at Keio University"
 msgstr ""
 
 #: weko_search_ui/config.py:
-msgid "Japanese General Social Surveys, Osaka University of Commerce"
+msgid "JGSS Research Center"
 msgstr ""
 
 #: weko_search_ui/config.py:

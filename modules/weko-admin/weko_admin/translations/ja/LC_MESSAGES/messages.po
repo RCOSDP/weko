@@ -546,7 +546,7 @@ msgid "Rankings"
 msgstr "ランキング"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:91
-msgid "The Most Viewed Items"
+msgid "The Most Reviewed Items"
 msgstr "最も閲覧されたアイテム"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:102

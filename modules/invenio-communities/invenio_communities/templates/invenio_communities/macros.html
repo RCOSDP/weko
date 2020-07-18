@@ -38,7 +38,7 @@
         <div id="wysiwyg_header" class="col-md-12">{{ community.community_header|safe }}</div>
         {% else %}
         <div class="container-fluid">
-          <a href="/"><h1 style="color: rgb(255, 255, 255);margin: 0px 0px 5px 0px; padding: 0;">MERAL</h1></a>
+          <a href="/#"><h1 style="color: rgb(255, 255, 255);margin: 0px 0px 5px 0px; padding: 0;">MERAL</h1></a>
           {%- if link %}
           <a href="{{url_for('invenio_communities.view', community_id=community.id, view='weko')}}">
             <h1 style="color: #ffffff; margin: 0px 0px 15px 0px; padding: 0px 15px 0px 0px ;">{{community.title}}</h1></a>

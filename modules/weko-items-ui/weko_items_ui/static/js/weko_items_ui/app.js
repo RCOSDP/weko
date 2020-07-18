@@ -26,9 +26,9 @@ require([
  *    if it none, pattern are yyyy-MM-dd, yyyy-MM, yyyy.
 */
 var Pattern = {
-  yyyy: '(-)[0-9][0-9][0-9][0-9]',
-  MM: '(([0-9])|((1)[0-2])|[0][0]',
-  dd: '([0-2][0-9]|(3)[0-1]|[0][0])',
+  yyyy: '\\d{4}',
+  MM: '(((0)[1-9])|((1)[0-2]))',
+  dd: '([0-2][0-9]|(3)[0-1])',
   sep: '(-)'
 }
 var Format = {
@@ -37,6 +37,7 @@ var Format = {
   yyyyMM: '^(' + Pattern.yyyy + Pattern.sep + Pattern.MM + ')$',
   yyyy: '^(' + Pattern.yyyy + ')$',
 }
+
 var CustomBSDatePicker = {
   option: {
     element: undefined,
@@ -1624,7 +1625,7 @@ function toObject(arr) {
             } else if (typeof(val.key) === 'string') {
               sub_item = val.key.split(".").pop()
             }
-            val["collapsed"] = isCollapsed && !$scope.required_list.includes(sub_item);
+            val["collapsed"] = isCollapsed && $scope.required_list.indexOf(sub_item) === -1;
           } else {
             val["collapsed"] = isCollapsed;
           }
@@ -1643,7 +1644,7 @@ function toObject(arr) {
         let isCollapsed;
         angular.forEach(forms, function(val, key){
           isCollapsed = requiredList.indexOf(val.key) == -1;
-          val["collapsed"] = isCollapsed && !$scope.required_list.includes(val.key);
+          val["collapsed"] = isCollapsed && $scope.required_list.indexOf(val.key) === -1;
           if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
             $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
           }
@@ -1658,7 +1659,7 @@ function toObject(arr) {
           let temp_key;
 
           let pushToRequiredList = function (key) {
-              if (!$scope.required_list.includes(key)) {
+              if ($scope.required_list.indexOf(key) === -1) {
                 $scope.required_list.push(key);
               }
 
@@ -1702,7 +1703,7 @@ function toObject(arr) {
               ids = val.split('.');
             }
             angular.forEach(ids, function (_val, _key) {
-              if (!$scope.required_list.includes(_val)) {
+              if ($scope.required_list.indexOf(_val) === -1) {
                 $scope.required_list.push(_val);
               }
             });
@@ -1841,7 +1842,23 @@ function toObject(arr) {
           // Change position of File and Billing File
           $scope.changePositionFileName();
         }, 500);
+
+        // Resize main content widget after optional items are collapsed
+        setTimeout(function () {
+          $scope.resizeMainContentWidget();
+        }, 500)
       });
+
+      /**
+       * Resize main content widget after optional items are collapsed
+       */
+      $scope.resizeMainContentWidget = function () {
+        if (typeof widgetBodyGrid !== 'undefined') {
+          let mainContent = $('#main_contents');
+          let width = mainContent.data("gsWidth");
+          widgetBodyGrid.resizeWidget(mainContent, width, DEFAULT_WIDGET_HEIGHT);
+        }
+      }
 
       $scope.changePositionFileName = function () {
         let records = $rootScope.recordsVM.invenioRecordsForm;
@@ -2861,7 +2878,7 @@ function toObject(arr) {
                 depositionForm[listSubItem[j].id].$setViewValue("");
               }
               if (noEitherError && eitherRequired) {
-                if (!eitherRequired.includes(listSubItem[j].id)) {
+                if (eitherRequired.indexOf(listSubItem[j].id) === -1) {
                   listItemErrors.push(listSubItem[j].title);
                 }
               } else {
