@@ -87,7 +87,7 @@
    template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_INDEX) }}">
   </invenio-search-results>
   {%- endblock search_index_results %}
-  <div class="panel panel-default">
+  <div class="panel panel-default" ng-if="vm.invenioSearchResults.hits.hits.length > 0">
     <div class="panel-heading clearfix">
       <span class="panel-title">
         {%- if item_export %}
