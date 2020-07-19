@@ -20,11 +20,13 @@
             {{ showAuthors ? 'Hide authors' : 'Show authors' }}
           </a>
         </li>
+        {%- if config.DEBUG_WEKO3 -%}
         <li>
           <a ng-click="showSource=!showSource">
             {{ showSource ? 'Hide source' : 'Show source' }}
           </a>
         </li>
+        {%- endif -%}
       </ul>
     </div>
     <div ng-hide="!showAuthors">
@@ -34,8 +36,10 @@
         </div>
       </ul>
     </div>
+    {%- if config.DEBUG_WEKO3 -%}
     <div ng-hide="!showSource">
       <pre class="pre-scrollable">{{ record | json }}</pre>
     </div>
+    {%- endif -%}
   </div>
 </div>

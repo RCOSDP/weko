@@ -138,7 +138,7 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
-      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
+      - "ES_JAVA_OPTS=-Xms4096m -Xmx4096m"
     ulimits:
       memlock:
         soft: -1
@@ -187,19 +187,19 @@ services:
 #      app_net:
 #        ipv4_address: 172.16.7.2
 
-  kibana:
-    build:
-      context: .
-      dockerfile: ./kibana/Dockerfile
-    restart: "always"
-    command: kibana
-    ports:
-      - "127.0.0.1:5601:5601"
-    environment:
-      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
-      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
-    links:
-      - elasticsearch
+# kibana:
+#    build:
+#      context: .
+#      dockerfile: ./kibana/Dockerfile
+#    restart: "always"
+#    command: kibana
+#    ports:
+#      - "127.0.0.1:5601:5601"
+#    environment:
+#      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+#      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
+#    links:
+#      - elasticsearch
 #    networks:
 #      app_net:
 #        ipv4_address: 172.16.8.2
