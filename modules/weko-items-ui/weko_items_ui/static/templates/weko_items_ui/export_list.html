@@ -13,8 +13,10 @@
                 ng-checked="check_all"/>
             </th>
             <th>Item</th>
+            <!--
             <th>Message</th>
             <th>No. of Files</th>
+            -->
           </tr>
         </thead>
         <tbody>
@@ -31,6 +33,7 @@
                 {{ record.metadata.hasOwnProperty('title') ? record.metadata.title[0] : record.metadata['dc:title'][0] }}
               </a>
             </td>
+            <!--
             <td>
                 <p class="text-danger" ng-show="items_with_restricted_content.indexOf(record.id) != -1">Contains restricted content</p>
               <p class="text-danger" id="bibtex_err_{{record.id}}" ></p>
@@ -38,6 +41,7 @@
             <td>
               {{ (record.metadata.hasOwnProperty('file') && record.metadata.file.hasOwnProperty('URI')) ? record.metadata.file.URI.length : '0' }}
             </td>
+            -->
           </tr>
         </tbody>
       </table>
