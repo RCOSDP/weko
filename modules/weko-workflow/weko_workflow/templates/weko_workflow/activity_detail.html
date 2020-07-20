@@ -400,15 +400,15 @@
 {%- endif %}
 <script type="text/javascript">
   $(window).load(function () {
-    var scope = angular.element('input#pubdate').scope();
-    if (!(scope.model['pubdate'])) {
+    var element = angular.element('input[name="pubdate"]');
+    if (!(element.scope().model['pubdate'])) {
         var dt = new Date();
         var y = dt.getFullYear();
         var m = ("00" + (dt.getMonth() + 1)).slice(-2);
         var d = ("00" + dt.getDate()).slice(-2);
         var st = y + "-" + m + "-" + d;
-        scope.model['pubdate']=st;
-        scope.$apply();
+        element.scope().model['pubdate']=st;
+        element.scope().$apply();
  　  }
   });
 </script>
