@@ -68,6 +68,7 @@
 {% assets "weko_records_ui_bootstrap_popover_js" %}
 <script src="{{ ASSET_URL }}"></script>{% endassets %}
 
+
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -399,14 +400,16 @@
 {%- endif %}
 <script type="text/javascript">
   $(window).load(function () {
-    if ($('#pubdate').val() == "") {
-      var dt = new Date();
-      var y = dt.getFullYear();
-      var m = ("00" + (dt.getMonth() + 1)).slice(-2);
-      var d = ("00" + dt.getDate()).slice(-2);
-      $('#pubdate').val(y + "-" + m + "-" + d);
-    }
-
+    var scope = angular.element('input#pubdate').scope();
+    if (!(scope.model['pubdate'])) {
+        var dt = new Date();
+        var y = dt.getFullYear();
+        var m = ("00" + (dt.getMonth() + 1)).slice(-2);
+        var d = ("00" + dt.getDate()).slice(-2);
+        var st = y + "-" + m + "-" + d;
+        scope.model['pubdate']=st;
+        scope.$apply();
+ 　  }
   });
 </script>
 {%- endblock page_body %}
