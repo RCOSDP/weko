@@ -17,10 +17,10 @@ const label = {
   "jpn": document.getElementById("jpn").value,
   "kor": document.getElementById("kor").value,
   "rus": document.getElementById("rus").value,
-  "Center for Social Research and Data Archives, Institute of Social Science, University of Tokyo": document.getElementById("Center for Social Research and Data Archives, Institute of Social Science, University of Tokyo").value,
+  "Social Science Japan Data Archive (SSJDA)": document.getElementById("Social Science Japan Data Archive (SSJDA)").value,
   "Institute of Economic Research, Hitotsubashi University": document.getElementById("Institute of Economic Research, Hitotsubashi University").value,
   "Panel Data Research Center at Keio University": document.getElementById("Panel Data Research Center at Keio University").value,
-  "Japanese General Social Surveys, Osaka University of Commerce": document.getElementById("Japanese General Social Surveys, Osaka University of Commerce").value,
+  "JGSS Research Center": document.getElementById("JGSS Research Center").value,
   "Historiographical Institute The University of Tokyo": document.getElementById("Historiographical Institute The University of Tokyo").value,
 
 }
@@ -133,7 +133,7 @@ class MainLayout extends React.Component {
   }
 
   handleCheck(params, value) {
-    let search = window.location.search || "?"
+    let search = window.location.search.replace(',', '%2C') || "?"
     let pattern = encodeURIComponent(params) + "=" + encodeURIComponent(value)
     if (search.indexOf(pattern) >= 0) {
       search = search.replace("&"+ pattern ,"")
@@ -146,7 +146,7 @@ class MainLayout extends React.Component {
 
   render() {
     const { is_enable, list_facet } = this.state
-    const search = window.location.search
+    const search = window.location.search.replace(',', '%2C')
     const that = this
     return (
       <div>

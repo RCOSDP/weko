@@ -2,8 +2,6 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
-
-
   $('.btn-begin').on('click', function () {
     let post_uri = $('#post_uri').text();
     let workflow_id = $(this).data('workflow-id');
