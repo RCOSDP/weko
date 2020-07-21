@@ -17,6 +17,7 @@ import sqlalchemy as sa
 from flask_alembic import Alembic
 from sqlalchemy_utils.functions import get_class_by_table
 
+from . import config
 from .cli import db as db_cmd
 from .shared import db
 from .utils import versioning_models_registered
@@ -33,6 +34,7 @@ class InvenioDB(object):
 
     def init_app(self, app, **kwargs):
         """Initialize application object."""
+        self.init_config(app)
         self.init_db(app, **kwargs)
 
         app.config.setdefault('ALEMBIC', {
@@ -140,3 +142,9 @@ class InvenioDB(object):
             builder.instrument_versioned_classes(
                 database.mapper, get_class_by_table(database.Model, tbl)
             )
+
+    def init_config(self, app):
+        """Initialize configuration."""
+        for k in dir(config):
+            if k.startswith('DB_'):
+                app.config.setdefault(k, getattr(config, k))

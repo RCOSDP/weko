@@ -34,6 +34,11 @@ class SQLAlchemy(FlaskSQLAlchemy):
         # Don't forget to apply hacks defined on parent object.
         super(SQLAlchemy, self).apply_driver_hacks(app, info, options)
 
+        # Set database pool connection
+        if app.config['DB_POOL_CLASS']:
+            options.setdefault('poolclass',
+                               app.config['DB_POOL_CLASS'])
+
         if info.drivername == 'sqlite':
             connect_args = options.setdefault('connect_args', {})
 
