@@ -45,6 +45,7 @@ from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
+from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
@@ -580,6 +581,7 @@ def handle_check_exist_record(list_recond) -> list:
                     item['indexes'] = indexes
                     item['errors'] = errors if errors else None
                     item['warnings'] = warnings if warnings else None
+                    check_feedback_mail(item)
 
                     item_exist = WekoRecord.get_record_by_pid(item_id)
                     if item_exist:
@@ -1109,7 +1111,7 @@ def handle_index_tree(item):
         if index.get('child'):
             return check_and_create_index(index['child'])
         else:
-            return index['index_id'] # Return last child index_id
+            return index['index_id']  # Return last child index_id
 
     indexes = item['indexes']
     if not indexes:
@@ -1120,3 +1122,27 @@ def handle_index_tree(item):
         for index in indexes:
             path.append(check_and_create_index(index))
         item['metadata']['path'] = path
+
+
+def check_feedback_mail(item):
+    """Check feedback email is existed in database.
+
+    :argument
+        item     -- {object} record item.
+    :return
+
+    """
+    errors = []
+    feedback_mail = []
+    if item.get('feedback_mail'):
+        for mail in item.get('feedback_mail'):
+            email_checked = check_email_existed(mail)
+            if not email_checked:
+                errors.append('{} not existed in system'.format(mail))
+            else:
+                feedback_mail.append(email_checked)
+        if feedback_mail:
+            item['metadata']['feedback_mail_list'] = feedback_mail
+        if errors:
+            item['errors'] = item['errors'] + errors \
+                if item.get('errors') else errors

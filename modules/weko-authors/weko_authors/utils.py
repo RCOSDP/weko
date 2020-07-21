@@ -22,6 +22,7 @@
 
 from flask import current_app
 from invenio_db import db
+from invenio_indexer.api import RecordIndexer
 
 from .models import AuthorsPrefixSettings
 
@@ -34,3 +35,36 @@ def get_author_setting_obj(scheme):
     except Exception as ex:
         current_app.logger.debug(ex)
     return None
+
+
+def check_email_existed(email: str):
+    """Check email has existed.
+
+    :param email: email string.
+    :returns: author info.
+    """
+    body = {
+        "query": {
+            "bool": {
+                "must": [
+                    {"term": {"gather_flg": 0}},
+                    {"term": {"emailInfo.email.raw": email}}
+                ]
+            }
+        }
+    }
+
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+        body=body
+    )
+
+    if result['hits']['total']:
+        return {
+            'email': email,
+            'author_id': result['hits']['hits'][0]['_source']['pk_id']
+        }
+    else:
+        return None
