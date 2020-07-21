@@ -235,7 +235,10 @@ class ItemImportView(BaseView):
         data_path = ''
 
         if data:
-            result = check_import_items(data.get('file').split(",")[-1])
+            result = check_import_items(
+                data.get('file').split(",")[-1],
+                data.get('is_change_indentifier')
+            )
             if isinstance(result, dict):
                 if result.get('error'):
                     return jsonify(code=0, error=result.get('error'))

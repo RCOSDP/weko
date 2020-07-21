@@ -329,11 +329,12 @@ def parse_to_json_form(data: list) -> dict:
     return result
 
 
-def check_import_items(file_content: str):
+def check_import_items(file_content: str, is_change_indentifier: bool):
     """Validation importing zip file.
 
     :argument
-        file_content -- contetn file's name.
+        file_content -- content file's name.
+        is_change_indentifier -- Change Identifier Mode.
     :return
         return       -- PID object if exist.
 
@@ -364,6 +365,11 @@ def check_import_items(file_content: str):
                     list_record.extend(
                         unpackage_import_file(data_path, tsv_entry))
             list_record = handle_check_exist_record(list_record)
+            handle_check_and_prepare_index_tree(list_record)
+            handle_check_and_prepare_feedback_mail(list_record)
+            handle_change_indentifier_mode(list_record, is_change_indentifier)
+            handle_check_doi_ra(list_record)
+            handle_check_doi(list_record, is_change_indentifier)
             return {
                 'list_record': list_record,
                 'data_path': data_path
@@ -576,13 +582,6 @@ def handle_check_exist_record(list_recond) -> list:
             try:
                 item_id = item.get('id')
                 if item_id:
-                    indexes, errors, warnings = check_and_prepare_index_id(
-                        item.get('IndexID'), item.get('pos_index'))
-                    item['indexes'] = indexes
-                    item['errors'] = errors if errors else None
-                    item['warnings'] = warnings if warnings else None
-                    check_feedback_mail(item)
-
                     item_exist = WekoRecord.get_record_by_pid(item_id)
                     if item_exist:
                         if item_exist.pid.is_deleted():
@@ -1013,19 +1012,14 @@ def handle_replace_new_index() -> list:
         return []
 
 
-def check_and_prepare_index_id(index_ids: list, pos_indexs: list) -> list:
-    """Check index existed and prepare indexes data.
+def handle_check_and_prepare_index_tree(list_recond):
+    """Check index existed and prepare index tree data.
 
     :argument
-        index_ids   -- {string[]} List IndexID.
-        pos_indexs   -- {string[]} List POST_INDEX.
+        list_recond -- {list} list recond import.
     :return
-        indexes   -- {object[]} List Index after prepare.
-        errors   -- {string[]} List error.
-        warnings   -- {string[]} List warning.
 
     """
-    indexes = []
     errors = []
     warnings = []
 
@@ -1041,45 +1035,67 @@ def check_and_prepare_index_id(index_ids: list, pos_indexs: list) -> list:
         elif index_name:
             index = Indexes.get_index_by_name(
                 index_name, parent['index_id'] if parent else 0)
-            if not (index and (
-                (isRoot and not index.parent) or
-                (not isRoot and parent and index.parent == parent['index_id'])
-            )):
+            if not index:
                 index = None
                 warnings.append(
                     'Index name not existed in system')
 
         data = {
-            'index_id': index.id if index else None,
+            'index_id': index.id if index else index_id,
             'index_name': index.index_name if index else index_name,
-            'parent_id': parent['index_id'] if parent else 0
+            'parent_id': parent['index_id'] if parent else 0,
+            'existed': index is not None
         }
         if parent:
             parent['child'] = data
+        
+        if not data.get('existed') and not data.get('index_name'):
+            errors.append('POS_INDEX not found')
+            return None
 
         return data
 
-    if not index_ids or not pos_indexs or len(index_ids) != len(pos_indexs):
-        errors.append('IndexID not mapping with POS_INDEX')
-    else:
+    for item in list_recond:
+        indexes = []
+        index_ids = item.get('IndexID')
+        pos_index = item.get('pos_index')
+
         for x, index_id in enumerate(index_ids):
             tree_ids = [i.strip() for i in index_id.split('/')]
-            tree_names = [i.strip() for i in pos_indexs[x].split('/')]
+            tree_names = []
+            if pos_index and x <= len(pos_index) - 1:
+                tree_names = [i.strip() for i in pos_index[x].split('/')]
+            else:
+                tree_names = [None for i in len(tree_ids)]
 
             root = None
             temp = None
             for i, tree_id in enumerate(tree_ids):
                 temp = check(tree_id, tree_names[i],
-                             temp if temp else root,
-                             True if i == 0 else False)
+                                temp if temp else root,
+                                True if i == 0 else False)
                 if not root:
                     root = temp
 
             if root:
                 indexes.append(root)
 
-    indexes = [i for n, i in enumerate(indexes) if i not in indexes[n + 1:]]
-    return indexes, list(set(errors)), list(set(warnings))
+        indexes = [i for i in indexes if i is not None]
+        if indexes:
+            item['indexes'] = indexes
+        else:
+            errors.append('Index Tree not found')
+        
+        if errors:
+            item['errors'] = item['errors'] + errors \
+                if item.get('errors') else errors
+            errors = []
+
+        if warnings:
+            warnings = list(set(warnings))
+            item['warnings'] = item['warnings'] + warnings \
+                if item.get('warnings') else warnings
+            warnings = []
 
 
 def handle_index_tree(item):
@@ -1091,14 +1107,14 @@ def handle_index_tree(item):
 
     """
     def check_and_create_index(index):
-        if not index['index_id']:
+        if not index['existed']:
             exist_index = Indexes.get_index_by_name(
                 index['index_name'], index['parent_id'])
             if exist_index:
                 index['index_id'] = exist_index.id
             else:
                 now = datetime.now()
-                index_id = int(datetime.timestamp(now) * 10 ** 3)
+                index_id = index['index_id'] if index['index_id'] else int(datetime.timestamp(now) * 10 ** 3)
                 create_index = Indexes.create(
                     pid=index['parent_id'],
                     indexes={'id': index_id,
@@ -1114,35 +1130,69 @@ def handle_index_tree(item):
             return index['index_id']  # Return last child index_id
 
     indexes = item['indexes']
-    if not indexes:
-        # Import to Index_import
-        item['metadata']['path'] = handle_replace_new_index()
-    else:
+    if indexes:
         path = []
         for index in indexes:
             path.append(check_and_create_index(index))
         item['metadata']['path'] = path
 
 
-def check_feedback_mail(item):
-    """Check feedback email is existed in database.
+def handle_check_and_prepare_feedback_mail(list_recond):
+    """Check feedback email is existed in database and prepare data.
 
     :argument
-        item     -- {object} record item.
+        list_recond -- {list} list recond import.
     :return
 
     """
-    errors = []
-    feedback_mail = []
-    if item.get('feedback_mail'):
-        for mail in item.get('feedback_mail'):
-            email_checked = check_email_existed(mail)
-            if not email_checked:
-                errors.append('{} not existed in system'.format(mail))
-            else:
-                feedback_mail.append(email_checked)
-        if feedback_mail:
-            item['metadata']['feedback_mail_list'] = feedback_mail
-        if errors:
-            item['errors'] = item['errors'] + errors \
-                if item.get('errors') else errors
+    for item in list_recond:
+        errors = []
+        feedback_mail = []
+        if item.get('feedback_mail'):
+            for mail in item.get('feedback_mail'):
+                email_checked = check_email_existed(mail)
+                if not email_checked:
+                    errors.append('{} not existed in system'.format(mail))
+                else:
+                    feedback_mail.append(email_checked)
+            if feedback_mail:
+                item['metadata']['feedback_mail_list'] = feedback_mail
+            if errors:
+                errors = list(set(errors))
+                item['errors'] = item['errors'] + errors \
+                    if item.get('errors') else errors
+
+
+def handle_change_indentifier_mode(list_recond, is_change_indentifier):
+    """Set Change Identifier Mode.
+
+    :argument
+        list_recond -- {list} list recond import.
+        is_change_indentifier -- {bool} Change Identifier Mode.
+    :return
+
+    """
+    for item in list_recond:
+        item['is_change_indentifier'] = is_change_indentifier
+
+
+def handle_check_doi_ra(list_recond):
+    """Check DOI_RA.
+
+    :argument
+        list_recond -- {list} list recond import.
+    :return
+
+    """
+    pass
+
+
+def handle_check_doi(list_recond):
+    """Check DOI.
+
+    :argument
+        list_recond -- {list} list recond import.
+    :return
+
+    """
+    pass
