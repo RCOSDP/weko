@@ -9,7 +9,6 @@
 """Deposit module receivers."""
 
 from flask import current_app
-from weko_records.models import ItemType
 from weko_records.utils import json_loader
 
 from .api import WekoDeposit
@@ -35,7 +34,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         for key in pops:
             json.pop(key)
         metadata = dep.item_metadata
-        dc, jrc, _ = json_loader(metadata, pid)
+        _, jrc, _ = json_loader(metadata, pid)
         dep.data = metadata
         dep.jrc = jrc
         # Update data based on data from DB
@@ -55,7 +54,8 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         if dep.jrc.get('content', None):
             kwargs['arguments']['pipeline'] = 'item-file-pipeline'
         json.update(dep.jrc)
-        current_app.logger.info('Done re-index record: {0}'.format(im['control_number']))
+        current_app.logger.info('Done re-index record: {0}'.format(
+            im['control_number']))
     except Exception:
         import traceback
         current_app.logger.error(traceback.print_exc())
