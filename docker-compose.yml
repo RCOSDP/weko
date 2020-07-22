@@ -49,6 +49,7 @@ services:
       - INVENIO_ROLE_COMMUNITY=Community Administrator
       - FLASK_DEBUG=0
       - SEARCH_INDEX_PREFIX=tenant1
+      - INVENIO_DB_POOL_CLASS=QueuePool
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static

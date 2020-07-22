@@ -36,7 +36,10 @@ ENV INVENIO_ELASTICSEARCH_HOST=elasticsearch
 ENV INVENIO_RABBITMQ_HOST=rabbitmq
 ENV INVENIO_WORKER_HOST=127.0.0.1
 ENV SEARCH_INDEX_PREFIX=tenant1
- 
+# Configure SQLAlchemy connection pool
+# see: https://docs.sqlalchemy.org/en/12/core/pooling.html#api-documentation-available-pool-implementations
+ENV INVENIO_DB_POOL_CLASS=QueuePool
+
 # Install Weko web node pre-requisites:
 COPY scripts/provision-web.sh /tmp/
 RUN /tmp/provision-web.sh
