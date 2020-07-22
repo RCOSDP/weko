@@ -14,8 +14,6 @@ from weko_records.utils import json_loader
 from .api import WekoDeposit
 from .pidstore import get_record_without_version
 
-ATTR_MLT = 'attribute_value_mlt'
-
 
 def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     """Append file content to ES record."""
