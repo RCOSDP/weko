@@ -367,9 +367,9 @@ def check_import_items(file_content: str, is_change_indentifier: bool):
             list_record = handle_check_exist_record(list_record)
             handle_check_and_prepare_index_tree(list_record)
             handle_check_and_prepare_feedback_mail(list_record)
-            handle_change_indentifier_mode(list_record, is_change_indentifier)
+            handle_set_change_indentifier_flag(list_record, is_change_indentifier)
             handle_check_doi_ra(list_record)
-            handle_check_doi(list_record, is_change_indentifier)
+            handle_check_doi(list_record)
             return {
                 'list_record': list_record,
                 'data_path': data_path
@@ -1023,34 +1023,42 @@ def handle_check_and_prepare_index_tree(list_recond):
     errors = []
     warnings = []
 
-    def check(index_id, index_name, parent=None, isRoot=False):
+    def check(index_ids, index_names, parent_id=0, isRoot=False):
+        index_id = index_ids[0]
+        index_name = index_names[0]
         index = Indexes.get_index(index_id)
         if index and (
             (isRoot and not index.parent)
-            or (not isRoot and parent and index.parent == parent['index_id'])
+            or (not isRoot and parent_id and index.parent == parent_id)
         ):
             if index.index_name != index_name:
                 warnings.append(
                     'Index name not mapping with existed Index')
         elif index_name:
             index = Indexes.get_index_by_name(
-                index_name, parent['index_id'] if parent else 0)
+                index_name, parent_id)
             if not index:
                 index = None
                 warnings.append(
-                    'Index name not existed in system')
+                    'IndexID and Index name not existed in system')
 
         data = {
             'index_id': index.id if index else index_id,
             'index_name': index.index_name if index else index_name,
-            'parent_id': parent['index_id'] if parent else 0,
+            'parent_id': parent_id,
             'existed': index is not None
         }
-        if parent:
-            parent['child'] = data
-        
+
+        if len(index_ids) > 1:
+            child = check(index_ids[1:], index_names[1:],
+                          data['index_id'], False)
+            if child:
+                data['child'] = child
+            else:
+                return None
+
         if not data.get('existed') and not data.get('index_name'):
-            errors.append('POS_INDEX not found')
+            errors.append('Index name is empty')
             return None
 
         return data
@@ -1060,33 +1068,26 @@ def handle_check_and_prepare_index_tree(list_recond):
         index_ids = item.get('IndexID')
         pos_index = item.get('pos_index')
 
+        if not index_ids:
+            errors = ['Index Tree not found']
+
         for x, index_id in enumerate(index_ids):
             tree_ids = [i.strip() for i in index_id.split('/')]
             tree_names = []
             if pos_index and x <= len(pos_index) - 1:
                 tree_names = [i.strip() for i in pos_index[x].split('/')]
             else:
-                tree_names = [None for i in len(tree_ids)]
+                tree_names = [None for i in range(len(tree_ids))]
 
-            root = None
-            temp = None
-            for i, tree_id in enumerate(tree_ids):
-                temp = check(tree_id, tree_names[i],
-                                temp if temp else root,
-                                True if i == 0 else False)
-                if not root:
-                    root = temp
-
+            root = check(tree_ids, tree_names, 0, True)
             if root:
                 indexes.append(root)
 
-        indexes = [i for i in indexes if i is not None]
         if indexes:
             item['indexes'] = indexes
-        else:
-            errors.append('Index Tree not found')
-        
+
         if errors:
+            errors = list(set(errors))
             item['errors'] = item['errors'] + errors \
                 if item.get('errors') else errors
             errors = []
@@ -1163,8 +1164,8 @@ def handle_check_and_prepare_feedback_mail(list_recond):
                     if item.get('errors') else errors
 
 
-def handle_change_indentifier_mode(list_recond, is_change_indentifier):
-    """Set Change Identifier Mode.
+def handle_set_change_indentifier_flag(list_recond, is_change_indentifier):
+    """Set Change Identifier Mode flag.
 
     :argument
         list_recond -- {list} list recond import.
