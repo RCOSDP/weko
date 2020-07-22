@@ -553,8 +553,14 @@ function toObject(arr) {
           uri : 'contributorAffiliationURI'
         }
       ]
+      $scope.identifiers = 'nameIdentifiers'
+      $scope.identifier_mapping = 'nameIdentifier'
+      $scope.scheme_identifier_mapping = 'nameIdentifierScheme'
+      $scope.uri_identifier_mapping = 'nameIdentifierURI'
+      $scope.scheme_affiliation_mapping = ['affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
       $scope.sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
       $scope.sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
+      $scope.sub_item_id = ['nameIdentifier', 'affiliationNameIdentifier', 'contributorAffiliation']
       $scope.previousNumFiles = 0;
 
       $scope.searchFilemetaKey = function () {
@@ -656,6 +662,97 @@ function toObject(arr) {
         })
       }
 
+      $scope.clearValueAuthor = function (e, identifier_key) {
+        var data_author = {}
+        $scope.data_author.map(function (item) {
+          data_author[item.scheme] = item.url
+        })
+        if ($scope.authors_keys.indexOf(identifier_key) >= 0 ) {
+          let list_nameIdentifiers = []
+          let uri_form_model = $rootScope.recordsVM.invenioRecordsModel[identifier_key]
+          if (!Array.isArray(uri_form_model)) {
+            if (Object.keys(uri_form_model).indexOf($scope.identifiers) >= 0) {
+              let name_identifier_form = uri_form_model[$scope.identifiers];
+              name_identifier_form.map(function (form) {
+                if (form.hasOwnProperty($scope.identifier_mapping) && form.hasOwnProperty($scope.uri_identifier_mapping)) {
+                  form[$scope.identifier_mapping] = ""
+                  form[$scope.uri_identifier_mapping] = ""
+                }
+                list_nameIdentifiers.push(form)
+              })
+            }
+          }
+          else if (Array.isArray(uri_form_model)) {
+            uri_form_model.map(function (object) {
+              if (Object.keys(object).indexOf($scope.identifiers) >= 0) {
+                let name_identifier_form = object[$scope.identifiers];
+                name_identifier_form.map(function (form) {
+                  if (form.hasOwnProperty($scope.identifier_mapping) && form.hasOwnProperty($scope.uri_identifier_mapping)) {
+                    form[$scope.identifier_mapping] = ""
+                    form[$scope.uri_identifier_mapping] = ""
+                  }
+                  list_nameIdentifiers.push(form)
+                })
+              }
+            })
+          }
+
+          $scope.sub_item_scheme.map(function (scheme) {
+            if (Object.keys($rootScope.recordsVM.invenioRecordsModel[identifier_key]).indexOf(scheme) >= 0) {
+              $rootScope.recordsVM.invenioRecordsModel[identifier_key].scheme = list_nameIdentifiers
+            }
+          })
+        }
+
+      }
+
+      $scope.getValueIdentifierURIAuthor = function (e , identifier_key) {
+        var data_author = {}
+        $scope.data_author.map(function (item) {
+          data_author[item.scheme] = item.url
+        })
+        if ($scope.authors_keys.indexOf(identifier_key) >= 0 ) {
+          let list_nameIdentifiers = []
+          let uri_form_model = $rootScope.recordsVM.invenioRecordsModel[identifier_key]
+          if (!Array.isArray(uri_form_model)) {
+            if (Object.keys(uri_form_model).indexOf($scope.identifiers) >= 0) {
+              let name_identifier_form = uri_form_model[$scope.identifiers];
+              name_identifier_form.map(function (form) {
+                if (form[$scope.scheme_identifier_mapping] && checkFillCreatorIdentifierURI(data_author[form[$scope.scheme_identifier_mapping]], form[$scope.identifier_mapping])) {
+                  form[$scope.uri_identifier_mapping] = data_author[form[$scope.scheme_identifier_mapping]].replace("##", form[$scope.identifier_mapping]);
+                }
+                else{
+                  form[$scope.uri_identifier_mapping] = data_author[form[$scope.scheme_identifier_mapping]]
+                }
+                list_nameIdentifiers.push(form)
+              })
+            }
+          }
+          else if (Array.isArray(uri_form_model)) {
+            uri_form_model.map(function (object) {
+              if (Object.keys(object).indexOf($scope.identifiers) >= 0) {
+                let name_identifier_form = object[$scope.identifiers];
+                name_identifier_form.map(function (form) {
+                  if (form[$scope.scheme_identifier_mapping] && checkFillCreatorIdentifierURI(data_author[form[$scope.scheme_identifier_mapping]], form[$scope.identifier_mapping])) {
+                    form[$scope.uri_identifier_mapping] = data_author[form[$scope.scheme_identifier_mapping]].replace("##", form[$scope.identifier_mapping]);
+                  }
+                  else{
+                    form[$scope.uri_identifier_mapping] = data_author[form[$scope.scheme_identifier_mapping]]
+                  }
+                  list_nameIdentifiers.push(form)
+                })
+              }
+            })
+          }
+
+          $scope.sub_item_scheme.map(function (scheme) {
+            if (Object.keys($rootScope.recordsVM.invenioRecordsModel[identifier_key]).indexOf(scheme) >= 0) {
+              $rootScope.recordsVM.invenioRecordsModel[identifier_key].scheme = list_nameIdentifiers
+            }
+          })
+        }
+      }
+
       $scope.initAuthorList = function () {
         $.ajax({
           url: '/api/items/author_prefix_settings',
@@ -731,7 +828,11 @@ function toObject(arr) {
                                 }
                               })
                             });
-                            author_form.items[searchTitleMap]['onChange'] = 'getValueAuthor(event)';
+                            if (scheme === $scope.scheme_identifier_mapping) {
+                              author_form.items[searchTitleMap]['onChange'] = 'clearValueAuthor($event,"'+author_form.key.split('.')[0]+'")';
+                            } else if ($scope.scheme_affiliation_mapping.indexOf(scheme) >= 0) {
+                              author_form.items[searchTitleMap]['onChange'] = 'getValueAuthor($event,"'+author_form.key.split('.')[0]+'")';
+                            }
                           }
                         })
                       }
@@ -744,7 +845,32 @@ function toObject(arr) {
                   identifier_uri_form['readonly'] = true;
                 }
               })
+
+              $scope.sub_item_id.map(function(item) {
+                let items = author_form.items
+                for (var i = 0; i < items.length; i++) {
+                  var key = items[i].key
+                  if (typeof key !== 'undefined') {
+                    listKey = key.split('.')
+                    for (const index in listKey) {
+                      if (listKey[index] === item) {
+                        var identifier_id_form = items[i]
+                      }
+                    }
+                  }
             }
+
+                if (identifier_id_form) {
+                  identifier_id_form['onChange'] = 'getValueIdentifierURIAuthor($event,"'+author_form.key.split('.')[0]+'")';
+                }
+              })
+            }
+      }
+      function checkFillCreatorIdentifierURI(nameIdentifierURI, nameIdentifier) {
+        if (nameIdentifierURI.slice(-2) === '##' && nameIdentifier) {
+          return true
+        }
+        return false
       }
 
       $scope.searchUsageApplicationIdKey = function() {
