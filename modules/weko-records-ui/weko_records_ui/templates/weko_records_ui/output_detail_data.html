@@ -108,7 +108,7 @@
       {%- if label == 'URL' -%}
           <td><a href="{{content}}">{{ content }}</a></td>
       {%- else -%}
-          <td class="{%- if label == 'Research Plan' or label == 'Summary' or label == 'Annual Report' %}multiple-line{%- endif %}">{{ content }}</td>
+          <td class="multiple-line">{{ content }}</td>
       {%- endif -%}
   </tr>
 {% endmacro %}
