@@ -265,7 +265,7 @@ def mapping():
             if j.get('authorIdShowFlg') == 'true':
                 scheme, uri = get_info_author_id(int(j['idType']))
                 author_id = j.get('authorId')
-                if bool(author_id) and uri[-2:] == '##':
+                if author_id and uri[-2:] == '##':
                     uri = uri.replace('##', author_id)
                 tmp = {
                     'nameIdentifier': author_id,
