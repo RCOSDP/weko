@@ -143,6 +143,30 @@ def register_hdl(activity_id):
         current_app.logger.info('Cannot connect Handle server!')
 
 
+def register_hdl_by_item_id(deposit_id, item_uuid):
+    """
+    Register HDL into Persistent Identifiers.
+
+    :param deposit_id: id
+    :param item_uuid: Item uuid
+    :return handle: HDL handle
+    """
+    record_url = request.url_root \
+        + 'records/' + str(deposit_id)
+
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
+
+    if handle:
+        handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+        identifier = IdentifierHandle(item_uuid)
+        identifier.register_pidstore('hdl', handle)
+    else:
+        current_app.logger.info('Cannot connect Handle server!')
+
+    return handle
+
+
 def item_metadata_validation(item_id, identifier_type):
     """
     Validate item metadata.
