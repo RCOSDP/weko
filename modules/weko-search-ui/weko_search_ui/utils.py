@@ -23,6 +23,7 @@
 import base64
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -45,7 +46,6 @@ from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
-from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
@@ -367,7 +367,8 @@ def check_import_items(file_content: str, is_change_indentifier: bool):
             list_record = handle_check_exist_record(list_record)
             handle_check_and_prepare_index_tree(list_record)
             handle_check_and_prepare_feedback_mail(list_record)
-            handle_set_change_indentifier_flag(list_record, is_change_indentifier)
+            handle_set_change_indentifier_flag(
+                list_record, is_change_indentifier)
             handle_check_doi_ra(list_record)
             handle_check_doi(list_record)
             return {
@@ -1115,7 +1116,8 @@ def handle_index_tree(item):
                 index['index_id'] = exist_index.id
             else:
                 now = datetime.now()
-                index_id = index['index_id'] if index['index_id'] else int(datetime.timestamp(now) * 10 ** 3)
+                index_id = index['index_id'] if index['index_id'] \
+                    else int(datetime.timestamp(now) * 10 ** 3)
                 create_index = Indexes.create(
                     pid=index['parent_id'],
                     indexes={'id': index_id,
@@ -1146,16 +1148,17 @@ def handle_check_and_prepare_feedback_mail(list_recond):
     :return
 
     """
+    regex_mail = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
     for item in list_recond:
         errors = []
         feedback_mail = []
         if item.get('feedback_mail'):
             for mail in item.get('feedback_mail'):
-                email_checked = check_email_existed(mail)
-                if not email_checked:
-                    errors.append('{} not existed in system'.format(mail))
+                if not re.search(regex_mail, mail):
+                    errors.append('{} is invalid'.format(mail))
                 else:
-                    feedback_mail.append(email_checked)
+                    feedback_mail.append(mail)
+
             if feedback_mail:
                 item['metadata']['feedback_mail_list'] = feedback_mail
             if errors:

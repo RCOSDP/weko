@@ -933,10 +933,11 @@ class CheckComponent extends React.Component {
 
                         </td>
                         <td>
-                          {item['errors'] ? item['errors'][0] && (error + ': ' + item['errors'][0]) || error : item.status === 'new' ?
-                          register :
-                          item.status === 'update' ?
-                            update : ''}
+                          {
+                            item['errors'] ? item['errors'].map(e => {
+                              return <div>{error + ': ' + e}</div>
+                            }) : item.status === 'new' ? register : item.status === 'update' ? update : ''
+                          }
                           {
                             item['warnings'] && item['warnings'].map(e => {
                               return <div>{warning + ': ' + e}</div>
