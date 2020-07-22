@@ -116,6 +116,7 @@
 .widget-nav {
   white-space: pre-line !important;
   margin-top: 25px;
+  border-radius: 4px !important;
 }
 
 #header_content {
@@ -180,7 +181,7 @@
   height: 20vh;
   width: 20vh;
   z-index: 1001;
-  right: 50%;
+  right: calc(50% - 10vh);
   top: 40vh;
   border: 5px solid rgba(0, 0, 0, 0.2);
   border-top-color: rgba(0, 174, 239, 0.8);

@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2017 CERN.
+#
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+dist: trusty
+
+notifications:
+  email: false
+
+sudo: false
+
+language: python
+
+matrix:
+  fast_finish: true
+
+cache:
+  - pip
+
+services:
+  - rabbitmq
+
+env:
+  - REQUIREMENTS=lowest
+  - REQUIREMENTS=release DEPLOY=true
+  - REQUIREMENTS=devel
+
+python:
+  - "2.7"
+  - "3.5"
+
+before_install:
+  - "pip install --upgrade pip"
+  - "nvm install 6; nvm use 6"
+  - "travis_retry pip install --upgrade pip setuptools py"
+  - "travis_retry pip install twine wheel coveralls requirements-builder"
+  - "requirements-builder -e all --level=min setup.py > .travis-lowest-requirements.txt"
+  - "requirements-builder -e all --level=pypi setup.py > .travis-release-requirements.txt"
+  - "requirements-builder -e all --level=dev --req requirements-devel.txt setup.py > .travis-devel-requirements.txt"
+
+install:
+  - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
+  - "travis_retry pip install -e .[all]"
+
+script:
+  - "./run-tests.sh"
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: inveniosoftware
+  password:
+    secure: "LED0I966Ei+z/mQKjalJdIGRPeb0HsDbgsW/p69aPu9kuUsFqwPW0P5n2Fs21BZ3IWtN0eHvvla8QpuTBfBcc3nIcqOfaj8M6RpRwQZGokGvh4WmPc5H1on/4fYda5gC82ox9lYyEJG42D1/2Ut4gbokCeehksHzz3pF6FFS+v2X7ABV+VxOGhQaZIBIa5TS2H/Z3UcnamlNr/Z15HEBsrtygdMPu/V0Hfui4MAXTyYKY3ui7gYyf9cy7AL6Amv9yxMsJPw6cEmqJ19spMHj/cTdgVnTTkoo1sfwyMncVy1e5W0EWtbz1jnoQOGyHNFLGqPjw0OgeeVSl6AkzCtpt4vO6PuFaYkbK2nSKVVhIJeZ5RvAtcMoHaIwmUG4v4YJ3/UVVRy+iJGsLf/m/2rGncGSaXn8RVrsPNUWR6Ohh/S65TBbWc7ZQUKQm+cDNZeErlMn6K9mmlc9UKsR/lY+peu9QlUjLQ78rSrD/q0CTejUcXv31Plxq+WtjKDks4zzik/HSuOgiQDUGHuT6NRJwS7VA1uSwEKkbcbPy6D8IeaGT4to5JOluinvf5NJpUPWrHXUWHFQKlke2LwxAow7R38D6BRkH2I1bBXy41DRTQzF+H4NoJwHwWqoD+VonQMQEOiLj8PZbNM2RbDbaxCHmCG8fuXuuz8KLQ212Y+IUHQ="
+  distributions: "sdist bdist_wheel"
+  on:
+    tags: true
+    python: "2.7"
+    repo: inveniosoftware/invenio-queues
+    condition: $DEPLOY = true

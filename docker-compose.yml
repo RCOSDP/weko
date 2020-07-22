@@ -55,9 +55,9 @@ services:
       - type: bind
         source: .
         target: /code
-      - /code/modules/invenio-admin/invenio_admin.egg-info 
-      - /code/modules/invenio-app/invenio_app.egg-info 
-      - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info 
+      - /code/modules/invenio-admin/invenio_admin.egg-info
+      - /code/modules/invenio-app/invenio_app.egg-info
+      - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info
       - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
       - /code/modules/invenio-s3/invenio_s3.egg-info
       - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
@@ -71,6 +71,7 @@ services:
       - /code/modules/invenio-deposit/invenio_deposit.egg-info
       - /code/modules/invenio-resourcesyncserver/invenio_resourcesyncserver.egg-info
       - /code/modules/invenio-resourcesyncclient/invenio_resourcesyncclient.egg-info
+      - /code/modules/invenio-queues/invenio_queues.egg-info
       - /code/modules/weko-theme/weko_theme.egg-info
       - /code/modules/weko-itemtypes-ui/weko_itemtypes_ui.egg-info
       - /code/modules/weko-items-ui/weko_items_ui.egg-info

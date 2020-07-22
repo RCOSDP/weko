@@ -129,17 +129,18 @@
                 </div>
               </div>
               {%- if need_thumbnail %}
+                <div ng-controller='UploadController' ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 <div class="row">
                   <div class="col-sm-12">
                     <div class="panel panel-default">
                       <div class="panel-heading">
                         <h3 class="panel-title">{{_('Thumbnail')}}</h3>
                       </div>
-                      <div ng-controller='UploadController' class="panel-body">
+                      <div class="panel-body">
                         <div class="row">
                           <div class="col-sm-12" id="app">
                             <div class="well">
-                              <center>{{_('Drop files or folders here')}}</center>
+                              <div class="text-center">{{_('Drop files or folders here')}}</div>
                             </div>
                             <p class="text-center legend"><strong>— {{_('OR')}} —</strong></p>
                             <p class="text-center">
@@ -161,6 +162,7 @@
                       </div>
                     </div>
                   </div>
+                </div>
                 </div>
               {%- endif %}
               <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
@@ -416,6 +418,8 @@
               value="{{_('The following email address is not registered in the system. Please recheck and input.')}}">
           <input type="hidden" id="validate_maxitems_field" name="validate_maxitems_field"
               value="{{_('The specified number has been exceeded. You can only select up to two fields.')}}">
+
+          <input type="hidden" id="item_registration_workflow" value="true">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">
