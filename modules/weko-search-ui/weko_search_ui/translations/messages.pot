@@ -388,3 +388,39 @@ msgstr ""
 #: weko_search_ui/config.py:
 msgid "Historiographical Institute The University of Tokyo"
 msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Please specify {}."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "{} is required item."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "{} cannot be set."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "{} must be one of JaLC, Crossref, DataCite."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} is different from existing {}."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} is invalid."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} does not exist in system."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} and {} do not exist in system."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} does not match with existing index."
+msgstr ""

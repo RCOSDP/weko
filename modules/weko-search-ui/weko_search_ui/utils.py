@@ -52,7 +52,7 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import ItemTypes
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.models import FlowDefine, WorkFlow
-from weko_workflow.utils import register_hdl_by_item_id
+from weko_workflow.utils import register_hdl_by_handle, register_hdl_by_item_id
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_REPO_USER, WEKO_SYS_USER
@@ -1038,7 +1038,7 @@ def handle_check_and_prepare_index_tree(list_recond):
             if index.index_name != index_name:
                 warnings.append(
                     _('Specified {} does not match with existing index.')
-                    .format('Index name'))
+                    .format('POS_INDEX'))
         elif index_name:
             index = Indexes.get_index_by_name(
                 index_name, parent_id)
@@ -1046,7 +1046,7 @@ def handle_check_and_prepare_index_tree(list_recond):
                 index = None
                 warnings.append(
                     _('Specified {} and {} do not exist in system.').format(
-                        'IndexID', 'Index name')
+                        'IndexID', 'POS_INDEX')
                 )
 
         data = {
@@ -1065,7 +1065,7 @@ def handle_check_and_prepare_index_tree(list_recond):
                 return None
 
         if not data.get('existed') and not data.get('index_name'):
-            errors.append(_('{} is empty.').format('Index name'))
+            errors.append(_('Please specify {}.').format('POS_INDEX'))
             return None
 
         return data
@@ -1076,7 +1076,7 @@ def handle_check_and_prepare_index_tree(list_recond):
         pos_index = item.get('pos_index')
 
         if not index_ids:
-            errors = [_('{} is empty.').format('Index tree')]
+            errors = [_('Please specify {}.').format('IndexID')]
 
         for x, index_id in enumerate(index_ids):
             tree_ids = [i.strip() for i in index_id.split('/')]
@@ -1219,36 +1219,33 @@ def register_item_handle(item):
     error = None
     item_id = str(item.get('id'))
     try:
-        pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid',
-            pid_value=item_id
-        ).first()
-
-        pid_hdl = PersistentIdentifier.query.filter_by(
-            pid_type='hdl',
-            pid_value=item_id
-        ).first()
+        record = WekoRecord.get_record_by_pid(item_id)
+        pid = record.pid_recid
+        pid_hdl = record.pid_cnri
 
         if item.get('is_change_indentifier'):
             if not item.get('cnri'):
-                error = _('{} is empty.').format('CNRI')
+                error = _('Please specify {}.').format('CNRI')
             else:
                 if item.get('status') == 'new':
-                    register_hdl_by_item_id(item_id, pid.object_uuid)
+                    register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
                 else:
                     if pid_hdl:
                         pid_hdl.delete()
-                    register_hdl_by_item_id(item_id, pid.object_uuid)
+                    register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
         else:
             if item.get('status') == 'new':
                 if item.get('cnri'):
-                    error = _('{} must be empty.').format('CNRI')
+                    error = _('{} cannot be set.').format('CNRI')
                 else:
                     register_hdl_by_item_id(item_id, pid.object_uuid)
             else:
-                if pid_hdl and not pid_hdl.pid.endswith(item.get('cnri')):
-                    error = _('Specified {} is different from existing {}.') \
-                        .format('CNRI', 'CNRI')
+                if pid_hdl:
+                    if not item.get('cnri'):
+                        error = _('Please specify {}.').format('CNRI')
+                    elif not pid_hdl.pid_value.endswith(item.get('cnri')):
+                        error = _('Specified {} is different ' +
+                                  'from existing {}.').format('CNRI', 'CNRI')
 
         if error:
             return {

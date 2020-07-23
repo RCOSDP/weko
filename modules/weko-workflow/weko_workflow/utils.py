@@ -167,6 +167,19 @@ def register_hdl_by_item_id(deposit_id, item_uuid):
     return handle
 
 
+def register_hdl_by_handle(handle, item_uuid):
+    """
+    Register HDL into Persistent Identifiers.
+
+    :param handle: HDL handle
+    :param item_uuid: Item uuid
+    """
+    if handle:
+        handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+        identifier = IdentifierHandle(item_uuid)
+        identifier.register_pidstore('hdl', handle)
+
+
 def item_metadata_validation(item_id, identifier_type):
     """
     Validate item metadata.
