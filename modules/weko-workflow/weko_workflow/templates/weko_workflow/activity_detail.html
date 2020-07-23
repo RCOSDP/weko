@@ -376,7 +376,7 @@
       <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
         <div class="modal-dialog modelWidth modal-lg" role="document">
           <div class="modal-content">
-            <div class="modal-body">
+            <div class="modal-body" onLoad='initPubdate()'>
               {%- with preview_carousel_id='modal_preview_carousel' %}
               {% include 'weko_workflow/record_detail.html' %}
               {%- endwith %}
@@ -399,7 +399,7 @@
 </div>
 {%- endif %}
 <script type="text/javascript">
-  $(window).load(function () {
+  var initPubdate = function() {
     scope = angular.element('input[name="pubdate"]').scope();
     model = scope.model;
     if (!(model['pubdate'])) {
@@ -411,6 +411,9 @@
         model['pubdate']=st;
         scope.$apply();
    }
+  };
+  $(window).load(function () {
+    initPubdate();
   });
 </script>
 {%- endblock page_body %}
