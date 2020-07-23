@@ -433,3 +433,7 @@ WEKO_IMPORT_LIST_NAME = [
     'No', 'Start Date', 'End Date', 'Item Id', 'Action', 'Work Flow Status'
 ]
 WEKO_ADMIN_LIFETIME_DEFAULT = 1800
+
+WEKO_IMPORT_EMAIL_PATTERN = \
+    r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+WEKO_IMPORT_PUBLISH_STATUS = ['publish', 'private']

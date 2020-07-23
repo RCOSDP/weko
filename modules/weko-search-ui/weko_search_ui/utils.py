@@ -55,7 +55,8 @@ from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import register_hdl_by_handle, register_hdl_by_item_id
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
-    WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, WEKO_REPO_USER, \
+    WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
@@ -366,6 +367,7 @@ def check_import_items(file_content: str, is_change_indentifier: bool):
                     list_record.extend(
                         unpackage_import_file(data_path, tsv_entry))
             list_record = handle_check_exist_record(list_record)
+            handle_check_and_prepare_publish_status(list_record)
             handle_check_and_prepare_index_tree(list_record)
             handle_check_and_prepare_feedback_mail(list_record)
             handle_set_change_indentifier_flag(
@@ -853,10 +855,19 @@ def register_item_metadata(item):
         deposit.update(item_status, new_data)
         deposit.commit()
         deposit.publish()
+
+        first_ver = None
         with current_app.test_request_context():
             first_ver = deposit.newversion(pid)
             if first_ver:
                 first_ver.publish()
+
+        publish_status = item.get('publish_status')
+        if publish_status == WEKO_IMPORT_PUBLISH_STATUS[1]:
+            update_publish_status(item_id, '1')
+            if first_ver:
+                update_publish_status(first_ver.get('recid'), '1')
+
         db.session.commit()
 
     except Exception as ex:
@@ -870,6 +881,22 @@ def register_item_metadata(item):
     return {
         'success': True
     }
+
+
+def update_publish_status(item_id, status):
+    """Handle get title.
+
+    :argument
+        item_id     -- {str} Item Id.
+        status      -- {str} Publish status (0: publish, 1: private)
+    :return
+
+    """
+    record = WekoRecord.get_record_by_pid(item_id)
+    record['publish_status'] = status
+    record.commit()
+    indexer = WekoIndexer()
+    indexer.update_publish_status(record)
 
 
 def handle_get_title(title) -> str:
@@ -1016,6 +1043,28 @@ def handle_replace_new_index() -> list:
         return []
 
 
+def handle_check_and_prepare_publish_status(list_recond):
+    """Check and prepare publish status.
+
+    :argument
+        list_recond -- {list} list recond import.
+    :return
+
+    """
+    for item in list_recond:
+        error = None
+        publish_status = item.get('publish_status')
+        if not publish_status:
+            error = _('{} is required item.').format('PUBLISH_STATUS')
+        elif publish_status not in WEKO_IMPORT_PUBLISH_STATUS:
+            error = _('Specified {} is different from existing {}.') \
+                .format('PUBLISH_STATUS', 'PUBLISH_STATUS')
+
+        if error:
+            item['errors'] = item['errors'].append(error) \
+                if item.get('errors') else [error]
+
+
 def handle_check_and_prepare_index_tree(list_recond):
     """Check index existed and prepare index tree data.
 
@@ -1154,13 +1203,12 @@ def handle_check_and_prepare_feedback_mail(list_recond):
     :return
 
     """
-    regex_mail = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
     for item in list_recond:
         errors = []
         feedback_mail = []
         if item.get('feedback_mail'):
             for mail in item.get('feedback_mail'):
-                if not re.search(regex_mail, mail):
+                if not re.search(WEKO_IMPORT_EMAIL_PATTERN, mail):
                     errors.append(_('Specified {} is invalid.').format(mail))
                 else:
                     feedback_mail.append(mail)
