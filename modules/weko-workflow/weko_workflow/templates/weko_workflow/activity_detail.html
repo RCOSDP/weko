@@ -400,17 +400,17 @@
 {%- endif %}
 <script type="text/javascript">
   $(window).load(function () {
-    var scope = angular.element('input[name="pubdate"]').scope();
-    var model = scope.model;
+    scope = angular.element('input[name="pubdate"]').scope();
+    model = scope.model;
     if (!(model['pubdate'])) {
-        var dt = new Date();
-        var y = dt.getFullYear();
-        var m = ("00" + (dt.getMonth() + 1)).slice(-2);
-        var d = ("00" + dt.getDate()).slice(-2);
-        var st = y + "-" + m + "-" + d;
+        dt = new Date();
+        y = dt.getFullYear();
+        m = ("00" + (dt.getMonth() + 1)).slice(-2);
+        d = ("00" + dt.getDate()).slice(-2);
+        st = y + "-" + m + "-" + d;
         model['pubdate']=st;
         scope.$apply();
- 　  }
+   }
   });
 </script>
 {%- endblock page_body %}
