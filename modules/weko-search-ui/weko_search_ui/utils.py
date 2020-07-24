@@ -49,7 +49,8 @@ from jsonschema import Draft4Validator
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
-from weko_records.api import ItemTypes
+from weko_records.api import ItemTypes, Mapping
+from weko_records.utils import check_required_data, get_sub_item_value
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, register_hdl_by_handle, \
@@ -1520,7 +1521,7 @@ def validation_item_property(record, item_map, properties):
 
 
 def validattion_item_property_required(
-        record, item_map, , properties):
+        record, item_map, properties):
     """
     Validate item property is required.
 
