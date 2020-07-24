@@ -372,6 +372,7 @@ def check_import_items(file_content: str, is_change_indentifier: bool):
             handle_check_and_prepare_feedback_mail(list_record)
             handle_set_change_indentifier_flag(
                 list_record, is_change_indentifier)
+            handle_check_cnri(list_record)
             handle_check_doi_ra(list_record)
             handle_check_doi(list_record)
             return {
@@ -472,11 +473,11 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     return result
 
 
-def handle_validate_item_import(list_recond, schema) -> list:
+def handle_validate_item_import(list_record, schema) -> list:
     """Validate item import.
 
     :argument
-        list_recond     -- {list} list recond import.
+        list_record     -- {list} list record import.
         schema     -- {dict} item_type schema.
     :return
         return       -- list_item_error.
@@ -484,7 +485,7 @@ def handle_validate_item_import(list_recond, schema) -> list:
     """
     result = []
     v2 = Draft4Validator(schema) if schema else None
-    for record in list_recond:
+    for record in list_record:
         errors = []
         record_id = record.get("id")
         if record_id and (not represents_int(record_id)):
@@ -568,17 +569,17 @@ def get_item_type(item_type_id=0) -> dict:
     return result
 
 
-def handle_check_exist_record(list_recond) -> list:
+def handle_check_exist_record(list_record) -> list:
     """Check record is exist in system.
 
     :argument
-        list_recond -- {list} list recond import.
+        list_record -- {list} list record import.
     :return
         return      -- list record has property status.
 
     """
     result = []
-    for item in list_recond:
+    for item in list_record:
         if not item.get('errors'):
             item = dict(**item, **{
                 'status': 'new'
@@ -1043,15 +1044,15 @@ def handle_replace_new_index() -> list:
         return []
 
 
-def handle_check_and_prepare_publish_status(list_recond):
+def handle_check_and_prepare_publish_status(list_record):
     """Check and prepare publish status.
 
     :argument
-        list_recond -- {list} list recond import.
+        list_record -- {list} list record import.
     :return
 
     """
-    for item in list_recond:
+    for item in list_record:
         error = None
         publish_status = item.get('publish_status')
         if not publish_status:
@@ -1065,11 +1066,11 @@ def handle_check_and_prepare_publish_status(list_recond):
                 if item.get('errors') else [error]
 
 
-def handle_check_and_prepare_index_tree(list_recond):
+def handle_check_and_prepare_index_tree(list_record):
     """Check index existed and prepare index tree data.
 
     :argument
-        list_recond -- {list} list recond import.
+        list_record -- {list} list record import.
     :return
 
     """
@@ -1119,7 +1120,7 @@ def handle_check_and_prepare_index_tree(list_recond):
 
         return data
 
-    for item in list_recond:
+    for item in list_record:
         indexes = []
         index_ids = item.get('IndexID')
         pos_index = item.get('pos_index')
@@ -1195,15 +1196,15 @@ def handle_index_tree(item):
         item['metadata']['path'] = path
 
 
-def handle_check_and_prepare_feedback_mail(list_recond):
+def handle_check_and_prepare_feedback_mail(list_record):
     """Check feedback email is existed in database and prepare data.
 
     :argument
-        list_recond -- {list} list recond import.
+        list_record -- {list} list record import.
     :return
 
     """
-    for item in list_recond:
+    for item in list_record:
         errors = []
         feedback_mail = []
         if item.get('feedback_mail'):
@@ -1221,35 +1222,68 @@ def handle_check_and_prepare_feedback_mail(list_recond):
                     if item.get('errors') else errors
 
 
-def handle_set_change_indentifier_flag(list_recond, is_change_indentifier):
+def handle_set_change_indentifier_flag(list_record, is_change_indentifier):
     """Set Change Identifier Mode flag.
 
     :argument
-        list_recond -- {list} list recond import.
+        list_record -- {list} list record import.
         is_change_indentifier -- {bool} Change Identifier Mode.
     :return
 
     """
-    for item in list_recond:
+    for item in list_record:
         item['is_change_indentifier'] = is_change_indentifier
 
 
-def handle_check_doi_ra(list_recond):
+def handle_check_cnri(list_record):
+    """Check CNRI.
+
+    :argument
+        list_record -- {list} list record import.
+    :return
+
+    """
+    for item in list_record:
+        error = None
+        item_id = str(item.get('id'))
+
+        if item.get('is_change_indentifier'):
+            if not item.get('cnri'):
+                error = _('Please specify {}.').format('CNRI')
+        else:
+            if item.get('status') == 'new':
+                if item.get('cnri'):
+                    error = _('{} cannot be set.').format('CNRI')
+            else:
+                pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
+                if pid_cnri:
+                    if not item.get('cnri'):
+                        error = _('Please specify {}.').format('CNRI')
+                    elif not pid_cnri.pid_value.endswith(item.get('cnri')):
+                        error = _('Specified {} is different ' +
+                                  'from existing {}.').format('CNRI', 'CNRI')
+
+        if error:
+            item['errors'] = item['errors'].append(error) \
+                if item.get('errors') else [error]
+
+
+def handle_check_doi_ra(list_record):
     """Check DOI_RA.
 
     :argument
-        list_recond -- {list} list recond import.
+        list_record -- {list} list record import.
     :return
 
     """
     pass
 
 
-def handle_check_doi(list_recond):
+def handle_check_doi(list_record):
     """Check DOI.
 
     :argument
-        list_recond -- {list} list recond import.
+        list_record -- {list} list record import.
     :return
 
     """
@@ -1264,7 +1298,6 @@ def register_item_handle(item):
     :return
 
     """
-    error = None
     item_id = str(item.get('id'))
     try:
         record = WekoRecord.get_record_by_pid(item_id)
@@ -1272,34 +1305,16 @@ def register_item_handle(item):
         pid_hdl = record.pid_cnri
 
         if item.get('is_change_indentifier'):
-            if not item.get('cnri'):
-                error = _('Please specify {}.').format('CNRI')
-            else:
-                if item.get('status') == 'new':
-                    register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
-                else:
-                    if pid_hdl:
-                        pid_hdl.delete()
-                    register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
-        else:
             if item.get('status') == 'new':
-                if item.get('cnri'):
-                    error = _('{} cannot be set.').format('CNRI')
-                else:
-                    register_hdl_by_item_id(item_id, pid.object_uuid)
+                register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
             else:
                 if pid_hdl:
-                    if not item.get('cnri'):
-                        error = _('Please specify {}.').format('CNRI')
-                    elif not pid_hdl.pid_value.endswith(item.get('cnri')):
-                        error = _('Specified {} is different ' +
-                                  'from existing {}.').format('CNRI', 'CNRI')
+                    pid_hdl.delete()
+                register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
+        else:
+            if item.get('status') == 'new':
+                register_hdl_by_item_id(item_id, pid.object_uuid)
 
-        if error:
-            return {
-                'success': False,
-                'error': error
-            }
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
