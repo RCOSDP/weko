@@ -869,7 +869,8 @@ class FileInstance(db.Model, Timestamp):
         def copy(storage, src, chunk_size=None, progress_callback=None):
             fp = src.open(mode='rb')
             try:
-                return storage.save(fp, chunk_size=chunk_size, progress_callback=progress_callback)
+                return storage.save(fp, chunk_size=chunk_size,
+                                    progress_callback=progress_callback)
             finally:
                 fp.close()
 
@@ -880,8 +881,8 @@ class FileInstance(db.Model, Timestamp):
 
         storage = self.storage(**kwargs)
         fileinstance_storage = fileinstance.storage(**kwargs)
-
-        copy_result = copy(storage, fileinstance_storage, chunk_size=chunk_size, progress_callback=progress_callback)
+        copy_result = copy(storage, fileinstance_storage, chunk_size=chunk_size,
+                           progress_callback=progress_callback)
         self.set_uri(*copy_result)
 
     @ensure_readable()
