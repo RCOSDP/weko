@@ -583,7 +583,7 @@ msgstr ""
 #: weko_theme/templates/weko_theme/footer_wysiwyg.html:27
 #, python-format
 msgid "<p>Powered by <a href=\"%(link)s\">CERN Data Centre & Invenio</a><p>"
-msgstr ""
+msgstr "<p>Back to <a href=\"%(link)s\">MERAL</a><p>"
 
 #: weko_theme/templates/weko_theme/header_editor.html:23
 #: weko_theme/templates/weko_theme/header_wysiwyg.html:23
