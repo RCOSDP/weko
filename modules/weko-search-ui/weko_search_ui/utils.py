@@ -52,11 +52,12 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import ItemTypes
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.models import FlowDefine, WorkFlow
-from weko_workflow.utils import register_hdl_by_handle, register_hdl_by_item_id
+from weko_workflow.utils import IdentifierHandle, register_hdl_by_handle, \
+    register_hdl_by_item_id
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
-    WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, WEKO_REPO_USER, \
-    WEKO_SYS_USER
+    WEKO_IMPORT_DOI_PATTERN, WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
+    WEKO_IMPORT_PUBLISH_STATUS, WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
@@ -1062,7 +1063,7 @@ def handle_check_and_prepare_publish_status(list_record):
                 .format('PUBLISH_STATUS', 'PUBLISH_STATUS')
 
         if error:
-            item['errors'] = item['errors'].append(error) \
+            item['errors'] = item['errors'] + [error] \
                 if item.get('errors') else [error]
 
 
@@ -1264,8 +1265,9 @@ def handle_check_cnri(list_record):
                                   'from existing {}.').format('CNRI', 'CNRI')
 
         if error:
-            item['errors'] = item['errors'].append(error) \
+            item['errors'] = item['errors'] + [error] \
                 if item.get('errors') else [error]
+            item['errors'] = list(set(item['errors']))
 
 
 def handle_check_doi_ra(list_record):
@@ -1276,7 +1278,43 @@ def handle_check_doi_ra(list_record):
     :return
 
     """
-    pass
+    def check_existed(item_id, doi_ra):
+        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+        identifier = IdentifierHandle(pid.object_uuid)
+        _value, doi_type = identifier.get_idt_registration_data()
+
+        error = None
+        if doi_type != doi_ra:
+            error = _('Specified {} is different from ' +
+                      'existing {}.').format('DOI_RA', 'DOI_RA')
+        return error
+
+    for item in list_record:
+        error = None
+        item_id = str(item.get('id'))
+        doi_ra = item.get('doi_ra')
+
+        if item.get('doi') and not doi_ra:
+            error = _('{} is required item.').format('DOI_RA')
+        elif doi_ra:
+            if doi_ra not in WEKO_IMPORT_DOI_TYPE:
+                error = _('{} must be one of JaLC, Crossref, DataCite.') \
+                    .format('DOI_RA')
+            elif item.get('is_change_indentifier'):
+                # TODO: handle check validation required in here
+                if item.get('status') != 'new':
+                    error = check_existed(item_id, doi_ra)
+            else:
+                if item.get('status') == 'new':
+                    if item.get('doi'):
+                        error = _('{} cannot be set.').format('DOI')
+                else:
+                    error = check_existed(item_id, doi_ra)
+
+        if error:
+            item['errors'] = item['errors'] + [error] \
+                if item.get('errors') else [error]
+            item['errors'] = list(set(item['errors']))
 
 
 def handle_check_doi(list_record):
@@ -1287,7 +1325,37 @@ def handle_check_doi(list_record):
     :return
 
     """
-    pass
+    for item in list_record:
+        error = None
+        item_id = str(item.get('id'))
+        doi = item.get('doi')
+
+        if item.get('is_change_indentifier') \
+                and item.get('doi_ra') and not doi:
+            error = _('{} is required item.').format('DOI')
+        elif item.get('doi_ra'):
+            if item.get('is_change_indentifier'):
+                if not item.get('doi'):
+                    error = _('Please specify {}.').format('DOI')
+                elif not re.search(WEKO_IMPORT_DOI_PATTERN, doi):
+                    error = _('Specified {} is invalid.').format('DOI')
+            else:
+                if item.get('status') == 'new':
+                    if item.get('doi'):
+                        error = _('{} cannot be set.').format('DOI')
+                else:
+                    pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                    if pid_doi:
+                        if not item.get('doi'):
+                            error = _('Please specify {}.').format('DOI')
+                        elif not pid_doi.pid_value.endswith(item.get('doi')):
+                            error = _('Specified {} is different ' +
+                                      'from existing {}.').format('DOI', 'DOI')
+
+        if error:
+            item['errors'] = item['errors'] + [error] \
+                if item.get('errors') else [error]
+            item['errors'] = list(set(item['errors']))
 
 
 def register_item_handle(item):

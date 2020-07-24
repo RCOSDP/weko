@@ -869,6 +869,23 @@ class IdentifierHandle(object):
                     atr_typ=input_type
                     )
 
+    def get_idt_registration_data(self):
+        """Get Identifier Registration data.
+
+        Arguments:
+
+        Returns:
+            doi_value -- {string} Identifier
+            doi_type  -- {string} Identifier type
+
+        """
+        doi_value, _ = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@value")
+        doi_type, _ = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@attributes.identifierType")
+
+        return doi_value, doi_type
+
     def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
         """Commit update.
 
