@@ -102,6 +102,8 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         if not flag_del_pidstore and identifier_val and doi_register_val:
             identifier = IdentifierHandle(record_without_version)
             reg = identifier.register_pidstore('doi', identifier_val)
+            identifier.update_idt_registration_metadata(doi_register_val,
+                                                        doi_register_typ)
 
             if reg:
                 identifier = IdentifierHandle(item_id)
