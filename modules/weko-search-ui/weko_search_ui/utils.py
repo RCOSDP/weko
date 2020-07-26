@@ -47,14 +47,17 @@ from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
+from weko_deposit.pidstore import get_latest_version_id
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
+from weko_workflow.config import IDENTIFIER_GRANT_LIST
 from weko_workflow.models import FlowDefine, WorkFlow
-from weko_workflow.utils import IdentifierHandle, register_hdl_by_handle, \
-    register_hdl_by_item_id, check_required_data, get_sub_item_value
+from weko_workflow.utils import IdentifierHandle, check_required_data, \
+    get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
+    register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_IMPORT_DOI_PATTERN, WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
@@ -859,17 +862,10 @@ def register_item_metadata(item):
         deposit.commit()
         deposit.publish()
 
-        first_ver = None
         with current_app.test_request_context():
             first_ver = deposit.newversion(pid)
             if first_ver:
                 first_ver.publish()
-
-        publish_status = item.get('publish_status')
-        if publish_status == WEKO_IMPORT_PUBLISH_STATUS[1]:
-            update_publish_status(item_id, '1')
-            if first_ver:
-                update_publish_status(first_ver.get('recid'), '1')
 
         db.session.commit()
 
@@ -1005,6 +1001,11 @@ def import_items_to_system(item: dict):
         response = register_item_metadata(item)
         if response.get('success'):
             response = register_item_handle(item)
+        if response.get('success'):
+            response = register_item_doi(item)
+        if response.get('success') and \
+                item.get('publish_status') == WEKO_IMPORT_PUBLISH_STATUS[1]:
+            response = register_item_update_publish_status(item, '1')
 
         return response
 
@@ -1236,6 +1237,7 @@ def handle_set_change_indentifier_flag(list_record, is_change_indentifier):
     for item in list_record:
         item['is_change_indentifier'] = is_change_indentifier
 
+
 def handle_check_cnri(list_record):
     """Check CNRI.
 
@@ -1284,7 +1286,7 @@ def handle_check_doi_ra(list_record):
         _value, doi_type = identifier.get_idt_registration_data()
 
         error = None
-        if doi_type != doi_ra:
+        if doi_type and doi_type[0] != doi_ra:
             error = _('Specified {} is different from ' +
                       'existing {}.').format('DOI_RA', 'DOI_RA')
         return error
@@ -1316,7 +1318,7 @@ def handle_check_doi_ra(list_record):
                 if item.get('errors') else [error]
             item['errors'] = list(set(item['errors']))
 
-        current_app.logger.debug(handle_doi_required_check(item))
+        # current_app.logger.debug(handle_doi_required_check(item))
 
 
 def handle_check_doi(list_record):
@@ -1366,6 +1368,7 @@ def register_item_handle(item):
     :argument
         item    -- {object} Record item.
     :return
+        response -- {object} Process status.
 
     """
     item_id = str(item.get('id'))
@@ -1385,6 +1388,135 @@ def register_item_handle(item):
             if item.get('status') == 'new':
                 register_hdl_by_item_id(item_id, pid.object_uuid)
 
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error('item id: %s update error.' % item_id)
+        current_app.logger.error(ex)
+        return {
+            'success': False,
+            'error': str(ex)
+        }
+    return {
+        'success': True
+    }
+
+
+def register_item_doi(item):
+    """Register item DOI.
+
+    :argument
+        item    -- {object} Record item.
+    :return
+        response -- {object} Process status.
+
+    """
+    def prepare_doi_link(item_id):
+        item_id = '%010d' % int(item_id)
+        identifier_setting = get_identifier_setting('Root Index')
+        if identifier_setting:
+            text_empty = '<Empty>'
+            if not identifier_setting.jalc_doi:
+                identifier_setting.jalc_doi = text_empty
+            if not identifier_setting.jalc_crossref_doi:
+                identifier_setting.jalc_crossref_doi = text_empty
+            if not identifier_setting.jalc_datacite_doi:
+                identifier_setting.jalc_datacite_doi = text_empty
+        suffix = '/' + identifier_setting.suffix \
+            if identifier_setting.suffix else ''
+
+        return {
+            'identifier_grant_jalc_doi_link':
+                IDENTIFIER_GRANT_LIST[1][2] + '/' +
+            identifier_setting.jalc_doi + suffix + '/' + item_id,
+            'identifier_grant_jalc_cr_doi_link':
+                IDENTIFIER_GRANT_LIST[2][2] + '/' +
+            identifier_setting.jalc_crossref_doi + suffix + '/' + item_id,
+            'identifier_grant_jalc_dc_doi_link':
+                IDENTIFIER_GRANT_LIST[3][2] + '/' +
+            identifier_setting.jalc_datacite_doi + suffix + '/' + item_id
+        }
+
+    item_id = str(item.get('id'))
+    status = item.get('status')
+    is_change_indentifier = item.get('is_change_indentifier')
+    doi_ra = item.get('doi_ra')
+    doi = item.get('doi')
+    try:
+        record_without_version = WekoRecord.get_record_by_pid(item_id)
+        pid = record_without_version.pid_recid
+        pid_doi = record_without_version.pid_doi
+
+        lastest_version_id = item_id + '.' + \
+            str(get_latest_version_id(item_id) - 1)
+        pid_lastest = WekoRecord.get_record_by_pid(
+            lastest_version_id).pid_recid
+
+        if is_change_indentifier:
+            if doi_ra and doi:
+                data = {
+                    'identifier_grant_jalc_doi_link':
+                        IDENTIFIER_GRANT_LIST[1][2] + '/' + doi,
+                    'identifier_grant_jalc_cr_doi_link':
+                        IDENTIFIER_GRANT_LIST[2][2] + '/' + doi,
+                    'identifier_grant_jalc_dc_doi_link':
+                        IDENTIFIER_GRANT_LIST[3][2] + '/' + doi
+                }
+                if status != 'new' and pid_doi:
+                    pid_doi.delete()
+                saving_doi_pidstore(
+                    pid_lastest.object_uuid,
+                    pid.object_uuid,
+                    data,
+                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
+                )
+        else:
+            if status == 'new':
+                if doi_ra and not doi:
+                    data = prepare_doi_link(item_id)
+                    saving_doi_pidstore(
+                        pid_lastest.object_uuid,
+                        pid.object_uuid,
+                        data,
+                        WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
+                    )
+
+        deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+        deposit.commit()
+        deposit.publish()
+
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error('item id: %s update error.' % item_id)
+        current_app.logger.error(ex)
+        return {
+            'success': False,
+            'error': str(ex)
+        }
+    return {
+        'success': True
+    }
+
+
+def register_item_update_publish_status(item, status):
+    """Update Publish Status.
+
+    :argument
+        item    -- {object} Record item.
+        status  -- {str} Publish Status.
+    :return
+        response -- {object} Process status.
+
+    """
+    try:
+        item_id = str(item.get('id'))
+        lastest_version_id = item_id + '.' + \
+            str(get_latest_version_id(item_id) - 1)
+
+        update_publish_status(item_id, status)
+        if lastest_version_id:
+            update_publish_status(lastest_version_id, status)
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
