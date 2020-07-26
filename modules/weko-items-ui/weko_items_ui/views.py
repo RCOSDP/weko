@@ -55,7 +55,7 @@ from werkzeug.utils import import_string
 from .permissions import item_permission
 from .utils import _get_max_export_items, export_items, get_current_user, \
     get_data_authors_prefix_settings, get_list_email, get_list_username, \
-    get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
+    get_new_items_by_date, get_latest_items,get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, get_workflow_by_item_type_id, \
     is_schema_include_key, parse_ranking_results, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
@@ -976,11 +976,14 @@ def ranking():
             target_report='3',
             unit='Item',
             agg_size=settings.display_rank,
-            agg_sort={'_count': 'desc'})
-        rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, settings.display_rank,
+            agg_sort={'count': 'desc'}
+            )
+        result['data'].sort(key=lambda x: x['col3'], reverse=True)
+        result2 =  parse_ranking_results(result, settings.display_rank,
                                   list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
+        rankings['most_downloaded_items'] = result2
+
 
     # created_most_items_user
     if settings.rankings['created_most_items_user']:
@@ -1010,18 +1013,28 @@ def ranking():
                                   title_key='search_key', count_key='count')
 
     # new_items
+    #if settings.rankings['new_items']:
+    #    new_item_start_date = end_date - \
+    #        timedelta(days=int(settings.new_item_period) - 1)
+    #    if new_item_start_date < start_date:
+    #        new_item_start_date = start_date
+    #    result = get_new_items_by_date(
+    #        new_item_start_date.strftime('%Y-%m-%d'),
+    #        end_date.strftime('%Y-%m-%d'))
+    #    result = get_latest_items(10)
+    #    rankings['new_items'] = \
+    #        parse_ranking_results(result, settings.display_rank,
+    #                              list_name='all', title_key='record_name',
+    #                              pid_key='pid_value', date_key='create_date')
+
+    # new_items
     if settings.rankings['new_items']:
-        new_item_start_date = end_date - \
-            timedelta(days=int(settings.new_item_period) - 1)
-        if new_item_start_date < start_date:
-            new_item_start_date = start_date
-        result = get_new_items_by_date(
-            new_item_start_date.strftime('%Y-%m-%d'),
-            end_date.strftime('%Y-%m-%d'))
+        result = get_latest_items(10)
         rankings['new_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='all', title_key='record_name',
                                   pid_key='pid_value', date_key='create_date')
+
 
     return render_template(
         current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
@@ -1030,7 +1043,7 @@ def ranking():
         is_show=settings.is_show,
         start_date=start_date,
         end_date=end_date,
-        rankings=rankings)
+        rankings=rankings, community=None, community_id="")
 
 
 def check_ranking_show():

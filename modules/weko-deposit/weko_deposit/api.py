@@ -123,8 +123,8 @@ class WekoIndexer(RecordIndexer):
         full_body = dict(id=str(item_id),
                          index=self.es_index,
                          doc_type=self.es_doc_type,
-                         version=revision_id + 1,
-                         version_type=self._version_type,
+                         #version=revision_id + 1,
+                         #version_type=self._version_type,
                          body=jrc)
 
         if 'content' in jrc:  # Only pass through pipeline if file exists
@@ -168,7 +168,6 @@ class WekoIndexer(RecordIndexer):
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(version.get('id')),
-            retry_on_conflict=3,
             body=body
         )
 

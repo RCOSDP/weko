@@ -1,3 +1,4 @@
+<!--
 <div class="row record-elem" ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
   <div class="col-xs-12">
     <div class="pull-right view-record hidden-xs">
@@ -15,13 +16,13 @@
             {{ showAuthors ? 'Hide authors' : 'Show authors' }}
           </a>
         </li>
-         <!--
+
         <li>
           <a ng-click="showSource=!showSource">
             {{ showSource ? 'Hide source' : 'Show source' }}
           </a>
         </li>
-      -->
+
       </ul>
     </div>
     <div ng-hide="!showAuthors">
@@ -31,11 +32,58 @@
         </div>
       </ul>
     </div>
-         <!--
+
     <div ng-hide="!showSource">
       <pre class="pre-scrollable">{{ record | json }}</pre>
     </div>
-  -->
+
     <hr />
   </div>
 </div>
+  -->
+  <div class="panel panel-default" ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
+    <div class="panel-heading">
+      <div class="form-inline">
+        <div class="checkbox hide">
+          <label>
+            <input type="checkbox" id="item_id_1" value="option1" aria-label="...">
+          </label>
+        </div>
+        <a target="_self" ng-href="/records/{{ record.id }}{{commInfo}}">
+          <span class="glyphicon glyphicon-file" aria-hidden="true"></span> {{ record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0] }}</a>
+      </div>
+    </div>
+    <div class="panel-body">
+      <pre class="hide">{{record.metadata._comment}}</pre>
+      <span ng-repeat="comment in record.metadata._comment track by $index"> {{ comment }} <br> </span>
+      <div class="pull-right">
+        <ul class="list-inline">
+          <li ng-show="record.metadata.creator">
+            <a ng-click="showAuthors=!showAuthors">
+              {{ showAuthors ? 'Hide authors' : 'Show authors' }}
+            </a>
+          </li>
+          <!--
+          <li>
+            <a ng-click="showSource=!showSource">
+              {{ showSource ? 'Hide source' : 'Show source' }}
+            </a>
+          </li>
+          -->
+        </ul>
+      </div>
+      <div ng-hide="!showAuthors">
+        <ul>
+          <div ng-repeat='author in record.metadata.creator'>
+            <li>{{ author }}</li>
+          </div>
+        </ul>
+      </div>
+      <!--
+      <div ng-hide="!showSource">
+        <pre class="pre-scrollable">{{ record | json }}</pre>
+      </div>
+      -->
+    </div>
+  </div>
+

@@ -1,0 +1,61 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+  <div id="search_detail" style="height: 100%" ng-controller="searchDetailCtrl">
+    <form id="search-form" action="/search">
+    <div class="row" style="height: 100%">
+      <div class="col-sm-6 col-md-6 col-lg-6 col-sm-offset-3 col-md-offset-3 col-lg-offset-3" style="height:100%">
+        <div id="search_simple" class="input-group" id="simple-search-btn">
+          <input type="text" id="q" name="q" class="form-control" placeholder="{{_('Type and press enter to search')}}" ng-model="search_q">
+          <div class="input-group-btn">
+            <button id="top-search-btn" type="submit" class="btn btn-primary"><i class="fa fa-search"></i></button>
+<button id="detail_search_main" type="button" class="btn btn-primary">
+            <i class="fa fa-search-plus"></i>
+          </button>
+
+</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="row detail-lable">
+      <div class="col-sm-6 col-md-6 col-lg-6 col-lg-offset-3">
+        <div id="search_type" class="form-inline ten-pixel-margin">
+          <label class="radio-inline">
+            <input type="radio" name="search_type" id="search_type_fulltext" value="0" ng-value="0" ng-model="search_type"> {{_('Full text')}}
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="search_type" id="search_type_keyword" value="1" ng-value="1" ng-model="search_type"> {{_('Keyword')}}
+          </label>
+        </div>
+      </div>
+    </div>
+    </form>
+    <!--Detail search-->
+    <div>
+        <div class="row">
+          <div id="search_detail_metadata" class="collapse col-sm-12 col-md-12
+              col-lg-12">
+              {% include "weko_theme/body_search_detail_new.html" %}
+          </div>
+        </div>
+    </div>
+  </div>
+
