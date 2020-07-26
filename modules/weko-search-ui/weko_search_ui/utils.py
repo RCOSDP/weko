@@ -50,11 +50,11 @@ from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import ItemTypes, Mapping
-from weko_records.utils import check_required_data, get_sub_item_value
+from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, register_hdl_by_handle, \
-    register_hdl_by_item_id
+    register_hdl_by_item_id, check_required_data, get_sub_item_value
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_IMPORT_DOI_PATTERN, WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
