@@ -1792,8 +1792,12 @@ def validattion_item_property_either_required(
     """
     if 'geoLocationPoint' in properties:
         latitude_data, latitude_key = get_data_by_property(
+            record,
+            item_map,
             "geoLocation.geoLocationPoint.pointLatitude.@value")
         longitude_data, longitude_key = get_data_by_property(
+            record,
+            item_map,
             "geoLocation.geoLocationPoint.pointLongitude.@value")
 
         latitude_requirement = check_required_data(
