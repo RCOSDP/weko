@@ -10,7 +10,7 @@
 
 from os import environ
 
-DB_POOL_CLASS = environ.get('INVENIO_DB_POOL_CLASS', 'QueuePool')
+DB_POOL_CLASS = 'QueuePool'
 """Database connection pool"""
 
 DB_SQLALCHEMY_POOL_PACKAGE = 'sqlalchemy.pool'
