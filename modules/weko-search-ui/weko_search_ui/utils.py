@@ -1103,6 +1103,11 @@ def handle_check_and_prepare_index_tree(list_record):
                     _('Specified {} and {} do not exist in system.').format(
                         'IndexID', 'POS_INDEX')
                 )
+            else:
+                warnings.append(
+                    _('Specified {} does not exist in system.').format(
+                        'IndexID')
+                )
 
         data = {
             'index_id': index.id if index else index_id,
