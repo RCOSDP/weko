@@ -1311,6 +1311,8 @@ def handle_check_doi_ra(list_record):
                 if item.get('status') == 'new':
                     if item.get('doi'):
                         error = _('{} cannot be set.').format('DOI')
+                    elif not handle_doi_required_check(item):
+                        error = _('PID does not meet the conditions.')
                 else:
                     error = check_existed(item_id, doi_ra)
 
