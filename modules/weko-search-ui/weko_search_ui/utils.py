@@ -1540,7 +1540,7 @@ def handle_doi_required_check(record):
     :argument
         record    -- {object} Record item.
     :return
-        true/false -- {object} Validation result. 
+        true/false -- {object} Validation result.
 
     """
     ddi_item_type_name = 'DDI'
@@ -1567,10 +1567,11 @@ def handle_doi_required_check(record):
                          'conference object', 'conference proceedings',
                          'conference poster']
 
-    item_type_id = None
     item_type = None
 
-    if 'doi_ra' in record and record['doi_ra'] in ['JaLC', 'Crossref', 'DataCite']:
+    if 'doi_ra' in record and record['doi_ra'] in ['JaLC',
+                                                   'Crossref',
+                                                   'DataCite']:
         doi_type = record['doi_ra']
         item_type_mapping = Mapping.get_record(record['item_type_id'])
         if item_type_mapping:
@@ -1585,8 +1586,11 @@ def handle_doi_required_check(record):
         # いずれか必須
         either_properties = []
 
-        resource_type, resource_type_key = get_data_by_property(record, item_map, 'type.@value')
-        if not resource_type or not item_type or check_required_data(resource_type, resource_type_key):
+        resource_type, resource_type_key = get_data_by_property(record,
+                                                                item_map,
+                                                                'type.@value')
+        if not resource_type or not item_type \
+                or check_required_data(resource_type, resource_type_key):
             return False
 
         resource_type = resource_type.pop()
@@ -1602,18 +1606,18 @@ def handle_doi_required_check(record):
                     required_properties.append('fileURI')
             elif resource_type in thesis_types:
                 required_properties = ['title',
-                                    'creator']
+                                       'creator']
                 if item_type.item_type_name.name != ddi_item_type_name:
                     required_properties.append('fileURI')
             elif item_type.name_id in dataset_nameid \
                     or resource_type in dataset_type:
                 required_properties = ['title',
-                                    'givenName']
+                                       'givenName']
                 if item_type.item_type_name.name != ddi_item_type_name:
                     required_properties.append('fileURI')
                 either_properties = ['geoLocationPoint',
-                                    'geoLocationBox',
-                                    'geoLocationPlace']
+                                     'geoLocationBox',
+                                     'geoLocationPlace']
 
         if required_properties:
             properties['required'] = required_properties
@@ -1626,6 +1630,7 @@ def handle_doi_required_check(record):
 
     return False
 
+
 def get_data_by_property(record, item_map, item_property):
     """
     Get data by property text.
@@ -1637,7 +1642,7 @@ def get_data_by_property(record, item_map, item_property):
     data = []
     if not key:
         current_app.logger.error(str(item_property) + ' jpcoar:mapping '
-                                                        'is not correct')
+                                                      'is not correct')
         return None, None
     attribute = record['metadata'].get(key.split('.')[0])
     if not attribute:
@@ -1753,9 +1758,7 @@ def validattion_item_property_required(
                 for value in creator_name_identifier:
                     idt_data.append(value)
 
-        repeatable = True
         requirements = check_required_data(data, key, True)
-        repeatable = True
         idt_requirements = check_required_data(idt_data, idt_key, True)
         if requirements and idt_requirements:
             return False
@@ -1849,14 +1852,14 @@ def validattion_item_property_either_required(
         west_requirement = check_required_data(
             west_data, west_key, True)
 
-        if east_requirement and north_requirement and south_requirement and west_requirement:
+        if east_requirement and north_requirement and south_requirement and \
+                west_requirement:
             return False
     # check 位置情報（自由記述） datacite:geoLocationPlace
     if 'geoLocationPlace' in properties:
         data, key = get_data_by_property(
             "geoLocation.geoLocationPlace.@value")
 
-        repeatable = True
         requirements = check_required_data(data, key, True)
         if requirements:
             return False
@@ -1876,9 +1879,12 @@ def handle_check_date(list_record):
         error = None
         for item in record.get('metadata'):
             metadata = record['metadata'][item]
-            if isinstance(metadata, dict) and metadata.get(WEKO_IMPORT_SUBITEM_DATE_ISO):
-                if not validattion_date_property(metadata.get(WEKO_IMPORT_SUBITEM_DATE_ISO)):
-                    error = _('Specified {} is invalid.').format(_('Date (ISO-8601)'))
+            if isinstance(metadata, dict) and metadata.get(
+                WEKO_IMPORT_SUBITEM_DATE_ISO) and not \
+                validattion_date_property(metadata.get(
+                    WEKO_IMPORT_SUBITEM_DATE_ISO)):
+                error = _('Specified {} is invalid.').format(
+                    _('Date (ISO-8601)'))
 
         if error:
             record['errors'] = record['errors'] + [error] \
