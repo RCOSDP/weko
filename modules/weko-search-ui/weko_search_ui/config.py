@@ -439,3 +439,6 @@ WEKO_IMPORT_EMAIL_PATTERN = \
 WEKO_IMPORT_PUBLISH_STATUS = ['publish', 'private']
 WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite']
 WEKO_IMPORT_DOI_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){1,290}$"
+
+WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
+"""Subitem ID of property Date (ISO-8601)."""

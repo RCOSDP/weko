@@ -61,7 +61,8 @@ from weko_workflow.utils import IdentifierHandle, check_required_data, \
 
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_IMPORT_DOI_PATTERN, WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
-    WEKO_IMPORT_PUBLISH_STATUS, WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_REPO_USER, \
+    WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
@@ -380,6 +381,7 @@ def check_import_items(file_content: str, is_change_indentifier: bool):
             handle_check_cnri(list_record)
             handle_check_doi_ra(list_record)
             handle_check_doi(list_record)
+            handle_check_date(list_record)
             return {
                 'list_record': list_record,
                 'data_path': data_path
@@ -1860,3 +1862,40 @@ def validattion_item_property_either_required(
             return False
 
     return True
+
+
+def handle_check_date(list_record):
+    """Support validate three pattern: yyyy-MM-dd, yyyy-MM, yyyy.
+
+    :argument
+        list_record -- {list} list record import.
+    :return
+
+    """
+    for record in list_record:
+        error = None
+        # item_id = str(item.get('id'))
+        for item in record.get('metadata'):
+            if item.get(WEKO_IMPORT_SUBITEM_DATE_ISO):
+                if not validattion_date_property(item.get(WEKO_IMPORT_SUBITEM_DATE_ISO)):
+                    error = _('Specified {} is invalid.').format(_('Date (ISO-8601)'))
+
+        if error:
+            item['errors'] = item['errors'] + [error] \
+                if item.get('errors') else [error]
+            item['errors'] = list(set(item['errors']))
+
+
+def validattion_date_property(date_str):
+    """
+    Validate item property is either required.
+
+    :param properties: Property's keywords
+    :return: error_list or None
+    """
+    for fmt in ('%Y-%m-%d', '%Y-%m', '%Y'):
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            pass
+    return False
