@@ -424,3 +424,7 @@ msgstr ""
 #: weko_search_ui/utils.py:
 msgid "Specified {} does not match with existing index."
 msgstr ""
+
+#: weko-search-ui\weko_search_ui\utils.py:1307
+msgid "PID does not meet the conditions."
+msgstr "PID does not meet the conditions."

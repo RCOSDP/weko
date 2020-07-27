@@ -197,6 +197,10 @@ msgstr ""
 msgid "Is the input contents discarded ?"
 msgstr ""
 
+#: weko-search-ui\weko_search_ui\utils.py:1307
+msgid "PID does not meet the conditions."
+msgstr "PID does not meet the conditions."
+
 #~ msgid "Search"
 #~ msgstr "Search"
 

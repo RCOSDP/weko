@@ -1303,7 +1303,8 @@ def handle_check_doi_ra(list_record):
                 error = _('{} must be one of JaLC, Crossref, DataCite.') \
                     .format('DOI_RA')
             elif item.get('is_change_indentifier'):
-                # TODO: handle check validation required in here
+                if not handle_doi_required_check(item):
+                    error = _('PID does not meet the conditions.')
                 if item.get('status') != 'new':
                     error = check_existed(item_id, doi_ra)
             else:
@@ -1317,8 +1318,6 @@ def handle_check_doi_ra(list_record):
             item['errors'] = item['errors'] + [error] \
                 if item.get('errors') else [error]
             item['errors'] = list(set(item['errors']))
-
-        # current_app.logger.debug(handle_doi_required_check(item))
 
 
 def handle_check_doi(list_record):
@@ -1532,6 +1531,14 @@ def register_item_update_publish_status(item, status):
 
 
 def handle_doi_required_check(record):
+    """DOI Validation check (Resource Type, Required, either required).
+
+    :argument
+        record    -- {object} Record item.
+    :return
+        true/false -- {object} Validation result. 
+
+    """
     ddi_item_type_name = 'DDI'
     journalarticle_nameid = [3, 5, 9]
     journalarticle_type = ['other（プレプリント）', 'conference paper',
@@ -1616,31 +1623,39 @@ def handle_doi_required_check(record):
     return False
 
 def get_data_by_property(record, item_map, item_property):
-        """
-        Get data by property text.
+    """
+    Get data by property text.
 
-        :param item_property: property value in item_map
-        :return: error_list or None
-        """
-        key = item_map.get(item_property)
-        data = []
-        if not key:
-            current_app.logger.error(str(item_property) + ' jpcoar:mapping '
-                                                            'is not correct')
-            return None, None
-        attribute = record['metadata'].get(key.split('.')[0])
-        if not attribute:
-            return None, key
-        else:
-            data_result = get_sub_item_value(
-                attribute, key.split('.')[-1])
-            if data_result:
-                for value in data_result:
-                    data.append(value)
-        return data, key
+    :param item_property: property value in item_map
+    :return: error_list or None
+    """
+    key = item_map.get(item_property)
+    data = []
+    if not key:
+        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
+                                                        'is not correct')
+        return None, None
+    attribute = record['metadata'].get(key.split('.')[0])
+    if not attribute:
+        return None, key
+    else:
+        data_result = get_sub_item_value(
+            attribute, key.split('.')[-1])
+        if data_result:
+            for value in data_result:
+                data.append(value)
+    return data, key
 
 
 def validation_item_property(record, item_map, properties):
+    """
+    Validate item property.
+
+    :param record: Record object.
+    :param item_map: Mapping Data.
+    :param properties: Property's keywords.
+    :return: True or False
+    """
     if properties.get('required'):
         if not validattion_item_property_required(
                 record, item_map, properties['required']):
