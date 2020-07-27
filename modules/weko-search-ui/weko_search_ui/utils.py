@@ -1874,16 +1874,16 @@ def handle_check_date(list_record):
     """
     for record in list_record:
         error = None
-        # item_id = str(item.get('id'))
         for item in record.get('metadata'):
-            if item.get(WEKO_IMPORT_SUBITEM_DATE_ISO):
-                if not validattion_date_property(item.get(WEKO_IMPORT_SUBITEM_DATE_ISO)):
+            metadata = record['metadata'][item]
+            if isinstance(metadata, dict) and metadata.get(WEKO_IMPORT_SUBITEM_DATE_ISO):
+                if not validattion_date_property(metadata.get(WEKO_IMPORT_SUBITEM_DATE_ISO)):
                     error = _('Specified {} is invalid.').format(_('Date (ISO-8601)'))
 
         if error:
-            item['errors'] = item['errors'] + [error] \
-                if item.get('errors') else [error]
-            item['errors'] = list(set(item['errors']))
+            record['errors'] = record['errors'] + [error] \
+                if record.get('errors') else [error]
+            record['errors'] = list(set(record['errors']))
 
 
 def validattion_date_property(date_str):
