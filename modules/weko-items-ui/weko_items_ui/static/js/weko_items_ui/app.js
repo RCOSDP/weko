@@ -553,8 +553,14 @@ function toObject(arr) {
           uri : 'contributorAffiliationURI'
         }
       ]
+      $scope.identifiers = 'nameIdentifiers'
+      $scope.identifier_mapping = 'nameIdentifier'
+      $scope.scheme_identifier_mapping = 'nameIdentifierScheme'
+      $scope.uri_identifier_mapping = 'nameIdentifierURI'
+      $scope.scheme_affiliation_mapping = ['affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
       $scope.sub_item_scheme = ['nameIdentifierScheme', 'affiliationNameIdentifierScheme', 'contributorAffiliationScheme']
       $scope.sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
+      $scope.sub_item_id = ['nameIdentifier', 'affiliationNameIdentifier', 'contributorAffiliation']
       $scope.previousNumFiles = 0;
 
       $scope.searchFilemetaKey = function () {
@@ -656,6 +662,85 @@ function toObject(arr) {
         })
       }
 
+      /**
+       * Common handle for author identifier.
+       * @param identifier_key Identifier key
+       * @param handlerFunction Handler function
+       */
+      $scope.commonHandleForAuthorIdentifier = function (identifier_key, handlerFunction) {
+        var data_author = {};
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        $scope.data_author.map(function (item) {
+          data_author[item.scheme] = item.url;
+        })
+        if ($scope.authors_keys.indexOf(identifier_key) >= 0 ) {
+          let list_nameIdentifiers = [];
+          let uri_form_model = model[identifier_key];
+          if (!Array.isArray(uri_form_model)) {
+            if (Object.keys(uri_form_model).indexOf($scope.identifiers) >= 0) {
+              let name_identifier_form = uri_form_model[$scope.identifiers];
+              name_identifier_form.forEach(function (form) {
+                handlerFunction(form, data_author);
+                list_nameIdentifiers.push(form);
+              })
+            }
+          }
+          else if (Array.isArray(uri_form_model)) {
+            uri_form_model.forEach(function (object) {
+              if (Object.keys(object).indexOf($scope.identifiers) >= 0) {
+                let name_identifier_form = object[$scope.identifiers];
+                name_identifier_form.forEach(function (form) {
+                  handlerFunction(form, data_author);
+                  list_nameIdentifiers.push(form);
+                })
+              }
+            })
+          }
+
+          $scope.sub_item_scheme.map(function (scheme) {
+            if (Object.keys(model[identifier_key]).indexOf(scheme) >= 0) {
+              model[identifier_key].scheme = list_nameIdentifiers;
+            }
+          })
+        }
+
+      }
+
+      /**
+       * Clear author value
+       * @param e HTML event
+       * @param identifier_key Identifier key
+       */
+      $scope.clearAuthorValue = function (e, identifier_key) {
+        function handleClearAuthorValue(form) {
+          if (form.hasOwnProperty($scope.identifier_mapping) && form.hasOwnProperty($scope.uri_identifier_mapping)) {
+            form[$scope.identifier_mapping] = "";
+            form[$scope.uri_identifier_mapping] = "";
+          }
+                  }
+        $scope.commonHandleForAuthorIdentifier(identifier_key, handleClearAuthorValue);
+          }
+
+      /**
+       * Get Identifier URI value.
+       * @param e HTML event
+       * @param identifier_key Identifier key.
+       */
+      $scope.getIdentifierURIValue = function (e, identifier_key) {
+        function handleGetValueForAuthorIdentifierURI(form, data_author) {
+          let schemaMappingKey = $scope.scheme_identifier_mapping;
+          let idMappingKey = $scope.identifier_mapping;
+          let uriMappingKey = $scope.uri_identifier_mapping;
+          let isFillIdentifierURI = checkFillCreatorIdentifierURI(data_author[form[schemaMappingKey]], form[idMappingKey])
+          if (form[schemaMappingKey] && isFillIdentifierURI) {
+            form[uriMappingKey] = data_author[form[schemaMappingKey]].replace("##", form[idMappingKey]);
+          } else {
+            form[uriMappingKey] = data_author[form[schemaMappingKey]];
+            }
+        }
+        $scope.commonHandleForAuthorIdentifier(identifier_key, handleGetValueForAuthorIdentifierURI);
+      }
+
       $scope.initAuthorList = function () {
         $.ajax({
           url: '/api/items/author_prefix_settings',
@@ -731,7 +816,14 @@ function toObject(arr) {
                                 }
                               })
                             });
-                            author_form.items[searchTitleMap]['onChange'] = 'getValueAuthor(event)';
+                            if (typeof author_form.key === 'string') {
+                              let identifierKey = author_form.key.split('.')[0];
+                              if (scheme === $scope.scheme_identifier_mapping) {
+                                author_form.items[searchTitleMap]['onChange'] = 'clearAuthorValue($event,"' + identifierKey + '")';
+                              } else if ($scope.scheme_affiliation_mapping.indexOf(scheme) >= 0) {
+                                author_form.items[searchTitleMap]['onChange'] = 'getValueAuthor($event,"' + identifierKey + '")';
+                              }
+                            }
                           }
                         })
                       }
@@ -744,7 +836,29 @@ function toObject(arr) {
                   identifier_uri_form['readonly'] = true;
                 }
               })
+
+              $scope.sub_item_id.map(function(item) {
+               let items = author_form.items;
+                for (var i = 0; i < items.length; i++) {
+                 var key = items[i].key;
+                  if (typeof key === 'string') {
+                   let listKey = key.split('.');
+                    for (let index in listKey) {
+                      if (listKey[index] === item) {
+                       var identifier_id_form = items[i];
+                      }
+                    }
+                  }
             }
+
+                if (identifier_id_form && typeof author_form.key === 'string') {
+                 identifier_id_form['onChange'] = 'getIdentifierURIValue($event,"' + author_form.key.split('.')[0] + '")';
+                }
+              })
+            }
+      }
+      function checkFillCreatorIdentifierURI(nameIdentifierURI, nameIdentifier) {
+        return !!(nameIdentifierURI.slice(-2) === '##' && nameIdentifier);
       }
 
       $scope.searchUsageApplicationIdKey = function() {

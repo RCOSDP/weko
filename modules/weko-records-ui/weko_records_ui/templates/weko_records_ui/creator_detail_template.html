@@ -52,10 +52,12 @@
                 {{ i['nameIdentifierScheme'] }}
                 <span> </span>
               {%- endif -%}
-              {%- if 'nameIdentifier' in i -%}
-                <a href='{%- if "nameIdentifierURI" in i -%} {{ i["nameIdentifierURI"] }} {%- endif -%}'>
+              {%- if "nameIdentifierURI" in i and i["nameIdentifierURI"] -%}
+                  <a href=' {{i["nameIdentifierURI"] }}'>
                   {{ i['nameIdentifier'] }}
                 </a>
+                {%- elif "nameIdentifier" in i -%}
+                  <span>{{ i['nameIdentifier'] }}</span>
               {%- endif -%}
               <br>
             {%- endfor -%}
