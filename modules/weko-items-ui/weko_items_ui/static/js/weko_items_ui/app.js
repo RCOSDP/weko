@@ -731,12 +731,18 @@ function toObject(arr) {
           let schemaMappingKey = $scope.scheme_identifier_mapping;
           let idMappingKey = $scope.identifier_mapping;
           let uriMappingKey = $scope.uri_identifier_mapping;
-          let isFillIdentifierURI = checkFillCreatorIdentifierURI(data_author[form[schemaMappingKey]], form[idMappingKey])
-          if (form[schemaMappingKey] && isFillIdentifierURI) {
-            form[uriMappingKey] = data_author[form[schemaMappingKey]].replace("##", form[idMappingKey]);
-          } else {
-            form[uriMappingKey] = data_author[form[schemaMappingKey]];
+          let isFillIdentifierURI = checkFillCreatorIdentifierURI(data_author[form[schemaMappingKey]]);
+          if (form[schemaMappingKey]) {
+            if (!form[idMappingKey]) {
+              form[$scope.uri_identifier_mapping] = "";
+            } else {
+              if (isFillIdentifierURI) {
+                form[uriMappingKey] = data_author[form[schemaMappingKey]].replace("##", form[idMappingKey]);
+              } else {
+                form[uriMappingKey] = data_author[form[schemaMappingKey]];
+              }
             }
+          }
         }
         $scope.commonHandleForAuthorIdentifier(identifier_key, handleGetValueForAuthorIdentifierURI);
       }
