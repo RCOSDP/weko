@@ -69,17 +69,17 @@ class MainLayout extends React.Component {
       tabs: [
         {
           tab_key: 'select',
-          tab_name: import_label,
+          tab_name: select,
           step: step.SELECT_STEP
         },
         {
           tab_key: 'import',
-          tab_name: check,
+          tab_name: import_label,
           step: step.IMPORT_STEP
         },
         {
           tab_key: 'result',
-          tab_name: list,
+          tab_name: result_label,
           step: step.RESULT_STEP
         }
       ],
@@ -263,7 +263,11 @@ class ImportComponent extends React.Component {
       list_index: [],
       term_select_index_list: [],
       select_index_list: [],
-      isShowModalImport: false
+      isShowModalImport: false,
+      show: false,
+      is_agree_doi: false,
+      is_update_doi: false,
+      isShowMessage: false,
     }
     this.handleChangefile = this.handleChangefile.bind(this)
     this.handleClickFile = this.handleClickFile.bind(this)
@@ -273,6 +277,10 @@ class ImportComponent extends React.Component {
     this.handleShowModalIndex = this.handleShowModalIndex.bind(this)
     this.handleSelectIndex = this.handleSelectIndex.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
+    this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleAgreeChange = this.handleAgreeChange.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+    this.handleConfirm = this.handleConfirm.bind(this);
 
   }
 
@@ -376,7 +384,7 @@ class ImportComponent extends React.Component {
   }
 
   handleSubmit() {
-    const { isShowModalImport, file, file_name, work_flow_data, select_index_list } = this.state
+    const { isShowModalImport, file, file_name, work_flow_data, select_index_list, is_update_doi } = this.state
     const { handleCheck } = this.props
     const data = {
       file,
@@ -384,6 +392,54 @@ class ImportComponent extends React.Component {
       // work_flow: work_flow_data,
       // index: select_index_list
     }
+    if (is_update_doi) {
+      this.setState({
+        show: true
+      });
+    } else {
+      handleCheck(data)
+    }
+
+  }
+
+  handleInputChange(event) {
+    const target = event.target;
+    const value = target.name === 'is_update_doi' ? target.checked : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+  }
+  handleAgreeChange(event) {
+    const target = event.target;
+    const value = target.name === 'is_agree_doi' ? target.checked : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+  }
+
+
+  handleClose() {
+    this.setState({
+      show: false
+    });
+  }
+  handleConfirm() {
+    const { isShowModalImport, file, file_name, work_flow_data, select_index_list, is_update_doi } = this.state
+    const { handleCheck } = this.props
+    const data = {
+      file,
+      file_name,
+      // work_flow: work_flow_data,
+      // index: select_index_list
+    }
+    this.setState({
+      show: false,
+      isShowMessage: true
+    });
     handleCheck(data)
   }
 
@@ -398,7 +454,9 @@ class ImportComponent extends React.Component {
       term_select_index_list,
       select_index_list,
       isShowModalImport,
-      file
+      file,
+      is_agree_doi,
+      is_update_doi,
     } = this.state
     return (
       <div className="import_component">
@@ -410,7 +468,7 @@ class ImportComponent extends React.Component {
               </div>
               <div className="col-md-8">
                 <div>
-                  <button className="btn btn-primary" onClick={this.handleClickFile}>{import_file}</button>
+                  <button className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
                   <input
                     type="file"
                     className="input-file"
@@ -482,19 +540,70 @@ class ImportComponent extends React.Component {
           <div className="col-md-12">
             <div className="row">
               <div className="col-md-2">
+                <div class="form-check">
+                  <input
+                    id="is_update_doi"
+                    name="is_update_doi"
+                    type="checkbox"
+                    checked={is_update_doi}
+                    onChange={this.handleInputChange} />
+                  <label class="form-check-label" for="is_update_doi">Change Identifier Mode</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-12">
+            <div className="row">
+              <div className="col-md-2">
                 <button
                   className="btn btn-primary"
                   disabled={!file}
 
                   onClick={() => { file && this.handleSubmit() }}
                 >
-                  <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
+                  <span className="glyphicon glyphicon-download-alt icon"></span>{next}
                 </button>
               </div>
             </div>
           </div>
         </div>
-
+        <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose}>
+          <ReactBootstrap.Modal.Header closeButton>
+            <img class="in_line margin_bottom" src="/static/favicon.ico" alt="Invenio"></img>
+            <h4 class="modal-title in_line">DOI変更モード</h4>
+          </ReactBootstrap.Modal.Header>
+          <ReactBootstrap.Modal.Body>
+            <div className="row">
+              免責事項：<br></br>
+              ・本機能は設定にかかわらずDOIを強制的に変更します。<br></br>
+              ・本機能は内容及び自機関で登録されているDOIについて十分に理解した上で作業を行なってください。<br></br>
+              ・本機能の利用は、自機間の責任で行なってください。<br></br>
+              ・本機能の利用により負った損害などについては、国立情報学研究所は一切の責任を追いません。<br></br>
+            </div>
+          </ReactBootstrap.Modal.Body>
+          <ReactBootstrap.Modal.Footer>
+            <br></br>
+            <div className="col-md-12 text-center">
+              <div className="row">
+                <div class="form-check">
+                  <input
+                    id="is_agree_doi"
+                    name="is_agree_doi"
+                    type="checkbox"
+                    checked={is_agree_doi}
+                    onChange={this.handleAgreeChange} />
+                  <label class="form-check-label" for="is_update_doi">I agree to the terms of use</label>
+                </div>
+              </div>
+              <br></br>
+              <br></br>
+              <div className="row">
+                <button variant="primary" disabled="" type="button" class="btn btn-default" disabled={!is_agree_doi} onClick={this.handleConfirm}>OK</button>
+                <button variant="secondary" type="button" class="btn btn-default" onClick={this.handleClose}>Cancel</button>
+              </div>
+            </div>
+          </ReactBootstrap.Modal.Footer>
+        </ReactBootstrap.Modal>
         {/* Work Flow */}
         {/*
           <div className={`modal ${isShowModalWF ? "active" : ''}`}>
@@ -771,14 +880,15 @@ class TreeNode extends React.Component {
 
 class CheckComponent extends React.Component {
 
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.state = {
       total: 0,
       new_item: 0,
       update_item: 0,
       check_error: 0,
-      list_record: []
+      list_record: [],
+      is_show : this.props.isShowMessage
     }
     this.handleGenerateData = this.handleGenerateData.bind(this)
     this.generateTitle = this.generateTitle.bind(this)
@@ -856,11 +966,15 @@ class CheckComponent extends React.Component {
   }
 
   render() {
-    const { total, list_record, update_item, new_item, check_error } = this.state
+    const { total, list_record, update_item, new_item, check_error, is_show } = this.state
     const { is_import } = this.props
     return (
       <div className="check-component">
         <div className="row">
+          <div disabled={!is_show} className="col-md-12 text-center">
+            <div class="message">Register with [Change Identifier Mode].</div>
+          </div>
+          <br></br>
           <div className="col-md-12 text-center">
             <button
               className="btn btn-primary"
