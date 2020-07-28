@@ -62,13 +62,8 @@ def get_affected_records(spec=None, search_pattern=None):
     if search_pattern:
         queries.append(query_string_parser(search_pattern=search_pattern))
 
-    search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX'].strip('-')
-    oaiserver_record_index = current_app.config['OAISERVER_RECORD_INDEX']
-    indexer_default_doctype = current_app.config['INDEXER_DEFAULT_DOCTYPE']
-
     search = OAIServerSearch(
-        index='{}-{}-{}'.format(search_index_prefix, oaiserver_record_index,
-                                indexer_default_doctype),
+        index=current_app.config['OAISERVER_RECORD_INDEX'],
     ).query(Q('bool', should=queries))
 
     for result in search.scan():
