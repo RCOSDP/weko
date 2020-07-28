@@ -266,7 +266,7 @@ class ImportComponent extends React.Component {
       isShowModalImport: false,
       show: false,
       is_agree_doi: false,
-      is_update_doi: false,
+      is_change_indentifier: false,
       isShowMessage: false,
     }
     this.handleChangefile = this.handleChangefile.bind(this)
@@ -384,15 +384,16 @@ class ImportComponent extends React.Component {
   }
 
   handleSubmit() {
-    const { isShowModalImport, file, file_name, work_flow_data, select_index_list, is_update_doi } = this.state
+    const { isShowModalImport, file, file_name, work_flow_data, select_index_list, is_change_indentifier } = this.state
     const { handleCheck } = this.props
     const data = {
       file,
       file_name,
+      is_change_indentifier
       // work_flow: work_flow_data,
       // index: select_index_list
     }
-    if (is_update_doi) {
+    if (is_change_indentifier) {
       this.setState({
         show: true
       });
@@ -404,7 +405,7 @@ class ImportComponent extends React.Component {
 
   handleInputChange(event) {
     const target = event.target;
-    const value = target.name === 'is_update_doi' ? target.checked : target.value;
+    const value = target.name === 'is_change_indentifier' ? target.checked : target.value;
     const name = target.name;
 
     this.setState({
@@ -428,11 +429,12 @@ class ImportComponent extends React.Component {
     });
   }
   handleConfirm() {
-    const { isShowModalImport, file, file_name, work_flow_data, select_index_list, is_update_doi } = this.state
+    const { isShowModalImport, file, file_name, work_flow_data, select_index_list, is_change_indentifier } = this.state
     const { handleCheck } = this.props
     const data = {
       file,
       file_name,
+      is_change_indentifier
       // work_flow: work_flow_data,
       // index: select_index_list
     }
@@ -456,7 +458,7 @@ class ImportComponent extends React.Component {
       isShowModalImport,
       file,
       is_agree_doi,
-      is_update_doi,
+      is_change_indentifier,
     } = this.state
     return (
       <div className="import_component">
@@ -542,12 +544,12 @@ class ImportComponent extends React.Component {
               <div className="col-md-2">
                 <div class="form-check">
                   <input
-                    id="is_update_doi"
-                    name="is_update_doi"
+                    id="is_change_indentifier"
+                    name="is_change_indentifier"
                     type="checkbox"
-                    checked={is_update_doi}
+                    checked={is_change_indentifier}
                     onChange={this.handleInputChange} />
-                  <label class="form-check-label" for="is_update_doi">Change Identifier Mode</label>
+                  <label class="form-check-label" for="is_change_indentifier">Change Identifier Mode</label>
                 </div>
               </div>
             </div>
@@ -592,7 +594,7 @@ class ImportComponent extends React.Component {
                     type="checkbox"
                     checked={is_agree_doi}
                     onChange={this.handleAgreeChange} />
-                  <label class="form-check-label" for="is_update_doi">I agree to the terms of use</label>
+                  <label class="form-check-label" for="is_agree_doi">I agree to the terms of use</label>
                 </div>
               </div>
               <br></br>
