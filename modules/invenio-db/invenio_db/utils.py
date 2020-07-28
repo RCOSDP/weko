@@ -49,8 +49,8 @@ def rebuild_encrypted_properties(old_key, model, properties):
         db.session.expunge_all()
 
     for old_row in old_rows:
-        primary_keys, old_entries = old_row[:len(primary_key_names)], \
-                                    old_row[len(primary_key_names):]
+        primary_keys, old_entries = old_row[:len(
+            primary_key_names)], old_row[len(primary_key_names):]
         primary_key_fields = dict(zip(primary_key_names, primary_keys))
         update_values = dict(zip(properties, old_entries))
         model.query.filter_by(**primary_key_fields).\
