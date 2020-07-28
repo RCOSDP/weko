@@ -122,11 +122,14 @@ class MainLayout extends React.Component {
       dataType: "json",
       success: function (response) {
         if (response.code) {
+          const is_import = response.list_record.filter(item => {
+            return !item.errors || item.errors.length === 0;
+          }).length > 0 ? false : true;
           that.setState(() => {
             return {
               list_record: response.list_record,
               root_path: response.data_path,
-              is_import: false,
+              is_import,
               step: step.IMPORT_STEP
             }
           }, () => {
@@ -600,7 +603,7 @@ class ImportComponent extends React.Component {
               <br></br>
               <br></br>
               <div className="row">
-                <button variant="primary" disabled="" type="button" class="btn btn-default" disabled={!is_agree_doi} onClick={this.handleConfirm}>OK</button>
+                <button variant="primary" type="button" class="btn btn-default" disabled={!is_agree_doi} onClick={this.handleConfirm}>OK</button>
                 <button variant="secondary" type="button" class="btn btn-default" onClick={this.handleClose}>Cancel</button>
               </div>
             </div>
