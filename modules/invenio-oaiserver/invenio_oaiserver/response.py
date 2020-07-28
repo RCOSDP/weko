@@ -295,7 +295,7 @@ def is_private_index(record):
         index_id_lst = []
         for index in list_index:
             indexes = str(index).split('/')
-            index_id_lst.append(indexes[len(indexes) - 1])
+            index_id_lst.append(indexes[-1])
         index_lst = index_id_lst
     indexes = Indexes.get_path_list(index_lst)
     publish_state = 6
@@ -435,16 +435,16 @@ def listrecords(**kwargs):
                                   etree.QName(NS_OAIPMH, 'record'))
 
             identify = OaiIdentify.get_all()
-            pid_1 = OAIIDProvider.get(pid_value=pid.pid_value).pid
+            pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
             harvest_public_state, rec = WekoRecord.get_record_with_hps(
-                pid_1.object_uuid)
+                pid_object.object_uuid)
             if not harvest_public_state or (
                 identify and not identify.outPutSetting):
                 # Harvest is private
                 kwargs['identifier'] = pid.pid_value
                 append_error_info(e_record, **kwargs)
                 continue
-            elif is_deleted_workflow(pid_1) or (
+            elif is_deleted_workflow(pid_object) or (
                 harvest_public_state and is_private_workflow(rec)) or (
                     harvest_public_state and is_private_index(rec)):
                 # Item is deleted
@@ -452,7 +452,7 @@ def listrecords(**kwargs):
                 # or Harvest is public & Index is private
                 header(
                     e_record,
-                    identifier=pid_1.pid_value,
+                    identifier=pid_object.pid_value,
                     datestamp=rec.updated,
                     sets=rec.get('_oai', {}).get('sets', []),
                     deleted=True
