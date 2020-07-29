@@ -17,6 +17,9 @@ const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
 const check = document.getElementById("check").value;
+const change_identifier_mode = document.getElementById("change_identifier_mode").value;
+const change_doi_mode = document.getElementById("change_doi_mode").value;
+const i_agree = document.getElementById("i_agree").value;
 // label check
 const summary = document.getElementById("summary").value;
 const total_label = document.getElementById("total").value;
@@ -33,6 +36,7 @@ const warning = document.getElementById("warning").value;
 const update = document.getElementById("update").value;
 const not_match = document.getElementById("not_match").value;
 const register = document.getElementById("register").value;
+const register_with = document.getElementById("register_with").value;
 
 //label result
 const start_date = document.getElementById("start_date").value;
@@ -50,6 +54,7 @@ const next = document.getElementById("next").value;
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin + '/api/tree'
 const urlCheck = window.location.origin + '/admin/items/import/check'
+const urlGetChangeIdentifierMode = window.location.origin + '/admin/items/import/get_disclaimer_text'
 const urlCheckStatus = window.location.origin + '/admin/items/import/check_status'
 const urlDownloadCheck = window.location.origin + '/admin/items/import/download_check'
 const urlDownloadImport = window.location.origin + '/admin/items/import/export_import'
@@ -86,12 +91,18 @@ class MainLayout extends React.Component {
       list_record: [],
       tasks: [],
       is_import: true,
-      import_status: false
+      import_status: false,
+      isShowMessage: false,
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
     this.handleImport = this.handleImport.bind(this)
     this.getStatus = this.getStatus.bind(this)
+    this.updateShowMessage = this.updateShowMessage.bind(this)
+  }
+
+  updateShowMessage(state) {
+    this.setState({isShowMessage: state})
   }
 
   handleChangeTab(tab) {
@@ -210,7 +221,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const { tab, tabs, list_record, is_import, tasks, import_status } = this.state
+    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage} = this.state
     return (
       <div>
         <ul className="nav nav-tabs">
@@ -225,10 +236,12 @@ class MainLayout extends React.Component {
         <div className={`${tab === tabs[0].tab_key ? '' : 'hide'}`}>
           <ImportComponent
             handleCheck={this.handleCheck}
+            updateShowMessage={this.updateShowMessage}
           ></ImportComponent>
         </div>
         <div className={`${tab === tabs[1].tab_key ? '' : 'hide'}`}>
           <CheckComponent
+            isShowMessage={isShowMessage}
             list_record={list_record || []}
             handleImport={this.handleImport}
             is_import={is_import}
@@ -267,7 +280,7 @@ class ImportComponent extends React.Component {
       show: false,
       is_agree_doi: false,
       is_change_indentifier: false,
-      isShowMessage: false,
+      change_identifier_mode_content:[]
     }
     this.handleChangefile = this.handleChangefile.bind(this)
     this.handleClickFile = this.handleClickFile.bind(this)
@@ -384,8 +397,8 @@ class ImportComponent extends React.Component {
   }
 
   handleSubmit() {
-    const { isShowModalImport, file, file_name, work_flow_data, select_index_list, is_change_indentifier } = this.state
-    const { handleCheck } = this.props
+    const { isShowModalImport, file, file_name, work_flow_data, select_index_list, is_change_indentifier, change_identifier_mode_content } = this.state
+    const { handleCheck, updateShowMessage } = this.props
     const data = {
       file,
       file_name,
@@ -394,10 +407,26 @@ class ImportComponent extends React.Component {
       // index: select_index_list
     }
     if (is_change_indentifier) {
+      const that = this
+      $.ajax({
+        url: urlGetChangeIdentifierMode,
+        type: 'GET',
+        success: function (result) {
+
+          that.setState({
+            change_identifier_mode_content: result.data
+          })
+        },
+        error: function (error) {
+          console.log(error);
+          // alert();
+        }
+      });
       this.setState({
         show: true
       });
     } else {
+      updateShowMessage(false);
       handleCheck(data)
     }
 
@@ -430,7 +459,7 @@ class ImportComponent extends React.Component {
   }
   handleConfirm() {
     const { isShowModalImport, file, file_name, work_flow_data, select_index_list, is_change_indentifier } = this.state
-    const { handleCheck } = this.props
+    const { handleCheck, updateShowMessage } = this.props
     const data = {
       file,
       file_name,
@@ -440,8 +469,8 @@ class ImportComponent extends React.Component {
     }
     this.setState({
       show: false,
-      isShowMessage: true
     });
+    updateShowMessage(true);
     handleCheck(data)
   }
 
@@ -459,6 +488,7 @@ class ImportComponent extends React.Component {
       file,
       is_agree_doi,
       is_change_indentifier,
+      change_identifier_mode_content
     } = this.state
     return (
       <div className="import_component">
@@ -541,7 +571,7 @@ class ImportComponent extends React.Component {
              */}
           <div className="col-md-12">
             <div className="row">
-              <div className="col-md-2">
+              <div className="col-md-4">
                 <div class="form-check">
                   <input
                     id="is_change_indentifier"
@@ -549,7 +579,7 @@ class ImportComponent extends React.Component {
                     type="checkbox"
                     checked={is_change_indentifier}
                     onChange={this.handleInputChange} />
-                  <label class="form-check-label" for="is_change_indentifier">Change Identifier Mode</label>
+                  <label class="form-check-label" for="is_change_indentifier">{change_identifier_mode}</label>
                 </div>
               </div>
             </div>
@@ -569,39 +599,35 @@ class ImportComponent extends React.Component {
             </div>
           </div>
         </div>
-        <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose}>
+        <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-710">
           <ReactBootstrap.Modal.Header closeButton>
             <img class="in_line margin_bottom" src="/static/favicon.ico" alt="Invenio"></img>
-            <h4 class="modal-title in_line">DOI変更モード</h4>
+            <h4 class="modal-title in_line">{change_identifier_mode}</h4>
           </ReactBootstrap.Modal.Header>
           <ReactBootstrap.Modal.Body>
-            <div className="row">
-              免責事項：<br></br>
-              ・本機能は設定にかかわらずDOIを強制的に変更します。<br></br>
-              ・本機能は内容及び自機関で登録されているDOIについて十分に理解した上で作業を行なってください。<br></br>
-              ・本機能の利用は、自機間の責任で行なってください。<br></br>
-              ・本機能の利用により負った損害などについては、国立情報学研究所は一切の責任を追いません。<br></br>
-            </div>
+          {change_identifier_mode_content.map((item, index) => (
+            <div className="row">{item} </div>
+          ))}
           </ReactBootstrap.Modal.Body>
           <ReactBootstrap.Modal.Footer>
             <br></br>
-            <div className="col-md-12 text-center">
+            <div className="col-md-12">
               <div className="row">
-                <div class="form-check">
+                <div class="form-check pull-left">
                   <input
                     id="is_agree_doi"
                     name="is_agree_doi"
                     type="checkbox"
                     checked={is_agree_doi}
                     onChange={this.handleAgreeChange} />
-                  <label class="form-check-label" for="is_agree_doi">I agree to the terms of use</label>
+                  <label class="form-check-label margin_left" for="is_agree_doi">{i_agree}</label>
                 </div>
               </div>
               <br></br>
               <br></br>
-              <div className="row">
+              <div className="row text-center">
                 <button variant="primary" disabled="" type="button" class="btn btn-default" disabled={!is_agree_doi} onClick={this.handleConfirm}>OK</button>
-                <button variant="secondary" type="button" class="btn btn-default" onClick={this.handleClose}>Cancel</button>
+                <button variant="secondary" type="button" class="btn btn-default" onClick={this.handleClose}>{cancel}</button>
               </div>
             </div>
           </ReactBootstrap.Modal.Footer>
@@ -889,8 +915,7 @@ class CheckComponent extends React.Component {
       new_item: 0,
       update_item: 0,
       check_error: 0,
-      list_record: [],
-      is_show : this.props.isShowMessage
+      list_record: []
     }
     this.handleGenerateData = this.handleGenerateData.bind(this)
     this.generateTitle = this.generateTitle.bind(this)
@@ -968,14 +993,12 @@ class CheckComponent extends React.Component {
   }
 
   render() {
-    const { total, list_record, update_item, new_item, check_error, is_show } = this.state
-    const { is_import } = this.props
+    const { total, list_record, update_item, new_item, check_error } = this.state
+    const { is_import, isShowMessage } = this.props
     return (
       <div className="check-component">
         <div className="row">
-          <div disabled={!is_show} className="col-md-12 text-center">
-            <div class="message">Register with [Change Identifier Mode].</div>
-          </div>
+          { isShowMessage && (<div className="col-md-12 text-center"><div class="message">{register_with}</div></div>)}
           <br></br>
           <div className="col-md-12 text-center">
             <button

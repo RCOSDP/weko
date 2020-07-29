@@ -38,7 +38,7 @@ from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
     get_content_workflow, get_tree_items, handle_index_tree, handle_workflow, \
-    make_stats_tsv
+    make_stats_tsv, get_change_identifier_mode_content
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -360,6 +360,12 @@ class ItemImportView(BaseView):
                     "Content-disposition": "attachment; filename=" + file_name
                 }
             )
+
+    @expose('/get_disclaimer_text', methods=['GET'])
+    def get_disclaimer_text(self):
+        """Get disclaimer text."""
+        data = get_change_identifier_mode_content()
+        return jsonify(code=1, data=data)
 
 
 item_management_bulk_search_adminview = {

@@ -207,3 +207,14 @@ msgstr "PID does not meet the conditions."
 #~ msgid "DetailSearch"
 #~ msgstr "DetailSearch"
 
+msgid "Change Identifier Mode."
+msgstr ""
+
+msgid "Register with [Change Identifier Mode]."
+msgstr ""
+
+msgid "I agree to the terms of use."
+msgstr ""
+
+msgid "Change DOI Mode"
+msgstr ""

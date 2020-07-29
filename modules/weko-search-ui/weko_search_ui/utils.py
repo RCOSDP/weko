@@ -62,7 +62,11 @@ from weko_workflow.utils import IdentifierHandle, check_required_data, \
 from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
     WEKO_IMPORT_DOI_PATTERN, WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
     WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_REPO_USER, \
-    WEKO_SYS_USER
+    WEKO_SYS_USER, \
+    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES, \
+    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
+    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME, \
+    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
@@ -1910,3 +1914,41 @@ def validattion_date_property(date_str):
         except ValueError:
             pass
     return False
+
+
+def get_current_language():
+    """Get current language.
+
+    :return:
+    """
+    current_lang = current_i18n.language
+    # In case current_lang is not English
+    # neither Japanese set default to English
+    languages = \
+        WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES
+    if current_lang not in languages:
+        current_lang = 'en'
+    return current_lang
+
+
+
+def get_change_identifier_mode_content():
+    """Read data of change identifier mode base on language.
+
+    :return:
+    """
+    file_extension = \
+        WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION
+    first_file_name = \
+        WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME
+    folder_path = \
+        WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION
+    current_lang = get_current_language()
+    file_name = first_file_name + "_" + current_lang + file_extension
+    data = []
+    try:
+        with open(folder_path + file_name) as file:
+            data = file.read().splitlines()
+    except FileNotFoundError as ex:
+        current_app.logger.error(str(ex))
+    return data
