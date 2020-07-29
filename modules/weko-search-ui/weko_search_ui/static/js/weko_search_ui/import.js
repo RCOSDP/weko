@@ -283,7 +283,8 @@ class ImportComponent extends React.Component {
       show: false,
       is_agree_doi: false,
       is_change_indentifier: false,
-      change_identifier_mode_content:[]
+      change_identifier_mode_content:[],
+      disabled_checkbox:false
     }
     this.handleChangefile = this.handleChangefile.bind(this)
     this.handleClickFile = this.handleClickFile.bind(this)
@@ -426,6 +427,7 @@ class ImportComponent extends React.Component {
         }
       });
       this.setState({
+        disabled_checkbox: true,
         show: true
       });
     } else {
@@ -491,7 +493,8 @@ class ImportComponent extends React.Component {
       file,
       is_agree_doi,
       is_change_indentifier,
-      change_identifier_mode_content
+      change_identifier_mode_content,
+      disabled_checkbox
     } = this.state
     return (
       <div className="import_component">
@@ -580,6 +583,7 @@ class ImportComponent extends React.Component {
                     id="is_change_indentifier"
                     name="is_change_indentifier"
                     type="checkbox"
+                    disabled={disabled_checkbox}
                     checked={is_change_indentifier}
                     onChange={this.handleInputChange} />
                   <label class="form-check-label margin_left" for="is_change_indentifier">{change_identifier_mode}</label>
@@ -604,7 +608,6 @@ class ImportComponent extends React.Component {
         </div>
         <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-710">
           <ReactBootstrap.Modal.Header closeButton>
-            <img class="in_line margin_bottom" src="/static/favicon.ico" alt="Invenio"></img>
             <h4 class="modal-title in_line">{change_identifier_mode}</h4>
           </ReactBootstrap.Modal.Header>
           <ReactBootstrap.Modal.Body>
