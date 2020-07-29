@@ -582,7 +582,7 @@ class ImportComponent extends React.Component {
                     type="checkbox"
                     checked={is_change_indentifier}
                     onChange={this.handleInputChange} />
-                  <label class="form-check-label" for="is_change_indentifier">{change_identifier_mode}</label>
+                  <label class="form-check-label margin_left" for="is_change_indentifier">{change_identifier_mode}</label>
                 </div>
               </div>
             </div>
@@ -614,7 +614,7 @@ class ImportComponent extends React.Component {
           </ReactBootstrap.Modal.Body>
           <ReactBootstrap.Modal.Footer>
             <br></br>
-            <div className="col-md-12">
+            <div className="col-12">
               <div className="row">
                 <div class="form-check pull-left">
                   <input
