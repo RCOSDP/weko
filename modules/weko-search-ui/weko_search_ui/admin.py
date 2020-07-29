@@ -279,6 +279,7 @@ class ItemImportView(BaseView):
     @expose('/import', methods=['POST'])
     def import_items(self) -> jsonify:
         """Import item into System."""
+        url_root = request.url_root
         data = request.get_json() or {}
         tasks = []
         list_record = [item for item in data.get(
@@ -289,7 +290,7 @@ class ItemImportView(BaseView):
             item['root_path'] = data.get('root_path')
             create_flow_define()
             handle_workflow(item)
-            task = import_item.delay(item)
+            task = import_item.delay(item, url_root)
             tasks.append({
                 'task_id': task.task_id,
                 'item_id': item.get('id'),

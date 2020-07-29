@@ -987,11 +987,12 @@ def create_flow_define():
                                      WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-def import_items_to_system(item: dict):
+def import_items_to_system(item: dict, url_root: str):
     """Validation importing zip file.
 
     :argument
         item        -- Items Metadata.
+        url_root    -- url_root.
     :return
         return      -- PID object if exist.
 
@@ -1006,7 +1007,7 @@ def import_items_to_system(item: dict):
         up_load_file_content(item, root_path)
         response = register_item_metadata(item)
         if response.get('success'):
-            response = register_item_handle(item)
+            response = register_item_handle(item, url_root)
         if response.get('success'):
             response = register_item_doi(item)
         if response.get('success') and \
@@ -1374,11 +1375,12 @@ def handle_check_doi(list_record):
             item['errors'] = list(set(item['errors']))
 
 
-def register_item_handle(item):
+def register_item_handle(item, url_root):
     """Register item handle (CNRI).
 
     :argument
         item    -- {object} Record item.
+        url_root -- {str} url_root.
     :return
         response -- {object} Process status.
 
@@ -1398,7 +1400,7 @@ def register_item_handle(item):
                 register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
         else:
             if item.get('status') == 'new':
-                register_hdl_by_item_id(item_id, pid.object_uuid)
+                register_hdl_by_item_id(item_id, pid.object_uuid, url_root)
 
         db.session.commit()
     except Exception as ex:
@@ -1495,7 +1497,6 @@ def register_item_doi(item):
 
         deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
         deposit.commit()
-        deposit.publish()
 
         db.session.commit()
     except Exception as ex:

@@ -30,10 +30,10 @@ from .utils import import_items_to_system, remove_temp_dir
 
 
 @shared_task
-def import_item(item):
+def import_item(item, url_root):
     """Import Item ."""
     start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    result = import_items_to_system(item) or dict()
+    result = import_items_to_system(item, url_root) or dict()
     result['start_date'] = start_date
     return result
 
