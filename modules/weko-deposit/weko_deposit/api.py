@@ -338,6 +338,8 @@ class WekoDeposit(Deposit):
                 del arg['$schema']
             if '_deposit' in arg:
                 del arg['_deposit']
+            if 'control_number' in arg:
+                del arg['control_number']
         args.append({})
         m = Merger(*args)
         try:
@@ -994,6 +996,7 @@ class WekoDeposit(Deposit):
                      'actions': self.get('publish_status')}
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
+            item_metadata.pop('control_number', None)
 
             # Clone bucket
             bucket = {
