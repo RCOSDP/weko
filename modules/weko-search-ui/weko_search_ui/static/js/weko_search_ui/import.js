@@ -1003,6 +1003,7 @@ class CheckComponent extends React.Component {
         <div className="row">
           { isShowMessage && (<div className="col-md-12 text-center"><div class="message">{register_with}</div></div>)}
           <br></br>
+          <br></br>
           <div className="col-md-12 text-center">
             <button
               className="btn btn-primary"
