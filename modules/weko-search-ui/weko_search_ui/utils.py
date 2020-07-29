@@ -46,11 +46,12 @@ from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
+from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
-from weko_records.api import ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
@@ -868,9 +869,23 @@ def register_item_metadata(item):
         deposit.commit()
         deposit.publish()
 
+        feedback_mail_list = item['metadata'].get('feedback_mail_list')
+        if feedback_mail_list:
+            FeedbackMailList.update(
+                item_id=deposit.id,
+                feedback_maillist=feedback_mail_list
+            )
+            deposit.update_feedback_mail()
+
         with current_app.test_request_context():
             first_ver = deposit.newversion(pid)
             if first_ver:
+                if feedback_mail_list:
+                    FeedbackMailList.update(
+                        item_id=first_ver.id,
+                        feedback_maillist=feedback_mail_list
+                    )
+                    first_ver.update_feedback_mail()
                 first_ver.publish()
 
         db.session.commit()
@@ -1227,7 +1242,8 @@ def handle_check_and_prepare_feedback_mail(list_record):
                 if not re.search(WEKO_IMPORT_EMAIL_PATTERN, mail):
                     errors.append(_('Specified {} is invalid.').format(mail))
                 else:
-                    feedback_mail.append(mail)
+                    email_checked = check_email_existed(mail)
+                    feedback_mail.append(email_checked)
 
             if feedback_mail:
                 item['metadata']['feedback_mail_list'] = feedback_mail
