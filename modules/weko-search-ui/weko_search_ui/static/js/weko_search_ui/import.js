@@ -327,7 +327,9 @@ class ImportComponent extends React.Component {
     }
 
     this.setState({
+
       file_name: file_name,
+      disabled_checkbox: false
     });
 
     reader.onload = (e) => {
