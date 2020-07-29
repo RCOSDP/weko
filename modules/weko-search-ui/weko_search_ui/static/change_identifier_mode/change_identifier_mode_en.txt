@@ -1,0 +1,5 @@
+Disclaimer:
+- This function forcibly changes the DOI regardless of the setting.
+- Before starting this operation, you need fully understand the contents and DOI registered at your institution.
+- Use this function on your own responsibility.
+- National Institute of Informatics (NII) does not take any responsibility for damages caused by using this function.
