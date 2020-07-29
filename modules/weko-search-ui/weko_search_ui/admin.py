@@ -37,8 +37,8 @@ from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
-    get_content_workflow, get_tree_items, handle_index_tree, handle_workflow, \
-    make_stats_tsv, get_change_identifier_mode_content
+    get_change_identifier_mode_content, get_content_workflow, get_tree_items, \
+    handle_index_tree, handle_workflow, make_stats_tsv
 
 _signals = Namespace()
 searched = _signals.signal('searched')
