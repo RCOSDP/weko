@@ -59,14 +59,14 @@ from weko_workflow.utils import IdentifierHandle, check_required_data, \
     get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
     register_hdl_by_item_id, saving_doi_pidstore
 
-from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
-    WEKO_IMPORT_DOI_PATTERN, WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
-    WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_REPO_USER, \
-    WEKO_SYS_USER, \
+from .config import WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME, \
-    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION
+    WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_PATTERN, \
+    WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
+    WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_REPO_USER, \
+    WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
@@ -1141,18 +1141,18 @@ def handle_check_and_prepare_index_tree(list_record):
 
         if not index_ids:
             errors = [_('Please specify {}.').format('IndexID')]
+        else:
+            for x, index_id in enumerate(index_ids):
+                tree_ids = [i.strip() for i in index_id.split('/')]
+                tree_names = []
+                if pos_index and x <= len(pos_index) - 1:
+                    tree_names = [i.strip() for i in pos_index[x].split('/')]
+                else:
+                    tree_names = [None for i in range(len(tree_ids))]
 
-        for x, index_id in enumerate(index_ids):
-            tree_ids = [i.strip() for i in index_id.split('/')]
-            tree_names = []
-            if pos_index and x <= len(pos_index) - 1:
-                tree_names = [i.strip() for i in pos_index[x].split('/')]
-            else:
-                tree_names = [None for i in range(len(tree_ids))]
-
-            root = check(tree_ids, tree_names, 0, True)
-            if root:
-                indexes.append(root)
+                root = check(tree_ids, tree_names, 0, True)
+                if root:
+                    indexes.append(root)
 
         if indexes:
             item['indexes'] = indexes
@@ -1929,7 +1929,6 @@ def get_current_language():
     if current_lang not in languages:
         current_lang = 'en'
     return current_lang
-
 
 
 def get_change_identifier_mode_content():
