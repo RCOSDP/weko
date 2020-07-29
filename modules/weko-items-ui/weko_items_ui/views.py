@@ -962,6 +962,7 @@ def ranking():
             end_date=end_date.strftime('%Y-%m-%d'),
             agg_size=settings.display_rank,
             agg_sort={'value': 'desc'})
+        result['all'].sort(key=lambda x: x['total_all'], reverse=True)
         rankings['most_reviewed_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='all',
