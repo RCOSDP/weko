@@ -127,6 +127,16 @@ curl -XPUT 'http://elasticsearch:9200/_ingest/pipeline/item-file-pipeline' -H 'C
          }
        }
      }
+   },
+   {
+     "foreach": {
+       "field": "content",
+       "processor": {
+         "remove": {
+           "field": "_ingest._value.file"
+         }
+       }
+     }
    }
  ]
 }'
