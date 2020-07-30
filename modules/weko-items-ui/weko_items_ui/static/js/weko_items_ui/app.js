@@ -562,6 +562,7 @@ function toObject(arr) {
       $scope.sub_item_uri = ['nameIdentifierURI', 'affiliationNameIdentifierURI', 'contributorAffiliationURI']
       $scope.sub_item_id = ['nameIdentifier', 'affiliationNameIdentifier', 'contributorAffiliation']
       $scope.previousNumFiles = 0;
+      $scope.bibliographic_titles = "bibliographic_titles";
 
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
@@ -733,10 +734,10 @@ function toObject(arr) {
           let uriMappingKey = $scope.uri_identifier_mapping;
           let isFillIdentifierURI = checkFillCreatorIdentifierURI(data_author[form[schemaMappingKey]], form[idMappingKey])
           if (form[schemaMappingKey] && isFillIdentifierURI) {
-            form[uriMappingKey] = data_author[form[schemaMappingKey]].replace("##", form[idMappingKey]);
+            form[uriMappingKey] = data_author[form[schemaMappingKey]].replace(/#+$/, form[idMappingKey]);
           } else {
             form[uriMappingKey] = data_author[form[schemaMappingKey]];
-            }
+          }
         }
         $scope.commonHandleForAuthorIdentifier(identifier_key, handleGetValueForAuthorIdentifierURI);
       }
@@ -858,7 +859,7 @@ function toObject(arr) {
             }
       }
       function checkFillCreatorIdentifierURI(nameIdentifierURI, nameIdentifier) {
-        return !!(nameIdentifierURI.slice(-2) === '##' && nameIdentifier);
+        return !!(nameIdentifierURI.search(/#+$/) > -1 && nameIdentifier);
       }
 
       $scope.searchUsageApplicationIdKey = function() {
@@ -1262,17 +1263,20 @@ function toObject(arr) {
         }
       }
       $scope.getBibliographicMetaKey = function () {
-        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
-          let value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
-          if (value.properties && value.properties.hasOwnProperty('bibliographic_title')) {
+        let recordSchemaProperties = $rootScope.recordsVM.invenioRecordsSchema.properties;
+        let bibliographicKey = $scope.bibliographic_titles;
+        for (let key in recordSchemaProperties) {
+          let properties = recordSchemaProperties[key].properties;
+          if (properties && properties.hasOwnProperty(bibliographicKey)) {
             $scope.bibliographic_key = key;
-            const titleProperties = value.properties.bibliographic_title.items.properties;
-            for (var subkey in titleProperties) {
-              let subValue = titleProperties[subkey];
-              if (subValue.format == "text") {
-                $scope.bibliographic_title_key = subkey;
-              } else if (subValue.format == "select") {
-                $scope.bibliographic_title_lang_key = subkey;
+            const titleProperties = properties[bibliographicKey].items.properties;
+            // Get language key
+            for (let subKey in titleProperties) {
+              let subValue = titleProperties[subKey];
+              if (subValue.format === "text") {
+                $scope.bibliographic_title_key = subKey;
+              } else if (subValue.format === "select") {
+                $scope.bibliographic_title_lang_key = subKey;
               }
             }
           }
@@ -1284,7 +1288,8 @@ function toObject(arr) {
         const title = $scope.bibliographic_title_key;
         const titleLanguage = $scope.bibliographic_title_lang_key;
         const activityId = $("#activity_id").text();
-        if (bibliographicKey && $rootScope.recordsVM.invenioRecordsModel && activityId) {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        if (bibliographicKey && model && activityId) {
           let request = {
             url: '/api/autofill/get_auto_fill_journal/' + activityId,
             method: "GET",
@@ -1301,9 +1306,7 @@ function toObject(arr) {
                   let titleData = {};
                   titleData[title] = journalData.keywords;
                   titleData[titleLanguage] = defaultLanguage;
-                  $rootScope.recordsVM.invenioRecordsModel[bibliographicKey].bibliographic_title = [
-                    titleData
-                  ];
+                  model[bibliographicKey][$scope.bibliographic_titles] = [titleData];
                 }
               }
             },

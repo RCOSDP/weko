@@ -20,6 +20,8 @@
 
 """Views for weko-authors."""
 
+import re
+
 from flask import Blueprint, current_app, json, jsonify, request
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -264,11 +266,11 @@ def mapping():
         for j in id_info:
             if j.get('authorIdShowFlg') == 'true':
                 scheme, uri = get_info_author_id(int(j['idType']))
-                author_id = j.get('authorId')
-                if author_id and uri[-2:] == '##':
-                    uri = uri.replace('##', author_id)
+                _author_id = j.get('authorId')
+                if _author_id and uri:
+                    uri = re.sub("#+$", _author_id, uri, 1)
                 tmp = {
-                    'nameIdentifier': author_id,
+                    'nameIdentifier': _author_id,
                     'nameIdentifierScheme': scheme,
                     'nameIdentifierURI': uri
                 }
