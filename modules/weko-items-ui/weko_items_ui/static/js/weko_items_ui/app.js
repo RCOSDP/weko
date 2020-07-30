@@ -735,10 +735,10 @@ function toObject(arr) {
           let isFillIdentifierURI = checkFillCreatorIdentifierURI(data_author[form[schemaMappingKey]], form[idMappingKey])
           if (form[schemaMappingKey] && isFillIdentifierURI) {
             form[uriMappingKey] = data_author[form[schemaMappingKey]].replace(/#+$/, form[idMappingKey]);
-              } else {
-                form[uriMappingKey] = data_author[form[schemaMappingKey]];
-              }
-            }
+          } else {
+            form[uriMappingKey] = data_author[form[schemaMappingKey]];
+          }
+        }
         $scope.commonHandleForAuthorIdentifier(identifier_key, handleGetValueForAuthorIdentifierURI);
       }
 
