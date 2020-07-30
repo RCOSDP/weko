@@ -145,15 +145,16 @@ def register_hdl(activity_id):
         current_app.logger.info('Cannot connect Handle server!')
 
 
-def register_hdl_by_item_id(deposit_id, item_uuid):
+def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
     """
     Register HDL into Persistent Identifiers.
 
     :param deposit_id: id
     :param item_uuid: Item uuid
+    :param url_root: url_root
     :return handle: HDL handle
     """
-    record_url = request.url_root \
+    record_url = url_root \
         + 'records/' + str(deposit_id)
 
     weko_handle = Handle()

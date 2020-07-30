@@ -46,11 +46,12 @@ from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
+from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
-from weko_records.api import ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
@@ -59,8 +60,12 @@ from weko_workflow.utils import IdentifierHandle, check_required_data, \
     get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
     register_hdl_by_item_id, saving_doi_pidstore
 
-from .config import WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, \
-    WEKO_IMPORT_DOI_PATTERN, WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
+from .config import WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
+    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES, \
+    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
+    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME, \
+    WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_PATTERN, \
+    WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
     WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_REPO_USER, \
     WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
@@ -864,9 +869,23 @@ def register_item_metadata(item):
         deposit.commit()
         deposit.publish()
 
+        feedback_mail_list = item['metadata'].get('feedback_mail_list')
+        if feedback_mail_list:
+            FeedbackMailList.update(
+                item_id=deposit.id,
+                feedback_maillist=feedback_mail_list
+            )
+            deposit.update_feedback_mail()
+
         with current_app.test_request_context():
             first_ver = deposit.newversion(pid)
             if first_ver:
+                if feedback_mail_list:
+                    FeedbackMailList.update(
+                        item_id=first_ver.id,
+                        feedback_maillist=feedback_mail_list
+                    )
+                    first_ver.update_feedback_mail()
                 first_ver.publish()
 
         db.session.commit()
@@ -983,11 +1002,12 @@ def create_flow_define():
                                      WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-def import_items_to_system(item: dict):
+def import_items_to_system(item: dict, url_root: str):
     """Validation importing zip file.
 
     :argument
         item        -- Items Metadata.
+        url_root    -- url_root.
     :return
         return      -- PID object if exist.
 
@@ -1002,7 +1022,7 @@ def import_items_to_system(item: dict):
         up_load_file_content(item, root_path)
         response = register_item_metadata(item)
         if response.get('success'):
-            response = register_item_handle(item)
+            response = register_item_handle(item, url_root)
         if response.get('success'):
             response = register_item_doi(item)
         if response.get('success') and \
@@ -1103,6 +1123,11 @@ def handle_check_and_prepare_index_tree(list_record):
                     _('Specified {} and {} do not exist in system.').format(
                         'IndexID', 'POS_INDEX')
                 )
+            else:
+                warnings.append(
+                    _('Specified {} does not exist in system.').format(
+                        'IndexID')
+                )
 
         data = {
             'index_id': index.id if index else index_id,
@@ -1132,18 +1157,18 @@ def handle_check_and_prepare_index_tree(list_record):
 
         if not index_ids:
             errors = [_('Please specify {}.').format('IndexID')]
+        else:
+            for x, index_id in enumerate(index_ids):
+                tree_ids = [i.strip() for i in index_id.split('/')]
+                tree_names = []
+                if pos_index and x <= len(pos_index) - 1:
+                    tree_names = [i.strip() for i in pos_index[x].split('/')]
+                else:
+                    tree_names = [None for i in range(len(tree_ids))]
 
-        for x, index_id in enumerate(index_ids):
-            tree_ids = [i.strip() for i in index_id.split('/')]
-            tree_names = []
-            if pos_index and x <= len(pos_index) - 1:
-                tree_names = [i.strip() for i in pos_index[x].split('/')]
-            else:
-                tree_names = [None for i in range(len(tree_ids))]
-
-            root = check(tree_ids, tree_names, 0, True)
-            if root:
-                indexes.append(root)
+                root = check(tree_ids, tree_names, 0, True)
+                if root:
+                    indexes.append(root)
 
         if indexes:
             item['indexes'] = indexes
@@ -1217,7 +1242,8 @@ def handle_check_and_prepare_feedback_mail(list_record):
                 if not re.search(WEKO_IMPORT_EMAIL_PATTERN, mail):
                     errors.append(_('Specified {} is invalid.').format(mail))
                 else:
-                    feedback_mail.append(mail)
+                    email_checked = check_email_existed(mail)
+                    feedback_mail.append(email_checked)
 
             if feedback_mail:
                 item['metadata']['feedback_mail_list'] = feedback_mail
@@ -1262,11 +1288,12 @@ def handle_check_cnri(list_record):
             else:
                 pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
                 if pid_cnri:
-                    if not item.get('cnri'):
-                        error = _('Please specify {}.').format('CNRI')
-                    elif not pid_cnri.pid_value.endswith(item.get('cnri')):
+                    if not pid_cnri.pid_value.endswith(str(item.get('cnri'))):
                         error = _('Specified {} is different ' +
                                   'from existing {}.').format('CNRI', 'CNRI')
+                elif item.get('cnri'):
+                    error = _('Specified {} is different ' +
+                              'from existing {}.').format('CNRI', 'CNRI')
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1365,11 +1392,12 @@ def handle_check_doi(list_record):
             item['errors'] = list(set(item['errors']))
 
 
-def register_item_handle(item):
+def register_item_handle(item, url_root):
     """Register item handle (CNRI).
 
     :argument
         item    -- {object} Record item.
+        url_root -- {str} url_root.
     :return
         response -- {object} Process status.
 
@@ -1389,7 +1417,7 @@ def register_item_handle(item):
                 register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
         else:
             if item.get('status') == 'new':
-                register_hdl_by_item_id(item_id, pid.object_uuid)
+                register_hdl_by_item_id(item_id, pid.object_uuid, url_root)
 
         db.session.commit()
     except Exception as ex:
@@ -1486,7 +1514,6 @@ def register_item_doi(item):
 
         deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
         deposit.commit()
-        deposit.publish()
 
         db.session.commit()
     except Exception as ex:
@@ -1905,3 +1932,40 @@ def validattion_date_property(date_str):
         except ValueError:
             pass
     return False
+
+
+def get_current_language():
+    """Get current language.
+
+    :return:
+    """
+    current_lang = current_i18n.language
+    # In case current_lang is not English
+    # neither Japanese set default to English
+    languages = \
+        WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES
+    if current_lang not in languages:
+        current_lang = 'en'
+    return current_lang
+
+
+def get_change_identifier_mode_content():
+    """Read data of change identifier mode base on language.
+
+    :return:
+    """
+    file_extension = \
+        WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION
+    first_file_name = \
+        WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME
+    folder_path = \
+        WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION
+    current_lang = get_current_language()
+    file_name = first_file_name + "_" + current_lang + file_extension
+    data = []
+    try:
+        with open(folder_path + file_name) as file:
+            data = file.read().splitlines()
+    except FileNotFoundError as ex:
+        current_app.logger.error(str(ex))
+    return data

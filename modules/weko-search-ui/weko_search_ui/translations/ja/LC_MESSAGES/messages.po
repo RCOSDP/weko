@@ -429,3 +429,15 @@ msgstr "指定された{}はシステムのものと一致していません。"
 #: weko-search-ui\weko_search_ui\utils.py:1307
 msgid "PID does not meet the conditions."
 msgstr "PID付与の条件を満たしていません。"
+
+msgid "Change Identifier Mode."
+msgstr "識別子変更モード"
+
+msgid "Register with [Change Identifier Mode]."
+msgstr "「識別子変更モード」で登録します。"
+
+msgid "I agree to the terms of use."
+msgstr "利用規約に同意します"
+
+msgid "Change DOI Mode"
+msgstr "DOI変更モード"
