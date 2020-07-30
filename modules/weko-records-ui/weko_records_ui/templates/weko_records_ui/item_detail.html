@@ -62,18 +62,17 @@
                     <tr>
                       <th scope="row"
                           colspan="6">{{ lst['attribute_name_i18n'] }}</th>
-                      <td>
-                        <pre class="hide">{{ lst|tojson }}</pre>
-                          {% if lst['attribute_value'] is string %}
-                              {{ lst['attribute_value'] }}
-                          {% else %}
-                              {%- for key in lst['attribute_value'] %}
-                                  {{ key }}
-                              {% endfor %}
-                          {% endif %}
-                          {%- for l in lst['attribute_value_mlt'] -%}
-                              {{ output_attribute_value(l, is_logged_in, open_day_display_flg) }}
-                          {%- endfor -%}
+                      <td class="multiple-line">
+                        {%- if lst['attribute_value'] is string -%}
+                          {{ lst['attribute_value'] }}
+                        {%- else -%}
+                            {%- for key in lst['attribute_value'] -%}
+                                {{ key }}
+                            {%- endfor -%}
+                        {%- endif -%}
+                        {%- for l in lst['attribute_value_mlt'] -%}
+                            {{ output_attribute_value(l, is_logged_in, open_day_display_flg) }}
+                        {%- endfor -%}
                       </td>
                     </tr>
                     {%- endif -%}

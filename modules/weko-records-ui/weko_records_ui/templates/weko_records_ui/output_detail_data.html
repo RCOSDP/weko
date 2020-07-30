@@ -56,7 +56,6 @@
             <th scope="row" colspan="6"
             style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
             <td>
-              <pre class="hidden">{{ record_detail_data|tojson }}</pre>
             </td>
           </tr>
             {{ output_attribute_value_mlt(attribute_data, 1) }}
@@ -108,7 +107,7 @@
       {%- if label == 'URL' -%}
           <td><a href="{{content}}">{{ content }}</a></td>
       {%- else -%}
-          <td class="{%- if label == 'Research Plan' or label == 'Summary' or label == 'Annual Report' %}multiple-line{%- endif %}">{{ content }}</td>
+          <td class="multiple-line">{{ content }}</td>
       {%- endif -%}
   </tr>
 {% endmacro %}

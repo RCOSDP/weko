@@ -866,16 +866,24 @@ class FileInstance(db.Model, Timestamp):
     def copy_contents(self, fileinstance, progress_callback=None,
                       chunk_size=None, **kwargs):
         """Copy this file instance into another file instance."""
+        def copy(storage, src, chunk_size=None, progress_callback=None):
+            fp = src.open(mode='rb')
+            try:
+                return storage.save(fp, chunk_size=chunk_size,
+                                    progress_callback=progress_callback)
+            finally:
+                fp.close()
+
         if not fileinstance.readable:
             raise ValueError('Source file instance is not readable.')
         if not self.size == 0:
             raise ValueError('File instance has data.')
 
-        self.set_uri(
-            *self.storage(**kwargs).copy(
-                fileinstance.storage(**kwargs),
-                chunk_size=chunk_size,
-                progress_callback=progress_callback))
+        storage = self.storage(**kwargs)
+        fileinstance_storage = fileinstance.storage(**kwargs)
+        copy_result = copy(storage, fileinstance_storage, chunk_size=chunk_size,
+                           progress_callback=progress_callback)
+        self.set_uri(*copy_result)
 
     @ensure_readable()
     def send_file(self, filename, restricted=True, mimetype=None,
@@ -1373,6 +1381,7 @@ class ObjectVersion(db.Model, Timestamp):
 
            Use this method with great care.
         """
+        new_file.checksum = old_file.checksum
         assert old_file.checksum == new_file.checksum
         assert old_file.id
         assert new_file.id

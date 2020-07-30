@@ -2010,20 +2010,24 @@ function toObject(arr) {
 
       $scope.addFileFormAndFill = function () {
         let model = $rootScope.recordsVM.invenioRecordsModel;
-        let schema = $rootScope.recordsVM.invenioRecordsSchema.properties;
         let filesUploaded = $rootScope.filesVM.files;
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           for (var i = $scope.previousNumFiles; i < filesUploaded.length; i++) {
-            var fileInfo = new Object();
+            let fileInfo = {};
+            let fileData = filesUploaded[i];
+            // Do not add the thumbnail file info to the form file.
+            if (fileData.hasOwnProperty('is_thumbnail') && fileData['is_thumbnail']) {
+              continue;
+            }
             // Fill filename
-            fileInfo['version_id'] = filesUploaded[i].version_id;
-            fileInfo['filename'] = filesUploaded[i].key;
+            fileInfo['version_id'] = fileData.version_id;
+            fileInfo['filename'] = fileData.key;
             // Fill size
             fileInfo.filesize = [{}]; // init array
-            fileInfo.filesize[0].value = $scope.bytesToReadableString(filesUploaded[i].size);
+            fileInfo.filesize[0].value = $scope.bytesToReadableString(fileData.size);
             // Fill format
-            fileInfo.format = filesUploaded[i].mimetype;
+            fileInfo.format = fileData.mimetype;
             // Fill Date and DateType
             fileInfo.date = [{}]; // init array
             fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
@@ -3294,44 +3298,50 @@ function toObject(arr) {
           && !angular.isUndefined($rootScope.$$childHead.model)
           && !angular.equals([], $rootScope.$$childHead.model.thumbnailsInfor)) {
           // search thumbnail form
-          thumbnail_item = this.searchThumbnailForm("Thumbnail");
-          if (!angular.equals([], thumbnail_item)) {
+          let thumbnailItemKey = this.searchThumbnailForm();
+          let subThumbnailKey = 'subitem_thumbnail';
+          let subThumbnailLabelKey = 'thumbnail_label';
+          let subThumbnailUrlKey = 'thumbnail_url';
+          if (thumbnailItemKey) {
             var thumbnail_list = [];
 
             $rootScope.filesVM.files.forEach(function (file) {
               if (file.is_thumbnail) {
                 var file_form = {};
-                file_form[thumbnail_item[2][0]] = file.key;
+                file_form[subThumbnailLabelKey] = file.key;
                 var deposit_files_api = $("#deposit-files-api").val();
-                file_form[thumbnail_item[2][1]] = deposit_files_api + (file.links ? (file.links.version || file.links.self).split(deposit_files_api)[1] : '');
+                file_form[subThumbnailUrlKey] = deposit_files_api + (file.links ? (file.links.version || file.links.self).split(deposit_files_api)[1] : '');
                 thumbnail_list.push(file_form);
               }
             });
             if (thumbnail_list.length > 0) {
+              let recordModel = $rootScope.recordsVM.invenioRecordsModel;
               if ($rootScope.$$childHead.model.allowMultiple == 'True') {
-                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]] = [];
+                recordModel[thumbnailItemKey] = [];
                 var sub_item = {};
-                sub_item[thumbnail_item[1]] = thumbnail_list
-                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]].push(sub_item);
+                sub_item[subThumbnailKey] = thumbnail_list;
+                recordModel[thumbnailItemKey].push(sub_item);
               } else {
-                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]] = {};
-                $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]][thumbnail_item[1]] = thumbnail_list;
+                recordModel[thumbnailItemKey] = {};
+                recordModel[thumbnailItemKey][subThumbnailKey] = thumbnail_list;
               }
             }
           }
         }
       }
 
-      $scope.searchThumbnailForm = function (title) {
-        var thumbnail_attrs = [];
-        $rootScope.recordsVM.invenioRecordsForm.forEach(function (RecordForm) {
-          if (RecordForm.title == title) {
-            var properties = RecordForm.schema.properties || RecordForm.schema.items.properties;
-            var subItem = Object.keys(properties)[0] || 'subitem_thumbnail';
-            thumbnail_attrs = [RecordForm.key[0], subItem, Object.keys(properties[subItem].items.properties)];
+      $scope.searchThumbnailForm = function () {
+        let thumbnailItemKey = '';
+        let recordSchema = $rootScope.recordsVM.invenioRecordsSchema;
+        for (let key in recordSchema.properties) {
+          let value = recordSchema.properties[key];
+          var properties = value.properties ? value.properties : (value.items ? value.items.properties : [])
+          if (Object.keys(properties).indexOf('subitem_thumbnail') >= 0) {
+            thumbnailItemKey = key;
+            break;
           }
-        });
-        return thumbnail_attrs;
+        }
+        return thumbnailItemKey;
       }
 
       $scope.unattachedSystemProperties = function () {
@@ -3404,11 +3414,23 @@ function toObject(arr) {
             allowMultiple: $("#allow-thumbnail-flg").val(),
         };
 
-        // set current data thumbnail if has
-        let thumbnailsInfor = $("form[name='uploadThumbnailForm']").data('files-thumbnail');
-        if (thumbnailsInfor.length > 0) {
-          $scope.model.thumbnailsInfor = thumbnailsInfor;
-        }
+
+        $scope.$on('invenio.records.loading.stop', function () {
+          let thumbnailsInfor;
+          let files = $rootScope.filesVM.files;
+          if (Array.isArray(files) && files.length > 0) {
+            thumbnailsInfor = files.filter(function (file) {
+              return (file.hasOwnProperty('is_thumbnail') && file['is_thumbnail'])
+            });
+          } else {
+            thumbnailsInfor = $("form[name='uploadThumbnailForm']").data('files-thumbnail');
+          }
+          // set current data thumbnail if has
+          if (thumbnailsInfor.length > 0) {
+            $scope.model.thumbnailsInfor = thumbnailsInfor;
+          }
+        });
+
         // click input upload files
         $scope.uploadThumbnail = function() {
           if ($rootScope.filesVM.invenioFilesEndpoints.bucket === undefined) {
@@ -3418,7 +3440,10 @@ function toObject(arr) {
                 data: {},
                 headers: ($rootScope.filesVM.invenioFilesArgs.headers !== undefined) ? $rootScope.filesVM.invenioFilesArgs.headers : {}
             }).then(function success(response) {
-                $rootScope.filesVM.invenioFilesEndpoints = response.data.links;
+                $rootScope.filesVM.invenioFilesArgs.url = response.data.links.bucket;
+                $rootScope.$broadcast(
+                  'invenio.records.endpoints.updated', response.data.links
+                );
             }, function error(response) {
             });
           }
@@ -3426,20 +3451,42 @@ function toObject(arr) {
               document.getElementById('selectThumbnail').click();
           }, 0);
         };
+
+        $scope.updateFileList = function(removeFile) {
+          let model = $scope.model;
+          model['thumbnailsInfor'] = model['thumbnailsInfor'].filter(function(fileInfo) {
+            return !(fileInfo.lastModified === removeFile.lastModified
+              && fileInfo.key === removeFile.key);
+          });
+        }
+
+        // Get file links
+        $scope.getFileLinks = function(file) {
+          let fileLink = $rootScope.filesVM.files.filter(function (fileInfo) {
+            return fileInfo.is_thumbnail && fileInfo.key === file.key;
+          })
+          let links;
+          if (Array.isArray(fileLink) && fileLink.length > 0) {
+            links = fileLink[0].links;
+          }
+          return links;
+        }
+
         // remove file
-        $scope.removeThumbnail = function(file) {
+        $scope.removeThumbnail = function (file) {
           if (angular.isUndefined(file.links)) {
-            var indexOfFile = _.indexOf($scope.model.thumbnailsInfor, file)
-            if (!angular.isUndefined($rootScope.filesVM.files[indexOfFile])) {
-              file.links = $rootScope.filesVM.files[indexOfFile].links;
+            let links = $scope.getFileLinks(file);
+            if (links) {
+              file.links = links;
             } else {
               console.log('File not found!');
               return;
             }
           }
           $rootScope.filesVM.remove(file);
-          $scope.model.thumbnailsInfor.splice(indexOfFile || $scope.model.thumbnailsInfor.indexOf(file), 1);
+          $scope.updateFileList(file);
         };
+
     }).$inject = [
       '$scope',
       '$rootScope',
