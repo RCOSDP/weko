@@ -274,7 +274,7 @@ class ImportComponent extends React.Component {
       isShowModalImport: false,
       show: false,
       is_agree_doi: false,
-      is_change_indentifier: false,
+      is_change_identifier: false,
       change_identifier_mode_content:[],
       disabled_checkbox:false
     }
@@ -321,7 +321,7 @@ class ImportComponent extends React.Component {
 
       file_name: file_name,
       disabled_checkbox: false,
-      is_change_indentifier: false
+      is_change_identifier: false
     });
 
     reader.onload = (e) => {
@@ -395,14 +395,14 @@ class ImportComponent extends React.Component {
   }
 
   handleSubmit() {
-    const { file, file_name, is_change_indentifier } = this.state
+    const { file, file_name, is_change_identifier } = this.state
     const { handleCheck, updateShowMessage } = this.props
     const data = {
       file,
       file_name,
-      is_change_indentifier,
+      is_change_identifier,
     }
-    if (is_change_indentifier) {
+    if (is_change_identifier) {
       const that = this
       $.ajax({
         url: urlGetChangeIdentifierMode,
@@ -430,7 +430,7 @@ class ImportComponent extends React.Component {
 
   handleInputChange(event) {
     const target = event.target;
-    const value = target.name === 'is_change_indentifier' ? target.checked : target.value;
+    const value = target.name === 'is_change_identifier' ? target.checked : target.value;
     const name = target.name;
 
     this.setState({
@@ -454,12 +454,12 @@ class ImportComponent extends React.Component {
     });
   }
   handleConfirm() {
-    const {file, file_name, is_change_indentifier} = this.state
+    const {file, file_name, is_change_identifier} = this.state
     const { handleCheck, updateShowMessage } = this.props
     const data = {
       file,
       file_name,
-      is_change_indentifier,
+      is_change_identifier,
     }
     this.setState({
       show: false,
@@ -473,7 +473,7 @@ class ImportComponent extends React.Component {
       file_name,
       file,
       is_agree_doi,
-      is_change_indentifier,
+      is_change_identifier,
       change_identifier_mode_content,
       disabled_checkbox
     } = this.state
@@ -509,13 +509,13 @@ class ImportComponent extends React.Component {
               <div className="col-md-4">
                 <div class="form-check">
                   <input
-                    id="is_change_indentifier"
-                    name="is_change_indentifier"
+                    id="is_change_identifier"
+                    name="is_change_identifier"
                     type="checkbox"
                     disabled={disabled_checkbox}
-                    checked={is_change_indentifier}
+                    checked={is_change_identifier}
                     onChange={this.handleInputChange} />
-                  <label class="form-check-label margin_left" for="is_change_indentifier">{change_identifier_mode}</label>
+                  <label class="form-check-label margin_left" for="is_change_identifier">{change_identifier_mode}</label>
                 </div>
               </div>
             </div>

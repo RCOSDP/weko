@@ -237,7 +237,7 @@ class ItemImportView(BaseView):
         if data:
             result = check_import_items(
                 data.get('file').split(",")[-1],
-                data.get('is_change_indentifier')
+                data.get('is_change_identifier')
             )
             if isinstance(result, dict):
                 if result.get('error'):

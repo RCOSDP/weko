@@ -342,12 +342,12 @@ def parse_to_json_form(data: list) -> dict:
     return result
 
 
-def check_import_items(file_content: str, is_change_indentifier: bool):
+def check_import_items(file_content: str, is_change_identifier: bool):
     """Validation importing zip file.
 
     :argument
         file_content -- content file's name.
-        is_change_indentifier -- Change Identifier Mode.
+        is_change_identifier -- Change Identifier Mode.
     :return
         return       -- PID object if exist.
 
@@ -381,8 +381,8 @@ def check_import_items(file_content: str, is_change_indentifier: bool):
             handle_check_and_prepare_publish_status(list_record)
             handle_check_and_prepare_index_tree(list_record)
             handle_check_and_prepare_feedback_mail(list_record)
-            handle_set_change_indentifier_flag(
-                list_record, is_change_indentifier)
+            handle_set_change_identifier_flag(
+                list_record, is_change_identifier)
             handle_check_cnri(list_record)
             handle_check_doi_ra(list_record)
             handle_check_doi(list_record)
@@ -1256,17 +1256,17 @@ def handle_check_and_prepare_feedback_mail(list_record):
                     if item.get('errors') else errors
 
 
-def handle_set_change_indentifier_flag(list_record, is_change_indentifier):
+def handle_set_change_identifier_flag(list_record, is_change_identifier):
     """Set Change Identifier Mode flag.
 
     :argument
         list_record -- {list} list record import.
-        is_change_indentifier -- {bool} Change Identifier Mode.
+        is_change_identifier -- {bool} Change Identifier Mode.
     :return
 
     """
     for item in list_record:
-        item['is_change_indentifier'] = is_change_indentifier
+        item['is_change_identifier'] = is_change_identifier
 
 
 def handle_check_cnri(list_record):
@@ -1281,7 +1281,7 @@ def handle_check_cnri(list_record):
         error = None
         item_id = str(item.get('id'))
 
-        if item.get('is_change_indentifier'):
+        if item.get('is_change_identifier'):
             if not item.get('cnri'):
                 error = _('Please specify {}.').format('CNRI')
         else:
@@ -1334,7 +1334,7 @@ def handle_check_doi_ra(list_record):
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
                 error = _('{} must be one of JaLC, Crossref, DataCite.') \
                     .format('DOI_RA')
-            elif item.get('is_change_indentifier'):
+            elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
                 if item.get('status') != 'new':
@@ -1367,11 +1367,11 @@ def handle_check_doi(list_record):
         item_id = str(item.get('id'))
         doi = item.get('doi')
 
-        if item.get('is_change_indentifier') \
+        if item.get('is_change_identifier') \
                 and item.get('doi_ra') and not doi:
             error = _('{} is required item.').format('DOI')
         elif item.get('doi_ra'):
-            if item.get('is_change_indentifier'):
+            if item.get('is_change_identifier'):
                 if not item.get('doi'):
                     error = _('Please specify {}.').format('DOI')
                 elif not re.search(WEKO_IMPORT_DOI_PATTERN, doi):
@@ -1411,7 +1411,7 @@ def register_item_handle(item, url_root):
         pid = record.pid_recid
         pid_hdl = record.pid_cnri
 
-        if item.get('is_change_indentifier'):
+        if item.get('is_change_identifier'):
             if item.get('status') == 'new':
                 register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
             else:
@@ -1473,7 +1473,7 @@ def register_item_doi(item):
 
     item_id = str(item.get('id'))
     status = item.get('status')
-    is_change_indentifier = item.get('is_change_indentifier')
+    is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
     doi = item.get('doi')
     try:
@@ -1486,7 +1486,7 @@ def register_item_doi(item):
         pid_lastest = WekoRecord.get_record_by_pid(
             lastest_version_id).pid_recid
 
-        if is_change_indentifier:
+        if is_change_identifier:
             if doi_ra and doi:
                 data = {
                     'identifier_grant_jalc_doi_link':
