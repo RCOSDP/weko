@@ -1571,7 +1571,6 @@ def handle_doi_required_check(record):
 
     """
     ddi_item_type_name = 'DDI'
-    journalarticle_nameid = [3, 5, 9]
     journalarticle_type = ['other（プレプリント）', 'conference paper',
                            'data paper', 'departmental bulletin paper',
                            'editorial', 'journal article', 'periodical',
@@ -1581,9 +1580,7 @@ def handle_doi_required_check(record):
     report_types = ['technical report', 'research report', 'report',
                     'book', 'book part']
     elearning_type = ['learning material']
-    dataset_nameid = [4]
     dataset_type = ['software', 'dataset']
-    datageneral_nameid = [1, 10]
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',
                          'musical notation', 'research proposal',
@@ -1622,12 +1619,10 @@ def handle_doi_required_check(record):
 
         resource_type = resource_type.pop()
         if doi_type == 'JaLC':
-            if item_type.name_id in journalarticle_nameid \
-                or resource_type in journalarticle_type \
+            if resource_type in journalarticle_type \
                 or resource_type in report_types \
                 or (resource_type in elearning_type) \
-                or (item_type.name_id in datageneral_nameid
-                    or resource_type in datageneral_types):
+                    or resource_type in datageneral_types:
                 required_properties = ['title']
                 if item_type.item_type_name.name != ddi_item_type_name:
                     required_properties.append('fileURI')
@@ -1636,8 +1631,7 @@ def handle_doi_required_check(record):
                                        'creator']
                 if item_type.item_type_name.name != ddi_item_type_name:
                     required_properties.append('fileURI')
-            elif item_type.name_id in dataset_nameid \
-                    or resource_type in dataset_type:
+            elif resource_type in dataset_type:
                 required_properties = ['title',
                                        'givenName']
                 if item_type.item_type_name.name != ddi_item_type_name:
