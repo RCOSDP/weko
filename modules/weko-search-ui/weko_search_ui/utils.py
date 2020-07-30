@@ -501,13 +501,14 @@ def handle_validate_item_import(list_record, schema) -> list:
         errors = []
         record_id = record.get("id")
         if record_id and (not represents_int(record_id)):
-            errors.append("Incorrect Item id")
+            errors.append(_('Please specify item ID by half-width number.'))
         if record.get('metadata'):
             if v2:
                 a = v2.iter_errors(record.get('metadata'))
                 errors = errors + [error.message for error in a]
             else:
-                errors = errors = errors + ['ItemType is not exist']
+                errors = errors = errors + \
+                    [_('Specified item type does not exist.')]
 
         item_error = dict(**record, **{
             'errors': errors if len(errors) else None
@@ -613,12 +614,14 @@ def handle_check_exist_record(list_record) -> list:
                             if item.get('uri') == exist_url:
                                 item['status'] = 'update'
                             else:
-                                item['errors'] = ['URI of items are not match']
+                                item['errors'] = [_('Specified URI and system'
+                                                    ' URI do not match.')]
                                 item['status'] = None
                 else:
                     item['id'] = None
                     if item.get('uri'):
-                        item['errors'] = ['Item has no ID but non-empty URI']
+                        item['errors'] = [_('Item ID does not match the' +
+                                            ' specified URI information.')]
                         item['status'] = None
             except PIDDoesNotExistError:
                 pass
