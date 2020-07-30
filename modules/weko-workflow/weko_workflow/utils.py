@@ -378,11 +378,11 @@ def validattion_item_property_required(
                         data.append(value)
                 data.append(file_name_data)
 
-            repeatable = True
-            requirements = check_required_data(
-                data, key + '.filename', repeatable)
-            if requirements:
-                error_list['required'] += requirements
+                repeatable = True
+                requirements = check_required_data(
+                    data, key + '.filename', repeatable)
+                if requirements:
+                    error_list['required'] += requirements
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property(
