@@ -385,6 +385,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    from weko_index_tree.api import Indexes
+    path_name_dict = {}
+    for navi in record.navi:
+        path_arr = navi.path.split('/')
+        for path in path_arr:
+            index = Indexes.get_index(index_id=path)
+            path_name_dict[path] = index.index_name
+
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:
@@ -537,6 +545,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
         open_day_display_flg=open_day_display_flg,
+        path_name_dict=path_name_dict,
         **ctx,
         **kwargs
     )

@@ -257,3 +257,15 @@ def search_feedback_mail_list():
 def get_child_list(index_id=0):
     """Get child id list to index list display."""
     return jsonify(Indexes.get_child_id_list(index_id))
+
+
+@blueprint.route("/get_path_name_dict/<string:path_str>", methods=['GET'])
+def get_path_name_dict(path_str=''):
+    """Get path and name."""
+    from weko_index_tree.api import Indexes
+    path_name_dict = {}
+    path_arr = path_str.split('_')
+    for path in path_arr:
+        index = Indexes.get_index(index_id=path)
+        path_name_dict[path] = index.index_name
+    return jsonify(path_name_dict)

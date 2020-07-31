@@ -45,15 +45,15 @@
                 {%- else %}
                   {%- set name = nav.name_en.split('/') -%}
                 {%- endif -%}
-                {%- set p = nav.path.split('/') -%}
-                {%- for n in name -%}
+                {%- set path = nav.path.split('/') -%}
+                {%- for p in path -%}
                   {%- if community %}
                     <li>
-                      <a href="{{ url_for("invenio_search_ui.search") + "?search_type=2&q=" + p[loop.index-1] + "&community=" + community.id }}">{{n}}</a>
+                      <a href="{{ url_for("invenio_search_ui.search") + "?search_type=2&q=" + p + "&community=" + community.id }}">{{path_name_dict[p]}}</a>
                     </li>
                   {%-else%}
                     <li>
-                      <a href="{{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}">{{n}}</a>
+                      <a href="{{url_for("invenio_search_ui.search")+"?search_type=2&q="+p}}">{{path_name_dict[p]}}</a>
                     </li>
                   {%- endif -%}
                 {%- endfor -%}

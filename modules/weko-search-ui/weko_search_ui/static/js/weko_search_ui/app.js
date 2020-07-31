@@ -127,6 +127,21 @@ function getMessage(messageCode) {
 // add by ryuu. at 20181129 start
 
 function searchResCtrl($scope, $rootScope, $http, $location) {
+  //Get path and name to dict.
+  setTimeout(function(){
+    path_str = $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0].key;
+    path_str = path_str.replace(/\//g, '_');
+    $http({
+      method: 'GET',
+      url: '/get_path_name_dict/' + path_str + '?time=' + currentTime,
+      headers: {'Content-Type': 'application/json'},
+    }).then(function successCallback(response) {
+      $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'] = response.data;
+    }, function errorCallback(error) {
+      console.log(error);
+    });
+  }, 1000);
+
   var commInfo = $("#community").val();
   if (commInfo != "") {
     $rootScope.commInfo = "?community=" + commInfo;
