@@ -450,7 +450,8 @@ class ImportComponent extends React.Component {
 
   handleClose() {
     this.setState({
-      show: false
+      show: false,
+      is_agree_doi: false
     });
   }
   handleConfirm() {
@@ -463,6 +464,7 @@ class ImportComponent extends React.Component {
     }
     this.setState({
       show: false,
+      is_agree_doi: false
     });
     updateShowMessage(true);
     handleCheck(data)
