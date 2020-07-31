@@ -10,8 +10,7 @@
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.schema import Sequence, CreateSequence, \
-    DropSequence
+from sqlalchemy.schema import CreateSequence, DropSequence, Sequence
 
 # revision identifiers, used by Alembic.
 revision = 'dbdbc1b19cf2'

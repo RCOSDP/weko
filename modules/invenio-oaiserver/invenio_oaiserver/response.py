@@ -439,7 +439,7 @@ def listrecords(**kwargs):
             harvest_public_state, rec = WekoRecord.get_record_with_hps(
                 pid_object.object_uuid)
             if not harvest_public_state or (
-                identify and not identify.outPutSetting):
+                    identify and not identify.outPutSetting):
                 # Harvest is private
                 kwargs['identifier'] = pid.pid_value
                 append_error_info(e_record, **kwargs)
