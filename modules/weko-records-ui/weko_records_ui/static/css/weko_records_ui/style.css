@@ -94,3 +94,9 @@
   float:left;
   margin-left:1px;
 }
+
+.language-button {
+  border-radius: 5px;
+  background-color: #f7f7f7 !important;
+  border: 1px solid #ebebeb;
+}
