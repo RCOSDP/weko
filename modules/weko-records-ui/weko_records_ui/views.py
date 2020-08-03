@@ -42,6 +42,7 @@ from lxml import etree
 from simplekv.memory.redisstore import RedisStore
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
+from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
@@ -63,7 +64,6 @@ from .utils import get_billing_file_download_permission, get_groups_price, \
     get_registration_data_type
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
-from weko_index_tree.api import Indexes
 
 blueprint = Blueprint(
     'weko_records_ui',
