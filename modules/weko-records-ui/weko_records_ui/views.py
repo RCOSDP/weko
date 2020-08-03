@@ -63,6 +63,7 @@ from .utils import get_billing_file_download_permission, get_groups_price, \
     get_registration_data_type
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
+from weko_index_tree.api import Indexes
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -385,6 +386,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    path_name_dict = {}
+    for navi in record.navi:
+        path_arr = navi.path.split('/')
+        for path in path_arr:
+            index = Indexes.get_index(index_id=path)
+            path_name_dict[path] = index.index_name
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:
@@ -537,6 +544,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
         open_day_display_flg=open_day_display_flg,
+        path_name_dict=path_name_dict,
         **ctx,
         **kwargs
     )
