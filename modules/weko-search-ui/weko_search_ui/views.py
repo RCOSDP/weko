@@ -262,7 +262,6 @@ def get_child_list(index_id=0):
 @blueprint.route("/get_path_name_dict/<string:path_str>", methods=['GET'])
 def get_path_name_dict(path_str=''):
     """Get path and name."""
-    from weko_index_tree.api import Indexes
     path_name_dict = {}
     path_arr = path_str.split('_')
     for path in path_arr:

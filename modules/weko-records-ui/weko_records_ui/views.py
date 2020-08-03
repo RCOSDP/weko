@@ -42,6 +42,7 @@ from lxml import etree
 from simplekv.memory.redisstore import RedisStore
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
+from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
@@ -385,7 +386,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
-    from weko_index_tree.api import Indexes
     path_name_dict = {'ja': {}, 'en': {}}
     for navi in record.navi:
         path_arr = navi.path.split('/')
