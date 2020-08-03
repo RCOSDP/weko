@@ -266,5 +266,8 @@ def get_path_name_dict(path_str=''):
     path_arr = path_str.split('_')
     for path in path_arr:
         index = Indexes.get_index(index_id=path)
-        path_name_dict[path] = index.index_name
+        if current_i18n.language == 'ja':
+            path_name_dict[path] = index.index_name
+        else:
+            path_name_dict[path] = index.index_name_english
     return jsonify(path_name_dict)

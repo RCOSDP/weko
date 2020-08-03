@@ -392,6 +392,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         for path in path_arr:
             index = Indexes.get_index(index_id=path)
             path_name_dict[path] = index.index_name
+            path_name_dict['en'][path] = index.index_name_english
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:
