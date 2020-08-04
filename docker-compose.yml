@@ -49,6 +49,7 @@ services:
       - INVENIO_ROLE_COMMUNITY=Community Administrator
       - FLASK_DEBUG=0
       - SEARCH_INDEX_PREFIX=tenant1
+      - INVENIO_DB_POOL_CLASS=QueuePool
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -70,6 +71,7 @@ services:
       - /code/modules/invenio-resourcesyncserver/invenio_resourcesyncserver.egg-info
       - /code/modules/invenio-resourcesyncclient/invenio_resourcesyncclient.egg-info
       - /code/modules/invenio-queues/invenio_queues.egg-info
+      - /code/modules/invenio-db/invenio_db.egg-info
       - /code/modules/weko-theme/weko_theme.egg-info
       - /code/modules/weko-itemtypes-ui/weko_itemtypes_ui.egg-info
       - /code/modules/weko-items-ui/weko_items_ui.egg-info

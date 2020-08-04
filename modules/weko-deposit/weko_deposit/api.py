@@ -123,8 +123,8 @@ class WekoIndexer(RecordIndexer):
         full_body = dict(id=str(item_id),
                          index=self.es_index,
                          doc_type=self.es_doc_type,
-                         #version=revision_id + 1,
-                         #version_type=self._version_type,
+                         version=revision_id + 1,
+                         version_type=self._version_type,
                          body=jrc)
 
         if 'content' in jrc:  # Only pass through pipeline if file exists
@@ -326,37 +326,20 @@ class WekoDeposit(Deposit):
         """Check if deposit is published."""
         return self['_deposit'].get('pid') is not None
 
-    def check(self,d):
-        """ Delete a item with size zero string. """
-        if isinstance(d,dict):
-            for key in list(d):
-                if isinstance(d[key],dict):
-                    self.check(d[key])
-                elif isinstance(d[key],list):
-                    for item in d[key]:
-                        self.check(item)
-                elif isinstance(d[key],str):
-                    if (len(d[key])==0):
-                        d.pop(key)
-
     @preserve(fields=('_deposit', '$schema'))
     def merge_with_published(self):
         """Merge changes with latest published version."""
         pid, first = self.fetch_published()
         lca = first.revisions[self['_deposit']['pid']['revision_id']]
         # ignore _deposit and $schema field
-        a = lca.dumps()
-        b = first.dumps()
-        c = self.dumps()
-        self.check(a)
-        self.check(b)
-        self.check(c)
-        args = [a, b, c]
+        args = [lca.dumps(), first.dumps(), self.dumps()]
         for arg in args:
             if '$schema' in arg:
                 del arg['$schema']
             if '_deposit' in arg:
                 del arg['_deposit']
+            if 'control_number' in arg:
+                del arg['control_number']
         args.append({})
         m = Merger(*args)
         try:
@@ -613,7 +596,6 @@ class WekoDeposit(Deposit):
 
                 # Get file contents
                 self.get_content_files()
-
 
                 # upload file content to Elasticsearch
                 self.indexer.upload_metadata(self.jrc, self.pid.object_uuid,
@@ -1014,6 +996,7 @@ class WekoDeposit(Deposit):
                      'actions': self.get('publish_status')}
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
+            item_metadata.pop('control_number', None)
 
             # Clone bucket
             bucket = {
