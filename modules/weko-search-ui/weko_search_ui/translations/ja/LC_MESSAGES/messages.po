@@ -263,6 +263,10 @@ msgid "Error"
 msgstr "エラー"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Warning"
+msgstr "警告"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Update"
 msgstr "更新"
 
@@ -386,5 +390,70 @@ msgstr "大阪商業大学JGSS研究センター"
 msgid "Historiographical Institute The University of Tokyo"
 msgstr "東京大学史料編纂所"
 
+#: weko_search_ui/utils.py:
+msgid "Please specify {}."
+msgstr "{}を設定してください。"
 
+#: weko_search_ui/utils.py:
+msgid "{} is required item."
+msgstr "{}は必須項目です。"
 
+#: weko_search_ui/utils.py:
+msgid "{} cannot be set."
+msgstr "{}は設定できません。"
+
+#: weko_search_ui/utils.py:
+msgid "{} must be one of JaLC, Crossref, DataCite."
+msgstr "{}は JaLC, Crossref, DataCiteのいずれかである必須があります。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} is different from existing {}."
+msgstr "指定された{}は登録している{}と異なっています。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} is invalid."
+msgstr "指定された{}は不正です。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} does not exist in system."
+msgstr "指定された{}はシステムに存在していません。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} and {} do not exist in system."
+msgstr "指定された{}と{}はシステムに存在していません。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} does not match with existing index."
+msgstr "指定された{}はシステムのものと一致していません。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified URI and system URI do not match."
+msgstr "指定されたURIとシステムURIが一致しません。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified item type does not exist."
+msgstr "指定されたアイテムタイプが存在していません。"
+
+#: weko_search_ui/utils.py:
+msgid "Please specify item ID by half-width number."
+msgstr "アイテムIDは半角数字で指定してください。"
+
+#: weko_search_ui/utils.py:
+msgid " Item ID does not match the specified URI information."
+msgstr "アイテムIDが指定されたURIの情報と一致しません。"
+
+#: weko-search-ui\weko_search_ui\utils.py:1307
+msgid "PID does not meet the conditions."
+msgstr "PID付与の条件を満たしていません。"
+
+msgid "Change Identifier Mode."
+msgstr "識別子変更モード"
+
+msgid "Register with [Change Identifier Mode]."
+msgstr "「識別子変更モード」で登録します。"
+
+msgid "I agree to the terms of use."
+msgstr "利用規約に同意します"
+
+msgid "Change DOI Mode"
+msgstr "DOI変更モード"

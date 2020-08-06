@@ -1,22 +1,17 @@
 const import_label = document.getElementById("import").value;
 const list = document.getElementById("list").value;
-const import_file = document.getElementById("import_file").value;
-const import_index = document.getElementById("import_index").value;
-const work_flow = document.getElementById("work_flow").value;
 const select_file = document.getElementById("select_file").value;
-const select_index = document.getElementById("select_index").value;
-const select_work_flow = document.getElementById("select_work_flow").value;
 const selected_file_name = document.getElementById("selected_file_name").value;
-const selected_index = document.getElementById("selected_index").value;
-const selected_work_flow = document.getElementById("selected_work_flow").value;
 const index_tree = document.getElementById("index_tree").value;
 const designate_index = document.getElementById("designate_index").value;
-const work_flow_2 = document.getElementById("work_flow_2").value;
 const item_type = document.getElementById("item_type").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
 const check = document.getElementById("check").value;
+const change_identifier_mode = document.getElementById("change_identifier_mode").value;
+const change_doi_mode = document.getElementById("change_doi_mode").value;
+const i_agree = document.getElementById("i_agree").value;
 // label check
 const summary = document.getElementById("summary").value;
 const total_label = document.getElementById("total").value;
@@ -29,9 +24,11 @@ const item_id = document.getElementById("item_id").value;
 const title = document.getElementById("title").value;
 const check_result = document.getElementById("check_result").value;
 const error = document.getElementById("error").value;
+const warning = document.getElementById("warning").value;
 const update = document.getElementById("update").value;
 const not_match = document.getElementById("not_match").value;
 const register = document.getElementById("register").value;
+const register_with = document.getElementById("register_with").value;
 
 //label result
 const start_date = document.getElementById("start_date").value;
@@ -49,6 +46,7 @@ const next = document.getElementById("next").value;
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin + '/api/tree'
 const urlCheck = window.location.origin + '/admin/items/import/check'
+const urlGetChangeIdentifierMode = window.location.origin + '/admin/items/import/get_disclaimer_text'
 const urlCheckStatus = window.location.origin + '/admin/items/import/check_status'
 const urlDownloadCheck = window.location.origin + '/admin/items/import/download_check'
 const urlDownloadImport = window.location.origin + '/admin/items/import/export_import'
@@ -68,29 +66,35 @@ class MainLayout extends React.Component {
       tabs: [
         {
           tab_key: 'select',
-          tab_name: import_label,
+          tab_name: select,
           step: step.SELECT_STEP
         },
         {
           tab_key: 'import',
-          tab_name: check,
+          tab_name: import_label,
           step: step.IMPORT_STEP
         },
         {
           tab_key: 'result',
-          tab_name: list,
+          tab_name: result_label,
           step: step.RESULT_STEP
         }
       ],
       list_record: [],
       tasks: [],
       is_import: true,
-      import_status: false
+      import_status: false,
+      isShowMessage: false,
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
     this.handleImport = this.handleImport.bind(this)
     this.getStatus = this.getStatus.bind(this)
+    this.updateShowMessage = this.updateShowMessage.bind(this)
+  }
+
+  updateShowMessage(state) {
+    this.setState({isShowMessage: state})
   }
 
   handleChangeTab(tab) {
@@ -121,11 +125,14 @@ class MainLayout extends React.Component {
       dataType: "json",
       success: function (response) {
         if (response.code) {
+          const is_import = response.list_record.filter(item => {
+            return !item.errors || item.errors.length === 0;
+          }).length <= 0;
           that.setState(() => {
             return {
               list_record: response.list_record,
               root_path: response.data_path,
-              is_import: false,
+              is_import,
               step: step.IMPORT_STEP
             }
           }, () => {
@@ -209,7 +216,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const { tab, tabs, list_record, is_import, tasks, import_status } = this.state
+    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage} = this.state
     return (
       <div>
         <ul className="nav nav-tabs">
@@ -224,14 +231,16 @@ class MainLayout extends React.Component {
         <div className={`${tab === tabs[0].tab_key ? '' : 'hide'}`}>
           <ImportComponent
             handleCheck={this.handleCheck}
-          ></ImportComponent>
+            updateShowMessage={this.updateShowMessage}
+          />
         </div>
         <div className={`${tab === tabs[1].tab_key ? '' : 'hide'}`}>
           <CheckComponent
+            isShowMessage={isShowMessage}
             list_record={list_record || []}
             handleImport={this.handleImport}
             is_import={is_import}
-          ></CheckComponent>
+          />
         </div>
         <div className={`${tab === tabs[2].tab_key ? '' : 'hide'}`}>
           {
@@ -239,7 +248,7 @@ class MainLayout extends React.Component {
               tasks={tasks || []}
               getStatus={this.getStatus}
               import_status={import_status}
-            ></ResultComponent>
+            />
           }
 
         </div>
@@ -262,7 +271,12 @@ class ImportComponent extends React.Component {
       list_index: [],
       term_select_index_list: [],
       select_index_list: [],
-      isShowModalImport: false
+      isShowModalImport: false,
+      show: false,
+      is_agree_doi: false,
+      is_change_identifier: false,
+      change_identifier_mode_content:[],
+      disabled_checkbox:false
     }
     this.handleChangefile = this.handleChangefile.bind(this)
     this.handleClickFile = this.handleClickFile.bind(this)
@@ -272,6 +286,10 @@ class ImportComponent extends React.Component {
     this.handleShowModalIndex = this.handleShowModalIndex.bind(this)
     this.handleSelectIndex = this.handleSelectIndex.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
+    this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleAgreeChange = this.handleAgreeChange.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+    this.handleConfirm = this.handleConfirm.bind(this);
 
   }
 
@@ -287,7 +305,6 @@ class ImportComponent extends React.Component {
       },
       error: function (error) {
         console.log(error);
-        // alert();
       }
     });
   }
@@ -301,7 +318,10 @@ class ImportComponent extends React.Component {
     }
 
     this.setState({
+
       file_name: file_name,
+      disabled_checkbox: false,
+      is_change_identifier: false
     });
 
     reader.onload = (e) => {
@@ -375,29 +395,89 @@ class ImportComponent extends React.Component {
   }
 
   handleSubmit() {
-    const { isShowModalImport, file, file_name, work_flow_data, select_index_list } = this.state
-    const { handleCheck } = this.props
+    const { file, file_name, is_change_identifier } = this.state
+    const { handleCheck, updateShowMessage } = this.props
     const data = {
       file,
       file_name,
-      // work_flow: work_flow_data,
-      // index: select_index_list
+      is_change_identifier,
     }
+    if (is_change_identifier) {
+      const that = this
+      $.ajax({
+        url: urlGetChangeIdentifierMode,
+        type: 'GET',
+        success: function (result) {
+
+          that.setState({
+            change_identifier_mode_content: result.data
+          })
+        },
+        error: function (error) {
+          console.log(error);
+        }
+      });
+      this.setState({
+        disabled_checkbox: true,
+        show: true
+      });
+    } else {
+      updateShowMessage(false);
+      handleCheck(data)
+    }
+
+  }
+
+  handleInputChange(event) {
+    const target = event.target;
+    const value = target.name === 'is_change_identifier' ? target.checked : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+  }
+  handleAgreeChange(event) {
+    const target = event.target;
+    const value = target.name === 'is_agree_doi' ? target.checked : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+  }
+
+
+  handleClose() {
+    this.setState({
+      show: false,
+      is_agree_doi: false
+    });
+  }
+  handleConfirm() {
+    const {file, file_name, is_change_identifier} = this.state
+    const { handleCheck, updateShowMessage } = this.props
+    const data = {
+      file,
+      file_name,
+      is_change_identifier,
+    }
+    this.setState({
+      show: false,
+      is_agree_doi: false
+    });
+    updateShowMessage(true);
     handleCheck(data)
   }
 
   render() {
     const {
       file_name,
-      isShowModalWF,
-      wl_key,
-      work_flow_data,
-      isShowModalIndex,
-      list_index,
-      term_select_index_list,
-      select_index_list,
-      isShowModalImport,
-      file
+      file,
+      is_agree_doi,
+      is_change_identifier,
+      change_identifier_mode_content,
+      disabled_checkbox
     } = this.state
     return (
       <div className="import_component">
@@ -409,7 +489,7 @@ class ImportComponent extends React.Component {
               </div>
               <div className="col-md-8">
                 <div>
-                  <button className="btn btn-primary" onClick={this.handleClickFile}>{import_file}</button>
+                  <button className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
                   <input
                     type="file"
                     className="input-file"
@@ -426,238 +506,69 @@ class ImportComponent extends React.Component {
               </div>
             </div>
           </div>
-          {/*
-            <div className="col-md-12">
-              <div className="row">
-                <div className="col-md-2 col-cd">
-                  <label>{import_index}</label>
-                </div>
-                <div className="col-md-8 ">
-                  <div>
-                    <button className="btn btn-primary" onClick={()=>this.handleShowModalIndex(false)}>{select_index}</button>
-                  </div>
-                  <div className="block-placeholder">
-                    {
-                      select_index_list.length ? select_index_list.map((item,key) => {
-                        return(
-                          <div className="panel_bread" key={key}>
-                            <ol className="breadcrumb breadcrumb-custorm">
-                              {
-                                item.name.map((item_name, key_item)=>{
-                                  return(
-                                    <li
-                                      style={{listStylePosition: "inside",
-                                      }}>{item_name}</li>
-                                  )
-                                })
-                              }
-                            </ol>
-                          </div>
-                        )
-                      }) : <p>{selected_index}</p>
-                    }
-                  </div>
+          <div className="col-md-12">
+            <div className="row">
+              <div className="col-md-4">
+                <div class="form-check">
+                  <input
+                    id="is_change_identifier"
+                    name="is_change_identifier"
+                    type="checkbox"
+                    disabled={disabled_checkbox}
+                    checked={is_change_identifier}
+                    onChange={this.handleInputChange} />
+                  <label class="form-check-label margin_left" for="is_change_identifier">{change_identifier_mode}</label>
                 </div>
               </div>
             </div>
-            <div className="col-md-12">
-              <div className="row">
-                <div className="col-md-2 col-cd">
-                  <label>{work_flow}</label>
-                </div>
-                <div className="col-md-8">
-                  <div>
-                    <button className="btn btn-primary" onClick={this.handleShowModalWorkFlow}>{select_work_flow}</button>
-                  </div>
-                  <div className="block-placeholder">
-                    {
-                      work_flow_data ? <p className="active">{work_flow_data.flows_name}</p> : <p>{selected_work_flow}</p>
-                    }
-                  </div>
-                </div>
-              </div>
-            </div>
-             */}
+          </div>
           <div className="col-md-12">
             <div className="row">
               <div className="col-md-2">
                 <button
                   className="btn btn-primary"
                   disabled={!file}
-
-                  onClick={() => { file && this.handleSubmit() }}
-                >
-                  <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
+                  onClick={() => {
+                    file && this.handleSubmit()
+                  }}>
+                  <span className="glyphicon glyphicon-download-alt icon"></span>{next}
                 </button>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Work Flow */}
-        {/*
-          <div className={`modal ${isShowModalWF ? "active" : ''}`}>
-            <div className="modal-mark" onClick={()=>this.handleShowModalWorkFlow()}></div>
-            <div className="modal-content">
-              <div class="row">
-                <div class="col-sm-12 header">
-                  <h3>{work_flow}</h3>
-                </div>
-                <div class="col-sm-12 table-scroll-400">
-                  <table class="table table-striped table-bordered">
-                    <thead>
-                      <tr>
-                        <th></th>
-                        <th>{work_flow}</th>
-                        <th>{item_type}</th>
-                        <th>{flow}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {
-                        workflows.map((item, key) => {
-                          return (
-                            <tr key={key}>
-                              <td style={{textAlign: 'center'}}>
-                                <input
-                                  type='radio'
-                                  name='workflow'
-                                  value={key}
-                                  checked={wl_key == key}
-                                  onChange={this.handleChangeWF}
-                                  ></input>
-                              </td>
-                              <td>{item.flows_name}</td>
-                              <td>{item.item_type_name}</td>
-                              <td>{item.flow_name}</td>
-                            </tr>
-                          )
-                        })
-                      }
-                    </tbody>
-                  </table>
-                </div>
-                <div class="col-sm-12 footer text-align-right">
-                  <button
-                    className="btn btn-primary"
-                    disabled={wl_key === null}
-                    onClick={()=>{wl_key!== null && this.handleShowModalWorkFlow(workflows[wl_key])}}
-                  >
-                    <span className="glyphicon glyphicon-download-alt icon"></span>{select}
-                  </button>
-                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalWorkFlow()}>{cancel}</button>
+        <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-710">
+          <ReactBootstrap.Modal.Header closeButton>
+            <h4 className="modal-title in_line">{change_identifier_mode}</h4>
+          </ReactBootstrap.Modal.Header>
+          <ReactBootstrap.Modal.Body>
+          {change_identifier_mode_content.map((item, index) => (
+            <div className="row">{item} </div>
+          ))}
+          </ReactBootstrap.Modal.Body>
+          <ReactBootstrap.Modal.Footer>
+            <br/>
+            <div className="col-12">
+              <div className="row">
+                <div className="form-check pull-left">
+                  <input
+                    id="is_agree_doi"
+                    name="is_agree_doi"
+                    type="checkbox"
+                    checked={is_agree_doi}
+                    onChange={this.handleAgreeChange} />
+                  <label className="form-check-label margin_left" htmlFor="is_agree_doi">{i_agree}</label>
                 </div>
               </div>
-            </div>
-          </div>
-           */}
-        {/* Index */}
-        {/*
-          <div className={`modal ${isShowModalIndex ? "active" : ''}`}>
-            <div className="modal-mark" onClick={()=>this.handleShowModalIndex(false)}></div>
-            <div className="modal-index">
-              <div class="row">
-                <div class="col-sm-12 header">
-                  <h3>{import_index}</h3>
-                </div>
-                <div class="col-sm-12">
-                  <div className="row">
-                    <div className="col-md-4">
-                      <div className="panel panel-default">
-                        <div className="panel-heading">
-                          <h3 className="panel-title">{index_tree}</h3>
-                        </div>
-                        <div className="panel-body tree_list">
-                          {
-                            isShowModalIndex && <TreeList
-                            children={list_index}
-                            handleSelectIndex={this.handleSelectIndex}
-                            tree_name={[]}
-                            select_index_list={[...select_index_list]}
-                            ></TreeList>
-                          }
-
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-8">
-                      <div className="panel panel-default">
-                        <div className="panel-heading">
-                          <h3 className="panel-title">{designate_index}</h3>
-                        </div>
-                        <div className="panel-body index_list">
-                        <ul className="list-group">
-                          {term_select_index_list.map((item,key)=>{
-                            return (
-                              <li className="list-group-item" key={key}>
-                                {item.name[item.name.length-1]}
-                              </li>
-                            )
-                          })}
-                        </ul>
-
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-sm-12 footer text-align-right">
-                  <button
-                    className="btn btn-primary"
-                    disabled={!term_select_index_list.length}
-                    onClick={()=>{term_select_index_list.length && this.handleShowModalIndex(true)}}
-                  >
-                    <span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
-                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalIndex(false)}>{cancel}</button>
-                </div>
+              <br/>
+              <br/>
+              <div className="row text-center">
+                <button variant="primary" type="button" className="btn btn-default" disabled={!is_agree_doi} onClick={this.handleConfirm}>OK</button>
+                <button variant="secondary" type="button" className="btn btn-default" onClick={this.handleClose}>{cancel}</button>
               </div>
             </div>
-          </div>
-           */}
-        {/* import */}
-        {/*
-          <div className={`modal ${isShowModalImport ? "active" : ''}`}>
-            <div className="modal-mark" onClick={()=>this.handleSubmit(false)}></div>
-            <div className="modal-index">
-              <div class="row">
-                <div class="col-sm-12 header">
-                  <h3>Import Items</h3>
-                </div>
-                <div class="col-sm-12">
-                  <table class="table table-striped table-bordered">
-                    <thead>
-                      <tr>
-                        <th>No</th>
-                        <th>Item ID</th>
-                        <th>Title</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {
-                        workflows.slice(0,5).map((item, key) => {
-                          return (
-                            <tr key={key}>
-                              <td>
-                               {key}
-                              </td>
-                              <td>{item.flows_name}</td>
-                              <td>{item.item_type_name}</td>
-                            </tr>
-                          )
-                        })
-                      }
-                    </tbody>
-                  </table>
-                </div>
-                <div class="col-sm-12 footer footer-import text-center">
-                  <button className="btn btn-primary" onClick={()=>{this.handleSubmit(true)}}><span className="glyphicon glyphicon-download-alt icon"></span>{import_label}</button>
-                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleSubmit(false)}>{cancel}</button>
-                  <button className="btn btn-success m-l-15" onClick={()=>this.handleSubmit(false)}>Download</button>
-                </div>
-              </div>
-            </div>
-          </div> */}
-
+          </ReactBootstrap.Modal.Footer>
+        </ReactBootstrap.Modal>
       </div>
     )
   }
@@ -770,8 +681,8 @@ class TreeNode extends React.Component {
 
 class CheckComponent extends React.Component {
 
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.state = {
       total: 0,
       new_item: 0,
@@ -856,10 +767,13 @@ class CheckComponent extends React.Component {
 
   render() {
     const { total, list_record, update_item, new_item, check_error } = this.state
-    const { is_import } = this.props
+    const { is_import, isShowMessage } = this.props
     return (
       <div className="check-component">
         <div className="row">
+          { isShowMessage && (<div className="col-md-12 text-center"><div className="message">{register_with}</div></div>)}
+          <br/>
+          <br/>
           <div className="col-md-12 text-center">
             <button
               className="btn btn-primary"
@@ -931,10 +845,18 @@ class CheckComponent extends React.Component {
                           </p>
 
                         </td>
-                        <td>{item['errors'] ? item['errors'][0] && (error + ': ' + item['errors'][0]) || error : item.status === 'new' ?
-                          register :
-                          item.status === 'update' ?
-                            update : ''}</td>
+                        <td>
+                          {
+                            item['errors'] ? item['errors'].map(e => {
+                              return <div>{error + ': ' + e}</div>
+                            }) : item.status === 'new' ? register : item.status === 'update' ? update : ''
+                          }
+                          {
+                            item['warnings'] && item['warnings'].map(e => {
+                              return <div>{warning + ': ' + e}</div>
+                            })
+                          }
+                        </td>
                       </tr>
                     )
                   })

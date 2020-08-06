@@ -102,6 +102,8 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         if not flag_del_pidstore and identifier_val and doi_register_val:
             identifier = IdentifierHandle(record_without_version)
             reg = identifier.register_pidstore('doi', identifier_val)
+            identifier.update_idt_registration_metadata(doi_register_val,
+                                                        doi_register_typ)
 
             if reg:
                 identifier = IdentifierHandle(item_id)
@@ -141,6 +143,44 @@ def register_hdl(activity_id):
         identifier.register_pidstore('hdl', handle)
     else:
         current_app.logger.info('Cannot connect Handle server!')
+
+
+def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
+    """
+    Register HDL into Persistent Identifiers.
+
+    :param deposit_id: id
+    :param item_uuid: Item uuid
+    :param url_root: url_root
+    :return handle: HDL handle
+    """
+    record_url = url_root \
+        + 'records/' + str(deposit_id)
+
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
+
+    if handle:
+        handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+        identifier = IdentifierHandle(item_uuid)
+        identifier.register_pidstore('hdl', handle)
+    else:
+        current_app.logger.info('Cannot connect Handle server!')
+
+    return handle
+
+
+def register_hdl_by_handle(handle, item_uuid):
+    """
+    Register HDL into Persistent Identifiers.
+
+    :param handle: HDL handle
+    :param item_uuid: Item uuid
+    """
+    if handle:
+        handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+        identifier = IdentifierHandle(item_uuid)
+        identifier.register_pidstore('hdl', handle)
 
 
 def item_metadata_validation(item_id, identifier_type):
@@ -339,11 +379,11 @@ def validattion_item_property_required(
                         data.append(value)
                 data.append(file_name_data)
 
-            repeatable = True
-            requirements = check_required_data(
-                data, key + '.filename', repeatable)
-            if requirements:
-                error_list['required'] += requirements
+                repeatable = True
+                requirements = check_required_data(
+                    data, key + '.filename', repeatable)
+                if requirements:
+                    error_list['required'] += requirements
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property(
@@ -831,6 +871,23 @@ class IdentifierHandle(object):
                     atr_val=input_value,
                     atr_typ=input_type
                     )
+
+    def get_idt_registration_data(self):
+        """Get Identifier Registration data.
+
+        Arguments:
+
+        Returns:
+            doi_value -- {string} Identifier
+            doi_type  -- {string} Identifier type
+
+        """
+        doi_value, _ = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@value")
+        doi_type, _ = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@attributes.identifierType")
+
+        return doi_value, doi_type
 
     def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
         """Commit update.

@@ -27,7 +27,6 @@ from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from invenio_db import db
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_workflow.api import WorkFlow
@@ -38,7 +37,8 @@ from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
-    get_content_workflow, get_tree_items, handle_workflow, make_stats_tsv
+    get_change_identifier_mode_content, get_content_workflow, get_tree_items, \
+    handle_index_tree, handle_workflow, make_stats_tsv
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -68,7 +68,7 @@ class ItemManagementBulkDelete(BaseView):
                             and recursive_tree is not None:
                         # Delete recursively
                         direct_child_trees = []
-                        for index, obj in enumerate(recursive_tree):
+                        for obj in recursive_tree:
                             if obj[1] != current_tree.id:
                                 child_tree = Indexes.get_index(obj[1])
 
@@ -235,7 +235,10 @@ class ItemImportView(BaseView):
         data_path = ''
 
         if data:
-            result = check_import_items(data.get('file').split(",")[-1])
+            result = check_import_items(
+                data.get('file').split(",")[-1],
+                data.get('is_change_identifier')
+            )
             if isinstance(result, dict):
                 if result.get('error'):
                     return jsonify(code=0, error=result.get('error'))
@@ -276,16 +279,18 @@ class ItemImportView(BaseView):
     @expose('/import', methods=['POST'])
     def import_items(self) -> jsonify:
         """Import item into System."""
+        url_root = request.url_root
         data = request.get_json() or {}
         tasks = []
         list_record = [item for item in data.get(
             'list_record', []) if not item.get(
             'errors')]
         for item in list_record:
+            handle_index_tree(item)
             item['root_path'] = data.get('root_path')
             create_flow_define()
             handle_workflow(item)
-            task = import_item.delay(item)
+            task = import_item.delay(item, url_root)
             tasks.append({
                 'task_id': task.task_id,
                 'item_id': item.get('id'),
@@ -356,6 +361,12 @@ class ItemImportView(BaseView):
                     "Content-disposition": "attachment; filename=" + file_name
                 }
             )
+
+    @expose('/get_disclaimer_text', methods=['GET'])
+    def get_disclaimer_text(self):
+        """Get disclaimer text."""
+        data = get_change_identifier_mode_content()
+        return jsonify(code=1, data=data)
 
 
 item_management_bulk_search_adminview = {
