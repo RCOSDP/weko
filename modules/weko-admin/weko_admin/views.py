@@ -73,7 +73,6 @@ def _has_admin_access():
     return current_user.is_authenticated and current_admin \
         .permission_factory(current_admin.admin.index_view).can()
 
-
 @blueprint.route('/session/lifetime/<int:minutes>', methods=['GET'])
 def set_lifetime(minutes):
     """Update session lifetime in db.
