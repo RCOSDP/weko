@@ -10,15 +10,27 @@ require([
 
   // click button Next
   $('#btn-finish').on('click', function () {
+    if ('disabled' != $(this).attr('disabled')) {
+      $(this).attr('disabled', true);
     if (preparePostData(0)) {
       sendQuitAction();
+    }
+      $(this).prop('disabled', true);
+    } else {
+      return;
     }
   });
 
   // click button Save
   $('#btn-draft').on('click', function () {
+    if ('disabled' != $(this).attr('disabled')) {
+      $(this).attr('disabled', true);
     if (preparePostData(1)) {
       sendQuitAction();
+    }
+      $(this).prop('disabled', true);
+    } else {
+      return;
     }
   });
 

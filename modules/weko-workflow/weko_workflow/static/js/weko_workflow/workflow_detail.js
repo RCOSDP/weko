@@ -3,132 +3,150 @@ require([
   "bootstrap"
 ], function () {
   $('.btn-begin').on('click', function () {
-    let post_uri = $('#post_uri').text();
-    let workflow_id = $(this).data('workflow-id');
-    let community = $(this).data('community');
-    let post_data = {
-      workflow_id: workflow_id,
-      flow_id: $('#flow_' + workflow_id).data('flow-id'),
-      itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id')
-    };
-    if (community != "") {
-      post_uri = post_uri + "?community=" + community;
-    }
-    $.ajax({
-      url: post_uri,
-      method: 'POST',
-      async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (data, status) {
-        if (0 == data.code) {
-          document.location.href = data.data.redirect;
-        } else {
-          alert(data.msg);
+      if ('disabled' != $(this).attr('disabled')) {
+        $(this).attr('disabled', true);
+        let post_uri = $('#post_uri').text();
+        let workflow_id = $(this).data('workflow-id');
+        let community = $(this).data('community');
+        let post_data = {
+          workflow_id: workflow_id,
+          flow_id: $('#flow_' + workflow_id).data('flow-id'),
+          itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id')
+        };
+        if (community != "") {
+          post_uri = post_uri + "?community=" + community;
         }
-      },
-      error: function (jqXHE, status) { }
-    });
+        $.ajax({
+          url: post_uri,
+          method: 'POST',
+          async: true,
+          contentType: 'application/json',
+          data: JSON.stringify(post_data),
+          success: function (data, status) {
+            if (0 == data.code) {
+              document.location.href = data.data.redirect;
+            } else {
+              alert(data.msg);
+            }
+          },
+          error: function (jqXHE, status) { }
+        });
+        $(this).prop('disabled', true);
+      } else {
+        return;
+      }
   });
 
   $('#btn-finish').on('click', function () {
-    let comment = '';
-    if ($('#input-comment') && $('#input-comment').val()) {
-      comment = $('#input-comment').val();
-    }
-
-    let post_uri = $('.cur_step').data('next-uri');
-    let post_data = {
-      commond: comment,
-      action_version: $('.cur_step').data('action-version'),
-      temporary_save: 0
-    };
-    // Get Journal
-    if ($('#action-journal')) {
-      if ($('#action-journal').text()) {
-        post_data['journal'] = $.parseJSON($('#action-journal').text());
-      } else {
-        if ($("#journal-info").attr("hidden")) {
-          if ($('#search-key').val()) {
-            post_data['journal'] = { keywords: $('#search-key').val() };
-          }
-        }
+    if ('disabled' != $(this).attr('disabled')) {
+      $(this).attr('disabled', true);
+      let comment = '';
+      if ($('#input-comment') && $('#input-comment').val()) {
+        comment = $('#input-comment').val();
       }
-    }
 
-    $.ajax({
-      url: post_uri,
-      method: 'POST',
-      async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (data, status) {
-        if (0 == data.code) {
-          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href = data.data.redirect;
-          } else {
-            document.location.reload(true);
-          }
+      let post_uri = $('.cur_step').data('next-uri');
+      let post_data = {
+        commond: comment,
+        action_version: $('.cur_step').data('action-version'),
+        temporary_save: 0
+      };
+      // Get Journal
+      if ($('#action-journal')) {
+        if ($('#action-journal').text()) {
+          post_data['journal'] = $.parseJSON($('#action-journal').text());
         } else {
-          alert(data.msg);
+          if ($("#journal-info").attr("hidden")) {
+            if ($('#search-key').val()) {
+              post_data['journal'] = { keywords: $('#search-key').val() };
+            }
+          }
         }
-      },
-      error: function (jqXHE, status) {
-        alert('server error');
-        $('#myModal').modal('hide');
       }
-    });
+
+      $.ajax({
+        url: post_uri,
+        method: 'POST',
+        async: true,
+        contentType: 'application/json',
+        data: JSON.stringify(post_data),
+        success: function (data, status) {
+          if (0 == data.code) {
+            if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+              document.location.href = data.data.redirect;
+            } else {
+              document.location.reload(true);
+            }
+          } else {
+            alert(data.msg);
+          }
+        },
+        error: function (jqXHE, status) {
+          alert('server error');
+          $('#myModal').modal('hide');
+        }
+      });
+      $(this).prop('disabled', true);
+    } else {
+      return;
+    }
   });
 
   $('#btn-draft').on('click', function () {
-    let comment = ''
-    if ($('#input-comment') && $('#input-comment').val()) {
-      comment = $('#input-comment').val();
-    }
-
-    let post_uri = $('.cur_step').data('next-uri');
-    let post_data = {
-      commond: comment,
-      action_version: $('.cur_step').data('action-version'),
-      temporary_save: 1
-    };
-
-    // Get Journal
-    if ($('#action-journal')) {
-      if ($('#action-journal').text()) {
-        post_data['journal'] = $.parseJSON($('#action-journal').text());
-      } else {
-        if ($("#journal-info").attr("hidden")) {
-          if ($('#search-key').val()) {
-            post_data['journal'] = { keywords: $('#search-key').val() };
-          } else {
-            post_data['journal'] = { keywords: '' };
-          }
-        }
+    if ('disabled' != $(this).attr('disabled')) {
+      $(this).attr('disabled', true);
+      let comment = ''
+      if ($('#input-comment') && $('#input-comment').val()) {
+        comment = $('#input-comment').val();
       }
-    }
-    $.ajax({
-      url: post_uri,
-      method: 'POST',
-      async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (data, status) {
-        if (0 == data.code) {
-          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href = data.data.redirect;
-          } else {
-            document.location.reload(true);
-          }
+
+      let post_uri = $('.cur_step').data('next-uri');
+      let post_data = {
+        commond: comment,
+        action_version: $('.cur_step').data('action-version'),
+        temporary_save: 1
+      };
+
+      // Get Journal
+      if ($('#action-journal')) {
+        if ($('#action-journal').text()) {
+          post_data['journal'] = $.parseJSON($('#action-journal').text());
         } else {
-          alert(data.msg);
+          if ($("#journal-info").attr("hidden")) {
+            if ($('#search-key').val()) {
+              post_data['journal'] = { keywords: $('#search-key').val() };
+            } else {
+              post_data['journal'] = { keywords: '' };
+            }
+          }
         }
-      },
-      error: function (jqXHE, status) {
-        alert('server error');
-        $('#myModal').modal('hide');
       }
-    });
+      $.ajax({
+        url: post_uri,
+        method: 'POST',
+        async: true,
+        contentType: 'application/json',
+        data: JSON.stringify(post_data),
+        success: function (data, status) {
+          if (0 == data.code) {
+            if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+              document.location.href = data.data.redirect;
+            } else {
+              document.location.reload(true);
+            }
+          } else {
+            alert(data.msg);
+          }
+        },
+        error: function (jqXHE, status) {
+          alert('server error');
+          $('#myModal').modal('hide');
+        }
+      });
+      $(this).prop('disabled', true);
+    } else {
+      return;
+    }
   });
 
   $('#btn-approval-req').on('click', function () {
@@ -138,95 +156,113 @@ require([
   });
 
   $('#btn-approval').on('click', function () {
-    let uri_apo = $('.cur_step').data('next-uri');
-    let act_ver = $('.cur_step').data('action-version');
-    let post_data = {
-      commond: $('#input-comment').val(),
-      action_version: act_ver
-    };
-    $.ajax({
-      url: uri_apo,
-      method: 'POST',
-      async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (data, status) {
-        if (0 == data.code) {
-          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href = data.data.redirect;
+    if ('disabled' != $(this).attr('disabled')) {
+      $(this).attr('disabled', true);
+      let uri_apo = $('.cur_step').data('next-uri');
+      let act_ver = $('.cur_step').data('action-version');
+      let post_data = {
+        commond: $('#input-comment').val(),
+        action_version: act_ver
+      };
+      $.ajax({
+        url: uri_apo,
+        method: 'POST',
+        async: true,
+        contentType: 'application/json',
+        data: JSON.stringify(post_data),
+        success: function (data, status) {
+          if (0 == data.code) {
+            if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+              document.location.href = data.data.redirect;
+            } else {
+              document.location.reload(true);
+            }
           } else {
-            document.location.reload(true);
+            alert(data.msg);
           }
-        } else {
-          alert(data.msg);
+        },
+        error: function (jqXHE, status) {
+          alert('server error');
         }
-      },
-      error: function (jqXHE, status) {
-        alert('server error');
-      }
-    });
+      });
+      $(this).prop('disabled', true);
+    } else {
+      return;
+    }
   });
 
   $('#btn-reject').on('click', function () {
-    let uri_apo = $('.cur_step').data('next-uri');
-    let act_ver = $('.cur_step').data('action-version');
-    let post_data = {
-      commond: $('#input-comment').val(),
-      action_version: act_ver
-    };
-    uri_apo = uri_apo + "/rejectOrReturn/0";
-    $.ajax({
-      url: uri_apo,
-      method: 'POST',
-      async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (data, status) {
-        if (0 == data.code) {
-          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href = data.data.redirect;
+    if ('disabled' != $(this).attr('disabled')) {
+      $(this).attr('disabled', true);
+      let uri_apo = $('.cur_step').data('next-uri');
+      let act_ver = $('.cur_step').data('action-version');
+      let post_data = {
+        commond: $('#input-comment').val(),
+        action_version: act_ver
+      };
+      uri_apo = uri_apo + "/rejectOrReturn/0";
+      $.ajax({
+        url: uri_apo,
+        method: 'POST',
+        async: true,
+        contentType: 'application/json',
+        data: JSON.stringify(post_data),
+        success: function (data, status) {
+          if (0 == data.code) {
+            if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+              document.location.href = data.data.redirect;
+            } else {
+              document.location.reload(true);
+            }
           } else {
-            document.location.reload(true);
+            alert(data.msg);
           }
-        } else {
-          alert(data.msg);
+        },
+        error: function (jqXHE, status) {
+          alert('server error');
         }
-      },
-      error: function (jqXHE, status) {
-        alert('server error');
-      }
-    });
+      });
+      $(this).prop('disabled', true);
+    } else {
+      return;
+    }
   });
 
   $('#btn-return').on('click', function () {
-    let uri_apo = $('.cur_step').data('next-uri');
-    let act_ver = $('.cur_step').data('action-version');
-    let post_data = {
-      commond: $('#input-comment').val(),
-      action_version: act_ver
-    };
-    uri_apo = uri_apo + "/rejectOrReturn/1";
-    $.ajax({
-      url: uri_apo,
-      method: 'POST',
-      async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (data, status) {
-        if (0 == data.code) {
-          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href = data.data.redirect;
+    if ('disabled' != $(this).attr('disabled')) {
+      $(this).attr('disabled', true);
+      let uri_apo = $('.cur_step').data('next-uri');
+      let act_ver = $('.cur_step').data('action-version');
+      let post_data = {
+        commond: $('#input-comment').val(),
+        action_version: act_ver
+      };
+      uri_apo = uri_apo + "/rejectOrReturn/1";
+      $.ajax({
+        url: uri_apo,
+        method: 'POST',
+        async: true,
+        contentType: 'application/json',
+        data: JSON.stringify(post_data),
+        success: function (data, status) {
+          if (0 == data.code) {
+            if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+              document.location.href = data.data.redirect;
+            } else {
+              document.location.reload(true);
+            }
           } else {
-            document.location.reload(true);
+            alert(data.msg);
           }
-        } else {
-          alert(data.msg);
+        },
+        error: function (jqXHE, status) {
+          alert('server error');
         }
-      },
-      error: function (jqXHE, status) {
-        alert('server error');
-      }
-    });
+      });
+      $(this).prop('disabled', true);
+    } else {
+      return;
+    }
   });
 
   $('#lnk_item_detail').on('click', function () {

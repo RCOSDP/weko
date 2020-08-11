@@ -111,10 +111,10 @@
     {%- else%}
       {%- set back_url = url_for('weko_workflow.index') -%}
     {%- endif%}
-       <a class="btn btn-default pull-left" href="{{back_url}}">
-           <span class="glyphicon glyphicon-chevron-left"></span>&nbsp
-             {{_('Back')}}
-       </a>
+       <button class="btn btn-default pull-left" id="back_workflow" onClick="window.location.href='{{back_url}}';$(this).prop('disabled', true);">
+         <span class="glyphicon glyphicon-chevron-left"></span>&nbsp
+           {{_('Back')}}
+       </button>
   </div>
 </div>
 {%- endblock page_body_main %}

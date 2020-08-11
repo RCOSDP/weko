@@ -3031,71 +3031,79 @@ function toObject(arr) {
       }
 
       $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
-        $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
-        if (!$scope.priceValidator()) {
-            var modalcontent = "Billing price is required half-width numbers.";
+        if ('disabled' != $("#update_data_json").attr('disabled')) {
+          $(".lds-ring-background").removeClass("hidden");
+          $("#update_data_json").prop('disabled', true);
+          setTimeout(function() {
+              $(".lds-ring-background").addClass("hidden");
+              $('#update_data_json').removeAttr("disabled");
+          }, 3000);
+          $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
+          if (!$scope.priceValidator()) {
+              var modalcontent = "Billing price is required half-width numbers.";
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
+              return false;
+          } else if (enableFeedbackMail === 'True' && $scope.getFeedbackMailList().length > 0) {
+            let modalcontent = $('#invalid-email-format').val();
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
             return false;
-        } else if (enableFeedbackMail === 'True' && $scope.getFeedbackMailList().length > 0) {
-          let modalcontent = $('#invalid-email-format').val();
-          $("#inputModal").html(modalcontent);
-          $("#allModal").modal("show");
-          return false;
-        }
-        let isValid = this.validateInputData(activityId, steps, isAutoSetIndexAction);
-        if (!isValid) {
-          return false;
-        } else {
-          $scope.genTitleAndPubDate();
-          this.mappingThumbnailInfor();
-          let next_frame = $('#next-frame').val();
-          let next_frame_upgrade = $('#next-frame-upgrade').val();
-          let next_frame_edit = $('#next-frame-edit').val();
-          if (enableContributor === 'True' && !this.registerUserPermission()) {
-            // Do nothing
-          } else if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
-            // Do nothing
+          }
+          let isValid = this.validateInputData(activityId, steps, isAutoSetIndexAction);
+          if (!isValid) {
+            return false;
           } else {
-            $scope.addApprovalMail();
-            var jsonObj = $scope.cleanJsonObject($rootScope.recordsVM.invenioRecordsModel);
-            var str = JSON.stringify(jsonObj);
-            var indexOfLink = str.indexOf("authorLink");
-            if (indexOfLink != -1) {
-              str = str.split(',"authorLink":[]').join('');
-            }
-            if (enableFeedbackMail === 'True') {
-              if (!$scope.saveFeedbackMailListCallback(currentActionId)) {
-                return false;
-              }
-            }
-            $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-            //If CustomBSDatePicker empty => remove attr.
-            CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
-
-            let title = $rootScope.recordsVM.invenioRecordsModel['title'];
-            let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
-            $scope.saveTilteAndShareUserID(title, shareUserID);
-            $scope.updatePositionKey();
-            sessionStorage.removeItem(activityId);
-            let versionSelected = $("input[name='radioVersionSelect']:checked").val();
-            if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
-              if (versionSelected == "keep") {
-                $rootScope.recordsVM.actionHandler(
-                  ["edit", "PUT"],
-                  next_frame_edit
-                );
-              } else if (versionSelected == "update") {
-                $rootScope.recordsVM.actionHandler(
-                  [
-                    ["newversion", "PUT"],
-                    ["index_upgrade", "PUT"],
-                  ],
-                  next_frame_upgrade
-                );
-              }
+            $scope.genTitleAndPubDate();
+            this.mappingThumbnailInfor();
+            let next_frame = $('#next-frame').val();
+            let next_frame_upgrade = $('#next-frame-upgrade').val();
+            let next_frame_edit = $('#next-frame-edit').val();
+            if (enableContributor === 'True' && !this.registerUserPermission()) {
+              // Do nothing
+            } else if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
+              // Do nothing
             } else {
-              $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
+              $scope.addApprovalMail();
+              var jsonObj = $scope.cleanJsonObject($rootScope.recordsVM.invenioRecordsModel);
+              var str = JSON.stringify(jsonObj);
+              var indexOfLink = str.indexOf("authorLink");
+              if (indexOfLink != -1) {
+                str = str.split(',"authorLink":[]').join('');
+              }
+              if (enableFeedbackMail === 'True') {
+                if (!$scope.saveFeedbackMailListCallback(currentActionId)) {
+                  return false;
+                }
+              }
+              $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+              //If CustomBSDatePicker empty => remove attr.
+              CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
+
+              let title = $rootScope.recordsVM.invenioRecordsModel['title'];
+              let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
+              $scope.saveTilteAndShareUserID(title, shareUserID);
+              $scope.updatePositionKey();
+              sessionStorage.removeItem(activityId);
+              let versionSelected = $("input[name='radioVersionSelect']:checked").val();
+              if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
+                if (versionSelected == "keep") {
+                  $rootScope.recordsVM.actionHandler(
+                    ["edit", "PUT"],
+                    next_frame_edit
+                  );
+                } else if (versionSelected == "update") {
+                  $rootScope.recordsVM.actionHandler(
+                    [
+                      ["newversion", "PUT"],
+                      ["index_upgrade", "PUT"],
+                    ],
+                    next_frame_upgrade
+                  );
+                }
+              } else {
+                $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
+              }
             }
           }
         }
@@ -3188,34 +3196,42 @@ function toObject(arr) {
       $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail) {
         //When press 'Next' or 'Save' button, setting data for model.
         //This function is called in updataDataJson function.
-        let model = $rootScope.recordsVM.invenioRecordsModel;
-        CustomBSDatePicker.setDataFromFieldToModel(model, false);
+        if ('disabled' != $("#save_data_json").attr('disabled')) {
+          $(".lds-ring-background").removeClass("hidden");
+          $("#save_data_json").prop('disabled', true);
+          setTimeout(function() {
+              $(".lds-ring-background").addClass("hidden");
+              $('#save_data_json').removeAttr("disabled");
+          }, 3000);
+          let model = $rootScope.recordsVM.invenioRecordsModel;
+          CustomBSDatePicker.setDataFromFieldToModel(model, false);
 
-        var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
-        let permission = false;
-        $scope.$broadcast('schemaFormValidate');
-        if (enableFeedbackMail === 'True' && enableContributor === 'True') {
-          if (!invalidFlg && $scope.is_item_owner) {
-            if (!this.registerUserPermission()) {
-              // Do nothing
-            } else {
+          var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
+          let permission = false;
+          $scope.$broadcast('schemaFormValidate');
+          if (enableFeedbackMail === 'True' && enableContributor === 'True') {
+            if (!invalidFlg && $scope.is_item_owner) {
+              if (!this.registerUserPermission()) {
+                // Do nothing
+              } else {
+                permission = true;
+              }
+            }else {
               permission = true;
             }
-          }else {
-            permission = true;
-          }
-          if (permission) {
-            if ($scope.getFeedbackMailList().length > 0) {
-              let modalcontent = $('#invalid-email-format').val();
-              $("#inputModal").html(modalcontent);
-              $("#allModal").modal("show");
-              return;
+            if (permission) {
+              if ($scope.getFeedbackMailList().length > 0) {
+                let modalcontent = $('#invalid-email-format').val();
+                $("#inputModal").html(modalcontent);
+                $("#allModal").modal("show");
+                return;
+              }
+              this.saveDataJsonCallback(item_save_uri);
+              this.saveFeedbackMailListCallback(currentActionId);
             }
-            this.saveDataJsonCallback(item_save_uri);
-            this.saveFeedbackMailListCallback(currentActionId);
+          }else{
+              this.saveDataJsonCallback(item_save_uri);
           }
-        }else{
-            this.saveDataJsonCallback(item_save_uri);
         }
       };
 

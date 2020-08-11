@@ -221,6 +221,8 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     { id: "isSoruceOf", content: "isSoruceOf" }
   ];
   $scope.comment_data = "";
+  $scope.isDisabledSave = false;
+  $scope.isDisabledRun = false;
 
 //   add button
   $rootScope.add_link = function(data, index) {
@@ -263,7 +265,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 1
     };
-
+    $scope.isDisabledSave = true;
     $http({
       method: 'POST',
       url: post_url,
@@ -279,7 +281,9 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       } else {
         alert(response.data.msg);
       }
+      $scope.isDisabledSave = false;
     }, function errorCallback(response) {
+      $scope.isDisabledSave = false;
       alert(response.data.msg);
       document.location.reload(true);
     });
@@ -293,13 +297,14 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       temporary_save: 0,
       link_data: $scope.link_item_list
     };
-
+    $scope.isDisabledRun = true;
     $http({
         method: 'POST',
         url: post_url,
         data: post_data,
         headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
+      $scope.isDisabledRun = false;
       if(0 == response.data.code) {
         if(response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
           document.location.href=response.data.data.redirect;
@@ -310,6 +315,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         alert(response.data.msg);
       }
     }, function errorCallback(response) {
+        $scope.isDisabledRun = false;
         alert(response.data.msg);
         document.location.reload(true);
     });
