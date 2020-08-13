@@ -2,8 +2,27 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
+  /**
+   * Start Loading
+   * @param actionButton
+   */
+  function startLoading(actionButton) {
+    actionButton.prop('disabled', true);
+    $(".lds-ring-background").removeClass("hidden");
+  }
+
+  /**
+   * End Loading
+   * @param actionButton
+   */
+  function endLoading(actionButton) {
+    actionButton.removeAttr("disabled");
+    $(".lds-ring-background").addClass("hidden");
+  }
 
   $('.btn-begin').on('click', function () {
+      let _this = $(this);
+      startLoading(_this);
       let post_uri = $('#post_uri').text();
       let workflow_id = $(this).data('workflow-id');
       let community = $(this).data('community');
@@ -22,17 +41,22 @@ require([
           contentType: 'application/json',
           data: JSON.stringify(post_data),
           success: function (data, status) {
+              endLoading(_this);
               if (0 == data.code) {
                   document.location.href = data.data.redirect;
               } else {
                   alert(data.msg);
               }
           },
-          error: function (jqXHE, status) {}
+          error: function (jqXHE, status) {
+            endLoading(_this);
+          }
       });
   });
 
   $('#btn-finish').on('click', function(){
+    let _this = $(this);
+    startLoading(_this);
     let post_uri = $('.cur_step').data('next-uri');
     let post_data = {
       commond: $('#input-comment').val(),
@@ -46,6 +70,7 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function(data, status) {
+        endLoading(_this);
         if(0 == data.code) {
           if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href=data.data.redirect;
@@ -57,6 +82,7 @@ require([
         }
       },
       error: function(jqXHE, status) {
+        endLoading(_this);
         alert('server error');
         $('#myModal').modal('hide');
       }
@@ -64,6 +90,8 @@ require([
   });
 
   $('#btn-draft').on('click', function(){
+    let _this = $(this);
+    startLoading(_this);
     let post_uri = $('.cur_step').data('next-uri');
     let post_data = {
       commond: $('#input-comment').val(),
@@ -77,6 +105,7 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function(data, status) {
+        endLoading(_this);
         if(0 == data.code) {
           if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href=data.data.redirect;
@@ -88,6 +117,7 @@ require([
         }
       },
       error: function(jqXHE, status) {
+        endLoading(_this);
         alert('server error');
         $('#myModal').modal('hide');
       }
@@ -101,6 +131,8 @@ require([
   });
 
   $('#btn-approval').on('click', function () {
+      let _this = $(this);
+      startLoading(_this);
       let uri_apo = $('.cur_step').data('next-uri');
       let act_ver = $('.cur_step').data('action-version');
       let post_data = {
@@ -114,6 +146,7 @@ require([
           contentType: 'application/json',
           data: JSON.stringify(post_data),
           success: function (data, status) {
+              endLoading(_this);
               if (0 == data.code) {
                   if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
                       document.location.href = data.data.redirect;
@@ -125,12 +158,15 @@ require([
               }
           },
           error: function (jqXHE, status) {
+              endLoading(_this);
               alert('server error');
           }
       });
   });
 
   $('#btn-reject').on('click', function () {
+      let _this = $(this);
+      startLoading(_this);
       let uri_apo = $('.cur_step').data('next-uri');
       let act_ver = $('.cur_step').data('action-version');
       let post_data = {
@@ -145,6 +181,7 @@ require([
           contentType: 'application/json',
           data: JSON.stringify(post_data),
           success: function (data, status) {
+              endLoading(_this);
               if (0 == data.code) {
                   if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
                       document.location.href = data.data.redirect;
@@ -156,12 +193,15 @@ require([
               }
           },
           error: function (jqXHE, status) {
+              endLoading(_this);
               alert('server error');
           }
       });
   });
 
   $('#btn-return').on('click', function () {
+      let _this = $(this);
+      startLoading(_this);
       let uri_apo = $('.cur_step').data('next-uri');
       let act_ver = $('.cur_step').data('action-version');
       let post_data = {
@@ -176,6 +216,7 @@ require([
           contentType: 'application/json',
           data: JSON.stringify(post_data),
           success: function (data, status) {
+              endLoading(_this);
               if (0 == data.code) {
                   if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
                       document.location.href = data.data.redirect;
@@ -187,6 +228,7 @@ require([
               }
           },
           error: function (jqXHE, status) {
+              endLoading(_this)
               alert('server error');
           }
       });
@@ -199,6 +241,23 @@ require([
 
 //Item Link
 function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
+  /**
+   * Start Loading
+   * @param actionButton
+   */
+  $scope.startLoading = function (actionButton) {
+    actionButton.prop('disabled', true);
+    $(".lds-ring-background").removeClass("hidden");
+  }
+
+  /**
+   * End Loading
+   * @param actionButton
+   */
+  $scope.endLoading = function (actionButton) {
+    actionButton.removeAttr("disabled");
+    $(".lds-ring-background").addClass("hidden");
+  }
   $scope.link_item_list = [];
   $scope.sele_options = [
     { id: "relateTo", content: "relateTo" },
@@ -221,8 +280,6 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     { id: "isSoruceOf", content: "isSoruceOf" }
   ];
   $scope.comment_data = "";
-  $scope.isDisabledSave = false;
-  $scope.isDisabledRun = false;
 
 //   add button
   $rootScope.add_link = function(data, index) {
@@ -259,19 +316,21 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 
 //   save button
   $scope.btn_save = function () {
+    let saveButton = $("#item-link-save-btn");
+    $scope.startLoading(saveButton);
     var post_url = $('.cur_step').data('next-uri');
     var post_data = {
       commond: $scope.comment_data,
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 1
     };
-    $scope.isDisabledSave = true;
     $http({
       method: 'POST',
       url: post_url,
       data: post_data,
       headers: { 'Content-Type': 'application/json' },
     }).then(function successCallback(response) {
+      $scope.endLoading(saveButton);
       if (0 == response.data.code) {
         if (response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
           document.location.href = response.data.data.redirect;
@@ -281,15 +340,16 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       } else {
         alert(response.data.msg);
       }
-      $scope.isDisabledSave = false;
     }, function errorCallback(response) {
-      $scope.isDisabledSave = false;
+      $scope.endLoading(saveButton);
       alert(response.data.msg);
       document.location.reload(true);
     });
   };
 //   run button
   $scope.btn_run=function(){
+    let runButton = $("#item-link-run-btn");
+    $scope.startLoading(runButton);
     var post_url = $('.cur_step').data('next-uri');
     var post_data = {
       commond: $scope.comment_data,
@@ -304,8 +364,8 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         data: post_data,
         headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
-      $scope.isDisabledRun = false;
       if(0 == response.data.code) {
+        $scope.endLoading(runButton);
         if(response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
           document.location.href=response.data.data.redirect;
         } else {
@@ -315,7 +375,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         alert(response.data.msg);
       }
     }, function errorCallback(response) {
-        $scope.isDisabledRun = false;
+      $scope.endLoading(runButton);
         alert(response.data.msg);
         document.location.reload(true);
     });
