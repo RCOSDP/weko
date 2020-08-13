@@ -72,7 +72,7 @@ def get_permission_filter(comm_id=None):
             mst.append(match)
             mst.append(rng)
             terms = Q('bool', should=should_path)
-        else:  # In case search_type is keyword or index
+        else:   # In case search_type is keyword or index
             self_path = Indexes.get_self_path(comm_id)
             if self_path and self_path.path in is_perm_paths:
                 term_list.append(self_path.path)
@@ -148,7 +148,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                         kvl = [x for x in kv.split(',')
                                if x.isdecimal() and int(x) < len(vlst) + 1]
                         for j in map(
-                            partial(lambda x, y: x[int(y)], vlst), kvl):
+                                partial(lambda x, y: x[int(y)], vlst), kvl):
                             name_dict = dict(operator="and")
                             name_dict.update(dict(query=j))
                             shud.append(Q('match', **{key: name_dict}))
@@ -206,11 +206,11 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             qt = None
                                             if '=*' in alst[1]:
                                                 name = alst[0] + \
-                                                       "." + val_attr_lst[0]
+                                                    "." + val_attr_lst[0]
                                                 qt = [
                                                     Q('term',
                                                       **{name:
-                                                             val_attr_lst[1]})]
+                                                         val_attr_lst[1]})]
 
                                             mut.extend(qt or [])
                                             qry = Q('bool', must=mut)
@@ -225,7 +225,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                 if isinstance(vlst, list):
                                     attr_val = [x for x in attr_val_str.split(
                                         ',') if x.isdecimal()
-                                                and int(x) < len(vlst)]
+                                        and int(x) < len(vlst)]
                                     if attr_val:
                                         mst = []
                                         name = v[0] + ".value"
@@ -843,9 +843,9 @@ def item_search_factory(self,
                        "relation_version_is_last:true AND " \
                        "publish_status:0 AND " \
                        "publish_date:[{} TO {}]".format(current_app.config[
-                                                            "INDEXER_DEFAULT_DOC_TYPE"],
-                                                        start_term,
-                                                        end_term)
+                           "INDEXER_DEFAULT_DOC_TYPE"],
+                           start_term,
+                           end_term)
         query_filter = []
         if indexes:
             for index in indexes:
@@ -881,7 +881,7 @@ def item_search_factory(self,
                                 "order": "desc"
                             }
                     }
-                ]
+            ]
         }
         return query_q
 
