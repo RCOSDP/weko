@@ -27,8 +27,8 @@ from collections import OrderedDict
 from functools import wraps
 
 import redis
-from flask import Blueprint, current_app, jsonify, render_template, request, \
-    session, url_for
+from flask import Blueprint, abort, current_app, jsonify, render_template, \
+    request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -61,10 +61,11 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, filter_condition, get_actionid, \
-    get_activity_id_of_record_without_version, get_identifier_setting, \
-    handle_finish_workflow, is_hidden_pubdate, is_show_autofill_metadata, \
-    item_metadata_validation, register_hdl, saving_doi_pidstore
+from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
+    get_actionid, get_activity_id_of_record_without_version, get_cache_data, \
+    get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
+    is_show_autofill_metadata, item_metadata_validation, register_hdl, \
+    saving_doi_pidstore, update_cache_data
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -1183,3 +1184,44 @@ def get_feedback_maillist(activity_id='0'):
     except (ValueError, Exception):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
+
+
+@blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
+@login_required
+def lock_activity(activity_id=0):
+    """Lock activity."""
+    data = request.form.to_dict()
+    locked_value = data.get('locked_value')
+    # get lock activity from cache
+    cur_locked_val = str(get_cache_data(
+        'workflow_locked_activity_{}'.format(activity_id))) or str()
+    if cur_locked_val:
+        if locked_value != cur_locked_val:
+            abort(423)
+        else:
+            return jsonify(
+                code=200,
+                msg=_('Success'),
+                locked_value=int(locked_value)
+            )
+    else:
+        # create new lock cache
+        from datetime import datetime
+        value = int(datetime.timestamp(datetime.now()) * 10 ** 3)
+        update_cache_data(
+            'workflow_locked_activity_{}'.format(activity_id), value)
+        return jsonify(code=200, msg=_('Success'), locked_value=value)
+
+
+@blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])
+@login_required
+def unlock_activity(activity_id=0):
+    """Unlock activity."""
+    data = json.loads(request.data.decode("utf-8"))
+    locked_value = data.get('locked_value')
+    # get lock activity from cache
+    cur_locked_val = get_cache_data(
+        'workflow_locked_activity_{}'.format(activity_id)) or int()
+    if cur_locked_val and cur_locked_val == locked_value:
+        delete_cache_data('workflow_locked_activity_{}'.format(activity_id))
+    return jsonify(code=200, msg=_('Success'))

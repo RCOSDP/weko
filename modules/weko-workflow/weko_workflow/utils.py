@@ -24,6 +24,7 @@ from copy import deepcopy
 
 from flask import current_app, request
 from flask_babelex import gettext as _
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -1307,3 +1308,35 @@ def handle_finish_workflow(deposit, current_pid, recid):
         current_app.logger.exception(str(ex))
         return item_id
     return item_id
+
+
+def delete_cache_data(key: str):
+    """Delete cache data.
+
+    :param key: Cache key.
+    """
+    current_value = current_cache.get(key) or str()
+    if current_value:
+        current_cache.delete(key)
+
+
+def update_cache_data(key: str, value: str):
+    """Update cache data.
+
+    :param key: Cache key.
+    :param value: Cache value.
+    """
+    current_value = current_cache.get(key) or str()
+    if current_value:
+        current_cache.delete(key)
+    current_cache.set(key, value)
+
+
+def get_cache_data(key: str):
+    """Get cache data.
+
+    :param key: Cache key.
+
+    :return: Cache value.
+    """
+    return current_cache.get(key) or str()
