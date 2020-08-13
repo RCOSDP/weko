@@ -41,10 +41,10 @@ require([
           contentType: 'application/json',
           data: JSON.stringify(post_data),
           success: function (data, status) {
-              endLoading(_this);
               if (0 == data.code) {
                   document.location.href = data.data.redirect;
               } else {
+                  endLoading(_this);
                   alert(data.msg);
               }
           },
@@ -70,7 +70,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function(data, status) {
-        endLoading(_this);
         if(0 == data.code) {
           if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href=data.data.redirect;
@@ -78,6 +77,7 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
@@ -105,7 +105,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function(data, status) {
-        endLoading(_this);
         if(0 == data.code) {
           if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href=data.data.redirect;
@@ -113,6 +112,7 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
@@ -146,7 +146,6 @@ require([
           contentType: 'application/json',
           data: JSON.stringify(post_data),
           success: function (data, status) {
-              endLoading(_this);
               if (0 == data.code) {
                   if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
                       document.location.href = data.data.redirect;
@@ -154,6 +153,7 @@ require([
                       document.location.reload(true);
                   }
               } else {
+                  endLoading(_this);
                   alert(data.msg);
               }
           },
@@ -181,7 +181,6 @@ require([
           contentType: 'application/json',
           data: JSON.stringify(post_data),
           success: function (data, status) {
-              endLoading(_this);
               if (0 == data.code) {
                   if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
                       document.location.href = data.data.redirect;
@@ -189,6 +188,7 @@ require([
                       document.location.reload(true);
                   }
               } else {
+                  endLoading(_this);
                   alert(data.msg);
               }
           },
@@ -216,7 +216,6 @@ require([
           contentType: 'application/json',
           data: JSON.stringify(post_data),
           success: function (data, status) {
-              endLoading(_this);
               if (0 == data.code) {
                   if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
                       document.location.href = data.data.redirect;
@@ -224,6 +223,7 @@ require([
                       document.location.reload(true);
                   }
               } else {
+                  endLoading(_this);
                   alert(data.msg);
               }
           },
@@ -330,7 +330,6 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       data: post_data,
       headers: { 'Content-Type': 'application/json' },
     }).then(function successCallback(response) {
-      $scope.endLoading(saveButton);
       if (0 == response.data.code) {
         if (response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
           document.location.href = response.data.data.redirect;
@@ -338,6 +337,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
           document.location.reload(true);
         }
       } else {
+        $scope.endLoading(saveButton);
         alert(response.data.msg);
       }
     }, function errorCallback(response) {
@@ -365,13 +365,13 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       if(0 == response.data.code) {
-        $scope.endLoading(runButton);
         if(response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
           document.location.href=response.data.data.redirect;
         } else {
           document.location.reload(true);
         }
       } else {
+        $scope.endLoading(runButton);
         alert(response.data.msg);
       }
     }, function errorCallback(response) {

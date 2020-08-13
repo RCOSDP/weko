@@ -42,10 +42,10 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (data, status) {
-        endLoading(_this);
         if (0 == data.code) {
           document.location.href = data.data.redirect;
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
@@ -89,7 +89,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (data, status) {
-        endLoading(_this);
         if (0 == data.code) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href = data.data.redirect;
@@ -97,6 +96,7 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
@@ -144,7 +144,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (data, status) {
-        endLoading(_this);
         if (0 == data.code) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href = data.data.redirect;
@@ -152,6 +151,7 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
@@ -185,7 +185,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (data, status) {
-        endLoading(_this);
         if (0 == data.code) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href = data.data.redirect;
@@ -193,6 +192,7 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
@@ -220,7 +220,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (data, status) {
-        endLoading(_this);
         if (0 == data.code) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href = data.data.redirect;
@@ -228,6 +227,7 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
@@ -239,7 +239,7 @@ require([
   });
 
   $('#btn-return').on('click', function () {
-    let _this = $(THIS);
+    let _this = $(this);
     startLoading(_this);
     let uri_apo = $('.cur_step').data('next-uri');
     let act_ver = $('.cur_step').data('action-version');
@@ -255,7 +255,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (data, status) {
-        endLoading(_this);
         if (0 == data.code) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href = data.data.redirect;
@@ -263,6 +262,7 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },

@@ -180,7 +180,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(data_global.post_data),
       success: function (data, status) {
-        endLoading(actionButton);
         if (0 == data.code) {
           if (data.hasOwnProperty('data') &&
             data.data.hasOwnProperty('redirect')) {
@@ -189,6 +188,7 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(actionButton);
           alert(data.msg);
         }
       },
@@ -223,11 +223,11 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(withdrawBtn);
           $('#pwd').parent().addClass('has-error');
           $('#error-info').html(data.msg);
           $('#error-info').parent().show();
         }
-        endLoading(withdrawBtn);
       },
       error: function (jqXHE, status) {
         alert('Server error');

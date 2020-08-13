@@ -39,7 +39,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (data, status) {
-        endLoading(_this);
         if (data.code == 0) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             parent.document.location.href = data.data.redirect;
@@ -51,6 +50,7 @@ require([
             parent.document.location.href = redirectUrl;
           }
         } else {
+          endLoading(_this);
           $('#action_quit_confirmation').modal('show');
           $('.modal-body').html(data.msg);
           $("#btn_cancel").attr('style', 'display: none;');
@@ -81,7 +81,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (data, status) {
-        endLoading(_this);
         if (0 == data.code) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             parent.document.location.href = data.data.redirect;
@@ -90,6 +89,7 @@ require([
             parent.document.location.href = redirectUrl;
           }
         } else {
+          endLoading(_this);
           $('#action_quit_confirmation').modal('show');
           $('.modal-body').html(data.msg);
           $("#btn_cancel").attr('style', 'display: none;');
