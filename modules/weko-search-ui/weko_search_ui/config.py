@@ -317,9 +317,9 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "des": ["search_des", "search_des.ja"],
         "publisher": ["search_publisher", "search_publisher.ja"],
         "cname": ["search_contributor", "search_contributor.ja"],
-        "itemtype": ("item_type_id", int),
+        "itemtype": ("itemtype", str),
         "type": {
-            "type": [
+            "type.raw": [
                 "conference paper",
                 "departmental bulletin paper",
                 "journal article",
@@ -353,7 +353,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "dissno": "dissertationNumber",
         "degreename": ["degreeName", "degreeName.ja"],
         "dgname": ["dgName", "dgName.ja"],
-        "wid": "weko_id",
+        "wid": ("creator.nameIdentifier", str),
         "iid": ("path.tree", int)
     },
     "date": {
