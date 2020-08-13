@@ -1911,6 +1911,7 @@ function toObject(arr) {
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
+        $scope.checkLoadingNextButton();
         $scope.hiddenPubdate();
         $scope.initContributorData();
         $scope.initUserGroups();
@@ -3032,6 +3033,7 @@ function toObject(arr) {
 
       $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
         $scope.startLoading();
+        let currActivityId = $("#activity_id").text();
         $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
         if (!$scope.priceValidator()) {
           var modalcontent = "Billing price is required half-width numbers.";
@@ -3082,7 +3084,7 @@ function toObject(arr) {
             let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
             $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
-            sessionStorage.removeItem(activityId);
+            sessionStorage.removeItem(currActivityId);
             let versionSelected = $("input[name='radioVersionSelect']:checked").val();
             if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
               if (versionSelected == "keep") {
@@ -3102,9 +3104,7 @@ function toObject(arr) {
             } else {
               $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
             }
-            $scope.$on('invenio.records.action.error', function () {
-              $scope.endLoading();
-            });
+            sessionStorage.setItem("next_btn_" + currActivityId, new Date().getTime().toString());
           }
         }
       };
@@ -3201,6 +3201,24 @@ function toObject(arr) {
       $scope.endLoading = function() {
         $(".lds-ring-background").addClass("hidden");
         $("#weko-records :button, #weko-records :input[type=button]").removeAttr("disabled");
+      }
+
+      $scope.checkLoadingNextButton = function () {
+        let activityId = $("#activity_id").text();
+        let key = "next_btn_" + activityId;
+        let loadingTime = sessionStorage.getItem(key);
+        if (loadingTime) {
+          loadingTime = parseInt(loadingTime);
+          let currentTime = new Date().getTime();
+          let diffTime = currentTime - loadingTime;
+          if (diffTime < 3000) {
+            $scope.startLoading();
+            setTimeout(function () {
+              $scope.endLoading();
+            }, 2000);
+          }
+        }
+        sessionStorage.removeItem(key);
       }
 
       $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading) {
