@@ -515,3 +515,6 @@ msgstr "リンク"
 
 msgid "Display Name"
 msgstr "表示名"
+
+msgid "This activity is being edited."
+msgstr "このアクティビティは編集中です。"

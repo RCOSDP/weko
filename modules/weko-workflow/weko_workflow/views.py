@@ -42,6 +42,7 @@ from sqlalchemy import types
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
+from weko_admin.config import WEKO_ADMIN_DEFAULT_LIFETIME
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit
 from weko_deposit.links import base_factory
@@ -1209,7 +1210,10 @@ def lock_activity(activity_id=0):
         from datetime import datetime
         value = int(datetime.timestamp(datetime.now()) * 10 ** 3)
         update_cache_data(
-            'workflow_locked_activity_{}'.format(activity_id), value)
+            'workflow_locked_activity_{}'.format(activity_id),
+            value,
+            WEKO_ADMIN_DEFAULT_LIFETIME * 60
+        )
         return jsonify(code=200, msg=_('Success'), locked_value=value)
 
 

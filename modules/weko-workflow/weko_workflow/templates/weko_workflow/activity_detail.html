@@ -335,8 +335,8 @@
     {%- endif %}
   </div>
 </div>
-<div id="activity_locked">
-  This activity has locked by another request!
+<div id="activity_locked" class="alert alert-danger alert-dismissible collapse" style="margin-top: 25px;">
+  {{ _('This activity is being edited.') }}
 </div>
 {%- endblock page_body_main %}
 

@@ -1320,7 +1320,7 @@ def delete_cache_data(key: str):
         current_cache.delete(key)
 
 
-def update_cache_data(key: str, value: str):
+def update_cache_data(key: str, value: str, timeout=0):
     """Update cache data.
 
     :param key: Cache key.
@@ -1329,7 +1329,11 @@ def update_cache_data(key: str, value: str):
     current_value = current_cache.get(key) or str()
     if current_value:
         current_cache.delete(key)
-    current_cache.set(key, value)
+
+    if timeout:
+        current_cache.set(key, value, timeout=timeout)
+    else:
+        current_cache.set(key, value)
 
 
 def get_cache_data(key: str):
