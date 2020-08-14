@@ -2136,6 +2136,9 @@ function toObject(arr) {
       $scope.getItemMetadata = function () {
         // Reset error message befor open modal.
         this.resetAutoFillErrorMessage();
+        if ($("#autofill_item_button").is(":disabled")) {
+          $("#autofill_item_button").prop('disabled', false);
+        }
         $('#meta-search').modal('show');
       };
 
