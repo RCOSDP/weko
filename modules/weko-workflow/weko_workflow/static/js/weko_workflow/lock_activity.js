@@ -58,8 +58,8 @@ $(document).ready(function () {
         locked_value: locked_value
       });
 
-      var isIE = /*@cc_on!@*/false || !!document.documentMode;
-      if (isIE) {
+      var is_ie = /*@cc_on!@*/false || !!document.documentMode;
+      if (is_ie) {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", url, false);
         xhr.send(data);
