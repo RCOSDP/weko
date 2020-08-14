@@ -2185,13 +2185,16 @@ function toObject(arr) {
       }
 
       $scope.setItemMetadata = function () {
+        $("#autofill_item_button").prop('disabled', true);
         let autoFillID = $('#autofill_id_type').val();
         let value = $('#autofill_item_id').val();
         let itemTypeId = $("#autofill_item_type_id").val();
         if (autoFillID === 'Default') {
+          $("#autofill_item_button").prop('disabled', false);
           this.setAutoFillErrorMessage($("#autofill_error_id").val());
           return;
         } else if (!value.length) {
+          $("#autofill_item_button").prop('disabled', false);
           this.setAutoFillErrorMessage($("#autofill_error_input_value").val());
           return;
         }
@@ -2259,15 +2262,18 @@ function toObject(arr) {
           function success(response) {
             let data = response.data;
             if (data.error) {
+              $("#autofill_item_button").prop('disabled', false);
               $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
               $scope.setRecordDataCallBack(data);
             } else {
+              $("#autofill_item_button").prop('disabled', false);
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
           },
           function error(response) {
+            $("#autofill_item_button").prop('disabled', false);
             $scope.setAutoFillErrorMessage("Cannot connect to server!");
           }
         );
