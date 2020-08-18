@@ -1191,28 +1191,34 @@ def get_feedback_maillist(activity_id='0'):
 @login_required
 def lock_activity(activity_id=0):
     """Lock activity."""
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+    timeout = current_app.permanent_session_lifetime.seconds * 60
     data = request.form.to_dict()
     locked_value = data.get('locked_value')
     # get lock activity from cache
-    cur_locked_val = str(get_cache_data(
-        'workflow_locked_activity_{}'.format(activity_id))) or str()
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
     if cur_locked_val:
         if locked_value != cur_locked_val:
             abort(423)
         else:
+            update_cache_data(
+                cache_key,
+                locked_value,
+                timeout
+            )
             return jsonify(
                 code=200,
                 msg=_('Success'),
-                locked_value=int(locked_value)
+                locked_value=locked_value
             )
     else:
         # create new lock cache
         from datetime import datetime
         value = int(datetime.timestamp(datetime.now()) * 10 ** 3)
         update_cache_data(
-            'workflow_locked_activity_{}'.format(activity_id),
+            cache_key,
             value,
-            WEKO_ADMIN_DEFAULT_LIFETIME * 60
+            timeout
         )
         return jsonify(code=200, msg=_('Success'), locked_value=value)
 
@@ -1221,11 +1227,13 @@ def lock_activity(activity_id=0):
 @login_required
 def unlock_activity(activity_id=0):
     """Unlock activity."""
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     data = json.loads(request.data.decode("utf-8"))
-    locked_value = data.get('locked_value')
+    locked_value = str(data.get('locked_value'))
+    msg = None
     # get lock activity from cache
-    cur_locked_val = get_cache_data(
-        'workflow_locked_activity_{}'.format(activity_id)) or int()
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
     if cur_locked_val and cur_locked_val == locked_value:
-        delete_cache_data('workflow_locked_activity_{}'.format(activity_id))
-    return jsonify(code=200, msg=_('Success'))
+        delete_cache_data(cache_key)
+        msg = _('Unlock success')
+    return jsonify(code=200, msg=msg or _('Not unlock'))

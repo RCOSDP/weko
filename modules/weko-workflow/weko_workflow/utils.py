@@ -1326,10 +1326,6 @@ def update_cache_data(key: str, value: str, timeout=0):
     :param key: Cache key.
     :param value: Cache value.
     """
-    current_value = current_cache.get(key) or str()
-    if current_value:
-        current_cache.delete(key)
-
     if timeout:
         current_cache.set(key, value, timeout=timeout)
     else:

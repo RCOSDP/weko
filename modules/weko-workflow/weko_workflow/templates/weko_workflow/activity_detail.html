@@ -74,7 +74,7 @@
 {%- set items_show_list = record.items_show_list -%}
 
 {%- block page_body_main %}
-<div class="row" id="activity_detail">
+<div class="row">
   {%-if community%}
     <div id="community_id" class="hide">{{community.id}}</div>
   {%-else %}
@@ -224,6 +224,9 @@
               {% include 'weko_workflow/permission_required.html' %}
             </div>
           {%- else %}
+            <div class="panel-body" id="activity_locked">
+              {% include 'weko_workflow/lock_activity.html' %}
+            </div>
             <div class="panel-body" id="step_page">
               <div class="hide" id="hide-actionId">{{action_id}}</div>
               {%- if 'item_login' == cur_step or 'file_upload' == cur_step %}
@@ -334,9 +337,6 @@
         <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</a>
     {%- endif %}
   </div>
-</div>
-<div id="activity_locked" class="alert alert-danger alert-dismissible collapse" style="margin-top: 25px;">
-  {{ _('This activity is being edited.') }}
 </div>
 {%- endblock page_body_main %}
 
