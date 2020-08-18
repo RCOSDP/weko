@@ -2137,10 +2137,13 @@ function toObject(arr) {
         // Reset error message befor open modal.
         this.resetAutoFillErrorMessage();
         if ($("#autofill_item_button").is(":disabled")) {
-          $("#autofill_item_button").prop('disabled', false);
+          $scope.enableAutofillButton()
         }
         $('#meta-search').modal('show');
       };
+      $scope.enableAutofillButton = function () {
+        $("#autofill_item_button").prop('disabled', false);
+      }
 
       $scope.hiddenPubdate = function () {
         if ($("#is_hidden_pubdate").val() !== "True"){
@@ -2193,11 +2196,11 @@ function toObject(arr) {
         let value = $('#autofill_item_id').val();
         let itemTypeId = $("#autofill_item_type_id").val();
         if (autoFillID === 'Default') {
-          $("#autofill_item_button").prop('disabled', false);
+          $scope.enableAutofillButton()
           this.setAutoFillErrorMessage($("#autofill_error_id").val());
           return;
         } else if (!value.length) {
-          $("#autofill_item_button").prop('disabled', false);
+          $scope.enableAutofillButton()
           this.setAutoFillErrorMessage($("#autofill_error_input_value").val());
           return;
         }
@@ -2265,18 +2268,18 @@ function toObject(arr) {
           function success(response) {
             let data = response.data;
             if (data.error) {
-              $("#autofill_item_button").prop('disabled', false);
+              $scope.enableAutofillButton()
               $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
               $scope.setRecordDataCallBack(data);
             } else {
-              $("#autofill_item_button").prop('disabled', false);
+              $scope.enableAutofillButton()
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
           },
           function error(response) {
-            $("#autofill_item_button").prop('disabled', false);
+            $scope.enableAutofillButton()
             $scope.setAutoFillErrorMessage("Cannot connect to server!");
           }
         );
