@@ -23,7 +23,31 @@
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-10">
       <h1><i class="fa fa-flash"></i>{{_('Permission required')}}</h1>
-      <p>{{ _('This activity is being edited.') }}</p>
+      <p id="locked_msg">{{ _('This activity is being edited by {}.') }}</p>
+    </div>
+  </div>
+</div>
+
+<div id="action_unlock_activity" class="modal fade" tabindex="-1"
+     role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">WEKO</h4>
+      </div>
+      <div class="modal-body" style="overflow-x: auto;">
+        <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
+        <span style="margin: 0 10px">{{_('Are you sure you want to unlock this activity?')}}</span>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary"
+                id="btn_unlock">{{_('Unlock')}}</button>
+        <button type="button" class="btn btn-default"
+                data-dismiss="modal">{{_('Cancel')}}</button>
+      </div>
     </div>
   </div>
 </div>

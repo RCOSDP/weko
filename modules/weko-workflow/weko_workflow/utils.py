@@ -24,6 +24,7 @@ from copy import deepcopy
 
 from flask import current_app, request
 from flask_babelex import gettext as _
+from invenio_accounts.models import User
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -1340,3 +1341,14 @@ def get_cache_data(key: str):
     :return: Cache value.
     """
     return current_cache.get(key) or str()
+
+
+def get_account_email_by_id(user_id):
+    """Get account email by user id.
+
+    :param user_id: User id.
+
+    :return: email.
+    """
+    user = User.query.filter_by(id=user_id).one_or_none()
+    return user.email if user else None

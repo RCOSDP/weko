@@ -20,6 +20,7 @@ $(document).ready(function () {
     sessionStorage.removeItem('locked_value');
   };
 
+  var current_user_email = $('input#current_user_email').val();
   var locked_value = sessionStorage.getItem('locked_value');
   var activity_id = $('input#activity_id_for_lock').val();
   var cur_step = $('input#cur_step_for_lock').val();
@@ -34,12 +35,26 @@ $(document).ready(function () {
       },
       url: '/workflow/activity/lock/' + activity_id,
       success: function (result) {
-        locked_value = result.locked_value;
-        sessionStorage.setItem('locked_value', locked_value);
-      },
-      error: function () {
-        $('#step_page').hide();
-        $('#activity_locked').show();
+        if (result.err) {
+          $('#step_page').hide();
+          $('#activity_locked').show();
+          var msg = $('#locked_msg').text();
+          msg = msg.replace('{}', result.locked_by_email);
+          $('#locked_msg').html(msg);
+
+          if (current_user_email === result.locked_by_email) {
+            $("#action_unlock_activity").modal("show");
+            // handle popup unlock
+            $('#btn_unlock').on('click', function () {
+              $("#action_unlock_activity").modal("hide");
+              unlock_activity(activity_id, result.locked_value);
+              location.reload();
+            });
+          }
+        } else {
+          locked_value = result.locked_value;
+          sessionStorage.setItem('locked_value', locked_value);
+        }
       }
     });
   } else if (locked_value) {

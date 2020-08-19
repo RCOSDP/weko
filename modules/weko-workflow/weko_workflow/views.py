@@ -27,8 +27,8 @@ from collections import OrderedDict
 from functools import wraps
 
 import redis
-from flask import Blueprint, abort, current_app, jsonify, render_template, \
-    request, session, url_for
+from flask import Blueprint, current_app, jsonify, render_template, request, \
+    session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -42,7 +42,6 @@ from sqlalchemy import types
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
-from weko_admin.config import WEKO_ADMIN_DEFAULT_LIFETIME
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit
 from weko_deposit.links import base_factory
@@ -63,7 +62,8 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
-    get_actionid, get_activity_id_of_record_without_version, get_cache_data, \
+    get_account_email_by_id, get_actionid, \
+    get_activity_id_of_record_without_version, get_cache_data, \
     get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
     is_show_autofill_metadata, item_metadata_validation, register_hdl, \
     saving_doi_pidstore, update_cache_data
@@ -1195,32 +1195,37 @@ def lock_activity(activity_id=0):
     timeout = current_app.permanent_session_lifetime.seconds * 60
     data = request.form.to_dict()
     locked_value = data.get('locked_value')
-    # get lock activity from cache
     cur_locked_val = str(get_cache_data(cache_key)) or str()
+    err = ''
+
     if cur_locked_val:
         if locked_value != cur_locked_val:
-            abort(423)
+            locked_value = cur_locked_val
+            err = _('Locked')
         else:
             update_cache_data(
                 cache_key,
                 locked_value,
                 timeout
             )
-            return jsonify(
-                code=200,
-                msg=_('Success'),
-                locked_value=locked_value
-            )
     else:
         # create new lock cache
         from datetime import datetime
-        value = int(datetime.timestamp(datetime.now()) * 10 ** 3)
+        locked_value = str(current_user.get_id()) + '-' + \
+            str(int(datetime.timestamp(datetime.now()) * 10 ** 3))
         update_cache_data(
             cache_key,
-            value,
+            locked_value,
             timeout
         )
-        return jsonify(code=200, msg=_('Success'), locked_value=value)
+
+    return jsonify(
+        code=200,
+        msg='' if err else _('Success'),
+        err=err or '',
+        locked_value=locked_value,
+        locked_by_email=get_account_email_by_id(locked_value.split('-')[0])
+    )
 
 
 @blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])
