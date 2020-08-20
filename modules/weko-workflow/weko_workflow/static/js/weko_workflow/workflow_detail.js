@@ -2,7 +2,28 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
+
+  /**
+   * Start Loading
+   * @param actionButton
+   */
+  function startLoading(actionButton) {
+    actionButton.prop('disabled', true);
+    $(".lds-ring-background").removeClass("hidden");
+  }
+
+  /**
+   * End Loading
+   * @param actionButton
+   */
+  function endLoading(actionButton) {
+    actionButton.removeAttr("disabled");
+    $(".lds-ring-background").addClass("hidden");
+  }
+
   $('.btn-begin').on('click', function () {
+    let _this = $(this);
+    startLoading(_this);
     let post_uri = $('#post_uri').text();
     let workflow_id = $(this).data('workflow-id');
     let community = $(this).data('community');
@@ -24,14 +45,19 @@ require([
         if (0 == data.code) {
           document.location.href = data.data.redirect;
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) { }
+      error: function (jqXHE, status) {
+        endLoading(_this);
+      }
     });
   });
 
   $('#btn-finish').on('click', function () {
+    let _this = $(this);
+    startLoading(_this);
     let comment = '';
     if ($('#input-comment') && $('#input-comment').val()) {
       comment = $('#input-comment').val();
@@ -50,7 +76,7 @@ require([
       } else {
         if ($("#journal-info").attr("hidden")) {
           if ($('#search-key').val()) {
-            post_data['journal'] = { keywords: $('#search-key').val() };
+            post_data['journal'] = {keywords: $('#search-key').val()};
           }
         }
       }
@@ -70,10 +96,12 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
       error: function (jqXHE, status) {
+        endLoading(_this);
         alert('server error');
         $('#myModal').modal('hide');
       }
@@ -81,6 +109,8 @@ require([
   });
 
   $('#btn-draft').on('click', function () {
+    let _this = $(this);
+    startLoading(_this);
     let comment = ''
     if ($('#input-comment') && $('#input-comment').val()) {
       comment = $('#input-comment').val();
@@ -100,9 +130,9 @@ require([
       } else {
         if ($("#journal-info").attr("hidden")) {
           if ($('#search-key').val()) {
-            post_data['journal'] = { keywords: $('#search-key').val() };
+            post_data['journal'] = {keywords: $('#search-key').val()};
           } else {
-            post_data['journal'] = { keywords: '' };
+            post_data['journal'] = {keywords: ''};
           }
         }
       }
@@ -121,10 +151,12 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
       error: function (jqXHE, status) {
+        endLoading(_this);
         alert('server error');
         $('#myModal').modal('hide');
       }
@@ -138,6 +170,8 @@ require([
   });
 
   $('#btn-approval').on('click', function () {
+    let _this = $(this);
+    startLoading(_this);
     let uri_apo = $('.cur_step').data('next-uri');
     let act_ver = $('.cur_step').data('action-version');
     let post_data = {
@@ -158,16 +192,20 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
       error: function (jqXHE, status) {
+        endLoading(_this);
         alert('server error');
       }
     });
   });
 
   $('#btn-reject').on('click', function () {
+    let _this = $(this);
+    startLoading(_this);
     let uri_apo = $('.cur_step').data('next-uri');
     let act_ver = $('.cur_step').data('action-version');
     let post_data = {
@@ -189,16 +227,20 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
       error: function (jqXHE, status) {
+        endLoading(_this);
         alert('server error');
       }
     });
   });
 
   $('#btn-return').on('click', function () {
+    let _this = $(this);
+    startLoading(_this);
     let uri_apo = $('.cur_step').data('next-uri');
     let act_ver = $('.cur_step').data('action-version');
     let post_data = {
@@ -220,10 +262,12 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(_this);
           alert(data.msg);
         }
       },
       error: function (jqXHE, status) {
+        endLoading(_this);
         alert('server error');
       }
     });

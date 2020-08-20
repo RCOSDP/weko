@@ -173,7 +173,7 @@
   z-index: 1000;
   background-color: white;
   opacity: 1;
-  position: absolute;
+  position: fixed;
 }
 
 .lds-ring {
