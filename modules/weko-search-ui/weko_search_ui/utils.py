@@ -620,8 +620,8 @@ def handle_check_exist_record(list_record) -> list:
                 else:
                     item['id'] = None
                     if item.get('uri'):
-                        item['errors'] = [_('Item ID does not match the' +
-                                            ' specified URI information.')]
+                        item['errors'] = [_('Item ID does not match the'
+                                            + ' specified URI information.')]
                         item['status'] = None
             except PIDDoesNotExistError:
                 pass
@@ -1292,11 +1292,11 @@ def handle_check_cnri(list_record):
                 pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
                 if pid_cnri:
                     if not pid_cnri.pid_value.endswith(str(item.get('cnri'))):
-                        error = _('Specified {} is different ' +
-                                  'from existing {}.').format('CNRI', 'CNRI')
+                        error = _('Specified {} is different '
+                                  + 'from existing {}.').format('CNRI', 'CNRI')
                 elif item.get('cnri'):
-                    error = _('Specified {} is different ' +
-                              'from existing {}.').format('CNRI', 'CNRI')
+                    error = _('Specified {} is different '
+                              + 'from existing {}.').format('CNRI', 'CNRI')
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1319,8 +1319,8 @@ def handle_check_doi_ra(list_record):
 
         error = None
         if doi_type and doi_type[0] != doi_ra:
-            error = _('Specified {} is different from ' +
-                      'existing {}.').format('DOI_RA', 'DOI_RA')
+            error = _('Specified {} is different from '
+                      + 'existing {}.').format('DOI_RA', 'DOI_RA')
         return error
 
     for item in list_record:
@@ -1386,8 +1386,8 @@ def handle_check_doi(list_record):
                         if not item.get('doi'):
                             error = _('Please specify {}.').format('DOI')
                         elif not pid_doi.pid_value.endswith(item.get('doi')):
-                            error = _('Specified {} is different ' +
-                                      'from existing {}.').format('DOI', 'DOI')
+                            error = _('Specified {} is different '
+                                      + 'from existing {}.').format('DOI', 'DOI')
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1461,14 +1461,14 @@ def register_item_doi(item):
 
         return {
             'identifier_grant_jalc_doi_link':
-                IDENTIFIER_GRANT_LIST[1][2] + '/' +
-            identifier_setting.jalc_doi + suffix + '/' + item_id,
+                IDENTIFIER_GRANT_LIST[1][2] + '/'
+                + identifier_setting.jalc_doi + suffix + '/' + item_id,
             'identifier_grant_jalc_cr_doi_link':
-                IDENTIFIER_GRANT_LIST[2][2] + '/' +
-            identifier_setting.jalc_crossref_doi + suffix + '/' + item_id,
+                IDENTIFIER_GRANT_LIST[2][2] + '/'
+                + identifier_setting.jalc_crossref_doi + suffix + '/' + item_id,
             'identifier_grant_jalc_dc_doi_link':
-                IDENTIFIER_GRANT_LIST[3][2] + '/' +
-            identifier_setting.jalc_datacite_doi + suffix + '/' + item_id
+                IDENTIFIER_GRANT_LIST[3][2] + '/'
+                + identifier_setting.jalc_datacite_doi + suffix + '/' + item_id
         }
 
     item_id = str(item.get('id'))
