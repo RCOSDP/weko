@@ -43,6 +43,7 @@ def workflow():
 @with_appcontext
 def init_workflow_tables(tables):
     """Init workflow tables."""
+
     def init_action_status():
         """Init ActionStatus Table."""
         db_action_status = list()
@@ -51,14 +52,18 @@ def init_workflow_tables(tables):
             action_status_name='action_begin',
             action_status_desc='Indicates that the action has started.',
             action_scopes='sys',
-            action_displays=''
+            action_displays='',
+            created_user_id=0,
+            updated_user_id=0
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_DONE,
             action_status_name='action_done',
             action_status_desc='Indicates that the action has been completed.',
             action_scopes='sys,user',
-            action_displays='Complete'
+            action_displays='Complete',
+            created_user_id=0,
+            updated_user_id=0
         ))
         db_action_status.append(
             dict(
@@ -67,7 +72,10 @@ def init_workflow_tables(tables):
                 action_status_desc='Indicates that the flow is suspended and\
                     no subsequent action is performed.',
                 action_scopes='user',
-                action_displays='Suspend'))
+                action_displays='Suspend',
+                created_user_id=0,
+                updated_user_id=0
+            ))
         db_action_status.append(
             dict(
                 action_status_id=ActionStatusPolicy.ACTION_RETRY,
@@ -75,7 +83,10 @@ def init_workflow_tables(tables):
                 action_status_desc='Indicates that redo the workflow.\
                     (from start action)',
                 action_scopes='user',
-                action_displays='Redo'))
+                action_displays='Redo',
+                created_user_id=0,
+                updated_user_id=0
+            ))
         db_action_status.append(
             dict(
                 action_status_id=ActionStatusPolicy.ACTION_DOING,
@@ -83,34 +94,45 @@ def init_workflow_tables(tables):
                 action_status_desc='Indicates that the action is not \
                     completed.(There are following actions)',
                 action_scopes='user',
-                action_displays='Doing'))
+                action_displays='Doing',
+                created_user_id=0,
+                updated_user_id=0
+            ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_THROWN_OUT,
             action_status_name='action_thrown_out',
             action_status_desc='Indicates that the action has been rejected.',
             action_scopes='user',
-            action_displays='Reject'
+            action_displays='Reject',
+            created_user_id=0,
+            updated_user_id=0
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_SKIPPED,
             action_status_name='action_skipped',
             action_status_desc='Indicates that the action has been skipped.',
             action_scopes='user',
-            action_displays='Skip'
+            action_displays='Skip',
+            created_user_id=0,
+            updated_user_id=0
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_ERROR,
             action_status_name='action_error',
             action_status_desc='Indicates that the action has been errored.',
             action_scopes='user',
-            action_displays='Error'
+            action_displays='Error',
+            created_user_id=0,
+            updated_user_id=0
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_CANCELED,
             action_status_name='action_canceled',
             action_status_desc='Indicates that the action has been canceled.',
             action_scopes='user',
-            action_displays='Cancel'
+            action_displays='Cancel',
+            created_user_id=0,
+            updated_user_id=0
         ))
         return db_action_status
 
@@ -123,7 +145,9 @@ def init_workflow_tables(tables):
             action_version='1.0.0',
             action_endpoint='begin_action',
             action_makedate=datetime.date(2018, 5, 15),
-            action_lastdate=datetime.date(2018, 5, 15)
+            action_lastdate=datetime.date(2018, 5, 15),
+            created_user_id=0,
+            updated_user_id=0
         ))
         db_action.append(dict(
             action_name='End',
@@ -131,7 +155,9 @@ def init_workflow_tables(tables):
             action_version='1.0.0',
             action_endpoint='end_action',
             action_makedate=datetime.date(2018, 5, 15),
-            action_lastdate=datetime.date(2018, 5, 15)
+            action_lastdate=datetime.date(2018, 5, 15),
+            created_user_id=0,
+            updated_user_id=0
         ))
         db_action.append(dict(
             action_name='Item Registration',
@@ -139,7 +165,9 @@ def init_workflow_tables(tables):
             action_version='1.0.1',
             action_endpoint='item_login',
             action_makedate=datetime.date(2018, 5, 22),
-            action_lastdate=datetime.date(2018, 5, 22)
+            action_lastdate=datetime.date(2018, 5, 22),
+            created_user_id=0,
+            updated_user_id=0
         ))
         db_action.append(dict(
             action_name='Approval',
@@ -147,7 +175,9 @@ def init_workflow_tables(tables):
             action_version='2.0.0',
             action_endpoint='approval',
             action_makedate=datetime.date(2018, 2, 11),
-            action_lastdate=datetime.date(2018, 2, 11)
+            action_lastdate=datetime.date(2018, 2, 11),
+            created_user_id=0,
+            updated_user_id=0
         ))
         #
         db_action.append(dict(
@@ -156,7 +186,9 @@ def init_workflow_tables(tables):
             action_version='1.0.1',
             action_endpoint='item_link',
             action_makedate=datetime.date(2018, 5, 22),
-            action_lastdate=datetime.date(2018, 5, 22)
+            action_lastdate=datetime.date(2018, 5, 22),
+            created_user_id=0,
+            updated_user_id=0
         ))
         db_action.append(dict(
             action_name='OA Policy Confirmation',
@@ -164,7 +196,9 @@ def init_workflow_tables(tables):
             action_version='1.0.0',
             action_endpoint='oa_policy',
             action_makedate=datetime.date(2019, 3, 15),
-            action_lastdate=datetime.date(2019, 3, 15)
+            action_lastdate=datetime.date(2019, 3, 15),
+            created_user_id=0,
+            updated_user_id=0
         ))
         # Identifier Grant
         db_action.append(dict(
@@ -173,7 +207,9 @@ def init_workflow_tables(tables):
             action_version='1.0.0',
             action_endpoint='identifier_grant',
             action_makedate=datetime.date(2019, 3, 15),
-            action_lastdate=datetime.date(2019, 3, 15)
+            action_lastdate=datetime.date(2019, 3, 15),
+            created_user_id=0,
+            updated_user_id=0
         ))
         return db_action
 
@@ -187,7 +223,9 @@ def init_workflow_tables(tables):
             flow_id=_uuid,
             flow_name='Registration Flow',
             flow_status=FlowStatusPolicy.AVAILABLE,
-            flow_user=1
+            flow_user=1,
+            created_user_id=0,
+            updated_user_id=0
         ))
         for i, _idx in enumerate([0, 2, 3, 1]):
             """action.id: [1, 3, 4, 2]"""
@@ -197,7 +235,9 @@ def init_workflow_tables(tables):
                 action_version=action_list[_idx].action_version,
                 action_order=(i + 1),
                 action_condition='',
-                action_date=datetime.date(2018, 7, 28)
+                action_date=datetime.date(2018, 7, 28),
+                created_user_id=0,
+                updated_user_id=0
             ))
         return db_flow, db_flow_action
 
@@ -210,7 +250,9 @@ def init_workflow_tables(tables):
             flows_id=uuid.uuid4(),
             flows_name='Registration WorkFlow',
             itemtype_id=itemtypesname_list[0].item_type[0].id,
-            flow_id=flow_list[0].id
+            flow_id=flow_list[0].id,
+            created_user_id=0,
+            updated_user_id=0
         ))
         return db_workflow
 

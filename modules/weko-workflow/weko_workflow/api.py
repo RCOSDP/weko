@@ -286,7 +286,9 @@ class WorkFlow(object):
         assert workflow
         try:
             with db.session.begin_nested():
-                db.session.execute(_WorkFlow.__table__.insert(), workflow)
+                workflow_insert = _WorkFlow(flow_id=workflow['flow_id'], flows_id=workflow['flows_id'],
+                                            flows_name=workflow['flows_name'], itemtype_id=workflow['itemtype_id'])
+                db.session.add(workflow_insert)
             db.session.commit()
             return workflow
         except Exception as ex:

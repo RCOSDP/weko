@@ -32,6 +32,36 @@ from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
 from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
+from sqlalchemy import event
+from flask_login import current_user
+
+
+class WekoUserMixin(object):
+    """User model mix-in."""
+
+    created_user_id = db.Column(db.Integer(), nullable=True)
+    """Created user id."""
+
+    updated_user_id = db.Column(db.Integer(), nullable=True)
+    """Updated user id."""
+
+    @classmethod
+    def __declare_last__(cls):
+        @event.listens_for(cls, 'before_insert')
+        def receive_before_insert(mapper, conn, target):
+            if current_user:
+                current_user_id = int(current_user.get_id())
+            else:
+                current_user_id = 0
+            target.created_user_id = current_user_id
+
+        @event.listens_for(cls, 'before_update')
+        def receive_before_update(mapper, conn, target):
+            if current_user:
+                current_user_id = int(current_user.get_id())
+            else:
+                current_user_id = 0
+            target.updated_user_id = current_user_id
 
 
 class ActionStatusPolicy(object):
@@ -360,7 +390,7 @@ class TimestampMixin(object):
     """Updated timestamp."""
 
 
-class ActionStatus(db.Model, TimestampMixin):
+class ActionStatus(db.Model, TimestampMixin, WekoUserMixin):
     """define ActionStatus."""
 
     __tablename__ = 'workflow_action_status'
@@ -411,7 +441,7 @@ class ActionStatus(db.Model, TimestampMixin):
     """the display info of action status."""
 
 
-class Action(db.Model, TimestampMixin):
+class Action(db.Model, TimestampMixin, WekoUserMixin):
     """define Action."""
 
     __tablename__ = 'workflow_action'
@@ -445,7 +475,7 @@ class Action(db.Model, TimestampMixin):
                                      nullable=True, default=False)
 
 
-class FlowDefine(db.Model, TimestampMixin):
+class FlowDefine(db.Model, TimestampMixin, WekoUserMixin):
     """Define Flow."""
 
     __tablename__ = 'workflow_flow_define'
@@ -499,7 +529,7 @@ class FlowDefine(db.Model, TimestampMixin):
     """flow define delete flag."""
 
 
-class FlowAction(db.Model, TimestampMixin):
+class FlowAction(db.Model, TimestampMixin, WekoUserMixin):
     """Action list belong to Flow."""
 
     __tablename__ = 'workflow_flow_action'
@@ -554,7 +584,7 @@ class FlowAction(db.Model, TimestampMixin):
     """flow action relationship."""
 
 
-class FlowActionRole(db.Model, TimestampMixin):
+class FlowActionRole(db.Model, TimestampMixin, WekoUserMixin):
     """FlowActionRole list belong to FlowAction.
 
     It relates an allowed action with a role or a user
@@ -588,7 +618,7 @@ class FlowActionRole(db.Model, TimestampMixin):
     """If set to True, deny the action, otherwise allow it."""
 
 
-class WorkFlow(db.Model, TimestampMixin):
+class WorkFlow(db.Model, TimestampMixin, WekoUserMixin):
     """Define WorkFlow."""
 
     __tablename__ = 'workflow_workflow'
@@ -637,7 +667,7 @@ class WorkFlow(db.Model, TimestampMixin):
     """workflow delete flag."""
 
 
-class Activity(db.Model, TimestampMixin):
+class Activity(db.Model, TimestampMixin, WekoUserMixin):
     """Define Activety."""
 
     __tablename__ = 'workflow_activity'
@@ -752,7 +782,7 @@ class Activity(db.Model, TimestampMixin):
     shared_user_id = db.Column(db.Integer(), nullable=True)
 
 
-class ActivityAction(db.Model, TimestampMixin):
+class ActivityAction(db.Model, TimestampMixin, WekoUserMixin):
     """Define Activety."""
 
     __tablename__ = 'workflow_activity_action'
@@ -781,7 +811,7 @@ class ActivityAction(db.Model, TimestampMixin):
     """action handler"""
 
 
-class ActivityHistory(db.Model, TimestampMixin):
+class ActivityHistory(db.Model, TimestampMixin, WekoUserMixin):
     """Define ActivityHistory."""
 
     __tablename__ = 'workflow_action_history'
@@ -822,7 +852,7 @@ class ActivityHistory(db.Model, TimestampMixin):
     """User relaionship."""
 
 
-class ActionJournal(db.Model, TimestampMixin):
+class ActionJournal(db.Model, TimestampMixin, WekoUserMixin):
     """Define journal info."""
 
     __tablename__ = 'workflow_action_journal'
@@ -856,7 +886,7 @@ class ActionJournal(db.Model, TimestampMixin):
     """Action journal info."""
 
 
-class ActionIdentifier(db.Model, TimestampMixin):
+class ActionIdentifier(db.Model, TimestampMixin, WekoUserMixin):
     """Define action identifier info."""
 
     __tablename__ = 'workflow_action_identifier'
@@ -897,7 +927,7 @@ class ActionIdentifier(db.Model, TimestampMixin):
     """Action identifier grant ndl jalc doi input."""
 
 
-class ActionFeedbackMail(db.Model, TimestampMixin):
+class ActionFeedbackMail(db.Model, TimestampMixin, WekoUserMixin):
     """Define action identifier info."""
 
     __tablename__ = 'workflow_action_feedbackmail'
