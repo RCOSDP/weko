@@ -16,8 +16,10 @@ from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
 
+import click
 import six
 from dateutil import parser
+from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Search
 from flask import current_app, request, session
 from flask_login import current_user
@@ -27,6 +29,7 @@ from invenio_search import current_search_client
 from werkzeug.utils import import_string
 
 from . import config
+from .models import StatsAggregation, StatsBookmark, StatsEvents
 from .permissions import stats_api_permission
 from .proxies import current_stats
 
@@ -176,6 +179,213 @@ def parse_bucket_response(raw_res, pretty_result=dict()):
             raw_res['buckets'][0], pretty_result)
     else:
         return pretty_result
+
+
+def prepare_es_indexes(
+    index_types,
+    index_prefix=None,
+    index_suffix=None,
+    bookmark_index=False
+):
+    """Prepare event index data.
+
+    :param index_types:
+    :param index_prefix:
+    :param index_suffix:
+    :param bookmark_index:
+    """
+    search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX'].strip('-')
+    for event_type in index_types:
+        if not event_type:
+            continue
+
+        # In case prepare indexes for the stats bookmark
+        if bookmark_index:
+            prefix = "stats-bookmark-{}"
+        else:
+            prefix = "stats-{}"
+
+        event_type = prefix.format(event_type)
+
+        # In case prepare indexes for the stats event
+        if index_prefix:
+            event_index = '{0}-{1}-{2}'.format(search_index_prefix,
+                                               index_prefix,
+                                               event_type)
+        else:
+            event_index = '{0}-{1}'.format(search_index_prefix, event_type)
+
+        if index_suffix:
+            event_index = '{0}-{1}'.format(event_index, index_suffix)
+        yield event_index
+
+
+def __build_event_es_data(events_data):
+    """Build event data.
+
+    :param events_data:
+    """
+    for data in events_data:
+        yield dict(
+            _id=data.source_id,
+            _op_type=data.op_type,
+            _index=data.index,
+            _type=data.type,
+            _source=data.source,
+        )
+
+
+def __build_aggregation_es_data(aggregation_data, flush_indices):
+    """Build aggregation data.
+
+    :param aggregation_data:
+    """
+    for data in aggregation_data:
+        flush_indices.add(data.index)
+        yield dict(
+            _id=data.source_id,
+            _index=data.index,
+            _type=data.type,
+            _source=data.source,
+        )
+
+
+def __build_bookmark_es_data(bookmark_data):
+    """Build bookmark data.
+
+    :param bookmark_data:
+    """
+    for data in bookmark_data:
+        yield dict(
+            _id=data.source_id,
+            _index=data.index,
+            _type=data.type,
+            _source=data.source,
+        )
+
+
+def get_event_data_from_db(event_types, index_prefix, index_suffix):
+    """Get event data from database.
+
+    :param event_types:
+    :param index_prefix:
+    :param index_suffix:
+    :return:
+    """
+    if index_suffix:
+        events_index = prepare_es_indexes(
+            event_types, index_prefix, index_suffix
+        )
+        rtn_data = []
+        for event_index in events_index:
+            data = StatsEvents.get_by_index(event_index)
+            if data:
+                rtn_data.extend(data)
+    else:
+        rtn_data = StatsEvents.get_all()
+    return __build_event_es_data(rtn_data)
+
+
+def get_aggregation_data_from_db(types, index_suffix, flush_indices):
+    """Get aggregation data from database.
+
+    :param types:
+    :param index_suffix:
+    :param flush_indices:
+    :return:
+    """
+    if index_suffix:
+        indexes = prepare_es_indexes(
+            types, None, index_suffix
+        )
+        rtn_data = []
+        for _index in indexes:
+            data = StatsAggregation.get_by_index(_index)
+            if data:
+                rtn_data.extend(data)
+    else:
+        rtn_data = StatsAggregation.get_all()
+    return __build_aggregation_es_data(rtn_data, flush_indices)
+
+
+def get_bookmark_data_from_db(types, index_suffix, restore_bookmark):
+    """Get bookmark data from database.
+
+    :param types:
+    :param index_suffix:
+    :param restore_bookmark:
+    :return:
+    """
+    if index_suffix:
+        indexes = prepare_es_indexes(
+            types, None, index_suffix, restore_bookmark
+        )
+        rtn_data = []
+        for _index in indexes:
+            data = StatsBookmark.get_by_index(_index)
+            if data:
+                rtn_data.extend(data)
+    else:
+        rtn_data = StatsBookmark.get_all()
+
+    return __build_bookmark_es_data(rtn_data)
+
+
+def cli_restore_es_data_from_db(
+    restore_data,
+    force,
+    verbose,
+    flush_indices=None
+):
+    """Restore ElasticSearch data based on Database.
+
+    :param restore_data:
+    :param force:
+    :param verbose:
+    :param flush_indices:
+    """
+    if restore_data:
+        success, failed = bulk(
+            current_search_client,
+            restore_data,
+            stats_only=force,
+            chunk_size=50
+        )
+        if flush_indices:
+            current_search_client.indices.flush(
+                index=','.join(flush_indices),
+                wait_if_ongoing=True
+            )
+        if verbose:
+            click.secho('Success: {}'.format(str(success)), fg='green')
+            if force:
+                click.secho('Failed: {}'.format(str(failed)), fg='yellow')
+            else:
+                if len(failed) == 0:
+                    click.secho('Error: 0', fg='red')
+                else:
+                    click.secho('Error: 0', fg='red')
+                    for err in failed:
+                        click.secho(str(err), fg='red')
+    else:
+        if verbose:
+            click.secho('There is no stats data from Database.', fg='yellow')
+
+
+def cli_delete_es_index(_index, force, verbose):
+    """Delete ES index.
+
+    :param _index:
+    :param force:
+    :param verbose:
+    """
+    result = current_search_client.indices.delete(
+        index=_index,
+        ignore=[400, 404] if force else [],
+    )
+    if verbose:
+        if result and result.get('acknowledged'):
+            click.secho("The {} is deleted".format(_index), fg='green')
 
 
 class QueryFileReportsHelper(object):

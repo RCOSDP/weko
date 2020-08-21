@@ -12,6 +12,8 @@ from __future__ import absolute_import, print_function
 
 import datetime
 from collections import OrderedDict
+from itertools import tee
+from uuid import uuid4
 
 import six
 from dateutil import parser
@@ -19,6 +21,8 @@ from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Index, Search
 from flask import current_app
 from invenio_search import current_search_client
+
+from invenio_stats.models import StatsAggregation, StatsBookmark
 
 
 def filter_robots(query):
@@ -195,12 +199,15 @@ class StatAggregator(object):
                 strftime(self.doc_id_suffix)
             }
 
-            yield dict(_index=self.last_index_written,
+            yield dict(_id=uuid4(),
+                       _index=self.last_index_written,
                        _type=self.bookmark_doc_type,
                        _source=bookmark)
         if self.last_index_written:
+            db_iter, es_iter = tee(_success_date())
+            StatsBookmark.save(db_iter)
             bulk(self.client,
-                 _success_date(),
+                 es_iter,
                  stats_only=True)
 
     def _format_range_dt(self, d):
@@ -278,13 +285,19 @@ class StatAggregator(object):
                                        interval_date.strftime(
                                            self.index_name_suffix))
                 self.indices.add(index_name)
-                yield dict(_id='{0}-{1}'.
-                           format(aggregation['key'],
-                                  interval_date.strftime(
-                                      self.doc_id_suffix)),
-                           _index=index_name,
-                           _type=self.aggregation_doc_type,
-                           _source=aggregation_data)
+                rtn_data = dict(
+                    _id='{0}-{1}'.
+                        format(aggregation['key'],
+                               interval_date.strftime(
+                                   self.doc_id_suffix)),
+                    _index=index_name,
+                    _type=self.aggregation_doc_type,
+                    _source=aggregation_data
+                )
+                # Save stats event into Database.
+                StatsAggregation.save(rtn_data)
+
+                yield rtn_data
         self.last_index_written = bookmark_name
 
     def run(self, start_date=None, end_date=None, update_bookmark=True):
