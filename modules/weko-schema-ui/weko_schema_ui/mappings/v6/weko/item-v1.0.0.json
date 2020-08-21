@@ -626,7 +626,7 @@
           ]
         },
         "dateGranted": {
-          "type": "text"
+          "type": "keyword"
         },
         "degreeGrantor": {
           "type": "object",
@@ -712,7 +712,7 @@
                   "index": true
                 },
                 "value": {
-                  "type": "text"
+                  "type": "keyword"
                 }
               }
             },
