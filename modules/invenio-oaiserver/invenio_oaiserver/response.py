@@ -362,7 +362,7 @@ def getrecord(**kwargs):
     if check_correct_system_props_mapping(
         pid.object_uuid,
             current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
-        etree_record = combine_record_file_urls(etree_record, pid.object_uuid)
+        etree_record = combine_record_file_urls(etree_record, pid.object_uuid, kwargs['metadataPrefix'])
 
     root = record_dumper(pid, {'_source': etree_record})
 
@@ -540,7 +540,7 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
     return True
 
 
-def combine_record_file_urls(record, object_uuid):
+def combine_record_file_urls(record, object_uuid, meta_prefix):
     """Add file urls to record metadata.
 
     Get file property information by item_mapping and put to metadata.
@@ -551,15 +551,11 @@ def combine_record_file_urls(record, object_uuid):
     item_type = ItemsMetadata.get_by_object_id(object_uuid)
     item_type_id = item_type.item_type_id
     type_mapping = Mapping.get_record(item_type_id)
-    item_map = get_mapping(type_mapping, "jpcoar_mapping")
-    item_map_ddi = get_mapping(type_mapping, "ddi_mapping")
+    item_map = get_mapping(type_mapping, "{}_mapping".format(meta_prefix))
 
-    if item_map_ddi:
-        file_keys = item_map_ddi.get(current_app.config[
-            "OAISERVER_FILE_PROPS_MAPPING_DDI"])
-    else:
+    if item_map:
         file_keys = item_map.get(current_app.config[
-            "OAISERVER_FILE_PROPS_MAPPING"])
+                                     "OAISERVER_FILE_PROPS_MAPPING"][meta_prefix])
 
     if not file_keys:
         return record
