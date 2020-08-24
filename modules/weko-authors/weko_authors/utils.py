@@ -39,6 +39,7 @@ def get_author_setting_obj(scheme):
 
 def check_email_existed(email: str):
     """Check email has existed.
+
     :param email: email string.
     :returns: author info.
     """

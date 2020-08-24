@@ -129,7 +129,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         """
         def _get_keywords_query(k, v):
             qry = None
-            kv = request.values.get(k)
+            kv = request.values.get('lang') if k == 'language' else request.values.get(k)
             if not kv:
                 return
 
@@ -146,7 +146,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     if isinstance(vlst, list):
                         shud = []
                         kvl = [x for x in kv.split(',')
-                               if x.isdecimal() and int(x) < len(vlst)]
+                               if x.isdecimal() and int(x) < len(vlst) + 1]
                         for j in map(
                                 partial(lambda x, y: x[int(y)], vlst), kvl):
                             name_dict = dict(operator="and")
@@ -164,7 +164,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             elif isinstance(v, tuple) and len(v) >= 2:
                 shud = []
                 for i in map(lambda x: v[1](x), kv.split(',')):
-                    shud.append(Q('term', **{v[0]: i}))
+                    shud.append(Q('match', **{v[0]: i}))
                 if shud:
                     qry = Q('bool', should=shud)
 
@@ -204,7 +204,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                                   **{name: name_dict})]
 
                                             qt = None
-                                            if '=*' not in alst[1]:
+                                            if '=*' in alst[1]:
                                                 name = alst[0] + \
                                                     "." + val_attr_lst[0]
                                                 qt = [
@@ -227,24 +227,20 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         ',') if x.isdecimal()
                                         and int(x) < len(vlst)]
                                     if attr_val:
-                                        shud = []
+                                        mst = []
                                         name = v[0] + ".value"
-                                        name_dict = dict(operator="and")
-                                        name_dict.update(dict(query=kv))
-                                        qm = Q('match', **{name: name_dict})
-
-                                        for j in map(
-                                                partial(lambda m, n:
-                                                        m[int(n)], vlst),
-                                                attr_val):
-                                            name = attr_key_hit[0]
-                                            qm = Q('term', **{name: j})
-                                            shud.append(qm)
-
+                                        qry = Q('multi_match', query=kv,
+                                                type='most_fields',
+                                                minimum_should_match='75%',
+                                                operator='and', fields=[name])
+                                        mst.append(qry)
+                                        name = attr_key_hit[0]
+                                        qm = Q('terms',
+                                               **{name: list(map(partial(lambda m, n: m[int(n)], vlst), attr_val))})
+                                        mst.append(qm)
                                         shuld.append(Q('nested', path=v[0],
                                                        query=Q(
-                                                           'bool', should=shud,
-                                                           must=[qm])))
+                                                           'bool', must=mst)))
 
             return Q('bool', should=shuld) if shuld else None
 
@@ -286,10 +282,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         attr_val = [
                                             x for x in attr_val_str.split(',')]
                                         shud = []
-                                        for j in map(
-                                                partial(lambda m, n:
-                                                        m[int(n)], vlst),
-                                                attr_val):
+                                        for j in attr_val:
                                             qt = Q(
                                                 'term', **{attr_key_hit[0]: j})
                                             shud.append(qt)

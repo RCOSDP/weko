@@ -1911,6 +1911,7 @@ function toObject(arr) {
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
+        $scope.checkLoadingNextButton();
         $scope.hiddenPubdate();
         $scope.initContributorData();
         $scope.initUserGroups();
@@ -2135,8 +2136,14 @@ function toObject(arr) {
       $scope.getItemMetadata = function () {
         // Reset error message befor open modal.
         this.resetAutoFillErrorMessage();
+        if ($("#autofill_item_button").is(":disabled")) {
+          $scope.enableAutofillButton();
+        }
         $('#meta-search').modal('show');
       };
+      $scope.enableAutofillButton = function () {
+        $("#autofill_item_button").prop('disabled', false);
+      }
 
       $scope.hiddenPubdate = function () {
         if ($("#is_hidden_pubdate").val() !== "True"){
@@ -2184,13 +2191,16 @@ function toObject(arr) {
       }
 
       $scope.setItemMetadata = function () {
+        $("#autofill_item_button").prop('disabled', true);
         let autoFillID = $('#autofill_id_type').val();
         let value = $('#autofill_item_id').val();
         let itemTypeId = $("#autofill_item_type_id").val();
         if (autoFillID === 'Default') {
+          $scope.enableAutofillButton();
           this.setAutoFillErrorMessage($("#autofill_error_id").val());
           return;
         } else if (!value.length) {
+          $scope.enableAutofillButton();
           this.setAutoFillErrorMessage($("#autofill_error_input_value").val());
           return;
         }
@@ -2258,15 +2268,18 @@ function toObject(arr) {
           function success(response) {
             let data = response.data;
             if (data.error) {
+              $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
               $scope.setRecordDataCallBack(data);
             } else {
+              $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
           },
           function error(response) {
+            $scope.enableAutofillButton();
             $scope.setAutoFillErrorMessage("Cannot connect to server!");
           }
         );
@@ -3031,20 +3044,25 @@ function toObject(arr) {
       }
 
       $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+        $scope.startLoading();
+        let currActivityId = $("#activity_id").text();
         $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
         if (!$scope.priceValidator()) {
-            var modalcontent = "Billing price is required half-width numbers.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
-            return false;
+          var modalcontent = "Billing price is required half-width numbers.";
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
+          $scope.endLoading();
+          return false;
         } else if (enableFeedbackMail === 'True' && $scope.getFeedbackMailList().length > 0) {
           let modalcontent = $('#invalid-email-format').val();
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
+          $scope.endLoading();
           return false;
         }
         let isValid = this.validateInputData(activityId, steps, isAutoSetIndexAction);
         if (!isValid) {
+          $scope.endLoading();
           return false;
         } else {
           $scope.genTitleAndPubDate();
@@ -3053,9 +3071,9 @@ function toObject(arr) {
           let next_frame_upgrade = $('#next-frame-upgrade').val();
           let next_frame_edit = $('#next-frame-edit').val();
           if (enableContributor === 'True' && !this.registerUserPermission()) {
-            // Do nothing
+            $scope.endLoading();
           } else if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
-            // Do nothing
+            $scope.endLoading();
           } else {
             $scope.addApprovalMail();
             var jsonObj = $scope.cleanJsonObject($rootScope.recordsVM.invenioRecordsModel);
@@ -3066,6 +3084,7 @@ function toObject(arr) {
             }
             if (enableFeedbackMail === 'True') {
               if (!$scope.saveFeedbackMailListCallback(currentActionId)) {
+                $scope.endLoading();
                 return false;
               }
             }
@@ -3077,7 +3096,7 @@ function toObject(arr) {
             let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
             $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
-            sessionStorage.removeItem(activityId);
+            sessionStorage.removeItem(currActivityId);
             let versionSelected = $("input[name='radioVersionSelect']:checked").val();
             if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
               if (versionSelected == "keep") {
@@ -3097,6 +3116,7 @@ function toObject(arr) {
             } else {
               $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
             }
+            sessionStorage.setItem("next_btn_" + currActivityId, new Date().getTime().toString());
           }
         }
       };
@@ -3185,9 +3205,40 @@ function toObject(arr) {
         $rootScope.recordsVM.invenioRecordsModel['approval2'] = approval2Mail;
       };
 
-      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail) {
+      $scope.startLoading = function() {
+        $(".lds-ring-background").removeClass("hidden");
+        $("#weko-records :button, #weko-records :input[type=button]").prop("disabled", true);
+      }
+
+      $scope.endLoading = function() {
+        $(".lds-ring-background").addClass("hidden");
+        $("#weko-records :button, #weko-records :input[type=button]").removeAttr("disabled");
+      }
+
+      $scope.checkLoadingNextButton = function () {
+        let activityId = $("#activity_id").text();
+        let key = "next_btn_" + activityId;
+        let loadingTime = sessionStorage.getItem(key);
+        if (loadingTime) {
+          loadingTime = parseInt(loadingTime);
+          let currentTime = new Date().getTime();
+          let diffTime = currentTime - loadingTime;
+          if (diffTime < 3000) {
+            $scope.startLoading();
+            setTimeout(function () {
+              $scope.endLoading();
+            }, 2000);
+          }
+        }
+        sessionStorage.removeItem(key);
+      }
+
+      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading) {
         //When press 'Next' or 'Save' button, setting data for model.
         //This function is called in updataDataJson function.
+        if (startLoading) {
+          $scope.startLoading();
+        }
         let model = $rootScope.recordsVM.invenioRecordsModel;
         CustomBSDatePicker.setDataFromFieldToModel(model, false);
 
@@ -3201,7 +3252,7 @@ function toObject(arr) {
             } else {
               permission = true;
             }
-          }else {
+          } else {
             permission = true;
           }
           if (permission) {
@@ -3211,15 +3262,15 @@ function toObject(arr) {
               $("#allModal").modal("show");
               return;
             }
-            this.saveDataJsonCallback(item_save_uri);
+            this.saveDataJsonCallback(item_save_uri, startLoading);
             this.saveFeedbackMailListCallback(currentActionId);
           }
-        }else{
-            this.saveDataJsonCallback(item_save_uri);
+        } else {
+          this.saveDataJsonCallback(item_save_uri, startLoading);
         }
       };
 
-      $scope.saveDataJsonCallback = function (item_save_uri) {
+      $scope.saveDataJsonCallback = function (item_save_uri, startLoading) {
         $scope.unattachedSystemProperties();
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
@@ -3243,13 +3294,18 @@ function toObject(arr) {
         };
         InvenioRecordsAPI.request(request).then(
           function success(response) {
+            if (startLoading) {
+              $scope.endLoading();
+            }
             //When save: date fields data is lost, so this will fill data.
             let model = $rootScope.recordsVM.invenioRecordsModel;
             CustomBSDatePicker.setDataFromFieldToModel(model, true);
             addAlert(response.data.msg);
           },
           function error(response) {
-            //alert(response);
+            if (startLoading) {
+              $scope.endLoading();
+            }
             var modalcontent = response;
             if (response.status == 400) {
               window.location.reload();
@@ -3257,7 +3313,7 @@ function toObject(arr) {
               $("#inputModal").html(modalcontent);
               $("#allModal").modal("show");
             }
-          }
+          },
         );
       }
 
