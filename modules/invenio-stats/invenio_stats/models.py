@@ -10,6 +10,7 @@
 import hashlib
 import json
 from datetime import datetime
+from typing import List
 from uuid import uuid4
 
 from celery.utils.log import get_task_logger
@@ -23,14 +24,11 @@ from sqlalchemy_utils.types import JSONType
 logger = get_task_logger(__name__)
 
 
-class StatsEvents(db.Model, Timestamp):
-    """Database for Stats events."""
+class _StataModelBase(Timestamp):
+    """Model base."""
 
-    __tablename__ = "stats_events"
-
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    id = db.Column(db.String(100), primary_key=True)
     source_id = db.Column(db.String(100))
-    op_type = db.Column(db.String(10), nullable=False)
     index = db.Column(db.String(100), nullable=False)
     type = db.Column(db.String(50), nullable=False)
     source = db.Column(
@@ -41,16 +39,63 @@ class StatsEvents(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True,
     )
+    date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    @classmethod
+    def get_all(
+        cls, start_date: datetime = None, end_date: datetime = None
+    ) -> List:
+        """Get all stats data.
+
+        :param start_date:
+        :param end_date:
+        :return:
+        """
+        query = db.session.query(cls)
+        if start_date:
+            query = query.filter(cls.date >= start_date)
+        if end_date:
+            query = query.filter(cls.date <= end_date)
+        return query.all()
+
+    @classmethod
+    def get_by_index(
+        cls, _index: str, start_date: datetime = None, end_date: datetime = None
+    ) -> List:
+        """Get stats data by index.
+
+        :param _index: event index
+        :param start_date:
+        :param end_date:
+        :return:
+        """
+        query = db.session.query(cls)
+        if start_date:
+            query = query.filter(cls.date >= start_date)
+        if end_date:
+            query = query.filter(cls.date <= end_date)
+        query = query.filter(cls.index.ilike(_index + "%"))
+        return query.all()
+
+
+class StatsEvents(db.Model, _StataModelBase):
+    """Database for Stats events."""
+
+    __tablename__ = "stats_events"
+
+    op_type = db.Column(db.String(10), nullable=False)
 
     @classmethod
     def __convert_data(cls, event_object):
         if event_object.get("_source"):
             stats_event = StatsEvents(
+                id=_generate_id(),
                 source_id=event_object.get("_id"),
                 op_type=event_object.get("_op_type"),
                 index=event_object.get("_index"),
                 type=event_object.get("_type"),
                 source=json.dumps(event_object.get("_source")),
+                date=event_object.get("_source").get("timestamp"),
             )
             return stats_event
         return None
@@ -74,57 +119,27 @@ class StatsEvents(db.Model, Timestamp):
             db.session.rollback()
             return False
 
-    @classmethod
-    def get_all(cls):
-        """Get all stats event.
 
-        :return:
-        """
-        return db.session.query(cls).all()
-
-    @classmethod
-    def get_by_index(cls, _index):
-        """Get stats event by event index.
-
-        :param _index: event index
-        :return:
-        """
-        return (
-            db.session.query(cls)
-            .filter(cls.index.ilike(_index + "%"))
-            .all()
-        )
-
-
-class StatsAggregation(db.Model, Timestamp):
+class StatsAggregation(db.Model, _StataModelBase):
     """Database for Stats Aggregation."""
 
     __tablename__ = "stats_aggregation"
-
-    id = db.Column(db.String(100), primary_key=True)
-    source_id = db.Column(db.String(120))
-    index = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(50), nullable=False)
-    source = db.Column(
-        db.JSON()
-        .with_variant(postgresql.JSONB(none_as_null=True), "postgresql",)
-        .with_variant(JSONType(), "sqlite",)
-        .with_variant(JSONType(), "mysql",),
-        default=lambda: dict(),
-        nullable=True,
-    )
 
     @classmethod
     def __convert_data(cls, aggregation_object):
         if aggregation_object.get("_source"):
             current_time = datetime.utcnow().isoformat()
+            _id = (
+                str(uuid4())
+                + hashlib.sha1(current_time.encode("utf-8")).hexdigest()
+            )
             stats_agg = StatsAggregation(
-                id=str(uuid4())
-                + hashlib.sha1(current_time.encode("utf-8")).hexdigest(),
+                id=_generate_id(),
                 source_id=aggregation_object.get("_id"),
                 index=aggregation_object.get("_index"),
                 type=aggregation_object.get("_type"),
                 source=json.dumps(aggregation_object.get("_source")),
+                date=aggregation_object.get("_source").get("timestamp"),
             )
             return stats_agg
         return None
@@ -166,57 +181,26 @@ class StatsAggregation(db.Model, Timestamp):
             db.session.rollback()
             return False
 
-    @classmethod
-    def get_all(cls):
-        """Get all stats aggregation.
 
-        :return:
-        """
-        return db.session.query(cls).all()
-
-    @classmethod
-    def get_by_index(cls, _index):
-        """Get stats aggregation by index.
-
-        :param _index:
-        :return:
-        """
-        return (
-            db.session.query(cls)
-            .filter(cls.index.ilike(_index + "%"))
-            .all()
-        )
-
-
-class StatsBookmark(db.Model, Timestamp):
+class StatsBookmark(db.Model, _StataModelBase):
     """Database for Stats Aggregation."""
 
     __tablename__ = "stats_bookmark"
-
-    id = db.Column(db.BigInteger(), primary_key=True, autoincrement=True)
-    source_id = db.Column(db.String(100), primary_key=True)
-    index = db.Column(db.String(100))
-    type = db.Column(db.String(50), nullable=False)
-    source = db.Column(
-        db.JSON()
-        .with_variant(postgresql.JSONB(none_as_null=True), "postgresql",)
-        .with_variant(JSONType(), "sqlite",)
-        .with_variant(JSONType(), "mysql",),
-        default=lambda: dict(),
-        nullable=True,
-    )
 
     @staticmethod
     def __convert_data(bookmark_objects):
         mappings = []
         for _object in bookmark_objects:
             if _object.get("_source"):
+                _object.get("_source").get("date")
                 mappings.append(
                     dict(
+                        id=_generate_id(),
                         source_id=_object.get("_id"),
                         index=_object.get("_index"),
                         type=_object.get("_type"),
                         source=json.dumps(_object.get("_source")),
+                        date=_object.get("_source").get("date"),
                     )
                 )
         return mappings
@@ -239,26 +223,14 @@ class StatsBookmark(db.Model, Timestamp):
             current_app.logger.error("Unexpected error: ", err)
             db.session.rollback()
 
-    @classmethod
-    def get_all(cls):
-        """Get all stats bookmark.
 
-        :return:
-        """
-        return db.session.query(cls).all()
+def _generate_id():
+    """Generate identifier.
 
-    @classmethod
-    def get_by_index(cls, _index):
-        """Get stats bookmark by index.
-
-        :param _index: index
-        :return:
-        """
-        return (
-            db.session.query(cls)
-            .filter(cls.index.ilike(_index + "%"))
-            .all()
-        )
+    :return:
+    """
+    current_time = datetime.utcnow().isoformat()
+    return str(uuid4()) + hashlib.sha1(current_time.encode("utf-8")).hexdigest()
 
 
 __all__ = [

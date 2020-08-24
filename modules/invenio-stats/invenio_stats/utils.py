@@ -12,9 +12,11 @@ from __future__ import absolute_import, print_function
 
 import calendar
 import os
+import re
 from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
+import calendar
 
 import click
 import six
@@ -184,40 +186,48 @@ def parse_bucket_response(raw_res, pretty_result=dict()):
 def prepare_es_indexes(
     index_types,
     index_prefix=None,
-    index_suffix=None,
-    bookmark_index=False
+    bookmark_index=False,
+    delete=False
 ):
     """Prepare event index data.
 
     :param index_types:
     :param index_prefix:
-    :param index_suffix:
     :param bookmark_index:
+    :param delete:
     """
     search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX'].strip('-')
-    for event_type in index_types:
-        if not event_type:
+    for _type in index_types:
+        if not _type:
             continue
 
         # In case prepare indexes for the stats bookmark
         if bookmark_index:
             prefix = "stats-bookmark-{}"
+
         else:
             prefix = "stats-{}"
 
-        event_type = prefix.format(event_type)
+        search_type = prefix.format(_type)
 
         # In case prepare indexes for the stats event
         if index_prefix:
-            event_index = '{0}-{1}-{2}'.format(search_index_prefix,
-                                               index_prefix,
-                                               event_type)
+            _index = '{0}-{1}-{2}'.format(
+                search_index_prefix,
+                index_prefix,
+                search_type
+            )
+            _doc_type = search_type
         else:
-            event_index = '{0}-{1}'.format(search_index_prefix, event_type)
-
-        if index_suffix:
-            event_index = '{0}-{1}'.format(event_index, index_suffix)
-        yield event_index
+            _index = '{0}-{1}'.format(search_index_prefix, search_type)
+            if bookmark_index:
+                _doc_type = "{}-agg-bookmark".format(_type)
+            else:
+                _doc_type = '{0}-{1}-aggregation'.format(_type, "day")
+        if not delete:
+            yield _index
+        else:
+            yield _index, _doc_type
 
 
 def __build_event_es_data(events_data):
@@ -264,71 +274,87 @@ def __build_bookmark_es_data(bookmark_data):
         )
 
 
-def get_event_data_from_db(event_types, index_prefix, index_suffix):
+def get_event_data_from_db(types, index_prefix, start_date, end_date):
     """Get event data from database.
 
-    :param event_types:
+    :param types:
     :param index_prefix:
-    :param index_suffix:
+    :param start_date:
+    :param end_date:
     :return:
     """
-    if index_suffix:
+    if types:
         events_index = prepare_es_indexes(
-            event_types, index_prefix, index_suffix
+            types, index_prefix
         )
         rtn_data = []
         for event_index in events_index:
-            data = StatsEvents.get_by_index(event_index)
+            data = StatsEvents.get_by_index(event_index, start_date, end_date)
             if data:
                 rtn_data.extend(data)
     else:
-        rtn_data = StatsEvents.get_all()
+        rtn_data = StatsEvents.get_all(start_date, end_date)
     return __build_event_es_data(rtn_data)
 
 
-def get_aggregation_data_from_db(types, index_suffix, flush_indices):
+def get_aggregation_data_from_db(types, start_date, end_date, flush_indices):
     """Get aggregation data from database.
 
     :param types:
-    :param index_suffix:
+    :param start_date:
+    :param end_date:
     :param flush_indices:
     :return:
     """
-    if index_suffix:
+    if types:
         indexes = prepare_es_indexes(
-            types, None, index_suffix
+            types, None
         )
         rtn_data = []
         for _index in indexes:
-            data = StatsAggregation.get_by_index(_index)
+            data = StatsAggregation.get_by_index(_index, start_date, end_date)
             if data:
                 rtn_data.extend(data)
     else:
-        rtn_data = StatsAggregation.get_all()
+        rtn_data = StatsAggregation.get_all(start_date, end_date)
     return __build_aggregation_es_data(rtn_data, flush_indices)
 
 
-def get_bookmark_data_from_db(types, index_suffix, restore_bookmark):
+def get_bookmark_data_from_db(types, start_date, end_date, restore_bookmark):
     """Get bookmark data from database.
 
     :param types:
-    :param index_suffix:
+    :param start_date:
+    :param end_date:
     :param restore_bookmark:
     :return:
     """
-    if index_suffix:
+    if types:
         indexes = prepare_es_indexes(
-            types, None, index_suffix, restore_bookmark
+            types, None, restore_bookmark
         )
         rtn_data = []
         for _index in indexes:
-            data = StatsBookmark.get_by_index(_index)
+            data = StatsBookmark.get_by_index(_index, start_date, end_date)
             if data:
                 rtn_data.extend(data)
     else:
-        rtn_data = StatsBookmark.get_all()
+        rtn_data = StatsBookmark.get_all(start_date, end_date)
 
     return __build_bookmark_es_data(rtn_data)
+
+
+def __show_verbose(force, success, failed):
+    click.secho('Success: {}'.format(str(success)), fg='green')
+    if force:
+        click.secho('Failed: {}'.format(str(failed)), fg='yellow')
+    else:
+        if len(failed) == 0:
+            click.secho('Error: 0', fg='red')
+        else:
+            click.secho('Error: 0', fg='red')
+            for err in failed:
+                click.secho(str(err), fg='red')
 
 
 def cli_restore_es_data_from_db(
@@ -357,35 +383,104 @@ def cli_restore_es_data_from_db(
                 wait_if_ongoing=True
             )
         if verbose:
-            click.secho('Success: {}'.format(str(success)), fg='green')
-            if force:
-                click.secho('Failed: {}'.format(str(failed)), fg='yellow')
-            else:
-                if len(failed) == 0:
-                    click.secho('Error: 0', fg='red')
-                else:
-                    click.secho('Error: 0', fg='red')
-                    for err in failed:
-                        click.secho(str(err), fg='red')
+            __show_verbose(force, success, failed)
     else:
         if verbose:
             click.secho('There is no stats data from Database.', fg='yellow')
 
 
-def cli_delete_es_index(_index, force, verbose):
+def cli_delete_es_index(
+    _index, start_date, end_date,
+    doc_type, force, verbose, affected_indices=None
+):
     """Delete ES index.
 
     :param _index:
+    :param start_date:
+    :param end_date:
+    :param doc_type:
     :param force:
     :param verbose:
+    :param affected_indices:
     """
-    result = current_search_client.indices.delete(
+    query = Search(
+        using=current_search_client,
         index=_index,
-        ignore=[400, 404] if force else [],
+        doc_type=doc_type,
+    ).params(raise_on_error=False, ignore=[400, 404])
+    print("_index: ", _index)
+    print("doc_type: ", doc_type)
+    range_args = {}
+    if start_date:
+        range_args['gte'] = start_date
+    if end_date:
+        range_args['lte'] = end_date
+    if range_args:
+        query = query.filter('range', timestamp=range_args)
+
+    def _delete_actions():
+        for doc in query.scan():
+            if affected_indices:
+                affected_indices.add(doc.meta.index)
+            yield dict(_index=doc.meta.index,
+                       _op_type='delete',
+                       _id=doc.meta.id,
+                       _type=doc.meta.doc_type)
+        if affected_indices:
+            current_search_client.indices.flush(
+                index=','.join(affected_indices), wait_if_ongoing=True)
+
+    success, failed = bulk(
+        current_search_client,
+        _delete_actions(),
+        stats_only=force,
+        refresh=True
     )
     if verbose:
-        if result and result.get('acknowledged'):
-            click.secho("The {} is deleted".format(_index), fg='green')
+        __show_verbose(force, success, failed)
+
+
+def parse_date(_date: str, is_end_date=False):
+    def _parse_day():
+        _year, _month, _day = _date.split("-")
+        rtn = datetime(year=int(_year), month=int(_month), day=int(_day))
+        if is_end_date:
+            rtn = rtn.replace(hour=23, minute=59, second=59)
+        return rtn
+
+    def _parse_month():
+        _year, _month = _date.split("-")
+        _start, _end = calendar.monthrange(int(_year), int(_month))
+        if not is_end_date:
+            _day = _start
+        else:
+            _day = _end
+        rtn = datetime(year=int(_year), month=int(_month), day=int(_day))
+        if is_end_date:
+            rtn = rtn.replace(hour=23, minute=59, second=59)
+        return rtn
+
+    def _parse_year():
+        if not is_end_date:
+            rtn = datetime(year=int(_date), month=1, day=1)
+        else:
+            rtn = datetime(year=int(_date), month=12, day=31, hour=23,
+                           minute=59, second=59)
+        return rtn
+
+    if not isinstance(_date, str):
+        return
+    day = r"^\d{4}-\d{1,2}-\d{1,2}$"
+    month = r"^\d{4}-\d{1,2}$"
+    year = r"^\d{4}$"
+    date = _date
+    if re.match(day, _date):
+        date = _parse_day()
+    elif re.match(month, _date):
+        date = _parse_month()
+    elif re.match(year, _date):
+        date = _parse_year()
+    return date
 
 
 class QueryFileReportsHelper(object):
@@ -473,7 +568,7 @@ class QueryFileReportsHelper(object):
         if 'buckets' in res and res['buckets'] is not None:
             cls.calc_file_stats_reports(res, data_list, all_groups)
         elif res['get-file-download-per-user-report'] is not None \
-                and res['get-file-preview-per-user-report'] is not None:
+            and res['get-file-preview-per-user-report'] is not None:
             cls.calc_file_per_using_report(res, data_list)
 
     @classmethod
