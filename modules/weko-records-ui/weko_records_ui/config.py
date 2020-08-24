@@ -166,11 +166,11 @@ RECORDS_UI_ENDPOINTS = dict(
 
 RECORDS_UI_EXPORT_FORMATS = {
     'recid': {
-        'junii2': dict(
-            title='junii2',
-            serializer='weko_schema_ui.serializers.WekoCommonSchema',
-            order=1,
-        ),
+        # 'junii2': dict(
+        #     title='junii2',
+        #     serializer='weko_schema_ui.serializers.WekoCommonSchema',
+        #     order=1,
+        # ),
         'jpcoar': dict(
             title='JPCOAR',
             serializer='weko_schema_ui.serializers.WekoCommonSchema',
