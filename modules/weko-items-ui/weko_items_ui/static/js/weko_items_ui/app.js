@@ -3077,6 +3077,7 @@ function toObject(arr) {
           } else {
             $scope.addApprovalMail();
             var jsonObj = $scope.cleanJsonObject($rootScope.recordsVM.invenioRecordsModel);
+            jsonObj['deleted_items'] = $scope.listRemovedItemKey(jsonObj);
             var str = JSON.stringify(jsonObj);
             var indexOfLink = str.indexOf("authorLink");
             if (indexOfLink != -1) {
@@ -3159,6 +3160,19 @@ function toObject(arr) {
           }
         }
         return true;
+      }
+
+      /* Filter list removed item */
+      $scope.listRemovedItemKey = function(cleanObj) {
+        removedItemKeys = [];
+        originObj = $rootScope.recordsVM.invenioRecordsModel;
+        for (key in originObj) {
+          if (!(key in cleanObj)) {
+            removedItemKeys.push(key);
+          }
+        }
+
+        return removedItemKeys;
       }
 
       $scope.saveTilteAndShareUserID = function(title, shareUserID) {
