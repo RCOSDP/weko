@@ -110,7 +110,7 @@ class WekoIndexer(RecordIndexer):
         self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
         self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
 
-    def upload_metadata(self, jrc, item_id, revision_id):
+    def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
         """Upload the item data to ElasticSearch.
 
         :param jrc:
@@ -128,7 +128,8 @@ class WekoIndexer(RecordIndexer):
                          version_type=self._version_type,
                          body=jrc)
 
-        if 'content' in jrc:  # Only pass through pipeline if file exists
+        # Only pass through pipeline if file exists
+        if 'content' in jrc and not skip_files:
             full_body['pipeline'] = 'item-file-pipeline'
 
         self.client.index(**full_body)
@@ -606,11 +607,12 @@ class WekoDeposit(Deposit):
                 except ElasticsearchException as err:
                     parse_err = current_app.config.get(
                         'WEKO_DEPOSIT_ES_PARSING_ERROR')
-                    if parse_err in err.info.get("reason"):
+                    if parse_err in err.info["error"]["reason"]:
                         self.delete_content_files()
                         self.indexer.upload_metadata(self.jrc,
                                                      self.pid.object_uuid,
-                                                     self.revision_id)
+                                                     self.revision_id,
+                                                     True)
 
                 # remove large base64 files for release memory
                 if self.jrc.get('content'):
