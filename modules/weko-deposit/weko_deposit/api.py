@@ -28,7 +28,7 @@ from typing import NoReturn, Union
 import redis
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
-from elasticsearch import ElasticsearchException
+from elasticsearch.exceptions import TransportError
 from flask import abort, current_app, has_request_context, json, request, \
     session
 from flask_security import current_user
@@ -604,17 +604,22 @@ class WekoDeposit(Deposit):
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
-                except ElasticsearchException as err:
+                except TransportError as err:
+                    err_passing_config = current_app.config.get(
+                        'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
                     parse_err = current_app.config.get(
-                        'WEKO_DEPOSIT_ES_PARSING_ERROR')
-                    if parse_err in err.info["error"]["reason"]:
+                        'WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD')
+                    if err_passing_config and \
+                            parse_err in err.info["error"]["reason"]:
                         self.delete_content_files()
                         self.indexer.upload_metadata(self.jrc,
                                                      self.pid.object_uuid,
                                                      self.revision_id,
                                                      True)
+                    else:
+                        raise err
 
-                # remove large base64 files for release memory
+                # Remove large base64 files for release memory
                 if self.jrc.get('content'):
                     for content in self.jrc['content']:
                         if content.get('file'):
@@ -1002,7 +1007,6 @@ class WekoDeposit(Deposit):
 
     def merge_data_to_record_without_version(self, pid):
         """Update changes to current record by record from PID."""
-        from weko_workflow.utils import delete_bucket
         with db.session.begin_nested():
             # update item_metadata
             index = {'index': self.get('path', []),
@@ -1031,7 +1035,6 @@ class WekoDeposit(Deposit):
             sync_bucket.bucket.locked = False
             snapshot = bucket.snapshot(lock=False)
             snapshot.locked = False
-            # ex_bucket_id = sync_bucket.bucket_id
             sync_bucket.bucket = snapshot
             # delete_bucket(old_bucket_id)
 
@@ -1070,16 +1073,11 @@ class WekoDeposit(Deposit):
         return draft_deposit
 
     def delete_content_files(self):
-        """Get content file metadata."""
-        contents = []
-        fmd = self.get_file_data()
-        if fmd:
-            for lst in fmd:
-                content = lst.copy()
-                lst.update(
-                    {"file": ""})
-                contents.append(content)
-        self.jrc.update({'content': contents})
+        """Delete 'file' from content file metadata."""
+        if self.jrc.get('content'):
+            for content in self.jrc['content']:
+                if content.get('file'):
+                    del content['file']
 
 
 class WekoRecord(Record):
