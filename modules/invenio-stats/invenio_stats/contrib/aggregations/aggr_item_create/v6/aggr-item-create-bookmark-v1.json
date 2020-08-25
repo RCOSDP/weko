@@ -31,6 +31,6 @@
     }
   },
   "aliases": {
-    "stats-item-create-bookmark": {}
+    "__SEARCH_INDEX_PREFIX__stats-item-create-bookmark": {}
   }
 }
