@@ -3327,7 +3327,7 @@ function toObject(arr) {
               $("#inputModal").html(modalcontent);
               $("#allModal").modal("show");
             }
-          },
+          }
         );
       }
 
