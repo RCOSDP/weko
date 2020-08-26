@@ -98,7 +98,7 @@ def reset_tree(tree, path=None, more_ids=None):
         if not roles[0]:
             # for browsing role check
             reduce_index_by_role(tree, roles, groups)
-            reduce_index_by_more(tree=tree, more_ids=more_ids)
+        reduce_index_by_more(tree=tree, more_ids=more_ids)
 
 
 def get_tree_json(index_list, root_id):

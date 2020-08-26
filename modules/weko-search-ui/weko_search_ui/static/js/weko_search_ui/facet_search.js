@@ -71,10 +71,12 @@ class MainLayout extends React.Component {
     let params = this.getUrlVars()
     if (params.search_type && String(params.search_type) === "2") {
       url = '/api/index/'
+      let more_ids = sessionStorage.getItem('moreNodes');
+      search += "&more_ids=" + more_ids;
     }
     $.ajax({
         context: this,
-        url: url+ search,
+        url: url + search,
         type: 'GET',
         contentType: 'application/json; charset=UTF-8',
         success: function (res) {

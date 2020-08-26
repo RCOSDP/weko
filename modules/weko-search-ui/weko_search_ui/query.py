@@ -55,7 +55,9 @@ def get_permission_filter(comm_id=None):
     rng = Q('range', **{'publish_date': {'lte': 'now/d'}})
     term_list = []
     mst = []
-    is_perm_paths = Indexes.get_browsing_tree_paths()
+    is_perm_paths = Indexes.get_browsing_tree_paths(
+        more_ids=request.values.get('more_ids')
+    )
     search_type = request.values.get('search_type')
 
     if comm_id:
