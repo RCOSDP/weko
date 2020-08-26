@@ -39,7 +39,12 @@ $(document).ready(function () {
           $('#step_page').hide();
           $('#activity_locked').show();
           var msg = $('#locked_msg').text();
-          msg = msg.replace('{}', result.locked_by_username);
+          if (result.locked_by_username) {
+            msg = msg.replace('{}', result.locked_by_username);
+          } else {
+            msg = msg.replace(' ({})', '');
+            msg = msg.replace('（{}）', '');
+          }
           $('#locked_msg').html(msg);
 
           if (current_user_email === result.locked_by_email) {
