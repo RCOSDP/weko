@@ -24,7 +24,6 @@ from copy import deepcopy
 
 from flask import current_app, request
 from flask_babelex import gettext as _
-from invenio_accounts.models import User
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -41,6 +40,7 @@ from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
     Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_user_profiles.utils import get_user_profile_info
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
@@ -1343,12 +1343,16 @@ def get_cache_data(key: str):
     return current_cache.get(key) or str()
 
 
-def get_account_email_by_id(user_id):
-    """Get account email by user id.
+def get_account_info(user_id):
+    """Get account's info: email, username.
 
     :param user_id: User id.
 
-    :return: email.
+    :return: email, username.
     """
-    user = User.query.filter_by(id=user_id).one_or_none()
-    return user.email if user else None
+    data = get_user_profile_info(user_id)
+    if data:
+        return data.get('subitem_mail_address'), \
+            data.get('subitem_displayname')
+    else:
+        return None, None
