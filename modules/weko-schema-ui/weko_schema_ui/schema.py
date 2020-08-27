@@ -237,7 +237,7 @@ class SchemaTree:
         self._target_namespace = ''
         schemas = WekoSchema.get_all()
         if self._record and self._item_type_id:
-            self._ignore_list = self.get_ignore_item_from_option()
+            self._ignore_list_all, self._ignore_list = self.get_ignore_item_from_option()
         for schema in schemas:
             if self._schema_name == schema.schema_name:
                 self._location = schema.schema_location
@@ -246,13 +246,18 @@ class SchemaTree:
     def get_ignore_item_from_option(self):
         """Get all keys of properties that is enable Hide option in metadata."""
         ignore_list = []
+        ignore_list_all = []
+        ignore_list_all_bk = {}
         from weko_records.utils import get_options_and_order_list
-        _, meta_options = get_options_and_order_list(self._item_type_id)
+        ignore_list_all, meta_options = get_options_and_order_list(self._item_type_id)
         for key, val in meta_options.items():
             hidden = val.get('option').get('hidden')
             if hidden:
                 ignore_list.append(key)
-        return ignore_list
+        for i in ignore_list_all:
+            i[0] = i[0].replace("[]", "")
+            ignore_list_all_bk[i[0]] = i[3].get("hide")
+        return ignore_list_all_bk, ignore_list
 
     def get_mapping_data(self):
         """
@@ -361,6 +366,7 @@ class SchemaTree:
         obj = cls(schema_name=schema_name)
         obj._record = records
         obj._ignore_list = []
+        obj._ignore_list_all = []
         vlst = list(map(obj.__converter,
                         filter(lambda x: isinstance(x, dict),
                                obj.__get_value_list())))
@@ -768,6 +774,19 @@ class SchemaTree:
                             vlist_item)
             return vlst
 
+        def remove_hide_data(obj, parentkey):
+            """Remove all item that is set as hide."""
+
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    if self._ignore_list_all.get(parentkey + "." + k, None):
+                        obj[k] = None
+                    elif isinstance(v, dict):
+                        remove_hide_data(v, parentkey + "." + k)
+                    elif isinstance(v, list):
+                        for i in v:
+                            remove_hide_data(i, parentkey + "." + k)
+
         vlst = []
         for key_item_parent, value_item_parent in self._record.items():
             if key_item_parent != 'pubdate' and isinstance(value_item_parent,
@@ -798,6 +817,8 @@ class SchemaTree:
                 elif atr_vm and atr_name:
                     if isinstance(atr_vm, list) and isinstance(mpdic, dict):
                         for atr_vm_item in atr_vm:
+                            if self._ignore_list_all:
+                                remove_hide_data(atr_vm_item, key_item_parent)
                             vlst_child = get_mapping_value(mpdic, atr_vm_item,
                                                            key_item_parent,
                                                            atr_name)
@@ -1050,9 +1071,7 @@ class SchemaTree:
                         merge_json_xml(i, dct)
 
         # Function Remove custom scheme
-        def remove_custom_scheme(name_identifier, v):
-            lst_name_identifier_default = current_app.config[
-                'WEKO_SCHEMA_UI_LIST_SCHEME']
+        def remove_custom_scheme(name_identifier, v, lst_name_identifier_default):
             if '@attributes' in name_identifier and \
                     name_identifier['@attributes'].get('nameIdentifierScheme'):
                 element_first = 0
@@ -1061,8 +1080,9 @@ class SchemaTree:
                 lst_value = []
                 if '@value' in name_identifier:
                     lst_value = name_identifier['@value'][element_first]
-                lst_name_identifier_uri = name_identifier[
-                    '@attributes']['nameIdentifierURI'][element_first]
+                if name_identifier['@attributes'].get("nameIdentifierURI", None):
+                    lst_name_identifier_uri = name_identifier[
+                        '@attributes']['nameIdentifierURI'][element_first]
                 index_remove_items = []
                 total_remove_items = len(lst_name_identifier_scheme)
                 for identifior_item in lst_name_identifier_scheme:
@@ -1079,7 +1099,8 @@ class SchemaTree:
                         if len(lst_value) == total_remove_items:
                             lst_value.pop(index)
                             total_remove_items = total_remove_items - 1
-                        lst_name_identifier_uri.pop(index)
+                        if lst_name_identifier_uri:
+                            lst_name_identifier_uri.pop(index)
 
         if not self._schema_obj:
             E = ElementMaker()
@@ -1138,10 +1159,13 @@ class SchemaTree:
             for k, v in lst.items():
                 # Remove items that are not set as controlled vocabulary
                 if k in indetifier_keys:
-                    remove_custom_scheme(v[name_identifier_key], v)
+                    lst_name_identifier_default = current_app.config[
+                     'WEKO_SCHEMA_UI_LIST_SCHEME']
+                    remove_custom_scheme(v[name_identifier_key], v, lst_name_identifier_default)
                     if affiliation_key in v:
+                        lst_name_affiliation_default = current_app.config['WEKO_SCHEMA_UI_LIST_SCHEME_AFFILIATION']
                         remove_custom_scheme(
-                            v[affiliation_key][name_identifier_key], v)
+                            v[affiliation_key][name_identifier_key], v, lst_name_affiliation_default)
                 k = get_prefix(k)
                 set_children(k, v, root, [k])
         return root
