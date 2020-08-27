@@ -1178,6 +1178,7 @@ $(document).ready(function () {
 
   if($('#item-type-lists').val().length > 0) {
     $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
+      let changedProperties = [];
       Object.keys(data).forEach(function(key) {
         src_render[key] = data[key];
       });
@@ -1238,11 +1239,12 @@ $(document).ready(function () {
           setTitleI18nFromFormToPropertiesSchema(
             itemTypePropertiesSchema,
             itemTypeForm,
-            itemTypePropertyForm);
+            itemTypePropertyForm,
+            changedProperties);
           //Set format in schema from item_type to item_type_property.
-          setSchemaFromItemTypeToItemTypeProperty(
-            itemTypePropertiesSchema,
-            itemTypeSchema);
+          // setSchemaFromItemTypeToItemTypeProperty(
+          //   itemTypePropertiesSchema,
+          //   itemTypeSchema);
 
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
           let isAllowMultiple = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
@@ -1258,6 +1260,14 @@ $(document).ready(function () {
           render_empty('schema_'+row_id);
         }
       });
+      //Show message changed properties.
+      if(changedProperties.length > 0){
+        let message = `<div class="alert alert-info alert-dismissable">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+          <p>` + changedProperties.join('</p><p>') + `</p>
+        </div>`;
+        $('section.content-header').prepend(message);
+      }
       if($('input[type=radio][name=item_type]:checked').val() === 'deleted') {
         $('div.metadata-content *').not('[id=btn_restore_itemtype_schema]').prop('disabled', true);
       }
@@ -1408,7 +1418,7 @@ $(document).ready(function () {
   * @itemTypeForm: form in 'item_type' table (1).
   * @itemTypePropertyForm: form in 'item_type_property' table (2).
   */
-  function setTitleI18nFromFormToPropertiesSchema(properties, itemTypeForm, itemTypePropertyForm) {
+  function setTitleI18nFromFormToPropertiesSchema(properties, itemTypeForm, itemTypePropertyForm, changedProperties) {
     //condition 1:
     // Set all title_i18n of (1) to 'schema properties'.
     // Define insensitive(i) global(g) regex of square brackets.
@@ -1467,6 +1477,10 @@ $(document).ready(function () {
           titleI18nSchemaProperty.ja = !titleI18nSchemaProperty.ja ? titleI18nItemTypeProperty.ja : titleI18nSchemaProperty.ja;
           titleI18nSchemaProperty.en = !titleI18nSchemaProperty.en ? titleI18nItemTypeProperty.en : titleI18nSchemaProperty.en;
 
+          if(!form.hasOwnProperty('title_i18n_temp')) {
+            properties[propKey].title_i18n_temp = form.title_i18n;
+          }
+
           // Check and set title_i18n for child item.
           setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
           return false;
@@ -1474,10 +1488,8 @@ $(document).ready(function () {
       });
     });
 
-    //
-    let changedProperties = [];
+    // Get changed properties.
     getChangedProperties(itemTypePropertyForm, itemTypeForm, changedProperties);
-    console.log(changedProperties);
   }
 
   function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
@@ -1555,6 +1567,11 @@ $(document).ready(function () {
             // If title_i18n.ja of (1) is empty, set title_i18n.ja of (2) to 'schema properties'.
             titleI18nSchemaProperty.ja = !titleI18nSchemaProperty.ja ? titleI18nItemTypeProperty.ja : titleI18nSchemaProperty.ja;
             titleI18nSchemaProperty.en = !titleI18nSchemaProperty.en ? titleI18nItemTypeProperty.en : titleI18nSchemaProperty.en;
+
+            if(!form.hasOwnProperty('title_i18n_temp')) {
+              properties[propKey].title_i18n_temp = form.title_i18n;
+            }
+
             // Check and set title_i18n for child item.
             setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
             return false;
@@ -1585,9 +1602,8 @@ $(document).ready(function () {
           let itTitleI18nEn = itForm.title_i18n_temp.en;
           let itTitleI18nJa = itForm.title_i18n_temp.ja;
           if(itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) {
-            console.log(itTitleI18nEn + '!=' + itpTitleI18nEn + ' ||| ' + itTitleI18nJa + '!=' + itpTitleI18nJa);
             itForm.title_i18n_temp = itpForm.title_i18n;
-            changedProperties.push(itpFormKey + ': ' + itpTitleI18nEn);
+            changedProperties.push(itpTitleI18nEn);
           }
           getChangedSubProperties(itpForm, itForm, changedProperties);
           return false;
@@ -1617,9 +1633,8 @@ $(document).ready(function () {
           let itTitleI18nEn = itForm.title_i18n_temp.en;
           let itTitleI18nJa = itForm.title_i18n_temp.ja;
           if(itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) {
-            console.log(itTitleI18nEn + '!=' + itpTitleI18nEn + ' ||| ' + itTitleI18nJa + '!=' + itpTitleI18nJa);
             itForm.title_i18n_temp = itpForm.title_i18n;
-            changedProperties.push(itpFormKey + ': ' + itpTitleI18nEn);
+            changedProperties.push(itpTitleI18nEn);
           }
           getChangedSubProperties(itpForm, itForm, itpFormKey, changedProperties);
           return false;
@@ -1730,6 +1745,8 @@ $(document).ready(function () {
             subForm.titleMap = titleMap;
           }
 
+          subForm.title_i18n_temp = properties[propKey].title_i18n_temp;
+
           setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], subForm.items, propertyKey);
           return false;
         }
@@ -1777,6 +1794,8 @@ $(document).ready(function () {
               form.titleMap = titleMap;
             }
 
+            form.title_i18n_temp = properties[propKey].title_i18n_temp;
+
             setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], form.items, propertyKey);
             return false;
           }
@@ -1786,13 +1805,6 @@ $(document).ready(function () {
   }
 
   function fixKey(key) {
-    // let dest = '_';
-    // let squareBracketsRegex = /\[\]/gi;
-    // let dotRegex = /\./gi;
-    // let regexArray = [squareBracketsRegex, dotRegex];
-    // for(i=0; i<regexArray.length; i++){
-    //   key = key.replace(regexArray[i], dest);
-    // }
     key = key.replace(/\[\]/gi, '');
     key = key.replace(/\./gi, '_');
     return key;
