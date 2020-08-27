@@ -793,7 +793,8 @@ def check_to_upgrade_version(old_render, new_render):
         'isSpecifyNewline',
         'isHide',
         'enum',
-        'titleMap'
+        'titleMap',
+        'title_i18n_temp'
     ]
     remove_keys(excluded_keys, old_schema['properties'])
     remove_keys(excluded_keys, new_schema['properties'])
