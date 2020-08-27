@@ -753,7 +753,8 @@ $(document).ready(function () {
             }
 
             //'Meta' screen: Get title_i18n from input controls set to form
-            let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
+            // let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
+            let schemaProperties = editor.react.props.data.properties
             setTitleI18nFromPropertiesSchemaToForm(schemaProperties, object_forms);
 
             page_global.table_row_map.form.push(
@@ -778,7 +779,8 @@ $(document).ready(function () {
           }
 
           //'Meta' screen: Get title_i18n from input controls set to form
-          let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
+          // let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
+          let schemaProperties = editor.react.props.data.properties
           setTitleI18nFromPropertiesSchemaToForm(schemaProperties, object_form);
 
           page_global.table_row_map.form.push(

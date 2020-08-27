@@ -298,6 +298,7 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
+			this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
 			this.setState({
 				enum: event.target.value
 			});
