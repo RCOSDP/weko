@@ -32,11 +32,13 @@
       <meta property="og:description" content="{{ site_info.get('description') }}" />
       {%- endif %}
 
-     
+
       {%- if site_info.get('title') %}
         <meta property="og:title" content="{{ site_info.get('title') }}" />
        {%- endif %}
-<meta property="og:title" content="{{ record['title'] }}" />
+       {%- if record %}
+       <meta property="og:title" content="{{ record['title'] }}" />
+       {%- endif %}
       <meta property="og:locale" content="ja_JA" />
     <meta property="og:locale:alternate" content="en_EN" />
        <meta property="og:url" content="{{ site_info.get('url') }}" />

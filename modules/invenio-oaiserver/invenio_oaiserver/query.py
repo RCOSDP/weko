@@ -33,7 +33,7 @@ class OAIServerSearch(RecordsSearch):
     class Meta:
         """Configuration for OAI server search."""
 
-        default_filter = Q('exists', field='_oai.id')
+        default_filter = Q('bool',must=[Q('exists', field='_oai.id'),Q('match',relation_version_is_last='true')])
 
 
 def get_affected_records(spec=None, search_pattern=None):
