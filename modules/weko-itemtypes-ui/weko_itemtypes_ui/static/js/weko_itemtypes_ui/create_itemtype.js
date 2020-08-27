@@ -1432,14 +1432,11 @@ $(document).ready(function () {
         if(propertyKey == formKey) {
           properties[propKey].title_i18n = form.title_i18n;
           properties[propKey].uniqueKey = propertyKey;
-
           properties[propKey].isRequired = form.required;
           properties[propKey].isShowList = form.isShowList;
           properties[propKey].isSpecifyNewline = form.isSpecifyNewline;
           properties[propKey].isHide = form.isHide;
-
-          properties[propKey].format = form.format;
-
+          // properties[propKey].format = form.format;
           if(form.hasOwnProperty('titleMap')) {
             let titleMapList = form['titleMap'];
             let arrEnumList = [];
@@ -1448,7 +1445,6 @@ $(document).ready(function () {
             });
             properties[propKey].enum = arrEnumList;
           }
-
           setTitleI18nForSubPropertiesByCondition1(properties[propKey], form.items, propertyKey);
           return false;
         }
@@ -1480,14 +1476,12 @@ $(document).ready(function () {
           if(!form.hasOwnProperty('title_i18n_temp')) {
             properties[propKey].title_i18n_temp = form.title_i18n;
           }
-
           // Check and set title_i18n for child item.
           setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
           return false;
         }
       });
     });
-
     // Get changed properties.
     getChangedProperties(itemTypePropertyForm, itemTypeForm, changedProperties);
   }
@@ -1513,14 +1507,11 @@ $(document).ready(function () {
           if(propertyKey == formKey) {
             properties[propKey].title_i18n = form.title_i18n;
             properties[propKey].uniqueKey = propertyKey;
-
             properties[propKey].isRequired = form.required;
             properties[propKey].isShowList = form.isShowList;
             properties[propKey].isSpecifyNewline = form.isSpecifyNewline;
             properties[propKey].isHide = form.isHide;
-
-            properties[propKey].format = form.format;
-
+            // properties[propKey].format = form.format;
             if(form.hasOwnProperty('titleMap')) {
               let titleMapList = form['titleMap'];
               let arrEnumList = [];
@@ -1529,7 +1520,6 @@ $(document).ready(function () {
               });
               properties[propKey].enum = arrEnumList;
             }
-
             setTitleI18nForSubPropertiesByCondition1(properties[propKey], form, propertyKey);
             return false;
           }
@@ -1571,7 +1561,6 @@ $(document).ready(function () {
             if(!form.hasOwnProperty('title_i18n_temp')) {
               properties[propKey].title_i18n_temp = form.title_i18n;
             }
-
             // Check and set title_i18n for child item.
             setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
             return false;
@@ -1651,7 +1640,7 @@ $(document).ready(function () {
         if(itpSchemaKey == itSchemaKey) {
           let itpSubSchema = itpSchema[itpSchemaKey];
           let itSubSchema = itSchema[itSchemaKey];
-          itpSubSchema.format = itSubSchema.format;
+          // itpSubSchema.format = itSubSchema.format;
           // if(itpSubSchema.format == 'select') {
           //   itpSubSchema.type = "string";
           // } else if(itpSubSchema.format == 'checkboxes') {
@@ -1694,7 +1683,7 @@ $(document).ready(function () {
         if(itpSchemaKey == itSchemaKey) {
           let itpSubSchema = itpSchema[itpSchemaKey];
           let itSubSchema = itSchema[itSchemaKey];
-          itpSubSchema.format = itSubSchema.format;
+          // itpSubSchema.format = itSubSchema.format;
           // if(itpSubSchema.format == 'select') {
           //   itpSubSchema.type = "string";
           // } else if(itpSubSchema.format == 'checkboxes') {
@@ -1782,7 +1771,13 @@ $(document).ready(function () {
 
             // form.type = properties[propKey].format;
 
-            if(properties[propKey].hasOwnProperty('enum')){
+            let _enum;
+            if(properties[propKey].hasOwnProperty('currentEnum')){
+              _enum = properties[propKey]['currentEnum'];
+            } else if(properties[propKey].hasOwnProperty('enum')){
+              _enum = properties[propKey]['enum'];
+            }
+            if (_enum) {
               let _enum = properties[propKey]['enum'];
               let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
               let titleMap = [];
