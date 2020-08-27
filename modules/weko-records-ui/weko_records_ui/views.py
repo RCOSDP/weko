@@ -314,7 +314,6 @@ def get_workflow_detail(workflow_id):
     else:
         abort(404)
 
-
 def _get_google_scholar_meta(record):
     target_map = {
         'dc:title': 'citation_title',
@@ -379,6 +378,8 @@ def _get_google_scholar_meta(record):
                 'data': InstitutionName.get_institution_name()})
     res.append({'name': 'citation_abstract_html_url', 'data': request.url})
     return res
+
+
 
 
 def default_view_method(pid, record, filename=None, template=None, **kwargs):

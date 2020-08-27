@@ -44,7 +44,9 @@
   <li><a href="{{ url_for('invenio_records_ui.recid_export', pid_value=pid.pid_value, format=slug) }}">{{fmt['title']}}</a></li>
   {%- endif %}
   {%- if 'BIBTEX' in fmt['title'] %}
-  <li><a href="{{ url_for('invenio_records_ui.recid_export', pid_value=pid.pid_value, format=slug) }}">{{fmt['title']}}</a></li>
+  <!-- 
+   <li><a href="{{ url_for('invenio_records_ui.recid_export', pid_value=pid.pid_value, format=slug) }}">{{fmt['title']}}</a></li>
+  -->
   {%- endif %}
   {%- endfor %}
 </ul>
