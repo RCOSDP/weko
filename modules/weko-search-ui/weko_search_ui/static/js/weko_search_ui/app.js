@@ -127,6 +127,7 @@ function getMessage(messageCode) {
 // add by ryuu. at 20181129 start
 
 function searchResCtrl($scope, $rootScope, $http, $location) {
+  delete $location.$$search.more_ids;
   var more_ids = sessionStorage.getItem('moreNodes');
   if (more_ids) {
     $location.$$search.more_ids = more_ids;
