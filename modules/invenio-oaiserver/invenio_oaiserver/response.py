@@ -362,7 +362,8 @@ def getrecord(**kwargs):
     if check_correct_system_props_mapping(
         pid.object_uuid,
             current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
-        etree_record = combine_record_file_urls(etree_record, pid.object_uuid, kwargs['metadataPrefix'])
+        etree_record = combine_record_file_urls(
+            etree_record, pid.object_uuid, kwargs['metadataPrefix'])
 
     root = record_dumper(pid, {'_source': etree_record})
 
@@ -555,7 +556,7 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
 
     if item_map:
         file_keys = item_map.get(current_app.config[
-                                     "OAISERVER_FILE_PROPS_MAPPING"][meta_prefix])
+            "OAISERVER_FILE_PROPS_MAPPING"][meta_prefix])
 
     if not file_keys:
         return record
