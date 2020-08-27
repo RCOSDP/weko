@@ -1346,8 +1346,44 @@ class _FormatSysCreator:
                 if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'],
                             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']]):
                     continue
-                self._get_creator_to_show_popup(value, language, creator_list,
-                                                creator_list_temp)
+                if key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']:
+                    for create in value:
+                        affiliationNames = create.get('affiliationNames')
+                        affiliationNameIdentifiers = create.get(
+                            'affiliationNameIdentifiers')
+                        if len(affiliationNames) >= len(
+                                affiliationNameIdentifiers):
+                            for i in range(len(affiliationNames)):
+                                if i < len(affiliationNameIdentifiers):
+                                    affiliationNames[i].update(
+                                        affiliationNameIdentifiers[i])
+                                    self._get_creator_to_show_popup(
+                                        [affiliationNames[i]],
+                                        language, creator_list,
+                                        creator_list_temp)
+                                else:
+                                    self._get_creator_to_show_popup(
+                                        [affiliationNames[i]],
+                                        language, creator_list,
+                                        creator_list_temp)
+                        else:
+                            for i in range(len(affiliationNameIdentifiers)):
+                                if i < len(affiliationNames):
+                                    affiliationNameIdentifiers[i].update(
+                                        affiliationNames[i])
+                                    self._get_creator_to_show_popup(
+                                        [affiliationNameIdentifiers[i]],
+                                        language, creator_list,
+                                        creator_list_temp)
+                                else:
+                                    self._get_creator_to_show_popup(
+                                        [affiliationNameIdentifiers[i]],
+                                        language, creator_list,
+                                        creator_list_temp)
+                else:
+                    self._get_creator_to_show_popup(value, language,
+                                                    creator_list,
+                                                    creator_list_temp)
             if creator_list_temp:
                 if language:
                     creator_list.append({language: creator_list_temp})

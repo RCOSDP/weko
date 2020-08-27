@@ -145,6 +145,7 @@ WEKO_DEPOSIT_SYS_CREATOR_KEY = {
     'affiliation_name': 'affiliationName',
     'affiliation_name_identifier': 'affiliationNameIdentifier',
     'affiliation_name_identifier_URI': 'affiliationNameIdentifierURI',
+    'creatorAffiliations': 'creatorAffiliations',
 }
 """Key of Bibliographic information."""
 
