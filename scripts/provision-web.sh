@@ -215,8 +215,12 @@ setup_nginx_centos7 () {
         fi
         if ! $sudo getsebool -a | grep httpd | grep httpd_enable_homedirs | grep -q on; then
             $sudo setsebool -P httpd_enable_homedirs 1
+            # add static dir
             mkdir -p "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/static"
             $sudo chcon -R -t httpd_sys_content_t "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/static"
+            # add data dir
+            mkdir -p "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/data"
+            $sudo chcon -R -t httpd_sys_content_t "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/data"
         fi
     fi
 
