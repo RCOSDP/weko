@@ -298,7 +298,9 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
-			this.setState(this.state);
+			this.setState({
+				enum: event.target.value
+			});
 		},
 		exportTitleMap: function exportTitleMap() {
 			var titleMap = [];
@@ -312,10 +314,15 @@
 			return titleMap;
 		},
 		export: function _export() {
+			var arr = [];
+			if (this.state.enum.length > 0) {
+				arr = this.state.enum.split('|');
+			}
 			return {
 				type: this.state.type,
 				format: "select",
-				enum: this.state.enum_original ? this.state.enum_original : this.state.enum.length > 0 ? this.state.enum.split('|') : []
+				enum: this.state.enum_original ? this.state.enum_original : arr,
+				currentEnum: arr
 			};
 		},
 		render: function render() {

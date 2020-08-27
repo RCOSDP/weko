@@ -753,7 +753,7 @@ $(document).ready(function () {
             }
 
             //'Meta' screen: Get title_i18n from input controls set to form
-            let schemaProperties = editor.react.state.properties;
+            let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
             setTitleI18nFromPropertiesSchemaToForm(schemaProperties, object_forms);
 
             page_global.table_row_map.form.push(
@@ -778,7 +778,7 @@ $(document).ready(function () {
           }
 
           //'Meta' screen: Get title_i18n from input controls set to form
-          let schemaProperties = editor.react.state.properties;
+          let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
           setTitleI18nFromPropertiesSchemaToForm(schemaProperties, object_form);
 
           page_global.table_row_map.form.push(
@@ -1713,9 +1713,13 @@ $(document).ready(function () {
           subForm.isHide = properties[propKey].isHide;
 
           // subForm.type = properties[propKey].format;
-
-          if(properties[propKey].hasOwnProperty('enum')){
-            let _enum = properties[propKey]['enum'];
+          let _enum;
+          if(properties[propKey].hasOwnProperty('currentEnum')){
+            _enum = properties[propKey]['currentEnum'];
+          } else if(properties[propKey].hasOwnProperty('enum')){
+            _enum = properties[propKey]['enum'];
+          }
+          if (_enum) {
             let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
             let titleMap = [];
             $.each(list_enum, function(ind, val) {
