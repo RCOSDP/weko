@@ -48,6 +48,7 @@
     {%- endif %}
   {%- endif %}
   {% assets "workflow_quit_confirmation_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "workflow_lock_activity_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -101,6 +102,8 @@
                   </div>
                   <div class="col-xs-12 col-md-8 col-lg-8">
                     <p id="activity_id">{{activity.activity_id}}</p>
+                    <input id="activity_id_for_lock" type="hidden" value="{{activity.activity_id}}" />
+                    <input id="cur_step_for_lock" type="hidden" value="{{cur_step}}" />
                   </div>
                 </div>
                 <div class="form-group">
@@ -221,6 +224,9 @@
               {% include 'weko_workflow/permission_required.html' %}
             </div>
           {%- else %}
+            <div class="panel-body" id="activity_locked">
+              {% include 'weko_workflow/lock_activity.html' %}
+            </div>
             <div class="panel-body" id="step_page">
               <div class="hide" id="hide-actionId">{{action_id}}</div>
               {%- if 'item_login' == cur_step or 'file_upload' == cur_step %}

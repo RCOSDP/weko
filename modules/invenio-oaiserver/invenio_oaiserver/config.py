@@ -189,7 +189,6 @@ repository
 (GPLv3 licensed).
 """
 
-
 OAISERVER_SYSTEM_IDENTIFIER_MAPPING = {
     "system_identifier.@value":
         "subitem_systemidt_identifier",
@@ -198,19 +197,16 @@ OAISERVER_SYSTEM_IDENTIFIER_MAPPING = {
 }
 """Config used to specify system identifier mapping of jpcoar"""
 
-
 OAISERVER_SYSTEM_FILE_MAPPING = {
     "system_file.URI.@value":
         "subitem_systemfile_filename_uri"
 }
 
-OAISERVER_FILE_PROPS_MAPPING_DDI = 'stdyDscr.dataAccs.setAvail.accsPlac.@value'
-"""Config used to specify system file mapping of DDI"""
-
-"""Config used to specify system file mapping of jpcoar"""
-
-OAISERVER_FILE_PROPS_MAPPING = "file.URI.@value"
-"""Config used to specify system file mapping of jpcoar"""
+OAISERVER_FILE_PROPS_MAPPING = {
+    "jpcoar": "file.URI.@value",
+    "ddi": "stdyDscr.dataAccs.setAvail.accsPlac.@value"
+}
+"""Config used to specify file mapping"""
 
 OAISERVER_CODE_NO_RECORDS_MATCH = "noRecordsMatch"
 """Code of error when output xml error"""
