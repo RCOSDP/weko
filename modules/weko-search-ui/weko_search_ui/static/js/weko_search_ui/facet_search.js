@@ -72,7 +72,9 @@ class MainLayout extends React.Component {
     if (params.search_type && String(params.search_type) === "2") {
       url = '/api/index/'
       let more_ids = sessionStorage.getItem('moreNodes');
-      search += "&more_ids=" + more_ids;
+      if (more_ids) {
+        search += "&more_ids=" + more_ids;
+      }
     }
     $.ajax({
         context: this,
@@ -80,14 +82,15 @@ class MainLayout extends React.Component {
         type: 'GET',
         contentType: 'application/json; charset=UTF-8',
         success: function (res) {
+            const total = res && res.hits && res.hits.total ? res.hits.total : 0;
             if (params.search_type && String(params.search_type) === "2") {
     //          Index faceted search
               const data = res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ? res.aggregations.path.buckets[0] : {}
-              this.convertData(data && data[0] ? data[0] : {})
+              this.convertData(data && data[0] && total > 0 ? data[0] : {})
             }
             else {
     //          default faceted search
-              this.convertData(res && res.aggregations ? res.aggregations : {})
+              this.convertData(res && res.aggregations && total > 0 ? res.aggregations : {})
             }
         },
         error: function() {
