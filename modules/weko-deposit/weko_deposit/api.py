@@ -1348,36 +1348,36 @@ class _FormatSysCreator:
                     continue
                 if key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']:
                     for create in value:
-                        affiliationNames = create.get('affiliationNames')
-                        affiliationNameIdentifiers = create.get(
+                        affiliation_names = create.get('affiliationNames')
+                        affiliation_name_identifiers = create.get(
                             'affiliationNameIdentifiers')
-                        if len(affiliationNames) >= len(
-                                affiliationNameIdentifiers):
-                            for i in range(len(affiliationNames)):
-                                if i < len(affiliationNameIdentifiers):
-                                    affiliationNames[i].update(
-                                        affiliationNameIdentifiers[i])
+                        if len(affiliation_names) >= len(
+                                affiliation_name_identifiers):
+                            for i in range(len(affiliation_names)):
+                                if i < len(affiliation_name_identifiers):
+                                    affiliation_names[i].update(
+                                        affiliation_name_identifiers[i])
                                     self._get_creator_to_show_popup(
-                                        [affiliationNames[i]],
+                                        [affiliation_names[i]],
                                         language, creator_list,
                                         creator_list_temp)
                                 else:
                                     self._get_creator_to_show_popup(
-                                        [affiliationNames[i]],
+                                        [affiliation_names[i]],
                                         language, creator_list,
                                         creator_list_temp)
                         else:
-                            for i in range(len(affiliationNameIdentifiers)):
-                                if i < len(affiliationNames):
-                                    affiliationNameIdentifiers[i].update(
-                                        affiliationNames[i])
+                            for i in range(len(affiliation_name_identifiers)):
+                                if i < len(affiliation_names):
+                                    affiliation_name_identifiers[i].update(
+                                        affiliation_names[i])
                                     self._get_creator_to_show_popup(
-                                        [affiliationNameIdentifiers[i]],
+                                        [affiliation_name_identifiers[i]],
                                         language, creator_list,
                                         creator_list_temp)
                                 else:
                                     self._get_creator_to_show_popup(
-                                        [affiliationNameIdentifiers[i]],
+                                        [affiliation_name_identifiers[i]],
                                         language, creator_list,
                                         creator_list_temp)
                 else:
