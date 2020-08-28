@@ -1124,71 +1124,66 @@ class WekoRecord(Record):
     @property
     def items_show_list(self):
         """Return the item show list."""
-        try:
+        items = []
+        solst, meta_options = get_options_and_order_list(
+            self.get('item_type_id'))
 
-            items = []
-            solst, meta_options = get_options_and_order_list(
-                self.get('item_type_id'))
+        for lst in solst:
+            key = lst[0]
 
-            for lst in solst:
-                key = lst[0]
+            val = self.get(key)
+            option = meta_options.get(key, {}).get('option')
+            if not val or not option:
+                continue
 
-                val = self.get(key)
-                option = meta_options.get(key, {}).get('option')
-                if not val or not option:
-                    continue
+            hidden = option.get("hidden")
+            if hidden:
+                items.append({
+                    'attribute_name_hidden': val.get('attribute_name')
+                })
+                continue
 
-                hidden = option.get("hidden")
-                if hidden:
-                    items.append({
-                        'attribute_name_hidden': val.get('attribute_name')
-                    })
-                    continue
-
-                mlt = val.get('attribute_value_mlt')
-                if mlt is not None:
-                    nval = dict()
-                    nval['attribute_name'] = val.get('attribute_name')
-                    nval['attribute_name_i18n'] = lst[2] or val.get(
-                        'attribute_name')
-                    nval['attribute_type'] = val.get('attribute_type')
-                    if nval['attribute_name'] == 'Reference' \
-                            or nval['attribute_type'] == 'file':
-                        nval['attribute_value_mlt'] = \
-                            get_all_items(copy.deepcopy(mlt),
-                                          copy.deepcopy(solst), True)
-                    else:
-                        is_author = nval['attribute_type'] == 'creator'
-                        sys_bibliographic = _FormatSysBibliographicInformation(
-                            copy.deepcopy(mlt),
-                            copy.deepcopy(solst)
-                        )
-                        if is_author:
-                            language_list = []
-                            from weko_gridlayout.utils import \
-                                get_register_language
-                            for lang in get_register_language():
-                                language_list.append(lang['lang_code'])
-                            creators = self._get_creator(mlt, language_list)
-                            nval['attribute_value_mlt'] = creators
-                        elif sys_bibliographic.is_bibliographic():
-                            nval['attribute_value_mlt'] = \
-                                sys_bibliographic.get_bibliographic_list()
-                        else:
-                            nval['attribute_value_mlt'] = \
-                                get_attribute_value_all_items(
-                                    copy.deepcopy(mlt),
-                                    copy.deepcopy(solst),
-                                    is_author)
-                    items.append(nval)
+            mlt = val.get('attribute_value_mlt')
+            if mlt is not None:
+                nval = dict()
+                nval['attribute_name'] = val.get('attribute_name')
+                nval['attribute_name_i18n'] = lst[2] or val.get(
+                    'attribute_name')
+                nval['attribute_type'] = val.get('attribute_type')
+                if nval['attribute_name'] == 'Reference' \
+                        or nval['attribute_type'] == 'file':
+                    nval['attribute_value_mlt'] = \
+                        get_all_items(copy.deepcopy(mlt),
+                                      copy.deepcopy(solst), True)
                 else:
-                    val['attribute_name_i18n'] = lst[2] or val.get(
-                        'attribute_name')
-                    items.append(val)
+                    is_author = nval['attribute_type'] == 'creator'
+                    sys_bibliographic = _FormatSysBibliographicInformation(
+                        copy.deepcopy(mlt),
+                        copy.deepcopy(solst)
+                    )
+                    if is_author:
+                        language_list = []
+                        from weko_gridlayout.utils import get_register_language
+                        for lang in get_register_language():
+                            language_list.append(lang['lang_code'])
+                        creators = self._get_creator(mlt, language_list)
+                        nval['attribute_value_mlt'] = creators
+                    elif sys_bibliographic.is_bibliographic():
+                        nval['attribute_value_mlt'] = \
+                            sys_bibliographic.get_bibliographic_list()
+                    else:
+                        nval['attribute_value_mlt'] = \
+                            get_attribute_value_all_items(
+                                copy.deepcopy(mlt),
+                                copy.deepcopy(solst),
+                                is_author)
+                items.append(nval)
+            else:
+                val['attribute_name_i18n'] = lst[2] or val.get(
+                    'attribute_name')
+                items.append(val)
 
-            return items
-        except BaseException:
-            abort(500)
+        return items
 
     @staticmethod
     def _get_creator(meta_data, languages):
@@ -1751,8 +1746,9 @@ class _FormatSysBibliographicInformation:
         """
         page = ''
         page += page_start if page_start is not None else ''
-        temp = page_end if page == '' else '-' + page_end
-        page += temp if page_end else ''
+        if page_end is not None:
+            temp = page_end if page == '' else '-' + page_end
+            page += temp if page_end else ''
 
         return page
 
