@@ -1837,3 +1837,30 @@ def make_bibtex_data(record_ids):
         output = serializer.serialize(pid, record)
         result += output if output != err_msg else ''
     return result
+
+
+def translate_schema_form(form_element, cur_lang):
+    """Translate title and validation message in Schema Form.
+
+    :param form_element: Schema Form element
+    :param cur_lang: Current language
+    """
+    msg_i18n_key = "validationMessage_i18n"
+    title_i18n_key = "title_i18n"
+    if (
+        form_element.get(title_i18n_key)
+        and cur_lang in form_element[title_i18n_key]
+        and len(form_element[title_i18n_key][cur_lang]) > 0
+    ):
+        form_element['title'] = form_element[title_i18n_key][cur_lang]
+
+    if (
+        form_element.get(msg_i18n_key)
+        and cur_lang in form_element[msg_i18n_key]
+        and len(form_element[msg_i18n_key][cur_lang]) > 0
+    ):
+        form_element['validationMessage'] = form_element[msg_i18n_key][cur_lang]
+
+    if form_element.get('items'):
+        for sub_elem in form_element['items']:
+            translate_schema_form(sub_elem, cur_lang)
