@@ -245,19 +245,20 @@ class SchemaTree:
 
     def get_ignore_item_from_option(self):
         """Get all keys of properties that is enable Hide option in metadata."""
-        ignore_list = []
+        ignore_list_parents = []
         ignore_list_all = []
-        ignore_list_all_bk = {}
+        ignore_dict_all = {}
         from weko_records.utils import get_options_and_order_list
         ignore_list_all, meta_options = get_options_and_order_list(self._item_type_id)
         for key, val in meta_options.items():
             hidden = val.get('option').get('hidden')
             if hidden:
-                ignore_list.append(key)
-        for i in ignore_list_all:
-            i[0] = i[0].replace("[]", "")
-            ignore_list_all_bk[i[0]] = i[3].get("hide")
-        return ignore_list_all_bk, ignore_list
+                ignore_list_parents.append(key)
+        for element_info in ignore_list_all:
+            element_info[0] = element_info[0].replace("[]", "")
+            # only get hide option
+            ignore_dict_all[element_info[0]] = element_info[3].get("hide")
+        return ignore_dict_all, ignore_list_parents
 
     def get_mapping_data(self):
         """
