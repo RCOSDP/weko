@@ -487,16 +487,9 @@ def sort_meta_data_by_options(record_hit):
         get_values(v)
         return data_list
 
-    try:
-        src = record_hit['_source'].pop('_item_metadata')
-        item_type_id = record_hit['_source'].get('item_type_id') \
-            or src.get('item_type_id')
-        if not item_type_id:
-            return
-        items = []
-        solst, meta_options = get_options_and_order_list(item_type_id)
+    def convert_data_to_dict(solst):
+        """Convert solst to dict."""
         solst_dict_array = []
-        # Convert solst to dict.
         for lst in solst:
             key = lst[0]
             option = meta_options.get(key, {}).get('option')
@@ -509,6 +502,39 @@ def sort_meta_data_by_options(record_hit):
                 'value': ''
             }
             solst_dict_array.append(temp)
+        return solst_dict_array
+
+    def get_comment(solst_dict_array):
+        """Check and get info."""
+        result = []
+        for s in solst_dict_array:
+            value = s['value']
+            option = s['option']
+            if value:
+                parent_option = s['parent_option']
+                is_show_list = parent_option.get(
+                    'show_list') if parent_option.get(
+                    'show_list') else option.get('show_list')
+                is_specify_newline = parent_option.get(
+                    'specify_newline') if parent_option.get(
+                    'specify_newline') else option.get('specify_newline')
+                is_hide = parent_option.get('hide') if parent_option.get(
+                    'hide') else option.get('hide')
+                if not is_hide and is_show_list:
+                    if is_specify_newline or len(result) == 0:
+                        result.append(value)
+                    else:
+                        result[-1] += "," + value
+        return result
+
+    try:
+        src = record_hit['_source'].pop('_item_metadata')
+        item_type_id = record_hit['_source'].get('item_type_id') \
+            or src.get('item_type_id')
+        if not item_type_id:
+            return
+        solst, meta_options = get_options_and_order_list(item_type_id)
+        solst_dict_array = convert_data_to_dict(solst)
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -531,27 +557,7 @@ def sort_meta_data_by_options(record_hit):
                                 'hide': option.get("hidden")
                             }
                             break
-            # else:
-            #     data = val.get('attribute_value')
-            #     lst[-1] = data
-        for s in solst_dict_array:
-            value = s['value']
-            option = s['option']
-            if value:
-                parent_option = s['parent_option']
-                is_show_list = parent_option.get(
-                    'show_list') if parent_option.get(
-                    'show_list') else option.get('show_list')
-                is_specify_newline = parent_option.get(
-                    'specify_newline') if parent_option.get(
-                    'specify_newline') else option.get('specify_newline')
-                is_hide = parent_option.get('hide') if parent_option.get(
-                    'hide') else option.get('hide')
-                if not is_hide and is_show_list:
-                    if is_specify_newline or len(items) == 0:
-                        items.append(value)
-                    else:
-                        items[-1] += "," + value
+        items = get_comment(solst_dict_array)
         if items:
             record_hit['_source']['_comment'] = items
     except Exception:
@@ -649,7 +655,7 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
-                        hide = lst[3]['hide']
+                        hide = lst[3].get('hide')
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
                             if not hide:
