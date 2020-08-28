@@ -154,7 +154,6 @@ services:
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
-      - conf_data:/home/invenio/.virtualenvs/invenio/var/instance/conf
     links:
       - web
 
