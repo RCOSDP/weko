@@ -597,7 +597,8 @@ def recursive_update_schema_form_with_condition(
                                     condition_item['condition'] \
                                         = condition_required
                                     schema_form_condition.append(
-                                        {'index': index, 'item': condition_item})
+                                        {'index': index, 'item':
+                                            condition_item})
 
                                     elem['condition'] = condition_not_required
                                 else:
@@ -607,7 +608,8 @@ def recursive_update_schema_form_with_condition(
                             if len(either_required_list) != 1:
                                 condition_item = copy.deepcopy(elem)
                                 condition_item['required'] = True
-                                condition_item['condition'] = condition_required
+                                condition_item['condition'] = \
+                                    condition_required
                                 schema_form_condition.append(
                                     {'index': index, 'item': condition_item})
 
@@ -1859,7 +1861,8 @@ def translate_schema_form(form_element, cur_lang):
         and cur_lang in form_element[msg_i18n_key]
         and len(form_element[msg_i18n_key][cur_lang]) > 0
     ):
-        form_element['validationMessage'] = form_element[msg_i18n_key][cur_lang]
+        form_element['validationMessage'] = \
+            form_element[msg_i18n_key][cur_lang]
 
     if form_element.get('items'):
         for sub_elem in form_element['items']:
