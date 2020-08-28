@@ -1373,9 +1373,9 @@ class _FormatSysCreator:
             :param affiliation_data: Affiliation data.
             """
             for creator in affiliation_data:
-                affiliation_name_format = creator.get('affiliationNames')
+                affiliation_name_format = creator.get('affiliationNames', [])
                 affiliation_name_identifiers_format = creator.get(
-                    'affiliationNameIdentifiers')
+                    'affiliationNameIdentifiers', [])
                 if len(affiliation_name_format) >= len(
                         affiliation_name_identifiers_format):
                     affiliation_max = affiliation_name_format
