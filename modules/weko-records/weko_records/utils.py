@@ -655,7 +655,7 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
-                        hide = lst[3]['hide']
+                        hide = lst[3].get('hide')
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
                             if not hide:
