@@ -28,6 +28,7 @@ from typing import NoReturn, Union
 import redis
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
+from elasticsearch.exceptions import TransportError
 from flask import abort, current_app, has_request_context, json, request, \
     session
 from flask_security import current_user
@@ -109,7 +110,7 @@ class WekoIndexer(RecordIndexer):
         self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
         self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
 
-    def upload_metadata(self, jrc, item_id, revision_id):
+    def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
         """Upload the item data to ElasticSearch.
 
         :param jrc:
@@ -127,7 +128,8 @@ class WekoIndexer(RecordIndexer):
                          version_type=self._version_type,
                          body=jrc)
 
-        if 'content' in jrc:  # Only pass through pipeline if file exists
+        # Only pass through pipeline if file exists
+        if 'content' in jrc and not skip_files:
             full_body['pipeline'] = 'item-file-pipeline'
 
         self.client.index(**full_body)
@@ -597,11 +599,27 @@ class WekoDeposit(Deposit):
                 # Get file contents
                 self.get_content_files()
 
-                # upload file content to Elasticsearch
-                self.indexer.upload_metadata(self.jrc, self.pid.object_uuid,
-                                             self.revision_id)
+                try:
+                    # Upload file content to Elasticsearch
+                    self.indexer.upload_metadata(self.jrc,
+                                                 self.pid.object_uuid,
+                                                 self.revision_id)
+                except TransportError as err:
+                    err_passing_config = current_app.config.get(
+                        'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
+                    parse_err = current_app.config.get(
+                        'WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD')
+                    if err_passing_config and \
+                            parse_err in err.info["error"]["reason"]:
+                        self.delete_content_files()
+                        self.indexer.upload_metadata(self.jrc,
+                                                     self.pid.object_uuid,
+                                                     self.revision_id,
+                                                     True)
+                    else:
+                        raise err
 
-                # remove large base64 files for release memory
+                # Remove large base64 files for release memory
                 if self.jrc.get('content'):
                     for content in self.jrc['content']:
                         if content.get('file'):
@@ -989,7 +1007,6 @@ class WekoDeposit(Deposit):
 
     def merge_data_to_record_without_version(self, pid):
         """Update changes to current record by record from PID."""
-        from weko_workflow.utils import delete_bucket
         with db.session.begin_nested():
             # update item_metadata
             index = {'index': self.get('path', []),
@@ -999,11 +1016,6 @@ class WekoDeposit(Deposit):
             item_metadata.pop('control_number', None)
 
             # Clone bucket
-            bucket = {
-                "_buckets": {
-                    "deposit": None
-                }
-            }
             if ".0" not in pid.pid_value:
                 draft_pid = PersistentIdentifier.get('recid', '{}.0'.format(
                     pid.pid_value.split(".")[0]))
@@ -1023,7 +1035,6 @@ class WekoDeposit(Deposit):
             sync_bucket.bucket.locked = False
             snapshot = bucket.snapshot(lock=False)
             snapshot.locked = False
-            # ex_bucket_id = sync_bucket.bucket_id
             sync_bucket.bucket = snapshot
             # delete_bucket(old_bucket_id)
 
@@ -1060,6 +1071,13 @@ class WekoDeposit(Deposit):
         draft_deposit = self.newversion(recid, is_draft=True)
 
         return draft_deposit
+
+    def delete_content_files(self):
+        """Delete 'file' from content file metadata."""
+        if self.jrc.get('content'):
+            for content in self.jrc['content']:
+                if content.get('file'):
+                    del content['file']
 
 
 class WekoRecord(Record):

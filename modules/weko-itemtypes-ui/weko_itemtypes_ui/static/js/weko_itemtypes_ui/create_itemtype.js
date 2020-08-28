@@ -357,7 +357,7 @@ $(document).ready(function () {
             title: "Check Plagiarism",
             title_i18n:{ja:"剽窃チェック",en:"Check Plagiarism"},
             type: "template",
-            template: "<div class='text-center'><a class='btn btn-primary' href='/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>"
+            template: "<div class='text-center' style='display:none;'><a class='btn btn-primary' href='/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>"
           },
           {
             key: "filemeta[].accessrole",

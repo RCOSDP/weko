@@ -24,6 +24,7 @@ from copy import deepcopy
 
 from flask import current_app, request
 from flask_babelex import gettext as _
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -39,6 +40,7 @@ from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
     Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_user_profiles.utils import get_user_profile_info
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
@@ -1307,3 +1309,50 @@ def handle_finish_workflow(deposit, current_pid, recid):
         current_app.logger.exception(str(ex))
         return item_id
     return item_id
+
+
+def delete_cache_data(key: str):
+    """Delete cache data.
+
+    :param key: Cache key.
+    """
+    current_value = current_cache.get(key) or str()
+    if current_value:
+        current_cache.delete(key)
+
+
+def update_cache_data(key: str, value: str, timeout=0):
+    """Update cache data.
+
+    :param key: Cache key.
+    :param value: Cache value.
+    """
+    if timeout:
+        current_cache.set(key, value, timeout=timeout)
+    else:
+        current_cache.set(key, value)
+
+
+def get_cache_data(key: str):
+    """Get cache data.
+
+    :param key: Cache key.
+
+    :return: Cache value.
+    """
+    return current_cache.get(key) or str()
+
+
+def get_account_info(user_id):
+    """Get account's info: email, username.
+
+    :param user_id: User id.
+
+    :return: email, username.
+    """
+    data = get_user_profile_info(user_id)
+    if data:
+        return data.get('subitem_mail_address'), \
+            data.get('subitem_displayname')
+    else:
+        return None, None

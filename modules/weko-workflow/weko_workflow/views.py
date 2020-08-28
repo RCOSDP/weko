@@ -61,10 +61,12 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, filter_condition, get_actionid, \
-    get_activity_id_of_record_without_version, get_identifier_setting, \
-    handle_finish_workflow, is_hidden_pubdate, is_show_autofill_metadata, \
-    item_metadata_validation, register_hdl, saving_doi_pidstore
+from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
+    get_account_info, get_actionid, \
+    get_activity_id_of_record_without_version, get_cache_data, \
+    get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
+    is_show_autofill_metadata, item_metadata_validation, register_hdl, \
+    saving_doi_pidstore, update_cache_data
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -1183,3 +1185,63 @@ def get_feedback_maillist(activity_id='0'):
     except (ValueError, Exception):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
+
+
+@blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
+@login_required
+def lock_activity(activity_id=0):
+    """Lock activity."""
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+    timeout = current_app.permanent_session_lifetime.seconds * 60
+    data = request.form.to_dict()
+    locked_value = data.get('locked_value')
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    err = ''
+
+    if cur_locked_val:
+        if locked_value != cur_locked_val:
+            locked_value = cur_locked_val
+            err = _('Locked')
+        else:
+            update_cache_data(
+                cache_key,
+                locked_value,
+                timeout
+            )
+    else:
+        # create new lock cache
+        from datetime import datetime
+        locked_value = str(current_user.get_id()) + '-' + \
+            str(int(datetime.timestamp(datetime.now()) * 10 ** 3))
+        update_cache_data(
+            cache_key,
+            locked_value,
+            timeout
+        )
+
+    locked_by_email, locked_by_username = get_account_info(
+        locked_value.split('-')[0])
+    return jsonify(
+        code=200,
+        msg='' if err else _('Success'),
+        err=err or '',
+        locked_value=locked_value,
+        locked_by_email=locked_by_email,
+        locked_by_username=locked_by_username
+    )
+
+
+@blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])
+@login_required
+def unlock_activity(activity_id=0):
+    """Unlock activity."""
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+    data = json.loads(request.data.decode("utf-8"))
+    locked_value = str(data.get('locked_value'))
+    msg = None
+    # get lock activity from cache
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    if cur_locked_val and cur_locked_val == locked_value:
+        delete_cache_data(cache_key)
+        msg = _('Unlock success')
+    return jsonify(code=200, msg=msg or _('Not unlock'))
