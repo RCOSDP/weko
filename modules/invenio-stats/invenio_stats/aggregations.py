@@ -12,8 +12,6 @@ from __future__ import absolute_import, print_function
 
 import datetime
 from collections import OrderedDict
-from itertools import tee
-from uuid import uuid4
 
 import six
 from dateutil import parser
@@ -198,16 +196,19 @@ class StatAggregator(object):
                 'date': self.new_bookmark or datetime.datetime.utcnow().
                 strftime(self.doc_id_suffix)
             }
+            rtn_date = dict(
+                _id=self.event,
+                _index=self.last_index_written,
+                _type=self.bookmark_doc_type,
+                _source=bookmark
+            )
+            # Save stats bookmark into Database.
+            StatsBookmark.save(rtn_date, delete=True)
 
-            yield dict(_id=uuid4(),
-                       _index=self.last_index_written,
-                       _type=self.bookmark_doc_type,
-                       _source=bookmark)
+            yield rtn_date
         if self.last_index_written:
-            db_iter, es_iter = tee(_success_date())
-            StatsBookmark.save(db_iter)
             bulk(self.client,
-                 es_iter,
+                 _success_date(),
                  stats_only=True)
 
     def _format_range_dt(self, d):
@@ -294,8 +295,8 @@ class StatAggregator(object):
                     _type=self.aggregation_doc_type,
                     _source=aggregation_data
                 )
-                # Save stats event into Database.
-                StatsAggregation.save(rtn_data)
+                # Save stats aggregation into Database.
+                StatsAggregation.save(rtn_data, delete=True)
 
                 yield rtn_data
         self.last_index_written = bookmark_name

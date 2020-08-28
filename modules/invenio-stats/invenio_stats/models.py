@@ -77,96 +77,22 @@ class _StataModelBase(Timestamp):
         query = query.filter(cls.index.ilike(_index + "%"))
         return query.all()
 
-
-class StatsEvents(db.Model, _StataModelBase):
-    """Database for Stats events."""
-
-    __tablename__ = "stats_events"
-
-    op_type = db.Column(db.String(10), nullable=False)
-
     @classmethod
-    def __convert_data(cls, event_object):
-        if event_object.get("_source"):
-            stats_event = StatsEvents(
+    def __convert_data(cls, data_object: dict) -> object:
+        if data_object.get("_source"):
+            stats_agg = cls(
                 id=_generate_id(),
-                source_id=event_object.get("_id"),
-                op_type=event_object.get("_op_type"),
-                index=event_object.get("_index"),
-                type=event_object.get("_type"),
-                source=json.dumps(event_object.get("_source")),
-                date=event_object.get("_source").get("timestamp"),
-            )
-            return stats_event
-        return None
-
-    @classmethod
-    def save(cls, event_object):
-        """Save stats event.
-
-        :param event_object:stats event object.
-        :return:
-        """
-        try:
-            stats_event = cls.__convert_data(event_object)
-            if not stats_event:
-                return
-            with db.session.begin_nested():
-                db.session.add(stats_event)
-            db.session.commit()
-        except SQLAlchemyError as err:
-            current_app.logger.error("Unexpected error: ", err)
-            db.session.rollback()
-            return False
-
-
-class StatsAggregation(db.Model, _StataModelBase):
-    """Database for Stats Aggregation."""
-
-    __tablename__ = "stats_aggregation"
-
-    @classmethod
-    def __convert_data(cls, aggregation_object):
-        if aggregation_object.get("_source"):
-            current_time = datetime.utcnow().isoformat()
-            _id = (
-                str(uuid4())
-                + hashlib.sha1(current_time.encode("utf-8")).hexdigest()
-            )
-            stats_agg = StatsAggregation(
-                id=_generate_id(),
-                source_id=aggregation_object.get("_id"),
-                index=aggregation_object.get("_index"),
-                type=aggregation_object.get("_type"),
-                source=json.dumps(aggregation_object.get("_source")),
-                date=aggregation_object.get("_source").get("timestamp"),
+                source_id=data_object.get("_id"),
+                index=data_object.get("_index"),
+                type=data_object.get("_type"),
+                source=json.dumps(data_object.get("_source")),
+                date=data_object.get("_source").get("timestamp"),
             )
             return stats_agg
         return None
 
     @classmethod
-    def save(cls, aggregation_object):
-        """Save stats aggregation.
-
-        :param aggregation_object: aggregation object
-        :return:
-        """
-        try:
-            stats_agg = cls.__convert_data(aggregation_object)
-            if not stats_agg:
-                return
-            with db.session.begin_nested():
-                if cls.delete_by_source_id(aggregation_object.get("_id")):
-                    db.session.add(stats_agg)
-                else:
-                    return
-            db.session.commit()
-        except SQLAlchemyError as err:
-            current_app.logger.error("Unexpected error: ", err)
-            db.session.rollback()
-
-    @classmethod
-    def delete_by_source_id(cls, source_id):
+    def delete_by_source_id(cls, source_id: str) -> bool:
         """Delete stats aggregation by source id.
 
         :param source_id: source id
@@ -174,7 +100,34 @@ class StatsAggregation(db.Model, _StataModelBase):
         """
         try:
             with db.session.begin_nested():
-                cls.query.filter_by(source_id=source_id).delete()
+                db.session.query(cls).filter_by(source_id=source_id).delete()
+            return True
+        except SQLAlchemyError as err:
+            current_app.logger.error("Unexpected error: ", err)
+            db.session.rollback()
+            return False
+
+    @classmethod
+    def save(cls, data_object: dict, delete: bool = False) -> bool:
+        """Save stats event.
+
+        :param data_object:stats event object.
+        :param delete:
+        :return:
+        """
+        try:
+            stats_data = cls.__convert_data(data_object)
+            if not stats_data:
+                return False
+            with db.session.begin_nested():
+                if delete:
+                    if cls.delete_by_source_id(data_object.get("_id")):
+                        db.session.add(stats_data)
+                    else:
+                        return False
+                else:
+                    db.session.add(stats_data)
+            db.session.commit()
             return True
         except SQLAlchemyError as err:
             current_app.logger.error("Unexpected error: ", err)
@@ -182,46 +135,22 @@ class StatsAggregation(db.Model, _StataModelBase):
             return False
 
 
-class StatsBookmark(db.Model, _StataModelBase):
+class StatsEvents(db.Model, _StataModelBase):
+    """Database for Stats events."""
+
+    __tablename__ = "stats_events"
+
+
+class StatsAggregation(db.Model, _StataModelBase):
     """Database for Stats Aggregation."""
 
+    __tablename__ = "stats_aggregation"
+
+
+class StatsBookmark(db.Model, _StataModelBase):
+    """Database for Stats Bookmark."""
+
     __tablename__ = "stats_bookmark"
-
-    @staticmethod
-    def __convert_data(bookmark_objects):
-        mappings = []
-        for _object in bookmark_objects:
-            if _object.get("_source"):
-                _object.get("_source").get("date")
-                mappings.append(
-                    dict(
-                        id=_generate_id(),
-                        source_id=_object.get("_id"),
-                        index=_object.get("_index"),
-                        type=_object.get("_type"),
-                        source=json.dumps(_object.get("_source")),
-                        date=_object.get("_source").get("date"),
-                    )
-                )
-        return mappings
-
-    @classmethod
-    def save(cls, bookmark_objects):
-        """Save stats bookmark.
-
-        :param bookmark_objects:
-        :return:
-        """
-        bookmark_data = cls.__convert_data(bookmark_objects)
-        if not bookmark_data:
-            return
-        try:
-            with db.session.begin_nested():
-                db.session.bulk_insert_mappings(cls, bookmark_data)
-            db.session.commit()
-        except SQLAlchemyError as err:
-            current_app.logger.error("Unexpected error: ", err)
-            db.session.rollback()
 
 
 def _generate_id():

@@ -16,7 +16,6 @@ import re
 from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
-import calendar
 
 import click
 import six
@@ -203,8 +202,7 @@ def prepare_es_indexes(
 
         # In case prepare indexes for the stats bookmark
         if bookmark_index:
-            prefix = "stats-bookmark-{}"
-
+            prefix = "stats-{}-bookmark"
         else:
             prefix = "stats-{}"
 
@@ -238,7 +236,7 @@ def __build_event_es_data(events_data):
     for data in events_data:
         yield dict(
             _id=data.source_id,
-            _op_type=data.op_type,
+            _op_type="index",
             _index=data.index,
             _type=data.type,
             _source=data.source,
