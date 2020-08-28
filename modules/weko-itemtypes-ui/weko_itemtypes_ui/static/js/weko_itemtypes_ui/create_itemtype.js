@@ -751,6 +751,12 @@ $(document).ready(function () {
             if (rename_subitem_config && object_forms.items && object_forms.items.length > 0) {
               object_forms = rename_subitem(object_forms);
             }
+
+            //'Meta' screen: Get title_i18n from input controls set to form
+            // let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
+            let schemaProperties = editor.react.props.data.properties
+            setTitleI18nFromPropertiesSchemaToForm(schemaProperties, object_forms);
+
             page_global.table_row_map.form.push(
               JSON.parse(JSON.stringify(object_forms).replace(/parentkey/gi, row_id))
             );
@@ -771,6 +777,12 @@ $(document).ready(function () {
           if (rename_subitem_config && object_form.items && object_form.items.length > 0) {
             object_form = rename_subitem(object_form);
           }
+
+          //'Meta' screen: Get title_i18n from input controls set to form
+          // let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
+          let schemaProperties = editor.react.props.data.properties
+          setTitleI18nFromPropertiesSchemaToForm(schemaProperties, object_form);
+
           page_global.table_row_map.form.push(
             JSON.parse(JSON.stringify(object_form).replace(/parentkey/gi, row_id)));
         }
@@ -1168,6 +1180,7 @@ $(document).ready(function () {
 
   if($('#item-type-lists').val().length > 0) {
     $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
+      let changedProperties = [];
       Object.keys(data).forEach(function(key) {
         src_render[key] = data[key];
       });
@@ -1212,6 +1225,29 @@ $(document).ready(function () {
         }
 
         if(data.meta_list[row_id].input_type.indexOf('cus_') != -1) {
+
+          //Get title_i18n of item_type set to schema properties in order to fill to input controls.
+
+          //Get schema from table item_type_properties.
+          let itemTypePropertiesSchema = properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties;
+          //Get schema from table item_type.
+          let itemTypeSchema = data.table_row_map.schema.properties[row_id].properties;
+          //Get form from table item_type (1).
+          let itemTypeForm = getItemTypeForm(row_id, data.table_row_map.form);
+          //Get form from table item_type_property (2).
+          let itemTypePropertyForm = properties_obj[data.meta_list[row_id].input_type.substr(4)].form;
+          //If title_i18n of (1) =! title_i18n of (2), set title_i18n of (1) to schema property.
+          //If title_i18n of item_type is empty, set title_i18n of (2) to schema property.
+          setTitleI18nFromFormToPropertiesSchema(
+            itemTypePropertiesSchema,
+            itemTypeForm,
+            itemTypePropertyForm,
+            changedProperties);
+          //Set format in schema from item_type to item_type_property.
+          // setSchemaFromItemTypeToItemTypeProperty(
+          //   itemTypePropertiesSchema,
+          //   itemTypeSchema);
+
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
           let isAllowMultiple = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
           if (isAllowMultiple) {
@@ -1226,6 +1262,14 @@ $(document).ready(function () {
           render_empty('schema_'+row_id);
         }
       });
+      //Show message changed properties.
+      if(changedProperties.length > 0){
+        let message = `<div class="alert alert-info alert-dismissable">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+          <p>` + changedProperties.join('</p><p>') + `</p>
+        </div>`;
+        $('section.content-header').prepend(message);
+      }
       if($('input[type=radio][name=item_type]:checked').val() === 'deleted') {
         $('div.metadata-content *').not('[id=btn_restore_itemtype_schema]').prop('disabled', true);
       }
@@ -1366,6 +1410,400 @@ $(document).ready(function () {
       }
       page_global.table_row_map.schema.properties[row_id] = JSON.parse(JSON.stringify(item))
     }
+  }
+
+  function setInfoToSchema(itpSchema, itForm, propertyKey) {
+    itpSchema.title_i18n = itForm.title_i18n;
+    itpSchema.uniqueKey = propertyKey;
+    itpSchema.isRequired = itForm.required;
+    itpSchema.isShowList = itForm.isShowList;
+    itpSchema.isSpecifyNewline = itForm.isSpecifyNewline;
+    itpSchema.isHide = itForm.isHide;
+    // itpSchema.format = itForm.format;
+    if(itForm.hasOwnProperty('titleMap')) {
+      let titleMapList = itForm['titleMap'];
+      let arrEnumList = [];
+      Object.keys(titleMapList).map(function (titleMap) {
+        arrEnumList.push(titleMapList[titleMap].value);
+      });
+      itpSchema.enum = arrEnumList;
+    }
+  }
+
+  function checkAndSetTitleI18nForSchema(itpSchema, itpForm) {
+    let titleI118nDefault = {'ja': '', 'en': ''};
+    // Define title_i18n of SchemaProperty and ItemTypeProperty.
+    let itpSchemaTitleI18n = itpSchema.title_i18n;
+    let itpFormTitleI18n = itpForm.title_i18n;
+    // If title_i18n of (1) or (2) is empty => set title_i18n default value.
+    itpSchemaTitleI18n = itpSchemaTitleI18n ? itpSchemaTitleI18n : titleI118nDefault;
+    itpFormTitleI18n = itpFormTitleI18n ? itpFormTitleI18n : titleI118nDefault;
+    // If title_i18n.ja of (1) is empty, set title_i18n.ja of (2) to 'schema properties'.
+    itpSchemaTitleI18n.ja = itpSchemaTitleI18n.ja ? itpSchemaTitleI18n.ja : itpFormTitleI18n.ja;
+    itpSchemaTitleI18n.en = itpSchemaTitleI18n.en ? itpSchemaTitleI18n.en : itpFormTitleI18n.en;
+
+    if(!itpForm.hasOwnProperty('title_i18n_temp')) {
+      itpSchema.title_i18n_temp = itpForm.title_i18n;
+    }
+  }
+
+  /*
+  * When load page:
+  * - Condition 1: If title_i18n of (1) =! title_i18n of (2), set title_i18n of (1) to 'schema properties'.
+  * - Condition 2: If title_i18n of (1) is empty, set title_i18n of (2) to 'schema properties'.
+  * @properties: is 'schema properties' which are generate controls on 'Meta' screen.
+  * @itemTypeForm: form in 'item_type' table (1).
+  * @itemTypePropertyForm: form in 'item_type_property' table (2).
+  */
+  function setTitleI18nFromFormToPropertiesSchema(properties, itemTypeForm, itemTypePropertyForm, changedProperties) {
+    //condition 1:
+    // Set all title_i18n of (1) to 'schema properties'.
+    // Define insensitive(i) global(g) regex of square brackets.
+    Object.keys(properties).map(function (propKey) {
+      let propertyKey = itemTypeForm.key + '.' + propKey;
+      propertyKey = fixKey(propertyKey);
+      properties[propKey].uniqueKey = propertyKey;
+      $.each(itemTypeForm.items, function(ind, form) {
+        let formKey = !form.key ? '' : form.key;
+        formKey = fixKey(formKey);
+        if(propertyKey == formKey) {
+          setInfoToSchema(properties[propKey], form, propertyKey);
+          setTitleI18nForSubPropertiesByCondition1(properties[propKey], form.items, propertyKey);
+          return false;
+        }
+      });
+    });
+    // Condition 2:
+    // If title_i18n of (1) is empty, set title_i18n of (2) to 'schema properties'.
+    // setTitleI18nForSchemaPropertiesByCondition(properties, itemTypePropertyForm);
+    let titleI118nDefault = {'ja': '', 'en': ''};
+    Object.keys(properties).map(function (propKey) {
+      $.each(itemTypePropertyForm.items, function(ind, form){
+        let propertyKey = itemTypePropertyForm.key + '.' + propKey;
+        let formKey = !form.key ? '' : form.key;
+        // Remove all [] in key.
+        propertyKey = fixKey(propertyKey);
+        formKey = fixKey(formKey);
+        // Check and set title_i18n for parent item.
+        if(propertyKey == formKey) {
+          checkAndSetTitleI18nForSchema(properties[propKey], form);
+          // Check and set title_i18n for child item.
+          setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
+          return false;
+        }
+      });
+    });
+    // Get changed properties.
+    getChangedProperties(itemTypePropertyForm, itemTypeForm, changedProperties);
+  }
+
+  function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
+    let isHasItem = schemaProperties.hasOwnProperty('items');
+    let isHasProperties = schemaProperties.hasOwnProperty('properties');
+    let propertyKey, properties;
+    if(isHasItem || isHasProperties) {
+      if(isHasItem) {
+        properties = schemaProperties.items.properties;
+      } else {
+        properties = schemaProperties.properties;
+      }
+      Object.keys(properties).map(function (propKey) {
+        let propertyKey = prefixKey + '.' + propKey;
+        propertyKey = fixKey(propertyKey);
+        properties[propKey].uniqueKey = propertyKey;
+        $.each(subForms, function(ind, form) {
+          formKey = !form.key ? '' : form.key;
+          formKey = fixKey(formKey);
+          if(propertyKey == formKey) {
+            setInfoToSchema(properties[propKey], form, propertyKey);
+            setTitleI18nForSubPropertiesByCondition1(properties[propKey], form.items, propertyKey);
+            return false;
+          }
+        });
+      });
+    }
+  }
+
+  function setTitleI18nForSubPropertiesByCondition2(schemaProperties, subForms, prefixKey) {
+    let isHasItem = schemaProperties.hasOwnProperty('items');
+    let isHasProperties = schemaProperties.hasOwnProperty('properties');
+    let titleI118nDefault = {'ja': '', 'en': ''};
+    let propertyKey, properties;
+    if(isHasItem || isHasProperties) {
+      if(isHasItem) {
+        properties = schemaProperties.items.properties;
+      } else {
+        properties = schemaProperties.properties;
+      }
+      Object.keys(properties).map(function (propKey) {
+        $.each(subForms, function(ind, form) {
+          // define sub key.
+          propertyKey = prefixKey + '.' + propKey;
+          formKey = !form.key ? '' : form.key;
+          // Remove all [] in key.
+          propertyKey = fixKey(propertyKey);
+          formKey = fixKey(formKey);
+          if(propertyKey == formKey) {
+            checkAndSetTitleI18nForSchema(properties[propKey], form);
+            // Check and set title_i18n for child item.
+            setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
+            return false;
+          }
+        });
+      });
+    }
+  }
+
+  function getChangedProperties(itpForms, itForms, changedProperties) {
+    if(!itpForms || !itpForms.items || !itForms || !itForms.items) return;
+    let titleI118nDefault = {'ja': '', 'en': ''};
+    $.each(itpForms.items, function(ind, itpForm) {
+      $.each(itForms.items, function(ind, itForm) {
+        // Define key of form.
+        let itpFormKey = itForms.key + '.' + itpForm.key;
+        let itFormKey = !itForm.key ? '' : itForm.key;
+        //Remove 'parentkey.' in key.
+        itpFormKey = itpFormKey.replace(/parentkey./gi, '');
+        // Remove all [] in key.
+        itpFormKey = fixKey(itpFormKey);
+        itFormKey = fixKey(itFormKey);
+        if(itpFormKey == itFormKey) {
+          itpForm.title_i18n = itpForm.title_i18n ? itpForm.title_i18n : titleI118nDefault;
+          itForm.title_i18n_temp = itForm.title_i18n_temp ? itForm.title_i18n_temp : itpForm.title_i18n;
+          let itpTitleI18nEn = itpForm.title_i18n.en;
+          let itpTitleI18nJa = itpForm.title_i18n.ja;
+          let itTitleI18nEn = itForm.title_i18n_temp.en;
+          let itTitleI18nJa = itForm.title_i18n_temp.ja;
+          if(itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) {
+            itForm.title_i18n_temp = itpForm.title_i18n;
+            changedProperties.push(itpTitleI18nEn);
+          }
+          getChangedSubProperties(itpForm, itForm, changedProperties);
+          return false;
+        }
+      });
+    });
+  }
+
+  function getChangedSubProperties(itpForms, itForms, changedProperties) {
+    if(!itpForms || !itpForms.items || !itForms || !itForms.items) return;
+    let titleI118nDefault = {'ja': '', 'en': ''};
+    $.each(itpForms.items, function(ind, itpForm) {
+      $.each(itForms.items, function(ind, itForm) {
+        // Define sub key.
+        let itpFormKey = itpForm.key;
+        let itFormKey = !itForm.key ? '' : itForm.key;
+        itpFormKey = itpFormKey.substring(itpFormKey.indexOf('.') + 1, itpFormKey.length);
+        itFormKey = itFormKey.substring(itFormKey.indexOf('.') + 1, itFormKey.length);
+        // Remove all [] in key.
+        itpFormKey = fixKey(itpFormKey);
+        itFormKey = fixKey(itFormKey);
+        if(itpFormKey == itFormKey) {
+          itpForm.title_i18n = itpForm.title_i18n ? itpForm.title_i18n : titleI118nDefault;
+          itForm.title_i18n_temp = itForm.title_i18n_temp ? itForm.title_i18n_temp : itpForm.title_i18n;
+          let itpTitleI18nEn = itpForm.title_i18n.en;
+          let itpTitleI18nJa = itpForm.title_i18n.ja;
+          let itTitleI18nEn = itForm.title_i18n_temp.en;
+          let itTitleI18nJa = itForm.title_i18n_temp.ja;
+          if(itTitleI18nEn != itpTitleI18nEn || itTitleI18nJa != itpTitleI18nJa) {
+            itForm.title_i18n_temp = itpForm.title_i18n;
+            changedProperties.push(itpTitleI18nEn);
+          }
+          getChangedSubProperties(itpForm, itForm, itpFormKey, changedProperties);
+          return false;
+        }
+      });
+    });
+  }
+
+  function setSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema) {
+    let itpSchema = itemTypePropertiesSchema || {};
+    let itSchema = itemTypeSchema || {};
+    Object.keys(itpSchema).map(function(itpSchemaKey) {
+      Object.keys(itSchema).map(function(itSchemaKey) {
+        if(itpSchemaKey == itSchemaKey) {
+          let itpSubSchema = itpSchema[itpSchemaKey];
+          let itSubSchema = itSchema[itSchemaKey];
+          // itpSubSchema.format = itSubSchema.format;
+          // if(itpSubSchema.format == 'select') {
+          //   itpSubSchema.type = "string";
+          // } else if(itpSubSchema.format == 'checkboxes') {
+          //   itpSubSchema.type = "array";
+          // } else if(itpSubSchema.format == "radios") {
+          //   itpSubSchema.type = "string";
+          // }
+          setSubSchemaFromItemTypeToItemTypeProperty(itpSubSchema, itSubSchema);
+          return false;
+          }
+      });
+    });
+  }
+
+  function setSubSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema) {
+    let itpSchema = {}, itSchema = {};
+    //Get sub schema from itemTypePropertiesSchema.
+    let isHasItem = itemTypePropertiesSchema.hasOwnProperty('items');
+    let isHasProperties = itemTypePropertiesSchema.hasOwnProperty('properties');
+    if(isHasItem || isHasProperties) {
+      if(isHasItem) {
+        itpSchema = itemTypePropertiesSchema.items.properties || {};
+      } else {
+        itpSchema = itemTypePropertiesSchema.properties || {};
+      }
+    }
+    //Get sub schema from itemTypeSchema.
+    isHasItem = itemTypeSchema.hasOwnProperty('items');
+    isHasProperties = itemTypeSchema.hasOwnProperty('properties');
+    if(isHasItem || isHasProperties) {
+      if(isHasItem) {
+        itSchema = itemTypeSchema.items.properties || {};
+      } else {
+        itSchema = itemTypeSchema.properties || {};
+      }
+    }
+    //Update data from itemTypeSchema to itemTypePropertiesSchema
+    Object.keys(itpSchema).map(function(itpSchemaKey) {
+      Object.keys(itSchema).map(function(itSchemaKey) {
+        if(itpSchemaKey == itSchemaKey) {
+          let itpSubSchema = itpSchema[itpSchemaKey];
+          let itSubSchema = itSchema[itSchemaKey];
+          // itpSubSchema.format = itSubSchema.format;
+          // if(itpSubSchema.format == 'select') {
+          //   itpSubSchema.type = "string";
+          // } else if(itpSubSchema.format == 'checkboxes') {
+          //   itpSubSchema.type = "array";
+          // } else if(itpSubSchema.format == "radios") {
+          //   itpSubSchema.type = "string";
+          // }
+          setSubSchemaFromItemTypeToItemTypeProperty(itpSubSchema, itSubSchema);
+          return false;
+          }
+      });
+    });
+  }
+
+  //When save data, get data from schema set to form.
+  function setTitleI18nFromPropertiesSchemaToForm(properties, form) {
+    Object.keys(properties).map(function (propKey) {
+      $.each(form.items, function(ind, subForm){
+        //Get title_i18n of schema properties set to parent form.
+        let propertyKey = 'parentkey.' + propKey;
+        let formKey = !subForm.key ? '' : subForm.key;
+        // Remove all [] in key.
+        propertyKey = fixKey(propertyKey);
+        formKey = fixKey(formKey);
+        if(propertyKey == formKey){
+          subForm.title_i18n = properties[propKey].title_i18n;
+
+          subForm.required = properties[propKey].isRequired;
+          subForm.isShowList = properties[propKey].isShowList;
+          subForm.isSpecifyNewline = properties[propKey].isSpecifyNewline;
+          subForm.isHide = properties[propKey].isHide;
+
+          // subForm.type = properties[propKey].format;
+          let _enum;
+          if(properties[propKey].hasOwnProperty('currentEnum')){
+            _enum = properties[propKey]['currentEnum'];
+          } else if(properties[propKey].hasOwnProperty('enum')){
+            _enum = properties[propKey]['enum'];
+          }
+          if (_enum) {
+            let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
+            let titleMap = [];
+            $.each(list_enum, function(ind, val) {
+              if(val.length > 0){
+                titleMap.push({"name": val, "value": val});
+              }
+            });
+            subForm.titleMap = titleMap;
+          }
+
+          subForm.title_i18n_temp = properties[propKey].title_i18n_temp;
+
+          setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], subForm.items, propertyKey);
+          return false;
+        }
+      });
+    });
+  }
+
+  function setTitleI18nFromPropertiesSchemaToSubForm(schemaProperties, subForms, prefixKey) {
+    let isHasItem = schemaProperties.hasOwnProperty('items');
+    let isHasProperties = schemaProperties.hasOwnProperty('properties');
+    let propertyKey, properties;
+    if(isHasItem || isHasProperties) {
+      if(isHasItem) {
+        properties = schemaProperties.items.properties;
+      } else {
+        properties = schemaProperties.properties;
+      }
+      Object.keys(properties).map(function (propKey) {
+        $.each(subForms, function(ind, form) {
+          // define sub key.
+          propertyKey = prefixKey + '.' + propKey;
+          formKey = !form.key ? '' : form.key;
+          // Remove all [] in key.
+          propertyKey = fixKey(propertyKey);
+          formKey = fixKey(formKey);
+          if(propertyKey == formKey) {
+            form.title_i18n = properties[propKey].title_i18n;
+
+            form.required = properties[propKey].isRequired;
+            form.isShowList = properties[propKey].isShowList;
+            form.isSpecifyNewline = properties[propKey].isSpecifyNewline;
+            form.isHide = properties[propKey].isHide;
+
+            // form.type = properties[propKey].format;
+
+            let _enum;
+            if(properties[propKey].hasOwnProperty('currentEnum')){
+              _enum = properties[propKey]['currentEnum'];
+            } else if(properties[propKey].hasOwnProperty('enum')){
+              _enum = properties[propKey]['enum'];
+            }
+            if (_enum) {
+              let _enum = properties[propKey]['enum'];
+              let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
+              let titleMap = [];
+              $.each(list_enum, function(ind, val) {
+                if(val.length > 0){
+                  titleMap.push({"name": val, "value": val});
+                }
+              });
+              form.titleMap = titleMap;
+            }
+
+            form.title_i18n_temp = properties[propKey].title_i18n_temp;
+
+            setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], form.items, propertyKey);
+            return false;
+          }
+        });
+      });
+    }
+  }
+
+  function fixKey(key) {
+    key = key.replace(/\[\]/gi, '');
+    key = key.replace(/\./gi, '_');
+    return key;
+  }
+
+  /*
+  * Get form from table item_type (1).
+  * @formId: .
+  * @forms: .
+  */
+  function getItemTypeForm(formId, forms) {
+    //Get form from table item_type (1).
+    let itemTypeForm = {};
+    $.each(forms, function(ind, form){
+      if(form.key == formId){
+        itemTypeForm = form;
+        return false;
+      }
+    });
+    return itemTypeForm;
   }
 
 });

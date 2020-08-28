@@ -315,9 +315,15 @@ def find_items(form):
             title = node.get('title', '')
             title_i18n = node.get('title_i18n', {})\
                 .get(current_i18n.language, title)
-
+            option = {
+                'required': node.get('required', False),
+                'show_list': node.get('isShowList', False),
+                'specify_newline': node.get('isSpecifyNewline', False),
+                'hide': node.get('isHide', False),
+            }
+            val = ''
             if key:
-                yield [key, title, title_i18n]
+                yield [key, title, title_i18n, option, val]
             for v in node.values():
                 if isinstance(v, list):
                     for k in find_key(v):
@@ -433,7 +439,7 @@ def to_orderdict(alst, klst):
                 if val:
                     if isinstance(val, dict):
                         val = OrderedDict(val)
-                    nlst.append({key: val})
+                    nlst.append({lst[0]: val})
                 if not alst:
                     break
 
@@ -482,53 +488,70 @@ def sort_meta_data_by_options(record_hit):
         return data_list
 
     try:
-
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
             or src.get('item_type_id')
         if not item_type_id:
             return
-
         items = []
         solst, meta_options = get_options_and_order_list(item_type_id)
-
-        newline = True
+        solst_dict_array = []
+        # Convert solst to dict.
         for lst in solst:
             key = lst[0]
-
+            option = meta_options.get(key, {}).get('option')
+            temp = {
+                'key': key,
+                'title': lst[1],
+                'title_ja': lst[2],
+                'option': lst[3],
+                'parent_option': option,
+                'value': ''
+            }
+            solst_dict_array.append(temp)
+        # Set value and parent option
+        for lst in solst:
+            key = lst[0]
             val = src.get(key)
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-
-            hidden = option.get("hidden")
-            multiple = option.get('multiple')
-            crtf = option.get("crtf")
-            showlist = option.get("showlist")
-            is_show = False if hidden else showlist
-
-            if not is_show:
-                continue
-
             mlt = val.get('attribute_value_mlt')
             if mlt:
-                meta_data = get_all_items(mlt, solst)
-                data = get_meta_values(meta_data)
-            else:
-                data = val.get('attribute_value')
-
-            if data:
-                if isinstance(data, list):
-                    data = ",".join(data) if multiple else \
-                        (data[0] if len(data) > 0 else "")
-
-                if newline:
-                    items.append(data)
-                else:
-                    items[-1] += "," + data
-
-            newline = crtf
-
+                meta_data = get_all_items2(mlt, solst)
+                for m in meta_data:
+                    for s in solst_dict_array:
+                        s_key = s.get('key')
+                        if m.get(s_key):
+                            s['value'] = m.get(s_key)
+                            s['parent_option'] = {
+                                'required': option.get("required"),
+                                'show_list': option.get("showlist"),
+                                'specify_newline': option.get("crtf"),
+                                'hide': option.get("hidden")
+                            }
+                            break
+            # else:
+            #     data = val.get('attribute_value')
+            #     lst[-1] = data
+        for s in solst_dict_array:
+            value = s['value']
+            option = s['option']
+            if value:
+                parent_option = s['parent_option']
+                is_show_list = parent_option.get(
+                    'show_list') if parent_option.get(
+                    'show_list') else option.get('show_list')
+                is_specify_newline = parent_option.get(
+                    'specify_newline') if parent_option.get(
+                    'specify_newline') else option.get('specify_newline')
+                is_hide = parent_option.get('hide') if parent_option.get(
+                    'hide') else option.get('hide')
+                if not is_hide and is_show_list:
+                    if is_specify_newline or len(items) == 0:
+                        items.append(value)
+                    else:
+                        items[-1] += "," + value
         if items:
             record_hit['_source']['_comment'] = items
     except Exception:
@@ -626,16 +649,20 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
+                        hide = lst[3]['hide']
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
-                            result.append({key: val})
+                            if not hide:
+                                result.append({key: val})
                         elif isinstance(val, list) and len(
                                 val) > 0 and isinstance(val[0], str):
-                            result.append({key: val})
+                            if not hide:
+                                result.append({key: val})
                         else:
                             if check_has_attribute_value(val):
-                                res = to_sort_dict(val, klst)
-                                result.append({key: res})
+                                if not hide:
+                                    res = to_sort_dict(val, klst)
+                                    result.append({key: res})
                         if not alst:
                             break
                 return result
@@ -708,6 +735,23 @@ def remove_key(removed_key, item_val):
         remove_key(removed_key, v)
 
 
+def remove_keys(excluded_keys, item_val):
+    """Remove removed_key out of item_val.
+
+    @param removed_key:
+    @param item_val:
+    @return:
+    """
+    if not isinstance(item_val, dict):
+        return
+    key_list = item_val.keys()
+    for excluded_key in excluded_keys:
+        if excluded_key in key_list:
+            del item_val[excluded_key]
+    for k, v in item_val.items():
+        remove_keys(excluded_keys, v)
+
+
 def remove_multiple(schema):
     """Remove multiple of schema.
 
@@ -740,11 +784,20 @@ def check_to_upgrade_version(old_render, new_render):
     old_schema = old_render.get('table_row_map').get('schema')
     new_schema = new_render.get('table_row_map').get('schema')
 
-    remove_key('required', old_schema)
-    remove_key('required', new_schema)
-
-    remove_key('title', old_schema['properties'])
-    remove_key('title', new_schema['properties'])
+    excluded_keys = [
+        'required',
+        'title',
+        'uniqueKey',
+        'title_i18n',
+        'isShowList',
+        'isSpecifyNewline',
+        'isHide',
+        'enum',
+        'titleMap',
+        'title_i18n_temp'
+    ]
+    remove_keys(excluded_keys, old_schema['properties'])
+    remove_keys(excluded_keys, new_schema['properties'])
 
     remove_multiple(old_schema)
     remove_multiple(new_schema)
