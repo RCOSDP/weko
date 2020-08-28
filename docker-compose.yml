@@ -54,6 +54,7 @@ services:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
+      - conf_data:/home/invenio/.virtualenvs/invenio/var/instance/conf
       - type: bind
         source: .
         target: /code
@@ -153,6 +154,7 @@ services:
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
+      - conf_data:/home/invenio/.virtualenvs/invenio/var/instance/conf
     links:
       - web
 
@@ -183,5 +185,6 @@ volumes:
   weko3_data:
   static_data:
   data_data:
+  conf_data:
   pgsql-data:
   es-data:
