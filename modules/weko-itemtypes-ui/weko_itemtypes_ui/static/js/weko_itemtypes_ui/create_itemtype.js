@@ -1412,6 +1412,41 @@ $(document).ready(function () {
     }
   }
 
+  function setInfoToSchema(itpSchema, itForm, propertyKey) {
+    itpSchema.title_i18n = itForm.title_i18n;
+    itpSchema.uniqueKey = propertyKey;
+    itpSchema.isRequired = itForm.required;
+    itpSchema.isShowList = itForm.isShowList;
+    itpSchema.isSpecifyNewline = itForm.isSpecifyNewline;
+    itpSchema.isHide = itForm.isHide;
+    // itpSchema.format = itForm.format;
+    if(itForm.hasOwnProperty('titleMap')) {
+      let titleMapList = itForm['titleMap'];
+      let arrEnumList = [];
+      Object.keys(titleMapList).map(function (titleMap) {
+        arrEnumList.push(titleMapList[titleMap].value);
+      });
+      itpSchema.enum = arrEnumList;
+    }
+  }
+
+  function checkAndSetTitleI18nForSchema(itpSchema, itpForm) {
+    let titleI118nDefault = {'ja': '', 'en': ''};
+    // Define title_i18n of SchemaProperty and ItemTypeProperty.
+    let itpSchemaTitleI18n = itpSchema.title_i18n;
+    let itpFormTitleI18n = itpForm.title_i18n;
+    // If title_i18n of (1) or (2) is empty => set title_i18n default value.
+    itpSchemaTitleI18n = itpSchemaTitleI18n ? itpSchemaTitleI18n : titleI118nDefault;
+    itpFormTitleI18n = itpFormTitleI18n ? itpFormTitleI18n : titleI118nDefault;
+    // If title_i18n.ja of (1) is empty, set title_i18n.ja of (2) to 'schema properties'.
+    itpSchemaTitleI18n.ja = itpSchemaTitleI18n.ja ? itpSchemaTitleI18n.ja : itpFormTitleI18n.ja;
+    itpSchemaTitleI18n.en = itpSchemaTitleI18n.en ? itpSchemaTitleI18n.en : itpFormTitleI18n.en;
+
+    if(!itpForm.hasOwnProperty('title_i18n_temp')) {
+      itpSchema.title_i18n_temp = itpForm.title_i18n;
+    }
+  }
+
   /*
   * When load page:
   * - Condition 1: If title_i18n of (1) =! title_i18n of (2), set title_i18n of (1) to 'schema properties'.
@@ -1425,28 +1460,14 @@ $(document).ready(function () {
     // Set all title_i18n of (1) to 'schema properties'.
     // Define insensitive(i) global(g) regex of square brackets.
     Object.keys(properties).map(function (propKey) {
+      let propertyKey = itemTypeForm.key + '.' + propKey;
+      propertyKey = fixKey(propertyKey);
+      properties[propKey].uniqueKey = propertyKey;
       $.each(itemTypeForm.items, function(ind, form) {
-        let propertyKey = itemTypeForm.key + '.' + propKey;
         let formKey = !form.key ? '' : form.key;
-        // Remove all [] in key.
-        propertyKey = fixKey(propertyKey);
         formKey = fixKey(formKey);
         if(propertyKey == formKey) {
-          properties[propKey].title_i18n = form.title_i18n;
-          properties[propKey].uniqueKey = propertyKey;
-          properties[propKey].isRequired = form.required;
-          properties[propKey].isShowList = form.isShowList;
-          properties[propKey].isSpecifyNewline = form.isSpecifyNewline;
-          properties[propKey].isHide = form.isHide;
-          // properties[propKey].format = form.format;
-          if(form.hasOwnProperty('titleMap')) {
-            let titleMapList = form['titleMap'];
-            let arrEnumList = [];
-            Object.keys(titleMapList).map(function (titleMap) {
-              arrEnumList.push(titleMapList[titleMap].value);
-            });
-            properties[propKey].enum = arrEnumList;
-          }
+          setInfoToSchema(properties[propKey], form, propertyKey);
           setTitleI18nForSubPropertiesByCondition1(properties[propKey], form.items, propertyKey);
           return false;
         }
@@ -1465,19 +1486,7 @@ $(document).ready(function () {
         formKey = fixKey(formKey);
         // Check and set title_i18n for parent item.
         if(propertyKey == formKey) {
-          // Define title_i18n of SchemaProperty and ItemTypeProperty.
-          let titleI18nSchemaProperty = properties[propKey].title_i18n;
-          let titleI18nItemTypeProperty = form.title_i18n;
-          // If title_i18n of (1) or (2) is empty => set title_i18n default value.
-          titleI18nSchemaProperty = !titleI18nSchemaProperty ? titleI118nDefault : titleI18nSchemaProperty;
-          titleI18nItemTypeProperty = !titleI18nItemTypeProperty ? titleI118nDefault : titleI18nItemTypeProperty;
-          // If title_i18n.ja of (1) is empty, set title_i18n.ja of (2) to 'schema properties'.
-          titleI18nSchemaProperty.ja = !titleI18nSchemaProperty.ja ? titleI18nItemTypeProperty.ja : titleI18nSchemaProperty.ja;
-          titleI18nSchemaProperty.en = !titleI18nSchemaProperty.en ? titleI18nItemTypeProperty.en : titleI18nSchemaProperty.en;
-
-          if(!form.hasOwnProperty('title_i18n_temp')) {
-            properties[propKey].title_i18n_temp = form.title_i18n;
-          }
+          checkAndSetTitleI18nForSchema(properties[propKey], form);
           // Check and set title_i18n for child item.
           setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
           return false;
@@ -1499,30 +1508,15 @@ $(document).ready(function () {
         properties = schemaProperties.properties;
       }
       Object.keys(properties).map(function (propKey) {
+        let propertyKey = prefixKey + '.' + propKey;
+        propertyKey = fixKey(propertyKey);
+        properties[propKey].uniqueKey = propertyKey;
         $.each(subForms, function(ind, form) {
-          // define sub key.
-          propertyKey = prefixKey + '.' + propKey;
           formKey = !form.key ? '' : form.key;
-          // Remove all [] in key.
-          propertyKey = fixKey(propertyKey);
           formKey = fixKey(formKey);
           if(propertyKey == formKey) {
-            properties[propKey].title_i18n = form.title_i18n;
-            properties[propKey].uniqueKey = propertyKey;
-            properties[propKey].isRequired = form.required;
-            properties[propKey].isShowList = form.isShowList;
-            properties[propKey].isSpecifyNewline = form.isSpecifyNewline;
-            properties[propKey].isHide = form.isHide;
-            // properties[propKey].format = form.format;
-            if(form.hasOwnProperty('titleMap')) {
-              let titleMapList = form['titleMap'];
-              let arrEnumList = [];
-              Object.keys(titleMapList).map(function (titleMap) {
-                arrEnumList.push(titleMapList[titleMap].value);
-              });
-              properties[propKey].enum = arrEnumList;
-            }
-            setTitleI18nForSubPropertiesByCondition1(properties[propKey], form, propertyKey);
+            setInfoToSchema(properties[propKey], form, propertyKey);
+            setTitleI18nForSubPropertiesByCondition1(properties[propKey], form.items, propertyKey);
             return false;
           }
         });
@@ -1550,19 +1544,7 @@ $(document).ready(function () {
           propertyKey = fixKey(propertyKey);
           formKey = fixKey(formKey);
           if(propertyKey == formKey) {
-            // Define title_i18n of SchemaProperty and ItemTypeProperty.
-            let titleI18nSchemaProperty = properties[propKey].title_i18n;
-            let titleI18nItemTypeProperty = form.title_i18n;
-            // If title_i18n of (1) or (2) is empty => set title_i18n default value.
-            titleI18nSchemaProperty = !titleI18nSchemaProperty ? titleI118nDefault : titleI18nSchemaProperty;
-            titleI18nItemTypeProperty = !titleI18nItemTypeProperty ? titleI118nDefault : titleI18nItemTypeProperty;
-            // If title_i18n.ja of (1) is empty, set title_i18n.ja of (2) to 'schema properties'.
-            titleI18nSchemaProperty.ja = !titleI18nSchemaProperty.ja ? titleI18nItemTypeProperty.ja : titleI18nSchemaProperty.ja;
-            titleI18nSchemaProperty.en = !titleI18nSchemaProperty.en ? titleI18nItemTypeProperty.en : titleI18nSchemaProperty.en;
-
-            if(!form.hasOwnProperty('title_i18n_temp')) {
-              properties[propKey].title_i18n_temp = form.title_i18n;
-            }
+            checkAndSetTitleI18nForSchema(properties[propKey], form);
             // Check and set title_i18n for child item.
             setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
             return false;
