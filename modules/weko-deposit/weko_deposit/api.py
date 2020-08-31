@@ -1346,7 +1346,6 @@ class _FormatSysCreator:
         :param creator_list: Creator list.
         :param creator_list_temp: Creator temporary list.
         """
-
         def _run_format_affiliation(affiliation_max, affiliation_min, languages,
                                     creator_lists,
                                     creator_list_temps):

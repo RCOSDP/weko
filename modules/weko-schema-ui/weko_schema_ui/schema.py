@@ -972,9 +972,9 @@ class SchemaTree:
                                 if bool(node) and not [i for i in node.values()
                                                        if
                                                        i and (not i.get
-                                                       (self._v)
+                                                              (self._v)
                                                               or not i.get(
-                                                                self._atr))]:
+                                                                  self._atr))]:
                                     multi = max(
                                         [len(attr) for n in node.values()
                                          if n and n.get(self._atr)
