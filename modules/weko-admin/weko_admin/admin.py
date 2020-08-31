@@ -73,8 +73,11 @@ class StyleSettingView(BaseView):
         footer_default_bg = 'rgba(13,95,137,0.8)'
         navbar_default_bg = '#f8f8f8'
         panel_default_border = '#ddd'
-        scss_file = os.path.join(current_app.static_folder,
-                                 'css/weko_theme/_variables.scss')
+        scss_file = os.path.join(
+            current_app.instance_path,
+            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            '_variables.scss')
+
         try:
             with open(scss_file, 'r', encoding='utf-8') as fp:
                 for line in fp.readlines():
