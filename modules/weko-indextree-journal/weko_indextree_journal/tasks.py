@@ -203,7 +203,9 @@ def export_journal_task(p_path):
 
         # create folder if not exist
         directory = os.path.join(
-            current_app.instance_path, kbart_folder)
+            current_app.instance_path,
+            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            kbart_folder)
 
         if not os.path.exists(directory):
             os.makedirs(directory)
