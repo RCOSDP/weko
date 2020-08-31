@@ -20,9 +20,7 @@ from werkzeug.local import LocalProxy
 
 from .proxies import current_stats
 from .tasks import aggregate_events, process_events
-from .utils import cli_delete_es_index, cli_restore_es_data_from_db, \
-    get_aggregation_data_from_db, get_bookmark_data_from_db, \
-    get_event_data_from_db, parse_date, prepare_es_indexes
+from .utils import StatsCliUtil
 
 
 def abort_if_false(ctx, param, value):
@@ -158,13 +156,11 @@ def _events_delete(event_types, start_date, end_date, force, verbose):
             fg='green'
         )
     event_types = event_types or list(current_stats.enabled_events)
-    start_date = parse_date(start_date)
-    end_date = parse_date(end_date, is_end_date=True)
-    event_prefix = current_app.config['STATS_EVENT_STRING']
-    for _index, _type in prepare_es_indexes(
-        event_types, event_prefix, delete=True
-    ):
-        cli_delete_es_index(_index, start_date, end_date, _type, force, verbose)
+    stats_cli = StatsCliUtil(
+        StatsCliUtil.EVENTS_TYPE,
+        event_types, start_date, end_date, force, verbose
+    )
+    stats_cli.delete_data()
 
 
 @events.command('restore')
@@ -208,13 +204,11 @@ def _events_restore(event_types, start_date, end_date, force, verbose):
             'from the Database to Elasticsearch...',
             fg='green'
         )
-    start_date = parse_date(start_date)
-    end_date = parse_date(end_date, is_end_date=True)
-    event_prefix = current_app.config['STATS_EVENT_STRING']
-    event_data = get_event_data_from_db(
-        event_types, event_prefix, start_date, end_date
+    stats_cli = StatsCliUtil(
+        StatsCliUtil.EVENTS_TYPE,
+        event_types, start_date, end_date, force, verbose
     )
-    cli_restore_es_data_from_db(event_data, force, verbose)
+    stats_cli.restore_data()
 
 
 @stats.group()
@@ -341,31 +335,18 @@ def _aggregations_delete_index(
     (Aggregation type value: celery-task|file-download|file-preview|record-view|
     item-create|search|top-view)
     """
-    aggregation_types = (aggregation_types
-                         or current_app.config['STATS_AGGREGATION_INDEXES'])
-    start_date = parse_date(start_date)
-    end_date = parse_date(end_date, is_end_date=True)
     if verbose:
         click.secho(
             'Start deleting Aggregate data...',
             fg='green'
         )
-    for _index, _type in prepare_es_indexes(
-        aggregation_types, None, delete=True
-    ):
-        cli_delete_es_index(_index, start_date, end_date, _type, force, verbose)
-    if bookmark:
-        if verbose:
-            click.secho(
-                'Start deleting Bookmark data...',
-                fg='green'
-            )
-        for _index, _type in prepare_es_indexes(
-            aggregation_types, None, bookmark, delete=True
-        ):
-            cli_delete_es_index(
-                _index, start_date, end_date, _type, force, verbose
-            )
+    aggregation_types = (aggregation_types
+                         or current_app.config['STATS_AGGREGATION_INDEXES'])
+    stats_cli = StatsCliUtil(
+        StatsCliUtil.AGGREGATIONS_TYPE,
+        aggregation_types, start_date, end_date, force, verbose
+    )
+    stats_cli.delete_data(bookmark)
 
 
 @aggregations.command('restore')
@@ -413,27 +394,14 @@ def _aggregations_restore(
     (Aggregation type value: celery-task|file-download|file-preview|record-view|
     item-create|search|top-view)
     """
-    start_date = parse_date(start_date)
-    end_date = parse_date(end_date, is_end_date=True)
     if verbose:
         click.secho(
             'Start to restore Aggregation data '
             'from the Database to Elasticsearch...',
             fg='green'
         )
-    flush_indices = set()
-    aggregation_data = get_aggregation_data_from_db(
-        aggregation_types, start_date, end_date, flush_indices
+    stats_cli = StatsCliUtil(
+        StatsCliUtil.AGGREGATIONS_TYPE,
+        aggregation_types, start_date, end_date, force, verbose
     )
-    cli_restore_es_data_from_db(aggregation_data, force, verbose)
-    if bookmark:
-        if verbose:
-            click.secho(
-                'Start to restore of Bookmark data '
-                'from the Database to Elasticsearch...',
-                fg='green'
-            )
-        bookmark_data = get_bookmark_data_from_db(
-            aggregation_types, start_date, end_date, bookmark
-        )
-        cli_restore_es_data_from_db(bookmark_data, force, verbose)
+    stats_cli.restore_data(bookmark)

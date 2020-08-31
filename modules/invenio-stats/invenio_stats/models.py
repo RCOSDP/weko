@@ -52,10 +52,7 @@ class _StataModelBase(Timestamp):
         :return:
         """
         query = db.session.query(cls)
-        if start_date:
-            query = query.filter(cls.date >= start_date)
-        if end_date:
-            query = query.filter(cls.date <= end_date)
+        query = cls.get_by_date(query, start_date, end_date)
         return query.all()
 
     @classmethod
@@ -70,12 +67,37 @@ class _StataModelBase(Timestamp):
         :return:
         """
         query = db.session.query(cls)
+        query = cls.get_by_date(query, start_date, end_date)
+        query = query.filter(cls.index.ilike(_index + "%"))
+        return query.all()
+
+    @classmethod
+    def get_by_source_id(
+        cls, source_id: str, start_date: datetime = None,
+        end_date: datetime = None
+    ) -> List:
+        """Get stats data by source id.
+
+        :param source_id: source id.
+        :param start_date:
+        :param end_date:
+        :return:
+        """
+        query = db.session.query(cls)
+        query = cls.get_by_date(query, start_date, end_date)
+        query = query.filter(cls.source_id.ilike(source_id + "%"))
+        return query.all()
+
+    @classmethod
+    def get_by_date(
+        cls, query, start_date: datetime = None, end_date: datetime = None
+    ):
         if start_date:
             query = query.filter(cls.date >= start_date)
         if end_date:
             query = query.filter(cls.date <= end_date)
-        query = query.filter(cls.index.ilike(_index + "%"))
-        return query.all()
+        return query
+
 
     @classmethod
     def __convert_data(cls, data_object: dict) -> object:
