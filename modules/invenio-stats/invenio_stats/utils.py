@@ -19,7 +19,9 @@ from math import ceil
 
 import click
 import six
+from typing import Union
 from dateutil import parser
+from elasticsearch import VERSION as ES_VERSION
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Search
 from flask import current_app, request, session
@@ -182,6 +184,11 @@ def parse_bucket_response(raw_res, pretty_result=dict()):
         return pretty_result
 
 
+def get_doctype(doc_type):
+    """Configure doc_type value according to ES version."""
+    return doc_type if ES_VERSION[0] < 7 else '_doc'
+
+
 def prepare_es_indexes(
     index_types,
     index_prefix=None,
@@ -199,17 +206,14 @@ def prepare_es_indexes(
     for _type in index_types:
         if not _type:
             continue
-
+        prefix = "stats-{}"
+        search_type = prefix.format(_type)
         # In case prepare indexes for the stats bookmark
         if bookmark_index:
-            prefix = "stats-{}-bookmark"
-        else:
-            prefix = "stats-{}"
-
-        search_type = prefix.format(_type)
-
+            _index = "{}-stats-bookmarks".format(search_index_prefix)
+            _doc_type = get_doctype('aggregation-bookmark')
         # In case prepare indexes for the stats event
-        if index_prefix:
+        elif index_prefix:
             _index = '{0}-{1}-{2}'.format(
                 search_index_prefix,
                 index_prefix,
@@ -218,10 +222,7 @@ def prepare_es_indexes(
             _doc_type = search_type
         else:
             _index = '{0}-{1}'.format(search_index_prefix, search_type)
-            if bookmark_index:
-                _doc_type = "{}-agg-bookmark".format(_type)
-            else:
-                _doc_type = '{0}-{1}-aggregation'.format(_type, "day")
+            _doc_type = '{0}-{1}-aggregation'.format(_type, "day")
         if not delete:
             yield _index
         else:
@@ -406,8 +407,6 @@ def cli_delete_es_index(
         index=_index,
         doc_type=doc_type,
     ).params(raise_on_error=False, ignore=[400, 404])
-    print("_index: ", _index)
-    print("doc_type: ", doc_type)
     range_args = {}
     if start_date:
         range_args['gte'] = start_date
@@ -438,7 +437,13 @@ def cli_delete_es_index(
         __show_verbose(force, success, failed)
 
 
-def parse_date(_date: str, is_end_date=False):
+def parse_date(_date: str, is_end_date: bool = False) -> Union[datetime, None]:
+    """Parse date.
+
+    :param _date:
+    :param is_end_date:
+    :return:
+    """
     def _parse_day():
         _year, _month, _day = _date.split("-")
         rtn = datetime(year=int(_year), month=int(_month), day=int(_day))
