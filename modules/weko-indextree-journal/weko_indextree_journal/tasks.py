@@ -77,8 +77,8 @@ def export_journal_task(p_path):
         kbart_folder = 'kbart'
         filelist_path = os.path.join(
             current_app.instance_path,
-            kbart_folder,
             current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            kbart_folder,
             'filelist.txt')
 
         # UtokyoRepository_Global_AllTitles_2018-12-12.txt
