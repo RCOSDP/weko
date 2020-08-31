@@ -668,43 +668,87 @@ function toObject(arr) {
        * @param identifier_key Identifier key
        * @param handlerFunction Handler function
        */
-      $scope.commonHandleForAuthorIdentifier = function (identifier_key, handlerFunction) {
+      $scope.commonHandleForAuthorIdentifier = function (identifier_key, handlerFunction, currentForm) {
         var data_author = {};
         let model = $rootScope.recordsVM.invenioRecordsModel;
         $scope.data_author.map(function (item) {
           data_author[item.scheme] = item.url;
         })
-        if ($scope.authors_keys.indexOf(identifier_key) >= 0 ) {
+
+        let key = identifier_key.replace("[]", "");
+        if ($scope.authors_keys.indexOf(key) >= 0 ) {
+          let keyObject = {};
+          if (currentForm) {
+            keyObject = $scope.getNameIdentifierKey(currentForm.key);
+          }
           let list_nameIdentifiers = [];
-          let uri_form_model = model[identifier_key];
+          let uri_form_model = model[key];
+          let identifierKeyIndex = keyObject[key];
+          if (typeof identifierKeyIndex !== 'undefined') {
+            uri_form_model = uri_form_model[identifierKeyIndex]
+          }
           if (!Array.isArray(uri_form_model)) {
             if (Object.keys(uri_form_model).indexOf($scope.identifiers) >= 0) {
               let name_identifier_form = uri_form_model[$scope.identifiers];
+              let identifiersIndex = keyObject[$scope.identifiers];
+              if (typeof identifiersIndex !== 'undefined') {
+                name_identifier_form = name_identifier_form[identifiersIndex];
+              }
+              if (Array.isArray(name_identifier_form)) {
               name_identifier_form.forEach(function (form) {
                 handlerFunction(form, data_author);
                 list_nameIdentifiers.push(form);
               })
+              } else {
+                handlerFunction(name_identifier_form, data_author);
+                list_nameIdentifiers.push(name_identifier_form);
+              }
             }
           }
           else if (Array.isArray(uri_form_model)) {
             uri_form_model.forEach(function (object) {
               if (Object.keys(object).indexOf($scope.identifiers) >= 0) {
                 let name_identifier_form = object[$scope.identifiers];
-                name_identifier_form.forEach(function (form) {
-                  handlerFunction(form, data_author);
-                  list_nameIdentifiers.push(form);
-                })
+                let identifiersIndex = keyObject[$scope.identifiers];
+                if (typeof identifiersIndex !== 'undefined') {
+                  name_identifier_form = name_identifier_form[identifiersIndex];
+                }
+                if (Array.isArray(name_identifier_form)) {
+                  name_identifier_form.forEach(function (form) {
+                    handlerFunction(form, data_author);
+                    list_nameIdentifiers.push(form);
+                  })
+                } else {
+                  handlerFunction(name_identifier_form, data_author);
+                  list_nameIdentifiers.push(name_identifier_form);
+                }
               }
             })
           }
 
           $scope.sub_item_scheme.map(function (scheme) {
-            if (Object.keys(model[identifier_key]).indexOf(scheme) >= 0) {
-              model[identifier_key].scheme = list_nameIdentifiers;
+            if (Object.keys(uri_form_model).indexOf(scheme) >= 0) {
+              uri_form_model.scheme = list_nameIdentifiers;
             }
           })
         }
+      }
 
+      $scope.getNameIdentifierKey = function (keys) {
+        let keyObject = {}
+        for (let index in keys) {
+          let keyName = keys[index];
+          let isString = typeof keyName === 'string' || keyName instanceof String;
+          if (isString) {
+            let nextIndex = parseInt(index) + 1;
+            if (nextIndex < keys.length) {
+              if (!isNaN(keys[nextIndex])) {
+                keyObject[keyName] = keys[nextIndex];
+              }
+            }
+          }
+        }
+        return keyObject
       }
 
       /**
@@ -712,14 +756,14 @@ function toObject(arr) {
        * @param e HTML event
        * @param identifier_key Identifier key
        */
-      $scope.clearAuthorValue = function (e, identifier_key) {
+      $scope.clearAuthorValue = function (currentForm, identifier_key) {
         function handleClearAuthorValue(form) {
           if (form.hasOwnProperty($scope.identifier_mapping) && form.hasOwnProperty($scope.uri_identifier_mapping)) {
             form[$scope.identifier_mapping] = "";
             form[$scope.uri_identifier_mapping] = "";
           }
                   }
-        $scope.commonHandleForAuthorIdentifier(identifier_key, handleClearAuthorValue);
+        $scope.commonHandleForAuthorIdentifier(identifier_key, handleClearAuthorValue, currentForm);
           }
 
       /**
@@ -727,7 +771,7 @@ function toObject(arr) {
        * @param e HTML event
        * @param identifier_key Identifier key.
        */
-      $scope.getIdentifierURIValue = function (e, identifier_key) {
+      $scope.getIdentifierURIValue = function (currentForm, identifier_key) {
         function handleGetValueForAuthorIdentifierURI(form, data_author) {
           let schemaMappingKey = $scope.scheme_identifier_mapping;
           let idMappingKey = $scope.identifier_mapping;
@@ -739,7 +783,7 @@ function toObject(arr) {
             form[uriMappingKey] = data_author[form[schemaMappingKey]];
           }
         }
-        $scope.commonHandleForAuthorIdentifier(identifier_key, handleGetValueForAuthorIdentifierURI);
+        $scope.commonHandleForAuthorIdentifier(identifier_key, handleGetValueForAuthorIdentifierURI, currentForm);
       }
 
       $scope.initAuthorList = function () {
@@ -820,7 +864,7 @@ function toObject(arr) {
                             if (typeof author_form.key === 'string') {
                               let identifierKey = author_form.key.split('.')[0];
                               if (scheme === $scope.scheme_identifier_mapping) {
-                                author_form.items[searchTitleMap]['onChange'] = 'clearAuthorValue($event,"' + identifierKey + '")';
+                                author_form.items[searchTitleMap]['onChange'] = 'clearAuthorValue(form,"' + identifierKey + '")';
                               } else if ($scope.scheme_affiliation_mapping.indexOf(scheme) >= 0) {
                                 author_form.items[searchTitleMap]['onChange'] = 'getValueAuthor($event,"' + identifierKey + '")';
                               }
@@ -842,8 +886,8 @@ function toObject(arr) {
                let items = author_form.items;
                 for (var i = 0; i < items.length; i++) {
                  var key = items[i].key;
-                  if (typeof key === 'string') {
-                   let listKey = key.split('.');
+                  if (typeof key === "string") {
+                    let listKey = key.split(".");
                     for (let index in listKey) {
                       if (listKey[index] === item) {
                        var identifier_id_form = items[i];
@@ -852,14 +896,17 @@ function toObject(arr) {
                   }
             }
 
-                if (identifier_id_form && typeof author_form.key === 'string') {
-                 identifier_id_form['onChange'] = 'getIdentifierURIValue($event,"' + author_form.key.split('.')[0] + '")';
+                if (identifier_id_form && typeof author_form.key === "string") {
+                  identifier_id_form["onChange"] =
+                    'getIdentifierURIValue(form,"' +
+                    author_form.key.split(".")[0] +
+                    '")';
                 }
-              })
+              });
             }
       }
       function checkFillCreatorIdentifierURI(nameIdentifierURI, nameIdentifier) {
-        return !!(nameIdentifierURI.search(/#+$/) > -1 && nameIdentifier);
+        return !!(nameIdentifierURI && nameIdentifierURI.search(/#+$/) > -1 && nameIdentifier);
       }
 
       $scope.searchUsageApplicationIdKey = function() {

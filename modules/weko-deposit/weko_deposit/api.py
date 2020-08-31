@@ -1346,14 +1346,67 @@ class _FormatSysCreator:
         :param creator_list: Creator list.
         :param creator_list_temp: Creator temporary list.
         """
+
+        def _run_format_affiliation(affiliation_max, affiliation_min, languages,
+                                    creator_lists,
+                                    creator_list_temps):
+            """Format affiliation creator.
+
+            :param affiliation_max: Affiliation max.
+            :param affiliation_min: Affiliation min.
+            :param languages: Language.
+            :param creator_lists: Creator lists.
+            :param creator_list_temps: Creator lists temps.
+
+            """
+            for index in range(len(affiliation_max)):
+                if index < len(affiliation_min):
+                    affiliation_max[index].update(
+                        affiliation_min[index])
+                    self._get_creator_to_show_popup(
+                        [affiliation_max[index]],
+                        languages, creator_lists,
+                        creator_list_temps)
+                else:
+                    self._get_creator_to_show_popup(
+                        [affiliation_max[index]],
+                        languages, creator_lists,
+                        creator_list_temps)
+
+        def format_affiliation(affiliation_data):
+            """Format affiliation creator.
+
+            :param affiliation_data: Affiliation data.
+            """
+            for creator in affiliation_data:
+                affiliation_name_format = creator.get('affiliationNames', [])
+                affiliation_name_identifiers_format = creator.get(
+                    'affiliationNameIdentifiers', [])
+                if len(affiliation_name_format) >= len(
+                        affiliation_name_identifiers_format):
+                    affiliation_max = affiliation_name_format
+                    affiliation_min = affiliation_name_identifiers_format
+                else:
+                    affiliation_max = affiliation_name_identifiers_format
+                    affiliation_min = affiliation_name_format
+
+                _run_format_affiliation(affiliation_max, affiliation_min,
+                                        language,
+                                        creator_list,
+                                        creator_list_temp)
+
         if isinstance(creators, dict):
             creator_list_temp = []
             for key, value in creators.items():
                 if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'],
                             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']]):
                     continue
-                self._get_creator_to_show_popup(value, language, creator_list,
-                                                creator_list_temp)
+                if key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']:
+                    format_affiliation(value)
+                else:
+                    self._get_creator_to_show_popup(value, language,
+                                                    creator_list,
+                                                    creator_list_temp)
             if creator_list_temp:
                 if language:
                     creator_list.append({language: creator_list_temp})
