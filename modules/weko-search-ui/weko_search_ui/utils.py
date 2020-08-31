@@ -1725,9 +1725,8 @@ def validattion_item_property_required(
                         data.append(value)
                 data.append(file_name_data)
 
-                if check_required_data(
-                        data, key + '.filename', True):
-                    return False
+            if check_required_data(data, key + '.filename', True):
+                return False
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = get_data_by_property(

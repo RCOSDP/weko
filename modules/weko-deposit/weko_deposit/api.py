@@ -520,10 +520,15 @@ class WekoDeposit(Deposit):
         """Update only drafts."""
         self['_deposit']['status'] = 'draft'
         if len(args) > 1:
-            dc = self.convert_item_metadata(args[0], args[1])
+            dc, deleted_items = self.convert_item_metadata(args[0], args[1])
         else:
-            dc = self.convert_item_metadata(args[0])
+            dc, deleted_items = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
+        if deleted_items:
+            for key in deleted_items:
+                if key in self:
+                    self.pop(key)
+
 #        if 'pid' in self['_deposit']:
 #            self['_deposit']['pid']['revision_id'] += 1
         try:
@@ -779,8 +784,14 @@ class WekoDeposit(Deposit):
         if ItemMetadata.query.filter_by(id=self.id).first():
             obj = ItemsMetadata.get_record(self.id)
             obj.update(self.data)
+            if self.data.get('deleted_items'):
+                for key in self.data.get('deleted_items'):
+                    if key in obj:
+                        obj.pop(key)
             obj.commit()
         else:
+            if self.data.get('deleted_items'):
+                self.data.pop('deleted_items')
             ItemsMetadata.create(self.data, id_=self.pid.object_uuid,
                                  item_type_id=self.get('item_type_id'))
 
@@ -879,7 +890,7 @@ class WekoDeposit(Deposit):
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
-        return dc
+        return dc, data.get('deleted_items')
 
     def _convert_description_to_object(self):
         """Convert description to object."""
