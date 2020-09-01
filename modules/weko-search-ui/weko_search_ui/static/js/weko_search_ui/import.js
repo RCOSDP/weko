@@ -5,6 +5,7 @@ const selected_file_name = document.getElementById("selected_file_name").value;
 const index_tree = document.getElementById("index_tree").value;
 const designate_index = document.getElementById("designate_index").value;
 const item_type = document.getElementById("item_type").value;
+const item_type_templates = document.getElementById("item_type_templates").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
@@ -537,6 +538,8 @@ class ImportComponent extends React.Component {
             </div>
           </div>
         </div>
+        <hr />
+        <ItemTypeComponent />
         <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-710">
           <ReactBootstrap.Modal.Header closeButton>
             <h4 className="modal-title in_line">{change_identifier_mode}</h4>
@@ -971,6 +974,71 @@ class ResultComponent extends React.Component {
         </div>
       </div>
     )
+  }
+}
+
+class ItemTypeComponent extends React.Component {
+
+  constructor() {
+    super();
+    this.state = {
+      selected_item_type: null
+    };
+    this.getListItemType = this.getListItemType.bind(this);
+  }
+
+  componentDidMount() {
+    this.getListItemType();
+  }
+
+  getListItemType() {
+    fetch("/api/itemtypes/lastest",
+      {
+        method: 'POST',
+        body: JSON.stringify({ type: "normal_type" }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error();
+        } else {
+          // render item type cbx
+        }
+      })
+      .catch(() => alert("Get list Item Type failed"));
+  }
+
+  onCbxItemTypeChange() {
+
+  }
+
+  onBtnDownloadClick() {
+
+  }
+
+  render() {
+    const {selected_item_type} = this.state;
+
+    return (
+      <div class="item_type_compoment">
+        <h4>{item_type_templates}</h4>
+        <div class="row">
+          <div class="col-md-12 form-inline">
+            <div class="form-group">
+              <label style={{marginRight: ".5rem"}}>{item_type}:</label>
+              <select class="form-control" style={{marginRight: ".5rem"}}>
+                <option>BaseFilesView(5)</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" disabled={selected_item_type === null}>
+              <span class="glyphicon glyphicon-cloud-download icon"></span>{download}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 }
 
