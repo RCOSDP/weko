@@ -39,6 +39,7 @@ from invenio_assets import NpmBundle
 
 variables_css_plugin = Bundle(
     '/home/invenio/.virtualenvs/invenio/var/instance/data/_variables.scss',
+    filters='node-scss,cleancssurl',
     output="gen/weko_theme_variables.%(version)s.css",
 )
 """Background Theme's CSS plugin."""
