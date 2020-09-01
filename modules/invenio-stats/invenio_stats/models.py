@@ -98,7 +98,6 @@ class _StataModelBase(Timestamp):
             query = query.filter(cls.date <= end_date)
         return query
 
-
     @classmethod
     def __convert_data(cls, data_object: dict) -> object:
         if data_object.get("_source"):
