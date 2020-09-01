@@ -1272,21 +1272,24 @@ def handle_check_cnri(list_record):
     for item in list_record:
         error = None
         item_id = str(item.get('id'))
+        cnri = item.get('cnri')
 
         if item.get('is_change_identifier'):
-            if not item.get('cnri'):
+            if not cnri:
                 error = _('Please specify {}.').format('CNRI')
+            elif not re.search(WEKO_IMPORT_DOI_PATTERN, cnri):
+                error = _('Specified {} is invalid.').format('CNRI')
         else:
             if item.get('status') == 'new':
-                if item.get('cnri'):
+                if cnri:
                     error = _('{} cannot be set.').format('CNRI')
             else:
                 pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
                 if pid_cnri:
-                    if not pid_cnri.pid_value.endswith(str(item.get('cnri'))):
+                    if not pid_cnri.pid_value.endswith(str(cnri)):
                         error = _('Specified {} is different '
                                   + 'from existing {}.').format('CNRI', 'CNRI')
-                elif item.get('cnri'):
+                elif cnri:
                     error = _('Specified {} is different '
                               + 'from existing {}.').format('CNRI', 'CNRI')
 
@@ -1324,8 +1327,11 @@ def handle_check_doi_ra(list_record):
             error = _('{} is required item.').format('DOI_RA')
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
-                error = _('{} must be one of JaLC, Crossref, DataCite.') \
-                    .format('DOI_RA')
+                error = _('{} must be one of JaLC, Crossref,' \
+                            ' DataCite, NDL JaLC.').format('DOI_RA')
+            elif doi_ra == WEKO_IMPORT_DOI_TYPE[-1]:
+                error = _('Cannot register NDL JaLC for current' \
+                            ' Item Type of this item.').format('DOI_RA')
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
@@ -1364,22 +1370,22 @@ def handle_check_doi(list_record):
             error = _('{} is required item.').format('DOI')
         elif item.get('doi_ra'):
             if item.get('is_change_identifier'):
-                if not item.get('doi'):
+                if not doi:
                     error = _('Please specify {}.').format('DOI')
                 elif not re.search(WEKO_IMPORT_DOI_PATTERN, doi):
                     error = _('Specified {} is invalid.').format('DOI')
             else:
                 if item.get('status') == 'new':
-                    if item.get('doi'):
+                    if doi:
                         error = _('{} cannot be set.').format('DOI')
                 else:
                     pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
                     if pid_doi:
-                        if not item.get('doi'):
+                        if not doi:
                             error = _('Please specify {}.').format('DOI')
-                        elif not pid_doi.pid_value.endswith(item.get('doi')):
-                            error = _('Specified {} is different '
-                                      + 'from existing {}.').format('DOI', 'DOI')
+                        elif not pid_doi.pid_value.endswith(doi):
+                            error = _('Specified {} is different ' \
+                                      'from existing {}.').format('DOI', 'DOI')
 
         if error:
             item['errors'] = item['errors'] + [error] \

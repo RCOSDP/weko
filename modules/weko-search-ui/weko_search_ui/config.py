@@ -437,7 +437,7 @@ WEKO_ADMIN_LIFETIME_DEFAULT = 1800
 WEKO_IMPORT_EMAIL_PATTERN = \
     r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 WEKO_IMPORT_PUBLISH_STATUS = ['publish', 'private']
-WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite']
+WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
 WEKO_IMPORT_DOI_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){1,290}$"
 
 WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
