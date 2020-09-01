@@ -59,11 +59,12 @@ from .utils import _get_max_export_items, export_items, get_current_user, \
     get_user_information, get_user_permission, get_workflow_by_item_type_id, \
     is_schema_include_key, parse_ranking_results, \
     remove_excluded_items_in_json_schema, set_multi_language_name, \
-    to_files_js, translate_validation_message, update_index_tree_for_record, \
-    update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
-    update_schema_remove_hidden_item, update_sub_items_by_user_role, \
-    validate_form_input_data, validate_save_title_and_share_user_id, \
-    validate_user, validate_user_mail_and_index
+    to_files_js, translate_schema_form, translate_validation_message, \
+    update_index_tree_for_record, update_json_schema_by_activity_id, \
+    update_schema_form_by_activity_id, update_schema_remove_hidden_item, \
+    update_sub_items_by_user_role, validate_form_input_data, \
+    validate_save_title_and_share_user_id, validate_user, \
+    validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -340,33 +341,7 @@ def get_schema_form(item_type_id=0, activity_id=''):
 
         if 'default' != cur_lang:
             for elem in schema_form:
-                if 'title_i18n' in elem and cur_lang in elem['title_i18n']\
-                        and len(elem['title_i18n'][cur_lang]) > 0:
-                    elem['title'] = elem['title_i18n'][cur_lang]
-                if 'items' in elem:
-                    for sub_elem in elem['items']:
-                        if 'title_i18n' in sub_elem and cur_lang in \
-                            sub_elem['title_i18n'] and len(
-                                sub_elem['title_i18n'][cur_lang]) > 0:
-                            sub_elem['title'] = sub_elem[
-                                'title_i18n'][cur_lang]
-                        if sub_elem.get('title') == 'Group/Price':
-                            for sub_item in sub_elem['items']:
-                                if sub_item['title'] == "価格" and \
-                                    'validationMessage_i18n' in sub_item and \
-                                    cur_lang in sub_item[
-                                    'validationMessage_i18n'] and\
-                                    len(sub_item['validationMessage_i18n']
-                                        [cur_lang]) > 0:
-                                    sub_item['validationMessage'] = sub_item[
-                                        'validationMessage_i18n'][cur_lang]
-                        if 'items' in sub_elem:
-                            for sub_item in sub_elem['items']:
-                                if 'title_i18n' in sub_item and cur_lang in \
-                                        sub_item['title_i18n'] and len(
-                                        sub_item['title_i18n'][cur_lang]) > 0:
-                                    sub_item['title'] = sub_item['title_i18n'][
-                                        cur_lang]
+                translate_schema_form(elem, cur_lang)
 
         if activity_id:
             updated_schema_form = update_schema_form_by_activity_id(

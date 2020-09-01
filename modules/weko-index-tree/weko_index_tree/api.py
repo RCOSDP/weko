@@ -467,9 +467,17 @@ class Indexes(object):
         return tree
 
     @classmethod
+    def get_browsing_tree_ignore_more(cls, pid=0):
+        """Get browsing tree ignore more."""
+        tree = cls.get_index_tree(pid)
+        reset_tree(tree=tree, ignore_more=True)
+        return tree
+
+    @classmethod
     def get_browsing_tree_paths(cls, pid=0):
         """Get browsing tree paths."""
-        return get_index_id_list(cls.get_browsing_tree(pid), [])
+        tree = cls.get_browsing_tree_ignore_more(pid)
+        return get_index_id_list(tree, [])
 
     @classmethod
     def get_contribute_tree(cls, pid, root_node_id=0):

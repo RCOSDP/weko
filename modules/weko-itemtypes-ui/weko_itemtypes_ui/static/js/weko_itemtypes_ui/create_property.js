@@ -14,6 +14,7 @@ $(document).ready(function () {
   $('#previews').on('click', function(){
     schema = editor.getValue();
     forms = editor.exportForm();
+    removeCurrentEnum(schema.properties);
     $('#schema_json').val(JSON.stringify(schema, null, 4));
     $('#form1_json').val(JSON.stringify(forms.form, null, 4));
     $('#form2_json').val(JSON.stringify(forms.forms, null, 4));
@@ -34,6 +35,15 @@ $(document).ready(function () {
     }
     send(url_update_schema, data);
   });
+
+  function removeCurrentEnum(properties) {
+    Object.keys(properties).forEach(function(key) {
+      let subItem = properties[key];
+      if (subItem.hasOwnProperty('currentEnum')) {
+        delete subItem['currentEnum'];
+      }
+    })
+  }
 
   function send(url, data){
     $.ajax({

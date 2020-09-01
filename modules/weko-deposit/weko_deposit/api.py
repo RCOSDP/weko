@@ -520,10 +520,15 @@ class WekoDeposit(Deposit):
         """Update only drafts."""
         self['_deposit']['status'] = 'draft'
         if len(args) > 1:
-            dc = self.convert_item_metadata(args[0], args[1])
+            dc, deleted_items = self.convert_item_metadata(args[0], args[1])
         else:
-            dc = self.convert_item_metadata(args[0])
+            dc, deleted_items = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
+        if deleted_items:
+            for key in deleted_items:
+                if key in self:
+                    self.pop(key)
+
 #        if 'pid' in self['_deposit']:
 #            self['_deposit']['pid']['revision_id'] += 1
         try:
@@ -779,8 +784,14 @@ class WekoDeposit(Deposit):
         if ItemMetadata.query.filter_by(id=self.id).first():
             obj = ItemsMetadata.get_record(self.id)
             obj.update(self.data)
+            if self.data.get('deleted_items'):
+                for key in self.data.get('deleted_items'):
+                    if key in obj:
+                        obj.pop(key)
             obj.commit()
         else:
+            if self.data.get('deleted_items'):
+                self.data.pop('deleted_items')
             ItemsMetadata.create(self.data, id_=self.pid.object_uuid,
                                  item_type_id=self.get('item_type_id'))
 
@@ -879,7 +890,7 @@ class WekoDeposit(Deposit):
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
-        return dc
+        return dc, data.get('deleted_items')
 
     def _convert_description_to_object(self):
         """Convert description to object."""
@@ -1124,71 +1135,66 @@ class WekoRecord(Record):
     @property
     def items_show_list(self):
         """Return the item show list."""
-        try:
+        items = []
+        solst, meta_options = get_options_and_order_list(
+            self.get('item_type_id'))
 
-            items = []
-            solst, meta_options = get_options_and_order_list(
-                self.get('item_type_id'))
+        for lst in solst:
+            key = lst[0]
 
-            for lst in solst:
-                key = lst[0]
+            val = self.get(key)
+            option = meta_options.get(key, {}).get('option')
+            if not val or not option:
+                continue
 
-                val = self.get(key)
-                option = meta_options.get(key, {}).get('option')
-                if not val or not option:
-                    continue
+            hidden = option.get("hidden")
+            if hidden:
+                items.append({
+                    'attribute_name_hidden': val.get('attribute_name')
+                })
+                continue
 
-                hidden = option.get("hidden")
-                if hidden:
-                    items.append({
-                        'attribute_name_hidden': val.get('attribute_name')
-                    })
-                    continue
-
-                mlt = val.get('attribute_value_mlt')
-                if mlt is not None:
-                    nval = dict()
-                    nval['attribute_name'] = val.get('attribute_name')
-                    nval['attribute_name_i18n'] = lst[2] or val.get(
-                        'attribute_name')
-                    nval['attribute_type'] = val.get('attribute_type')
-                    if nval['attribute_name'] == 'Reference' \
-                            or nval['attribute_type'] == 'file':
-                        nval['attribute_value_mlt'] = \
-                            get_all_items(copy.deepcopy(mlt),
-                                          copy.deepcopy(solst), True)
-                    else:
-                        is_author = nval['attribute_type'] == 'creator'
-                        sys_bibliographic = _FormatSysBibliographicInformation(
-                            copy.deepcopy(mlt),
-                            copy.deepcopy(solst)
-                        )
-                        if is_author:
-                            language_list = []
-                            from weko_gridlayout.utils import \
-                                get_register_language
-                            for lang in get_register_language():
-                                language_list.append(lang['lang_code'])
-                            creators = self._get_creator(mlt, language_list)
-                            nval['attribute_value_mlt'] = creators
-                        elif sys_bibliographic.is_bibliographic():
-                            nval['attribute_value_mlt'] = \
-                                sys_bibliographic.get_bibliographic_list()
-                        else:
-                            nval['attribute_value_mlt'] = \
-                                get_attribute_value_all_items(
-                                    copy.deepcopy(mlt),
-                                    copy.deepcopy(solst),
-                                    is_author)
-                    items.append(nval)
+            mlt = val.get('attribute_value_mlt')
+            if mlt is not None:
+                nval = dict()
+                nval['attribute_name'] = val.get('attribute_name')
+                nval['attribute_name_i18n'] = lst[2] or val.get(
+                    'attribute_name')
+                nval['attribute_type'] = val.get('attribute_type')
+                if nval['attribute_name'] == 'Reference' \
+                        or nval['attribute_type'] == 'file':
+                    nval['attribute_value_mlt'] = \
+                        get_all_items(copy.deepcopy(mlt),
+                                      copy.deepcopy(solst), True)
                 else:
-                    val['attribute_name_i18n'] = lst[2] or val.get(
-                        'attribute_name')
-                    items.append(val)
+                    is_author = nval['attribute_type'] == 'creator'
+                    sys_bibliographic = _FormatSysBibliographicInformation(
+                        copy.deepcopy(mlt),
+                        copy.deepcopy(solst)
+                    )
+                    if is_author:
+                        language_list = []
+                        from weko_gridlayout.utils import get_register_language
+                        for lang in get_register_language():
+                            language_list.append(lang['lang_code'])
+                        creators = self._get_creator(mlt, language_list)
+                        nval['attribute_value_mlt'] = creators
+                    elif sys_bibliographic.is_bibliographic():
+                        nval['attribute_value_mlt'] = \
+                            sys_bibliographic.get_bibliographic_list()
+                    else:
+                        nval['attribute_value_mlt'] = \
+                            get_attribute_value_all_items(
+                                copy.deepcopy(mlt),
+                                copy.deepcopy(solst),
+                                is_author)
+                items.append(nval)
+            else:
+                val['attribute_name_i18n'] = lst[2] or val.get(
+                    'attribute_name')
+                items.append(val)
 
-            return items
-        except BaseException:
-            abort(500)
+        return items
 
     @staticmethod
     def _get_creator(meta_data, languages):
@@ -1340,14 +1346,66 @@ class _FormatSysCreator:
         :param creator_list: Creator list.
         :param creator_list_temp: Creator temporary list.
         """
+        def _run_format_affiliation(affiliation_max, affiliation_min, languages,
+                                    creator_lists,
+                                    creator_list_temps):
+            """Format affiliation creator.
+
+            :param affiliation_max: Affiliation max.
+            :param affiliation_min: Affiliation min.
+            :param languages: Language.
+            :param creator_lists: Creator lists.
+            :param creator_list_temps: Creator lists temps.
+
+            """
+            for index in range(len(affiliation_max)):
+                if index < len(affiliation_min):
+                    affiliation_max[index].update(
+                        affiliation_min[index])
+                    self._get_creator_to_show_popup(
+                        [affiliation_max[index]],
+                        languages, creator_lists,
+                        creator_list_temps)
+                else:
+                    self._get_creator_to_show_popup(
+                        [affiliation_max[index]],
+                        languages, creator_lists,
+                        creator_list_temps)
+
+        def format_affiliation(affiliation_data):
+            """Format affiliation creator.
+
+            :param affiliation_data: Affiliation data.
+            """
+            for creator in affiliation_data:
+                affiliation_name_format = creator.get('affiliationNames', [])
+                affiliation_name_identifiers_format = creator.get(
+                    'affiliationNameIdentifiers', [])
+                if len(affiliation_name_format) >= len(
+                        affiliation_name_identifiers_format):
+                    affiliation_max = affiliation_name_format
+                    affiliation_min = affiliation_name_identifiers_format
+                else:
+                    affiliation_max = affiliation_name_identifiers_format
+                    affiliation_min = affiliation_name_format
+
+                _run_format_affiliation(affiliation_max, affiliation_min,
+                                        language,
+                                        creator_list,
+                                        creator_list_temp)
+
         if isinstance(creators, dict):
             creator_list_temp = []
             for key, value in creators.items():
                 if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'],
                             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']]):
                     continue
-                self._get_creator_to_show_popup(value, language, creator_list,
-                                                creator_list_temp)
+                if key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']:
+                    format_affiliation(value)
+                else:
+                    self._get_creator_to_show_popup(value, language,
+                                                    creator_list,
+                                                    creator_list_temp)
             if creator_list_temp:
                 if language:
                     creator_list.append({language: creator_list_temp})
@@ -1751,8 +1809,9 @@ class _FormatSysBibliographicInformation:
         """
         page = ''
         page += page_start if page_start is not None else ''
-        temp = page_end if page == '' else '-' + page_end
-        page += temp if page_end else ''
+        if page_end is not None:
+            temp = page_end if page == '' else '-' + page_end
+            page += temp if page_end else ''
 
         return page
 
