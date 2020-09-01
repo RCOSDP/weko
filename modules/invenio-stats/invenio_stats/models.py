@@ -114,15 +114,19 @@ class _StataModelBase(Timestamp):
         return None
 
     @classmethod
-    def delete_by_source_id(cls, source_id: str) -> bool:
+    def delete_by_source_id(cls, source_id: str, _index: str) -> bool:
         """Delete stats aggregation by source id.
 
         :param source_id: source id
+        :param _index: index
         :return:
         """
         try:
             with db.session.begin_nested():
-                db.session.query(cls).filter_by(source_id=source_id).delete()
+                db.session.query(cls).filter_by(
+                    source_id=source_id,
+                    index=_index
+                ).delete()
             return True
         except SQLAlchemyError as err:
             current_app.logger.error("Unexpected error: ", err)
@@ -143,7 +147,8 @@ class _StataModelBase(Timestamp):
                 return False
             with db.session.begin_nested():
                 if delete:
-                    if cls.delete_by_source_id(data_object.get("_id")):
+                    if cls.delete_by_source_id(data_object.get("_id"),
+                                               data_object.get("_index")):
                         db.session.add(stats_data)
                     else:
                         return False
