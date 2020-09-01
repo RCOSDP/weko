@@ -34,7 +34,6 @@ from datetime import datetime
 from functools import reduce
 from operator import getitem
 
-import bagit
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
@@ -367,34 +366,27 @@ def check_import_items(file_content: str, is_change_identifier: bool):
         with open(import_path + '.zip', 'wb+') as f:
             f.write(file_content_decoded)
         shutil.unpack_archive(import_path + '.zip', extract_dir=data_path)
-        bag = bagit.Bag(data_path)
 
-        # Valid importing zip file format
-        if bag.is_valid():
-            data_path += '/data'
-            list_record = []
-            for tsv_entry in os.listdir(data_path):
-                if tsv_entry.endswith('.tsv'):
-                    list_record.extend(
-                        unpackage_import_file(data_path, tsv_entry))
-            list_record = handle_check_exist_record(list_record)
-            handle_check_and_prepare_publish_status(list_record)
-            handle_check_and_prepare_index_tree(list_record)
-            handle_check_and_prepare_feedback_mail(list_record)
-            handle_set_change_identifier_flag(
-                list_record, is_change_identifier)
-            handle_check_cnri(list_record)
-            handle_check_doi_ra(list_record)
-            handle_check_doi(list_record)
-            handle_check_date(list_record)
-            return {
-                'list_record': list_record,
-                'data_path': data_path
-            }
-        else:
-            return {
-                'error': 'Zip file is not follow Bagit format.'
-            }
+        data_path += '/data'
+        list_record = []
+        for tsv_entry in os.listdir(data_path):
+            if tsv_entry.endswith('.tsv'):
+                list_record.extend(
+                    unpackage_import_file(data_path, tsv_entry))
+        list_record = handle_check_exist_record(list_record)
+        handle_check_and_prepare_publish_status(list_record)
+        handle_check_and_prepare_index_tree(list_record)
+        handle_check_and_prepare_feedback_mail(list_record)
+        handle_set_change_identifier_flag(
+            list_record, is_change_identifier)
+        handle_check_cnri(list_record)
+        handle_check_doi_ra(list_record)
+        handle_check_doi(list_record)
+        handle_check_date(list_record)
+        return {
+            'list_record': list_record,
+            'data_path': data_path
+        }
     except Exception:
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
