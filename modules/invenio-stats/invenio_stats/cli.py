@@ -31,7 +31,6 @@ def abort_if_false(ctx, param, value):
 
 def lazy_result(f):
     """Decorate function to return LazyProxy."""
-
     @wraps(f)
     def decorated(ctx, param, value):
         return LocalProxy(lambda: f(ctx, param, value))

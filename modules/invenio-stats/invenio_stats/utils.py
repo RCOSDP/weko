@@ -274,7 +274,7 @@ class QueryFileReportsHelper(object):
         if 'buckets' in res and res['buckets'] is not None:
             cls.calc_file_stats_reports(res, data_list, all_groups)
         elif res['get-file-download-per-user-report'] is not None \
-            and res['get-file-preview-per-user-report'] is not None:
+                and res['get-file-preview-per-user-report'] is not None:
             cls.calc_file_per_using_report(res, data_list)
 
     @classmethod

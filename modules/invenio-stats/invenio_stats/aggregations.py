@@ -287,9 +287,9 @@ class StatAggregator(object):
     def agg_iter(self, lower_limit=None, upper_limit=None):
         """Aggregate and return dictionary to be indexed in ES."""
         lower_limit = (
-            lower_limit or
-            self.bookmark_api.get_bookmark() or
-            self._get_oldest_event_timestamp()
+            lower_limit
+            or self.bookmark_api.get_bookmark()
+            or self._get_oldest_event_timestamp()
         )
         upper_limit = upper_limit or (
             datetime.datetime.utcnow().replace(microsecond=0).isoformat())
@@ -371,9 +371,9 @@ class StatAggregator(object):
             return
 
         lower_limit = (
-            start_date or
-            self.bookmark_api.get_bookmark() or
-            self._get_oldest_event_timestamp()
+            start_date
+            or self.bookmark_api.get_bookmark()
+            or self._get_oldest_event_timestamp()
         )
         # Stop here if no bookmark could be estimated.
         if lower_limit is None:
@@ -398,8 +398,8 @@ class StatAggregator(object):
             )
             if update_bookmark:
                 self.bookmark_api.set_bookmark(
-                    upper_limit.strftime(self.doc_id_suffix) or
-                    datetime.datetime.utcnow().strftime(self.doc_id_suffix)
+                    upper_limit.strftime(self.doc_id_suffix)
+                    or datetime.datetime.utcnow().strftime(self.doc_id_suffix)
                 )
             self.indices = set()
             lower_limit = lower_limit + datetime.timedelta(self.batch_size)
