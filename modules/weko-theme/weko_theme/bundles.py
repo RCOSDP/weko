@@ -37,11 +37,17 @@ bundle as an example):
 from flask_assets import Bundle
 from invenio_assets import NpmBundle
 
+variables_css_plugin = Bundle(
+    '/home/invenio/.virtualenvs/invenio/var/instance/data/_variables.scss',
+    output="gen/weko_theme_variables.%(version)s.css",
+)
+"""Background Theme's CSS plugin."""
+
 css_bootstrap = NpmBundle(
     'css/weko_theme/styles.scss',
+    variables_css_plugin,
     depends=(
         'scss/invenio_theme/*.scss',
-        'css/weko_theme/_variables.scss',
         'scss/invenio_communities/variables.scss',
         'scss/invenio_communities/communities/*.scss',
     ),
