@@ -45,7 +45,6 @@ variables_css_plugin = Bundle(
 
 css_bootstrap = NpmBundle(
     'css/weko_theme/styles.scss',
-    variables_css_plugin,
     depends=(
         'scss/invenio_theme/*.scss',
         'scss/invenio_communities/variables.scss',
