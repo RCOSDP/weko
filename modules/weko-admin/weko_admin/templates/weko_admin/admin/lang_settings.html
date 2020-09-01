@@ -24,7 +24,6 @@
 {{ super() }}
 {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}<!-- New -->
-{% assets "weko_theme_css_variables" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
 {% endblock %}
