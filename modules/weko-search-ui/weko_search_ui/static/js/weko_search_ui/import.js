@@ -41,6 +41,8 @@ const done = document.getElementById("done").value;
 const to_do = document.getElementById("to_do").value;
 const result_label = document.getElementById("result").value;
 const next = document.getElementById("next").value;
+const error_download = document.getElementById("error_download").value;
+const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
 
 
 
@@ -732,9 +734,9 @@ class CheckComponent extends React.Component {
 
   handleDownload() {
     const { list_record } = this.state
-    const result = Array.from(list_record, (item, key) => {
+    const result = list_record.map((item, key) => {
       return {
-        'No': key+1,
+        'No': key + 1,
         'Item Type': item.item_type_name,
         'Item Id': item.id,
         'Title': (item['Title'] && item['Title'][0] && item['Title'][0]['Title']) ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title'] ? item['Title']['Title'] : '',
@@ -744,28 +746,39 @@ class CheckComponent extends React.Component {
     const data = {
       list_result: result
     }
-    fetch(urlDownloadCheck, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
+
+    $.ajax({
+      url: urlDownloadCheck,
+      type: 'POST',
+      data: JSON.stringify(data),
+      contentType: "application/json; charset=utf-8",
+      success: function (response) {
+        const date = moment()
+        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.tsv';
+
+        const blob = new Blob([response], { type: 'text/tsv' });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.style.display = 'none';
+          tempLink.href = url;
+          tempLink.download = fileName;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+
+          setTimeout(function() {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(url);
+        }, 200)
+        }
       },
-    })
-      .then(resp => resp.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        // the filename you want
-        const today = new Date();
-        const date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
-        a.download = 'check_' + date + '.tsv';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(() => alert('Error in download'));
+      error: function (error) {
+        console.log(error);
+        alert(error_download);
+      }
+    });
   }
 
   render() {
@@ -887,7 +900,7 @@ class ResultComponent extends React.Component {
 
   handleDownload() {
     const { tasks } = this.props
-    const result = Array.from(tasks, (item, key) => {
+    const result = tasks.map((item, key) => {
       return {
         'No': key + 1,
         'Start Date': item.start_date ? item.start_date : '',
@@ -900,27 +913,39 @@ class ResultComponent extends React.Component {
     const data = {
       list_result: result
     }
-    fetch(urlDownloadImport, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
-      },
-    })
-      .then(resp => resp.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        // the filename you want
+
+    $.ajax({
+      url: urlDownloadImport,
+      type: 'POST',
+      data: JSON.stringify(data),
+      contentType: "application/json; charset=utf-8",
+      success: function (response) {
         const date = moment()
-        a.download = 'List_Download ' + date.format("YYYY-DD-MM") + '.tsv';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(() => alert('Error in download'));
+        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.tsv';
+
+        const blob = new Blob([response], { type: 'text/tsv' });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.style.display = 'none';
+          tempLink.href = url;
+          tempLink.download = fileName;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+
+          setTimeout(function () {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(url);
+          }, 200)
+        }
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_download);
+      }
+    });
   }
 
   render() {
@@ -992,22 +1017,20 @@ class ItemTypeComponent extends React.Component {
   }
 
   getListItemType() {
-    fetch("/api/itemtypes/lastest",
-      {
-        method: 'POST',
-        body: JSON.stringify({ type: "normal_type" }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error();
-        } else {
-          // render item type cbx
-        }
-      })
-      .catch(() => alert("Get list Item Type failed"));
+    $.ajax({
+      url: "/api/itemtypes/lastest",
+      type: 'POST',
+      data: JSON.stringify({ type: "normal_type" }),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      success: function (response) {
+
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_get_lstItemType);
+      }
+    });
   }
 
   onCbxItemTypeChange() {

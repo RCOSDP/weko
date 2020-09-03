@@ -457,3 +457,18 @@ msgstr "利用規約に同意します"
 
 msgid "Change DOI Mode"
 msgstr "DOI変更モード"
+
+msgid "Specified {} exceeds the maximum length."
+msgstr "指定された{}が最大長を超えています。"
+
+msgid "Cannot register NDL JaLC for current Item Type of this item."
+msgstr "Cannot register NDL JaLC for current Item Type of this item。"
+
+msgid "Item Type templates"
+msgstr "Item Type templates"
+
+msgid "Error in download"
+msgstr "Error in download"
+
+msgid "Get list Item Type failed"
+msgstr "Get list Item Type failed"

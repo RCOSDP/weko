@@ -1278,7 +1278,11 @@ def handle_check_cnri(list_record):
             if not cnri:
                 error = _('Please specify {}.').format('CNRI')
             elif not re.search(WEKO_IMPORT_DOI_PATTERN, cnri):
-                error = _('Specified {} is invalid.').format('CNRI')
+                if len(cnri) > 290:
+                    error = _('Specified {} exceeds the maximum length.') \
+                        .format('CNRI')
+                else:
+                    error = _('Specified {} is invalid.').format('CNRI')
         else:
             if item.get('status') == 'new':
                 if cnri:
@@ -1327,11 +1331,11 @@ def handle_check_doi_ra(list_record):
             error = _('{} is required item.').format('DOI_RA')
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
-                error = _('{} must be one of JaLC, Crossref,' \
-                            ' DataCite, NDL JaLC.').format('DOI_RA')
+                error = _('{} must be one of JaLC, Crossref,'
+                          + ' DataCite, NDL JaLC.').format('DOI_RA')
             elif doi_ra == WEKO_IMPORT_DOI_TYPE[-1]:
-                error = _('Cannot register NDL JaLC for current' \
-                            ' Item Type of this item.').format('DOI_RA')
+                error = _('Cannot register NDL JaLC for current'
+                          + ' Item Type of this item.')
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
@@ -1373,7 +1377,11 @@ def handle_check_doi(list_record):
                 if not doi:
                     error = _('Please specify {}.').format('DOI')
                 elif not re.search(WEKO_IMPORT_DOI_PATTERN, doi):
-                    error = _('Specified {} is invalid.').format('DOI')
+                    if len(doi) > 290:
+                        error = _('Specified {} exceeds the maximum length.') \
+                            .format('DOI')
+                    else:
+                        error = _('Specified {} is invalid.').format('DOI')
             else:
                 if item.get('status') == 'new':
                     if doi:
@@ -1384,7 +1392,7 @@ def handle_check_doi(list_record):
                         if not doi:
                             error = _('Please specify {}.').format('DOI')
                         elif not pid_doi.pid_value.endswith(doi):
-                            error = _('Specified {} is different ' \
+                            error = _('Specified {} is different ' +
                                       'from existing {}.').format('DOI', 'DOI')
 
         if error:
@@ -1463,7 +1471,8 @@ def register_item_doi(item):
                 + identifier_setting.jalc_doi + suffix + '/' + item_id,
             'identifier_grant_jalc_cr_doi_link':
                 IDENTIFIER_GRANT_LIST[2][2] + '/'
-                + identifier_setting.jalc_crossref_doi + suffix + '/' + item_id,
+                + identifier_setting.jalc_crossref_doi
+                + suffix + '/' + item_id,
             'identifier_grant_jalc_dc_doi_link':
                 IDENTIFIER_GRANT_LIST[3][2] + '/'
                 + identifier_setting.jalc_datacite_doi + suffix + '/' + item_id
