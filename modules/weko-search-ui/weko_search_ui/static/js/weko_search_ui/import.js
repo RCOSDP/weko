@@ -1007,9 +1007,12 @@ class ItemTypeComponent extends React.Component {
   constructor() {
     super();
     this.state = {
-      selected_item_type: null
+      item_types: null,
+      selected_item_type: '-1'
     };
     this.getListItemType = this.getListItemType.bind(this);
+    this.onCbxItemTypeChange = this.onCbxItemTypeChange.bind(this);
+    this.onBtnDownloadClick = this.onBtnDownloadClick.bind(this);
   }
 
   componentDidMount() {
@@ -1017,14 +1020,17 @@ class ItemTypeComponent extends React.Component {
   }
 
   getListItemType() {
+    const that = this;
     $.ajax({
-      url: "/api/itemtypes/lastest",
-      type: 'POST',
-      data: JSON.stringify({ type: "normal_type" }),
-      contentType: "application/json; charset=utf-8",
+      url: "/api/itemtypes/lastest?type=normal_type",
+      type: 'GET',
       dataType: "json",
-      success: function (response) {
-
+      success: function (data) {
+        data = [
+          null,
+          ...data
+        ];
+        that.setState({ item_types: data });
       },
       error: function (error) {
         console.log(error);
@@ -1033,8 +1039,8 @@ class ItemTypeComponent extends React.Component {
     });
   }
 
-  onCbxItemTypeChange() {
-
+  onCbxItemTypeChange(event) {
+    this.setState({ selected_item_type: event.target.value });
   }
 
   onBtnDownloadClick() {
@@ -1042,7 +1048,14 @@ class ItemTypeComponent extends React.Component {
   }
 
   render() {
-    const {selected_item_type} = this.state;
+    const { item_types, selected_item_type } = this.state;
+    const select_options = item_types && item_types.map(item => {
+      if (item === null) {
+        return <option value={'-1'} selected={true}></option>;
+      } else {
+        return <option value={item.id} selected={item.id === selected_item_type}>{item.name} ({item.tag})</option>
+      }
+    });
 
     return (
       <div class="item_type_compoment">
@@ -1050,12 +1063,12 @@ class ItemTypeComponent extends React.Component {
         <div class="row">
           <div class="col-md-12 form-inline">
             <div class="form-group">
-              <label style={{marginRight: ".5rem"}}>{item_type}:</label>
-              <select class="form-control" style={{marginRight: ".5rem"}}>
-                <option>BaseFilesView(5)</option>
+              <label style={{ marginRight: ".5rem" }}>{item_type}:</label>
+              <select class="form-control" style={{ marginRight: ".5rem" }} onChange={this.onCbxItemTypeChange}>
+                {select_options}
               </select>
             </div>
-            <button class="btn btn-primary" disabled={selected_item_type === null}>
+            <button class="btn btn-primary" disabled={selected_item_type === '-1'}>
               <span class="glyphicon glyphicon-cloud-download icon"></span>{download}
             </button>
           </div>
