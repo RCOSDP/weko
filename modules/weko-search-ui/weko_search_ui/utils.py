@@ -709,6 +709,21 @@ def compare_identifier(item, item_exist):
     return item
 
 
+def make_tsv_by_line(lines):
+    """Make TSV file."""
+    import csv
+    from io import StringIO
+    tsv_output = StringIO()
+
+    writer = csv.writer(tsv_output, delimiter='\t',
+                        lineterminator="\n")
+
+    for line in lines:
+        writer.writerow(line)
+
+    return tsv_output
+
+
 def make_stats_tsv(raw_stats, list_name):
     """Make TSV report file for stats."""
     import csv

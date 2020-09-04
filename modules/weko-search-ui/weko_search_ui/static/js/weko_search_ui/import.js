@@ -53,6 +53,7 @@ const urlGetChangeIdentifierMode = window.location.origin + '/admin/items/import
 const urlCheckStatus = window.location.origin + '/admin/items/import/check_status'
 const urlDownloadCheck = window.location.origin + '/admin/items/import/download_check'
 const urlDownloadImport = window.location.origin + '/admin/items/import/export_import'
+const urlDownloadTemplate = window.location.origin + '/admin/items/import/export_template'
 const urlImport = window.location.origin + '/admin/items/import/import'
 const step = {
   "SELECT_STEP": 0,
@@ -1044,7 +1045,47 @@ class ItemTypeComponent extends React.Component {
   }
 
   onBtnDownloadClick() {
+    const { selected_item_type } = this.state;
+    $.ajax({
+      url: urlDownloadTemplate,
+      type: 'POST',
+      data: JSON.stringify({item_type_id: selected_item_type}),
+      contentType: "application/json; charset=utf-8",
+      success: function (response, status, xhr) {
+        var fileName = "";
+        var disposition = xhr.getResponseHeader('Content-Disposition');
+        if (disposition && disposition.indexOf('attachment') !== -1) {
+          var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          var matches = filenameRegex.exec(disposition);
+          if (matches != null && matches[1]) {
+            fileName = matches[1].replace(/['"]/g, '');
+          }
+        }
 
+        fileName = decodeURIComponent(fileName);
+        const blob = new Blob([response], { type: 'text/tsv' });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.style.display = 'none';
+          tempLink.href = url;
+          tempLink.download = fileName;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+
+          setTimeout(function () {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(url);
+          }, 200)
+        }
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_download);
+      }
+    });
   }
 
   render() {
@@ -1053,7 +1094,7 @@ class ItemTypeComponent extends React.Component {
       if (item === null) {
         return <option value={'-1'} selected={true}></option>;
       } else {
-        return <option value={item.id} selected={item.id === selected_item_type}>{item.name} ({item.tag})</option>
+        return <option value={item.id} selected={item.id === selected_item_type}>{item.name} ({item.id})</option>
       }
     });
 
@@ -1068,7 +1109,7 @@ class ItemTypeComponent extends React.Component {
                 {select_options}
               </select>
             </div>
-            <button class="btn btn-primary" disabled={selected_item_type === '-1'}>
+            <button class="btn btn-primary" disabled={selected_item_type === '-1'} onClick={this.onBtnDownloadClick}>
               <span class="glyphicon glyphicon-cloud-download icon"></span>{download}
             </button>
           </div>
