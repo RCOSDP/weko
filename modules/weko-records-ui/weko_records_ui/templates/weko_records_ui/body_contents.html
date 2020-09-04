@@ -50,7 +50,20 @@
 
           <!-- Preview Carousel -->
           {{ preview_carousel(record=record, files=files, pid=pid) }}
-
+          {%- set file_order = [] -%}
+          {%- for i in record -%}
+            {%- if 'ファイル' in record[i].attribute_name -%}
+              {%- set file_meta = record[i].attribute_value_mlt -%}
+              {%- for order in file_meta -%}
+              {%- if order.filename -%}{%- do file_order.append(order.filename) -%}{%- endif -%}
+              {%- endfor -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if file_order == [] -%}
+            {%- for file in files -%}
+              {%- do file_order.append(file.filename) -%}
+            {%- endfor -%}
+          {%- endif -%}
           <table class="table table-bordered">
             <thead>
               <tr>
@@ -65,9 +78,9 @@
             </thead>
             <tbody>
             {%- set preview_count = {'value': 0} -%}
-            {%- for file_meta in record.item_files.attribute_value_mlt-%}
+            {%- for file_name in file_order-%}
               {%- for file in files -%}
-                {%- if file_meta.filename == file.filename -%}
+                {%- if file_name == file.filename -%}
                   {%- if file.displaytype == 'preview' -%}
                     {% if preview_count.update({'value': preview_count.value + 1}) %}
                     {% endif %}
