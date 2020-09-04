@@ -65,7 +65,7 @@
             </thead>
             <tbody>
             {%- set preview_count = {'value': 0} -%}
-            {%- for file in files|sort(attribute='key') -%}
+            {%- for file in files|sort(attribute='version_id') -%}
               {%- if file.displaytype == 'preview' -%}
                 {% if preview_count.update({'value': preview_count.value + 1}) %}
                 {% endif %}
