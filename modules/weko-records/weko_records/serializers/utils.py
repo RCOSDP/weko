@@ -145,7 +145,7 @@ def get_item_type_name_id(item_type_id):
             id=item_type_id).one_or_none()
         if item_name_id:
             return item_name_id.name_id
-    return None
+    return 0
 
 
 def get_item_type_name(item_type_id):
