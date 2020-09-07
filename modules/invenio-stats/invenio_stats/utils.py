@@ -12,12 +12,17 @@ from __future__ import absolute_import, print_function
 
 import calendar
 import os
+import re
 from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
+from typing import Generator, NoReturn, Union
 
+import click
 import six
 from dateutil import parser
+from elasticsearch import VERSION as ES_VERSION
+from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Search
 from flask import current_app, request, session
 from flask_login import current_user
@@ -27,6 +32,7 @@ from invenio_search import current_search_client
 from werkzeug.utils import import_string
 
 from . import config
+from .models import StatsAggregation, StatsBookmark, StatsEvents
 from .permissions import stats_api_permission
 from .proxies import current_stats
 
@@ -176,6 +182,11 @@ def parse_bucket_response(raw_res, pretty_result=dict()):
             raw_res['buckets'][0], pretty_result)
     else:
         return pretty_result
+
+
+def get_doctype(doc_type):
+    """Configure doc_type value according to ES version."""
+    return doc_type if ES_VERSION[0] < 7 else '_doc'
 
 
 class QueryFileReportsHelper(object):
@@ -1058,3 +1069,309 @@ class QueryItemRegReportHelper(object):
             'data': result
         }
         return response
+
+
+class StatsCliUtil:
+    """Stats CLI utilities."""
+
+    EVENTS_TYPE = 0
+    AGGREGATIONS_TYPE = 1
+
+    def __init__(
+        self, cli_type, stats_types, start_date=None,
+        end_date=None, force=False, verbose=False
+    ):
+        """Stats CLI Utilities.
+
+        :param cli_type:CLI type.
+        :param stats_types:Stats type.
+        :param start_date:Start date
+        :param end_date:End date
+        :param force:Force flag
+        :param verbose:Verbose flag.
+        """
+        self.cli_type = cli_type
+        self.stats_types = stats_types
+        self.start_date = self.__parse_date(start_date)
+        self.end_date = self.__parse_date(end_date, is_end_date=True)
+        self.force = force
+        self.verbose = verbose
+        self.index_prefix = None
+        self.affected_indices = None
+        self.flush_indices = None
+        self._search_index_prefix = current_app.config[
+            'SEARCH_INDEX_PREFIX'].strip(
+            '-')
+
+        if self.cli_type == self.EVENTS_TYPE:
+            self.index_prefix = current_app.config['STATS_EVENT_STRING']
+        else:
+            self.affected_indices = set()
+            self.flush_indices = set()
+
+    def delete_data(self, bookmark: bool = False) -> NoReturn:
+        """Delete stats data in Elasticsearch.
+
+        :param bookmark: set True if delete bookmark
+        """
+        for _index, _type in self.__prepare_es_indexes(delete=True):
+            self.__cli_delete_es_index(_index, _type)
+        if bookmark:
+            if self.verbose:
+                click.secho(
+                    'Start deleting Bookmark data...',
+                    fg='green'
+                )
+            _bookmark_index = "{}-stats-bookmarks".format(
+                self._search_index_prefix)
+            _bookmark_doc_type = get_doctype('aggregation-bookmark')
+            self.__cli_delete_es_index(_bookmark_index, _bookmark_doc_type)
+
+    def restore_data(self, bookmark: bool = False) -> NoReturn:
+        """Restore stats data.
+
+        :param bookmark: set True if restore bookmark
+        """
+        if self.cli_type == self.EVENTS_TYPE:
+            data = self.__get_stats_data_from_db(StatsEvents)
+        else:
+            data = self.__get_stats_data_from_db(StatsAggregation)
+        self.__cli_restore_es_data_from_db(data)
+
+        if bookmark:
+            if self.verbose:
+                click.secho(
+                    'Start to restore of Bookmark data '
+                    'from the Database to Elasticsearch...',
+                    fg='green'
+                )
+            bookmark_data = self.__get_stats_data_from_db(StatsBookmark,
+                                                          bookmark)
+            self.__cli_restore_es_data_from_db(bookmark_data)
+
+    def __prepare_es_indexes(
+        self, bookmark_index=False, delete=False
+    ):
+        """Prepare ElasticSearch index data.
+
+        :param bookmark_index: set True if prepare the index for the bookmark
+        :param delete: set True if prepare the index for the delete data feature
+        """
+        search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX'].strip(
+            '-')
+        for _type in self.stats_types:
+            if not _type:
+                continue
+            prefix = "stats-{}"
+            search_type = prefix.format(_type)
+            # In case prepare indexes for the stats bookmark
+            if bookmark_index:
+                _index = "{}-stats-bookmarks".format(search_index_prefix)
+                _doc_type = get_doctype('aggregation-bookmark')
+            # In case prepare indexes for the stats event
+            elif self.index_prefix:
+                _index = '{0}-{1}-{2}'.format(
+                    search_index_prefix,
+                    self.index_prefix,
+                    search_type
+                )
+                _doc_type = search_type
+            else:
+                _index = '{0}-{1}'.format(search_index_prefix, search_type)
+                _doc_type = '{0}-{1}-aggregation'.format(_type, "day")
+            if not delete:
+                yield _index
+            else:
+                yield _index, _doc_type
+
+    def __build_es_data(self, data_list: list) -> Generator:
+        """Build Elasticsearch data.
+
+        :param data_list: Stats data from DB.
+        """
+        for data in data_list:
+            if self.flush_indices is not None:
+                self.flush_indices.add(data.index)
+            es_data = dict(
+                _id=data.source_id,
+                _index=data.index,
+                _type=data.type,
+                _source=data.source,
+            )
+            if self.cli_type == self.EVENTS_TYPE:
+                es_data['_op_type'] = "index"
+            yield es_data
+
+    def __get_data_from_db_by_stats_type(self, data_model, bookmark):
+        rtn_data = []
+        if not bookmark:
+            indexes = self.__prepare_es_indexes(bookmark)
+            for _index in indexes:
+                data = data_model.get_by_index(_index, self.start_date,
+                                               self.end_date)
+                if data:
+                    rtn_data.extend(data)
+        else:
+            for _type in self.stats_types:
+                data = data_model.get_by_source_id(_type)
+                if data:
+                    rtn_data.extend(data)
+        return rtn_data
+
+    def __get_stats_data_from_db(
+        self,
+        data_model, bookmark: bool = False
+    ) -> Generator:
+        """Get bookmark data from database.
+
+        :param data_model: Data model
+        :param bookmark: set True if get stats data for the bookmark
+        :return:
+        """
+        if self.stats_types:
+            rtn_data = self.__get_data_from_db_by_stats_type(data_model,
+                                                             bookmark)
+        else:
+            rtn_data = data_model.get_all(self.start_date, self.end_date)
+        return self.__build_es_data(rtn_data)
+
+    def __show_message(self, index_name, success, failed):
+        """Show message.
+
+        :param index_name:Elasticsearch index name.
+        :param success:Success message.
+        :param failed:failed message.
+        """
+        if index_name is not None:
+            click.secho('====== {} ======'.format(str(index_name)), fg='green')
+        click.secho('Success: {}'.format(str(success)), fg='green')
+        if self.force:
+            click.secho('Failed: {}'.format(str(failed)), fg='yellow')
+        else:
+            if len(failed) == 0:
+                click.secho('Error: 0', fg='red')
+            else:
+                click.secho('Error:', fg='red')
+                for err in failed:
+                    click.secho(str(err), fg='red')
+
+    def __cli_restore_es_data_from_db(
+        self,
+        restore_data: Generator,
+        flush_indices: set = None
+    ) -> NoReturn:
+        """Restore ElasticSearch data based on Database.
+
+        :param restore_data:
+        :param flush_indices:
+        """
+        if restore_data:
+            success, failed = bulk(
+                current_search_client,
+                restore_data,
+                stats_only=self.force,
+                chunk_size=50
+            )
+            if flush_indices:
+                current_search_client.indices.flush(
+                    index=','.join(flush_indices),
+                    wait_if_ongoing=True
+                )
+            if self.verbose:
+                self.__show_message(None, success, failed)
+        else:
+            if self.verbose:
+                click.secho('There is no stats data from Database.',
+                            fg='yellow')
+
+    def __cli_delete_es_index(self, _index: str, doc_type: str) -> NoReturn:
+        """Delete ES index.
+
+        :param _index: Elasticsearch index.
+        :param doc_type: document type.
+        """
+        query = Search(
+            using=current_search_client,
+            index=_index,
+            doc_type=doc_type,
+        ).params(raise_on_error=False, ignore=[400, 404])
+        range_args = {}
+        if self.start_date:
+            range_args['gte'] = self.start_date
+        if self.end_date:
+            range_args['lte'] = self.end_date
+        if range_args:
+            query = query.filter('range', timestamp=range_args)
+
+        def _delete_actions():
+            for doc in query.scan():
+                if self.affected_indices is not None:
+                    self.affected_indices.add(doc.meta.index)
+                yield dict(_index=doc.meta.index,
+                           _op_type='delete',
+                           _id=doc.meta.id,
+                           _type=doc.meta.doc_type)
+            if self.affected_indices is not None:
+                current_search_client.indices.flush(
+                    index=','.join(self.affected_indices), wait_if_ongoing=True)
+
+        success, failed = bulk(
+            current_search_client,
+            _delete_actions(),
+            stats_only=self.force,
+            refresh=True
+        )
+        if self.verbose:
+            self.__show_message(_index, success, failed)
+
+    @staticmethod
+    def __parse_date(
+        _date: str, is_end_date: bool = False
+    ) -> Union[datetime, None]:
+        """Parse date.
+
+        :param _date: a string date
+        :param is_end_date: True if the end date.
+        :return:
+        """
+
+        def _parse_day():
+            _year, _month, _day = _date.split("-")
+            rtn = datetime(year=int(_year), month=int(_month), day=int(_day))
+            if is_end_date:
+                rtn = rtn.replace(hour=23, minute=59, second=59)
+            return rtn
+
+        def _parse_month():
+            _year, _month = _date.split("-")
+            _start, _end = calendar.monthrange(int(_year), int(_month))
+            if not is_end_date:
+                _day = _start
+            else:
+                _day = _end
+            rtn = datetime(year=int(_year), month=int(_month), day=int(_day))
+            if is_end_date:
+                rtn = rtn.replace(hour=23, minute=59, second=59)
+            return rtn
+
+        def _parse_year():
+            if not is_end_date:
+                rtn = datetime(year=int(_date), month=1, day=1)
+            else:
+                rtn = datetime(year=int(_date), month=12, day=31, hour=23,
+                               minute=59, second=59)
+            return rtn
+
+        if not isinstance(_date, str):
+            return
+        day = r"^\d{4}-\d{1,2}-\d{1,2}$"
+        month = r"^\d{4}-\d{1,2}$"
+        year = r"^\d{4}$"
+        date = _date
+        if re.match(day, _date):
+            date = _parse_day()
+        elif re.match(month, _date):
+            date = _parse_month()
+        elif re.match(year, _date):
+            date = _parse_year()
+        return date
