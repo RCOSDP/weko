@@ -1147,14 +1147,20 @@ class WekoRecord(Record):
             if not val or not option:
                 continue
 
-            hidden = option.get("hidden")
-            if hidden:
+            mlt = val.get('attribute_value_mlt')
+            if mlt is not None and any(
+                    'subitem_thumbnail' in data for data in mlt):
                 items.append({
-                    'attribute_name_hidden': val.get('attribute_name')
+                    'attribute_name_hidden': val.get('attribute_name'),
+                    'is_thumbnail': True
                 })
+                items.append(val)
                 continue
 
-            mlt = val.get('attribute_value_mlt')
+            hidden = option.get("hidden")
+            if hidden:
+                continue
+
             if mlt is not None:
                 nval = dict()
                 nval['attribute_name'] = val.get('attribute_name')
