@@ -36,8 +36,9 @@ from weko_workflow.api import WorkFlow
 from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
-    WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_IMPORT_CHECK_LIST_NAME, \
-    WEKO_IMPORT_LIST_NAME, WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
+    WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
+    WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
     get_change_identifier_mode_content, get_content_workflow, get_tree_items, \
@@ -396,7 +397,7 @@ class ItemImportView(BaseView):
             if not item.get('items'):
                 ids.append(new_id)
                 if item.get('notitle'):
-                    names.append(new_id + '-notitle')
+                    names.append(item.get('key').split('.')[-1] + '-notitle')
                 else:
                     names.append(item.get('title'))
 
@@ -448,8 +449,7 @@ class ItemImportView(BaseView):
                     ]
                     ids_line = WEKO_EXPORT_TEMPLATE_BASIC_ID
                     names_line = WEKO_EXPORT_TEMPLATE_BASIC_NAME
-                    options_line = ['' for x in range(
-                        len(WEKO_EXPORT_TEMPLATE_BASIC_ID))]
+                    options_line = WEKO_EXPORT_TEMPLATE_BASIC_OPTION
 
                     item_type = item_type.render
                     meta_fix = item_type.get('meta_fix', {})

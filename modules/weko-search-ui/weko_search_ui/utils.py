@@ -449,6 +449,8 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                 item_path = data_row
             elif num == 3:
                 item_path_name = data_row
+            elif num == 4 and row.startswith('#'):
+                continue
             else:
                 data_parse_metadata = parse_to_json_form(
                     zip(item_path, item_path_name, data_row)
@@ -585,10 +587,10 @@ def handle_check_exist_record(list_record) -> list:
     """
     result = []
     for item in list_record:
+        item = dict(**item, **{
+            'status': 'new'
+        })
         if not item.get('errors'):
-            item = dict(**item, **{
-                'status': 'new'
-            })
             try:
                 item_id = item.get('id')
                 if item_id:
