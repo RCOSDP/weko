@@ -1334,7 +1334,6 @@ class StatsCliUtil:
         :param is_end_date: True if the end date.
         :return:
         """
-
         def _parse_day():
             _year, _month, _day = _date.split("-")
             rtn = datetime(year=int(_year), month=int(_month), day=int(_day))
