@@ -44,3 +44,18 @@
   border-color: #008d4c !important;
   border-radius: 3px;
 }
+
+.initial-display-index {
+  border: 1px solid #f4f4f4;
+  min-height: 300px;
+  margin-top: 10px;
+  overflow: auto;
+}
+
+.no-border {
+  border: none;
+}
+
+.width_250px {
+  width: 250px;
+}

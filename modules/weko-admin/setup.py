@@ -150,6 +150,7 @@ setup(
             'weko_admin_angular_js = weko_admin.bundles:angular_js',
             'weko_admin_site_info = weko_admin.bundles:weko_admin_site_info_js',
             'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
+            'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

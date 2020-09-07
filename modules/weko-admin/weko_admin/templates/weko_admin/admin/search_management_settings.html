@@ -24,17 +24,20 @@
   {{ super() }}
   {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  <link href="{{ url_for('static', filename='css/weko_admin/jstree_themes/jstree.style.min.css') }}" rel="stylesheet">
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
   {% assets "weko_admin_angular_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_ng_js_tree" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block body %}
 <div id="search_management" class="container-fluid table-responsive">
-  <div ng-init="initData('{{setting_data}}')" ng-controller="searchManagementCtrl">
+  <div ng-init="initData('{{ setting_data }}', '{{ search_management_options }}', '{{ init_disp_index }}')"
+       ng-controller="searchManagementCtrl">
     <div class="row">
       <div class="col-sm-12 col-md-12 col-md-12">
         <div id="alerts"></div>
@@ -263,6 +266,72 @@
         </div>
       </div>
     </div>
+    <!--START  Main Screen Initial Display Setting-->
+    <div class="row">
+      <div class="col-sm-12 col-md-12 col-md-12">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h5><strong>{{_('Main Screen Initial Display Setting')}}</strong></h5>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              <table class="table no-border">
+                <colgroup>
+                  <col class="width_250px">
+                </colgroup>
+                <tr>
+                  <th scope="col"><label
+                          for="init_disp_screen_setting">{{ _("Default Contents to Display:") }}</label>
+                  </th>
+                  <td>
+                    <select id="init_disp_screen_setting" class="form-control"
+                            ng-model="dataJson.init_disp_setting.init_disp_screen_setting">
+                      <option ng-repeat="opt in initDispSettingOpt.init_disp_screen_setting track by opt.id"
+                              value="[[opt.id]]">
+                        {{ _('[[opt.contents]]') }}
+                      </option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="col"><label
+                          for="init_disp_index_disp_method">{{ _("Default Index to Display:") }}</label>
+                  </th>
+                  <td>
+                    <select id="init_disp_index_disp_method"
+                            class="form-control"
+                            ng-model="dataJson.init_disp_setting.init_disp_index_disp_method"
+                            ng-change="specificIndex();">
+                      <option ng-repeat="opt in initDispSettingOpt.init_disp_index_disp_method track by opt.id"
+                              value="[[opt.id]]">
+                        {{ _('[[opt.contents]]') }}
+                      </option>
+                    </select>
+                  </td>
+                </tr>
+                <tr id="disp_index">
+                  <th scope="col"><label
+                          for="init_disp_index_text">{{ _("Initial Display Index:") }}</label>
+                  </th>
+                  <td>
+                    <input id="init_disp_index_text" class="form-control"
+                           readonly="readonly">
+                    <input type="hidden" id="init_disp_index"/>
+                    <div class="initial-display-index">
+                      <div js-tree="treeConfig" ng-model="treeData"
+                           tree="treeInstance"
+                           tree-events="select_node:selectInitDisplayIndex;deselect_node:disSelectInitDisplayIndex">
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div> <!-- End row class -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--END Main Screen Initial Display Setting -->
     <div class="form-group">
       <button type="button" class="btn btn-primary pull-right" ng-click="saveData()">
         <span class="glyphicon glyphicon-save"></span>&nbsp

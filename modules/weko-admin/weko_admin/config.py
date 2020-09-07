@@ -308,6 +308,11 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
             'status': False
         }
     },
+    'init_disp_setting': {
+        'init_disp_screen_setting': '0',
+        'init_disp_index_disp_method': '0',
+        'init_disp_index': ''
+    },
     'detail_condition': [
         {'id': 'title',
          'contents': 'Title',
@@ -685,3 +690,18 @@ WEKO_HEADER_NO_CACHE = {
     "Expires": "0",
 }
 """ Header no cache property """
+
+WEKO_ADMIN_SEARCH_OPTIONS = {
+    "init_disp_setting_options": {
+        "init_disp_screen_setting": [
+            {'id': '0', 'contents': 'Index search result'},
+            {'id': '1', 'contents': 'Ranking'},
+            {'id': '2', 'contents': 'Communities'},
+        ],
+        "init_disp_index_disp_method": [
+            {'id': '0', 'contents': 'Index of the newest item registered'},
+            {'id': '1', 'contents': 'Specific index'},
+        ]
+    }
+}
+"""Admin Search Options """

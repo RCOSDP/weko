@@ -1,11 +1,20 @@
+const SPECIFIC_INDEX_VALUE = '1';
 (function (angular) {
   // Bootstrap it!
   angular.element(document).ready(function() {
     angular.module('searchManagement.controllers', []);
     function searchManagementCtrl($scope, $rootScope,$http,$location){
-      $scope.initData = function(data){
+      $scope.initData = function (data, searchManagementOptions, initDispIndex) {
         $scope.dataJson = angular.fromJson(data);
+        $scope.searchMgtOptsJson = angular.fromJson(searchManagementOptions);
+        $scope.initDispSettingOpt = {}
+        if ($scope.searchMgtOptsJson) {
+          $scope.initDispSettingOpt = $scope.searchMgtOptsJson.init_disp_setting_options;
+        }
+        $scope.treeData = angular.fromJson(initDispIndex);
         $scope.rowspanNum = $scope.dataJson.detail_condition.length+1;
+        // Set Da
+        $scope.setData();
 //        $scope.setSearchKeyOptions();
       }
       // set selected data to allow
@@ -52,9 +61,15 @@
                     '&times;</button>' + message + '</div>');
         }
 
-        $scope.saveData=function(){
+      $scope.saveData=function(){
         var url = $location.path();
-        dbJson = $scope.dataJson;
+        let initialDisplayIndex = $("#init_disp_index").val();
+        if (initialDisplayIndex && this.isSpecificIndex()) {
+          $scope.dataJson['init_disp_setting']['init_disp_index'] = initialDisplayIndex;
+        } else {
+          $scope.dataJson['init_disp_setting']['init_disp_index'] = '';
+        }
+        let dbJson = $scope.dataJson;
 
         $http.post(url, dbJson).then(function successCallback(response) {
             // alert(response.data.message);
@@ -104,6 +119,88 @@
         })
       }
 
+      $scope.treeConfig = {
+        core: {
+          multiple: false,
+          animation: false,
+          error: function (error) {
+            console.error('treeCtrl: error from js tree - ' + angular.toJson(error));
+          },
+          check_callback: true,
+          themes: {
+            dots: false,
+            icons: false,
+          }
+        },
+        checkbox: {
+          three_state: false,
+          whole_node: false
+        },
+        version: 1,
+        plugins: ['checkbox']
+      };
+
+      $scope.setDefaultDataForInitDisplaySetting = function () {
+        if (!$scope.dataJson.hasOwnProperty('init_disp_setting')) {
+          $scope.dataJson['init_disp_setting'] = {
+            'init_disp_screen_setting': '0',
+            'init_disp_index_disp_method': '0',
+            'init_disp_index': ''
+          }
+        }
+      }
+
+      $scope.setData = function () {
+        $scope.setDefaultDataForInitDisplaySetting();
+        $scope.specificIndex();
+        $scope.specificIndexText();
+      }
+
+      $scope.specificIndexText = function () {
+        if (this.isSpecificIndex()) {
+          $scope.treeData.forEach(function (nodeData) {
+            if (nodeData.hasOwnProperty('state')) {
+                if (nodeData.state['selected']) {
+                  $("#init_disp_index_text").val(nodeData.text);
+                  $("#init_disp_index").val(nodeData.id);
+                  return null;
+                }
+            }
+          });
+        }
+      }
+
+      $scope.isSpecificIndex = function () {
+        const dispIndexDispMethod = $scope.dataJson['init_disp_setting']['init_disp_index_disp_method'];
+        return dispIndexDispMethod === SPECIFIC_INDEX_VALUE
+      }
+
+      $scope.specificIndex = function () {
+        let dispIndex = $("#disp_index");
+        if (this.isSpecificIndex()) {
+          dispIndex.removeClass('hidden');
+        } else {
+          // Reset
+          dispIndex.addClass('hidden');
+          $scope.treeInstance.jstree(true).uncheck_all();
+          this.clearInitDisplayIndex();
+        }
+      }
+
+      $scope.clearInitDisplayIndex = function () {
+        $("#init_disp_index_text").val("");
+        $("#init_disp_index").val("");
+      }
+
+      $scope.selectInitDisplayIndex = function (node, selected, event) {
+        $("#init_disp_index_text").val(selected.node.text);
+        $("#init_disp_index").val(selected.node.id);
+      }
+
+      $scope.disSelectInitDisplayIndex = function (node, selected, event) {
+        this.clearInitDisplayIndex();
+      }
+
     }
     // Inject depedencies
     searchManagementCtrl.$inject = [
@@ -123,6 +220,6 @@
     }]);
 
     angular.bootstrap(
-      document.getElementById('search_management'), ['searchSettingModule']);
+      document.getElementById('search_management'), ['searchSettingModule', 'ngJsTree']);
   });
 })(angular);
