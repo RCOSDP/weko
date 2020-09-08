@@ -176,12 +176,8 @@ const SPECIFIC_INDEX_VALUE = '1';
       }
 
       $scope.specificIndex = function () {
-        let dispIndex = $("#disp_index");
-        if (this.isSpecificIndex()) {
-          dispIndex.removeClass('hidden');
-        } else {
+        if (!this.isSpecificIndex()) {
           // Reset
-          dispIndex.addClass('hidden');
           $scope.treeInstance.jstree(true).uncheck_all();
           this.clearInitDisplayIndex();
         }

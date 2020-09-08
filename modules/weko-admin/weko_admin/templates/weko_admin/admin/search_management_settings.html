@@ -281,39 +281,38 @@
                 </colgroup>
                 <tr>
                   <th scope="col"><label
-                          for="init_disp_screen_setting">{{ _("Default Contents to Display:") }}</label>
+                          for="init_disp_screen_setting">{{ _("Default Contents to Display") }}:</label>
                   </th>
                   <td>
                     <select id="init_disp_screen_setting" class="form-control"
                             ng-model="dataJson.init_disp_setting.init_disp_screen_setting">
                       <option ng-repeat="opt in initDispSettingOpt.init_disp_screen_setting track by opt.id"
-                              value="[[opt.id]]">
-                        {{ _('[[opt.contents]]') }}
-                      </option>
+                              value="[[opt.id]]">{{ _('[[opt.contents]]') }}</option>
                     </select>
                   </td>
                 </tr>
                 <tr>
                   <th scope="col"><label
-                          for="init_disp_index_disp_method">{{ _("Default Index to Display:") }}</label>
+                          for="init_disp_index_disp_method">{{ _("Default Index to Display") }}:</label>
                   </th>
                   <td>
                     <select id="init_disp_index_disp_method"
                             class="form-control"
                             ng-model="dataJson.init_disp_setting.init_disp_index_disp_method"
-                            ng-change="specificIndex();">
+                            ng-change="specificIndex();"
+                            ng-disabled="dataJson.init_disp_setting.init_disp_screen_setting != 0">
                       <option ng-repeat="opt in initDispSettingOpt.init_disp_index_disp_method track by opt.id"
-                              value="[[opt.id]]">
-                        {{ _('[[opt.contents]]') }}
-                      </option>
+                              value="[[opt.id]]">{{ _('[[opt.contents]]') }}</option>
                     </select>
                   </td>
                 </tr>
-                <tr id="disp_index">
+                <tr class="ng-hide"
+                    ng-show="dataJson.init_disp_setting.init_disp_index_disp_method=='1' && dataJson.init_disp_setting.init_disp_screen_setting == '0'">
                   <th scope="col"><label
-                          for="init_disp_index_text">{{ _("Initial Display Index:") }}</label>
+                          for="init_disp_index_text">{{ _("Initial Display Index") }}:</label>
                   </th>
                   <td>
+                    <p>{{ _("An index which is not open in public cannot be selected") }}</p>
                     <input id="init_disp_index_text" class="form-control"
                            readonly="readonly">
                     <input type="hidden" id="init_disp_index"/>

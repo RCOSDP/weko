@@ -694,13 +694,28 @@ WEKO_HEADER_NO_CACHE = {
 WEKO_ADMIN_SEARCH_OPTIONS = {
     "init_disp_setting_options": {
         "init_disp_screen_setting": [
-            {'id': '0', 'contents': 'Index search result'},
-            {'id': '1', 'contents': 'Ranking'},
-            {'id': '2', 'contents': 'Communities'},
+            {'id': '0', 'contents': {
+                'en': 'Index search result',
+                'ja': 'インデックス検索結果を表示する'
+            }},
+            {'id': '1', 'contents': {
+                'en': 'Ranking',
+                'ja': 'ランキングを表示する'
+            }},
+            {'id': '2', 'contents': {
+                'en': 'Communities',
+                'ja': 'コミュニティ一覧を表示する'
+            }},
         ],
         "init_disp_index_disp_method": [
-            {'id': '0', 'contents': 'Index of the newest item registered'},
-            {'id': '1', 'contents': 'Specific index'},
+            {'id': '0', 'contents': {
+                'en': 'Index of the newest item registered',
+                'ja': '最も新しい公開アイテムの属するインデックス'
+            }},
+            {'id': '1', 'contents': {
+                'en': 'Specific index',
+                'ja': 'インデックス指定'
+            }},
         ]
     }
 }

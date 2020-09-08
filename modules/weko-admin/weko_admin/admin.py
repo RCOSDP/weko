@@ -42,6 +42,7 @@ from flask_mail import Attachment
 from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
+from invenio_i18n.ext import current_i18n
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
@@ -58,7 +59,8 @@ from .permissions import admin_permission_factory
 from .utils import get_init_display_index, get_redis_cache, \
     get_response_json, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, reset_redis_cache, str_to_bool
+from .utils import package_reports, reset_redis_cache, str_to_bool, \
+    translate_search_options
 
 
 # FIXME: Change all setting views' path to be under settings/
@@ -560,7 +562,10 @@ class SearchSettingsView(BaseView):
         """Site license setting page."""
         search_setting = get_search_setting()
         result = json.dumps(copy.deepcopy(search_setting))
-        options = json.dumps(current_app.config['WEKO_ADMIN_SEARCH_OPTIONS'])
+        current_lang = current_i18n.language
+        options = current_app.config['WEKO_ADMIN_SEARCH_OPTIONS']
+        translate_search_options(options, current_lang)
+        search_options = json.dumps(options)
         init_disp_index = json.dumps(get_init_display_index(search_setting))
         if 'POST' in request.method:
             jfy = {}
@@ -586,7 +591,7 @@ class SearchSettingsView(BaseView):
             return self.render(
                 current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
                 setting_data=result,
-                search_management_options=options,
+                search_management_options=search_options,
                 init_disp_index=init_disp_index,
             )
         except BaseException as e:
