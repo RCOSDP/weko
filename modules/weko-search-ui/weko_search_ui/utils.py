@@ -920,7 +920,7 @@ def update_publish_status(item_id, status):
 
     :argument
         item_id     -- {str} Item Id.
-        status      -- {str} Publish status (0: publish, 1: private)
+        status      -- {str} Publish status (0: public, 1: private)
     :return
 
     """
@@ -1095,8 +1095,8 @@ def handle_check_and_prepare_publish_status(list_record):
         if not publish_status:
             error = _('{} is required item.').format('PUBLISH_STATUS')
         elif publish_status not in WEKO_IMPORT_PUBLISH_STATUS:
-            error = _('Specified {} is different from existing {}.') \
-                .format('PUBLISH_STATUS', 'PUBLISH_STATUS')
+            error = _('Please set "public" or "private" for {}.') \
+                .format('PUBLISH_STATUS')
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1127,19 +1127,24 @@ def handle_check_and_prepare_index_tree(list_record):
                     _('Specified {} does not match with existing index.')
                     .format('POS_INDEX'))
         elif index_name:
+            index = None
             index = Indexes.get_index_by_name(
                 index_name, parent_id)
             if not index:
-                index = None
-                warnings.append(
-                    _('Specified {} and {} do not exist in system.').format(
-                        'IndexID', 'POS_INDEX')
-                )
+                if index_id:
+                    errors.append(_('The specified {} does not exist in system.')
+                                  .format('IndexID, POS_INDEX'))
+                    return None
+                else:
+                    errors.append(_('The specified {} does not exist in system.')
+                                  .format('POS_INDEX'))
+                    return None
             else:
-                warnings.append(
-                    _('Specified {} does not exist in system.').format(
-                        'IndexID')
-                )
+                if index_id:
+                    errors.append(
+                        _('The specified {} does not exist in system.')
+                        .format('IndexID'))
+                    return None
 
         data = {
             'index_id': index.id if index else index_id,
@@ -1156,10 +1161,6 @@ def handle_check_and_prepare_index_tree(list_record):
             else:
                 return None
 
-        if not data.get('existed') and not data.get('index_name'):
-            errors.append(_('Please specify {}.').format('POS_INDEX'))
-            return None
-
         return data
 
     for item in list_record:
@@ -1167,16 +1168,18 @@ def handle_check_and_prepare_index_tree(list_record):
         index_ids = item.get('IndexID')
         pos_index = item.get('pos_index')
 
-        if not index_ids:
-            errors = [_('Please specify {}.').format('IndexID')]
+        if not index_ids and not pos_index:
+            errors = [_('Both of IndexID and POS_INDEX are not being set.')]
         else:
+            if not index_ids:
+                index_ids = ['' for i in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
                 tree_ids = [i.strip() for i in index_id.split('/')]
                 tree_names = []
                 if pos_index and x <= len(pos_index) - 1:
                     tree_names = [i.strip() for i in pos_index[x].split('/')]
                 else:
-                    tree_names = [None for i in range(len(tree_ids))]
+                    tree_names = ['' for i in range(len(tree_ids))]
 
                 root = check(tree_ids, tree_names, 0, True)
                 if root:
@@ -1296,7 +1299,7 @@ def handle_check_cnri(list_record):
                 error = _('Please specify {}.').format('CNRI')
             elif not re.search(WEKO_IMPORT_DOI_PATTERN, cnri):
                 if len(cnri) > 290:
-                    error = _('Specified {} exceeds the maximum length.') \
+                    error = _('The specified {} exceeds the maximum length.') \
                         .format('CNRI')
                 else:
                     error = _('Specified {} is invalid.').format('CNRI')
@@ -1348,11 +1351,8 @@ def handle_check_doi_ra(list_record):
             error = _('{} is required item.').format('DOI_RA')
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
-                error = _('{} must be one of JaLC, Crossref,'
-                          + ' DataCite, NDL JaLC.').format('DOI_RA')
-            elif doi_ra == WEKO_IMPORT_DOI_TYPE[-1]:
-                error = _('Cannot register NDL JaLC for current'
-                          + ' Item Type of this item.')
+                error = _('DOI_RA should be set by one of JaLC' +
+                          ', Crrossref, DataCite, NDL JaLC.')
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
@@ -1395,8 +1395,8 @@ def handle_check_doi(list_record):
                     error = _('Please specify {}.').format('DOI')
                 elif not re.search(WEKO_IMPORT_DOI_PATTERN, doi):
                     if len(doi) > 290:
-                        error = _('Specified {} exceeds the maximum length.') \
-                            .format('DOI')
+                        error = _('The specified {} exceeds' +
+                                  ' the maximum length.').format('DOI')
                     else:
                         error = _('Specified {} is invalid.').format('DOI')
             else:
@@ -1479,20 +1479,28 @@ def register_item_doi(item):
                 identifier_setting.jalc_crossref_doi = text_empty
             if not identifier_setting.jalc_datacite_doi:
                 identifier_setting.jalc_datacite_doi = text_empty
+            if not identifier_setting.ndl_jalc_doi:
+                identifier_setting.ndl_jalc_doi = text_empty
         suffix = '/' + identifier_setting.suffix \
             if identifier_setting.suffix else ''
 
         return {
             'identifier_grant_jalc_doi_link':
                 IDENTIFIER_GRANT_LIST[1][2] + '/'
-                + identifier_setting.jalc_doi + suffix + '/' + item_id,
+                + identifier_setting.jalc_doi
+                + suffix + '/' + item_id,
             'identifier_grant_jalc_cr_doi_link':
                 IDENTIFIER_GRANT_LIST[2][2] + '/'
                 + identifier_setting.jalc_crossref_doi
                 + suffix + '/' + item_id,
             'identifier_grant_jalc_dc_doi_link':
                 IDENTIFIER_GRANT_LIST[3][2] + '/'
-                + identifier_setting.jalc_datacite_doi + suffix + '/' + item_id
+                + identifier_setting.jalc_datacite_doi
+                + suffix + '/' + item_id,
+            'identifier_grant_ndl_jalc_doi_link':
+                IDENTIFIER_GRANT_LIST[4][2] + '/'
+                + identifier_setting.ndl_jalc_doi
+                + suffix + '/' + item_id
         }
 
     item_id = str(item.get('id'))
@@ -1518,7 +1526,9 @@ def register_item_doi(item):
                     'identifier_grant_jalc_cr_doi_link':
                         IDENTIFIER_GRANT_LIST[2][2] + '/' + doi,
                     'identifier_grant_jalc_dc_doi_link':
-                        IDENTIFIER_GRANT_LIST[3][2] + '/' + doi
+                        IDENTIFIER_GRANT_LIST[3][2] + '/' + doi,
+                    'identifier_grant_ndl_jalc_doi_link':
+                        IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
                 }
                 if status != 'new' and pid_doi:
                     pid_doi.delete()
@@ -1526,7 +1536,8 @@ def register_item_doi(item):
                     pid_lastest.object_uuid,
                     pid.object_uuid,
                     data,
-                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
+                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
+                    is_feature_import=True
                 )
         else:
             if status == 'new':
@@ -1536,7 +1547,8 @@ def register_item_doi(item):
                         pid_lastest.object_uuid,
                         pid.object_uuid,
                         data,
-                        WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
+                        WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
+                        is_feature_import=True
                     )
 
         deposit = WekoDeposit.get_record(pid_lastest.object_uuid)

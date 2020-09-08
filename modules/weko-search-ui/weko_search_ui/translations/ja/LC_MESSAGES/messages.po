@@ -403,8 +403,12 @@ msgid "{} cannot be set."
 msgstr "{}は設定できません。"
 
 #: weko_search_ui/utils.py:
-msgid "{} must be one of JaLC, Crossref, DataCite."
-msgstr "{}は JaLC, Crossref, DataCiteのいずれかである必須があります。"
+msgid "DOI_RA should be set by one of JaLC, Crrossref, DataCite, NDL JaLC."
+msgstr "DOI_RAはJaLC,Crrossref,DataCite,NDL JaLCのいずれかを設定してください。"
+
+#: weko_search_ui/utils.py:
+msgid "Please set "public" or "private" for {}."
+msgstr "{}はpublic,privateのいずれかを設定してください。"
 
 #: weko_search_ui/utils.py:
 msgid "Specified {} is different from existing {}."
@@ -415,12 +419,12 @@ msgid "Specified {} is invalid."
 msgstr "指定された{}は不正です。"
 
 #: weko_search_ui/utils.py:
-msgid "Specified {} does not exist in system."
-msgstr "指定された{}はシステムに存在していません。"
+msgid "The specified {} does not exist in system."
+msgstr "指定された{}はシステムに存在しません。"
 
 #: weko_search_ui/utils.py:
-msgid "Specified {} and {} do not exist in system."
-msgstr "指定された{}と{}はシステムに存在していません。"
+msgid "Both of IndexID and POS_INDEX are not being set."
+msgstr "IndexID, POS_INDEXがどちらも設定されていません。"
 
 #: weko_search_ui/utils.py:
 msgid "Specified {} does not match with existing index."
@@ -458,17 +462,14 @@ msgstr "利用規約に同意します"
 msgid "Change DOI Mode"
 msgstr "DOI変更モード"
 
-msgid "Specified {} exceeds the maximum length."
+msgid "The specified {} exceeds the maximum length."
 msgstr "指定された{}が最大長を超えています。"
 
-msgid "Cannot register NDL JaLC for current Item Type of this item."
-msgstr "Cannot register NDL JaLC for current Item Type of this item。"
+msgid "Item Type Template"
+msgstr "アイテムタイプのテンプレート"
 
-msgid "Item Type templates"
-msgstr "Item Type templates"
+msgid "Failed to download."
+msgstr "ダウンロードに失敗しました。"
 
-msgid "Error in download"
-msgstr "Error in download"
-
-msgid "Get list Item Type failed"
-msgstr "Get list Item Type failed"
+msgid "Failed to get item type list."
+msgstr "アイテムタイプリストの取得に失敗しました。"
