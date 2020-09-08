@@ -1151,7 +1151,7 @@ class WekoRecord(Record):
             if mlt is not None and any(
                     'subitem_thumbnail' in data for data in mlt):
                 items.append({
-                    'attribute_name_hidden': val.get('attribute_name'),
+                    'attribute_name_i18n': lst[2] or val.get('attribute_name'),
                     'is_thumbnail': True
                 })
                 items.append(val)
