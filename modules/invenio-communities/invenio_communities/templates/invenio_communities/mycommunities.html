@@ -27,14 +27,14 @@
   <h2>
     {{ _('My communities') }}
     <!--<div class="pull-right">-->
-      <!--&nbsp;<a href="{{url_for('.new')}}" class="btn btn-primary"><i class="icon-plus-sign"></i> {{ _('New') }}</a>-->
+      <!--&nbsp;<a href="{{url_for('invenio_communities.new')}}" class="btn btn-primary"><i class="icon-plus-sign"></i> {{ _('New') }}</a>-->
     <!--</div>-->
   </h2>
   <table class="table table-striped">
   {% for obj in mycommunities %}
     <tr>
       <td>
-        <a href="{{url_for('.edit', community_id=obj.id)}}">{{obj.title if obj.title else 'Untitled'}}</a>
+        <a href="{{url_for('invenio_communities.edit', community_id=obj.id)}}">{{obj.title if obj.title else 'Untitled'}}</a>
         <br />
         <small class="muted">{{ _('Identifier') }}: {{obj.id}}</small>
       </td>
@@ -45,9 +45,9 @@
             <span class="caret"></span>
           </a>
           <ul class="dropdown-menu">
-            <li><a href="{{url_for('.view', community_id=obj.id, view='basic')}}"><i class="icon-eye-open"></i> {{ _('Basic') }}</a></li>
-            <li><a href="{{url_for('.view', community_id=obj.id, view='weko')}}"><i class="icon-eye-open"></i> {{ _('Weko') }}</a></li>
-            <li><a href="{{url_for('.edit', community_id=obj.id)}}"><i class="icon-pencil"></i> {{ _('Edit') }}</a></li>
+            <li><a href="{{url_for('invenio_communities.view', community_id=obj.id, view='basic')}}"><i class="icon-eye-open"></i> {{ _('Basic') }}</a></li>
+            <li><a href="{{url_for('invenio_communities.view', community_id=obj.id, view='weko')}}"><i class="icon-eye-open"></i> {{ _('Weko') }}</a></li>
+            <li><a href="{{url_for('invenio_communities.edit', community_id=obj.id)}}"><i class="icon-pencil"></i> {{ _('Edit') }}</a></li>
           </ul>
         </div> <!-- /.btn-group -->
       </td>
@@ -58,7 +58,7 @@
   <p class="muted">{{ _('You currently have no community collections.') }}</p>
   <h4>
     <div class="pull-right">
-      <!--&nbsp;<a href="{{url_for('.new')}}" class="btn btn-primary"><i class="icon-plus-sign"></i> {{ _('New') }}</a>-->
+      <!--&nbsp;<a href="{{url_for('invenio_communities.new')}}" class="btn btn-primary"><i class="icon-plus-sign"></i> {{ _('New') }}</a>-->
     </div>
     <strong>{{ _('Want your own community?') }}</strong>
   </h4>

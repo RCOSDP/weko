@@ -85,10 +85,22 @@
       {% include "weko_theme/body_search.html" %}
     </div>
   </div>
-  <div class="row">
-    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
+  <div class="row" style="height: 100%">
+    <div class="col-sm-{{ width }} col-md-{{ width }} col-lg-{{ width }}">
       {% include "weko_theme/body_index.html" %}
       {% include "weko_search_ui/body_facet_search.html" %}
     </div>
+    {%-if not community_id %}
+      <div class="col-sm-{{ 12-width|int }} col-md-{{ 12-width|int }} col-lg-{{ 12-width|int }}">
+        {% if init_display_setting == '0' %}
+          {% include "weko_search_ui/body_contents.html" %}
+        {% elif init_display_setting == '1' %}
+          {% from "weko_items_ui/macros/ranking_list.html" import ranking_list %}
+          {% include "weko_items_ui/ranking_body.html" %}
+        {% elif init_display_setting == '2' %}
+          {% include "invenio_communities/communities_list_body.html" %}
+        {% endif %}
+      </div>
+    {% endif %}
   </div>
 {%- endblock page_body_main %}

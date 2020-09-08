@@ -38,45 +38,7 @@
 {% from "weko_items_ui/macros/ranking_list.html" import ranking_list %}
 
 {%- if is_show %}
-  <div class="row">
-    <div class="col-sm-1 col-md-1 col-md-1"></div>
-    <p>
-        <b>{{ _('Aggregation Period') }} : </b>
-        {{ start_date.strftime('%Y-%m-%d') }} ~
-        {{ end_date.strftime('%Y-%m-%d') }}
-    </p>
-
-    <!-- Most viewed items -->
-    {% if (rankings['most_reviewed_items'] if 'most_reviewed_items' in rankings else False) %}
-      {{ ranking_list(panel_title=_('The Most Reviewed Items'),
-                      rankings=rankings['most_reviewed_items']) }}
-    {% endif %}
-
-    <!-- Most downloaded items -->
-    {% if (rankings['most_downloaded_items'] if 'most_downloaded_items' in rankings else False) %}
-      {{ ranking_list(panel_title=_('Most Downloaded Items'),
-                      rankings=rankings['most_downloaded_items']) }}
-    {% endif %}
-
-    <!-- Most active users (item-creation) -->
-    {% if (rankings['created_most_items_user'] if 'created_most_items_user' in rankings else False) %}
-      {{ ranking_list(panel_title=_('User Who Created The Most Items'),
-                      rankings=rankings['created_most_items_user']) }}
-    {% endif %}
-
-    <!-- Search keyword ranking -->
-    {% if (rankings['most_searched_keywords'] if 'most_searched_keywords' in rankings else False) %}
-      {{ ranking_list(panel_title=_('Most Searched Keywords'),
-                      rankings=rankings['most_searched_keywords']) }}
-    {% endif %}
-
-    <!-- Recently added items -->
-    {% if (rankings['new_items'] if 'new_items' in rankings else False) %}
-      {{ ranking_list(panel_title=_('New Items'),
-                      rankings=rankings['new_items']) }}
-    {% endif %}
-    <div class="col-sm-1 col-md-1 col-md-1"></div>
-  </div>
+  {% include "weko_items_ui/ranking_body.html" %}
 {% else %}
   {%- include config.WEKO_PERMISSION_REQUIRED_TEMPLATE -%}
 {%- endif %}

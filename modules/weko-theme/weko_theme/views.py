@@ -33,7 +33,8 @@ from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword
 
-from .utils import get_design_layout, get_weko_contents, has_widget_design
+from .utils import MainScreenInitDisplaySetting, get_design_layout, \
+    get_weko_contents, has_widget_design
 
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
@@ -94,11 +95,19 @@ def index():
         current_i18n.language)
     page = None
 
+    # Get main screen display setting.
+    if not community_id:
+        init_display_setting = MainScreenInitDisplaySetting()\
+            .get_init_display_setting()
+    else:
+        init_display_setting = {}
+
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         page=page,
         render_widgets=render_widgets,
         render_header_footer=render_header_footer,
+        **init_display_setting,
         **get_weko_contents(request.args))
 
 
@@ -117,8 +126,8 @@ def get_site_info(site_info):
     :return: result
 
     """
-    from weko_admin.utils import get_site_name_for_current_language, \
-        get_notify_for_current_language
+    from weko_admin.utils import get_notify_for_current_language, \
+        get_site_name_for_current_language
     site_info = SiteInfo.get()
     site_name = site_info.site_name if site_info and site_info.site_name else []
     notify = site_info.notify if site_info and site_info.notify else []
