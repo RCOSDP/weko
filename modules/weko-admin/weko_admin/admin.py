@@ -566,7 +566,6 @@ class SearchSettingsView(BaseView):
         options = current_app.config['WEKO_ADMIN_SEARCH_OPTIONS']
         translate_search_options(options, current_lang)
         search_options = json.dumps(options)
-        init_disp_index = json.dumps(get_init_display_index(search_setting))
         if 'POST' in request.method:
             jfy = {}
             try:
@@ -592,7 +591,6 @@ class SearchSettingsView(BaseView):
                 current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
                 setting_data=result,
                 search_management_options=search_options,
-                init_disp_index=init_disp_index,
             )
         except BaseException as e:
             current_app.logger.error('Could not save search settings', e)

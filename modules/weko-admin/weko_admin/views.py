@@ -32,7 +32,6 @@ from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
 from invenio_admin.proxies import current_admin
-from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm import session
 from weko_records.models import SiteLicenseInfo
@@ -43,9 +42,9 @@ from .config import WEKO_HEADER_NO_CACHE
 from .models import SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
     get_admin_lang_setting, get_api_certification_type, \
-    get_current_api_certification, get_initial_stats_report, \
-    get_search_setting, get_selected_language, get_unit_stats_report, \
-    save_api_certification, update_admin_lang_setting, \
+    get_current_api_certification, get_init_display_index, \
+    get_initial_stats_report, get_search_setting, get_selected_language, \
+    get_unit_stats_report, save_api_certification, update_admin_lang_setting, \
     validate_certification, validation_site_info
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
@@ -524,6 +523,7 @@ def get_avatar():
     """
     import base64
     import io
+
     from werkzeug import FileWrapper
     site_info = SiteInfo.get()
     if not site_info:
@@ -558,3 +558,15 @@ def display_control_function():
     ).get("Expires")
 
     return r
+
+
+@blueprint_api.route('/search/init_display_index/<string:selected_index>',
+                     methods=['GET'])
+def get_search_init_display_index(selected_index=None):
+    """Get search init display index.
+
+    :param selected_index: seleted index.
+    :return:
+    """
+    indexes = get_init_display_index(selected_index)
+    return jsonify(indexes=indexes)

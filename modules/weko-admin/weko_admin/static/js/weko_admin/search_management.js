@@ -4,14 +4,14 @@ const SPECIFIC_INDEX_VALUE = '1';
   angular.element(document).ready(function() {
     angular.module('searchManagement.controllers', []);
     function searchManagementCtrl($scope, $rootScope,$http,$location){
-      $scope.initData = function (data, searchManagementOptions, initDispIndex) {
+      $scope.initData = function (data, searchManagementOptions) {
         $scope.dataJson = angular.fromJson(data);
         $scope.searchMgtOptsJson = angular.fromJson(searchManagementOptions);
         $scope.initDispSettingOpt = {}
         if ($scope.searchMgtOptsJson) {
           $scope.initDispSettingOpt = $scope.searchMgtOptsJson.init_disp_setting_options;
         }
-        $scope.treeData = angular.fromJson(initDispIndex);
+        $scope.treeData = [];
         $scope.rowspanNum = $scope.dataJson.detail_condition.length+1;
         // Set Da
         $scope.setData();
@@ -130,7 +130,8 @@ const SPECIFIC_INDEX_VALUE = '1';
           themes: {
             dots: false,
             icons: false,
-          }
+          },
+          worker: false
         },
         checkbox: {
           three_state: false,
@@ -152,8 +153,8 @@ const SPECIFIC_INDEX_VALUE = '1';
 
       $scope.setData = function () {
         $scope.setDefaultDataForInitDisplaySetting();
-        $scope.setDefaultInitDisplayIndex();
         $scope.specificIndexText();
+        $scope.getInitDisplayIndex();
       }
 
       $scope.specificIndexText = function () {
@@ -184,22 +185,27 @@ const SPECIFIC_INDEX_VALUE = '1';
           // Reset tree data to default
           if (this.treeInstance && this.treeInstance.jstree) {
             let nodeChecked = this.treeInstance.jstree(true).get_checked([true]);
-            if (!nodeChecked) {
+            if (nodeChecked.length === 0 && this.treeData.length > 0) {
               this.treeInstance.jstree(true).select_node({id: "0"});
               $("#init_disp_index_text").val("Root Index");
               $("#init_disp_index").val("0");
             } else {
               let node = nodeChecked[0];
-              $("#init_disp_index_text").val(node.text);
-              $("#init_disp_index").val(node.id);
+              if (node !== undefined) {
+                $scope.setInitDisplayIndex(node)
+              }
             }
           }
         }
       }
 
+      $scope.setInitDisplayIndex = function (node) {
+        $("#init_disp_index_text").val(node.text);
+        $("#init_disp_index").val(node.id);
+      }
+
       $scope.selectInitDisplayIndex = function (node, selected, event) {
-        $("#init_disp_index_text").val(selected.node.text);
-        $("#init_disp_index").val(selected.node.id);
+        $scope.setInitDisplayIndex(selected.node);
       }
 
       $scope.disSelectInitDisplayIndex = function (node, selected, event) {
@@ -208,6 +214,26 @@ const SPECIFIC_INDEX_VALUE = '1';
         }
       }
 
+      $scope.getInitDisplayIndex = function () {
+        let initDispIndex = $scope.dataJson['init_disp_setting']['init_disp_index']
+        if (!initDispIndex) {
+          initDispIndex = "0";
+        }
+        let url = "/api/admin/search/init_display_index/" + initDispIndex;
+        $.get(url)
+          .done(function (data) {
+            let jstree = $scope.treeInstance.jstree(true);
+            jstree.settings.core.data = data.indexes;
+            jstree.refresh();
+            let currentNode = jstree.get_node({"id": initDispIndex});
+            jstree.select_node(currentNode);
+            // jstree.open_node(currentNode.parent);
+            $scope.setInitDisplayIndex(currentNode);
+          })
+          .fail(function () {
+            alert("Fail to get index list.");
+          })
+      }
     }
     // Inject depedencies
     searchManagementCtrl.$inject = [

@@ -1611,9 +1611,10 @@ def __build_init_display_index(indexes: list,
     for child in indexes:
         if child.get('id') and child.get('public_state') is True:
             selected = child.get('id') == init_disp_index
+            parent = child.get('parent', "0").split('/')[-1]
             index = {
                 "id": child.get('id'),
-                "parent": child.get('parent', "0"),
+                "parent": parent,
                 "text": child.get('name'),
             }
             if selected:
@@ -1626,16 +1627,14 @@ def __build_init_display_index(indexes: list,
                 )
 
 
-def get_init_display_index(search_setting: dict) -> list:
+def get_init_display_index(init_disp_index: str) -> list:
     """Get initial display index.
 
-    :param search_setting: Search setting
+    :param init_disp_index: Selected index.
     :return: index list.
     """
     from weko_index_tree.api import Indexes
     index_list = Indexes.get_index_tree()
-    init_disp_index = search_setting.get('init_disp_setting', {}).get(
-        'init_disp_index', "")
     root_index = {
         "id": "0",
         "parent": "#",
@@ -1644,6 +1643,7 @@ def get_init_display_index(search_setting: dict) -> list:
     }
     if not init_disp_index or init_disp_index == "0":
         root_index["state"].update({"selected": True})
+        root_index['a_attr'] = {"class": "jstree-clicked"}
     init_display_indexes = [root_index]
     __build_init_display_index(index_list, init_display_indexes,
                                init_disp_index)
