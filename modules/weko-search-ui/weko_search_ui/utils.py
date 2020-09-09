@@ -21,6 +21,7 @@
 """Weko Search-UI admin."""
 
 import base64
+import csv
 import json
 import os
 import re
@@ -32,6 +33,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
+from io import StringIO
 from operator import getitem
 
 from flask import abort, current_app, request
@@ -713,8 +715,6 @@ def compare_identifier(item, item_exist):
 
 def make_tsv_by_line(lines):
     """Make TSV file."""
-    import csv
-    from io import StringIO
     tsv_output = StringIO()
 
     writer = csv.writer(tsv_output, delimiter='\t',
@@ -728,8 +728,6 @@ def make_tsv_by_line(lines):
 
 def make_stats_tsv(raw_stats, list_name):
     """Make TSV report file for stats."""
-    import csv
-    from io import StringIO
     tsv_output = StringIO()
 
     writer = csv.writer(tsv_output, delimiter='\t',
@@ -927,6 +925,7 @@ def update_publish_status(item_id, status):
     record = WekoRecord.get_record_by_pid(item_id)
     record['publish_status'] = status
     record.commit()
+    db.session.commit()
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
@@ -1037,9 +1036,13 @@ def import_items_to_system(item: dict, url_root: str):
             response = register_item_handle(item, url_root)
         if response.get('success'):
             response = register_item_doi(item)
-        if response.get('success') and \
-                item.get('publish_status') == WEKO_IMPORT_PUBLISH_STATUS[1]:
-            response = register_item_update_publish_status(item, '1')
+        if response.get('success'):
+            status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
+                item.get('publish_status')
+            )
+            response = register_item_update_publish_status(
+                item,
+                str(status_number))
 
         return response
 
@@ -1127,23 +1130,19 @@ def handle_check_and_prepare_index_tree(list_record):
                     _('Specified {} does not match with existing index.')
                     .format('POS_INDEX'))
         elif index_name:
-            index = None
             index = Indexes.get_index_by_name(
                 index_name, parent_id)
+            msg_not_exist = _('The specified {} does not exist in system.')
             if not index:
                 if index_id:
-                    errors.append(_('The specified {} does not exist in system.')
-                                  .format('IndexID, POS_INDEX'))
+                    errors.append(msg_not_exist.format('IndexID, POS_INDEX'))
                     return None
                 else:
-                    errors.append(_('The specified {} does not exist in system.')
-                                  .format('POS_INDEX'))
+                    errors.append(msg_not_exist.format('POS_INDEX'))
                     return None
             else:
                 if index_id:
-                    errors.append(
-                        _('The specified {} does not exist in system.')
-                        .format('IndexID'))
+                    errors.append(msg_not_exist.format('IndexID'))
                     return None
 
         data = {
@@ -1352,7 +1351,7 @@ def handle_check_doi_ra(list_record):
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
                 error = _('DOI_RA should be set by one of JaLC' +
-                          ', Crrossref, DataCite, NDL JaLC.')
+                          ', Crossref, DataCite, NDL JaLC.')
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
@@ -1551,8 +1550,12 @@ def register_item_doi(item):
                         is_feature_import=True
                     )
 
+        deposit = WekoDeposit.get_record(pid.object_uuid)
+        deposit.commit()
+        deposit.publish()
         deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
         deposit.commit()
+        deposit.publish()
 
         db.session.commit()
     except Exception as ex:
@@ -1586,7 +1589,6 @@ def register_item_update_publish_status(item, status):
         update_publish_status(item_id, status)
         if lastest_version_id:
             update_publish_status(lastest_version_id, status)
-        db.session.commit()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error('item id: %s update error.' % item_id)
@@ -1634,7 +1636,8 @@ def handle_doi_required_check(record):
 
     if 'doi_ra' in record and record['doi_ra'] in ['JaLC',
                                                    'Crossref',
-                                                   'DataCite']:
+                                                   'DataCite',
+                                                   'NDL JaLC']:
         doi_type = record['doi_ra']
         item_type_mapping = Mapping.get_record(record['item_type_id'])
         if item_type_mapping:
@@ -1678,6 +1681,31 @@ def handle_doi_required_check(record):
                 either_properties = ['geoLocationPoint',
                                      'geoLocationBox',
                                      'geoLocationPlace']
+        elif doi_type == 'Crossref':
+            if resource_type in journalarticle_type:
+                required_properties = ['title',
+                                       'publisher',
+                                       'sourceIdentifier',
+                                       'sourceTitle']
+                if item_type.item_type_name.name != ddi_item_type_name:
+                    required_properties.append('fileURI')
+            elif resource_type in report_types:
+                required_properties = ['title']
+                if item_type.item_type_name.name != ddi_item_type_name:
+                    required_properties.append('fileURI')
+            elif resource_type in thesis_types:
+                required_properties = ['title',
+                                       'creator']
+                if item_type.item_type_name.name != ddi_item_type_name:
+                    required_properties.append('fileURI')
+        # DataCite DOI identifier registration
+        elif doi_type == 'DataCite' \
+                and item_type.item_type_name.name != ddi_item_type_name:
+            required_properties = ['fileURI']
+        # NDL JaLC DOI identifier registration
+        elif doi_type == 'NDL JaLC' \
+                and item_type.item_type_name.name != ddi_item_type_name:
+            required_properties = ['fileURI']
 
         if required_properties:
             properties['required'] = required_properties

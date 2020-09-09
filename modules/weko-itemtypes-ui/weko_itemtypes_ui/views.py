@@ -63,18 +63,18 @@ def get_itemtypes():
         }
 
     item_types = list(map(convert, ItemTypes.get_latest(True)))
-    type = request.args.get('type') or None
-    if type == 'harvesting_type':
+    filter_type = request.args.get('type') or None
+    if filter_type == 'harvesting_type':
         item_types = [
             item for item in item_types
             if item['harvesting_type']
         ]
-    elif type == 'deleted_type':
+    elif filter_type == 'deleted_type':
         item_types = [
             item for item in item_types
             if item['is_deleted']
         ]
-    elif type == 'normal_type':
+    elif filter_type == 'normal_type':
         item_types = [
             item for item in item_types
             if not (item['is_deleted'] or item['harvesting_type'])

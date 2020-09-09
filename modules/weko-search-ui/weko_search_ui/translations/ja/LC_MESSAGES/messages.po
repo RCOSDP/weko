@@ -403,8 +403,8 @@ msgid "{} cannot be set."
 msgstr "{}は設定できません。"
 
 #: weko_search_ui/utils.py:
-msgid "DOI_RA should be set by one of JaLC, Crrossref, DataCite, NDL JaLC."
-msgstr "DOI_RAはJaLC,Crrossref,DataCite,NDL JaLCのいずれかを設定してください。"
+msgid "DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."
+msgstr "DOI_RAはJaLC,Crossref,DataCite,NDL JaLCのいずれかを設定してください。"
 
 #: weko_search_ui/utils.py:
 msgid "Please set "public" or "private" for {}."

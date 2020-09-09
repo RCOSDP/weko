@@ -1062,7 +1062,7 @@ class ItemTypeComponent extends React.Component {
           }
         }
 
-        fileName = decodeURIComponent(fileName);
+        fileName = decodeURIComponent(fileName.replace(/\+/g, '%20'));
         const blob = new Blob([response], { type: 'text/tsv' });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);

@@ -402,7 +402,7 @@ msgid "{} cannot be set."
 msgstr ""
 
 #: weko_search_ui/utils.py:
-msgid "DOI_RA should be set by one of JaLC, Crrossref, DataCite, NDL JaLC."
+msgid "DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."
 msgstr ""
 
 #: weko_search_ui/utils.py:

@@ -20,6 +20,7 @@
 
 """Weko Search-UI admin."""
 
+import copy
 import json
 from datetime import datetime
 from urllib.parse import urlencode
@@ -376,6 +377,7 @@ class ItemImportView(BaseView):
     def export_template(self):
         """Download item type template."""
         def handle_root_item(key, value):
+            """Handle if is root item."""
             _id = '.metadata.{}'.format(key)
             _name = value.get('title')
 
@@ -387,41 +389,48 @@ class ItemImportView(BaseView):
             if value.get('option').get('multiple'):
                 _option.append('Allow Multiple')
                 _id += '[0]'
-                _name += '[0]'
+                _name += '#1'
 
             return _id, _name, _option
 
-        def handle_sub_item(item):
-            ids, names, options = [], [], []
-            new_id = '.metadata.{}'.format(item.get('key'))
-            if not item.get('items'):
-                ids.append(new_id)
-                if item.get('notitle'):
-                    names.append(item.get('key').split('.')[-1] + '-notitle')
+        def handle_sub_item(items, root_id=None, root_name=None):
+            """Handle if is sub-item."""
+            ids, names = [], []
+            for key, item in items.items():
+                if item.get('items'):
+                    _ids, _names = handle_sub_item(
+                        item.get('items').get('properties'))
+                    ids += [key + '[0].' + _id for _id in _ids]
+                    names += [item.get('title') + '#1.' + _name
+                              for _name in _names]
                 else:
+                    ids.append(key)
                     names.append(item.get('title'))
 
-                _option = []
-                if item.get('required'):
-                    _option.append('Required')
-                if item.get('isHide'):
-                    _option.append('Hide')
-                options.append(_option)
-            else:
-                for _item in item.get('items', {}):
-                    _ids, _names, _options = handle_sub_item(_item)
-                    ids += [_id.replace('[]', '[0]') for _id in _ids]
-                    options += _options
+            if root_id and root_name:
+                ids = [root_id + '.' + _id for _id in ids]
+                names = [root_name + '.' + _name
+                         for _name in names]
 
-                    root_title = item.get('title')
-                    if _ids:
-                        if _ids[0].startswith(new_id + '[]') \
-                                or _ids[0].startswith(new_id + '[0]'):
-                            root_title += '#1'
-                    names += [root_title + '.' +
-                              _name for _name in _names]
+            return ids, names
 
-            return ids, names, options
+        def get_sub_item_option(key, form):
+            """Get sub-item option."""
+            _option = []
+            for item in form:
+                if not item.get('items'):
+                    if item.get('key') == key:
+                        if item.get('required'):
+                            _option.append('Required')
+                        if item.get('isHide'):
+                            _option.append('Hide')
+                        return _option, True
+                else:
+                    _option, _found = get_sub_item_option(
+                        key, item.get('items'))
+                    if _found:
+                        return _option, True
+            return _option, False
 
         result = Response(
             [],
@@ -447,13 +456,16 @@ class ItemImportView(BaseView):
                         '{}items/jsonschema/{}'.format(
                             request.url_root, item_type.id)
                     ]
-                    ids_line = WEKO_EXPORT_TEMPLATE_BASIC_ID
-                    names_line = WEKO_EXPORT_TEMPLATE_BASIC_NAME
-                    options_line = WEKO_EXPORT_TEMPLATE_BASIC_OPTION
+                    ids_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_ID)
+                    names_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_NAME)
+                    options_line = copy.deepcopy(
+                        WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
 
                     item_type = item_type.render
                     meta_fix = item_type.get('meta_fix', {})
                     meta_list = item_type.get('meta_list', {})
+                    schema = item_type.get(
+                        'schemaeditor', {}).get('schema', {})
                     form = item_type.get(
                         'table_row_map', {}).get('form', {})
                     for key, value in meta_fix.items():
@@ -461,24 +473,25 @@ class ItemImportView(BaseView):
                         ids_line.append(_id)
                         names_line.append(_name)
                         options_line.append(', '.join(_option))
-                    for key, value in meta_list.items():
-                        item = next(
-                            filter(lambda _item: _item.get(
-                                'key') == key, form),
-                            None
-                        )
-                        if not item:
-                            _id, _name, _option = handle_root_item(key, value)
-                            ids_line.append(_id)
-                            names_line.append(_name)
-                            options_line.append(', '.join(_option))
-                        else:
-                            _ids, _names, _options = handle_sub_item(item)
+                    for key in item_type.get('table_row', {}):
+                        value = meta_list.get(key, {})
+                        if key in schema:
+                            item = schema.get(key)
+                            root_id, root_name, root_option = handle_root_item(
+                                key, value)
+                            _ids, _names = handle_sub_item(
+                                item.get('properties'), root_id, root_name)
+                            _options = [
+                                get_sub_item_option(
+                                    _id.replace('.metadata.', '')
+                                    .replace('[0]', '[]'),
+                                    form)[0]
+                                for _id in _ids
+                            ]
+
                             ids_line += _ids
                             names_line += _names
                             for _option in _options:
-                                _, _, root_option = handle_root_item(
-                                    key, value)
                                 options_line.append(
                                     ', '.join(list(set(root_option + _option)))
                                 )
