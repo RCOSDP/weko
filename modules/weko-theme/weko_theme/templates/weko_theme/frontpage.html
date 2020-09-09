@@ -93,6 +93,7 @@
     {%-if not community_id %}
       <div class="col-sm-{{ 12-width|int }} col-md-{{ 12-width|int }} col-lg-{{ 12-width|int }}">
         {% if init_display_setting == '0' %}
+          <input type="hidden" id="index_id_q" value="{{ search_hidden_params.q }}">
           {% include "weko_search_ui/body_contents.html" %}
         {% elif init_display_setting == '1' %}
           {% if is_show %}

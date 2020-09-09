@@ -152,7 +152,7 @@ class MainScreenInitDisplaySetting:
     __SPECIFIC_INDEX = "1"
 
     @classmethod
-    def get_init_display_setting(cls):
+    def get_init_display_setting(cls) -> dict:
         """Get main screen initial display setting.
 
         :return:initial display setting
@@ -257,14 +257,13 @@ class MainScreenInitDisplaySetting:
             "sort_option": sort_options,
             "index_id": init_disp_index,
             "index_display_format": display_format,
-            "disply_setting": {
-                "size": display_number,
-                "timestamp": time.time()
-            },
+            "disply_setting": {},
             "search_hidden_params": {
                 "search_type": current_app.config['WEKO_SEARCH_TYPE_DICT'][
                     'INDEX'],
-                "q": init_disp_index
+                "q": init_disp_index,
+                "size": display_number,
+                "timestamp": time.time(),
             },
             "journal_info": get_journal_info(init_disp_index),
             "allow_item_exporting": export_settings.allow_item_exporting,
