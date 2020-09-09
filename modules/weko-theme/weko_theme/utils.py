@@ -280,7 +280,6 @@ class MainScreenInitDisplaySetting:
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
             search = search.query(QueryString(query=query_string))
             search = search.sort('-publish_date', '-_updated')
-            print(search.to_dict())
             search_result = search.execute().to_dict()
             result = search_result.get('hits', {}).get('hits', [])
         except NotFoundError as e:

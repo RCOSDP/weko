@@ -565,7 +565,7 @@ def display_control_function():
 def get_search_init_display_index(selected_index=None):
     """Get search init display index.
 
-    :param selected_index: seleted index.
+    :param selected_index: selected index.
     :return:
     """
     indexes = get_init_display_index(selected_index)

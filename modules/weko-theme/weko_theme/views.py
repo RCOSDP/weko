@@ -96,18 +96,18 @@ def index():
     page = None
 
     # Get main screen display setting.
-    if not community_id:
-        init_display_setting = MainScreenInitDisplaySetting()\
-            .get_init_display_setting()
-    else:
-        init_display_setting = {}
+    # if not community_id:
+    #     init_display_setting = MainScreenInitDisplaySetting()\
+    #         .get_init_display_setting()
+    # else:
+    #     init_display_setting = {}
 
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         page=page,
         render_widgets=render_widgets,
         render_header_footer=render_header_footer,
-        **init_display_setting,
+        # **init_display_setting,
         **get_weko_contents(request.args))
 
 
@@ -160,3 +160,15 @@ def get_site_info(site_info):
             "WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS"]
     }
     return result
+
+
+@blueprint.app_template_filter('get_init_display_setting')
+def get_init_display_setting(settings):
+    """Get initial display settings.
+
+    :param settings:
+    :return:
+    """
+    init_display_setting = MainScreenInitDisplaySetting() \
+        .get_init_display_setting()
+    return init_display_setting
