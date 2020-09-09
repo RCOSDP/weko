@@ -152,7 +152,7 @@ const SPECIFIC_INDEX_VALUE = '1';
 
       $scope.setData = function () {
         $scope.setDefaultDataForInitDisplaySetting();
-        $scope.specificIndex();
+        $scope.setDefaultInitDisplayIndex();
         $scope.specificIndexText();
       }
 
@@ -176,16 +176,25 @@ const SPECIFIC_INDEX_VALUE = '1';
       }
 
       $scope.specificIndex = function () {
-        if (!this.isSpecificIndex()) {
-          // Reset
-          $scope.treeInstance.jstree(true).uncheck_all();
-          this.clearInitDisplayIndex();
-        }
+        this.setDefaultInitDisplayIndex();
       }
 
-      $scope.clearInitDisplayIndex = function () {
-        $("#init_disp_index_text").val("");
-        $("#init_disp_index").val("");
+      $scope.setDefaultInitDisplayIndex = function () {
+        if (this.isSpecificIndex()) {
+          // Reset tree data to default
+          if (this.treeInstance && this.treeInstance.jstree) {
+            let nodeChecked = this.treeInstance.jstree(true).get_checked([true]);
+            if (!nodeChecked) {
+              this.treeInstance.jstree(true).select_node({id: "0"});
+              $("#init_disp_index_text").val("Root Index");
+              $("#init_disp_index").val("0");
+            } else {
+              let node = nodeChecked[0];
+              $("#init_disp_index_text").val(node.text);
+              $("#init_disp_index").val(node.id);
+            }
+          }
+        }
       }
 
       $scope.selectInitDisplayIndex = function (node, selected, event) {
@@ -194,7 +203,9 @@ const SPECIFIC_INDEX_VALUE = '1';
       }
 
       $scope.disSelectInitDisplayIndex = function (node, selected, event) {
-        this.clearInitDisplayIndex();
+        if ($scope.treeInstance && $scope.treeInstance.jstree) {
+            $scope.treeInstance.jstree(true).select_node(selected.node);
+        }
       }
 
     }

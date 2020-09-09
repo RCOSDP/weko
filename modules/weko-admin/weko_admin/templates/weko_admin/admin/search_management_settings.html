@@ -285,6 +285,7 @@
                   </th>
                   <td>
                     <select id="init_disp_screen_setting" class="form-control"
+                            ng-change="specificIndex();"
                             ng-model="dataJson.init_disp_setting.init_disp_screen_setting">
                       <option ng-repeat="opt in initDispSettingOpt.init_disp_screen_setting track by opt.id"
                               value="[[opt.id]]">{{ _('[[opt.contents]]') }}</option>

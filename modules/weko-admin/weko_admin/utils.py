@@ -1636,12 +1636,15 @@ def get_init_display_index(search_setting: dict) -> list:
     index_list = Indexes.get_index_tree()
     init_disp_index = search_setting.get('init_disp_setting', {}).get(
         'init_disp_index', "")
-    init_display_indexes = [{
+    root_index = {
         "id": "0",
         "parent": "#",
         "text": "Root Index",
-        "state": {"opened": True, "disabled": True},
-    }]
+        "state": {"opened": True},
+    }
+    if not init_disp_index or init_disp_index == "0":
+        root_index["state"].update({"selected": True})
+    init_display_indexes = [root_index]
     __build_init_display_index(index_list, init_display_indexes,
                                init_disp_index)
 
@@ -1649,7 +1652,7 @@ def get_init_display_index(search_setting: dict) -> list:
 
 
 def translate_search_options(options, current_language):
-    """Translate search options
+    """Translate search options.
 
     :param options: search options
     :param current_language: current language.
