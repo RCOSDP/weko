@@ -79,10 +79,10 @@
       <!--</button>-->
       <!--<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu_View">-->
       <!--<li role="presentation">-->
-      <!--<a role="menuitem" tabindex="-1" href="{{url_for('.view', community_id=obj.id, view='basic')}}">{{ _('Basic') }}</a>-->
+      <!--<a role="menuitem" tabindex="-1" href="{{url_for('invenio_communities.view', community_id=obj.id, view='basic')}}">{{ _('Basic') }}</a>-->
       <!--</li>-->
       <!--<li role="presentation">-->
-      <!--<a role="menuitem" tabindex="-1" href="{{url_for('.view', community_id=obj.id, view='weko')}}">{{ _('Weko') }}</a>-->
+      <!--<a role="menuitem" tabindex="-1" href="{{url_for('invenio_communities.view', community_id=obj.id, view='weko')}}">{{ _('Weko') }}</a>-->
       <!--</li>-->
       <!--</ul>-->
       <!--</div>-->
@@ -172,9 +172,9 @@
                     <h4>
                       <div class="pull-right">
                         <div class="form-group">
-                          <a href="{{ url_for('.view', community_id=obj.id, view='basic') }}"
+                          <a href="{{ url_for('invenio_communities.view', community_id=obj.id, view='basic') }}"
                              class="btn btn-info">{{ _('Basic') }}</a>
-                          <a href="{{ url_for('.view', community_id=obj.id, view='weko') }}"
+                          <a href="{{ url_for('invenio_communities.view', community_id=obj.id, view='weko') }}"
                              class="btn btn-info">{{ _('Weko') }}</a>
                         </div>
                       </div>

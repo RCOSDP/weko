@@ -31,6 +31,7 @@ from flask_login import current_user
 from invenio_communities.forms import SearchForm
 from invenio_communities.models import Community, FeaturedCommunity
 from invenio_communities.utils import Pagination
+from invenio_communities.views.ui import mycommunities_ctx
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from weko_admin.models import AdminSettings, RankingSettings, SearchManagement
@@ -188,6 +189,7 @@ class MainScreenInitDisplaySetting:
 
     @classmethod
     def __communities(cls, main_screen_display_setting):
+        ctx = mycommunities_ctx()
         p = request.args.get('p', type=str)
         so = request.args.get('so', type=str)
         page = request.args.get('page', type=int, default=1)
@@ -210,6 +212,7 @@ class MainScreenInitDisplaySetting:
                 per_page * (page - 1), per_page * page).all(),
             'featured_community': featured_community,
         })
+        main_screen_display_setting.update(ctx)
 
     @classmethod
     def __ranking(cls, main_screen_display_setting):
@@ -217,11 +220,14 @@ class MainScreenInitDisplaySetting:
         # get statistical period
         end_date = date.today()
         start_date = date.today()
+        is_show = False
         if ranking_settings:
             start_date = end_date - timedelta(
                 days=int(ranking_settings.statistical_period))
             main_screen_display_setting['rankings'] = get_ranking(
                 ranking_settings)
+            is_show = ranking_settings.is_show
+        main_screen_display_setting['is_show'] = is_show
         main_screen_display_setting['start_date'] = start_date
         main_screen_display_setting['end_date'] = end_date
 

@@ -95,8 +95,10 @@
         {% if init_display_setting == '0' %}
           {% include "weko_search_ui/body_contents.html" %}
         {% elif init_display_setting == '1' %}
-          {% from "weko_items_ui/macros/ranking_list.html" import ranking_list %}
-          {% include "weko_items_ui/ranking_body.html" %}
+          {% if is_show %}
+            {% from "weko_items_ui/macros/ranking_list.html" import ranking_list %}
+            {% include "weko_items_ui/ranking_body.html" %}
+          {% endif %}
         {% elif init_display_setting == '2' %}
           {% include "invenio_communities/communities_list_body.html" %}
         {% endif %}
