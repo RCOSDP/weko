@@ -2117,16 +2117,37 @@ function toObject(arr) {
       }
 
       // This is callback function - Please do NOT change function name
-      $scope.fileNameSelect = function (modelValue) {
+      $scope.fileNameSelect = function ($event, form, modelValue) {
+        //Check to disable「本文URL」element.
+        let curElement = event.target;
+        let parForm = $(curElement).parents('.schema-form-section')[0];
+        let curTextUrl = $(parForm).find('.file-text-url')[0];
+        let flag = false;
+        form.titleMap.forEach(function(v, i){
+            if(v.value == modelValue)
+                flag = !flag;
+                return false;
+        });
+        $(curTextUrl).attr('disabled', flag);
+        $(curTextUrl).text('');
+
         let model = $rootScope.recordsVM.invenioRecordsModel;
         let filesObject = $scope.getFilesObject();
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key].forEach(function (fileInfo) {
             if (fileInfo.filename == modelValue) {
-              fileInfo.filesize = [{}];
-              fileInfo.filesize[0].value = filesObject[modelValue].size;
-              fileInfo.format = filesObject[modelValue].format;
+              // Set information for「サイズ」and「フォーマット」.
+              if(filesObject[modelValue]){
+                fileInfo.filesize = [{}];
+                fileInfo.filesize[0].value = filesObject[modelValue].size;
+                fileInfo.format = filesObject[modelValue].format;
+              } else {
+                fileInfo.filesize = [{}];
+                fileInfo.filesize[0].value = '';
+                fileInfo.format = '';
+              }
+              // Set information for「日付」.
               fileInfo.date = [{}];
               fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
               fileInfo.date[0].dateType = "Available";
