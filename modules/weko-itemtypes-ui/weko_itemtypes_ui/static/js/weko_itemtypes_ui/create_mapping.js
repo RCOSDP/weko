@@ -700,7 +700,13 @@ $(document).ready(function () {
             if(typeof sub_itemtypes == 'object') {
               if(sub_itemtypes.length > 0) {
                 sub_itemtypes.forEach(function (elm)  {
-                  sub_sub_itemtype = sub_sub_itemtype + elm.itemtype_key.split('.').pop() + elm.itemlink_key;
+                  if(elm.itemtype_key.indexOf('.') != -1){
+                    let index = elm.itemtype_key.indexOf('.') + 1;
+                    sub_sub_itemtype_e = elm.itemtype_key.slice(index) + elm.itemlink_key;
+                  }else{
+                    sub_sub_itemtype_e = elm.itemtype_key+elm.itemlink_key;
+                  }
+                  sub_sub_itemtype = sub_sub_itemtype+sub_sub_itemtype_e;
                 });
               }
             } else {
