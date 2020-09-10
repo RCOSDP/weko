@@ -20,14 +20,30 @@
 
 """Utils for weko-theme."""
 
-from flask import current_app
+import time
+from datetime import date, timedelta
+
+from elasticsearch.exceptions import NotFoundError
+from elasticsearch_dsl.query import QueryString, Range
+from flask import current_app, request
+from flask_babelex import gettext as _
+from flask_login import current_user
+from invenio_communities.forms import SearchForm
+from invenio_communities.models import Community, FeaturedCommunity
+from invenio_communities.utils import Pagination
+from invenio_communities.views.ui import mycommunities_ctx
 from invenio_i18n.ext import current_i18n
+from invenio_search import RecordsSearch
+from weko_admin.models import AdminSettings, RankingSettings, SearchManagement
 from weko_gridlayout.services import WidgetDesignServices
 from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
+from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
+from weko_items_ui.utils import get_ranking
 from weko_records_ui.ipaddr import check_site_license_permission
-from weko_search_ui.api import get_search_detail_keyword
+from weko_search_ui.api import SearchSetting, get_search_detail_keyword
+from weko_search_ui.utils import check_permission, get_journal_info
 
 
 def get_weko_contents(getargs):
@@ -124,3 +140,188 @@ def has_widget_design(repository_id, current_language):
         return True
     else:
         return False
+
+
+class MainScreenInitDisplaySetting:
+    """Main screen initial display setting."""
+
+    __INDEX_SEARCH_RESULT_VAL = "0"
+    __RANKING_VAL = "1"
+    __COMMUNITIES_VAL = "2"
+    __INDEX_OF_NEWEST_ITEM_REGISTERED = "0"
+    __SPECIFIC_INDEX = "1"
+
+    @classmethod
+    def get_init_display_setting(cls) -> dict:
+        """Get main screen initial display setting.
+
+        :return:initial display setting
+        """
+        search_setting = SearchManagement.get()
+        if search_setting and search_setting.init_disp_setting:
+            init_display_setting_data = search_setting.init_disp_setting
+        else:
+            init_display_setting_data = current_app.config[
+                'WEKO_ADMIN_MANAGEMENT_OPTIONS']['init_disp_setting']
+
+        # Get setting data.
+        init_display_setting = init_display_setting_data[
+            'init_disp_screen_setting']
+        init_disp_index_disp_method = init_display_setting_data[
+            'init_disp_index_disp_method']
+        init_disp_index = init_display_setting_data['init_disp_index']
+
+        main_screen_display_setting = {
+            "init_display_setting": init_display_setting
+        }
+
+        if init_display_setting == cls.__INDEX_SEARCH_RESULT_VAL:
+            cls.__index_search_result(init_disp_index,
+                                      init_disp_index_disp_method,
+                                      main_screen_display_setting)
+        elif init_display_setting == cls.__RANKING_VAL:
+            cls.__ranking(main_screen_display_setting)
+
+        elif init_display_setting == cls.__COMMUNITIES_VAL:
+            cls.__communities(main_screen_display_setting)
+
+        return main_screen_display_setting
+
+    @classmethod
+    def __communities(cls, main_screen_display_setting):
+        ctx = mycommunities_ctx()
+        p = request.args.get('p', type=str)
+        so = request.args.get('so', type=str)
+        page = request.args.get('page', type=int, default=1)
+        so = so or current_app.config.get(
+            'COMMUNITIES_DEFAULT_SORTING_OPTION')
+        communities = Community.filter_communities(p, so)
+        featured_community = FeaturedCommunity.get_featured_or_none()
+        form = SearchForm(p=p)
+        per_page = 10
+        page = max(page, 1)
+        p = Pagination(page, per_page, communities.count())
+        main_screen_display_setting.update({
+            'r_from': max(p.per_page * (p.page - 1), 0),
+            'r_to': min(p.per_page * p.page, p.total_count),
+            'r_total': p.total_count,
+            'pagination': p,
+            'form': form,
+            'title': _('Communities'),
+            'communities': communities.slice(
+                per_page * (page - 1), per_page * page).all(),
+            'featured_community': featured_community,
+        })
+        main_screen_display_setting.update(ctx)
+
+    @classmethod
+    def __ranking(cls, main_screen_display_setting):
+        ranking_settings = RankingSettings.get()
+        # get statistical period
+        end_date = date.today()
+        start_date = date.today()
+        is_show = False
+        if ranking_settings:
+            start_date = end_date - timedelta(
+                days=int(ranking_settings.statistical_period))
+            main_screen_display_setting['rankings'] = get_ranking(
+                ranking_settings)
+            is_show = ranking_settings.is_show
+        main_screen_display_setting['is_show'] = is_show
+        main_screen_display_setting['start_date'] = start_date
+        main_screen_display_setting['end_date'] = end_date
+
+    @classmethod
+    def __index_search_result(cls, init_disp_index, init_disp_index_disp_method,
+                              main_screen_display_setting):
+        export_settings = (
+            AdminSettings.get('item_export_settings')
+            or AdminSettings.Dict2Obj(
+                current_app.config[
+                    'WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS']
+            )
+        )
+        sort_options, display_number = SearchSetting.get_results_setting()
+        # Default index display format
+        display_format = '1'
+        if init_disp_index_disp_method == cls.__INDEX_OF_NEWEST_ITEM_REGISTERED:
+            init_disp_index, display_format = cls.__get_last_publish_index()
+        elif init_disp_index_disp_method == cls.__SPECIFIC_INDEX:
+            current_index = Indexes.get_index(index_id=init_disp_index)
+            if current_index:
+                display_format = current_index.display_format
+        if display_format == '2':
+            display_number = 100
+
+        main_screen_display_setting.update({
+            "sort_option": sort_options,
+            "index_id": init_disp_index,
+            "index_display_format": display_format,
+            "disply_setting": {},
+            "search_hidden_params": {
+                "search_type": current_app.config['WEKO_SEARCH_TYPE_DICT'][
+                    'INDEX'],
+                "q": init_disp_index,
+                "size": display_number,
+                "timestamp": time.time(),
+            },
+            "journal_info": get_journal_info(init_disp_index),
+            "allow_item_exporting": export_settings.allow_item_exporting,
+            "is_permission": check_permission(),
+            "is_login": bool(current_user.get_id()),
+        })
+
+    @classmethod
+    def __get_last_publish_record(cls):
+        query_string = "relation_version_is_last:true AND publish_status:0"
+        query_range = {'publish_date': {'lte': 'now'}}
+        result = []
+        try:
+            search = RecordsSearch(
+                index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+            search = search.query(QueryString(query=query_string))
+            search = search.filter(Range(**query_range))
+            search = search.sort('-publish_date', '-_updated')
+            search_result = search.execute().to_dict()
+            result = search_result.get('hits', {}).get('hits', [])
+        except NotFoundError as e:
+            current_app.logger.debug("Indexes do not exist yet: ", str(e))
+        return result
+
+    @classmethod
+    def __get_last_publish_index(cls):
+        def __last_index(_path: list):
+            _last_index = None
+            last_update = None
+            for index in _path:
+                tmp_index = index.split("/")[-1]
+                if tmp_index in public_indexes:
+                    _public_index = public_indexes.get(tmp_index, {})
+                    if (last_update is None
+                            or last_update < _public_index.get('updated')):
+                        _last_index = tmp_index
+                        last_update = _public_index.get('updated')
+            return _last_index
+
+        records = cls.__get_last_publish_record()
+        public_indexes = {}
+        cls.__get_public_indexes(Indexes.get_public_indexes(), public_indexes)
+        last_index = ""
+        for record in records:
+            path = record.get('_source').get('path')
+            last_index = __last_index(path)
+            if last_index is not None:
+                break
+        display_format = public_indexes.get(last_index, {}).get(
+            'display_format',
+            '1')
+        return last_index, display_format
+
+    @classmethod
+    def __get_public_indexes(cls, indexes: list, index_dict: dict):
+        for _index in indexes:
+            if _index.id and _index.public_state:
+                index_dict[str(_index.id)] = {
+                    'updated': _index.updated,
+                    'display_format': _index.display_format,
+                }

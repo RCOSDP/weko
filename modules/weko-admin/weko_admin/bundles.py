@@ -143,3 +143,10 @@ weko_admin_site_info_css = Bundle(
     'css/weko_admin/site.info.css',
     output="gen/weko_site_info_css.%(version)s.css",
 )
+
+weko_admin_ng_js_tree_js = NpmBundle(
+    'js/weko_admin/jstree.min.js',
+    'js/weko_admin/ngJsTree.min.js',
+    filters='jsmin',
+    output='gen/weko_admin_ui.ng_js_tree.%(version)s.js',
+)

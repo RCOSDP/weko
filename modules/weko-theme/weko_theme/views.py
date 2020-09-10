@@ -28,12 +28,10 @@ from flask import Blueprint, current_app, render_template, request
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import SiteInfo
-from weko_index_tree.models import IndexStyle
-from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
-from weko_search_ui.api import get_search_detail_keyword
 
-from .utils import get_design_layout, get_weko_contents, has_widget_design
+from .utils import MainScreenInitDisplaySetting, get_design_layout, \
+    get_weko_contents, has_widget_design
 
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
@@ -49,34 +47,6 @@ blueprint = Blueprint(
 @blueprint.route('/')
 def index():
     """Simplistic front page view."""
-    get_args = request.args
-    ctx = {'community': None}
-    community_id = ""
-    if 'community' in get_args:
-        from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        ctx = {'community': comm}
-        community_id = comm.id
-    # Get index style
-    style = IndexStyle.get(
-        current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    if not style:
-        IndexStyle.create(
-            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
-            width=3,
-            height=None)
-        style = IndexStyle.get(
-            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    width = style.width
-    height = style.height
-    index_link_enabled = style.index_link_enabled
-
-    if hasattr(current_i18n, 'language'):
-        index_link_list = get_index_link_list(current_i18n.language)
-    else:
-        index_link_list = get_index_link_list()
-
-    detail_condition = get_search_detail_keyword('')
     check_site_license_permission()
     send_info = {}
     send_info['site_license_flag'] = True \
@@ -117,8 +87,8 @@ def get_site_info(site_info):
     :return: result
 
     """
-    from weko_admin.utils import get_site_name_for_current_language, \
-        get_notify_for_current_language
+    from weko_admin.utils import get_notify_for_current_language, \
+        get_site_name_for_current_language
     site_info = SiteInfo.get()
     site_name = site_info.site_name if site_info and site_info.site_name else []
     notify = site_info.notify if site_info and site_info.notify else []
@@ -151,3 +121,15 @@ def get_site_info(site_info):
             "WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS"]
     }
     return result
+
+
+@blueprint.app_template_filter('get_init_display_setting')
+def get_init_display_setting(settings):
+    """Get initial display settings.
+
+    :param settings:
+    :return:
+    """
+    init_display_setting = MainScreenInitDisplaySetting() \
+        .get_init_display_setting()
+    return init_display_setting

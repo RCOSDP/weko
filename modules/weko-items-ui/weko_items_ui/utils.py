@@ -29,7 +29,7 @@ import shutil
 import sys
 import tempfile
 import traceback
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from io import StringIO
 
 import bagit
@@ -44,9 +44,12 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
+from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.utils import get_index_id
 from weko_records.api import ItemTypes
@@ -1867,3 +1870,91 @@ def translate_schema_form(form_element, cur_lang):
     if form_element.get('items'):
         for sub_elem in form_element['items']:
             translate_schema_form(sub_elem, cur_lang)
+
+
+def get_ranking(settings):
+    """Get ranking.
+
+    :param settings: ranking setting.
+    :return:
+    """
+    # get statistical period
+    end_date_original = date.today()  # - timedelta(days=1)
+    start_date_original = end_date_original - timedelta(
+        days=int(settings.statistical_period))
+    rankings = {}
+    start_date = start_date_original.strftime('%Y-%m-%d')
+    end_date = end_date_original.strftime('%Y-%m-%d')
+    # most_reviewed_items
+    if settings.rankings['most_reviewed_items']:
+        result = QueryRecordViewReportHelper.get(
+            start_date=start_date,
+            end_date=end_date,
+            agg_size=settings.display_rank,
+            agg_sort={'value': 'desc'})
+        rankings['most_reviewed_items'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all',
+                                  title_key='record_name',
+                                  count_key='total_all', pid_key='pid_value')
+
+    # most_downloaded_items
+    if settings.rankings['most_downloaded_items']:
+        result = QueryItemRegReportHelper.get(
+            start_date=start_date,
+            end_date=end_date,
+            target_report='3',
+            unit='Item',
+            agg_size=settings.display_rank,
+            agg_sort={'_count': 'desc'})
+        rankings['most_downloaded_items'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data', title_key='col2',
+                                  count_key='col3', pid_key='col1')
+
+    # created_most_items_user
+    if settings.rankings['created_most_items_user']:
+        result = QueryItemRegReportHelper.get(
+            start_date=start_date,
+            end_date=end_date,
+            target_report='0',
+            unit='User',
+            agg_size=settings.display_rank,
+            agg_sort={'_count': 'desc'})
+        rankings['created_most_items_user'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data',
+                                  title_key='user_id', count_key='count')
+
+    # most_searched_keywords
+    if settings.rankings['most_searched_keywords']:
+        result = QuerySearchReportHelper.get(
+            start_date=start_date,
+            end_date=end_date,
+            agg_size=settings.display_rank,
+            agg_sort={'value': 'desc'}
+        )
+        rankings['most_searched_keywords'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all',
+                                  title_key='search_key', count_key='count')
+
+    # new_items
+    if settings.rankings['new_items']:
+        new_item_start_date = (
+            end_date_original
+            - timedelta(
+                days=int(settings.new_item_period) - 1
+            )
+        )
+        if new_item_start_date < start_date_original:
+            new_item_start_date = start_date
+        result = get_new_items_by_date(
+            new_item_start_date,
+            end_date)
+        rankings['new_items'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all', title_key='record_name',
+                                  pid_key='pid_value', date_key='create_date')
+
+    return rankings

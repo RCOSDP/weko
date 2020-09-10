@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import copy
 import hashlib
 import json
 import os
@@ -129,6 +130,7 @@ class StyleSettingView(BaseView):
         """Upload header/footer settings from wysiwyg editor."""
         try:
             from html import unescape
+
             from weko_theme.views import blueprint as theme_bp
             write_path = folder_path = os.path.join(
                 theme_bp.root_path, theme_bp.template_folder)
@@ -555,7 +557,8 @@ class SearchSettingsView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Site license setting page."""
-        result = json.dumps(get_search_setting())
+        search_setting = get_search_setting()
+        result = json.dumps(copy.deepcopy(search_setting))
         if 'POST' in request.method:
             jfy = {}
             try:
@@ -570,7 +573,8 @@ class SearchSettingsView(BaseView):
                     SearchManagement.create(db_data)
                 jfy['status'] = 201
                 jfy['message'] = 'Search setting was successfully updated.'
-            except BaseException:
+            except BaseException as e:
+                current_app.logger.error('Could not save search settings', e)
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update search setting.'
             return make_response(jsonify(jfy), jfy['status'])
@@ -578,7 +582,7 @@ class SearchSettingsView(BaseView):
         try:
             return self.render(
                 current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
-                setting_data=result
+                setting_data=result,
             )
         except BaseException as e:
             current_app.logger.error('Could not save search settings', e)

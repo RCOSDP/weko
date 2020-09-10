@@ -105,6 +105,8 @@ def get_search_setting():
 
     if res:
         db_obj = res.search_setting_all
+        if not db_obj.get('init_disp_setting') and res.init_disp_setting:
+            db_obj['init_disp_setting'] = res.init_disp_setting
         # current_app.logger.debug(db_str)
         # if 'False' in db_str:
         #     db_str.replace('False','false')
@@ -1595,3 +1597,55 @@ def get_notify_for_current_language(notify):
         return ''
     else:
         return ''
+
+
+def __build_init_display_index(indexes: list,
+                               init_display_indexes: list,
+                               init_disp_index: str):
+    """Build initial display index.
+
+    :param indexes:index list from Database.
+    :param init_display_indexes:index list.
+    :param init_disp_index:selected index value
+    """
+    for child in indexes:
+        if child.get('id') and child.get('public_state') is True:
+            selected = child.get('id') == init_disp_index
+            parent = child.get('parent', "0").split('/')[-1]
+            index = {
+                "id": child.get('id'),
+                "parent": parent,
+                "text": child.get('name'),
+            }
+            if selected:
+                index['state'] = {"selected": selected}
+                index['a_attr'] = {"class": "jstree-clicked"}
+            init_display_indexes.append(index)
+            if child.get('children'):
+                __build_init_display_index(
+                    child.get('children'), init_display_indexes, init_disp_index
+                )
+
+
+def get_init_display_index(init_disp_index: str) -> list:
+    """Get initial display index.
+
+    :param init_disp_index: Selected index.
+    :return: index list.
+    """
+    from weko_index_tree.api import Indexes
+    index_list = Indexes.get_index_tree()
+    root_index = {
+        "id": "0",
+        "parent": "#",
+        "text": "Root Index",
+        "state": {"opened": True},
+    }
+    if not init_disp_index or init_disp_index == "0":
+        root_index["state"].update({"selected": True})
+        root_index['a_attr'] = {"class": "jstree-clicked"}
+    init_display_indexes = [root_index]
+    __build_init_display_index(index_list, init_display_indexes,
+                               init_disp_index)
+
+    return init_display_indexes

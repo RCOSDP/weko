@@ -308,6 +308,11 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
             'status': False
         }
     },
+    'init_disp_setting': {
+        'init_disp_screen_setting': '0',
+        'init_disp_index_disp_method': '0',
+        'init_disp_index': ''
+    },
     'detail_condition': [
         {'id': 'title',
          'contents': 'Title',
@@ -685,3 +690,33 @@ WEKO_HEADER_NO_CACHE = {
     "Expires": "0",
 }
 """ Header no cache property """
+
+WEKO_ADMIN_SEARCH_OPTIONS = {
+    "init_disp_setting_options": {
+        "init_disp_screen_setting": [
+            {'id': '0', 'contents': {
+                'en': 'Index search result',
+                'ja': 'インデックス検索結果を表示する'
+            }},
+            {'id': '1', 'contents': {
+                'en': 'Ranking',
+                'ja': 'ランキングを表示する'
+            }},
+            {'id': '2', 'contents': {
+                'en': 'Communities',
+                'ja': 'コミュニティ一覧を表示する'
+            }},
+        ],
+        "init_disp_index_disp_method": [
+            {'id': '0', 'contents': {
+                'en': 'Index of the newest item registered',
+                'ja': '最も新しい公開アイテムの属するインデックス'
+            }},
+            {'id': '1', 'contents': {
+                'en': 'Specific index',
+                'ja': 'インデックス指定'
+            }},
+        ]
+    }
+}
+"""Admin Search Options """
