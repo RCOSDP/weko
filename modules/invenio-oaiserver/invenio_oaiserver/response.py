@@ -473,7 +473,17 @@ def listrecords(**kwargs):
                     'system_identifier_doi'] = get_identifier(db_record)
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))
-            e_metadata.append(record_dumper(pid, record['json']))
+            etree_record = copy.deepcopy(record['json'])
+            if check_correct_system_props_mapping(
+                pid_object.object_uuid,
+                    current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
+                etree_record['_source']['_item_metadata'] = \
+                    combine_record_file_urls(
+                        etree_record['_source']['_item_metadata'],
+                        pid_object.object_uuid,
+                        kwargs['metadataPrefix'])
+
+            e_metadata.append(record_dumper(pid, etree_record))
         except Exception:
             import traceback
             current_app.logger.error(traceback.print_exc())
