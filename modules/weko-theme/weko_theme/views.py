@@ -28,10 +28,7 @@ from flask import Blueprint, current_app, render_template, request
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import SiteInfo
-from weko_index_tree.models import IndexStyle
-from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
-from weko_search_ui.api import get_search_detail_keyword
 
 from .utils import MainScreenInitDisplaySetting, get_design_layout, \
     get_weko_contents, has_widget_design
@@ -50,34 +47,6 @@ blueprint = Blueprint(
 @blueprint.route('/')
 def index():
     """Simplistic front page view."""
-    get_args = request.args
-    ctx = {'community': None}
-    community_id = ""
-    if 'community' in get_args:
-        from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        ctx = {'community': comm}
-        community_id = comm.id
-    # Get index style
-    style = IndexStyle.get(
-        current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    if not style:
-        IndexStyle.create(
-            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
-            width=3,
-            height=None)
-        style = IndexStyle.get(
-            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    width = style.width
-    height = style.height
-    index_link_enabled = style.index_link_enabled
-
-    if hasattr(current_i18n, 'language'):
-        index_link_list = get_index_link_list(current_i18n.language)
-    else:
-        index_link_list = get_index_link_list()
-
-    detail_condition = get_search_detail_keyword('')
     check_site_license_permission()
     send_info = {}
     send_info['site_license_flag'] = True \
