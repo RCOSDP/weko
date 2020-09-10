@@ -1303,6 +1303,21 @@ function toObject(arr) {
             case 'doctoral thesis':
               resourceuri = "http://purl.org/coar/resource_type/c_db06";
               break;
+            case 'software paper':
+              resourceuri = "http://purl.org/coar/resource_type/c_7bab";
+              break;
+            case 'newspaper':
+              resourceuri = "http://purl.org/coar/resource_type/c_2fe3";
+              break;
+            case 'data management plan':
+              resourceuri = "http://purl.org/coar/resource_type/c_ab20";
+              break;
+            case 'interview':
+              resourceuri = "http://purl.org/coar/resource_type/c_26e4";
+              break;
+            case 'manuscript':
+              resourceuri = "http://purl.org/coar/resource_type/c_0040";
+              break;
             default:
               resourceuri = "";
           }
