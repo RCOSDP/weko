@@ -24,7 +24,7 @@ import time
 from datetime import date, timedelta
 
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl.query import QueryString
+from elasticsearch_dsl.query import QueryString, Range
 from flask import current_app, request
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -274,11 +274,13 @@ class MainScreenInitDisplaySetting:
     @classmethod
     def __get_last_publish_record(cls):
         query_string = "relation_version_is_last:true AND publish_status:0"
+        query_range = {'publish_date': {'lte': 'now'}}
         result = []
         try:
             search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
             search = search.query(QueryString(query=query_string))
+            search = search.filter(Range(**query_range))
             search = search.sort('-publish_date', '-_updated')
             search_result = search.execute().to_dict()
             result = search_result.get('hits', {}).get('hits', [])
@@ -298,7 +300,7 @@ class MainScreenInitDisplaySetting:
                     if (last_update is None
                             or last_update < _public_index.get('updated')):
                         _last_index = tmp_index
-                    last_update = _public_index.get('updated')
+                        last_update = _public_index.get('updated')
             return _last_index
 
         records = cls.__get_last_publish_record()
