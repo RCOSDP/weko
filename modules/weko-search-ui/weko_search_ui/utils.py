@@ -1120,7 +1120,12 @@ def handle_check_and_prepare_index_tree(list_record):
     def check(index_ids, index_names, parent_id=0, isRoot=False):
         index_id = index_ids[0]
         index_name = index_names[0]
-        index = Indexes.get_index(index_id)
+        index = None
+        try:
+            index = Indexes.get_index(index_id)
+        except Exception:
+            current_app.logger.warning("Specified IndexID is invalid!")
+
         if index and (
             (isRoot and not index.parent)
             or (not isRoot and parent_id and index.parent == parent_id)
