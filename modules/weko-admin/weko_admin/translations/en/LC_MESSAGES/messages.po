@@ -665,27 +665,7 @@ msgid "Default Contents to Display"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Index search result"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Ranking"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Communities"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Default Index to Display"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Index of the newest item registered"
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Specific index"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html

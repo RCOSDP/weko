@@ -1649,22 +1649,3 @@ def get_init_display_index(init_disp_index: str) -> list:
                                init_disp_index)
 
     return init_display_indexes
-
-
-def translate_search_options(options, current_language):
-    """Translate search options.
-
-    :param options: search options
-    :param current_language: current language.
-    """
-    if isinstance(options, dict):
-        for k, v in options.items():
-            if k == 'contents' and isinstance(v, dict):
-                content = v.get(current_language, v.get('en', ''))
-                options[k] = content
-            elif not isinstance(v, str):
-                translate_search_options(v, current_language)
-    elif isinstance(options, list):
-        for v in options:
-            if not isinstance(v, str):
-                translate_search_options(v, current_language)

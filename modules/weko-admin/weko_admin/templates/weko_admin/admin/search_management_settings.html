@@ -35,8 +35,10 @@
 {%- endblock javascript %}
 
 {%- block body %}
+  {% set searchOptions = config['WEKO_ADMIN_SEARCH_OPTIONS'] %}
+  {% set currentLanguage = current_i18n.language %}
 <div id="search_management" class="container-fluid table-responsive">
-  <div ng-init="initData('{{ setting_data }}', '{{ search_management_options }}')"
+  <div ng-init="initData('{{ setting_data }}')"
        ng-controller="searchManagementCtrl">
     <div class="row">
       <div class="col-sm-12 col-md-12 col-md-12">
@@ -267,6 +269,7 @@
       </div>
     </div>
     <!--START  Main Screen Initial Display Setting-->
+  {% set disp_option = searchOptions.init_disp_setting_options %}
     <div class="row">
       <div class="col-sm-12 col-md-12 col-md-12">
         <div class="panel panel-default">
@@ -287,8 +290,9 @@
                     <select id="init_disp_screen_setting" class="form-control"
                             ng-change="specificIndex();"
                             ng-model="dataJson.init_disp_setting.init_disp_screen_setting">
-                      <option ng-repeat="opt in initDispSettingOpt.init_disp_screen_setting track by opt.id"
-                              value="[[opt.id]]">{{ _('[[opt.contents]]') }}</option>
+                      {% for option in disp_option.init_disp_screen_setting %}
+                        <option value="{{ option.id }}">{{ option.contents[currentLanguage] }}</option>
+                      {% endfor %}
                     </select>
                   </td>
                 </tr>
@@ -302,8 +306,9 @@
                             ng-model="dataJson.init_disp_setting.init_disp_index_disp_method"
                             ng-change="specificIndex();"
                             ng-disabled="dataJson.init_disp_setting.init_disp_screen_setting != 0">
-                      <option ng-repeat="opt in initDispSettingOpt.init_disp_index_disp_method track by opt.id"
-                              value="[[opt.id]]">{{ _('[[opt.contents]]') }}</option>
+                      {% for option in disp_option.init_disp_index_disp_method %}
+                        <option value="{{ option.id }}">{{ option.contents[currentLanguage] }}</option>
+                      {% endfor %}
                     </select>
                   </td>
                 </tr>

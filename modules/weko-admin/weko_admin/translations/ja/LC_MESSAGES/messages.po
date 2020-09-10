@@ -1172,28 +1172,8 @@ msgid "Default Contents to Display"
 msgstr "初期表示画面設定"
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Index search result"
-msgstr "インデックス検索結果を表示する"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Ranking"
-msgstr "ランキングを表示する"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Communities"
-msgstr "コミュニティ一覧を表示する"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Default Index to Display"
 msgstr "初期表示インデックス表示方法"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Index of the newest item registered"
-msgstr "最も新しい公開アイテムの属するインデックス"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-msgid "Specific index"
-msgstr "インデックス指定"
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Initial Display Index"

@@ -4,16 +4,12 @@ const SPECIFIC_INDEX_VALUE = '1';
   angular.element(document).ready(function() {
     angular.module('searchManagement.controllers', []);
     function searchManagementCtrl($scope, $rootScope,$http,$location){
-      $scope.initData = function (data, searchManagementOptions) {
+      $scope.initData = function (data) {
         $scope.dataJson = angular.fromJson(data);
-        $scope.searchMgtOptsJson = angular.fromJson(searchManagementOptions);
         $scope.initDispSettingOpt = {}
-        if ($scope.searchMgtOptsJson) {
-          $scope.initDispSettingOpt = $scope.searchMgtOptsJson.init_disp_setting_options;
-        }
         $scope.treeData = [];
         $scope.rowspanNum = $scope.dataJson.detail_condition.length+1;
-        // Set Da
+        // Set Data
         $scope.setData();
 //        $scope.setSearchKeyOptions();
       }
@@ -228,7 +224,6 @@ const SPECIFIC_INDEX_VALUE = '1';
             jstree.refresh();
             let currentNode = jstree.get_node({"id": initDispIndex});
             jstree.select_node(currentNode);
-            // jstree.open_node(currentNode.parent);
             $scope.setInitDisplayIndex(currentNode);
           })
           .fail(function () {
