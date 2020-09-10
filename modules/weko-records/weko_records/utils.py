@@ -27,7 +27,9 @@ from flask import current_app
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
+from invenio_pidstore.models import PersistentIdentifier
 from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
@@ -142,9 +144,18 @@ def json_loader(data, pid):
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
 
-        oai_value = current_app.config.get(
-            'OAISERVER_ID_PREFIX', '') + str(pid)
-        is_edit = pid_exists(oai_value, 'oai')
+        # check oai id value
+        is_edit = False
+        try:
+            oai_value = PersistentIdentifier.get_by_object(pid_type='oai',
+                                                           object_type='rec',
+                                                           object_uuid=PersistentIdentifier.get('recid',
+                                                                                                pid).object_uuid
+                                                           ).pid_value
+            is_edit = pid_exists(oai_value, 'oai')
+        except PIDDoesNotExistError:
+            pass
+
         if not is_edit:
             oaid = current_pidstore.minters['oaiid'](item_id, dc)
             oai_value = oaid.pid_value
@@ -622,7 +633,8 @@ def check_has_attribute_value(node):
                         return check_has_attribute_value(val)
         return False
     except BaseException as e:
-        current_app.logger.error('Function check_has_attribute_value error:', e)
+        current_app.logger.error(
+            'Function check_has_attribute_value error:', e)
         return False
 
 
@@ -637,7 +649,8 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
     def get_name(key):
         for lst in klst:
             if key == lst[0].split('.')[-1]:
-                return lst[2] if not is_author else '{}.{}'. format(key, lst[2])
+                return lst[2] if not is_author else '{}.{}'. format(
+                    key, lst[2])
 
     def to_sort_dict(alst, klst):
         """Sort item list.

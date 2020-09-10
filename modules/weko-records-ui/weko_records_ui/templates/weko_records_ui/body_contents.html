@@ -52,7 +52,7 @@
           {{ preview_carousel(record=record, files=files, pid=pid) }}
           {%- set file_order = [] -%}
           {%- for i in record -%}
-            {%- if 'ファイル' in record[i].attribute_name -%}
+            {%- if 'file' == record[i].attribute_type -%}
               {%- set file_meta = record[i].attribute_value_mlt -%}
               {%- for order in file_meta -%}
               {%- if order.filename -%}{%- do file_order.append(order.filename) -%}{%- endif -%}
