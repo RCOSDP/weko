@@ -95,19 +95,11 @@ def index():
         current_i18n.language)
     page = None
 
-    # Get main screen display setting.
-    # if not community_id:
-    #     init_display_setting = MainScreenInitDisplaySetting()\
-    #         .get_init_display_setting()
-    # else:
-    #     init_display_setting = {}
-
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         page=page,
         render_widgets=render_widgets,
         render_header_footer=render_header_footer,
-        # **init_display_setting,
         **get_weko_contents(request.args))
 
 

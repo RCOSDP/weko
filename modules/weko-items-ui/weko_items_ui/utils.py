@@ -1941,8 +1941,12 @@ def get_ranking(settings):
 
     # new_items
     if settings.rankings['new_items']:
-        new_item_start_date = end_date_original - \
-                              timedelta(days=int(settings.new_item_period) - 1)
+        new_item_start_date = (
+            end_date_original
+            - timedelta(
+                days=int(settings.new_item_period) - 1
+            )
+        )
         if new_item_start_date < start_date_original:
             new_item_start_date = start_date
         result = get_new_items_by_date(
