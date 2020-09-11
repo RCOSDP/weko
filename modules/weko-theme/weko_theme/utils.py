@@ -253,23 +253,28 @@ class MainScreenInitDisplaySetting:
         if display_format == '2':
             display_number = 100
 
-        main_screen_display_setting.update({
-            "sort_option": sort_options,
-            "index_id": init_disp_index,
-            "index_display_format": display_format,
-            "disply_setting": {},
-            "search_hidden_params": {
-                "search_type": current_app.config['WEKO_SEARCH_TYPE_DICT'][
-                    'INDEX'],
-                "q": init_disp_index,
-                "size": display_number,
-                "timestamp": time.time(),
-            },
-            "journal_info": get_journal_info(init_disp_index),
-            "allow_item_exporting": export_settings.allow_item_exporting,
-            "is_permission": check_permission(),
-            "is_login": bool(current_user.get_id()),
-        })
+        if not init_disp_index:
+            # In case is not found the index
+            # set main screen initial display to the default
+            main_screen_display_setting['init_display_setting'] = "-1"
+        else:
+            main_screen_display_setting.update({
+                "sort_option": sort_options,
+                "index_id": init_disp_index,
+                "index_display_format": display_format,
+                "disply_setting": {},
+                "search_hidden_params": {
+                    "search_type": current_app.config['WEKO_SEARCH_TYPE_DICT'][
+                        'INDEX'],
+                    "q": init_disp_index,
+                    "size": display_number,
+                    "timestamp": time.time(),
+                },
+                "journal_info": get_journal_info(init_disp_index),
+                "allow_item_exporting": export_settings.allow_item_exporting,
+                "is_permission": check_permission(),
+                "is_login": bool(current_user.get_id()),
+            })
 
     @classmethod
     def __get_last_publish_record(cls):
