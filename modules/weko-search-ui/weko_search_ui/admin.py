@@ -20,8 +20,10 @@
 
 """Weko Search-UI admin."""
 
+import copy
 import json
 from datetime import datetime
+from urllib.parse import urlencode
 
 from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request
@@ -29,16 +31,19 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
+from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 
 from weko_search_ui.api import get_search_detail_keyword
 
-from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
+from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
+    WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
+    WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
     get_change_identifier_mode_content, get_content_workflow, get_tree_items, \
-    handle_index_tree, handle_workflow, make_stats_tsv
+    handle_index_tree, handle_workflow, make_stats_tsv, make_tsv_by_line
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -367,6 +372,139 @@ class ItemImportView(BaseView):
         """Get disclaimer text."""
         data = get_change_identifier_mode_content()
         return jsonify(code=1, data=data)
+
+    @expose('/export_template', methods=['POST'])
+    def export_template(self):
+        """Download item type template."""
+        def handle_root_item(key, value):
+            """Handle if is root item."""
+            _id = '.metadata.{}'.format(key)
+            _name = value.get('title')
+
+            _option = []
+            if value.get('option').get('required'):
+                _option.append('Required')
+            if value.get('option').get('hidden'):
+                _option.append('Hide')
+            if value.get('option').get('multiple'):
+                _option.append('Allow Multiple')
+                _id += '[0]'
+                _name += '#1'
+
+            return _id, _name, _option
+
+        def handle_sub_item(items, root_id=None, root_name=None):
+            """Handle if is sub-item."""
+            ids, names = [], []
+            for key, item in items.items():
+                if item.get('items'):
+                    _ids, _names = handle_sub_item(
+                        item.get('items').get('properties'))
+                    ids += [key + '[0].' + _id for _id in _ids]
+                    names += [item.get('title') + '#1.' + _name
+                              for _name in _names]
+                else:
+                    ids.append(key)
+                    names.append(item.get('title'))
+
+            if root_id and root_name:
+                ids = [root_id + '.' + _id for _id in ids]
+                names = [root_name + '.' + _name
+                         for _name in names]
+
+            return ids, names
+
+        def get_sub_item_option(key, form):
+            """Get sub-item option."""
+            _option = []
+            for item in form:
+                if not item.get('items'):
+                    if item.get('key') == key:
+                        if item.get('required'):
+                            _option.append('Required')
+                        if item.get('isHide'):
+                            _option.append('Hide')
+                        return _option, True
+                else:
+                    _option, _found = get_sub_item_option(
+                        key, item.get('items'))
+                    if _found:
+                        return _option, True
+            return _option, False
+
+        result = Response(
+            [],
+            mimetype="text/tsv",
+            headers={
+                "Content-disposition": "attachment; filename="
+            }
+        )
+
+        data = request.get_json()
+        if data:
+            item_type_id = int(data.get('item_type_id', 0))
+            if item_type_id > 0:
+                item_type = ItemTypes.get_by_id(
+                    id_=item_type_id, with_deleted=True)
+                if item_type:
+                    file_name = '{}({}).tsv'.format(
+                        item_type.item_type_name.name, item_type.id)
+                    item_type_line = [
+                        '#ItemType',
+                        '{}({})'.format(
+                            item_type.item_type_name.name, item_type.id),
+                        '{}items/jsonschema/{}'.format(
+                            request.url_root, item_type.id)
+                    ]
+                    ids_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_ID)
+                    names_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_NAME)
+                    options_line = copy.deepcopy(
+                        WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
+
+                    item_type = item_type.render
+                    meta_fix = item_type.get('meta_fix', {})
+                    meta_list = item_type.get('meta_list', {})
+                    schema = item_type.get(
+                        'schemaeditor', {}).get('schema', {})
+                    form = item_type.get(
+                        'table_row_map', {}).get('form', {})
+                    for key, value in meta_fix.items():
+                        _id, _name, _option = handle_root_item(key, value)
+                        ids_line.append(_id)
+                        names_line.append(_name)
+                        options_line.append(', '.join(_option))
+                    for key in item_type.get('table_row', {}):
+                        value = meta_list.get(key, {})
+                        if key in schema:
+                            item = schema.get(key)
+                            root_id, root_name, root_option = handle_root_item(
+                                key, value)
+                            _ids, _names = handle_sub_item(
+                                item.get('properties'), root_id, root_name)
+                            _options = [
+                                get_sub_item_option(
+                                    _id.replace('.metadata.', '')
+                                    .replace('[0]', '[]'),
+                                    form)[0]
+                                for _id in _ids
+                            ]
+
+                            ids_line += _ids
+                            names_line += _names
+                            for _option in _options:
+                                options_line.append(
+                                    ', '.join(list(set(root_option + _option)))
+                                )
+                    tsv_file = make_tsv_by_line(
+                        [item_type_line, ids_line, names_line, options_line])
+                    result = Response(
+                        tsv_file.getvalue(),
+                        mimetype="text/tsv",
+                        headers={
+                            "Content-disposition": "attachment; "
+                            + urlencode({'filename': file_name})
+                        })
+        return result
 
 
 item_management_bulk_search_adminview = {

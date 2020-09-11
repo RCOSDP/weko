@@ -402,7 +402,11 @@ msgid "{} cannot be set."
 msgstr ""
 
 #: weko_search_ui/utils.py:
-msgid "{} must be one of JaLC, Crossref, DataCite."
+msgid "DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Please set "public" or "private" for {}."
 msgstr ""
 
 #: weko_search_ui/utils.py:
@@ -418,7 +422,7 @@ msgid "Specified {} does not exist in system."
 msgstr ""
 
 #: weko_search_ui/utils.py:
-msgid "Specified {} and {} do not exist in system."
+msgid "Both of IndexID and POS_INDEX are not being set."
 msgstr ""
 
 #: weko_search_ui/utils.py:
@@ -455,4 +459,16 @@ msgid "I agree to the terms of use."
 msgstr ""
 
 msgid "Change DOI Mode"
+msgstr ""
+
+msgid "The specified {} exceeds the maximum length."
+msgstr ""
+
+msgid "Item Type Template"
+msgstr ""
+
+msgid "Failed to download."
+msgstr ""
+
+msgid "Failed to get item type list."
 msgstr ""

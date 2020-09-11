@@ -21,6 +21,7 @@
 """Weko Search-UI admin."""
 
 import base64
+import csv
 import json
 import os
 import re
@@ -32,9 +33,9 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
+from io import StringIO
 from operator import getitem
 
-import bagit
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
@@ -367,34 +368,27 @@ def check_import_items(file_content: str, is_change_identifier: bool):
         with open(import_path + '.zip', 'wb+') as f:
             f.write(file_content_decoded)
         shutil.unpack_archive(import_path + '.zip', extract_dir=data_path)
-        bag = bagit.Bag(data_path)
 
-        # Valid importing zip file format
-        if bag.is_valid():
-            data_path += '/data'
-            list_record = []
-            for tsv_entry in os.listdir(data_path):
-                if tsv_entry.endswith('.tsv'):
-                    list_record.extend(
-                        unpackage_import_file(data_path, tsv_entry))
-            list_record = handle_check_exist_record(list_record)
-            handle_check_and_prepare_publish_status(list_record)
-            handle_check_and_prepare_index_tree(list_record)
-            handle_check_and_prepare_feedback_mail(list_record)
-            handle_set_change_identifier_flag(
-                list_record, is_change_identifier)
-            handle_check_cnri(list_record)
-            handle_check_doi_ra(list_record)
-            handle_check_doi(list_record)
-            handle_check_date(list_record)
-            return {
-                'list_record': list_record,
-                'data_path': data_path
-            }
-        else:
-            return {
-                'error': 'Zip file is not follow Bagit format.'
-            }
+        data_path += '/data'
+        list_record = []
+        for tsv_entry in os.listdir(data_path):
+            if tsv_entry.endswith('.tsv'):
+                list_record.extend(
+                    unpackage_import_file(data_path, tsv_entry))
+        list_record = handle_check_exist_record(list_record)
+        handle_check_and_prepare_publish_status(list_record)
+        handle_check_and_prepare_index_tree(list_record)
+        handle_check_and_prepare_feedback_mail(list_record)
+        handle_set_change_identifier_flag(
+            list_record, is_change_identifier)
+        handle_check_cnri(list_record)
+        handle_check_doi_ra(list_record)
+        handle_check_doi(list_record)
+        handle_check_date(list_record)
+        return {
+            'list_record': list_record,
+            'data_path': data_path
+        }
     except Exception:
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
@@ -457,6 +451,8 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                 item_path = data_row
             elif num == 3:
                 item_path_name = data_row
+            elif num == 4 and row.startswith('#'):
+                continue
             else:
                 data_parse_metadata = parse_to_json_form(
                     zip(item_path, item_path_name, data_row)
@@ -593,10 +589,10 @@ def handle_check_exist_record(list_record) -> list:
     """
     result = []
     for item in list_record:
+        item = dict(**item, **{
+            'status': 'new'
+        })
         if not item.get('errors'):
-            item = dict(**item, **{
-                'status': 'new'
-            })
             try:
                 item_id = item.get('id')
                 if item_id:
@@ -717,10 +713,21 @@ def compare_identifier(item, item_exist):
     return item
 
 
+def make_tsv_by_line(lines):
+    """Make TSV file."""
+    tsv_output = StringIO()
+
+    writer = csv.writer(tsv_output, delimiter='\t',
+                        lineterminator="\n")
+
+    for line in lines:
+        writer.writerow(line)
+
+    return tsv_output
+
+
 def make_stats_tsv(raw_stats, list_name):
     """Make TSV report file for stats."""
-    import csv
-    from io import StringIO
     tsv_output = StringIO()
 
     writer = csv.writer(tsv_output, delimiter='\t',
@@ -911,13 +918,14 @@ def update_publish_status(item_id, status):
 
     :argument
         item_id     -- {str} Item Id.
-        status      -- {str} Publish status (0: publish, 1: private)
+        status      -- {str} Publish status (0: public, 1: private)
     :return
 
     """
     record = WekoRecord.get_record_by_pid(item_id)
     record['publish_status'] = status
     record.commit()
+    db.session.commit()
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
@@ -1028,9 +1036,13 @@ def import_items_to_system(item: dict, url_root: str):
             response = register_item_handle(item, url_root)
         if response.get('success'):
             response = register_item_doi(item)
-        if response.get('success') and \
-                item.get('publish_status') == WEKO_IMPORT_PUBLISH_STATUS[1]:
-            response = register_item_update_publish_status(item, '1')
+        if response.get('success'):
+            status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
+                item.get('publish_status')
+            )
+            response = register_item_update_publish_status(
+                item,
+                str(status_number))
 
         return response
 
@@ -1086,8 +1098,8 @@ def handle_check_and_prepare_publish_status(list_record):
         if not publish_status:
             error = _('{} is required item.').format('PUBLISH_STATUS')
         elif publish_status not in WEKO_IMPORT_PUBLISH_STATUS:
-            error = _('Specified {} is different from existing {}.') \
-                .format('PUBLISH_STATUS', 'PUBLISH_STATUS')
+            error = _('Please set "public" or "private" for {}.') \
+                .format('PUBLISH_STATUS')
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1108,7 +1120,12 @@ def handle_check_and_prepare_index_tree(list_record):
     def check(index_ids, index_names, parent_id=0, isRoot=False):
         index_id = index_ids[0]
         index_name = index_names[0]
-        index = Indexes.get_index(index_id)
+        index = None
+        try:
+            index = Indexes.get_index(index_id)
+        except Exception:
+            current_app.logger.warning("Specified IndexID is invalid!")
+
         if index and (
             (isRoot and not index.parent)
             or (not isRoot and parent_id and index.parent == parent_id)
@@ -1120,17 +1137,18 @@ def handle_check_and_prepare_index_tree(list_record):
         elif index_name:
             index = Indexes.get_index_by_name(
                 index_name, parent_id)
+            msg_not_exist = _('The specified {} does not exist in system.')
             if not index:
-                index = None
-                warnings.append(
-                    _('Specified {} and {} do not exist in system.').format(
-                        'IndexID', 'POS_INDEX')
-                )
+                if index_id:
+                    errors.append(msg_not_exist.format('IndexID, POS_INDEX'))
+                    return None
+                else:
+                    errors.append(msg_not_exist.format('POS_INDEX'))
+                    return None
             else:
-                warnings.append(
-                    _('Specified {} does not exist in system.').format(
-                        'IndexID')
-                )
+                if index_id:
+                    errors.append(msg_not_exist.format('IndexID'))
+                    return None
 
         data = {
             'index_id': index.id if index else index_id,
@@ -1147,10 +1165,6 @@ def handle_check_and_prepare_index_tree(list_record):
             else:
                 return None
 
-        if not data.get('existed') and not data.get('index_name'):
-            errors.append(_('Please specify {}.').format('POS_INDEX'))
-            return None
-
         return data
 
     for item in list_record:
@@ -1158,16 +1172,18 @@ def handle_check_and_prepare_index_tree(list_record):
         index_ids = item.get('IndexID')
         pos_index = item.get('pos_index')
 
-        if not index_ids:
-            errors = [_('Please specify {}.').format('IndexID')]
+        if not index_ids and not pos_index:
+            errors = [_('Both of IndexID and POS_INDEX are not being set.')]
         else:
+            if not index_ids:
+                index_ids = ['' for i in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
                 tree_ids = [i.strip() for i in index_id.split('/')]
                 tree_names = []
                 if pos_index and x <= len(pos_index) - 1:
                     tree_names = [i.strip() for i in pos_index[x].split('/')]
                 else:
-                    tree_names = [None for i in range(len(tree_ids))]
+                    tree_names = ['' for i in range(len(tree_ids))]
 
                 root = check(tree_ids, tree_names, 0, True)
                 if root:
@@ -1280,21 +1296,28 @@ def handle_check_cnri(list_record):
     for item in list_record:
         error = None
         item_id = str(item.get('id'))
+        cnri = item.get('cnri')
 
         if item.get('is_change_identifier'):
-            if not item.get('cnri'):
+            if not cnri:
                 error = _('Please specify {}.').format('CNRI')
+            elif not re.search(WEKO_IMPORT_DOI_PATTERN, cnri):
+                if len(cnri) > 290:
+                    error = _('The specified {} exceeds the maximum length.') \
+                        .format('CNRI')
+                else:
+                    error = _('Specified {} is invalid.').format('CNRI')
         else:
             if item.get('status') == 'new':
-                if item.get('cnri'):
+                if cnri:
                     error = _('{} cannot be set.').format('CNRI')
             else:
                 pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
                 if pid_cnri:
-                    if not pid_cnri.pid_value.endswith(str(item.get('cnri'))):
+                    if not pid_cnri.pid_value.endswith(str(cnri)):
                         error = _('Specified {} is different '
                                   + 'from existing {}.').format('CNRI', 'CNRI')
-                elif item.get('cnri'):
+                elif cnri:
                     error = _('Specified {} is different '
                               + 'from existing {}.').format('CNRI', 'CNRI')
 
@@ -1332,8 +1355,8 @@ def handle_check_doi_ra(list_record):
             error = _('{} is required item.').format('DOI_RA')
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
-                error = _('{} must be one of JaLC, Crossref, DataCite.') \
-                    .format('DOI_RA')
+                error = _('DOI_RA should be set by one of JaLC' +
+                          ', Crossref, DataCite, NDL JaLC.')
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
@@ -1372,22 +1395,26 @@ def handle_check_doi(list_record):
             error = _('{} is required item.').format('DOI')
         elif item.get('doi_ra'):
             if item.get('is_change_identifier'):
-                if not item.get('doi'):
+                if not doi:
                     error = _('Please specify {}.').format('DOI')
                 elif not re.search(WEKO_IMPORT_DOI_PATTERN, doi):
-                    error = _('Specified {} is invalid.').format('DOI')
+                    if len(doi) > 290:
+                        error = _('The specified {} exceeds' +
+                                  ' the maximum length.').format('DOI')
+                    else:
+                        error = _('Specified {} is invalid.').format('DOI')
             else:
                 if item.get('status') == 'new':
-                    if item.get('doi'):
+                    if doi:
                         error = _('{} cannot be set.').format('DOI')
                 else:
                     pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
                     if pid_doi:
-                        if not item.get('doi'):
+                        if not doi:
                             error = _('Please specify {}.').format('DOI')
-                        elif not pid_doi.pid_value.endswith(item.get('doi')):
-                            error = _('Specified {} is different '
-                                      + 'from existing {}.').format('DOI', 'DOI')
+                        elif not pid_doi.pid_value.endswith(doi):
+                            error = _('Specified {} is different ' +
+                                      'from existing {}.').format('DOI', 'DOI')
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1456,19 +1483,28 @@ def register_item_doi(item):
                 identifier_setting.jalc_crossref_doi = text_empty
             if not identifier_setting.jalc_datacite_doi:
                 identifier_setting.jalc_datacite_doi = text_empty
+            if not identifier_setting.ndl_jalc_doi:
+                identifier_setting.ndl_jalc_doi = text_empty
         suffix = '/' + identifier_setting.suffix \
             if identifier_setting.suffix else ''
 
         return {
             'identifier_grant_jalc_doi_link':
                 IDENTIFIER_GRANT_LIST[1][2] + '/'
-                + identifier_setting.jalc_doi + suffix + '/' + item_id,
+                + identifier_setting.jalc_doi
+                + suffix + '/' + item_id,
             'identifier_grant_jalc_cr_doi_link':
                 IDENTIFIER_GRANT_LIST[2][2] + '/'
-                + identifier_setting.jalc_crossref_doi + suffix + '/' + item_id,
+                + identifier_setting.jalc_crossref_doi
+                + suffix + '/' + item_id,
             'identifier_grant_jalc_dc_doi_link':
                 IDENTIFIER_GRANT_LIST[3][2] + '/'
-                + identifier_setting.jalc_datacite_doi + suffix + '/' + item_id
+                + identifier_setting.jalc_datacite_doi
+                + suffix + '/' + item_id,
+            'identifier_grant_ndl_jalc_doi_link':
+                IDENTIFIER_GRANT_LIST[4][2] + '/'
+                + identifier_setting.ndl_jalc_doi
+                + suffix + '/' + item_id
         }
 
     item_id = str(item.get('id'))
@@ -1494,7 +1530,9 @@ def register_item_doi(item):
                     'identifier_grant_jalc_cr_doi_link':
                         IDENTIFIER_GRANT_LIST[2][2] + '/' + doi,
                     'identifier_grant_jalc_dc_doi_link':
-                        IDENTIFIER_GRANT_LIST[3][2] + '/' + doi
+                        IDENTIFIER_GRANT_LIST[3][2] + '/' + doi,
+                    'identifier_grant_ndl_jalc_doi_link':
+                        IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
                 }
                 if status != 'new' and pid_doi:
                     pid_doi.delete()
@@ -1502,7 +1540,8 @@ def register_item_doi(item):
                     pid_lastest.object_uuid,
                     pid.object_uuid,
                     data,
-                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
+                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
+                    is_feature_import=True
                 )
         else:
             if status == 'new':
@@ -1512,11 +1551,16 @@ def register_item_doi(item):
                         pid_lastest.object_uuid,
                         pid.object_uuid,
                         data,
-                        WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
+                        WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
+                        is_feature_import=True
                     )
 
+        deposit = WekoDeposit.get_record(pid.object_uuid)
+        deposit.commit()
+        deposit.publish()
         deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
         deposit.commit()
+        deposit.publish()
 
         db.session.commit()
     except Exception as ex:
@@ -1550,7 +1594,6 @@ def register_item_update_publish_status(item, status):
         update_publish_status(item_id, status)
         if lastest_version_id:
             update_publish_status(lastest_version_id, status)
-        db.session.commit()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error('item id: %s update error.' % item_id)
@@ -1598,7 +1641,8 @@ def handle_doi_required_check(record):
 
     if 'doi_ra' in record and record['doi_ra'] in ['JaLC',
                                                    'Crossref',
-                                                   'DataCite']:
+                                                   'DataCite',
+                                                   'NDL JaLC']:
         doi_type = record['doi_ra']
         item_type_mapping = Mapping.get_record(record['item_type_id'])
         if item_type_mapping:
@@ -1642,6 +1686,31 @@ def handle_doi_required_check(record):
                 either_properties = ['geoLocationPoint',
                                      'geoLocationBox',
                                      'geoLocationPlace']
+        elif doi_type == 'Crossref':
+            if resource_type in journalarticle_type:
+                required_properties = ['title',
+                                       'publisher',
+                                       'sourceIdentifier',
+                                       'sourceTitle']
+                if item_type.item_type_name.name != ddi_item_type_name:
+                    required_properties.append('fileURI')
+            elif resource_type in report_types:
+                required_properties = ['title']
+                if item_type.item_type_name.name != ddi_item_type_name:
+                    required_properties.append('fileURI')
+            elif resource_type in thesis_types:
+                required_properties = ['title',
+                                       'creator']
+                if item_type.item_type_name.name != ddi_item_type_name:
+                    required_properties.append('fileURI')
+        # DataCite DOI identifier registration
+        elif doi_type == 'DataCite' \
+                and item_type.item_type_name.name != ddi_item_type_name:
+            required_properties = ['fileURI']
+        # NDL JaLC DOI identifier registration
+        elif doi_type == 'NDL JaLC' \
+                and item_type.item_type_name.name != ddi_item_type_name:
+            required_properties = ['fileURI']
 
         if required_properties:
             properties['required'] = required_properties

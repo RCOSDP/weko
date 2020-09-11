@@ -5,6 +5,7 @@ const selected_file_name = document.getElementById("selected_file_name").value;
 const index_tree = document.getElementById("index_tree").value;
 const designate_index = document.getElementById("designate_index").value;
 const item_type = document.getElementById("item_type").value;
+const item_type_templates = document.getElementById("item_type_templates").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
@@ -40,6 +41,8 @@ const done = document.getElementById("done").value;
 const to_do = document.getElementById("to_do").value;
 const result_label = document.getElementById("result").value;
 const next = document.getElementById("next").value;
+const error_download = document.getElementById("error_download").value;
+const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
 
 
 
@@ -50,6 +53,7 @@ const urlGetChangeIdentifierMode = window.location.origin + '/admin/items/import
 const urlCheckStatus = window.location.origin + '/admin/items/import/check_status'
 const urlDownloadCheck = window.location.origin + '/admin/items/import/download_check'
 const urlDownloadImport = window.location.origin + '/admin/items/import/export_import'
+const urlDownloadTemplate = window.location.origin + '/admin/items/import/export_template'
 const urlImport = window.location.origin + '/admin/items/import/import'
 const step = {
   "SELECT_STEP": 0,
@@ -537,6 +541,8 @@ class ImportComponent extends React.Component {
             </div>
           </div>
         </div>
+        <hr />
+        <ItemTypeComponent />
         <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-710">
           <ReactBootstrap.Modal.Header closeButton>
             <h4 className="modal-title in_line">{change_identifier_mode}</h4>
@@ -729,9 +735,9 @@ class CheckComponent extends React.Component {
 
   handleDownload() {
     const { list_record } = this.state
-    const result = Array.from(list_record, (item, key) => {
+    const result = list_record.map((item, key) => {
       return {
-        'No': key+1,
+        'No': key + 1,
         'Item Type': item.item_type_name,
         'Item Id': item.id,
         'Title': (item['Title'] && item['Title'][0] && item['Title'][0]['Title']) ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title'] ? item['Title']['Title'] : '',
@@ -741,28 +747,39 @@ class CheckComponent extends React.Component {
     const data = {
       list_result: result
     }
-    fetch(urlDownloadCheck, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
+
+    $.ajax({
+      url: urlDownloadCheck,
+      type: 'POST',
+      data: JSON.stringify(data),
+      contentType: "application/json; charset=utf-8",
+      success: function (response) {
+        const date = moment()
+        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.tsv';
+
+        const blob = new Blob([response], { type: 'text/tsv' });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.style.display = 'none';
+          tempLink.href = url;
+          tempLink.download = fileName;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+
+          setTimeout(function() {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(url);
+        }, 200)
+        }
       },
-    })
-      .then(resp => resp.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        // the filename you want
-        const today = new Date();
-        const date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
-        a.download = 'check_' + date + '.tsv';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(() => alert('Error in download'));
+      error: function (error) {
+        console.log(error);
+        alert(error_download);
+      }
+    });
   }
 
   render() {
@@ -884,7 +901,7 @@ class ResultComponent extends React.Component {
 
   handleDownload() {
     const { tasks } = this.props
-    const result = Array.from(tasks, (item, key) => {
+    const result = tasks.map((item, key) => {
       return {
         'No': key + 1,
         'Start Date': item.start_date ? item.start_date : '',
@@ -897,27 +914,39 @@ class ResultComponent extends React.Component {
     const data = {
       list_result: result
     }
-    fetch(urlDownloadImport, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
-      },
-    })
-      .then(resp => resp.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        // the filename you want
+
+    $.ajax({
+      url: urlDownloadImport,
+      type: 'POST',
+      data: JSON.stringify(data),
+      contentType: "application/json; charset=utf-8",
+      success: function (response) {
         const date = moment()
-        a.download = 'List_Download ' + date.format("YYYY-DD-MM") + '.tsv';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(() => alert('Error in download'));
+        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.tsv';
+
+        const blob = new Blob([response], { type: 'text/tsv' });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.style.display = 'none';
+          tempLink.href = url;
+          tempLink.download = fileName;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+
+          setTimeout(function () {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(url);
+          }, 200)
+        }
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_download);
+      }
+    });
   }
 
   render() {
@@ -971,6 +1000,122 @@ class ResultComponent extends React.Component {
         </div>
       </div>
     )
+  }
+}
+
+class ItemTypeComponent extends React.Component {
+
+  constructor() {
+    super();
+    this.state = {
+      item_types: null,
+      selected_item_type: '-1'
+    };
+    this.getListItemType = this.getListItemType.bind(this);
+    this.onCbxItemTypeChange = this.onCbxItemTypeChange.bind(this);
+    this.onBtnDownloadClick = this.onBtnDownloadClick.bind(this);
+  }
+
+  componentDidMount() {
+    this.getListItemType();
+  }
+
+  getListItemType() {
+    const that = this;
+    $.ajax({
+      url: "/api/itemtypes/lastest?type=normal_type",
+      type: 'GET',
+      dataType: "json",
+      success: function (data) {
+        data = [
+          null,
+          ...data
+        ];
+        that.setState({ item_types: data });
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_get_lstItemType);
+      }
+    });
+  }
+
+  onCbxItemTypeChange(event) {
+    this.setState({ selected_item_type: event.target.value });
+  }
+
+  onBtnDownloadClick() {
+    const { selected_item_type } = this.state;
+    $.ajax({
+      url: urlDownloadTemplate,
+      type: 'POST',
+      data: JSON.stringify({item_type_id: selected_item_type}),
+      contentType: "application/json; charset=utf-8",
+      success: function (response, status, xhr) {
+        var fileName = "";
+        var disposition = xhr.getResponseHeader('Content-Disposition');
+        if (disposition && disposition.indexOf('attachment') !== -1) {
+          var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          var matches = filenameRegex.exec(disposition);
+          if (matches != null && matches[1]) {
+            fileName = matches[1].replace(/['"]/g, '');
+          }
+        }
+
+        fileName = decodeURIComponent(fileName.replace(/\+/g, '%20'));
+        const blob = new Blob([response], { type: 'text/tsv' });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.style.display = 'none';
+          tempLink.href = url;
+          tempLink.download = fileName;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+
+          setTimeout(function () {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(url);
+          }, 200)
+        }
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_download);
+      }
+    });
+  }
+
+  render() {
+    const { item_types, selected_item_type } = this.state;
+    const select_options = item_types && item_types.map(item => {
+      if (item === null) {
+        return <option value={'-1'} selected={true}></option>;
+      } else {
+        return <option value={item.id} selected={item.id === selected_item_type}>{item.name} ({item.id})</option>
+      }
+    });
+
+    return (
+      <div class="item_type_compoment">
+        <h4>{item_type_templates}</h4>
+        <div class="row">
+          <div class="col-md-12 form-inline">
+            <div class="form-group">
+              <label style={{ marginRight: ".5rem" }}>{item_type}:</label>
+              <select class="form-control" style={{ marginRight: ".5rem" }} onChange={this.onCbxItemTypeChange}>
+                {select_options}
+              </select>
+            </div>
+            <button class="btn btn-primary" disabled={selected_item_type === '-1'} onClick={this.onBtnDownloadClick}>
+              <span class="glyphicon glyphicon-cloud-download icon"></span>{download}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 }
 

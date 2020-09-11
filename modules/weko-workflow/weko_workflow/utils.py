@@ -62,7 +62,7 @@ def get_identifier_setting(community_id):
 
 
 def saving_doi_pidstore(item_id, record_without_version, data=None,
-                        doi_select=0):
+                        doi_select=0, is_feature_import=False):
     """
     Mapp doi pidstore data to ItemMetadata.
 
@@ -97,6 +97,13 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         identifier_val = jalcdoi_dc_link
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'DataCite'
+    elif is_feature_import and doi_select == IDENTIFIER_GRANT_LIST[4][0] \
+            and data.get('identifier_grant_ndl_jalc_doi_link'):
+        ndljalcdoi_dc_link = data.get('identifier_grant_ndl_jalc_doi_link')
+        ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
+        identifier_val = ndljalcdoi_dc_link
+        doi_register_val = '/'.join(ndljalcdoi_dc_tail[1:])
+        doi_register_typ = 'NDL JaLC'
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
 
