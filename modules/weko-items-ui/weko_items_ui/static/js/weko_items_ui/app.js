@@ -2130,7 +2130,7 @@ function toObject(arr) {
         });
         $(curTextUrl).attr('disabled', flag);
         $(curTextUrl).text('');
-
+        //Check and fill data for file information.
         let model = $rootScope.recordsVM.invenioRecordsModel;
         let filesObject = $scope.getFilesObject();
         $scope.searchFilemetaKey();
