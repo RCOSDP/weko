@@ -506,14 +506,61 @@ class SchemaTree:
                 klst.append(blst)
             return klst
 
+        def analyze_value_with_exp(nlst, exp):
+            """Get many value with exp """
+            mlst = []
+            ava = ""
+            is_next = True
+            glst = []
+            for lst in nlst:
+                glst.append(get_exp_value(lst))
+            mlst = []
+            vst = []
+            mc = 0
+            while is_next:
+                ctp = ()
+                cnt = 0
+                ava = ""
+                for g in glst:
+                    try:
+                        eval, p = next(g)
+                        ctp += (len(p),)
+                        ava = ava + exp + eval
+                    except StopIteration:
+                        cnt += 1
+
+                if cnt == len(glst):
+                    is_next = False
+                    mlst.append(vst)
+                else:
+                    mc = max(ctp)
+                    if ava:
+                        if exp in ava:
+                            ava_arr = ava.split(exp)
+                            for av in ava_arr:
+                                if av:
+                                    vst.append(av)
+                        else:
+                            vst.append(ava[1:])
+            return mlst
+
         def get_atr_value_lst(node, atr_vm, rlst):
             for k1, v1 in node.items():
                 # if 'item' not in v1:
                 #     continue
                 if isinstance(v1, str):
-                    klst = get_items_value_lst(atr_vm, v1, rlst)
-                    if klst:
-                        node[k1] = klst
+                    exp, lk = analysis(v1)
+                    if len(lk) == 1:
+                        klst = get_items_value_lst(atr_vm, v1, rlst)
+                        if klst:
+                            node[k1] = klst
+                    elif len(lk) > 1:
+                        nlst = []
+                        for val in lk:
+                            klst = get_items_value_lst(atr_vm, val, rlst)
+                            if klst:
+                                nlst.append(klst)
+                        node[k1] = analyze_value_with_exp(nlst, exp)
 
         def get_mapping_value(mpdic, atr_vm, k, atr_name):
             remain_keys = []
@@ -705,39 +752,7 @@ class SchemaTree:
                                 nlst.append(klst)
 
                             if nlst:
-                                ava = ""
-                                is_next = True
-                                glst = []
-                                for lst in nlst:
-                                    glst.append(get_exp_value(lst))
-
-                                mlst = []
-                                vst = []
-                                mc = 0
-                                while is_next:
-                                    ctp = ()
-                                    cnt = 0
-                                    ava = ""
-                                    for g in glst:
-                                        try:
-                                            eval, p = next(g)
-                                            ctp += (len(p),)
-                                            ava = ava + exp + eval
-                                        except StopIteration:
-                                            cnt += 1
-
-                                    if cnt == len(glst):
-                                        is_next = False
-                                        mlst.append(vst)
-                                    else:
-                                        mc = max(ctp)
-                                        if ava:
-                                            if len(vst) == mc:
-                                                mlst.append(vst)
-                                                vst = []
-                                            vst.append(ava[1:])
-
-                                node_result[self._v] = mlst
+                                node_result[self._v] = analyze_value_with_exp(nlst, exp)
                 if remove_empty:
                     remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
