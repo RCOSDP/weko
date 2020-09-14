@@ -51,6 +51,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_index_tree.api import Indexes
 from weko_index_tree.utils import get_index_id
 from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_item_type_name
@@ -888,15 +889,31 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     ret_label = ['#ID', 'URI']
 
     max_path = records.get_max_ins('path')
-    ret.extend(['.metadata.path[{}]'.format(i) for i in range(max_path)])
-    ret_label.extend(['.IndexID#{}'.format(i + 1) for i in range(max_path)])
+    for i in range(max_path):
+        ret.append('.metadata.path[{}]'.format(i))
+        ret.append('.pos_index#{}'.format(i + 1))
+        ret_label.append('.IndexID#{}'.format(i + 1))
+        ret_label.append('.POS_INDEX#{}'.format(i + 1))
+
+    ret.append('.publish_status')
+    ret_label.append('.PUBLISH_STATUS')
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
 
     for recid in recids:
-        records.attr_output[recid].extend(records.attr_data['path'][recid])
+        paths = records.attr_data['path'][recid]
+        for path in paths:
+            records.attr_output[recid].append(path)
+            index_ids = path.split('/')
+            pos_index = []
+            for index_id in index_ids:
+                index = Indexes.get_index(index_id)
+                pos_index.append(index.index_name if index else '')
+            records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend([''] * (max_path - len(
-            records.attr_output[recid])))
+            records.attr_output[recid])) * 2)
+        records.attr_output[recid].append('public' if records.records[recid][
+            'publish_status'] == '0' else 'private')
         records.attr_output[recid].append(records.records[recid][
             'pubdate']['attribute_value'])
 
