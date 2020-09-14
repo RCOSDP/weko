@@ -1704,8 +1704,14 @@ $(document).ready(function () {
           let _enum, editAble;
           editAble = properties[propKey].hasOwnProperty('editAble') && properties[propKey]['editAble'];
           if(properties[propKey].hasOwnProperty('currentEnum')){
+            if(propertyKey == 'parentkey_licensetype'){
+              properties[propKey]['currentEnum'] = [];
+            }
             _enum = properties[propKey]['currentEnum'];
           } else if(properties[propKey].hasOwnProperty('enum')){
+            if(propertyKey == 'parentkey_licensetype'){
+              properties[propKey]['enum'] = [];
+            }
             _enum = properties[propKey]['enum'];
           }
           if (editAble && _enum) {
@@ -1759,8 +1765,14 @@ $(document).ready(function () {
             let _enum, editAble;
             editAble = properties[propKey].hasOwnProperty('editAble') && properties[propKey]['editAble'];
             if(properties[propKey].hasOwnProperty('currentEnum')){
+              if(propertyKey == 'parentkey_licensetype'){
+                properties[propKey]['currentEnum'] = [];
+              }
               _enum = properties[propKey]['currentEnum'];
             } else if(properties[propKey].hasOwnProperty('enum')){
+              if(propertyKey == 'parentkey_licensetype'){
+                properties[propKey]['enum'] = [];
+              }
               _enum = properties[propKey]['enum'];
             }
             if (editAble && _enum) {
