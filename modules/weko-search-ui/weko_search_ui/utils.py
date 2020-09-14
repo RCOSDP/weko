@@ -1355,8 +1355,8 @@ def handle_check_doi_ra(list_record):
             error = _('{} is required item.').format('DOI_RA')
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
-                error = _('DOI_RA should be set by one of JaLC' +
-                          ', Crossref, DataCite, NDL JaLC.')
+                error = _('DOI_RA should be set by one of JaLC'
+                          + ', Crossref, DataCite, NDL JaLC.')
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
@@ -1399,8 +1399,8 @@ def handle_check_doi(list_record):
                     error = _('Please specify {}.').format('DOI')
                 elif not re.search(WEKO_IMPORT_DOI_PATTERN, doi):
                     if len(doi) > 290:
-                        error = _('The specified {} exceeds' +
-                                  ' the maximum length.').format('DOI')
+                        error = _('The specified {} exceeds'
+                                  + ' the maximum length.').format('DOI')
                     else:
                         error = _('Specified {} is invalid.').format('DOI')
             else:
@@ -1413,8 +1413,8 @@ def handle_check_doi(list_record):
                         if not doi:
                             error = _('Please specify {}.').format('DOI')
                         elif not pid_doi.pid_value.endswith(doi):
-                            error = _('Specified {} is different ' +
-                                      'from existing {}.').format('DOI', 'DOI')
+                            error = _('Specified {} is different '
+                                      + 'from existing {}.').format('DOI', 'DOI')
 
         if error:
             item['errors'] = item['errors'] + [error] \

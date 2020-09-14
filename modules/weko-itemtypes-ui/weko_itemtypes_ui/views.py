@@ -51,7 +51,6 @@ def itemtype_mapping(ItemTypeID=0):
 @blueprint_api.route('/lastest', methods=['GET'])
 def get_itemtypes():
     """Get List Itemtype."""
-
     def convert(item):
         item_type = item.item_type.first()
         return {
