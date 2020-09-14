@@ -35,6 +35,7 @@ from flask_login import current_user
 from invenio_admin.forms import LazyChoices
 from invenio_db import db
 from markupsafe import Markup
+from weko_accounts.utils import get_remote_addr
 from weko_user_profiles.api import current_userprofile, localize_time
 
 from .api import send_run_status_mail
@@ -99,7 +100,7 @@ class HarvestSettingView(ModelView):
         run_harvesting.apply_async(args=(
             request.args.get('id'),
             datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
-            {'ip_address': request.remote_addr,
+            {'ip_address': get_remote_addr(),
              'user_agent': request.user_agent.string,
              'user_id': (
                  current_user.get_id() if current_user.is_authenticated else None),

@@ -29,6 +29,7 @@ from flask_login import current_user
 from geolite2 import geolite2
 from invenio_cache import current_cache
 from invenio_search import current_search_client
+from weko_accounts.utils import get_remote_addr
 from werkzeug.utils import import_string
 
 from . import config
@@ -71,7 +72,7 @@ def get_user():
        The information is then discarded.
     """
     return dict(
-        ip_address=request.remote_addr,
+        ip_address=get_remote_addr(),
         user_agent=request.user_agent.string,
         user_id=(
             current_user.get_id() if current_user.is_authenticated else None

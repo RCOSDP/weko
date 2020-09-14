@@ -15,6 +15,7 @@ import hashlib
 import uuid
 
 from flask import request
+from weko_accounts.utils import get_remote_addr
 
 from ..utils import get_user
 
@@ -67,7 +68,7 @@ def file_download_event_builder(event, sender_app, obj=None, **kwargs):
         cur_user_id=obj.userid,
         item_id=obj.item_id,
         item_title=obj.item_title,
-        remote_addr=request.remote_addr,
+        remote_addr=get_remote_addr(),
         is_billing_item=obj.is_billing_item,
         billing_file_price=obj.billing_file_price,
         user_group_list=obj.user_group_list,
@@ -96,7 +97,7 @@ def file_preview_event_builder(event, sender_app, obj=None, **kwargs):
         cur_user_id=obj.userid,
         item_id=obj.item_id,
         item_title=obj.item_title,
-        remote_addr=request.remote_addr,
+        remote_addr=get_remote_addr(),
         is_billing_item=obj.is_billing_item,
         billing_file_price=obj.billing_file_price,
         user_group_list=obj.user_group_list,
@@ -206,7 +207,7 @@ def record_view_event_builder(event, sender_app, pid=None, record=None,
         pid_value=str(pid.pid_value),
         referrer=request.referrer,
         cur_user_id=cur_user_id,
-        remote_addr=request.remote_addr,
+        remote_addr=get_remote_addr(),
         site_license_flag=info['site_license_flag'],
         site_license_name=info['site_license_name'],
         # Who:
@@ -222,7 +223,7 @@ def top_view_event_builder(event, sender_app, info=None, **kwargs):
         timestamp=datetime.datetime.utcnow().isoformat(),
         # What:
         referrer=request.referrer,
-        remote_addr=request.remote_addr,
+        remote_addr=get_remote_addr(),
         site_license_flag=info['site_license_flag'],
         site_license_name=info['site_license_name'],
         # Who:
@@ -311,7 +312,7 @@ def item_create_event_builder(event, sender_app, user_id=None,
         timestamp=datetime.datetime.utcnow().isoformat(),
         # What:
         referrer=request.referrer,
-        remote_addr=request.remote_addr,
+        remote_addr=get_remote_addr(),
         cur_user_id=user_id,
         pid_type=item_id.pid_type,
         pid_value=str(item_id.pid_value),
