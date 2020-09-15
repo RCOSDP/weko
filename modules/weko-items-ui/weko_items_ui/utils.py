@@ -53,12 +53,15 @@ from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import get_index_id
-from weko_records.api import ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes
 from weko_records.serializers.utils import get_item_type_name
-from weko_records_ui.permissions import check_file_download_permission
+from weko_records_ui.permissions import check_created_id, \
+    check_file_download_permission
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
+from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+from weko_workflow.utils import IdentifierHandle
 
 
 def get_list_username():
@@ -734,6 +737,22 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
             return self.attr_data[attr]['max_size']
 
+        def get_max_ins_feedback_mail(self):
+            """Get max data each feedback mail in all exporting records."""
+            largest_size = 1
+            self.attr_data['feedback_mail_list'] = {'max_size': 0}
+            for record_id, record in self.records.items():
+                if check_created_id(record):
+                    mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                        record.id)
+                    self.attr_data['feedback_mail_list'][record_id] = [
+                        mail.get('email') for mail in mail_list]
+                    if len(mail_list) > largest_size:
+                        largest_size = len(mail_list)
+            self.attr_data['feedback_mail_list']['max_size'] = largest_size
+
+            return self.attr_data['feedback_mail_list']['max_size']
+
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             list_attr = item_attrs.split('.')
@@ -897,10 +916,19 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
     ret.append('.publish_status')
     ret_label.append('.PUBLISH_STATUS')
+
+    max_feedback_mail = records.get_max_ins_feedback_mail()
+    for i in range(max_feedback_mail):
+        ret.append('.feedback_mail#{}'.format(i + 1))
+        ret_label.append('.FEEDBACK_MAIL#{}'.format(i + 1))
+
+    ret.extend(['.cnri', '.doi_ra', '.doi'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI'])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
 
     for recid in recids:
+        record = records.records[recid]
         paths = records.attr_data['path'][recid]
         for path in paths:
             records.attr_output[recid].append(path)
@@ -912,9 +940,29 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend([''] * (max_path - len(
             records.attr_output[recid])) * 2)
-        records.attr_output[recid].append('public' if records.records[recid][
-            'publish_status'] == '0' else 'private')
-        records.attr_output[recid].append(records.records[recid][
+
+        records.attr_output[recid].append(
+            'public' if record['publish_status'] == '0' else 'private')
+        feedback_mail_list = records.attr_data['feedback_mail_list'] \
+            .get(recid, [])
+        records.attr_output[recid].extend(feedback_mail_list)
+        records.attr_output[recid].extend([''] * (max_feedback_mail - len(
+            feedback_mail_list)))
+
+        pid_cnri = record.pid_cnri
+        cnri = ''
+        if pid_cnri:
+            cnri = pid_cnri.pid_value.replace(WEKO_SERVER_CNRI_HOST_LINK, '')
+        records.attr_output[recid].append(cnri)
+
+        identifier = IdentifierHandle(record.pid_recid.object_uuid)
+        doi_value, doi_type = identifier.get_idt_registration_data()
+        records.attr_output[recid].extend([
+            doi_type[0] if doi_type and doi_type[0] else '',
+            doi_value[0] if doi_value and doi_value[0] else ''
+        ])
+
+        records.attr_output[recid].append(record[
             'pubdate']['attribute_value'])
 
     for item_key in item_type.get('table_row'):
@@ -1268,8 +1316,7 @@ def _export_item(record_id,
             # Get files
             for file in record.files:  # TODO: Temporary processing
                 if check_file_download_permission(record, file.info()):
-                    if ('accessrole' in file.info() and file.info()[
-                            'accessrole'] != 'open_restricted'):
+                    if file.info().get('accessrole') != 'open_restricted':
                         exported_item['files'].append(file.info())
                         # TODO: Then convert the item into the desired format
                         if file:
