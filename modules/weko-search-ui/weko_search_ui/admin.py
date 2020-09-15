@@ -42,7 +42,8 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, create_flow_define, delete_records, \
-    get_change_identifier_mode_content, get_content_workflow, get_tree_items, \
+    get_change_identifier_mode_content, get_content_workflow, \
+    get_root_item_option, get_sub_item_option, get_tree_items, \
     handle_index_tree, handle_workflow, make_stats_tsv, make_tsv_by_line
 
 _signals = Namespace()
@@ -376,27 +377,11 @@ class ItemImportView(BaseView):
     @expose('/export_template', methods=['POST'])
     def export_template(self):
         """Download item type template."""
-        def handle_root_item(key, value):
-            """Handle if is root item."""
-            _id = '.metadata.{}'.format(key)
-            _name = value.get('title')
-
-            _option = []
-            if value.get('option').get('required'):
-                _option.append('Required')
-            if value.get('option').get('hidden'):
-                _option.append('Hide')
-            if value.get('option').get('multiple'):
-                _option.append('Allow Multiple')
-                _id += '[0]'
-                _name += '#1'
-
-            return _id, _name, _option
-
         def handle_sub_item(items, root_id=None, root_name=None):
             """Handle if is sub-item."""
             ids, names = [], []
-            for key, item in items.items():
+            for key in sorted(items.keys()):
+                item = items.get(key)
                 if item.get('items'):
                     _ids, _names = handle_sub_item(
                         item.get('items').get('properties'))
@@ -413,24 +398,6 @@ class ItemImportView(BaseView):
                          for _name in names]
 
             return ids, names
-
-        def get_sub_item_option(key, form):
-            """Get sub-item option."""
-            _option = []
-            for item in form:
-                if not item.get('items'):
-                    if item.get('key') == key:
-                        if item.get('required'):
-                            _option.append('Required')
-                        if item.get('isHide'):
-                            _option.append('Hide')
-                        return _option, True
-                else:
-                    _option, _found = get_sub_item_option(
-                        key, item.get('items'))
-                    if _found:
-                        return _option, True
-            return _option, False
 
         result = Response(
             [],
@@ -469,18 +436,29 @@ class ItemImportView(BaseView):
                     form = item_type.get(
                         'table_row_map', {}).get('form', {})
                     for key, value in meta_fix.items():
-                        _id, _name, _option = handle_root_item(key, value)
+                        _id, _name, _option = get_root_item_option(key, value)
                         ids_line.append(_id)
                         names_line.append(_name)
                         options_line.append(', '.join(_option))
+
+                    count_file = 1
                     for key in item_type.get('table_row', {}):
                         value = meta_list.get(key, {})
                         if key in schema:
                             item = schema.get(key)
-                            root_id, root_name, root_option = handle_root_item(
-                                key, value)
+                            root_id, root_name, root_option = \
+                                get_root_item_option(key, value)
                             _ids, _names = handle_sub_item(
                                 item.get('properties'), root_id, root_name)
+                            for _id in _ids:
+                                if 'filename' in _id \
+                                        or 'thumbnail_label' in _id:
+                                    ids_line.append(
+                                        '.file_path#{}'.format(count_file))
+                                    names_line.append(
+                                        '.ファイルパス#{}'.format(count_file))
+                                    options_line.append('')
+                                    count_file += 1
                             _options = [
                                 get_sub_item_option(
                                     _id.replace('.metadata.', '')

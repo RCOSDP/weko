@@ -49,7 +49,6 @@ from invenio_stats.utils import QueryItemRegReportHelper, \
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
-from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import get_index_id
@@ -58,6 +57,7 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission
 from weko_search_ui.query import item_search_factory
+from weko_search_ui.utils import get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
 from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
@@ -651,16 +651,21 @@ def package_export_file(item_type_data):
 
     keys = item_type_data['keys']
     labels = item_type_data['labels']
+    options = item_type_data['options']
     tsv_metadata_writer = csv.DictWriter(tsv_output,
                                          fieldnames=keys,
                                          delimiter='\t')
     tsv_metadata_label_writer = csv.DictWriter(tsv_output,
                                                fieldnames=labels,
                                                delimiter='\t')
+    tsv_metadata_option_writer = csv.DictWriter(tsv_output,
+                                                fieldnames=options,
+                                                delimiter='\t')
     tsv_metadata_data_writer = csv.writer(tsv_output,
                                           delimiter='\t')
     tsv_metadata_writer.writeheader()
     tsv_metadata_label_writer.writeheader()
+    tsv_metadata_option_writer.writeheader()
     for recid in item_type_data.get('recids'):
         tsv_metadata_data_writer.writerow(
             [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
@@ -1013,7 +1018,33 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         ret.extend(new_keys)
         ret_label.extend(labels)
 
-    return ret, ret_label, records.attr_output
+    ret_option = []
+    meta_list = item_type.get('meta_list', {})
+    meta_list.update(item_type.get('meta_fix', {}))
+    form = item_type.get('table_row_map', {}).get('form', {})
+    for _id in ret:
+        key = re.sub(r'\[.\]', '[]', _id.replace('.metadata.', ''))
+        root_key = key.split('.')[0].replace('[]', '')
+        if root_key in meta_list:
+            _, _, root_option = get_root_item_option(
+                root_key,
+                meta_list.get(root_key)
+            )
+            sub_options = get_sub_item_option(key, form)[0]
+            if not sub_options:
+                ret_option.append(', '.join(root_option))
+            else:
+                ret_option.append(
+                    ', '.join(list(set(root_option + sub_options)))
+                )
+        elif key == '#.id':
+            ret_option.append('#')
+        elif key == '.publish_status':
+            ret_option.append('Required')
+        else:
+            ret_option.append('')
+
+    return ret, ret_label, ret_option, records.attr_output
 
 
 def get_list_file_by_record_id(recid):
@@ -1086,13 +1117,14 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
     @return:
     """
     for item_type_id in item_types_data:
-        keys, labels, records = make_stats_tsv(
+        keys, labels, options, records = make_stats_tsv(
             item_type_id,
             item_types_data[item_type_id]['recids'],
             list_item_role)
         item_types_data[item_type_id]['recids'].sort()
         item_types_data[item_type_id]['keys'] = keys
         item_types_data[item_type_id]['labels'] = labels
+        item_types_data[item_type_id]['options'] = options
         item_types_data[item_type_id]['data'] = records
         item_type_data = item_types_data[item_type_id]
 

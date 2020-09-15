@@ -438,10 +438,10 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
         for num, row in enumerate(tsvfile, start=1):
             data_row = row.rstrip('\n').split('\t')
             if num == 1:
-                if data_row[-1] and data_row[-1].split('/')[-1]:
-                    item_type_id = data_row[-1].split('/')[-1]
+                if data_row[2] and data_row[2].split('/')[2]:
+                    item_type_id = data_row[2].split('/')[2]
                     check_item_type = get_item_type(int(item_type_id))
-                    schema = data_row[-1]
+                    schema = data_row[2]
                     if not check_item_type:
                         result['item_type_schema'] = {}
                     else:
@@ -451,7 +451,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                 item_path = data_row
             elif num == 3:
                 item_path_name = data_row
-            elif num == 4 and row.startswith('#'):
+            elif (num == 4 or num == 5) and row.startswith('#'):
                 continue
             else:
                 data_parse_metadata = parse_to_json_form(
@@ -1413,8 +1413,8 @@ def handle_check_doi(list_record):
                         if not doi:
                             error = _('Please specify {}.').format('DOI')
                         elif not pid_doi.pid_value.endswith(doi):
-                            error = _('Specified {} is different '
-                                      + 'from existing {}.').format('DOI', 'DOI')
+                            error = _('Specified {} is different from'
+                                      + ' existing {}.').format('DOI', 'DOI')
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -2034,3 +2034,40 @@ def get_change_identifier_mode_content():
     except FileNotFoundError as ex:
         current_app.logger.error(str(ex))
     return data
+
+
+def get_root_item_option(item_id, item):
+    """Handle if is root item."""
+    _id = '.metadata.{}'.format(item_id)
+    _name = item.get('title')
+
+    _option = []
+    if item.get('option').get('required'):
+        _option.append('Required')
+    if item.get('option').get('hidden'):
+        _option.append('Hide')
+    if item.get('option').get('multiple'):
+        _option.append('Allow Multiple')
+        _id += '[0]'
+        _name += '#1'
+
+    return _id, _name, _option
+
+
+def get_sub_item_option(key, schemaform):
+    """Get sub-item option."""
+    _option = []
+    for item in schemaform:
+        if not item.get('items'):
+            if item.get('key') == key:
+                if item.get('required'):
+                    _option.append('Required')
+                if item.get('isHide'):
+                    _option.append('Hide')
+                return _option, True
+        else:
+            _option, _found = get_sub_item_option(
+                key, item.get('items'))
+            if _found:
+                return _option, True
+    return _option, False
