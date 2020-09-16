@@ -514,7 +514,6 @@ class SchemaTree:
                 glst.append(get_exp_value(lst))
             mlst = []
             vst = []
-            mc = 0
             while is_next:
                 ctp = ()
                 cnt = 0
@@ -531,7 +530,6 @@ class SchemaTree:
                     is_next = False
                     mlst.append(vst)
                 else:
-                    mc = max(ctp)
                     if ava:
                         if exp in ava:
                             ava_arr = ava.split(exp)
