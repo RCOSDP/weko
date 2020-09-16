@@ -142,7 +142,7 @@
                             {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url) }}
                           {%- else -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                            >{{ file.filename }} ({{ file.url.label or file.size|filesizeformat }})</a>
+                            >{{ file.url.label or file.filename }} ({{ file.size|filesizeformat }})</a>
                             <br>
                           {%- endif -%}
 

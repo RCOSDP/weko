@@ -704,9 +704,9 @@ $(document).ready(function () {
                     let index = elm.itemtype_key.indexOf('.') + 1;
                     sub_sub_itemtype_e = elm.itemtype_key.slice(index) + elm.itemlink_key;
                   }else{
-                    sub_sub_itemtype_e = elm.itemtype_key+elm.itemlink_key;
+                    sub_sub_itemtype_e = elm.itemtype_key + elm.itemlink_key;
                   }
-                  sub_sub_itemtype = sub_sub_itemtype+sub_sub_itemtype_e;
+                  sub_sub_itemtype = sub_sub_itemtype + sub_sub_itemtype_e;
                 });
               }
             } else {

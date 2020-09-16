@@ -508,8 +508,6 @@ class SchemaTree:
 
         def analyze_value_with_exp(nlst, exp):
             """Get many value with exp """
-            mlst = []
-            ava = ""
             is_next = True
             glst = []
             for lst in nlst:
