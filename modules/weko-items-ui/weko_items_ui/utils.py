@@ -1231,7 +1231,11 @@ def export_items(post_data):
         current_app.logger.error('-' * 60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
-    return send_file(export_path + '.zip')
+    return send_file(
+        export_path + '.zip',
+        as_attachment=True,
+        attachment_filename='export.zip'
+    )
 
 
 def export_item_custorm(post_data):
