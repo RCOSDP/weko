@@ -16,7 +16,6 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
 from flask_login import login_required
-from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_theme.utils import get_community_id, get_weko_contents
@@ -27,8 +26,9 @@ from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
 from .models import WidgetDesignPage
 from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
-from .utils import get_default_language, get_elasticsearch_result_by_date, \
-    get_system_language, get_widget_design_setting, get_widget_type_list
+from .utils import WidgetBucket, get_default_language, \
+    get_elasticsearch_result_by_date, get_system_language, \
+    get_widget_design_setting, get_widget_type_list
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -493,3 +493,41 @@ def get_access_counter_record(repository_id, current_language):
                             {start_date: top_view_total_by_widget_id})
 
     return jsonify(result)
+
+
+@blueprint.route('/widget/uploads/',
+                 defaults={"community_id": 0},
+                 methods=["POST"]
+                 )
+@blueprint.route('/widget/uploads/<string:community_id>', methods=["POST"])
+def upload_file(community_id):
+    """Upload widget static file.
+
+    :param community_id: community identifier.
+    :return:
+    """
+    if 'file' not in request.files:
+        return jsonify(msg=_("No file part")), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify(msg=_("No selected file")), 400
+    return jsonify(
+        WidgetBucket().save_file(file, file.filename, file.content_type,
+                                 community_id)
+    ), 200
+
+
+@blueprint.route('/widget/uploaded/<string:filename>',
+                 defaults={"community_id": 0}, methods=["GET"]
+                 )
+@blueprint.route('/widget/uploaded/<string:filename>/<string:community_id>',
+                 methods=["GET"]
+                 )
+def uploaded_file(filename, community_id=0):
+    """Get widget static file.
+
+    :param filename: file name.
+    :param community_id: community identifier.
+    :return:
+    """
+    return WidgetBucket().get_file(filename, community_id)
