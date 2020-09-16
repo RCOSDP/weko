@@ -1114,7 +1114,7 @@ def handle_check_and_prepare_index_tree(list_record):
     errors = []
     warnings = []
 
-    def check(index_ids, index_names, parent_id=0, isRoot=False):
+    def check(index_ids, index_names, parent_id=0, is_root=False):
         index_id = index_ids[0]
         index_name = index_names[0]
         index = None
@@ -1124,8 +1124,8 @@ def handle_check_and_prepare_index_tree(list_record):
             current_app.logger.warning("Specified IndexID is invalid!")
 
         if index and (
-            (isRoot and not index.parent)
-            or (not isRoot and parent_id and index.parent == parent_id)
+            (is_root and not index.parent)
+            or (not is_root and parent_id and index.parent == parent_id)
         ):
             if index.index_name != index_name:
                 warnings.append(
@@ -1357,8 +1357,6 @@ def handle_check_doi_ra(list_record):
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
-                if item.get('status') != 'new':
-                    error = check_existed(item_id, doi_ra)
             else:
                 if item.get('status') == 'new':
                     if item.get('doi'):
@@ -1531,7 +1529,7 @@ def register_item_doi(item):
                     'identifier_grant_ndl_jalc_doi_link':
                         IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
                 }
-                if status != 'new' and pid_doi:
+                if pid_doi:
                     pid_doi.delete()
                 saving_doi_pidstore(
                     pid_lastest.object_uuid,
