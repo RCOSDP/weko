@@ -438,8 +438,8 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
         for num, row in enumerate(tsvfile, start=1):
             data_row = row.rstrip('\n').split('\t')
             if num == 1:
-                if data_row[2] and data_row[2].split('/')[2]:
-                    item_type_id = data_row[2].split('/')[2]
+                if data_row[2] and data_row[2].split('/')[-1]:
+                    item_type_id = data_row[2].split('/')[-1]
                     check_item_type = get_item_type(int(item_type_id))
                     schema = data_row[2]
                     if not check_item_type:
@@ -717,11 +717,8 @@ def make_tsv_by_line(lines):
     """Make TSV file."""
     tsv_output = StringIO()
 
-    writer = csv.writer(tsv_output, delimiter='\t',
-                        lineterminator="\n")
-
-    for line in lines:
-        writer.writerow(line)
+    writer = csv.writer(tsv_output, delimiter='\t')
+    writer.writerows(lines)
 
     return tsv_output
 
@@ -2056,18 +2053,37 @@ def get_root_item_option(item_id, item):
 
 def get_sub_item_option(key, schemaform):
     """Get sub-item option."""
-    _option = []
+    _option = None
     for item in schemaform:
         if not item.get('items'):
             if item.get('key') == key:
+                _option = []
                 if item.get('required'):
                     _option.append('Required')
                 if item.get('isHide'):
                     _option.append('Hide')
-                return _option, True
+                break
         else:
-            _option, _found = get_sub_item_option(
+            _option = get_sub_item_option(
                 key, item.get('items'))
-            if _found:
-                return _option, True
-    return _option, False
+            if _option is not None:
+                break
+    return _option
+
+
+def check_sub_item_is_system(key, schemaform):
+    """Check the sub-item is system."""
+    is_system = None
+    for item in schemaform:
+        if not item.get('items'):
+            if item.get('key') == key:
+                is_system = False
+                if item.get('readonly'):
+                    is_system = True
+                break
+        else:
+            is_system = check_sub_item_is_system(
+                key, item.get('items'))
+            if is_system is not None:
+                break
+    return is_system

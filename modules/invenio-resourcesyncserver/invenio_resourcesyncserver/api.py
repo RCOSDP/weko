@@ -521,12 +521,14 @@ class ResourceListHandler(object):
 
             # Create export info file
             for item_type_id in item_types_data:
-                keys, labels, options, records = make_stats_tsv(
+                headers, records = make_stats_tsv(
                     item_type_id,
                     item_types_data[item_type_id]['recids'])
+                keys, labels, is_systems, options = headers
                 item_types_data[item_type_id]['recids'].sort()
                 item_types_data[item_type_id]['keys'] = keys
                 item_types_data[item_type_id]['labels'] = labels
+                item_types_data[item_type_id]['is_systems'] = is_systems
                 item_types_data[item_type_id]['options'] = options
                 item_types_data[item_type_id]['data'] = records
                 item_type_data = item_types_data[item_type_id]
@@ -1188,12 +1190,14 @@ class ChangeListHandler(object):
 
             # Create export info file
             for item_type_id in item_types_data:
-                keys, labels, options, records = make_stats_tsv(
+                headers, records = make_stats_tsv(
                     item_type_id,
                     item_types_data[item_type_id]['recids'])
+                keys, labels, is_systems, options = headers
                 item_types_data[item_type_id]['recids'].sort()
                 item_types_data[item_type_id]['keys'] = keys
                 item_types_data[item_type_id]['labels'] = labels
+                item_types_data[item_type_id]['is_systems'] = is_systems
                 item_types_data[item_type_id]['options'] = options
                 item_types_data[item_type_id]['data'] = records
                 item_type_data = item_types_data[item_type_id]

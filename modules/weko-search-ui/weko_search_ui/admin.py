@@ -41,10 +41,11 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
-from .utils import check_import_items, create_flow_define, delete_records, \
-    get_change_identifier_mode_content, get_content_workflow, \
-    get_root_item_option, get_sub_item_option, get_tree_items, \
-    handle_index_tree, handle_workflow, make_stats_tsv, make_tsv_by_line
+from .utils import check_import_items, check_sub_item_is_system, \
+    create_flow_define, delete_records, get_change_identifier_mode_content, \
+    get_content_workflow, get_root_item_option, get_sub_item_option, \
+    get_tree_items, handle_index_tree, handle_workflow, make_stats_tsv, \
+    make_tsv_by_line
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -425,6 +426,8 @@ class ItemImportView(BaseView):
                     ]
                     ids_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_ID)
                     names_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_NAME)
+                    systems_line = ['#'] + \
+                        ['' for _ in range(len(ids_line) - 1)]
                     options_line = copy.deepcopy(
                         WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
 
@@ -439,6 +442,7 @@ class ItemImportView(BaseView):
                         _id, _name, _option = get_root_item_option(key, value)
                         ids_line.append(_id)
                         names_line.append(_name)
+                        systems_line.append('')
                         options_line.append(', '.join(_option))
 
                     count_file = 1
@@ -450,6 +454,8 @@ class ItemImportView(BaseView):
                                 get_root_item_option(key, value)
                             _ids, _names = handle_sub_item(
                                 item.get('properties'), root_id, root_name)
+
+                            _options = []
                             for _id in _ids:
                                 if 'filename' in _id \
                                         or 'thumbnail_label' in _id:
@@ -457,15 +463,18 @@ class ItemImportView(BaseView):
                                         '.file_path#{}'.format(count_file))
                                     names_line.append(
                                         '.ファイルパス#{}'.format(count_file))
+                                    systems_line.append('')
                                     options_line.append('')
                                     count_file += 1
-                            _options = [
-                                get_sub_item_option(
-                                    _id.replace('.metadata.', '')
-                                    .replace('[0]', '[]'),
-                                    form)[0]
-                                for _id in _ids
-                            ]
+
+                                clean_key = _id.replace(
+                                    '.metadata.', '').replace('[0]', '[]')
+                                _options.append(
+                                    get_sub_item_option(clean_key, form) or [])
+                                systems_line.append(
+                                    'System' if check_sub_item_is_system(
+                                        clean_key, form) else ''
+                                )
 
                             ids_line += _ids
                             names_line += _names
@@ -473,8 +482,13 @@ class ItemImportView(BaseView):
                                 options_line.append(
                                     ', '.join(list(set(root_option + _option)))
                                 )
-                    tsv_file = make_tsv_by_line(
-                        [item_type_line, ids_line, names_line, options_line])
+                    tsv_file = make_tsv_by_line([
+                        item_type_line,
+                        ids_line,
+                        names_line,
+                        systems_line,
+                        options_line
+                    ])
                     result = Response(
                         tsv_file.getvalue(),
                         mimetype="text/tsv",
