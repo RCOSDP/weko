@@ -100,7 +100,8 @@ class WidgetItem(db.Model):
                            default=True)
     is_deleted = db.Column(db.Boolean(name='deleted'),
                            default=False)
-
+    label = db.Column(db.String(100),
+            db.ForeignKey('widget_multi_lang_data.label_fk'), unique=True)
     #
     # Query Operation
     #
@@ -248,7 +249,8 @@ class WidgetMultiLangData(db.Model):
 
     is_deleted = db.Column(db.Boolean(name='deleted'),
                            default=False)
-
+    label_fk = db.relationship('WidgetItem',
+            backref='widget_multi_lang_data.label', uselist=False)
     #
     # Query Operation
     #
