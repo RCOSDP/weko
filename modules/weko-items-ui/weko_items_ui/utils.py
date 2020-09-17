@@ -1172,7 +1172,7 @@ def export_items(post_data):
         return new_name
 
     include_contents = True if \
-        post_data['export_file_contents_radio'] == 'True' else False
+        post_data.get('export_file_contents_radio') == 'True' else False
     export_format = post_data['export_format_radio']
     record_ids = json.loads(post_data['record_ids'])
     invalid_record_ids = json.loads(post_data['invalid_record_ids'])
