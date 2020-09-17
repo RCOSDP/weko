@@ -294,7 +294,7 @@ class ImportComponent extends React.Component {
     this.handleAgreeChange = this.handleAgreeChange.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.handleConfirm = this.handleConfirm.bind(this);
-
+    this.getDisclaimerContent = this.getDisclaimerContent.bind(this);
   }
 
   componentDidMount() {
@@ -311,6 +311,8 @@ class ImportComponent extends React.Component {
         console.log(error);
       }
     });
+
+    this.getDisclaimerContent();
   }
 
   handleChangefile(e) {
@@ -407,20 +409,6 @@ class ImportComponent extends React.Component {
       is_change_identifier,
     }
     if (is_change_identifier) {
-      const that = this
-      $.ajax({
-        url: urlGetChangeIdentifierMode,
-        type: 'GET',
-        success: function (result) {
-
-          that.setState({
-            change_identifier_mode_content: result.data
-          })
-        },
-        error: function (error) {
-          console.log(error);
-        }
-      });
       this.setState({
         disabled_checkbox: true,
         show: true
@@ -430,6 +418,23 @@ class ImportComponent extends React.Component {
       handleCheck(data)
     }
 
+  }
+
+  getDisclaimerContent() {
+    const that = this
+    $.ajax({
+      url: urlGetChangeIdentifierMode,
+      type: 'GET',
+      success: function (result) {
+
+        that.setState({
+          change_identifier_mode_content: result.data
+        })
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
   }
 
   handleInputChange(event) {
@@ -543,7 +548,7 @@ class ImportComponent extends React.Component {
         </div>
         <hr />
         <ItemTypeComponent />
-        <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-710">
+        <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-725">
           <ReactBootstrap.Modal.Header closeButton>
             <h4 className="modal-title in_line">{change_identifier_mode}</h4>
           </ReactBootstrap.Modal.Header>
