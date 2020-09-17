@@ -695,9 +695,9 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     """
     item_type = ItemTypes.get_by_id(item_type_id).render
     list_hide = get_item_from_option(item_type_id)
-    if hide_meta_data_for_role(
-        list_item_role.get(item_type_id)) and item_type and item_type.get(
-            'table_row'):
+    no_permission_show_hide = hide_meta_data_for_role(
+        list_item_role.get(item_type_id))
+    if no_permission_show_hide and item_type and item_type.get('table_row'):
         for name_hide in list_hide:
             item_type['table_row'] = hide_table_row_for_tsv(
                 item_type.get('table_row'), name_hide)
@@ -1029,7 +1029,10 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})
-    for _id in ret:
+    del_num = 0
+    total_col = len(ret)
+    for index in range(total_col):
+        _id = ret[index - del_num]
         key = re.sub(r'\[.\]', '[]', _id.replace('.metadata.', ''))
         root_key = key.split('.')[0].replace('[]', '')
         if root_key in meta_list:
@@ -1044,9 +1047,17 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             if not sub_options:
                 ret_option.append(', '.join(root_option))
             else:
-                ret_option.append(
-                    ', '.join(list(set(root_option + sub_options)))
-                )
+                if no_permission_show_hide and 'Hide' in sub_options:
+                    del ret[index - del_num]
+                    del ret_label[index - del_num]
+                    del ret_system[index - del_num]
+                    for recid in recids:
+                        del records.attr_output[recid][index - del_num - 2]
+                    del_num += 1
+                else:
+                    ret_option.append(
+                        ', '.join(list(set(root_option + sub_options)))
+                    )
         elif key == '#.id':
             ret_system.append('#')
             ret_option.append('#')
@@ -1328,6 +1339,21 @@ def _export_item(record_id,
                  tmp_path=None,
                  records_data=None):
     """Exports files for record according to view permissions."""
+    def del_hide_sub_metadata(keys, metadata):
+        """Delete hide metadata."""
+        if isinstance(metadata, dict):
+            data = metadata.get(keys[0])
+            if data:
+                if len(keys) > 1:
+                    del_hide_sub_metadata(keys[1:], data)
+                else:
+                    del metadata[keys[0]]
+        elif isinstance(metadata, list):
+            count = len(metadata)
+            for index in range(count):
+                del_hide_sub_metadata(keys[1:] if len(
+                    keys) > 1 else keys, metadata[index])
+
     exported_item = {}
     record = WekoRecord.get_record_by_pid(record_id)
     list_item_role = {}
@@ -1352,8 +1378,12 @@ def _export_item(record_id,
                     {exported_item['item_type_id']: record_role_ids})
                 if hide_meta_data_for_role(record_role_ids):
                     for hide_key in list_hidden:
-                        if meta_data.get(hide_key):
+                        if isinstance(hide_key, str) \
+                                and meta_data.get(hide_key):
                             del records_data['metadata'][hide_key]
+                        elif isinstance(hide_key, list):
+                            del_hide_sub_metadata(
+                                hide_key, records_data['metadata'])
 
         # Create metadata file.
         with open('{}/{}_metadata.json'.format(tmp_path,
@@ -1763,11 +1793,24 @@ def get_ignore_item_from_mapping(_item_type_id):
     """
     ignore_list = []
     meta_options, item_type_mapping = get_options_and_order_list(_item_type_id)
+    sub_ids = get_hide_list_by_schema_form(item_type_id=_item_type_id)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
             ignore_list.append(
                 get_mapping_name_item_type_by_key(key, item_type_mapping))
+    for sub_id in sub_ids:
+        key = [re.sub(r'\[.\]', '', _id) for _id in sub_id.split('.')]
+        if key[0] in item_type_mapping:
+            mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
+            name = [list(mapping.keys())[0]]
+            if len(key) > 1:
+                tree_name = get_mapping_name_item_type_by_sub_key(
+                    '.'.join(key[1:]), mapping.get(name[0])
+                )
+                if tree_name:
+                    name += tree_name
+            ignore_list.append(name)
     return ignore_list
 
 
@@ -1785,6 +1828,46 @@ def get_mapping_name_item_type_by_key(key, item_type_mapping):
                 for name in property_data.get('jpcoar_mapping'):
                     return name
     return key
+
+
+def get_mapping_name_item_type_by_sub_key(key, item_type_mapping):
+    """Get mapping name item type by sub key.
+
+    :param item_type_mapping:
+    :param key:
+    :return: name
+    """
+    tree_name = None
+    for mapping_key in item_type_mapping:
+        property_data = item_type_mapping.get(mapping_key)
+
+        if isinstance(property_data, dict):
+            _mapping_name = get_mapping_name_item_type_by_sub_key(
+                key, property_data)
+            if _mapping_name is not None:
+                tree_name = [mapping_key] \
+                    if mapping_key != '@attributes' else []
+                tree_name += _mapping_name
+                break
+        elif key == property_data:
+            tree_name = [mapping_key if mapping_key != '@value' else '']
+            break
+    return tree_name
+
+
+def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
+    """Get hide list by schema form."""
+    ids = []
+    if item_type_id and not schemaform:
+        item_type = ItemTypes.get_by_id(item_type_id).render
+        schemaform = item_type.get('table_row_map', {}).get('form', {})
+    for item in schemaform:
+        if not item.get('items'):
+            if item.get('isHide'):
+                ids.append(item.get('key'))
+        else:
+            ids += get_hide_list_by_schema_form(schemaform=item.get('items'))
+    return ids
 
 
 def get_item_from_option(_item_type_id):
