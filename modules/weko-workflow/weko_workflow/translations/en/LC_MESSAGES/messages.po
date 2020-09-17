@@ -480,3 +480,6 @@ msgstr ""
 
 msgid "Display Name"
 msgstr ""
+
+msgid "Your session has timed out. Please login again."
+msgstr ""

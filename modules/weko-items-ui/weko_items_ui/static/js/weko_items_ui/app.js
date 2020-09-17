@@ -2746,7 +2746,10 @@ function toObject(arr) {
             contentType: "application/json",
             async: false,
             success: function (data, status) {
-              if (data.is_valid) {
+              if (data.unauthorized) {
+                alert(data.error)
+                window.location.assign("/login/?next=" + window.location.pathname)
+              } else if (data.is_valid) {
                 isValid = true;
               } else {
                 $("#inputModal").html(data.error);
@@ -3383,7 +3386,10 @@ function toObject(arr) {
               $scope.endLoading();
             }
             var modalcontent = response;
-            if (response.status == 400) {
+            if (response.data.unauthorized) {
+              alert(response.data.error)
+              window.location.assign("/login/?next=" + window.location.pathname)
+            } else if (response.status == 400) {
               window.location.reload();
             } else {
               $("#inputModal").html(modalcontent);

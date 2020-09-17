@@ -22,6 +22,7 @@
 
 import copy
 import csv
+import functools
 import json
 import os
 import re
@@ -36,7 +37,7 @@ import bagit
 import redis
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, flash, redirect, request, send_file, \
-    url_for
+    url_for, jsonify
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
@@ -1958,3 +1959,21 @@ def get_ranking(settings):
                                   pid_key='pid_value', date_key='create_date')
 
     return rankings
+
+
+def login_required_custom(func):
+    """Login required custom for requests using ajax, which can not
+    redirect to login page automatically but show err mgs instead."""
+
+    @functools.wraps(func)
+    def wrapper_function(*args, **kwargs):
+        if current_user and current_user.get_id():
+            return func(*args, **kwargs)
+        else:
+            result = {
+                "unauthorized": True,
+                "error": _('Login required')
+            }
+            return jsonify(result)
+
+    return wrapper_function
