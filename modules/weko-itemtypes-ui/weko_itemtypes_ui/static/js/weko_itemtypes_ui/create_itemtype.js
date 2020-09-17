@@ -1701,13 +1701,14 @@ $(document).ready(function () {
           subForm.isHide = properties[propKey].isHide;
 
           // subForm.type = properties[propKey].format;
-          let _enum;
+          let _enum, editAble;
+          editAble = properties[propKey].hasOwnProperty('editAble') && properties[propKey]['editAble'];
           if(properties[propKey].hasOwnProperty('currentEnum')){
             _enum = properties[propKey]['currentEnum'];
           } else if(properties[propKey].hasOwnProperty('enum')){
             _enum = properties[propKey]['enum'];
           }
-          if (_enum) {
+          if (editAble && _enum) {
             let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
             let titleMap = [];
             $.each(list_enum, function(ind, val) {
@@ -1755,14 +1756,14 @@ $(document).ready(function () {
 
             // form.type = properties[propKey].format;
 
-            let _enum;
+            let _enum, editAble;
+            editAble = properties[propKey].hasOwnProperty('editAble') && properties[propKey]['editAble'];
             if(properties[propKey].hasOwnProperty('currentEnum')){
               _enum = properties[propKey]['currentEnum'];
             } else if(properties[propKey].hasOwnProperty('enum')){
               _enum = properties[propKey]['enum'];
             }
-            if (_enum) {
-              let _enum = properties[propKey]['enum'];
+            if (editAble && _enum) {
               let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
               let titleMap = [];
               $.each(list_enum, function(ind, val) {

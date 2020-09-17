@@ -136,13 +136,13 @@
                         {%- set permission = record | get_permission(file.info()) -%}
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              href={{ file_url }}>{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                              href={{ file_url }}>{{ file.url.label or file.filename }} ({{ file.size|filesizeformat }})</a>
                             <br>
                           {%- elif clickable -%}
                             {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url) }}
                           {%- else -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                            >{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                            >{{ file.url.label or file.filename }} ({{ file.size|filesizeformat }})</a>
                             <br>
                           {%- endif -%}
 

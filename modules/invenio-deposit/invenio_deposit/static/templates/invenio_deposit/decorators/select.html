@@ -1,4 +1,4 @@
-<div class="form-group {{form.htmlClass}} schema-form-select"
+<div ng-if="!form.useDataList" class="form-group {{form.htmlClass}} schema-form-select"
      ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}">
   <label class="control-label col-sm-3 {{form.labelHtmlClass}}" ng-show="showTitle()" ng-class="{'field-required': form.required}">
     {{form.title}}
@@ -14,5 +14,28 @@
 		    <option value=""></option>
     </select>
         <div class="help-block" sf-message="form.description"></div>
+    </div>
+</div>
+
+<div ng-if="form.useDataList" class="form-group {{form.htmlClass}} schema-form-select"
+     ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}">
+  <label class="control-label col-sm-3 {{form.labelHtmlClass}}" ng-show="showTitle()" ng-class="{'field-required': form.required}">
+    {{form.title}}
+  </label>
+    <div class="col-sm-9">
+      <input type="text" ng-model="$$value$$"
+        ng-disabled="form.readonly"
+        sf-changed="form"
+        class="form-control {{ form.fieldHtmlClass }}"
+        name="{{ form.key.slice(-1)[0] }}"
+        list="{{ form.key.slice(-1)[0] }}" />
+      <datalist id="{{ form.key.slice(-1)[0] }}">
+        <option ng-repeat="item in form.titleMap"
+          ng-click=""
+          value="{{item.value}}">
+          {{item.name}}
+        </option>
+      </datalist>
+      <div class="help-block" sf-message="form.description"></div>
     </div>
 </div>
