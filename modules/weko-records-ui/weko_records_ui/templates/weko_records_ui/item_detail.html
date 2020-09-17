@@ -81,10 +81,10 @@
                   {% endif %}
               {% endif %}
           {% endif %}
-          {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
+          {%- if 'is_thumbnail' in lst.keys() and lst.get('is_thumbnail') and files_thumbnail -%}
             <tr>
               <th scope="row"
-                  colspan="6">{{ lst.get('attribute_name_hidden', _('Thumbnail')) }}</th>
+                  colspan="6">{{ lst.get('attribute_name_i18n', _('Thumbnail')) }}</th>
               <td>
                   {%- for thumb in files_thumbnail | sort(attribute='key') -%}
                       {%- set thumb_name = thumb.filename or thumb.key -%}

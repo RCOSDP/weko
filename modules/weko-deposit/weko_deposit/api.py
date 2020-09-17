@@ -1149,9 +1149,6 @@ class WekoRecord(Record):
 
             hidden = option.get("hidden")
             if hidden:
-                items.append({
-                    'attribute_name_hidden': val.get('attribute_name')
-                })
                 continue
 
             mlt = val.get('attribute_value_mlt')
@@ -1161,6 +1158,7 @@ class WekoRecord(Record):
                 nval['attribute_name_i18n'] = lst[2] or val.get(
                     'attribute_name')
                 nval['attribute_type'] = val.get('attribute_type')
+
                 if nval['attribute_name'] == 'Reference' \
                         or nval['attribute_type'] == 'file':
                     nval['attribute_value_mlt'] = \
@@ -1168,6 +1166,8 @@ class WekoRecord(Record):
                                       copy.deepcopy(solst), True)
                 else:
                     is_author = nval['attribute_type'] == 'creator'
+                    is_thumbnail = any(
+                        'subitem_thumbnail' in data for data in mlt)
                     sys_bibliographic = _FormatSysBibliographicInformation(
                         copy.deepcopy(mlt),
                         copy.deepcopy(solst)
@@ -1179,6 +1179,8 @@ class WekoRecord(Record):
                             language_list.append(lang['lang_code'])
                         creators = self._get_creator(mlt, language_list)
                         nval['attribute_value_mlt'] = creators
+                    elif is_thumbnail:
+                        nval['is_thumbnail'] = True
                     elif sys_bibliographic.is_bibliographic():
                         nval['attribute_value_mlt'] = \
                             sys_bibliographic.get_bibliographic_list()
