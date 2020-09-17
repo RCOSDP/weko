@@ -565,8 +565,11 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
     item_map = get_mapping(type_mapping, "{}_mapping".format(meta_prefix))
 
     if item_map:
-        file_keys = item_map.get(current_app.config[
-            "OAISERVER_FILE_PROPS_MAPPING"][meta_prefix])
+        file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
+        if meta_prefix in file_props:
+            file_keys = item_map.get(file_props[meta_prefix])
+        else:
+            file_keys = None
 
     if not file_keys:
         return record
