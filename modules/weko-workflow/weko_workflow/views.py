@@ -1192,7 +1192,7 @@ def get_feedback_maillist(activity_id='0'):
 def lock_activity(activity_id=0):
     """Lock activity."""
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
-    timeout = current_app.permanent_session_lifetime.seconds * 60
+    timeout = current_app.permanent_session_lifetime.seconds
     data = request.form.to_dict()
     locked_value = data.get('locked_value')
     cur_locked_val = str(get_cache_data(cache_key)) or str()
