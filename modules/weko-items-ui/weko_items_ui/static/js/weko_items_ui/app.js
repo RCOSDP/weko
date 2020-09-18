@@ -3314,7 +3314,7 @@ function toObject(arr) {
         sessionStorage.removeItem(key);
       }
 
-      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading,sessionValid=false) {
+      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading,sessionValid) {
         //When press 'Next' or 'Save' button, setting data for model.
         //This function is called in updataDataJson function.
         if(!sessionValid){
