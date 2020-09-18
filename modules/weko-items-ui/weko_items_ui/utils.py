@@ -36,7 +36,7 @@ import bagit
 import redis
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, flash, redirect, request, send_file, \
-    url_for, jsonify
+    url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
