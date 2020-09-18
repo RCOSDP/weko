@@ -22,7 +22,6 @@
 
 import copy
 import csv
-import functools
 import json
 import os
 import re
