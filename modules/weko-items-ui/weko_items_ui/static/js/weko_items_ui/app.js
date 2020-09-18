@@ -2157,6 +2157,8 @@ function toObject(arr) {
                 fileInfo.filesize = [{}];
                 fileInfo.filesize[0].value = filesObject[modelValue].size;
                 fileInfo.format = filesObject[modelValue].format;
+                fileInfo.url = {};
+                fileInfo.url.url = filesObject[modelValue].url;
               } else {
                 fileInfo.filesize = [{}];
                 fileInfo.filesize[0].value = '';
@@ -2169,6 +2171,60 @@ function toObject(arr) {
             }
           });
         });
+      }
+
+      // This is callback function - Please do NOT change function name
+      $scope.changedVersionType = function ($event, modelValue) {
+        //
+        let curElement = event.target;
+        let parForm = $(curElement).parents('.schema-form-fieldset ')[0];
+        let txtVersionResource = $(parForm).find('.txt-version-resource')[0];
+        let exists = false;
+        let dictionaries = {
+          'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
+          'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
+          'AM': 'http://purl.org/coar/version/c_ab4af688f83e57aa',
+          'P': 'http://purl.org/coar/version/c_970fb48d4fbd8a85',
+          'VoR': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
+          'CVoR': 'http://purl.org/coar/version/c_e19f295774971610',
+          'EVoR': 'http://purl.org/coar/version/c_dc82b40f9837b551',
+          'NA': 'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
+        };
+        $.map(dictionaries, function(val, key) {
+          if(key == modelValue){
+            $(txtVersionResource).val(val);
+            exists = true;
+            return false;
+          }
+        });
+        if(!exists){
+          $(txtVersionResource).val('');
+        }
+      }
+
+      // This is callback function - Please do NOT change function name
+      $scope.changedAccessRights = function ($event, modelValue) {
+        //
+        let curElement = event.target;
+        let parForm = $(curElement).parents('.schema-form-fieldset ')[0];
+        let txtVersionResource = $(parForm).find('.txt-access-rights-uri')[0];
+        let exists = false;
+        let dictionaries = {
+          'embargoed access': 'http://purl.org/coar/access_right/c_f1cf',
+          'metadata only access': 'http://purl.org/coar/access_right/c_14cb',
+          'open access': 'http://purl.org/coar/access_right/c_abf2',
+          'restricted access': 'http://purl.org/coar/access_right/c_16ec'
+        };
+        $.map(dictionaries, function(val, key) {
+          if(key == modelValue){
+            $(txtVersionResource).val(val);
+            exists = true;
+            return false;
+          }
+        });
+        if(!exists){
+          $(txtVersionResource).val('');
+        }
       }
 
       $scope.updateNumFiles = function () {
@@ -2184,6 +2240,7 @@ function toObject(arr) {
           filesObject[file.key] = new Object();
           filesObject[file.key].size = $scope.bytesToReadableString(file.size);
           filesObject[file.key].format = file.mimetype;
+          filesObject[file.key].url = file.links.self;
         });
         return filesObject;
       }
