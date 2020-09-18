@@ -61,7 +61,7 @@ from .utils import _get_max_export_items, export_items, get_current_user, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
     update_schema_remove_hidden_item, update_sub_items_by_user_role, \
     validate_form_input_data, validate_save_title_and_share_user_id, \
-    validate_user, validate_user_mail_and_index, login_required_custom
+    validate_user, validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -184,7 +184,7 @@ def iframe_index(item_type_id=0):
 
 
 @blueprint.route('/iframe/model/save', methods=['POST'])
-@login_required_custom
+@login_required
 @item_permission.require(http_exception=403)
 def iframe_save_model():
     """Renders an item register view.
@@ -1032,7 +1032,7 @@ def export():
 
 
 @blueprint_api.route('/validate', methods=['POST'])
-@login_required_custom
+@login_required
 def validate():
     """Validate input data.
 
@@ -1177,3 +1177,13 @@ def newversion(pid_value='0'):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         db.session.rollback()
     return jsonify(success=True)
+
+
+@blueprint.route('/sessionvalidate', methods=['POST'])
+def session_validate():
+    authorized = True if current_user and current_user.get_id() else False
+    result = {
+        "unauthorized": authorized,
+        "msg": _('Your session has timed out. Please login again.')
+    }
+    return jsonify(result)

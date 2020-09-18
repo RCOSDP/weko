@@ -1959,21 +1959,3 @@ def get_ranking(settings):
                                   pid_key='pid_value', date_key='create_date')
 
     return rankings
-
-
-def login_required_custom(func):
-    """Login required custom for requests using ajax, which can not
-    redirect to login page automatically but show err mgs instead."""
-
-    @functools.wraps(func)
-    def wrapper_function(*args, **kwargs):
-        if current_user and current_user.get_id():
-            return func(*args, **kwargs)
-        else:
-            result = {
-                "unauthorized": True,
-                "error": _('Login required')
-            }
-            return jsonify(result)
-
-    return wrapper_function

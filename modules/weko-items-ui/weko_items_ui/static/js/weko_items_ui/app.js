@@ -3109,9 +3109,11 @@ function toObject(arr) {
       }
 
       $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+        if(!validateSession())
+          return;
         $scope.startLoading();
         let currActivityId = $("#activity_id").text();
-        $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
+        $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true);
         if (!$scope.priceValidator()) {
           var modalcontent = "Billing price is required half-width numbers.";
           $("#inputModal").html(modalcontent);
@@ -3312,9 +3314,13 @@ function toObject(arr) {
         sessionStorage.removeItem(key);
       }
 
-      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading) {
+      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading,sessionValid=false) {
         //When press 'Next' or 'Save' button, setting data for model.
         //This function is called in updataDataJson function.
+        if(!sessionValid){
+          if(!validateSession())
+          return;
+        }
         if (startLoading) {
           $scope.startLoading();
         }
