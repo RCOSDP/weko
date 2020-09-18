@@ -40,6 +40,7 @@ from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import asc
+from sqlalchemy.orm.exc import MultipleResultsFound
 from weko_admin.models import AdminLangSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import Mapping
@@ -991,12 +992,17 @@ class WidgetBucket:
 
         key = "{0}_{1}".format(community_id, file_name)
         file_stream.seek(0)  # Rewind the stream to the beginning
-        if ObjectVersion.get(file_bucket, key):
+        try:
+            if ObjectVersion.get(file_bucket, key):
+                raise FileInstanceAlreadySetError(
+                    _("The {} file is already exists.".format(file_name))
+                )
+            else:
+                return True
+        except MultipleResultsFound:
             raise FileInstanceAlreadySetError(
                 _("The {} file is already exists.".format(file_name))
             )
-        else:
-            return True
 
     def save_file(self, file_stream, file_name: str, mimetype: str,
                   community_id=0):
