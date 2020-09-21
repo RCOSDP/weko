@@ -95,3 +95,9 @@ WEKO_SCHEME_FIRST_INDEX = 0
 
 WEKO_SCHEMA_RECORD_URL = "{}records/{}"
 """Pattern of url record."""
+
+WEKO_SCHEMA_VERSION_TYPE = {
+    "modified": "oaire:versiontype",
+    "original": "oaire:version"
+}
+"""Modified and original for versiontype key"""
