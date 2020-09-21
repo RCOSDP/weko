@@ -14,7 +14,6 @@
 -e /code/modules/invenio-resourcesyncclient
 -e /code/modules/invenio-queues
 -e /code/modules/invenio-db
--e /code/modules/invenio-formatter
 -e /code/modules/weko-theme
 -e /code/modules/weko-itemtypes-ui
 -e /code/modules/weko-items-ui
