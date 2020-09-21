@@ -57,7 +57,7 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_file_download_permission
 from weko_search_ui.query import item_search_factory
 from weko_user_profiles import UserProfile
-from weko_workflow.api import WorkActivity
+from weko_workflow.api import WorkActivity, WorkFlow
 
 
 def get_list_username():
@@ -1958,3 +1958,55 @@ def get_ranking(settings):
                                   pid_key='pid_value', date_key='create_date')
 
     return rankings
+
+
+def save_title(activity_id, request_data):
+    """Save title.
+
+    :param activity_id: activity id.
+    :param request_data: request data.
+    :return:
+    """
+    activity = WorkActivity()
+    db_activity = activity.get_activity_detail(activity_id)
+    itemtype_schema = db_activity.workflow.itemtype.schema
+    key, title_schema = get_key_title_in_item_type(itemtype_schema)
+    key_child, json_title = get_key_title_in_item_type(title_schema)
+    if key and key_child:
+        title = get_title_in_request(request_data, key, key_child)
+        activity.update_title(activity_id, title)
+
+
+def get_key_title_in_item_type(item_type_schema):
+    """Get key title in item type.
+
+    :param item_type_schema: item type schema.
+    :return:
+    """
+    if item_type_schema and item_type_schema.get('properties'):
+        properties = item_type_schema.get('properties')
+        for key in properties:
+            if properties.get(key).get('title') and properties.get(key).get(
+                    'title') == 'Title':
+                return key, properties.get(key)
+
+
+def get_title_in_request(request_data, key, key_child):
+    """Get title in request.
+
+    :param request_data: activity id.
+    :param key: key of title.
+    :param key_child: key child of title.
+    :return:
+    """
+    result = ''
+    try:
+        if request_data.get('metainfo'):
+            for k, v in request_data.get('metainfo').items():
+                if k == key:
+                    for key_title, val in v.items():
+                        if key_child == key_title:
+                            result = val
+    except Exception:
+        pass
+    return result
