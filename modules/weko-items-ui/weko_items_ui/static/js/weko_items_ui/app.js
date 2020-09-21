@@ -2173,13 +2173,34 @@ function toObject(arr) {
         });
       }
 
+      //Set data for input control, this not change data to model.
+      $scope.setValueForInputControl = function (dictionaries, modelValue, inputControl) {
+        let exists = false;
+        $.map(dictionaries, function(val, key) {
+          if(key == modelValue){
+            $(inputControl).val(val);
+            exists = true;
+            return false;
+          }
+        });
+        if(!exists){
+          $(inputControl).val('');
+        }
+      }
+
+      //Set data for model base on input control.
+      $scope.setValueForModelByInputControl = function (inputControl) {
+        let ngModel = $(inputControl).attr('ng-model');
+        ngModel = ngModel.replace('model', '$rootScope.recordsVM.invenioRecordsModel');
+        let strSetModel = ngModel + '=$(inputControl).val();';
+        eval(strSetModel);
+      }
+
       // This is callback function - Please do NOT change function name
       $scope.changedVersionType = function ($event, modelValue) {
-        //
         let curElement = event.target;
         let parForm = $(curElement).parents('.schema-form-fieldset ')[0];
         let txtVersionResource = $(parForm).find('.txt-version-resource')[0];
-        let exists = false;
         let dictionaries = {
           'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
           'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
@@ -2190,41 +2211,23 @@ function toObject(arr) {
           'EVoR': 'http://purl.org/coar/version/c_dc82b40f9837b551',
           'NA': 'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
         };
-        $.map(dictionaries, function(val, key) {
-          if(key == modelValue){
-            $(txtVersionResource).val(val);
-            exists = true;
-            return false;
-          }
-        });
-        if(!exists){
-          $(txtVersionResource).val('');
-        }
+        $scope.setValueForInputControl(dictionaries, modelValue, txtVersionResource);
+        $scope.setValueForModelByInputControl(txtVersionResource);
       }
 
       // This is callback function - Please do NOT change function name
       $scope.changedAccessRights = function ($event, modelValue) {
-        //
         let curElement = event.target;
         let parForm = $(curElement).parents('.schema-form-fieldset ')[0];
-        let txtVersionResource = $(parForm).find('.txt-access-rights-uri')[0];
-        let exists = false;
+        let txtAccessRightsUri = $(parForm).find('.txt-access-rights-uri')[0];
         let dictionaries = {
           'embargoed access': 'http://purl.org/coar/access_right/c_f1cf',
           'metadata only access': 'http://purl.org/coar/access_right/c_14cb',
           'open access': 'http://purl.org/coar/access_right/c_abf2',
           'restricted access': 'http://purl.org/coar/access_right/c_16ec'
         };
-        $.map(dictionaries, function(val, key) {
-          if(key == modelValue){
-            $(txtVersionResource).val(val);
-            exists = true;
-            return false;
-          }
-        });
-        if(!exists){
-          $(txtVersionResource).val('');
-        }
+        $scope.setValueForInputControl(dictionaries, modelValue, txtAccessRightsUri);
+        $scope.setValueForModelByInputControl(txtAccessRightsUri);
       }
 
       $scope.updateNumFiles = function () {
