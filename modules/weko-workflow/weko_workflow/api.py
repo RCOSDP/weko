@@ -1646,7 +1646,7 @@ class WorkActivity(object):
                 activity = self.get_activity_detail(activity_id)
                 if activity:
                     activity.title = title
-                    db.session.add(activity)
+                    db.session.merge(activity)
             db.session.commit()
         except Exception as ex:
             current_app.logger.exception(str(ex))

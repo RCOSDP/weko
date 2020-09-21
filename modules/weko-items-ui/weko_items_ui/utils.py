@@ -1971,7 +1971,7 @@ def save_title(activity_id, request_data):
     db_activity = activity.get_activity_detail(activity_id)
     itemtype_schema = db_activity.workflow.itemtype.schema
     key, title_schema = get_key_title_in_item_type(itemtype_schema)
-    key_child, json_title = get_key_title_in_item_type(title_schema)
+    key_child, _ = get_key_title_in_item_type(title_schema)
     if key and key_child:
         title = get_title_in_request(request_data, key, key_child)
         activity.update_title(activity_id, title)
@@ -1986,9 +1986,9 @@ def get_key_title_in_item_type(item_type_schema):
     if item_type_schema and item_type_schema.get('properties'):
         properties = item_type_schema.get('properties')
         for key in properties:
-            if properties.get(key).get('title') and properties.get(key).get(
-                    'title') == 'Title':
+            if properties.get(key).get('title') == 'Title':
                 return key, properties.get(key)
+    return None, None
 
 
 def get_title_in_request(request_data, key, key_child):
@@ -2001,12 +2001,9 @@ def get_title_in_request(request_data, key, key_child):
     """
     result = ''
     try:
-        if request_data.get('metainfo'):
-            for k, v in request_data.get('metainfo').items():
-                if k == key:
-                    for key_title, val in v.items():
-                        if key_child == key_title:
-                            result = val
+        title = request_data.get('metainfo')
+        if title and key in title and key_child in title.get(key):
+            result = title.get(key).get(key_child)
     except Exception:
         pass
     return result
