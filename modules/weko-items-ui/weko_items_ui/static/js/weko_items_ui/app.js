@@ -2153,11 +2153,11 @@ function toObject(arr) {
           model[filemeta_key].forEach(function (fileInfo) {
             if (fileInfo.filename == modelValue) {
               // Set information for「サイズ」and「フォーマット」.
+              fileInfo.url = {};
               if(filesObject[modelValue]){
                 fileInfo.filesize = [{}];
                 fileInfo.filesize[0].value = filesObject[modelValue].size;
                 fileInfo.format = filesObject[modelValue].format;
-                fileInfo.url = {};
                 fileInfo.url.url = filesObject[modelValue].url;
               } else {
                 fileInfo.filesize = [{}];
