@@ -627,6 +627,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 
 const TrumbowygWrapper = props => {
   const [value, setValue] = useState();
+  let timeoutHandle;
 
   useEffect(() => {
     if (props.value != $("#" + props.id)[0].innerHTML) {
@@ -637,6 +638,37 @@ const TrumbowygWrapper = props => {
   function handleChange(e) {
     props.onChange(e.target.innerHTML);
   }
+
+  function handleViewHTMLBtn() {
+    let viewHTMLBtn = document.getElementsByClassName('trumbowyg-viewHTML-button');
+    if (viewHTMLBtn) {
+      Array.from(viewHTMLBtn).forEach(function (btn) {
+        btn.onclick = handleDisabledSaveButton;
+      });
+    }
+  }
+
+  function handleDisabledSaveButton(event) {
+    event.preventDefault();
+    timeoutHandle = setTimeout(function () {
+      let viewHTMLBtn = document.getElementsByClassName('trumbowyg-viewHTML-button');
+      let isDisabled = false;
+      Array.from(viewHTMLBtn).forEach(function (btn) {
+        if (btn && btn.classList.contains("trumbowyg-active")) {
+          isDisabled = true;
+          return null;
+        }
+      });
+      props.getValueOfField("isDisableSaveBtn", isDisabled);
+    }, 0);
+  }
+
+  useEffect(() => {
+    handleViewHTMLBtn();
+    return (
+      clearTimeout(timeoutHandle)
+    )
+  }, [], [props.isDisableSaveBtn])
 
   return (
     <div>
@@ -713,6 +745,8 @@ const ComponentFieldEditor = function (props) {
           btnsDef={btnsDef}
           plugins={plugins}
           semantic={semantic}
+          isDisableSaveBtn={props.isDisableSaveBtn}
+          getValueOfField={props.getValueOfField}
         />
       </div>
     </div>
@@ -955,14 +989,14 @@ class ExtendComponent extends React.Component {
         if (this.state.type === FREE_DESCRIPTION_TYPE) {
             return (
                 <div>
-                    <ComponentFieldEditor key={this.state.type + this.props.language} language={this.props.language} handleChange={this.handleChange} name="Free description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                    <ComponentFieldEditor isDisableSaveBtn={this.props.isDisableSaveBtn} key={this.state.type + this.props.language} language={this.props.language} handleChange={this.handleChange} name="Free description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
         else if (this.state.type === HEADER_TYPE || this.state.type === FOOTER_TYPE){
             return (
                 <div>
-                    <ComponentFieldEditor key={this.state.type + this.props.language} language={this.props.language} handleChange={this.handleChange} name={this.state.type === HEADER_TYPE ? "Header setting" : "Footer setting"} key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                    <ComponentFieldEditor isDisableSaveBtn={this.props.isDisableSaveBtn} key={this.state.type + this.props.language} language={this.props.language} handleChange={this.handleChange} name={this.state.type === HEADER_TYPE ? "Header setting" : "Footer setting"} key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
@@ -971,7 +1005,7 @@ class ExtendComponent extends React.Component {
                 return (
                     <div>
                         <div>
-                            <ComponentFieldEditor key={this.state.type + this.props.language + "description"} language={this.props.language} handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                            <ComponentFieldEditor isDisableSaveBtn={this.props.isDisableSaveBtn} key={this.state.type + this.props.language + "description"} language={this.props.language} handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                         </div>
                         <div className="row">
                             <div className="controls col-xs-offset-2 col-xs-10">
@@ -986,7 +1020,7 @@ class ExtendComponent extends React.Component {
                 return (
                     <div>
                         <div>
-                            <ComponentFieldEditor key={this.state.type + this.props.language + "description"} language={this.props.language} handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                            <ComponentFieldEditor isDisableSaveBtn={this.props.isDisableSaveBtn} key={this.state.type + this.props.language + "description"} language={this.props.language} handleChange={this.handleChange} name="Notice description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                         </div>
                         <div className="row">
                             <div className="controls col-xs-offset-2 col-xs-10">
@@ -1002,7 +1036,7 @@ class ExtendComponent extends React.Component {
                             </div>
                         </div>
                         <div>
-                            <ComponentFieldEditor key={this.state.type + this.props.language + "more_description"} language={this.props.language} handleChange={this.handleChange} name="" key_binding="more_description" data_load={this.state.settings.more_description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                            <ComponentFieldEditor isDisableSaveBtn={this.props.isDisableSaveBtn} key={this.state.type + this.props.language + "more_description"} language={this.props.language} handleChange={this.handleChange} name="" key_binding="more_description" data_load={this.state.settings.more_description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                         </div>
                         <div className="row">
                             <div className="controls col-xs-offset-2 col-xs-10">
@@ -1338,7 +1372,7 @@ class ComponentButtonLayout extends React.Component {
             return (
                 <div className="form-group row">
                     <div className="col-xs-offset-2 col-xs-5">
-                        <button className="btn btn-primary save-button" onClick={this.saveCommand}>
+                        <button disabled={this.props.isDisableSaveBtn} className="btn btn-primary save-button" onClick={this.saveCommand}>
                             <span className="glyphicon glyphicon-download-alt" aria-hidden="true"/>
                             &nbsp;Save
                         </button>
@@ -1358,7 +1392,7 @@ class ComponentButtonLayout extends React.Component {
             return (
                 <div className="form-group row">
                     <div className="col-xs-offset-2 col-xs-5">
-                        <button className="btn btn-primary save-button " onClick={this.saveCommand}>
+                        <button disabled={this.props.isDisableSaveBtn} className="btn btn-primary save-button " onClick={this.saveCommand}>
                             <span className="glyphicon glyphicon-download-alt" aria-hidden="true"/>
                             &nbsp;Save
                         </button>
@@ -1593,7 +1627,8 @@ class MainLayout extends React.Component {
             language: this.props.data_load.language,
             multiLangSetting: this.props.data_load.multiLangSetting,
             multiLanguageChange: false,
-            accessInitValue: 0
+            accessInitValue: 0,
+            isDisableSaveBtn: false,
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
@@ -1619,7 +1654,8 @@ class MainLayout extends React.Component {
                     widget_type: value,
                     multiLangSetting: {},
                     label: '',
-                    settings: {}
+                    settings: {},
+                    isDisableSaveBtn: false,
                 });
                 break;
             case 'label':
@@ -1648,6 +1684,7 @@ class MainLayout extends React.Component {
                 break;
             case 'language':
                 this.setState({ multiLanguageChange: value });
+                this.setState({isDisableSaveBtn: false});
                 break;
             case 'lang':
                 this.setState({ language: value });
@@ -1663,6 +1700,9 @@ class MainLayout extends React.Component {
                 break;
             case 'accessInitValue':
                 this.setState({ accessInitValue: value });
+                break;
+            case 'isDisableSaveBtn':
+                this.setState({isDisableSaveBtn: value});
                 break;
         }
     }
@@ -1834,13 +1874,13 @@ class MainLayout extends React.Component {
                     <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding="enable" data_load={this.state.enable} />
                 </div>
                 <div className="row">
-                    <ExtendComponent type={this.state.widget_type} is_edit={this.props.is_edit} repositoryId={this.state.repository}
+                    <ExtendComponent isDisableSaveBtn={this.state.isDisableSaveBtn} type={this.state.widget_type} is_edit={this.props.is_edit} repositoryId={this.state.repository}
                         getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings}
                         language={this.state.language} data_change={this.state.multiLanguageChange}
                         init_value={this.state.accessInitValue}/>
                 </div>
                 <div className="row">
-                    <ComponentButtonLayout data={this.state} getValueOfField={this.getValueOfField} url_request="/api/admin/save_widget_item" is_edit={this.props.is_edit} return_url={this.props.return_url} data_id={this.props.data_id} />
+                    <ComponentButtonLayout isDisableSaveBtn={this.state.isDisableSaveBtn} data={this.state} getValueOfField={this.getValueOfField} url_request="/api/admin/save_widget_item" is_edit={this.props.is_edit} return_url={this.props.return_url} data_id={this.props.data_id} />
                 </div>
             </div>
         )
