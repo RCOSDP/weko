@@ -717,13 +717,16 @@
 						value['title_i18n'] = {ja: '', en: ''};
 					}
 					var itemKey = self.state.propertyItems[index];
+					//Hide item on Properties & Meta.
+					let hideItems = ['iscreator'];
+					let isHideItems = hideItems.includes(itemKey);
+					if(isHideItems) return;
+
 					var copiedState = self.state.properties[name]; // JSON.parse(JSON.stringify(self.state.properties[index]));
 					var optionForm = mapping('subitem' + index, copiedState, self.state.editor, self.onChange);
-					let classEdit = self.state.editor ? "form-group media-right" : "hide";
 					let allowedChangeArray = ['checkboxes', 'radios', 'select'];
 					let isDisabledFormat = !allowedChangeArray.includes(value.format);
 					let disabledFormatSelect = isDisabledFormat && !self.state.editor;
-					let isList = allowedChangeArray.includes(value.format);
 					let isEditor = self.state.editor ? ' hide' : '';
 					return React.createElement('div', { key: index },
 						React.createElement('div', { className: 'col-md-12 col-lg-12' },
