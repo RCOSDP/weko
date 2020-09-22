@@ -20,7 +20,7 @@ demo site uses, you can do:
    invenio-celery==1.0.0b2
    invenio-config==1.0.0b3
    invenio-db==1.0.0b3
-   invenio-formatter==1.0.0b1
+   invenio-formatter==1.1.0a1
    invenio-i18n==1.0.0b3
    invenio-indexer==1.0.0a9
    invenio-jsonschemas==1.0.0a3

@@ -65,7 +65,7 @@ install_requires = [
     'invenio-db>=1.0.0b4',
     'invenio-pidrelations>=1.0.0a3',
     'invenio-records>=1.0.0b4',
-    'invenio-formatter>=1.0.0b3',
+    'invenio-formatter>=1.0.2',
 ]
 
 packages = find_packages()
