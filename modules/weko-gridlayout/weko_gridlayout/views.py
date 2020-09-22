@@ -16,7 +16,6 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
 from flask_login import login_required
-from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_theme.utils import get_community_id, get_weko_contents
