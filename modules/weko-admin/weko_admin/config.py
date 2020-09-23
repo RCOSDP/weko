@@ -617,6 +617,7 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
 """Classes Community Administrator can access."""
 
 WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
+    'authors',
     'bucket',
     'flowsetting',
     'fileinstance',
