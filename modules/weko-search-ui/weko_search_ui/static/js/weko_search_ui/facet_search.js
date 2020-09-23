@@ -89,7 +89,7 @@ class MainLayout extends React.Component {
             }
         },
         error: function() {
-          alert("Error in get list")
+          console.log("Error in get list")
         }
     });
   }
