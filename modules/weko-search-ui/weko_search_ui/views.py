@@ -29,7 +29,7 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
-from weko_gridlayout.utils import get_widget_design_page_with_main, \	
+from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
