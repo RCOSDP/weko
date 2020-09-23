@@ -27,7 +27,7 @@ import shutil
 import uuid
 from functools import partial
 
-from flask import Blueprint, Markup, abort, current_app, jsonify, redirect, \
+from flask import Blueprint, abort, current_app, jsonify, redirect, \
     request, url_for
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
@@ -252,8 +252,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             m = 0
             for k in range(len(agp)):
                 if p.path == agp[k].get("key"):
-                    agp[k]["name"] = str(Markup.escape(p.name)) \
-                        if lang == "ja" else str(Markup.escape(p.name_en))
+                    agp[k]["name"] = p.name if lang == "ja" else p.name_en
                     date_range = agp[k].pop("date_range")
                     no_available = agp[k].pop("no_available")
                     pub = dict()
@@ -280,8 +279,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nd = {
                     'doc_count': 0,
                     'key': p.path,
-                    'name': str(Markup.escape(p.name))
-                    if lang == "ja" else str(Markup.escape(p.name_en)),
+                    'name': p.name if lang == "ja" else p.name_en,
                     'date_range': {
                         'pub_cnt': 0,
                         'un_pub_cnt': 0},
@@ -398,8 +396,7 @@ def get_heading_info(data, lang, item_type):
     sheading = ''
     if heading_id \
             and heading_id in data['_source']['_item_metadata']:
-        temp = data['_source'][
-            '_item_metadata'][heading_id]['attribute_value_mlt']
+        temp = data['_source']['_item_metadata'][heading_id]['attribute_value_mlt']
         if len(temp) > 1:
             for v in temp:
                 lheading_tmp = ''
