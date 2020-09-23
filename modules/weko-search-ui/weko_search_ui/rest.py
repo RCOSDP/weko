@@ -55,7 +55,7 @@ from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
 
 from . import config
-
+from invenio_formatter.filters.html import sanitize_html
 
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
@@ -300,6 +300,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nlst[0]['img'] = index_info.image_name
             nlst[0]['display_format'] = index_info.display_format
             nlst[0]['rss_status'] = index_info.rss_status
+            nlst[0]['name'] = sanitize_html(index_info.name)
         # Update rss_status for index child
         for idx in range(0, len(nlst)):
             index_id = nlst[idx].get('key')
