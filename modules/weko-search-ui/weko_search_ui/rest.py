@@ -252,7 +252,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             m = 0
             for k in range(len(agp)):
                 if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name if lang == "ja" else p.name_en
+                    agp[k]["name"] = Markup.escape(p.name) \
+                        if lang == "ja" else Markup.escape(p.name_en)
                     date_range = agp[k].pop("date_range")
                     no_available = agp[k].pop("no_available")
                     pub = dict()
@@ -279,7 +280,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nd = {
                     'doc_count': 0,
                     'key': p.path,
-                    'name': p.name if lang == "ja" else p.name_en,
+                    'name': Markup.escape(p.name)
+                    if lang == "ja" else Markup.escape(p.name_en),
                     'date_range': {
                         'pub_cnt': 0,
                         'un_pub_cnt': 0},
@@ -299,7 +301,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nlst[0]['img'] = index_info.image_name
             nlst[0]['display_format'] = index_info.display_format
             nlst[0]['rss_status'] = index_info.rss_status
-            nlst[0]['name'] = Markup.escape(index_info.name)
         # Update rss_status for index child
         for idx in range(0, len(nlst)):
             index_id = nlst[idx].get('key')
@@ -398,7 +399,8 @@ def get_heading_info(data, lang, item_type):
     if heading_id \
             and heading_id in data['_source']['_item_metadata']:
         temp = \
-            data['_source']['_item_metadata'][heading_id]['attribute_value_mlt']
+            data['_source']['_item_metadata'][
+                heading_id]['attribute_value_mlt']
         if len(temp) > 1:
             for v in temp:
                 lheading_tmp = ''
