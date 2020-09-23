@@ -27,8 +27,8 @@ import shutil
 import uuid
 from functools import partial
 
-from flask import Blueprint, abort, current_app, jsonify, redirect, \
-    request, url_for
+from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
+    url_for
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_i18n.ext import current_i18n
@@ -396,7 +396,8 @@ def get_heading_info(data, lang, item_type):
     sheading = ''
     if heading_id \
             and heading_id in data['_source']['_item_metadata']:
-        temp = data['_source']['_item_metadata'][heading_id]['attribute_value_mlt']
+        temp = \
+            data['_source']['_item_metadata'][heading_id]['attribute_value_mlt']
         if len(temp) > 1:
             for v in temp:
                 lheading_tmp = ''
