@@ -21,41 +21,20 @@
 """Blueprint for Index Search rest."""
 
 import copy
-import json
-import os.path
-import shutil
-import uuid
-# from copy import deepcopy
 from functools import partial
 
-from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
-    url_for
-from invenio_db import db
-from invenio_files_rest.storage import PyFSFileStorage
+from flask import Blueprint, current_app, request, url_for
+from invenio_formatter.filters.html import sanitize_html
 from invenio_i18n.ext import current_i18n
-from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore import current_pidstore
-from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records.api import Record
-from invenio_records_rest.errors import InvalidDataRESTError, \
-    MaxResultWindowRESTError, UnsupportedMediaRESTError
+from invenio_records_rest.errors import MaxResultWindowRESTError
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
-from invenio_records_rest.views import \
-    create_error_handlers as records_rest_error_handlers
-from invenio_records_rest.views import create_url_rules, \
-    need_record_permission, pass_record
 from invenio_rest import ContentNegotiatedMethodView
-from invenio_rest.views import create_api_errorhandler
-from webargs import fields
-from webargs.flaskparser import use_kwargs
-from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
 from weko_records.models import ItemType
-from werkzeug.utils import secure_filename
 
-from . import config
-from invenio_formatter.filters.html import sanitize_html
 
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
@@ -253,7 +232,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             m = 0
             for k in range(len(agp)):
                 if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name if lang == "ja" else p.name_en
+                    agp[k]["name"] = sanitize_html(p.name) \
+                        if lang == "ja" else sanitize_html(p.name_en)
                     date_range = agp[k].pop("date_range")
                     no_available = agp[k].pop("no_available")
                     pub = dict()
@@ -280,7 +260,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nd = {
                     'doc_count': 0,
                     'key': p.path,
-                    'name': p.name if lang == "ja" else p.name_en,
+                    'name': sanitize_html(p.name)
+                    if lang == "ja" else sanitize_html(p.name_en),
                     'date_range': {
                         'pub_cnt': 0,
                         'un_pub_cnt': 0},
@@ -300,7 +281,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nlst[0]['img'] = index_info.image_name
             nlst[0]['display_format'] = index_info.display_format
             nlst[0]['rss_status'] = index_info.rss_status
-            nlst[0]['name'] = sanitize_html(index_info.name)
         # Update rss_status for index child
         for idx in range(0, len(nlst)):
             index_id = nlst[idx].get('key')
@@ -399,7 +379,8 @@ def get_heading_info(data, lang, item_type):
     if heading_id \
             and heading_id in data['_source']['_item_metadata']:
         temp = \
-            data['_source']['_item_metadata'][heading_id]['attribute_value_mlt']
+            data['_source']['_item_metadata'][
+                heading_id]['attribute_value_mlt']
         if len(temp) > 1:
             for v in temp:
                 lheading_tmp = ''
