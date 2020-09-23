@@ -256,8 +256,6 @@ def mapping():
             for prefix in prefix_settings:
                 if prefix.id == idTtype:
                     scheme = prefix.name
-                    if scheme == 'KAKEN2':
-                        scheme = 'kakenhi'
                     uri = prefix.url
                     return scheme, uri
             return scheme, uri
