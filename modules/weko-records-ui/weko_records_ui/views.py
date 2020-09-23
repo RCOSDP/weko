@@ -33,6 +33,7 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_files_rest.permissions import has_update_version_role
+from invenio_formatter.filters.html import sanitize_html
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -393,8 +394,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         path_arr = navi.path.split('/')
         for path in path_arr:
             index = Indexes.get_index(index_id=path)
-            path_name_dict['ja'][path] = index.index_name
-            path_name_dict['en'][path] = index.index_name_english
+            path_name_dict['ja'][path] = sanitize_html(index.index_name)
+            path_name_dict['en'][path] = sanitize_html(
+                index.index_name_english)
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:

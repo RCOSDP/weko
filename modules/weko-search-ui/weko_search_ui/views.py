@@ -26,11 +26,9 @@ from xml.etree import ElementTree
 from blinker import Namespace
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_security import current_user
-from invenio_db import db
+from invenio_formatter.filters.html import sanitize_html
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
-from weko_gridlayout.utils import get_widget_design_page_with_main, \
-    main_design_has_main_widget
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
@@ -44,6 +42,7 @@ from .api import SearchSetting
 from .config import WEKO_SEARCH_TYPE_DICT
 from .utils import check_permission, get_feedback_mail_list, \
     get_journal_info, parse_feedback_mail_data
+
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -267,7 +266,7 @@ def get_path_name_dict(path_str=''):
     for path in path_arr:
         index = Indexes.get_index(index_id=path)
         if current_i18n.language == 'ja':
-            path_name_dict[path] = index.index_name
+            path_name_dict[path] = sanitize_html(index.index_name)
         else:
-            path_name_dict[path] = index.index_name_english
+            path_name_dict[path] = sanitize_html(index.index_name_english)
     return jsonify(path_name_dict)
