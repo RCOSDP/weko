@@ -26,7 +26,7 @@ import redis
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
-    make_response, redirect, render_template, request, url_for
+    make_response, redirect, render_template, request, url_for, Markup
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -393,8 +393,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         path_arr = navi.path.split('/')
         for path in path_arr:
             index = Indexes.get_index(index_id=path)
-            path_name_dict['ja'][path] = index.index_name
-            path_name_dict['en'][path] = index.index_name_english
+            path_name_dict['ja'][path] = Markup.escape(index.index_name)
+            path_name_dict['en'][path] = Markup.escape(
+                index.index_name_english)
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:

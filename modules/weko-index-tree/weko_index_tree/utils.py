@@ -24,11 +24,10 @@ from functools import wraps
 from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
-from flask import current_app, session
+from flask import current_app, session, Markup
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
-from invenio_formatter.filters.html import sanitize_html
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table
@@ -142,7 +141,7 @@ def get_tree_json(index_list, root_id):
 
         list_index_expand = get_user_list_expand()
         is_expand_on_init = str(index_element.cid) in list_index_expand
-        index_sanitize_name = sanitize_html(index_element.name)
+        index_sanitize_name = Markup.escape(index_element.name)
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_sanitize_name,
