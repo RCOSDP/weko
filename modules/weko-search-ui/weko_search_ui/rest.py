@@ -23,7 +23,7 @@
 import copy
 from functools import partial
 
-from flask import Blueprint, current_app, request, url_for, Markup
+from flask import Blueprint, Markup, current_app, request, url_for
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
 from invenio_records.api import Record
@@ -33,6 +33,8 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 from weko_index_tree.api import Indexes
 from weko_records.models import ItemType
+
+from . import config
 
 
 def create_blueprint(app, endpoints):
