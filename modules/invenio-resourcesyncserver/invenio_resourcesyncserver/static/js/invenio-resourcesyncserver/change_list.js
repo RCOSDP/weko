@@ -164,7 +164,7 @@ class ListResourceComponent extends React.Component {
           list_resource: res
         });
       })
-      .catch(() => alert("Error in get list"));
+      .catch(() => console.log("Error in get list"));
   }
 
   handleViewDetail(item) {
