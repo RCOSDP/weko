@@ -52,7 +52,7 @@ from sqlalchemy import MetaData, Table
 from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.utils import get_index_id
-from weko_records.api import ItemTypes
+from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_file_download_permission
 from weko_search_ui.query import item_search_factory
@@ -1969,25 +1969,27 @@ def save_title(activity_id, request_data):
     """
     activity = WorkActivity()
     db_activity = activity.get_activity_detail(activity_id)
-    itemtype_schema = db_activity.workflow.itemtype.schema
-    key, title_schema = get_key_title_in_item_type(itemtype_schema)
-    key_child, _ = get_key_title_in_item_type(title_schema)
+    item_type_id = db_activity.workflow.itemtype.id
+    if item_type_id:
+        item_type_mapping = Mapping.get_record(item_type_id)
+        key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
     if key and key_child:
         title = get_title_in_request(request_data, key, key_child)
         activity.update_title(activity_id, title)
 
 
-def get_key_title_in_item_type(item_type_schema):
-    """Get key title in item type.
+def get_key_title_in_item_type_mapping(item_type_mapping):
+    """Get key title in item type mapping.
 
-    :param item_type_schema: item type schema.
+    :param item_type_mapping: item type mapping.
     :return:
     """
-    if item_type_schema and item_type_schema.get('properties'):
-        properties = item_type_schema.get('properties')
-        for key in properties:
-            if properties.get(key).get('title') == 'Title':
-                return key, properties.get(key)
+    for mapping_key in item_type_mapping:
+        property_data = item_type_mapping.get(mapping_key).get('jpcoar_mapping')
+        if isinstance(property_data,
+                      dict) and 'title' in property_data and property_data.get(
+                'title').get('@value'):
+            return mapping_key, property_data.get('title').get('@value')
     return None, None
 
 
