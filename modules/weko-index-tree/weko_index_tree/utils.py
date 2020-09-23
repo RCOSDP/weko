@@ -142,10 +142,6 @@ def get_tree_json(index_list, root_id):
 
         list_index_expand = get_user_list_expand()
         is_expand_on_init = str(index_element.cid) in list_index_expand
-<<<<<<< HEAD
-        index_sanitize_name = Markup.escape(index_element.name)
-=======
->>>>>>> c3c8e46e41ad2a0bdc22590b8425e0744a5b7a40
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_sanitize_name,
