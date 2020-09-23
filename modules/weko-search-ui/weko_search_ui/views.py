@@ -24,9 +24,9 @@ import time
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, \
+    request, Markup
 from flask_security import current_user
-from invenio_formatter.filters.html import sanitize_html
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
@@ -266,7 +266,7 @@ def get_path_name_dict(path_str=''):
     for path in path_arr:
         index = Indexes.get_index(index_id=path)
         if current_i18n.language == 'ja':
-            path_name_dict[path] = sanitize_html(index.index_name)
+            path_name_dict[path] = Markup.escape(index.index_name)
         else:
-            path_name_dict[path] = sanitize_html(index.index_name_english)
+            path_name_dict[path] = Markup.escape(index.index_name_english)
     return jsonify(path_name_dict)

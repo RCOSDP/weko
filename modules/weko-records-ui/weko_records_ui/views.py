@@ -26,14 +26,13 @@ import redis
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
-    make_response, redirect, render_template, request, url_for
+    make_response, redirect, render_template, request, url_for, Markup
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_files_rest.permissions import has_update_version_role
-from invenio_formatter.filters.html import sanitize_html
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -394,8 +393,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         path_arr = navi.path.split('/')
         for path in path_arr:
             index = Indexes.get_index(index_id=path)
-            path_name_dict['ja'][path] = sanitize_html(index.index_name)
-            path_name_dict['en'][path] = sanitize_html(
+            path_name_dict['ja'][path] = Markup.escape(index.index_name)
+            path_name_dict['en'][path] = Markup.escape(
                 index.index_name_english)
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)

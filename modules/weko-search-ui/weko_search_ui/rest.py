@@ -23,8 +23,7 @@
 import copy
 from functools import partial
 
-from flask import Blueprint, current_app, request, url_for
-from invenio_formatter.filters.html import sanitize_html
+from flask import Blueprint, current_app, request, url_for, Markup
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
 from invenio_records.api import Record
@@ -232,8 +231,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             m = 0
             for k in range(len(agp)):
                 if p.path == agp[k].get("key"):
-                    agp[k]["name"] = sanitize_html(p.name) \
-                        if lang == "ja" else sanitize_html(p.name_en)
+                    agp[k]["name"] = Markup.escape(p.name) \
+                        if lang == "ja" else Markup.escape(p.name_en)
                     date_range = agp[k].pop("date_range")
                     no_available = agp[k].pop("no_available")
                     pub = dict()
@@ -260,8 +259,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nd = {
                     'doc_count': 0,
                     'key': p.path,
-                    'name': sanitize_html(p.name)
-                    if lang == "ja" else sanitize_html(p.name_en),
+                    'name': Markup.escape(p.name)
+                    if lang == "ja" else Markup.escape(p.name_en),
                     'date_range': {
                         'pub_cnt': 0,
                         'un_pub_cnt': 0},
