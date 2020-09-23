@@ -23,16 +23,18 @@
     {%- if attribute_value_mlt is mapping -%}
         {%- for k, v in attribute_value_mlt.items() -%}
             {%- if '.name' not in k -%}
+                {% autoescape false %}
                 {%- if 'licensetype' in k -%}
                     {% set att_val  = v | get_license_icon %}
-                    {{ att_val [1] }}<br />
+                    {{ att_val[1] | escape_str }}<br />
                 {%- elif 'accessrole' in k or 'date' in k  -%}
                     {%- if is_logged_in or open_day_display_flg -%}
-                        {{ v }}<br>
+                        {{ v | escape_str }}<br>
                     {%- endif -%}
                 {%- else -%}
-                    {{ v }}<br>
+                    {{ v | escape_str }}<br>
                 {%- endif -%}
+                {% endautoescape %}
             {%- endif -%}
         {%- endfor -%}
     {%- elif attribute_value_mlt is iterable and attribute_value_mlt is not string -%}
@@ -104,11 +106,13 @@
           {% set label = labels[1] %}
       {%- endif -%}
       <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label }}</th>
-      {%- if label == 'URL' -%}
-          <td><a href="{{content}}">{{ content }}</a></td>
-      {%- else -%}
-          <td class="multiple-line">{{ content }}</td>
-      {%- endif -%}
+        {% autoescape false %}
+            {%- if label == 'URL' -%}
+                <td><a href="{{content}}">{{ content | escape_str }}</a></td>
+            {%- else -%}
+                <td class="multiple-line">{{ content | escape_str }}</td>
+            {%- endif -%}
+        {% endautoescape %}
   </tr>
 {% endmacro %}
 

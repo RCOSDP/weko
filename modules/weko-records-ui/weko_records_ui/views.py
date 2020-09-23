@@ -25,7 +25,7 @@ import os
 import redis
 import six
 import werkzeug
-from flask import Blueprint, abort, current_app, flash, jsonify, \
+from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -740,3 +740,17 @@ def init_permission(recid):
     except Exception as ex:
         current_app.logger.debug(ex)
         abort(500)
+
+
+@blueprint.app_template_filter('escape_str')
+def escape_str(s):
+    """Process escape, replace \n to <br/>, convert &EMPTY& to blank char.
+
+    :param s: string
+    :return: result
+    """
+    if s:
+        s = s.replace('&EMPTY&', '')
+        s = str(escape(s))
+        s = s.replace('\\n', '<br/>')
+    return s

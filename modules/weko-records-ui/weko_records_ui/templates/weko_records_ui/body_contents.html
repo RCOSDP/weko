@@ -136,13 +136,20 @@
                         {%- set permission = record | get_permission(file.info()) -%}
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              href={{ file_url }}>{{ file.url.label or file.filename }} ({{ file.size|filesizeformat }})</a>
+                              href={{ file_url }}>
+                              {% autoescape false %}
+                              {{ file.url.label | escape_str or file.filename | escape_str }} ({{ file.size|filesizeformat }})
+                              {% endautoescape %}
+                            </a>
                             <br>
                           {%- elif clickable -%}
                             {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url) }}
                           {%- else -%}
-                            <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                            >{{ file.url.label or file.filename }} ({{ file.size|filesizeformat }})</a>
+                            <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}>
+                              {% autoescape false %}
+                              {{ file.url.label | escape_str or file.filename | escape_str }} ({{ file.size|filesizeformat }})
+                              {% endautoescape %}
+                            </a>
                             <br>
                           {%- endif -%}
 
@@ -178,7 +185,9 @@
                         <div>
                             {%- if not 'simple' in file.displaytype -%}
                             {%- if 'license_free' == file.licensetype -%}
-                              <span class="break-word">{{ file.licensefree }}</span>
+                              {% autoescape false %}
+                              <span class="break-word">{{ file.licensefree | escape_str }}</span>
+                              {% endautoescape %}
                             {%- else %}
                               {% set lst = file.licensetype | get_license_icon %}
                               <a class="creative-commons" target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
