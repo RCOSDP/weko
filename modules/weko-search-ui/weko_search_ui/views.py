@@ -24,8 +24,8 @@ import time
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, current_app, jsonify, render_template, \
-    request, Markup
+from flask import Markup, Blueprint, current_app, jsonify, render_template, \
+    request
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
@@ -42,7 +42,6 @@ from .api import SearchSetting
 from .config import WEKO_SEARCH_TYPE_DICT
 from .utils import check_permission, get_feedback_mail_list, \
     get_journal_info, parse_feedback_mail_data
-
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -266,7 +265,7 @@ def get_path_name_dict(path_str=''):
     for path in path_arr:
         index = Indexes.get_index(index_id=path)
         if current_i18n.language == 'ja':
-            path_name_dict[path] = Markup.escape(index.index_name)
+            path_name_dict[path] = str(Markup.escape(index.index_name))
         else:
-            path_name_dict[path] = Markup.escape(index.index_name_english)
+            path_name_dict[path] = str(Markup.escape(index.index_name_english))
     return jsonify(path_name_dict)
