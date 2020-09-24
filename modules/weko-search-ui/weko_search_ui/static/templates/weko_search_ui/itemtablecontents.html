@@ -19,7 +19,7 @@
             <span>
               <a target="_self" ng-href="/records/{{ record.id }}{{commInfo}}">
                 <p class="glyphicon glyphicon-file" aria-hidden="true"></p>
-                {{record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0]}}
+                {{record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0]|escapeTitle}}
               </a>
             </span>
             <span ng-if="record.metadata.pageStart.length > 0 || record.metadata.pageEnd.length > 0">
@@ -57,7 +57,7 @@
       <div ng-hide="!showAuthors">
         <ul>
           <div ng-repeat='author in record.metadata.creator'>
-            <li>{{ author }}</li>
+            <li>{{ author|escapeAuthor }}</li>
           </div>
         </ul>
       </div>

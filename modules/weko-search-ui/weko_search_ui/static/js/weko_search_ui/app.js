@@ -495,7 +495,43 @@ angular.module('invenioSearch')
     return function (htmlCode) {
       return $sce.trustAsHtml(htmlCode);
     }
-  }]);
+  }])
+  .filter("escapeTitle", function () {
+    return function (data) {
+      if (data){
+        data = escapeString(data);
+      }
+      return data;
+    }
+  })
+  .filter("escapeAuthor", function () {
+    return function (authorData) {
+      let tmpAuthorData = JSON.parse(JSON.stringify(authorData))
+      return escapeAuthorString(tmpAuthorData);
+    }
+  });
+
+function escapeAuthorString(data) {
+  if (Array.isArray(data) && data.length > 0) {
+    for (let i = 0; i < data.length; i++) {
+      data[i] = escapeAuthorString(data[i]);
+    }
+  } else if (typeof data === 'object') {
+    Object.keys(data).forEach(function (key) {
+      data[key] = escapeAuthorString(data[key]);
+    })
+  } else if (typeof data === 'string') {
+    data = escapeString(data)
+  }
+  return data;
+}
+
+function escapeString(data) {
+  return data
+    .replace(/[\x00-\x1F\x7F]/g, "")
+    .replace(/&EMPTY&/g, "")
+    .trim();
+}
 
 function format_comment(comment) {
   let result = ""
