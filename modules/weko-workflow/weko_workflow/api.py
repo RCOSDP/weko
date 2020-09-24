@@ -1633,6 +1633,25 @@ class WorkActivity(object):
             current_app.logger.error(ex)
             return None
 
+    def update_title(self, activity_id, title):
+        """
+        Update title to activity.
+
+        :param activity_id:
+        :param title:
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                activity = self.get_activity_detail(activity_id)
+                if activity:
+                    activity.title = title
+                    db.session.merge(activity)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity."""

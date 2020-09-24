@@ -24,16 +24,23 @@ import gzip
 import json
 import xml.etree.ElementTree as Et
 from datetime import datetime
-from io import BytesIO
+from io import SEEK_END, SEEK_SET, BytesIO
+from uuid import UUID
 from xml.etree.ElementTree import tostring
 
 import redis
 from elasticsearch.exceptions import NotFoundError
-from flask import Markup, Response, current_app, jsonify, request
+from flask import Markup, Response, abort, current_app, jsonify, request
+from flask_babelex import gettext as _
 from invenio_cache import current_cache
+from invenio_db import db
+from invenio_files_rest.errors import FileInstanceAlreadySetError, \
+    FilesException, UnexpectedFileSizeError
+from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import asc
+from sqlalchemy.orm.exc import MultipleResultsFound
 from weko_admin.models import AdminLangSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import Mapping
@@ -935,3 +942,127 @@ def delete_widget_cache(repository_id, page_id=None):
 
     for key in cache_store.redis.scan_iter(cache_key):
         cache_store.redis.delete(key)
+
+
+class WidgetBucket:
+    """The widget file bucket."""
+
+    def __init__(self):
+        """Initial."""
+        self.bucket_id = current_app.config['WEKO_GRIDLAYOUT_BUCKET_UUID']
+
+    def initialize_widget_bucket(self):
+        """Initialize the widget file bucket."""
+        bucket_id = UUID(self.bucket_id)
+
+        if Bucket.query.get(bucket_id):
+            raise FilesException(
+                _("Bucket with UUID {} already exists.".format(bucket_id))
+            )
+        else:
+            storage_class = current_app.config[
+                'FILES_REST_DEFAULT_STORAGE_CLASS']
+            location = Location.get_default()
+            bucket = Bucket(id=bucket_id,
+                            location=location,
+                            default_storage_class=storage_class)
+            db.session.add(bucket)
+            db.session.commit()
+
+    def __validate(self, file_stream, file_name, community_id=0, file_size=0):
+        """Validate upload file.
+
+        :param file_stream: file stream.
+        :param file_name: file name.
+        :param community_id: community identifier.
+        :param file_size: file size.
+        :return:
+        """
+        cfg = current_app.config
+        file_max_size = cfg['WEKO_GRIDLAYOUT_FILE_MAX_SIZE']
+        file_bucket = Bucket.query.get(self.bucket_id)
+
+        if file_size > file_max_size:
+            raise UnexpectedFileSizeError(
+                _(
+                    '{} is greater than the maximum value allowed ({}).'
+                    .format(file_size, file_max_size)
+                )
+            )
+
+        key = "{0}_{1}".format(community_id, file_name)
+        file_stream.seek(0)  # Rewind the stream to the beginning
+        try:
+            if ObjectVersion.get(file_bucket, key):
+                raise FileInstanceAlreadySetError(
+                    _("The {} file is already exists.".format(file_name))
+                )
+            else:
+                return True
+        except MultipleResultsFound:
+            raise FileInstanceAlreadySetError(
+                _("The {} file is already exists.".format(file_name))
+            )
+
+    def save_file(self, file_stream, file_name: str, mimetype: str,
+                  community_id=0):
+        """Save widget static file.
+
+        :param file_stream: file stream.
+        :param file_name: file name.
+        :param mimetype: mime type.
+        :param community_id: community identifier.
+        :return:
+        """
+        rtn = {
+            "status": True,
+            "duplicated": False,
+            "url": "",
+            "msg": "OK",
+        }
+        file_bucket = Bucket.query.get(self.bucket_id)
+        key = "{0}_{1}".format(community_id, file_name)
+        try:
+            file_stream.seek(SEEK_SET, SEEK_END)  # Seek from beginning to end
+            file_size = file_stream.tell()
+            if self.__validate(file_stream, file_name, community_id, file_size):
+                file_stream.seek(0)  # Rewind the stream to the beginning
+                with db.session.begin_nested():
+                    ObjectVersion.create(
+                        file_bucket, key, stream=file_stream, size=file_size,
+                        mimetype=mimetype
+                    )
+                db.session.commit()
+                rtn["url"] = "/widget/uploaded/{}/{}".format(
+                    file_name,
+                    community_id
+                )
+                return rtn
+        except UnexpectedFileSizeError as error:
+            current_app.logger.error(error)
+            rtn['status'] = False
+            rtn['msg'] = str(error.errors)
+            return rtn
+        except FileInstanceAlreadySetError as error:
+            current_app.logger.error(error.errors)
+            rtn['status'] = False
+            rtn['duplicated'] = True
+            rtn['msg'] = str(error.errors)
+            rtn["url"] = "/widget/uploaded/{}/{}".format(
+                file_name,
+                community_id
+            )
+            return rtn
+
+    def get_file(self, file_name, community_id=0):
+        """Get widget static file.
+
+        :param file_name:
+        :param community_id:
+        :return:
+        """
+        key = '{0}_{1}'.format(community_id, file_name)
+        obj = ObjectVersion.get(self.bucket_id, key)
+        if not obj:
+            abort(404, '{} does not exists.'.format(file_name))
+        return obj.send_file(trusted=True)

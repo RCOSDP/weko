@@ -56,7 +56,7 @@ from .utils import _get_max_export_items, export_items, get_current_user, \
     get_ranking, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, get_workflow_by_item_type_id, \
     is_schema_include_key, remove_excluded_items_in_json_schema, \
-    sanitize_input_data, set_multi_language_name, to_files_js, \
+    sanitize_input_data, save_title, set_multi_language_name, to_files_js, \
     translate_schema_form, translate_validation_message, \
     update_index_tree_for_record, update_json_schema_by_activity_id, \
     update_schema_form_by_activity_id, update_schema_remove_hidden_item, \
@@ -198,6 +198,7 @@ def iframe_save_model():
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
             sanitize_input_data(data)
+            save_title(activity_id, data)
             sessionstore = RedisStore(redis.StrictRedis.from_url(
                 'redis://{host}:{port}/1'.format(
                     host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
@@ -1179,3 +1180,14 @@ def newversion(pid_value='0'):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         db.session.rollback()
     return jsonify(success=True)
+
+
+@blueprint.route('/sessionvalidate', methods=['POST'])
+def session_validate():
+    """Validate the session."""
+    authorized = True if current_user and current_user.get_id() else False
+    result = {
+        "unauthorized": authorized,
+        "msg": _('Your session has timed out. Please login again.')
+    }
+    return jsonify(result)

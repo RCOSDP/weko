@@ -49,15 +49,20 @@ from invenio_stats.utils import QueryItemRegReportHelper, \
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
-from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_index_tree.api import Indexes
 from weko_index_tree.utils import get_index_id
-from weko_records.api import ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
-from weko_records_ui.permissions import check_file_download_permission
+from weko_records_ui.permissions import check_created_id, \
+    check_file_download_permission
 from weko_search_ui.query import item_search_factory
+from weko_search_ui.utils import check_sub_item_is_system, \
+    get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
-from weko_workflow.api import WorkActivity
+from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+from weko_workflow.utils import IdentifierHandle
 
 
 def get_list_username():
@@ -647,16 +652,26 @@ def package_export_file(item_type_data):
 
     keys = item_type_data['keys']
     labels = item_type_data['labels']
+    is_systems = item_type_data['is_systems']
+    options = item_type_data['options']
     tsv_metadata_writer = csv.DictWriter(tsv_output,
                                          fieldnames=keys,
                                          delimiter='\t')
     tsv_metadata_label_writer = csv.DictWriter(tsv_output,
                                                fieldnames=labels,
                                                delimiter='\t')
+    tsv_metadata_is_system_writer = csv.DictWriter(tsv_output,
+                                                   fieldnames=is_systems,
+                                                   delimiter='\t')
+    tsv_metadata_option_writer = csv.DictWriter(tsv_output,
+                                                fieldnames=options,
+                                                delimiter='\t')
     tsv_metadata_data_writer = csv.writer(tsv_output,
                                           delimiter='\t')
     tsv_metadata_writer.writeheader()
     tsv_metadata_label_writer.writeheader()
+    tsv_metadata_is_system_writer.writeheader()
+    tsv_metadata_option_writer.writeheader()
     for recid in item_type_data.get('recids'):
         tsv_metadata_data_writer.writerow(
             [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
@@ -680,9 +695,9 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     """
     item_type = ItemTypes.get_by_id(item_type_id).render
     list_hide = get_item_from_option(item_type_id)
-    if hide_meta_data_for_role(
-        list_item_role.get(item_type_id)) and item_type and item_type.get(
-            'table_row'):
+    no_permission_show_hide = hide_meta_data_for_role(
+        list_item_role.get(item_type_id))
+    if no_permission_show_hide and item_type and item_type.get('table_row'):
         for name_hide in list_hide:
             item_type['table_row'] = hide_table_row_for_tsv(
                 item_type.get('table_row'), name_hide)
@@ -732,6 +747,22 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             self.attr_data[attr]['max_size'] = largest_size
 
             return self.attr_data[attr]['max_size']
+
+        def get_max_ins_feedback_mail(self):
+            """Get max data each feedback mail in all exporting records."""
+            largest_size = 1
+            self.attr_data['feedback_mail_list'] = {'max_size': 0}
+            for record_id, record in self.records.items():
+                if check_created_id(record):
+                    mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                        record.id)
+                    self.attr_data['feedback_mail_list'][record_id] = [
+                        mail.get('email') for mail in mail_list]
+                    if len(mail_list) > largest_size:
+                        largest_size = len(mail_list)
+            self.attr_data['feedback_mail_list']['max_size'] = largest_size
+
+            return self.attr_data['feedback_mail_list']['max_size']
 
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
@@ -888,16 +919,61 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     ret_label = ['#ID', 'URI']
 
     max_path = records.get_max_ins('path')
-    ret.extend(['.metadata.path[{}]'.format(i) for i in range(max_path)])
-    ret_label.extend(['.IndexID#{}'.format(i + 1) for i in range(max_path)])
+    for i in range(max_path):
+        ret.append('.metadata.path[{}]'.format(i))
+        ret.append('.pos_index#{}'.format(i + 1))
+        ret_label.append('.IndexID#{}'.format(i + 1))
+        ret_label.append('.POS_INDEX#{}'.format(i + 1))
+
+    ret.append('.publish_status')
+    ret_label.append('.PUBLISH_STATUS')
+
+    max_feedback_mail = records.get_max_ins_feedback_mail()
+    for i in range(max_feedback_mail):
+        ret.append('.feedback_mail#{}'.format(i + 1))
+        ret_label.append('.FEEDBACK_MAIL#{}'.format(i + 1))
+
+    ret.extend(['.cnri', '.doi_ra', '.doi'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI'])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
 
     for recid in recids:
-        records.attr_output[recid].extend(records.attr_data['path'][recid])
+        record = records.records[recid]
+        paths = records.attr_data['path'][recid]
+        for path in paths:
+            records.attr_output[recid].append(path)
+            index_ids = path.split('/')
+            pos_index = []
+            for index_id in index_ids:
+                index = Indexes.get_index(index_id)
+                pos_index.append(index.index_name if index else '')
+            records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend([''] * (max_path - len(
-            records.attr_output[recid])))
-        records.attr_output[recid].append(records.records[recid][
+            records.attr_output[recid])) * 2)
+
+        records.attr_output[recid].append(
+            'public' if record['publish_status'] == '0' else 'private')
+        feedback_mail_list = records.attr_data['feedback_mail_list'] \
+            .get(recid, [])
+        records.attr_output[recid].extend(feedback_mail_list)
+        records.attr_output[recid].extend([''] * (max_feedback_mail - len(
+            feedback_mail_list)))
+
+        pid_cnri = record.pid_cnri
+        cnri = ''
+        if pid_cnri:
+            cnri = pid_cnri.pid_value.replace(WEKO_SERVER_CNRI_HOST_LINK, '')
+        records.attr_output[recid].append(cnri)
+
+        identifier = IdentifierHandle(record.pid_recid.object_uuid)
+        doi_value, doi_type = identifier.get_idt_registration_data()
+        records.attr_output[recid].extend([
+            doi_type[0] if doi_type and doi_type[0] else '',
+            doi_value[0] if doi_value and doi_value[0] else ''
+        ])
+
+        records.attr_output[recid].append(record[
             'pubdate']['attribute_value'])
 
     for item_key in item_type.get('table_row'):
@@ -948,7 +1024,51 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         ret.extend(new_keys)
         ret_label.extend(labels)
 
-    return ret, ret_label, records.attr_output
+    ret_system = []
+    ret_option = []
+    meta_list = item_type.get('meta_list', {})
+    meta_list.update(item_type.get('meta_fix', {}))
+    form = item_type.get('table_row_map', {}).get('form', {})
+    del_num = 0
+    total_col = len(ret)
+    for index in range(total_col):
+        _id = ret[index - del_num]
+        key = re.sub(r'\[.\]', '[]', _id.replace('.metadata.', ''))
+        root_key = key.split('.')[0].replace('[]', '')
+        if root_key in meta_list:
+            is_system = check_sub_item_is_system(key, form)
+            ret_system.append('System' if is_system else '')
+
+            _, _, root_option = get_root_item_option(
+                root_key,
+                meta_list.get(root_key)
+            )
+            sub_options = get_sub_item_option(key, form)
+            if not sub_options:
+                ret_option.append(', '.join(root_option))
+            else:
+                if no_permission_show_hide and 'Hide' in sub_options:
+                    del ret[index - del_num]
+                    del ret_label[index - del_num]
+                    del ret_system[index - del_num]
+                    for recid in recids:
+                        del records.attr_output[recid][index - del_num - 2]
+                    del_num += 1
+                else:
+                    ret_option.append(
+                        ', '.join(list(set(root_option + sub_options)))
+                    )
+        elif key == '#.id':
+            ret_system.append('#')
+            ret_option.append('#')
+        elif key == '.publish_status':
+            ret_system.append('')
+            ret_option.append('Required')
+        else:
+            ret_system.append('')
+            ret_option.append('')
+
+    return [ret, ret_label, ret_system, ret_option], records.attr_output
 
 
 def get_list_file_by_record_id(recid):
@@ -1021,13 +1141,16 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
     @return:
     """
     for item_type_id in item_types_data:
-        keys, labels, records = make_stats_tsv(
+        headers, records = make_stats_tsv(
             item_type_id,
             item_types_data[item_type_id]['recids'],
             list_item_role)
+        keys, labels, is_systems, options = headers
         item_types_data[item_type_id]['recids'].sort()
         item_types_data[item_type_id]['keys'] = keys
         item_types_data[item_type_id]['labels'] = labels
+        item_types_data[item_type_id]['is_systems'] = is_systems
+        item_types_data[item_type_id]['options'] = options
         item_types_data[item_type_id]['data'] = records
         item_type_data = item_types_data[item_type_id]
 
@@ -1049,7 +1172,7 @@ def export_items(post_data):
         return new_name
 
     include_contents = True if \
-        post_data['export_file_contents_radio'] == 'True' else False
+        post_data.get('export_file_contents_radio') == 'True' else False
     export_format = post_data['export_format_radio']
     record_ids = json.loads(post_data['record_ids'])
     invalid_record_ids = json.loads(post_data['invalid_record_ids'])
@@ -1119,7 +1242,11 @@ def export_items(post_data):
         current_app.logger.error('-' * 60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
-    return send_file(export_path + '.zip')
+    return send_file(
+        export_path + '.zip',
+        as_attachment=True,
+        attachment_filename='export.zip'
+    )
 
 
 def export_item_custorm(post_data):
@@ -1212,6 +1339,21 @@ def _export_item(record_id,
                  tmp_path=None,
                  records_data=None):
     """Exports files for record according to view permissions."""
+    def del_hide_sub_metadata(keys, metadata):
+        """Delete hide metadata."""
+        if isinstance(metadata, dict):
+            data = metadata.get(keys[0])
+            if data:
+                if len(keys) > 1:
+                    del_hide_sub_metadata(keys[1:], data)
+                else:
+                    del metadata[keys[0]]
+        elif isinstance(metadata, list):
+            count = len(metadata)
+            for index in range(count):
+                del_hide_sub_metadata(keys[1:] if len(
+                    keys) > 1 else keys, metadata[index])
+
     exported_item = {}
     record = WekoRecord.get_record_by_pid(record_id)
     list_item_role = {}
@@ -1236,8 +1378,12 @@ def _export_item(record_id,
                     {exported_item['item_type_id']: record_role_ids})
                 if hide_meta_data_for_role(record_role_ids):
                     for hide_key in list_hidden:
-                        if meta_data.get(hide_key):
+                        if isinstance(hide_key, str) \
+                                and meta_data.get(hide_key):
                             del records_data['metadata'][hide_key]
+                        elif isinstance(hide_key, list):
+                            del_hide_sub_metadata(
+                                hide_key, records_data['metadata'])
 
         # Create metadata file.
         with open('{}/{}_metadata.json'.format(tmp_path,
@@ -1251,8 +1397,7 @@ def _export_item(record_id,
             # Get files
             for file in record.files:  # TODO: Temporary processing
                 if check_file_download_permission(record, file.info()):
-                    if ('accessrole' in file.info() and file.info()[
-                            'accessrole'] != 'open_restricted'):
+                    if file.info().get('accessrole') != 'open_restricted':
                         exported_item['files'].append(file.info())
                         # TODO: Then convert the item into the desired format
                         if file:
@@ -1648,11 +1793,24 @@ def get_ignore_item_from_mapping(_item_type_id):
     """
     ignore_list = []
     meta_options, item_type_mapping = get_options_and_order_list(_item_type_id)
+    sub_ids = get_hide_list_by_schema_form(item_type_id=_item_type_id)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
             ignore_list.append(
                 get_mapping_name_item_type_by_key(key, item_type_mapping))
+    for sub_id in sub_ids:
+        key = [re.sub(r'\[.\]', '', _id) for _id in sub_id.split('.')]
+        if key[0] in item_type_mapping:
+            mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
+            name = [list(mapping.keys())[0]]
+            if len(key) > 1:
+                tree_name = get_mapping_name_item_type_by_sub_key(
+                    '.'.join(key[1:]), mapping.get(name[0])
+                )
+                if tree_name:
+                    name += tree_name
+            ignore_list.append(name)
     return ignore_list
 
 
@@ -1670,6 +1828,46 @@ def get_mapping_name_item_type_by_key(key, item_type_mapping):
                 for name in property_data.get('jpcoar_mapping'):
                     return name
     return key
+
+
+def get_mapping_name_item_type_by_sub_key(key, item_type_mapping):
+    """Get mapping name item type by sub key.
+
+    :param item_type_mapping:
+    :param key:
+    :return: name
+    """
+    tree_name = None
+    for mapping_key in item_type_mapping:
+        property_data = item_type_mapping.get(mapping_key)
+
+        if isinstance(property_data, dict):
+            _mapping_name = get_mapping_name_item_type_by_sub_key(
+                key, property_data)
+            if _mapping_name is not None:
+                tree_name = [mapping_key] \
+                    if mapping_key != '@attributes' else []
+                tree_name += _mapping_name
+                break
+        elif key == property_data:
+            tree_name = [mapping_key if mapping_key != '@value' else '']
+            break
+    return tree_name
+
+
+def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
+    """Get hide list by schema form."""
+    ids = []
+    if item_type_id and not schemaform:
+        item_type = ItemTypes.get_by_id(item_type_id).render
+        schemaform = item_type.get('table_row_map', {}).get('form', {})
+    for item in schemaform:
+        if not item.get('items'):
+            if item.get('isHide'):
+                ids.append(item.get('key'))
+        else:
+            ids += get_hide_list_by_schema_form(schemaform=item.get('items'))
+    return ids
 
 
 def get_item_from_option(_item_type_id):
@@ -1991,3 +2189,60 @@ def sanitize_input_data(data):
                 data[i] = __sanitize_string(data[i])
             else:
                 sanitize_input_data(data[i])
+
+
+def save_title(activity_id, request_data):
+    """Save title.
+
+    :param activity_id: activity id.
+    :param request_data: request data.
+    :return:
+    """
+    activity = WorkActivity()
+    db_activity = activity.get_activity_detail(activity_id)
+    item_type_id = db_activity.workflow.itemtype.id
+    if item_type_id:
+        item_type_mapping = Mapping.get_record(item_type_id)
+        key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
+    if key and key_child:
+        title = get_title_in_request(request_data, key, key_child)
+        activity.update_title(activity_id, title)
+
+
+def get_key_title_in_item_type_mapping(item_type_mapping):
+    """Get key title in item type mapping.
+
+    :param item_type_mapping: item type mapping.
+    :return:
+    """
+    for mapping_key in item_type_mapping:
+        property_data = item_type_mapping.get(mapping_key).get('jpcoar_mapping')
+        if isinstance(property_data,
+                      dict) and 'title' in property_data and property_data.get(
+                'title').get('@value'):
+            return mapping_key, property_data.get('title').get('@value')
+    return None, None
+
+
+def get_title_in_request(request_data, key, key_child):
+    """Get title in request.
+
+    :param request_data: activity id.
+    :param key: key of title.
+    :param key_child: key child of title.
+    :return:
+    """
+    result = ''
+    try:
+        title = request_data.get('metainfo')
+        if title and key in title:
+            title_value = title.get(key)
+            if type(title_value) == dict and key_child in title_value:
+                result = title_value.get(key_child)
+            elif type(title_value) == list and len(title_value) > 0:
+                title_value = title_value[0]
+                if key_child in title_value:
+                    result = title_value.get(key_child)
+    except Exception:
+        pass
+    return result

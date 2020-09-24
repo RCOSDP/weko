@@ -97,3 +97,9 @@ WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY = "widget_cache"
 
 WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY = "widget_page_cache"
 """The Page cache key"""
+
+WEKO_GRIDLAYOUT_BUCKET_UUID = "517f7d98-ab2c-4736-91ea-54ba34e7905d"
+"""The Gridlayout bucket UUID"""
+
+WEKO_GRIDLAYOUT_FILE_MAX_SIZE = 1024 * 1024 * 16  # 16 MB
+"""Allowed file size for the widget static files."""

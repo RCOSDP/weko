@@ -44,7 +44,6 @@ from resync.w3c_datetime import str_to_datetime
 from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import ItemTypes, WekoRecord
 from weko_index_tree.api import Indexes
-from weko_index_tree.models import Index
 from weko_items_ui.utils import make_stats_tsv, package_export_file
 from weko_records_ui.permissions import check_file_download_permission
 
@@ -522,12 +521,15 @@ class ResourceListHandler(object):
 
             # Create export info file
             for item_type_id in item_types_data:
-                keys, labels, records = make_stats_tsv(
+                headers, records = make_stats_tsv(
                     item_type_id,
                     item_types_data[item_type_id]['recids'])
+                keys, labels, is_systems, options = headers
                 item_types_data[item_type_id]['recids'].sort()
                 item_types_data[item_type_id]['keys'] = keys
                 item_types_data[item_type_id]['labels'] = labels
+                item_types_data[item_type_id]['is_systems'] = is_systems
+                item_types_data[item_type_id]['options'] = options
                 item_types_data[item_type_id]['data'] = records
                 item_type_data = item_types_data[item_type_id]
 
@@ -1188,12 +1190,15 @@ class ChangeListHandler(object):
 
             # Create export info file
             for item_type_id in item_types_data:
-                keys, labels, records = make_stats_tsv(
+                headers, records = make_stats_tsv(
                     item_type_id,
                     item_types_data[item_type_id]['recids'])
+                keys, labels, is_systems, options = headers
                 item_types_data[item_type_id]['recids'].sort()
                 item_types_data[item_type_id]['keys'] = keys
                 item_types_data[item_type_id]['labels'] = labels
+                item_types_data[item_type_id]['is_systems'] = is_systems
+                item_types_data[item_type_id]['options'] = options
                 item_types_data[item_type_id]['data'] = records
                 item_type_data = item_types_data[item_type_id]
 
