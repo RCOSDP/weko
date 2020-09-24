@@ -170,6 +170,9 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
+      if (!this.state.editor) {
+        this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
+      }
 			this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
@@ -189,11 +192,15 @@
 				arr = this.state.enum.split('|');
 			}
 			return {
-				type: "array",
-				format: "checkboxes",
-				enum: arr
-			};
-		},
+        type: "array",
+        format: "checkboxes",
+        enum: arr,
+        items: {
+          type: "string",
+          enum: arr
+        }
+      };
+    },
 		render: function render() {
 			var self = this;
 			let is_write = self.state.hasOwnProperty('editAble') ? self.state.editAble : false;
@@ -233,6 +240,9 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
+      if (!this.state.editor) {
+        this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
+      }
 			this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
@@ -596,7 +606,7 @@
 							key: parentkey + itemKey,
 							type: "template",
 							title: value.title,
-						  templateUrl: "/static/templates/weko_deposit/datepicker.html",
+              templateUrl: "/static/templates/weko_deposit/radios.html",
 							titleMap: self.refs['subitem' + index].exportTitleMap()
 						};
 					}  else if ('array' === value.format) {
