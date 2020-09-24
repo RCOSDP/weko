@@ -190,6 +190,7 @@ class ItemResource(ContentNegotiatedMethodView):
         """Put."""
         try:
             data = request.get_json()
+            self.__sanitize_input_data(data)
             pid = kwargs.get('pid_value').value
 
             # Saving ItemMetadata cached on Redis by pid
@@ -206,3 +207,35 @@ class ItemResource(ContentNegotiatedMethodView):
             abort(400, "Failed to register item!")
 
         return jsonify({'status': 'success'})
+
+    @staticmethod
+    def __sanitize_string(s: str):
+        """Sanitize string.
+
+        :param s:
+        :return:
+        """
+        s = s.strip()
+        sanitize_str = ""
+        for i in s:
+            if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
+                sanitize_str += i
+        return sanitize_str
+
+    def __sanitize_input_data(self, data):
+        """Sanitize input data.
+
+        :param data: input data.
+        """
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, str):
+                    data[k] = self.__sanitize_string(v)
+                else:
+                    self.__sanitize_input_data(v)
+        elif isinstance(data, list):
+            for i in range(len(data)):
+                if isinstance(data[i], str):
+                    data[i] = self.__sanitize_string(data[i])
+                else:
+                    self.__sanitize_input_data(data[i])
