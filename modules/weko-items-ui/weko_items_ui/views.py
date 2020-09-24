@@ -1181,6 +1181,7 @@ def newversion(pid_value='0'):
 
 @blueprint.route('/sessionvalidate', methods=['POST'])
 def session_validate():
+    """Validate the session."""
     authorized = True if current_user and current_user.get_id() else False
     result = {
         "unauthorized": authorized,
