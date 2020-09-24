@@ -1,5 +1,7 @@
 // require(["jquery", "bootstrap"],function() {});
 $(document).ready(function () {
+  var checkboxTemplate = "/static/templates/weko_deposit/checkboxes.html";
+  var radioTemplate = "/static/templates/weko_deposit/radios.html";
   src_render = {};
   src_mapping = {};
   page_global = {
@@ -594,24 +596,36 @@ $(document).ready(function () {
               notitle: true,
               titleMap: titleMap_tmp
             }],
-            templateUrl: "/static/templates/weko_deposit/checkboxes.html"
+            templateUrl: checkboxTemplate
           });
         } else {
           // 選択式(プルダウン)
           page_global.table_row_map.schema.properties[row_id] = {
-            type: "array",
-            title: tmp.title,
-            items: {
-              type: "string",
-              enum: enum_tmp
+            title: tmp.title,                // [interim]は本当の意味を持たない
+            "type": "object",
+            "format": "object",
+            properties: {
+              "interim": {
+                type: "array",
+                format: "checkboxes",
+                items: {
+                  type: "string",
+                  enum: enum_tmp
+                }
+              }
             }
           }
           page_global.table_row_map.form.push({
+            items: [{
+              key: row_id + '.interim',
+              type: "template",
+              title_i18n: tmp.title_i18n,
+              title: tmp.title,
+              templateUrl: checkboxTemplate,
+              titleMap: titleMap_tmp
+            }],
             key: row_id,
-            title_i18n: tmp.title_i18n,
-            type: "template",
-            titleMap: titleMap_tmp,
-            templateUrl: "/static/templates/weko_deposit/checkboxes.html",
+            type: "fieldset"
           });
         }
       } else if(tmp.input_type == 'select') {
@@ -684,6 +698,7 @@ $(document).ready(function () {
               properties: {
                 interim: {                  // [interim]は本当の意味を持たない
                   type: "string",
+                  format:"radios",
                   enum: enum_tmp
                 }
               }
@@ -698,27 +713,41 @@ $(document).ready(function () {
               key: row_id+'[].interim',
               type: "template",
               notitle: true,
-              templateUrl: "/static/templates/weko_deposit/radios.html",
+              templateUrl: radioTemplate,
               titleMap: titleMap_tmp
             }]
           });
         } else {
           page_global.table_row_map.schema.properties[row_id] = {
-            type: "string",
-            title: tmp.title,
-            enum: enum_tmp
-          };
+            title: tmp.title,                // [interim]は本当の意味を持たない
+            type: "object",
+            format: "object",
+            properties: {
+              interim: {
+                title: tmp.title,                // [interim]は本当の意味を持たない
+                type: "string",
+                format: "radios",
+                enum: enum_tmp
+              }
+            }
+          }
           page_global.table_row_map.form.push({
+            items: [{
+              key: row_id + '.interim',
+              type: "template",
+              title_i18n: tmp.title_i18n,
+              title: tmp.title,
+              templateUrl: radioTemplate,
+              titleMap: titleMap_tmp
+            }],
             key: row_id,
-            title_i18n: tmp.title_i18n,
-            type: "template",    // radios|select
-            templateUrl: "/static/templates/weko_deposit/radios.html",
-            titleMap: titleMap_tmp
+            type: "fieldset"
           });
         }
       } else if(tmp.input_type.indexOf('cus_') != -1) {
         editor = page_json_editor['schema_'+row_id];
         page_global.schemaeditor.schema[row_id] = editor.getValue();
+        removeEnumForCheckboxes(page_global.schemaeditor.schema[row_id].properties);
         if(tmp.option.multiple) {
           page_global.table_row_map.schema.properties[row_id] = {
             type: "array",
@@ -1244,9 +1273,9 @@ $(document).ready(function () {
             itemTypePropertyForm,
             changedProperties);
           //Set format in schema from item_type to item_type_property.
-          // setSchemaFromItemTypeToItemTypeProperty(
-          //   itemTypePropertiesSchema,
-          //   itemTypeSchema);
+          setSchemaFromItemTypeToItemTypeProperty(
+            itemTypePropertiesSchema,
+            itemTypeSchema, itemTypePropertyForm['items']);
 
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
           let isAllowMultiple = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
@@ -1498,7 +1527,9 @@ $(document).ready(function () {
   }
 
   function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
-    let isHasItem = schemaProperties.hasOwnProperty('items');
+    // Checkboxes format has 'items' but it's not actual items. So ignore it
+    let isCheckboxFormat = schemaProperties.format == "checkboxes";
+    let isHasItem = schemaProperties.hasOwnProperty('items') && !isCheckboxFormat;
     let isHasProperties = schemaProperties.hasOwnProperty('properties');
     let propertyKey, properties;
     if(isHasItem || isHasProperties) {
@@ -1525,7 +1556,9 @@ $(document).ready(function () {
   }
 
   function setTitleI18nForSubPropertiesByCondition2(schemaProperties, subForms, prefixKey) {
-    let isHasItem = schemaProperties.hasOwnProperty('items');
+    // Checkboxes format has 'items' but it's not actual items. So ignore it
+    let isCheckboxFormat = schemaProperties.format == "checkboxes";
+    let isHasItem = schemaProperties.hasOwnProperty('items') && !isCheckboxFormat;
     let isHasProperties = schemaProperties.hasOwnProperty('properties');
     let titleI118nDefault = {'ja': '', 'en': ''};
     let propertyKey, properties;
@@ -1616,7 +1649,7 @@ $(document).ready(function () {
     });
   }
 
-  function setSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema) {
+  function setSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema, itemTypeForm) {
     let itpSchema = itemTypePropertiesSchema || {};
     let itSchema = itemTypeSchema || {};
     Object.keys(itpSchema).map(function(itpSchemaKey) {
@@ -1624,14 +1657,14 @@ $(document).ready(function () {
         if(itpSchemaKey == itSchemaKey) {
           let itpSubSchema = itpSchema[itpSchemaKey];
           let itSubSchema = itSchema[itSchemaKey];
-          // itpSubSchema.format = itSubSchema.format;
-          // if(itpSubSchema.format == 'select') {
-          //   itpSubSchema.type = "string";
-          // } else if(itpSubSchema.format == 'checkboxes') {
-          //   itpSubSchema.type = "array";
-          // } else if(itpSubSchema.format == "radios") {
-          //   itpSubSchema.type = "string";
-          // }
+          itpSubSchema.format = itSubSchema.format;
+          if (itpSubSchema.format == 'select') {
+            itpSubSchema.type = "string";
+          } else if (itpSubSchema.format == 'checkboxes') {
+            itpSubSchema.type = "array";
+          } else if (itpSubSchema.format == "radios") {
+            itpSubSchema.type = "string";
+          }
           setSubSchemaFromItemTypeToItemTypeProperty(itpSubSchema, itSubSchema);
           return false;
           }
@@ -1667,14 +1700,14 @@ $(document).ready(function () {
         if(itpSchemaKey == itSchemaKey) {
           let itpSubSchema = itpSchema[itpSchemaKey];
           let itSubSchema = itSchema[itSchemaKey];
-          // itpSubSchema.format = itSubSchema.format;
-          // if(itpSubSchema.format == 'select') {
-          //   itpSubSchema.type = "string";
-          // } else if(itpSubSchema.format == 'checkboxes') {
-          //   itpSubSchema.type = "array";
-          // } else if(itpSubSchema.format == "radios") {
-          //   itpSubSchema.type = "string";
-          // }
+          itpSubSchema.format = itSubSchema.format;
+          if(itpSubSchema.format == 'select') {
+            itpSubSchema.type = "string";
+          } else if(itpSubSchema.format == 'checkboxes') {
+            itpSubSchema.type = "array";
+          } else if(itpSubSchema.format == "radios") {
+            itpSubSchema.type = "string";
+          }
           setSubSchemaFromItemTypeToItemTypeProperty(itpSubSchema, itSubSchema);
           return false;
           }
@@ -1722,14 +1755,55 @@ $(document).ready(function () {
           subForm.title_i18n_temp = properties[propKey].title_i18n_temp;
 
           setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], subForm.items, propertyKey);
+          // Rearrange data for form in case of radio, checkbox, select
+          if (properties[propKey].format == 'radios' || properties[propKey].format == 'select') {
+            if (properties[propKey].hasOwnProperty('items'))
+              delete itpSubSchema.items
+          }
+          if (properties[propKey].format == 'radios') {
+            subForm['templateUrl'] = radioTemplate
+            subForm.type = "template"
+          } else if (properties[propKey].format == 'checkboxes') {
+            properties[propKey]['items'] = {
+              type: "string",
+              enum: properties[propKey].enum
+            }
+            properties[propKey].type = "array";
+            subForm['templateUrl'] = checkboxTemplate
+            subForm.type = "template"
+            // Delete enum form properties to avoid schema validation error because of 2 enums
+            delete properties[propKey].enum
+          } else if (properties[propKey].format == 'select') {
+            subForm.type = "select"
+          }
           return false;
         }
       });
     });
   }
 
+  function removeEnumForCheckboxes(schema) {
+    Object.keys(schema).map(function (propKey) {
+      let isCheckboxFormat = schema[propKey].format == "checkboxes";
+      let isHasItem = schema[propKey].hasOwnProperty('items') && !isCheckboxFormat;
+      let isHasProperties = schema[propKey].hasOwnProperty('properties');
+      if(isCheckboxFormat && schema[propKey].hasOwnProperty('enum'))
+          delete schema[propKey].enum;
+      let properties;
+        if(isHasItem || isHasProperties) {
+          if(isHasItem) {
+            properties = schema[propKey].items.properties;
+          } else {
+            properties = schema[propKey].properties;
+          }
+          removeEnumForCheckboxes(properties);
+        }
+    });
+  }
+
   function setTitleI18nFromPropertiesSchemaToSubForm(schemaProperties, subForms, prefixKey) {
-    let isHasItem = schemaProperties.hasOwnProperty('items');
+    let isCheckboxFormat = schemaProperties.format == "checkboxes";
+    let isHasItem = schemaProperties.hasOwnProperty('items') && !isCheckboxFormat;
     let isHasProperties = schemaProperties.hasOwnProperty('properties');
     let propertyKey, properties;
     if(isHasItem || isHasProperties) {
