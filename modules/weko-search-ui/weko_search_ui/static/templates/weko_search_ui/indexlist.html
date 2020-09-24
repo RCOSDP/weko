@@ -10,13 +10,13 @@
           ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
           <span ng-if="is_permission">
             <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}{{commInfoIndex}}">
-            {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}} <{{vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/')[$index]}}> </a>
-            <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}} <{{vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/')[$index]}}></span>
+            {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}} <{{vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/')[$index]}}> </a>
+            <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}} <{{vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/')[$index]}}></span>
           </span>
           <span ng-if="!is_permission">
             <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}{{commInfoIndex}}">
-            {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</a>
-            <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</span>
+            {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}}</a>
+            <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}}</span>
           </span>
 
         </li>

@@ -810,9 +810,9 @@ class Indexes(object):
                 test_alias.parent,
                 test_alias.id,
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                rec_alias.c.name + '/' + test_alias.index_name,
+                rec_alias.c.name + '-/-' + test_alias.index_name,
                 # add by ryuu at 1108 start
-                rec_alias.c.name_en + '/' + test_alias.index_name_english,
+                rec_alias.c.name_en + '-/-' + test_alias.index_name_english,
                 # add by ryuu at 1108 end
                 rec_alias.c.lev + 1,
                 test_alias.public_state,
