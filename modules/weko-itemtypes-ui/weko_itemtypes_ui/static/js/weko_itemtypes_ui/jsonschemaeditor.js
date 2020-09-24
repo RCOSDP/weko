@@ -159,7 +159,7 @@
 		propsToState: function propsToState(props) {
 			var data = props.data; //get enum for checkboxes
 			if (data.hasOwnProperty('enum') && data.enum.length > 0) {
-				data.enum = data.enum.join('|');
+				data.enum = typeof(data.enum) == 'object' ? data.enum.join('|') : data.enum;
 			} else {
 				data.enum = '';
 			}
@@ -229,7 +229,7 @@
 		propsToState: function propsToState(props) {
 			var data = props.data;
 			if (data.hasOwnProperty('enum') && data.enum.length > 0) {
-				data.enum = data.enum.join('|');
+				data.enum = typeof(data.enum) == 'object' ? data.enum.join('|') : data.enum;
 			} else {
 				data.enum = '';
 			}
@@ -296,8 +296,8 @@
 		propsToState: function propsToState(props) {
 			var data = props.data;
 			if (data.hasOwnProperty('enum') && data.enum.length > 0) {
-				data.enum_original = data.enum;
-				data.enum = data.enum.join('|');
+				data.enum_original = typeof(data.enum) == 'object' ? data.enum : data.enum.split('|');
+				data.enum = typeof(data.enum) == 'object' ? data.enum.join('|') : data.enum;
 			} else {
 				data.enum = '';
 			}
@@ -461,7 +461,9 @@
 						title: ""
 					};
 				} else if ('checkboxes' === event.target.value || 'radios' === event.target.value || 'select' === event.target.value) {
-					this.state.propertyNames[i].enum = [];
+					if(this.state.editor){
+						this.state.propertyNames[i].enum = [];
+					}
 				} else if ('array' === event.target.value) {
 					this.state.propertyNames[i].type = event.target.value;
 					this.state.propertyNames[i].format = event.target.value;
