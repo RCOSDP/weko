@@ -581,8 +581,10 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'inputVal':'',
          'mappingFlg':False,
          'mappingName':''},
-        {'id': 'rights', 'contents': 'Rights', 'useable_status': True, 'mapping': ['CC', 'BY', 'CC', 'BY-SA', 'CC', 'BY-ND', 'CC', 'BY-NC', 'CC', 'BY-NC-SA', 'ANY'],
-         'radio_val':[
+        {'id': 'rights', 'contents': 'Rights', 'useable_status': True,
+'mapping': ['CC', 'BY', 'CC', 'BY-SA', 'CC', 'BY-ND', 'CC', 'BY-NC', 'CC',
+'BY-NC-SA', 'ANY', 'CC0', '3.0', '4.0', 'CC', 'BY-NC-ND'],
+         'check_val':[
             {'id': 'CC BY', 'contents': 'CC BY'},
             {'id': 'CC BY-SA',
              'contents': 'CC BY-SA'},
@@ -594,7 +596,11 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
                 'id': 'CC BY-NC-SA', 'contents': 'CC BY-NC-SA'},
             {'id': 'ANY',
              'contents': 'ANY'},
-        ], 'default_display': True, 'inputType': 'radio_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''}
+            {'id': 'CC0', 'contents': 'CC0'},
+            {'id': '3.0', 'contents': '3.0'},
+            {'id': '4.0', 'contents': '4.0'},
+            {'id': 'BY-NC-ND', 'contents': 'BY-NC-ND'},
+        ], 'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''}
     ]
 }
 
