@@ -1177,3 +1177,14 @@ def newversion(pid_value='0'):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         db.session.rollback()
     return jsonify(success=True)
+
+
+@blueprint.route('/sessionvalidate', methods=['POST'])
+def session_validate():
+    """Validate the session."""
+    authorized = True if current_user and current_user.get_id() else False
+    result = {
+        "unauthorized": authorized,
+        "msg": _('Your session has timed out. Please login again.')
+    }
+    return jsonify(result)
