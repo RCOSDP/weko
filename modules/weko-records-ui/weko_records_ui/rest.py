@@ -32,6 +32,8 @@ from invenio_rest.views import create_api_errorhandler
 from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
 
+from .views import escape_str
+
 
 def create_error_handlers(blueprint):
     """Create error handlers on blueprint."""
@@ -129,6 +131,7 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
 
             result = citeproc_v1.serialize(pid, record, style=style,
                                            locale=locale)
+            result = escape_str(result)
             return make_response(jsonify(result), 200)
         except Exception:
             current_app.logger.exception(

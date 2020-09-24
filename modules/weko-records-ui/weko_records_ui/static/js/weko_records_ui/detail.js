@@ -132,4 +132,17 @@ require([
       });
     }
   });
+
+  var current_cite = '';
+  $('body').on('DOMSubtreeModified', '#citationResult', function (e) {
+    let cite = e.currentTarget.innerHTML;
+    if (cite.indexOf('&amp;') !== -1) {
+      cite = e.currentTarget.innerText;
+    }
+    cite = cite.replace(/<br>/g, '<br/>');
+    if (cite !== '' && cite !== current_cite) {
+      current_cite = cite;
+      $('#citationResult').html(current_cite);
+    }
+  });
 });

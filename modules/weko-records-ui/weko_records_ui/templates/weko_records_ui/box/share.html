@@ -36,7 +36,7 @@
     {% set citation_result = record|citation(pid, style='aapg-bulletin') %}
     <invenio-csl
       {%- if citation_result %}
-        ng-init="vm.citationResult = '{{citation_result}}'"
+        ng-init="vm.citationResult = '{{citation_result | escape_str}}'"
       {%- else %}
         ng-init="vm.error = '{{_('Your record could not be processed by the citation formatter')}}'"
       {%- endif %}
