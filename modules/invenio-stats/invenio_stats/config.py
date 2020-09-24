@@ -186,3 +186,17 @@ SEARCH_INDEX_PREFIX = os.environ.get('SEARCH_INDEX_PREFIX', '')
 
 WEKO_STATS_UNKNOWN_LABEL = 'UNKNOWN'
 """Label using for missing of view or file-download stats."""
+
+STATS_EVENT_STRING = 'events'
+"""Stats event string."""
+
+STATS_AGGREGATION_INDEXES = [
+    'celery-task',
+    'file-download',
+    'file-preview',
+    'record-view',
+    'item-create',
+    'search',
+    'top-view',
+]
+"""Stats aggregation indexes."""

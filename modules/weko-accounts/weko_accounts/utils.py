@@ -39,7 +39,7 @@ def get_remote_addr():
         if address is not None:
             address = address.encode('utf-8').split(b',')[0].strip()
 
-    return address
+    return address.decode()
 
 
 def generate_random_str(length=128):

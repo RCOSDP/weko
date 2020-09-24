@@ -24,7 +24,7 @@ services:
   web:
     restart: "always"
     build: .
-    command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D && uwsgi --ini /code/scripts/uwsgi.ini"
+    command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     environment:
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
@@ -54,6 +54,7 @@ services:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
+      - conf_data:/home/invenio/.virtualenvs/invenio/var/instance/conf
       - type: bind
         source: .
         target: /code
@@ -183,5 +184,6 @@ volumes:
   weko3_data:
   static_data:
   data_data:
+  conf_data:
   pgsql-data:
   es-data:

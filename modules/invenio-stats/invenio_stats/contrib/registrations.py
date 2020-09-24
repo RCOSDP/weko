@@ -35,7 +35,9 @@ def register_events():
                     flag_robots,
                     anonymize_user,
                     build_celery_task_unique_id
-                ])),
+                ],
+                suffix="%Y",
+            )),
         dict(
             event_type='file-download',
             templates='invenio_stats.contrib.file_download',
@@ -46,7 +48,9 @@ def register_events():
                     flag_robots,
                     anonymize_user,
                     build_file_unique_id
-                ])),
+                ],
+                suffix="%Y",
+            )),
         dict(
             event_type='file-preview',
             templates='invenio_stats.contrib.file_preview',
@@ -57,7 +61,9 @@ def register_events():
                     flag_robots,
                     anonymize_user,
                     build_file_unique_id
-                ])),
+                ],
+                suffix="%Y",
+            )),
         dict(
             event_type='item-create',
             templates='invenio_stats.contrib.item_create',
@@ -68,7 +74,9 @@ def register_events():
                     flag_robots,
                     anonymize_user,
                     build_item_create_unique_id
-                ])),
+                ],
+                suffix="%Y",
+            )),
         dict(
             event_type='record-view',
             templates='invenio_stats.contrib.record_view',
@@ -79,7 +87,9 @@ def register_events():
                     flag_robots,
                     anonymize_user,
                     build_record_unique_id
-                ])),
+                ],
+                suffix="%Y",
+            )),
         dict(
             event_type='top-view',
             templates='invenio_stats.contrib.top_view',
@@ -90,7 +100,9 @@ def register_events():
                     flag_robots,
                     anonymize_user,
                     build_top_unique_id
-                ])),
+                ],
+                suffix="%Y",
+            )),
         dict(
             event_type='search',
             templates='invenio_stats.contrib.search',
@@ -102,7 +114,9 @@ def register_events():
                     anonymize_user,
                     build_search_detail_condition,
                     build_search_unique_id
-                ]))
+                ],
+                suffix="%Y",
+            ))
     ]
 
 
@@ -117,6 +131,7 @@ def register_aggregations():
             event='celery-task',
             aggregation_field='unique_id',
             aggregation_interval='day',
+            index_interval='year',
             query_modifiers=[filter_restricted],
             copy_fields=dict(
                 task_id='task_id',
@@ -143,6 +158,7 @@ def register_aggregations():
                 event='search',
                 aggregation_field='unique_id',
                 aggregation_interval='day',
+                index_interval='year',
                 query_modifiers=[filter_restricted],
                 copy_fields=dict(
                     country='country',
@@ -166,6 +182,7 @@ def register_aggregations():
             event='file-download',
             aggregation_field='unique_id',
             aggregation_interval='day',
+            index_interval='year',
             query_modifiers=[filter_restricted],
             copy_fields=dict(
                 country='country',
@@ -201,6 +218,7 @@ def register_aggregations():
             aggregation_field='unique_id',
             query_modifiers=[filter_restricted],
             aggregation_interval='day',
+            index_interval='year',
             copy_fields=dict(
                 country='country',
                 item_id='item_id',
@@ -234,6 +252,7 @@ def register_aggregations():
             event='item-create',
             aggregation_field='unique_id',
             aggregation_interval='day',
+            index_interval='year',
             query_modifiers=[filter_restricted],
             copy_fields=dict(
                 country='country',
@@ -257,6 +276,7 @@ def register_aggregations():
             event='record-view',
             aggregation_field='unique_id',
             aggregation_interval='day',
+            index_interval='year',
             query_modifiers=[filter_restricted],
             copy_fields=dict(
                 country='country',
@@ -284,6 +304,7 @@ def register_aggregations():
             event='top-view',
             aggregation_field='unique_id',
             aggregation_interval='day',
+            index_interval='year',
             query_modifiers=[filter_restricted],
             copy_fields=dict(
                 country='country',

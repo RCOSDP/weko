@@ -1232,3 +1232,10 @@ class Indexes(object):
         tree_path = get_publish_index_id_list(cls.get_index_tree(index_id),
                                               [])
         return tree_path
+
+    @classmethod
+    def get_public_indexes(cls):
+        """Get child id list without recursive."""
+        query = Index.query.filter_by(public_state=True).order_by(
+            Index.updated.desc())
+        return query.all()

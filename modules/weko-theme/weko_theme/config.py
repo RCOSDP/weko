@@ -92,3 +92,6 @@ ADMIN_BASE_TEMPLATE = 'weko_theme/page_admin.html'
 SETTINGS_TEMPLATE = 'weko_theme/page_setting.html'
 
 COVER_TEMPLATE = 'weko_theme/page_cover.html'
+
+WEKO_THEME_INSTANCE_DATA_DIR = 'data'
+"""ユーザデータのィレクトリ."""

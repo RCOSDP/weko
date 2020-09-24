@@ -473,7 +473,17 @@ def listrecords(**kwargs):
                     'system_identifier_doi'] = get_identifier(db_record)
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))
-            e_metadata.append(record_dumper(pid, record['json']))
+            etree_record = copy.deepcopy(record['json'])
+            if check_correct_system_props_mapping(
+                pid_object.object_uuid,
+                    current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
+                etree_record['_source']['_item_metadata'] = \
+                    combine_record_file_urls(
+                        etree_record['_source']['_item_metadata'],
+                        pid_object.object_uuid,
+                        kwargs['metadataPrefix'])
+
+            e_metadata.append(record_dumper(pid, etree_record))
         except Exception:
             import traceback
             current_app.logger.error(traceback.print_exc())
@@ -555,8 +565,11 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
     item_map = get_mapping(type_mapping, "{}_mapping".format(meta_prefix))
 
     if item_map:
-        file_keys = item_map.get(current_app.config[
-            "OAISERVER_FILE_PROPS_MAPPING"][meta_prefix])
+        file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
+        if meta_prefix in file_props:
+            file_keys = item_map.get(file_props[meta_prefix])
+        else:
+            file_keys = None
 
     if not file_keys:
         return record

@@ -1303,6 +1303,21 @@ function toObject(arr) {
             case 'doctoral thesis':
               resourceuri = "http://purl.org/coar/resource_type/c_db06";
               break;
+            case 'software paper':
+              resourceuri = "http://purl.org/coar/resource_type/c_7bab";
+              break;
+            case 'newspaper':
+              resourceuri = "http://purl.org/coar/resource_type/c_2fe3";
+              break;
+            case 'data management plan':
+              resourceuri = "http://purl.org/coar/resource_type/c_ab20";
+              break;
+            case 'interview':
+              resourceuri = "http://purl.org/coar/resource_type/c_26e4";
+              break;
+            case 'manuscript':
+              resourceuri = "http://purl.org/coar/resource_type/c_0040";
+              break;
             default:
               resourceuri = "";
           }
@@ -2117,16 +2132,37 @@ function toObject(arr) {
       }
 
       // This is callback function - Please do NOT change function name
-      $scope.fileNameSelect = function (modelValue) {
+      $scope.fileNameSelect = function ($event, form, modelValue) {
+        //Check to disable「本文URL」element.
+        let curElement = event.target;
+        let parForm = $(curElement).parents('.schema-form-section')[0];
+        let curTextUrl = $(parForm).find('.file-text-url')[0];
+        let flag = false;
+        form.titleMap.forEach(function(v, i){
+            if(v.value == modelValue)
+                flag = !flag;
+                return false;
+        });
+        $(curTextUrl).attr('disabled', flag);
+        $(curTextUrl).text('');
+        //Check and fill data for file information.
         let model = $rootScope.recordsVM.invenioRecordsModel;
         let filesObject = $scope.getFilesObject();
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key].forEach(function (fileInfo) {
             if (fileInfo.filename == modelValue) {
-              fileInfo.filesize = [{}];
-              fileInfo.filesize[0].value = filesObject[modelValue].size;
-              fileInfo.format = filesObject[modelValue].format;
+              // Set information for「サイズ」and「フォーマット」.
+              if(filesObject[modelValue]){
+                fileInfo.filesize = [{}];
+                fileInfo.filesize[0].value = filesObject[modelValue].size;
+                fileInfo.format = filesObject[modelValue].format;
+              } else {
+                fileInfo.filesize = [{}];
+                fileInfo.filesize[0].value = '';
+                fileInfo.format = '';
+              }
+              // Set information for「日付」.
               fileInfo.date = [{}];
               fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
               fileInfo.date[0].dateType = "Available";
@@ -2731,7 +2767,10 @@ function toObject(arr) {
             contentType: "application/json",
             async: false,
             success: function (data, status) {
-              if (data.is_valid) {
+              if (data.unauthorized) {
+                alert(data.error)
+                window.location.assign("/login/?next=" + window.location.pathname)
+              } else if (data.is_valid) {
                 isValid = true;
               } else {
                 $("#inputModal").html(data.error);
@@ -3091,9 +3130,11 @@ function toObject(arr) {
       }
 
       $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+        if(!validateSession())
+          return;
         $scope.startLoading();
         let currActivityId = $("#activity_id").text();
-        $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail);
+        $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true);
         if (!$scope.priceValidator()) {
           var modalcontent = "Billing price is required half-width numbers.";
           $("#inputModal").html(modalcontent);
@@ -3294,9 +3335,13 @@ function toObject(arr) {
         sessionStorage.removeItem(key);
       }
 
-      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading) {
+      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading,sessionValid) {
         //When press 'Next' or 'Save' button, setting data for model.
         //This function is called in updataDataJson function.
+        if(!sessionValid){
+          if(!validateSession())
+          return;
+        }
         if (startLoading) {
           $scope.startLoading();
         }
@@ -3368,7 +3413,10 @@ function toObject(arr) {
               $scope.endLoading();
             }
             var modalcontent = response;
-            if (response.status == 400) {
+            if (response.data.unauthorized) {
+              alert(response.data.error)
+              window.location.assign("/login/?next=" + window.location.pathname)
+            } else if (response.status == 400) {
               window.location.reload();
             } else {
               $("#inputModal").html(modalcontent);

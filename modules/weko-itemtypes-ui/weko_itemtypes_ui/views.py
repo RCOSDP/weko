@@ -21,10 +21,8 @@
 """Blueprint for weko-itemtypes-ui."""
 
 
-from flask import Blueprint, current_app, jsonify
-from flask_babelex import gettext as _
-from flask_login import login_required
-from weko_records.api import Mapping
+from flask import Blueprint, jsonify, request
+from weko_records.api import ItemTypes, Mapping
 
 blueprint = Blueprint(
     'weko_itemtypes_ui',
@@ -48,3 +46,37 @@ def itemtype_mapping(ItemTypeID=0):
     """Itemtype mapping."""
     item_type_mapping = Mapping.get_record(ItemTypeID)
     return jsonify(item_type_mapping)
+
+
+@blueprint_api.route('/lastest', methods=['GET'])
+def get_itemtypes():
+    """Get List Itemtype."""
+    def convert(item):
+        item_type = item.item_type.first()
+        return {
+            'id': item_type.id,
+            'name': item.name,
+            'tag': item_type.tag,
+            'harvesting_type': item_type.harvesting_type,
+            'is_deleted': item_type.is_deleted
+        }
+
+    item_types = list(map(convert, ItemTypes.get_latest(True)))
+    filter_type = request.args.get('type') or None
+    if filter_type == 'harvesting_type':
+        item_types = [
+            item for item in item_types
+            if item['harvesting_type']
+        ]
+    elif filter_type == 'deleted_type':
+        item_types = [
+            item for item in item_types
+            if item['is_deleted']
+        ]
+    elif filter_type == 'normal_type':
+        item_types = [
+            item for item in item_types
+            if not (item['is_deleted'] or item['harvesting_type'])
+        ]
+
+    return jsonify(item_types)

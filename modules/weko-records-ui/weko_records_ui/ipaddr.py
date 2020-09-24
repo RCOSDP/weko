@@ -24,6 +24,7 @@ import ipaddress
 
 from flask import current_app, request
 from flask_security import current_user
+from weko_accounts.utils import get_remote_addr
 from weko_records.api import SiteLicense
 
 
@@ -32,15 +33,7 @@ def check_site_license_permission():
 
     :return: True or False
     """
-    http_f = 'HTTP_X_FORWARDED_FOR'
-    if request.environ.get(http_f) is None:
-        ip_addr = request.environ['REMOTE_ADDR']
-    else:
-        ip_addr = request.environ[http_f]
-
-    # current_app.logger. \
-    #     debug('-->>>>>>>>>>>>>>>>>>>>>>------------------ip address : {ip_adr}'.
-    #           format(ip_adr=ip_addr))
+    ip_addr = get_remote_addr()
 
     sl_lst = SiteLicense.get_records()
     if ip_addr:

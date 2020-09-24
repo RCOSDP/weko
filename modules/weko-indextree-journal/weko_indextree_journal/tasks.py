@@ -74,9 +74,12 @@ def export_journal_task(p_path):
         # Get file name of journal info with KBART2 format.
         # Own institution repository URL" +  "/weko/kbart/{Repository
         # name}_Global_AllTitles_{Last update date}.txt
-        kbart_folder = 'weko/kbart'
+        kbart_folder = 'kbart'
         filelist_path = os.path.join(
-            current_app.static_folder, kbart_folder, "filelist.txt")
+            current_app.instance_path,
+            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            kbart_folder,
+            'filelist.txt')
 
         # UtokyoRepository_Global_AllTitles_2018-12-12.txt
         # {0}: {Repository name}, {1}: {Last update date}
@@ -88,7 +91,10 @@ def export_journal_task(p_path):
             repository_name, current_date)
 
         repository_data_path = os.path.join(
-            current_app.static_folder, kbart_folder, repository_filename)
+            current_app.instance_path,
+            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            kbart_folder,
+            repository_filename)
 
         # Build header.
         header = [
@@ -197,7 +203,9 @@ def export_journal_task(p_path):
 
         # create folder if not exist
         directory = os.path.join(
-            current_app.static_folder, kbart_folder)
+            current_app.instance_path,
+            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            kbart_folder)
 
         if not os.path.exists(directory):
             os.makedirs(directory)

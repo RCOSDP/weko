@@ -39,7 +39,8 @@ WEKO_SCHEMA_UI_FILES_API = '/api/schemas/files'
 WEKO_SCHEMA_UI_DEFAULT_SCHEMAFORM = 'json/weko_schema_ui/form.json'
 WEKO_SCHEMA_UI_FORM_JSONSCHEMA = 'json/weko_schema_ui/schema.json'
 
-WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER = '{0}/static/xsd/'
+WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER = '{0}/data/xsd/'
+"""データスキーマ."""
 
 _PID = 'pid(depid,record_class="weko_schema_ui.api:WekoSchema")'
 

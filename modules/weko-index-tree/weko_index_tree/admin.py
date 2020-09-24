@@ -150,8 +150,11 @@ class IndexEditSettingView(BaseView):
             return abort(400)
 
         filename = os.path.join(
-            current_app.static_folder, 'indextree', fp.filename)
-        file_uri = url_for('static', filename='indextree/' + fp.filename)
+            current_app.instance_path,
+            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            'indextree',
+            fp.filename)
+        file_uri = '/data/' + 'indextree/' + fp.filename
         fp.save(filename)
         return jsonify({'code': 0,
                         'msg': 'file upload success',

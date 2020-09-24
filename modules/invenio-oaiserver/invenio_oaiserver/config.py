@@ -116,6 +116,10 @@ OAISERVER_CELERY_TASK_CHUNK_SIZE = 100
 OAISERVER_CONTROL_NUMBER_FETCHER = 'recid'
 """PIDStore fetcher for the OAI ID control number."""
 
+OAISERVER_CONTROL_NUMBER_LEN = 8
+"""adds zeros (0) at the beginning of the the OAI ID control number,
+until it reaches the specified length."""
+
 OAISERVER_DESCRIPTIONS = []
 """Specify the optional description containers that can be used to express
 properties of the repository that are not covered by the standard response

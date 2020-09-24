@@ -19,6 +19,7 @@ from flask import abort, current_app, jsonify, render_template, request, \
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+from weko_accounts.utils import get_remote_addr
 
 
 class SitemapSettingView(BaseView):
@@ -36,7 +37,7 @@ class SitemapSettingView(BaseView):
         # Celery cannot access config
         task = update_sitemap.apply_async(args=(
             datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
-            {'ip_address': request.remote_addr,
+            {'ip_address': get_remote_addr(),
              'user_agent': request.user_agent.string,
              'user_id': (
                  current_user.get_id() if current_user.is_authenticated else None),

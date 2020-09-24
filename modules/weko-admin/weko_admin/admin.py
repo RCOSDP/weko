@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import copy
 import hashlib
 import json
 import os
@@ -73,8 +74,11 @@ class StyleSettingView(BaseView):
         footer_default_bg = 'rgba(13,95,137,0.8)'
         navbar_default_bg = '#f8f8f8'
         panel_default_border = '#ddd'
-        scss_file = os.path.join(current_app.static_folder,
-                                 'css/weko_theme/_variables.scss')
+        scss_file = os.path.join(
+            current_app.instance_path,
+            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            '_variables.scss')
+
         try:
             with open(scss_file, 'r', encoding='utf-8') as fp:
                 for line in fp.readlines():
@@ -126,6 +130,7 @@ class StyleSettingView(BaseView):
         """Upload header/footer settings from wysiwyg editor."""
         try:
             from html import unescape
+
             from weko_theme.views import blueprint as theme_bp
             write_path = folder_path = os.path.join(
                 theme_bp.root_path, theme_bp.template_folder)
@@ -552,7 +557,8 @@ class SearchSettingsView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Site license setting page."""
-        result = json.dumps(get_search_setting())
+        search_setting = get_search_setting()
+        result = json.dumps(copy.deepcopy(search_setting))
         if 'POST' in request.method:
             jfy = {}
             try:
@@ -567,7 +573,8 @@ class SearchSettingsView(BaseView):
                     SearchManagement.create(db_data)
                 jfy['status'] = 201
                 jfy['message'] = 'Search setting was successfully updated.'
-            except BaseException:
+            except BaseException as e:
+                current_app.logger.error('Could not save search settings', e)
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update search setting.'
             return make_response(jsonify(jfy), jfy['status'])
@@ -575,7 +582,7 @@ class SearchSettingsView(BaseView):
         try:
             return self.render(
                 current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
-                setting_data=result
+                setting_data=result,
             )
         except BaseException as e:
             current_app.logger.error('Could not save search settings', e)

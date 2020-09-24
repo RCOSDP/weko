@@ -37,8 +37,6 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
-from invenio_stats.utils import QueryItemRegReportHelper, \
-    QueryRecordViewReportHelper, QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -55,16 +53,15 @@ from werkzeug.utils import import_string
 from .permissions import item_permission
 from .utils import _get_max_export_items, export_items, get_current_user, \
     get_data_authors_prefix_settings, get_list_email, get_list_username, \
-    get_new_items_by_date, get_user_info_by_email, get_user_info_by_username, \
+    get_ranking, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, get_workflow_by_item_type_id, \
-    is_schema_include_key, parse_ranking_results, \
-    remove_excluded_items_in_json_schema, set_multi_language_name, \
-    to_files_js, translate_schema_form, translate_validation_message, \
-    update_index_tree_for_record, update_json_schema_by_activity_id, \
-    update_schema_form_by_activity_id, update_schema_remove_hidden_item, \
-    update_sub_items_by_user_role, validate_form_input_data, \
-    validate_save_title_and_share_user_id, validate_user, \
-    validate_user_mail_and_index
+    is_schema_include_key, remove_excluded_items_in_json_schema, \
+    set_multi_language_name, to_files_js, translate_schema_form, \
+    translate_validation_message, update_index_tree_for_record, \
+    update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
+    update_schema_remove_hidden_item, update_sub_items_by_user_role, \
+    validate_form_input_data, validate_save_title_and_share_user_id, \
+    validate_user, validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -95,6 +92,7 @@ def index(item_type_id=0):
     """
     try:
         from weko_theme.utils import get_design_layout
+
         # Get the design for widget rendering
         page, render_widgets = get_design_layout(
             current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -370,6 +368,7 @@ def items_index(pid_value='0'):
             else 'publish'
 
         from weko_theme.utils import get_design_layout
+
         # Get the design for widget rendering
         page, render_widgets = get_design_layout(
             current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -856,8 +855,8 @@ def prepare_edit_item():
                         code=err_code,
                         msg=_("This Item is being edited.")
                     )
-                from invenio_pidstore.models import PIDStatus
                 from invenio_pidrelations.models import PIDRelation
+                from invenio_pidstore.models import PIDStatus
                 pv = PIDVersioning(child=recid)
                 latest_pid = PIDVersioning(parent=pv.parent).get_children(
                     pid_status=PIDStatus.REGISTERED
@@ -925,78 +924,12 @@ def ranking():
     start_date = end_date - timedelta(days=int(settings.statistical_period))
 
     from weko_theme.utils import get_design_layout
+
     # Get the design for widget rendering -- Always default
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    rankings = {}
-    # most_reviewed_items
-    if settings.rankings['most_reviewed_items']:
-        result = QueryRecordViewReportHelper.get(
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'})
-        rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all',
-                                  title_key='record_name',
-                                  count_key='total_all', pid_key='pid_value')
-
-    # most_downloaded_items
-    if settings.rankings['most_downloaded_items']:
-        result = QueryItemRegReportHelper.get(
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            target_report='3',
-            unit='Item',
-            agg_size=settings.display_rank,
-            agg_sort={'_count': 'desc'})
-        rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='data', title_key='col2',
-                                  count_key='col3', pid_key='col1')
-
-    # created_most_items_user
-    if settings.rankings['created_most_items_user']:
-        result = QueryItemRegReportHelper.get(
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            target_report='0',
-            unit='User',
-            agg_size=settings.display_rank,
-            agg_sort={'_count': 'desc'})
-        rankings['created_most_items_user'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='data',
-                                  title_key='user_id', count_key='count')
-
-    # most_searched_keywords
-    if settings.rankings['most_searched_keywords']:
-        result = QuerySearchReportHelper.get(
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'}
-        )
-        rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all',
-                                  title_key='search_key', count_key='count')
-
-    # new_items
-    if settings.rankings['new_items']:
-        new_item_start_date = end_date - \
-            timedelta(days=int(settings.new_item_period) - 1)
-        if new_item_start_date < start_date:
-            new_item_start_date = start_date
-        result = get_new_items_by_date(
-            new_item_start_date.strftime('%Y-%m-%d'),
-            end_date.strftime('%Y-%m-%d'))
-        rankings['new_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all', title_key='record_name',
-                                  pid_key='pid_value', date_key='create_date')
+    rankings = get_ranking(settings)
 
     return render_template(
         current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
@@ -1076,6 +1009,7 @@ def export():
         community_id = comm.id
 
     from weko_theme.utils import get_design_layout
+
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -1243,3 +1177,14 @@ def newversion(pid_value='0'):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         db.session.rollback()
     return jsonify(success=True)
+
+
+@blueprint.route('/sessionvalidate', methods=['POST'])
+def session_validate():
+    """Validate the session."""
+    authorized = True if current_user and current_user.get_id() else False
+    result = {
+        "unauthorized": authorized,
+        "msg": _('Your session has timed out. Please login again.')
+    }
+    return jsonify(result)

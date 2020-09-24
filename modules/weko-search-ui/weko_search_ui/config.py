@@ -436,8 +436,8 @@ WEKO_ADMIN_LIFETIME_DEFAULT = 1800
 
 WEKO_IMPORT_EMAIL_PATTERN = \
     r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
-WEKO_IMPORT_PUBLISH_STATUS = ['publish', 'private']
-WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite']
+WEKO_IMPORT_PUBLISH_STATUS = ['public', 'private']
+WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
 WEKO_IMPORT_DOI_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){1,290}$"
 
 WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
@@ -451,3 +451,18 @@ WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION = '/code/modules/weko-sea
 WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME = 'change_identifier_mode'
 #: Change identifier mode file extension
 WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION = '.txt'
+
+WEKO_EXPORT_TEMPLATE_BASIC_ID = [
+    '#.id', '.uri', '.metadata.path[0]',
+    '.pos_index#1', '.publish_status', '.feedback_mail#1',
+    '.cnri', '.doi_ra', '.doi'
+]
+WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
+    '#ID', 'URI', '.IndexID#1',
+    '.POS_INDEX#1', '.PUBLISH_STATUS', '.FEEDBACK_MAIL#1',
+    '.CNRI', '.DOI_RA', '.DOI'
+]
+WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
+    '#', '', '',
+    '', 'Required', '', '', '', ''
+]

@@ -375,5 +375,5 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
 ]
 """Define of list license will be used."""
 
-WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR = '/static/'
+WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR = '/data/pdfcoverpage/'
 """Directory of Image Header of PDF."""

@@ -390,3 +390,7 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "KAKEN2" "KAKEN2" "https://kaken.nii.ac.jp/"
 # create-default-authors-prefix-settings-end
+
+# create-widget-bucket-begin
+${INVENIO_WEB_INSTANCE} widget init
+# create-widget-bucket-end
