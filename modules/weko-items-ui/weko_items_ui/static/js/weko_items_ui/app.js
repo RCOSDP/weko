@@ -1183,12 +1183,8 @@ function toObject(arr) {
             case 'workflow':
               resourceuri = "http://purl.org/coar/resource_type/c_393c";
               break;
-            case 'other（その他）':
+            case 'other':
               resourceuri = "http://purl.org/coar/resource_type/c_1843";
-              break;
-            case 'other（プレプリント）':
-              $("#resourceuri").prop('disabled', false);
-              resourceuri = "";
               break;
             // conference
             case 'conference object':
