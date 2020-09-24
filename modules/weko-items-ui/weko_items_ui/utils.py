@@ -2004,8 +2004,14 @@ def get_title_in_request(request_data, key, key_child):
     result = ''
     try:
         title = request_data.get('metainfo')
-        if title and key in title and key_child in title.get(key):
-            result = title.get(key).get(key_child)
+        if title and key in title:
+            title_value = title.get(key)
+            if type(title_value) == dict and key_child in title_value:
+                result = title_value.get(key_child)
+            elif type(title_value) == list and len(title_value) > 0:
+                title_value = title_value[0]
+                if key_child in title_value:
+                    result = title_value.get(key_child)
     except Exception:
         pass
     return result
