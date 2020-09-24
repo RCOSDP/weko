@@ -1726,77 +1726,11 @@ $(document).ready(function () {
         propertyKey = fixKey(propertyKey);
         formKey = fixKey(formKey);
         if(propertyKey == formKey){
-          subForm.title_i18n = properties[propKey].title_i18n;
-
-          subForm.required = properties[propKey].isRequired;
-          subForm.isShowList = properties[propKey].isShowList;
-          subForm.isSpecifyNewline = properties[propKey].isSpecifyNewline;
-          subForm.isHide = properties[propKey].isHide;
-
-          // subForm.type = properties[propKey].format;
-          let _enum;
-          if(properties[propKey].hasOwnProperty('currentEnum')){
-            _enum = properties[propKey]['currentEnum'];
-          } else if(properties[propKey].hasOwnProperty('enum')){
-            _enum = properties[propKey]['enum'];
-          }
-          if (_enum) {
-            let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
-            let titleMap = [];
-            $.each(list_enum, function(ind, val) {
-              if(val.length > 0){
-                titleMap.push({"name": val, "value": val});
-              }
-            });
-            subForm.titleMap = titleMap;
-          }
-
-          subForm.title_i18n_temp = properties[propKey].title_i18n_temp;
-
+          setInfoToPropertySchema(properties[propKey], subForm);
           setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], subForm.items, propertyKey);
-          // Rearrange data for form in case of radio, checkbox, select
-          if (properties[propKey].format == 'radios' || properties[propKey].format == 'select') {
-            if (properties[propKey].hasOwnProperty('items'))
-              delete itpSubSchema.items
-          }
-          if (properties[propKey].format == 'radios') {
-            subForm['templateUrl'] = radioTemplate
-            subForm.type = "template"
-          } else if (properties[propKey].format == 'checkboxes') {
-            properties[propKey]['items'] = {
-              type: "string",
-              enum: properties[propKey].enum
-            }
-            properties[propKey].type = "array";
-            subForm['templateUrl'] = checkboxTemplate
-            subForm.type = "template"
-            // Delete enum form properties to avoid schema validation error because of 2 enums
-            delete properties[propKey].enum
-          } else if (properties[propKey].format == 'select') {
-            subForm.type = "select"
-          }
           return false;
         }
       });
-    });
-  }
-
-  function removeEnumForCheckboxes(schema) {
-    Object.keys(schema).map(function (propKey) {
-      let isCheckboxFormat = schema[propKey].format == "checkboxes";
-      let isHasItem = schema[propKey].hasOwnProperty('items') && !isCheckboxFormat;
-      let isHasProperties = schema[propKey].hasOwnProperty('properties');
-      if(isCheckboxFormat && schema[propKey].hasOwnProperty('enum'))
-          delete schema[propKey].enum;
-      let properties;
-        if(isHasItem || isHasProperties) {
-          if(isHasItem) {
-            properties = schema[propKey].items.properties;
-          } else {
-            properties = schema[propKey].properties;
-          }
-          removeEnumForCheckboxes(properties);
-        }
     });
   }
 
@@ -1820,41 +1754,87 @@ $(document).ready(function () {
           propertyKey = fixKey(propertyKey);
           formKey = fixKey(formKey);
           if(propertyKey == formKey) {
-            form.title_i18n = properties[propKey].title_i18n;
-
-            form.required = properties[propKey].isRequired;
-            form.isShowList = properties[propKey].isShowList;
-            form.isSpecifyNewline = properties[propKey].isSpecifyNewline;
-            form.isHide = properties[propKey].isHide;
-
-            // form.type = properties[propKey].format;
-
-            let _enum;
-            if(properties[propKey].hasOwnProperty('currentEnum')){
-              _enum = properties[propKey]['currentEnum'];
-            } else if(properties[propKey].hasOwnProperty('enum')){
-              _enum = properties[propKey]['enum'];
-            }
-            if (_enum) {
-              let _enum = properties[propKey]['enum'];
-              let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
-              let titleMap = [];
-              $.each(list_enum, function(ind, val) {
-                if(val.length > 0){
-                  titleMap.push({"name": val, "value": val});
-                }
-              });
-              form.titleMap = titleMap;
-            }
-
-            form.title_i18n_temp = properties[propKey].title_i18n_temp;
-
+            setInfoToPropertySchema(properties[propKey], form);
             setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], form.items, propertyKey);
             return false;
           }
         });
       });
     }
+  }
+
+  function setInfoToPropertySchema(property, form) {
+    //Set title.
+    form.title_i18n = property.title_i18n;
+    form.title_i18n_temp = property.title_i18n_temp;
+    //Set option.
+    form.required = property.isRequired;
+    form.isShowList = property.isShowList;
+    form.isSpecifyNewline = property.isSpecifyNewline;
+    form.isHide = property.isHide;
+    //Set TitleMap for form.
+    let _enum, editAble;
+    editAble = property.hasOwnProperty('editAble') && property['editAble'];
+    if(property.hasOwnProperty('currentEnum')){
+      _enum = property['currentEnum'];
+    } else if(property.hasOwnProperty('enum')){
+      _enum = property['enum'];
+    }
+    if (editAble && _enum) {
+      let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
+      let titleMap = [];
+      $.each(list_enum, function(ind, val) {
+        if(val.length > 0){
+          titleMap.push({"name": val, "value": val});
+        }
+      });
+      form.titleMap = titleMap;
+    }
+    // Rearrange data for form in case of radio, checkbox, select
+    if (property.format == 'radios' || property.format == 'select') {
+      if (property.hasOwnProperty('items'))
+        delete property.items
+    }
+    if (property.format == 'radios') {
+      form['templateUrl'] = radioTemplate
+      form.type = "template"
+    } else if (property.format == 'checkboxes') {
+      property['items'] = {
+        type: "string",
+        enum: property.enum
+      }
+      property.type = "array";
+      form['templateUrl'] = checkboxTemplate;
+      form.type = "template";
+      // Delete enum form properties to avoid schema validation error because of 2 enums
+      delete property.enum
+    } else if (property.format == 'select') {
+      property.type="string";
+      form.type = "select";
+    }
+  }
+
+  function removeEnumForCheckboxes(schema) {
+    Object.keys(schema).map(function (propKey) {
+      if (schema[propKey].format == "radios" || schema[propKey].format == "select") {
+        schema[propKey].type = "string";
+      }else{
+        let isCheckboxFormat = schema[propKey].format == "checkboxes";
+        let isHasItem = schema[propKey].hasOwnProperty('items') && !isCheckboxFormat;
+        let isHasProperties = schema[propKey].hasOwnProperty('properties');
+        if (isCheckboxFormat && schema[propKey].hasOwnProperty('enum'))
+          delete schema[propKey].enum;
+        let properties;
+        if (isHasItem || isHasProperties) {
+          if (isHasItem) {
+            properties = schema[propKey].items.properties;
+          } else {
+              properties = schema[propKey].properties;
+            }
+            removeEnumForCheckboxes(properties);
+          }
+      }
+    });
   }
 
   function fixKey(key) {
