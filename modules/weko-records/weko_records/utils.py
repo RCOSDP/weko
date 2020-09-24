@@ -638,9 +638,10 @@ def check_has_attribute_value(node):
         return False
 
 
-def get_attribute_value_all_items(nlst, klst, is_author=False):
+def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
     """Convert and sort item list.
 
+    :param root_key:
     :param nlst:
     :param klst:
     :param is_author:
@@ -648,7 +649,8 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
     """
     def get_name(key):
         for lst in klst:
-            if key == lst[0].split('.')[-1]:
+            keys = lst[0].split('.')
+            if root_key == keys[0] and key == keys[-1]:
                 return lst[2] if not is_author else '{}.{}'. format(
                     key, lst[2])
 
