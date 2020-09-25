@@ -34,7 +34,8 @@ from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
 
-from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
+from .config import WEKO_BILLING_FILE_ACCESS, WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT, \
+    WEKO_BILLING_FILE_PROP_ATT
 from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
     has_system_admin_access, remove_xsd_prefix
@@ -246,8 +247,8 @@ class ItemTypePropertiesView(BaseView):
         """Renders an primitive property view."""
         lists = ItemTypeProps.get_records([])
         properties = lists.copy()
-        defaults_property_ids = current_app.config.get(
-            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_IDS')
+        defaults_property_ids = [prop.id for prop in lists if
+                                 prop.schema.get(WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT, None)]
         for item in lists:
             if item.id in defaults_property_ids:
                 properties.remove(item)
@@ -256,7 +257,7 @@ class ItemTypePropertiesView(BaseView):
             WEKO_BILLING_FILE_ACCESS)
         if not billing_perm or not billing_perm.is_active:
             for prop in properties:
-                if prop.id == WEKO_BILLING_FILE_PROP_ID:
+                if prop.schema.get(WEKO_BILLING_FILE_PROP_ATT, None):
                     properties.remove(prop)
 
         return self.render(
@@ -277,7 +278,7 @@ class ItemTypePropertiesView(BaseView):
             WEKO_BILLING_FILE_ACCESS)
         if not billing_perm or not billing_perm.is_active:
             for prop in props:
-                if prop.id == WEKO_BILLING_FILE_PROP_ID:
+                if prop.schema.get(WEKO_BILLING_FILE_PROP_ATT, None):
                     props.remove(prop)
 
         lists = {}

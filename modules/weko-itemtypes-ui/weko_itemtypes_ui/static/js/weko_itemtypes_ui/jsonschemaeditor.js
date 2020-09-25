@@ -159,7 +159,7 @@
 		propsToState: function propsToState(props) {
 			var data = props.data; //get enum for checkboxes
 			if (data.hasOwnProperty('enum') && data.enum.length > 0) {
-				data.enum = data.enum.join('|');
+				data.enum = typeof(data.enum) == 'object' ? data.enum.join('|') : data.enum;
 			} else {
 				data.enum = '';
 			}
@@ -170,6 +170,9 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
+      if (!this.state.editor) {
+        this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
+      }
 			this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
@@ -189,11 +192,15 @@
 				arr = this.state.enum.split('|');
 			}
 			return {
-				type: "array",
-				format: "checkboxes",
-				enum: arr
-			};
-		},
+        type: "array",
+        format: "checkboxes",
+        enum: arr,
+        items: {
+          type: "string",
+          enum: arr
+        }
+      };
+    },
 		render: function render() {
 			var self = this;
 			let is_write = self.state.hasOwnProperty('editAble') ? self.state.editAble : false;
@@ -222,7 +229,7 @@
 		propsToState: function propsToState(props) {
 			var data = props.data;
 			if (data.hasOwnProperty('enum') && data.enum.length > 0) {
-				data.enum = data.enum.join('|');
+				data.enum = typeof(data.enum) == 'object' ? data.enum.join('|') : data.enum;
 			} else {
 				data.enum = '';
 			}
@@ -233,6 +240,9 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
+      if (!this.state.editor) {
+        this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
+      }
 			this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
@@ -286,8 +296,8 @@
 		propsToState: function propsToState(props) {
 			var data = props.data;
 			if (data.hasOwnProperty('enum') && data.enum.length > 0) {
-				data.enum_original = data.enum;
-				data.enum = data.enum.join('|');
+				data.enum_original = typeof(data.enum) == 'object' ? data.enum : data.enum.split('|');
+				data.enum = typeof(data.enum) == 'object' ? data.enum.join('|') : data.enum;
 			} else {
 				data.enum = '';
 			}
@@ -451,7 +461,9 @@
 						title: ""
 					};
 				} else if ('checkboxes' === event.target.value || 'radios' === event.target.value || 'select' === event.target.value) {
-					this.state.propertyNames[i].enum = [];
+					if(this.state.editor){
+						this.state.propertyNames[i].enum = [];
+					}
 				} else if ('array' === event.target.value) {
 					this.state.propertyNames[i].type = event.target.value;
 					this.state.propertyNames[i].format = event.target.value;
@@ -598,7 +610,7 @@
 							key: parentkey + itemKey,
 							type: "template",
 							title: value.title,
-						  templateUrl: "/static/templates/weko_deposit/datepicker.html",
+              templateUrl: "/static/templates/weko_deposit/radios.html",
 							titleMap: self.refs['subitem' + index].exportTitleMap()
 						};
 					}  else if ('array' === value.format) {

@@ -54,15 +54,8 @@ WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
 WEKO_BILLING_FILE_ACCESS = 1
 """Show billing file property in list."""
 
-WEKO_BILLING_FILE_PROP_ID = 103
-"""Id of billing file property."""
+WEKO_BILLING_FILE_PROP_ATT = 'billing_file_prop'
+"""Attribute to detect billing file property."""
 
-WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_IDS = [3, 60, 62, 65, 102, 103]
-"""Ids of default properties
-    3 = Right Holder
-    60 = Creator / Author
-    62 = Contributor
-    65 = File
-    102 = Bibliographic information
-    103 = Billing File
-"""
+WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT = 'system_prop'
+"""Attribute to detect property is default property which is not shown at properties screen."""
