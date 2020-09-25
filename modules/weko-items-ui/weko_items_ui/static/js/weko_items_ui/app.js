@@ -1183,12 +1183,8 @@ function toObject(arr) {
             case 'workflow':
               resourceuri = "http://purl.org/coar/resource_type/c_393c";
               break;
-            case 'other（その他）':
+            case 'other':
               resourceuri = "http://purl.org/coar/resource_type/c_1843";
-              break;
-            case 'other（プレプリント）':
-              $("#resourceuri").prop('disabled', false);
-              resourceuri = "";
               break;
             // conference
             case 'conference object':
@@ -2153,10 +2149,12 @@ function toObject(arr) {
           model[filemeta_key].forEach(function (fileInfo) {
             if (fileInfo.filename == modelValue) {
               // Set information for「サイズ」and「フォーマット」.
+              fileInfo.url = {};
               if(filesObject[modelValue]){
                 fileInfo.filesize = [{}];
                 fileInfo.filesize[0].value = filesObject[modelValue].size;
                 fileInfo.format = filesObject[modelValue].format;
+                fileInfo.url.url = filesObject[modelValue].url;
               } else {
                 fileInfo.filesize = [{}];
                 fileInfo.filesize[0].value = '';
@@ -2169,6 +2167,63 @@ function toObject(arr) {
             }
           });
         });
+      }
+
+      //Set data for input control, this not change data to model.
+      $scope.setValueForInputControl = function (dictionaries, modelValue, inputControl) {
+        let exists = false;
+        $.map(dictionaries, function(val, key) {
+          if(key == modelValue){
+            $(inputControl).val(val);
+            exists = true;
+            return false;
+          }
+        });
+        if(!exists){
+          $(inputControl).val('');
+        }
+      }
+
+      //Set data for model base on input control.
+      $scope.setValueForModelByInputControl = function (inputControl) {
+        let ngModel = $(inputControl).attr('ng-model');
+        ngModel = ngModel.replace('model', '$rootScope.recordsVM.invenioRecordsModel');
+        let strSetModel = ngModel + '=$(inputControl).val();';
+        eval(strSetModel);
+      }
+
+      // This is callback function - Please do NOT change function name
+      $scope.changedVersionType = function ($event, modelValue) {
+        let curElement = event.target;
+        let parForm = $(curElement).parents('.schema-form-fieldset ')[0];
+        let txtVersionResource = $(parForm).find('.txt-version-resource')[0];
+        let dictionaries = {
+          'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
+          'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
+          'AM': 'http://purl.org/coar/version/c_ab4af688f83e57aa',
+          'P': 'http://purl.org/coar/version/c_fa2ee174bc00049f',
+          'VoR': 'http://purl.org/coar/version/c_970fb48d4fbd8a85',
+          'CVoR': 'http://purl.org/coar/version/c_e19f295774971610',
+          'EVoR': 'http://purl.org/coar/version/c_dc82b40f9837b551',
+          'NA': 'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
+        };
+        $scope.setValueForInputControl(dictionaries, modelValue, txtVersionResource);
+        $scope.setValueForModelByInputControl(txtVersionResource);
+      }
+
+      // This is callback function - Please do NOT change function name
+      $scope.changedAccessRights = function ($event, modelValue) {
+        let curElement = event.target;
+        let parForm = $(curElement).parents('.schema-form-fieldset ')[0];
+        let txtAccessRightsUri = $(parForm).find('.txt-access-rights-uri')[0];
+        let dictionaries = {
+          'embargoed access': 'http://purl.org/coar/access_right/c_f1cf',
+          'metadata only access': 'http://purl.org/coar/access_right/c_14cb',
+          'open access': 'http://purl.org/coar/access_right/c_abf2',
+          'restricted access': 'http://purl.org/coar/access_right/c_16ec'
+        };
+        $scope.setValueForInputControl(dictionaries, modelValue, txtAccessRightsUri);
+        $scope.setValueForModelByInputControl(txtAccessRightsUri);
       }
 
       $scope.updateNumFiles = function () {
@@ -2184,6 +2239,7 @@ function toObject(arr) {
           filesObject[file.key] = new Object();
           filesObject[file.key].size = $scope.bytesToReadableString(file.size);
           filesObject[file.key].format = file.mimetype;
+          filesObject[file.key].url = file.links.self;
         });
         return filesObject;
       }
