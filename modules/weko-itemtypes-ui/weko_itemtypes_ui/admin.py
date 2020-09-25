@@ -34,8 +34,8 @@ from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
 
-from .config import WEKO_BILLING_FILE_ACCESS, WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT, \
-    WEKO_BILLING_FILE_PROP_ATT
+from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
+    WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
 from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
     has_system_admin_access, remove_xsd_prefix
