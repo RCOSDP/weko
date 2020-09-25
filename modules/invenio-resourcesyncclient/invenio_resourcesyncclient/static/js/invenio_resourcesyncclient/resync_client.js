@@ -193,7 +193,7 @@ class ListResyncComponent extends React.Component {
           list_resource: res.data
         });
       })
-      .catch(() => alert("Error in get list"));
+      .catch(() => console.log("Error in get list"));
   }
 
   handleViewDetail(item) {
