@@ -3430,6 +3430,7 @@ function toObject(arr) {
         } else {
           this.saveDataJsonCallback(item_save_uri, startLoading);
         }
+        $scope.storeFilesToSession();
       };
 
       $scope.saveDataJsonCallback = function (item_save_uri, startLoading) {
