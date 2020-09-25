@@ -130,6 +130,9 @@ def get_tree_json(index_list, root_id):
     def generate_index_dict(index_element, is_root):
         """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
         index_dict = index_element._asdict()
+        index_name = str(index_element.name).replace("&EMPTY&", "")
+        index_name = Markup.escape(index_name)
+        index_name = index_name.replace("\n", r"<br\>")
 
         if not is_root:
             pid = str(index_element.pid)
@@ -141,11 +144,10 @@ def get_tree_json(index_list, root_id):
 
         list_index_expand = get_user_list_expand()
         is_expand_on_init = str(index_element.cid) in list_index_expand
-        index_sanitize_name = Markup.escape(index_element.name)
         index_dict.update({
             'id': str(index_element.cid),
-            'value': index_sanitize_name,
-            'name' : index_sanitize_name,
+            'value': index_name,
+            'name' : index_name,
             'position': index_element.position,
             'emitLoadNextLevel': False,
             'settings': {
@@ -502,3 +504,12 @@ def get_index_id(activity_id):
     else:
         index_tree_id = None
     return index_tree_id
+
+
+def sanitize(s):
+    s = s.strip()
+    esc_str = ""
+    for i in s:
+        if ord(i) in [9, 10, 13] or (31 < ord(i) and ord(i) != 127):
+            esc_str += i
+    return esc_str

@@ -38,7 +38,7 @@ from weko_groups.api import Group
 from .models import Index
 from .utils import cached_index_tree_json, filter_index_list_by_role, \
     get_index_id_list, get_publish_index_id_list, get_tree_json, \
-    get_user_roles, reset_tree
+    get_user_roles, reset_tree, sanitize
 
 
 class Indexes(object):
@@ -190,6 +190,8 @@ class Indexes(object):
                             v = datetime.strptime(v, '%Y%m%d')
                         else:
                             v = None
+                    if "index_name" in k or "index_name_english" in k:
+                        v = sanitize(v)
                     if "have_children" in k:
                         continue
                     setattr(index, k, v)

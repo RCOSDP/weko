@@ -393,8 +393,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         path_arr = navi.path.split('/')
         for path in path_arr:
             index = Indexes.get_index(index_id=path)
-            path_name_dict['ja'][path] = index.index_name
-            path_name_dict['en'][path] = index.index_name_english
+            idx_name = index.index_name
+            idx_name_en = index.index_name_english
+            path_name_dict['ja'][path] = idx_name.replace(
+                "\n", r"<br\>").replace("&EMPTY&", "")
+            path_name_dict['en'][path] = idx_name_en.replace(
+                "\n", "<br\>").replace("&EMPTY&", "")
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:
