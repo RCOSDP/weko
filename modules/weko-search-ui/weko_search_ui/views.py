@@ -268,7 +268,7 @@ def get_path_name_dict(path_str=''):
         index = Indexes.get_index(index_id=path)
         idx_name = index.index_name
         idx_name_en = index.index_name_english
-        if current_i18n.language == 'ja':
+        if current_i18n.language == 'ja' and idx_name:
             path_name_dict[path] = idx_name.replace(
                 "\n", r"<br\>").replace("&EMPTY&", "")
         else:

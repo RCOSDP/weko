@@ -393,7 +393,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         path_arr = navi.path.split('/')
         for path in path_arr:
             index = Indexes.get_index(index_id=path)
-            idx_name = index.index_name
+            idx_name = index.index_name or ""
             idx_name_en = index.index_name_english
             path_name_dict['ja'][path] = idx_name.replace(
                 "\n", r"<br\>").replace("&EMPTY&", "")
