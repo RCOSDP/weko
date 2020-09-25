@@ -507,7 +507,7 @@ class SchemaTree:
             return klst
 
         def analyze_value_with_exp(nlst, exp):
-            """Get many value with exp """
+            """Get many value with exp."""
             is_next = True
             glst = []
             for lst in nlst:
@@ -811,7 +811,7 @@ class SchemaTree:
                 mpdic = value_item_parent.get(
                     self._schema_name) \
                     if self._schema_name in value_item_parent else ''
-                if mpdic is "" or (
+                if mpdic == "" or (
                     self._ignore_list and key_item_parent
                         in self._ignore_list):
                     continue
@@ -1126,7 +1126,7 @@ class SchemaTree:
             root = E.Weko()
             root.text = "Sorry! This Item has not been mappinged."
             return root
-
+        self.support_for_output_xml(self._record)
         list_json_xml = self.__get_value_list(remove_empty=True)
         if self._schema_name == current_app.config[
                 'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
@@ -1191,6 +1191,42 @@ class SchemaTree:
                 k = get_prefix(k)
                 set_children(k, v, root, [k])
         return root
+
+    def __sanitize_str(self, s: str):
+        """Sanitize a string.
+
+        :param s:
+        :return:
+        """
+        def __replace_str(_s_str: str):
+            _s_str = _s_str.replace("&EMPTY&", "")
+            return _s_str
+
+        s = s.strip()
+        esc_str = ""
+        for i in s:
+            if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
+                esc_str += i
+        esc_str = __replace_str(esc_str)
+        return esc_str.strip()
+
+    def support_for_output_xml(self, data):
+        """Support for output XML.
+
+        :param data:
+        """
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, str):
+                    data[k] = self.__sanitize_str(v)
+                else:
+                    self.support_for_output_xml(v)
+        elif isinstance(data, list):
+            for i in range(len(data)):
+                if isinstance(data[i], str):
+                    data[i] = self.__sanitize_str(data[i])
+                else:
+                    self.support_for_output_xml(data[i])
 
     def to_list(self):
         """Get a elementName List."""

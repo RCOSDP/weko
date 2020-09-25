@@ -19,13 +19,14 @@
 #}
 
 {% macro output_bibliographic_information(lst) %}
+{% autoescape false %}
   <tr>
     <th scope="row" colspan="6">{{ lst['attribute_name_i18n'] }}</th>
     <td>
       {%- for l in lst['attribute_value_mlt'] %}
         {% for source_title in l.get('title_attribute_name') %}
           {% if source_title != '' %}
-            {{ source_title }} <br>
+            {{ source_title | escape_str }} <br>
           {% endif %}
         {% endfor %}
         {% if not (l.get('title_attribute_name')|length == 1 and l.get('title_attribute_name')[0] == "") and l.get('magazine_attribute_name') |length > 0 %}
@@ -35,9 +36,9 @@
         {% for magazine in l.get('magazine_attribute_name') %}
           {% for key, value in magazine.items() %}
             {% if count|length + 1 == l.get('length') %}
-              {{ key }} {{ value }}
+              {{ key | escape_str }} {{ value | escape_str }}
             {% else %}
-              {{ key }} {{ value }}{{ ', ' }}
+              {{ key | escape_str }} {{ value | escape_str }}{{ ', ' }}
             {% endif %}
             {% set var = count.append(1) %}
           {% endfor %}
@@ -45,4 +46,5 @@
       {%- endfor -%}
     </td>
   </tr>
+{% endautoescape %}
 {% endmacro %}

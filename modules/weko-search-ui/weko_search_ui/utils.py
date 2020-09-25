@@ -438,10 +438,10 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
         for num, row in enumerate(tsvfile, start=1):
             data_row = row.rstrip('\n').split('\t')
             if num == 1:
-                if data_row[-1] and data_row[-1].split('/')[-1]:
-                    item_type_id = data_row[-1].split('/')[-1]
+                if data_row[2] and data_row[2].split('/')[-1]:
+                    item_type_id = data_row[2].split('/')[-1]
                     check_item_type = get_item_type(int(item_type_id))
-                    schema = data_row[-1]
+                    schema = data_row[2]
                     if not check_item_type:
                         result['item_type_schema'] = {}
                     else:
@@ -451,7 +451,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                 item_path = data_row
             elif num == 3:
                 item_path_name = data_row
-            elif num == 4 and row.startswith('#'):
+            elif (num == 4 or num == 5) and row.startswith('#'):
                 continue
             else:
                 data_parse_metadata = parse_to_json_form(
@@ -717,11 +717,8 @@ def make_tsv_by_line(lines):
     """Make TSV file."""
     tsv_output = StringIO()
 
-    writer = csv.writer(tsv_output, delimiter='\t',
-                        lineterminator="\n")
-
-    for line in lines:
-        writer.writerow(line)
+    writer = csv.writer(tsv_output, delimiter='\t')
+    writer.writerows(lines)
 
     return tsv_output
 
@@ -1117,7 +1114,7 @@ def handle_check_and_prepare_index_tree(list_record):
     errors = []
     warnings = []
 
-    def check(index_ids, index_names, parent_id=0, isRoot=False):
+    def check(index_ids, index_names, parent_id=0, is_root=False):
         index_id = index_ids[0]
         index_name = index_names[0]
         index = None
@@ -1127,8 +1124,8 @@ def handle_check_and_prepare_index_tree(list_record):
             current_app.logger.warning("Specified IndexID is invalid!")
 
         if index and (
-            (isRoot and not index.parent)
-            or (not isRoot and parent_id and index.parent == parent_id)
+            (is_root and not index.parent)
+            or (not is_root and parent_id and index.parent == parent_id)
         ):
             if index.index_name != index_name:
                 warnings.append(
@@ -1360,8 +1357,6 @@ def handle_check_doi_ra(list_record):
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
-                if item.get('status') != 'new':
-                    error = check_existed(item_id, doi_ra)
             else:
                 if item.get('status') == 'new':
                     if item.get('doi'):
@@ -1413,8 +1408,8 @@ def handle_check_doi(list_record):
                         if not doi:
                             error = _('Please specify {}.').format('DOI')
                         elif not pid_doi.pid_value.endswith(doi):
-                            error = _('Specified {} is different '
-                                      + 'from existing {}.').format('DOI', 'DOI')
+                            error = _('Specified {} is different from'
+                                      + ' existing {}.').format('DOI', 'DOI')
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1534,7 +1529,7 @@ def register_item_doi(item):
                     'identifier_grant_ndl_jalc_doi_link':
                         IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
                 }
-                if status != 'new' and pid_doi:
+                if pid_doi:
                     pid_doi.delete()
                 saving_doi_pidstore(
                     pid_lastest.object_uuid,
@@ -2034,3 +2029,59 @@ def get_change_identifier_mode_content():
     except FileNotFoundError as ex:
         current_app.logger.error(str(ex))
     return data
+
+
+def get_root_item_option(item_id, item):
+    """Handle if is root item."""
+    _id = '.metadata.{}'.format(item_id)
+    _name = item.get('title')
+
+    _option = []
+    if item.get('option').get('required'):
+        _option.append('Required')
+    if item.get('option').get('hidden'):
+        _option.append('Hide')
+    if item.get('option').get('multiple'):
+        _option.append('Allow Multiple')
+        _id += '[0]'
+        _name += '#1'
+
+    return _id, _name, _option
+
+
+def get_sub_item_option(key, schemaform):
+    """Get sub-item option."""
+    _option = None
+    for item in schemaform:
+        if not item.get('items'):
+            if item.get('key') == key:
+                _option = []
+                if item.get('required'):
+                    _option.append('Required')
+                if item.get('isHide'):
+                    _option.append('Hide')
+                break
+        else:
+            _option = get_sub_item_option(
+                key, item.get('items'))
+            if _option is not None:
+                break
+    return _option
+
+
+def check_sub_item_is_system(key, schemaform):
+    """Check the sub-item is system."""
+    is_system = None
+    for item in schemaform:
+        if not item.get('items'):
+            if item.get('key') == key:
+                is_system = False
+                if item.get('readonly'):
+                    is_system = True
+                break
+        else:
+            is_system = check_sub_item_is_system(
+                key, item.get('items'))
+            if is_system is not None:
+                break
+    return is_system

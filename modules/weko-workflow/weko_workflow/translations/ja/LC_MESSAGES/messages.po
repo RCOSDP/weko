@@ -521,3 +521,6 @@ msgstr "このアクティビティはロック中です（{}）。"
 
 msgid "Do you want to unlock this activity?"
 msgstr "このアクティビティのロックを解除してよろしいでしょうか。"
+
+msgid "Your session has timed out. Please login again."
+msgstr "セッションが切れました。再度ログインしてください。"
