@@ -399,6 +399,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 "\n", r"<br\>").replace("&EMPTY&", "")
             path_name_dict['en'][path] = idx_name_en.replace(
                 "\n", r"<br\>").replace("&EMPTY&", "")
+            if not path_name_dict['ja'][path]:
+                path_name_dict['ja'][path] = path_name_dict['en'][path]
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:
