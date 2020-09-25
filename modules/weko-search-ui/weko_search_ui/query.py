@@ -355,8 +355,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
-        multi_cont_q = Q('multi_match', query=qstr, operator='and',
+        multi_cont_q = Q('query_string', query=qstr,
                          fields=['content.attachment.content'])
+        #multi_cont_q = Q('multi_match', query=qstr, operator='and',
+        #                 fields=['content.attachment.content'])
 
         # Search fields may increase so leaving as multi
         multi_q = Q('query_string', query=qs, default_operator='and',
