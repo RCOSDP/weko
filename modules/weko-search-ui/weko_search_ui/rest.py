@@ -252,7 +252,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             m = 0
             for k in range(len(agp)):
                 if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name if lang == "ja" else p.name_en
+                    agp[k]["name"] = p.name if p.name and lang == "ja" \
+                        else p.name_en
                     date_range = agp[k].pop("date_range")
                     no_available = agp[k].pop("no_available")
                     pub = dict()
@@ -279,7 +280,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nd = {
                     'doc_count': 0,
                     'key': p.path,
-                    'name': p.name if lang == "ja" else p.name_en,
+                    'name': p.name if p.name and lang == "ja" else p.name_en,
                     'date_range': {
                         'pub_cnt': 0,
                         'un_pub_cnt': 0},
