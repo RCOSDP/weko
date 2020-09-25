@@ -147,7 +147,7 @@ def get_tree_json(index_list, root_id):
         index_dict.update({
             'id': str(index_element.cid),
             'value': index_name,
-            'name' : index_name,
+            'name': index_name,
             'position': index_element.position,
             'emitLoadNextLevel': False,
             'settings': {
@@ -507,6 +507,7 @@ def get_index_id(activity_id):
 
 
 def sanitize(s):
+    """Sanitize input string."""
     s = s.strip()
     esc_str = ""
     for i in s:

@@ -273,5 +273,5 @@ def get_path_name_dict(path_str=''):
                 "\n", r"<br\>").replace("&EMPTY&", "")
         else:
             path_name_dict[path] = idx_name_en.replace(
-                "\n", "<br\>").replace("&EMPTY&", "")
+                "\n", r"<br\>").replace("&EMPTY&", "")
     return jsonify(path_name_dict)
