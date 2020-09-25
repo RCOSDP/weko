@@ -774,7 +774,7 @@
 											id: "txt_title_ja_item_" + itemKey,
 											'data-index': index,
 											disabled: false,
-											defaultValue: value.title_i18n.ja,
+											value: value.title_i18n.ja,
 											onChange: self.changeItem,
 											style: {width: "305px !important"}
 										}
@@ -787,7 +787,7 @@
 											id: "txt_title_en_item_" + itemKey,
 											'data-index': index,
 											disabled: false,
-											defaultValue: value.title_i18n.en,
+											value: value.title_i18n.en,
 											onChange: self.changeItem,
 											style: {width: "305px !important"}
 										}

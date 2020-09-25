@@ -1017,6 +1017,29 @@ $(document).ready(function () {
     });
   }
 
+  function setDefaultI18n(schema, forms) {
+    if (schema == undefined || forms == undefined)
+      return;
+    Object.keys(schema).map(function (subSchema) {
+      forms.items.forEach(function (subForm) {
+        let subkey = subForm.key.split(".");
+        let last_key = subkey[subkey.length - 1]
+        if (last_key == subSchema) {
+          if (subForm.hasOwnProperty('title_i18n')) {
+            schema[subSchema]['title_i18n'] = subForm['title_i18n'];
+          }
+          else{
+            schema[subSchema]['title_i18n'] = { "ja": schema[subSchema]['title'], "en": schema[subSchema]['title'] }
+          }
+          let childSchema = getPropertiesOrItems(schema[subSchema]);
+          if (childSchema != null) {
+            setDefaultI18n(childSchema, subForm)
+          }
+        }
+      });
+    });
+  }
+
 
   // itemtype select input change
   $('#tbody_itemtype').on('change', '.change_input_type', function(){
@@ -1025,6 +1048,7 @@ $(document).ready(function () {
     let checkboxMetaId = $('#chk_' + meta_id + '_1');
     if($(this).val().indexOf('cus_') != -1) {
       let product = properties_obj[$(this).val().substr(4)].schema;
+      let product_forms = properties_obj[$(this).val().substr(4)].forms;
       isAllowMultiple = properties_obj[$(this).val().substr(4)].is_file;
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       if (isAllowMultiple) {
@@ -1033,6 +1057,7 @@ $(document).ready(function () {
         checkboxMetaId.attr('disabled', false);
       }
       checkboxMetaId.prop("checked", isAllowMultiple);
+      setDefaultI18n(product.properties, product_forms);
       setUniqueKey(product.properties, meta_id);
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
