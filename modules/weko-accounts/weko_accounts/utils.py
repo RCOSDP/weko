@@ -37,9 +37,9 @@ def get_remote_addr():
     if address is None:
         address = request.headers.get('X-Forwarded-For', request.remote_addr)
         if address is not None:
-            address = address.encode('utf-8').split(b',')[0].strip()
+            address = address.encode('utf-8').split(b',')[0].strip().decode()
 
-    return address.decode()
+    return address
 
 
 def generate_random_str(length=128):
