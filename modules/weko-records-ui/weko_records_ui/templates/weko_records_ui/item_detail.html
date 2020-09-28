@@ -58,7 +58,7 @@
                  {{ output_bibliographic_information(lst) }}
               {% else %}
                   {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' %}
-                    {%- if lst['attribute_value'] is string or lst['attribute_value'] or lst['attribute_value_mlt']|length > 0 and lst['attribute_type'] != 'file' -%}
+                    {%- if lst['attribute_value'] is string or lst['attribute_value'] or lst['attribute_value_mlt']|length > 0 -%}
                     <tr>
                       <th scope="row"
                           colspan="6">{{ lst['attribute_name_i18n'] }}</th>

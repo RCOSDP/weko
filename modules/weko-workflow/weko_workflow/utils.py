@@ -203,7 +203,6 @@ def item_metadata_validation(item_id, identifier_type):
         return None
 
     ddi_item_type_name = 'DDI'
-    journalarticle_nameid = [3, 5, 9]
     journalarticle_type = ['other（プレプリント）', 'conference paper',
                            'data paper', 'departmental bulletin paper',
                            'editorial', 'journal article', 'periodical',
@@ -213,9 +212,7 @@ def item_metadata_validation(item_id, identifier_type):
     report_types = ['technical report', 'research report', 'report',
                     'book', 'book part']
     elearning_type = ['learning material']
-    dataset_nameid = [4]
     dataset_type = ['software', 'dataset']
-    datageneral_nameid = [1, 10]
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',
                          'musical notation', 'research proposal',
@@ -263,12 +260,10 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if item_type.name_id in journalarticle_nameid \
-            or resource_type in journalarticle_type \
+        if resource_type in journalarticle_type \
             or resource_type in report_types \
             or (resource_type in elearning_type) \
-            or (item_type.name_id in datageneral_nameid
-                or resource_type in datageneral_types):
+                or resource_type in datageneral_types:
             required_properties = ['title']
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
@@ -279,8 +274,7 @@ def item_metadata_validation(item_id, identifier_type):
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
-        elif item_type.name_id in dataset_nameid \
-                or resource_type in dataset_type:
+        elif resource_type in dataset_type:
             required_properties = ['title',
                                    'givenName']
             if item_type.item_type_name.name != ddi_item_type_name:
@@ -290,8 +284,7 @@ def item_metadata_validation(item_id, identifier_type):
                                  'geoLocationPlace']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
-        if item_type.name_id in journalarticle_nameid or resource_type in \
-                journalarticle_type:
+        if resource_type in journalarticle_type:
             required_properties = ['title',
                                    'publisher',
                                    'sourceIdentifier',

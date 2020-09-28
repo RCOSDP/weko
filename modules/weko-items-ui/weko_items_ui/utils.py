@@ -52,7 +52,7 @@ from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import get_index_id
-from weko_records.api import FeedbackMailList, ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission
@@ -60,7 +60,7 @@ from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
-from weko_workflow.api import WorkActivity
+from weko_workflow.api import WorkActivity, WorkFlow
 from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.utils import IdentifierHandle
 
@@ -2156,3 +2156,60 @@ def get_ranking(settings):
                                   pid_key='pid_value', date_key='create_date')
 
     return rankings
+
+
+def save_title(activity_id, request_data):
+    """Save title.
+
+    :param activity_id: activity id.
+    :param request_data: request data.
+    :return:
+    """
+    activity = WorkActivity()
+    db_activity = activity.get_activity_detail(activity_id)
+    item_type_id = db_activity.workflow.itemtype.id
+    if item_type_id:
+        item_type_mapping = Mapping.get_record(item_type_id)
+        key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
+    if key and key_child:
+        title = get_title_in_request(request_data, key, key_child)
+        activity.update_title(activity_id, title)
+
+
+def get_key_title_in_item_type_mapping(item_type_mapping):
+    """Get key title in item type mapping.
+
+    :param item_type_mapping: item type mapping.
+    :return:
+    """
+    for mapping_key in item_type_mapping:
+        property_data = item_type_mapping.get(mapping_key).get('jpcoar_mapping')
+        if isinstance(property_data,
+                      dict) and 'title' in property_data and property_data.get(
+                'title').get('@value'):
+            return mapping_key, property_data.get('title').get('@value')
+    return None, None
+
+
+def get_title_in_request(request_data, key, key_child):
+    """Get title in request.
+
+    :param request_data: activity id.
+    :param key: key of title.
+    :param key_child: key child of title.
+    :return:
+    """
+    result = ''
+    try:
+        title = request_data.get('metainfo')
+        if title and key in title:
+            title_value = title.get(key)
+            if type(title_value) == dict and key_child in title_value:
+                result = title_value.get(key_child)
+            elif type(title_value) == list and len(title_value) > 0:
+                title_value = title_value[0]
+                if key_child in title_value:
+                    result = title_value.get(key_child)
+    except Exception:
+        pass
+    return result

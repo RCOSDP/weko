@@ -1339,7 +1339,11 @@ class SchemaTree:
                                         node.update({self._atr: atr})
                         except StopIteration:
                             pass
-                nlst.append({k: nv})
+                version_type = current_app.config['WEKO_SCHEMA_VERSION_TYPE']
+                if k == version_type['modified']:
+                    nlst.append({version_type['original']: nv})
+                else:
+                    nlst.append({k: nv})
         return nlst
         # end
 

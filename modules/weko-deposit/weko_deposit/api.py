@@ -1187,6 +1187,7 @@ class WekoRecord(Record):
                     else:
                         nval['attribute_value_mlt'] = \
                             get_attribute_value_all_items(
+                                key,
                                 copy.deepcopy(mlt),
                                 copy.deepcopy(solst),
                                 is_author)

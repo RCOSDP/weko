@@ -55,7 +55,7 @@ from .utils import _get_max_export_items, export_items, get_current_user, \
     get_data_authors_prefix_settings, get_list_email, get_list_username, \
     get_ranking, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, get_workflow_by_item_type_id, \
-    is_schema_include_key, remove_excluded_items_in_json_schema, \
+    is_schema_include_key, remove_excluded_items_in_json_schema, save_title, \
     set_multi_language_name, to_files_js, translate_schema_form, \
     translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
@@ -196,6 +196,7 @@ def iframe_save_model():
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
+            save_title(activity_id, data)
             sessionstore = RedisStore(redis.StrictRedis.from_url(
                 'redis://{host}:{port}/1'.format(
                     host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
