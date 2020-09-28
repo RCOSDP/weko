@@ -1005,6 +1005,42 @@ $(document).ready(function () {
     }
   });
 
+  function setUniqueKey(schema, parentkey) {
+    if (schema == undefined)
+      return;
+    Object.keys(schema).map(function (itSubSchema) {
+      schema[itSubSchema]['uniqueKey'] = parentkey + "_" + itSubSchema;
+      let childSchema = getPropertiesOrItems( schema[itSubSchema]);
+      if (childSchema != null) {
+        setUniqueKey(childSchema, itSubSchema)
+      }
+    });
+  }
+
+  function setDefaultI18n(schema, forms) {
+    if (schema == undefined || forms == undefined)
+      return;
+    Object.keys(schema).map(function (subSchema) {
+      forms.items.forEach(function (subForm) {
+        let subkey = subForm.key.split(".");
+        let last_key = subkey[subkey.length - 1]
+        if (last_key == subSchema) {
+          if (subForm.hasOwnProperty('title_i18n')) {
+            schema[subSchema]['title_i18n'] = subForm['title_i18n'];
+          }
+          else{
+            schema[subSchema]['title_i18n'] = { "ja": schema[subSchema]['title'], "en": schema[subSchema]['title'] }
+          }
+          let childSchema = getPropertiesOrItems(schema[subSchema]);
+          if (childSchema != null) {
+            setDefaultI18n(childSchema, subForm)
+          }
+        }
+      });
+    });
+  }
+
+
   // itemtype select input change
   $('#tbody_itemtype').on('change', '.change_input_type', function(){
     var meta_id = $(this).attr('metaid');
@@ -1012,6 +1048,7 @@ $(document).ready(function () {
     let checkboxMetaId = $('#chk_' + meta_id + '_1');
     if($(this).val().indexOf('cus_') != -1) {
       let product = properties_obj[$(this).val().substr(4)].schema;
+      let product_forms = properties_obj[$(this).val().substr(4)].forms;
       isAllowMultiple = properties_obj[$(this).val().substr(4)].is_file;
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       if (isAllowMultiple) {
@@ -1020,6 +1057,8 @@ $(document).ready(function () {
         checkboxMetaId.attr('disabled', false);
       }
       checkboxMetaId.prop("checked", isAllowMultiple);
+      setDefaultI18n(product.properties, product_forms);
+      setUniqueKey(product.properties, meta_id);
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
@@ -1526,65 +1565,65 @@ $(document).ready(function () {
     getChangedProperties(itemTypePropertyForm, itemTypeForm, changedProperties);
   }
 
-  function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
+
+    function getPropertiesOrItems(schema) {
     // Checkboxes format has 'items' but it's not actual items. So ignore it
-    let isCheckboxFormat = schemaProperties.format == "checkboxes";
-    let isHasItem = schemaProperties.hasOwnProperty('items') && !isCheckboxFormat;
-    let isHasProperties = schemaProperties.hasOwnProperty('properties');
-    let propertyKey, properties;
-    if(isHasItem || isHasProperties) {
-      if(isHasItem) {
-        properties = schemaProperties.items.properties;
+    let isCheckboxFormat = schema.format == "checkboxes";
+    let isHasItem = schema.hasOwnProperty('items') && !isCheckboxFormat;
+    let isHasProperties = schema.hasOwnProperty('properties');
+    let properties;
+    if (isHasItem || isHasProperties) {
+      if (isHasItem) {
+        properties = schema.items.properties;
       } else {
-        properties = schemaProperties.properties;
+        properties = schema.properties;
       }
-      Object.keys(properties).map(function (propKey) {
-        let propertyKey = prefixKey + '.' + propKey;
-        propertyKey = fixKey(propertyKey);
-        properties[propKey].uniqueKey = propertyKey;
-        $.each(subForms, function(ind, form) {
-          formKey = !form.key ? '' : form.key;
-          formKey = fixKey(formKey);
-          if(propertyKey == formKey) {
-            setInfoToSchema(properties[propKey], form, propertyKey);
-            setTitleI18nForSubPropertiesByCondition1(properties[propKey], form.items, propertyKey);
-            return false;
-          }
-        });
-      });
+      return properties;
     }
+    return null;
+  }
+
+  function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
+    let properties = getPropertiesOrItems(schemaProperties);
+    if (properties == null)
+      return;
+    Object.keys(properties).map(function (propKey) {
+      let propertyKey = prefixKey + '.' + propKey;
+      propertyKey = fixKey(propertyKey);
+      properties[propKey].uniqueKey = propertyKey;
+      $.each(subForms, function (ind, form) {
+        formKey = !form.key ? '' : form.key;
+        formKey = fixKey(formKey);
+        if (propertyKey == formKey) {
+          setInfoToSchema(properties[propKey], form, propertyKey);
+          setTitleI18nForSubPropertiesByCondition1(properties[propKey], form.items, propertyKey);
+          return false;
+        }
+      });
+    });
   }
 
   function setTitleI18nForSubPropertiesByCondition2(schemaProperties, subForms, prefixKey) {
-    // Checkboxes format has 'items' but it's not actual items. So ignore it
-    let isCheckboxFormat = schemaProperties.format == "checkboxes";
-    let isHasItem = schemaProperties.hasOwnProperty('items') && !isCheckboxFormat;
-    let isHasProperties = schemaProperties.hasOwnProperty('properties');
+    let properties = getPropertiesOrItems(schemaProperties);
+    if (properties == null)
+      return;
     let titleI118nDefault = {'ja': '', 'en': ''};
-    let propertyKey, properties;
-    if(isHasItem || isHasProperties) {
-      if(isHasItem) {
-        properties = schemaProperties.items.properties;
-      } else {
-        properties = schemaProperties.properties;
-      }
-      Object.keys(properties).map(function (propKey) {
-        $.each(subForms, function(ind, form) {
-          // define sub key.
-          propertyKey = prefixKey + '.' + propKey;
-          formKey = !form.key ? '' : form.key;
-          // Remove all [] in key.
-          propertyKey = fixKey(propertyKey);
-          formKey = fixKey(formKey);
-          if(propertyKey == formKey) {
-            checkAndSetTitleI18nForSchema(properties[propKey], form);
-            // Check and set title_i18n for child item.
-            setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
-            return false;
-          }
-        });
+    Object.keys(properties).map(function (propKey) {
+      $.each(subForms, function (ind, form) {
+        // define sub key.
+        let propertyKey = prefixKey + '.' + propKey;
+        formKey = !form.key ? '' : form.key;
+        // Remove all [] in key.
+        propertyKey = fixKey(propertyKey);
+        formKey = fixKey(formKey);
+        if (propertyKey == formKey) {
+          checkAndSetTitleI18nForSchema(properties[propKey], form);
+          // Check and set title_i18n for child item.
+          setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
+          return false;
+        }
       });
-    }
+    });
   }
 
   function getChangedProperties(itpForms, itForms, changedProperties) {
@@ -1735,32 +1774,26 @@ $(document).ready(function () {
   }
 
   function setTitleI18nFromPropertiesSchemaToSubForm(schemaProperties, subForms, prefixKey) {
-    let isCheckboxFormat = schemaProperties.format == "checkboxes";
-    let isHasItem = schemaProperties.hasOwnProperty('items') && !isCheckboxFormat;
-    let isHasProperties = schemaProperties.hasOwnProperty('properties');
-    let propertyKey, properties;
-    if(isHasItem || isHasProperties) {
-      if(isHasItem) {
-        properties = schemaProperties.items.properties;
-      } else {
-        properties = schemaProperties.properties;
-      }
-      Object.keys(properties).map(function (propKey) {
-        $.each(subForms, function(ind, form) {
-          // define sub key.
-          propertyKey = prefixKey + '.' + propKey;
-          formKey = !form.key ? '' : form.key;
-          // Remove all [] in key.
-          propertyKey = fixKey(propertyKey);
-          formKey = fixKey(formKey);
-          if(propertyKey == formKey) {
-            setInfoToPropertySchema(properties[propKey], form);
-            setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], form.items, propertyKey);
-            return false;
-          }
-        });
-      });
+    let properties = getPropertiesOrItems(schemaProperties);
+    if (properties == null) {
+      return;
     }
+    let propertyKey;
+    Object.keys(properties).map(function (propKey) {
+      $.each(subForms, function (ind, form) {
+        // define sub key.
+        propertyKey = prefixKey + '.' + propKey;
+        formKey = !form.key ? '' : form.key;
+        // Remove all [] in key.
+        propertyKey = fixKey(propertyKey);
+        formKey = fixKey(formKey);
+        if (propertyKey == formKey) {
+          setInfoToPropertySchema(properties[propKey], form);
+          setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], form.items, propertyKey);
+          return false;
+        }
+      });
+    });
   }
 
   function setInfoToPropertySchema(property, form) {
@@ -1818,21 +1851,13 @@ $(document).ready(function () {
     Object.keys(schema).map(function (propKey) {
       if (schema[propKey].format == "radios" || schema[propKey].format == "select") {
         schema[propKey].type = "string";
-      }else{
-        let isCheckboxFormat = schema[propKey].format == "checkboxes";
-        let isHasItem = schema[propKey].hasOwnProperty('items') && !isCheckboxFormat;
-        let isHasProperties = schema[propKey].hasOwnProperty('properties');
-        if (isCheckboxFormat && schema[propKey].hasOwnProperty('enum'))
+      } else {
+        let properties = getPropertiesOrItems(schema[propKey]);
+        if (schema[propKey].format == "checkboxes" && schema[propKey].hasOwnProperty('enum'))
           delete schema[propKey].enum;
-        let properties;
-        if (isHasItem || isHasProperties) {
-          if (isHasItem) {
-            properties = schema[propKey].items.properties;
-          } else {
-              properties = schema[propKey].properties;
-            }
-            removeEnumForCheckboxes(properties);
-          }
+        if (properties != null) {
+          removeEnumForCheckboxes(properties);
+        }
       }
     });
   }
