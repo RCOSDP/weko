@@ -585,6 +585,8 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': ['CC', 'BY', 'CC', 'BY-SA', 'CC', 'BY-ND', 'CC', 'BY-NC', 'CC',
                      'BY-NC-SA', 'ANY', 'CC0', 'licensefree', 'CC', 'BY-NC-ND'],
          'check_val':[
+             {'id': 'licensefree', 'contents': 'licensefree'},
+             {'id': 'CC0', 'contents': 'CC0'},
              {'id': 'CC BY 3.0', 'contents': 'CC BY 3.0'},
              {'id': 'CC BY-SA 3.0', 'contents': 'CC BY-SA 3.0'},
              {'id': 'CC BY-ND 3.0', 'contents': 'CC BY-ND 3.0'},
@@ -596,9 +598,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
              {'id': 'CC BY-ND 4.0', 'contents': 'CC BY-ND 4.0'},
              {'id': 'CC BY-NC 4.0', 'contents': 'CC BY-NC 4.0'},
              {'id': 'CC BY-NC-SA 4.0', 'contents': 'CC BY-NC-SA 4.0'},
-             {'id': 'CC0', 'contents': 'CC0'},
-             {'id': 'licensefree', 'contents': 'licensefree'},
-             {'id': 'CC BY-NC-ND 4.0', 'contents': 'CC BY-NC-ND 4.0'},
+             {'id': 'CC BY-NC-ND 4.0', 'contents': 'CC BY-NC-ND 4.0'}
          ], 'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''}
     ]
 }
