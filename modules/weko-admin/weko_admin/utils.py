@@ -22,7 +22,7 @@
 import csv
 import os
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 
 import redis
@@ -526,9 +526,8 @@ class StatisticMail:
             string -- time with format yyyy-MM
 
         """
-        month = str(datetime.now().month - 1)
-        month = month.zfill(2)
-        return str(datetime.now().year) + '-' + month
+        previous_month = datetime.now().replace(day=1) - timedelta(days=1)
+        return previous_month.strftime("%Y-%m")
 
     @classmethod
     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
@@ -701,7 +700,7 @@ class StatisticMail:
         count_item_view = cls.get_item_view(item_id, time)
         count_item_download = cls.get_item_download(data, time)
         title = data.get("item_title")
-        url = root_url + '/records/' + data.get('control_number')
+        url = root_url + '/records/' + data.get('recid', '').split('.')[0]
         result = {
             'title': title,
             'url': url,
