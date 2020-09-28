@@ -167,15 +167,15 @@ class ComponentTextboxField extends React.Component {
     this.handleChange = this.handleChange.bind(this);
   }
 
-  componentWillReceiveProps(props) {
-    if (props.type !== this.props.type) {
+  componentDidUpdate(prevProps) {
+    if (this.props.type !== prevProps.type) {
       this.setState({
         value: ''
       })
     }
-    if (props.data_change) {
+    if (this.props.data_change) {
       this.setState({
-        value: props.data_load
+        value: this.props.data_load
       });
       this.props.getValueOfField("language", false);
     }
@@ -224,7 +224,6 @@ const ComponentTextboxForAccessCounter = function (props) {
       let data = props.value || "";
       setValue(data);
     }
-    props.getValueOfField("language", false);
   }, [props.data_change]);
 
   useEffect(() => {
@@ -454,17 +453,16 @@ class ComponentFieldContainSelectMultiple extends React.Component {
   }
 
   // Get the new page titles on change of lang
-  componentWillReceiveProps(nextProps) {
-    if ((nextProps.language !== this.state.language &&
+  componentDidUpdate(prevProps) {
+    if ((this.props.language !== prevProps.language &&
       this.props.key_binding === "menu_show_pages")) {
-      this.setState({language: nextProps.language});
-      let loadPagesURL = "/api/admin/load_widget_design_pages/" +
-        nextProps.language;
-      this.initSelectBox(loadPagesURL, this.props.repositoryId); // Re-ender tables select box
+      this.setState({language: this.props.language});
+      let loadPagesURL = "/api/admin/load_widget_design_pages/" + this.props.language;
+      this.initSelectBox(loadPagesURL, this.props.repositoryId); // Re-render tables select box
     }
-    if (nextProps.repositoryId !== this.props.repositoryId && this.props.key_binding === "menu_show_pages") {
+    if (this.props.repositoryId !== prevProps.repositoryId && this.props.key_binding === "menu_show_pages") {
       let loadPagesURL = "/api/admin/load_widget_design_pages/" + this.state.language;
-      this.initSelectBox(loadPagesURL, nextProps.repositoryId);
+      this.initSelectBox(loadPagesURL, this.props.repositoryId);
     }
   }
 
@@ -1672,12 +1670,12 @@ class ComponentLanguage extends React.Component {
     this.initLanguageList();
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.type !== this.props.type) {
-      this.initLanguageList();
+  componentDidUpdate(prevProps) {
+    if (this.props.type !== prevProps.type) {
       this.setState({
         registeredLanguage: []
       });
+      this.initLanguageList();
     }
   }
 
