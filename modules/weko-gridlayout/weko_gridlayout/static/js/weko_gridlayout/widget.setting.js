@@ -805,20 +805,16 @@ const ComponentFieldEditor = function (props) {
 class ExtendComponent extends React.Component {
   constructor(props) {
     super(props);
+    let settings = this.props.data_load;
+    let initState = {
+      type: this.props.type,
+    }
     if (this.props.type === NOTICE_TYPE) {
+      let writeMore = false;
       if (this.props.data_load.more_description) {
-        this.state = {
-          type: this.props.type,
-          settings: this.props.data_load,
-          write_more: true,
-        };
-      } else {
-        this.state = {
-          type: this.props.type,
-          settings: this.props.data_load,
-          write_more: false,
-        };
+        writeMore = true;
       }
+      initState['write_more'] = writeMore;
     } else if (this.props.type === NEW_ARRIVALS) {
       let newDate = 5;
       let displayResult = 5;
@@ -835,16 +831,10 @@ class ExtendComponent extends React.Component {
         rss_feed: rssFeed,
       };
       this.props.getValueOfField(this.props.key_binding, newArrivalsData);
-      this.state = {
-        type: this.props.type,
-        settings: newArrivalsData,
-      }
-    } else {
-      this.state = {
-        type: this.props.type,
-        settings: this.props.data_load,
-      }
+      settings = newArrivalsData;
     }
+    initState['settings'] = settings;
+    this.state = initState;
     this.handleChange = this.handleChange.bind(this);
     this.handleChangeCheckBox = this.handleChangeCheckBox.bind(this);
     this.handleChangeHideTheRest = this.handleChangeHideTheRest.bind(this);
@@ -889,6 +879,7 @@ class ExtendComponent extends React.Component {
     }
     if (nextProps.data_change) {
       let setting = nextProps.data_load;
+      let newState = {};
       nextProps.getValueOfField("language", false);
       let read_more = document.getElementById("read_more");
       let hide_the_rest = document.getElementById("hide_the_rest");
@@ -897,6 +888,7 @@ class ExtendComponent extends React.Component {
           read_more.value = setting['read_more'];
         } else {
           read_more.value = '';
+          newState['write_more'] = false;
         }
       }
       if (hide_the_rest) {
@@ -909,9 +901,8 @@ class ExtendComponent extends React.Component {
       if (nextProps.type === ACCESS_COUNTER) {
         setting["access_counter"] = nextProps.init_value;
       }
-      return {
-        settings: setting
-      }
+      newState['settings'] = setting;
+      return newState
     }
     return null;
   }
@@ -993,10 +984,14 @@ class ExtendComponent extends React.Component {
 
   handleChangeAccessCounter(event) {
     let setting = this.state.settings;
-    setting['access_counter'] = event.target.value;
+    let accessCounter = event.target.value;
+    if (!isNaN(parseInt(accessCounter))){
+      accessCounter = parseInt(accessCounter)
+    }
+    setting['access_counter'] = accessCounter;
     this.setState({settings: setting});
-    this.handleChange("access_counter", event.target.value);
-    this.props.getValueOfField('accessInitValue', event.target.value);
+    this.handleChange("access_counter", accessCounter);
+    this.props.getValueOfField('accessInitValue', accessCounter);
   }
 
   handleChangeNewDates(event) {
@@ -1169,6 +1164,7 @@ class ExtendComponent extends React.Component {
                 name="Access_counter" id='Access_counter' type="input"
                 value={access_counter || "0"}
                 onChange={this.handleChangeAccessCounter}
+                maxLength={9}
                 className="form-control"/>
             </div>
           </div>
@@ -1671,7 +1667,6 @@ class ComponentLanguage extends React.Component {
             _this.props.initEditData(selectedLang);
           }
           _this.displayOptions(langList, registeredLang, langName, true, selectedLang);
-          // this.props.getValueOfField('lang', langList[0]);
           _this.props.getValueOfField('lang', defaultLang);
           _this.setState({
             languageList: langList,
