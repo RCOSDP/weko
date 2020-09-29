@@ -1720,6 +1720,16 @@ class FeedbackMailList(object):
         return True
 
     @classmethod
+    def update_by_list_item_id(cls, item_ids, feedback_maillist):
+        """Create a new instance feedback_mail_list.
+
+        :param item_ids: Item Identifiers
+        :param feedback_maillist: list mail feedback
+        """
+        for item_id in item_ids:
+            cls.update(item_id, feedback_maillist)
+
+    @classmethod
     def get_mail_list_by_item_id(cls, item_id):
         """Get a FeedbackMail list by item_id.
 
