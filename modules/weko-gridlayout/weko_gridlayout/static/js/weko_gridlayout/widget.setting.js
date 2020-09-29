@@ -1644,15 +1644,25 @@ class ComponentLanguage extends React.Component {
               }
             }
           }
+          let tpmRegisteredLang = [];
           if (!$.isEmptyObject(_this.props.data_load)) {
-            registeredLang = Object.keys(_this.props.data_load);
+            tpmRegisteredLang = Object.keys(_this.props.data_load);
             langList.forEach(function (lang) {
-              if (registeredLang.indexOf(lang) !== -1) {
+              if (tpmRegisteredLang.indexOf(lang) !== -1) {
                 let index = langList.indexOf(lang);
                 langList.slice(index, 1);
               }
             });
           }
+
+          // Sort registered language base on language setting.
+          langList.forEach(function (lang) {
+            if (tpmRegisteredLang.indexOf(lang) > -1) {
+              registeredLang.push(lang);
+            }
+          })
+
+
           langList = _this.removeDuplicatedLang(langList, registeredLang);
 
           // Load data for edit UI
