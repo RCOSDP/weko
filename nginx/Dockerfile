@@ -43,6 +43,8 @@ ADD shibboleth.conf /etc/supervisor/conf.d/shibboleth.conf
 ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD attribute-map.xml /etc/shibboleth/attribute-map.xml
 ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml
+RUN sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.3/fpm/php-fpm.conf
+RUN sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.3/fpm/pool.d/www.conf
 
 ADD ./keys/server.crt /etc/shibboleth/server.crt
 ADD ./keys/server.key /etc/shibboleth/server.key
