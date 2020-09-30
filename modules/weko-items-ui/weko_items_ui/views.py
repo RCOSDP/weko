@@ -20,6 +20,7 @@
 
 """Blueprint for weko-items-ui."""
 
+import json
 import os
 import sys
 from datetime import date, timedelta
