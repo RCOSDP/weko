@@ -30,7 +30,6 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
-from invenio_files_rest import Bucket
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from sqlalchemy.exc import SQLAlchemyError
