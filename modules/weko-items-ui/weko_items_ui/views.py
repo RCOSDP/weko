@@ -20,7 +20,6 @@
 
 """Blueprint for weko-items-ui."""
 
-import json
 import os
 import sys
 from datetime import date, timedelta
@@ -34,7 +33,8 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidrelations.models import PIDRelation
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
@@ -856,8 +856,7 @@ def prepare_edit_item():
                         code=err_code,
                         msg=_("This Item is being edited.")
                     )
-                from invenio_pidrelations.models import PIDRelation
-                from invenio_pidstore.models import PIDStatus
+
                 pv = PIDVersioning(child=recid)
                 latest_pid = PIDVersioning(parent=pv.parent).get_children(
                     pid_status=PIDStatus.REGISTERED
