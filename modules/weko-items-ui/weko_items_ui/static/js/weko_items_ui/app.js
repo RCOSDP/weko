@@ -3227,12 +3227,6 @@ function toObject(arr) {
             if (indexOfLink != -1) {
               str = str.split(',"authorLink":[]').join('');
             }
-            if (enableFeedbackMail === 'True') {
-              if (!$scope.saveFeedbackMailListCallback(currentActionId)) {
-                $scope.endLoading();
-                return false;
-              }
-            }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
             //If CustomBSDatePicker empty => remove attr.
             CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
@@ -3488,7 +3482,6 @@ function toObject(arr) {
         const actionID = cur_action_id;// Item Registration's Action ID
         let emails = $scope.feedback_emails;
         let result = true;
-        if (!emails.length) return true
 
         $.ajax({
           url: '/workflow/save_feedback_maillist/'+ activityID+ '/'+ actionID,

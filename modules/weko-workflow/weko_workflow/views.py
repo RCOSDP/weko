@@ -702,10 +702,13 @@ def next_action(activity_id='0', action_id=0):
                     item_ids.append(draft_pid.object_uuid)
                 item_ids.append(pid_without_ver.object_uuid)
 
-            FeedbackMailList.update_by_list_item_id(
-                item_ids=item_ids,
-                feedback_maillist=action_feedbackmail.feedback_maillist
-            )
+            if action_feedbackmail.feedback_maillist:
+                FeedbackMailList.update_by_list_item_id(
+                    item_ids=item_ids,
+                    feedback_maillist=action_feedbackmail.feedback_maillist
+                )
+            else:
+                FeedbackMailList.delete_by_list_item_id(item_ids)
 
         if deposit:
             deposit.update_feedback_mail()

@@ -1765,6 +1765,15 @@ class FeedbackMailList(object):
             return False
         return True
 
+    @classmethod
+    def delete_by_list_item_id(cls, item_ids):
+        """Delete a feedback_mail_list by item_id.
+
+        :param item_ids: item_id of target feed_back_mail_list
+        """
+        for item_id in item_ids:
+            cls.delete(item_id)
+
 
 class ItemLink(object):
     """Item Link API."""
