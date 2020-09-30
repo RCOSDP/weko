@@ -1065,7 +1065,7 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             drf_deposit['_buckets']['deposit'] = str(snapshot.id)
             drf_deposit.commit()
             drf_bucket.remove()
-            db.session.add(drf_deposit.files.bucket)
+            db.session.add(records_buckets)
         db.session.commit()
         rtn = activity.init_activity(post_activity,
                                      community,
