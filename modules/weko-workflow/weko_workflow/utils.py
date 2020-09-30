@@ -31,7 +31,7 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
 from invenio_records.models import RecordMetadata
-from invenio_records_files.models import RecordsBuckets
+from invenio_records_files.models import Bucket, RecordsBuckets
 from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -1050,21 +1050,21 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         with db.session.begin_nested():
             drf_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
             cur_deposit = WekoDeposit.get_record(recid.object_uuid)
-            drf_bucket = drf_deposit.files.bucket
             cur_bucket = cur_deposit.files.bucket
+            bucket = Bucket.get(drf_deposit.files.bucket.id)
 
             records_buckets = RecordsBuckets.query.filter_by(
-                    bucket_id=drf_bucket.id
+                    bucket_id=drf_deposit.files.bucket.id
                 ).first()
             snapshot = cur_bucket.snapshot(lock=False)
             snapshot.locked = False
-            drf_bucket.locked = False
+            bucket.locked = False
 
             drf_deposit.files.bucket = snapshot
             records_buckets.bucket_id = snapshot.id
             drf_deposit['_buckets']['deposit'] = str(snapshot.id)
             drf_deposit.commit()
-            drf_bucket.remove()
+            bucket.remove()
             db.session.add(records_buckets)
         db.session.commit()
         rtn = activity.init_activity(post_activity,
