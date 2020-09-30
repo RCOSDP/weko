@@ -134,11 +134,22 @@
                           {%- set is_file_name_url = True %}
                           {%- set clickable = record | check_content_file_clickable(file.info()) -%}
                         {%- set permission = record | get_permission(file.info()) -%}
+                          <!-- Check and set file label. -->
+                          {%- if file.url -%}
+                            {%- if file.url.label -%}
+                              {%- set file_label = file.url.label -%}
+                            {%- else -%}
+                              {%- set file_label = file.filename -%}
+                            {%- endif -%}
+                          {%- else -%}
+                            {%- set file_label = file.filename -%}
+                          {%- endif -%}
+
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
                               href={{ file_url }}>
                               {% autoescape false %}
-                              {{ file.url.label | escape_str or file.filename | escape_str }} ({{ file.size|filesizeformat }})
+                              {{ file_label | escape_str }} ({{ file.size|filesizeformat }})
                               {% endautoescape %}
                             </a>
                             <br>
@@ -147,7 +158,7 @@
                           {%- else -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}>
                               {% autoescape false %}
-                              {{ file.url.label | escape_str or file.filename | escape_str }} ({{ file.size|filesizeformat }})
+                              {{ file_label | escape_str }} ({{ file.size|filesizeformat }})
                               {% endautoescape %}
                             </a>
                             <br>

@@ -1,5 +1,7 @@
 // require(["jquery", "bootstrap"],function() {});
 $(document).ready(function () {
+  var checkboxTemplate = "/static/templates/weko_deposit/checkboxes.html";
+  var radioTemplate = "/static/templates/weko_deposit/radios.html";
   src_render = {};
   src_mapping = {};
   page_global = {
@@ -594,24 +596,36 @@ $(document).ready(function () {
               notitle: true,
               titleMap: titleMap_tmp
             }],
-            templateUrl: "/static/templates/weko_deposit/checkboxes.html"
+            templateUrl: checkboxTemplate
           });
         } else {
           // 選択式(プルダウン)
           page_global.table_row_map.schema.properties[row_id] = {
-            type: "array",
-            title: tmp.title,
-            items: {
-              type: "string",
-              enum: enum_tmp
+            title: tmp.title,                // [interim]は本当の意味を持たない
+            "type": "object",
+            "format": "object",
+            properties: {
+              "interim": {
+                type: "array",
+                format: "checkboxes",
+                items: {
+                  type: "string",
+                  enum: enum_tmp
+                }
+              }
             }
           }
           page_global.table_row_map.form.push({
+            items: [{
+              key: row_id + '.interim',
+              type: "template",
+              title_i18n: tmp.title_i18n,
+              title: tmp.title,
+              templateUrl: checkboxTemplate,
+              titleMap: titleMap_tmp
+            }],
             key: row_id,
-            title_i18n: tmp.title_i18n,
-            type: "template",
-            titleMap: titleMap_tmp,
-            templateUrl: "/static/templates/weko_deposit/checkboxes.html",
+            type: "fieldset"
           });
         }
       } else if(tmp.input_type == 'select') {
@@ -684,6 +698,7 @@ $(document).ready(function () {
               properties: {
                 interim: {                  // [interim]は本当の意味を持たない
                   type: "string",
+                  format:"radios",
                   enum: enum_tmp
                 }
               }
@@ -698,27 +713,41 @@ $(document).ready(function () {
               key: row_id+'[].interim',
               type: "template",
               notitle: true,
-              templateUrl: "/static/templates/weko_deposit/radios.html",
+              templateUrl: radioTemplate,
               titleMap: titleMap_tmp
             }]
           });
         } else {
           page_global.table_row_map.schema.properties[row_id] = {
-            type: "string",
-            title: tmp.title,
-            enum: enum_tmp
-          };
+            title: tmp.title,                // [interim]は本当の意味を持たない
+            type: "object",
+            format: "object",
+            properties: {
+              interim: {
+                title: tmp.title,                // [interim]は本当の意味を持たない
+                type: "string",
+                format: "radios",
+                enum: enum_tmp
+              }
+            }
+          }
           page_global.table_row_map.form.push({
+            items: [{
+              key: row_id + '.interim',
+              type: "template",
+              title_i18n: tmp.title_i18n,
+              title: tmp.title,
+              templateUrl: radioTemplate,
+              titleMap: titleMap_tmp
+            }],
             key: row_id,
-            title_i18n: tmp.title_i18n,
-            type: "template",    // radios|select
-            templateUrl: "/static/templates/weko_deposit/radios.html",
-            titleMap: titleMap_tmp
+            type: "fieldset"
           });
         }
       } else if(tmp.input_type.indexOf('cus_') != -1) {
         editor = page_json_editor['schema_'+row_id];
         page_global.schemaeditor.schema[row_id] = editor.getValue();
+        removeEnumForCheckboxes(page_global.schemaeditor.schema[row_id].properties);
         if(tmp.option.multiple) {
           page_global.table_row_map.schema.properties[row_id] = {
             type: "array",
@@ -976,6 +1005,42 @@ $(document).ready(function () {
     }
   });
 
+  function setUniqueKey(schema, parentkey) {
+    if (schema == undefined)
+      return;
+    Object.keys(schema).map(function (itSubSchema) {
+      schema[itSubSchema]['uniqueKey'] = parentkey + "_" + itSubSchema;
+      let childSchema = getPropertiesOrItems( schema[itSubSchema]);
+      if (childSchema != null) {
+        setUniqueKey(childSchema, itSubSchema)
+      }
+    });
+  }
+
+  function setDefaultI18n(schema, forms) {
+    if (schema == undefined || forms == undefined)
+      return;
+    Object.keys(schema).map(function (subSchema) {
+      forms.items.forEach(function (subForm) {
+        let subkey = subForm.key.split(".");
+        let last_key = subkey[subkey.length - 1]
+        if (last_key == subSchema) {
+          if (subForm.hasOwnProperty('title_i18n')) {
+            schema[subSchema]['title_i18n'] = subForm['title_i18n'];
+          }
+          else{
+            schema[subSchema]['title_i18n'] = { "ja": schema[subSchema]['title'], "en": schema[subSchema]['title'] }
+          }
+          let childSchema = getPropertiesOrItems(schema[subSchema]);
+          if (childSchema != null) {
+            setDefaultI18n(childSchema, subForm)
+          }
+        }
+      });
+    });
+  }
+
+
   // itemtype select input change
   $('#tbody_itemtype').on('change', '.change_input_type', function(){
     var meta_id = $(this).attr('metaid');
@@ -983,6 +1048,7 @@ $(document).ready(function () {
     let checkboxMetaId = $('#chk_' + meta_id + '_1');
     if($(this).val().indexOf('cus_') != -1) {
       let product = properties_obj[$(this).val().substr(4)].schema;
+      let product_forms = properties_obj[$(this).val().substr(4)].forms;
       isAllowMultiple = properties_obj[$(this).val().substr(4)].is_file;
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       if (isAllowMultiple) {
@@ -991,6 +1057,8 @@ $(document).ready(function () {
         checkboxMetaId.attr('disabled', false);
       }
       checkboxMetaId.prop("checked", isAllowMultiple);
+      setDefaultI18n(product.properties, product_forms);
+      setUniqueKey(product.properties, meta_id);
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
@@ -1244,9 +1312,9 @@ $(document).ready(function () {
             itemTypePropertyForm,
             changedProperties);
           //Set format in schema from item_type to item_type_property.
-          // setSchemaFromItemTypeToItemTypeProperty(
-          //   itemTypePropertiesSchema,
-          //   itemTypeSchema);
+          setSchemaFromItemTypeToItemTypeProperty(
+            itemTypePropertiesSchema,
+            itemTypeSchema, itemTypePropertyForm['items']);
 
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
           let isAllowMultiple = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
@@ -1497,61 +1565,65 @@ $(document).ready(function () {
     getChangedProperties(itemTypePropertyForm, itemTypeForm, changedProperties);
   }
 
-  function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
-    let isHasItem = schemaProperties.hasOwnProperty('items');
-    let isHasProperties = schemaProperties.hasOwnProperty('properties');
-    let propertyKey, properties;
-    if(isHasItem || isHasProperties) {
-      if(isHasItem) {
-        properties = schemaProperties.items.properties;
+
+    function getPropertiesOrItems(schema) {
+    // Checkboxes format has 'items' but it's not actual items. So ignore it
+    let isCheckboxFormat = schema.format == "checkboxes";
+    let isHasItem = schema.hasOwnProperty('items') && !isCheckboxFormat;
+    let isHasProperties = schema.hasOwnProperty('properties');
+    let properties;
+    if (isHasItem || isHasProperties) {
+      if (isHasItem) {
+        properties = schema.items.properties;
       } else {
-        properties = schemaProperties.properties;
+        properties = schema.properties;
       }
-      Object.keys(properties).map(function (propKey) {
-        let propertyKey = prefixKey + '.' + propKey;
-        propertyKey = fixKey(propertyKey);
-        properties[propKey].uniqueKey = propertyKey;
-        $.each(subForms, function(ind, form) {
-          formKey = !form.key ? '' : form.key;
-          formKey = fixKey(formKey);
-          if(propertyKey == formKey) {
-            setInfoToSchema(properties[propKey], form, propertyKey);
-            setTitleI18nForSubPropertiesByCondition1(properties[propKey], form.items, propertyKey);
-            return false;
-          }
-        });
-      });
+      return properties;
     }
+    return null;
+  }
+
+  function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
+    let properties = getPropertiesOrItems(schemaProperties);
+    if (properties == null)
+      return;
+    Object.keys(properties).map(function (propKey) {
+      let propertyKey = prefixKey + '.' + propKey;
+      propertyKey = fixKey(propertyKey);
+      properties[propKey].uniqueKey = propertyKey;
+      $.each(subForms, function (ind, form) {
+        formKey = !form.key ? '' : form.key;
+        formKey = fixKey(formKey);
+        if (propertyKey == formKey) {
+          setInfoToSchema(properties[propKey], form, propertyKey);
+          setTitleI18nForSubPropertiesByCondition1(properties[propKey], form.items, propertyKey);
+          return false;
+        }
+      });
+    });
   }
 
   function setTitleI18nForSubPropertiesByCondition2(schemaProperties, subForms, prefixKey) {
-    let isHasItem = schemaProperties.hasOwnProperty('items');
-    let isHasProperties = schemaProperties.hasOwnProperty('properties');
+    let properties = getPropertiesOrItems(schemaProperties);
+    if (properties == null)
+      return;
     let titleI118nDefault = {'ja': '', 'en': ''};
-    let propertyKey, properties;
-    if(isHasItem || isHasProperties) {
-      if(isHasItem) {
-        properties = schemaProperties.items.properties;
-      } else {
-        properties = schemaProperties.properties;
-      }
-      Object.keys(properties).map(function (propKey) {
-        $.each(subForms, function(ind, form) {
-          // define sub key.
-          propertyKey = prefixKey + '.' + propKey;
-          formKey = !form.key ? '' : form.key;
-          // Remove all [] in key.
-          propertyKey = fixKey(propertyKey);
-          formKey = fixKey(formKey);
-          if(propertyKey == formKey) {
-            checkAndSetTitleI18nForSchema(properties[propKey], form);
-            // Check and set title_i18n for child item.
-            setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
-            return false;
-          }
-        });
+    Object.keys(properties).map(function (propKey) {
+      $.each(subForms, function (ind, form) {
+        // define sub key.
+        let propertyKey = prefixKey + '.' + propKey;
+        formKey = !form.key ? '' : form.key;
+        // Remove all [] in key.
+        propertyKey = fixKey(propertyKey);
+        formKey = fixKey(formKey);
+        if (propertyKey == formKey) {
+          checkAndSetTitleI18nForSchema(properties[propKey], form);
+          // Check and set title_i18n for child item.
+          setTitleI18nForSubPropertiesByCondition2(properties[propKey], form.items, propertyKey);
+          return false;
+        }
       });
-    }
+    });
   }
 
   function getChangedProperties(itpForms, itForms, changedProperties) {
@@ -1616,7 +1688,7 @@ $(document).ready(function () {
     });
   }
 
-  function setSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema) {
+  function setSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema, itemTypeForm) {
     let itpSchema = itemTypePropertiesSchema || {};
     let itSchema = itemTypeSchema || {};
     Object.keys(itpSchema).map(function(itpSchemaKey) {
@@ -1624,14 +1696,14 @@ $(document).ready(function () {
         if(itpSchemaKey == itSchemaKey) {
           let itpSubSchema = itpSchema[itpSchemaKey];
           let itSubSchema = itSchema[itSchemaKey];
-          // itpSubSchema.format = itSubSchema.format;
-          // if(itpSubSchema.format == 'select') {
-          //   itpSubSchema.type = "string";
-          // } else if(itpSubSchema.format == 'checkboxes') {
-          //   itpSubSchema.type = "array";
-          // } else if(itpSubSchema.format == "radios") {
-          //   itpSubSchema.type = "string";
-          // }
+          itpSubSchema.format = itSubSchema.format;
+          if (itpSubSchema.format == 'select') {
+            itpSubSchema.type = "string";
+          } else if (itpSubSchema.format == 'checkboxes') {
+            itpSubSchema.type = "array";
+          } else if (itpSubSchema.format == "radios") {
+            itpSubSchema.type = "string";
+          }
           setSubSchemaFromItemTypeToItemTypeProperty(itpSubSchema, itSubSchema);
           return false;
           }
@@ -1667,14 +1739,14 @@ $(document).ready(function () {
         if(itpSchemaKey == itSchemaKey) {
           let itpSubSchema = itpSchema[itpSchemaKey];
           let itSubSchema = itSchema[itSchemaKey];
-          // itpSubSchema.format = itSubSchema.format;
-          // if(itpSubSchema.format == 'select') {
-          //   itpSubSchema.type = "string";
-          // } else if(itpSubSchema.format == 'checkboxes') {
-          //   itpSubSchema.type = "array";
-          // } else if(itpSubSchema.format == "radios") {
-          //   itpSubSchema.type = "string";
-          // }
+          itpSubSchema.format = itSubSchema.format;
+          if(itpSubSchema.format == 'select') {
+            itpSubSchema.type = "string";
+          } else if(itpSubSchema.format == 'checkboxes') {
+            itpSubSchema.type = "array";
+          } else if(itpSubSchema.format == "radios") {
+            itpSubSchema.type = "string";
+          }
           setSubSchemaFromItemTypeToItemTypeProperty(itpSubSchema, itSubSchema);
           return false;
           }
@@ -1693,34 +1765,7 @@ $(document).ready(function () {
         propertyKey = fixKey(propertyKey);
         formKey = fixKey(formKey);
         if(propertyKey == formKey){
-          subForm.title_i18n = properties[propKey].title_i18n;
-
-          subForm.required = properties[propKey].isRequired;
-          subForm.isShowList = properties[propKey].isShowList;
-          subForm.isSpecifyNewline = properties[propKey].isSpecifyNewline;
-          subForm.isHide = properties[propKey].isHide;
-
-          // subForm.type = properties[propKey].format;
-          let _enum, editAble;
-          editAble = properties[propKey].hasOwnProperty('editAble') && properties[propKey]['editAble'];
-          if(properties[propKey].hasOwnProperty('currentEnum')){
-            _enum = properties[propKey]['currentEnum'];
-          } else if(properties[propKey].hasOwnProperty('enum')){
-            _enum = properties[propKey]['enum'];
-          }
-          if (editAble && _enum) {
-            let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
-            let titleMap = [];
-            $.each(list_enum, function(ind, val) {
-              if(val.length > 0){
-                titleMap.push({"name": val, "value": val});
-              }
-            });
-            subForm.titleMap = titleMap;
-          }
-
-          subForm.title_i18n_temp = properties[propKey].title_i18n_temp;
-
+          setInfoToPropertySchema(properties[propKey], subForm);
           setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], subForm.items, propertyKey);
           return false;
         }
@@ -1729,59 +1774,92 @@ $(document).ready(function () {
   }
 
   function setTitleI18nFromPropertiesSchemaToSubForm(schemaProperties, subForms, prefixKey) {
-    let isHasItem = schemaProperties.hasOwnProperty('items');
-    let isHasProperties = schemaProperties.hasOwnProperty('properties');
-    let propertyKey, properties;
-    if(isHasItem || isHasProperties) {
-      if(isHasItem) {
-        properties = schemaProperties.items.properties;
-      } else {
-        properties = schemaProperties.properties;
-      }
-      Object.keys(properties).map(function (propKey) {
-        $.each(subForms, function(ind, form) {
-          // define sub key.
-          propertyKey = prefixKey + '.' + propKey;
-          formKey = !form.key ? '' : form.key;
-          // Remove all [] in key.
-          propertyKey = fixKey(propertyKey);
-          formKey = fixKey(formKey);
-          if(propertyKey == formKey) {
-            form.title_i18n = properties[propKey].title_i18n;
-
-            form.required = properties[propKey].isRequired;
-            form.isShowList = properties[propKey].isShowList;
-            form.isSpecifyNewline = properties[propKey].isSpecifyNewline;
-            form.isHide = properties[propKey].isHide;
-
-            // form.type = properties[propKey].format;
-
-            let _enum, editAble;
-            editAble = properties[propKey].hasOwnProperty('editAble') && properties[propKey]['editAble'];
-            if(properties[propKey].hasOwnProperty('currentEnum')){
-              _enum = properties[propKey]['currentEnum'];
-            } else if(properties[propKey].hasOwnProperty('enum')){
-              _enum = properties[propKey]['enum'];
-            }
-            if (editAble && _enum) {
-              let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
-              let titleMap = [];
-              $.each(list_enum, function(ind, val) {
-                if(val.length > 0){
-                  titleMap.push({"name": val, "value": val});
-                }
-              });
-              form.titleMap = titleMap;
-            }
-
-            form.title_i18n_temp = properties[propKey].title_i18n_temp;
-
-            setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], form.items, propertyKey);
-            return false;
-          }
-        });
-      });
+    let properties = getPropertiesOrItems(schemaProperties);
+    if (properties == null) {
+      return;
     }
+    let propertyKey;
+    Object.keys(properties).map(function (propKey) {
+      $.each(subForms, function (ind, form) {
+        // define sub key.
+        propertyKey = prefixKey + '.' + propKey;
+        formKey = !form.key ? '' : form.key;
+        // Remove all [] in key.
+        propertyKey = fixKey(propertyKey);
+        formKey = fixKey(formKey);
+        if (propertyKey == formKey) {
+          setInfoToPropertySchema(properties[propKey], form);
+          setTitleI18nFromPropertiesSchemaToSubForm(properties[propKey], form.items, propertyKey);
+          return false;
+        }
+      });
+    });
+  }
+
+  function setInfoToPropertySchema(property, form) {
+    //Set title.
+    form.title_i18n = property.title_i18n;
+    form.title_i18n_temp = property.title_i18n_temp;
+    //Set option.
+    form.required = property.isRequired;
+    form.isShowList = property.isShowList;
+    form.isSpecifyNewline = property.isSpecifyNewline;
+    form.isHide = property.isHide;
+    //Set TitleMap for form.
+    let _enum, editAble;
+    editAble = property.hasOwnProperty('editAble') && property['editAble'];
+    if(property.hasOwnProperty('currentEnum')){
+      _enum = property['currentEnum'];
+    } else if(property.hasOwnProperty('enum')){
+      _enum = property['enum'];
+    }
+    if (editAble && _enum) {
+      let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
+      let titleMap = [];
+      $.each(list_enum, function(ind, val) {
+        if(val.length > 0){
+          titleMap.push({"name": val, "value": val});
+        }
+      });
+      form.titleMap = titleMap;
+    }
+    // Rearrange data for form in case of radio, checkbox, select
+    if (property.format == 'radios' || property.format == 'select') {
+      if (property.hasOwnProperty('items'))
+        delete property.items
+    }
+    if (property.format == 'radios') {
+      form['templateUrl'] = radioTemplate
+      form.type = "template"
+    } else if (property.format == 'checkboxes') {
+      property['items'] = {
+        type: "string",
+        enum: property.enum
+      }
+      property.type = "array";
+      form['templateUrl'] = checkboxTemplate;
+      form.type = "template";
+      // Delete enum form properties to avoid schema validation error because of 2 enums
+      delete property.enum
+    } else if (property.format == 'select') {
+      property.type="string";
+      form.type = "select";
+    }
+  }
+
+  function removeEnumForCheckboxes(schema) {
+    Object.keys(schema).map(function (propKey) {
+      if (schema[propKey].format == "radios" || schema[propKey].format == "select") {
+        schema[propKey].type = "string";
+      } else {
+        let properties = getPropertiesOrItems(schema[propKey]);
+        if (schema[propKey].format == "checkboxes" && schema[propKey].hasOwnProperty('enum'))
+          delete schema[propKey].enum;
+        if (properties != null) {
+          removeEnumForCheckboxes(properties);
+        }
+      }
+    });
   }
 
   function fixKey(key) {
