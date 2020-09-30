@@ -85,7 +85,8 @@ class IdentifyModelView(ModelView):
 
     @property
     def can_create(self):
-        if Identify.query.filter().first() != None:
+        """Hide create tab if one Identify exists."""
+        if Identify.query.filter().first() is not None:
             return False
         return True
 
