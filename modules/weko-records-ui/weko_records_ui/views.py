@@ -758,5 +758,5 @@ def escape_str(s):
     if s:
         s = s.replace('&EMPTY&', '')
         s = str(escape(s))
-        s = s.replace('\\n', '<br/>')
+        s = s.replace('\\n', '<br/>').replace('\n', '<br/>')
     return s
