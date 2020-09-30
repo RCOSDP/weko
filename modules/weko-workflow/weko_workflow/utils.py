@@ -1053,19 +1053,18 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             cur_bucket = cur_deposit.files.bucket
             bucket = Bucket.get(drf_deposit.files.bucket.id)
 
-            records_buckets = RecordsBuckets.query.filter_by(
+            sync_bucket = RecordsBuckets.query.filter_by(
                     bucket_id=drf_deposit.files.bucket.id
                 ).first()
             snapshot = cur_bucket.snapshot(lock=False)
             snapshot.locked = False
             bucket.locked = False
 
-            drf_deposit.files.bucket = snapshot
-            records_buckets.bucket_id = snapshot.id
+            sync_bucket.bucket_id = snapshot.id
             drf_deposit['_buckets']['deposit'] = str(snapshot.id)
-            drf_deposit.commit()
             bucket.remove()
-            db.session.add(records_buckets)
+            drf_deposit.commit()
+            db.session.add(sync_bucket)
         db.session.commit()
         rtn = activity.init_activity(post_activity,
                                      community,
