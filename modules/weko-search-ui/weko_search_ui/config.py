@@ -335,7 +335,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                 "other"
             ]
         },
-        "mimetype": "file.mimeType",
+        "mimetype": "content.format",
         "language": {
             "language": ["jpn", "eng",
                          "fra", "ita",
@@ -348,7 +348,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "srctitle": ["sourceTitle", "sourceTitle.ja"],
         "spatial": "geoLocation.geoLocationPlace",
         "temporal": "temporal",
-        "rights": "rights",
+        "rights": ("content.licensetype", str),
         "version": "versionType",
         "dissno": "dissertationNumber",
         "degreename": ["degreeName", "degreeName.ja"],
