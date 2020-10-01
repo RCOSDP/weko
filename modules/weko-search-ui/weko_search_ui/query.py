@@ -761,8 +761,8 @@ def item_path_search_factory(self, search, index_id=None):
                 sort_obj[key_fileds] = dict(order='asc', unmapped_type='long')
             search._sort.append(sort_obj)
         else:
+            ind_id = request.values.get('q', '')
             if sort == 'desc':
-                ind_id = request.values.get('q', '')
                 script_str, default_sort = SearchSetting.get_custom_sort(
                     ind_id, 'desc')
                 sort_key = '-' + sort_key
