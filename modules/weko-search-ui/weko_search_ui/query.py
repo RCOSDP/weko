@@ -749,8 +749,10 @@ def item_path_search_factory(self, search, index_id=None):
 
     # default sort
     if not sortkwargs:
+        ind_id = request.values.get('q', '')
+        no_root_flag = True if ind_id and ind_id != 0 else False
         sort_key, sort = SearchSetting.get_default_sort(
-            current_app.config['WEKO_SEARCH_TYPE_INDEX'])
+            current_app.config['WEKO_SEARCH_TYPE_INDEX'], no_root_flag)
         sort_obj = dict()
         key_fileds = SearchSetting.get_sort_key(sort_key)
         if 'custom_sort' not in sort_key:
@@ -762,7 +764,6 @@ def item_path_search_factory(self, search, index_id=None):
             search._sort.append(sort_obj)
         else:
             if sort == 'desc':
-                ind_id = request.values.get('q', '')
                 script_str, default_sort = SearchSetting.get_custom_sort(
                     ind_id, 'desc')
                 sort_key = '-' + sort_key
