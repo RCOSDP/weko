@@ -750,7 +750,7 @@ def init_permission(recid):
 
 @blueprint.app_template_filter('escape_str')
 def escape_str(s):
-    """Process escape, replace \n to <br/>, convert &EMPTY& to blank char.
+    r"""Process escape, replace \n to <br/>, convert &EMPTY& to blank char.
 
     :param s: string
     :return: result

@@ -24,7 +24,7 @@ from functools import wraps
 from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
-from flask import current_app, session, Markup
+from flask import Markup, current_app, session
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db

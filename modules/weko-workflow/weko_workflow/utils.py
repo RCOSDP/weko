@@ -1055,8 +1055,8 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             bucket = Bucket.get(drf_deposit.files.bucket.id)
 
             sync_bucket = RecordsBuckets.query.filter_by(
-                    bucket_id=drf_deposit.files.bucket.id
-                ).first()
+                bucket_id=drf_deposit.files.bucket.id
+            ).first()
             snapshot = cur_bucket.snapshot(lock=False)
             snapshot.locked = False
             bucket.locked = False
