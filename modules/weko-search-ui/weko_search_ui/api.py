@@ -58,11 +58,11 @@ class SearchSetting(object):
         return sort_options, display_number
 
     @classmethod
-    def get_default_sort(cls, search_type):
+    def get_default_sort(cls, search_type, no_root_flag=True):
         """Get default sort."""
         res = sm.get()
         sort_str = None
-        if res:
+        if res and no_root_flag:
             if search_type == current_app.config['WEKO_SEARCH_TYPE_KEYWORD']:
                 sort_str = res.default_dis_sort_keyword
             else:
