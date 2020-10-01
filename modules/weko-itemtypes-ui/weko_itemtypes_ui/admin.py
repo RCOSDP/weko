@@ -33,6 +33,7 @@ from weko_admin.models import BillingPermission
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
+from weko_workflow.api import WorkFlow
 
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
@@ -182,6 +183,11 @@ class ItemTypeMetaDataView(BaseView):
                 Mapping.create(item_type_id=record.model.id,
                                mapping=table_row_map.
                                get('mapping'))
+                workflow = WorkFlow()
+                workflow_list = workflow.get_workflow_by_itemtype_id(
+                    item_type_id)
+                for wf in workflow_list:
+                    workflow.update_itemtype_id(wf.id, record.model.id)
 
             ItemTypeEditHistory.create_or_update(
                 item_type_id=record.model.id,
