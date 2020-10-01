@@ -991,7 +991,7 @@ class WekoDeposit(Deposit):
         """Remove feedback mail list."""
         feedback_mail = {
             "id": self.id,
-            "mail_list": None
+            "mail_list": []
         }
         self.indexer.update_feedback_mail_list(feedback_mail)
 

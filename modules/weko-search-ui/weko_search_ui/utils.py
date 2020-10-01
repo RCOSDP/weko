@@ -890,13 +890,13 @@ def register_item_metadata(item):
         with current_app.test_request_context():
             first_ver = deposit.newversion(pid)
             if first_ver:
+                first_ver.publish()
                 if feedback_mail_list:
                     FeedbackMailList.update(
                         item_id=first_ver.id,
                         feedback_maillist=feedback_mail_list
                     )
                     first_ver.update_feedback_mail()
-                first_ver.publish()
 
         db.session.commit()
 
