@@ -1047,7 +1047,6 @@ class WekoDeposit(Deposit):
             snapshot = bucket.snapshot(lock=False)
             snapshot.locked = False
             sync_bucket.bucket = snapshot
-            # delete_bucket(old_bucket_id)
 
             bucket = {
                 "_buckets": {
