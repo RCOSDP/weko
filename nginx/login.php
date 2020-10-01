@@ -1,12 +1,14 @@
 <?php
 
+  $base =  $_SERVER['REQUEST_SCHEME']."://".$_SERVER['SERVER_NAME'];
+
   // ERROR
   if(!$_SERVER['mail']){
     header("HTTP/1.1 403 Forbidden");
-    exit;
+    header("Location: ".$base);
   }
 
-  $base =  $_SERVER['REQUEST_SCHEME']."://".$_SERVER['SERVER_NAME'];
+
   $url = $base."/weko/shib/login?next=%2F";
 
   $curl = curl_init();
@@ -39,7 +41,14 @@ curl_setopt($curl,CURLOPT_COOKIEFILE,$cookie);
 // request
 $result = curl_exec($curl);
 
+$info = curl_getinfo($curl);
+
+$errno = curl_errno($curl);
+$error = curl_error($curl);
 curl_close($curl);
+if (CURLE_OK !== $errno) {
+        throw new RuntimeException($error, $errno);
+}
 
 header("HTTP/1.1 302 Found");
 header("Location: ".$base.$result);
