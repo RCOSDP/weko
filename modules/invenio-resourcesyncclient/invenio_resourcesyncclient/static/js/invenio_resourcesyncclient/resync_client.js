@@ -579,7 +579,7 @@ class CreateResyncComponent extends React.Component {
             >
               <option value="" disabled></option>
               {state.tree_list.map(item => {
-                return <option value={item.id}>{item.value}</option>;
+                return <option value={item.id} dangerouslySetInnerHTML={{ __html: item.value }}></option>;
               })}
             </select>
           </div>
