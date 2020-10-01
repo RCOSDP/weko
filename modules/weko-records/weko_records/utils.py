@@ -147,11 +147,11 @@ def json_loader(data, pid):
         # check oai id value
         is_edit = False
         try:
-            oai_value = PersistentIdentifier.get_by_object(pid_type='oai',
-                                                           object_type='rec',
-                                                           object_uuid=PersistentIdentifier.get('recid',
-                                                                                                pid).object_uuid
-                                                           ).pid_value
+            oai_value = PersistentIdentifier.get_by_object(
+                pid_type='oai',
+                object_type='rec',
+                object_uuid=PersistentIdentifier.get('recid',pid).object_uuid
+            ).pid_value
             is_edit = pid_exists(oai_value, 'oai')
         except PIDDoesNotExistError:
             pass
@@ -807,6 +807,7 @@ def check_to_upgrade_version(old_render, new_render):
 
     excluded_keys = [
         'required',
+        'isRequired',
         'title',
         'uniqueKey',
         'title_i18n',
@@ -815,10 +816,11 @@ def check_to_upgrade_version(old_render, new_render):
         'isHide',
         'enum',
         'titleMap',
-        'title_i18n_temp'
+        'title_i18n_temp',
+        'currentEnum'
     ]
-    remove_keys(excluded_keys, old_schema['properties'])
-    remove_keys(excluded_keys, new_schema['properties'])
+    remove_keys(excluded_keys, old_schema)
+    remove_keys(excluded_keys, new_schema)
 
     remove_multiple(old_schema)
     remove_multiple(new_schema)

@@ -1005,35 +1005,25 @@ $(document).ready(function () {
     }
   });
 
-  function setUniqueKey(schema, parentkey) {
-    if (schema == undefined)
-      return;
-    Object.keys(schema).map(function (itSubSchema) {
-      schema[itSubSchema]['uniqueKey'] = parentkey + "_" + itSubSchema;
-      let childSchema = getPropertiesOrItems( schema[itSubSchema]);
-      if (childSchema != null) {
-        setUniqueKey(childSchema, itSubSchema)
-      }
-    });
-  }
-
   function setDefaultI18n(schema, forms) {
     if (schema == undefined || forms == undefined)
       return;
     Object.keys(schema).map(function (subSchema) {
       forms.items.forEach(function (subForm) {
-        let subkey = subForm.key.split(".");
-        let last_key = subkey[subkey.length - 1]
-        if (last_key == subSchema) {
-          if (subForm.hasOwnProperty('title_i18n')) {
-            schema[subSchema]['title_i18n'] = subForm['title_i18n'];
-          }
-          else{
-            schema[subSchema]['title_i18n'] = { "ja": schema[subSchema]['title'], "en": schema[subSchema]['title'] }
-          }
-          let childSchema = getPropertiesOrItems(schema[subSchema]);
-          if (childSchema != null) {
-            setDefaultI18n(childSchema, subForm)
+        if(subForm['key']){
+          let subkey = subForm.key.split(".");
+          let last_key = subkey[subkey.length - 1]
+          if (last_key == subSchema) {
+            if (subForm.hasOwnProperty('title_i18n')) {
+              schema[subSchema]['title_i18n'] = subForm['title_i18n'];
+            }
+            else{
+              schema[subSchema]['title_i18n'] = { "ja": schema[subSchema]['title'], "en": schema[subSchema]['title'] }
+            }
+            let childSchema = getPropertiesOrItems(schema[subSchema]);
+            if (childSchema != null) {
+              setDefaultI18n(childSchema, subForm)
+            }
           }
         }
       });
@@ -1058,7 +1048,6 @@ $(document).ready(function () {
       }
       checkboxMetaId.prop("checked", isAllowMultiple);
       setDefaultI18n(product.properties, product_forms);
-      setUniqueKey(product.properties, meta_id);
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
@@ -1805,7 +1794,7 @@ $(document).ready(function () {
     form.isShowList = property.isShowList;
     form.isSpecifyNewline = property.isSpecifyNewline;
     form.isHide = property.isHide;
-    //Set TitleMap for form.
+    //Set enum for schema.
     let _enum, editAble;
     editAble = property.hasOwnProperty('editAble') && property['editAble'];
     if(property.hasOwnProperty('currentEnum')){
@@ -1813,6 +1802,8 @@ $(document).ready(function () {
     } else if(property.hasOwnProperty('enum')){
       _enum = property['enum'];
     }
+    property['enum'] = _enum
+    //Set TitleMap for form.
     if (editAble && _enum) {
       let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
       let titleMap = [];
@@ -1845,6 +1836,9 @@ $(document).ready(function () {
       property.type="string";
       form.type = "select";
     }
+    //Delete info not use.
+    if(property.hasOwnProperty('uniqueKey')) delete property['uniqueKey'];
+    if(property.hasOwnProperty('currentEnum')) delete property['currentEnum'];
   }
 
   function removeEnumForCheckboxes(schema) {
