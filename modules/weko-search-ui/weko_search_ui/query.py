@@ -750,7 +750,7 @@ def item_path_search_factory(self, search, index_id=None):
     # default sort
     if not sortkwargs:
         ind_id = request.values.get('q', '')
-        no_root_flag = True if ind_id and ind_id != 0 else False
+        no_root_flag = True if ind_id and ind_id != '0' else False
         sort_key, sort = SearchSetting.get_default_sort(
             current_app.config['WEKO_SEARCH_TYPE_INDEX'], no_root_flag)
         sort_obj = dict()
