@@ -187,7 +187,7 @@ class ItemTypeMetaDataView(BaseView):
                 workflow_list = workflow.get_workflow_by_itemtype_id(
                     item_type_id)
                 for wf in workflow_list:
-                    workflow.update_itemtype_id(wf.id, record.model.id)
+                    workflow.update_itemtype_id(wf, record.model.id)
 
             ItemTypeEditHistory.create_or_update(
                 item_type_id=record.model.id,

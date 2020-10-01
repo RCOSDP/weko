@@ -401,7 +401,7 @@ class WorkFlow(object):
         with db.session.no_autoflush:
             return _WorkFlow.query.filter_by(flows_name=workflow_name).first()
 
-    def update_itemtype_id(self, workflow_id, itemtype_id):
+    def update_itemtype_id(self, workflow, itemtype_id):
         """
         Update itemtype id to workflow.
 
@@ -411,8 +411,6 @@ class WorkFlow(object):
         """
         try:
             with db.session.begin_nested():
-                workflow = _WorkFlow.query.filter_by(
-                    id=workflow_id).one_or_none()
                 if workflow:
                     workflow.itemtype_id = itemtype_id
                     db.session.merge(workflow)
