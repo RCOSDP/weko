@@ -26,7 +26,7 @@ from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_cache import current_cache
 from invenio_db import db
-from invenio_files_rest.models import Bucket
+from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
