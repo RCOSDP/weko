@@ -335,7 +335,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                 "other"
             ]
         },
-        "mimetype": "content.format",
+        "mimetype": "file.mimeType",
         "language": {
             "language": ["jpn", "eng",
                          "fra", "ita",

@@ -151,7 +151,6 @@ def get_search_detail_keyword(str):
     for x in item_type_list:
         sub = dict(id=x[0], contents=x[0], checkStus=False)
         check_val.append(sub)
-
     for k_v in options:
         if k_v.get('id') == 'itemtype':
             k_v['check_val'] = check_val

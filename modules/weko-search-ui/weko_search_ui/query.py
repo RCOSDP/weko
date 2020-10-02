@@ -167,7 +167,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     shud.append(Q('match', **{v[0]: i}))
                 if shud:
                     qry = Q('bool', should=shud)
-
             return qry
 
         def _get_nested_query(k, v):
@@ -241,7 +240,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         shuld.append(Q('nested', path=v[0],
                                                        query=Q(
                                                            'bool', must=mst)))
-
+ 
             return Q('bool', should=shuld) if shuld else None
 
         def _get_date_query(k, v):

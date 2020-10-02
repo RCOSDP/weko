@@ -722,17 +722,32 @@
           }
         },
         "content": {
-          "type": "nested",
+          "type": "object",
           "properties": {
-            "file_id": {
-              "type": "keyword",
-              "index": true
+            "url": {"type": "nested", "properties": {"label": {"type":
+"text"},"objectType": {"type": "keyword"}}},
+            "version": {"type": "text"},
+            "version_id": {"type": "text"},
+            "licensetype": {"type": "keyword"},
+            "accessrole": {"type": "keyword"},
+            "displaytype": {"type": "keyword"},
+            "date": {
+              "type": "nested",
+              "properties": {
+                "dateType": {
+                  "type": "keyword",
+                  "index": true
+                },
+                "value": {
+                  "type": "keyword"
+                }
+              }
             },
             "groups": {
               "type": "keyword",
               "index": true
             },
-            "file_name": {
+            "filename": {
               "type": "text",
               "fields": {
                 "ja": {
