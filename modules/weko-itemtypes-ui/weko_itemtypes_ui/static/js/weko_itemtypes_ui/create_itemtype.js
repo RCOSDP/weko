@@ -1006,24 +1006,22 @@ $(document).ready(function () {
   });
 
   function setDefaultI18n(schema, forms) {
-    if (schema == undefined || forms == undefined)
-      return;
+    if(!schema|| !forms || forms.items) return;
     Object.keys(schema).map(function (subSchema) {
       forms.items.forEach(function (subForm) {
         if(subForm['key']){
           let subkey = subForm.key.split(".");
           let last_key = subkey[subkey.length - 1]
           if (last_key == subSchema) {
-            if (subForm.hasOwnProperty('title_i18n')) {
-              schema[subSchema]['title_i18n'] = subForm['title_i18n'];
+            let defaultTitle = {
+              "ja": schema[subSchema]['title'],
+              "en": schema[subSchema]['title']
             }
-            else{
-              schema[subSchema]['title_i18n'] = { "ja": schema[subSchema]['title'], "en": schema[subSchema]['title'] }
-            }
+            let schemaTitleI18n = schema[subSchema]['title_i18n'];
+            let subFormTtitleI18n = subForm['title_i18n'];
+            schemaTitleI18n = subFormTtitleI18n ? subFormTtitleI18n : defaultTitle;
             let childSchema = getPropertiesOrItems(schema[subSchema]);
-            if (childSchema != null) {
-              setDefaultI18n(childSchema, subForm)
-            }
+            setDefaultI18n(childSchema, subForm);
           }
         }
       });
@@ -1282,13 +1280,11 @@ $(document).ready(function () {
         }
 
         if(data.meta_list[row_id].input_type.indexOf('cus_') != -1) {
-
           //Get title_i18n of item_type set to schema properties in order to fill to input controls.
-
           //Get schema from table item_type_properties.
-          let itemTypePropertiesSchema = properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties;
+          let itemTypePropertiesSchema = properties_obj[data.meta_list[row_id].input_type.substr(4)].schema;
           //Get schema from table item_type.
-          let itemTypeSchema = data.table_row_map.schema.properties[row_id].properties;
+          let itemTypeSchema = data.table_row_map.schema.properties[row_id];
           //Get form from table item_type (1).
           let itemTypeForm = getItemTypeForm(row_id, data.table_row_map.form);
           //Get form from table item_type_property (2).
@@ -1300,10 +1296,11 @@ $(document).ready(function () {
             itemTypeForm,
             itemTypePropertyForm,
             changedProperties);
+          //Suport for Select, Radios, Checkboxes.
           //Set format in schema from item_type to item_type_property.
           setSchemaFromItemTypeToItemTypeProperty(
             itemTypePropertiesSchema,
-            itemTypeSchema, itemTypePropertyForm['items']);
+            itemTypeSchema);
 
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
           let isAllowMultiple = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
@@ -1512,7 +1509,8 @@ $(document).ready(function () {
   * @itemTypeForm: form in 'item_type' table (1).
   * @itemTypePropertyForm: form in 'item_type_property' table (2).
   */
-  function setTitleI18nFromFormToPropertiesSchema(properties, itemTypeForm, itemTypePropertyForm, changedProperties) {
+  function setTitleI18nFromFormToPropertiesSchema(itemTypePropertiesSchema, itemTypeForm, itemTypePropertyForm, changedProperties) {
+    let properties = getPropertiesOrItems(itemTypePropertiesSchema) || {};
     //condition 1:
     // Set all title_i18n of (1) to 'schema properties'.
     // Define insensitive(i) global(g) regex of square brackets.
@@ -1533,7 +1531,6 @@ $(document).ready(function () {
     // Condition 2:
     // If title_i18n of (1) is empty, set title_i18n of (2) to 'schema properties'.
     // setTitleI18nForSchemaPropertiesByCondition(properties, itemTypePropertyForm);
-    let titleI118nDefault = {'ja': '', 'en': ''};
     Object.keys(properties).map(function (propKey) {
       $.each(itemTypePropertyForm.items, function(ind, form){
         let propertyKey = itemTypePropertyForm.key + '.' + propKey;
@@ -1554,28 +1551,17 @@ $(document).ready(function () {
     getChangedProperties(itemTypePropertyForm, itemTypeForm, changedProperties);
   }
 
-
-    function getPropertiesOrItems(schema) {
+  function getPropertiesOrItems(schema) {
     // Checkboxes format has 'items' but it's not actual items. So ignore it
     let isCheckboxFormat = schema.format == "checkboxes";
     let isHasItem = schema.hasOwnProperty('items') && !isCheckboxFormat;
     let isHasProperties = schema.hasOwnProperty('properties');
-    let properties;
-    if (isHasItem || isHasProperties) {
-      if (isHasItem) {
-        properties = schema.items.properties;
-      } else {
-        properties = schema.properties;
-      }
-      return properties;
-    }
-    return null;
+    let properties = isHasItem ? schema.items.properties : isHasProperties ? schema.properties : {};
+    return properties;
   }
 
   function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
     let properties = getPropertiesOrItems(schemaProperties);
-    if (properties == null)
-      return;
     Object.keys(properties).map(function (propKey) {
       let propertyKey = prefixKey + '.' + propKey;
       propertyKey = fixKey(propertyKey);
@@ -1594,9 +1580,6 @@ $(document).ready(function () {
 
   function setTitleI18nForSubPropertiesByCondition2(schemaProperties, subForms, prefixKey) {
     let properties = getPropertiesOrItems(schemaProperties);
-    if (properties == null)
-      return;
-    let titleI118nDefault = {'ja': '', 'en': ''};
     Object.keys(properties).map(function (propKey) {
       $.each(subForms, function (ind, form) {
         // define sub key.
@@ -1677,52 +1660,9 @@ $(document).ready(function () {
     });
   }
 
-  function setSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema, itemTypeForm) {
-    let itpSchema = itemTypePropertiesSchema || {};
-    let itSchema = itemTypeSchema || {};
-    Object.keys(itpSchema).map(function(itpSchemaKey) {
-      Object.keys(itSchema).map(function(itSchemaKey) {
-        if(itpSchemaKey == itSchemaKey) {
-          let itpSubSchema = itpSchema[itpSchemaKey];
-          let itSubSchema = itSchema[itSchemaKey];
-          itpSubSchema.format = itSubSchema.format;
-          if (itpSubSchema.format == 'select') {
-            itpSubSchema.type = "string";
-          } else if (itpSubSchema.format == 'checkboxes') {
-            itpSubSchema.type = "array";
-          } else if (itpSubSchema.format == "radios") {
-            itpSubSchema.type = "string";
-          }
-          setSubSchemaFromItemTypeToItemTypeProperty(itpSubSchema, itSubSchema);
-          return false;
-          }
-      });
-    });
-  }
-
-  function setSubSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema) {
-    let itpSchema = {}, itSchema = {};
-    //Get sub schema from itemTypePropertiesSchema.
-    let isHasItem = itemTypePropertiesSchema.hasOwnProperty('items');
-    let isHasProperties = itemTypePropertiesSchema.hasOwnProperty('properties');
-    if(isHasItem || isHasProperties) {
-      if(isHasItem) {
-        itpSchema = itemTypePropertiesSchema.items.properties || {};
-      } else {
-        itpSchema = itemTypePropertiesSchema.properties || {};
-      }
-    }
-    //Get sub schema from itemTypeSchema.
-    isHasItem = itemTypeSchema.hasOwnProperty('items');
-    isHasProperties = itemTypeSchema.hasOwnProperty('properties');
-    if(isHasItem || isHasProperties) {
-      if(isHasItem) {
-        itSchema = itemTypeSchema.items.properties || {};
-      } else {
-        itSchema = itemTypeSchema.properties || {};
-      }
-    }
-    //Update data from itemTypeSchema to itemTypePropertiesSchema
+  function setSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema) {
+    let itpSchema = getPropertiesOrItems(itemTypePropertiesSchema) || {};
+    let itSchema = getPropertiesOrItems(itemTypeSchema) || {};
     Object.keys(itpSchema).map(function(itpSchemaKey) {
       Object.keys(itSchema).map(function(itSchemaKey) {
         if(itpSchemaKey == itSchemaKey) {
@@ -1736,7 +1676,7 @@ $(document).ready(function () {
           } else if(itpSubSchema.format == "radios") {
             itpSubSchema.type = "string";
           }
-          setSubSchemaFromItemTypeToItemTypeProperty(itpSubSchema, itSubSchema);
+          setSchemaFromItemTypeToItemTypeProperty(itpSubSchema, itSubSchema);
           return false;
           }
       });
@@ -1764,9 +1704,6 @@ $(document).ready(function () {
 
   function setTitleI18nFromPropertiesSchemaToSubForm(schemaProperties, subForms, prefixKey) {
     let properties = getPropertiesOrItems(schemaProperties);
-    if (properties == null) {
-      return;
-    }
     let propertyKey;
     Object.keys(properties).map(function (propKey) {
       $.each(subForms, function (ind, form) {
@@ -1794,7 +1731,7 @@ $(document).ready(function () {
     form.isShowList = property.isShowList;
     form.isSpecifyNewline = property.isSpecifyNewline;
     form.isHide = property.isHide;
-    //Set enum for schema.
+    //Set TitleMap for form.
     let _enum, editAble;
     editAble = property.hasOwnProperty('editAble') && property['editAble'];
     if(property.hasOwnProperty('currentEnum')){
