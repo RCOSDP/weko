@@ -376,6 +376,7 @@ def check_import_items(file_content: str, is_change_identifier: bool):
                 list_record.extend(
                     unpackage_import_file(data_path, tsv_entry))
         list_record = handle_check_exist_record(list_record)
+        handle_item_title(list_record)
         handle_check_and_prepare_publish_status(list_record)
         handle_check_and_prepare_index_tree(list_record)
         handle_check_and_prepare_feedback_mail(list_record)
@@ -528,31 +529,6 @@ def represents_int(s):
         return True
     except ValueError:
         return False
-
-
-def handle_check_index(list_index: list) -> bool:
-    """Handle check index.
-
-    :argument
-        list_index     -- {list} list index id.
-    :return
-        return       -- true if exist.
-
-    """
-    result = True
-
-    index_lst = []
-    if list_index:
-        index_id_lst = []
-        for index in list_index:
-            indexes = str(index).split('/')
-            index_id_lst.append(indexes[len(indexes) - 1])
-        index_lst = index_id_lst
-
-    plst = Indexes.get_path_list(index_lst)
-    if not plst or len(index_lst) != len(plst):
-        result = False
-    return result
 
 
 def get_item_type(item_type_id=0) -> dict:
@@ -857,7 +833,7 @@ def register_item_metadata(item):
             **_deposit_data,
             **{
                 '$schema': item.get('$schema'),
-                'title': handle_get_title(item.get('Title')),
+                'title': item.get('item_title'),
             }
         )
         item_status = {
@@ -925,22 +901,6 @@ def update_publish_status(item_id, status):
     db.session.commit()
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
-
-
-def handle_get_title(title) -> str:
-    """Handle get title.
-
-    :argument
-        title           -- {dict or list} title.
-    :return
-        return       -- title string.
-
-    """
-    if isinstance(title, dict):
-        return title.get('Title', '')
-    elif isinstance(title, list):
-        return title[0].get('Title') if title[0] \
-            and isinstance(title[0], dict) else ''
 
 
 def handle_workflow(item: dict):
@@ -1055,30 +1015,27 @@ def remove_temp_dir(path):
     shutil.rmtree(str(path.replace("/data", "")))
 
 
-def handle_replace_new_index() -> list:
-    """Validation importing zip file.
+def handle_item_title(list_record):
+    """Prepare item title.
 
     :argument
+        list_record -- {list} list record import.
     :return
-        return       -- index id import item
 
     """
-    from datetime import datetime
-    now = datetime.now()
-    index_import = Indexes.get_index_by_name("Index_import")
-    if index_import:
-        return [index_import.id]
-    else:
-        create_index = Indexes.create(
-            pid=0,
-            indexes={'id': int(datetime.timestamp(now) * 10 ** 3),
-                     'value': 'Index_import'}
-        )
-        if create_index:
-            index_import = Indexes.get_index_by_name("Index_import")
-            if index_import:
-                return [index_import.id]
-        return []
+    for item in list_record:
+        error = None
+        item_type_mapping = Mapping.get_record(item['item_type_id'])
+        item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+        title_data, _ = get_data_by_property(item, item_map, "title.@value")
+        if not title_data:
+            error = _('Title is required item.')
+        else:
+            item['item_title'] = title_data[0]
+
+        if error:
+            item['errors'] = item['errors'] + [error] \
+                if item.get('errors') else [error]
 
 
 def handle_check_and_prepare_publish_status(list_record):
