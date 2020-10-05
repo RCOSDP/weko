@@ -349,7 +349,7 @@ class ReportView(BaseView):
     @expose('/get_email_address', methods=['POST'])
     def get_email_address(self):
         """Save Email Address."""
-        input_email = request.form.getlist('input_email')
+        input_email = request.form.getlist('inputEmail')
         StatisticsEmail.delete_all_row()
         alert_msg = 'Successfully saved email addresses.'
         category = 'info'
