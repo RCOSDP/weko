@@ -989,7 +989,8 @@ def import_items_to_system(item: dict, url_root: str):
             item['id'] = item_id
         up_load_file_content(item, root_path)
         response = register_item_metadata(item)
-        if response.get('success'):
+        if response.get('success') and \
+                current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
             response = register_item_handle(item, url_root)
         if response.get('success'):
             response = register_item_doi(item)
@@ -1252,8 +1253,9 @@ def handle_check_cnri(list_record):
         error = None
         item_id = str(item.get('id'))
         cnri = item.get('cnri')
+        cnri_set = current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI')
 
-        if item.get('is_change_identifier'):
+        if item.get('is_change_identifier') and cnri_set:
             if not cnri:
                 error = _('Please specify {}.').format('CNRI')
             elif not re.search(WEKO_IMPORT_DOI_PATTERN, cnri):
@@ -1263,7 +1265,7 @@ def handle_check_cnri(list_record):
                 else:
                     error = _('Specified {} is invalid.').format('CNRI')
         else:
-            if item.get('status') == 'new':
+            if item.get('status') == 'new' or item.get('is_change_identifier'):
                 if cnri:
                     error = _('{} cannot be set.').format('CNRI')
             else:
