@@ -565,10 +565,10 @@ def handle_check_exist_record(list_record) -> list:
     """
     result = []
     for item in list_record:
-        item = dict(**item, **{
-            'status': 'new'
-        })
         if not item.get('errors'):
+            item = dict(**item, **{
+                'status': 'new'
+            })
             try:
                 item_id = item.get('id')
                 if item_id:
@@ -1027,7 +1027,8 @@ def handle_item_title(list_record):
         error = None
         item_type_mapping = Mapping.get_record(item['item_type_id'])
         item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
-        title_data, _ = get_data_by_property(item, item_map, "title.@value")
+        title_data, _title_key = get_data_by_property(
+            item, item_map, "title.@value")
         if not title_data:
             error = _('Title is required item.')
         else:
@@ -1266,14 +1267,20 @@ def handle_check_cnri(list_record):
                 if cnri:
                     error = _('{} cannot be set.').format('CNRI')
             else:
-                pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
-                if pid_cnri:
-                    if not pid_cnri.pid_value.endswith(str(cnri)):
+                pid_cnri = None
+                try:
+                    pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
+                    if pid_cnri:
+                        if not pid_cnri.pid_value.endswith(str(cnri)):
+                            error = _('Specified {} is different from existing'
+                                      + ' {}.').format('CNRI', 'CNRI')
+                    elif cnri:
                         error = _('Specified {} is different '
                                   + 'from existing {}.').format('CNRI', 'CNRI')
-                elif cnri:
-                    error = _('Specified {} is different '
-                              + 'from existing {}.').format('CNRI', 'CNRI')
+                except Exception as ex:
+                    current_app.logger.error(
+                        'item id: %s not found.' % item_id)
+                    current_app.logger.error(ex)
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1290,14 +1297,18 @@ def handle_check_doi_ra(list_record):
 
     """
     def check_existed(item_id, doi_ra):
-        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-        identifier = IdentifierHandle(pid.object_uuid)
-        _value, doi_type = identifier.get_idt_registration_data()
-
         error = None
-        if doi_type and doi_type[0] != doi_ra:
-            error = _('Specified {} is different from '
-                      + 'existing {}.').format('DOI_RA', 'DOI_RA')
+        try:
+            pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+            identifier = IdentifierHandle(pid.object_uuid)
+            _value, doi_type = identifier.get_idt_registration_data()
+
+            if doi_type and doi_type[0] != doi_ra:
+                error = _('Specified {} is different from '
+                          + 'existing {}.').format('DOI_RA', 'DOI_RA')
+        except Exception as ex:
+            current_app.logger.error('item id: %s not found.' % item_id)
+            current_app.logger.error(ex)
         return error
 
     for item in list_record:
@@ -1360,7 +1371,13 @@ def handle_check_doi(list_record):
                     if doi:
                         error = _('{} cannot be set.').format('DOI')
                 else:
-                    pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                    pid_doi = None
+                    try:
+                        pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                    except Exception as ex:
+                        current_app.logger.error(
+                            'item id: %s not found.' % item_id)
+                        current_app.logger.error(ex)
                     if pid_doi:
                         if not doi:
                             error = _('Please specify {}.').format('DOI')
