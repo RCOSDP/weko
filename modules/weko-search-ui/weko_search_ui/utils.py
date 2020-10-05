@@ -1477,7 +1477,6 @@ def register_item_doi(item):
         }
 
     item_id = str(item.get('id'))
-    status = item.get('status')
     is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
     doi = item.get('doi')
@@ -1513,16 +1512,15 @@ def register_item_doi(item):
                     is_feature_import=True
                 )
         else:
-            if status == 'new':
-                if doi_ra and not doi:
-                    data = prepare_doi_link(item_id)
-                    saving_doi_pidstore(
-                        pid_lastest.object_uuid,
-                        pid.object_uuid,
-                        data,
-                        WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
-                        is_feature_import=True
-                    )
+            if doi_ra and not doi:
+                data = prepare_doi_link(item_id)
+                saving_doi_pidstore(
+                    pid_lastest.object_uuid,
+                    pid.object_uuid,
+                    data,
+                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
+                    is_feature_import=True
+                )
 
         deposit = WekoDeposit.get_record(pid.object_uuid)
         deposit.commit()
