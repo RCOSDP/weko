@@ -1018,8 +1018,8 @@ $(document).ready(function () {
               "en": schema[subSchema]['title']
             }
             let schemaTitleI18n = schema[subSchema]['title_i18n'];
-            let subFormTtitleI18n = subForm['title_i18n'];
-            schemaTitleI18n = subFormTtitleI18n ? subFormTtitleI18n : defaultTitle;
+            let subFormTitleI18n = subForm['title_i18n'];
+            schemaTitleI18n = subFormTitleI18n ? subFormTitleI18n : defaultTitle;
             let childSchema = getPropertiesOrItems(schema[subSchema]);
             setDefaultI18n(childSchema, subForm);
           }
@@ -1296,7 +1296,7 @@ $(document).ready(function () {
             itemTypeForm,
             itemTypePropertyForm,
             changedProperties);
-          //Suport for Select, Radios, Checkboxes.
+          //Support for Select, Radios, Checkboxes.
           //Set format in schema from item_type to item_type_property.
           setSchemaFromItemTypeToItemTypeProperty(
             itemTypePropertiesSchema,

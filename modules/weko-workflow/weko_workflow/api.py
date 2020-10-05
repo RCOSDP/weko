@@ -405,7 +405,7 @@ class WorkFlow(object):
         """
         Update itemtype id to workflow.
 
-        :param workflow_id:
+        :param workflow:
         :param itemtype_id:
         :return:
         """

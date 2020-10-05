@@ -805,20 +805,8 @@ def check_to_upgrade_version(old_render, new_render):
     old_schema = old_render.get('table_row_map').get('schema')
     new_schema = new_render.get('table_row_map').get('schema')
 
-    excluded_keys = [
-        'required',
-        'isRequired',
-        'title',
-        'uniqueKey',
-        'title_i18n',
-        'isShowList',
-        'isSpecifyNewline',
-        'isHide',
-        'enum',
-        'titleMap',
-        'title_i18n_temp',
-        'currentEnum'
-    ]
+    excluded_keys = \
+        current_app.config['WEKO_ITEMTYPE_EXCLUDED_KEYS']
     remove_keys(excluded_keys, old_schema)
     remove_keys(excluded_keys, new_schema)
 
