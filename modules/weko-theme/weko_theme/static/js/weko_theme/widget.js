@@ -121,8 +121,7 @@ const PageBodyGrid = function () {
                     '#main_contents .panel-heading{' +
                         'background-color: ' + labelColor + ';' +
                     '}' +
-                    '#main_contents .panel-heading ul.leaders span:first-child,' +
-                    '#main_contents .panel-heading ul.leaders span + span {' +
+                    '#main_contents .panel-heading ul.leaders span:first-child {' +
                         'background-color: ' + labelColor + '!important;' +
                     '}' +
                     '.panel-default > .panel-heading{' +
