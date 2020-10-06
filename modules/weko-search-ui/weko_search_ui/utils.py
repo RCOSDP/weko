@@ -565,45 +565,48 @@ def handle_check_exist_record(list_record) -> list:
     """
     result = []
     for item in list_record:
-        if not item.get('errors'):
-            item = dict(**item, **{
-                'status': 'new'
-            })
-            try:
-                item_id = item.get('id')
-                if item_id:
-                    item_exist = WekoRecord.get_record_by_pid(item_id)
-                    if item_exist:
-                        if item_exist.pid.is_deleted():
-                            item['status'] = None
-                            item['errors'] = [_('Item already DELETED'
-                                                ' in the system')]
-                            result.append(item)
-                            continue
-                        else:
-                            exist_url = request.url_root + \
-                                'records/' + item_exist.get('recid')
-                            if item.get('uri') == exist_url:
-                                item['status'] = 'update'
-                            else:
-                                item['errors'] = [_('Specified URI and system'
-                                                    ' URI do not match.')]
-                                item['status'] = None
-                else:
-                    item['id'] = None
-                    if item.get('uri'):
-                        item['errors'] = [_('Item ID does not match the'
-                                            + ' specified URI information.')]
+        item = dict(**item, **{
+            'status': 'new'
+        })
+        errors = item.get('errors') or []
+        try:
+            item_id = item.get('id')
+            if item_id:
+                item_exist = WekoRecord.get_record_by_pid(item_id)
+                if item_exist:
+                    if item_exist.pid.is_deleted():
                         item['status'] = None
-            except PIDDoesNotExistError:
-                pass
-            except BaseException:
-                current_app.logger.error(
-                    'Unexpected error: ',
-                    sys.exc_info()[0]
-                )
+                        errors.append(_('Item already DELETED'
+                                        ' in the system'))
+                        item['errors'] = errors
+                        result.append(item)
+                        continue
+                    else:
+                        exist_url = request.url_root + \
+                            'records/' + item_exist.get('recid')
+                        if item.get('uri') == exist_url:
+                            item['status'] = 'update'
+                        else:
+                            errors.append(_('Specified URI and system'
+                                            ' URI do not match.'))
+                            item['status'] = None
+            else:
+                item['id'] = None
+                if item.get('uri'):
+                    errors.append(_('Item ID does not match the'
+                                    + ' specified URI information.'))
+                    item['status'] = None
+        except PIDDoesNotExistError:
+            pass
+        except BaseException:
+            current_app.logger.error(
+                'Unexpected error: ',
+                sys.exc_info()[0]
+            )
         if item.get('status') == 'new':
             handle_remove_identifier(item)
+        if errors:
+            item['errors'] = errors
         result.append(item)
     return result
 
@@ -1410,14 +1413,17 @@ def register_item_handle(item, url_root):
         record = WekoRecord.get_record_by_pid(item_id)
         pid = record.pid_recid
         pid_hdl = record.pid_cnri
+        cnri = item.get('cnri')
 
         if item.get('is_change_identifier'):
             if item.get('status') == 'new':
-                register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
+                register_hdl_by_handle(cnri, pid.object_uuid)
             else:
-                if pid_hdl:
+                if pid_hdl and not pid_hdl.pid_value.endswith(cnri):
                     pid_hdl.delete()
-                register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
+                    register_hdl_by_handle(cnri, pid.object_uuid)
+                elif not pid_hdl:
+                    register_hdl_by_handle(cnri, pid.object_uuid)
         else:
             if item.get('status') == 'new':
                 register_hdl_by_item_id(item_id, pid.object_uuid, url_root)
