@@ -295,9 +295,14 @@ class ReportView(BaseView):
                 attachments = [Attachment(zip_name,
                                           'application/x-zip-compressed',
                                           zip_stream.getvalue())]
-                send_mail(subject, recepients, html=html_body,
-                          attachments=attachments)
-                flash(_('Successfully sent the reports to the recepients.'))
+                ret = send_mail(subject, recepients,
+                                html=html_body,
+                                attachments=attachments)
+                if ret:
+                    flash(ret, 'error')
+                else:
+                    flash(
+                        _('Successfully sent the reports to the recepients.'))
             else:
                 resp = make_response()
                 resp.data = zip_stream.getvalue()
@@ -740,7 +745,9 @@ class ItemExportSettingsView(BaseView):
         """File preview settings."""
         if request.method == 'POST':
             item_setting = request.form.get('item_export_radio', 'True')
-            contents_setting = request.form.get('export_contents_radio', 'True')
+            contents_setting = request.form.get(
+                'export_contents_radio',
+                'True')
             new_settings = {
                 'allow_item_exporting': str_to_bool(item_setting),
                 'enable_contents_exporting': str_to_bool(contents_setting)
@@ -916,7 +923,8 @@ class IdentifierSettingView(ModelView):
             if (form.repository.data.id in id_list) and \
                 (form.action == 'create'
                  or form.repo_selected.data != form.repository.data.id):
-                flash(_('Specified repository is already registered.'), 'error')
+                flash(_('Specified repository is already registered.'),
+                      'error')
                 return False
         return super(IdentifierSettingView, self).validate_form(form)
 
