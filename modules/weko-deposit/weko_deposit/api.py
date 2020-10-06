@@ -502,7 +502,7 @@ class WekoDeposit(Deposit):
             'parent',
             'parent:{0}'.format(record_id),
             object_type='rec',
-            object_uuid=id_,
+            object_uuid=deposit.id,
             status=PIDStatus.REGISTERED
         )
 
