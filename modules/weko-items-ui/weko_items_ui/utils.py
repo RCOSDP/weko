@@ -324,7 +324,6 @@ def parse_ranking_results(results,
         key = search_key
     else:
         url = None
-
     if date_key == 'create_date':
         data_list = parse_ranking_new_items(results)
         results = dict()
@@ -335,6 +334,8 @@ def parse_ranking_results(results,
         date = ''
         for item in results[list_name]:
             t = {}
+            if len(item["search_key"]) == 13 and bool(int(item["search_key"])):
+                continue
             if count_key:
                 if not count == int(item[count_key]):
                     rank = len(ranking_list) + 1
