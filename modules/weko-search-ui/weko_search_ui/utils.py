@@ -565,10 +565,10 @@ def handle_check_exist_record(list_record) -> list:
     """
     result = []
     for item in list_record:
-        item = dict(**item, **{
-            'status': 'new'
-        })
         if not item.get('errors'):
+            item = dict(**item, **{
+                'status': 'new'
+            })
             try:
                 item_id = item.get('id')
                 if item_id:
@@ -989,7 +989,8 @@ def import_items_to_system(item: dict, url_root: str):
             item['id'] = item_id
         up_load_file_content(item, root_path)
         response = register_item_metadata(item)
-        if response.get('success'):
+        if response.get('success') and \
+                current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
             response = register_item_handle(item, url_root)
         if response.get('success'):
             response = register_item_doi(item)
@@ -1027,7 +1028,8 @@ def handle_item_title(list_record):
         error = None
         item_type_mapping = Mapping.get_record(item['item_type_id'])
         item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
-        title_data, _ = get_data_by_property(item, item_map, "title.@value")
+        title_data, _title_key = get_data_by_property(
+            item, item_map, "title.@value")
         if not title_data:
             error = _('Title is required item.')
         else:
@@ -1251,8 +1253,9 @@ def handle_check_cnri(list_record):
         error = None
         item_id = str(item.get('id'))
         cnri = item.get('cnri')
+        cnri_set = current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI')
 
-        if item.get('is_change_identifier'):
+        if item.get('is_change_identifier') and cnri_set:
             if not cnri:
                 error = _('Please specify {}.').format('CNRI')
             elif not re.search(WEKO_IMPORT_DOI_PATTERN, cnri):
@@ -1262,18 +1265,26 @@ def handle_check_cnri(list_record):
                 else:
                     error = _('Specified {} is invalid.').format('CNRI')
         else:
-            if item.get('status') == 'new':
+            if item.get('status') == 'new' or item.get('is_change_identifier'):
                 if cnri:
                     error = _('{} cannot be set.').format('CNRI')
             else:
-                pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
-                if pid_cnri:
-                    if not pid_cnri.pid_value.endswith(str(cnri)):
+                pid_cnri = None
+                try:
+                    pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
+                    if pid_cnri:
+                        if not cnri:
+                            error = _('Please specify {}.').format('CNRI')
+                        elif not pid_cnri.pid_value.endswith(str(cnri)):
+                            error = _('Specified {} is different from existing'
+                                      + ' {}.').format('CNRI', 'CNRI')
+                    elif cnri:
                         error = _('Specified {} is different '
                                   + 'from existing {}.').format('CNRI', 'CNRI')
-                elif cnri:
-                    error = _('Specified {} is different '
-                              + 'from existing {}.').format('CNRI', 'CNRI')
+                except Exception as ex:
+                    current_app.logger.error(
+                        'item id: %s not found.' % item_id)
+                    current_app.logger.error(ex)
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1290,14 +1301,18 @@ def handle_check_doi_ra(list_record):
 
     """
     def check_existed(item_id, doi_ra):
-        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-        identifier = IdentifierHandle(pid.object_uuid)
-        _value, doi_type = identifier.get_idt_registration_data()
-
         error = None
-        if doi_type and doi_type[0] != doi_ra:
-            error = _('Specified {} is different from '
-                      + 'existing {}.').format('DOI_RA', 'DOI_RA')
+        try:
+            pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+            identifier = IdentifierHandle(pid.object_uuid)
+            _value, doi_type = identifier.get_idt_registration_data()
+
+            if doi_type and doi_type[0] != doi_ra:
+                error = _('Specified {} is different from '
+                          + 'existing {}.').format('DOI_RA', 'DOI_RA')
+        except Exception as ex:
+            current_app.logger.error('item id: %s not found.' % item_id)
+            current_app.logger.error(ex)
         return error
 
     for item in list_record:
@@ -1360,7 +1375,13 @@ def handle_check_doi(list_record):
                     if doi:
                         error = _('{} cannot be set.').format('DOI')
                 else:
-                    pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                    pid_doi = None
+                    try:
+                        pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                    except Exception as ex:
+                        current_app.logger.error(
+                            'item id: %s not found.' % item_id)
+                        current_app.logger.error(ex)
                     if pid_doi:
                         if not doi:
                             error = _('Please specify {}.').format('DOI')
@@ -1460,7 +1481,6 @@ def register_item_doi(item):
         }
 
     item_id = str(item.get('id'))
-    status = item.get('status')
     is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
     doi = item.get('doi')
@@ -1496,16 +1516,15 @@ def register_item_doi(item):
                     is_feature_import=True
                 )
         else:
-            if status == 'new':
-                if doi_ra and not doi:
-                    data = prepare_doi_link(item_id)
-                    saving_doi_pidstore(
-                        pid_lastest.object_uuid,
-                        pid.object_uuid,
-                        data,
-                        WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
-                        is_feature_import=True
-                    )
+            if doi_ra and not doi:
+                data = prepare_doi_link(item_id)
+                saving_doi_pidstore(
+                    pid_lastest.object_uuid,
+                    pid.object_uuid,
+                    data,
+                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
+                    is_feature_import=True
+                )
 
         deposit = WekoDeposit.get_record(pid.object_uuid)
         deposit.commit()

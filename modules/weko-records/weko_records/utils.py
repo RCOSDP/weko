@@ -650,7 +650,7 @@ def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
     def get_name(key):
         for lst in klst:
             keys = lst[0].split('.')
-            if root_key == keys[0] and key == keys[-1]:
+            if keys[0].startswith(root_key) and key == keys[-1]:
                 return lst[2] if not is_author else '{}.{}'. format(
                     key, lst[2])
 

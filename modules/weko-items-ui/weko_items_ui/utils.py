@@ -766,48 +766,44 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
-            list_attr = item_attrs.split('.')
             max_length = 0
-            if len(list_attr) == 1:
+            list_attr = []
+            for attr in item_attrs.split('.'):
+                index_left_racket = attr.find('[')
+                if index_left_racket >= 0:
+                    list_attr.extend(
+                        [attr[:index_left_racket],
+                         attr[index_left_racket:]]
+                    )
+                else:
+                    list_attr.append(attr)
+
+            level = len(list_attr)
+            if level == 1:
                 return self.attr_data[item_attrs]['max_size']
-            elif len(list_attr) == 2:
+            elif level > 1:
                 max_length = 1
-                first_attr = list_attr[0].split('[')
-                item_attr = first_attr[0]
-                idx = int(first_attr[1].split(']')[0])
-                sub_attr = list_attr[1].split('[')[0]
                 for record in self.records:
-                    if self.records[record].get(item_attr) \
-                        and len(self.records[record][item_attr][
-                            'attribute_value_mlt']) > idx \
-                        and self.records[record][item_attr][
-                            'attribute_value_mlt'][idx].get(sub_attr):
-                        cur_len = len(self.records[record][item_attr][
-                            'attribute_value_mlt'][idx][sub_attr])
-                        if cur_len > max_length:
-                            max_length = cur_len
-            elif len(list_attr) == 3:
-                max_length = 1
-                first_attr = list_attr[0].split('[')
-                key2 = list_attr[1].split('[')
-                item_attr = first_attr[0]
-                idx = int(first_attr[1].split(']')[0])
-                sub_attr = list_attr[1].split('[')[0]
-                idx_2 = int(key2[1].split(']')[0])
-                sub_attr_2 = list_attr[2].split('[')[0]
-                for record in self.records:
-                    if self.records[record].get(item_attr):
-                        attr_val = self.records[record][item_attr][
-                            'attribute_value_mlt']
-                        if len(attr_val) > idx \
-                            and attr_val[idx].get(sub_attr) \
-                            and len(attr_val[idx][sub_attr]) > idx_2 \
-                            and attr_val[idx][sub_attr][idx_2].get(
-                                sub_attr_2):
-                            cur_len = len(attr_val[idx][sub_attr][idx_2][
-                                sub_attr_2])
-                            if cur_len > max_length:
-                                max_length = cur_len
+                    _data = self.records[record].get(list_attr[0])
+                    if _data:
+                        _data = _data['attribute_value_mlt']
+                        for attr in list_attr[1:]:
+                            if re.search(r'^\[\d+\]$', attr):
+                                idx = int(attr[1:-1])
+                                if isinstance(_data, list) and len(_data) > idx:
+                                    _data = _data[idx]
+                                else:
+                                    _data = []
+                                    break
+                            elif isinstance(_data, list):
+                                _data = _data[0]
+                            elif isinstance(_data, dict) and _data.get(attr):
+                                _data = _data.get(attr)
+                            else:
+                                _data = []
+                                break
+                        if isinstance(_data, list) and len(_data) > max_length:
+                            max_length = len(_data)
             return max_length
 
         def get_subs_item(self,
@@ -840,49 +836,41 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 key_label = []
                 key_data = []
                 for key in sorted(properties):
-                    if properties[key]['type'] == 'array':
+                    if not is_object:
+                        new_key = '{}[{}].{}'.format(
+                            item_key, str(idx), key)
+                        new_label = '{}#{}.{}'.format(item_label, str(
+                            idx + 1), properties[key].get('title'))
+                    else:
+                        new_key = '{}.{}'.format(item_key, key)
+                        new_label = '{}.{}'.format(
+                            item_label, properties[key].get('title'))
+
+                    if properties[key]['type'] in ['array', 'object']:
                         if data and idx < len(data) and data[idx].get(key):
                             m_data = data[idx][key]
                         else:
                             m_data = None
+
+                        if properties[key]['type'] == 'object':
+                            new_properties = properties[key]['properties']
+                            new_is_object = True
+                        else:
+                            new_properties = \
+                                properties[key]['items']['properties']
+                            new_is_object = False
+
                         sub, sublabel, subdata = self.get_subs_item(
-                            '{}[{}].{}'.format(item_key, str(idx), key),
-                            '{}#{}.{}'.format(item_label, str(idx + 1),
-                                              properties[key].get('title')),
-                            properties[key]['items']['properties'],
-                            m_data)
-                        if is_object:
-                            _sub_ = []
-                            for item in sub:
-                                if 'item_' in item:
-                                    _sub_.append(item.split('.')[0].replace(
-                                        '[0]', '') + '.' + '.'.join(
-                                        item.split('.')[1:]))
-                                else:
-                                    _sub_.append(item)
-                            sub = _sub_
+                            new_key, new_label, new_properties,
+                            m_data, new_is_object)
                         key_list.extend(sub)
                         key_label.extend(sublabel)
                         key_data.extend(subdata)
                     else:
                         if isinstance(data, dict):
                             data = [data]
-                        if is_object:
-                            key_list.append('{}.{}'.format(
-                                item_key,
-                                key))
-                            key_label.append('{}.{}'.format(
-                                item_label,
-                                properties[key].get('title')))
-                        else:
-                            key_list.append('{}[{}].{}'.format(
-                                item_key,
-                                str(idx),
-                                key))
-                            key_label.append('{}#{}.{}'.format(
-                                item_label,
-                                str(idx + 1),
-                                properties[key].get('title')))
+                        key_list.append(new_key)
+                        key_label.append(new_label)
                         if data and idx < len(data) and data[idx].get(key):
                             key_data.append(data[idx][key])
                         else:
@@ -1033,7 +1021,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     total_col = len(ret)
     for index in range(total_col):
         _id = ret[index - del_num]
-        key = re.sub(r'\[.\]', '[]', _id.replace('.metadata.', ''))
+        key = re.sub(r'\[\d+\]', '[]', _id.replace('.metadata.', ''))
         root_key = key.split('.')[0].replace('[]', '')
         if root_key in meta_list:
             is_system = check_sub_item_is_system(key, form)
@@ -1800,7 +1788,7 @@ def get_ignore_item_from_mapping(_item_type_id):
             ignore_list.append(
                 get_mapping_name_item_type_by_key(key, item_type_mapping))
     for sub_id in sub_ids:
-        key = [re.sub(r'\[.\]', '', _id) for _id in sub_id.split('.')]
+        key = [re.sub(r'\[\d+\]', '', _id) for _id in sub_id.split('.')]
         if key[0] in item_type_mapping:
             mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
             name = [list(mapping.keys())[0]]

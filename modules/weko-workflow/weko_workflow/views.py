@@ -645,7 +645,8 @@ def next_action(activity_id='0', action_id=0):
             pid_without_ver = get_record_without_version(current_pid)
 
     if action_endpoint == 'item_login' and current_pid and ".0" not in \
-            current_pid.pid_value:
+        current_pid.pid_value and \
+            current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
         register_hdl(activity_id)
 
     if post_json.get('temporary_save') == 1 \
