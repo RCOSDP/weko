@@ -53,6 +53,6 @@ WEKO_ITEMPROPS_SCHEMAID_PUBLISH = 68
 WEKO_ITEMTYPE_ID_BASEFILESVIEW = 10
 
 WEKO_ITEMTYPE_EXCLUDED_KEYS = ['required', 'isRequired', 'title', 'uniqueKey',
-                          'title_i18n','isShowList', 'isSpecifyNewline',
-                          'isHide', 'enum', 'titleMap','title_i18n_temp',
-                          'currentEnum']
+                               'title_i18n', 'isShowList', 'isSpecifyNewline',
+                               'isHide', 'enum', 'titleMap', 'title_i18n_temp',
+                               'currentEnum']
