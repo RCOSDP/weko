@@ -14,7 +14,8 @@
   $curl = curl_init();
 
   $post_args=[];
-  $post_args["SHIB_ATTR_EPPN"]=$_SERVER['HTTP_WEKOID'];
+  $post_args['SHIB_ATTR_USER_NAME']=$_SERVER['HTTP_WEKOID'];
+  $post_args["SHIB_ATTR_EPPN"]=$_SERVER['Remote-User'];
   $post_args["SHIB_ATTR_MAIL"]=$_SERVER['mail'];
   $post_args["SHIB_ATTR_SESSION_ID"]=$_SERVER['Shib-Session-ID'];
   $post_args["SHIB_ATTR_ROLE_AUTHORITY_NAME"]=$_SERVER['HTTP_WEKOSOCIETYAFFILIATION'];
