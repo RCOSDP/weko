@@ -26,7 +26,7 @@ ul.leaders li:after {
 
 ul.leaders span:first-child {
     padding-right: 1.5em;
-    background: transparent;
+    background: #ffffff;
     height:100%;
 }
 
@@ -37,4 +37,12 @@ ul.leaders span + span {
     position: relative;
     z-index: 1;
     height:100%;
+}
+
+.bg-color-white {
+  background-color: #ffffff !important;
+}
+
+.border-color-transparent {
+  border-color: transparent !important;
 }
