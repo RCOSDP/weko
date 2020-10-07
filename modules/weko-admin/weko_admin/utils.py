@@ -334,6 +334,8 @@ def package_reports(all_stats, year, month):
     month = str(month)
     try:  # TODO: Make this into one loop, no need for two
         for stats_type, stats in all_stats.items():
+            if not stats:
+                continue
             file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(
                 stats_type, '_')
             file_name = 'logReport_' + file_name + year + '-' + month + '.tsv'
