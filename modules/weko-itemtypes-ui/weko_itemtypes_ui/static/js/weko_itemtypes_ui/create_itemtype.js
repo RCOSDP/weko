@@ -1241,6 +1241,8 @@ $(document).ready(function () {
       });
       page_global.upload_file = false;    // data.upload_file;
       $('#chk_upload_file').attr('checked', data.upload_file);
+      // load publish date option
+      loadPubdateOptions(data);
       $.each(data.table_row, function(idx, row_id){
         new_meta_row(row_id);
         let requiredCheckbox = $('#chk_'+row_id+'_0');
@@ -1814,6 +1816,22 @@ $(document).ready(function () {
       }
     });
     return itemTypeForm;
+  }
+
+  function loadPubdateOptions(data){
+    if (data.hasOwnProperty("meta_fix") && data.meta_fix.hasOwnProperty("pubdate")){
+      let options = data.meta_fix.pubdate.option;
+      if(options) {
+        $('#chk_pubdate_1').prop('checked', options.multiple);
+        $('#chk_pubdate_2').prop('checked', options.showlist);
+        $('#chk_pubdate_3').prop('checked', options.crtf);
+        $('#chk_pubdate_4').prop('checked', options.hidden);
+        meta_fix.pubdate.option.multiple = options.multiple;
+        meta_fix.pubdate.option.showlist = options.showlist;
+        meta_fix.pubdate.option.crtf = options.crtf;
+        meta_fix.pubdate.option.hidden = options.hidden;
+      }
+    }
   }
 
 });
