@@ -1163,11 +1163,25 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                                      community,
                                      draft_record.model.id)
     else:
+        # Clone org bucket into draft record.
         with db.session.begin_nested():
-            draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
-            bucket = draft_deposit.files.bucket
+            drf_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            cur_deposit = WekoDeposit.get_record(recid.object_uuid)
+            cur_bucket = cur_deposit.files.bucket
+            bucket = Bucket.get(drf_deposit.files.bucket.id)
+
+            sync_bucket = RecordsBuckets.query.filter_by(
+                bucket_id=drf_deposit.files.bucket.id
+            ).first()
+            snapshot = cur_bucket.snapshot(lock=False)
+            snapshot.locked = False
             bucket.locked = False
-            db.session.add(bucket)
+
+            sync_bucket.bucket_id = snapshot.id
+            drf_deposit['_buckets']['deposit'] = str(snapshot.id)
+            bucket.remove()
+            drf_deposit.commit()
+            db.session.add(sync_bucket)
         db.session.commit()
         rtn = activity.init_activity(post_activity,
                                      community,

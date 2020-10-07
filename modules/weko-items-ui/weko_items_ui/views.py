@@ -34,7 +34,8 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidrelations.models import PIDRelation
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
@@ -55,13 +56,14 @@ from .utils import _get_max_export_items, export_items, get_current_user, \
     get_data_authors_prefix_settings, get_list_email, get_list_username, \
     get_ranking, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, get_workflow_by_item_type_id, \
-    is_schema_include_key, remove_excluded_items_in_json_schema, save_title, \
-    set_multi_language_name, to_files_js, translate_schema_form, \
-    translate_validation_message, update_index_tree_for_record, \
-    update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
-    update_schema_remove_hidden_item, update_sub_items_by_user_role, \
-    validate_form_input_data, validate_save_title_and_share_user_id, \
-    validate_user, validate_user_mail_and_index
+    is_schema_include_key, remove_excluded_items_in_json_schema, \
+    sanitize_input_data, save_title, set_multi_language_name, to_files_js, \
+    translate_schema_form, translate_validation_message, \
+    update_index_tree_for_record, update_json_schema_by_activity_id, \
+    update_schema_form_by_activity_id, update_schema_remove_hidden_item, \
+    update_sub_items_by_user_role, validate_form_input_data, \
+    validate_save_title_and_share_user_id, validate_user, \
+    validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -196,6 +198,7 @@ def iframe_save_model():
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
+            sanitize_input_data(data)
             save_title(activity_id, data)
             sessionstore = RedisStore(redis.StrictRedis.from_url(
                 'redis://{host}:{port}/1'.format(
@@ -856,8 +859,7 @@ def prepare_edit_item():
                         code=err_code,
                         msg=_("This Item is being edited.")
                     )
-                from invenio_pidrelations.models import PIDRelation
-                from invenio_pidstore.models import PIDStatus
+
                 pv = PIDVersioning(child=recid)
                 latest_pid = PIDVersioning(parent=pv.parent).get_children(
                     pid_status=PIDStatus.REGISTERED

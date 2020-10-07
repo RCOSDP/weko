@@ -25,7 +25,7 @@ import os
 import redis
 import six
 import werkzeug
-from flask import Blueprint, abort, current_app, flash, jsonify, \
+from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -393,8 +393,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         path_arr = navi.path.split('/')
         for path in path_arr:
             index = Indexes.get_index(index_id=path)
-            path_name_dict['ja'][path] = index.index_name
-            path_name_dict['en'][path] = index.index_name_english
+            idx_name = index.index_name or ""
+            idx_name_en = index.index_name_english
+            path_name_dict['ja'][path] = idx_name.replace(
+                "\n", r"<br\>").replace("&EMPTY&", "")
+            path_name_dict['en'][path] = idx_name_en.replace(
+                "\n", r"<br\>").replace("&EMPTY&", "")
+            if not path_name_dict['ja'][path]:
+                path_name_dict['ja'][path] = path_name_dict['en'][path]
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:
@@ -740,3 +746,17 @@ def init_permission(recid):
     except Exception as ex:
         current_app.logger.debug(ex)
         abort(500)
+
+
+@blueprint.app_template_filter('escape_str')
+def escape_str(s):
+    r"""Process escape, replace \n to <br/>, convert &EMPTY& to blank char.
+
+    :param s: string
+    :return: result
+    """
+    if s:
+        s = s.replace('&EMPTY&', '')
+        s = str(escape(s))
+        s = s.replace('\\n', '<br/>').replace('\n', '<br/>')
+    return s

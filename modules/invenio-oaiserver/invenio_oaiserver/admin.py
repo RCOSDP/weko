@@ -52,7 +52,6 @@ set_adminview = dict(
 class IdentifyModelView(ModelView):
     """OAIPMH model view."""
 
-    can_create = True
     can_edit = True
     can_delete = False
     can_view_details = False
@@ -84,9 +83,12 @@ class IdentifyModelView(ModelView):
         form = super(IdentifyModelView, self).edit_form(obj)
         return form
 
-    def after_model_change(self, form, Identify, true):
-        """Set Create button Hidden."""
-        IdentifyModelView.can_create = False
+    @property
+    def can_create(self):
+        """Hide create tab if one Identify exists."""
+        if Identify.query.filter().first() is not None:
+            return False
+        return True
 
 
 set_OAIPMHview = dict(

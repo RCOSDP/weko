@@ -376,6 +376,7 @@ def check_import_items(file_content: str, is_change_identifier: bool):
                 list_record.extend(
                     unpackage_import_file(data_path, tsv_entry))
         list_record = handle_check_exist_record(list_record)
+        handle_item_title(list_record)
         handle_check_and_prepare_publish_status(list_record)
         handle_check_and_prepare_index_tree(list_record)
         handle_check_and_prepare_feedback_mail(list_record)
@@ -530,31 +531,6 @@ def represents_int(s):
         return False
 
 
-def handle_check_index(list_index: list) -> bool:
-    """Handle check index.
-
-    :argument
-        list_index     -- {list} list index id.
-    :return
-        return       -- true if exist.
-
-    """
-    result = True
-
-    index_lst = []
-    if list_index:
-        index_id_lst = []
-        for index in list_index:
-            indexes = str(index).split('/')
-            index_id_lst.append(indexes[len(indexes) - 1])
-        index_lst = index_id_lst
-
-    plst = Indexes.get_path_list(index_lst)
-    if not plst or len(index_lst) != len(plst):
-        result = False
-    return result
-
-
 def get_item_type(item_type_id=0) -> dict:
     """Get item type.
 
@@ -592,42 +568,45 @@ def handle_check_exist_record(list_record) -> list:
         item = dict(**item, **{
             'status': 'new'
         })
-        if not item.get('errors'):
-            try:
-                item_id = item.get('id')
-                if item_id:
-                    item_exist = WekoRecord.get_record_by_pid(item_id)
-                    if item_exist:
-                        if item_exist.pid.is_deleted():
-                            item['status'] = None
-                            item['errors'] = [_('Item already DELETED'
-                                                ' in the system')]
-                            result.append(item)
-                            continue
-                        else:
-                            exist_url = request.url_root + \
-                                'records/' + item_exist.get('recid')
-                            if item.get('uri') == exist_url:
-                                item['status'] = 'update'
-                            else:
-                                item['errors'] = [_('Specified URI and system'
-                                                    ' URI do not match.')]
-                                item['status'] = None
-                else:
-                    item['id'] = None
-                    if item.get('uri'):
-                        item['errors'] = [_('Item ID does not match the'
-                                            + ' specified URI information.')]
+        errors = item.get('errors') or []
+        try:
+            item_id = item.get('id')
+            if item_id:
+                item_exist = WekoRecord.get_record_by_pid(item_id)
+                if item_exist:
+                    if item_exist.pid.is_deleted():
                         item['status'] = None
-            except PIDDoesNotExistError:
-                pass
-            except BaseException:
-                current_app.logger.error(
-                    'Unexpected error: ',
-                    sys.exc_info()[0]
-                )
+                        errors.append(_('Item already DELETED'
+                                        ' in the system'))
+                        item['errors'] = errors
+                        result.append(item)
+                        continue
+                    else:
+                        exist_url = request.url_root + \
+                            'records/' + item_exist.get('recid')
+                        if item.get('uri') == exist_url:
+                            item['status'] = 'update'
+                        else:
+                            errors.append(_('Specified URI and system'
+                                            ' URI do not match.'))
+                            item['status'] = None
+            else:
+                item['id'] = None
+                if item.get('uri'):
+                    errors.append(_('Item ID does not match the'
+                                    + ' specified URI information.'))
+                    item['status'] = None
+        except PIDDoesNotExistError:
+            pass
+        except BaseException:
+            current_app.logger.error(
+                'Unexpected error: ',
+                sys.exc_info()[0]
+            )
         if item.get('status') == 'new':
             handle_remove_identifier(item)
+        if errors:
+            item['errors'] = errors
         result.append(item)
     return result
 
@@ -857,7 +836,7 @@ def register_item_metadata(item):
             **_deposit_data,
             **{
                 '$schema': item.get('$schema'),
-                'title': handle_get_title(item.get('Title')),
+                'title': item.get('item_title'),
             }
         )
         item_status = {
@@ -925,22 +904,6 @@ def update_publish_status(item_id, status):
     db.session.commit()
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
-
-
-def handle_get_title(title) -> str:
-    """Handle get title.
-
-    :argument
-        title           -- {dict or list} title.
-    :return
-        return       -- title string.
-
-    """
-    if isinstance(title, dict):
-        return title.get('Title', '')
-    elif isinstance(title, list):
-        return title[0].get('Title') if title[0] \
-            and isinstance(title[0], dict) else ''
 
 
 def handle_workflow(item: dict):
@@ -1029,7 +992,8 @@ def import_items_to_system(item: dict, url_root: str):
             item['id'] = item_id
         up_load_file_content(item, root_path)
         response = register_item_metadata(item)
-        if response.get('success'):
+        if response.get('success') and \
+                current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
             response = register_item_handle(item, url_root)
         if response.get('success'):
             response = register_item_doi(item)
@@ -1055,30 +1019,28 @@ def remove_temp_dir(path):
     shutil.rmtree(str(path.replace("/data", "")))
 
 
-def handle_replace_new_index() -> list:
-    """Validation importing zip file.
+def handle_item_title(list_record):
+    """Prepare item title.
 
     :argument
+        list_record -- {list} list record import.
     :return
-        return       -- index id import item
 
     """
-    from datetime import datetime
-    now = datetime.now()
-    index_import = Indexes.get_index_by_name("Index_import")
-    if index_import:
-        return [index_import.id]
-    else:
-        create_index = Indexes.create(
-            pid=0,
-            indexes={'id': int(datetime.timestamp(now) * 10 ** 3),
-                     'value': 'Index_import'}
-        )
-        if create_index:
-            index_import = Indexes.get_index_by_name("Index_import")
-            if index_import:
-                return [index_import.id]
-        return []
+    for item in list_record:
+        error = None
+        item_type_mapping = Mapping.get_record(item['item_type_id'])
+        item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+        title_data, _title_key = get_data_by_property(
+            item, item_map, "title.@value")
+        if not title_data:
+            error = _('Title is required item.')
+        else:
+            item['item_title'] = title_data[0]
+
+        if error:
+            item['errors'] = item['errors'] + [error] \
+                if item.get('errors') else [error]
 
 
 def handle_check_and_prepare_publish_status(list_record):
@@ -1294,8 +1256,9 @@ def handle_check_cnri(list_record):
         error = None
         item_id = str(item.get('id'))
         cnri = item.get('cnri')
+        cnri_set = current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI')
 
-        if item.get('is_change_identifier'):
+        if item.get('is_change_identifier') and cnri_set:
             if not cnri:
                 error = _('Please specify {}.').format('CNRI')
             elif not re.search(WEKO_IMPORT_DOI_PATTERN, cnri):
@@ -1305,18 +1268,26 @@ def handle_check_cnri(list_record):
                 else:
                     error = _('Specified {} is invalid.').format('CNRI')
         else:
-            if item.get('status') == 'new':
+            if item.get('status') == 'new' or item.get('is_change_identifier'):
                 if cnri:
                     error = _('{} cannot be set.').format('CNRI')
             else:
-                pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
-                if pid_cnri:
-                    if not pid_cnri.pid_value.endswith(str(cnri)):
+                pid_cnri = None
+                try:
+                    pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
+                    if pid_cnri:
+                        if not cnri:
+                            error = _('Please specify {}.').format('CNRI')
+                        elif not pid_cnri.pid_value.endswith(str(cnri)):
+                            error = _('Specified {} is different from existing'
+                                      + ' {}.').format('CNRI', 'CNRI')
+                    elif cnri:
                         error = _('Specified {} is different '
                                   + 'from existing {}.').format('CNRI', 'CNRI')
-                elif cnri:
-                    error = _('Specified {} is different '
-                              + 'from existing {}.').format('CNRI', 'CNRI')
+                except Exception as ex:
+                    current_app.logger.error(
+                        'item id: %s not found.' % item_id)
+                    current_app.logger.error(ex)
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1333,14 +1304,18 @@ def handle_check_doi_ra(list_record):
 
     """
     def check_existed(item_id, doi_ra):
-        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-        identifier = IdentifierHandle(pid.object_uuid)
-        _value, doi_type = identifier.get_idt_registration_data()
-
         error = None
-        if doi_type and doi_type[0] != doi_ra:
-            error = _('Specified {} is different from '
-                      + 'existing {}.').format('DOI_RA', 'DOI_RA')
+        try:
+            pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+            identifier = IdentifierHandle(pid.object_uuid)
+            _value, doi_type = identifier.get_idt_registration_data()
+
+            if doi_type and doi_type[0] != doi_ra:
+                error = _('Specified {} is different from '
+                          + 'existing {}.').format('DOI_RA', 'DOI_RA')
+        except Exception as ex:
+            current_app.logger.error('item id: %s not found.' % item_id)
+            current_app.logger.error(ex)
         return error
 
     for item in list_record:
@@ -1403,7 +1378,13 @@ def handle_check_doi(list_record):
                     if doi:
                         error = _('{} cannot be set.').format('DOI')
                 else:
-                    pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                    pid_doi = None
+                    try:
+                        pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                    except Exception as ex:
+                        current_app.logger.error(
+                            'item id: %s not found.' % item_id)
+                        current_app.logger.error(ex)
                     if pid_doi:
                         if not doi:
                             error = _('Please specify {}.').format('DOI')
@@ -1432,14 +1413,17 @@ def register_item_handle(item, url_root):
         record = WekoRecord.get_record_by_pid(item_id)
         pid = record.pid_recid
         pid_hdl = record.pid_cnri
+        cnri = item.get('cnri')
 
         if item.get('is_change_identifier'):
             if item.get('status') == 'new':
-                register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
+                register_hdl_by_handle(cnri, pid.object_uuid)
             else:
-                if pid_hdl:
+                if pid_hdl and not pid_hdl.pid_value.endswith(cnri):
                     pid_hdl.delete()
-                register_hdl_by_handle(item.get('cnri'), pid.object_uuid)
+                    register_hdl_by_handle(cnri, pid.object_uuid)
+                elif not pid_hdl:
+                    register_hdl_by_handle(cnri, pid.object_uuid)
         else:
             if item.get('status') == 'new':
                 register_hdl_by_item_id(item_id, pid.object_uuid, url_root)
@@ -1503,7 +1487,6 @@ def register_item_doi(item):
         }
 
     item_id = str(item.get('id'))
-    status = item.get('status')
     is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
     doi = item.get('doi')
@@ -1539,16 +1522,15 @@ def register_item_doi(item):
                     is_feature_import=True
                 )
         else:
-            if status == 'new':
-                if doi_ra and not doi:
-                    data = prepare_doi_link(item_id)
-                    saving_doi_pidstore(
-                        pid_lastest.object_uuid,
-                        pid.object_uuid,
-                        data,
-                        WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
-                        is_feature_import=True
-                    )
+            if doi_ra and not doi:
+                data = prepare_doi_link(item_id)
+                saving_doi_pidstore(
+                    pid_lastest.object_uuid,
+                    pid.object_uuid,
+                    data,
+                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
+                    is_feature_import=True
+                )
 
         deposit = WekoDeposit.get_record(pid.object_uuid)
         deposit.commit()

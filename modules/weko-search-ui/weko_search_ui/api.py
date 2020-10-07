@@ -58,7 +58,7 @@ class SearchSetting(object):
         return sort_options, display_number
 
     @classmethod
-    def get_default_sort(cls, search_type):
+    def get_default_sort(cls, search_type, root_flag=False):
         """Get default sort."""
         res = sm.get()
         sort_str = None
@@ -74,8 +74,15 @@ class SearchSetting(object):
                 sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_index_sort_selected']
 
         sort_key = sort_str[0:sort_str.rfind('_', 1)]
-
         sort = sort_str[sort_str.rfind('_', 1) + 1:]
+
+        if root_flag and 'custom_sort' in sort_key:
+            if search_type == current_app.config['WEKO_SEARCH_TYPE_KEYWORD']:
+                sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_keyword_sort_selected']
+            else:
+                sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_index_sort_selected']
+            sort_key = sort_str[0:sort_str.rfind('_', 1)]
+            sort = sort_str[sort_str.rfind('_', 1) + 1:]
 
         return sort_key, sort
 

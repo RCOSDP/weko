@@ -126,6 +126,8 @@
 		}
 	};
 
+	let localizationSettingsKey = 0;
+
 	var SchemaText = React.createClass({
 		displayName: 'SchemaText',
 
@@ -740,6 +742,8 @@
 					let isDisabledFormat = !allowedChangeArray.includes(value.format);
 					let disabledFormatSelect = isDisabledFormat && !self.state.editor;
 					let isEditor = self.state.editor ? ' hide' : '';
+					//Get unique key of Localization Settings.
+					localizationSettingsKey += 1;
 					return React.createElement('div', { key: index },
 						React.createElement('div', { className: 'col-md-12 col-lg-12' },
 							React.createElement('div', { className: 'form-inline' },
@@ -765,7 +769,7 @@
 									)
 								),
 								React.createElement('p', {className: isEditor}),
-								React.createElement('div', {id: "text_title_JaEn_item_" + value.uniqueKey, className: "collapse" + isEditor},
+								React.createElement('div', {id: "btnLocalizationSettings_" + localizationSettingsKey, className: "collapse" + isEditor},
 									React.createElement('p', null, 'Japanese：'),
 									React.createElement('input', {
 											type: 'text',
@@ -799,7 +803,7 @@
 											className: 'btn btn-link',
 											disabled: false,
 											"data-toggle": "collapse",
-											"data-target": "#text_title_JaEn_item_" + value.uniqueKey
+											"data-target": "#btnLocalizationSettings_" + localizationSettingsKey
 										},
 										'Localization Settings')
 								),

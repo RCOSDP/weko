@@ -29,6 +29,7 @@
 </div>
 {%- endif %}
 
+{% autoescape false %}
 <div class="panel-body">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-12 col-left">
@@ -60,7 +61,7 @@
         {%- endif -%}
         <div class="panel-group" style="padding-top: 10px;">
           <h2 style="display: inline;">
-            <a href='#' style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) }}</a>
+            <a href='#' style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) | escape_str }}</a>
           </h2>
         </div>
         <div class="panel-group">
@@ -73,3 +74,4 @@
     </div>
   </div>
 </div>
+{% endautoescape %}

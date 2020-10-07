@@ -745,7 +745,7 @@ class CheckComponent extends React.Component {
         'No': key + 1,
         'Item Type': item.item_type_name,
         'Item Id': item.id,
-        'Title': (item['Title'] && item['Title'][0] && item['Title'][0]['Title']) ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title'] ? item['Title']['Title'] : '',
+        'Title': item['item_title'] ? item['item_title'] : '',
         'Check result': item['errors'] ? 'ERRORS' + (item['errors'][0] ? ': ' + item['errors'][0] : '') : item.status === 'new' ? 'Register' : item.status === 'update' ? 'Update' : ''
       }
     })
@@ -861,9 +861,7 @@ class CheckComponent extends React.Component {
                         </td>
                         <td>
                           <p className="title_item">
-                            {(item['Title'] && item['Title'][0] && item['Title'][0]['Title'])
-                              ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title']
-                                ? item['Title']['Title'] : ''}
+                            {item['item_title'] ? item['item_title'] : ''}
                           </p>
 
                         </td>

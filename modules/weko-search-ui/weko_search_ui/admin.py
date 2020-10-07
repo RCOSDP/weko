@@ -389,6 +389,11 @@ class ItemImportView(BaseView):
                     ids += [key + '[0].' + _id for _id in _ids]
                     names += [item.get('title') + '#1.' + _name
                               for _name in _names]
+                elif item.get('type') == 'object' and item.get('properties'):
+                    _ids, _names = handle_sub_item(item.get('properties'))
+                    ids += [key + '.' + _id for _id in _ids]
+                    names += [item.get('title') + '.' + _name
+                              for _name in _names]
                 else:
                     ids.append(key)
                     names.append(item.get('title'))

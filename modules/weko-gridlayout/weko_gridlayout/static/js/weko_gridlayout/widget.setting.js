@@ -77,7 +77,7 @@ const ComponentSelectField = function (props) {
               )
             });
           } else {
-            options = result.repositories.map((repository) => {
+            options = result["repositories"].map((repository) => {
               return (
                 <option key={repository.id}
                         value={repository.id}>{repository.id}</option>
@@ -167,15 +167,15 @@ class ComponentTextboxField extends React.Component {
     this.handleChange = this.handleChange.bind(this);
   }
 
-  componentWillReceiveProps(props) {
-    if (props.type !== this.props.type) {
+  componentDidUpdate(prevProps) {
+    if (this.props.type !== prevProps.type) {
       this.setState({
         value: ''
       })
     }
-    if (props.data_change) {
+    if (this.props.data_change) {
       this.setState({
-        value: props.data_load
+        value: this.props.data_load
       });
       this.props.getValueOfField("language", false);
     }
@@ -224,7 +224,6 @@ const ComponentTextboxForAccessCounter = function (props) {
       let data = props.value || "";
       setValue(data);
     }
-    props.getValueOfField("language", false);
   }, [props.data_change]);
 
   useEffect(() => {
@@ -402,10 +401,10 @@ class ComponentFieldContainSelectMultiple extends React.Component {
               hasMainLayout = true;
             }
             if (this.props.is_edit === true) {
-              if (currentSelectionString.indexOf(option.id.toString()) == -1) {
-                let innerhtml = <option key={option.id}
+              if (currentSelectionString.indexOf(option.id.toString()) === -1) {
+                let innerHTML = <option key={option.id}
                                         value={option.id}>{option.name}</option>;
-                unOptions.push(innerhtml);
+                unOptions.push(innerHTML);
               }
             } else {
               choseOptions.push(option.id);
@@ -445,26 +444,25 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     let result = [];
     for (let option = 0; option < options.length; option++) {
       if (options[option].value) {
-        let innerhtml = <option key={options[option].value}
+        let innerHTML = <option key={options[option].value}
                                 value={options[option].value}>{options[option].text}</option>;
-        result.push(innerhtml);
+        result.push(innerHTML);
       }
     }
     return result;
   }
 
   // Get the new page titles on change of lang
-  componentWillReceiveProps(nextProps) {
-    if ((nextProps.language !== this.state.language &&
+  componentDidUpdate(prevProps) {
+    if ((this.props.language !== prevProps.language &&
       this.props.key_binding === "menu_show_pages")) {
-      this.setState({language: nextProps.language});
-      let loadPagesURL = "/api/admin/load_widget_design_pages/" +
-        nextProps.language;
-      this.initSelectBox(loadPagesURL, this.props.repositoryId); // Re-ender tables select box
+      this.setState({language: this.props.language});
+      let loadPagesURL = "/api/admin/load_widget_design_pages/" + this.props.language;
+      this.initSelectBox(loadPagesURL, this.props.repositoryId); // Re-render tables select box
     }
-    if (nextProps.repositoryId !== this.props.repositoryId && this.props.key_binding === "menu_show_pages") {
+    if (this.props.repositoryId !== prevProps.repositoryId && this.props.key_binding === "menu_show_pages") {
       let loadPagesURL = "/api/admin/load_widget_design_pages/" + this.state.language;
-      this.initSelectBox(loadPagesURL, nextProps.repositoryId);
+      this.initSelectBox(loadPagesURL, this.props.repositoryId);
     }
   }
 
@@ -489,8 +487,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 
   updateGlobalValues(optionsList) {
     let data = [];
-    for (let option in optionsList) {
-      data.push(optionsList[option].props.value);
+    for (let i = 0; i < optionsList.length; i++) {
+      data.push(optionsList[i].props.value);
     }
     this.props.getValueOfField(this.props.key_binding, data);
   }
@@ -502,16 +500,16 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     let nonSelectOptions = [];
     for (let option = 0; option < options.length; option++) {
       if (options[option].selected) {
-        let innerhtml = <option key={options[option].value}
+        let innerHTML = <option key={options[option].value}
                                 value={options[option].value}>{options[option].text}</option>;
         if (!this.isValueExist(options[option].value, selectedOptions) && options[option].value) {
-          selectedOptions.push(innerhtml);
+          selectedOptions.push(innerHTML);
         }
       } else {
-        let innerhtml = <option key={options[option].value}
+        let innerHTML = <option key={options[option].value}
                                 value={options[option].value}>{options[option].text}</option>;
         if (options[option].value) {
-          nonSelectOptions.push(innerhtml);
+          nonSelectOptions.push(innerHTML);
         }
       }
     }
@@ -682,7 +680,7 @@ const TrumbowygWrapper = props => {
   let timeoutHandle;
 
   useEffect(() => {
-    if (props.value != $("#" + props.id)[0].innerHTML) {
+    if (props.value !== $("#" + props.id)[0].innerHTML) {
       setValue(props.value);
     }
   }, [props.value]);
@@ -807,38 +805,36 @@ const ComponentFieldEditor = function (props) {
 class ExtendComponent extends React.Component {
   constructor(props) {
     super(props);
+    let settings = this.props.data_load;
+    let initState = {
+      type: this.props.type,
+    }
     if (this.props.type === NOTICE_TYPE) {
+      let writeMore = false;
       if (this.props.data_load.more_description) {
-        this.state = {
-          type: this.props.type,
-          settings: this.props.data_load,
-          write_more: true,
-        };
-      } else {
-        this.state = {
-          type: this.props.type,
-          settings: this.props.data_load,
-          write_more: false,
-        };
+        writeMore = true;
       }
+      initState['write_more'] = writeMore;
     } else if (this.props.type === NEW_ARRIVALS) {
-      let newDate = this.props.data_load.new_dates && this.props.data_load.new_dates != "None" || 5;
-      let displayResult = this.props.data_load.display_result && this.props.data_load.display_result != "None" || 5;
+      let newDate = 5;
+      let displayResult = 5;
+      let rssFeed = this.props.data_load.rss_feed || false;
+      if (this.props.data_load.new_dates && this.props.data_load.new_dates !== "None") {
+        newDate = this.props.data_load.new_dates
+      }
+      if (this.props.data_load.display_result && this.props.data_load.display_result !== "None") {
+        displayResult = this.props.data_load.display_result;
+      }
       let newArrivalsData = {
         new_dates: newDate,
-        display_result: displayResult
+        display_result: displayResult,
+        rss_feed: rssFeed,
       };
       this.props.getValueOfField(this.props.key_binding, newArrivalsData);
-      this.state = {
-        type: this.props.type,
-        settings: newArrivalsData,
-      }
-    } else {
-      this.state = {
-        type: this.props.type,
-        settings: this.props.data_load,
-      }
+      settings = newArrivalsData;
     }
+    initState['settings'] = settings;
+    this.state = initState;
     this.handleChange = this.handleChange.bind(this);
     this.handleChangeCheckBox = this.handleChangeCheckBox.bind(this);
     this.handleChangeHideTheRest = this.handleChangeHideTheRest.bind(this);
@@ -883,6 +879,7 @@ class ExtendComponent extends React.Component {
     }
     if (nextProps.data_change) {
       let setting = nextProps.data_load;
+      let newState = {};
       nextProps.getValueOfField("language", false);
       let read_more = document.getElementById("read_more");
       let hide_the_rest = document.getElementById("hide_the_rest");
@@ -891,6 +888,7 @@ class ExtendComponent extends React.Component {
           read_more.value = setting['read_more'];
         } else {
           read_more.value = '';
+          newState['write_more'] = false;
         }
       }
       if (hide_the_rest) {
@@ -903,9 +901,8 @@ class ExtendComponent extends React.Component {
       if (nextProps.type === ACCESS_COUNTER) {
         setting["access_counter"] = nextProps.init_value;
       }
-      return {
-        settings: setting
-      }
+      newState['settings'] = setting;
+      return newState
     }
     return null;
   }
@@ -987,10 +984,14 @@ class ExtendComponent extends React.Component {
 
   handleChangeAccessCounter(event) {
     let setting = this.state.settings;
-    setting['access_counter'] = event.target.value;
+    let accessCounter = event.target.value;
+    if (!isNaN(parseInt(accessCounter))){
+      accessCounter = parseInt(accessCounter)
+    }
+    setting['access_counter'] = accessCounter;
     this.setState({settings: setting});
-    this.handleChange("access_counter", event.target.value);
-    this.props.getValueOfField('accessInitValue', event.target.value);
+    this.handleChange("access_counter", accessCounter);
+    this.props.getValueOfField('accessInitValue', accessCounter);
   }
 
   handleChangeNewDates(event) {
@@ -1037,6 +1038,11 @@ class ExtendComponent extends React.Component {
 
 
   render() {
+    const {
+      hide_the_rest, description, other_message, more_description, preceding_message,
+      menu_active_bg_color, access_counter, read_more, write_more, menu_default_color,
+      following_message, menu_show_pages, rss_feed, menu_active_color, menu_orientation, menu_bg_color
+    } = this.state.settings;
     if (this.state.type === FREE_DESCRIPTION_TYPE) {
       return (
         <div>
@@ -1047,7 +1053,7 @@ class ExtendComponent extends React.Component {
             handleChange={this.handleChange}
             name="Free description"
             key_binding="description"
-            data_load={this.state.settings.description}
+            data_load={description}
             data_change={this.props.data_change}
             getValueOfField={this.props.getValueOfField}/>
         </div>
@@ -1062,7 +1068,7 @@ class ExtendComponent extends React.Component {
             handleChange={this.handleChange}
             name={this.state.type === HEADER_TYPE ? "Header setting" : "Footer setting"}
             key_binding="description"
-            data_load={this.state.settings.description}
+            data_load={description}
             data_change={this.props.data_change}
             getValueOfField={this.props.getValueOfField}/>
         </div>
@@ -1077,7 +1083,7 @@ class ExtendComponent extends React.Component {
                 key={this.state.type + this.props.language + "description"}
                 language={this.props.language} handleChange={this.handleChange}
                 name="Notice description" key_binding="description"
-                data_load={this.state.settings.description}
+                data_load={description}
                 data_change={this.props.data_change}
                 getValueOfField={this.props.getValueOfField}/>
             </div>
@@ -1085,7 +1091,7 @@ class ExtendComponent extends React.Component {
               <div className="controls col-xs-offset-2 col-xs-10">
                 <input name="write_more" type="checkbox"
                        onChange={this.handleChangeCheckBox}
-                       defaultChecked={this.state.settings.write_more}/>
+                       defaultChecked={write_more}/>
                 <span>&nbsp;Write more</span>
               </div>
             </div>
@@ -1100,7 +1106,7 @@ class ExtendComponent extends React.Component {
                 key={this.state.type + this.props.language + "description"}
                 language={this.props.language} handleChange={this.handleChange}
                 name="Notice description" key_binding="description"
-                data_load={this.state.settings.description}
+                data_load={description}
                 data_change={this.props.data_change}
                 getValueOfField={this.props.getValueOfField}/>
             </div>
@@ -1117,7 +1123,7 @@ class ExtendComponent extends React.Component {
                   <input type="text" id="read_more" name="read_more"
                          onChange={this.handleChangeReadMore}
                          className="form-control" placeholder="Read more"
-                         value={this.state.settings.read_more}/>
+                         value={read_more}/>
                 </div>
                 <br/>
               </div>
@@ -1128,7 +1134,7 @@ class ExtendComponent extends React.Component {
                 key={this.state.type + this.props.language + "more_description"}
                 language={this.props.language} handleChange={this.handleChange}
                 name="" key_binding="more_description"
-                data_load={this.state.settings.more_description}
+                data_load={more_description}
                 data_change={this.props.data_change}
                 getValueOfField={this.props.getValueOfField}/>
             </div>
@@ -1138,7 +1144,7 @@ class ExtendComponent extends React.Component {
                   <input type="text" id="hide_the_rest" name="hide_the_rest"
                          onChange={this.handleChangeHideTheRest}
                          className="form-control" placeholder="Hide the rest"
-                         value={this.state.settings.hide_the_rest}/>
+                         value={hide_the_rest}/>
                 </div>
                 <br/>
               </div>
@@ -1156,8 +1162,9 @@ class ExtendComponent extends React.Component {
             <div className="controls col-xs-3">
               <input
                 name="Access_counter" id='Access_counter' type="input"
-                value={this.state.settings.access_counter || "0"}
+                value={access_counter || "0"}
                 onChange={this.handleChangeAccessCounter}
+                maxLength={9}
                 className="form-control"/>
             </div>
           </div>
@@ -1167,7 +1174,7 @@ class ExtendComponent extends React.Component {
               key_binding="preceding_message"
               handleChange={this.handleChange}
               getValueOfField={this.props.getValueOfField}
-              value={this.state.settings.preceding_message || ""}
+              value={preceding_message || ""}
               data_change={this.props.data_change}/>
           </div>
           <div className="form-group">
@@ -1176,7 +1183,7 @@ class ExtendComponent extends React.Component {
               key_binding="following_message"
               handleChange={this.handleChange}
               getValueOfField={this.props.getValueOfField}
-              value={this.state.settings.following_message || ""}
+              value={following_message || ""}
               data_change={this.props.data_change}/>
           </div>
           <div className="form-group">
@@ -1185,7 +1192,7 @@ class ExtendComponent extends React.Component {
               key_binding="other_message"
               handleChange={this.handleChange}
               getValueOfField={this.props.getValueOfField}
-              value={this.state.settings.other_message || ""}
+              value={other_message || ""}
               data_change={this.props.data_change}/>
           </div>
         </div>
@@ -1216,7 +1223,7 @@ class ExtendComponent extends React.Component {
             <div className="controls col-xs-1">
               <input name="rss_feed" type="checkbox"
                      onChange={this.handleChangeRssFeed}
-                     defaultChecked={this.state.settings.rss_feed}/>
+                     defaultChecked={rss_feed}/>
             </div>
           </div>
         </div>
@@ -1231,33 +1238,33 @@ class ExtendComponent extends React.Component {
             handleChange={this.handleOrientationRadio}
             getValueOfField={this.props.getValueOfField}
             name="Display Orientation" key_binding="menu_orientation"
-            data_load={this.state.settings.menu_orientation || 'horizontal'}/>
+            data_load={menu_orientation || 'horizontal'}/>
           <ComponentSelectColorFiled
             getValueOfField={this.props.getValueOfField}
             handleChange={this.handleChange} name="Background Color"
             key_binding="menu_bg_color"
-            data_load={this.state.settings.menu_bg_color}/>
+            data_load={menu_bg_color}/>
           <ComponentSelectColorFiled
             getValueOfField={this.props.getValueOfField}
             handleChange={this.handleChange} name="Active Background Color"
             key_binding="menu_active_bg_color"
-            data_load={this.state.settings.menu_active_bg_color}/>
+            data_load={menu_active_bg_color}/>
           <ComponentSelectColorFiled
             getValueOfField={this.props.getValueOfField}
             handleChange={this.handleChange} name="Default Color"
             key_binding="menu_default_color"
-            data_load={this.state.settings.menu_default_color}/>
+            data_load={menu_default_color}/>
           <ComponentSelectColorFiled
             getValueOfField={this.props.getValueOfField}
             handleChange={this.handleChange} name="Active Color"
             key_binding="menu_active_color"
-            data_load={this.state.settings.menu_active_color}/>
+            data_load={menu_active_color}/>
           <ComponentFieldContainSelectMultiple
             getValueOfField={this.handleChange} name="Show/Hide Pages"
             authorSelect="showPageSelect" unauthorSelect="hidePageSelect"
             url_request={loadPagesURL}
             key_binding="menu_show_pages"
-            data_load={this.state.settings.menu_show_pages || []}
+            data_load={menu_show_pages || []}
             is_edit={this.props.is_edit}
             leftBoxTitle="Show" rightBoxTitle="Hide" enableUpDownArrows={true}
             data_change={this.props.data_change}
@@ -1340,7 +1347,7 @@ class ComponentButtonLayout extends React.Component {
     }
 
     for (let key in multiLangData) {
-      if (multiLangData[key].hasOwnProperty("description")) {
+      if (multiLangData.hasOwnProperty(key) && multiLangData[key].hasOwnProperty("description")) {
         if (!validateDescription(multiLangData[key]["description"])) {
           return false;
         }
@@ -1350,6 +1357,7 @@ class ComponentButtonLayout extends React.Component {
   }
 
   saveCommand(event) {
+    event.preventDefault();
     // Convert data
     let data = this.props.data;
     let multiLangData = data['multiLangSetting'];
@@ -1358,8 +1366,8 @@ class ComponentButtonLayout extends React.Component {
     let currentLanguage = $("#language")[0].value;
 
     let noData = true;
-    for (let currentDescriptionKey in currentDescription) {
-      if (currentDescription[currentDescriptionKey]) {
+    for (let key in currentDescription) {
+      if (currentDescription.hasOwnProperty(key) && currentDescription[key]) {
         noData = false;
         break;
       }
@@ -1377,8 +1385,10 @@ class ComponentButtonLayout extends React.Component {
     }
     if ((data['widget_type'] + "") === ACCESS_COUNTER) {
       for (let key in multiLangData) {
-        let value = multiLangData[key]
-        value.description['access_counter'] = data.accessInitValue
+        if (multiLangData.hasOwnProperty(key)) {
+          let value = multiLangData[key];
+          value.description['access_counter'] = data.accessInitValue;
+        }
       }
     }
     this.props.getValueOfField('multiLangData', multiLangData);
@@ -1399,8 +1409,8 @@ class ComponentButtonLayout extends React.Component {
   }
 
   sendRequest(request) {
+    let _this = this;
     return $.ajax({
-      context: this,
       url: this.props.url_request,
       method: 'POST',
       contentType: 'application/json',
@@ -1408,10 +1418,10 @@ class ComponentButtonLayout extends React.Component {
       data: JSON.stringify(request),
       success: function (result) {
         if (result.success) {
-          this.addAlert(result.message);
+          _this.addAlert(result.message);
         } else {
           let errorMessage = result.message;
-          this.showErrorMessage(errorMessage);
+          _this.showErrorMessage(errorMessage);
         }
       }
     })
@@ -1464,22 +1474,25 @@ class ComponentButtonLayout extends React.Component {
     }
 
     let isValid = true;
-    for (let data in multiLangData) {
-      let label = multiLangData[data]['label'];
-      let noData = true;
-      if (!$.isEmptyObject(multiLangData[data]['description'])) {
-        let description = multiLangData[data]['description'];
-        for (data in description) {
-          if (description[data]) {
-            noData = false;
-            break;
+    for (let key in multiLangData) {
+      if (multiLangData.hasOwnProperty(key)) {
+        let languageData = multiLangData[key];
+        let label = languageData['label'];
+        let noData = true;
+        if (!$.isEmptyObject(languageData['description'])) {
+          let descriptionData = languageData['description'];
+          for (let descriptionKey in descriptionData) {
+            if (descriptionData.hasOwnProperty(descriptionKey) && descriptionData[descriptionKey]) {
+              noData = false;
+              break;
+            }
           }
         }
-      }
-      if (!label) {
-        if (!noData) {
-          isValid = false;
-          break;
+        if (!label) {
+          if (!noData) {
+            isValid = false;
+            break;
+          }
         }
       }
     }
@@ -1493,13 +1506,13 @@ class ComponentButtonLayout extends React.Component {
         '<button type="button" class="close" data-dismiss="alert">' +
         '&times;</button>' + message + '</div>');
     }
-
+    event.preventDefault();
     let request = {
       data_id: this.props.data_id
     };
+    let _this = this;
     if (confirm("Are you sure to delete this widget Item ?")) {
       return $.ajax({
-        context: this,
         url: '/api/admin/delete_widget_item',
         method: 'POST',
         contentType: 'application/json',
@@ -1511,7 +1524,7 @@ class ComponentButtonLayout extends React.Component {
             window.location = this.props.return_url;
           } else {
             let errorMessage = result.message;
-            this.showErrorMessage(errorMessage);
+            _this.showErrorMessage(errorMessage);
           }
         }
       })
@@ -1598,8 +1611,8 @@ class ComponentLanguage extends React.Component {
     let langName = {};
     let systemRegisteredLang = [];
     let registeredLang = [];
+    let _this = this;
     $.ajax({
-      context: this,
       url: '/api/admin/get_system_lang',
       type: 'GET',
       contentType: 'application/json',
@@ -1607,8 +1620,8 @@ class ComponentLanguage extends React.Component {
       async: false,
       success: function (result) {
         if (result.error) {
-          let modalcontent = "Can't get system language! \nDetail: " + result.error;
-          $("#inputModal").html(modalcontent);
+          let modalContent = "Can't get system language! \nDetail: " + result.error;
+          $("#inputModal").html(modalContent);
           $("#allModal").modal("show");
         } else {
           let systemLang = result.language;
@@ -1622,25 +1635,35 @@ class ComponentLanguage extends React.Component {
             } else {
               langList.push(lang.lang_code);
             }
-            langName[lang.lang_code] = lang.lang_name;
+            langName[lang.lang_code] = lang["lang_name"];
           });
           for (let i = systemRegisteredLang.length; i >= 0; i--) {
             for (let j = 0; j < systemRegisteredLang.length; j++) {
-              if (systemRegisteredLang[j].sequence == i) {
+              if (systemRegisteredLang[j].sequence === i) {
                 langList.unshift(systemRegisteredLang[j].code);
               }
             }
           }
-          if (!$.isEmptyObject(this.props.data_load)) {
-            registeredLang = Object.keys(this.props.data_load);
+          let tpmRegisteredLang = [];
+          if (!$.isEmptyObject(_this.props.data_load)) {
+            tpmRegisteredLang = Object.keys(_this.props.data_load);
             langList.forEach(function (lang) {
-              if (registeredLang.indexOf(lang) !== -1) {
+              if (tpmRegisteredLang.indexOf(lang) !== -1) {
                 let index = langList.indexOf(lang);
                 langList.slice(index, 1);
               }
             });
           }
-          langList = this.removeDuplicatedLang(langList, registeredLang);
+
+          // Sort registered language base on language setting.
+          langList.forEach(function (lang) {
+            if (tpmRegisteredLang.indexOf(lang) > -1) {
+              registeredLang.push(lang);
+            }
+          })
+
+
+          langList = _this.removeDuplicatedLang(langList, registeredLang);
 
           // Load data for edit UI
           let selectedLang;
@@ -1651,12 +1674,11 @@ class ComponentLanguage extends React.Component {
           } else {
             selectedLang = registeredLang[0];
             defaultLang = registeredLang[0];
-            this.props.initEditData(selectedLang);
+            _this.props.initEditData(selectedLang);
           }
-          this.displayOptions(langList, registeredLang, langName, true, selectedLang);
-          // this.props.getValueOfField('lang', langList[0]);
-          this.props.getValueOfField('lang', defaultLang);
-          this.setState({
+          _this.displayOptions(langList, registeredLang, langName, true, selectedLang);
+          _this.props.getValueOfField('lang', defaultLang);
+          _this.setState({
             languageList: langList,
             registeredLanguage: registeredLang,
             languageNameList: langName,
@@ -1672,12 +1694,12 @@ class ComponentLanguage extends React.Component {
     this.initLanguageList();
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.type !== this.props.type) {
-      this.initLanguageList();
+  componentDidUpdate(prevProps) {
+    if (this.props.type !== prevProps.type) {
       this.setState({
         registeredLanguage: []
       });
+      this.initLanguageList();
     }
   }
 
@@ -1699,17 +1721,15 @@ class ComponentLanguage extends React.Component {
       });
     }
     languageList.forEach(function (lang) {
+      let selectedValue = false;
       let innerHTML;
-      if ($.isEmptyObject(registeredLanguage) && lang === state.defaultLanguage && isReset) {
-        innerHTML = <option key={lang} value={lang}
-                            selected>{languageNameList[lang]}</option>;
-      } else if (lang === selected) {
-        innerHTML = <option key={lang} value={lang}
-                            selected>{languageNameList[lang]}</option>;
-      } else {
-        innerHTML =
-          <option key={lang} value={lang}>{languageNameList[lang]}</option>;
+      if (($.isEmptyObject(registeredLanguage) && lang === state.defaultLanguage && isReset)
+        || lang === selected) {
+        selectedValue = true;
       }
+      innerHTML =
+        <option key={lang} value={lang}
+                selected={selectedValue}>{languageNameList[lang]}</option>;
       optionList.push(innerHTML);
     });
     this.setState({
@@ -1913,7 +1933,7 @@ class MainLayout extends React.Component {
       if (!this.state.label) {
         let noData = true;
         for (let data in this.state.settings) {
-          if (this.state.settings[data]) {
+          if (this.state.settings.hasOwnProperty(data) && this.state.settings[data]) {
             noData = false;
           }
         }
@@ -1984,16 +2004,14 @@ class MainLayout extends React.Component {
     if (setting.label !== "") {
       return false;
     }
-    if (setting.description.preceding_message) {
+    const {other_message, following_message, preceding_message} = setting.description;
+    if (preceding_message) {
       return false;
     }
-    if (setting.description.following_message) {
+    if (following_message) {
       return false;
     }
-    if (setting.description.other_message) {
-      return false;
-    }
-    return true;
+    return !other_message;
   }
 
   render() {

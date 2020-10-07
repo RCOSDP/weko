@@ -30,7 +30,10 @@
          data-target="#creator_{{ index }}" data-placement="auto"
          data-toggle="popover">
         {%- for name in attribute_data['name'] -%}
-          {{ name }}<span> </span>
+          {% autoescape false %}
+            {{ name | escape_str }}
+          {% endautoescape %}
+          <span> </span>
         {%- endfor -%}
       </a><br>
     {%- endif -%}
@@ -40,7 +43,10 @@
               class="close pull-right" data-dismiss="popover-x">&times;</span>
         {%- if 'name' in  attribute_data -%}
           {%- for name in attribute_data['name'] -%}
-            {{ name }}<span> </span>
+            {% autoescape false %}
+              {{ name | escape_str }}
+            {% endautoescape %}
+            <span> </span>
           {%- endfor -%}
         {%- endif -%}
       </strong></h1>
@@ -49,15 +55,21 @@
           <p>
             {%- for i in attribute_data['nameIdentifiers'] -%}
               {%- if 'nameIdentifierScheme' in i -%}
-                {{ i['nameIdentifierScheme'] }}
+                {% autoescape false %}
+                  {{ i['nameIdentifierScheme'] | escape_str }}
+                {% endautoescape %}
                 <span> </span>
               {%- endif -%}
               {%- if "nameIdentifierURI" in i and i["nameIdentifierURI"] -%}
                   <a href=' {{i["nameIdentifierURI"] }}'>
-                  {{ i['nameIdentifier'] }}
+                    {% autoescape false %}
+                    {{ i['nameIdentifier'] | escape_str }}
+                    {% endautoescape %}
                 </a>
                 {%- elif "nameIdentifier" in i -%}
-                  <span>{{ i['nameIdentifier'] }}</span>
+                  {% autoescape false %}
+                  <span>{{ i['nameIdentifier'] | escape_str }}</span>
+                  {% endautoescape %}
               {%- endif -%}
               <br>
             {%- endfor -%}
@@ -114,22 +126,26 @@
 {% macro _fill_data(data_list) %}
   {% if data_list %}
     {% for detail_data in data_list %}
-      {{ detail_data }}<br>
+      {% autoescape false %}
+        {{ detail_data | escape_str }}<br>
+      {% endautoescape %}
     {% endfor %}
   {% endif %}
 {% endmacro %}
 
 {% macro _fill_affiliation(affiliation_name, identifier) %}
+  {% autoescape false %}
   {% if affiliation_name %}
     {% for name in affiliation_name %}
-      {{ name }}
+      {{ name | escape_str }}
       {% set identifier_data = identifier[loop.index - 1] %}
       {% if identifier_data and identifier_data['identifier'] %}
         <a href='{{ identifier_data['uri'] or "javascript:void(0)" }}'>
-          {{ identifier_data['identifier'] }}
+          {{ identifier_data['identifier'] | escape_str }}
         </a>
       {% endif %}
       <br>
     {% endfor %}
   {% endif %}
+  {% endautoescape %}
 {% endmacro %}

@@ -401,6 +401,35 @@ class WorkFlow(object):
         with db.session.no_autoflush:
             return _WorkFlow.query.filter_by(flows_name=workflow_name).first()
 
+    def update_itemtype_id(self, workflow, itemtype_id):
+        """
+        Update itemtype id to workflow.
+
+        :param workflow:
+        :param itemtype_id:
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                if workflow:
+                    workflow.itemtype_id = itemtype_id
+                    db.session.merge(workflow)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+
+    def get_workflow_by_itemtype_id(self, item_type_id):
+        """Get workflow detail info by item type id.
+
+        :param item_type_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                itemtype_id=item_type_id, is_deleted=False)
+            return query.all()
+
 
 class Action(object):
     """Operated on the Action."""

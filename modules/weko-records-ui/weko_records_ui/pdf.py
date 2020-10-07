@@ -250,7 +250,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     except (KeyError, IndexError):
         pass
-    creator_items = item_metadata_json.get(_creator_item_id)
+    creator_items = item_metadata_json.get(_creator_item_id, [])
     if type(creator_items) is dict:
         creator_items = [creator_items]
     creator_mail_list = []
@@ -258,31 +258,35 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     creator_affiliation_list = []
     for creator_item in creator_items:
         # Get creator mail
-        if creator_item.get('creatorMails'):
-            for creator_mail in creator_item.get('creatorMails'):
-                if creator_mail.get('creatorMail'):
-                    creator_mail_list.append(creator_mail.get('creatorMail'))
+        creator_mails = creator_item.get('creatorMails', [])
+        for creator_mail in creator_mails:
+            mail = creator_mail.get('creatorMail')
+            if mail:
+                creator_mail_list.append(mail)
         # Get creator name
         default_creator_name_list = []
-        if creator_item.get('creatorNames'):
-            for creator_name in creator_item.get('creatorNames'):
-                if creator_name.get('creatorNameLang') == lang_user:
-                    creator_name_list.append(creator_name.get('creatorName'))
-                if creator_name.get('creatorNameLang') == 'en':
-                    default_creator_name_list.append(creator_name.get(
-                        'creatorName'))
+        creator_names = creator_item.get('creatorNames', [])
+        for creator_name in creator_names:
+            name = creator_name.get('creatorName')
+            name_lang = creator_name.get('creatorNameLang')
+            if name_lang == lang_user:
+                creator_name_list.append(name)
+            if name_lang == 'en':
+                default_creator_name_list.append(name)
         if not creator_name_list and default_creator_name_list:
             creator_name_list = default_creator_name_list
         # Get creator affiliation
         default_creator_affiliation_list = []
-        if creator_item.get('affiliation'):
-            for creator_affiliation in creator_item.get('affiliation'):
-                if creator_affiliation.get('affiliationNameLang') == lang_user:
-                    creator_affiliation_list.append(creator_affiliation.get(
-                        'affiliationName'))
-                if creator_affiliation.get('affiliationNameLang') == 'en':
-                    default_creator_affiliation_list.\
-                        append(creator_affiliation.get('affiliationName'))
+        creator_affiliations = creator_item.get('creatorAffiliations', [])
+        for creator_affiliation in creator_affiliations:
+            affiliation_names = creator_affiliation.get('affiliationNames', [])
+            for affiliation_name in affiliation_names:
+                name = affiliation_name.get('affiliationName')
+                name_lang = affiliation_name.get('affiliationNameLang')
+                if name_lang == lang_user:
+                    creator_affiliation_list.append(name)
+                if name_lang == 'en':
+                    default_creator_affiliation_list.append(name)
         if not creator_affiliation_list and default_creator_affiliation_list:
             creator_affiliation_list = default_creator_affiliation_list
 
