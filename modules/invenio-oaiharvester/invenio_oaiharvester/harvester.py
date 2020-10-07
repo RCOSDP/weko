@@ -43,12 +43,11 @@ DEFAULT_FIELD = [
     'pubdate',
     'lang']
 
-system_identifier_uri = 'system_identifier_uri'
-system_identifier_hdl = 'system_identifier_hdl'
-system_identifier_doi = 'system_identifier_doi'
-subitem_systemidt_identifier = 'subitem_systemidt_identifier'
-ddi_mapping_key_title = "stdyDscr.citation.titlStmt.titl.@value"
-
+SYSTEM_IDENTIFIER_URI = 'system_identifier_uri'
+SYSTEM_IDENTIFIER_HDL = 'system_identifier_hdl'
+SYSTEM_IDENTIFIER_DOI = 'system_identifier_doi'
+SUBITEM_SYSTEMIDT_IDENTIFIER = 'subitem_systemidt_identifier'
+DDI_MAPPING_KEY_TITLE = 'stdyDscr.citation.titlStmt.titl.@value'
 
 def list_sets(url, encoding='utf-8'):
     """Get sets list."""
@@ -1274,7 +1273,7 @@ class DDIMapper(BaseMapper):
             for i in keys:
                 i_r = i.replace("[]", "")
                 if str(last_key) == str(i):
-                    if not current_temp.get(i_r, None):
+                    if not current_temp.get(i_r):
                         if "[]" in i:
                             current_temp[i_r] = []
                         else:
@@ -1311,7 +1310,7 @@ class DDIMapper(BaseMapper):
                     if full_key in lst_keys_unique:
                         if isinstance(val, str):
                             val = {'#text': val}
-                        if dict_data.get(full_key, None):
+                        if dict_data.get(full_key):
                             dict_data[full_key].append(val)
                         else:
                             dict_data[full_key] = [val]
@@ -1322,7 +1321,7 @@ class DDIMapper(BaseMapper):
                     merge_data_by_mapping_keys(parent_key, data)
             elif isinstance(data_mapping, str) and '@' not in current_key:
                 data_mapping = {'#text': data_mapping}
-                if dict_data.get(current_key, None):
+                if dict_data.get(current_key):
                     dict_data[current_key].append(data_mapping)
                 else:
                     dict_data[current_key] = [data_mapping]
@@ -1367,14 +1366,14 @@ class DDIMapper(BaseMapper):
                             last_key = sub_keys.pop()
                             sub_keys_clone = copy.deepcopy(sub_keys)
                             if mapping_key.split(".@")[1] == "value":
-                                if val_obj.get('#text', None):
+                                if val_obj.get('#text'):
                                     value = val_obj['#text']
-                                    if mapping_key == ddi_mapping_key_title:
+                                    if mapping_key == DDI_MAPPING_KEY_TITLE:
                                         self.record_title = value
                                     parse_each_obj(value)
                             elif 'attributes' in mapping_key.split(".@")[1]:
                                 att = mapping_key.split(".")[-1]
-                                if val_obj.get('@' + att, None):
+                                if val_obj.get('@' + att):
                                     att = val_obj['@' + att]
                                     parse_each_obj(att)
                     result_dict = {}
@@ -1423,23 +1422,23 @@ class DDIMapper(BaseMapper):
         def handle_identifier():
             """Handel Identifiers."""
             identifiers = None
-            identifier_uri = res.get(system_identifier_uri, None)
-            identifiers_hdl = res.get(system_identifier_hdl, None)
-            identifiers_doi = res.get(system_identifier_doi, None)
+            identifier_uri = res.get(SYSTEM_IDENTIFIER_URI)
+            identifiers_hdl = res.get(SYSTEM_IDENTIFIER_HDL)
+            identifiers_doi = res.get(SYSTEM_IDENTIFIER_DOI)
             if identifiers_doi:
                 identifiers = identifiers_doi
-                del res[system_identifier_doi]
+                del res[SYSTEM_IDENTIFIER_DOI]
             elif identifiers_hdl:
                 identifiers = identifiers_hdl
-                del res[system_identifier_hdl]
+                del res[SYSTEM_IDENTIFIER_HDL]
             elif identifier_uri:
                 identifiers = identifier_uri
-                del res[system_identifier_uri]
+                del res[SYSTEM_IDENTIFIER_URI]
             if not identifiers:
                 return
             if isinstance(identifiers[0], dict):
                 identifier = identifiers[0].get(
-                    subitem_systemidt_identifier, None)
+                    SUBITEM_SYSTEMIDT_IDENTIFIER)
                 if identifier.startswith(OAIHARVESTER_DOI_PREFIX):
                     self.identifiers.append({'type': 'DOI',
                                              'identifier': identifier})
@@ -1447,8 +1446,8 @@ class DDIMapper(BaseMapper):
                     self.identifiers.append({'type': 'HDL', 'identifier':
                                             identifier})
                 else:
-                    res[system_identifier_doi] = \
-                        [{subitem_systemidt_identifier: identifier}]
+                    res[SYSTEM_IDENTIFIER_DOI] = \
+                        [{SUBITEM_SYSTEMIDT_IDENTIFIER: identifier}]
 
         lst_keys = []
         harvest_data = to_dict(harvest_data)
@@ -1467,7 +1466,7 @@ class DDIMapper(BaseMapper):
             lst_parsed, first_key = parse_to_obj_data_by_mapping_keys(
                 convert_to_lst(v), lst_keys_with_prefix)
             if lst_parsed:
-                if not res.get(first_key, None):
+                if not res.get(first_key):
                     res[first_key] = lst_parsed
                 else:
                     res[first_key].extend(lst_parsed)
