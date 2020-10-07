@@ -99,7 +99,7 @@ $(document).ready(function () {
       document.getElementById('inputEmail_0').value = email;
       moreEmail();
     }
-    // one time only	
+    // one time only
     localStorage.setItem('invalidEmails', '');
   }
 });
