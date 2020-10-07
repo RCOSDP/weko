@@ -147,11 +147,11 @@ def json_loader(data, pid):
         # check oai id value
         is_edit = False
         try:
-            oai_value = PersistentIdentifier.get_by_object(pid_type='oai',
-                                                           object_type='rec',
-                                                           object_uuid=PersistentIdentifier.get('recid',
-                                                                                                pid).object_uuid
-                                                           ).pid_value
+            oai_value = PersistentIdentifier.get_by_object(
+                pid_type='oai',
+                object_type='rec',
+                object_uuid=PersistentIdentifier.get('recid',pid).object_uuid
+            ).pid_value
             is_edit = pid_exists(oai_value, 'oai')
         except PIDDoesNotExistError:
             pass
@@ -324,13 +324,8 @@ def find_items(form):
         if isinstance(node, dict):
             key = node.get('key')
             title = node.get('title', '')
-            try:
-                # Try catch for case this function is called from celery app
-                current_lang = current_i18n.language
-            except Exception:
-                current_lang = 'en'
-            title_i18n = node.get('title_i18n', {}) \
-                .get(current_lang, title)
+            title_i18n = node.get('title_i18n', {})\
+                .get(current_i18n.language, title)
             option = {
                 'required': node.get('required', False),
                 'show_list': node.get('isShowList', False),
@@ -654,8 +649,8 @@ def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
     """
     def get_name(key):
         for lst in klst:
-            keys = lst[0].replace("[]", "").split('.')
-            if root_key == keys[0] and key == keys[-1]:
+            keys = lst[0].split('.')
+            if keys[0].startswith(root_key) and key == keys[-1]:
                 return lst[2] if not is_author else '{}.{}'. format(
                     key, lst[2])
 
@@ -810,20 +805,10 @@ def check_to_upgrade_version(old_render, new_render):
     old_schema = old_render.get('table_row_map').get('schema')
     new_schema = new_render.get('table_row_map').get('schema')
 
-    excluded_keys = [
-        'required',
-        'title',
-        'uniqueKey',
-        'title_i18n',
-        'isShowList',
-        'isSpecifyNewline',
-        'isHide',
-        'enum',
-        'titleMap',
-        'title_i18n_temp'
-    ]
-    remove_keys(excluded_keys, old_schema['properties'])
-    remove_keys(excluded_keys, new_schema['properties'])
+    excluded_keys = \
+        current_app.config['WEKO_ITEMTYPE_EXCLUDED_KEYS']
+    remove_keys(excluded_keys, old_schema)
+    remove_keys(excluded_keys, new_schema)
 
     remove_multiple(old_schema)
     remove_multiple(new_schema)

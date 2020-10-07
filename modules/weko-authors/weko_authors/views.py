@@ -166,34 +166,39 @@ def get():
         "size": size,
         "sort": sort
     }
-    query_item = {
-        "size": 0,
-        "query": {
-            "bool": {
-                "must_not": {
-                    "match": {
-                        "weko_id": "",
-                    }
-                }
-            }
-        }, "aggs": {
-            "item_count": {
-                "terms": {
-                    "field": "weko_id"
-                }
-            }
-        }
-    }
-
     indexer = RecordIndexer()
     result = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=body
     )
+
+    author_id_list = []
+    for es_hit in result['hits']['hits']:
+        author_id_info = es_hit['_source']['authorIdInfo']
+        if author_id_info:
+            author_id_list.append(author_id_info[0]['authorId'])
+
+    name_id = '_item_metadata.item_creator.attribute_value_mlt.nameIdentifiers'
+    name_id += '.nameIdentifier.keyword'
+    query_item = {
+        'size': 0,
+        'query': {
+            'terms': {
+                name_id: author_id_list
+            }
+        }, 'aggs': {
+            'item_count': {
+                'terms': {
+                    'size': size,
+                    'field': name_id,
+                    'include': author_id_list
+                }
+            }
+        }
+    }
     result_itemCnt = indexer.client.search(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=query_item
     )
 
