@@ -334,8 +334,6 @@ def package_reports(all_stats, year, month):
     month = str(month)
     try:  # TODO: Make this into one loop, no need for two
         for stats_type, stats in all_stats.items():
-            if not stats:
-                continue
             file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(
                 stats_type, '_')
             file_name = 'logReport_' + file_name + year + '-' + month + '.tsv'
@@ -372,30 +370,31 @@ def make_stats_tsv(raw_stats, file_type, year, month):
         col_dict_key = file_type.split('_', 1)[1]
         cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key,
                                                                 [])
-        cols[3:1] = raw_stats['all_groups']  # Insert group columns
+        if raw_stats:
+            cols[3:1] = raw_stats['all_groups']  # Insert group columns
     else:
         cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
     writer.writerow(cols)
 
     # Special cases:
     # Write total for per index views
-    if file_type == 'index_access':
-        writer.writerow([_('Total Detail Views'), raw_stats['total']])
-
-    elif file_type in ['billing_file_download', 'billing_file_preview']:
-        write_report_tsv_rows(writer, raw_stats['all'], file_type,
-                              raw_stats['all_groups'])  # Pass all groups
-    elif file_type == 'site_access':
-        write_report_tsv_rows(writer,
-                              raw_stats['site_license'],
-                              file_type,
-                              _('Site license member'))
-        write_report_tsv_rows(writer,
-                              raw_stats['other'],
-                              file_type,
-                              _('Other than site license'))
-    else:
-        write_report_tsv_rows(writer, raw_stats['all'], file_type)
+    if raw_stats:
+        if file_type == 'index_access':
+            writer.writerow([_('Total Detail Views'), raw_stats['total']])
+        elif file_type in ['billing_file_download', 'billing_file_preview']:
+            write_report_tsv_rows(writer, raw_stats['all'], file_type,
+                                  raw_stats['all_groups'])  # Pass all groups
+        elif file_type == 'site_access':
+            write_report_tsv_rows(writer,
+                                  raw_stats['site_license'],
+                                  file_type,
+                                  _('Site license member'))
+            write_report_tsv_rows(writer,
+                                  raw_stats['other'],
+                                  file_type,
+                                  _('Other than site license'))
+        else:
+            write_report_tsv_rows(writer, raw_stats['all'], file_type)
 
     # Write open access stats
     if sub_header_row is not None:
