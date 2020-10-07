@@ -81,7 +81,7 @@ $(document).ready(function () {
   $('#saveEmail').on('click', function () {
       // save any invalid addresses
       let invalidInputs = Array.from(document.getElementById('email_form').elements).filter(function(element){
-        return element.type == 'email' && element.value && element.checkValidity();
+        return element.type == 'email' && element.value && !element.checkValidity();
       });
       let invalidEmails = [];
       for (let element of invalidInputs) {
@@ -90,6 +90,18 @@ $(document).ready(function () {
       localStorage.setItem('invalidEmails', JSON.stringify(invalidEmails));
       $('#email_form').submit();
   });
+
+  // check before parsing to prevent error in case of empty string	
+  if (localStorage.getItem('invalidEmails')) {	
+    // load invalid address if saved	
+    let invalidEmails = JSON.parse(localStorage.getItem('invalidEmails'));	
+    for (let email of invalidEmails) {	
+      document.getElementById('inputEmail_0').value = email;	
+      moreEmail();	
+    }	
+    // one time only	
+    localStorage.setItem('invalidEmails', '');	
+  }
 });
 
 function ajaxGetTSV(endpoint) {
