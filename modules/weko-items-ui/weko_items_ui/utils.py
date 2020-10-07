@@ -324,7 +324,6 @@ def parse_ranking_results(results,
         key = search_key
     else:
         url = None
-
     if date_key == 'create_date':
         data_list = parse_ranking_new_items(results)
         results = dict()

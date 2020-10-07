@@ -150,11 +150,12 @@ def search():
         send_info['site_license_name'] = current_user.site_license_name \
             if hasattr(current_user, 'site_license_name') else ''
         if search_type in WEKO_SEARCH_TYPE_DICT.values():
-            searched.send(
-                current_app._get_current_object(),
-                search_args=get_args,
-                info=send_info
-            )
+            if not search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
+                searched.send(
+                    current_app._get_current_object(),
+                    search_args = get_args,
+                    info=send_info
+                )
             if search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
                 cur_index_id = request.args.get('q', '0')
                 journal_info = get_journal_info(cur_index_id)
