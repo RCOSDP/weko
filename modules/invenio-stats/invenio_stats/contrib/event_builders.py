@@ -264,7 +264,6 @@ def resolve_address(addr):
 def search_event_builder(event, sender_app, search_args=None,
                          info=None, **kwargs):
     """Build a search event."""
-    
     event.update(dict(
         # When:
         timestamp=datetime.datetime.utcnow().isoformat(),
