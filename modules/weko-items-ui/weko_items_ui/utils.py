@@ -334,8 +334,6 @@ def parse_ranking_results(results,
         date = ''
         for item in results[list_name]:
             t = {}
-            if len(item["search_key"]) == 13 and bool(int(item["search_key"])):
-                continue
             if count_key:
                 if not count == int(item[count_key]):
                     rank = len(ranking_list) + 1

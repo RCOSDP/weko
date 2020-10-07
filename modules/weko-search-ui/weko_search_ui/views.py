@@ -152,7 +152,7 @@ def search():
         if search_type in WEKO_SEARCH_TYPE_DICT.values():
             searched.send(
                 current_app._get_current_object(),
-                search_args=get_args,
+                search_args = get_args,
                 info=send_info
             )
             if search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
