@@ -1246,6 +1246,11 @@ class JPCOARMapper(BaseMapper):
 class DDIMapper(BaseMapper):
     """DDIMapper."""
 
+    def __init__(self, xml):
+        """Init."""
+        super().__init__(xml)
+        self.record_title = ""
+
     def ddi_harvest_processing(self, harvest_data, res):
         """Process parsing DDI data."""
         def get_mapping_ddi():
@@ -1297,11 +1302,11 @@ class DDIMapper(BaseMapper):
                     break
             return result
 
-        def merge_data_by_mapping_keys(parent_key, dic):
+        def merge_data_by_mapping_keys(parent_key, data_mapping):
             """Merge all sub data by parent key(prefix key)."""
             current_key = parent_key
-            if isinstance(dic, dict):
-                for key, val in dic.items():
+            if isinstance(data_mapping, dict):
+                for key, val in data_mapping.items():
                     full_key = current_key + '.' + key
                     if full_key in lst_keys_unique:
                         if isinstance(val, str):
@@ -1312,28 +1317,43 @@ class DDIMapper(BaseMapper):
                             dict_data[full_key] = [val]
                     else:
                         merge_data_by_mapping_keys(full_key, val)
-            elif isinstance(dic, list):
-                for i in dic:
-                    for key, val, in i.items():
-                        full_key = current_key + '.' + key
-                        if full_key in lst_keys_unique:
-                            if isinstance(val, str):
-                                val = {'#text': val}
-                            if dict_data.get(full_key, None):
-                                dict_data[full_key].append(val)
-                            else:
-                                dict_data[full_key] = [val]
-                        else:
-                            merge_data_by_mapping_keys(full_key, val)
-            elif isinstance(dic, str) and '@' not in current_key:
-                dic = {'#text': dic}
+            elif isinstance(data_mapping, list):
+                for data in data_mapping:
+                    merge_data_by_mapping_keys(parent_key, data)
+            elif isinstance(data_mapping, str) and '@' not in current_key:
+                data_mapping = {'#text': data_mapping}
                 if dict_data.get(current_key, None):
-                    dict_data[current_key].append(dic)
+                    dict_data[current_key].append(data_mapping)
                 else:
-                    dict_data[current_key] = [dic]
+                    dict_data[current_key] = [data_mapping]
 
         def parse_to_obj_data_by_mapping_keys(vals, keys):
             """Parse all data to type of object by mapping key."""
+            def get_same_key_from_form(sub_key):
+                """Get the same key with sub_key in form."""
+                for item_sub_key_form in item_sub_keys_form:
+                    if item_sub_key_form.replace("[]", "") == sub_key:
+                        sub_key = item_sub_key_form
+                        break
+                return sub_key
+
+            def parse_each_obj(parse_data):
+                """Parse data for each item."""
+                full_key_val_obj = {last_key: parse_data}
+                while sub_keys:
+                    current_key = sub_keys.pop()
+                    if '[]' in current_key:
+                        full_key_val_obj = {
+                            current_key.replace("[]", ""):
+                                [full_key_val_obj]}
+                    else:
+                        full_key_val_obj = {
+                            current_key: full_key_val_obj}
+                temp_lst.append(
+                    {"full": full_key_val_obj,
+                     "key": sub_keys_clone,
+                     "val": {last_key: parse_data}})
+
             try:
                 list_result = []
                 root_key = ''
@@ -1341,11 +1361,7 @@ class DDIMapper(BaseMapper):
                     temp_lst = []
                     for key_pair in keys:
                         for mapping_key, item_sub_key in key_pair.items():
-                            for item_sub_key_form in item_sub_keys_form:
-                                if item_sub_key_form.replace("[]", "") \
-                                        == item_sub_key:
-                                    item_sub_key = item_sub_key_form
-                                    break
+                            item_sub_key = get_same_key_from_form(item_sub_key)
                             sub_keys = item_sub_key.split('.')
                             root_key = sub_keys[0]
                             last_key = sub_keys.pop()
@@ -1355,38 +1371,12 @@ class DDIMapper(BaseMapper):
                                     value = val_obj['#text']
                                     if mapping_key == ddi_mapping_key_title:
                                         self.record_title = value
-                                    full_key_val_obj = {last_key: value}
-                                    while sub_keys:
-                                        current_key = sub_keys.pop()
-                                        if '[]' in current_key:
-                                            full_key_val_obj = {
-                                                current_key.replace("[]", ""):
-                                                    [full_key_val_obj]}
-                                        else:
-                                            full_key_val_obj = {
-                                                current_key: full_key_val_obj}
-                                    temp_lst.append(
-                                        {"full": full_key_val_obj,
-                                         "key": sub_keys_clone,
-                                         "val": {last_key: value}})
+                                    parse_each_obj(value)
                             elif 'attributes' in mapping_key.split(".@")[1]:
                                 att = mapping_key.split(".")[-1]
                                 if val_obj.get('@' + att, None):
                                     att = val_obj['@' + att]
-                                    full_key_val_obj = {last_key: att}
-                                    while sub_keys:
-                                        current_key = sub_keys.pop()
-                                        if '[]' in current_key:
-                                            full_key_val_obj = {
-                                                current_key.replace("[]", ""):
-                                                    [full_key_val_obj]}
-                                        else:
-                                            full_key_val_obj = {
-                                                current_key: full_key_val_obj}
-                                    temp_lst.append(
-                                        {"full": full_key_val_obj,
-                                         "key": sub_keys_clone,
-                                         "val": {last_key: att}})
+                                    parse_each_obj(att)
                     result_dict = {}
                     for temp_obj in temp_lst:
                         merge_dict(result_dict, temp_obj['full'],
@@ -1399,10 +1389,10 @@ class DDIMapper(BaseMapper):
                                     dict):
                         list_result.append(
                             result_dict[root_key.replace("[]", "")])
-            except Exception as ex:
+                return list_result, root_key.replace("[]", "")
+            except Exception:
                 import traceback
                 traceback.print_exc()
-            return list_result, root_key.replace("[]", "")
 
         def get_all_key(prefix):
             """Get all keys with the prefix key."""
@@ -1482,11 +1472,6 @@ class DDIMapper(BaseMapper):
                 else:
                     res[first_key].extend(lst_parsed)
         handle_identifier()
-
-    def __init__(self, xml):
-        """Init."""
-        super().__init__(xml)
-        self.record_title = ""
 
     def map_itemtype(self, type_tag):
         """Map itemtype."""

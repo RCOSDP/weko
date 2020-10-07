@@ -324,8 +324,13 @@ def find_items(form):
         if isinstance(node, dict):
             key = node.get('key')
             title = node.get('title', '')
-            title_i18n = node.get('title_i18n', {})\
-                .get(current_i18n.language, title)
+            try:
+                # Try catch for case this function is called from celery app
+                current_lang = current_i18n.language
+            except Exception:
+                current_lang = 'en'
+            title_i18n = node.get('title_i18n', {}) \
+                .get(current_lang, title)
             option = {
                 'required': node.get('required', False),
                 'show_list': node.get('isShowList', False),
@@ -649,7 +654,7 @@ def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
     """
     def get_name(key):
         for lst in klst:
-            keys = lst[0].split('.')
+            keys = lst[0].replace("[]", "").split('.')
             if root_key == keys[0] and key == keys[-1]:
                 return lst[2] if not is_author else '{}.{}'. format(
                     key, lst[2])
