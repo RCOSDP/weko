@@ -1787,6 +1787,76 @@ class ItemLink(object):
 
         return ret
 
+    @staticmethod
+    def __get_titles_key(item_type_mapping):
+        """Get title keys in item type mapping.
+
+        :param item_type_mapping: item type mapping.
+        :return:
+        """
+        parent_key = None
+        title_key = None
+        language_key = None
+        for mapping_key in item_type_mapping:
+            property_data = item_type_mapping.get(mapping_key).get(
+                'jpcoar_mapping')
+            if (
+                isinstance(property_data, dict) and
+                property_data.get('title')
+            ):
+                title = property_data.get('title')
+                parent_key = mapping_key
+                title_key = title.get("@value")
+                language_key = title.get("@attributes", {}).get("xml:lang")
+        return parent_key, title_key, language_key
+
+    @classmethod
+    def __get_titles(cls, record):
+        """Get titles of record.
+
+        :param record:
+        :return:
+        """
+        item_type_mapping = Mapping.get_record(record.get("item_type_id"))
+        parent_key, title_key, language_key = cls.__get_titles_key(
+            item_type_mapping)
+        title_metadata = record.get(parent_key)
+        titles = []
+        if title_metadata:
+            attribute_value = title_metadata.get('attribute_value_mlt')
+            if isinstance(attribute_value, list):
+                for attribute in attribute_value:
+                    tmp = dict()
+                    if attribute.get(title_key):
+                        tmp['title'] = attribute.get(title_key)
+                    if attribute.get(language_key):
+                        tmp['language'] = attribute.get(language_key)
+                    if tmp.get('title'):
+                        titles.append(tmp.copy())
+        return titles
+
+    @classmethod
+    def get_item_link_info_output_xml(cls, recid):
+        """Get item link info of recid for output xml.
+
+        :param recid: Record Identifier.
+        :return ret: List destination records.
+        """
+        from weko_deposit.api import WekoRecord
+
+        dst_relations = ItemReference.get_src_references(recid).all()
+        ret = []
+
+        for relation in dst_relations:
+            record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
+            titles = cls.__get_titles(record)
+            ret.append(dict(
+                reference_type=relation.reference_type,
+                titles=titles,
+            ))
+
+        return ret
+
     def update(self, items):
         """Update list item link of current record.
 
