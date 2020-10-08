@@ -411,6 +411,8 @@ def make_stats_tsv(raw_stats, file_type, year, month):
 def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
     """Write tsv rows for stats."""
     from weko_items_ui.utils import get_user_information
+    if not records:
+        return
     if isinstance(records, dict):
         records = list(records.values())
     for record in records:
