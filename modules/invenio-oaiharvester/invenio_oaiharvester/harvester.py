@@ -48,6 +48,8 @@ SYSTEM_IDENTIFIER_HDL = 'system_identifier_hdl'
 SYSTEM_IDENTIFIER_DOI = 'system_identifier_doi'
 SUBITEM_SYSTEMIDT_IDENTIFIER = 'subitem_systemidt_identifier'
 DDI_MAPPING_KEY_TITLE = 'stdyDscr.citation.titlStmt.titl.@value'
+DDI_MAPPING_KEY_URI = 'stdyDscr.citation.holdings.@value'
+
 
 def list_sets(url, encoding='utf-8'):
     """Get sets list."""
@@ -1304,16 +1306,32 @@ class DDIMapper(BaseMapper):
         def merge_data_by_mapping_keys(parent_key, data_mapping):
             """Merge all sub data by parent key(prefix key)."""
             current_key = parent_key
+            if current_key in lst_keys_unique:
+                if dict_data.get(current_key):
+                    dict_data[current_key].append(data_mapping)
+                else:
+                    dict_data[current_key] = [data_mapping]
             if isinstance(data_mapping, dict):
                 for key, val in data_mapping.items():
                     full_key = current_key + '.' + key
                     if full_key in lst_keys_unique:
                         if isinstance(val, str):
                             val = {'#text': val}
+                        elif isinstance(val, list):
+                            for i in range(len(val)):
+                                if isinstance(val[i], str):
+                                    val[i] = {'#text': val[i]}
+
                         if dict_data.get(full_key):
-                            dict_data[full_key].append(val)
+                            if isinstance(val, list):
+                                dict_data[full_key].extend(val)
+                            else:
+                                dict_data[full_key].append(val)
                         else:
-                            dict_data[full_key] = [val]
+                            if isinstance(val, list):
+                                dict_data[full_key] = val
+                            else:
+                                dict_data[full_key] = [val]
                     else:
                         merge_data_by_mapping_keys(full_key, val)
             elif isinstance(data_mapping, list):
@@ -1370,6 +1388,8 @@ class DDIMapper(BaseMapper):
                                     value = val_obj['#text']
                                     if mapping_key == DDI_MAPPING_KEY_TITLE:
                                         self.record_title = value
+                                    if mapping_key == DDI_MAPPING_KEY_URI:
+                                        handle_identifier(value)
                                     parse_each_obj(value)
                             elif 'attributes' in mapping_key.split(".@")[1]:
                                 att = mapping_key.split(".")[-1]
@@ -1380,14 +1400,15 @@ class DDIMapper(BaseMapper):
                     for temp_obj in temp_lst:
                         merge_dict(result_dict, temp_obj['full'],
                                    temp_obj['val'], temp_obj['key'])
-                    if isinstance(result_dict[root_key.replace("[]", "")],
-                                  list):
-                        list_result.append(
-                            result_dict[root_key.replace("[]", "")][0])
-                    elif isinstance(result_dict[root_key.replace("[]", "")],
-                                    dict):
-                        list_result.append(
-                            result_dict[root_key.replace("[]", "")])
+                    if result_dict:
+                        if isinstance(result_dict[root_key.replace("[]", "")],
+                                      list):
+                            list_result.append(
+                                result_dict[root_key.replace("[]", "")][0])
+                        elif isinstance(result_dict[root_key.replace("[]", "")],
+                                        dict):
+                            list_result.append(
+                                result_dict[root_key.replace("[]", "")])
                 return list_result, root_key.replace("[]", "")
             except Exception:
                 import traceback
@@ -1419,35 +1440,14 @@ class DDIMapper(BaseMapper):
                 all_keys_result.append(i[0])
             return all_keys_result
 
-        def handle_identifier():
+        def handle_identifier(identifier):
             """Handel Identifiers."""
-            identifiers = None
-            identifier_uri = res.get(SYSTEM_IDENTIFIER_URI)
-            identifiers_hdl = res.get(SYSTEM_IDENTIFIER_HDL)
-            identifiers_doi = res.get(SYSTEM_IDENTIFIER_DOI)
-            if identifiers_doi:
-                identifiers = identifiers_doi
-                del res[SYSTEM_IDENTIFIER_DOI]
-            elif identifiers_hdl:
-                identifiers = identifiers_hdl
-                del res[SYSTEM_IDENTIFIER_HDL]
-            elif identifier_uri:
-                identifiers = identifier_uri
-                del res[SYSTEM_IDENTIFIER_URI]
-            if not identifiers:
-                return
-            if isinstance(identifiers[0], dict):
-                identifier = identifiers[0].get(
-                    SUBITEM_SYSTEMIDT_IDENTIFIER)
-                if identifier.startswith(OAIHARVESTER_DOI_PREFIX):
-                    self.identifiers.append({'type': 'DOI',
-                                             'identifier': identifier})
-                elif identifier.startswith(OAIHARVESTER_HDL_PREFIX):
-                    self.identifiers.append({'type': 'HDL', 'identifier':
-                                            identifier})
-                else:
-                    res[SYSTEM_IDENTIFIER_DOI] = \
-                        [{SUBITEM_SYSTEMIDT_IDENTIFIER: identifier}]
+            if identifier.startswith(OAIHARVESTER_DOI_PREFIX):
+                self.identifiers.append({'type': 'DOI',
+                                         'identifier': identifier})
+            elif identifier.startswith(OAIHARVESTER_HDL_PREFIX):
+                self.identifiers.append({'type': 'HDL', 'identifier':
+                                        identifier})
 
         lst_keys = []
         harvest_data = to_dict(harvest_data)
@@ -1470,7 +1470,6 @@ class DDIMapper(BaseMapper):
                     res[first_key] = lst_parsed
                 else:
                     res[first_key].extend(lst_parsed)
-        handle_identifier()
 
     def map_itemtype(self, type_tag):
         """Map itemtype."""
