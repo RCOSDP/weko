@@ -381,16 +381,16 @@ def make_stats_tsv(raw_stats, file_type, year, month):
         writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
     elif file_type in ['billing_file_download', 'billing_file_preview']:
         write_report_tsv_rows(writer, raw_stats.get('all'), file_type,
-                                raw_stats.get('all_groups'))  # Pass all groups
+                              raw_stats.get('all_groups'))  # Pass all groups
     elif file_type == 'site_access':
         write_report_tsv_rows(writer,
-                                raw_stats.get('site_license'),
-                                file_type,
-                                _('Site license member'))
+                              raw_stats.get('site_license'),
+                              file_type,
+                              _('Site license member'))
         write_report_tsv_rows(writer,
-                                raw_stats.get('other'),
-                                file_type,
-                                _('Other than site license'))
+                              raw_stats.get('other'),
+                              file_type,
+                              _('Other than site license'))
     else:
         write_report_tsv_rows(writer, raw_stats.get('all'), file_type)
 
@@ -461,20 +461,20 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
                 record.get('total_download'), record.get('total_preview')])
         elif file_type == 'top_page_access':
             writer.writerow([record.get('host'), record.get('ip'),
-                             record.get('count')])
+                            record.get('count')])
         elif file_type == 'site_access' and record:
             if other_info:
                 writer.writerow([other_info, record.get('top_view'),
-                                    record.get('search'),
-                                    record.get('record_view'),
-                                    record.get('file_download'),
-                                    record.get('file_preview')])
+                                record.get('search'),
+                                record.get('record_view'),
+                                record.get('file_download'),
+                                record.get('file_preview')])
             else:
                 writer.writerow([record.get('name'), record.get('top_view'),
-                                    record.get('search'),
-                                    record.get('record_view'),
-                                    record.get('file_download'),
-                                    record.get('file_preview')])
+                                record.get('search'),
+                                record.get('record_view'),
+                                record.get('file_download'),
+                                record.get('file_preview')])
 
 
 def reset_redis_cache(cache_key, value):
@@ -1412,11 +1412,6 @@ class FeedbackMail:
 
         """
         FeedbackMailHistory.update_lastest_status(history_id, False)
-
-
-def str_to_bool(str):
-    """Convert string to bool."""
-    return str.lower() in ['true', 't']
 
 
 def validation_site_info(site_info):
