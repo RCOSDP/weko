@@ -789,7 +789,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         for attr in list_attr[1:]:
                             if re.search(r'^\[\d+\]$', attr):
                                 idx = int(attr[1:-1])
-                                if isinstance(_data, list) and len(_data) > idx:
+                                if isinstance(_data, list) \
+                                        and len(_data) > idx:
                                     _data = _data[idx]
                                 else:
                                     _data = []
@@ -934,7 +935,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             pos_index = []
             for index_id in index_ids:
                 index = Indexes.get_index(index_id)
-                pos_index.append(index.index_name if index else '')
+                pos_index.append(index.index_name_english if index else '')
             records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend([''] * (max_path - len(
             records.attr_output[recid])) * 2)
@@ -2203,7 +2204,8 @@ def get_key_title_in_item_type_mapping(item_type_mapping):
     :return:
     """
     for mapping_key in item_type_mapping:
-        property_data = item_type_mapping.get(mapping_key).get('jpcoar_mapping')
+        property_data = item_type_mapping.get(
+            mapping_key).get('jpcoar_mapping')
         if isinstance(property_data,
                       dict) and 'title' in property_data and property_data.get(
                 'title').get('@value'):
