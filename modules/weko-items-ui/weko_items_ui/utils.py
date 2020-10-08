@@ -937,16 +937,18 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 index = Indexes.get_index(index_id)
                 pos_index.append(index.index_name_english if index else '')
             records.attr_output[recid].append('/'.join(pos_index))
-        records.attr_output[recid].extend([''] * (max_path - len(
-            records.attr_output[recid])) * 2)
+        records.attr_output[recid].extend(
+            [''] * (max_path * 2 - len(records.attr_output[recid]))
+        )
 
         records.attr_output[recid].append(
             'public' if record['publish_status'] == '0' else 'private')
         feedback_mail_list = records.attr_data['feedback_mail_list'] \
             .get(recid, [])
         records.attr_output[recid].extend(feedback_mail_list)
-        records.attr_output[recid].extend([''] * (max_feedback_mail - len(
-            feedback_mail_list)))
+        records.attr_output[recid].extend(
+            [''] * (max_feedback_mail - len(feedback_mail_list))
+        )
 
         pid_cnri = record.pid_cnri
         cnri = ''
