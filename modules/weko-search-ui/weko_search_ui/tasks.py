@@ -19,13 +19,10 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-import time
 from datetime import datetime
 
 from celery import shared_task
-from weko_admin.models import SessionLifetime
 
-from .config import WEKO_ADMIN_LIFETIME_DEFAULT
 from .utils import import_items_to_system, remove_temp_dir
 
 
@@ -41,14 +38,4 @@ def import_item(item, url_root):
 @shared_task
 def remove_temp_dir_task(path):
     """Import Item ."""
-    try:
-        db_lifetime = SessionLifetime.get_validtime()
-        if db_lifetime is None:
-            time.sleep(WEKO_ADMIN_LIFETIME_DEFAULT)
-            remove_temp_dir(path)
-        else:
-            time.sleep(db_lifetime.lifetime * 60)
-            remove_temp_dir(path)
-
-    except BaseException:
-        pass
+    remove_temp_dir(path)
