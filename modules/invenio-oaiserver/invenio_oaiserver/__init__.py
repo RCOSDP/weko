@@ -100,7 +100,7 @@ The above set will group all records that contain word "higgs" in the title.
 We can now see the set by using verb ``ListSets``:
 
 >>> with app.test_client() as client:
-...     res = client.get('/oai2d?verb=ListSets')
+...     res = client.get('/oai?verb=ListSets')
 >>> res.status_code
 200
 >>> b'Higgs' in res.data

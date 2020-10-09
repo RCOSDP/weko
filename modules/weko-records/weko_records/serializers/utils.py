@@ -290,7 +290,7 @@ class OpenSearchDetailData:
             item_url = request.host_url + 'records/' + _pid
             fe.link(href=item_url, rel='alternate', type='text/xml')
 
-            oai_param = 'oai2d?verb=GetRecord&metadataPrefix=jpcoar&identifier='
+            oai_param = 'oai?verb=GetRecord&metadataPrefix=jpcoar&identifier='
             if self.output_type == self.OUTPUT_ATOM:
                 # Set oai
                 _oai = hit['_source']['_oai']['id']
