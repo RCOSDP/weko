@@ -26,8 +26,8 @@ from .query import get_records
 from .resumption_token import serialize
 from .utils import datetime_to_datestamp, serializer
 
-NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
-NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
+NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/oai_dc/'
+NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd'
 NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
 NS_OAIDC = 'http://www.openarchives.org/OAI/2.0/oai_dc/'
 NS_DC = "http://purl.org/dc/elements/1.1/"
