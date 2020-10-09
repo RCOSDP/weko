@@ -933,7 +933,15 @@ def ranking():
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     rankings = get_ranking(settings)
-
+   
+    x = rankings['most_searched_keywords']
+    import urllib.parse
+    for y in x:
+        if y["title"].split():
+            y["url"] = '/search?search_type=0&q={}'.format(urllib.parse.quote(y["title"]))
+        else:
+            y["url"] = '/search?search_type=0&q={z}'.format(z=y["title"])
+        
     return render_template(
         current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
         page=page,
