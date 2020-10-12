@@ -40,6 +40,7 @@ from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
     Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_user_profiles.utils import get_user_profile_info
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
@@ -1196,6 +1197,19 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         else:
             identifier = activity.get_action_identifier_grant(
                 '', identifier_actionid)
+
+        if not identifier:
+            identifier_handle = IdentifierHandle(recid.object_uuid)
+            doi_value, doi_type = identifier_handle.get_idt_registration_data()
+            if doi_value and doi_type:
+                identifier = {
+                    'action_identifier_select':
+                        WEKO_IMPORT_DOI_TYPE.index(doi_type[0]) + 1,
+                    'action_identifier_jalc_doi': '',
+                    'action_identifier_jalc_cr_doi': '',
+                    'action_identifier_jalc_dc_doi': '',
+                    'action_identifier_ndl_jalc_doi': ''
+                }
 
         if identifier:
             if identifier.get('action_identifier_select') > \
