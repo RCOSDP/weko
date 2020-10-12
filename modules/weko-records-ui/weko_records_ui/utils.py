@@ -28,7 +28,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
-from weko_records.api import ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes
 
 from .permissions import check_user_group_permission
 
@@ -177,6 +177,8 @@ def soft_delete(recid):
             dep = WekoDeposit(rec.json, rec)
             dep['path'] = []
             dep.indexer.update_path(dep, update_revision=False)
+            FeedbackMailList.delete(pid.object_uuid)
+            dep.remove_feedback_mail()
         pids = PersistentIdentifier.query.filter_by(
             object_uuid=pid.object_uuid)
         for p in pids:

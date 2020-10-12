@@ -22,7 +22,7 @@
 import csv
 import os
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 
 import redis
@@ -526,9 +526,8 @@ class StatisticMail:
             string -- time with format yyyy-MM
 
         """
-        month = str(datetime.now().month - 1)
-        month = month.zfill(2)
-        return str(datetime.now().year) + '-' + month
+        previous_month = datetime.now().replace(day=1) - timedelta(days=1)
+        return previous_month.strftime("%Y-%m")
 
     @classmethod
     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
@@ -701,7 +700,7 @@ class StatisticMail:
         count_item_view = cls.get_item_view(item_id, time)
         count_item_download = cls.get_item_download(data, time)
         title = data.get("item_title")
-        url = root_url + '/records/' + data.get('control_number')
+        url = root_url + '/records/' + data.get('recid', '').split('.')[0]
         result = {
             'title': title,
             'url': url,
@@ -948,62 +947,59 @@ class FeedbackMail:
         :return: author mail
         """
         search_key = request_data.get('searchKey') or ''
-        query = {"match": {"gather_flg": 0}}
+        match = [{"term": {"gather_flg": 0}}]
+
         if search_key:
-            search_keys = search_key.split(" ")
-            match = []
-            for key in search_keys:
-                if key:
-                    match.append(
-                        {"match_phrase_prefix": {"emailInfo.email": key}})
-            query = {
-                "bool":
-                    {
-                        "should": match, "minimum_should_match": 1
-                    }
-            }
-        size = config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE
+            match.append(
+                {"multi_match": {"query": search_key, "type": "phrase"}})
+        query = {"bool": {"must": match}}
+        size = int(request_data.get('numOfPage')
+                   or config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE)
         num = request_data.get('pageNumber') or 1
         offset = (int(num) - 1) * size if int(num) > 1 else 0
-        sort_key = request_data.get('sortKey') or ''
-        sort_order = request_data.get('sortOrder') or ''
-        sort = {}
-        if sort_key and sort_order:
-            sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
+
         body = {
             "query": query,
             "from": offset,
             "size": size,
-            "sort": sort
-        }
-        query_item = {
-            "size": 0,
-            "query": {
-                "bool": {
-                    "must_not": {
-                        "match": {
-                            "weko_id": "",
-                        }
-                    }
-                }
-            }, "aggs": {
-                "item_count": {
-                    "terms": {
-                        "field": "weko_id"
-                    }
-                }
-            }
         }
         indexer = RecordIndexer()
         result = indexer.client.search(
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             body=body
         )
-        result_item_cnt = indexer.client.search(
+
+        author_id_list = []
+        for es_hit in result['hits']['hits']:
+            author_id_info = es_hit['_source']['authorIdInfo']
+            if author_id_info:
+                author_id_list.append(author_id_info[0]['authorId'])
+
+        name_id = '_item_metadata.item_creator.attribute_value_mlt'
+        name_id += '.nameIdentifiers.nameIdentifier.keyword'
+        query_item = {
+            'size': 0,
+            'query': {
+                'terms': {
+                    name_id: author_id_list
+                }
+            }, 'aggs': {
+                'item_count': {
+                    'terms': {
+                        'field': name_id,
+                        'include': author_id_list
+                    }
+                }
+            }
+        }
+        result_itemCnt = indexer.client.search(
             index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
             body=query_item
         )
-        result['item_cnt'] = result_item_cnt
+
+        result['item_cnt'] = result_itemCnt
+
         return result
 
     @classmethod
