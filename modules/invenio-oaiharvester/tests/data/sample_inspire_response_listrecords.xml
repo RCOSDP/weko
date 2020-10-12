@@ -1,6 +1,6 @@
 <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
     <responseDate>2014-11-05T09:30:08Z</responseDate>
-    <request from="2014-05-01" metadataPrefix="marcxml" set="INSPIRE:Conferences" until="2014-05-02" verb="ListRecords">http://inspirehep.net/oai2d</request>
+    <request from="2014-05-01" metadataPrefix="marcxml" set="INSPIRE:Conferences" until="2014-05-02" verb="ListRecords">http://inspirehep.net/oai</request>
     <ListRecords>
         <record>
             <header>
