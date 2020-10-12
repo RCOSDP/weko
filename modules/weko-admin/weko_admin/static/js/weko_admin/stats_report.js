@@ -81,7 +81,7 @@ $(document).ready(function () {
   $('#saveEmail').on('click', function () {
       // save any invalid addresses
       let invalidInputs = Array.from(document.getElementById('email_form').elements).filter(function(element){
-        return element.type == 'email' &&  element.value && !element.checkValidity();
+        return element.type == 'email' && element.value && !element.checkValidity();
       });
       let invalidEmails = [];
       for (let element of invalidInputs) {
