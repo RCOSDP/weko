@@ -190,7 +190,8 @@ class Indexes(object):
                             v = datetime.strptime(v, '%Y%m%d')
                         else:
                             v = None
-                    if "index_name" in k or "index_name_english" in k:
+                    if v is not None and (
+                            "index_name" in k or "index_name_english" in k):
                         v = sanitize(v)
                     if "have_children" in k:
                         continue
