@@ -75,7 +75,7 @@ class AuthorManagementView(BaseView):
 authors_list_adminview = {
     'view_class': AuthorManagementView,
     'kwargs': {
-        'category': _('DB Author'),
+        'category': _('Author Management'),
         'name': _('Author Management'),
         'endpoint': 'authors'
     }
