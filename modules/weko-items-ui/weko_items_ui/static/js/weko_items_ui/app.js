@@ -1914,6 +1914,9 @@ function toObject(arr) {
       }
 
       $scope.storeFilesToSession = function () {
+        if (!$rootScope.filesVM) {
+          return;
+        }
         //Add file uploaded to sessionStorage when uploaded processing done
         window.history.pushState("", "", $scope.currentUrl);
         let actionID = $("#activity_id").text();
