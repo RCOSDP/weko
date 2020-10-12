@@ -272,7 +272,7 @@ def shib_stub_login():
 
     # LOGIN USING JAIROCLOUD PAGE
     if current_app.config['SHIB_IDP_LOGIN_ENABLED']:
-        return redirect(config.SHIB_IDP_LOGIN_URL)
+        return redirect(current_app.config['WEKO_RECORDS_UI_LICENSE_DICT'])
     else:
         return render_template(
             config.SECURITY_LOGIN_SHIB_USER_TEMPLATE,
