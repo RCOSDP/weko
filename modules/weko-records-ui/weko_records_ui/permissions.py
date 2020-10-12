@@ -90,6 +90,11 @@ def check_file_download_permission(record, fjson):
     if fjson:
         is_can = True
         acsrole = fjson.get('accessrole', '')
+        # Get email of login user.
+        is_has_email = hasattr(current_user, "email")
+        current_user_email = current_user.email if is_has_email else ''
+        # Get email of created workflow user.
+        created_user_email = record['_deposit']['owners_ext']['email']
 
         # Super users
         supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
@@ -151,8 +156,12 @@ def check_file_download_permission(record, fjson):
 
             #  can not access
             elif 'open_no' in acsrole:
-                # site license permission check
-                is_can = site_license_check()
+                if current_user_email == created_user_email:
+                    # Allow created workflow user view file.
+                    is_can = True
+                else:
+                    # site license permission check
+                    is_can = site_license_check()
             elif 'open_restricted' in acsrole:
                 is_can = check_open_restricted_permission(record, fjson)
         except BaseException:
