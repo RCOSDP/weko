@@ -667,6 +667,7 @@ def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
                     for a in alst:
                         result.append(to_sort_dict(a, klst))
                 else:
+                    temp = []
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
@@ -674,18 +675,19 @@ def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
                             if not hide:
-                                result.append({key: val})
+                                temp.append({key: val})
                         elif isinstance(val, list) and len(
                                 val) > 0 and isinstance(val[0], str):
                             if not hide:
-                                result.append({key: val})
+                                temp.append({key: val})
                         else:
                             if check_has_attribute_value(val):
                                 if not hide:
                                     res = to_sort_dict(val, klst)
-                                    result.append({key: res})
+                                    temp.append({key: res})
                         if not alst:
                             break
+                    result.append(temp)
                 return result
             except BaseException as e:
                 current_app.logger.error('Function to_sort_dict error: ', e)
