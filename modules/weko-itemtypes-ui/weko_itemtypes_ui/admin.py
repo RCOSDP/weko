@@ -525,7 +525,7 @@ itemtype_meta_data_adminview = {
     'view_class': ItemTypeMetaDataView,
     'kwargs': {
         'category': _('Item Types'),
-        'name': _('Meta'),
+        'name': _('Metadata'),
         'url': '/admin/itemtypes',
         'endpoint': 'itemtypesregister'
     }

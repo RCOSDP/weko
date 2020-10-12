@@ -213,7 +213,7 @@ class IndexJournalSettingView(BaseView):
 index_journal_adminview = {
     'view_class': IndexJournalSettingView,
     'kwargs': {
-        'category': _('Setting'),
+        'category': _('Index Tree'),
         'name': _('Index Journal'),
         'endpoint': 'indexjournal'
     }
