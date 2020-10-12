@@ -626,6 +626,23 @@ class Indexes(object):
         return obj
 
     @classmethod
+    def get_index_by_name_english(cls, index_name_english="", pid=0):
+        """Get index by English index name.
+
+        :argument
+            index_name_english   -- {str} index_name_english query
+            pid          -- {number} parent index id
+        :return
+            return       -- index object
+
+        """
+        with db.session.begin_nested():
+            obj = db.session.query(Index). \
+                filter_by(index_name_english=index_name_english,
+                          parent=pid).one_or_none()
+        return obj
+
+    @classmethod
     def get_root_index_count(cls):
         """Get root index."""
         with db.session.begin_nested():

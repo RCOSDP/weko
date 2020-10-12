@@ -1091,12 +1091,12 @@ def handle_check_and_prepare_index_tree(list_record):
             (is_root and not index.parent)
             or (not is_root and parent_id and index.parent == parent_id)
         ):
-            if index.index_name != index_name:
+            if index.index_name_english != index_name:
                 warnings.append(
                     _('Specified {} does not match with existing index.')
                     .format('POS_INDEX'))
         elif index_name:
-            index = Indexes.get_index_by_name(
+            index = Indexes.get_index_by_name_english(
                 index_name, parent_id)
             msg_not_exist = _('The specified {} does not exist in system.')
             if not index:
@@ -1113,7 +1113,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
         data = {
             'index_id': index.id if index else index_id,
-            'index_name': index.index_name if index else index_name,
+            'index_name': index.index_name_english if index else index_name,
             'parent_id': parent_id,
             'existed': index is not None
         }
@@ -1176,7 +1176,7 @@ def handle_index_tree(item):
     """
     def check_and_create_index(index):
         if not index['existed']:
-            exist_index = Indexes.get_index_by_name(
+            exist_index = Indexes.get_index_by_name_english(
                 index['index_name'], index['parent_id'])
             if exist_index:
                 index['index_id'] = exist_index.id
