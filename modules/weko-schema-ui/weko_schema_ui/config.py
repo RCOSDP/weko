@@ -101,3 +101,11 @@ WEKO_SCHEMA_VERSION_TYPE = {
     "original": "oaire:version"
 }
 """Modified and original for versiontype key"""
+
+WEKO_SCHEMA_RELATION_TYPE = [
+    'isVersionOf', 'hasVersion', 'isPartOf', 'hasPart', 'isReferencedBy',
+    'references', 'isFormatOf', 'hasFormat', 'isReplacedBy', 'replaces',
+    'isRequiredBy', 'requires', 'isSupplementedBy', 'isSupplementTo',
+    'isIdenticalTo', 'isDerivedFrom', 'isSourceOf'
+]
+"""jpcoar:relation relationType Controlled Vocabularies"""
