@@ -41,6 +41,7 @@ from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
+from invenio_oaiharvester.harvester import RESOURCE_TYPE_URI
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
@@ -62,15 +63,16 @@ from weko_workflow.utils import IdentifierHandle, check_required_data, \
     get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
     register_hdl_by_item_id, saving_doi_pidstore
 
-from .config import WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
+from .config import ACCESS_RIGHT_TYPE_URI, VERSION_TYPE_URI, \
+    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_PATTERN, \
     WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
-    WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_REPO_USER, \
-    WEKO_SYS_USER
+    WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, \
+    WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
@@ -379,6 +381,7 @@ def check_import_items(file_content: str, is_change_identifier: bool):
                     unpackage_import_file(data_path, tsv_entry))
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
+        handle_fill_system_item(list_record)
         handle_check_and_prepare_publish_status(list_record)
         handle_check_and_prepare_index_tree(list_record)
         handle_check_and_prepare_feedback_mail(list_record)
@@ -2084,3 +2087,77 @@ def get_lifetime():
             return db_lifetime.lifetime * 60
     except BaseException:
         return 0
+
+
+def get_system_data_uri(key_type, key):
+    """Get uri from key of System item."""
+    if key_type == WEKO_IMPORT_SYSTEM_ITEMS[0]:
+        return RESOURCE_TYPE_URI.get(key, None)
+    elif key_type == WEKO_IMPORT_SYSTEM_ITEMS[1]:
+        return VERSION_TYPE_URI.get(key, None)
+    elif key_type == WEKO_IMPORT_SYSTEM_ITEMS[2]:
+        return ACCESS_RIGHT_TYPE_URI.get(key, None)
+
+
+def handle_fill_system_item(list_record):
+    """Auto fill data into system item.
+
+    :argument
+        list_record -- {list} list record import.
+    :return
+
+    """
+    def recursive_sub(keys, node, uri_key, current_type):
+        if isinstance(node, list):
+            for sub_node in node:
+                recursive_sub(keys[1:], sub_node, uri_key, current_type)
+        elif isinstance(node, dict):
+            if len(keys) > 1:
+                recursive_sub(keys[1:], node.get(keys[0]),
+                              uri_key, current_type)
+            else:
+                type_data = node.get(keys[0])
+                uri = get_system_data_uri(current_type, type_data)
+                if uri is not None:
+                    node[uri_key] = uri
+
+    item_type_id = None
+    item_map = None
+    for item in list_record:
+        if item_type_id != item['item_type_id']:
+            item_type_id = item['item_type_id']
+            item_map = get_mapping(Mapping.get_record(
+                item_type_id), 'jpcoar_mapping')
+
+        # Resource Type
+        _, resourcetype_key = get_data_by_property(
+            item, item_map, "type.@value")
+        _, resourceuri_key = get_data_by_property(
+            item, item_map, "type.@attributes.rdf:resource")
+        if resourcetype_key and resourceuri_key:
+            recursive_sub(resourcetype_key.split('.'),
+                          item['metadata'],
+                          resourceuri_key.split('.')[-1],
+                          WEKO_IMPORT_SYSTEM_ITEMS[0])
+
+        # Version Type
+        _, versiontype_key = get_data_by_property(
+            item, item_map, "versiontype.@value")
+        _, versionuri_key = get_data_by_property(
+            item, item_map, "versiontype.@attributes.rdf:resource")
+        if versiontype_key and versionuri_key:
+            recursive_sub(versiontype_key.split('.'),
+                          item['metadata'],
+                          versionuri_key.split('.')[-1],
+                          WEKO_IMPORT_SYSTEM_ITEMS[1])
+
+        # Access Right
+        _, accessRights_key = get_data_by_property(
+            item, item_map, "accessRights.@value")
+        _, accessRightsuri_key = get_data_by_property(
+            item, item_map, "accessRights.@attributes.rdf:resource")
+        if accessRights_key and accessRightsuri_key:
+            recursive_sub(accessRights_key.split('.'),
+                          item['metadata'],
+                          accessRightsuri_key.split('.')[-1],
+                          WEKO_IMPORT_SYSTEM_ITEMS[2])

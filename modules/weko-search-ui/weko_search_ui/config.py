@@ -466,3 +466,21 @@ WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
     '#', '', '',
     '', 'Required', '', '', '', ''
 ]
+
+WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
+VERSION_TYPE_URI = {
+    'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
+    'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
+    'AM': 'http://purl.org/coar/version/c_ab4af688f83e57aa',
+    'P': 'http://purl.org/coar/version/c_fa2ee174bc00049f',
+    'VoR': 'http://purl.org/coar/version/c_970fb48d4fbd8a85',
+    'CVoR': 'http://purl.org/coar/version/c_e19f295774971610',
+    'EVoR': 'http://purl.org/coar/version/c_dc82b40f9837b551',
+    'NA': 'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
+}
+ACCESS_RIGHT_TYPE_URI = {
+    'embargoed access': 'http://purl.org/coar/access_right/c_f1cf',
+    'metadata only access': 'http://purl.org/coar/access_right/c_14cb',
+    'open access': 'http://purl.org/coar/access_right/c_abf2',
+    'restricted access': 'http://purl.org/coar/access_right/c_16ec'
+}
