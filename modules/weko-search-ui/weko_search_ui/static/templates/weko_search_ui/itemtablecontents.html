@@ -11,8 +11,8 @@
   <span ng-if="record.metadata.heading=='' && $index!=0">
     {{record.metadata.heading=vm.invenioSearchResults.hits.hits[$index-1].metadata.heading;""}}
   </span>
-  <div class="panel">
-    <div class="panel-heading">
+  <div class="panel border-color-transparent">
+    <div class="panel-heading bg-color-white">
       <div class="form-inline">
         <ul class="leaders">
           <li>
@@ -32,14 +32,15 @@
               </p>
             </span>
             <span ng-if="record.metadata.pageStart.length == 0 && record.metadata.pageEnd.length == 0">
-              <p>.</p>
+              <p></p>
             </span>
           </li>
         </ul>
       </div>
     </div>
+    <!--
     <div class="panel-body">
-    <pre class="hide">{{record.metadata._comment}}</pre>
+      <pre class="hide">{{record.metadata._comment}}</pre>
       <div class="pull-right">
         <ul class="list-inline">
           <li ng-show="record.metadata.publisher.length > 0">
@@ -65,5 +66,6 @@
         <pre class="pre-scrollable">{{ record | json }}</pre>
       </div>
     </div>
+    -->
   </div>
 </div>

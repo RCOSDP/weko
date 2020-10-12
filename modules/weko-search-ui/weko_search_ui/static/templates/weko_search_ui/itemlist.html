@@ -13,6 +13,7 @@
   <div class="panel-body">
     <pre class="hide">{{record.metadata._comment}}</pre>
     <span ng-repeat="comment in record.metadata._comment track by $index"> {{ comment|escapeTitle }} <br> </span>
+    <!--
     <div class="pull-right">
       <ul class="list-inline">
         <li ng-show="record.metadata.creator">
@@ -37,5 +38,6 @@
     <div ng-hide="!showSource">
       <pre class="pre-scrollable">{{ record | json }}</pre>
     </div>
+    -->
   </div>
 </div>

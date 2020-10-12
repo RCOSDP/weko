@@ -47,6 +47,7 @@ from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
+from weko_admin.models import SessionLifetime
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
@@ -65,7 +66,8 @@ from .config import WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME, \
-    WEKO_FLOW_DEFINE, WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_PATTERN, \
+    WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
+    WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_PATTERN, \
     WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
     WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_REPO_USER, \
     WEKO_SYS_USER
@@ -2067,3 +2069,15 @@ def check_sub_item_is_system(key, schemaform):
             if is_system is not None:
                 break
     return is_system
+
+
+def get_lifetime():
+    """Get db life time."""
+    try:
+        db_lifetime = SessionLifetime.get_validtime()
+        if db_lifetime is None:
+            return WEKO_ADMIN_LIFETIME_DEFAULT
+        else:
+            return db_lifetime.lifetime * 60
+    except BaseException:
+        return 0

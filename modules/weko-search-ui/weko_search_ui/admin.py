@@ -43,9 +43,9 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, check_sub_item_is_system, \
     create_flow_define, delete_records, get_change_identifier_mode_content, \
-    get_content_workflow, get_root_item_option, get_sub_item_option, \
-    get_tree_items, handle_index_tree, handle_workflow, make_stats_tsv, \
-    make_tsv_by_line
+    get_content_workflow, get_lifetime, get_root_item_option, \
+    get_sub_item_option, get_tree_items, handle_index_tree, handle_workflow, \
+    make_stats_tsv, make_tsv_by_line
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -252,7 +252,8 @@ class ItemImportView(BaseView):
                 else:
                     list_record = result.get('list_record', [])
                     data_path = result.get('data_path', '')
-        remove_temp_dir_task.delay(data_path)
+        remove_temp_dir_task.apply_async(
+            (data_path,), countdown=get_lifetime())
         return jsonify(code=1, list_record=list_record, data_path=data_path)
 
     @expose('/download_check', methods=['POST'])

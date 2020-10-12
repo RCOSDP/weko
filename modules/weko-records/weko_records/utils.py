@@ -150,7 +150,7 @@ def json_loader(data, pid):
             oai_value = PersistentIdentifier.get_by_object(
                 pid_type='oai',
                 object_type='rec',
-                object_uuid=PersistentIdentifier.get('recid',pid).object_uuid
+                object_uuid=PersistentIdentifier.get('recid', pid).object_uuid
             ).pid_value
             is_edit = pid_exists(oai_value, 'oai')
         except PIDDoesNotExistError:
