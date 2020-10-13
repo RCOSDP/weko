@@ -37,7 +37,6 @@ from invenio_admin.proxies import current_admin
 from simplekv.memory.redisstore import RedisStore
 from werkzeug.local import LocalProxy
 
-from . import config
 from .api import ShibUser
 from .utils import generate_random_str, parse_attributes
 
@@ -84,7 +83,8 @@ def shib_auto_login():
 
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
-        cache_key = current_app.config['SHIB_CACHE_PREFIX'] + shib_session_id
+        cache_key = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
         if not datastore.redis.exists(cache_key):
             return redirect(url_for_security('login'))
 
@@ -134,7 +134,8 @@ def confirm_user():
             return redirect(url_for_security('login'))
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
-        cache_key = current_app.config['SHIB_CACHE_PREFIX'] + shib_session_id
+        cache_key = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
         if not datastore.redis.exists(cache_key):
             return redirect(url_for_security('login'))
         cache_val = datastore.get(cache_key)
@@ -180,7 +181,8 @@ def shib_login():
 
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
-        cache_key = current_app.config['SHIB_CACHE_PREFIX'] + shib_session_id
+        cache_key = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
         if not datastore.redis.exists(cache_key):
             return redirect(url_for_security('login'))
@@ -199,7 +201,8 @@ def shib_login():
         if not shib_role_auth:
             current_app.logger.debug(_("Failed to get attribute."))
 
-        shib_role_config = current_app.config['SHIB_ACCOUNTS_ROLE_RELATION']
+        shib_role_config = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
 
         if shib_role_auth and shib_role_auth not in shib_role_config.keys():
             current_app.logger.error(_("Invalid attribute."))
@@ -226,7 +229,7 @@ def shib_sp_login():
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not current_app.config[
-                'SHIB_ACCOUNTS_LOGIN_ENABLED']:
+                'WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
             return url_for_security('login')
 
         shib_attr, error = parse_attributes()
@@ -235,9 +238,11 @@ def shib_sp_login():
 
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
-        ttl_sec = int(current_app.config['SHIB_ACCOUNTS_LOGIN_CACHE_TTL'])
+        ttl_sec = int(current_app.config[
+            'WEKO_ACCOUNTS_SHIB_LOGIN_CACHE_TTL'])
         datastore.put(
-            current_app.config['SHIB_CACHE_PREFIX'] + shib_session_id,
+            current_app.config[
+                'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id,
             bytes(json.dumps(shib_attr), encoding='utf-8'),
             ttl_secs=ttl_sec)
 
@@ -266,17 +271,18 @@ def shib_stub_login():
 
     :return:
     """
-    if not current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
+    if not current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
         return abort(403)
 
     session['next'] = request.args.get('next', '/')
 
     # LOGIN USING JAIROCLOUD PAGE
-    if current_app.config['SHIB_IDP_LOGIN_ENABLED']:
-        return redirect(current_app.config['SHIB_IDP_LOGIN_URL'])
+    if current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
+        return redirect(current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
     else:
         return render_template(
-            current_app.config['SECURITY_LOGIN_SHIB_USER_TEMPLATE'],
+            current_app.config[
+                'WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_USER_TEMPLATE'],
             module_name=_('WEKO-Accounts'))
 
 
