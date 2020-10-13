@@ -1820,8 +1820,8 @@ class ItemLink(object):
             property_data = item_type_mapping.get(mapping_key).get(
                 'jpcoar_mapping')
             if (
-                isinstance(property_data, dict) and
-                property_data.get('title')
+                isinstance(property_data, dict)
+                and property_data.get('title')
             ):
                 title = property_data.get('title')
                 parent_key = mapping_key
