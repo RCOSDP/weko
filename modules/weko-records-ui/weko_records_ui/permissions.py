@@ -28,7 +28,7 @@ from flask_security import current_user
 from invenio_access import Permission, action_factory
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import filter_index_list_by_role, get_user_roles
-from weko_items_ui.utils import get_user_information
+from weko_user_profiles import UserProfile
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkActivity, WorkFlow
 
@@ -92,7 +92,7 @@ def check_file_download_permission(record, fjson):
         # get emails of user ids
         result = []
         for user_id in user_id_list:
-            user = get_user_information(user_id)
+            user = UserProfile.get_by_userid(user_id)
             if user:
                 result.append(user.get('email', ''))
         return result
