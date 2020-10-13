@@ -52,12 +52,14 @@ from weko_admin.models import SessionLifetime
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
+from weko_handle.api import Handle
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
-from weko_workflow.config import IDENTIFIER_GRANT_LIST
+from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
+    IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_required_data, \
     get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
@@ -69,9 +71,9 @@ from .config import ACCESS_RIGHT_TYPE_URI, VERSION_TYPE_URI, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
-    WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_PATTERN, \
-    WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
-    WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, \
+    WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
+    WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
+    WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_IMPORT_SUFFIX_PATTERN, \
     WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
@@ -1269,12 +1271,25 @@ def handle_check_cnri(list_record):
         if item.get('is_change_identifier') and cnri_set:
             if not cnri:
                 error = _('Please specify {}.').format('CNRI')
-            elif not re.search(WEKO_IMPORT_DOI_PATTERN, cnri):
+            else:
                 if len(cnri) > 290:
                     error = _('The specified {} exceeds the maximum length.') \
                         .format('CNRI')
                 else:
-                    error = _('Specified {} is invalid.').format('CNRI')
+                    split_cnri = cnri.split('/')
+                    if len(split_cnri) > 1:
+                        prefix = '/'.join(split_cnri[0:-1])
+                        suffix = split_cnri[-1]
+                    else:
+                        prefix = cnri
+                        suffix = "{:010d}".format(int(item_id))
+
+                    if prefix != Handle().get_prefix():
+                        error = _('Specified Prefix of {} is incorrect.') \
+                            .format('CNRI')
+                    if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
+                        error = _('Specified Suffix of {} is incorrect.') \
+                            .format('CNRI')
         else:
             if item.get('status') == 'new' or item.get('is_change_identifier'):
                 if cnri:
@@ -1367,20 +1382,34 @@ def handle_check_doi(list_record):
         error = None
         item_id = str(item.get('id'))
         doi = item.get('doi')
+        doi_ra = item.get('doi_ra')
 
         if item.get('is_change_identifier') \
-                and item.get('doi_ra') and not doi:
+                and doi_ra and not doi:
             error = _('{} is required item.').format('DOI')
-        elif item.get('doi_ra'):
+        elif doi_ra:
             if item.get('is_change_identifier'):
                 if not doi:
                     error = _('Please specify {}.').format('DOI')
-                elif not re.search(WEKO_IMPORT_DOI_PATTERN, doi):
+                else:
                     if len(doi) > 290:
                         error = _('The specified {} exceeds'
                                   + ' the maximum length.').format('DOI')
                     else:
-                        error = _('Specified {} is invalid.').format('DOI')
+                        split_doi = doi.split('/')
+                        if len(split_doi) > 1:
+                            prefix = '/'.join(split_doi[0:-1])
+                            suffix = split_doi[-1]
+                        else:
+                            prefix = doi
+                            suffix = "{:010d}".format(int(item_id))
+
+                        if prefix != get_doi_prefix(doi_ra):
+                            error = _('Specified Prefix of {} is incorrect.') \
+                                .format('DOI')
+                        if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
+                            error = _('Specified Suffix of {} is incorrect.') \
+                                .format('DOI')
             else:
                 if item.get('status') == 'new':
                     if doi:
@@ -1450,6 +1479,68 @@ def register_item_handle(item, url_root):
     }
 
 
+def prepare_doi_setting():
+    """Prepare doi link with empty."""
+    identifier_setting = get_identifier_setting('Root Index')
+    if identifier_setting:
+        text_empty = '<Empty>'
+        if not identifier_setting.jalc_doi:
+            identifier_setting.jalc_doi = text_empty
+        if not identifier_setting.jalc_crossref_doi:
+            identifier_setting.jalc_crossref_doi = text_empty
+        if not identifier_setting.jalc_datacite_doi:
+            identifier_setting.jalc_datacite_doi = text_empty
+        if not identifier_setting.ndl_jalc_doi:
+            identifier_setting.ndl_jalc_doi = text_empty
+        # Semi-automatic suffix
+        if identifier_setting.suffix and IDENTIFIER_GRANT_SUFFIX_METHOD == 1:
+            identifier_setting.suffix = '/' + identifier_setting.suffix
+        else:
+            identifier_setting.suffix = ''
+        return identifier_setting
+
+
+def get_doi_prefix(doi_ra):
+    """Get DOI prefix."""
+    identifier_setting = prepare_doi_setting()
+    if identifier_setting:
+        suffix = identifier_setting.suffix or ''
+        if doi_ra == WEKO_IMPORT_DOI_TYPE[0]:
+            return identifier_setting.jalc_doi + suffix
+        elif doi_ra == WEKO_IMPORT_DOI_TYPE[1]:
+            return identifier_setting.jalc_crossref_doi + suffix
+        elif doi_ra == WEKO_IMPORT_DOI_TYPE[2]:
+            return identifier_setting.jalc_datacite_doi + suffix
+        elif doi_ra == WEKO_IMPORT_DOI_TYPE[3]:
+            return identifier_setting.ndl_jalc_doi + suffix
+
+
+def prepare_doi_link(item_id):
+    """Get DOI link."""
+    item_id = '%010d' % int(item_id)
+    identifier_setting = prepare_doi_setting()
+    suffix = identifier_setting.suffix or ''
+
+    return {
+        'identifier_grant_jalc_doi_link':
+            IDENTIFIER_GRANT_LIST[1][2] + '/'
+            + identifier_setting.jalc_doi
+            + suffix + '/' + item_id,
+        'identifier_grant_jalc_cr_doi_link':
+            IDENTIFIER_GRANT_LIST[2][2] + '/'
+            + identifier_setting.jalc_crossref_doi
+            + suffix + '/' + item_id,
+        'identifier_grant_jalc_dc_doi_link':
+            IDENTIFIER_GRANT_LIST[3][2] + '/'
+            + identifier_setting.jalc_datacite_doi
+            + suffix + '/' + item_id,
+        'identifier_grant_ndl_jalc_doi_link':
+            IDENTIFIER_GRANT_LIST[4][2] + '/'
+            + identifier_setting.ndl_jalc_doi
+            + suffix + '/' + item_id
+    }
+
+
 def register_item_doi(item):
     """Register item DOI.
 
@@ -1459,41 +1550,6 @@ def register_item_doi(item):
         response -- {object} Process status.
 
     """
-    def prepare_doi_link(item_id):
-        item_id = '%010d' % int(item_id)
-        identifier_setting = get_identifier_setting('Root Index')
-        if identifier_setting:
-            text_empty = '<Empty>'
-            if not identifier_setting.jalc_doi:
-                identifier_setting.jalc_doi = text_empty
-            if not identifier_setting.jalc_crossref_doi:
-                identifier_setting.jalc_crossref_doi = text_empty
-            if not identifier_setting.jalc_datacite_doi:
-                identifier_setting.jalc_datacite_doi = text_empty
-            if not identifier_setting.ndl_jalc_doi:
-                identifier_setting.ndl_jalc_doi = text_empty
-        suffix = '/' + identifier_setting.suffix \
-            if identifier_setting.suffix else ''
-
-        return {
-            'identifier_grant_jalc_doi_link':
-                IDENTIFIER_GRANT_LIST[1][2] + '/'
-                + identifier_setting.jalc_doi
-                + suffix + '/' + item_id,
-            'identifier_grant_jalc_cr_doi_link':
-                IDENTIFIER_GRANT_LIST[2][2] + '/'
-                + identifier_setting.jalc_crossref_doi
-                + suffix + '/' + item_id,
-            'identifier_grant_jalc_dc_doi_link':
-                IDENTIFIER_GRANT_LIST[3][2] + '/'
-                + identifier_setting.jalc_datacite_doi
-                + suffix + '/' + item_id,
-            'identifier_grant_ndl_jalc_doi_link':
-                IDENTIFIER_GRANT_LIST[4][2] + '/'
-                + identifier_setting.ndl_jalc_doi
-                + suffix + '/' + item_id
-        }
-
     item_id = str(item.get('id'))
     is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
@@ -1960,8 +2016,8 @@ def handle_check_date(list_record):
                 WEKO_IMPORT_SUBITEM_DATE_ISO) and not \
                 validattion_date_property(metadata.get(
                     WEKO_IMPORT_SUBITEM_DATE_ISO)):
-                error = _('Specified {} is invalid.').format(
-                    _('Date (ISO-8601)'))
+                error = _('Please specify the date with any format of'
+                          + ' YYYY-MM-DD, YYYY-MM, YYYY.')
 
         if error:
             record['errors'] = record['errors'] + [error] \

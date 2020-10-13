@@ -473,3 +473,12 @@ msgstr "ダウンロードに失敗しました。"
 
 msgid "Failed to get item type list."
 msgstr "アイテムタイプリストの取得に失敗しました。"
+
+msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
+msgstr "日付はYYYY-MM-DD、YYYY-MM、YYYYのいずれかで指定してください。"
+
+msgid "Specified Prefix of {} is incorrect."
+msgstr "指定された{}のPrefixが誤っています。"
+
+msgid "Specified Suffix of {} is incorrect."
+msgstr "指定された{}のSuffixが誤っています。"

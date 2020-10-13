@@ -472,3 +472,12 @@ msgstr ""
 
 msgid "Failed to get item type list."
 msgstr ""
+
+msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
+msgstr ""
+
+msgid "Specified Prefix of {} is incorrect."
+msgstr ""
+
+msgid "Specified Suffix of {} is incorrect."
+msgstr ""
