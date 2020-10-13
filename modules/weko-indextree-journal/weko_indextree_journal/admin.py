@@ -214,7 +214,7 @@ index_journal_adminview = {
     'view_class': IndexJournalSettingView,
     'kwargs': {
         'category': _('Index Tree'),
-        'name': _('Index Journal'),
+        'name': _('Journal Information'),
         'endpoint': 'indexjournal'
     }
 }

@@ -467,7 +467,7 @@ widget_design_adminview = {
     'view_class': WidgetDesign,
     'kwargs': {
         'category': _('Web Design'),
-        'name': _('Widget Design'),
+        'name': _('Page Layout'),
         'endpoint': 'widgetdesign'
     }
 }
