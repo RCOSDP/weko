@@ -31,7 +31,7 @@ from flask import abort, current_app, request, url_for
 from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
-from weko_records.api import Mapping
+from weko_records.api import ItemLink, Mapping
 from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
     XsdAtomicBuiltin, XsdAtomicRestriction, XsdAttribute, \
     XsdEnumerationFacet, XsdGroup, XsdPatternsFacet, XsdSingleFacet, \
@@ -1141,6 +1141,9 @@ class SchemaTree:
                                     'stdyDscr.method': set(),
                                     'stdyDscr.dataAccs': set(),
                                     'stdyDscr.othrStdyMat': set()}
+        else:
+            self.__build_jpcoar_relation(list_json_xml)
+
         node_tree = self.find_nodes(list_json_xml)
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -1191,6 +1194,49 @@ class SchemaTree:
                 k = get_prefix(k)
                 set_children(k, v, root, [k])
         return root
+
+    def __build_jpcoar_relation(self, list_json_xml):
+        """Build JPCOAR relation.
+
+        :param list_json_xml:
+        """
+        def __build_relation(data):
+            """Build relation.
+
+            :param data:
+            """
+            relation_tmp = {
+                "relation": {}
+            }
+            _relation = relation_tmp['relation']
+            reference_type = data.get('reference_type')
+            titles = data.get('titles')
+            if reference_type in current_app.config[
+                    'WEKO_SCHEMA_RELATION_TYPE']:
+                _relation.update({
+                    "@attributes": {"relationType": [[reference_type]]}
+                })
+            if titles:
+                language_list = []
+                title_list = []
+                for title in titles:
+                    title_list.append(title.get('title'))
+                    language_list.append(title.get('language'))
+                _relation.update({
+                    "relatedTitle": {
+                        "@attributes": {
+                            "xml:lang": [language_list]
+                        },
+                        "@value": [title_list]
+                    }
+                })
+            list_json_xml.append(relation_tmp.copy())
+
+        item_links = ItemLink.get_item_link_info_output_xml(
+            self._record.get("recid"))
+        if isinstance(item_links, list):
+            for item in item_links:
+                __build_relation(item)
 
     def __sanitize_str(self, s: str):
         """Sanitize a string.

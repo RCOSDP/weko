@@ -34,6 +34,7 @@ from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
@@ -685,15 +686,30 @@ def next_action(activity_id='0', action_id=0):
             action_id=current_app.config.get(
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
         if action_feedbackmail:
-            FeedbackMailList.update(
-                item_id=item_id,
-                feedback_maillist=action_feedbackmail.feedback_maillist
-            )
+            item_ids = [item_id]
             if not recid and pid_without_ver:
-                FeedbackMailList.update(
-                    item_id=pid_without_ver.object_uuid,
+                if ".0" in current_pid.pid_value:
+                    pv = PIDVersioning(child=pid_without_ver)
+                    last_ver = PIDVersioning(parent=pv.parent).get_children(
+                        pid_status=PIDStatus.REGISTERED
+                    ).filter(PIDRelation.relation_type == 2).order_by(
+                        PIDRelation.index.desc()).first()
+                    item_ids.append(last_ver.object_uuid)
+                else:
+                    draft_pid = PersistentIdentifier.get(
+                        'recid',
+                        '{}.0'.format(pid_without_ver.pid_value)
+                    )
+                    item_ids.append(draft_pid.object_uuid)
+                item_ids.append(pid_without_ver.object_uuid)
+
+            if action_feedbackmail.feedback_maillist:
+                FeedbackMailList.update_by_list_item_id(
+                    item_ids=item_ids,
                     feedback_maillist=action_feedbackmail.feedback_maillist
                 )
+            else:
+                FeedbackMailList.delete_by_list_item_id(item_ids)
 
         if deposit:
             deposit.update_feedback_mail()

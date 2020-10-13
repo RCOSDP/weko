@@ -190,7 +190,8 @@ class Indexes(object):
                             v = datetime.strptime(v, '%Y%m%d')
                         else:
                             v = None
-                    if "index_name" in k or "index_name_english" in k:
+                    if v is not None and (
+                            "index_name" in k or "index_name_english" in k):
                         v = sanitize(v)
                     if "have_children" in k:
                         continue
@@ -623,6 +624,23 @@ class Indexes(object):
         with db.session.begin_nested():
             obj = db.session.query(Index). \
                 filter_by(index_name=index_name, parent=pid).one_or_none()
+        return obj
+
+    @classmethod
+    def get_index_by_name_english(cls, index_name_english="", pid=0):
+        """Get index by English index name.
+
+        :argument
+            index_name_english   -- {str} index_name_english query
+            pid          -- {number} parent index id
+        :return
+            return       -- index object
+
+        """
+        with db.session.begin_nested():
+            obj = db.session.query(Index). \
+                filter_by(index_name_english=index_name_english,
+                          parent=pid).one_or_none()
         return obj
 
     @classmethod

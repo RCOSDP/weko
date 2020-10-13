@@ -40,6 +40,7 @@ from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
     Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_user_profiles.utils import get_user_profile_info
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
@@ -1197,6 +1198,19 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             identifier = activity.get_action_identifier_grant(
                 '', identifier_actionid)
 
+        if not identifier:
+            identifier_handle = IdentifierHandle(recid.object_uuid)
+            doi_value, doi_type = identifier_handle.get_idt_registration_data()
+            if doi_value and doi_type:
+                identifier = {
+                    'action_identifier_select':
+                        WEKO_IMPORT_DOI_TYPE.index(doi_type[0]) + 1,
+                    'action_identifier_jalc_doi': '',
+                    'action_identifier_jalc_cr_doi': '',
+                    'action_identifier_jalc_dc_doi': '',
+                    'action_identifier_ndl_jalc_doi': ''
+                }
+
         if identifier:
             if identifier.get('action_identifier_select') > \
                     current_app.config.get(
@@ -1260,6 +1274,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
             ver_attaching_deposit = WekoDeposit(
                 new_deposit,
                 new_deposit.model)
+            feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                pid_without_ver.object_uuid)
+            if feedback_mail_list:
+                FeedbackMailList.update(
+                    item_id=item_id,
+                    feedback_maillist=feedback_mail_list
+                )
+                ver_attaching_deposit.update_feedback_mail()
             ver_attaching_deposit.publish()
 
             weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
@@ -1296,6 +1318,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_parent_record = maintain_deposit.\
                         merge_data_to_record_without_version(current_pid)
                     maintain_deposit.publish()
+                    new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
                 else:   # Handle Upgrade workflow
                     draft_pid = PersistentIdentifier.get(
@@ -1308,12 +1331,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_draft_record = draft_deposit.\
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
+                    new_draft_record.update_feedback_mail()
                     new_draft_record.commit()
 
                 weko_record = WekoRecord.get_record_by_pid(
                     pid_without_ver.pid_value)
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
+                parent_record.update_feedback_mail()
                 db.session.commit()
                 updated_item.publish(parent_record)
                 if ".0" in current_pid.pid_value and last_ver:

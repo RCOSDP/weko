@@ -40,7 +40,7 @@ def _xpath_errors(body):
 def test_no_verb(app):
     """Test response when no verb is specified."""
     with app.test_client() as c:
-        result = c.get('/oai2d')
+        result = c.get('/oai')
         tree = etree.fromstring(result.data)
         assert 'Missing data for required field.' in _xpath_errors(
             tree)[0].text
@@ -49,7 +49,7 @@ def test_no_verb(app):
 def test_wrong_verb(app):
     """Test wrong verb."""
     with app.test_client() as c:
-        result = c.get('/oai2d?verb=Aaa')
+        result = c.get('/oai?verb=Aaa')
         tree = etree.fromstring(result.data)
 
         assert 'This is not a valid OAI-PMH verb:Aaa' in _xpath_errors(
@@ -83,7 +83,7 @@ def test_identify(app):
                                     sampleIdentifier)]
 
     with app.test_client() as c:
-        result = c.get('/oai2d?verb=Identify')
+        result = c.get('/oai?verb=Identify')
         assert 200 == result.status_code
 
         tree = etree.fromstring(result.data)
@@ -98,7 +98,7 @@ def test_identify(app):
         base_url = tree.xpath('/x:OAI-PMH/x:Identify/x:baseURL',
                               namespaces=NAMESPACES)
         assert len(base_url) == 1
-        assert base_url[0].text == 'http://app/oai2d'
+        assert base_url[0].text == 'http://app/oai'
         protocolVersion = tree.xpath(
             '/x:OAI-PMH/x:Identify/x:protocolVersion',
             namespaces=NAMESPACES)
@@ -203,7 +203,7 @@ def test_getrecord(app):
         record_updated = record.updated
         with app.test_client() as c:
             result = c.get(
-                '/oai2d?verb=GetRecord&identifier={0}&metadataPrefix=oai_dc'
+                '/oai?verb=GetRecord&identifier={0}&metadataPrefix=oai_dc'
                 .format(pid_value))
             assert 200 == result.status_code
 
@@ -234,7 +234,7 @@ def test_getrecord_fail(app):
     with app.test_request_context():
         with app.test_client() as c:
             result = c.get(
-                '/oai2d?verb=GetRecord&identifier={0}&metadataPrefix=oai_dc'
+                '/oai?verb=GetRecord&identifier={0}&metadataPrefix=oai_dc'
                 .format('not-exist-pid'))
             assert 422 == result.status_code
 
@@ -254,7 +254,7 @@ def _check_xml_error(tree, code):
 def test_identify_with_additional_args(app):
     """Test identify with additional arguments."""
     with app.test_client() as c:
-        result = c.get('/oai2d?verb=Identify&notAValidArg=True')
+        result = c.get('/oai?verb=Identify&notAValidArg=True')
         tree = etree.fromstring(result.data)
         assert 'You have passed too many arguments.' == _xpath_errors(
             tree)[0].text
@@ -262,7 +262,7 @@ def test_identify_with_additional_args(app):
 
 def test_listmetadataformats(app):
     """Test ListMetadataFormats."""
-    _listmetadataformats(app=app, query='/oai2d?verb=ListMetadataFormats')
+    _listmetadataformats(app=app, query='/oai?verb=ListMetadataFormats')
 
 
 def test_listmetadataformats_record(app):
@@ -280,13 +280,13 @@ def test_listmetadataformats_record(app):
 
     _listmetadataformats(
         app=app,
-        query='/oai2d?verb=ListMetadataFormats&identifier={0}'.format(
+        query='/oai?verb=ListMetadataFormats&identifier={0}'.format(
             pid_value))
 
 
 def test_listmetadataformats_record_fail(app):
     """Test ListMetadataFormats for a record that doesn't exist."""
-    query = '/oai2d?verb=ListMetadataFormats&identifier={0}'.format(
+    query = '/oai?verb=ListMetadataFormats&identifier={0}'.format(
             'pid-not-exixts')
     with app.test_request_context():
         with app.test_client() as c:
@@ -345,7 +345,7 @@ def test_listsets(app):
             db.session.add(a)
 
         with app.test_client() as c:
-            result = c.get('/oai2d?verb=ListSets')
+            result = c.get('/oai?verb=ListSets')
 
         tree = etree.fromstring(result.data)
 
@@ -381,9 +381,9 @@ def test_listsets(app):
 def test_fail_missing_metadataPrefix(app):
     """Test ListRecords fail missing metadataPrefix."""
     queries = [
-        '/oai2d?verb=ListRecords',
-        '/oai2d?verb=GetRecord&identifier=123',
-        '/oai2d?verb=ListIdentifiers'
+        '/oai?verb=ListRecords',
+        '/oai?verb=GetRecord&identifier=123',
+        '/oai?verb=ListIdentifiers'
     ]
     for query in queries:
         with app.test_request_context():
@@ -398,9 +398,9 @@ def test_fail_missing_metadataPrefix(app):
 def test_fail_not_exist_metadataPrefix(app):
     """Test ListRecords fail not exist metadataPrefix."""
     queries = [
-        '/oai2d?verb=ListRecords&metadataPrefix=not-exist',
-        '/oai2d?verb=GetRecord&identifier=123&metadataPrefix=not-exist',
-        '/oai2d?verb=ListIdentifiers&metadataPrefix=not-exist'
+        '/oai?verb=ListRecords&metadataPrefix=not-exist',
+        '/oai?verb=GetRecord&identifier=123&metadataPrefix=not-exist',
+        '/oai?verb=ListIdentifiers&metadataPrefix=not-exist'
     ]
     for query in queries:
         with app.test_request_context():
@@ -414,7 +414,7 @@ def test_fail_not_exist_metadataPrefix(app):
 
 def test_listrecords_fail_missing_metadataPrefix(app):
     """Test ListRecords fail missing metadataPrefix."""
-    query = '/oai2d?verb=ListRecords&'
+    query = '/oai?verb=ListRecords&'
     with app.test_request_context():
         with app.test_client() as c:
             result = c.get(query)
@@ -449,7 +449,7 @@ def test_listrecords(app):
         current_search.flush_and_refresh('_all')
 
         with app.test_client() as c:
-            result = c.get('/oai2d?verb=ListRecords&metadataPrefix=oai_dc')
+            result = c.get('/oai?verb=ListRecords&metadataPrefix=oai_dc')
 
         tree = etree.fromstring(result.data)
 
@@ -475,7 +475,7 @@ def test_listrecords(app):
 
         with app.test_client() as c:
             result = c.get(
-                '/oai2d?verb=ListRecords&resumptionToken={0}'.format(
+                '/oai?verb=ListRecords&resumptionToken={0}'.format(
                     resumption_token.text
                 )
             )
@@ -507,7 +507,7 @@ def test_listrecords(app):
             # Check date and datetime timestamps.
             for granularity in (False, True):
                 result = c.get(
-                    '/oai2d?verb=ListRecords&metadataPrefix=oai_dc'
+                    '/oai?verb=ListRecords&metadataPrefix=oai_dc'
                     '&from={0}&until={1}'.format(
                         datetime_to_datestamp(
                             record.updated - timedelta(days=1),
@@ -564,7 +564,7 @@ def test_listidentifiers(app):
         # get the list of identifiers
         with app.test_client() as c:
             result = c.get(
-                '/oai2d?verb=ListIdentifiers&metadataPrefix=oai_dc'
+                '/oai?verb=ListIdentifiers&metadataPrefix=oai_dc'
             )
 
         tree = etree.fromstring(result.data)
@@ -592,7 +592,7 @@ def test_listidentifiers(app):
             # Check date and datetime timestamps.
             for granularity in (False, True):
                 result = c.get(
-                    '/oai2d?verb=ListIdentifiers&metadataPrefix=oai_dc'
+                    '/oai?verb=ListIdentifiers&metadataPrefix=oai_dc'
                     '&from={0}&until={1}&set=test0'.format(
                         datetime_to_datestamp(
                             record.updated - timedelta(1),
@@ -634,7 +634,7 @@ def test_list_sets_long(app):
 
     with app.test_client() as c:
         # First page:
-        result = c.get('/oai2d?verb=ListSets')
+        result = c.get('/oai?verb=ListSets')
         tree = etree.fromstring(result.data)
 
         assert len(tree.xpath('/x:OAI-PMH/x:ListSets/x:set',
@@ -646,7 +646,7 @@ def test_list_sets_long(app):
         assert resumption_token.text
 
         # Second page:
-        result = c.get('/oai2d?verb=ListSets&resumptionToken={0}'.format(
+        result = c.get('/oai?verb=ListSets&resumptionToken={0}'.format(
             resumption_token.text
         ))
         tree = etree.fromstring(result.data)
@@ -660,7 +660,7 @@ def test_list_sets_long(app):
         assert resumption_token.text
 
         # Third page:
-        result = c.get('/oai2d?verb=ListSets&resumptionToken={0}'.format(
+        result = c.get('/oai?verb=ListSets&resumptionToken={0}'.format(
             resumption_token.text
         ))
         tree = etree.fromstring(result.data)

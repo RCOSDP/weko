@@ -502,7 +502,7 @@ class WekoDeposit(Deposit):
             'parent',
             'parent:{0}'.format(record_id),
             object_type='rec',
-            object_uuid=id_,
+            object_uuid=deposit.id,
             status=PIDStatus.REGISTERED
         )
 
@@ -990,6 +990,14 @@ class WekoDeposit(Deposit):
             }
             self.indexer.update_feedback_mail_list(feedback_mail)
 
+    def remove_feedback_mail(self):
+        """Remove feedback mail list."""
+        feedback_mail = {
+            "id": self.id,
+            "mail_list": []
+        }
+        self.indexer.update_feedback_mail_list(feedback_mail)
+
     def update_jpcoar_identifier(self):
         """
         Update JPCOAR meta data item.
@@ -1351,7 +1359,8 @@ class _FormatSysCreator:
         :param creator_list: Creator list.
         :param creator_list_temp: Creator temporary list.
         """
-        def _run_format_affiliation(affiliation_max, affiliation_min, languages,
+        def _run_format_affiliation(affiliation_max, affiliation_min,
+                                    languages,
                                     creator_lists,
                                     creator_list_temps):
             """Format affiliation creator.

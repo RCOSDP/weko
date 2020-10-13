@@ -864,17 +864,20 @@ def register_item_metadata(item):
                 feedback_maillist=feedback_mail_list
             )
             deposit.update_feedback_mail()
+        else:
+            FeedbackMailList.delete(deposit.id)
+            deposit.remove_feedback_mail()
 
         with current_app.test_request_context():
             first_ver = deposit.newversion(pid)
             if first_ver:
+                first_ver.publish()
                 if feedback_mail_list:
                     FeedbackMailList.update(
                         item_id=first_ver.id,
                         feedback_maillist=feedback_mail_list
                     )
                     first_ver.update_feedback_mail()
-                first_ver.publish()
 
         db.session.commit()
 
@@ -1091,12 +1094,12 @@ def handle_check_and_prepare_index_tree(list_record):
             (is_root and not index.parent)
             or (not is_root and parent_id and index.parent == parent_id)
         ):
-            if index.index_name != index_name:
+            if index.index_name_english != index_name:
                 warnings.append(
                     _('Specified {} does not match with existing index.')
                     .format('POS_INDEX'))
         elif index_name:
-            index = Indexes.get_index_by_name(
+            index = Indexes.get_index_by_name_english(
                 index_name, parent_id)
             msg_not_exist = _('The specified {} does not exist in system.')
             if not index:
@@ -1113,7 +1116,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
         data = {
             'index_id': index.id if index else index_id,
-            'index_name': index.index_name if index else index_name,
+            'index_name': index.index_name_english if index else index_name,
             'parent_id': parent_id,
             'existed': index is not None
         }
@@ -1176,7 +1179,7 @@ def handle_index_tree(item):
     """
     def check_and_create_index(index):
         if not index['existed']:
-            exist_index = Indexes.get_index_by_name(
+            exist_index = Indexes.get_index_by_name_english(
                 index['index_name'], index['parent_id'])
             if exist_index:
                 index['index_id'] = exist_index.id

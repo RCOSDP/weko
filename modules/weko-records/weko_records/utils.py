@@ -324,8 +324,13 @@ def find_items(form):
         if isinstance(node, dict):
             key = node.get('key')
             title = node.get('title', '')
+            try:
+                # Try catch for case this function is called from celery app
+                current_lang = current_i18n.language
+            except Exception:
+                current_lang = 'en'
             title_i18n = node.get('title_i18n', {})\
-                .get(current_i18n.language, title)
+                .get(current_lang, title)
             option = {
                 'required': node.get('required', False),
                 'show_list': node.get('isShowList', False),
@@ -649,7 +654,7 @@ def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
     """
     def get_name(key):
         for lst in klst:
-            keys = lst[0].split('.')
+            keys = lst[0].replace("[]", "").split('.')
             if keys[0].startswith(root_key) and key == keys[-1]:
                 return lst[2] if not is_author else '{}.{}'. format(
                     key, lst[2])
@@ -667,6 +672,7 @@ def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
                     for a in alst:
                         result.append(to_sort_dict(a, klst))
                 else:
+                    temp = []
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
@@ -674,18 +680,19 @@ def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
                             if not hide:
-                                result.append({key: val})
+                                temp.append({key: val})
                         elif isinstance(val, list) and len(
                                 val) > 0 and isinstance(val[0], str):
                             if not hide:
-                                result.append({key: val})
+                                temp.append({key: val})
                         else:
                             if check_has_attribute_value(val):
                                 if not hide:
                                     res = to_sort_dict(val, klst)
-                                    result.append({key: res})
+                                    temp.append({key: res})
                         if not alst:
                             break
+                    result.append(temp)
                 return result
             except BaseException as e:
                 current_app.logger.error('Function to_sort_dict error: ', e)

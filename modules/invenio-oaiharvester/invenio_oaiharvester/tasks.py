@@ -157,7 +157,8 @@ def process_item(record, harvesting, counter):
         mapper = DCMapper(xml)
     elif harvesting.metadata_prefix == 'jpcoar':
         mapper = JPCOARMapper(xml)
-    elif harvesting.metadata_prefix == 'ddi':
+    elif harvesting.metadata_prefix == 'oai_ddi25' or \
+            harvesting.metadata_prefix == 'ddi':
         mapper = DDIMapper(xml)
     else:
         return
