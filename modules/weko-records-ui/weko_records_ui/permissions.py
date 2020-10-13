@@ -28,6 +28,7 @@ from flask_security import current_user
 from invenio_access import Permission, action_factory
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import filter_index_list_by_role, get_user_roles
+from weko_items_ui.utils import get_user_information
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkActivity, WorkFlow
 
@@ -87,14 +88,24 @@ def check_file_download_permission(record, fjson):
             ) | check_user_group_permission(fjson.get('groups'))
         return False
 
+    def get_email_list(user_id_list):
+        # get emails of user ids
+        result = []
+        for user_id in user_id_list:
+            user = get_user_information(user_id)
+            if user:
+                result.append(user.get('email', ''))
+        return result
+
     if fjson:
         is_can = True
         acsrole = fjson.get('accessrole', '')
         # Get email of login user.
         is_has_email = hasattr(current_user, "email")
         current_user_email = current_user.email if is_has_email else ''
-        # Get email of created workflow user.
-        created_user_email = record['_deposit']['owners_ext']['email']
+        # Get email list of created workflow user.
+        user_id_list = record['_deposit']['owners']
+        created_user_email_list = get_email_list(user_id_list)
 
         # Super users
         supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
@@ -156,7 +167,7 @@ def check_file_download_permission(record, fjson):
 
             #  can not access
             elif 'open_no' in acsrole:
-                if current_user_email == created_user_email:
+                if current_user_email in created_user_email_list:
                     # Allow created workflow user view file.
                     is_can = True
                 else:
