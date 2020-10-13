@@ -26,9 +26,10 @@ from datetime import timedelta
 from flask import abort, current_app
 from flask_security import current_user
 from invenio_access import Permission, action_factory
+from invenio_db import db
+from sqlalchemy import MetaData, Table
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import filter_index_list_by_role, get_user_roles
-from weko_items_ui.utils import get_user_information
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkActivity, WorkFlow
 
@@ -88,13 +89,21 @@ def check_file_download_permission(record, fjson):
             ) | check_user_group_permission(fjson.get('groups'))
         return False
 
-    def get_email_list(user_id_list):
-        # get emails of user ids
+    def get_email_list_by_ids(user_id_list):
+        """Get user email list by user id list.
+
+        :param user_id_list: list id of users in table accounts_user.
+        :return: list email.
+        """
+        metadata = MetaData()
+        metadata.reflect(bind=db.engine)
+        user_table = Table('accounts_user', metadata)
+        rec = db.session.query(user_table)
+        data = rec.all()
         result = []
-        for user_id in user_id_list:
-            user = get_user_information(user_id)
-            if user:
-                result.append(user.get('email', ''))
+        for item in data:
+            if item[0] in user_id_list:
+                result.append(item[1])
         return result
 
     if fjson:
@@ -105,7 +114,7 @@ def check_file_download_permission(record, fjson):
         current_user_email = current_user.email if is_has_email else ''
         # Get email list of created workflow user.
         user_id_list = record['_deposit']['owners']
-        created_user_email_list = get_email_list(user_id_list)
+        created_user_email_list = get_email_list_by_ids(user_id_list)
 
         # Super users
         supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
