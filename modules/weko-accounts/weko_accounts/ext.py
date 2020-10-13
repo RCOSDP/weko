@@ -68,6 +68,11 @@ class WekoAccounts(object):
                 'WEKO_ACCOUNTS_BASE_TEMPLATE',
                 app.config['BASE_TEMPLATE'],
             )
+        # Handle redirect to the screen of corresponding pattern
+        if app.config['SHIB_ACCOUNTS_LOGIN_ENABLED'] and \
+                app.config['SHIB_INST_LOGIN_DIRECTLY_ENABLED']:
+            app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
+                app.config['SECURITY_LOGIN_SHIB_INST_TEMPLATE']
 
         for k in dir(config):
             if k.startswith('WEKO_ACCOUNTS_') or k.startswith('BABEL_'):
