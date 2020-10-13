@@ -92,8 +92,8 @@ def check_file_download_permission(record, fjson):
     def get_email_list_by_ids(user_id_list):
         """Get user email list by user id list.
 
-        :param user_id: list id of users in table accounts_user
-        :return: email
+        :param user_id_list: list id of users in table accounts_user.
+        :return: list email.
         """
         metadata = MetaData()
         metadata.reflect(bind=db.engine)
