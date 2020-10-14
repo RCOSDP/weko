@@ -2237,3 +2237,48 @@ def get_title_in_request(request_data, key, key_child):
     except Exception:
         pass
     return result
+
+
+def hide_form_items(item_type, schema_form):
+    """
+    Hide form items.
+
+    :param item_type: Item type data
+    :param schema_form: Schema form data.
+    """
+    system_properties = [
+        'subitem_systemidt_identifier',
+        'subitem_systemfile_datetime',
+        'subitem_systemfile_filename',
+        'subitem_system_id_rg_doi',
+        'subitem_system_date_type',
+        'subitem_system_date',
+        'subitem_system_identifier_type',
+        'subitem_system_identifier',
+        'subitem_system_text'
+    ]
+    for i in system_properties:
+        hidden_items = [
+            schema_form.index(form) for form in schema_form
+            if form.get('items') and form['items'][0]['key'].split('.')[1] in i]
+        if hidden_items and i in json.dumps(schema_form):
+            schema_form = update_schema_remove_hidden_item(
+                schema_form,
+                item_type.render,
+                hidden_items
+            )
+    hide_thumbnail(schema_form)
+
+
+def hide_thumbnail(schema_form):
+    def is_thumbnail(items):
+        for item in items:
+            if 'subitem_thumbnail' in item.get('key'):
+                return True
+        return False
+
+    for form_data in schema_form:
+        data_items = form_data.get('items')
+        if isinstance(data_items, list) and is_thumbnail(data_items):
+            form_data['condition'] = 1
+            break

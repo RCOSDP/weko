@@ -3143,12 +3143,12 @@ function toObject(arr) {
         }
         for (let i = 0; i < schemaForm.length; i++) {
           let listSubItem = $scope.findRequiredItemInSchemaForm(schemaForm[i])
-          if (listSubItem.length == 0) {
+          if (listSubItem.length === 0) {
             continue;
           }
           for (let j = 0; j < listSubItem.length; j++) {
-            if (!depositionForm[listSubItem[j].id].$viewValue) {
-              if (depositionForm[listSubItem[j].id].$name == "pubdate") {
+            if (depositionForm[listSubItem[j].id] && !depositionForm[listSubItem[j].id].$viewValue) {
+              if (depositionForm[listSubItem[j].id].$name === "pubdate") {
                 depositionForm[listSubItem[j].id].$setViewValue(null);
               } else {
                 depositionForm[listSubItem[j].id].$setViewValue("");
@@ -3189,8 +3189,9 @@ function toObject(arr) {
       }
 
       $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
-        if(!validateSession())
+        if(!validateSession()){
           return;
+        }
         $scope.startLoading();
         let currActivityId = $("#activity_id").text();
         $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true);
@@ -3207,13 +3208,14 @@ function toObject(arr) {
           $scope.endLoading();
           return false;
         }
+        // Mapping thumbnail data to record model.
+        this.mappingThumbnailInfor();
         let isValid = this.validateInputData(activityId, steps, isAutoSetIndexAction);
         if (!isValid) {
           $scope.endLoading();
           return false;
         } else {
           $scope.genTitleAndPubDate();
-          this.mappingThumbnailInfor();
           let next_frame = $('#next-frame').val();
           let next_frame_upgrade = $('#next-frame-upgrade').val();
           let next_frame_edit = $('#next-frame-edit').val();
