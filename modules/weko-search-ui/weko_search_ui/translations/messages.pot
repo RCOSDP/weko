@@ -479,5 +479,5 @@ msgstr ""
 msgid "Specified Prefix of {} is incorrect."
 msgstr ""
 
-msgid "Specified Suffix of {} is incorrect."
+msgid "Suffix of {} can only be used with half-width alphanumeric characters and half-width symbols "_-.; () /"."
 msgstr ""

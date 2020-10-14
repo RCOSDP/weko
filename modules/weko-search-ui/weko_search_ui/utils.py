@@ -65,7 +65,8 @@ from weko_workflow.utils import IdentifierHandle, check_required_data, \
     get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
     register_hdl_by_item_id, saving_doi_pidstore
 
-from .config import ACCESS_RIGHT_TYPE_URI, VERSION_TYPE_URI, \
+from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
+    VERSION_TYPE_URI, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
@@ -76,6 +77,10 @@ from .config import ACCESS_RIGHT_TYPE_URI, VERSION_TYPE_URI, \
     WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_IMPORT_SUFFIX_PATTERN, \
     WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
+
+err_msg_suffix = _('Suffix of {} can only be used with half-width'
+                   + ' alphanumeric characters and half-width symbols'
+                   + ' "_-.; () /".')
 
 
 def get_tree_items(index_tree_id):
@@ -1288,8 +1293,7 @@ def handle_check_cnri(list_record):
                         error = _('Specified Prefix of {} is incorrect.') \
                             .format('CNRI')
                     if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
-                        error = _('Specified Suffix of {} is incorrect.') \
-                            .format('CNRI')
+                        error = err_msg_suffix.format('CNRI')
         else:
             if item.get('status') == 'new' or item.get('is_change_identifier'):
                 if cnri:
@@ -1408,8 +1412,7 @@ def handle_check_doi(list_record):
                             error = _('Specified Prefix of {} is incorrect.') \
                                 .format('DOI')
                         if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
-                            error = _('Specified Suffix of {} is incorrect.') \
-                                .format('DOI')
+                            error = err_msg_suffix.format('DOI')
             else:
                 if item.get('status') == 'new':
                     if doi:
@@ -2010,19 +2013,28 @@ def handle_check_date(list_record):
     """
     for record in list_record:
         error = None
-        for item in record.get('metadata'):
-            metadata = record['metadata'][item]
-            if isinstance(metadata, dict) and metadata.get(
-                WEKO_IMPORT_SUBITEM_DATE_ISO) and not \
-                validattion_date_property(metadata.get(
-                    WEKO_IMPORT_SUBITEM_DATE_ISO)):
-                error = _('Please specify the date with any format of'
-                          + ' YYYY-MM-DD, YYYY-MM, YYYY.')
-
-        if error:
-            record['errors'] = record['errors'] + [error] \
-                if record.get('errors') else [error]
-            record['errors'] = list(set(record['errors']))
+        date_iso_keys = []
+        item_type = ItemTypes.get_by_id(id_=record.get(
+            'item_type_id', 0), with_deleted=True)
+        if item_type:
+            item_type = item_type.render
+            form = item_type.get('table_row_map', {}).get('form', {})
+            date_iso_keys = get_list_key_of_iso_date(form)
+        for key in date_iso_keys:
+            _keys = key.split('.')
+            attribute = record.get('metadata').get(_keys[0])
+            if attribute:
+                data_result = get_sub_item_value(attribute, _keys[-1])
+                for value in data_result:
+                    if not validattion_date_property(value):
+                        error = _('Please specify the date with any format of'
+                                  + ' YYYY-MM-DD, YYYY-MM, YYYY.')
+                        record['errors'] = record['errors'] + [error] \
+                            if record.get('errors') else [error]
+                        record['errors'] = list(set(record['errors']))
+                        break
+                if error:
+                    break
 
 
 def validattion_date_property(date_str):
@@ -2038,6 +2050,18 @@ def validattion_date_property(date_str):
         except ValueError:
             pass
     return False
+
+
+def get_list_key_of_iso_date(schemaform):
+    """Get list key of iso date."""
+    keys = []
+    for item in schemaform:
+        if not item.get('items'):
+            if item.get('templateUrl', '') == DATE_ISO_TEMPLATE_URL:
+                keys.append(item.get('key').replace('[]', ''))
+        else:
+            keys.extend(get_list_key_of_iso_date(item.get('items')))
+    return keys
 
 
 def get_current_language():

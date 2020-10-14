@@ -484,3 +484,4 @@ ACCESS_RIGHT_TYPE_URI = {
     'open access': 'http://purl.org/coar/access_right/c_abf2',
     'restricted access': 'http://purl.org/coar/access_right/c_16ec'
 }
+DATE_ISO_TEMPLATE_URL = '/static/templates/weko_deposit/datepicker_multi_format.html'
