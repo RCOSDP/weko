@@ -356,7 +356,8 @@ def parse_ranking_results(results,
                     title = 'None'
             t['title'] = title
             t['url'] = url.format(item[key]) if url and key in item else None
-            ranking_list.append(t)
+            if(title != ''):  # Do not add empty searches
+                ranking_list.append(t)
             if len(ranking_list) == display_rank:
                 break
     return ranking_list
@@ -1967,7 +1968,7 @@ def translate_validation_message(item_property, cur_lang):
     properties_attr = 'properties'
     if isExistKeyInDict(items_attr, item_property):
         for _key1, value1 in item_property.get(items_attr).items():
-            if not type(value1) is dict:
+            if not isinstance(value1, dict):
                 continue
             for _key2, value2 in value1.items():
                 set_validation_message(value2, cur_lang)
@@ -2228,9 +2229,9 @@ def get_title_in_request(request_data, key, key_child):
         title = request_data.get('metainfo')
         if title and key in title:
             title_value = title.get(key)
-            if type(title_value) == dict and key_child in title_value:
+            if isinstance(title_value, dict) and key_child in title_value:
                 result = title_value.get(key_child)
-            elif type(title_value) == list and len(title_value) > 0:
+            elif isinstance(title_value, list) and len(title_value) > 0:
                 title_value = title_value[0]
                 if key_child in title_value:
                     result = title_value.get(key_child)

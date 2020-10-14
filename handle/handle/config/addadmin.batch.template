@@ -1,0 +1,3 @@
+AUTHENTICATE PUBKEY:$HOME_PREFIX`
+/var/handle/svr/adminpriv.bin
+

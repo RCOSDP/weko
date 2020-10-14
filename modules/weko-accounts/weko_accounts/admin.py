@@ -27,8 +27,6 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
 
-from . import config
-
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
 
@@ -40,7 +38,7 @@ class ShibSettingView(BaseView):
         """Index."""
         try:
             shib_flg = '0'
-            if current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
+            if current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
                 shib_flg = '1'
 
             if request.method == 'POST':
@@ -49,15 +47,16 @@ class ShibSettingView(BaseView):
                 if form == 'shib_form':
                     shib_flg = request.form.get('shibbolethRadios', '0')
                     if shib_flg == '1':
-                        _app.config['SHIB_ACCOUNTS_LOGIN_ENABLED'] = True
+                        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = True
                     else:
-                        _app.config['SHIB_ACCOUNTS_LOGIN_ENABLED'] = False
+                        _app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] = False
                     flash(
                         _('Shibboleth flag was updated.'),
                         category='success')
 
-            return self.render(config.WEKO_ACCOUNTS_SET_SHIB_TEMPLATE,
-                               shib_flg=shib_flg)
+            return self.render(
+                current_app.config['WEKO_ACCOUNTS_SET_SHIB_TEMPLATE'],
+                shib_flg=shib_flg)
         except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
