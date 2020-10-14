@@ -78,9 +78,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
-err_msg_suffix = _('Suffix of {} can only be used with half-width'
-                   + ' alphanumeric characters and half-width symbols'
-                   + ' "_-.; () /".')
+err_msg_suffix = 'Suffix of {} can only be used with half-width' \
+    + ' alphanumeric characters and half-width symbols "_-.; () /".'
 
 
 def get_tree_items(index_tree_id):
@@ -1288,12 +1287,13 @@ def handle_check_cnri(list_record):
                     else:
                         prefix = cnri
                         suffix = "{:010d}".format(int(item_id))
+                        item['cnri'] = prefix + '/' + suffix
 
                     if prefix != Handle().get_prefix():
                         error = _('Specified Prefix of {} is incorrect.') \
                             .format('CNRI')
                     if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
-                        error = err_msg_suffix.format('CNRI')
+                        error = _(err_msg_suffix).format('CNRI')
         else:
             if item.get('status') == 'new' or item.get('is_change_identifier'):
                 if cnri:
@@ -1407,12 +1407,13 @@ def handle_check_doi(list_record):
                         else:
                             prefix = doi
                             suffix = "{:010d}".format(int(item_id))
+                            item['doi'] = prefix + '/' + suffix
 
                         if prefix != get_doi_prefix(doi_ra):
                             error = _('Specified Prefix of {} is incorrect.') \
                                 .format('DOI')
                         if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
-                            error = err_msg_suffix.format('DOI')
+                            error = _(err_msg_suffix).format('DOI')
             else:
                 if item.get('status') == 'new':
                     if doi:
