@@ -356,7 +356,8 @@ def parse_ranking_results(results,
                     title = 'None'
             t['title'] = title
             t['url'] = url.format(item[key]) if url and key in item else None
-            ranking_list.append(t)
+            if(title != ''): #Do not add empty searches
+                ranking_list.append(t)
             if len(ranking_list) == display_rank:
                 break
     return ranking_list
