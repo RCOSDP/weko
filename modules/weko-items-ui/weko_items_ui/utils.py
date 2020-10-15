@@ -2268,6 +2268,7 @@ def hide_form_items(item_type, schema_form):
                 hidden_items
             )
     hide_thumbnail(schema_form)
+    return schema_form
 
 
 def hide_thumbnail(schema_form):

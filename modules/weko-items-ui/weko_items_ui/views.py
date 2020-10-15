@@ -312,7 +312,7 @@ def get_schema_form(item_type_id=0, activity_id=''):
         update_sub_items_by_user_role(item_type_id, schema_form)
 
         # Hide form items
-        hide_form_items(result, schema_form)
+        schema_form = hide_form_items(result, schema_form)
 
         for elem in schema_form:
             set_multi_language_name(elem, cur_lang)
