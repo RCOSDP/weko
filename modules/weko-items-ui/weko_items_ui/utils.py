@@ -2271,6 +2271,11 @@ def hide_form_items(item_type, schema_form):
 
 
 def hide_thumbnail(schema_form):
+    """Hide thumbnail item.
+
+    :param schema_form:
+    :return:
+    """
     def is_thumbnail(items):
         for item in items:
             if 'subitem_thumbnail' in item.get('key'):
