@@ -867,6 +867,8 @@ class WekoDeposit(Deposit):
             self.jrc = jrc
             self.is_edit = is_edit
             self._convert_description_to_object()
+        except RuntimeError:
+            raise
         except BaseException:
             abort(500, 'MAPPING_ERROR')
 
