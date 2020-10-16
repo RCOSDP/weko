@@ -1090,6 +1090,12 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                             get_activity_id_of_record_without_version(
                                 pid_without_ver)
                         if record_without_ver_activity_id is not None:
+                            without_ver_item_id = activity.get_activity_detail(
+                                record_without_ver_activity_id).item_id
+                            without_ver_identifier_handle = IdentifierHandle(
+                                item_id)
+                            without_ver_identifier_handle \
+                                .remove_idt_registration_metadata()
                             activity.create_or_update_action_identifier(
                                 record_without_ver_activity_id,
                                 identifier_actionid,
