@@ -653,7 +653,7 @@ def item_path_search_factory(self, search, index_id=None):
                 "aggs": {
                     "path": {
                         "terms": {
-                            "field": "path.tree",
+                            "field": "path",
                             "size": "@count"
                         },
                         "aggs": {
