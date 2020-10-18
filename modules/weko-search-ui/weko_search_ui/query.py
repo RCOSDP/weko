@@ -530,8 +530,8 @@ def item_path_search_factory(self, search, index_id=None):
             "aggs": {
                 "path": {
                     "terms": {
-                        "field": "path.tree",
-                        "include": "@index|@index/[^/]+",
+                        "field": "path",
+                        "include": "@idxchild",
                         "size": "@count"
                     },
                     "aggs": {
@@ -596,12 +596,21 @@ def item_path_search_factory(self, search, index_id=None):
             # create search query
             if q:
                 try:
+                    child_idx = Indexes.get_child_list_by_pip(q)
+                    child_idx_str = ""
                     fp = Indexes.get_self_path(q)
-
+                    for i in range(len(child_idx)):
+                        if i != 0:
+                            child_idx_str += "|" + str(child_idx[i][2])
+                        else:
+                            child_idx_str += str(child_idx[i][2])
                     query_q = json.dumps(query_q).replace("@index", fp.path)
                     query_q = json.loads(query_q)
-                except BaseException:
-                    pass
+                    query_q = json.dumps(query_q).replace("@idxchild", child_idx_str)
+                    query_q = json.loads(query_q)
+                except BaseException as ex:
+                    import traceback
+                    traceback.print_exc()
             count = str(Indexes.get_index_count())
 
             query_q = json.dumps(query_q).replace("@count", count)
