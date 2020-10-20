@@ -726,3 +726,8 @@ WEKO_ADMIN_SEARCH_OPTIONS = {
     }
 }
 """Admin Search Options """
+
+WEKO_INDEX_TREE_STYLE_OPTIONS = {
+    'id': 'weko',
+    'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+}

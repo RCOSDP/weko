@@ -268,12 +268,41 @@
                             <div class="col-sm-2 col-md-2 col-md-2">
                               <label>{{_('Index Tree')}}:</label>
                             </div>
-                            <div class="col-sm-10 col-md-10 col-md-10" style="display: flex;">
+                            <div class="col-sm-10 col-md-10 col-md-10">
                               <input type="checkbox" id="display_control_index_tree" value="dataJson.display_control.display_index_tree.id" ng-model="dataJson.display_control.display_index_tree.status" class="ng-pristine ng-valid ng-touched">
-                              <label for="display_control_index_tree" style="
-                                  font-weight: normal;
-                                  margin: 0 5px;
-                              ">{{_('Display')}}</label>
+                              <label for="display_control_index_tree" style="font-weight: normal; margin: 0 5px;">{{_('Display')}}</label>
+                              <div style="display: flex; flex-direction: column; flex: 1">
+                                <form class="form-horizontal" method="POST" name="index_form" action={{url_for('indextree.index')}}>
+                                  <div class="form-group" style="margin-top:
+                                      15px">
+                                    <label for="width" class="control-label
+                                        col-sm-1">
+                                      {{_('Width (Grid)')}}
+                                    </label>
+                                    <div class="controls col-sm-2"i>
+                                      <select class="form-control" id="width" name="width">
+                                        {%- for width in widths if width %}
+                                          {{ width }}
+                                          {%- if width == width_selected %}
+                                            <option value={{ width }} selected="selected">{{ width }}</option>
+                                          {%- else %}
+                                            <option value="{{ width }}">{{ width }}</option>
+                                          {%- endif %}
+                                        {%- endfor %}
+                                      </select>
+                                    </div>
+                                  </div>
+                                  <div class="form-group" style="margin-top:
+                                      15px;">
+                                    <label for="height" class="control-label col-sm-1">
+                                      {{_('Height (Pixel)')}}
+                                    </label>
+                                    <div class="controls col-sm-2">
+                                      <input type="text" class="form-control" id="height" name="height" value={{ height }}>
+                                    </div>
+                                  </div>  
+                                </form>
+                              </div>
                             </div>
                           </div>
                       </form>

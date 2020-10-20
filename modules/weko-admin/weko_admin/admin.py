@@ -582,6 +582,7 @@ class SearchSettingsView(BaseView):
         try:
             return self.render(
                 current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
+                widths=current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
                 setting_data=result,
             )
         except BaseException as e:
