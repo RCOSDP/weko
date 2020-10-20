@@ -1948,9 +1948,13 @@ function toObject(arr) {
               if (model[filemeta_key][i]) {
                 let modelFile = model[filemeta_key][i];
                 files.forEach(function (file) {
-                  if (modelFile.filename === file.key
-                    && !$rootScope.isModelFileVersion(model[filemeta_key], file.version_id)) {
-                    modelFile.version_id = file.version_id;
+                  if (modelFile.filename === file.key) {
+                    if(!$rootScope.isModelFileVersion(model[filemeta_key], file.version_id)){
+                      modelFile.version_id = file.version_id;
+                    }
+                    if(!modelFile.fileDate){
+                      modelFile.fileDate = [{fileDateType: '', fileDateValue: ''}];
+                    }
                   }
                 })
               }
