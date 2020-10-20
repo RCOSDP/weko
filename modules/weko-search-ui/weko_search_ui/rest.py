@@ -258,6 +258,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
         for p in paths:
             m = 0
+            current_idx = {}
             for k in range(len(agp)):
                 if p.path == agp[k].get("key"):
                     agp[k]["name"] = p.name if p.name and lang == "ja" \
@@ -271,7 +272,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     agp[k]["comment"] = comment,
                     result = agp.pop(k)
                     result["comment"] = comment
-                    nlst.append(result)
+                    current_idx = result
                     m = 1
                     break
             if m == 0:
@@ -289,7 +290,11 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     'rss_status': rss_status,
                     'comment': p.comment,
                 }
-                nlst.append(nd)
+                current_idx = nd
+            private_count, public_count = count_items((str(p.path)), temp, all_indexes)
+            current_idx["date_range"]["pub_cnt"] = public_count
+            current_idx["date_range"]["un_pub_cnt"] = private_count
+            nlst.append(current_idx)
         agp.clear()
         # process index tree image info
         if len(nlst):

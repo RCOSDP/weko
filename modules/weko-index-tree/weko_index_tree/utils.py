@@ -529,7 +529,7 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
         """Get all child indexes of target index."""
         lst_result = []
         for index_aggr in indexes_aggr:
-            if target_check_key in index_aggr['key']:
+            if index_aggr['key'].startswith(target_check_key + '/'):
                 lst_result.append(index_aggr)
         return lst_result
 
