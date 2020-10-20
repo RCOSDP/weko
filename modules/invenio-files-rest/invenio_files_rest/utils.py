@@ -12,6 +12,8 @@ import mimetypes
 
 import six
 from flask import current_app
+from invenio_db import db
+from sqlalchemy import MetaData, Table
 from werkzeug.utils import import_string
 
 ENCODING_MIMETYPES = {
@@ -56,3 +58,30 @@ def guess_mimetype(filename):
     if encoding:
         m = ENCODING_MIMETYPES.get(encoding, None)
     return m or 'application/octet-stream'
+
+
+def get_record_bucket_by_bucket_id(bucket_id):
+    """Get record bucket from table records_buckets.
+
+    :params bucket_id: id of bucket.
+    :returns: a record bucket.
+    """
+    metadata = MetaData()
+    metadata.reflect(bind=db.engine)
+    table = Table('records_buckets', metadata)
+    result = db.session.query(table).filter(
+        table.c.bucket_id == bucket_id).one()
+    return result
+
+
+def get_record_metadata_by_record_id(record_id):
+    """Get record metadata from table records_metadata.
+
+    :params record_id: id of record metadata.
+    :returns: a record metadata.
+    """
+    metadata = MetaData()
+    metadata.reflect(bind=db.engine)
+    table = Table('records_metadata', metadata)
+    result = db.session.query(table).filter(table.c.id == record_id).one()
+    return result

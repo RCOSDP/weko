@@ -32,6 +32,8 @@ from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
 from .signals import file_downloaded, file_previewed
 from .tasks import merge_multipartobject, remove_file_data
+from .utils import get_record_bucket_by_bucket_id, \
+    get_record_metadata_by_record_id
 
 blueprint = Blueprint(
     'invenio_files_rest',
@@ -542,12 +544,15 @@ class ObjectResource(ContentNegotiatedMethodView):
     # ObjectVersion helpers
     #
     @staticmethod
-    def check_object_permission(obj):
+    def check_object_permission(obj, allowed_guest_user):
         """Retrieve object and abort if it doesn't exists."""
-        check_permission(current_permission_factory(
-            obj,
-            'object-read'
-        ))
+        # Check for guest user (not login)
+        # If not login => has permission
+        if not allowed_guest_user:
+            check_permission(current_permission_factory(
+                obj,
+                'object-read'
+            ))
         if not obj.is_head:
             check_permission(
                 current_permission_factory(obj, 'object-read-version'),
@@ -566,12 +571,30 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param version_id: The version ID.
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
+        """Get record metadata (table records_metadata) from bucket_id."""
+        record_bucket = get_record_bucket_by_bucket_id(bucket)
+        record_metadata = get_record_metadata_by_record_id(
+            record_bucket.record_id)
+        """Check and get access role of file in this record metadata."""
+        access_role = None
+        for k, v in record_metadata.json.items():
+            if isinstance(v, dict) and v.get('attribute_type') == 'file':
+                for item in v.get('attribute_value_mlt', []):
+                    is_this_version = item.get('version_id') == version_id
+                    is_preview = item.get('displaytype') == 'preview'
+                    if is_this_version and is_preview:
+                        access_role = item.get('accessrole', None)
+                        break
+        """Set a flag for guest user who can preview file."""
+        allowed_guest_user = False
+        if access_role == 'open_access' and not current_user.is_authenticated:
+            allowed_guest_user = True
+        """Get current bucket info."""
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
         if not obj:
             abort(404, 'Object does not exists.')
-
-        cls.check_object_permission(obj)
-
+        """Check permission. if it is not permission, return None."""
+        cls.check_object_permission(obj, allowed_guest_user)
         return obj
 
     def create_object(self, bucket, key, is_thumbnail):
