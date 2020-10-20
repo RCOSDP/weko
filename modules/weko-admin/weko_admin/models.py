@@ -98,7 +98,7 @@ class SessionLifetime(db.Model):
         :returns: A :class:`~weko_admin.models.SessionLifetime` instance
             or ``None``.
         """
-        return cls.query.filter_by(is_delete=False).one_or_none()
+        return cls.query.filter_by(is_delete=False).first()
 
     @property
     def is_anonymous(self):

@@ -34,6 +34,11 @@ if [ "${INVENIO_WEB_VENV}" = "" ]; then
     echo "[ERROR] Example: export INVENIO_WEB_VENV=invenio"
     exit 1
 fi
+if [ "${INVENIO_WEB_HOST_NAME}" = "" ]; then
+    echo "[ERROR] Please set environment variable INVENIO_WEB_HOST_NAME before runnning this script."
+    echo "[ERROR] Example: export INVENIO_WEB_HOST_NAME=invenio"
+    exit 1
+fi
 if [ "${INVENIO_USER_EMAIL}" = "" ]; then
     echo "[ERROR] Please set environment variable INVENIO_USER_EMAIL before runnning this script."
     echo "[ERROR] Example: export INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp"
@@ -77,6 +82,21 @@ fi
 if [ "${INVENIO_RABBITMQ_HOST}" = "" ]; then
     echo "[ERROR] Please set environment variable INVENIO_RABBITMQ_HOST before runnning this script."
     echo "[ERROR] Example: export INVENIO_RABBITMQ_HOST=192.168.50.14"
+    exit 1
+fi
+if [ "${INVENIO_RABBITMQ_USER}" = "" ]; then
+    echo "[ERROR] Please set environment variable INVENIO_RABBITMQ_USER before runnning this script."
+    echo "[ERROR] Example: export INVENIO_RABBITMQ_USER=guest"
+    exit 1
+fi
+if [ "${INVENIO_RABBITMQ_PASS}" = "" ]; then
+    echo "[ERROR] Please set environment variable INVENIO_RABBITMQ_PASS before runnning this script."
+    echo "[ERROR] Example: export INVENIO_RABBITMQ_PASS=guest"
+    exit 1
+fi
+if [ "${INVENIO_RABBITMQ_VHOST}" = "" ]; then
+    echo "[ERROR] Please set environment variable INVENIO_RABBITMQ_VHOST before runnning this script."
+    echo "[ERROR] Example: export INVENIO_RABBITMQ_VHOST=/"
     exit 1
 fi
 if [ "${INVENIO_WORKER_HOST}" = "" ]; then
