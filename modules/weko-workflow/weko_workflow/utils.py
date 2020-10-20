@@ -1288,6 +1288,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
             if weko_record:
                 weko_record.update_item_link(current_pid.pid_value)
             updated_item.publish(deposit)
+            updated_item.publish(ver_attaching_deposit)
         else:
             # update to record without version ID when editing
             if pid_without_ver:
@@ -1320,6 +1321,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     maintain_deposit.publish()
                     new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
+                    updated_item.publish(new_parent_record)
                 else:   # Handle Upgrade workflow
                     draft_pid = PersistentIdentifier.get(
                         'recid',
@@ -1333,6 +1335,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     draft_deposit.publish()
                     new_draft_record.update_feedback_mail()
                     new_draft_record.commit()
+                    updated_item.publish(new_draft_record)
 
                 weko_record = WekoRecord.get_record_by_pid(
                     pid_without_ver.pid_value)

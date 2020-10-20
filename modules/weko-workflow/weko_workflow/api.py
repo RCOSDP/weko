@@ -1787,7 +1787,6 @@ class UpdateItem(object):
         :param record: Record object.
         :return: The rendered template.
         """
-        from invenio_db import db
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:
@@ -1808,7 +1807,6 @@ class UpdateItem(object):
         :param record: Record object.
         :param status: Publish status (0: publish, 1: private).
         """
-        from invenio_db import db
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:
