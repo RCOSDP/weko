@@ -87,5 +87,5 @@ WEKO_ACCOUNTS_GENERAL_ROLE = 'Contributor'
 WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED = True
 """Shibboleth login pattern."""
 
-WEKO_ACCOUNTS_SHIB_DP_INST_LOGIN_DIRECTLY_ENABLED = True
+WEKO_ACCOUNTS_SHIB_DP_LOGIN_DIRECTLY_ENABLED = True
 """Enable Shibboleth login system using DP selection only."""
