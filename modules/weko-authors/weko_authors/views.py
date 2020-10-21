@@ -327,6 +327,12 @@ def gatherById():
     gatherFromPkId = data["idFromPkId"]
     gatherTo = data["idTo"]
 
+    # Remove the target from the gatherFrom list
+    if gatherTo in gatherFrom:
+        target_index = gatherFrom.index(gatherTo)
+        gatherFrom.pop(target_index)
+        gatherFromPkId.pop(target_index)
+
     # update DB of Author
     try:
         with db.session.begin_nested():
