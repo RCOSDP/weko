@@ -249,12 +249,12 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
         nlst = []
-        temp = []
+        items_count = []
         all_indexes = Indexes.get_all_indexes()
         recorrect_private_items_count(agp)
         for i in agp:
-            temp.append({"key": i["key"], "doc_count": i["doc_count"],
-                         "no_available": i["no_available"]["doc_count"]})
+            items_count.append({"key": i["key"], "doc_count": i["doc_count"],
+                                "no_available": i["no_available"]["doc_count"]})
 
         for p in paths:
             m = 0
@@ -263,11 +263,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 if p.path == agp[k].get("key"):
                     agp[k]["name"] = p.name if p.name and lang == "ja" \
                         else p.name_en
-                    private_count, public_count = count_items((str(p.path)), temp, all_indexes)
-                    pub = dict()
-                    pub["pub_cnt"] = public_count
-                    pub["un_pub_cnt"] = private_count
-                    agp[k]["date_range"] = pub
+                    agp[k]["date_range"] = dict()
                     comment = p.comment
                     agp[k]["comment"] = comment,
                     result = agp.pop(k)
@@ -291,7 +287,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     'comment': p.comment,
                 }
                 current_idx = nd
-            private_count, public_count = count_items((str(p.path)), temp, all_indexes)
+            private_count, public_count = count_items((str(p.path)), items_count, all_indexes)
             current_idx["date_range"]["pub_cnt"] = public_count
             current_idx["date_range"]["un_pub_cnt"] = private_count
             nlst.append(current_idx)
