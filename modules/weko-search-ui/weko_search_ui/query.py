@@ -21,6 +21,7 @@
 """Query factories for REST API."""
 
 import json
+import sys
 from datetime import datetime
 from functools import partial
 
@@ -606,11 +607,12 @@ def item_path_search_factory(self, search, index_id=None):
                             child_idx_str += str(child_idx[i][2])
                     query_q = json.dumps(query_q).replace("@index", fp.path)
                     query_q = json.loads(query_q)
-                    query_q = json.dumps(query_q).replace("@idxchild", child_idx_str)
+                    query_q = json.dumps(query_q).replace("@idxchild",
+                                                          child_idx_str)
                     query_q = json.loads(query_q)
                 except BaseException as ex:
                     import traceback
-                    traceback.print_exc()
+                    traceback.print_exc(file=sys.stdout)
             count = str(Indexes.get_index_count())
 
             query_q = json.dumps(query_q).replace("@count", count)

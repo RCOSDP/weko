@@ -518,7 +518,8 @@ def sanitize(s):
 
 def count_items(target_check_key, indexes_aggr, all_indexes):
     """
-    Count public and private items of a target index based on index state
+    Count public and private items of a target index based on index state.
+
     :param target_check_key: id of target index
     :param indexes_aggr: indexes aggregation returned from ES
     :param all_indexes:
@@ -529,12 +530,14 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
         """Get all child indexes of target index."""
         lst_result = []
         for index_aggr in indexes_aggr:
-            if index_aggr['key'].startswith(target_check_key + '/') or index_aggr['key'] == target_check_key:
+            if index_aggr['key'].startswith(target_check_key + '/') \
+                    or index_aggr['key'] == target_check_key:
                 lst_result.append(index_aggr)
         return lst_result
 
-    def check_private_index_count(target_index):
-        """Re-set private count of index based on index and parent index state
+    def set_private_index_count(target_index):
+        """Set private count of index based on index and parent index state.
+
         :param target_index: in of target index
         :return:
         """
@@ -562,7 +565,7 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
     lst_indexes_state = get_indexes_state()
     # Modify counts of index based on index and parent indexes state
     for agg in lst_child_agg:
-        check_private_index_count(agg)
+        set_private_index_count(agg)
     for agg in lst_child_agg:
         pri_items_count += agg['no_available']
         pub_items_count += agg['doc_count'] - agg['no_available']
@@ -570,7 +573,8 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
 
 
 def recorrect_private_items_count(agp):
-    """Re-correct private item count in case of unpublished items
+    """Re-correct private item count in case of unpublished items.
+tre
     :param agp: aggregation returned from ES
     :return:
     """
