@@ -83,7 +83,7 @@
                             <img src="{{img}}" alt={{ file.filename }}/>
                             {%- if is_billing_file -%}
                               {%- if not session['user_id'] and not access_permission and file.accessrole == 'open_login' -%}
-                                {%- set file_url = 'https://localhost/secure/login.php' -%}
+                                {%- set file_url = {{config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']}} -%}
                                 {%- set billing_file_class = "" -%}
                               {%- elif billing_file_permission -%}
                                 {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key) %}

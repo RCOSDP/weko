@@ -20,7 +20,7 @@
 
 {% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url) %}
   {%- if not session['user_id'] -%}
-    {%- set href_url = 'https://localhost/secure/login.php' -%}
+    {%- set href_url = {{config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']}} -%}
     {%- if is_file_name_url -%}
       <a class="forcewrap"
          href={{ href_url }}>{{ file.filename }}
