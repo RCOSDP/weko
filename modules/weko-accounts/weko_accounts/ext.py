@@ -75,7 +75,7 @@ class WekoAccounts(object):
 
         # Handle redirect to the screen of corresponding pattern
         app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
-                app.config['WEKO_ACCOUNTS_SECURITY_LOGIN_USER_TEMPLATE']
+            app.config['WEKO_ACCOUNTS_SECURITY_LOGIN_USER_TEMPLATE']
 
         # Shibboleth
         if app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
