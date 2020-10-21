@@ -74,13 +74,22 @@ class WekoAccounts(object):
                 app.config.setdefault(k, getattr(config, k))
 
         # Handle redirect to the screen of corresponding pattern
-        if app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] and \
-                app.config['WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']:
-            app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
-                app.config['WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_INST_TEMPLATE']
-        else:
-            app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
+        app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
                 app.config['WEKO_ACCOUNTS_SECURITY_LOGIN_USER_TEMPLATE']
+
+        # Shibboleth
+        if app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
+            # Shibboleth IdP
+            if app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
+                if app.config[
+                    'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
+                    app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
+                        app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
+            # Shibboleth DS
+            else:
+                app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
+                    app.config[
+                        'WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_INST_TEMPLATE']
 
     def _enable_logger_activity(self, app):
         """
