@@ -41,6 +41,7 @@ from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
+from invenio_oaiharvester.harvester import RESOURCE_TYPE_URI
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
@@ -51,27 +52,34 @@ from weko_admin.models import SessionLifetime
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
+from weko_handle.api import Handle
 from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
-from weko_workflow.config import IDENTIFIER_GRANT_LIST
+from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
+    IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_required_data, \
     get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
     register_hdl_by_item_id, saving_doi_pidstore
 
-from .config import WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
+from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
+    VERSION_TYPE_URI, \
+    WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
-    WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_PATTERN, \
-    WEKO_IMPORT_DOI_TYPE, WEKO_IMPORT_EMAIL_PATTERN, \
-    WEKO_IMPORT_PUBLISH_STATUS, WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_REPO_USER, \
-    WEKO_SYS_USER
+    WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
+    WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
+    WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_IMPORT_SUFFIX_PATTERN, \
+    WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
+
+err_msg_suffix = 'Suffix of {} can only be used with half-width' \
+    + ' alphanumeric characters and half-width symbols "_-.; () /".'
 
 
 def get_tree_items(index_tree_id):
@@ -379,6 +387,7 @@ def check_import_items(file_content: str, is_change_identifier: bool):
                     unpackage_import_file(data_path, tsv_entry))
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
+        handle_fill_system_item(list_record)
         handle_check_and_prepare_publish_status(list_record)
         handle_check_and_prepare_index_tree(list_record)
         handle_check_and_prepare_feedback_mail(list_record)
@@ -1266,12 +1275,25 @@ def handle_check_cnri(list_record):
         if item.get('is_change_identifier') and cnri_set:
             if not cnri:
                 error = _('Please specify {}.').format('CNRI')
-            elif not re.search(WEKO_IMPORT_DOI_PATTERN, cnri):
+            else:
                 if len(cnri) > 290:
                     error = _('The specified {} exceeds the maximum length.') \
                         .format('CNRI')
                 else:
-                    error = _('Specified {} is invalid.').format('CNRI')
+                    split_cnri = cnri.split('/')
+                    if len(split_cnri) > 1:
+                        prefix = '/'.join(split_cnri[0:-1])
+                        suffix = split_cnri[-1]
+                    else:
+                        prefix = cnri
+                        suffix = "{:010d}".format(int(item_id))
+                        item['cnri'] = prefix + '/' + suffix
+
+                    if prefix != Handle().get_prefix():
+                        error = _('Specified Prefix of {} is incorrect.') \
+                            .format('CNRI')
+                    if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
+                        error = _(err_msg_suffix).format('CNRI')
         else:
             if item.get('status') == 'new' or item.get('is_change_identifier'):
                 if cnri:
@@ -1364,20 +1386,34 @@ def handle_check_doi(list_record):
         error = None
         item_id = str(item.get('id'))
         doi = item.get('doi')
+        doi_ra = item.get('doi_ra')
 
         if item.get('is_change_identifier') \
-                and item.get('doi_ra') and not doi:
+                and doi_ra and not doi:
             error = _('{} is required item.').format('DOI')
-        elif item.get('doi_ra'):
+        elif doi_ra:
             if item.get('is_change_identifier'):
                 if not doi:
                     error = _('Please specify {}.').format('DOI')
-                elif not re.search(WEKO_IMPORT_DOI_PATTERN, doi):
+                else:
                     if len(doi) > 290:
                         error = _('The specified {} exceeds'
                                   + ' the maximum length.').format('DOI')
                     else:
-                        error = _('Specified {} is invalid.').format('DOI')
+                        split_doi = doi.split('/')
+                        if len(split_doi) > 1:
+                            prefix = '/'.join(split_doi[0:-1])
+                            suffix = split_doi[-1]
+                        else:
+                            prefix = doi
+                            suffix = "{:010d}".format(int(item_id))
+                            item['doi'] = prefix + '/' + suffix
+
+                        if prefix != get_doi_prefix(doi_ra):
+                            error = _('Specified Prefix of {} is incorrect.') \
+                                .format('DOI')
+                        if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
+                            error = _(err_msg_suffix).format('DOI')
             else:
                 if item.get('status') == 'new':
                     if doi:
@@ -1447,6 +1483,68 @@ def register_item_handle(item, url_root):
     }
 
 
+def prepare_doi_setting():
+    """Prepare doi link with empty."""
+    identifier_setting = get_identifier_setting('Root Index')
+    if identifier_setting:
+        text_empty = '<Empty>'
+        if not identifier_setting.jalc_doi:
+            identifier_setting.jalc_doi = text_empty
+        if not identifier_setting.jalc_crossref_doi:
+            identifier_setting.jalc_crossref_doi = text_empty
+        if not identifier_setting.jalc_datacite_doi:
+            identifier_setting.jalc_datacite_doi = text_empty
+        if not identifier_setting.ndl_jalc_doi:
+            identifier_setting.ndl_jalc_doi = text_empty
+        # Semi-automatic suffix
+        if identifier_setting.suffix and IDENTIFIER_GRANT_SUFFIX_METHOD == 1:
+            identifier_setting.suffix = '/' + identifier_setting.suffix
+        else:
+            identifier_setting.suffix = ''
+        return identifier_setting
+
+
+def get_doi_prefix(doi_ra):
+    """Get DOI prefix."""
+    identifier_setting = prepare_doi_setting()
+    if identifier_setting:
+        suffix = identifier_setting.suffix or ''
+        if doi_ra == WEKO_IMPORT_DOI_TYPE[0]:
+            return identifier_setting.jalc_doi + suffix
+        elif doi_ra == WEKO_IMPORT_DOI_TYPE[1]:
+            return identifier_setting.jalc_crossref_doi + suffix
+        elif doi_ra == WEKO_IMPORT_DOI_TYPE[2]:
+            return identifier_setting.jalc_datacite_doi + suffix
+        elif doi_ra == WEKO_IMPORT_DOI_TYPE[3]:
+            return identifier_setting.ndl_jalc_doi + suffix
+
+
+def prepare_doi_link(item_id):
+    """Get DOI link."""
+    item_id = '%010d' % int(item_id)
+    identifier_setting = prepare_doi_setting()
+    suffix = identifier_setting.suffix or ''
+
+    return {
+        'identifier_grant_jalc_doi_link':
+            IDENTIFIER_GRANT_LIST[1][2] + '/'
+            + identifier_setting.jalc_doi
+            + suffix + '/' + item_id,
+        'identifier_grant_jalc_cr_doi_link':
+            IDENTIFIER_GRANT_LIST[2][2] + '/'
+            + identifier_setting.jalc_crossref_doi
+            + suffix + '/' + item_id,
+        'identifier_grant_jalc_dc_doi_link':
+            IDENTIFIER_GRANT_LIST[3][2] + '/'
+            + identifier_setting.jalc_datacite_doi
+            + suffix + '/' + item_id,
+        'identifier_grant_ndl_jalc_doi_link':
+            IDENTIFIER_GRANT_LIST[4][2] + '/'
+            + identifier_setting.ndl_jalc_doi
+            + suffix + '/' + item_id
+    }
+
+
 def register_item_doi(item):
     """Register item DOI.
 
@@ -1456,41 +1554,6 @@ def register_item_doi(item):
         response -- {object} Process status.
 
     """
-    def prepare_doi_link(item_id):
-        item_id = '%010d' % int(item_id)
-        identifier_setting = get_identifier_setting('Root Index')
-        if identifier_setting:
-            text_empty = '<Empty>'
-            if not identifier_setting.jalc_doi:
-                identifier_setting.jalc_doi = text_empty
-            if not identifier_setting.jalc_crossref_doi:
-                identifier_setting.jalc_crossref_doi = text_empty
-            if not identifier_setting.jalc_datacite_doi:
-                identifier_setting.jalc_datacite_doi = text_empty
-            if not identifier_setting.ndl_jalc_doi:
-                identifier_setting.ndl_jalc_doi = text_empty
-        suffix = '/' + identifier_setting.suffix \
-            if identifier_setting.suffix else ''
-
-        return {
-            'identifier_grant_jalc_doi_link':
-                IDENTIFIER_GRANT_LIST[1][2] + '/'
-                + identifier_setting.jalc_doi
-                + suffix + '/' + item_id,
-            'identifier_grant_jalc_cr_doi_link':
-                IDENTIFIER_GRANT_LIST[2][2] + '/'
-                + identifier_setting.jalc_crossref_doi
-                + suffix + '/' + item_id,
-            'identifier_grant_jalc_dc_doi_link':
-                IDENTIFIER_GRANT_LIST[3][2] + '/'
-                + identifier_setting.jalc_datacite_doi
-                + suffix + '/' + item_id,
-            'identifier_grant_ndl_jalc_doi_link':
-                IDENTIFIER_GRANT_LIST[4][2] + '/'
-                + identifier_setting.ndl_jalc_doi
-                + suffix + '/' + item_id
-        }
-
     item_id = str(item.get('id'))
     is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
@@ -1951,19 +2014,28 @@ def handle_check_date(list_record):
     """
     for record in list_record:
         error = None
-        for item in record.get('metadata'):
-            metadata = record['metadata'][item]
-            if isinstance(metadata, dict) and metadata.get(
-                WEKO_IMPORT_SUBITEM_DATE_ISO) and not \
-                validattion_date_property(metadata.get(
-                    WEKO_IMPORT_SUBITEM_DATE_ISO)):
-                error = _('Specified {} is invalid.').format(
-                    _('Date (ISO-8601)'))
-
-        if error:
-            record['errors'] = record['errors'] + [error] \
-                if record.get('errors') else [error]
-            record['errors'] = list(set(record['errors']))
+        date_iso_keys = []
+        item_type = ItemTypes.get_by_id(id_=record.get(
+            'item_type_id', 0), with_deleted=True)
+        if item_type:
+            item_type = item_type.render
+            form = item_type.get('table_row_map', {}).get('form', {})
+            date_iso_keys = get_list_key_of_iso_date(form)
+        for key in date_iso_keys:
+            _keys = key.split('.')
+            attribute = record.get('metadata').get(_keys[0])
+            if attribute:
+                data_result = get_sub_item_value(attribute, _keys[-1])
+                for value in data_result:
+                    if not validattion_date_property(value):
+                        error = _('Please specify the date with any format of'
+                                  + ' YYYY-MM-DD, YYYY-MM, YYYY.')
+                        record['errors'] = record['errors'] + [error] \
+                            if record.get('errors') else [error]
+                        record['errors'] = list(set(record['errors']))
+                        break
+                if error:
+                    break
 
 
 def validattion_date_property(date_str):
@@ -1979,6 +2051,18 @@ def validattion_date_property(date_str):
         except ValueError:
             pass
     return False
+
+
+def get_list_key_of_iso_date(schemaform):
+    """Get list key of iso date."""
+    keys = []
+    for item in schemaform:
+        if not item.get('items'):
+            if item.get('templateUrl', '') == DATE_ISO_TEMPLATE_URL:
+                keys.append(item.get('key').replace('[]', ''))
+        else:
+            keys.extend(get_list_key_of_iso_date(item.get('items')))
+    return keys
 
 
 def get_current_language():
@@ -2084,3 +2168,77 @@ def get_lifetime():
             return db_lifetime.lifetime * 60
     except BaseException:
         return 0
+
+
+def get_system_data_uri(key_type, key):
+    """Get uri from key of System item."""
+    if key_type == WEKO_IMPORT_SYSTEM_ITEMS[0]:
+        return RESOURCE_TYPE_URI.get(key, None)
+    elif key_type == WEKO_IMPORT_SYSTEM_ITEMS[1]:
+        return VERSION_TYPE_URI.get(key, None)
+    elif key_type == WEKO_IMPORT_SYSTEM_ITEMS[2]:
+        return ACCESS_RIGHT_TYPE_URI.get(key, None)
+
+
+def handle_fill_system_item(list_record):
+    """Auto fill data into system item.
+
+    :argument
+        list_record -- {list} list record import.
+    :return
+
+    """
+    def recursive_sub(keys, node, uri_key, current_type):
+        if isinstance(node, list):
+            for sub_node in node:
+                recursive_sub(keys[1:], sub_node, uri_key, current_type)
+        elif isinstance(node, dict):
+            if len(keys) > 1:
+                recursive_sub(keys[1:], node.get(keys[0]),
+                              uri_key, current_type)
+            else:
+                type_data = node.get(keys[0])
+                uri = get_system_data_uri(current_type, type_data)
+                if uri is not None:
+                    node[uri_key] = uri
+
+    item_type_id = None
+    item_map = None
+    for item in list_record:
+        if item_type_id != item['item_type_id']:
+            item_type_id = item['item_type_id']
+            item_map = get_mapping(Mapping.get_record(
+                item_type_id), 'jpcoar_mapping')
+
+        # Resource Type
+        _, resourcetype_key = get_data_by_property(
+            item, item_map, "type.@value")
+        _, resourceuri_key = get_data_by_property(
+            item, item_map, "type.@attributes.rdf:resource")
+        if resourcetype_key and resourceuri_key:
+            recursive_sub(resourcetype_key.split('.'),
+                          item['metadata'],
+                          resourceuri_key.split('.')[-1],
+                          WEKO_IMPORT_SYSTEM_ITEMS[0])
+
+        # Version Type
+        _, versiontype_key = get_data_by_property(
+            item, item_map, "versiontype.@value")
+        _, versionuri_key = get_data_by_property(
+            item, item_map, "versiontype.@attributes.rdf:resource")
+        if versiontype_key and versionuri_key:
+            recursive_sub(versiontype_key.split('.'),
+                          item['metadata'],
+                          versionuri_key.split('.')[-1],
+                          WEKO_IMPORT_SYSTEM_ITEMS[1])
+
+        # Access Right
+        _, accessRights_key = get_data_by_property(
+            item, item_map, "accessRights.@value")
+        _, accessRightsuri_key = get_data_by_property(
+            item, item_map, "accessRights.@attributes.rdf:resource")
+        if accessRights_key and accessRightsuri_key:
+            recursive_sub(accessRights_key.split('.'),
+                          item['metadata'],
+                          accessRightsuri_key.split('.')[-1],
+                          WEKO_IMPORT_SYSTEM_ITEMS[2])
