@@ -321,17 +321,51 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "type": {
             "type.raw": [
                 "conference paper",
+                "data paper",
                 "departmental bulletin paper",
+                "editorial",
                 "journal article",
+                "newspaper",
+                "periodical",
+                "review article",
+                "software paper",
                 "article",
                 "book",
+                "book part",
+                "cartographic material",
+                "map",
                 "conference object",
+                "conference proceedings",
+                "conference poster",
                 "dataset",
+                "interview",
+                "image",
+                "still image",
+                "moving image",
+                "video",
+                "lecture",
+                "patent",
+                "internal report",
+                "report",
                 "research report",
                 "technical report",
+                "policy report",
+                "report part",
+                "working paper",
+                "data management plan",
+                "sound",
                 "thesis",
-                "learning material",
+                "bachelor thesis",
+                "master thesis",
+                "doctoral thesis",
+                "interactive resource",
+                "learning object",
+                "manuscript",
+                "musical notation",
+                "research proposal",
                 "software",
+                "technical documentation",
+                "workflow",
                 "other"
             ]
         },
@@ -438,7 +472,7 @@ WEKO_IMPORT_EMAIL_PATTERN = \
     r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 WEKO_IMPORT_PUBLISH_STATUS = ['public', 'private']
 WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
-WEKO_IMPORT_DOI_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){1,290}$"
+WEKO_IMPORT_SUFFIX_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){1,290}$"
 
 WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
 """Subitem ID of property Date (ISO-8601)."""
@@ -466,3 +500,22 @@ WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
     '#', '', '',
     '', 'Required', '', '', '', ''
 ]
+
+WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
+VERSION_TYPE_URI = {
+    'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
+    'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
+    'AM': 'http://purl.org/coar/version/c_ab4af688f83e57aa',
+    'P': 'http://purl.org/coar/version/c_fa2ee174bc00049f',
+    'VoR': 'http://purl.org/coar/version/c_970fb48d4fbd8a85',
+    'CVoR': 'http://purl.org/coar/version/c_e19f295774971610',
+    'EVoR': 'http://purl.org/coar/version/c_dc82b40f9837b551',
+    'NA': 'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
+}
+ACCESS_RIGHT_TYPE_URI = {
+    'embargoed access': 'http://purl.org/coar/access_right/c_f1cf',
+    'metadata only access': 'http://purl.org/coar/access_right/c_14cb',
+    'open access': 'http://purl.org/coar/access_right/c_abf2',
+    'restricted access': 'http://purl.org/coar/access_right/c_16ec'
+}
+DATE_ISO_TEMPLATE_URL = '/static/templates/weko_deposit/datepicker_multi_format.html'

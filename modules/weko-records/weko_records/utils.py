@@ -62,67 +62,69 @@ def json_loader(data, pid):
     ojson = ItemTypes.get_record(item_type_id)
     mjson = Mapping.get_record(item_type_id)
 
-    if ojson and mjson:
-        mp = mjson.dumps()
-        data.get("$schema")
-        for k, v in data.items():
-            if k != "pubdate":
-                if k == "$schema" or mp.get(k) is None:
-                    continue
+    if not (ojson and mjson):
+        raise RuntimeError('Item Type {} does not exist.'.format(item_type_id))
 
-            item.clear()
-            try:
-                item["attribute_name"] = ojson["properties"][k]["title"] \
-                    if ojson["properties"][k].get("title") is not None else k
-            except Exception:
-                pub_date_setting = {
-                    "type": "string",
-                    "title": "Publish Date",
-                    "format": "datetime"
-                }
-                ojson["properties"]["pubdate"] = pub_date_setting
-                item["attribute_name"] = 'Publish Date'
-            # set a identifier to add a link on detail page when is a creator field
-            # creator = mp.get(k, {}).get('jpcoar_mapping', {})
-            # creator = creator.get('creator') if isinstance(
-            #     creator, dict) else None
-            iscreator = False
-            creator = ojson["properties"][k]
-            if 'object' == creator["type"]:
-                creator = creator["properties"]
-                if 'iscreator' in creator:
-                    iscreator = True
-            elif 'array' == creator["type"]:
-                creator = creator['items']["properties"]
-                if 'iscreator' in creator:
-                    iscreator = True
-            if iscreator:
-                item["attribute_type"] = 'creator'
+    mp = mjson.dumps()
+    data.get("$schema")
+    for k, v in data.items():
+        if k != "pubdate":
+            if k == "$schema" or mp.get(k) is None:
+                continue
 
-            item_data = ojson["properties"][k]
-            if 'array' == item_data.get('type'):
-                properties_data = item_data['items']['properties']
-                if 'filename' in properties_data:
-                    item["attribute_type"] = 'file'
+        item.clear()
+        try:
+            item["attribute_name"] = ojson["properties"][k]["title"] \
+                if ojson["properties"][k].get("title") is not None else k
+        except Exception:
+            pub_date_setting = {
+                "type": "string",
+                "title": "Publish Date",
+                "format": "datetime"
+            }
+            ojson["properties"]["pubdate"] = pub_date_setting
+            item["attribute_name"] = 'Publish Date'
+        # set a identifier to add a link on detail page when is a creator field
+        # creator = mp.get(k, {}).get('jpcoar_mapping', {})
+        # creator = creator.get('creator') if isinstance(
+        #     creator, dict) else None
+        iscreator = False
+        creator = ojson["properties"][k]
+        if 'object' == creator["type"]:
+            creator = creator["properties"]
+            if 'iscreator' in creator:
+                iscreator = True
+        elif 'array' == creator["type"]:
+            creator = creator['items']["properties"]
+            if 'iscreator' in creator:
+                iscreator = True
+        if iscreator:
+            item["attribute_type"] = 'creator'
 
-            if isinstance(v, list):
-                if len(v) > 0 and isinstance(v[0], dict):
-                    item["attribute_value_mlt"] = v
-                else:
-                    item["attribute_value"] = v
-            elif isinstance(v, dict):
-                ar.append(v)
-                item["attribute_value_mlt"] = ar
-                ar = []
+        item_data = ojson["properties"][k]
+        if 'array' == item_data.get('type'):
+            properties_data = item_data['items']['properties']
+            if 'filename' in properties_data:
+                item["attribute_type"] = 'file'
+
+        if isinstance(v, list):
+            if len(v) > 0 and isinstance(v[0], dict):
+                item["attribute_value_mlt"] = v
             else:
                 item["attribute_value"] = v
+        elif isinstance(v, dict):
+            ar.append(v)
+            item["attribute_value_mlt"] = ar
+            ar = []
+        else:
+            item["attribute_value"] = v
 
-            dc[k] = item.copy()
-            if k != "pubdate":
-                item.update(mp.get(k))
-            else:
-                pubdate = v
-            jpcoar[k] = item.copy()
+        dc[k] = item.copy()
+        if k != "pubdate":
+            item.update(mp.get(k))
+        else:
+            pubdate = v
+        jpcoar[k] = item.copy()
 
     # convert to es jpcoar mapping data
     jrc = SchemaTree.get_jpcoar_json(jpcoar)
