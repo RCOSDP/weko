@@ -108,8 +108,7 @@ WEKO_ADMIN_SITE_INFO = 'weko_admin/admin/site_info.html'
 
 WEKO_ADMIN_DEFAULT_CRAWLER_LISTS = [
     'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_ip_blacklist.txt',
-    'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_useragent.txt'
-]
+    'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_useragent.txt']
 """Default crawler files for restricting IP addresses and user agents."""
 
 WEKO_ADMIN_REPORT_FREQUENCIES = ['daily', 'weekly', 'monthly']
@@ -501,8 +500,8 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
              {'id': '44', 'contents': 'technical documentation', 'checkStus': False},
              {'id': '45', 'contents': 'workflow', 'checkStus': False},
              {'id': '46', 'contents': 'other', 'checkStus': False}
-         ],
-         'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
+        ],
+            'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
 
         {'id': 'itemtype',
          'contents': 'Item Type',

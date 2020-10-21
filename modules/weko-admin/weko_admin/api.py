@@ -86,11 +86,14 @@ def send_site_license_mail(organization_name, mail_list, agg_date, data):
             # setting locale
             setattr(ctx, 'babel_locale', default_lang)
             # send alert mail
-            send_mail(subject, mail_list,
-                      body=str(
-                          render_template('weko_admin/email_templates/site_license_report.html',
-                                          agg_date=agg_date,
-                                          data=data,
-                                          lang_code=default_lang)))
+            send_mail(
+                subject,
+                mail_list,
+                body=str(
+                    render_template(
+                        'weko_admin/email_templates/site_license_report.html',
+                        agg_date=agg_date,
+                        data=data,
+                        lang_code=default_lang)))
     except Exception as ex:
         current_app.logger.error(ex)
