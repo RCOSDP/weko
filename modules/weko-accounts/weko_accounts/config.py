@@ -29,7 +29,7 @@ WEKO_ACCOUNTS_BASE_TEMPLATE = 'weko_accounts/base.html'
 WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED = True
 """Enable Shibboleth user login system."""
 
-WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED = False
+WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED = True
 """Enable Shibboleth login system using IdP selection only."""
 
 WEKO_ACCOUNTS_SHIB_CACHE_PREFIX = 'Shib-Session-'
@@ -84,5 +84,5 @@ WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
 WEKO_ACCOUNTS_GENERAL_ROLE = 'Contributor'
 """Default role."""
 
-WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED = False
+WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED = True
 """Shibboleth login pattern."""
