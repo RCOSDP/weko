@@ -1419,11 +1419,7 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
     from weko_records.serializers.utils import get_mapping
 
     item_type_id = record.get('item_type_id')
-    item_type = ItemTypes.get_by_id(id_=item_type_id)
     type_mapping = Mapping.get_record(item_type_id)
-
-    if 'DDI' == item_type.item_type_name.name:
-        meta_prefix = 'ddi'
     item_map = get_mapping(type_mapping, "{}_mapping".format(meta_prefix))
 
     if item_map:
