@@ -88,7 +88,7 @@ class WekoAccounts(object):
             # Shibboleth DS
             else:
                 if app.config[
-                        'WEKO_ACCOUNTS_SHIB_DP_INST_LOGIN_DIRECTLY_ENABLED']:
+                        'WEKO_ACCOUNTS_SHIB_DP_LOGIN_DIRECTLY_ENABLED']:
                     app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
                         app.config[
                             'WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_USER_TEMPLATE']
