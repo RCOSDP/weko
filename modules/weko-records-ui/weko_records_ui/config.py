@@ -225,7 +225,7 @@ OAISERVER_METADATA_FORMATS = {
         'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
         'namespace': 'http://irdb.nii.ac.jp/oai',
     },
-    'jpcoar': {
+    'jpcoar_1.0': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
                 'schema_type': 'jpcoar',
