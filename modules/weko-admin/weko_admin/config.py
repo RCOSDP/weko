@@ -615,32 +615,29 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'identifier',
     'widgetitem',
     'widgetdesign',
-    'community',
     'indexedit',
     'indexjournal',
+    'report',
+    'itemexportsettings'
 ]
 """Classes Community Administrator can access."""
 
 WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'authors',
-    'bucket',
     'flowsetting',
-    'fileinstance',
     'identify',
     'items/bulk/delete',
-    'items/search',
+    'items/search', #doesnt exist/old url?
     'items/custom_sort',
     'items/bulk/update',
     'location',
     'itemtypes',
     'language',
     'loganalysissetting',
-    'mail',
     'others',
     'pdfcoverpage',
-    'shibboleth',
-    'site-license',
-    'search-management',
+    'site-license', #doesnt exist/old url?
+    'search-management', #doesnt exist/old url
     'sitemap',
     'indexlink',
     'indextree',
@@ -650,14 +647,25 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'webapiaccount',
     'report',
     'user',
+    'userprofile',
     'workflowsetting',
     'searchsettings',
     'sitelicensesettings',
-    'schemasettings',
-    'itemtypesregister',
-    'itemtypesproperties',
-    'itemtypesmapping',
-    'itemexportsettings',
+    'itemtypesregister', #doesnt exist/old url
+    'itemtypesmapping', #doesnt exist/old url
+    'itemtypes/mapping',
+    'items/import',
+    'indexedit',
+    'indexjournal',
+    'widgetitem',
+    'widgetdesign',
+    'feedbackmail',
+    'sitelicensesendmail',
+    'community',
+    'sessionactivity',
+    'rankingsettings',
+    'longanalysissetting',
+    'site_info'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
