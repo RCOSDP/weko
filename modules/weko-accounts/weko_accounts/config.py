@@ -26,11 +26,8 @@ WEKO_ACCOUNTS_LOGGER_ENABLED = True
 WEKO_ACCOUNTS_BASE_TEMPLATE = 'weko_accounts/base.html'
 """Default base template for the demo page."""
 
-WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED = True
+WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED = False
 """Enable Shibboleth user login system."""
-
-WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED = False
-"""Enable Shibboleth login system using IdP selection only."""
 
 WEKO_ACCOUNTS_SHIB_CACHE_PREFIX = 'Shib-Session-'
 """Shibboleth cache prefix info."""
@@ -58,7 +55,7 @@ WEKO_ACCOUNTS_STUB_USER_TEMPLATE = 'weko_accounts/shib_user.html'
 WEKO_ACCOUNTS_SHIB_LOGIN_CACHE_TTL = 180
 """Cache default timeout 3 minute"""
 
-WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL = 'https://localhost/secure/login.php'
+WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL = '{}secure/login.php'
 """Login proxy URL."""
 
 WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
@@ -84,5 +81,11 @@ WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
 WEKO_ACCOUNTS_GENERAL_ROLE = 'Contributor'
 """Default role."""
 
-WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED = False
+WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED = True
 """Shibboleth login pattern."""
+
+WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED = True
+"""Enable Shibboleth login system using IdP selection only."""
+
+WEKO_ACCOUNTS_SHIB_DP_LOGIN_DIRECTLY_ENABLED = True
+"""Enable Shibboleth login system using DP selection only."""
