@@ -83,7 +83,7 @@
                             <img src="{{img}}" alt={{ file.filename }}/>
                             {%- if is_billing_file -%}
                               {%- if not session['user_id'] and not access_permission and file.accessrole == 'open_login' -%}
-                                {%- if config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
+                                {%- if config.WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED and config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
                                   {%- set file_url = {{ config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path }} -%}
                                 {%- else %}
                                   {%- set file_url = url_for_security('login', next=request.path) -%}
