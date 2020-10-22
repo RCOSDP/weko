@@ -372,23 +372,29 @@ class Indexes(object):
                                     Index.position).with_for_update().all()
                                 n = t = -1
 
+                                tmp_moved_index = Index()
                                 for i in range(len(nlst)):
                                     db.session.delete(nlst[i])
                                     if nlst[i].id == index_id:
+                                        # old.
                                         n = i
+                                        tmp_moved_index = nlst[i]
                                     if position == nlst[i].position:
+                                        # new
                                         t = i
                                 # if the index has been deleted.
                                 if n < 0:
                                     raise Exception()
 
-                                pre_index = nlst.pop(n)
-                                if n < t:
-                                    t -= 1
-                                if t < 0:
-                                    t = position - 1
-
-                                nlst.insert(t + 1, pre_index)
+                                if n > t:
+                                    for i in range(n, t, -1):
+                                        nlst[i] = nlst[i-1]
+                                    nlst[t] = tmp_moved_index
+                                else:
+                                    for i in range(n, t):
+                                        nlst[i] = nlst[i+1]
+                                    nlst[t] = tmp_moved_index
+                                
                                 db.session.flush()
                                 for i in range(len(nlst)):
                                     nid = Index()
