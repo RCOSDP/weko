@@ -21,7 +21,7 @@
 {%- if not current_user.is_authenticated %}
 <form class="navbar-form navbar-right">
   {%- if config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
-    <a href="{{config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL}}" class="btn
+    <a href="{{ config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path }}" class="btn
         btn-default btn-primary bg-transparent login-button"><i class="fa fa-sign-in"></i> {{_('Log in')}}</a>
   {%- else %}
     <a href="{{url_for_security('login', next=request.path)}}" class="btn

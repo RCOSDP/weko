@@ -71,6 +71,7 @@ def shib_auto_login():
 
     :return: next url
     """
+    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
@@ -82,8 +83,7 @@ def shib_auto_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -95,8 +95,7 @@ def shib_auto_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -106,8 +105,7 @@ def shib_auto_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -128,8 +126,7 @@ def shib_auto_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -149,14 +146,14 @@ def confirm_user():
 
     :return:
     """
+    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
     try:
         csrf_random = request.form.get('csrf_random', '')
         if csrf_random != session['csrf_random']:
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
         shib_session_id = session['shib_session_id']
@@ -164,8 +161,7 @@ def confirm_user():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
         datastore = RedisStore(redis.StrictRedis.from_url(
@@ -176,15 +172,13 @@ def confirm_user():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
         cache_val = datastore.get(cache_key)
         if cache_val is None:
             datastore.delete(cache_key)
-            return redirect(current_app.config[
-                'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+            return redirect(_shib_login_url.format(request.url_root))
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
         account = request.form.get('WEKO_ATTR_ACCOUNT', None)
@@ -194,8 +188,7 @@ def confirm_user():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
         shib_user.bind_relation_info(account)
@@ -208,8 +201,7 @@ def confirm_user():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -228,6 +220,7 @@ def shib_login():
 
     :return: confirm user page when relation is empty
     """
+    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
     try:
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
 
@@ -235,8 +228,7 @@ def shib_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -249,8 +241,7 @@ def shib_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
         cache_val = datastore.get(cache_key)
@@ -260,8 +251,7 @@ def shib_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -283,8 +273,7 @@ def shib_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -305,6 +294,7 @@ def shib_sp_login():
 
     :return: confirm page when relation is empty
     """
+    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not current_app.config[
@@ -312,8 +302,7 @@ def shib_sp_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -322,8 +311,7 @@ def shib_sp_login():
             if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                     and current_app.config.get(
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-                return redirect(current_app.config[
-                    'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+                return redirect(_shib_login_url.format(request.url_root))
             else:
                 return redirect(url_for_security('login'))
 
@@ -356,8 +344,7 @@ def shib_sp_login():
         if current_app.config.get('WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED') \
                 and current_app.config.get(
                     'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED'):
-            return redirect(current_app.config[
-                'WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+            return redirect(_shib_login_url.format(request.url_root))
         else:
             return redirect(url_for_security('login'))
 
@@ -368,6 +355,7 @@ def shib_stub_login():
 
     :return:
     """
+    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
     if not current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
         return abort(403)
 
@@ -375,7 +363,7 @@ def shib_stub_login():
 
     # LOGIN USING JAIROCLOUD PAGE
     if current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
-        return redirect(current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL'])
+        return redirect(_shib_login_url.format(request.url_root))
     else:
         return render_template(
             current_app.config[

@@ -83,8 +83,7 @@ class WekoAccounts(object):
             if app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
                 if app.config[
                         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']:
-                    app.config['SECURITY_LOGIN_URL'] = \
-                        app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
+                    # TODO: Implement login method for redirect URL
             # Shibboleth DS
             else:
                 if app.config[
