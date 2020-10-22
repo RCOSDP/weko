@@ -21,7 +21,7 @@
 {% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url) %}
   {%- if not session['user_id'] -%}
     {%- if config.WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED and config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
-      {%- set href_url = {{ config.WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path }} -%}
+      {%- set href_url = {{ config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path }} -%}
     {%- else %}
       {%- set href_url = url_for_security('login', next=request.path) -%}
     {%- endif %}
