@@ -323,10 +323,10 @@ def shib_sp_login():
         return url_for(next_url, **query_string)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+        if _shib_enable and _idp_login and _idp_login_inst:
+            return redirect(_shib_login_url.format(request.url_root))
+        else:
+            return redirect(url_for_security('login'))
 
 
 @blueprint.route('/shib/sp/login', methods=['GET'])
