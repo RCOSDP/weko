@@ -621,6 +621,9 @@ class WekoDeposit(Deposit):
                                                      self.pid.object_uuid,
                                                      self.revision_id,
                                                      True)
+                        record_id = self['_deposit']['id']
+                        message = 'Failed to parse file from item {}'
+                        current_app.logger.warn(message.format(record_id))
                     else:
                         raise err
 

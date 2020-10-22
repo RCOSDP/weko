@@ -1,0 +1,8 @@
+{
+"handle_server_url": "https://handle:8000",
+"private_key": "/code/modules/resources/handle_privatekey.pem",
+"certificate_only": "/code/modules/resources/handle_certificate_only.pem",
+"prefix": "20.500.12465",
+"handleowner": "300:0.NA/20.500.12465",
+"HTTPS_verify": "False"
+}
