@@ -1127,6 +1127,7 @@ class SchemaTree:
             root.text = "Sorry! This Item has not been mappinged."
             return root
         self.support_for_output_xml(self._record)
+        self.__remove_files_do_not_publish()
         list_json_xml = self.__get_value_list(remove_empty=True)
         if self._schema_name == current_app.config[
                 'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
@@ -1194,6 +1195,22 @@ class SchemaTree:
                 k = get_prefix(k)
                 set_children(k, v, root, [k])
         return root
+
+    def __remove_files_do_not_publish(self):
+        """Remove files do not publish."""
+        def __get_file_permissions(files_json):
+            new_files = []
+            for file in files_json:
+                if 'open_no' not in file.get('version_id'):
+                    new_files.append(file)
+            return new_files
+
+        for k, v in self._record.items():
+            if (isinstance(v, dict) and
+                v.get("attribute_type") == "file" and
+                    v.get("attribute_value_mlt")):
+                v['attribute_value_mlt'] = __get_file_permissions(
+                    v.get("attribute_value_mlt"))
 
     def __build_jpcoar_relation(self, list_json_xml):
         """Build JPCOAR relation.

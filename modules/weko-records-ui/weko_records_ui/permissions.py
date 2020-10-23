@@ -116,8 +116,15 @@ def check_file_download_permission(record, fjson):
         user_id_list = record['_deposit']['owners']
         created_user_email_list = get_email_list_by_ids(user_id_list)
 
+        # Registered user
+        if current_user and \
+                current_user.is_authenticated and \
+                current_user.id in user_id_list:
+            return is_can
+
         # Super users
-        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+            current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY'],)
         for role in list(current_user.roles or []):
             if role.name in supers:
                 return is_can
@@ -180,8 +187,7 @@ def check_file_download_permission(record, fjson):
                     # Allow created workflow user view file.
                     is_can = True
                 else:
-                    # site license permission check
-                    is_can = site_license_check()
+                    is_can = False
             elif 'open_restricted' in acsrole:
                 is_can = check_open_restricted_permission(record, fjson)
         except BaseException:
@@ -333,6 +339,10 @@ def check_user_group_permission(group_id):
     user_id = current_user.get_id()
     is_ok = False
     if group_id:
+        try:
+            group_id = int(group_id)
+        except ValueError:
+            return is_ok
         if user_id:
             query = Group.query.filter_by(id=group_id).join(Membership) \
                 .filter_by(user_id=user_id, state=MembershipState.ACTIVE)
