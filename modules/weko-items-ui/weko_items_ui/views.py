@@ -56,11 +56,11 @@ from .utils import _get_max_export_items, export_items, get_current_user, \
     get_data_authors_prefix_settings, get_list_email, get_list_username, \
     get_ranking, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, get_workflow_by_item_type_id, \
-    is_schema_include_key, remove_excluded_items_in_json_schema, \
-    sanitize_input_data, save_title, set_multi_language_name, to_files_js, \
-    translate_schema_form, translate_validation_message, \
-    update_index_tree_for_record, update_json_schema_by_activity_id, \
-    update_schema_form_by_activity_id, update_schema_remove_hidden_item, \
+    hide_form_items, is_schema_include_key, \
+    remove_excluded_items_in_json_schema, sanitize_input_data, save_title, \
+    set_multi_language_name, to_files_js, translate_schema_form, \
+    translate_validation_message, update_index_tree_for_record, \
+    update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
     validate_user_mail_and_index
@@ -311,28 +311,8 @@ def get_schema_form(item_type_id=0, activity_id=''):
         # Check role for input(5 item type)
         update_sub_items_by_user_role(item_type_id, schema_form)
 
-        # hidden option
-        hidden_subitem = ['subitem_thumbnail',
-                          'subitem_systemidt_identifier',
-                          'subitem_systemfile_datetime',
-                          'subitem_systemfile_filename',
-                          'subitem_system_id_rg_doi',
-                          'subitem_system_date_type',
-                          'subitem_system_date',
-                          'subitem_system_identifier_type',
-                          'subitem_system_identifier',
-                          'subitem_system_text'
-                          ]
-
-        for i in hidden_subitem:
-            hidden_items = [
-                schema_form.index(form) for form in schema_form
-                if form.get('items')
-                and form['items'][0]['key'].split('.')[1] in i]
-            if hidden_items and i in json.dumps(schema_form):
-                schema_form = update_schema_remove_hidden_item(schema_form,
-                                                               result.render,
-                                                               hidden_items)
+        # Hide form items
+        schema_form = hide_form_items(result, schema_form)
 
         for elem in schema_form:
             set_multi_language_name(elem, cur_lang)
