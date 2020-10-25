@@ -16,13 +16,12 @@ from functools import partial, wraps
 from flask import Blueprint, abort, current_app, json, jsonify, request
 from flask_login import current_user
 from invenio_db import db
-from invenio_records.models import RecordMetadata
-from invenio_records_files.models import RecordsBuckets
 from invenio_rest import ContentNegotiatedMethodView
 from marshmallow import missing
 from six.moves.urllib.parse import parse_qsl
 from webargs import fields
 from webargs.flaskparser import use_kwargs
+from weko_records_ui.permissions import check_file_download_permission
 
 from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
     InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
@@ -576,19 +575,16 @@ class ObjectResource(ContentNegotiatedMethodView):
         record_metadata = get_record_metadata_by_record_id(
             record_bucket.record_id)
         """Check and get access role of file in this record metadata."""
-        access_role = None
+        allowed_guest_user = False
         for k, v in record_metadata.json.items():
             if isinstance(v, dict) and v.get('attribute_type') == 'file':
                 for item in v.get('attribute_value_mlt', []):
                     is_this_version = item.get('version_id') == version_id
                     is_preview = item.get('displaytype') == 'preview'
                     if is_this_version and is_preview:
-                        access_role = item.get('accessrole', None)
+                        allowed_guest_user = check_file_download_permission(
+                            record_metadata.json, item)
                         break
-        """Set a flag for guest user who can preview file."""
-        allowed_guest_user = False
-        if access_role == 'open_access' and not current_user.is_authenticated:
-            allowed_guest_user = True
         """Get current bucket info."""
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
         if not obj:
