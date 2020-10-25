@@ -178,8 +178,14 @@ def check_file_download_permission(record, fjson):
                             break
                     is_can = is_can & is_user_group_permission
                 else:
-                    is_can = is_can & check_user_group_permission(
-                        fjson.get('groups'))
+                    if current_user.is_authenticated:
+                        if fjson.get('groups'):
+                            is_can = check_user_group_permission(
+                                fjson.get('groups'))
+                        else:
+                            is_can = True
+                    else:
+                        is_can = check_site_license_permission()
 
             #  can not access
             elif 'open_no' in acsrole:

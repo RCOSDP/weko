@@ -1201,7 +1201,7 @@ class SchemaTree:
         def __get_file_permissions(files_json):
             new_files = []
             for file in files_json:
-                if 'open_no' not in file.get('version_id'):
+                if 'open_no' not in file.get('accessrole'):
                     new_files.append(file)
             return new_files
 
