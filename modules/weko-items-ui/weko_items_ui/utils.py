@@ -2280,7 +2280,8 @@ def hide_thumbnail(schema_form):
     """
     def is_thumbnail(items):
         for item in items:
-            if 'subitem_thumbnail' in item.get('key'):
+            if isinstance(item, dict) and 'subitem_thumbnail' in item.get(
+                    'key', ''):
                 return True
         return False
 
