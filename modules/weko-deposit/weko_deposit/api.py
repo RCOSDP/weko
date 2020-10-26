@@ -440,6 +440,12 @@ class WekoDeposit(Deposit):
         if '$schema' not in self:
             self['$schema'] = current_app.extensions['invenio-jsonschemas'].\
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
+        if 'pid' not in self:
+            self['pid'] = {
+                'type': self.pid.pid_type,
+                'value': self.pid.pid_value,
+                'revision_id': 0,
+            }
         self.is_edit = True
         try:
             deposit = super(WekoDeposit, self).publish(pid, id_)
@@ -649,80 +655,77 @@ class WekoDeposit(Deposit):
 
             # Check that there is not a newer draft version for this record
             # and this is the latest version
-            pv = PIDVersioning(child=pid)
-            if pv.exists and not pv.draft_child:  # and pid == pv.last_child:
-                # the latest record: item without version ID
-                last_pid = pid  # pv.last_child
-                # Get copy of the latest record
-                latest_record = WekoDeposit.get_record(last_pid.object_uuid)
-                if latest_record:
-                    data = latest_record.dumps()
-                    owners = data['_deposit']['owners']
-                    keys_to_remove = ('_deposit', 'doi', '_oai',
-                                      '_files', '_buckets', '$schema')
-                    for k in keys_to_remove:
-                        data.pop(k, None)
+            versioning = PIDVersioning(child=pid)
+            record = WekoDeposit.get_record(pid.object_uuid)
 
-                    # Attaching version ID, "{}.0" for draft record id.
-                    if is_draft:
-                        draft_id = '{0}.{1}' . format(
-                            last_pid.pid_value,
-                            0)
-                    else:
-                        draft_id = '{0}.{1}' . format(
-                            last_pid.pid_value,
-                            get_latest_version_id(last_pid.pid_value))
-                    # NOTE: We call the superclass `create()` method, because
-                    # we don't want a new empty bucket, but
-                    # an unlocked snapshot of the old record's bucket.
-                    deposit = super(WekoDeposit, self).create(data,
-                                                              recid=draft_id)
-                    # Injecting owners is required in case of creating new
-                    # version this outside of request context
-                    deposit['_deposit']['owners'] = owners
+            assert PIDStatus.REGISTERED == pid.status
+            if not record or not versioning.exists or versioning.draft_child:
+                return None
 
-                    recid = PersistentIdentifier.get(
-                        'recid', str(data['_deposit']['id']))
-                    depid = PersistentIdentifier.get(
-                        'depid', str(data['_deposit']['id']))
 
-                    PIDVersioning(
-                        parent=pv.parent).insert_draft_child(
-                        child=recid)
-                    RecordDraft.link(recid, depid)
+            data = record.dumps()
+            owners = data['_deposit']['owners']
+            keys_to_remove = ('_deposit', 'doi', '_oai',
+                                '_files', '_buckets', '$schema')
+            for k in keys_to_remove:
+                data.pop(k, None)
 
-                    if is_draft:
-                        with db.session.begin_nested():
-                            # Set relation type of draft record is 3: Draft
-                            parent_pid = PIDVersioning(child=recid).parent
-                            relation = PIDRelation.query.\
-                                filter_by(parent=parent_pid,
-                                          child=recid).one_or_none()
-                            relation.relation_type = 3
-                        db.session.merge(relation)
+            draft_id = '{0}.{1}'.format(
+                    pid.pid_value,
+                    0 if is_draft else get_latest_version_id(pid.pid_value))
 
-                    snapshot = latest_record.files.bucket.\
-                        snapshot(lock=False)
-                    snapshot.locked = False
-                    deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                    RecordsBuckets.create(record=deposit.model,
-                                          bucket=snapshot)
+            # NOTE: We call the superclass `create()` method, because
+            # we don't want a new empty bucket, but
+            # an unlocked snapshot of the old record's bucket.
+            deposit = super(
+                WekoDeposit,
+                self).create(data, recid=draft_id)
+            # Injecting owners is required in case of creating new
+            # version this outside of request context
 
-                    index = {'index': self.get('path', []),
-                             'actions': self.get('publish_status')}
-                    if 'activity_info' in session:
-                        del session['activity_info']
-                    item_metadata = ItemsMetadata.get_record(
-                        last_pid.object_uuid).dumps()
-                    item_metadata.pop('id', None)
-                    args = [index, item_metadata]
-                    deposit.update(*args)
-                    deposit.commit()
-            return deposit
+            deposit['_deposit']['owners'] = owners
+
+            recid = PersistentIdentifier.get(
+                'recid', str(data['_deposit']['id']))
+            depid = PersistentIdentifier.get(
+                'depid', str(data['_deposit']['id']))
+
+            PIDVersioning(
+                parent=versioning.parent).insert_draft_child(
+                child=recid)
+            RecordDraft.link(recid, depid)
+
+            if is_draft:
+                with db.session.begin_nested():
+                    # Set relation type of draft record is 3: Draft
+                    parent_pid = PIDVersioning(child=recid).parent
+                    relation = PIDRelation.query.\
+                        filter_by(parent=parent_pid,
+                                    child=recid).one_or_none()
+                    relation.relation_type = 3
+                db.session.merge(relation)
+
+            snapshot = record.files.bucket.\
+                snapshot(lock=False)
+            snapshot.locked = False
+            deposit['_buckets'] = {'deposit': str(snapshot.id)}
+            RecordsBuckets.create(record=deposit.model,
+                                    bucket=snapshot)
+
+            index = {'index': self.get('path', []),
+                        'actions': self.get('publish_status')}
+            if 'activity_info' in session:
+                del session['activity_info']
+            item_metadata = ItemsMetadata.get_record(
+                pid.object_uuid).dumps()
+            item_metadata.pop('id', None)
+            args = [index, item_metadata]
+            deposit.update(*args)
+            deposit.commit()
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-            return None
+        return deposit
 
     def get_content_files(self):
         """Get content file metadata."""

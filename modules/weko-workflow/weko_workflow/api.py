@@ -1777,14 +1777,13 @@ class WorkActivityHistory(object):
 class UpdateItem(object):
     """The class about item."""
 
-    def publish(pid, record):
+    def publish(self, record):
         r"""Record publish  status change view.
 
         Change record publish status with given status and renders record
         export template.
 
-        :param pid: PID object.
-        :param record: Record object.
+        :param record: record object.
         :return: The rendered template.
         """
         from weko_deposit.api import WekoIndexer
@@ -1800,7 +1799,7 @@ class UpdateItem(object):
         indexer = WekoIndexer()
         indexer.update_publish_status(record)
 
-    def update_status(pid, record, status='1'):
+    def update_status(self, record, status='1'):
         r"""Record update status.
 
         :param pid: PID object.
