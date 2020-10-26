@@ -542,11 +542,11 @@ class ObjectResource(ContentNegotiatedMethodView):
     # ObjectVersion helpers
     #
     @staticmethod
-    def check_object_permission(obj, allowed_guest_user=False):
+    def check_object_permission(obj, file_access_permission=False):
         """Retrieve object and abort if it doesn't exists."""
         # Check for guest user (not login)
         # If not login => has permission
-        if not allowed_guest_user:
+        if not file_access_permission:
             check_permission(current_permission_factory(
                 obj,
                 'object-read'
