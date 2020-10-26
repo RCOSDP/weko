@@ -525,7 +525,6 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
     :param all_indexes:
     :return:
     """
-
     def get_child_agg_by_key():
         """Get all child indexes of target index."""
         lst_result = []
@@ -574,7 +573,7 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
 
 def recorrect_private_items_count(agp):
     """Re-correct private item count in case of unpublished items.
-tre
+
     :param agp: aggregation returned from ES
     :return:
     """

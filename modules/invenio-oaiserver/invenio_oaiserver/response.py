@@ -538,6 +538,68 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
     return True
 
 
+def combine_record_file_urls(record, object_uuid, meta_prefix):
+    """Add file urls to record metadata.
+
+    Get file property information by item_mapping and put to metadata.
+    """
+    from weko_records.api import ItemsMetadata, Mapping
+    from weko_records.serializers.utils import get_mapping
+    from weko_schema_ui.schema import get_oai_metadata_formats
+
+    metadata_formats = get_oai_metadata_formats(current_app)
+    item_type = ItemsMetadata.get_by_object_id(object_uuid)
+    item_type_id = item_type.item_type_id
+    type_mapping = Mapping.get_record(item_type_id)
+    mapping_type = metadata_formats[meta_prefix]['serializer'][1]['schema_type']
+    item_map = get_mapping(type_mapping,
+                           "{}_mapping".format(mapping_type))
+
+    if item_map:
+        file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
+        if mapping_type in file_props:
+            file_keys = item_map.get(file_props[mapping_type])
+        else:
+            file_keys = None
+
+    if not file_keys:
+        return record
+    else:
+        file_keys = file_keys.split('.')
+
+    if len(file_keys) == 3 and record.get(file_keys[0]):
+        attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
+        if isinstance(attr_mlt, list):
+            for attr in attr_mlt:
+                if attr.get('filename'):
+                    if not attr.get(file_keys[1]):
+                        attr[file_keys[1]] = {}
+                    attr[file_keys[1]][file_keys[2]] = \
+                        create_files_url(
+                            request.url_root,
+                            record.get('recid'),
+                            attr.get('filename'))
+        elif isinstance(attr_mlt, dict) and \
+                attr_mlt.get('filename'):
+            if not attr_mlt.get(file_keys[1]):
+                attr_mlt[file_keys[1]] = {}
+            attr_mlt[file_keys[1]][file_keys[2]] = \
+                create_files_url(
+                    request.url_root,
+                    record.get('recid'),
+                    attr_mlt.get('filename'))
+
+    return record
+
+
+def create_files_url(root_url, record_id, filename):
+    """Generation of downloading file url."""
+    return "{}record/{}/files/{}".format(
+        root_url,
+        record_id,
+        filename)
+
+
 def get_identifier(record):
     """Get Identifier of record(DOI or HDL), if not set URL as default.
 
