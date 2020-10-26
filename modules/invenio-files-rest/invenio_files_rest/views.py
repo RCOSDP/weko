@@ -575,6 +575,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         rm = RecordMetadata.query.filter_by(id=rb.record_id).first()
         """Check and get access role of file in this record metadata."""
         allowed_guest_user = False
+        flag = False
         for k, v in rm.json.items():
             if isinstance(v, dict) and v.get('attribute_type') == 'file':
                 for item in v.get('attribute_value_mlt', []):
@@ -583,8 +584,9 @@ class ObjectResource(ContentNegotiatedMethodView):
                     if is_this_version and is_preview:
                         allowed_guest_user = check_file_download_permission(
                             rm.json, item)
+                        flag = True
                         break
-            if allowed_guest_user:
+            if flag:
                 break
         """Get current bucket info."""
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
