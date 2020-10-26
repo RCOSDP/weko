@@ -21,7 +21,6 @@ from marshmallow import missing
 from six.moves.urllib.parse import parse_qsl
 from webargs import fields
 from webargs.flaskparser import use_kwargs
-from weko_records_ui.permissions import check_file_download_permission
 
 from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
     InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
@@ -570,6 +569,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param version_id: The version ID.
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
+        from weko_records_ui.permissions import check_file_download_permission
         """Get record metadata (table records_metadata) from bucket_id."""
         record_bucket = get_record_bucket_by_bucket_id(bucket)
         record_metadata = get_record_metadata_by_record_id(
