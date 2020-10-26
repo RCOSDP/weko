@@ -130,6 +130,12 @@ def check_file_download_permission(record, fjson):
                 return is_can
 
         try:
+            # Check for guest user.
+            if not current_user.is_authenticated:
+                if 'open_access' in acsrole:
+                    return True
+                else:
+                    return False
             # can access
             if 'open_access' in acsrole:
                 date = fjson.get('date')
@@ -306,7 +312,8 @@ def get_correct_usage_workflow(data_type):
                 current_app.logger.debug(data)
                 for value in data:
                     if value['role'].casefold() == role.name.casefold():
-                        usage_application_workflow_name = value['workflow_name']
+                        usage_application_workflow_name = \
+                            value['workflow_name']
                         workflow = WorkFlow()
                         usage_workflow = workflow.find_workflow_by_name(
                             usage_application_workflow_name)
