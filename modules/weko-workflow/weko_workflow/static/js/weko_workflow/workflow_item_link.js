@@ -263,7 +263,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     { id: "relateTo", content: "relateTo" },
     { id: "isVersionOf", content: "isVersionOf" },
     { id: "hasVersion", content: "hasVersion" },
-    { id: "isReplaceBy", content: "isReplaceBy" },
+    { id: "isReplacedBy", content: "isReplacedBy" },
     { id: "replaces", content: "replaces" },
     { id: "isRequiredBy", content: "isRequiredBy" },
     { id: "requires", content: "requires" },
@@ -274,10 +274,10 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     { id: "isFormatOf", content: "isFormatOf" },
     { id: "hasFormat", content: "hasFormat" },
     { id: "isSupplementTo", content: "isSupplementTo" },
-    { id: "isSupplementBy", content: "isSupplementBy" },
+    { id: "isSupplementedBy", content: "isSupplementedBy" },
     { id: "isIdenticalTo", content: "isIdenticalTo" },
-    { id: "isDeriverdFrom", content: "isDeriverdFrom" },
-    { id: "isSoruceOf", content: "isSoruceOf" }
+    { id: "isDerivedFrom", content: "isDerivedFrom" },
+    { id: "isSourceOf", content: "isSourceOf" }
   ];
   $scope.comment_data = "";
 

@@ -812,6 +812,57 @@ class Indexes(object):
             return False
 
     @classmethod
+    def get_child_list_by_pip(cls, pid):
+        """
+        Get index list info.
+
+        :param pid: pid of the index.
+        :return: the list of index.
+        """
+        def recursive_p():
+            recursive_p = db.session.query(
+                Index.parent.label("pid"),
+                Index.id.label("cid"),
+                func.cast(Index.id, db.Text).label("path"),
+            ).filter(Index.id == pid). \
+                cte(name="recursive_p", recursive=True)
+
+            rec_alias = aliased(recursive_p, name="recursive")
+            test_alias = aliased(Index, name="test")
+            recursive_p = recursive_p.union_all(
+                db.session.query(
+                    test_alias.parent,
+                    test_alias.id,
+                    func.cast(test_alias.id, db.Text) + '/' + rec_alias.c.path,
+                ).filter(test_alias.id == rec_alias.c.pid)
+            )
+            path_index_searchs = db.session.query(recursive_p).filter_by(pid=0).one()
+            return path_index_searchs.path
+        path_index_searchs = recursive_p()
+
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+            func.cast(path_index_searchs, db.Text).label("path"),
+            Index.public_state.label("public_state"),
+        ).filter(Index.id == pid). \
+            cte(name="recursive_t", recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec")
+        test_alias = aliased(Index, name="t")
+        recursive_t = recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                test_alias.public_state,
+            ).filter(test_alias.parent == rec_alias.c.cid)
+        )
+        query = db.session.query(recursive_t)
+        q = query.order_by(recursive_t.c.path).all()
+        return q
+
+    @classmethod
     def recs_query(cls, pid=0):
         """
         Init select condition of index.
@@ -1274,3 +1325,9 @@ class Indexes(object):
         query = Index.query.filter_by(public_state=True).order_by(
             Index.updated.desc())
         return query.all()
+
+    @classmethod
+    def get_all_indexes(cls):
+        """Get all indexes."""
+        query = Index.query.all()
+        return query

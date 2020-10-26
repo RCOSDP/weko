@@ -1295,7 +1295,8 @@ def handle_check_cnri(list_record):
                     if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
                         error = _(err_msg_suffix).format('CNRI')
         else:
-            if item.get('status') == 'new' or item.get('is_change_identifier'):
+            if item.get('status') == 'new' \
+                    or item.get('is_change_identifier') or not cnri_set:
                 if cnri:
                     error = _('{} cannot be set.').format('CNRI')
             else:
