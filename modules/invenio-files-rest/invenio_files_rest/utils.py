@@ -12,8 +12,6 @@ import mimetypes
 
 import six
 from flask import current_app
-from invenio_db import db
-from sqlalchemy import MetaData, Table
 from werkzeug.utils import import_string
 
 ENCODING_MIMETYPES = {

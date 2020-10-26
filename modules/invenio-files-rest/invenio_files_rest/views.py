@@ -16,6 +16,8 @@ from functools import partial, wraps
 from flask import Blueprint, abort, current_app, json, jsonify, request
 from flask_login import current_user
 from invenio_db import db
+from invenio_records.models import RecordMetadata
+from invenio_records_files.models import RecordsBuckets
 from invenio_rest import ContentNegotiatedMethodView
 from marshmallow import missing
 from six.moves.urllib.parse import parse_qsl
@@ -30,8 +32,6 @@ from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
 from .signals import file_downloaded, file_previewed
 from .tasks import merge_multipartobject, remove_file_data
-from invenio_records_files.models import RecordsBuckets
-from invenio_records.models import RecordMetadata
 
 blueprint = Blueprint(
     'invenio_files_rest',
@@ -570,11 +570,11 @@ class ObjectResource(ContentNegotiatedMethodView):
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
         from weko_records_ui.permissions import check_file_download_permission
-        """Get record metadata (table records_metadata) from bucket_id."""
+        # Get record metadata (table records_metadata) from bucket_id.
         rb = RecordsBuckets.query.filter_by(bucket_id=bucket).first()
         rm = RecordMetadata.query.filter_by(id=rb.record_id).first()
-        """Check and get access role of file in this record metadata."""
-        allowed_guest_user = False
+        # Check and file_access_permission of file in this record metadata.
+        file_access_permission = False
         flag = False
         for k, v in rm.json.items():
             if isinstance(v, dict) and v.get('attribute_type') == 'file':
@@ -582,18 +582,18 @@ class ObjectResource(ContentNegotiatedMethodView):
                     is_this_version = item.get('version_id') == version_id
                     is_preview = item.get('displaytype') == 'preview'
                     if is_this_version and is_preview:
-                        allowed_guest_user = check_file_download_permission(
-                            rm.json, item)
+                        file_access_permission = \
+                            check_file_download_permission(rm.json, item)
                         flag = True
                         break
             if flag:
                 break
-        """Get current bucket info."""
+        # Get and check exists of current bucket info.
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
         if not obj:
             abort(404, 'Object does not exists.')
-        """Check permission. if it is not permission, return None."""
-        cls.check_object_permission(obj, allowed_guest_user)
+        # Check permission. if it is not permission, return None.
+        cls.check_object_permission(obj, file_access_permission)
         return obj
 
     def create_object(self, bucket, key, is_thumbnail):

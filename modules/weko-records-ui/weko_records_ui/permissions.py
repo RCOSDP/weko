@@ -123,7 +123,7 @@ def check_file_download_permission(record, fjson):
                 return is_can
 
         try:
-            """If this is guest, file can view file."""
+            # Check for guest user.
             if not current_user.is_authenticated:
                 if 'open_access' in acsrole:
                     return True
