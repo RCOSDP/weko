@@ -30,8 +30,8 @@ from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
 from .signals import file_downloaded, file_previewed
 from .tasks import merge_multipartobject, remove_file_data
-from .utils import get_record_bucket_by_bucket_id, \
-    get_record_metadata_by_record_id
+from invenio_records_files.models import RecordsBuckets
+from invenio_records.models import RecordMetadata
 
 blueprint = Blueprint(
     'invenio_files_rest',
@@ -571,20 +571,21 @@ class ObjectResource(ContentNegotiatedMethodView):
         """
         from weko_records_ui.permissions import check_file_download_permission
         """Get record metadata (table records_metadata) from bucket_id."""
-        record_bucket = get_record_bucket_by_bucket_id(bucket)
-        record_metadata = get_record_metadata_by_record_id(
-            record_bucket.record_id)
+        rb = RecordsBuckets.query.filter_by(bucket_id=bucket).first()
+        rm = RecordMetadata.query.filter_by(id=rb.record_id).first()
         """Check and get access role of file in this record metadata."""
         allowed_guest_user = False
-        for k, v in record_metadata.json.items():
+        for k, v in rm.json.items():
             if isinstance(v, dict) and v.get('attribute_type') == 'file':
                 for item in v.get('attribute_value_mlt', []):
                     is_this_version = item.get('version_id') == version_id
                     is_preview = item.get('displaytype') == 'preview'
                     if is_this_version and is_preview:
                         allowed_guest_user = check_file_download_permission(
-                            record_metadata.json, item)
+                            rm.json, item)
                         break
+            if allowed_guest_user:
+                break
         """Get current bucket info."""
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
         if not obj:
