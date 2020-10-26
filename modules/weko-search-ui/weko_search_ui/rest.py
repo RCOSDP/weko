@@ -50,7 +50,7 @@ from webargs import fields
 from webargs.flaskparser import use_kwargs
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
-from weko_index_tree.utils import recorrect_private_items_count, count_items
+from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
 
