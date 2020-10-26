@@ -2091,6 +2091,8 @@ function toObject(arr) {
             fileInfo.date = [{}]; // init array
             fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
             fileInfo.date[0].dateType = "Available";
+            // Set default Access Role is Open Access
+            fileInfo.accessrole = 'open_access'
             // Push data to model
             model[filemeta_key].push(fileInfo);
           }
