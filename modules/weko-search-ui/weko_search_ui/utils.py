@@ -397,6 +397,7 @@ def check_import_items(file_content: str, is_change_identifier: bool):
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
+        handle_check_edit(list_record)
         return {
             'list_record': list_record,
             'data_path': data_path
@@ -596,7 +597,15 @@ def handle_check_exist_record(list_record) -> list:
                         exist_url = request.url_root + \
                             'records/' + item_exist.get('recid')
                         if item.get('uri') == exist_url:
-                            item['status'] = 'update'
+                            _edit_mode = item.get('edit_mode')
+                            if not _edit_mode or _edit_mode.lower() \
+                                    not in ['keep', 'upgrade']:
+                                errors.append(
+                                    _('Please specify either \"Keep\"'
+                                    ' or "Upgrade".'))
+                                item['status'] = None
+                            else:
+                                item['status'] = _edit_mode.lower()
                         else:
                             errors.append(_('Specified URI and system'
                                             ' URI do not match.'))
