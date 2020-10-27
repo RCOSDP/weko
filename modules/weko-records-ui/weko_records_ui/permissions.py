@@ -130,12 +130,6 @@ def check_file_download_permission(record, fjson):
                 return is_can
 
         try:
-            # Check for guest user.
-            if not current_user.is_authenticated:
-                if 'open_access' in acsrole:
-                    return True
-                else:
-                    return False
             # can access
             if 'open_access' in acsrole:
                 date = fjson.get('date')
