@@ -1046,21 +1046,43 @@ function toObject(arr) {
               }
             });
           }
+
+          // Initialization groups list for billing file
           groupsprice_schema = filemeta_schema.items.properties['groupsprice']
           groupsprice_form = get_subitem(filemeta_form.items, 'groupsprice')
           if (groupsprice_schema && groupsprice_form) {
-            groupsprice_schema.items.properties['group']['enum'] = [];
-            groupsprice_schema.items.properties['group']['enum'].push(null);
-            group_form = get_subitem(groupsprice_form.items, 'groupsprice');
-            group_form['titleMap'] = [];
-            $scope.groups.forEach(function (group) {
-              groupsprice_schema.items.properties['group']['enum'].push(group.id);
-              group_form['titleMap'].push({ name: group.value, value: group.id });
-            });
+            if (groupsprice_schema.hasOwnProperty('items')
+              && groupsprice_schema.items.hasOwnProperty('properties')
+              && groupsprice_schema.items.properties.hasOwnProperty('group')
+              && groupsprice_form.hasOwnProperty('items')) {
+              let groupSchema = groupsprice_schema.items.properties.group;
+              let groupForm = get_subitem(groupsprice_form.items, 'groupsprice');
+              $scope.loadUserGroups(groupSchema, groupForm);
+            }
+          }
+
+          // Initialization groups list for content file
+          let fileContentGroupSchema = filemeta_schema.items.properties['groups'];
+          let fileContentGroupForm = get_subitem(filemeta_form.items, 'groups');
+          if (fileContentGroupSchema && fileContentGroupForm) {
+            $scope.loadUserGroups(fileContentGroupSchema, fileContentGroupForm);
           }
         });
         $rootScope.$broadcast('schemaFormRedraw');
       }
+
+      $scope.loadUserGroups = function (groupSchema, groupForm) {
+        groupSchema['enum'] = [];
+        groupSchema['enum'].push(null);
+        if (groupForm && groupForm.hasOwnProperty('titleMap')) {
+          groupForm['titleMap'] = [];
+          $scope.groups.forEach(function (group) {
+            groupSchema['enum'].push(group.id);
+            groupForm['titleMap'].push({name: group.value, value: group.id});
+          });
+        }
+      }
+
       $scope.initContributorData = function () {
         $("#contributor-panel").addClass("hidden");
         // Load Contributor information
