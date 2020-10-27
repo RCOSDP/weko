@@ -397,7 +397,6 @@ def check_import_items(file_content: str, is_change_identifier: bool):
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
-        handle_check_edit(list_record)
         return {
             'list_record': list_record,
             'data_path': data_path
