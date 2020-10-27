@@ -1975,7 +1975,7 @@ function toObject(arr) {
                       modelFile.version_id = file.version_id;
                     }
                     if(!modelFile.fileDate){
-                      modelFile.fileDate = [{fileDateType: '', fileDateValue: ''}];
+                      modelFile.fileDate = [{}];
                     }
                   }
                 })
