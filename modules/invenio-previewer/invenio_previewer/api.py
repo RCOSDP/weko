@@ -94,7 +94,7 @@ class PreviewFile(object):
         return self.file.file.storage().open()
 
 
-def convert_to(folder, source, timeout=30):
+def convert_to(folder, source, timeout=80):
     """Convert file to pdf."""
     args = ['libreoffice', '--headless', '--convert-to', 'pdf',
             '--outdir', folder, source]
