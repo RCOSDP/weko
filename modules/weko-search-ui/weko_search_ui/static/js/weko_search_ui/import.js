@@ -716,7 +716,7 @@ class CheckComponent extends React.Component {
       return item.status && item.status === 'new'
     }).length
     const update_item = list_record.filter((item) => {
-      return item.status && item.status === 'update'
+      return item.status && (item.status === 'keep' || item.status === 'upgrade')
     }).length
 
     this.setState({
