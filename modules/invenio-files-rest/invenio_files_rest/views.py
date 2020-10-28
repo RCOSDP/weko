@@ -570,8 +570,10 @@ class ObjectResource(ContentNegotiatedMethodView):
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
         from weko_records_ui.permissions import check_file_download_permission
+        from invenio_files_rest.models import as_bucket_id
         # Get record metadata (table records_metadata) from bucket_id.
-        rb = RecordsBuckets.query.filter_by(bucket_id=bucket).first()
+        bucket_id = as_bucket_id(bucket)
+        rb = RecordsBuckets.query.filter_by(bucket_id=bucket_id).first()
         rm = RecordMetadata.query.filter_by(id=rb.record_id).first()
         # Check and file_access_permission of file in this record metadata.
         file_access_permission = False
