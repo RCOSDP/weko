@@ -1072,12 +1072,9 @@ function toObject(arr) {
       }
 
       $scope.loadUserGroups = function (groupSchema, groupForm) {
-        groupSchema['enum'] = [];
-        groupSchema['enum'].push(null);
-        if (groupForm && groupForm.hasOwnProperty('titleMap')) {
+        if (groupForm && groupForm.hasOwnProperty('titleMap') && $scope.groups.length > 0) {
           groupForm['titleMap'] = [];
           $scope.groups.forEach(function (group) {
-            groupSchema['enum'].push(group.id);
             groupForm['titleMap'].push({name: group.value, value: group.id});
           });
         }
