@@ -2119,6 +2119,12 @@ function toObject(arr) {
             fileInfo.date[0].dateType = "Available";
             // Set default Access Role is Open Access
             fileInfo.accessrole = 'open_access'
+            // Set file URL
+            if (fileData.hasOwnProperty('links') && fileData.links.hasOwnProperty('self')) {
+              fileInfo.url = {
+                url: fileData.links.self
+              };
+            }
             // Push data to model
             model[filemeta_key].push(fileInfo);
           }
