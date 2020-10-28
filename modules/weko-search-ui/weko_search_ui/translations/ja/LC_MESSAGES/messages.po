@@ -306,6 +306,14 @@ msgstr "作業済"
 msgid "To Do"
 msgstr ""
 
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "バージョンの維持"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "バージョンの変更"
+msgstr ""
+
 #: weko_search_ui/config.py:
 msgid "Access"
 msgstr "アクセス制限"

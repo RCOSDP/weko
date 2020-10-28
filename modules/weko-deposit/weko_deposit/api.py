@@ -662,11 +662,10 @@ class WekoDeposit(Deposit):
             if not record or not versioning.exists or versioning.draft_child:
                 return None
 
-
             data = record.dumps()
             owners = data['_deposit']['owners']
             keys_to_remove = ('_deposit', 'doi', '_oai',
-                                '_files', '_buckets', '$schema')
+                              '_files', '_buckets', '$schema')
             for k in keys_to_remove:
                 data.pop(k, None)
 
@@ -701,7 +700,7 @@ class WekoDeposit(Deposit):
                     parent_pid = PIDVersioning(child=recid).parent
                     relation = PIDRelation.query.\
                         filter_by(parent=parent_pid,
-                                    child=recid).one_or_none()
+                                  child=recid).one_or_none()
                     relation.relation_type = 3
                 db.session.merge(relation)
 
@@ -710,10 +709,10 @@ class WekoDeposit(Deposit):
             snapshot.locked = False
             deposit['_buckets'] = {'deposit': str(snapshot.id)}
             RecordsBuckets.create(record=deposit.model,
-                                    bucket=snapshot)
+                                  bucket=snapshot)
 
             index = {'index': self.get('path', []),
-                        'actions': self.get('publish_status')}
+                     'actions': self.get('publish_status')}
             if 'activity_info' in session:
                 del session['activity_info']
             item_metadata = ItemsMetadata.get_record(
@@ -1050,19 +1049,18 @@ class WekoDeposit(Deposit):
             else:
                 draft_deposit = WekoDeposit.get_record(pid.object_uuid)
             # Get draft bucket's data
-            bucket = Bucket.get(draft_deposit.files.bucket.id)
-            if ".0" in self.pid.pid_value:
-                sync_bucket = RecordsBuckets.query.filter_by(
-                    record_id=pid.object_uuid
-                ).first()
-            else:
-                sync_bucket = RecordsBuckets.query.filter_by(
-                    record_id=self.id
-                ).first()
+            sync_bucket = RecordsBuckets.query.filter_by(
+                record_id=pid.object_uuid if ".0" in self.pid.pid_value
+                else self.id
+            ).first()
             sync_bucket.bucket.locked = False
-            snapshot = bucket.snapshot(lock=False)
+            snapshot = Bucket.get(
+                draft_deposit.files.bucket.id).snapshot(lock=False)
+            bucket = Bucket.get(sync_bucket.bucket_id)
             snapshot.locked = False
             sync_bucket.bucket = snapshot
+            bucket.locked = False
+            bucket.remove()
 
             bucket = {
                 "_buckets": {

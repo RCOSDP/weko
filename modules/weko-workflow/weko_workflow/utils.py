@@ -1292,16 +1292,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
         else:
             # update to record without version ID when editing
             if pid_without_ver:
-                record_without_ver = WekoDeposit.get_record(
+                _record = WekoDeposit.get_record(
                     pid_without_ver.object_uuid)
-                deposit_without_ver = WekoDeposit(
-                    record_without_ver,
-                    record_without_ver.model)
-                deposit_without_ver['path'] = deposit.get('path', [])
+                _deposit = WekoDeposit(_record, _record.model)
+                _deposit['path'] = deposit.get('path', [])
 
-                parent_record = deposit_without_ver.\
+                parent_record = _deposit.\
                     merge_data_to_record_without_version(current_pid)
-                deposit_without_ver.publish()
+                _deposit.publish()
 
                 pv = PIDVersioning(child=pid_without_ver)
                 last_ver = PIDVersioning(parent=pv.parent).get_children(
