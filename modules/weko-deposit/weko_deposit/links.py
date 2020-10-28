@@ -45,10 +45,9 @@ def base_factory(pid, **kwargs):
     links['index'] = redirect_url + pid.pid_value
     links['r'] = "/items/index/" + pid.pid_value
     links['iframe_tree'] = iframe_index_url + pid.pid_value
-    links['newversion'] = "/items/newversion/" + pid.pid_value
-    links['edit'] = redirect_url + pid.pid_value
-    links['iframe_tree_edit'] = iframe_index_url + pid.pid_value
-    links['index_upgrade'] = redirect_url + upgrade_pid_number
+    # links['edit'] = redirect_url + pid.pid_value
+    # links['iframe_tree_edit'] = iframe_index_url + pid.pid_value
+    # links['index_upgrade'] = redirect_url + upgrade_pid_number
     links['iframe_tree_upgrade'] = iframe_index_url + upgrade_pid_number
 
     return links

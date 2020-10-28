@@ -1040,22 +1040,20 @@ class WekoDeposit(Deposit):
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
             item_metadata.pop('control_number', None)
+            is_draft = True if ".0" not in pid.pid_value else False
 
             # Clone bucket
-            if ".0" not in pid.pid_value:
-                draft_pid = PersistentIdentifier.get('recid', '{}.0'.format(
-                    pid.pid_value.split(".")[0]))
-                draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
-            else:
-                draft_deposit = WekoDeposit.get_record(pid.object_uuid)
+            _deposit = WekoDeposit.get_record(
+                PersistentIdentifier.get(
+                    'recid',
+                    '{}.0'.format(pid.pid_value.split(".")[0])
+                ).object_uuid if is_draft else pid.object_uuid)
             # Get draft bucket's data
             sync_bucket = RecordsBuckets.query.filter_by(
-                record_id=pid.object_uuid if ".0" in self.pid.pid_value
-                else self.id
-            ).first()
+                record_id=pid.object_uuid if is_draft else self.id).first()
             sync_bucket.bucket.locked = False
             snapshot = Bucket.get(
-                draft_deposit.files.bucket.id).snapshot(lock=False)
+                _deposit.files.bucket.id).snapshot(lock=False)
             bucket = Bucket.get(sync_bucket.bucket_id)
             snapshot.locked = False
             sync_bucket.bucket = snapshot
@@ -1070,9 +1068,9 @@ class WekoDeposit(Deposit):
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
-            if ".0" in self.pid.pid_value:
-                draft_deposit['_buckets'] = {"deposit": str(snapshot.id)}
-                draft_deposit.commit()
+            if is_draft:
+                _deposit['_buckets'] = {"deposit": str(snapshot.id)}
+                _deposit.commit()
             else:
                 super(WekoDeposit, self).update(bucket)
             self.commit()

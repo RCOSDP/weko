@@ -21,9 +21,11 @@
 """Blueprint for Weko deposit rest."""
 
 import json
+import sys
 
 import redis
 from flask import Blueprint, abort, current_app, jsonify, request
+from invenio_db import db
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
@@ -189,22 +191,43 @@ class ItemResource(ContentNegotiatedMethodView):
 
     def put(self, **kwargs):
         """Put."""
+        from weko_workflow.api import WorkActivity
         try:
             data = request.get_json()
             self.__sanitize_input_data(data)
-            pid = kwargs.get('pid_value').value
+            pid_value = kwargs.get('pid_value').value
+            edit_mode = data.get('edit_mode')
+
+            if edit_mode and edit_mode == 'upgrade':
+                draft_pid = PersistentIdentifier.get('recid', pid_value)
+                if ".0" in pid_value:
+                    pid_value = pid_value.split(".")[0]
+                pid = PersistentIdentifier.get('recid', pid_value)
+                deposit = WekoDeposit.get_record(pid.object_uuid)
+
+                upgrade_record = deposit.newversion(pid)
+
+                with db.session.begin_nested():
+                    activity = WorkActivity()
+                    wf_activity = activity.get_workflow_activity_by_item_id(
+                        draft_pid.object_uuid)
+                    wf_activity.item_id = upgrade_record.model.id
+                    db.session.merge(wf_activity)
+                db.session.commit()
 
             # Saving ItemMetadata cached on Redis by pid
             datastore = RedisStore(redis.StrictRedis.from_url(
                 current_app.config['CACHE_REDIS_URL']))
             cache_key = current_app.config[
-                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid)
+                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid_value)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
             datastore.put(
                 cache_key,
                 json.dumps(data).encode('utf-8'),
                 ttl_secs=ttl_sec)
         except BaseException:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            db.session.rollback()
             abort(400, "Failed to register item!")
 
         return jsonify({'status': 'success'})
