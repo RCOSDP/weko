@@ -206,7 +206,7 @@ class QueryRecordViewCount(WekoQuery):
             for _idx in _data:
                 for key, value in _idx['country'].items():
                     countries[key] = countries.get(key, 0) + value
-                result['total'] = result['total'] + value['total']
+                result['total'] = result['total'] + _idx['total']
                 result['period'] = _idx.get('period', [])
 
         return result
