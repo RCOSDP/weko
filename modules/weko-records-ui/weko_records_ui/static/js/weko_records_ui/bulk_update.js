@@ -305,7 +305,7 @@ require([
               }
 
               // URL
-              var index_url = redirect_url + "/" + pidversion;
+              var index_url = redirect_url + "/" + version;
               var self_url = items_url + "/" + next_version;
               var pub_url = publish_url + "/" + next_version;
 
