@@ -299,12 +299,15 @@ require([
               var index = JSON.stringify(itemsMeta[pid].index);
               var version = JSON.stringify(itemsMeta[pid].version);
 
-              console.log(version);
+              let next_version = version
+              if (version) {
+                next_version = version.split('.')[0] + '.' + (parseInt(version.split('.')[1]) + 1)
+              }
 
               // URL
               var index_url = redirect_url + "/" + pidversion;
-              var self_url = items_url + "/" + version;
-              var pub_url = publish_url + "/" + version;
+              var self_url = items_url + "/" + next_version;
+              var pub_url = publish_url + "/" + next_version;
 
               var error = {};
 

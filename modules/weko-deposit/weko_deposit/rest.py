@@ -199,6 +199,7 @@ class ItemResource(ContentNegotiatedMethodView):
             edit_mode = data.get('edit_mode')
 
             if edit_mode and edit_mode == 'upgrade':
+                data.pop('edit_mode')
                 draft_pid = PersistentIdentifier.get('recid', pid_value)
                 if ".0" in pid_value:
                     pid_value = pid_value.split(".")[0]
