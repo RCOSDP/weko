@@ -297,7 +297,7 @@ require([
               // Data
               var meta = JSON.stringify(itemsMeta[pid].meta);
               var index = JSON.stringify(itemsMeta[pid].index);
-              var version = JSON.stringify(itemsMeta[pid].version);
+              var version = itemsMeta[pid].version;
 
               let next_version = version
               if (version) {
