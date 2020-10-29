@@ -930,7 +930,7 @@ class WekoDeposit(Deposit):
                     flag_modified(r, 'json')
                 except BaseException:
                     pass
-                if not r.json['path']:
+                if r.json and not r.json['path']:
                     from weko_records_ui.utils import soft_delete
                     soft_delete(obj_uuid)
             db.session.commit()

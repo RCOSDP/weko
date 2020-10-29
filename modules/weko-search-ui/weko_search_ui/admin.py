@@ -69,8 +69,7 @@ class ItemManagementBulkDelete(BaseView):
                     # Delete items in current_tree
                     delete_records(current_tree.id)
 
-                    # If recursively, then delete all child index trees
-                    # and theirs items
+                    # If recursively, then delete items of child indices
                     if request.values.get('recursively') == 'true'\
                             and recursive_tree is not None:
                         # Delete recursively
@@ -85,10 +84,6 @@ class ItemManagementBulkDelete(BaseView):
                                 # Add the level 1 child into the current_tree
                                 if obj[0] == current_tree.id:
                                     direct_child_trees.append(child_tree.id)
-                        # Then do delete child_tree inside current_tree
-                        for cid in direct_child_trees:
-                            # Delete this tree and children
-                            Indexes.delete(cid)
 
                     return jsonify({'status': 1})
             else:

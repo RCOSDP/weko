@@ -1258,6 +1258,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
 
     item_id = None
     try:
+        combine_record_file_urls(deposit)
         pid_without_ver = PersistentIdentifier.get(
             "recid",
             current_pid.pid_value.split(".")[0]
@@ -1274,6 +1275,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
             ver_attaching_deposit = WekoDeposit(
                 new_deposit,
                 new_deposit.model)
+            combine_record_file_urls(ver_attaching_deposit)
             feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
                 pid_without_ver.object_uuid)
             if feedback_mail_list:
@@ -1317,6 +1319,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_parent_record = maintain_deposit.\
                         merge_data_to_record_without_version(current_pid)
                     maintain_deposit.publish()
+                    combine_record_file_urls(new_parent_record)
                     new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
                     updated_item.publish(new_parent_record)
@@ -1331,6 +1334,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_draft_record = draft_deposit.\
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
+                    combine_record_file_urls(new_draft_record)
                     new_draft_record.update_feedback_mail()
                     new_draft_record.commit()
                     updated_item.publish(new_draft_record)
@@ -1339,6 +1343,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     pid_without_ver.pid_value)
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
+                combine_record_file_urls(parent_record)
                 parent_record.update_feedback_mail()
                 db.session.commit()
                 updated_item.publish(parent_record)
@@ -1398,3 +1403,70 @@ def get_account_info(user_id):
             data.get('subitem_displayname')
     else:
         return None, None
+
+
+def combine_record_file_urls(record, meta_prefix='jpcoar'):
+    """Add file urls to record metadata.
+
+    Get file property information by item_mapping and put to metadata.
+    """
+    def check_url_is_manual(version_id):
+        for file in record.files.dumps():
+            if file.get('version_id') == version_id:
+                return False
+        return True
+
+    from weko_records.api import Mapping
+    from weko_records.serializers.utils import get_mapping
+
+    item_type_id = record.get('item_type_id')
+    type_mapping = Mapping.get_record(item_type_id)
+    item_map = get_mapping(type_mapping, "{}_mapping".format(meta_prefix))
+
+    if item_map:
+        file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
+        if meta_prefix in file_props:
+            file_keys = item_map.get(file_props[meta_prefix])
+        else:
+            file_keys = None
+
+    if not file_keys:
+        return record
+    else:
+        file_keys = file_keys.split('.')
+
+    if len(file_keys) == 3 and record.get(file_keys[0]):
+        attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
+        if isinstance(attr_mlt, list):
+            for attr in attr_mlt:
+                if attr.get('filename'):
+                    if not attr.get(file_keys[1]):
+                        attr[file_keys[1]] = {}
+                    if not (attr[file_keys[1]].get(file_keys[2])
+                            and check_url_is_manual(attr.get('version_id'))):
+                        attr[file_keys[1]][file_keys[2]] = \
+                            create_files_url(
+                                request.url_root,
+                                record.get('recid'),
+                                attr.get('filename'))
+        elif isinstance(attr_mlt, dict) and \
+                attr_mlt.get('filename'):
+            if not attr_mlt.get(file_keys[1]):
+                attr_mlt[file_keys[1]] = {}
+            if not (attr[file_keys[1]].get(file_keys[2])
+                    and check_url_is_manual(attr.get('version_id'))):
+                attr_mlt[file_keys[1]][file_keys[2]] = \
+                    create_files_url(
+                        request.url_root,
+                        record.get('recid'),
+                        attr_mlt.get('filename'))
+
+    return record
+
+
+def create_files_url(root_url, record_id, filename):
+    """Generation of downloading file url."""
+    return "{}record/{}/files/{}".format(
+        root_url,
+        record_id,
+        filename)
