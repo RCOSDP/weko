@@ -185,9 +185,10 @@ class ItemResource(ContentNegotiatedMethodView):
     def post(self, pid, record, **kwargs):
         """Post."""
         from weko_deposit.links import base_factory
-        response = self.make_response(pid, record, 201,
-                                      links_factory=base_factory)
-        return response
+        return self.make_response(pid,
+                                  record,
+                                  201,
+                                  links_factory=base_factory)
 
     def put(self, **kwargs):
         """Put."""
@@ -200,10 +201,8 @@ class ItemResource(ContentNegotiatedMethodView):
 
             if edit_mode and edit_mode == 'upgrade':
                 data.pop('edit_mode')
-                draft_pid = PersistentIdentifier.get('recid', pid_value)
-                if ".0" in pid_value:
-                    pid_value = pid_value.split(".")[0]
-                pid = PersistentIdentifier.get('recid', pid_value)
+                cur_pid = PersistentIdentifier.get('recid', pid_value)
+                pid = PersistentIdentifier.get('recid', pid_value.split(".")[0])
                 deposit = WekoDeposit.get_record(pid.object_uuid)
 
                 upgrade_record = deposit.newversion(pid)
@@ -211,7 +210,7 @@ class ItemResource(ContentNegotiatedMethodView):
                 with db.session.begin_nested():
                     activity = WorkActivity()
                     wf_activity = activity.get_workflow_activity_by_item_id(
-                        draft_pid.object_uuid)
+                        cur_pid.object_uuid)
                     if wf_activity:
                         wf_activity.item_id = upgrade_record.model.id
                         db.session.merge(wf_activity)
