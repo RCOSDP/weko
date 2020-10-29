@@ -297,6 +297,9 @@ require([
               // Data
               var meta = JSON.stringify(itemsMeta[pid].meta);
               var index = JSON.stringify(itemsMeta[pid].index);
+              var version = JSON.stringify(itemsMeta[pid].version);
+
+              console.log(version);
 
               // URL
               var index_url = redirect_url + "/" + pid;

@@ -211,8 +211,9 @@ class ItemResource(ContentNegotiatedMethodView):
                     activity = WorkActivity()
                     wf_activity = activity.get_workflow_activity_by_item_id(
                         draft_pid.object_uuid)
-                    wf_activity.item_id = upgrade_record.model.id
-                    db.session.merge(wf_activity)
+                    if wf_activity:
+                        wf_activity.item_id = upgrade_record.model.id
+                        db.session.merge(wf_activity)
                 db.session.commit()
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type='recid',
