@@ -302,11 +302,13 @@ require([
               console.log(version);
 
               // URL
-              var index_url = redirect_url + "/" + pid;
-              var self_url = items_url + "/" + pid;
-              var pub_url = publish_url + "/" + pid;
+              var index_url = redirect_url + "/" + pidversion;
+              var self_url = items_url + "/" + version;
+              var pub_url = publish_url + "/" + version;
 
               var error = {};
+
+              meta['edit_mode'] = 'upgrade'
 
               // Update items
               updateItems(index_url, self_url, pub_url, meta, index, error);
