@@ -198,7 +198,7 @@ class QueryRecordViewCount(WekoQuery):
             if not versioning.exists:
                 return self._get_data(record_id, query_date, get_period)
 
-            _data = list(self.get_data(
+            _data = list(self._get_data(
                 record_id=child.object_uuid,
                 get_period=True) for child in versioning.children.all())
 
