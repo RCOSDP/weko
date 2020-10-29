@@ -180,7 +180,7 @@ class QueryRecordViewCount(WekoQuery):
 
         return result
 
-    def get_data(self, record_id, query_date=None, get_period=False)
+    def get_data(self, record_id, query_date=None, get_period=False):
         """Public interface of _get_data."""
         result = dict(
             total=0,
