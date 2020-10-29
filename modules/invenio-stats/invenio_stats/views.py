@@ -19,6 +19,8 @@ from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl import Search
 from flask import Blueprint, abort, current_app, jsonify, request
 from flask_login import login_required
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_rest.views import ContentNegotiatedMethodView
 from invenio_search import current_search_client
 
@@ -116,7 +118,7 @@ class QueryRecordViewCount(WekoQuery):
 
     view_name = 'get_record_view_count'
 
-    def get_data(self, record_id, query_date=None, get_period=False):
+    def _get_data(self, record_id, query_date=None, get_period=False):
         """Get data."""
         result = {}
         period = []
@@ -175,6 +177,37 @@ class QueryRecordViewCount(WekoQuery):
             result['total'] = 0
             result['country'] = country
             result['period'] = period
+
+        return result
+
+    def get_data(self, record_id, query_date=None, get_period=False)
+        """Public interface of _get_data."""
+        result = dict(
+            total=0,
+            country=dict(),
+            period=list()
+        )
+
+        recid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            object_uuid=record_id).first()
+
+        if recid:
+            versioning = PIDVersioning(child=recid)
+
+            if not versioning.exists:
+                return self._get_data(record_id, query_date, get_period)
+
+            _data = list(self.get_data(
+                record_id=child.object_uuid,
+                get_period=True) for child in versioning.children.all())
+
+            countries = result['country']
+            for _idx in _data:
+                for key, value in _idx['country'].items():
+                    countries[key] = countries.get(key, 0) + value
+                result['total'] = result['total'] + value['total']
+                result['period'] = _idx.get('period', [])
 
         return result
 

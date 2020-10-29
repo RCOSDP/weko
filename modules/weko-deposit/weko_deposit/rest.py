@@ -214,6 +214,10 @@ class ItemResource(ContentNegotiatedMethodView):
                     wf_activity.item_id = upgrade_record.model.id
                     db.session.merge(wf_activity)
                 db.session.commit()
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type='recid',
+                    object_uuid=upgrade_record.model.id).one_or_none()
+                pid_value = pid.pid_value if pid else pid_value
 
             # Saving ItemMetadata cached on Redis by pid
             datastore = RedisStore(redis.StrictRedis.from_url(
