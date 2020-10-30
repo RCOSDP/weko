@@ -306,16 +306,17 @@ require([
               }
 
               // URL
+              var _index_url= redirect_url + "/" + pid;
+              var _self_url = items_url    + "/" + pid;
+              var _pub_url  = publish_url  + "/" + pid;
               var index_url = redirect_url + "/" + version;
-              var _self_url = items_url + "/" + version;
-              var _pub_url = publish_url + "/" + version;
-              var self_url = items_url + "/" + next_version;
-              var pub_url = publish_url + "/" + next_version;
+              var self_url  = items_url    + "/" + next_version;
+              var pub_url   = publish_url  + "/" + next_version;
 
               var error = {};
 
               // Update items
-              updateItems(index_url, _self_url, _pub_url, meta, index, error);
+              updateItems(_index_url, _self_url, _pub_url, meta, index, error);
 
               itemsMeta[pid].meta['edit_mode'] = 'upgrade'
               // Data
