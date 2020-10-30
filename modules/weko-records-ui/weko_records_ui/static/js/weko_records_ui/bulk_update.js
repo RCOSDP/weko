@@ -307,12 +307,19 @@ require([
 
               // URL
               var index_url = redirect_url + "/" + version;
+              var _self_url = items_url + "/" + version;
+              var _pub_url = items_url + "/" + version;
               var self_url = items_url + "/" + next_version;
               var pub_url = publish_url + "/" + next_version;
 
               var error = {};
 
               // Update items
+              updateItems(index_url, _self_url, _pub_url, meta, index, error);
+
+              itemsMeta[pid].meta['edit_mode'] = 'upgrade'
+              // Data
+              meta = JSON.stringify(itemsMeta[pid].meta);
               updateItems(index_url, self_url, pub_url, meta, index, error);
 
               if(error.isError) {
