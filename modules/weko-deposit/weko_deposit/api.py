@@ -440,12 +440,6 @@ class WekoDeposit(Deposit):
         if '$schema' not in self:
             self['$schema'] = current_app.extensions['invenio-jsonschemas'].\
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
-        if 'pid' not in self['_deposit']:
-            self['_deposit']['pid'] = {
-                'type': self.pid.pid_type,
-                'value': self.pid.pid_value,
-                'revision_id': 0,
-            }
         self.is_edit = True
         try:
             deposit = super(WekoDeposit, self).publish(pid, id_)
