@@ -308,7 +308,7 @@ require([
               // URL
               var index_url = redirect_url + "/" + version;
               var _self_url = items_url + "/" + version;
-              var _pub_url = items_url + "/" + version;
+              var _pub_url = publish_url + "/" + version;
               var self_url = items_url + "/" + next_version;
               var pub_url = publish_url + "/" + next_version;
 
