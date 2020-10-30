@@ -1362,7 +1362,9 @@ def _export_item(record_id,
                     exported_item['files'].append(file.info())
                     # TODO: Then convert the item into the desired format
                     if file:
-                        shutil.copy2(file.obj.file.uri,
-                                     tmp_path + '/' + file.obj.basename)
+                        file_buffered = file.obj.file.storage().open()
+                        temp_file = open(tmp_path + '/' + file.obj.basename, 'wb')
+                        temp_file.write(file_buffered.read())
+                        temp_file.close()
 
     return record, exported_item

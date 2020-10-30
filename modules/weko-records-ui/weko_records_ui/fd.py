@@ -288,11 +288,10 @@ def file_ui(
     # Send file with its pdf cover page
     file_instance_record = FileInstance.query.filter_by(
         id=obj.file_id).first()
-    obj_file_uri = file_instance_record.uri
 
     # return obj_file_uri
     signals.file_downloaded.send(current_app._get_current_object(), obj=obj)
-    return make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang)
+    return make_combined_pdf(pid, fileobj, obj, lang)
 
 
 def add_signals_info(record, obj):
