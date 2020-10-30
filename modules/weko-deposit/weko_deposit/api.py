@@ -455,6 +455,7 @@ class WekoDeposit(Deposit):
                 relations_ver['id'] = recid.object_uuid
                 relations_ver['is_last'] = relations_ver.get('index') == 0
                 self.indexer.update_relation_version_is_last(relations_ver)
+            db.session.commit()
             return deposit
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)

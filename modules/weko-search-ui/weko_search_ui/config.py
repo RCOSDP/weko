@@ -489,7 +489,7 @@ WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION = '.txt'
 WEKO_EXPORT_TEMPLATE_BASIC_ID = [
     '#.id', '.uri', '.metadata.path[0]',
     '.pos_index#1', '.publish_status', '.feedback_mail#1',
-    '.cnri', '.doi_ra', '.doi'
+    '.cnri', '.doi_ra', '.doi', '.edit_mode'
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     '#ID', 'URI', '.IndexID#1',

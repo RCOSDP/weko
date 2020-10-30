@@ -922,8 +922,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         ret.append('.feedback_mail#{}'.format(i + 1))
         ret_label.append('.FEEDBACK_MAIL#{}'.format(i + 1))
 
-    ret.extend(['.cnri', '.doi_ra', '.doi'])
-    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI'])
+    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
 
