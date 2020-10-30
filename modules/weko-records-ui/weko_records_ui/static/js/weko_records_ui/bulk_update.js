@@ -294,8 +294,9 @@ require([
                 itemsMeta[pid].meta[contentKey] = contentsMeta;
               });
 
-              itemsMeta[pid].meta['edit_mode'] = 'upgrade'
               // Data
+              var _meta = JSON.stringify(itemsMeta[pid].meta);
+              itemsMeta[pid].meta['edit_mode'] = 'upgrade'
               var meta = JSON.stringify(itemsMeta[pid].meta);
               var index = JSON.stringify(itemsMeta[pid].index);
               var version = itemsMeta[pid].version;
@@ -316,11 +317,8 @@ require([
               var error = {};
 
               // Update items
-              updateItems(_index_url, _self_url, _pub_url, meta, index, error);
-
-              itemsMeta[pid].meta['edit_mode'] = 'upgrade'
-              // Data
-              meta = JSON.stringify(itemsMeta[pid].meta);
+              updateItems(_index_url, _self_url, _pub_url, _meta, index, error);
+              // Create new version
               updateItems(index_url, self_url, pub_url, meta, index, error);
 
               if(error.isError) {
