@@ -225,14 +225,9 @@ def file_ui(
     # #Check permissions
     # ObjectResource.check_object_permission(obj)
 
-    # Get user's language
-    user = UserProfile.get_by_userid(current_user.get_id())
-    lang = 'en'     # Defautl language for PDF coverpage
-
-    if user is None:
-        lang = 'en'
-    else:
-        lang = user.language
+    # Get user's language and defautl language for PDF coverpage.
+    user_profile = UserProfile.get_by_userid(current_user.get_id())
+    lang = user_profile.language if user_profile else 'en'
 
     add_signals_info(record, obj)
     """ Send file without its pdf cover page """
