@@ -885,7 +885,7 @@ def register_item_metadata(item):
             FeedbackMailList.delete(deposit.id)
             deposit.remove_feedback_mail()
 
-        if item['status'] == 'upgrade':
+        if item['status'] != 'keep':
             with current_app.test_request_context():
                 first_ver = deposit.newversion(pid)
                 first_ver.publish()
