@@ -458,6 +458,10 @@ msgstr "アイテムIDが指定されたURIの情報と一致しません。"
 msgid "PID does not meet the conditions."
 msgstr "PID付与の条件を満たしていません。"
 
+#: weko-search-ui\weko_search_ui\utils.py:603
+msgid "Please specify either \'Keep\' or \'Upgrade\'."
+msgstr "Keep、Upgradeのいずれかを指定してください。"
+
 msgid "Change Identifier Mode."
 msgstr "識別子変更モード"
 

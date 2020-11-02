@@ -498,7 +498,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
     '#', '', '',
-    '', 'Required', '', '', '', ''
+    '', 'Required', '', '', '', '', 'Required'
 ]
 
 WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
