@@ -601,7 +601,7 @@ def handle_check_exist_record(list_record) -> list:
                                     not in ['keep', 'upgrade']:
                                 errors.append(
                                     _('Please specify either \"Keep\"'
-                                    ' or "Upgrade".'))
+                                      ' or "Upgrade".'))
                                 item['status'] = None
                             else:
                                 item['status'] = _edit_mode.lower()

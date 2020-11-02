@@ -665,8 +665,8 @@ class WekoDeposit(Deposit):
                 data.pop(k, None)
 
             draft_id = '{0}.{1}'.format(
-                    pid.pid_value,
-                    0 if is_draft else get_latest_version_id(pid.pid_value))
+                pid.pid_value,
+                0 if is_draft else get_latest_version_id(pid.pid_value))
 
             # NOTE: We call the superclass `create()` method, because
             # we don't want a new empty bucket, but
