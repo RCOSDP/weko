@@ -494,7 +494,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_ID = [
 WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     '#ID', 'URI', '.IndexID#1',
     '.POS_INDEX#1', '.PUBLISH_STATUS', '.FEEDBACK_MAIL#1',
-    '.CNRI', '.DOI_RA', '.DOI', 'Change/Maintain Version'
+    '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
     '#', '', '',
