@@ -887,7 +887,8 @@ class WorkActivity(object):
         """Get activity action status."""
         with db.session.no_autoflush:
             activity_ac = ActivityAction.query.filter_by(
-                activity_id=activity_id, action_id=action_id).one()
+                activity_id=activity_id,
+                action_id=action_id).one()
             action_stus = activity_ac.action_status
             return action_stus
 

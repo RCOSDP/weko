@@ -307,12 +307,12 @@ msgid "To Do"
 msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
-msgid "バージョンの維持"
-msgstr ""
+msgid "Keep Version"
+msgstr "バージョンの維持"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
-msgid "バージョンの変更"
-msgstr ""
+msgid "Upgrade Version"
+msgstr "バージョンの変更"
 
 #: weko_search_ui/config.py:
 msgid "Access"
