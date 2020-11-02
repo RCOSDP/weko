@@ -375,8 +375,9 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     url_lfnum = int(get_east_asian_width_count(url)) // max_letters_num
 
     # Get OA Policy
-    activity_id = get_current_activity_id(pid_object, pid.pid_value)
-    oa_policy = get_oa_policy(activity_id)
+    # activity_id = get_current_activity_id(pid_object, pid.pid_value)
+    # oa_policy = get_oa_policy(activity_id)
+    oa_policy = ''
     oa_policy_lfnum = int(
         get_east_asian_width_count(oa_policy)) // max_letters_num
 
