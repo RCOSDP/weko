@@ -1,4 +1,3 @@
-//import {ComponentFieldEditor} from './widget.setting'
 const MAIN_CONTENT_TYPE = "Main contents";
 const MAIN_CONTENT_BUTTON_ID = "main_content_id";
 let isHasMainContent = false;
@@ -12,6 +11,17 @@ const FOOTER_TYPE = "Footer";
 let isHasFooter = false;
 
 const ACCESS_COUNTER = "Access counter";
+
+const LOAD_REPOSITORY_URL = "/api/admin/load_repository";
+const LOAD_WIDGET_LIST_DESIGN_SETTING_URL = "/api/admin/load_widget_list_design_setting";
+const LOAD_WIDGET_DESIGN_PAGES_URL = '/api/admin/load_widget_design_pages';
+const LOAD_DESIGN_PAGE = '/api/admin/load_widget_design_page';
+const DELETE_WIDGET_DESIGN_PAGE_URL = '/api/admin/delete_widget_design_page';
+const ROOT_URL = '/';
+const GET_SYSTEM_LANG_URL = '/api/admin/get_system_lang';
+const SAVE_WIDGET_LAYOUT_SETTING_URL = "/api/admin/save_widget_layout_setting";
+const LOAD_WIDGET_DESIGN_SETTING_URL = "/api/admin/load_widget_design_setting";
+const LOAD_WIDGET_DESIGN_PAGE_SETTING_URL = '/api/admin/load_widget_design_page_setting/';
 
 /**
  * Repository combo box.
@@ -30,9 +40,9 @@ class Repository extends React.Component {
   }
 
   componentDidMount() {
+    let _this = this;
     $.ajax({
-      context: this,
-      url: "/api/admin/load_repository",
+      url: LOAD_REPOSITORY_URL,
       type: 'GET',
       dataType: "json",
       success: function (result) {
@@ -40,12 +50,12 @@ class Repository extends React.Component {
           addAlert(result.error);
           return;
         }
-        let options = result.repositories.map((option) => {
+        let options = result['repositories'].map((option) => {
           return (
             <option key={option.id} value={option.id}>{option.id}</option>
           )
         });
-        this.setState({
+        _this.setState({
           selectOptions: options
         });
       },
@@ -60,9 +70,8 @@ class Repository extends React.Component {
     let data = {
       repository_id: repositoryId
     };
-    let url = "/api/admin/load_widget_list_design_setting";
     $.ajax({
-      url: url,
+      url: LOAD_WIDGET_LIST_DESIGN_SETTING_URL,
       type: 'POST',
       dataType: "json",
       contentType: 'application/json',
@@ -72,12 +81,10 @@ class Repository extends React.Component {
           console.log(result.error);
           return;
         }
-        let widgetPreview = result['widget-preview'];
-        let widgetList = result['widget-list'];
-        let widgetPreviewElement = widgetPreview['data'];
-        loadWidgetPreview(widgetPreviewElement);  // TODO: Reuse below
-        widgetPreviewElement = widgetList['data'];
-        loadWidgetList(widgetPreviewElement);
+        let widgetPreview = result['widget-preview']['data'];
+        let widgetList = result['widget-list']['data'];
+        loadWidgetPreview(widgetPreview);
+        loadWidgetList(widgetList);
       },
       error: function (error) {
         console.log(error);
@@ -174,9 +181,9 @@ class PagesListSelect extends React.Component {
       let data = {
         repository_id: this.props.repositoryId
       };
+      let _this = this;
       $.ajax({
-        context: this,
-        url: '/api/admin/load_widget_design_pages',
+        url: LOAD_WIDGET_DESIGN_PAGES_URL,
         type: 'POST',
         dataType: "json",
         contentType: 'application/json',
@@ -185,7 +192,7 @@ class PagesListSelect extends React.Component {
           if (result.error) {
             alertModal("Can't get page list! \nDetail: " + result.error);
           } else {
-            this.displayOptions(result['page-list']['data'], selectedPage);  //this.state.selectedPage
+            _this.displayOptions(result['page-list']['data'], selectedPage);  //this.state.selectedPage
           }
         },
         error: function (error) {
@@ -226,13 +233,13 @@ class PagesListSelect extends React.Component {
     let requestType = 'GET';
     let data;
     if (String(id) === '0' || isMainLayout) {  // If zero, then the main layout was selected
-      url = '/api/admin/load_widget_design_setting';
+      url = LOAD_WIDGET_DESIGN_SETTING_URL;
       data = {
         repository_id: this.props.repositoryId
       };
       requestType = 'POST'
     } else {  // Get design setting for page not repository
-      url = '/api/admin/load_widget_design_page_setting/' + id;
+      url = LOAD_WIDGET_DESIGN_PAGE_SETTING_URL + id;
     }
     $.ajax({
       url: url,
@@ -312,7 +319,7 @@ class PagesListSelectControls extends React.Component {
     };
     $.ajax({
       context: this,
-      url: '/api/admin/load_widget_design_page',
+      url: LOAD_DESIGN_PAGE,
       type: 'POST',
       dataType: "json",
       contentType: 'application/json',
@@ -340,13 +347,13 @@ class PagesListSelectControls extends React.Component {
     let postData = {page_id: this.props.selectedOption};
     $.ajax({
       context: this,
-      url: '/api/admin/delete_widget_design_page',
+      url: DELETE_WIDGET_DESIGN_PAGE_URL,
       type: 'POST',
       dataType: "json",
       contentType: 'application/json',
       data: JSON.stringify(postData),
       success: function (result) {
-        if (result.error) {  // Exception occured while saving
+        if (result.error) {  // Exception occurred while saving
           alertModal(result.error);
         } else if (!result.result) {  // No exception, but problem with request data
           alertModal('Unable to delete page: Unexpected error.');
@@ -361,7 +368,7 @@ class PagesListSelectControls extends React.Component {
   render() {
     const selected = this.props.selectedOption;
     let buttons = [];
-    let addButton = <IconButton id={'add-page'} onClick={(e) => this.setState({
+    let addButton = <IconButton id={'add-page'} onClick={() => this.setState({
       pageModalOpen: true,
       isEdit: false
     })} iconClass={'fa fa-plus glyphicon glyphicon-plus'}/>;
@@ -370,7 +377,7 @@ class PagesListSelectControls extends React.Component {
       this.setState({isEdit: true})
     }} iconClass={'fa fa-pencil glyphicon glyphicon-pencil'}/>;
     let deleteButton = <IconButton id={'delete-page'}
-                                   onClick={(e) => this.setState({deleteModalOpen: true})}
+                                   onClick={() => this.setState({deleteModalOpen: true})}
                                    iconClass={'fa fa-trash glyphicon glyphicon-trash'}/>;
     if (parseInt(selected) !== 0 && !this.props.isMainLayout) {  // Do not allow the deletion of parent layout
       buttons.push(editButton);
@@ -388,10 +395,10 @@ class PagesListSelectControls extends React.Component {
         </div>,
         <DeletePageModal deleteModalOpen={this.state.deleteModalOpen}
                          handleDelete={this.handleDelete}
-                         handleClose={(e) => this.setState({deleteModalOpen: false})}/>,
+                         handleClose={() => this.setState({deleteModalOpen: false})}/>,
         <AddPageModal isEdit={this.state.isEdit}
                       isOpen={this.state.pageModalOpen}
-                      handleClose={(e) => this.setState({pageModalOpen: false})}
+                      handleClose={() => this.setState({pageModalOpen: false})}
                       repositoryId={this.props.repositoryId}
                       addPageEndpoint={'/api/admin/save_widget_design_page'}
                       pageId={selected} page={this.state.page}
@@ -525,25 +532,25 @@ class AddPageModal extends React.Component {
         is_main_layout: this.state.isMainLayout,
         is_edit: this.props.isEdit,
       };
+      let _this = this;
       $.ajax({
-        context: this,
         url: this.props.addPageEndpoint,
         type: 'POST',
         dataType: "json",
         contentType: 'application/json',
         data: JSON.stringify(postData),
         success: function (result) {
-          if (result.error) {  // Exception occured while saving
+          if (result.error) {  // Exception occurred while saving
             alertModal(result.error);
           } else if (!result.result) {  // No exception, but problem with request data
             alertModal('Unable to save page: Unexpected error.');
           } else {
-            this.props.refreshList(this.props.pageId);
-            this.handleClose(event);
+            _this.props.refreshList(_this.props.pageId);
+            _this.handleClose(event);
             addAlert('Successfully saved page.');
           }
         },
-        error: function (error) {
+        error: function () {
           alertModal('Unable to save page: Unexpected error.');
         }
       });
@@ -554,7 +561,7 @@ class AddPageModal extends React.Component {
     this.setState({
       page: {},
       title: 'Page Title',
-      url: '/',
+      url: ROOT_URL,
       content: '',
       multiLangData: {},
       isMainLayout: false,
@@ -667,9 +674,9 @@ class PageTitle extends React.Component {
     let langList = [];
     let langName = {};
     let systemRegisteredLang = [];
+    let _this = this;
     $.ajax({
-      context: this,
-      url: '/api/admin/get_system_lang',
+      url: GET_SYSTEM_LANG_URL,
       type: 'GET',
       dataType: "json",
       success: function (result) {
@@ -688,11 +695,11 @@ class PageTitle extends React.Component {
             } else {
               langList.push(lang.lang_code);
             }
-            langName[lang.lang_code] = lang.lang_name;
+            langName[lang.lang_code] = lang['lang_name'];
           });
           for (let i = systemRegisteredLang.length; i >= 0; i--) {
             for (let j = 0; j < systemRegisteredLang.length; j++) {
-              if (systemRegisteredLang[j].sequence == i) {
+              if (systemRegisteredLang[j].sequence === i) {
                 langList.unshift(systemRegisteredLang[j].code);
               }
             }
@@ -706,8 +713,8 @@ class PageTitle extends React.Component {
           selectedLang = langList[0];
           defaultLang = langList[0];
 
-          this.displayOptions(langList, langName, selectedLang);
-          this.setState({
+          _this.displayOptions(langList, langName, selectedLang);
+          _this.setState({
             languageList: langList,
             languageNameList: langName,
             selectedLanguage: selectedLang,
@@ -727,9 +734,9 @@ class PageTitle extends React.Component {
     let state = this.state;
     languageList.forEach(function (lang) {
       let innerHTML;
-      if (lang == state.defaultLanguage) {
+      if (lang === state.defaultLanguage) {
         innerHTML = <option value={lang} selected>{lang}</option>;
-      } else if (lang == selected) {
+      } else if (lang === selected) {
         innerHTML = <option value={lang} selected>{lang}</option>;
       } else {
         innerHTML = <option value={lang}>{lang}</option>;
@@ -744,11 +751,11 @@ class PageTitle extends React.Component {
   handleChange(event) {
 
     // Add the default as the 'title' of the model
-    if (this.state.selectedLanguage == this.state.defaultLanguage) {
+    if (this.state.selectedLanguage === this.state.defaultLanguage) {
       this.props.handleChange(event.target.name, event.target.value);
     }
 
-    // Add to current multi-lanugage data in state
+    // Add to current multi-language data in state
     let multiLangData = this.state.multiLangData;
     multiLangData[this.state.selectedLanguage] = event.target.value;
     this.setState({
@@ -761,7 +768,7 @@ class PageTitle extends React.Component {
   handleChangeLanguage(event) {
     if (event.target.value in this.state.multiLangData) {
       this.setState({title: this.state.multiLangData[event.target.value]});
-    } else if (event.target.value == this.state.defaultLanguage) {  // Default language is main one
+    } else if (event.target.value === this.state.defaultLanguage) {  // Default language is main one
       this.setState({title: this.props.title});
     } else {
       this.setState({title: ''});
@@ -770,7 +777,7 @@ class PageTitle extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.pageModalOpen != this.state.pageModalOpen) {
+    if (nextProps.pageModalOpen !== this.state.pageModalOpen) {
       let lang = this.state.defaultLanguage;
       let title = lang in nextProps.multiLangData ?
         nextProps.multiLangData[lang] : nextProps.title;
@@ -848,14 +855,14 @@ class ButtonLayout extends React.Component {
     let url;
     let requestType = 'GET';
     let data;
-    if (this.props.pageId == 0) {  // If zero, then the main layout is selected
-      url = '/api/admin/load_widget_design_setting';
+    if (this.props.pageId === 0) {  // If zero, then the main layout is selected
+      url = LOAD_WIDGET_DESIGN_SETTING_URL;
       data = {
         repository_id: this.props.repositoryId
       };
       requestType = 'POST'
     } else {  // Get design setting for page not repository
-      url = '/api/admin/load_widget_design_page_setting/' + this.props.pageId;
+      url = LOAD_WIDGET_DESIGN_PAGE_SETTING_URL + this.props.pageId;
     }
     $.ajax({
       url: url,
@@ -921,7 +928,7 @@ class MainLayout extends React.Component {
       <div>
         <div className="row">
           <Repository callbackMainLayout={this.callbackMainLayout.bind(this)}/>
-          {(repositoryId != 0 || repositoryId != '0' && repositoryId.length) ?  // Only show if parent data is available
+          {(repositoryId !== 0 || repositoryId !== '0' && repositoryId.length) ?  // Only show if parent data is available
             <PagesListSelect
               callbackMainLayout={this.callbackMainLayout.bind(this)}
               repositoryId={repositoryId}/> :
@@ -958,11 +965,13 @@ var PreviewGrid = new function () {
       acceptWidgets: '.grid-stack-item'
     };
 
-    $('#gridPreview').gridstack(_.defaults(options));
+    let gridPreview = $('#gridPreview');
+
+    gridPreview.gridstack(_.defaults(options));
 
     this.serializedData = [];
 
-    this.grid = $('#gridPreview').data('gridstack');
+    this.grid = gridPreview.data('gridstack');
   };
 
   this.loadGrid = function (widgetListItems) {
@@ -1082,7 +1091,7 @@ var PreviewGrid = new function () {
  */
 function addWidget() {
   $('.add-new-widget').each(function () {
-    var $this = $(this);
+    let $this = $(this);
     $this.on("click", function () {
       let widgetName = $(this).data('widgetName');
       let widgetId = $(this).data('widgetId');
@@ -1138,34 +1147,36 @@ function addWidget() {
  * @param {*} widgetListItems
  */
 function loadWidgetList(widgetListItems) {
-  var options = {
+  let options = {
     width: 2,
     ddPlugin: false,
     cellHeight: 80,
     acceptWidgets: '.grid-stack-item'
   };
-  $('#widgetList').gridstack(options);
-  var widgetList = $('#widgetList').data('gridstack');
+  let widgetListPanel = $('#widgetList');
+  widgetListPanel.gridstack(options);
+  let widgetList = widgetListPanel.data('gridstack');
   widgetList.removeAll();
   let x = 0;
   let y = 0;
   _.each(widgetListItems, function (widget) {
     let buttonId = "";
     let buttonClass = "";
-    if (MAIN_CONTENT_TYPE === widget.widgetType) {
+    let widgetType = widget['widgetType'];
+    if (widgetType === MAIN_CONTENT_TYPE) {
       buttonId = 'id="' + MAIN_CONTENT_BUTTON_ID + '"';
-    } else if (widget.widgetType === HEADER_TYPE) {
+    } else if (widgetType === HEADER_TYPE) {
       buttonClass = HEADER_CLASS;
-    } else if (widget.widgetType === FOOTER_TYPE) {
+    } else if (widgetType === FOOTER_TYPE) {
       buttonClass = FOOTER_CLASS;
     }
     widgetList.addWidget($(
       '<div>'
       + '<div class="grid-stack-item-content">'
-      + ' <span class="widget-label" >&lt;' + widget.widgetType + '&gt;</span>'
+      + ' <span class="widget-label" >&lt;' + widgetType + '&gt;</span>'
       + ' <span class="widget-label">' + widget.label + '</span>'
-      + ' <button ' + buttonId + ' data-widget-type="' + widget.widgetType
-      + '" data-widget-name="' + escapeHtml(widget.label) + '" data-widget-id="' + widget.widgetId
+      + ' <button ' + buttonId + ' data-widget-type="' + widgetType
+      + '" data-widget-name="' + escapeHtml(widget.label) + '" data-widget-id="' + widget['widgetId']
       + '" data-id="' + widget.Id + '" class="btn btn-default add-new-widget ' + buttonClass + '">'
       + ' Add Widget'
       + ' </button>'
@@ -1312,7 +1323,7 @@ function saveWidgetDesignSetting(widgetDesignData) {
 
   if (saveData && Object.keys(widgetDesignData).length) {
     $.ajax({
-      url: "/api/admin/save_widget_layout_setting",
+      url: SAVE_WIDGET_LAYOUT_SETTING_URL,
       type: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1331,7 +1342,7 @@ function saveWidgetDesignSetting(widgetDesignData) {
           let d = new Date();
           let date = d.getFullYear() + '-' + (d.getMonth() > 8 ? '' : '0') + (d.getMonth() + 1)
             + '-' + (d.getDate() > 9 ? '' : '0') + d.getDate();
-          for (var index = 0; index < elements.length; index++) {
+          for (let index = 0; index < elements.length; index++) {
             if (!elements[index].getAttribute('data-created_date')) {
               elements[index].setAttribute('data-created_date', date);
             }
