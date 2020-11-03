@@ -161,11 +161,11 @@ class WidgetList extends React.Component {
         }
     }
 
-    refreshList() {
-        this.getPages();
+    refreshList(selectedPage = 0) {
+        this.getPages(selectedPage);
     }
 
-    getPages() {
+    getPages(selectedPage = 0) {
       if(this.props.repositoryId) {
           let data = {
               repository_id: this.props.repositoryId
@@ -182,7 +182,7 @@ class WidgetList extends React.Component {
                      alertModal("Can't get page list! \nDetail: " + result.error);
                  }
                  else {
-                     this.displayOptions(result['page-list']['data']);  //this.state.selectedPage
+                     this.displayOptions(result['page-list']['data'], selectedPage);  //this.state.selectedPage
                  }
                 },
                 error: function (error) {
@@ -192,9 +192,8 @@ class WidgetList extends React.Component {
         }
     }
 
-    displayOptions(pages) {
+    displayOptions(pages, selectedPage = 0) {
         let options = [<option key={this.props.repositoryId} value={0} selected>Main Layout</option>];
-        let selectedPage = 0;
         let isMainLayout = false;
         pages.forEach(function (page) {
           if (page.is_main_layout) {
@@ -513,7 +512,7 @@ class AddPageModal extends React.Component {
                     alertModal('Unable to save page: Unexpected error.');
                 }
                 else {
-                    this.props.refreshList();
+                    this.props.refreshList(this.props.pageId);
                     this.handleClose(event);
                     addAlert('Successfully saved page.');
                 }
