@@ -734,12 +734,13 @@ class PageTitle extends React.Component {
     let state = this.state;
     languageList.forEach(function (lang) {
       let innerHTML;
+      let langName = languageNameList[lang]
       if (lang === state.defaultLanguage) {
-        innerHTML = <option value={lang} selected>{lang}</option>;
+        innerHTML = <option key={lang} value={lang} selected>{langName}</option>;
       } else if (lang === selected) {
-        innerHTML = <option value={lang} selected>{lang}</option>;
+        innerHTML = <option key={lang} value={lang} selected>{langName}</option>;
       } else {
-        innerHTML = <option value={lang}>{lang}</option>;
+        innerHTML = <option key={lang} value={lang}>{langName}</option>;
       }
       optionList.push(innerHTML);
     });
@@ -749,31 +750,35 @@ class PageTitle extends React.Component {
   }
 
   handleChange(event) {
-
     // Add the default as the 'title' of the model
-    if (this.state.selectedLanguage === this.state.defaultLanguage) {
-      this.props.handleChange(event.target.name, event.target.value);
+    let selectedLanguage = this.state.selectedLanguage;
+    let inputValue = event.target.value;
+    if (selectedLanguage === this.state.defaultLanguage) {
+      this.props.handleChange(event.target.name, inputValue);
     }
 
     // Add to current multi-language data in state
     let multiLangData = this.state.multiLangData;
-    multiLangData[this.state.selectedLanguage] = event.target.value;
+    multiLangData[selectedLanguage] = inputValue;
     this.setState({
       multiLangData: multiLangData,
-      title: event.target.value
+      title: inputValue,
     });
     this.props.handleChange('multiLangData', multiLangData);
   }
 
   handleChangeLanguage(event) {
-    if (event.target.value in this.state.multiLangData) {
-      this.setState({title: this.state.multiLangData[event.target.value]});
-    } else if (event.target.value === this.state.defaultLanguage) {  // Default language is main one
+    let selectedValue = event.target.value;
+    let multiLangData = this.state.multiLangData;
+    console.log(selectedValue, multiLangData);
+    if (multiLangData.hasOwnProperty(selectedValue)) {
+      this.setState({title: multiLangData[selectedValue]});
+    } else if (selectedValue === this.state.defaultLanguage) {  // Default language is main one
       this.setState({title: this.props.title});
     } else {
       this.setState({title: ''});
     }
-    this.setState({selectedLanguage: event.target.value});
+    this.setState({selectedLanguage: selectedValue});
   }
 
   componentWillReceiveProps(nextProps) {
@@ -784,7 +789,8 @@ class PageTitle extends React.Component {
       this.setState({
         title: title,
         multiLangData: nextProps.multiLangData,
-        pageModalOpen: nextProps.pageModalOpen
+        pageModalOpen: nextProps.pageModalOpen,
+        selectedLanguage: lang,
       });
     }
   }
@@ -793,13 +799,15 @@ class PageTitle extends React.Component {
     return (
       <div>
         <div className="col-xs-6">
-          <input id="page-title-input" name="title" type="text"
+          <input id="page-title-input"
+                 name="title" type="text"
                  value={this.state.title}
                  onChange={this.handleChange}
                  className="form-control"/>
         </div>
-        <div className="col-xs-2">
-          <select id="page-language-select" onChange={this.handleChangeLanguage}
+        <div key={this.state.pageModalOpen} className="col-xs-2">
+          <select id="page-language-select"
+                  onChange={this.handleChangeLanguage}
                   className="form-control">
             {this.state.options}
           </select>
