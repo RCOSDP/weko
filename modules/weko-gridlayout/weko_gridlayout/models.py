@@ -509,7 +509,8 @@ class WidgetDesignPage(db.Model):
                 page.title = title
                 page.url = url
                 page.content = content
-                page.settings = settings
+                if settings is not None:
+                    page.settings = settings
                 page.is_main_layout = is_main_layout
                 for lang in multi_lang_data:
                     page.multi_lang_data[lang] = \
