@@ -308,11 +308,12 @@ def handle_generate_key_path(key) -> list:
     return key_path
 
 
-def parse_to_json_form(data: list) -> dict:
+def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
     """Parse set argument to json object.
 
     :argument
         data    -- {list zip} argument if json object.
+        item_path_not_existed -- {list} item paths not existed in metadata.
     :return
         return  -- {dict} dict after convert argument.
 
@@ -337,6 +338,8 @@ def parse_to_json_form(data: list) -> dict:
             return
 
     for key, name, value in data:
+        if key in item_path_not_existed:
+            continue
         key_path = handle_generate_key_path(key)
         name_path = handle_generate_key_path(name)
         if value:
@@ -445,6 +448,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     item_path = []
     item_path_name = []
     check_item_type = {}
+    item_path_not_existed = []
     schema = ''
     with open(tsv_file_path, 'r') as tsvfile:
         for num, row in enumerate(tsvfile, start=1):
@@ -461,17 +465,22 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
 
             elif num == 2:
                 item_path = data_row
+                if check_item_type:
+                    item_path_not_existed = handle_check_metadata_not_existed(
+                        item_path, check_item_type.get('item_type_id'))
             elif num == 3:
                 item_path_name = data_row
             elif (num == 4 or num == 5) and row.startswith('#'):
                 continue
             else:
                 data_parse_metadata = parse_to_json_form(
-                    zip(item_path, item_path_name, data_row)
+                    zip(item_path, item_path_name, data_row),
+                    item_path_not_existed
                 )
 
                 json_data_parse = parse_to_json_form(
-                    zip(item_path_name, item_path, data_row)
+                    zip(item_path_name, item_path, data_row),
+                    item_path_not_existed
                 )
                 if isinstance(check_item_type, dict):
                     item_type_name = check_item_type.get('name')
@@ -485,8 +494,21 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                             '$schema': schema if schema else ''
                         }
                     )
+                    if not check_item_type.get('is_lastest'):
+                        tsv_item['errors'] = [
+                            _('Cannot register because the specified'
+                              + ' item type is not the latest version.')
+                        ]
                 else:
                     tsv_item = dict(**json_data_parse, **data_parse_metadata)
+                if item_path_not_existed:
+                    str_keys = ', '.join(item_path_not_existed) \
+                        .replace('.metadata.', '')
+                    tsv_item['warnings'] = [
+                        _('The following items are not registered because '
+                          + 'they do not exist in the specified item type. {}')
+                        .format(str_keys)
+                    ]
                 tsv_data.append(tsv_item)
 
     result['tsv_data'] = tsv_data
@@ -506,7 +528,7 @@ def handle_validate_item_import(list_record, schema) -> list:
     result = []
     v2 = Draft4Validator(schema) if schema else None
     for record in list_record:
-        errors = []
+        errors = record.get('errors') or []
         record_id = record.get("id")
         if record_id and (not represents_int(record_id)):
             errors.append(_('Please specify item ID by half-width number.'))
@@ -518,9 +540,8 @@ def handle_validate_item_import(list_record, schema) -> list:
                 errors = errors = errors + \
                     [_('Specified item type does not exist.')]
 
-        item_error = dict(**record, **{
-            'errors': errors if len(errors) else None
-        })
+        item_error = dict(**record)
+        item_error['errors'] = errors if len(errors) else None
         result.append(item_error)
 
     return result
@@ -553,8 +574,10 @@ def get_item_type(item_type_id=0) -> dict:
         itemtype = ItemTypes.get_by_id(item_type_id)
         if itemtype and itemtype.schema \
                 and itemtype.item_type_name.name and item_type_id:
+            lastest_id = itemtype.item_type_name.item_type.first().id
             result = {
                 'schema': itemtype.schema,
+                'is_lastest': lastest_id == item_type_id,
                 'name': itemtype.item_type_name.name,
                 'item_type_id': item_type_id
             }
@@ -657,52 +680,6 @@ def handle_remove_identifier(item) -> dict:
     return item
 
 
-def compare_identifier(item, item_exist):
-    """Compare data is Identifier.
-
-    :argument
-        item           -- {dict} item import.
-        item_exist     -- {dict} item in system.
-    :return
-        return       -- Name of key if is Identifier.
-
-    """
-    if item.get('Identifier key'):
-        item_iden = item.get('metadata', '').get(item.get('Identifier key'))
-        item_exist_iden = item_exist.get(item.get(
-            'Identifier key')).get('attribute_value_mlt')
-        if len(item_iden) == len(item_exist_iden):
-            list_dif = difference(item_iden, item_exist_iden)
-            if list_dif:
-                item['errors'] = ['Errors in Identifier']
-                item['status'] = ''
-        elif len(item_iden) > len(item_exist_iden):
-            list_dif = difference(item_iden, item_exist_iden)
-            for i in list_dif + item_iden:
-                if i not in item_exist_iden:
-                    try:
-                        pids = [
-                            k for k in i.values() if k != 'DOI' or k != 'HDL']
-                        for pid in pids:
-                            item_check = \
-                                WekoRecord.get_record_by_pid(pid)
-                            if item_check and item_check.id != item.id:
-                                item['errors'] = ['Errors in Identifier']
-                                item['status'] = ''
-                    except BaseException:
-                        current_app.logger.error('Unexpected error: ',
-                                                 sys.exc_info()[0])
-            if item['errors']:
-                item['metadata'][item.get('Identifier key')] = list(set([
-                    it for it in list_dif + item_iden
-                ]))
-        elif len(item_iden) < len(item_exist_iden):
-            item['metadata'][item.get('Identifier key')] = item_exist_iden
-    if item.get('uri'):
-        pass
-    return item
-
-
 def make_tsv_by_line(lines):
     """Make TSV file."""
     tsv_output = StringIO()
@@ -728,40 +705,6 @@ def make_stats_tsv(raw_stats, list_name):
         writer.writerow(term)
 
     return tsv_output
-
-
-def difference(list1, list2):
-    """Make TSV report file for stats."""
-    list_dif = [i for i in list1 + list2 if i not in list1 or i not in list2]
-    return list_dif
-
-
-def check_identifier_new(item):
-    """Check data Identifier.
-
-    :argument
-        item           -- {dict} item import.
-        item_exist     -- {dict} item in system.
-    :return
-        return       -- Name of key if is Identifier.
-
-    """
-    if item.get('Identifier key'):
-        item_iden = item.get('metadata', '').get(item.get('Identifier key'))
-        for it in item_iden:
-            try:
-                pids = [
-                    k for k in it.values() if k != 'DOI' or k != 'HDL']
-                for pid in pids:
-                    item_check = \
-                        WekoRecord.get_record_by_pid(pid)
-                    if item_check and item_check.id != item.id:
-                        item['errors'] = ['Errors in Identifier']
-                        item['status'] = ''
-            except BaseException:
-                current_app.logger.error('Unexpected error: ',
-                                         sys.exc_info()[0])
-    return item
 
 
 def create_deposit(item_id):
@@ -2243,3 +2186,49 @@ def handle_fill_system_item(list_record):
                           item['metadata'],
                           accessRightsuri_key.split('.')[-1],
                           WEKO_IMPORT_SYSTEM_ITEMS[2])
+
+
+def handle_check_metadata_not_existed(str_keys, item_type_id=0):
+    """Check and get list metadata not existed in item type.
+
+    :argument
+        str_keys -- {list} list key.
+        item_type_id -- {int} item type id.
+    :return
+
+    """
+    def check_existed(keys, schema):
+        if keys[0] in schema:
+            if len(keys) > 1:
+                sub_schema = schema.get(keys[0])
+                if sub_schema.get('items'):
+                    sub_schema = sub_schema.get('items').get('properties')
+                elif sub_schema.get('properties'):
+                    sub_schema = sub_schema.get('properties')
+                else:
+                    sub_schema = None
+
+                if sub_schema:
+                    return check_existed(keys[1:], sub_schema)
+                else:
+                    return False
+            else:
+                return True
+        else:
+            return False
+
+    result = []
+    item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
+    if item_type:
+        schema = item_type.render.get('schemaeditor', {}).get('schema', {})
+        for str_key in str_keys:
+            if str_key.startswith('.metadata.'):
+                pre_key = re.sub(
+                    r'\[\d+\]', '',
+                    str_key.replace('.metadata.', '')
+                )
+                if pre_key in ['path', 'pubdate']:
+                    continue
+                if not check_existed(pre_key.split('.'), schema):
+                    result.append(str_key)
+    return result
