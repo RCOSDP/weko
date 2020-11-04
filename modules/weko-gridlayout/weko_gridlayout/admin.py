@@ -459,15 +459,15 @@ class WidgetSettingView(ModelView):
 widget_adminview = dict(
     modelview=WidgetSettingView,
     model=WidgetItem,
-    category=_('Setting'),
+    category=_('Web Design'),
     name=_('Widget'),
 )
 
 widget_design_adminview = {
     'view_class': WidgetDesign,
     'kwargs': {
-        'category': _('Setting'),
-        'name': _('Widget Design'),
+        'category': _('Web Design'),
+        'name': _('Page Layout'),
         'endpoint': 'widgetdesign'
     }
 }
