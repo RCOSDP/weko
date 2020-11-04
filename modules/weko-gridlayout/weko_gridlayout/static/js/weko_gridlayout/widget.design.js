@@ -212,7 +212,9 @@ class PagesListSelect extends React.Component {
         options.unshift(<option data-is-main-layout={page.is_main_layout}
                                 key={page.id}
                                 value={page.id}>{page.name}</option>);
-        selectedPage = page.id;
+        if (selectedPage === 0) {
+          selectedPage = page.id;
+        }
         isMainLayout = page.is_main_layout;
       } else {
         options.push(<option data-is-main-layout={page.is_main_layout}
