@@ -71,9 +71,13 @@
   {% endif %}
 {% else %}
   <h4>
-    <div class="pull-right">
-      &nbsp;<a href="{{url_for('security.register')}}" class="btn btn-warning btn-large signup">{{ _('Sign Up') }}</a>
-    </div>
+    {%- block registerable %}
+      {%- if security.registerable %}
+        <div class="pull-right">
+          &nbsp;<a href="{{url_for('security.register')}}" class="btn btn-warning btn-large signup">{{ _('Sign Up') }}</a>
+        </div>
+      {%- endif %}
+    {%- endblock %}
     <strong>{{ _('Want your own community?') }}</strong>
   </h4>
   <p>{{ _('It\'s easy. Just click the button to get started.') }}</p>
