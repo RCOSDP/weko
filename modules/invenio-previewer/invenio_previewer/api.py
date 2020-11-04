@@ -96,33 +96,37 @@ class PreviewFile(object):
 
 def convert_to(folder, source, timeout=80):
     """Convert file to pdf."""
-    current_app.logger.debug('start file: '+ source)
+    current_app.logger.debug('start file: ' + source)
     args = ['libreoffice', '--headless', '--convert-to', 'pdf',
             '--outdir', folder, source]
     d = dict(os.environ)
-    temp_folder = "/var/tmp/" + source.split("/")[-2] + "_libreoffice"
+    temp_folder = "/tmp/" + source.split("/")[-2] + "_libreoffice"
     if os.path.exists(temp_folder):
         shutil.rmtree(temp_folder)
     os.mkdir(temp_folder)
     d['HOME'] = temp_folder
     filename = None
-    process_count = 0
-    while not filename and process_count <= \
+    try:
+        process_count = 0
+        while not filename and process_count <= \
             current_app.config.get('PREVIEWER_CONVERT_PDF_RETRY_COUNT'):
-        current_app.logger.debug('start file parsing: '+ source)
-        timeStarted = time.time()
-        process = subprocess.run(args, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,env=d, timeout=timeout)
-        timeDelta = time.time() - timeStarted
-        current_app.logger.debug(process)
-        current_app.logger.debug("Finished process in "+str(timeDelta)+" seconds.")
-        filename = re.search('-> (.*?) using filter', process.stdout.decode())
-        if not filename:
-            current_app.logger.debug('retry convert to pdf :'
-                                     + str(process_count))
-            sleep(1)
-        process_count = process_count + 1
-
+            current_app.logger.debug('start file parsing: ' + source)
+            timeStarted = time.time()
+            process = subprocess.run(args, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, env=d, timeout=timeout)
+            timeDelta = time.time() - timeStarted
+            current_app.logger.debug(process)
+            current_app.logger.debug("Finished process in " + str(timeDelta) + " seconds.")
+            filename = re.search('-> (.*?) using filter', process.stdout.decode())
+            if not filename:
+                current_app.logger.debug('retry convert to pdf :'
+                                         + str(process_count))
+                sleep(1)
+            process_count = process_count + 1
+    except Exception as ex:
+        current_app.logger.error(ex)
+    finally:
+        shutil.rmtree(temp_folder)
     if filename is None:
         current_app.logger.error('convert to pdf failure')
         raise LibreOfficeError(process.stdout.decode())
