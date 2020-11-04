@@ -27,10 +27,10 @@
 from __future__ import absolute_import, print_function
 
 import re
-import subprocess
+import subprocess, time
 from os.path import basename, splitext
 from time import sleep
-
+import os, shutil
 from flask import current_app, url_for
 
 
@@ -96,15 +96,26 @@ class PreviewFile(object):
 
 def convert_to(folder, source, timeout=80):
     """Convert file to pdf."""
+    current_app.logger.debug('start file: '+ source)
     args = ['libreoffice', '--headless', '--convert-to', 'pdf',
             '--outdir', folder, source]
-
+    d = dict(os.environ)
+    temp_folder = "/var/tmp/" + source.split("/")[-2] + "_libreoffice"
+    if os.path.exists(temp_folder):
+        shutil.rmtree(temp_folder)
+    os.mkdir(temp_folder)
+    d['HOME'] = temp_folder
     filename = None
     process_count = 0
     while not filename and process_count <= \
             current_app.config.get('PREVIEWER_CONVERT_PDF_RETRY_COUNT'):
+        current_app.logger.debug('start file parsing: '+ source)
+        timeStarted = time.time()
         process = subprocess.run(args, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE, timeout=timeout)
+                                 stderr=subprocess.PIPE,env=d, timeout=timeout)
+        timeDelta = time.time() - timeStarted
+        current_app.logger.debug(process)
+        current_app.logger.debug("Finished process in "+str(timeDelta)+" seconds.")
         filename = re.search('-> (.*?) using filter', process.stdout.decode())
         if not filename:
             current_app.logger.debug('retry convert to pdf :'

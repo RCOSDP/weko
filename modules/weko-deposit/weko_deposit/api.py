@@ -88,6 +88,7 @@ class WekoFileObject(FileObject):
         self.obj = obj
         self.data = data
         self.info()
+        self.preview_able = self.file_preview_able()
 
     def info(self):
         """Info."""
@@ -99,7 +100,24 @@ class WekoFileObject(FileObject):
             index = self['filename'].rfind('.')
             self['filename'] = self['filename'][:index]
         return self.data
+    
+    def file_preview_able(self):
+        from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+        file_type_short = ''
+        file_size =  self.data['filesize'][0]['value']
+        for k,v in WEKO_ITEMS_UI_MS_MIME_TYPE.items():
+            if self.data['format'] in v:
+                file_type_short = k
+                break
 
+        if file_type_short in WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT.keys():
+            file_size_limit = WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT[file_type_short]
+            print('----------------')
+            print(file_size_limit)
+            print(file_size)
+            if ('GB' in file_size) or ('Mb' in file_size and float(file_size.replace('Mb','')) > file_size_limit):
+                return False
+        return True   
 
 class WekoIndexer(RecordIndexer):
     """Provide an interface for indexing records in Elasticsearch."""

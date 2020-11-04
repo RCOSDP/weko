@@ -891,6 +891,7 @@ class FileInstance(db.Model, Timestamp):
                   convert_to_pdf=False, **kwargs):
         """Send file to client."""
         # Convert ms office file to PDF for preview
+        current_app.logger.debug('inside about to parse-----------')
         if convert_to_pdf:
             try:
                 settings = AdminSettings.get('convert_pdf_settings')
@@ -907,6 +908,7 @@ class FileInstance(db.Model, Timestamp):
                 self.json['mimetype'] = 'application/pdf'
                 self.json['filename'] = \
                     self.json['filename'].replace(file_type, '.pdf')
+                current_app.logger.debug("Checking File: " + pdf_dir + pdf_filename)
                 if not os.path.isfile(pdf_dir + pdf_filename):
                     convert_to(pdf_dir, self.uri)
                 self.uri = pdf_dir + pdf_filename
