@@ -521,7 +521,7 @@ item_management_bulk_delete_adminview = {
 item_management_custom_sort_adminview = {
     'view_class': ItemManagementCustomSort,
     'kwargs': {
-        'category': _('Items'),
+        'category': _('Index Tree'),
         'name': _('Custom Sort'),
         'endpoint': 'items/custom_sort'
     }

@@ -72,15 +72,43 @@ class AuthorManagementView(BaseView):
         )
 
 
+class ExportView(BaseView):
+    pass
+
+
+class ImportView(BaseView):
+    pass
+
+
 authors_list_adminview = {
     'view_class': AuthorManagementView,
     'kwargs': {
-        'category': _('Setting'),
-        'name': _('Author Management'),
+        'category': _('Author Management'),
+        'name': _('Edit'),
         'endpoint': 'authors'
+    }
+}
+
+export_adminview = {
+    'view_class': ExportView,
+    'kwargs': {
+        'category': _('Author Management'),
+        'name': _('Export'),
+        'endpoint': 'export'
+    }
+}
+
+import_adminview = {
+    'view_class': ImportView,
+    'kwargs': {
+        'category': _('Author Management'),
+        'name': _('Import'),
+        'endpoint': 'import'
     }
 }
 
 __all__ = (
     'authors_list_adminview',
+    'export_adminview',
+    'import_adminview'
 )

@@ -182,7 +182,7 @@ index_link_adminview = {
 index_edit_adminview = {
     'view_class': IndexEditSettingView,
     'kwargs': {
-        'category': _('Setting'),
+        'category': _('Index Tree'),
         'name': _('Edit Tree'),
         'endpoint': 'indexedit'
     }

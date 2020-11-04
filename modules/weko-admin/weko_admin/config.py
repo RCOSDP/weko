@@ -642,9 +642,10 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'identifier',
     'widgetitem',
     'widgetdesign',
-    'community',
     'indexedit',
     'indexjournal',
+    'report',
+    'itemexportsettings'
 ]
 """Classes Community Administrator can access."""
 
@@ -653,7 +654,6 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'flowsetting',
     'identify',
     'items/bulk/delete',
-    'items/search',
     'items/custom_sort',
     'items/bulk/update',
     'items/import',
@@ -674,6 +674,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'stylesetting',
     'report',
     'user',
+    'userprofile',
     'workflowsetting',
     'searchsettings',
     'sitelicensesettings',
@@ -681,6 +682,19 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'itemtypesregister',
     'itemtypesmapping',
     'itemexportsettings',
+    'itemtypes/mapping',
+    'items/import',
+    'indexedit',
+    'indexjournal',
+    'widgetitem',
+    'widgetdesign',
+    'feedbackmail',
+    'sitelicensesendmail',
+    'community',
+    'sessionactivity',
+    'rankingsettings',
+    'longanalysissetting',
+    'site_info',
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -749,3 +763,8 @@ WEKO_ADMIN_SEARCH_OPTIONS = {
     }
 }
 """Admin Search Options """
+
+WEKO_INDEX_TREE_STYLE_OPTIONS = {
+    'id': 'weko',
+    'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+}
