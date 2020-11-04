@@ -307,10 +307,10 @@ class Indexes(object):
     @classmethod
     def move(cls, index_id, **data):
         """Move."""
-        def _update_index(parent=None):
+        def _update_index(new_position, parent=None):
             with db.session.begin_nested():
                 index = Index.query.filter_by(id=index_id).one()
-                index.position = position_max
+                index.position = new_position
                 index.owner_user_id = user_id
                 flag_modified(index, 'position')
                 flag_modified(index, 'owner_user_id')
@@ -318,11 +318,53 @@ class Indexes(object):
                     index.parent = parent
                     flag_modified(index, 'parent')
                 db.session.merge(index)
-            db.session.commit()
+
+        def _swap_position(i, index_tree, next_index_tree):
+            # move the index in position i to temp
+            next_index_tree.position = -1
+            db.session.merge(next_index_tree)
+            # move current index to position i
+            temp_position = index_tree.position
+            index_tree.position = i
+            db.session.merge(index_tree)
+            # move the index in position i to new temp
+            next_index_tree.position = temp_position
+            db.session.merge(next_index_tree)
+
+        def _re_order_tree(new_position):
+            with db.session.begin_nested():
+                nlst = Index.query.filter_by(parent=parent). \
+                    order_by(
+                    Index.position).with_for_update().all()
+
+                moved_items = list(
+                    filter(lambda item: item.id == index_id, nlst))
+                if moved_items:
+                    current_index = nlst.index(moved_items[0])
+                    if new_position != current_index \
+                            or new_position != moved_items[0].position:
+                        del nlst[current_index]
+                        nlst.insert(new_position, moved_items[0])
+
+                        for i, index_tree in enumerate(nlst):
+                            if index_tree.position != i:
+                                if i + 1 < len(nlst):
+                                    is_swap = False
+                                    for next_index_tree in nlst[i + 1:]:
+                                        if next_index_tree.position == i:
+                                            _swap_position(
+                                                i, index_tree, next_index_tree)
+                                            is_swap = True
+                                            break
+                                    if not is_swap:
+                                        index_tree.position = i
+                                        db.session.merge(index_tree)
+                                else:
+                                    index_tree.position = i
+                                    db.session.merge(index_tree)
 
         is_ok = True
         user_id = current_user.get_id()
-        position_max = 0
 
         if isinstance(data, dict):
             pre_parent = data.get('pre_parent')
@@ -331,6 +373,7 @@ class Indexes(object):
                 return False
 
             try:
+                new_position = int(data.get('position'))
                 # move index on the same hierarchy
                 if str(pre_parent) == str(parent):
                     if int(pre_parent) == 0:
@@ -338,19 +381,20 @@ class Indexes(object):
                     else:
                         parent_info = cls.get_index(pre_parent,
                                                     with_count=True)
-                    position = int(data.get('position'))
                     pmax = parent_info.position_max \
                         if parent_info.position_max is not None else 0
 
-                    if position >= pmax:
-                        position_max = pmax + 1
+                    if new_position >= pmax:
+                        new_position = pmax + 1
                         try:
-                            _update_index()
+                            _update_index(new_position)
+                            db.session.commit()
                         except IntegrityError as ie:
                             if 'uix_position' in ''.join(ie.args):
                                 try:
-                                    position_max += 1
-                                    _update_index()
+                                    new_position += 1
+                                    _update_index(new_position)
+                                    db.session.commit()
                                 except SQLAlchemyError as ex:
                                     is_ok = False
                                     current_app.logger.debug(ex)
@@ -364,39 +408,8 @@ class Indexes(object):
                             if not is_ok:
                                 db.session.rollback()
                     else:
-                        position_max = position
                         try:
-                            with db.session.begin_nested():
-                                nlst = Index.query.filter_by(parent=parent). \
-                                    order_by(
-                                    Index.position).with_for_update().all()
-                                n = t = -1
-
-                                for i in range(len(nlst)):
-                                    db.session.delete(nlst[i])
-                                    if nlst[i].id == index_id:
-                                        n = i
-                                    if position == nlst[i].position:
-                                        t = i
-                                # if the index has been deleted.
-                                if n < 0:
-                                    raise Exception()
-
-                                pre_index = nlst.pop(n)
-                                if n < t:
-                                    t -= 1
-                                if t < 0:
-                                    t = position - 1
-
-                                nlst.insert(t + 1, pre_index)
-                                db.session.flush()
-                                for i in range(len(nlst)):
-                                    nid = Index()
-                                    for k in dict(nid).keys():
-                                        setattr(nid, k, getattr(nlst[i], k))
-                                    nid.position = i
-                                    nid.owner_user_id = user_id
-                                    db.session.add(nid)
+                            _re_order_tree(new_position)
                             db.session.commit()
                         except Exception as ex:
                             is_ok = False
@@ -413,7 +426,9 @@ class Indexes(object):
                     position_max = parent_info.position_max + 1 \
                         if parent_info.position_max is not None else 0
                     try:
-                        _update_index(parent)
+                        _update_index(position_max, parent)
+                        _re_order_tree(new_position)
+                        db.session.commit()
                     except IntegrityError as ie:
                         if 'uix_position' in ''.join(ie.args):
                             try:
@@ -425,7 +440,7 @@ class Indexes(object):
                                 position_max = parent_info.position_max + 1 \
                                     if parent_info.position_max is not None \
                                     else 0
-                                _update_index()
+                                _update_index(position_max)
                             except SQLAlchemyError as ex:
                                 is_ok = False
                                 current_app.logger.debug(ex)
