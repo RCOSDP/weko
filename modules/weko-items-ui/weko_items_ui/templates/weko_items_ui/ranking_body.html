@@ -45,9 +45,9 @@
 
   <!-- Search keyword ranking -->
   {% if (rankings['most_searched_keywords'] if 'most_searched_keywords' in rankings else False) %}
-    {{ ranking_list(panel_title=_('Most Searched Keywords'),rankings=rankings['most_searched_keywords']) }}
+    {{ ranking_list(panel_title=_('Most Searched Keywords'),
+                          rankings=rankings['most_searched_keywords']) }}
   {% endif %}
-   
   <!-- Recently added items -->
   {% if (rankings['new_items'] if 'new_items' in rankings else False) %}
     {{ ranking_list(panel_title=_('New Items'),
