@@ -434,25 +434,36 @@ def listrecords(**kwargs):
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
             harvest_public_state, rec = WekoRecord.get_record_with_hps(
                 pid_object.object_uuid)
-            if not harvest_public_state or (
-                    identify and not identify.outPutSetting):
-                # Harvest is private
+            # Check output delete, noRecordsMatch
+            if identify and identify.outPutSetting:
+                if harvest_public_state:
+                    if not is_private_index(rec):
+                        if is_deleted_workflow(
+                                pid_object) or is_private_workflow(rec):
+                            header(
+                                e_record,
+                                identifier=pid_object.pid_value,
+                                datestamp=rec.updated,
+                                sets=rec.get('_oai', {}).get('sets', []),
+                                deleted=True
+                            )
+                            continue
+                    else:
+                        header(
+                            e_record,
+                            identifier=pid_object.pid_value,
+                            datestamp=rec.updated,
+                            sets=rec.get('_oai', {}).get('sets', []),
+                            deleted=True
+                        )
+                        continue
+                else:
+                    kwargs['identifier'] = pid.pid_value
+                    append_error_info(e_record, **kwargs)
+                    continue
+            else:
                 kwargs['identifier'] = pid.pid_value
                 append_error_info(e_record, **kwargs)
-                continue
-            elif is_deleted_workflow(pid_object) or (
-                harvest_public_state and is_private_workflow(rec)) or (
-                    harvest_public_state and is_private_index(rec)):
-                # Item is deleted
-                # or Harvest is public & Item is private
-                # or Harvest is public & Index is private
-                header(
-                    e_record,
-                    identifier=pid_object.pid_value,
-                    datestamp=rec.updated,
-                    sets=rec.get('_oai', {}).get('sets', []),
-                    deleted=True
-                )
                 continue
 
             header(
