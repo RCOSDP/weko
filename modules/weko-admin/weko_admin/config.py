@@ -656,7 +656,6 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'items/bulk/delete',
     'items/custom_sort',
     'items/bulk/update',
-    'items/import',
     'itemtypes',
     'language',
     'loganalysissetting',
