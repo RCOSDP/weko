@@ -26,11 +26,13 @@
 
 from __future__ import absolute_import, print_function
 
+import os
 import re
+import shutil
 import subprocess
 from os.path import basename, splitext
 from time import sleep
-import os, shutil
+
 from flask import current_app, url_for
 
 
@@ -112,8 +114,10 @@ def convert_to(folder, source):
         while not filename and process_count <= \
                 current_app.config.get('PREVIEWER_CONVERT_PDF_RETRY_COUNT'):
             process = subprocess.run(args, stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE, env=os_env, timeout=timeout)
-            filename = re.search('-> (.*?) using filter', process.stdout.decode())
+                                     stderr=subprocess.PIPE, env=os_env,
+                                     timeout=timeout)
+            filename = re.search('-> (.*?) using filter',
+                                 process.stdout.decode())
             if not filename:
                 current_app.logger.debug('retry convert to pdf :'
                                          + str(process_count))

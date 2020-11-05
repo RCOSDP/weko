@@ -167,8 +167,8 @@ WEKO_ITEMS_UI_MS_MIME_TYPE = {
 }
 
 WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT = {
-    'ms_word': 5,
-    'ms_powerpoint': 5,
-    'ms_excel': 5
+    'ms_word': 30,
+    'ms_powerpoint': 20,
+    'ms_excel': 10
 }
 """Limit size of preview-able file."""

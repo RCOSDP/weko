@@ -108,9 +108,12 @@ class WekoFileObject(FileObject):
             if self.data['format'] in v:
                 file_type = k
                 break
-        if file_type in current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
+        if file_type in current_app.config[
+                'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
             # Convert MB to Bytes in decimal
-            file_size_limit = current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'] * 1000000
+            file_size_limit = current_app.config[
+                                  'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT']\
+                              * 1000000
             if file_size > file_size_limit:
                 return False
         return True
