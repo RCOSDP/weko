@@ -75,8 +75,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
-    WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_IMPORT_SUFFIX_PATTERN, \
-    WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, \
+    WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
@@ -896,8 +896,9 @@ def register_item_metadata(item):
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit.update(item_status, new_data)
                 _deposit.commit()
+                _deposit.merge_data_to_record_without_version(pid)
                 _deposit.publish()
-            
+
             if feedback_mail_list:
                 FeedbackMailList.update(
                     item_id=_deposit.id,
