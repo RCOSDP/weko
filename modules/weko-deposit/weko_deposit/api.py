@@ -102,6 +102,7 @@ class WekoFileObject(FileObject):
         return self.data
 
     def file_preview_able(self):
+        """Check whether file can be previewed or not."""
         file_type = ''
         file_size = self.data['size']
         for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
@@ -112,8 +113,8 @@ class WekoFileObject(FileObject):
                 'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
             # Convert MB to Bytes in decimal
             file_size_limit = current_app.config[
-                                  'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT']\
-                              * 1000000
+                                  'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
+                                    file_type] * 1000000
             if file_size > file_size_limit:
                 return False
         return True
