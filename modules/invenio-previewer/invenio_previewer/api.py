@@ -27,7 +27,7 @@
 from __future__ import absolute_import, print_function
 
 import re
-import subprocess, time
+import subprocess
 from os.path import basename, splitext
 from time import sleep
 import os, shutil
