@@ -42,6 +42,7 @@ from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_oaiharvester.harvester import RESOURCE_TYPE_URI
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
@@ -885,16 +886,24 @@ def register_item_metadata(item):
             FeedbackMailList.delete(deposit.id)
             deposit.remove_feedback_mail()
 
-        if item['status'] != 'keep':
-            with current_app.test_request_context():
-                first_ver = deposit.newversion(pid)
-                first_ver.publish()
-                if feedback_mail_list:
-                    FeedbackMailList.update(
-                        item_id=first_ver.id,
-                        feedback_maillist=feedback_mail_list
-                    )
-                    first_ver.update_feedback_mail()
+        with current_app.test_request_context():
+            if item['status'] in ['upgrade', 'new']:
+                _deposit = deposit.newversion(pid)
+                _deposit.publish()
+            else:
+                _pid = PIDVersioning(child=pid).last_child
+                _record = WekoDeposit.get_record(_pid.object_uuid)
+                _deposit = WekoDeposit(_record, _record.model)
+                _deposit.update(item_status, new_data)
+                _deposit.commit()
+                _deposit.publish()
+            
+            if feedback_mail_list:
+                FeedbackMailList.update(
+                    item_id=_deposit.id,
+                    feedback_maillist=feedback_mail_list
+                )
+                _deposit.update_feedback_mail()
 
         db.session.commit()
 
