@@ -748,7 +748,8 @@ class SchemaTree:
                                 nlst.append(klst)
 
                             if nlst:
-                                node_result[self._v] = analyze_value_with_exp(nlst, exp)
+                                node_result[self._v] = analyze_value_with_exp(
+                                    nlst, exp)
                 if remove_empty:
                     remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
@@ -1206,9 +1207,9 @@ class SchemaTree:
             return new_files
 
         for k, v in self._record.items():
-            if (isinstance(v, dict) and
-                v.get("attribute_type") == "file" and
-                    v.get("attribute_value_mlt")):
+            if (isinstance(v, dict)
+                and v.get("attribute_type") == "file"
+                    and v.get("attribute_value_mlt")):
                 v['attribute_value_mlt'] = __get_file_permissions(
                     v.get("attribute_value_mlt"))
 
