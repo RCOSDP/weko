@@ -80,3 +80,17 @@ def get_itemtypes():
         ]
 
     return jsonify(item_types)
+
+
+@blueprint.app_template_filter('replace_mapping_version')
+def replace_mapping_version(jp_key):
+    """Replace mapping version key.
+
+    :param jp_key:
+    :return:
+    """
+    if jp_key == "versiontype":
+        return "version(oaire)"
+    elif jp_key == "version":
+        return "version(datacite)"
+    return jp_key
