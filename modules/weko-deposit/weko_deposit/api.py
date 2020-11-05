@@ -1173,9 +1173,12 @@ class WekoRecord(Record):
 
                 if nval['attribute_name'] == 'Reference' \
                         or nval['attribute_type'] == 'file':
+                    file_metadata = copy.deepcopy(mlt)
+                    if nval['attribute_type'] == 'file':
+                        file_metadata = self.\
+                            __remove_file_metadata_do_not_publish(file_metadata)
                     nval['attribute_value_mlt'] = \
-                        get_all_items(copy.deepcopy(mlt),
-                                      copy.deepcopy(solst), True)
+                        get_all_items(file_metadata, copy.deepcopy(solst), True)
                 else:
                     is_author = nval['attribute_type'] == 'creator'
                     is_thumbnail = any(
@@ -1226,6 +1229,46 @@ class WekoRecord(Record):
                     creator_dict[creator_mails] = creator_data[creator_mails]
                 creators.append(creator_dict)
         return creators
+
+    def __remove_file_metadata_do_not_publish(self, file_metadata_list):
+        """Remove file metadata do not publish.
+
+        :param file_metadata_list: File metadata list.
+        :return: New file metadata list.
+        """
+
+        def __check_user_permission():
+            """Check user permission.
+
+            :return: True if the login user is allowed to display file metadata.
+            """
+            is_ok = False
+            # Check guest user
+            if not current_user.is_authenticated:
+                return is_ok
+            # Check registered user
+            elif current_user and current_user.id in user_id_list:
+                is_ok = True
+            # Check super users
+            else:
+                super_users = current_app.config[
+                                  'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                                  current_app.config[
+                                      'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+                for role in list(current_user.roles or []):
+                    if role.name in super_users:
+                        is_ok = True
+                        break
+
+            return is_ok
+
+        new_file_metadata_list = []
+        user_id_list = self.get('_deposit', {}).get('owners', [])
+        for file in file_metadata_list:
+            if not ('open_no' in file.get('accessrole') and
+                    not __check_user_permission()):
+                new_file_metadata_list.append(file)
+        return new_file_metadata_list
 
     @property
     def pid_doi(self):
