@@ -1,0 +1,135 @@
+{% macro sub_menu(name) %}
+  {% if name == "Edit" %}
+    編集
+  {% elif name == "Community" %}
+    コミューにティ
+  {% elif name == "Featured Community" %}
+    特徴コミューにティ
+  {% elif name == "Inclusion Request" %}
+    包含リクエスト
+  {% elif name == "Bucket" %}
+    バケツ
+  {% elif name == "File Instance" %}
+    ファイルインスタンス
+  {% elif name == "Location" %}
+    ロケーション
+  {% elif name == "Multipart Object" %}
+    マルチパートオブジェクト
+  {% elif name == "Object Version" %}
+    オブジェクトバージョン
+  {% elif name == "Custom Sort" %}
+    カスタムソート
+  {% elif name == "Edit Tree" %}
+    編集ツリー
+  {% elif name == "Journal Information" %}
+    ジャーナル情報
+  {% elif name == "Mapping" %}
+    マッピング
+  {% elif name == "Metadata" %}
+    メタデータ
+  {% elif name == "OAI Schema" %}
+    OAIスキーマ
+  {% elif name == "Properties" %}
+    プロパティ
+  {% elif name == "Bulk Delete" %}
+    一括削除
+  {% elif name == "Bulk Update" %}
+    一括更新
+  {% elif name == "Import" %}
+    インポート
+  {% elif name == "Harvesting" %}
+    収穫
+  {% elif name == "Identify" %}
+    識別
+  {% elif name == "Sets" %}
+    セット
+  {% elif name == "Persistent Identifier" %}
+    持続的識別子
+  {% elif name == "Record Metadata" %}
+    レコードメタデータ
+  {% elif name == "Change List" %}
+    変更リスト
+  {% elif name == "Resource List" %}
+    リソースリスト
+  {% elif name == "Resync" %}
+    再同期
+  {% elif name == "File Preview" %}
+    ファイルプレビュー
+  {% elif name == "Identifier" %}
+    識別子
+  {% elif name == "Index Link" %}
+    インデクスリンク
+  {% elif name == "Index Tree" %}
+    インデクスツリー
+  {% elif name == "Item Export" %}
+    アイテムエクスポート
+  {% elif name == "Items" %}
+    アイテムス
+  {% elif name == "Language" %}
+    言語
+  {% elif name == "Log Analysis" %}
+    ログ分析
+  {% elif name == "Mail" %}
+    メール
+  {% elif name == "Others" %}
+    他
+  {% elif name == "PDF Cover Page" %}
+    PDFカバーページ
+  {% elif name == "Ranking" %}
+    ランキング
+  {% elif name == "Search" %}
+    検索
+  {% elif name == "Shibboleth" %}
+    シボレス
+  {% elif name == "Site Info" %}
+    サイト情報
+  {% elif name == "Site License" %}
+    サイトライセンス
+  {% elif name == "Sitemap" %}
+    サイトマップ
+  {% elif name == "Stats" %}
+    統計
+  {% elif name == "Style" %}
+    スタイル
+  {% elif name == "WebAPI Account" %}
+    WebAPIアカウント
+  {% elif name == "Feedback Mail" %}
+    フィードバックメール
+  {% elif name == "Report" %}
+    リポート
+  {% elif name == "Access: Roles" %}
+    アクセス：ロール
+  {% elif name == "Access: System Roles" %}
+    アクセス：システムズロール
+  {% elif name == "Access: Users" %}
+    アクセス：ユーザー
+  {% elif name == "Linked account identities" %}
+    リンクアカウントアイデンティティー
+  {% elif name == "Linked account tokens" %}
+    リンクアカウントトークン
+  {% elif name == "Linked accounts" %}
+    リンクアカウント
+  {% elif name == "OAuth Application Tokens" %}
+    OAuthアプリケーショントークン
+  {% elif name == "OAuth Applications" %}
+    OAuthアプリケーション
+  {% elif name == "Role" %}
+    ロール
+  {% elif name == "Session Activity" %}
+    セッションアクティビティー
+  {% elif name == "User" %}
+    ユーザー
+  {% elif name == "User Profile" %}
+    ユーザープロフィル
+  {% elif name == "Page Layout" %}
+    ページレイアウト
+  {% elif name == "Widget" %}
+    ウィジェット
+  {% elif name == "Flow List" %}
+    フローリスト
+  {% elif name == "WorkFlow List" %}
+    ワークフローリスト
+  {% else %}
+    {{ name }}
+  {% endif %}
+{% endmacro %}
