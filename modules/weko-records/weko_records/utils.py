@@ -568,7 +568,7 @@ def sort_meta_data_by_options(record_hit):
                         s_key = s.get('key')
                         if m.get(s_key):
                             s['value'] = m.get(s_key) if not s['value'] else \
-                                    '{}, {}'.format(s['value'], m.get(s_key))
+                                '{}, {}'.format(s['value'], m.get(s_key))
                             s['parent_option'] = {
                                 'required': option.get("required"),
                                 'show_list': option.get("showlist"),
