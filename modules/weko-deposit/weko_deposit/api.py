@@ -102,19 +102,19 @@ class WekoFileObject(FileObject):
         return self.data
 
     def file_preview_able(self):
-        from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
-        file_type_short = ''
-        file_size =  self.data['filesize'][0]['value']
-        for k,v in WEKO_ITEMS_UI_MS_MIME_TYPE.items():
+        file_type = ''
+        file_size = self.data['size']
+        for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
             if self.data['format'] in v:
-                file_type_short = k
+                file_type = k
                 break
-
-        if file_type_short in WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT.keys():
-            file_size_limit = WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT[file_type_short]
-            if ('GB' in file_size) or ('Mb' in file_size and float(file_size.replace('Mb', '')) > file_size_limit):
+        if file_type in current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
+            # Convert MB to Bytes in decimal
+            file_size_limit = current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'] * 1000000
+            if file_size > file_size_limit:
                 return False
         return True
+
 
 class WekoIndexer(RecordIndexer):
     """Provide an interface for indexing records in Elasticsearch."""

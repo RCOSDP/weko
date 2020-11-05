@@ -171,3 +171,4 @@ WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT = {
     'ms_powerpoint': 5,
     'ms_excel': 5
 }
+"""Limit size of preview-able file."""

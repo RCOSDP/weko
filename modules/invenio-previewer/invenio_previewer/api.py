@@ -94,29 +94,25 @@ class PreviewFile(object):
         return self.file.file.storage().open()
 
 
-def convert_to(folder, source, timeout=80):
+def convert_to(folder, source):
     """Convert file to pdf."""
-    current_app.logger.debug('start file: ' + source)
+    timeout = current_app.config['PREVIEWER_CONVERT_PDF_TIMEOUT']
     args = ['libreoffice', '--headless', '--convert-to', 'pdf',
             '--outdir', folder, source]
-    d = dict(os.environ)
+    os_env = dict(os.environ)
     temp_folder = "/tmp/" + source.split("/")[-2] + "_libreoffice"
     if os.path.exists(temp_folder):
         shutil.rmtree(temp_folder)
     os.mkdir(temp_folder)
-    d['HOME'] = temp_folder
+    # Change home var for next subprocess for process runs faster.
+    os_env['HOME'] = temp_folder
     filename = None
     try:
         process_count = 0
         while not filename and process_count <= \
-            current_app.config.get('PREVIEWER_CONVERT_PDF_RETRY_COUNT'):
-            current_app.logger.debug('start file parsing: ' + source)
-            timeStarted = time.time()
+                current_app.config.get('PREVIEWER_CONVERT_PDF_RETRY_COUNT'):
             process = subprocess.run(args, stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE, env=d, timeout=timeout)
-            timeDelta = time.time() - timeStarted
-            current_app.logger.debug(process)
-            current_app.logger.debug("Finished process in " + str(timeDelta) + " seconds.")
+                                     stderr=subprocess.PIPE, env=os_env, timeout=timeout)
             filename = re.search('-> (.*?) using filter', process.stdout.decode())
             if not filename:
                 current_app.logger.debug('retry convert to pdf :'
