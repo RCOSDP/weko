@@ -57,11 +57,12 @@ def get_east_asian_width_count(text):
 """ Function making PDF cover page """
 
 
-def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
+def make_combined_pdf(pid, fileobj, obj, lang_user):
     """Make the cover-page-combined PDF file.
 
     :param pid: PID object
-    :param file_uri: URI of the file object
+    :param fileobj: File metadata
+    :param obj: File object
     :param lang_user: LANGUAGE of access user
     :return: cover-page-combined PDF file object
     """
@@ -407,7 +408,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     # Combine cover page and existing pages
     cover_page = PdfFileReader(b_output)
-    f = open(obj_file_uri, "rb")
+    f = obj.file.storage().open()
     existing_pages = PdfFileReader(f)
 
     # In the case the PDF file is encrypted by the password, ''(i.e. not
