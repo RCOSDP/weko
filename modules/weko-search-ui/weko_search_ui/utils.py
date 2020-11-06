@@ -388,7 +388,6 @@ def check_import_items(file_content: str, is_change_identifier: bool):
                     unpackage_import_file(data_path, tsv_entry))
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
-        handle_fill_system_item(list_record)
         handle_check_and_prepare_publish_status(list_record)
         handle_check_and_prepare_index_tree(list_record)
         handle_check_and_prepare_feedback_mail(list_record)
@@ -421,7 +420,9 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     """
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
     data = read_stats_tsv(tsv_file_path)
-    list_record = handle_validate_item_import(data.get('tsv_data'), data.get(
+    list_record = data.get('tsv_data')
+    handle_fill_system_item(list_record)
+    list_record = handle_validate_item_import(list_record, data.get(
         'item_type_schema', {}
     ))
     return list_record
@@ -840,6 +841,45 @@ def register_item_metadata(item):
         list_record    -- {list} list item import.
         file_path      -- {str} file path.
     """
+    def clean_file_metadata(item_type_id, data):
+        # clear metadata of file information
+        item_map = get_mapping(Mapping.get_record(
+                item_type_id), 'jpcoar_mapping')
+        _, key = get_data_by_property(
+            item, item_map, "file.URI.@value")
+        if key:
+            key = key.split('.')[0]
+            if not data.get(key):
+                deleted_items = data.get('deleted_items') or []
+                deleted_items.append(key)
+                data['deleted_items'] = deleted_items
+        return data
+
+    def clean_file_bucket(deposit):
+        # clean bucket
+        file_names = [file['filename'] for file in deposit.get_file_data()]
+        lastest_files_version = []
+        # remove lastest version
+        for file in deposit.files:
+            if file.obj.key not in file_names:
+                file.obj.remove()
+            else:
+                lastest_files_version.append(file.obj.version_id)
+        # remove old version of file
+        all_file_version = ObjectVersion.get_by_bucket(
+            deposit.files.bucket, True, True).all()
+        for file in all_file_version:
+            if file.key not in file_names:
+                file.remove()
+            elif file.version_id not in lastest_files_version:
+                file.remove()
+
+    def clean_all_file_in_bucket(deposit):
+        all_file_version = ObjectVersion.get_by_bucket(
+            deposit.files.bucket, True, True).all()
+        for file in all_file_version:
+            file.remove()
+
     item_id = str(item.get('id'))
     try:
         pid = PersistentIdentifier.query.filter_by(
@@ -871,7 +911,14 @@ def register_item_metadata(item):
                     'value': item_id
                 }
             })
+        new_data = clean_file_metadata(item['item_type_id'], new_data)
         deposit.update(item_status, new_data)
+        if item.get('file_path'):
+            # update
+            clean_file_bucket(deposit)
+        else:
+            # delete
+            clean_all_file_in_bucket(deposit)
         deposit.commit()
         deposit.publish()
 
