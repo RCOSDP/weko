@@ -113,16 +113,24 @@ def publish(pid, record, template=None, **kwargs):
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
+
+    pid_ver = PIDVersioning(child=pid)
+    last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
+
     if not publish_status:
         record.update({'publish_status': (status or '0')})
+        last_record.update({'publish_status': (status or '0')})
     else:
         record['publish_status'] = (status or '0')
+        last_record['publish_status'] = (status or '0')
 
     record.commit()
+    last_record.commit()
     db.session.commit()
 
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
+    indexer.update_publish_status(last_record)
 
     return redirect(url_for('.recid', pid_value=pid.pid_value))
 

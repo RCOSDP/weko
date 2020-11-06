@@ -30,6 +30,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.orm import load_only
 from weko_admin.models import AdminSettings
@@ -187,21 +188,23 @@ class ItemManagementBulkUpdate(BaseView):
             pid_list = pids.split('/')
 
         data = {}
-        for pid in pid_list:
-            record = WekoRecord.get_record_by_pid(pid)
+        for pid_value in pid_list:
+            record = WekoRecord.get_record_by_pid(pid_value)
             indexes = []
             if isinstance(record.get('path'), list):
                 for path in record.get('path'):
                     indexes.append(path.split('/')[-1])
 
-            pidObject = PersistentIdentifier.get('recid', pid)
-            meta = ItemsMetadata.get_record(pidObject.object_uuid)
+            pid = PersistentIdentifier.get('recid', pid_value)
+            meta = ItemsMetadata.get_record(pid.object_uuid)
+            last_pid = PIDVersioning(child=pid).last_child
 
             if meta:
-                data[pid] = {}
-                data[pid]['meta'] = meta
-                data[pid]['index'] = {"index": indexes}
-                data[pid]['contents'] = get_file_data(meta)
+                data[pid_value] = {}
+                data[pid_value]['meta'] = meta
+                data[pid_value]['index'] = {"index": indexes}
+                data[pid_value]['contents'] = get_file_data(meta)
+                data[pid_value]['version'] = last_pid.pid_value
 
         return jsonify(data)
 

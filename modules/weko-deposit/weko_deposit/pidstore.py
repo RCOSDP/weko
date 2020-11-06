@@ -78,7 +78,8 @@ def get_latest_version_id(recid):
     pid = PersistentIdentifier.query.filter_by(pid_type='recid')\
         .filter(PersistentIdentifier.pid_value.like(pid_value)).all()
     if pid:
-        version_id = int(max([idx.pid_value.split('.')[-1] for idx in pid])) + 1
+        version_id = max([int(idx.pid_value.split('.')[-1]) for idx in pid])
+        version_id += 1
 
     return version_id
 
