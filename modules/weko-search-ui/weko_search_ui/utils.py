@@ -530,7 +530,8 @@ def handle_validate_item_import(list_record, schema) -> list:
     for record in list_record:
         errors = record.get('errors') or []
         record_id = record.get("id")
-        if record_id and (not represents_int(record_id)):
+        if record_id and (not represents_int(record_id)) \
+                or re.search(r'([０-９])', record_id):
             errors.append(_('Please specify item ID by half-width number.'))
         if record.get('metadata'):
             if v2:
@@ -606,24 +607,23 @@ def handle_check_exist_record(list_record) -> list:
         try:
             item_id = item.get('id')
             if item_id:
-                item_exist = WekoRecord.get_record_by_pid(item_id)
-                if item_exist:
-                    if item_exist.pid.is_deleted():
-                        item['status'] = None
-                        errors.append(_('Item already DELETED'
-                                        ' in the system'))
-                        item['errors'] = errors
-                        result.append(item)
-                        continue
-                    else:
-                        exist_url = request.url_root + \
-                            'records/' + item_exist.get('recid')
-                        if item.get('uri') == exist_url:
-                            item['status'] = 'update'
-                        else:
-                            errors.append(_('Specified URI and system'
-                                            ' URI do not match.'))
+                system_url = request.url_root + 'records/' + item_id
+                if item.get('uri') != system_url:
+                    errors.append(_('Specified URI and system'
+                                    ' URI do not match.'))
+                    item['status'] = None
+                else:
+                    item_exist = WekoRecord.get_record_by_pid(item_id)
+                    if item_exist:
+                        if item_exist.pid.is_deleted():
                             item['status'] = None
+                            errors.append(_('Item already DELETED'
+                                            ' in the system'))
+                        else:
+                            exist_url = request.url_root + \
+                                'records/' + item_exist.get('recid')
+                            if item.get('uri') == exist_url:
+                                item['status'] = 'update'
             else:
                 item['id'] = None
                 if item.get('uri'):
