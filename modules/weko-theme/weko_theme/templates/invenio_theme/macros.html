@@ -1,32 +1,32 @@
 {% macro language_change(item) %}
   {% if item.name == "Author Management" %}
-    著者管理
+    著者DB管理
   {% elif item.name == "Communities" %}
-    コミューにティ
+    コミュニティ管理
   {% elif item.name == "Files" %}
-    ファイル
+    ファイル管理
   {% elif item.name == "Index Tree" %}
-    インデクスツリー
+    インデックスツリー管理
   {% elif item.name == "Item Types" %}
-    アイテムタイプ
+    アイテムタイプ管理
   {% elif item.name == "Items" %}
-    アイテム
+    アイテム管理
   {% elif item.name == "OAI-PMH" %}
     OAI-PMH
   {% elif item.name == "Records" %}
-    記録
+    レコード管理
   {% elif item.name == "Resource Sync" %}
-    リソースシンク
+    Resource Sync
   {% elif item.name == "Setting" %}
     設定
   {% elif item.name == "Statistics" %}
-    統計情報
+    統計
   {% elif item.name == "User Management" %}
-    ユーザーマネージメント
+    ユーザ管理
   {% elif item.name == "Web Design" %}
-    ウェブデザイン
+    ウェブデザイン管理
   {% elif item.name == "WorkFlow" %}
-    ワークフロー
+    ワークフロー管理
   {% else %}
     {{ item.name }}
   {% endif %}

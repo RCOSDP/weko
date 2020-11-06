@@ -2,48 +2,66 @@
 {%- import 'invenio_theme/sub_menu_macros.html' as language_change_sub_menu_macros -%}
 
 {% macro main(menu_list, menu_icon) %}
-  {%- for item in menu_list %}
-    {%- if item.is_category() -%}
-      {% set children = item.get_children() %}
-      {%- if children %}
-        {% set class_name = item.get_class_name() %}
-        {%- if item.is_active(admin_view) %}
+  <!-- "ホーム"を一番上に移動するため -->
+  {%- for menu_name in menu_list -%}
+    {%- if menu_name.name == "ホーム" -%}
+      {%- if menu_name.is_active(admin_view) %}
         <li class="treeview active">
         {% else -%}
         <li class="treeview">
-        {%- endif %}
-          <a href="#">
-            {% if item.class_name %}<i class="{{ item.class_name }}"></i> {% endif %}
-            <span>{{ language_change_macros.language_change(item) }}</span>
-            <i class="fa fa-angle-left pull-right"></i>
-          </a>
-          <ul class="treeview-menu">
-          {%- for child in children|sort(attribute='name') -%}
-            {% set class_name = child.get_class_name() %}
-            {%- if child.is_active(admin_view) %}
-            <li class="active">
-            {% else %}
-            <li>
+      {%- endif %}
+      <a href="/admin">
+        {% if menu_name.class_name %}<i class="{{ menu_name.class_name }}"></i> {% endif%}
+        <span>ホーム</span>
+      </a>
+
+      {%- for item in menu_list %}
+        {%- if item.is_category() -%}
+          {% set children = item.get_children() %}
+          {%- if children %}
+            {% set class_name = item.get_class_name() %}
+
+            {%- if item.is_active(admin_view) %}
+            <li class="treeview active">
+            {% else -%}
+            <li class="treeview">
             {%- endif %}
-              <a href="{{ child.get_url() }}">{{ menu_icon(child) }}{{
-                language_change_sub_menu_macros.sub_menu(child.name) }}</a>
+              <a href="#">
+                {% if item.class_name %}<i class="{{ item.class_name }}"></i> {% endif %}
+                <span>{{ language_change_macros.language_change(item) }}</span>
+                <i class="fa fa-angle-left pull-right"></i>
+              </a>
+              <ul class="treeview-menu">
+                {%- for child in children|sort(attribute='name') -%}
+                {% set class_name = child.get_class_name() %}
+                {%- if child.is_active(admin_view) %}
+                <li class="active">
+                {% else %}
+                <li>
+                {%- endif %}
+                <a href="{{ child.get_url() }}">{{ menu_icon(child) }}{{
+                    language_change_sub_menu_macros.sub_menu(child.name) }}</a>
+                </li>
+                {%- endfor %}
+              </ul>
             </li>
-          {%- endfor %}
-          </ul>
-        </li>
-      {% endif %}
-    {%- else %}
-      {%- if item.is_accessible() and item.is_visible() -%}
-        {% set class_name = item.get_class_name() %}
-        {%- if item.is_active(admin_view) %}
-        <li class="active">
-        {%- else %}
-        <li>
-        {%- endif %}
-          <a href="{{ item.get_url() }}">{{ menu_icon(item) }}{{
-            language_change_sub_menu_macros.sub_menu(item.name) }}</a>
-        </li>
-      {%- endif -%}
-    {% endif -%}
+          {% endif %}
+        {%- else %}i
+          {% if item.name != "ホーム" %}
+            {%- if item.is_accessible() and item.is_visible() -%}
+              {% set class_name = item.get_class_name() %}
+              {%- if item.is_active(admin_view) %}
+              <li class="active">
+              {%- else %}
+              <li>
+              {%- endif %}
+                <a href="{{ item.get_url() }}">{{ menu_icon(item) }}{{
+                  language_change_sub_menu_macros.sub_menu(item.name) }}</a>
+              </li>
+            {%- endif -%}
+          {% endif %}
+        {% endif -%}
+      {%- endfor -%}
+    {%- endif -%}
   {% endfor %}
 {% endmacro %}
