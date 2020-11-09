@@ -73,7 +73,6 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     :param lang_user: LANGUAGE of access user
     :return: cover-page-combined PDF file object
     """
-
     def get_pid_object(pid_value):
         pid_object = PersistentIdentifier.get('recid', pid_value)
         pv = PIDVersioning(child=pid_object)
