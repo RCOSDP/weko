@@ -376,3 +376,6 @@ msgstr ""
 
 msgid "Feedback Mail Import"
 msgstr ""
+
+msgid "Cannot preview because the file size is too large."
+msgstr ""

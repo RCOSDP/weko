@@ -69,3 +69,6 @@ PREVIEWER_RECORD_FILE_FACOTRY = None
 
 PREVIEWER_CONVERT_PDF_RETRY_COUNT = 5
 """Retry convert office file to pdf count."""
+
+PREVIEWER_CONVERT_PDF_TIMEOUT = 80
+""""Timout of converting file to PDF."""
