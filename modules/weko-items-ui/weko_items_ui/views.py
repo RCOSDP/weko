@@ -1140,37 +1140,6 @@ def get_authors_prefix_settings():
         return abort(403)
 
 
-@blueprint.route('/newversion/<string:pid_value>',
-                 methods=['PUT'])
-@login_required
-@item_permission.require(http_exception=403)
-def newversion(pid_value='0'):
-    """Create new version and update it's id to current activity."""
-    draft_pid = PersistentIdentifier.get('recid', pid_value)
-    if ".0" in pid_value:
-        pid_value = pid_value.split(".")[0]
-    pid = PersistentIdentifier.get('recid', pid_value)
-    deposit = WekoDeposit.get_record(pid.object_uuid)
-    try:
-        upgrade_record = deposit.newversion(pid)
-
-        if not upgrade_record:
-            return jsonify(code=-1,
-                           msg=_('An error has occurred.'))
-
-        with db.session.begin_nested():
-            activity = WorkActivity()
-            wf_activity = activity.get_workflow_activity_by_item_id(
-                draft_pid.object_uuid)
-            wf_activity.item_id = upgrade_record.model.id
-            db.session.merge(wf_activity)
-        db.session.commit()
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-        db.session.rollback()
-    return jsonify(success=True)
-
-
 @blueprint.route('/sessionvalidate', methods=['POST'])
 def session_validate():
     """Validate the session."""

@@ -3275,18 +3275,11 @@ function toObject(arr) {
             let versionSelected = $("input[name='radioVersionSelect']:checked").val();
             if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
               if (versionSelected == "keep") {
-                $rootScope.recordsVM.actionHandler(
-                  ["edit", "PUT"],
-                  next_frame_edit
-                );
+                $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'keep'
+                $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
               } else if (versionSelected == "update") {
-                $rootScope.recordsVM.actionHandler(
-                  [
-                    ["newversion", "PUT"],
-                    ["index_upgrade", "PUT"],
-                  ],
-                  next_frame_upgrade
-                );
+                $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'upgrade'
+                $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame_upgrade);
               }
             } else {
               $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);

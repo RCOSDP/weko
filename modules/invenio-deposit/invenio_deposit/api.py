@@ -343,7 +343,12 @@ class Deposit(Record):
         self['_deposit']['status'] = 'published'
 
         if self['_deposit'].get('pid') is None:  # First publishing
-            self._publish_new(id_=id_)
+            # self._publish_new(id_=id_)
+            self['_deposit']['pid'] = {
+                'type': pid.pid_type,
+                'value': pid.pid_value,
+                'revision_id': 0,
+            }
         else:  # Update after edit
             record = self._publish_edited()
             record.commit()

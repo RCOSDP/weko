@@ -24,6 +24,7 @@ from decimal import Decimal
 
 from flask import current_app
 from invenio_db import db
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from weko_admin.models import AdminSettings
@@ -170,20 +171,35 @@ def soft_delete(recid):
                 pid_type='recid', object_uuid=recid).first()
         if pid.status == PIDStatus.DELETED:
             return
-        depid = PersistentIdentifier.query.filter_by(
-            pid_type='depid', object_uuid=pid.object_uuid).first()
-        if depid:
-            rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
-            dep = WekoDeposit(rec.json, rec)
-            dep['path'] = []
-            dep.indexer.update_path(dep, update_revision=False)
-            FeedbackMailList.delete(pid.object_uuid)
-            dep.remove_feedback_mail()
-        pids = PersistentIdentifier.query.filter_by(
-            object_uuid=pid.object_uuid)
-        for p in pids:
-            p.status = PIDStatus.DELETED
-        db.session.commit()
+
+        versioning = PIDVersioning(child=pid)
+        if not versioning.exists:
+            return
+        all_ver = versioning.children.all()
+        draft_pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value="{}.0".format(pid.pid_value.split(".")[0])
+        ).one_or_none()
+
+        if draft_pid:
+            all_ver.append(draft_pid)
+
+        for ver in all_ver:
+            depid = PersistentIdentifier.query.filter_by(
+                pid_type='depid', object_uuid=ver.object_uuid).first()
+            if depid:
+                rec = RecordMetadata.query.filter_by(
+                    id=ver.object_uuid).first()
+                dep = WekoDeposit(rec.json, rec)
+                dep['path'] = []
+                dep.indexer.update_path(dep, update_revision=False)
+                FeedbackMailList.delete(ver.object_uuid)
+                dep.remove_feedback_mail()
+            pids = PersistentIdentifier.query.filter_by(
+                object_uuid=ver.object_uuid)
+            for p in pids:
+                p.status = PIDStatus.DELETED
+            db.session.commit()
     except Exception as ex:
         db.session.rollback()
         raise ex
@@ -199,19 +215,33 @@ def restore(recid):
                 pid_type='recid', object_uuid=recid).first()
         if pid.status != PIDStatus.DELETED:
             return
-        pid.status = PIDStatus.REGISTERED
-        depid = PersistentIdentifier.query.filter_by(
-            pid_type='depid', object_uuid=pid.object_uuid).first()
-        if depid:
-            depid.status = PIDStatus.REGISTERED
-            rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
-            dep = WekoDeposit(rec.json, rec)
-            dep.indexer.update_path(dep, update_revision=False)
-        pids = PersistentIdentifier.query.filter_by(
-            object_uuid=pid.object_uuid)
-        for p in pids:
-            p.status = PIDStatus.REGISTERED
-        db.session.commit()
+
+        versioning = PIDVersioning(child=pid)
+        if not versioning.exists:
+            return
+        all_ver = versioning.children.all()
+        draft_pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value="{}.0".format(pid.pid_value.split(".")[0])
+        ).one_or_none()
+
+        if draft_pid:
+            all_ver.append(draft_pid)
+
+        for ver in all_ver:
+            ver.status = PIDStatus.REGISTERED
+            depid = PersistentIdentifier.query.filter_by(
+                pid_type='depid', object_uuid=ver.object_uuid).first()
+            if depid:
+                depid.status = PIDStatus.REGISTERED
+                rec = RecordMetadata.query.filter_by(id=ver.object_uuid).first()
+                dep = WekoDeposit(rec.json, rec)
+                dep.indexer.update_path(dep, update_revision=False)
+            pids = PersistentIdentifier.query.filter_by(
+                object_uuid=ver.object_uuid)
+            for p in pids:
+                p.status = PIDStatus.REGISTERED
+            db.session.commit()
     except Exception as ex:
         db.session.rollback()
         raise ex

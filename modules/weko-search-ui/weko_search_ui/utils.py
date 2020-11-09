@@ -42,6 +42,7 @@ from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_oaiharvester.harvester import RESOURCE_TYPE_URI
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
@@ -74,8 +75,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
-    WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_IMPORT_SUFFIX_PATTERN, \
-    WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, \
+    WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
@@ -596,7 +597,15 @@ def handle_check_exist_record(list_record) -> list:
                         exist_url = request.url_root + \
                             'records/' + item_exist.get('recid')
                         if item.get('uri') == exist_url:
-                            item['status'] = 'update'
+                            _edit_mode = item.get('edit_mode')
+                            if not _edit_mode or _edit_mode.lower() \
+                                    not in ['keep', 'upgrade']:
+                                errors.append(
+                                    _('Please specify either \"Keep\"'
+                                      ' or "Upgrade".'))
+                                item['status'] = None
+                            else:
+                                item['status'] = _edit_mode.lower()
                         else:
                             errors.append(_('Specified URI and system'
                                             ' URI do not match.'))
@@ -878,15 +887,24 @@ def register_item_metadata(item):
             deposit.remove_feedback_mail()
 
         with current_app.test_request_context():
-            first_ver = deposit.newversion(pid)
-            if first_ver:
-                first_ver.publish()
-                if feedback_mail_list:
-                    FeedbackMailList.update(
-                        item_id=first_ver.id,
-                        feedback_maillist=feedback_mail_list
-                    )
-                    first_ver.update_feedback_mail()
+            if item['status'] in ['upgrade', 'new']:
+                _deposit = deposit.newversion(pid)
+                _deposit.publish()
+            else:
+                _pid = PIDVersioning(child=pid).last_child
+                _record = WekoDeposit.get_record(_pid.object_uuid)
+                _deposit = WekoDeposit(_record, _record.model)
+                _deposit.update(item_status, new_data)
+                _deposit.commit()
+                _deposit.merge_data_to_record_without_version(pid)
+                _deposit.publish()
+
+            if feedback_mail_list:
+                FeedbackMailList.update(
+                    item_id=_deposit.id,
+                    feedback_maillist=feedback_mail_list
+                )
+                _deposit.update_feedback_mail()
 
         db.session.commit()
 
@@ -997,6 +1015,7 @@ def import_items_to_system(item: dict, url_root: str):
         return      -- PID object if exist.
 
     """
+    response = None
     if not item:
         return None
     else:

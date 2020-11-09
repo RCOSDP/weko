@@ -922,8 +922,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         ret.append('.feedback_mail#{}'.format(i + 1))
         ret_label.append('.FEEDBACK_MAIL#{}'.format(i + 1))
 
-    ret.extend(['.cnri', '.doi_ra', '.doi'])
-    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI'])
+    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
 
@@ -964,6 +964,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             doi_value[0] if doi_value and doi_value[0] else ''
         ])
 
+        records.attr_output[recid].append('')
         records.attr_output[recid].append(record[
             'pubdate']['attribute_value'])
 
@@ -1052,7 +1053,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         elif key == '#.id':
             ret_system.append('#')
             ret_option.append('#')
-        elif key == '.publish_status':
+        elif key == '.edit_mode' or key == '.publish_status':
             ret_system.append('')
             ret_option.append('Required')
         else:
