@@ -369,25 +369,27 @@ def get_heading_info(data, lang, item_type):
             flag = False
             if 'properties' in value and value['type'] == 'object':
                 for k, v in value['properties'].items():
-                    if v['title'] == 'Banner Headline':
+                    if v['title'] == 'Banner Headline' or \
+                            v['title'] == '大見出し':
                         lheading_id = k
                         flag = True
-                    elif v['title'] == 'Subheading':
+                    elif v['title'] == 'Subheading' or v['title'] == '小見出し':
                         sheading_id = k
                         flag = True
-                    elif v['title'] == 'Language':
+                    elif v['title'] == 'Language' or v['title'] == '言語':
                         lang_id = k
             elif 'items' in value \
                     and value['type'] == 'array' \
                     and 'properties' in value['items']:
                 for k, v in value['items']['properties'].items():
-                    if v['title'] == 'Banner Headline':
+                    if v['title'] == 'Banner Headline' or \
+                            v['title'] == '大見出し':
                         lheading_id = k
                         flag = True
-                    elif v['title'] == 'Subheading':
+                    elif v['title'] == 'Subheading' or v['title'] == '小見出し':
                         sheading_id = k
                         flag = True
-                    elif v['title'] == 'Language':
+                    elif v['title'] == 'Language' or v['title'] == '言語':
                         lang_id = k
             if flag:
                 heading_id = key
