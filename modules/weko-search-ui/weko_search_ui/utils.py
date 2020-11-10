@@ -844,7 +844,7 @@ def register_item_metadata(item):
     def clean_file_metadata(item_type_id, data):
         # clear metadata of file information
         item_map = get_mapping(Mapping.get_record(
-                item_type_id), 'jpcoar_mapping')
+            item_type_id), 'jpcoar_mapping')
         _, key = get_data_by_property(
             item, item_map, "file.URI.@value")
         if key:
