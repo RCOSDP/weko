@@ -165,7 +165,7 @@ index_adminview = {
     'view_class': IndexSettingView,
     'kwargs': {
         'category': _('Setting'),
-        'name': _('Index Tree'),
+        'name': '',
         'endpoint': 'indextree'
     }
 }
