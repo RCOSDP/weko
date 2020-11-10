@@ -887,7 +887,8 @@ class WorkActivity(object):
         """Get activity action status."""
         with db.session.no_autoflush:
             activity_ac = ActivityAction.query.filter_by(
-                activity_id=activity_id, action_id=action_id).one()
+                activity_id=activity_id,
+                action_id=action_id).one()
             action_stus = activity_ac.action_status
             return action_stus
 
@@ -1777,17 +1778,15 @@ class WorkActivityHistory(object):
 class UpdateItem(object):
     """The class about item."""
 
-    def publish(pid, record):
+    def publish(self, record):
         r"""Record publish  status change view.
 
         Change record publish status with given status and renders record
         export template.
 
-        :param pid: PID object.
-        :param record: Record object.
+        :param record: record object.
         :return: The rendered template.
         """
-        from invenio_db import db
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:
@@ -1801,14 +1800,13 @@ class UpdateItem(object):
         indexer = WekoIndexer()
         indexer.update_publish_status(record)
 
-    def update_status(pid, record, status='1'):
+    def update_status(self, record, status='1'):
         r"""Record update status.
 
         :param pid: PID object.
         :param record: Record object.
         :param status: Publish status (0: publish, 1: private).
         """
-        from invenio_db import db
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:

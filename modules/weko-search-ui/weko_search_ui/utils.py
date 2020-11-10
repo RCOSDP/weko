@@ -42,6 +42,7 @@ from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_oaiharvester.harvester import RESOURCE_TYPE_URI
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
@@ -74,8 +75,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
-    WEKO_IMPORT_SUBITEM_DATE_ISO, WEKO_IMPORT_SUFFIX_PATTERN, \
-    WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, \
+    WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
@@ -390,7 +391,6 @@ def check_import_items(file_content: str, is_change_identifier: bool):
                     unpackage_import_file(data_path, tsv_entry))
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
-        handle_fill_system_item(list_record)
         handle_check_and_prepare_publish_status(list_record)
         handle_check_and_prepare_index_tree(list_record)
         handle_check_and_prepare_feedback_mail(list_record)
@@ -423,7 +423,9 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     """
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
     data = read_stats_tsv(tsv_file_path)
-    list_record = handle_validate_item_import(data.get('tsv_data'), data.get(
+    list_record = data.get('tsv_data')
+    handle_fill_system_item(list_record)
+    list_record = handle_validate_item_import(list_record, data.get(
         'item_type_schema', {}
     ))
     return list_record
@@ -623,7 +625,15 @@ def handle_check_exist_record(list_record) -> list:
                             exist_url = request.url_root + \
                                 'records/' + item_exist.get('recid')
                             if item.get('uri') == exist_url:
-                                item['status'] = 'update'
+                                _edit_mode = item.get('edit_mode')
+                                if not _edit_mode or _edit_mode.lower() \
+                                        not in ['keep', 'upgrade']:
+                                    errors.append(
+                                        _('Please specify either \"Keep\"'
+                                        ' or "Upgrade".'))
+                                    item['status'] = None
+                                else:
+                                    item['status'] = _edit_mode.lower()
             else:
                 item['id'] = None
                 if item.get('uri'):
@@ -774,6 +784,45 @@ def register_item_metadata(item):
         list_record    -- {list} list item import.
         file_path      -- {str} file path.
     """
+    def clean_file_metadata(item_type_id, data):
+        # clear metadata of file information
+        item_map = get_mapping(Mapping.get_record(
+                item_type_id), 'jpcoar_mapping')
+        _, key = get_data_by_property(
+            item, item_map, "file.URI.@value")
+        if key:
+            key = key.split('.')[0]
+            if not data.get(key):
+                deleted_items = data.get('deleted_items') or []
+                deleted_items.append(key)
+                data['deleted_items'] = deleted_items
+        return data
+
+    def clean_file_bucket(deposit):
+        # clean bucket
+        file_names = [file['filename'] for file in deposit.get_file_data()]
+        lastest_files_version = []
+        # remove lastest version
+        for file in deposit.files:
+            if file.obj.key not in file_names:
+                file.obj.remove()
+            else:
+                lastest_files_version.append(file.obj.version_id)
+        # remove old version of file
+        all_file_version = ObjectVersion.get_by_bucket(
+            deposit.files.bucket, True, True).all()
+        for file in all_file_version:
+            if file.key not in file_names:
+                file.remove()
+            elif file.version_id not in lastest_files_version:
+                file.remove()
+
+    def clean_all_file_in_bucket(deposit):
+        all_file_version = ObjectVersion.get_by_bucket(
+            deposit.files.bucket, True, True).all()
+        for file in all_file_version:
+            file.remove()
+
     item_id = str(item.get('id'))
     try:
         pid = PersistentIdentifier.query.filter_by(
@@ -805,7 +854,14 @@ def register_item_metadata(item):
                     'value': item_id
                 }
             })
+        new_data = clean_file_metadata(item['item_type_id'], new_data)
         deposit.update(item_status, new_data)
+        if item.get('file_path'):
+            # update
+            clean_file_bucket(deposit)
+        else:
+            # delete
+            clean_all_file_in_bucket(deposit)
         deposit.commit()
         deposit.publish()
 
@@ -821,15 +877,24 @@ def register_item_metadata(item):
             deposit.remove_feedback_mail()
 
         with current_app.test_request_context():
-            first_ver = deposit.newversion(pid)
-            if first_ver:
-                first_ver.publish()
-                if feedback_mail_list:
-                    FeedbackMailList.update(
-                        item_id=first_ver.id,
-                        feedback_maillist=feedback_mail_list
-                    )
-                    first_ver.update_feedback_mail()
+            if item['status'] in ['upgrade', 'new']:
+                _deposit = deposit.newversion(pid)
+                _deposit.publish()
+            else:
+                _pid = PIDVersioning(child=pid).last_child
+                _record = WekoDeposit.get_record(_pid.object_uuid)
+                _deposit = WekoDeposit(_record, _record.model)
+                _deposit.update(item_status, new_data)
+                _deposit.commit()
+                _deposit.merge_data_to_record_without_version(pid)
+                _deposit.publish()
+
+            if feedback_mail_list:
+                FeedbackMailList.update(
+                    item_id=_deposit.id,
+                    feedback_maillist=feedback_mail_list
+                )
+                _deposit.update_feedback_mail()
 
         db.session.commit()
 
@@ -940,6 +1005,7 @@ def import_items_to_system(item: dict, url_root: str):
         return      -- PID object if exist.
 
     """
+    response = None
     if not item:
         return None
     else:

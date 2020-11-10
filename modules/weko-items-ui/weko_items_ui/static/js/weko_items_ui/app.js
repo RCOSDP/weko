@@ -1046,21 +1046,40 @@ function toObject(arr) {
               }
             });
           }
+
+          // Initialization groups list for billing file
           groupsprice_schema = filemeta_schema.items.properties['groupsprice']
           groupsprice_form = get_subitem(filemeta_form.items, 'groupsprice')
           if (groupsprice_schema && groupsprice_form) {
-            groupsprice_schema.items.properties['group']['enum'] = [];
-            groupsprice_schema.items.properties['group']['enum'].push(null);
-            group_form = get_subitem(groupsprice_form.items, 'groupsprice');
-            group_form['titleMap'] = [];
-            $scope.groups.forEach(function (group) {
-              groupsprice_schema.items.properties['group']['enum'].push(group.id);
-              group_form['titleMap'].push({ name: group.value, value: group.id });
-            });
+            if (groupsprice_schema.hasOwnProperty('items')
+              && groupsprice_schema.items.hasOwnProperty('properties')
+              && groupsprice_schema.items.properties.hasOwnProperty('group')
+              && groupsprice_form.hasOwnProperty('items')) {
+              let groupSchema = groupsprice_schema.items.properties.group;
+              let groupForm = get_subitem(groupsprice_form.items, 'groupsprice');
+              $scope.loadUserGroups(groupSchema, groupForm);
+            }
+          }
+
+          // Initialization groups list for content file
+          let fileContentGroupSchema = filemeta_schema.items.properties['groups'];
+          let fileContentGroupForm = get_subitem(filemeta_form.items, 'groups');
+          if (fileContentGroupSchema && fileContentGroupForm) {
+            $scope.loadUserGroups(fileContentGroupSchema, fileContentGroupForm);
           }
         });
         $rootScope.$broadcast('schemaFormRedraw');
       }
+
+      $scope.loadUserGroups = function (groupSchema, groupForm) {
+        if (groupForm && groupForm.hasOwnProperty('titleMap') && $scope.groups.length > 0) {
+          groupForm['titleMap'] = [];
+          $scope.groups.forEach(function (group) {
+            groupForm['titleMap'].push({name: group.value, value: group.id});
+          });
+        }
+      }
+
       $scope.initContributorData = function () {
         $("#contributor-panel").addClass("hidden");
         // Load Contributor information
@@ -1948,9 +1967,13 @@ function toObject(arr) {
               if (model[filemeta_key][i]) {
                 let modelFile = model[filemeta_key][i];
                 files.forEach(function (file) {
-                  if (modelFile.filename === file.key
-                    && !$rootScope.isModelFileVersion(model[filemeta_key], file.version_id)) {
-                    modelFile.version_id = file.version_id;
+                  if (modelFile.filename === file.key) {
+                    if(!$rootScope.isModelFileVersion(model[filemeta_key], file.version_id)){
+                      modelFile.version_id = file.version_id;
+                    }
+                    if(!modelFile.fileDate){
+                      modelFile.fileDate = [{}];
+                    }
                   }
                 })
               }
@@ -2091,6 +2114,14 @@ function toObject(arr) {
             fileInfo.date = [{}]; // init array
             fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
             fileInfo.date[0].dateType = "Available";
+            // Set default Access Role is Open Access
+            fileInfo.accessrole = 'open_access'
+            // Set file URL
+            if (fileData.hasOwnProperty('links') && fileData.links.hasOwnProperty('self')) {
+              fileInfo.url = {
+                url: fileData.links.self
+              };
+            }
             // Push data to model
             model[filemeta_key].push(fileInfo);
           }
@@ -3244,18 +3275,11 @@ function toObject(arr) {
             let versionSelected = $("input[name='radioVersionSelect']:checked").val();
             if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
               if (versionSelected == "keep") {
-                $rootScope.recordsVM.actionHandler(
-                  ["edit", "PUT"],
-                  next_frame_edit
-                );
+                $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'keep'
+                $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
               } else if (versionSelected == "update") {
-                $rootScope.recordsVM.actionHandler(
-                  [
-                    ["newversion", "PUT"],
-                    ["index_upgrade", "PUT"],
-                  ],
-                  next_frame_upgrade
-                );
+                $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'upgrade'
+                $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame_upgrade);
               }
             } else {
               $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);

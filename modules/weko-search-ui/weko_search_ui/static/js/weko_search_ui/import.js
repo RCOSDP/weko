@@ -26,9 +26,10 @@ const title = document.getElementById("title").value;
 const check_result = document.getElementById("check_result").value;
 const error = document.getElementById("error").value;
 const warning = document.getElementById("warning").value;
-const update = document.getElementById("update").value;
 const not_match = document.getElementById("not_match").value;
 const register = document.getElementById("register").value;
+const keep = document.getElementById("keep").value;
+const upgrade = document.getElementById("upgrade").value;
 const register_with = document.getElementById("register_with").value;
 
 //label result
@@ -716,7 +717,7 @@ class CheckComponent extends React.Component {
       return item.status && item.status === 'new'
     }).length
     const update_item = list_record.filter((item) => {
-      return item.status && item.status === 'update'
+      return item.status && (item.status === 'keep' || item.status === 'upgrade')
     }).length
 
     this.setState({
@@ -744,7 +745,7 @@ class CheckComponent extends React.Component {
         'Item Type': item.item_type_name,
         'Item Id': item.id,
         'Title': item['item_title'] ? item['item_title'] : '',
-        'Check result': item['errors'] ? 'ERRORS' + (item['errors'][0] ? ': ' + item['errors'][0] : '') : item.status === 'new' ? 'Register' : item.status === 'update' ? 'Update' : ''
+        'Check result': item['errors'] ? 'ERRORS' + (item['errors'][0] ? ': ' + item['errors'][0] : '') : item.status === 'new' ? 'Register' : item.status === 'keep' ? 'Keep' : item.status === 'upgrade' ? 'Upgrade' : ''
       }
     })
     const data = {
@@ -867,7 +868,7 @@ class CheckComponent extends React.Component {
                           {
                             item['errors'] ? item['errors'].map(e => {
                               return <div>{error + ': ' + e}</div>
-                            }) : item.status === 'new' ? register : item.status === 'update' ? update : ''
+                            }) : item.status === 'new' ? register : item.status === 'keep' ? keep : item.status === 'upgrade' ? upgrade : ''
                           }
                           {
                             item['warnings'] && item['warnings'].map(e => {

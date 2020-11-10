@@ -218,3 +218,7 @@ msgstr ""
 
 msgid "Change DOI Mode"
 msgstr ""
+
+#: weko-search-ui\weko_search_ui\utils.py:603
+msgid "Please specify either \"Keep\" or \"Upgrade\"."
+msgstr ""

@@ -274,7 +274,7 @@
           {%- endif %}
 
           <div class="table-responsive" style="display: inline-block; _display: inline;">
-              {{ output_item_detail(record, files_thumbnail, pid, items_show_list, true, is_logged_in, open_day_display_flg) }}
+              {{ output_item_detail(record, files, files_thumbnail, pid, items_show_list, true, is_logged_in, open_day_display_flg) }}
           </div>
           {%- if 'main_entry_personal_name' in record %}
           <p class="record_authors">
@@ -293,11 +293,11 @@
                 <a class="btn btn-primary edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}"
                   {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
                   <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
+                <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm('',
+                  '{{'/records/soft_delete/'+ pid.pid_value}}',
+                  '{{url_for('weko_search_ui.search')}}')">
+                  <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
               {% endif %}
-            <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm('',
-              '{{'/records/soft_delete/'+ pid.pid_value}}',
-              '{{url_for('weko_search_ui.search')}}')">
-              <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
             <div class="row">
               <p class="alert alert-danger alert-dismissible text-middle collapse" role="alert"
                 style="min-width: 330px;">

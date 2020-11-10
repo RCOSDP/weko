@@ -306,6 +306,14 @@ msgstr "作業済"
 msgid "To Do"
 msgstr ""
 
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Keep Version"
+msgstr "バージョンの維持"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Upgrade Version"
+msgstr "バージョンの変更"
+
 #: weko_search_ui/config.py:
 msgid "Access"
 msgstr "アクセス制限"
@@ -449,6 +457,10 @@ msgstr "アイテムIDが指定されたURIの情報と一致しません。"
 #: weko-search-ui\weko_search_ui\utils.py:1307
 msgid "PID does not meet the conditions."
 msgstr "PID付与の条件を満たしていません。"
+
+#: weko-search-ui\weko_search_ui\utils.py:603
+msgid "Please specify either \"Keep\" or \"Upgrade\"."
+msgstr "Keep、Upgradeのいずれかを指定してください。"
 
 msgid "Change Identifier Mode."
 msgstr "識別子変更モード"

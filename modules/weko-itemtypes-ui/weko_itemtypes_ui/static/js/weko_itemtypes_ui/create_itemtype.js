@@ -1006,7 +1006,7 @@ $(document).ready(function () {
   });
 
   function setDefaultI18n(schema, forms) {
-    if(!schema|| !forms || forms.items) return;
+    if(!schema|| !forms || !forms.items) return;
     Object.keys(schema).map(function (subSchema) {
       forms.items.forEach(function (subForm) {
         if(subForm['key']){
@@ -1020,8 +1020,10 @@ $(document).ready(function () {
             let schemaTitleI18n = schema[subSchema]['title_i18n'];
             let subFormTitleI18n = subForm['title_i18n'];
             schemaTitleI18n = subFormTitleI18n ? subFormTitleI18n : defaultTitle;
+            schema[subSchema]['title_i18n'] = schemaTitleI18n;
             let childSchema = getPropertiesOrItems(schema[subSchema]);
-            setDefaultI18n(childSchema, subForm);
+            if(childSchema)
+              setDefaultI18n(childSchema, subForm);
           }
         }
       });
@@ -1672,7 +1674,7 @@ $(document).ready(function () {
           let itSubSchema = itSchema[itSchemaKey];
           itpSubSchema.format = itSubSchema.format;
           if(itpSubSchema.format == 'select') {
-            itpSubSchema.type = "string";
+            itpSubSchema.type = ["null","string"];
           } else if(itpSubSchema.format == 'checkboxes') {
             itpSubSchema.type = "array";
           } else if(itpSubSchema.format == "radios") {
@@ -1772,7 +1774,7 @@ $(document).ready(function () {
       // Delete enum form properties to avoid schema validation error because of 2 enums
       delete property.enum
     } else if (property.format == 'select') {
-      property.type="string";
+      property.type=["null","string"];
       form.type = "select";
     }
     //Delete info not use.

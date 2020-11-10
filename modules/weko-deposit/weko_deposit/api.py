@@ -88,6 +88,7 @@ class WekoFileObject(FileObject):
         self.obj = obj
         self.data = data
         self.info()
+        self.preview_able = self.file_preview_able()
 
     def info(self):
         """Info."""
@@ -99,6 +100,24 @@ class WekoFileObject(FileObject):
             index = self['filename'].rfind('.')
             self['filename'] = self['filename'][:index]
         return self.data
+
+    def file_preview_able(self):
+        """Check whether file can be previewed or not."""
+        file_type = ''
+        file_size = self.data['size']
+        for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
+            if self.data['format'] in v:
+                file_type = k
+                break
+        if file_type in current_app.config[
+                'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
+            # Convert MB to Bytes in decimal
+            file_size_limit = current_app.config[
+                'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
+                file_type] * 1000000
+            if file_size > file_size_limit:
+                return False
+        return True
 
 
 class WekoIndexer(RecordIndexer):
@@ -455,6 +474,7 @@ class WekoDeposit(Deposit):
                 relations_ver['id'] = recid.object_uuid
                 relations_ver['is_last'] = relations_ver.get('index') == 0
                 self.indexer.update_relation_version_is_last(relations_ver)
+            db.session.commit()
             return deposit
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
@@ -649,80 +669,76 @@ class WekoDeposit(Deposit):
 
             # Check that there is not a newer draft version for this record
             # and this is the latest version
-            pv = PIDVersioning(child=pid)
-            if pv.exists and not pv.draft_child:  # and pid == pv.last_child:
-                # the latest record: item without version ID
-                last_pid = pid  # pv.last_child
-                # Get copy of the latest record
-                latest_record = WekoDeposit.get_record(last_pid.object_uuid)
-                if latest_record:
-                    data = latest_record.dumps()
-                    owners = data['_deposit']['owners']
-                    keys_to_remove = ('_deposit', 'doi', '_oai',
-                                      '_files', '_buckets', '$schema')
-                    for k in keys_to_remove:
-                        data.pop(k, None)
+            versioning = PIDVersioning(child=pid)
+            record = WekoDeposit.get_record(pid.object_uuid)
 
-                    # Attaching version ID, "{}.0" for draft record id.
-                    if is_draft:
-                        draft_id = '{0}.{1}' . format(
-                            last_pid.pid_value,
-                            0)
-                    else:
-                        draft_id = '{0}.{1}' . format(
-                            last_pid.pid_value,
-                            get_latest_version_id(last_pid.pid_value))
-                    # NOTE: We call the superclass `create()` method, because
-                    # we don't want a new empty bucket, but
-                    # an unlocked snapshot of the old record's bucket.
-                    deposit = super(WekoDeposit, self).create(data,
-                                                              recid=draft_id)
-                    # Injecting owners is required in case of creating new
-                    # version this outside of request context
-                    deposit['_deposit']['owners'] = owners
+            assert PIDStatus.REGISTERED == pid.status
+            if not record or not versioning.exists or versioning.draft_child:
+                return None
 
-                    recid = PersistentIdentifier.get(
-                        'recid', str(data['_deposit']['id']))
-                    depid = PersistentIdentifier.get(
-                        'depid', str(data['_deposit']['id']))
+            data = record.dumps()
+            owners = data['_deposit']['owners']
+            keys_to_remove = ('_deposit', 'doi', '_oai',
+                              '_files', '_buckets', '$schema')
+            for k in keys_to_remove:
+                data.pop(k, None)
 
-                    PIDVersioning(
-                        parent=pv.parent).insert_draft_child(
-                        child=recid)
-                    RecordDraft.link(recid, depid)
+            draft_id = '{0}.{1}'.format(
+                pid.pid_value,
+                0 if is_draft else get_latest_version_id(pid.pid_value))
 
-                    if is_draft:
-                        with db.session.begin_nested():
-                            # Set relation type of draft record is 3: Draft
-                            parent_pid = PIDVersioning(child=recid).parent
-                            relation = PIDRelation.query.\
-                                filter_by(parent=parent_pid,
-                                          child=recid).one_or_none()
-                            relation.relation_type = 3
-                        db.session.merge(relation)
+            # NOTE: We call the superclass `create()` method, because
+            # we don't want a new empty bucket, but
+            # an unlocked snapshot of the old record's bucket.
+            deposit = super(
+                WekoDeposit,
+                self).create(data, recid=draft_id)
+            # Injecting owners is required in case of creating new
+            # version this outside of request context
 
-                    snapshot = latest_record.files.bucket.\
-                        snapshot(lock=False)
-                    snapshot.locked = False
-                    deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                    RecordsBuckets.create(record=deposit.model,
-                                          bucket=snapshot)
+            deposit['_deposit']['owners'] = owners
 
-                    index = {'index': self.get('path', []),
-                             'actions': self.get('publish_status')}
-                    if 'activity_info' in session:
-                        del session['activity_info']
-                    item_metadata = ItemsMetadata.get_record(
-                        last_pid.object_uuid).dumps()
-                    item_metadata.pop('id', None)
-                    args = [index, item_metadata]
-                    deposit.update(*args)
-                    deposit.commit()
-            return deposit
+            recid = PersistentIdentifier.get(
+                'recid', str(data['_deposit']['id']))
+            depid = PersistentIdentifier.get(
+                'depid', str(data['_deposit']['id']))
+
+            PIDVersioning(
+                parent=versioning.parent).insert_draft_child(
+                child=recid)
+            RecordDraft.link(recid, depid)
+
+            if is_draft:
+                with db.session.begin_nested():
+                    # Set relation type of draft record is 3: Draft
+                    parent_pid = PIDVersioning(child=recid).parent
+                    relation = PIDRelation.query.\
+                        filter_by(parent=parent_pid,
+                                  child=recid).one_or_none()
+                    relation.relation_type = 3
+                db.session.merge(relation)
+
+            snapshot = record.files.bucket.\
+                snapshot(lock=False)
+            snapshot.locked = False
+            deposit['_buckets'] = {'deposit': str(snapshot.id)}
+            RecordsBuckets.create(record=deposit.model,
+                                  bucket=snapshot)
+
+            index = {'index': self.get('path', []),
+                     'actions': self.get('publish_status')}
+            if 'activity_info' in session:
+                del session['activity_info']
+            item_metadata = ItemsMetadata.get_record(
+                pid.object_uuid).dumps()
+            item_metadata.pop('id', None)
+            args = [index, item_metadata]
+            deposit.update(*args)
+            deposit.commit()
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-            return None
+        return deposit
 
     def get_content_files(self):
         """Get content file metadata."""
@@ -1038,28 +1054,25 @@ class WekoDeposit(Deposit):
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
             item_metadata.pop('control_number', None)
+            is_draft = True if ".0" in pid.pid_value else False
 
             # Clone bucket
-            if ".0" not in pid.pid_value:
-                draft_pid = PersistentIdentifier.get('recid', '{}.0'.format(
-                    pid.pid_value.split(".")[0]))
-                draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
-            else:
-                draft_deposit = WekoDeposit.get_record(pid.object_uuid)
+            _deposit = WekoDeposit.get_record(
+                PersistentIdentifier.get(
+                    'recid',
+                    '{}.0'.format(pid.pid_value.split(".")[0])
+                ).object_uuid if is_draft else pid.object_uuid)
             # Get draft bucket's data
-            bucket = Bucket.get(draft_deposit.files.bucket.id)
-            if ".0" in self.pid.pid_value:
-                sync_bucket = RecordsBuckets.query.filter_by(
-                    record_id=pid.object_uuid
-                ).first()
-            else:
-                sync_bucket = RecordsBuckets.query.filter_by(
-                    record_id=self.id
-                ).first()
+            sync_bucket = RecordsBuckets.query.filter_by(
+                record_id=pid.object_uuid if is_draft else self.id).first()
             sync_bucket.bucket.locked = False
-            snapshot = bucket.snapshot(lock=False)
+            snapshot = Bucket.get(
+                _deposit.files.bucket.id).snapshot(lock=False)
+            bucket = Bucket.get(sync_bucket.bucket_id)
             snapshot.locked = False
             sync_bucket.bucket = snapshot
+            bucket.locked = False
+            bucket.remove()
 
             bucket = {
                 "_buckets": {
@@ -1069,9 +1082,9 @@ class WekoDeposit(Deposit):
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
-            if ".0" in self.pid.pid_value:
-                draft_deposit['_buckets'] = {"deposit": str(snapshot.id)}
-                draft_deposit.commit()
+            if is_draft:
+                _deposit['_buckets'] = {"deposit": str(snapshot.id)}
+                _deposit.commit()
             else:
                 super(WekoDeposit, self).update(bucket)
             self.commit()
@@ -1173,9 +1186,14 @@ class WekoRecord(Record):
 
                 if nval['attribute_name'] == 'Reference' \
                         or nval['attribute_type'] == 'file':
+                    file_metadata = copy.deepcopy(mlt)
+                    if nval['attribute_type'] == 'file':
+                        file_metadata = self.\
+                            __remove_file_metadata_do_not_publish(
+                                file_metadata)
                     nval['attribute_value_mlt'] = \
-                        get_all_items(copy.deepcopy(mlt),
-                                      copy.deepcopy(solst), True)
+                        get_all_items(
+                        file_metadata, copy.deepcopy(solst), True)
                 else:
                     is_author = nval['attribute_type'] == 'creator'
                     is_thumbnail = any(
@@ -1226,6 +1244,45 @@ class WekoRecord(Record):
                     creator_dict[creator_mails] = creator_data[creator_mails]
                 creators.append(creator_dict)
         return creators
+
+    def __remove_file_metadata_do_not_publish(self, file_metadata_list):
+        """Remove file metadata do not publish.
+
+        :param file_metadata_list: File metadata list.
+        :return: New file metadata list.
+        """
+        def __check_user_permission():
+            """Check user permission.
+
+            :return: True if the login user is allowed to display file metadata.
+            """
+            is_ok = False
+            # Check guest user
+            if not current_user.is_authenticated:
+                return is_ok
+            # Check registered user
+            elif current_user and current_user.id in user_id_list:
+                is_ok = True
+            # Check super users
+            else:
+                super_users = current_app.config[
+                    'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                    current_app.config[
+                        'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+                for role in list(current_user.roles or []):
+                    if role.name in super_users:
+                        is_ok = True
+                        break
+
+            return is_ok
+
+        new_file_metadata_list = []
+        user_id_list = self.get('_deposit', {}).get('owners', [])
+        for file in file_metadata_list:
+            if not ('open_no' in file.get('accessrole', [])
+                    and not __check_user_permission()):
+                new_file_metadata_list.append(file)
+        return new_file_metadata_list
 
     @property
     def pid_doi(self):

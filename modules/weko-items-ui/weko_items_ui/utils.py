@@ -922,8 +922,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         ret.append('.feedback_mail#{}'.format(i + 1))
         ret_label.append('.FEEDBACK_MAIL#{}'.format(i + 1))
 
-    ret.extend(['.cnri', '.doi_ra', '.doi'])
-    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI'])
+    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日')
 
@@ -964,6 +964,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             doi_value[0] if doi_value and doi_value[0] else ''
         ])
 
+        records.attr_output[recid].append('')
         records.attr_output[recid].append(record[
             'pubdate']['attribute_value'])
 
@@ -1052,7 +1053,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         elif key == '#.id':
             ret_system.append('#')
             ret_option.append('#')
-        elif key == '.publish_status':
+        elif key == '.edit_mode' or key == '.publish_status':
             ret_system.append('')
             ret_option.append('Required')
         else:
@@ -1392,8 +1393,10 @@ def _export_item(record_id,
                         exported_item['files'].append(file.info())
                         # TODO: Then convert the item into the desired format
                         if file:
-                            shutil.copy2(file.obj.file.uri,
-                                         tmp_path + '/' + file.obj.basename)
+                            file_buffered = file.obj.file.storage().open()
+                            temp_file = open(tmp_path + '/' + file.obj.basename, 'wb')
+                            temp_file.write(file_buffered.read())
+                            temp_file.close()
 
     return exported_item, list_item_role
 
@@ -2280,7 +2283,8 @@ def hide_thumbnail(schema_form):
     """
     def is_thumbnail(items):
         for item in items:
-            if 'subitem_thumbnail' in item.get('key'):
+            if isinstance(item, dict) and 'subitem_thumbnail' in item.get(
+                    'key', ''):
                 return True
         return False
 

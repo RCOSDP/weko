@@ -304,6 +304,13 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Keep Version"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Upgrade Version"
+msgstr ""
 
 #: weko_search_ui/config.py:
 msgid "Access"

@@ -225,14 +225,9 @@ def file_ui(
     # #Check permissions
     # ObjectResource.check_object_permission(obj)
 
-    # Get user's language
-    user = UserProfile.get_by_userid(current_user.get_id())
-    lang = 'en'     # Defautl language for PDF coverpage
-
-    if user is None:
-        lang = 'en'
-    else:
-        lang = user.language
+    # Get user's language and defautl language for PDF coverpage.
+    user_profile = UserProfile.get_by_userid(current_user.get_id())
+    lang = user_profile.language if user_profile else 'en'
 
     add_signals_info(record, obj)
     """ Send file without its pdf cover page """
@@ -288,11 +283,10 @@ def file_ui(
     # Send file with its pdf cover page
     file_instance_record = FileInstance.query.filter_by(
         id=obj.file_id).first()
-    obj_file_uri = file_instance_record.uri
 
     # return obj_file_uri
     signals.file_downloaded.send(current_app._get_current_object(), obj=obj)
-    return make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang)
+    return make_combined_pdf(pid, fileobj, obj, lang)
 
 
 def add_signals_info(record, obj):
