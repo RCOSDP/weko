@@ -90,7 +90,6 @@ setup(
             'weko_index_tree_rest = weko_index_tree:WekoIndexTreeREST',
         ],
         'invenio_admin.views': [
-            'weko_index_tree_indextree = weko_index_tree.admin:index_adminview',
             'weko_index_tree_indexlink = '
             'weko_index_tree.admin:index_link_adminview',
             'weko_index_tree_edit = weko_index_tree.admin:index_edit_adminview',

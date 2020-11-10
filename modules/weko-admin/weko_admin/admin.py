@@ -47,6 +47,7 @@ from simplekv.memory.redisstore import RedisStore
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
+from weko_records_ui.utils import check_items_settings
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
@@ -571,7 +572,8 @@ class SearchSettingsView(BaseView):
             search_author_flg = current_app.config['ITEM_SEARCH_FLG']
         search_setting['search_author_flg'] = search_author_flg
         # get index tree style setting
-        style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+        style = IndexStyle.get(
+            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
         width = style.width if style else '3'
         height = style.height if style else None
         search_setting['index_tree_style'] = {
