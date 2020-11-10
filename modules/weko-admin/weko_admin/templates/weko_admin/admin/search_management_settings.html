@@ -38,48 +38,37 @@
   {% set searchOptions = config['WEKO_ADMIN_SEARCH_OPTIONS'] %}
   {% set currentLanguage = current_i18n.language %}
 <div id="search_management" class="container-fluid table-responsive">
-  <div class="row">
-    <div id="alerts"></div>
-    <div class="col-sm-12 col-md-12 col-md-12">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h5><strong><p>{{ _('Search Setting') }}</p></strong></h5>
-        </div>
-        <div class="panel-body">
-          <form class="form-inline" method="POST" name="set_search_author_form" action={{url_for('itemsetting.index')}}>
-            <div class="row">
-              <div class="col-sm-2 text-right">
-                <label>{{_('Search Author')}}</label>
+  <div ng-init="initData('{{ setting_data }}')"
+       ng-controller="searchManagementCtrl">
+    <div class="row">
+      <div id="alerts"></div>
+      <div class="col-sm-12 col-md-12 col-md-12">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h5><strong><p>{{ _('Search Author Setting') }}</p></strong></h5>
+          </div>
+          <div class="panel-body">
+            <form class="form-inline">
+              <div class="row">
+                <div class="col-sm-2 text-right">
+                  <label>{{_('Search Author')}}</label>
+                </div>
+                <div class="col-sm-8">
+                    <label class="radio-inline">
+                      <input type="radio" ng-model="dataJson.search_author_flg" value="name">
+                      {{_("Search by Author Name")}}
+                    </label>
+                    <label class="radio-inline">
+                      <input type="radio" ng-model="dataJson.search_author_flg" value="id">
+                      {{_("Search by Author ID")}}
+                    </label>
+                </div>
               </div>
-              <div class="col-sm-8">
-                {%- if search_author_flg == 'name' %}
-                  <label class="radio-inline">
-                    <input type="radio" name="searchRadios" id="searchRadiosName" value="name" checked>
-                    {{_("Search by Author Name")}}
-                  </label>
-                  <label class="radio-inline">
-                    <input type="radio" name="searchRadios" id="searchRadiosID" value="id">
-                    {{_("Search by Author ID")}}
-                  </label>
-                {%- else %}
-                  <label class="radio-inline">
-                    <input type="radio" name="searchRadios" id="searchRadiosName" value="name">
-                    {{_("Search by Author Name")}}
-                  </label>
-                  <label class="radio-inline">
-                    <input type="radio" name="searchRadios" id="searchRadiosID" value="id" checked>
-                    {{_("Search by Author ID")}}
-                  </label>
-                {%- endif %}
-              </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     </div>
-  </div>  
-  <div ng-init="initData('{{ setting_data }}')"
-       ng-controller="searchManagementCtrl">
     <div class="row">
       <div class="col-sm-12 col-md-12 col-md-12">
         <div class="panel panel-default">
@@ -272,25 +261,14 @@
                               <input type="checkbox" id="display_control_index_tree" value="dataJson.display_control.display_index_tree.id" ng-model="dataJson.display_control.display_index_tree.status" class="ng-pristine ng-valid ng-touched">
                               <label for="display_control_index_tree" style="font-weight: normal; margin: 0 5px;">{{_('Display')}}</label>
                               <div style="display: flex; flex-direction: column; flex: 1">
-                                <form class="form-horizontal" method="POST" name="index_form" action={{url_for('indextree.index')}}>
-                                  <div class="form-group" style="margin-top:
-                                      15px">
-                                    <label for="width" class="control-label
-                                        col-sm-1">
+                                <form class="form-horizontal">
+                                  <div class="form-group" style="margin-top: 15px">
+                                    <label for="width" class="control-label col-sm-1">
                                       {{_('Width (Grid)')}}
                                     </label>
-                                    <div class="controls col-sm-2"i>
-                                      <select class="form-control" id="width" name="width">
-                                        {%- for width in widths if width %}
-                                          {{ width }}
-                                          {%- if width == width_selected %}
-                                            <option value={{ width }} selected="selected">{{ width }}</option>
-                                          {%- else %}
-                                            <option value="{{ width }}">{{ width }}</option>
-                                          {%- endif %}
-                                        {%- endfor %}
-                                      </select>
-                                    </div>
+                                    <select id="width" ng-model="dataJson.index_tree_style.width" class="form-control">
+                                      <option ng-repeat="opt_num in dataJson.index_tree_style.width_options track by $index" value="[[opt_num]]">{{[[opt_num]]}}</option>
+                                    </select>
                                   </div>
                                   <div class="form-group" style="margin-top:
                                       15px;">
@@ -298,7 +276,7 @@
                                       {{_('Height (Pixel)')}}
                                     </label>
                                     <div class="controls col-sm-2">
-                                      <input type="text" class="form-control" id="height" name="height" value={{ height }}>
+                                      <input type="text" class="form-control" id="height" value="dataJson.index_tree_style.height" ng-model="dataJson.index_tree_style.height">
                                     </div>
                                   </div>  
                                 </form>

@@ -668,7 +668,6 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'search-management',
     'sitemap',
     'indexlink',
-    'indextree',
     'itemsetting',
     'statssettings',
     'stylesetting',
