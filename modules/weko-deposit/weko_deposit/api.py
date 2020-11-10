@@ -88,6 +88,7 @@ class WekoFileObject(FileObject):
         self.obj = obj
         self.data = data
         self.info()
+        self.preview_able = self.file_preview_able()
 
     def info(self):
         """Info."""
@@ -99,6 +100,24 @@ class WekoFileObject(FileObject):
             index = self['filename'].rfind('.')
             self['filename'] = self['filename'][:index]
         return self.data
+
+    def file_preview_able(self):
+        """Check whether file can be previewed or not."""
+        file_type = ''
+        file_size = self.data['size']
+        for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
+            if self.data['format'] in v:
+                file_type = k
+                break
+        if file_type in current_app.config[
+                'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
+            # Convert MB to Bytes in decimal
+            file_size_limit = current_app.config[
+                'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
+                file_type] * 1000000
+            if file_size > file_size_limit:
+                return False
+        return True
 
 
 class WekoIndexer(RecordIndexer):

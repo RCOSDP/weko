@@ -441,3 +441,6 @@ msgstr "必須項目がありません。"
 
 msgid "Feedback Mail Import"
 msgstr "入力"
+
+msgid "Cannot preview because the file size is too large."
+msgstr "ファイルサイズが大きいためプレビューできません。"
