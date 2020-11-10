@@ -440,7 +440,7 @@ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
 
     """
     records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().\
+    records_search = records_search.with_preference_param(). \
         params(version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
     result = None
@@ -545,7 +545,13 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
         is_parent_private = False
         while list_parent_key:
             nearest_parent_key = list_parent_key.pop()
-            if not lst_indexes_state[nearest_parent_key]:
+            if lst_indexes_state.get(nearest_parent_key) is None:
+                lst_indexes_deleted.add(nearest_parent_key)
+                current_app.logger.warning(
+                    "Index {} is existed in ElasticSearch but not "
+                    "in DataBase".format(str(nearest_parent_key)))
+                continue
+            if lst_indexes_state[nearest_parent_key] is False:
                 is_parent_private = True
                 break
         if is_parent_private:
@@ -562,10 +568,16 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
     pri_items_count = 0
     lst_child_agg = get_child_agg_by_key()
     lst_indexes_state = get_indexes_state()
+    # list indexes existed in ES but deleted in DB
+    lst_indexes_deleted = set()
     # Modify counts of index based on index and parent indexes state
     for agg in lst_child_agg:
-        set_private_index_count(agg)
+        set_private_index_count(agg, lst_indexes_deleted)
     for agg in lst_child_agg:
+        for index_deleted in lst_indexes_deleted:
+            if str(agg['key']).endswith(str(index_deleted)):
+                agg['no_available'] = 0
+                agg['doc_count'] = 0
         pri_items_count += agg['no_available']
         pub_items_count += agg['doc_count'] - agg['no_available']
     return pri_items_count, pub_items_count
