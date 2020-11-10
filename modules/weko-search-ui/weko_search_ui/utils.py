@@ -532,8 +532,8 @@ def handle_validate_item_import(list_record, schema) -> list:
     for record in list_record:
         errors = record.get('errors') or []
         record_id = record.get("id")
-        if record_id and (not represents_int(record_id)) \
-                or re.search(r'([０-９])', record_id):
+        if record_id and (not represents_int(record_id)
+                          or re.search(r'([０-９])', record_id)):
             errors.append(_('Please specify item ID by half-width number.'))
         if record.get('metadata'):
             if v2:
@@ -630,7 +630,7 @@ def handle_check_exist_record(list_record) -> list:
                                         not in ['keep', 'upgrade']:
                                     errors.append(
                                         _('Please specify either \"Keep\"'
-                                        ' or "Upgrade".'))
+                                          ' or "Upgrade".'))
                                     item['status'] = None
                                 else:
                                     item['status'] = _edit_mode.lower()
