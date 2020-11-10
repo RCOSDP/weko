@@ -534,10 +534,11 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
                 lst_result.append(index_aggr)
         return lst_result
 
-    def set_private_index_count(target_index):
+    def set_private_index_count(target_index, lst_deleted):
         """Set private count of index based on index and parent index state.
 
         :param target_index: in of target index
+        :param lst_deleted: lst deleted indexes
         :return:
         """
         temp = target_index.copy()
@@ -546,7 +547,7 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
         while list_parent_key:
             nearest_parent_key = list_parent_key.pop()
             if lst_indexes_state.get(nearest_parent_key) is None:
-                lst_indexes_deleted.add(nearest_parent_key)
+                lst_deleted.add(nearest_parent_key)
                 current_app.logger.warning(
                     "Index {} is existed in ElasticSearch but not "
                     "in DataBase".format(str(nearest_parent_key)))
