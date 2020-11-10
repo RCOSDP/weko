@@ -17,14 +17,15 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
-{%- extends config.ACCOUNTS_COVER_TEMPLATE %}
 
-{% from "invenio_accounts/_macros.html" import render_field, form_errors %}
-
-{% block panel %}
 {%- if config.WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED and config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
   <meta http-equiv="Refresh" content="0; url={{ config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path }}" />
 {%- else %}
+  {%- extends config.ACCOUNTS_COVER_TEMPLATE %}
+
+  {% from "invenio_accounts/_macros.html" import render_field, form_errors %}
+
+  {% block panel %}
   <div class="col-md-6 col-md-offset-3">
     <div class="panel panel-default">
       <div class="panel-body">
@@ -71,5 +72,5 @@
     {%- endif %}
     {%- endblock %}
   </div>
+  {% endblock panel %}
 {%- endif %}
-{% endblock panel %}
