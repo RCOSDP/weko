@@ -1279,7 +1279,7 @@ class WekoRecord(Record):
         new_file_metadata_list = []
         user_id_list = self.get('_deposit', {}).get('owners', [])
         for file in file_metadata_list:
-            if not ('open_no' in file.get('accessrole')
+            if not ('open_no' in file.get('accessrole', [])
                     and not __check_user_permission()):
                 new_file_metadata_list.append(file)
         return new_file_metadata_list
