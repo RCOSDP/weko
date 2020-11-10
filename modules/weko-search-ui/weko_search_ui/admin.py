@@ -504,7 +504,7 @@ item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,
     'kwargs': {
         'endpoint': 'items/search',
-        'category': 'Items',
+        'category': _('Index Tree'),
         'name': '',
     }
 }
