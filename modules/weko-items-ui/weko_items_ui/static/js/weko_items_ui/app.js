@@ -2010,6 +2010,8 @@ function toObject(arr) {
         $scope.initAuthorList();
         $scope.getDataAuthors();
         $scope.updateNumFiles();
+        $scope.editModeHandle();
+
         //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
@@ -3274,6 +3276,7 @@ function toObject(arr) {
 
             let versionSelected = $("input[name='radioVersionSelect']:checked").val();
             if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
+              let edit_mode = sessionStorage.getItem("edit_mode_" + currActivityId);
               if (versionSelected == "keep" || edit_mode) {
                 $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'keep'
                 $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
@@ -3412,15 +3415,6 @@ function toObject(arr) {
               $scope.endLoading();
             }, 2000);
           }
-        }
-
-        let key = "edit_mode_" + activityId;
-        var edit_mode = sessionStorage.getItem(key);
-        if (edit_mode) {
-          let version_radios = $('input[name ="radioVersionSelect"]');
-
-          version_radios.prop('disabled', true);
-          version_radios.filter('[value='+edit_mode+']').prop('checked', true);
         }
         sessionStorage.removeItem(key);
       }
@@ -3608,6 +3602,21 @@ function toObject(arr) {
         delete $rootScope.recordsVM.invenioRecordsModel.persistent_identifier_h;
         delete $rootScope.recordsVM.invenioRecordsModel.ranking_page_url;
         delete $rootScope.recordsVM.invenioRecordsModel.belonging_index_info;
+      }
+
+      $scope.editModeHandle = function () {
+        let activityId = $("#activity_id").text();
+        if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
+          let edit_mode = sessionStorage.getItem("edit_mode_" + activityId);
+          if (edit_mode) {
+            let version_radios = $('input[name ="radioVersionSelect"]');
+
+            version_radios.prop('disabled', true);
+            version_radios.filter('[value=' + edit_mode + ']').prop('checked', true);
+          }
+        } else {
+          $('#react-component-version').hide()
+        }
       }
     }
     // Inject depedencies
