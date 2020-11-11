@@ -3276,8 +3276,7 @@ function toObject(arr) {
 
             let versionSelected = $("input[name='radioVersionSelect']:checked").val();
             if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0")) {
-              let edit_mode = sessionStorage.getItem("edit_mode_" + currActivityId);
-              if (versionSelected == "keep" || edit_mode) {
+              if (versionSelected == "keep") {
                 $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'keep'
                 $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
               } else if (versionSelected == "update") {
@@ -3606,9 +3605,8 @@ function toObject(arr) {
 
       $scope.editModeHandle = function () {
         let activityId = $("#activity_id").text();
-        if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0")) {
-          let edit_mode = sessionStorage.getItem("edit_mode_" + activityId);
-
+        let edit_mode = sessionStorage.getItem("edit_mode_" + activityId);
+        if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0") || edit_mode) {
           if (edit_mode) {
             let version_radios = $('input[name ="radioVersionSelect"]');
 
