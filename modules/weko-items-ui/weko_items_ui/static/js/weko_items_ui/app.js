@@ -3249,7 +3249,6 @@ function toObject(arr) {
           $scope.genTitleAndPubDate();
           let next_frame = $('#next-frame').val();
           let next_frame_upgrade = $('#next-frame-upgrade').val();
-          let next_frame_edit = $('#next-frame-edit').val();
           if (enableContributor === 'True' && !this.registerUserPermission()) {
             $scope.endLoading();
           } else if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
@@ -3272,18 +3271,21 @@ function toObject(arr) {
             $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
             sessionStorage.removeItem(currActivityId);
+
             let versionSelected = $("input[name='radioVersionSelect']:checked").val();
             if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
-              if (versionSelected == "keep") {
+              if (versionSelected == "keep" || edit_mode) {
                 $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'keep'
                 $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
               } else if (versionSelected == "update") {
                 $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'upgrade'
                 $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame_upgrade);
               }
+              sessionStorage.setItem("edit_mode_" + currActivityId, versionSelected);
             } else {
               $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
             }
+
             sessionStorage.setItem("next_btn_" + currActivityId, new Date().getTime().toString());
           }
         }
@@ -3411,6 +3413,7 @@ function toObject(arr) {
             }, 2000);
           }
         }
+        $scope.edit_mode_handle();
         sessionStorage.removeItem(key);
       }
 
@@ -3597,6 +3600,17 @@ function toObject(arr) {
         delete $rootScope.recordsVM.invenioRecordsModel.persistent_identifier_h;
         delete $rootScope.recordsVM.invenioRecordsModel.ranking_page_url;
         delete $rootScope.recordsVM.invenioRecordsModel.belonging_index_info;
+      }
+
+      $scope.edit_mode_handle = function () {
+        let key = "edit_mode_" + activityId;
+        var edit_mode = sessionStorage.getItem(key);
+        if (edit_mode) {
+          let version_radios = $('input[name ="radioVersionSelect"]');
+
+          version_radios.prop('disabled', true);
+          version_radios.filter('[value='+edit_mode+']').prop('checked', true);
+        }
       }
     }
     // Inject depedencies
