@@ -3613,9 +3613,9 @@ function toObject(arr) {
 
             version_radios.prop('disabled', true);
             version_radios.filter('[value=' + edit_mode + ']').prop('checked', true);
+          } else {
+            $('#react-component-version').hide();
           }
-        } else {
-          $('#react-component-version').hide()
         }
       }
     }
