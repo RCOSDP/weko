@@ -71,9 +71,6 @@ class ItemSettingView(BaseView):
                 form = request.form.get('submit', None)
                 if form == 'set_search_author_form':
                     settings = AdminSettings.get('items_display_settings')
-                    search_author_flg = request.form.get(
-                        'searchRadios', 'name')
-                    settings.items_search_author = search_author_flg
                     email_display_flg = request.form.get('displayRadios', '0')
                     if email_display_flg == '1':
                         settings.items_display_email = True

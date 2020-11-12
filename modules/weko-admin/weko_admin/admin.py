@@ -44,8 +44,10 @@ from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
+from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
+from weko_records_ui.utils import check_items_settings
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
@@ -563,14 +565,54 @@ class SearchSettingsView(BaseView):
     def index(self):
         """Site license setting page."""
         search_setting = get_search_setting()
+        # get search author setting
+        check_items_settings()
+        search_author_flg = 'name'
+        if 'ITEM_SEARCH_FLG' in current_app.config:
+            search_author_flg = current_app.config['ITEM_SEARCH_FLG']
+        search_setting['search_author_flg'] = search_author_flg
+        # get index tree style setting
+        style = IndexStyle.get(
+            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+        width = style.width if style else '3'
+        height = style.height if style else None
+        search_setting['index_tree_style'] = {
+            'width_options': current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
+            'width': width,
+            'height': height
+        }
+        # dump json string
         result = json.dumps(copy.deepcopy(search_setting))
         if 'POST' in request.method:
             jfy = {}
             try:
-                # update search setting
+                # get requset data
                 db_data = request.get_json()
-                res = SearchManagement.get()
 
+                # update search author setting to db
+                if 'search_author_flg' in db_data:
+                    search_author_flg = db_data.pop('search_author_flg')
+                    settings = AdminSettings.get('items_display_settings')
+                    settings.items_search_author = search_author_flg
+                    AdminSettings.update('items_display_settings',
+                                         settings.__dict__)
+                # update index tree style setting
+                if 'index_tree_style' in db_data:
+                    index_tree_style = db_data.pop('index_tree_style')
+                    width = index_tree_style.get('width', '3')
+                    height = index_tree_style.get('height', None)
+                    if style:
+                        IndexStyle.update(
+                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            width=width,
+                            height=height)
+                    else:
+                        IndexStyle.create(
+                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            width=width,
+                            height=height)
+                # update other search settings
+                res = SearchManagement.get()
                 if res:
                     id = res.id
                     SearchManagement.update(id, db_data)

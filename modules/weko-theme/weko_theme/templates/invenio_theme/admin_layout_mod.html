@@ -1,0 +1,39 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2018 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- import 'invenio_theme/eng_macros.html' as english_macros -%}
+{%- import 'invenio_theme/jap_macros.html' as japanese_macros -%}
+
+{% macro menu_icon(item) -%}
+{% set icon_type = item.get_icon_type() %}
+{%- if icon_type %}
+  {% set icon_value = item.get_icon_value() %}
+  {% if icon_type == 'glyph' %}
+    <i class="glyphicon {{ icon_value }}"></i>
+  {% elif icon_type == 'fa' %}
+    <i class="fa {{ icon_value }}"></i>
+  {% elif icon_type == 'image' %}
+    <img src="{{ url_for('static', filename=icon_value) }}" alt="menu image">
+  {% elif icon_type == 'image-url' %}
+    <img src="item.icon_value" alt="menu image">
+  {% endif %}
+{% endif %}
+{%- endmacro %}
+
+{% macro menu_overwrite() %}
+  {%- for item in admin_view.admin.menu()|sort(attribute='name') %}
+    {% if item.name == "Home" %}
+      {{ english_macros.main(admin_view.admin.menu()|sort(attribute='name'),
+      menu_icon) }}
+    {% elif item.name == "ホーム" %}
+      {{ japanese_macros.main(admin_view.admin.menu()|sort(attribute='name'),
+      menu_icon) }}
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
