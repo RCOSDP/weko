@@ -2093,6 +2093,15 @@ function toObject(arr) {
       $scope.addFileFormAndFill = function () {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         let filesUploaded = $rootScope.filesVM.files;
+        let filesEndPoints = $rootScope['filesVM'].invenioFilesEndpoints;
+        let baseURL = "";
+        if (filesEndPoints && filesEndPoints.hasOwnProperty("index")) {
+          let pip = filesEndPoints['index'].split("/").pop();
+          if (!isNaN(pip)) {
+            pip = parseInt(pip);
+            baseURL = window.location.origin + "/record/" + pip + "/files/";
+          }
+        }
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           for (var i = $scope.previousNumFiles; i < filesUploaded.length; i++) {
@@ -2117,9 +2126,9 @@ function toObject(arr) {
             // Set default Access Role is Open Access
             fileInfo.accessrole = 'open_access'
             // Set file URL
-            if (fileData.hasOwnProperty('links') && fileData.links.hasOwnProperty('self')) {
+            if (baseURL) {
               fileInfo.url = {
-                url: fileData.links.self
+                url: baseURL + fileData.key
               };
             }
             // Push data to model
@@ -2168,10 +2177,11 @@ function toObject(arr) {
         let parForm = $(curElement).parents('.schema-form-section')[0];
         let curTextUrl = $(parForm).find('.file-text-url')[0];
         let flag = false;
-        form.titleMap.forEach(function(v, i){
-            if(v.value == modelValue)
-                flag = !flag;
-                return false;
+        form.titleMap.forEach(function (v, i) {
+          if (v.value === modelValue) {
+            flag = !flag;
+            return false;
+          }
         });
         $(curTextUrl).attr('disabled', flag);
         $(curTextUrl).text('');
