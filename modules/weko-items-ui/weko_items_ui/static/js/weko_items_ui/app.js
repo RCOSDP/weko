@@ -194,7 +194,7 @@ var CustomBSDatePicker = {
         eval(str_code);
       } else {
         //Fill data from fields to model
-        str_code = $(val).attr('ng-model') + '=$(val).val()';
+        str_code = 'if ($(val).val().length != 0) {' + $(val).attr('ng-model') + '=$(val).val()}';
         eval(str_code);
       }
     });
