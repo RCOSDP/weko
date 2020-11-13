@@ -191,7 +191,14 @@ var CustomBSDatePicker = {
       if (reverse) {
         //Fill data from model to fields
         str_code = "$(val).val(" + $(val).attr('ng-model') + ")";
-        eval(str_code);
+        try {
+          eval(str_code);
+        } catch (e) {
+          // If the date on model is undefined, we can safetly ignore it.
+          if (!e instanceof TypeError) {
+            throw e;
+          }
+        }
       } else {
         //Fill data from fields to model
         str_code = 'if ($(val).val().length != 0) {' + $(val).attr('ng-model') + '=$(val).val()}';
