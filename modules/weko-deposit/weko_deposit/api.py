@@ -1054,7 +1054,7 @@ class WekoDeposit(Deposit):
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
             item_metadata.pop('control_number', None)
-            is_draft = True if ".0" in pid.pid_value else False
+            is_draft = True if ".0" not in pid.pid_value else False
 
             # Clone bucket
             _deposit = WekoDeposit.get_record(

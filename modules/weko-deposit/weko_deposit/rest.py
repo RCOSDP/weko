@@ -193,6 +193,7 @@ class ItemResource(ContentNegotiatedMethodView):
     def put(self, **kwargs):
         """Put."""
         from weko_workflow.api import WorkActivity
+
         try:
             data = request.get_json()
             self.__sanitize_input_data(data)
@@ -208,6 +209,12 @@ class ItemResource(ContentNegotiatedMethodView):
                 upgrade_record = deposit.newversion(pid)
 
                 with db.session.begin_nested():
+                    if upgrade_record and ".0" in pid_value:
+                        _upgrade_record = WekoDeposit(
+                            upgrade_record,
+                            upgrade_record.model)
+                        _upgrade_record.merge_data_to_record_without_version(
+                            cur_pid)
                     activity = WorkActivity()
                     wf_activity = activity.get_workflow_activity_by_item_id(
                         cur_pid.object_uuid)

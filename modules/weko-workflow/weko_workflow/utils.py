@@ -1253,16 +1253,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
     return:
         acitivity_item_id
     """
+    from weko_deposit.pidstore import get_record_without_version
     if not deposit:
         return None
 
     item_id = None
     try:
         combine_record_file_urls(deposit)
-        pid_without_ver = PersistentIdentifier.get(
-            "recid",
-            current_pid.pid_value.split(".")[0]
-        )
+        pid_without_ver = get_record_without_version(current_pid)
         if ".0" in current_pid.pid_value:
             deposit.commit()
         deposit.publish()
