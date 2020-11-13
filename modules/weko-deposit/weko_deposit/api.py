@@ -1054,17 +1054,12 @@ class WekoDeposit(Deposit):
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
             item_metadata.pop('control_number', None)
-            is_draft = True if ".0" not in pid.pid_value else False
 
             # Clone bucket
-            _deposit = WekoDeposit.get_record(
-                PersistentIdentifier.get(
-                    'recid',
-                    '{}.0'.format(pid.pid_value.split(".")[0])
-                ).object_uuid if is_draft else pid.object_uuid)
+            _deposit = WekoDeposit.get_record(pid.object_uuid)
             # Get draft bucket's data
             sync_bucket = RecordsBuckets.query.filter_by(
-                record_id=pid.object_uuid if is_draft else self.id).first()
+                record_id=self.id).first()
             sync_bucket.bucket.locked = False
             snapshot = Bucket.get(
                 _deposit.files.bucket.id).snapshot(lock=False)
@@ -1082,11 +1077,7 @@ class WekoDeposit(Deposit):
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
-            if is_draft:
-                _deposit['_buckets'] = {"deposit": str(snapshot.id)}
-                _deposit.commit()
-            else:
-                super(WekoDeposit, self).update(bucket)
+            super(WekoDeposit, self).update(bucket)
             self.commit()
             # update records_metadata
             flag_modified(self.model, 'json')
