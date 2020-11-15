@@ -563,6 +563,7 @@ function toObject(arr) {
       $scope.sub_item_id = ['nameIdentifier', 'affiliationNameIdentifier', 'contributorAffiliation']
       $scope.previousNumFiles = 0;
       $scope.bibliographic_titles = "bibliographic_titles";
+      $scope.disableFileTextURLInterval = null;
 
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
@@ -1979,7 +1980,6 @@ function toObject(arr) {
               }
             }
           });
-
         }, 3000);
       }
 
@@ -2087,6 +2087,11 @@ function toObject(arr) {
         }
         if (isClearInterval) {
           clearInterval($scope.changePositionFileInterval);
+          if (!$scope.disableFileTextURLInterval) {
+            $scope.disableFileTextURLInterval = setInterval(function () {
+              $scope.disableFileTextURL();
+            }, 1000)
+          }
         }
       }
 
@@ -2159,15 +2164,41 @@ function toObject(arr) {
         }
         var limit = Math.pow(1024, 4);
         if (bytes > limit) {
-            return round(bytes / limit, 1) + ' Tb';
+            return round(bytes / limit, 1) + ' TB';
         } else if (bytes > (limit /= 1024)) {
-            return round(bytes / limit, 1) + ' Gb';
+            return round(bytes / limit, 1) + ' GB';
         } else if (bytes > (limit /= 1024)) {
-            return round(bytes / limit, 1) + ' Mb';
+            return round(bytes / limit, 1) + ' MB';
         } else if (bytes > 1024) {
-            return Math.round(bytes / 1024) + ' Kb';
+            return Math.round(bytes / 1024) + ' KB';
         }
         return bytes + ' B';
+      }
+
+      $scope.disableFileTextURL = function () {
+        let filesObject = $scope.getFilesObject();
+        if ($scope.filemeta_keys.length === 0 || $.isEmptyObject(filesObject)) {
+          clearInterval($scope.disableFileTextURLInterval);
+          return;
+        }
+        let isClearInterval = false
+        $(".file-name").each(function () {
+          let parentForm = $(this).parents('.schema-form-section')[0];
+          let fileTextUrl = $(parentForm).find('.file-text-url')[0];
+          if (!parentForm || !fileTextUrl) {
+            clearInterval($scope.disableFileTextURLInterval);
+            return;
+          }
+          let fileName = $(this).val();
+          if (fileName) {
+            isClearInterval = true;
+          }
+          let disableFlag = !!filesObject[fileName];
+          $(fileTextUrl).attr('disabled', disableFlag);
+        })
+        if (isClearInterval) {
+          clearInterval($scope.disableFileTextURLInterval);
+        }
       }
 
       // This is callback function - Please do NOT change function name
@@ -2191,7 +2222,7 @@ function toObject(arr) {
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key].forEach(function (fileInfo) {
-            if (fileInfo.filename == modelValue) {
+            if (fileInfo.filename === modelValue) {
               // Set information for「サイズ」and「フォーマット」.
               fileInfo.url = {};
               if(filesObject[modelValue]){
@@ -2208,6 +2239,11 @@ function toObject(arr) {
               fileInfo.date = [{}];
               fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
               fileInfo.date[0].dateType = "Available";
+
+              // Set default Access Role is Open Access
+              if (!fileInfo.accessrole) {
+                fileInfo.accessrole = 'open_access'
+              }
             }
           });
         });
