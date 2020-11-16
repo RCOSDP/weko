@@ -2095,18 +2095,30 @@ function toObject(arr) {
         }
       }
 
+      $scope.getFileURL = function (fileName) {
+        let filesEndPoints = $rootScope['filesVM'].invenioFilesEndpoints;
+        let fileURL = "";
+        let pip = null;
+        if (filesEndPoints && filesEndPoints.hasOwnProperty("index")) {
+          let tmpPip = filesEndPoints['index'].split("/").pop();
+          if (!isNaN(tmpPip)) {
+            pip = parseInt(tmpPip);
+          }
+        } else if (filesEndPoints && filesEndPoints.hasOwnProperty('initialization')) {
+          let tmpPip = filesEndPoints['initialization'].split("/").pop();
+          if (!isNaN(tmpPip)) {
+            pip = parseInt(tmpPip);
+          }
+        }
+        if (pip !== null) {
+          fileURL = window.location.origin + "/record/" + pip + "/files/" + fileName;
+        }
+        return fileURL;
+      }
+
       $scope.addFileFormAndFill = function () {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         let filesUploaded = $rootScope.filesVM.files;
-        let filesEndPoints = $rootScope['filesVM'].invenioFilesEndpoints;
-        let baseURL = "";
-        if (filesEndPoints && filesEndPoints.hasOwnProperty("index")) {
-          let pip = filesEndPoints['index'].split("/").pop();
-          if (!isNaN(pip)) {
-            pip = parseInt(pip);
-            baseURL = window.location.origin + "/record/" + pip + "/files/";
-          }
-        }
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           for (var i = $scope.previousNumFiles; i < filesUploaded.length; i++) {
@@ -2131,9 +2143,9 @@ function toObject(arr) {
             // Set default Access Role is Open Access
             fileInfo.accessrole = 'open_access'
             // Set file URL
-            if (baseURL) {
+            if (fileData.key) {
               fileInfo.url = {
-                url: baseURL + fileData.key
+                url: $scope.getFileURL(fileData.key)
               };
             }
             // Push data to model
@@ -2175,10 +2187,15 @@ function toObject(arr) {
         return bytes + ' B';
       }
 
+      $scope.clearDisableFileTextURLInterval = function () {
+        clearInterval($scope.disableFileTextURLInterval);
+        $scope.disableFileTextURLInterval = null;
+      }
+
       $scope.disableFileTextURL = function () {
         let filesObject = $scope.getFilesObject();
         if ($scope.filemeta_keys.length === 0 || $.isEmptyObject(filesObject)) {
-          clearInterval($scope.disableFileTextURLInterval);
+          $scope.clearDisableFileTextURLInterval();
           return;
         }
         let isClearInterval = false
@@ -2186,7 +2203,7 @@ function toObject(arr) {
           let parentForm = $(this).parents('.schema-form-section')[0];
           let fileTextUrl = $(parentForm).find('.file-text-url')[0];
           if (!parentForm || !fileTextUrl) {
-            clearInterval($scope.disableFileTextURLInterval);
+            $scope.clearDisableFileTextURLInterval();
             return;
           }
           let fileName = $(this).val();
@@ -2197,48 +2214,50 @@ function toObject(arr) {
           $(fileTextUrl).attr('disabled', disableFlag);
         })
         if (isClearInterval) {
-          clearInterval($scope.disableFileTextURLInterval);
+          $scope.clearDisableFileTextURLInterval();
         }
       }
 
       // This is callback function - Please do NOT change function name
       $scope.fileNameSelect = function ($event, form, modelValue) {
+        let filesObject = $scope.getFilesObject();
         //Check to disable「本文URL」element.
         let curElement = event.target;
         let parForm = $(curElement).parents('.schema-form-section')[0];
         let curTextUrl = $(parForm).find('.file-text-url')[0];
-        let flag = false;
-        form.titleMap.forEach(function (v, i) {
-          if (v.value === modelValue) {
-            flag = !flag;
-            return false;
-          }
-        });
-        $(curTextUrl).attr('disabled', flag);
+        let disableFlag = !!filesObject[modelValue];
+        $(curTextUrl).attr('disabled', disableFlag);
         $(curTextUrl).text('');
         //Check and fill data for file information.
-        let model = $rootScope.recordsVM.invenioRecordsModel;
-        let filesObject = $scope.getFilesObject();
+        let model = $rootScope['recordsVM'].invenioRecordsModel;
         $scope.searchFilemetaKey();
-        $scope.filemeta_keys.forEach(function (filemeta_key) {
-          model[filemeta_key].forEach(function (fileInfo) {
+        $scope.filemeta_keys.forEach(function (fileMetaKey) {
+          model[fileMetaKey].forEach(function (fileInfo) {
             if (fileInfo.filename === modelValue) {
-              // Set information for「サイズ」and「フォーマット」.
-              fileInfo.url = {};
-              if(filesObject[modelValue]){
-                fileInfo.filesize = [{}];
-                fileInfo.filesize[0].value = filesObject[modelValue].size;
-                fileInfo.format = filesObject[modelValue].format;
-                fileInfo.url.url = filesObject[modelValue].url;
+              if (!fileInfo.url) {
+                fileInfo.url = {};
+              }
+              if (fileInfo.filename !== '') {
+                let fileData = filesObject[modelValue];
+                if (fileData) {
+                  fileInfo.filesize = [{
+                    value: fileData.size
+                  }];
+                  fileInfo.format = fileData.format;
+                  fileInfo.url.url = $scope.getFileURL(modelValue);
+                }
               } else {
-                fileInfo.filesize = [{}];
-                fileInfo.filesize[0].value = '';
+                fileInfo.filesize = [{
+                  value: ''
+                }];
                 fileInfo.format = '';
+                fileInfo.url.url = '';
               }
               // Set information for「日付」.
-              fileInfo.date = [{}];
-              fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
-              fileInfo.date[0].dateType = "Available";
+              fileInfo.date = [{
+                dateValue: new Date().toJSON().slice(0, 10),
+                dateType: "Available"
+              }];
 
               // Set default Access Role is Open Access
               if (!fileInfo.accessrole) {
