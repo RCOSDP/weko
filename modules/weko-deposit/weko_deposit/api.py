@@ -1904,4 +1904,8 @@ class _FormatSysBibliographicInformation:
                         'bibliographicIssueDate') and issued_date.get(
                         'bibliographicIssueDateType') == issue_type:
                     date.append(issued_date.get('bibliographicIssueDate'))
-            return date
+        elif isinstance(issue_date, dict):
+            if issue_date.get('bibliographicIssueDate') \
+                    and issue_date.get('bibliographicIssueDateType') == issue_type:
+                date.append(issue_date.get('bibliographicIssueDate'))
+        return date
