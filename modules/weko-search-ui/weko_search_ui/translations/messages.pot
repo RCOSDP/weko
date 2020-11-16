@@ -488,3 +488,21 @@ msgstr ""
 
 msgid "Suffix of {} can only be used with half-width alphanumeric characters and half-width symbols "_-.; () /"."
 msgstr ""
+
+msgid "The format of the specified file {} does not support import. Please specify one of the following formats: zip, tar, gztar, bztar, xztar."
+msgstr ""
+
+msgid "The TSV file was not found in the specified file {}. Check if the directory structure is correct."
+msgstr ""
+
+msgid "The TSV file could not be read. Make sure the file format is TSV and that the file is UTF-8 encoded."
+msgstr ""
+
+msgid "There is an error in the format of the first line of the header of the TSV file."
+msgstr ""
+
+msgid "The item type ID specified in the TSV file does not exist."
+msgstr ""
+
+msgid "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) for the thumbnail."
+msgstr ""

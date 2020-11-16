@@ -75,8 +75,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
-    WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, \
-    WEKO_SYS_USER, WEKO_IMPORT_THUMBNAIL_FILE_TYPE
+    WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
+    WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
@@ -410,10 +410,14 @@ def check_import_items(file_name: str, file_content: str,
     except Exception as ex:
         error = _('Internal server error')
         if isinstance(ex, shutil.ReadError):
-            error = _('{} is not a zip file.').format(file_name)
+            error = _('The format of the specified file {} does not'
+                      + ' support import. Please specify one of the'
+                      + ' following formats: zip, tar, gztar, bztar,'
+                      + ' xztar.').format(file_name)
         elif isinstance(ex, FileNotFoundError):
-            error = _('Can\'t find any tsv file in "{}" directory.') \
-                .format('/data')
+            error = _('The TSV file was not found in the specified file {}.'
+                      + ' Check if the directory structure is correct.') \
+                .format(file_name)
         elif isinstance(ex, UnicodeDecodeError):
             error = ex.reason
         elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
@@ -476,8 +480,9 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                     if len(data_row) < 3:
                         raise Exception({
                             'is_item_type': True,
-                            'msg': _('Item type id is missing in {} file.')
-                            .format(tsv_file_name)
+                            'msg': _('There is an error in the format of the'
+                                     + ' first line of the header of the TSV'
+                                     + ' file.')
                         })
                     if data_row[2] and data_row[2].split('/')[-1]:
                         item_type_id = data_row[2].split('/')[-1]
@@ -487,9 +492,8 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                             result['item_type_schema'] = {}
                             raise Exception({
                                 'is_item_type': True,
-                                'msg': _('Item type id in {} file '
-                                         + 'is not existed in system.')
-                                .format(tsv_file_name)
+                                'msg': _('The item type ID specified in'
+                                         + ' the TSV file does not exist.')
                             })
                         else:
                             result['item_type_schema'] = \
@@ -525,8 +529,9 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                                         data_parse_metadata)
                     tsv_data.append(tsv_item)
         except UnicodeDecodeError as ex:
-            ex.reason = _('Can\'t decode {} file. File format must be "csv" '
-                          + 'and encode by "utf-8".').format(tsv_file_name)
+            ex.reason = _('The TSV file could not be read. Make sure the file'
+                          + ' format is TSV and that the file is'
+                          + ' UTF-8 encoded.').format(tsv_file_name)
             raise ex
         except Exception as ex:
             raise ex
@@ -842,7 +847,7 @@ def clean_thumbnail_file(bucket):
     all_file_version = ObjectVersion.get_by_bucket(
         bucket, True, True).all()
     for file in all_file_version:
-        if file.is_thumbnail == True:
+        if file.is_thumbnail is True:
             file.remove()
 
 
@@ -919,7 +924,7 @@ def register_item_metadata(item):
             thumbnail_item = {}
             subitem_thumbnail = []
             for file in all_file_version:
-                if file.is_thumbnail == True:
+                if file.is_thumbnail is True:
                     subitem_thumbnail.append({
                         'thumbnail_label': file.key,
                         'thumbnail_uri':
@@ -945,7 +950,7 @@ def register_item_metadata(item):
         lastest_files_version = []
         # remove lastest version
         for file in deposit.files:
-            if file.obj.is_thumbnail == False \
+            if file.obj.is_thumbnail is False \
                     and file.obj.key not in file_names:
                 file.obj.remove()
             else:
@@ -954,7 +959,7 @@ def register_item_metadata(item):
         all_file_version = ObjectVersion.get_by_bucket(
             deposit.files.bucket, True, True).all()
         for file in all_file_version:
-            if file.is_thumbnail == False \
+            if file.is_thumbnail is False \
                     and file.key not in file_names:
                 file.remove()
             elif file.version_id not in lastest_files_version:
@@ -964,7 +969,7 @@ def register_item_metadata(item):
         all_file_version = ObjectVersion.get_by_bucket(
             deposit.files.bucket, True, True).all()
         for file in all_file_version:
-            if file.is_thumbnail == False:
+            if file.is_thumbnail is False:
                 file.remove()
 
     item_id = str(item.get('id'))
@@ -2431,12 +2436,12 @@ def handle_check_thumbnail_file_type(list_record):
     :return
 
     """
-    error = _('Please specify the image file(gif, jpg, jpe, jpeg,' \
-        + ' png, bmp, tiff, tif) for the thumbnail.')
+    error = _('Please specify the image file(gif, jpg, jpe, jpeg,'
+              + ' png, bmp, tiff, tif) for the thumbnail.')
     for record in list_record:
         thumbnail_paths = record.get('thumbnail_path', [])
         for path in thumbnail_paths:
             file_extend = path.split('.')[-1]
             if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
                 record['errors'] = record['errors'] + [error] \
-                if record.get('errors') else [error]
+                    if record.get('errors') else [error]
