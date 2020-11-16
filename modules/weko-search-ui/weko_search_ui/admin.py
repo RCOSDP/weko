@@ -448,6 +448,7 @@ class ItemImportView(BaseView):
                         options_line.append(', '.join(_option))
 
                     count_file = 0
+                    count_thumbnail = 0
                     for key in item_type.get('table_row', {}):
                         value = meta_list.get(key, {})
                         if key in schema:
@@ -459,8 +460,7 @@ class ItemImportView(BaseView):
 
                             _options = []
                             for _id in _ids:
-                                if 'filename' in _id \
-                                        or 'thumbnail_label' in _id:
+                                if 'filename' in _id:
                                     ids_line.append(
                                         '.file_path[{}]'.format(count_file))
                                     names_line.append(
@@ -468,6 +468,15 @@ class ItemImportView(BaseView):
                                     systems_line.append('')
                                     options_line.append('')
                                     count_file += 1
+                                if 'thumbnail_label' in _id:
+                                    ids_line.append(
+                                        '.thumbnail_path[{}]'
+                                        .format(count_thumbnail))
+                                    names_line.append(
+                                        '.サムネイルパス[{}]'.format(count_thumbnail))
+                                    systems_line.append('')
+                                    options_line.append('')
+                                    count_thumbnail += 1
 
                                 clean_key = _id.replace(
                                     '.metadata.', '').replace('[0]', '[]')

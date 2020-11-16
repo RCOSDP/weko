@@ -76,7 +76,7 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, \
-    WEKO_SYS_USER
+    WEKO_SYS_USER, WEKO_IMPORT_THUMBNAIL_FILE_TYPE
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
@@ -402,6 +402,7 @@ def check_import_items(file_name: str, file_content: str,
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
+        handle_check_thumbnail_file_type(list_record)
         result = {
             'list_record': list_record,
             'data_path': data_path
@@ -832,8 +833,21 @@ def create_deposit(item_id):
         db.session.rollback()
 
 
-def up_load_file_content(record, root_path):
-    """Upload file content.
+def clean_thumbnail_file(bucket):
+    """Remove all thumbnail in bucket.
+
+    :argument
+        bucket         -- {object} bucket.
+    """
+    all_file_version = ObjectVersion.get_by_bucket(
+        bucket, True, True).all()
+    for file in all_file_version:
+        if file.is_thumbnail == True:
+            file.remove()
+
+
+def up_load_file(record, root_path):
+    """Upload thumbnail or file content.
 
     :argument
         record         -- {dict} item import.
@@ -841,20 +855,24 @@ def up_load_file_content(record, root_path):
 
     """
     try:
-        file_path = record.get('file_path')
-        if file_path:
+        file_path = record.get('file_path', [])
+        thumbnail_path = record.get('thumbnail_path', [])
+        if file_path or thumbnail_path:
             pid = PersistentIdentifier.query.filter_by(
                 pid_type='recid',
                 pid_value=record.get('id')).first()
             rec = RecordMetadata.query.filter_by(
                 id=pid.object_uuid).first()
             bucket = rec.json['_buckets']['deposit']
-            for file_name in file_path:
+            clean_thumbnail_file(bucket)
+            for file_name in [*file_path, *thumbnail_path]:
                 with open(root_path + '/' + file_name, 'rb') as file:
                     obj = ObjectVersion.create(
                         bucket,
                         get_file_name(file_name)
                     )
+                    if file_name in thumbnail_path:
+                        obj.is_thumbnail = True
                     obj.set_contents(file)
                     db.session.commit()
     except Exception:
@@ -893,13 +911,42 @@ def register_item_metadata(item):
                 data['deleted_items'] = deleted_items
         return data
 
+    def autofill_thumbnail_metadata(item_type_id, data):
+        key = get_thumbnail_key(item_type_id)
+        if key:
+            all_file_version = ObjectVersion.get_by_bucket(
+                deposit.files.bucket, True, True).all()
+            thumbnail_item = {}
+            subitem_thumbnail = []
+            for file in all_file_version:
+                if file.is_thumbnail == True:
+                    subitem_thumbnail.append({
+                        'thumbnail_label': file.key,
+                        'thumbnail_uri':
+                            current_app.config['DEPOSIT_FILES_API']
+                            + u'/{bucket}/{key}?versionId={version_id}'.format(
+                                bucket=file.bucket_id,
+                                key=file.key,
+                                version_id=file.version_id)
+                    })
+            if subitem_thumbnail:
+                thumbnail_item['subitem_thumbnail'] = subitem_thumbnail
+            if thumbnail_item:
+                data[key] = thumbnail_item
+            else:
+                deleted_items = data.get('deleted_items') or []
+                deleted_items.append(key)
+                data['deleted_items'] = deleted_items
+        return data
+
     def clean_file_bucket(deposit):
         # clean bucket
         file_names = [file['filename'] for file in deposit.get_file_data()]
         lastest_files_version = []
         # remove lastest version
         for file in deposit.files:
-            if file.obj.key not in file_names:
+            if file.obj.is_thumbnail == False \
+                    and file.obj.key not in file_names:
                 file.obj.remove()
             else:
                 lastest_files_version.append(file.obj.version_id)
@@ -907,7 +954,8 @@ def register_item_metadata(item):
         all_file_version = ObjectVersion.get_by_bucket(
             deposit.files.bucket, True, True).all()
         for file in all_file_version:
-            if file.key not in file_names:
+            if file.is_thumbnail == False \
+                    and file.key not in file_names:
                 file.remove()
             elif file.version_id not in lastest_files_version:
                 file.remove()
@@ -916,7 +964,8 @@ def register_item_metadata(item):
         all_file_version = ObjectVersion.get_by_bucket(
             deposit.files.bucket, True, True).all()
         for file in all_file_version:
-            file.remove()
+            if file.is_thumbnail == False:
+                file.remove()
 
     item_id = str(item.get('id'))
     try:
@@ -949,6 +998,7 @@ def register_item_metadata(item):
                     'value': item_id
                 }
             })
+        new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
         new_data = clean_file_metadata(item['item_type_id'], new_data)
         deposit.update(item_status, new_data)
         if item.get('file_path'):
@@ -1108,7 +1158,7 @@ def import_items_to_system(item: dict, url_root: str):
         if item.get('status') == 'new':
             item_id = create_deposit(item.get('id'))
             item['id'] = item_id
-        up_load_file_content(item, root_path)
+        up_load_file(item, root_path)
         response = register_item_metadata(item)
         if response.get('success') and \
                 current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
@@ -2353,3 +2403,40 @@ def handle_fill_system_item(list_record):
                           item['metadata'],
                           accessRightsuri_key.split('.')[-1],
                           WEKO_IMPORT_SYSTEM_ITEMS[2])
+
+
+def get_thumbnail_key(item_type_id=0):
+    """Get thumbnail key.
+
+    :argument
+        item_type_id -- {int} item type id.
+    :return
+
+    """
+    item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
+    if item_type:
+        item_type = item_type.render
+        schema = item_type.get('schemaeditor', {}).get('schema', {})
+        for key, item in schema.items():
+            if item.get('properties') \
+                    and item['properties'].get('subitem_thumbnail'):
+                return key
+
+
+def handle_check_thumbnail_file_type(list_record):
+    """Check thumbnail file type.
+
+    :argument
+        list_record -- {list} list record import.
+    :return
+
+    """
+    error = _('Please specify the image file(gif, jpg, jpe, jpeg,' \
+        + ' png, bmp, tiff, tif) for the thumbnail.')
+    for record in list_record:
+        thumbnail_paths = record.get('thumbnail_path', [])
+        for path in thumbnail_paths:
+            file_extend = path.split('.')[-1]
+            if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
+                record['errors'] = record['errors'] + [error] \
+                if record.get('errors') else [error]

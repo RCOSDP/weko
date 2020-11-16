@@ -502,6 +502,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
 ]
 
 WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
+WEKO_IMPORT_THUMBNAIL_FILE_TYPE = ['gif', 'jpg', 'jpe', 'jpeg', 'png', 'bmp', 'tiff', 'tif']
 VERSION_TYPE_URI = {
     'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
     'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
