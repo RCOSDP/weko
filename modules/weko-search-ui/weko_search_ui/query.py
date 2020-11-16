@@ -273,7 +273,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                 x, request.values.get(x)), list(
                                 dt.keys())):
                             attr_obj = dt.get(attr_key)
-                            if isinstance(attr_obj, dict) and attr_val_str:
+                            if isinstance(attr_obj, dict) or attr_val_str:
                                 attr_key_hit = [
                                     x for x in attr_obj.keys()
                                     if path + "." in x]
@@ -284,16 +284,20 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             x for x in attr_val_str.split(',')]
                                         shud = []
                                         for j in attr_val:
-                                            qt = Q(
-                                                'term', **{attr_key_hit[0]: j})
-                                            shud.append(qt)
+                                            if j:
+                                                qt = Q('term',
+                                                       **{attr_key_hit[0]: j})
+                                                shud.append(qt)
 
-                                        qry = Q(
-                                            'range', **{path + ".value": qv})
-                                        qry = Q(
-                                            'nested', path=path, query=Q(
-                                                'bool', should=shud,
-                                                must=[qry]))
+                                        qry = Q('range',
+                                                **{path + ".value": qv})
+                                        if shud and len(shud) >= 0:
+                                            qry = Q('nested', path=path,
+                                                    query=Q('bool', should=shud,
+                                                            must=[qry]))
+                                        else:
+                                            qry = Q('nested', path=path,
+                                                    query=Q('bool', must=[qry]))
             return qry
 
         kwd = current_app.config['WEKO_SEARCH_KEYWORDS_DICT']
