@@ -34,6 +34,7 @@
 {%- endblock javascript %}
 
 {%- block body %}
+<div id="alerts"></div>
 {% from "weko_authors/macros/tabs_selector.html" import tabs_selector with context %}
 {{ tabs_selector('author_list') }}
 <input id="lang-code" type="hidden" value="{{lang_code}}" />
