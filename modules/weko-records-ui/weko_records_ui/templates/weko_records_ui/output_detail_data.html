@@ -71,7 +71,7 @@
         {%- set displayflag = True -%}
         {% if parrent_name %}
             {%- set labels = parrent_name.split('.') -%}
-            {%- if labels|length == 1 or labels[0] != 'creatorMails' or config['EMAIL_DISPLAY_FLG'] -%}
+            {%- if labels|length == 1 -%}
                 {{ child_data(parrent_name, '', level) }}
             {%- else -%}
                 {%- set displayflag = False -%}

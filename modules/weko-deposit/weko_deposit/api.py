@@ -52,6 +52,7 @@ from invenio_records_rest.errors import PIDResolveRESTError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
+from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
     ItemTypes
@@ -1161,6 +1162,8 @@ class WekoRecord(Record):
     def items_show_list(self):
         """Return the item show list."""
         items = []
+        settings = AdminSettings.get('items_display_settings')
+        hide_email_flag = not settings.items_display_email
         solst, meta_options = get_options_and_order_list(
             self.get('item_type_id'))
 
@@ -1207,7 +1210,7 @@ class WekoRecord(Record):
                         from weko_gridlayout.utils import get_register_language
                         for lang in get_register_language():
                             language_list.append(lang['lang_code'])
-                        creators = self._get_creator(mlt, language_list)
+                        creators = self._get_creator(mlt, language_list, hide_email_flag)
                         nval['attribute_value_mlt'] = creators
                     elif is_thumbnail:
                         nval['is_thumbnail'] = True
@@ -1220,7 +1223,8 @@ class WekoRecord(Record):
                                 key,
                                 copy.deepcopy(mlt),
                                 copy.deepcopy(solst),
-                                is_author)
+                                is_author,
+                                hide_email_flag)
                 items.append(nval)
             else:
                 val['attribute_name_i18n'] = lst[2] or val.get(
@@ -1230,7 +1234,7 @@ class WekoRecord(Record):
         return items
 
     @staticmethod
-    def _get_creator(meta_data, languages):
+    def _get_creator(meta_data, languages, hide_email_flag):
         creators = []
         if meta_data:
             for creator_data in meta_data:
@@ -1240,7 +1244,7 @@ class WekoRecord(Record):
                 creator_mails = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']
                 if identifiers in creator_data:
                     creator_dict[identifiers] = creator_data[identifiers]
-                if creator_mails in creator_data:
+                if creator_mails in creator_data and not hide_email_flag:
                     creator_dict[creator_mails] = creator_data[creator_mails]
                 creators.append(creator_dict)
         return creators
