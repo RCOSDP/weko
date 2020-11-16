@@ -449,8 +449,8 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     check_item_type = {}
     schema = ''
     with open(tsv_file_path, 'r') as tsvfile:
-        for num, row in enumerate(tsvfile, start=1):
-            data_row = row.rstrip('\n').split('\t')
+        csv_reader = csv.reader(tsvfile, delimiter='\t')
+        for num, data_row in enumerate(csv_reader, start=1):
             if num == 1:
                 if data_row[2] and data_row[2].split('/')[-1]:
                     item_type_id = data_row[2].split('/')[-1]
@@ -465,7 +465,7 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
                 item_path = data_row
             elif num == 3:
                 item_path_name = data_row
-            elif (num == 4 or num == 5) and row.startswith('#'):
+            elif (num == 4 or num == 5) and data_row[0].startswith('#'):
                 continue
             else:
                 data_parse_metadata = parse_to_json_form(
@@ -1352,8 +1352,8 @@ def handle_check_cnri(list_record):
                         suffix = split_cnri[-1]
                     else:
                         prefix = cnri
-                        suffix = "{:010d}".format(int(item_id))
-                        item['cnri'] = prefix + '/' + suffix
+                        suffix = ''
+                        item['cnri_suffix_not_existed'] = True
 
                     if prefix != Handle().get_prefix():
                         error = _('Specified Prefix of {} is incorrect.') \
@@ -1473,8 +1473,8 @@ def handle_check_doi(list_record):
                             suffix = split_doi[-1]
                         else:
                             prefix = doi
-                            suffix = "{:010d}".format(int(item_id))
-                            item['doi'] = prefix + '/' + suffix
+                            suffix = ''
+                            item['doi_suffix_not_existed'] = True
 
                         if prefix != get_doi_prefix(doi_ra):
                             error = _('Specified Prefix of {} is incorrect.') \
@@ -1524,6 +1524,9 @@ def register_item_handle(item, url_root):
         cnri = item.get('cnri')
 
         if item.get('is_change_identifier'):
+            if item.get('cnri_suffix_not_existed'):
+                suffix = "{:010d}".format(int(item_id))
+                cnri += '/' + suffix
             if item.get('status') == 'new':
                 register_hdl_by_handle(cnri, pid.object_uuid)
             else:
@@ -1636,6 +1639,9 @@ def register_item_doi(item):
             lastest_version_id).pid_recid
 
         if is_change_identifier:
+            if item.get('doi_suffix_not_existed'):
+                suffix = "{:010d}".format(int(item_id))
+                doi += '/' + suffix
             if doi_ra and doi:
                 data = {
                     'identifier_grant_jalc_doi_link':
@@ -2182,7 +2188,7 @@ def get_root_item_option(item_id, item):
     if item.get('option').get('multiple'):
         _option.append('Allow Multiple')
         _id += '[0]'
-        _name += '#1'
+        _name += '[0]'
 
     return _id, _name, _option
 
