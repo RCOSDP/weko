@@ -45,8 +45,6 @@ const next = document.getElementById("next").value;
 const error_download = document.getElementById("error_download").value;
 const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
 
-
-
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin + '/api/tree'
 const urlCheck = window.location.origin + '/admin/items/import/check'
@@ -61,6 +59,11 @@ const step = {
   "IMPORT_STEP": 1,
   "RESULT_STEP": 2,
 }
+
+function closeError() {
+  $('#errors').empty();
+}
+
 class MainLayout extends React.Component {
 
   constructor() {
@@ -118,10 +121,17 @@ class MainLayout extends React.Component {
   }
 
   componentDidMount() {
+    const header = document.getElementsByClassName('content-header')[0];
+    if (header) {
+      const errorElement = document.createElement('div');
+      errorElement.setAttribute('id', 'errors');
+      header.insertBefore(errorElement, header.firstChild);
+    }
   }
 
   handleCheck(data) {
     const that = this
+    closeError();
     $.ajax({
       url: urlCheck,
       type: 'POST',
@@ -144,7 +154,10 @@ class MainLayout extends React.Component {
             that.handleChangeTab('import');
           })
         } else {
-          alert(response.error || '')
+          $('#errors').append(
+            '<div class="alert alert-danger alert-dismissable">' +
+            '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+            '&times;</button>' + response.error + '</div>');
         }
       },
       error: function (error) {

@@ -238,6 +238,7 @@ class ItemImportView(BaseView):
 
         if data:
             result = check_import_items(
+                data.get('file_name'),
                 data.get('file').split(",")[-1],
                 data.get('is_change_identifier')
             )

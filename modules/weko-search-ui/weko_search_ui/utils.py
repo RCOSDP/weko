@@ -354,16 +354,19 @@ def parse_to_json_form(data: list) -> dict:
     return result
 
 
-def check_import_items(file_content: str, is_change_identifier: bool):
+def check_import_items(file_name: str, file_content: str,
+                       is_change_identifier: bool):
     """Validation importing zip file.
 
     :argument
+        file_name -- file name.
         file_content -- content file's name.
         is_change_identifier -- Change Identifier Mode.
     :return
         return       -- PID object if exist.
 
     """
+    result = {}
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
     save_path = "/tmp"
@@ -382,10 +385,12 @@ def check_import_items(file_content: str, is_change_identifier: bool):
 
         data_path += '/data'
         list_record = []
-        for tsv_entry in os.listdir(data_path):
-            if tsv_entry.endswith('.tsv'):
-                list_record.extend(
-                    unpackage_import_file(data_path, tsv_entry))
+        list_tsv = list(
+            filter(lambda x: x.endswith('.tsv'), os.listdir(data_path)))
+        if not list_tsv:
+            raise FileNotFoundError()
+        for tsv_entry in list_tsv:
+            list_record.extend(unpackage_import_file(data_path, tsv_entry))
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
         handle_check_and_prepare_publish_status(list_record)
@@ -397,16 +402,29 @@ def check_import_items(file_content: str, is_change_identifier: bool):
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
-        return {
+        result = {
             'list_record': list_record,
             'data_path': data_path
         }
-    except Exception:
+    except Exception as ex:
+        error = _('Internal server error')
+        if isinstance(ex, shutil.ReadError):
+            error = _('{} is not a zip file.').format(file_name)
+        elif isinstance(ex, FileNotFoundError):
+            error = _('Can\'t find any tsv file in "{}" directory.') \
+                .format('/data')
+        elif isinstance(ex, UnicodeDecodeError):
+            error = ex.reason
+        elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('is_item_type'):
+            error = ex.args[0].get('msg')
+        result['error'] = error
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
         current_app.logger.error('-' * 60)
     finally:
         temp_path.cleanup()
+    return result
 
 
 def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
@@ -419,7 +437,7 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
 
     """
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
-    data = read_stats_tsv(tsv_file_path)
+    data = read_stats_tsv(tsv_file_path, tsv_file_name)
     list_record = data.get('tsv_data')
     handle_fill_system_item(list_record)
     list_record = handle_validate_item_import(list_record, data.get(
@@ -428,11 +446,12 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     return list_record
 
 
-def read_stats_tsv(tsv_file_path: str) -> dict:
+def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
     """Read importing TSV file.
 
     :argument
         tsv_file_path -- tsv file's url.
+        tsv_file_name -- tsv file name.
     :return
         return       -- PID object if exist.
 
@@ -450,47 +469,66 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     schema = ''
     with open(tsv_file_path, 'r') as tsvfile:
         csv_reader = csv.reader(tsvfile, delimiter='\t')
-        for num, data_row in enumerate(csv_reader, start=1):
-            if num == 1:
-                if data_row[2] and data_row[2].split('/')[-1]:
-                    item_type_id = data_row[2].split('/')[-1]
-                    check_item_type = get_item_type(int(item_type_id))
-                    schema = data_row[2]
-                    if not check_item_type:
-                        result['item_type_schema'] = {}
-                    else:
-                        result['item_type_schema'] = check_item_type['schema']
-
-            elif num == 2:
-                item_path = data_row
-            elif num == 3:
-                item_path_name = data_row
-            elif (num == 4 or num == 5) and data_row[0].startswith('#'):
-                continue
-            else:
-                data_parse_metadata = parse_to_json_form(
-                    zip(item_path, item_path_name, data_row)
-                )
-
-                json_data_parse = parse_to_json_form(
-                    zip(item_path_name, item_path, data_row)
-                )
-                if isinstance(check_item_type, dict):
-                    item_type_name = check_item_type.get('name')
-                    item_type_id = check_item_type.get('item_type_id')
-                    tsv_item = dict(
-                        **json_data_parse,
-                        **data_parse_metadata,
-                        **{
-                            'item_type_name': item_type_name or '',
-                            'item_type_id': item_type_id or '',
-                            '$schema': schema if schema else ''
-                        }
-                    )
+        try:
+            for num, data_row in enumerate(csv_reader, start=1):
+                if num == 1:
+                    if len(data_row) < 3:
+                        raise Exception({
+                            'is_item_type': True,
+                            'msg': _('Item type id is missing in {} file.')
+                            .format(tsv_file_name)
+                        })
+                    if data_row[2] and data_row[2].split('/')[-1]:
+                        item_type_id = data_row[2].split('/')[-1]
+                        check_item_type = get_item_type(int(item_type_id))
+                        schema = data_row[2]
+                        if not check_item_type:
+                            result['item_type_schema'] = {}
+                            raise Exception({
+                                'is_item_type': True,
+                                'msg': _('Item type id in {} file '
+                                         + 'is not existed in system.')
+                                .format(tsv_file_name)
+                            })
+                        else:
+                            result['item_type_schema'] = \
+                                check_item_type['schema']
+                elif num == 2:
+                    item_path = data_row
+                elif num == 3:
+                    item_path_name = data_row
+                elif (num == 4 or num == 5) and data_row[0].startswith('#'):
+                    continue
                 else:
-                    tsv_item = dict(**json_data_parse, **data_parse_metadata)
-                tsv_data.append(tsv_item)
+                    data_parse_metadata = parse_to_json_form(
+                        zip(item_path, item_path_name, data_row)
+                    )
 
+                    json_data_parse = parse_to_json_form(
+                        zip(item_path_name, item_path, data_row)
+                    )
+                    if isinstance(check_item_type, dict):
+                        item_type_name = check_item_type.get('name')
+                        item_type_id = check_item_type.get('item_type_id')
+                        tsv_item = dict(
+                            **json_data_parse,
+                            **data_parse_metadata,
+                            **{
+                                'item_type_name': item_type_name or '',
+                                'item_type_id': item_type_id or '',
+                                '$schema': schema if schema else ''
+                            }
+                        )
+                    else:
+                        tsv_item = dict(**json_data_parse, **
+                                        data_parse_metadata)
+                    tsv_data.append(tsv_item)
+        except UnicodeDecodeError as ex:
+            ex.reason = _('Can\'t decode {} file. File format must be "csv" '
+                          + 'and encode by "utf-8".').format(tsv_file_name)
+            raise ex
+        except Exception as ex:
+            raise ex
     result['tsv_data'] = tsv_data
     return result
 
