@@ -710,7 +710,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         first_recid = 0
         cur_recid = 0
-        filepath_idx = 1
+        filepath_idx = 0
         recids = []
         records = {}
         attr_data = {}
@@ -840,8 +840,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                     if not is_object:
                         new_key = '{}[{}].{}'.format(
                             item_key, str(idx), key)
-                        new_label = '{}#{}.{}'.format(item_label, str(
-                            idx + 1), properties[key].get('title'))
+                        new_label = '{}[{}].{}'.format(
+                            item_label, str(idx), properties[key].get('title'))
                     else:
                         new_key = '{}.{}'.format(item_key, key)
                         new_label = '{}.{}'.format(
@@ -882,10 +882,10 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                     if 'filename' in key_list[key_index] \
                         or 'thumbnail_label' in key_list[key_index] \
                             and len(item_key.split('.')) == 2:
-                        key_list.insert(0, '.file_path#'
-                                        + str(self.filepath_idx + idx))
-                        key_label.insert(0, '.ファイルパス#'
-                                         + str(self.filepath_idx + idx))
+                        key_list.insert(0, '.file_path[{}]'.format(
+                            str(self.filepath_idx + idx)))
+                        key_label.insert(0, '.ファイルパス[{}]'.format(
+                            str(self.filepath_idx + idx)))
                         if key_data[key_index]:
                             key_data.insert(0, 'recid_{}/{}'.format(str(
                                 self.cur_recid), key_data[key_index]))
@@ -910,17 +910,17 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     max_path = records.get_max_ins('path')
     for i in range(max_path):
         ret.append('.metadata.path[{}]'.format(i))
-        ret.append('.pos_index#{}'.format(i + 1))
-        ret_label.append('.IndexID#{}'.format(i + 1))
-        ret_label.append('.POS_INDEX#{}'.format(i + 1))
+        ret.append('.pos_index[{}]'.format(i))
+        ret_label.append('.IndexID[{}]'.format(i))
+        ret_label.append('.POS_INDEX[{}]'.format(i))
 
     ret.append('.publish_status')
     ret_label.append('.PUBLISH_STATUS')
 
     max_feedback_mail = records.get_max_ins_feedback_mail()
     for i in range(max_feedback_mail):
-        ret.append('.feedback_mail#{}'.format(i + 1))
-        ret_label.append('.FEEDBACK_MAIL#{}'.format(i + 1))
+        ret.append('.feedback_mail[{}]'.format(i))
+        ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
 
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
