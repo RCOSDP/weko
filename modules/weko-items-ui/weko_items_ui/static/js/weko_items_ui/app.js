@@ -2155,6 +2155,7 @@ function toObject(arr) {
                 url: $scope.getFileURL(fileData.key)
               };
             }
+            $scope.saveFileNameToSessionStore(model[filemeta_key].length, fileData.key);
             // Push data to model
             model[filemeta_key].push(fileInfo);
           }
@@ -2206,7 +2207,7 @@ function toObject(arr) {
           return;
         }
         let isClearInterval = false
-        $(".file-name").each(function () {
+        $("input[name='filename']").each(function (index) {
           let parentForm = $(this).parents('.schema-form-section')[0];
           let fileTextUrl = $(parentForm).find('.file-text-url')[0];
           if (!parentForm || !fileTextUrl) {
@@ -2216,6 +2217,7 @@ function toObject(arr) {
           let fileName = $(this).val();
           if (fileName) {
             isClearInterval = true;
+            $scope.saveFileNameToSessionStore(index, fileName);
           }
           let disableFlag = !!filesObject[fileName];
           $(fileTextUrl).attr('disabled', disableFlag);
@@ -2223,6 +2225,28 @@ function toObject(arr) {
         if (isClearInterval) {
           $scope.clearDisableFileTextURLInterval();
         }
+      }
+
+      $scope.saveFileNameToSessionStore = function (index, fileName) {
+        index = index.toString();
+        let actionID = $("#activity_id").text();
+        let key = actionID + "_files_name";
+        let data = sessionStorage.getItem(key);
+        let fileNameData = data == null ? {} : JSON.parse(data);
+        fileNameData[index] = fileName;
+        sessionStorage.setItem(key, JSON.stringify(fileNameData));
+      }
+
+      $scope.getFileNameToSessionStore = function (index) {
+        index = index.toString();
+        let actionID = $("#activity_id").text();
+        let key = actionID + "_files_name";
+        let fileNameData = sessionStorage.getItem(key);
+        if (fileNameData == null || $.isEmptyObject(fileNameData)) {
+          return "";
+        }
+        fileNameData = JSON.parse(fileNameData);
+        return fileNameData[index];
       }
 
       // This is callback function - Please do NOT change function name
@@ -2238,27 +2262,29 @@ function toObject(arr) {
         //Check and fill data for file information.
         let model = $rootScope['recordsVM'].invenioRecordsModel;
         $scope.searchFilemetaKey();
+        let formIndex = form.key[1];
+        let beforeFileName = $scope.getFileNameToSessionStore(formIndex);
+        $scope.saveFileNameToSessionStore(formIndex, modelValue);
         $scope.filemeta_keys.forEach(function (fileMetaKey) {
           model[fileMetaKey].forEach(function (fileInfo) {
             if (fileInfo.filename === modelValue) {
               if (!fileInfo.url) {
                 fileInfo.url = {};
               }
-              if (fileInfo.filename !== '') {
-                let fileData = filesObject[modelValue];
-                if (fileData) {
-                  fileInfo.filesize = [{
-                    value: fileData.size
-                  }];
-                  fileInfo.format = fileData.format;
-                  fileInfo.url.url = $scope.getFileURL(modelValue);
-                }
-              } else {
+              if (filesObject[beforeFileName]) {
                 fileInfo.filesize = [{
                   value: ''
                 }];
                 fileInfo.format = '';
                 fileInfo.url.url = '';
+              }
+              if (filesObject[modelValue]) {
+                let fileData = filesObject[modelValue];
+                fileInfo.filesize = [{
+                  value: fileData.size
+                }];
+                fileInfo.format = fileData.format;
+                fileInfo.url.url = $scope.getFileURL(modelValue);
               }
               // Set information for「日付」.
               fileInfo.date = [{
