@@ -468,6 +468,22 @@ class ItemTypes(RecordBase):
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod
+    def get_latest_with_item_type(cls, with_deleted=False):
+        """Retrieve the latest item types with all its associated data.
+
+        :param with_deleted: If `True` then it includes deleted item types.
+        :returns: A list of :class:`ItemTypeName` joined w/ :class:`ItemType`.
+        """
+        with db.session.no_autoflush:
+            query = ItemTypeName.query.join(ItemType) \
+                .add_columns(ItemTypeName.name, ItemType.id,
+                             ItemType.harvesting_type, ItemType.is_deleted,
+                             ItemType.tag)
+            if not with_deleted:
+                query = query.filter(ItemType.is_deleted.is_(False))
+            return query.order_by(ItemTypeName.id).all()
+
+    @classmethod
     def get_latest_custorm_harvesting(cls, with_deleted=False,
                                       harvesting_type=False):
         """Retrieve the latest item types.

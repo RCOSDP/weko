@@ -17,55 +17,60 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
-{%- extends config.ACCOUNTS_COVER_TEMPLATE %}
 
-{% from "invenio_accounts/_macros.html" import render_field, form_errors %}
+{%- if config.WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED and config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
+  <meta http-equiv="Refresh" content="0; url={{ config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path }}" />
+{%- else %}
+  {%- extends config.ACCOUNTS_COVER_TEMPLATE %}
 
-{% block panel %}
-<div class="col-md-6 col-md-offset-3">
-  <div class="panel panel-default">
-    <div class="panel-body">
-      {%- block form_header %}
-      {%- set site_info = site_info|get_site_info %}
-      {% if site_info.get("enable_notify") %}
-      <h3 style="margin-bottom: 0" class="text-center panel-free-title">{{_('Log in to account') }}</h3>
-      <p class="sign_up"style="white-space: pre-line; text-align: left; word-break: break-word">
-        {{site_info.get("login_instructions")}}
-      </p>
-      {% else %}
-      <h3 class="text-center panel-free-title">{{_('Log in to account') }}</h3>
-      {% endif %}
-      {%- endblock form_header %}
-      {%- block form_outer %}
-      {%- with form = login_user_form %}
-      <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
-      {{form.hidden_tag()}}
-      {{form_errors(form)}}
-      {{ render_field(form.email, icon="fa fa-user", autofocus=True, errormsg=False) }}
-      {{ render_field(form.password, icon="fa fa-lock", errormsg=False) }}
-      <button type="submit" class="btn btn-primary btn-lg btn-block"><i class="fa fa-sign-in"></i> {{_('Log In')}}</button>
-      </form>
-      {%- if config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] %}
-      <div class="navbar-btn">
-        <a type="button" class="btn btn-default btn-lg btn-block" href={{url_for('weko_accounts.shib_stub_login', next=request.args.get('next'))}}>
-          <i class="fa fa-sign-in"></i> Shibboleth User</a>
+  {% from "invenio_accounts/_macros.html" import render_field, form_errors %}
+
+  {% block panel %}
+  <div class="col-md-6 col-md-offset-3">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        {%- block form_header %}
+        {%- set site_info = site_info|get_site_info %}
+        {% if site_info.get("enable_notify") %}
+        <h3 style="margin-bottom: 0" class="text-center panel-free-title">{{_('Log in to account') }}</h3>
+        <p class="sign_up"style="white-space: pre-line; text-align: left; word-break: break-word">
+          {{site_info.get("login_instructions")}}
+        </p>
+        {% else %}
+        <h3 class="text-center panel-free-title">{{_('Log in to account') }}</h3>
+        {% endif %}
+        {%- endblock form_header %}
+        {%- block form_outer %}
+        {%- with form = login_user_form %}
+        <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
+        {{form.hidden_tag()}}
+        {{form_errors(form)}}
+        {{ render_field(form.email, icon="fa fa-user", autofocus=True, errormsg=False) }}
+        {{ render_field(form.password, icon="fa fa-lock", errormsg=False) }}
+        <button type="submit" class="btn btn-primary btn-lg btn-block"><i class="fa fa-sign-in"></i> {{_('Log In')}}</button>
+        </form>
+        {%- if config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] %}
+        <div class="navbar-btn">
+          <a type="button" class="btn btn-default btn-lg btn-block" href={{url_for('weko_accounts.shib_stub_login', next=request.args.get('next'))}}>
+            <i class="fa fa-sign-in"></i> Shibboleth User</a>
+        </div>
+        {%- endif %}
+        {%- endwith %}
+        {%- endblock form_outer %}
+      </div>
+      {%- block registerable %}
+      {%- if security.registerable %}
+      <div class="panel-footer text-center">
+          <h4 class="text-muted">{% trans sitename=config.ACCOUNTS_SITENAME %}New to {{sitename}}?{% endtrans %} <a href="{{url_for('security.register')}}">{{_('Sign Up')}}</a></h4>
       </div>
       {%- endif %}
-      {%- endwith %}
-      {%- endblock form_outer %}
+      {%- endblock %}
     </div>
-    {%- block registerable %}
-    {%- if security.registerable %}
-    <div class="panel-footer text-center">
-        <h4 class="text-muted">{% trans sitename=config.ACCOUNTS_SITENAME %}New to {{sitename}}?{% endtrans %} <a href="{{url_for('security.register')}}">{{_('Sign Up')}}</a></h4>
-    </div>
+    {%- block recoverable %}
+    {%- if security.recoverable %}
+    <a href="{{url_for('security.forgot_password')}}" class="text-muted">{{_('Forgot password?')}}</a>
     {%- endif %}
     {%- endblock %}
   </div>
-  {%- block recoverable %}
-  {%- if security.recoverable %}
-  <a href="{{url_for('security.forgot_password')}}" class="text-muted">{{_('Forgot password?')}}</a>
-  {%- endif %}
-  {%- endblock %}
-</div>
-{% endblock panel %}
+  {% endblock panel %}
+{%- endif %}

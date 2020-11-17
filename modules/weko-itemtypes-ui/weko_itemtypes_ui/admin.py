@@ -53,23 +53,12 @@ class ItemTypeMetaDataView(BaseView):
 
         :param item_type_id: Item type i. Default 0.
         """
-        lists = ItemTypes.get_latest(True)
-        # Check that item type is already registered to an item or not
-        for item in lists:
-            # Get all versions
-            all_records = ItemTypes.get_records_by_name_id(name_id=item.id)
-            item.belonging_item_flg = False
-            for item in all_records:
-                metaDataRecords = ItemsMetadata.get_by_item_type_id(
-                    item_type_id=item.id)
-                item.belonging_item_flg = len(metaDataRecords) > 0
-                if item.belonging_item_flg:
-                    break
+        item_type_list = ItemTypes.get_latest_with_item_type(True)
         is_sys_admin = has_system_admin_access()
 
         return self.render(
             current_app.config['WEKO_ITEMTYPES_UI_ADMIN_REGISTER_TEMPLATE'],
-            lists=lists,
+            item_type_list=item_type_list,
             id=item_type_id,
             is_sys_admin=is_sys_admin,
             lang_code=session.get('selected_language', 'en')  # Set default
