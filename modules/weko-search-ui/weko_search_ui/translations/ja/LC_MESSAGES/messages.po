@@ -512,3 +512,6 @@ msgstr "TSVファイルで指定されたアイテムタイプIDは存在しま�
 
 msgid "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) for the thumbnail."
 msgstr "サムネイルは画像ファイル（gif, jpg, jpe, jpeg, png, bmp, tiff, tif）を指定してください。"
+
+msgid "Please specify PubDate with YYYY-MM-DD."
+msgstr "公開日はYYYY-MM-DDで指定してください。"

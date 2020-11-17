@@ -506,3 +506,6 @@ msgstr ""
 
 msgid "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) for the thumbnail."
 msgstr ""
+
+msgid "Please specify PubDate with YYYY-MM-DD."
+msgstr ""

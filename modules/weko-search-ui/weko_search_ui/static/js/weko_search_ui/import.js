@@ -44,6 +44,7 @@ const result_label = document.getElementById("result").value;
 const next = document.getElementById("next").value;
 const error_download = document.getElementById("error_download").value;
 const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
+const internal_server_error = document.getElementById("internal_server_error").value;
 
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin + '/api/tree'
@@ -162,6 +163,10 @@ class MainLayout extends React.Component {
       },
       error: function (error) {
         console.log(error);
+        $('#errors').append(
+          '<div class="alert alert-danger alert-dismissable">' +
+          '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+          '&times;</button>' + internal_server_error + '</div>');
       }
     });
   }

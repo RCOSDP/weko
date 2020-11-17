@@ -2179,7 +2179,7 @@ def handle_check_date(list_record):
 
     """
     for record in list_record:
-        error = None
+        errors = []
         date_iso_keys = []
         item_type = ItemTypes.get_by_id(id_=record.get(
             'item_type_id', 0), with_deleted=True)
@@ -2194,14 +2194,22 @@ def handle_check_date(list_record):
                 data_result = get_sub_item_value(attribute, _keys[-1])
                 for value in data_result:
                     if not validattion_date_property(value):
-                        error = _('Please specify the date with any format of'
-                                  + ' YYYY-MM-DD, YYYY-MM, YYYY.')
-                        record['errors'] = record['errors'] + [error] \
-                            if record.get('errors') else [error]
-                        record['errors'] = list(set(record['errors']))
+                        errors.append(
+                            _('Please specify the date with any format of'
+                              + ' YYYY-MM-DD, YYYY-MM, YYYY.'))
                         break
-                if error:
+                if errors:
                     break
+        # validate pubdate
+        try:
+            pubdate = record.get('metadata').get('pubdate')
+            datetime.strptime(pubdate, '%Y-%m-%d')
+        except ValueError:
+            errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
+        if errors:
+            record['errors'] = record['errors'] + errors \
+                if record.get('errors') else errors
+            record['errors'] = list(set(record['errors']))
 
 
 def validattion_date_property(date_str):
