@@ -51,11 +51,12 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.api import Indexes
-from weko_index_tree.utils import get_index_id
+from weko_index_tree.utils import filter_index_list_by_role, get_index_id, \
+    get_user_roles
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_created_id, \
-    check_file_download_permission
+    check_file_download_permission, check_publish_status
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
@@ -306,6 +307,38 @@ def get_current_user():
     return current_id
 
 
+def find_hidden_items(item_id_list):
+    """
+    Find items that should not be visible by the current user.
+
+    parameter:
+        item_id_list: list of items ID to be checked.
+    return: List of items ID that the user cannot access.
+    """
+    if not item_id_list:
+        return []
+
+    # Check if is admin
+    roles = get_user_roles()
+    if roles[0]:
+        return []
+
+    hidden_list = []
+    for record in WekoRecord.get_records(item_id_list):
+        # Check if user is owner of the item
+        if check_created_id(record):
+            continue
+
+        # Check if item and indices are public
+        is_public = check_publish_status(record)
+        if is_public and filter_index_list_by_role(record.navi):
+            continue
+
+        hidden_list.append(str(record.id))
+
+    return hidden_list
+
+
 def parse_ranking_results(results,
                           display_rank,
                           list_name='all',
@@ -328,11 +361,24 @@ def parse_ranking_results(results,
         data_list = parse_ranking_new_items(results)
         results = dict()
         results['all'] = data_list
+
+    item_id_list = []
+    for item in results[list_name]:
+        record_id = item.get('record_id')
+        if record_id:
+            item_id_list.append(record_id)
+    hidden_items = find_hidden_items(item_id_list)
+
     if results and list_name in results:
         rank = 1
         count = 0
         date = ''
         for item in results[list_name]:
+            # Skip hidden items
+            record_id = item.get('record_id')
+            if record_id and record_id in hidden_items:
+                continue
+
             t = {}
             if count_key:
                 if not count == int(item[count_key]):
@@ -375,6 +421,7 @@ def parse_ranking_new_items(result_data):
     for item_data in result_data.get('hits').get('hits'):
         item_created = item_data.get('_source')
         data = dict()
+        data['record_id'] = item_data.get('_id')
         data['create_date'] = item_created.get('publish_date', '')
         data['pid_value'] = item_created.get('control_number')
         meta_data = item_created.get('_item_metadata')
