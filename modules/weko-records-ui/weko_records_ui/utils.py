@@ -354,7 +354,8 @@ def hide_display_emails(record):
 
     record['weko_creator_id'] = record.get('owner')
 
-    if hide_meta_data_for_role(record) and current_app.config['EMAIL_DISPLAY_FLG']:
+    if hide_meta_data_for_role(record) and \
+            not current_app.config['EMAIL_DISPLAY_FLG']:
         record = hide_emails(record)
         return True
 
@@ -373,10 +374,12 @@ def hide_emails(item_metadata):
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
     for item in item_metadata:
-        if isinstance(item, dict) and item.get('attribute_value_mlt'):
-            for _idx in item['attribute_value_mlt']:
+        _item = item_metadata[item]
+        if isinstance(_item, dict) and \
+                _item.get('attribute_value_mlt'):
+            for _idx,_value in enumerate(_item['attribute_value_mlt']):
                 for key in subitem_keys:
-                    if key in _idx.keys():
-                        item['attribute_value_mlt'][key] = []
+                    if key in _value.keys():
+                        _item['attribute_value_mlt'][_idx][key] = []
 
     return item_metadata
