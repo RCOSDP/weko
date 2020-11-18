@@ -63,7 +63,7 @@ from .permissions import check_content_clickable, check_created_id, \
     is_open_restricted
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, \
-    get_registration_data_type
+    get_registration_data_type, hide_display_emails
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -150,6 +150,8 @@ def export(pid, record, template=None, **kwargs):
         pid.pid_type)
     schema_type = request.view_args.get('format')
     fmt = formats.get(schema_type)
+
+    hide_display_emails(record)
 
     if fmt is False:
         # If value is set to False, it means it was deprecated.

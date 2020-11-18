@@ -339,3 +339,44 @@ def get_pair_value(name_keys, lang_keys, datas):
             for name, lang in get_pair_value(name_keys[1:], lang_keys[1:],
                                              datas.get(name_keys[0])):
                 yield name, lang
+
+
+def hide_display_emails(record):
+    """Get pairs value of name and language.
+
+    :param name_keys:
+    :param lang_keys:
+    :param datas:
+    :return:
+    """
+    from weko_items_ui.utils import hide_meta_data_for_role
+    check_items_settings()
+
+    record['weko_creator_id'] = record.get('owner')
+
+    if hide_meta_data_for_role(record) and current_app.config['EMAIL_DISPLAY_FLG']:
+        record = hide_emails(record)
+        return True
+
+    record.pop('weko_creator_id')
+    return False
+
+
+def hide_emails(item_metadata):
+    """Get pairs value of name and language.
+
+    :param name_keys:
+    :param lang_keys:
+    :param datas:
+    :return:
+    """
+    subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
+
+    for item in item_metadata:
+        if isinstance(item, dict) and item.get('attribute_value_mlt'):
+            for _idx in item['attribute_value_mlt']:
+                for key in subitem_keys:
+                    if key in _idx.keys():
+                        item['attribute_value_mlt'][key] = []
+
+    return item_metadata
