@@ -1229,24 +1229,20 @@ class SchemaTree:
             }
             _relation = relation_tmp['relation']
             reference_type = data.get('reference_type')
-            titles = data.get('titles')
+            url = data.get('url')
+            identifierType = data.get('identifierType')
             if reference_type in current_app.config[
                     'WEKO_SCHEMA_RELATION_TYPE']:
                 _relation.update({
                     "@attributes": {"relationType": [[reference_type]]}
                 })
-            if titles:
-                language_list = []
-                title_list = []
-                for title in titles:
-                    title_list.append(title.get('title'))
-                    language_list.append(title.get('language'))
+            if url and identifierType:
                 _relation.update({
-                    "relatedTitle": {
+                    "relatedIdentifier": {
                         "@attributes": {
-                            "xml:lang": [language_list]
+                            "identifierType": identifierType
                         },
-                        "@value": [title_list]
+                        "@value": url
                     }
                 })
             list_json_xml.append(relation_tmp.copy())
