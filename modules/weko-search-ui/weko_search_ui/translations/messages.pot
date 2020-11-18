@@ -509,3 +509,9 @@ msgstr ""
 
 msgid "Please specify PubDate with YYYY-MM-DD."
 msgstr ""
+
+msgid "Cannot register because the specified item type is not the latest version."
+msgstr ""
+
+msgid "The following items are not registered because they do not exist in the specified item type. {}"
+msgstr ""

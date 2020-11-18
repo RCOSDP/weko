@@ -118,6 +118,8 @@ RECORDS_UI_ENDPOINTS = dict(
         view_imp='weko_records_ui.views.export',
         template='weko_records_ui/export.html',
         record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
     ),
     recid_files=dict(
         pid_type='recid',

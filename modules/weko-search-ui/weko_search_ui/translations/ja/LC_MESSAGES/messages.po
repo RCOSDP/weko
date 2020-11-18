@@ -515,3 +515,9 @@ msgstr "サムネイルは画像ファイル（gif, jpg, jpe, jpeg, png, bmp, ti
 
 msgid "Please specify PubDate with YYYY-MM-DD."
 msgstr "公開日はYYYY-MM-DDで指定してください。"
+
+msgid "Cannot register because the specified item type is not the latest version."
+msgstr "指定されたアイテムタイプが最新のバージョンでないため登録できません。"
+
+msgid "The following items are not registered because they do not exist in the specified item type. {}"
+msgstr "次の項目指定されたアイテムタイプに存在しないため登録されません。{}"
