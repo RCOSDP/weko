@@ -502,6 +502,13 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                         else:
                             result['item_type_schema'] = \
                                 check_item_type['schema']
+                            if not check_item_type.get('is_lastest'):
+                                raise Exception({
+                                    'is_item_type': True,
+                                    'msg': _('Cannot register because the '
+                                             + 'specified item type is not '
+                                             + 'the latest version.')
+                                })
                 elif num == 2:
                     item_path = data_row
                     if check_item_type:
@@ -534,11 +541,6 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                                 '$schema': schema if schema else ''
                             }
                         )
-                        if not check_item_type.get('is_lastest'):
-                            tsv_item['errors'] = [
-                                _('Cannot register because the specified'
-                                  + ' item type is not the latest version.')
-                            ]
                     else:
                         tsv_item = dict(
                             **json_data_parse,
