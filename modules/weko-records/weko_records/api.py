@@ -22,7 +22,7 @@
 
 from copy import deepcopy
 
-from flask import current_app
+from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
