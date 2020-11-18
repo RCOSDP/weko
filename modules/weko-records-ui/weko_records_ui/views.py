@@ -536,6 +536,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
 
+    hide_display_emails(record)
+
     return render_template(
         template,
         pid=pid,
