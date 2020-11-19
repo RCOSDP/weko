@@ -341,7 +341,7 @@ def get_pair_value(name_keys, lang_keys, datas):
                 yield name, lang
 
 
-def hide_display_emails(record):
+def hide_item_metadata(record):
     """Get pairs value of name and language.
 
     :param name_keys:
@@ -382,7 +382,7 @@ def hide_by_email(item_metadata):
         _item = item_metadata[item]
         if isinstance(_item, dict) and \
                 _item.get('attribute_value_mlt'):
-            for _idx,_value in enumerate(_item['attribute_value_mlt']):
+            for _idx, _value in enumerate(_item['attribute_value_mlt']):
                 for key in subitem_keys:
                     if key in _value.keys():
                         del _item['attribute_value_mlt'][_idx][key]

@@ -56,7 +56,7 @@ from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission
-from weko_records_ui.utils import hide_display_emails
+from weko_records_ui.utils import hide_item_metadata
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
@@ -723,7 +723,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             self.first_recid = record_ids[0]
             for record_id in record_ids:
                 record = WekoRecord.get_record_by_pid(record_id)
-                hide_display_emails(record)
+                hide_item_metadata(record)
                 self.records[record_id] = record
                 self.attr_output[record_id] = []
 
@@ -2017,7 +2017,7 @@ def make_bibtex_data(record_ids):
     for record_id in record_ids:
         record = WekoRecord.get_record_by_pid(record_id)
         pid = record.pid_recid
-        hide_display_emails(record)
+        hide_item_metadata(record)
         serializer = WekoBibTexSerializer()
         output = serializer.serialize(pid, record)
         result += output if output != err_msg else ''
@@ -2319,6 +2319,6 @@ def get_ignore_item(_item_type_id):
             mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
             name = [list(mapping.keys())[0]]
             if len(key) > 1:
-                name = [e.replace('[]','') for e in key]
+                name = [e.replace('[]', '') for e in key]
             ignore_list.append(name)
     return ignore_list
