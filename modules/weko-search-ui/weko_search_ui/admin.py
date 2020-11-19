@@ -411,10 +411,11 @@ class ItemImportView(BaseView):
 
                     count_file = 0
                     count_thumbnail = 0
-                    for key, item in schema.items():
+                    for key in ['pubdate', *item_type.get('table_row', [])]:
                         if key in meta_system:
                             continue
 
+                        item = schema.get(key)
                         item_option = meta_list.get(key) \
                             if meta_list.get(key) else item
                         root_id, root_name, root_option = \
