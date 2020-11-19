@@ -349,8 +349,7 @@ def hide_display_emails(record):
     :param datas:
     :return:
     """
-    from weko_items_ui.utils import hide_meta_data_for_role, \
-        get_ignore_item
+    from weko_items_ui.utils import get_ignore_item, hide_meta_data_for_role
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
@@ -417,8 +416,11 @@ def hide_by_itemtype(item_metadata, hidden_items):
         if isinstance(hide_key, str) \
                 and item_metadata.get(hide_key):
             del item_metadata[hide_key]
-        elif isinstance(hide_key, list):
+        elif isinstance(hide_key, list) and \
+                item_metadata.get(hide_key[0]):
             del_hide_sub_metadata(
-                hide_key, item_metadata)
+                hide_key[1:],
+                item_metadata[
+                    hide_key[0]]['attribute_value_mlt'])
 
     return item_metadata
