@@ -2297,3 +2297,28 @@ def del_hide_sub_metadata(keys, metadata):
         for index in range(count):
             del_hide_sub_metadata(keys[1:] if len(
                 keys) > 1 else keys, metadata[index])
+
+
+def get_ignore_item(_item_type_id):
+    """Get ignore item from mapping.
+
+    :param _item_type_id:
+    :return ignore_list:
+    """
+    ignore_list = []
+    meta_options, item_type_mapping = get_options_and_order_list(_item_type_id)
+    sub_ids = get_hide_list_by_schema_form(item_type_id=_item_type_id)
+    for key, val in meta_options.items():
+        hidden = val.get('option').get('hidden')
+        if hidden:
+            ignore_list.append(
+                get_mapping_name_item_type_by_key(key, item_type_mapping))
+    for sub_id in sub_ids:
+        key = [re.sub(r'\[\d+\]', '', _id) for _id in sub_id.split('.')]
+        if key[0] in item_type_mapping:
+            mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
+            name = [list(mapping.keys())[0]]
+            if len(key) > 1:
+                name = [e.replace('[]','') for e in key]
+            ignore_list.append(name)
+    return ignore_list

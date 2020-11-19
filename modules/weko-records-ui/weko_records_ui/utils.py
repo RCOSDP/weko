@@ -349,13 +349,13 @@ def hide_display_emails(record):
     :param datas:
     :return:
     """
-    from weko_items_ui.utils import hide_meta_data_for_role, get_ignore_item_from_mapping
+    from weko_items_ui.utils import hide_meta_data_for_role, \
+        get_ignore_item
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
 
-    list_hidden = get_ignore_item_from_mapping(
-        record['item_type_id'])
+    list_hidden = get_ignore_item(record['item_type_id'])
 
     if hide_meta_data_for_role(record):
         record = hide_by_itemtype(record, list_hidden)
@@ -386,7 +386,7 @@ def hide_by_email(item_metadata):
             for _idx,_value in enumerate(_item['attribute_value_mlt']):
                 for key in subitem_keys:
                     if key in _value.keys():
-                        _item['attribute_value_mlt'][_idx][key] = []
+                        del _item['attribute_value_mlt'][_idx][key]
 
     return item_metadata
 
@@ -399,7 +399,19 @@ def hide_by_itemtype(item_metadata, hidden_items):
     :param datas:
     :return:
     """
-    from weko_items_ui.utils import del_hide_sub_metadata
+    def del_hide_sub_metadata(keys, metadata):
+        """Delete hide metadata."""
+        if isinstance(metadata, dict):
+            data = metadata.get(keys[0])
+            if data:
+                if len(keys) > 1:
+                    del_hide_sub_metadata(keys[1:], data)
+                else:
+                    del metadata[keys[0]]
+        elif isinstance(metadata, list):
+            count = len(metadata)
+            for index in range(count):
+                del_hide_sub_metadata(keys, metadata[index])
 
     for hide_key in hidden_items:
         if isinstance(hide_key, str) \
