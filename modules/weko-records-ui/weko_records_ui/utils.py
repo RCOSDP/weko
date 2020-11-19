@@ -349,21 +349,26 @@ def hide_display_emails(record):
     :param datas:
     :return:
     """
-    from weko_items_ui.utils import hide_meta_data_for_role
+    from weko_items_ui.utils import hide_meta_data_for_role, get_ignore_item_from_mapping
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
 
-    if hide_meta_data_for_role(record) and \
-            not current_app.config['EMAIL_DISPLAY_FLG']:
-        record = hide_emails(record)
+    list_hidden = get_ignore_item_from_mapping(
+        record['item_type_id'])
+
+    if hide_meta_data_for_role(record):
+        
+        
+        if not current_app.config['EMAIL_DISPLAY_FLG']:
+            record = hide_by_email(record)
         return True
 
     record.pop('weko_creator_id')
     return False
 
 
-def hide_emails(item_metadata):
+def hide_by_email(item_metadata):
     """Get pairs value of name and language.
 
     :param name_keys:
@@ -381,5 +386,26 @@ def hide_emails(item_metadata):
                 for key in subitem_keys:
                     if key in _value.keys():
                         _item['attribute_value_mlt'][_idx][key] = []
+
+    return item_metadata
+
+
+def hide_by_itemtype(item_metadata, hidden_items):
+    """Get pairs value of name and language.
+
+    :param name_keys:
+    :param lang_keys:
+    :param datas:
+    :return:
+    """
+    from weko_items_ui.utils import del_hide_sub_metadata
+
+    for hide_key in hidden_items:
+        if isinstance(hide_key, str) \
+                and item_metadata.get(hide_key):
+            del item_metadata[hide_key]
+        elif isinstance(hide_key, list):
+            del_hide_sub_metadata(
+                hide_key, item_metadata)
 
     return item_metadata

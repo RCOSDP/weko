@@ -1333,21 +1333,6 @@ def _export_item(record_id,
                  tmp_path=None,
                  records_data=None):
     """Exports files for record according to view permissions."""
-    def del_hide_sub_metadata(keys, metadata):
-        """Delete hide metadata."""
-        if isinstance(metadata, dict):
-            data = metadata.get(keys[0])
-            if data:
-                if len(keys) > 1:
-                    del_hide_sub_metadata(keys[1:], data)
-                else:
-                    del metadata[keys[0]]
-        elif isinstance(metadata, list):
-            count = len(metadata)
-            for index in range(count):
-                del_hide_sub_metadata(keys[1:] if len(
-                    keys) > 1 else keys, metadata[index])
-
     exported_item = {}
     record = WekoRecord.get_record_by_pid(record_id)
     list_item_role = {}
@@ -2296,3 +2281,19 @@ def hide_thumbnail(schema_form):
         if isinstance(data_items, list) and is_thumbnail(data_items):
             form_data['condition'] = 1
             break
+
+
+def del_hide_sub_metadata(keys, metadata):
+    """Delete hide metadata."""
+    if isinstance(metadata, dict):
+        data = metadata.get(keys[0])
+        if data:
+            if len(keys) > 1:
+                del_hide_sub_metadata(keys[1:], data)
+            else:
+                del metadata[keys[0]]
+    elif isinstance(metadata, list):
+        count = len(metadata)
+        for index in range(count):
+            del_hide_sub_metadata(keys[1:] if len(
+                keys) > 1 else keys, metadata[index])
