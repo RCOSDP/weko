@@ -591,31 +591,22 @@
 							templateUrl: "/static/templates/weko_deposit/datepicker.html",
 							title: value.title
 						};
-					} else if ('checkboxes' === value.format) {
-			  sub_form = {
-				key: parentkey + itemKey,
-				type: "template",
-				templateUrl: "/static/templates/weko_deposit/checkboxes.html",
-				title: value.title,
-				titleMap: self.refs['subitem' + index].exportTitleMap()
-			  };
-					}else if ('select' === value.format) {
-						sub_form = {
-							key: parentkey + itemKey,
-							type: value.format,
-							title: value.title,
-							titleMap: self.refs['subitem' + index].exportTitleMap()
-						};
-					}
-					 else if ('radios' === value.format ) {
-						sub_form = {
-							key: parentkey + itemKey,
-							type: "template",
-							title: value.title,
-              templateUrl: "/static/templates/weko_deposit/radios.html",
-							titleMap: self.refs['subitem' + index].exportTitleMap()
-						};
-					}  else if ('array' === value.format) {
+          } else if ('checkboxes' === value.format) {
+            sub_form = {
+              key: parentkey + itemKey,
+              type: "template",
+              templateUrl: "/static/templates/weko_deposit/checkboxes.html",
+              title: value.title,
+              titleMap: self.refs['subitem' + index].exportTitleMap()
+            };
+          } else if ('select' === value.format || 'radios' === value.format) {
+            sub_form = {
+              key: parentkey + itemKey,
+              type: value.format,
+              title: value.title,
+              titleMap: self.refs['subitem' + index].exportTitleMap()
+            };
+          }  else if ('array' === value.format) {
 						sub_form = {
 							key: parentkey + itemKey,
 							add: "New",
