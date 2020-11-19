@@ -1305,6 +1305,9 @@ $(document).ready(function () {
           setSchemaFromItemTypeToItemTypeProperty(
             itemTypePropertiesSchema,
             itemTypeSchema);
+          setRequiredListFromItemTypeToProperty(
+            itemTypePropertiesSchema,
+            itemTypeSchema);
             // Set disable attribute for child in case parent is set Hide
           for(key in properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties){
             if(properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] ==true){
@@ -1668,6 +1671,26 @@ $(document).ready(function () {
         }
       });
     });
+  }
+
+  function setRequiredListFromItemTypeToProperty(property,itemType) {
+    if (itemType.hasOwnProperty("required")) {
+      property["required"] = itemType["required"]
+    }
+    if (itemType.hasOwnProperty("properties")) {
+      Object.keys(itemType.properties).map(function (ip_key) {
+        setRequiredListFromItemTypeToProperty(property.properties[ip_key],itemType.properties[ip_key])
+      });
+    } else if (itemType.hasOwnProperty("items")) {
+      // setRequiredListFromItemTypeToProperty(itemType.items, property.items)
+      // It means that itemtype is set as multiple
+      if(itemType.hasOwnProperty("minItems")){
+        setRequiredListFromItemTypeToProperty(property,itemType.items)
+      }else{
+        setRequiredListFromItemTypeToProperty(property.items, itemType.items)
+      }
+    }
+
   }
 
   function setSchemaFromItemTypeToItemTypeProperty(itemTypePropertiesSchema, itemTypeSchema) {
