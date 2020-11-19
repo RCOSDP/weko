@@ -358,10 +358,11 @@ def hide_display_emails(record):
         record['item_type_id'])
 
     if hide_meta_data_for_role(record):
-        
-        
+        record = hide_by_itemtype(record, list_hidden)
+
         if not current_app.config['EMAIL_DISPLAY_FLG']:
             record = hide_by_email(record)
+
         return True
 
     record.pop('weko_creator_id')
