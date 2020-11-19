@@ -2160,7 +2160,7 @@ def handle_check_date(list_record):
         try:
             pubdate = record.get('metadata').get('pubdate')
             datetime.strptime(pubdate, '%Y-%m-%d')
-        except ValueError:
+        except Exception:
             errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
         if errors:
             record['errors'] = record['errors'] + errors \
