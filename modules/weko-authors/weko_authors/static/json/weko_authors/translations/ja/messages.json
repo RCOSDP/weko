@@ -94,5 +94,9 @@
     "Author_On_1_Page": [
         null,
         "1ページに:"
+    ],
+    "Author_Confirm_Msg": [
+        null,
+        "指定された識別子にURLが設定されていないため確認のサイトを開けません。"
     ]
 }
