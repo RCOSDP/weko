@@ -1467,7 +1467,7 @@ def handle_check_doi_ra(list_record):
         doi_ra = item.get('doi_ra')
 
         if item.get('doi') and not doi_ra:
-            error = _('{} is required item.').format('DOI_RA')
+            error = _('Please specify {}.').format('DOI_RA')
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
                 error = _('DOI_RA should be set by one of JaLC'
@@ -1506,7 +1506,7 @@ def handle_check_doi(list_record):
 
         if item.get('is_change_identifier') \
                 and doi_ra and not doi:
-            error = _('{} is required item.').format('DOI')
+            error = _('Please specify {}.').format('DOI')
         elif doi_ra:
             if item.get('is_change_identifier'):
                 if not doi:
