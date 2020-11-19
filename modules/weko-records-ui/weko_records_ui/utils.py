@@ -342,11 +342,9 @@ def get_pair_value(name_keys, lang_keys, datas):
 
 
 def hide_item_metadata(record):
-    """Get pairs value of name and language.
+    """Hiding emails and hidden item metadata.
 
-    :param name_keys:
-    :param lang_keys:
-    :param datas:
+    :param record:
     :return:
     """
     from weko_items_ui.utils import get_ignore_item, hide_meta_data_for_role
@@ -368,7 +366,7 @@ def hide_item_metadata(record):
 
 
 def hide_item_metadata_email_only(record):
-    """Get pairs value of name and language.
+    """Hiding emails only.
 
     :param name_keys:
     :param lang_keys:
@@ -391,11 +389,9 @@ def hide_item_metadata_email_only(record):
 
 
 def hide_by_email(item_metadata):
-    """Get pairs value of name and language.
+    """Hiding emails.
 
-    :param name_keys:
-    :param lang_keys:
-    :param datas:
+    :param item_metadata:
     :return:
     """
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
@@ -413,11 +409,10 @@ def hide_by_email(item_metadata):
 
 
 def hide_by_itemtype(item_metadata, hidden_items):
-    """Get pairs value of name and language.
+    """Hiding item type metadata.
 
-    :param name_keys:
-    :param lang_keys:
-    :param datas:
+    :param item_metadata:
+    :param hidden_items:
     :return:
     """
     def del_hide_sub_metadata(keys, metadata):
