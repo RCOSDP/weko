@@ -570,6 +570,7 @@ function toObject(arr) {
       $scope.sub_item_id = ['nameIdentifier', 'affiliationNameIdentifier', 'contributorAffiliation']
       $scope.previousNumFiles = 0;
       $scope.bibliographic_titles = "bibliographic_titles";
+      $scope.disableFileTextURLInterval = null;
 
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
@@ -1986,7 +1987,6 @@ function toObject(arr) {
               }
             }
           });
-
         }, 3000);
       }
 
@@ -2094,7 +2094,33 @@ function toObject(arr) {
         }
         if (isClearInterval) {
           clearInterval($scope.changePositionFileInterval);
+          if (!$scope.disableFileTextURLInterval) {
+            $scope.disableFileTextURLInterval = setInterval(function () {
+              $scope.disableFileTextURL();
+            }, 1000)
+          }
         }
+      }
+
+      $scope.getFileURL = function (fileName) {
+        let filesEndPoints = $rootScope['filesVM'].invenioFilesEndpoints;
+        let fileURL = "";
+        let pip = null;
+        if (filesEndPoints && filesEndPoints.hasOwnProperty("index")) {
+          let tmpPip = filesEndPoints['index'].split("/").pop();
+          if (!isNaN(tmpPip)) {
+            pip = parseInt(tmpPip);
+          }
+        } else if (filesEndPoints && filesEndPoints.hasOwnProperty('initialization')) {
+          let tmpPip = filesEndPoints['initialization'].split("/").pop();
+          if (!isNaN(tmpPip)) {
+            pip = parseInt(tmpPip);
+          }
+        }
+        if (pip !== null) {
+          fileURL = window.location.origin + "/record/" + pip + "/files/" + fileName;
+        }
+        return fileURL;
       }
 
       $scope.addFileFormAndFill = function () {
@@ -2124,11 +2150,12 @@ function toObject(arr) {
             // Set default Access Role is Open Access
             fileInfo.accessrole = 'open_access'
             // Set file URL
-            if (fileData.hasOwnProperty('links') && fileData.links.hasOwnProperty('self')) {
+            if (fileData.key) {
               fileInfo.url = {
-                url: fileData.links.self
+                url: $scope.getFileURL(fileData.key)
               };
             }
+            $scope.saveFileNameToSessionStore(model[filemeta_key].length, fileData.key);
             // Push data to model
             model[filemeta_key].push(fileInfo);
           }
@@ -2157,54 +2184,118 @@ function toObject(arr) {
         }
         var limit = Math.pow(1024, 4);
         if (bytes > limit) {
-            return round(bytes / limit, 1) + ' Tb';
+            return round(bytes / limit, 1) + ' TB';
         } else if (bytes > (limit /= 1024)) {
-            return round(bytes / limit, 1) + ' Gb';
+            return round(bytes / limit, 1) + ' GB';
         } else if (bytes > (limit /= 1024)) {
-            return round(bytes / limit, 1) + ' Mb';
+            return round(bytes / limit, 1) + ' MB';
         } else if (bytes > 1024) {
-            return Math.round(bytes / 1024) + ' Kb';
+            return Math.round(bytes / 1024) + ' KB';
         }
         return bytes + ' B';
       }
 
+      $scope.clearDisableFileTextURLInterval = function () {
+        clearInterval($scope.disableFileTextURLInterval);
+        $scope.disableFileTextURLInterval = null;
+      }
+
+      $scope.disableFileTextURL = function () {
+        let filesObject = $scope.getFilesObject();
+        if ($scope.filemeta_keys.length === 0 || $.isEmptyObject(filesObject)) {
+          $scope.clearDisableFileTextURLInterval();
+          return;
+        }
+        let isClearInterval = false
+        $("input[name='filename']").each(function (index) {
+          let parentForm = $(this).parents('.schema-form-section')[0];
+          let fileTextUrl = $(parentForm).find('.file-text-url')[0];
+          if (!parentForm || !fileTextUrl) {
+            $scope.clearDisableFileTextURLInterval();
+            return;
+          }
+          let fileName = $(this).val();
+          if (fileName) {
+            isClearInterval = true;
+            $scope.saveFileNameToSessionStore(index, fileName);
+          }
+          let disableFlag = !!filesObject[fileName];
+          $(fileTextUrl).attr('disabled', disableFlag);
+        })
+        if (isClearInterval) {
+          $scope.clearDisableFileTextURLInterval();
+        }
+      }
+
+      $scope.saveFileNameToSessionStore = function (index, fileName) {
+        index = index.toString();
+        let actionID = $("#activity_id").text();
+        let key = actionID + "_files_name";
+        let data = sessionStorage.getItem(key);
+        let fileNameData = data == null ? {} : JSON.parse(data);
+        fileNameData[index] = fileName;
+        sessionStorage.setItem(key, JSON.stringify(fileNameData));
+      }
+
+      $scope.getFileNameToSessionStore = function (index) {
+        index = index.toString();
+        let actionID = $("#activity_id").text();
+        let key = actionID + "_files_name";
+        let fileNameData = sessionStorage.getItem(key);
+        if (fileNameData == null || $.isEmptyObject(fileNameData)) {
+          return "";
+        }
+        fileNameData = JSON.parse(fileNameData);
+        return fileNameData[index];
+      }
+
       // This is callback function - Please do NOT change function name
       $scope.fileNameSelect = function ($event, form, modelValue) {
+        let filesObject = $scope.getFilesObject();
         //Check to disable「本文URL」element.
         let curElement = event.target;
         let parForm = $(curElement).parents('.schema-form-section')[0];
         let curTextUrl = $(parForm).find('.file-text-url')[0];
-        let flag = false;
-        form.titleMap.forEach(function(v, i){
-            if(v.value == modelValue)
-                flag = !flag;
-                return false;
-        });
-        $(curTextUrl).attr('disabled', flag);
+        let disableFlag = !!filesObject[modelValue];
+        $(curTextUrl).attr('disabled', disableFlag);
         $(curTextUrl).text('');
         //Check and fill data for file information.
-        let model = $rootScope.recordsVM.invenioRecordsModel;
-        let filesObject = $scope.getFilesObject();
+        let model = $rootScope['recordsVM'].invenioRecordsModel;
         $scope.searchFilemetaKey();
-        $scope.filemeta_keys.forEach(function (filemeta_key) {
-          model[filemeta_key].forEach(function (fileInfo) {
-            if (fileInfo.filename == modelValue) {
-              // Set information for「サイズ」and「フォーマット」.
-              fileInfo.url = {};
-              if(filesObject[modelValue]){
-                fileInfo.filesize = [{}];
-                fileInfo.filesize[0].value = filesObject[modelValue].size;
-                fileInfo.format = filesObject[modelValue].format;
-                fileInfo.url.url = filesObject[modelValue].url;
-              } else {
-                fileInfo.filesize = [{}];
-                fileInfo.filesize[0].value = '';
+        let formIndex = form.key[1];
+        let beforeFileName = $scope.getFileNameToSessionStore(formIndex);
+        $scope.saveFileNameToSessionStore(formIndex, modelValue);
+        $scope.filemeta_keys.forEach(function (fileMetaKey) {
+          model[fileMetaKey].forEach(function (fileInfo) {
+            if (fileInfo.filename === modelValue) {
+              if (!fileInfo.url) {
+                fileInfo.url = {};
+              }
+              if (filesObject[beforeFileName]) {
+                fileInfo.filesize = [{
+                  value: ''
+                }];
                 fileInfo.format = '';
+                fileInfo.url.url = '';
+              }
+              if (filesObject[modelValue]) {
+                let fileData = filesObject[modelValue];
+                fileInfo.filesize = [{
+                  value: fileData.size
+                }];
+                fileInfo.format = fileData.format;
+                fileInfo.url.url = $scope.getFileURL(modelValue);
               }
               // Set information for「日付」.
-              fileInfo.date = [{}];
-              fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
-              fileInfo.date[0].dateType = "Available";
+              fileInfo.date = [{
+                dateValue: new Date().toJSON().slice(0, 10),
+                dateType: "Available"
+              }];
+
+              // Set default Access Role is Open Access
+              if (!fileInfo.accessrole) {
+                fileInfo.accessrole = 'open_access'
+              }
             }
           });
         });
