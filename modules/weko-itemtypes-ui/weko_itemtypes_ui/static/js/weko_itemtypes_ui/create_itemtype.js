@@ -1174,7 +1174,7 @@ $(document).ready(function () {
       return form;
   }
 
-  getPropUrl = '/admin/itemtypes/properties/list?lang=' + $('#lang-code').val();
+  getPropUrl = '/admin/itemtypes/get-all-properties?lang=' + $('#lang-code').val();
   select_option = '';
   // 作成したメタデータ項目タイプの取得
   $.ajax({
