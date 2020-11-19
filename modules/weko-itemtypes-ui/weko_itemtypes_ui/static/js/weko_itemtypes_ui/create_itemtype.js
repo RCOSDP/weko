@@ -1743,7 +1743,31 @@ $(document).ready(function () {
     } else if(property.hasOwnProperty('enum')){
       _enum = property['enum'];
     }
-    property['enum'] = _enum
+    //Trim space for value of enum in item type schema.
+    if(_enum){
+      let isEnumStr = typeof(_enum) == 'string';
+      let list_enum = isEnumStr ? _enum.split('|') : _enum;
+      let enumTemp = [];
+      $.each(list_enum, function(ind, val) {
+        if(val.length > 0){
+          enumTemp.push(val.trim());
+        }
+      });
+      _enum = enumTemp;
+    }
+    //Trim space for name and value of titleMap form in item type schema.
+    if(form.titleMap){
+      Object.keys(form.titleMap).map(function (titleMap) {
+        if(form.titleMap[titleMap]['name']){
+          form.titleMap[titleMap]['name'] = form.titleMap[titleMap]['name'].trim();
+        }
+        if(form.titleMap[titleMap]['value']){
+          form.titleMap[titleMap]['value'] = form.titleMap[titleMap]['value'].trim();
+        }
+      });
+    }
+
+    property['enum'] = _enum;
     //Set TitleMap for form.
     if (editAble && _enum) {
       let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
