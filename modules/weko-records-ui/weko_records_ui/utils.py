@@ -354,13 +354,35 @@ def hide_item_metadata(record):
 
     record['weko_creator_id'] = record.get('owner')
 
-    list_hidden = get_ignore_item(record['item_type_id'])
-
     if hide_meta_data_for_role(record):
+        list_hidden = get_ignore_item(record['item_type_id'])
         record = hide_by_itemtype(record, list_hidden)
 
         if not current_app.config['EMAIL_DISPLAY_FLG']:
             record = hide_by_email(record)
+
+        return True
+
+    record.pop('weko_creator_id')
+    return False
+
+
+def hide_item_metadata_email_only(record):
+    """Get pairs value of name and language.
+
+    :param name_keys:
+    :param lang_keys:
+    :param datas:
+    :return:
+    """
+    from weko_items_ui.utils import hide_meta_data_for_role
+    check_items_settings()
+
+    record['weko_creator_id'] = record.get('owner')
+
+    if hide_meta_data_for_role(record) and \
+            not current_app.config['EMAIL_DISPLAY_FLG']:
+        record = hide_by_email(record)
 
         return True
 
