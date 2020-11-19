@@ -515,3 +515,6 @@ msgstr ""
 
 msgid "The following items are not registered because they do not exist in the specified item type. {}"
 msgstr ""
+
+msgid "The item does not consistent with the specified item type."
+msgstr ""

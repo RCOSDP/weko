@@ -512,6 +512,14 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                 elif num == 2:
                     item_path = data_row
                     if check_item_type:
+                        if not handle_check_consistence_with_item_type(
+                                check_item_type.get('item_type_id'),
+                                item_path):
+                            raise Exception({
+                                'is_item_type': True,
+                                'msg': _('The item does not consistent'
+                                         + ' with the specified item type.')
+                            })
                         item_path_not_existed = \
                             handle_check_metadata_not_existed(
                                 item_path, check_item_type.get('item_type_id'))
@@ -2412,38 +2420,97 @@ def handle_check_metadata_not_existed(str_keys, item_type_id=0):
     :return
 
     """
-    def check_existed(keys, schema):
-        if keys[0] in schema:
-            if len(keys) > 1:
-                sub_schema = schema.get(keys[0])
-                if sub_schema.get('items'):
-                    sub_schema = sub_schema.get('items').get('properties')
-                elif sub_schema.get('properties'):
-                    sub_schema = sub_schema.get('properties')
-                else:
-                    sub_schema = None
+    result = []
+    ids = handle_get_all_id_in_item_type(item_type_id)
+    for str_key in str_keys:
+        if str_key.startswith('.metadata.'):
+            pre_key = re.sub(r'\[\d+\]', '[0]', str_key)
+            if pre_key != '.metadata.path[0]' and pre_key not in ids:
+                result.append(str_key.replace('.metadata.', ''))
+    return result
 
-                if sub_schema:
-                    return check_existed(keys[1:], sub_schema)
-                else:
-                    return False
-            else:
-                return True
+
+def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None):
+    """Get all sub id, sub name of root item with full-path.
+
+    :argument
+        items - {dict} sub items.
+        root_id -- {str} root id.
+        root_name -- {str} root name.
+    :return
+        ids - {list} full-path of ids.
+        names - {list} full-path of names.
+    """
+    ids, names = [], []
+    for key in sorted(items.keys()):
+        item = items.get(key)
+        if item.get('items'):
+            _ids, _names = handle_get_all_sub_id_and_name(
+                item.get('items').get('properties'))
+            ids += [key + '[0].' + _id for _id in _ids]
+            names += [item.get('title') + '[0].' + _name
+                      for _name in _names]
+        elif item.get('type') == 'object' and item.get('properties'):
+            _ids, _names = handle_get_all_sub_id_and_name(
+                item.get('properties'))
+            ids += [key + '.' + _id for _id in _ids]
+            names += [item.get('title') + '.' + _name
+                      for _name in _names]
         else:
-            return False
+            ids.append(key)
+            names.append(item.get('title'))
 
+    if root_id:
+        ids = [root_id + '.' + _id for _id in ids]
+    if root_name:
+        names = [root_name + '.' + _name
+                 for _name in names]
+
+    return ids, names
+
+
+def handle_get_all_id_in_item_type(item_type_id):
+    """Get all id of item with full-path.
+
+    :argument
+        item_type_id - {str} item type id.
+    :return
+        ids - {list} full-path of ids.
+    """
     result = []
     item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
     if item_type:
-        schema = item_type.render.get('schemaeditor', {}).get('schema', {})
-        for str_key in str_keys:
-            if str_key.startswith('.metadata.'):
-                pre_key = re.sub(
-                    r'\[\d+\]', '',
-                    str_key.replace('.metadata.', '')
-                )
-                if pre_key in ['path', 'pubdate']:
-                    continue
-                if not check_existed(pre_key.split('.'), schema):
-                    result.append(str_key)
+        item_type = item_type.render
+        meta_system = [
+            item_key for item_key in item_type.get('meta_system', {})]
+        schema = item_type.get(
+            'table_row_map', {}).get('schema', {}).get('properties', {})
+
+        for key, item in schema.items():
+            if key not in meta_system:
+                new_key = '.metadata.{}{}'.format(
+                    key, '[0]' if item.get('items') else '')
+                if not item.get('properties') and not item.get('items'):
+                    result.append(new_key)
+                else:
+                    sub_items = item.get('properties') if item.get(
+                        'properties') else item.get('items').get('properties')
+                    result += handle_get_all_sub_id_and_name(
+                        sub_items, new_key)[0]
     return result
+
+
+def handle_check_consistence_with_item_type(item_type_id, keys):
+    """Check consistence between tsv and item type.
+
+    :argument
+        item_type_id - {str} item type id.
+        keys - {list} data from line 2 of tsv file.
+    :return
+        status - {bool} status.
+    """
+    ids = handle_get_all_id_in_item_type(item_type_id)
+    for _id in ids:
+        if _id not in keys:
+            return False
+    return True
