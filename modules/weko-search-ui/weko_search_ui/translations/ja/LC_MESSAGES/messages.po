@@ -524,3 +524,6 @@ msgstr "次の項目指定されたアイテムタイプに存在しないため
 
 msgid "The item does not consistent with the specified item type."
 msgstr "指定されたアイテムタイプと項目が一致しません。"
+
+msgid "Cannot read tsv file correctly."
+msgstr "TSVファイルが正しく読み込めません。"

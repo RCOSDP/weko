@@ -333,7 +333,7 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
                 term = list(term_path)
                 term.append(pro_name)
                 convert_data(pro[pro_name], term)
-            if list_pro[0].isnumeric():
+            if list_pro and list_pro[0].isnumeric():
                 convert_nested_item_to_list(result, term_path)
         else:
             return
@@ -424,8 +424,8 @@ def check_import_items(file_name: str, file_content: str,
         elif isinstance(ex, UnicodeDecodeError):
             error = ex.reason
         elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
-                and ex.args[0].get('is_item_type'):
-            error = ex.args[0].get('msg')
+                and ex.args[0].get('error_msg'):
+            error = ex.args[0].get('error_msg')
         result['error'] = error
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
@@ -482,10 +482,9 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
             for num, data_row in enumerate(csv_reader, start=1):
                 if num == 1:
                     first_line_format_exception = Exception({
-                        'is_item_type': True,
-                        'msg': _('There is an error in the format of the'
-                                 + ' first line of the header of the TSV'
-                                 + ' file.')
+                        'error_msg': _('There is an error in the format of the'
+                                       + ' first line of the header of the TSV'
+                                       + ' file.')
                     })
                     if len(data_row) < 3:
                         raise first_line_format_exception
@@ -499,18 +498,16 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                     if not check_item_type:
                         result['item_type_schema'] = {}
                         raise Exception({
-                            'is_item_type': True,
-                            'msg': _('The item type ID specified in'
-                                        + ' the TSV file does not exist.')
+                            'error_msg': _('The item type ID specified in'
+                                           + ' the TSV file does not exist.')
                         })
                     else:
                         result['item_type_schema'] = check_item_type['schema']
                         if not check_item_type.get('is_lastest'):
                             raise Exception({
-                                'is_item_type': True,
-                                'msg': _('Cannot register because the '
-                                            + 'specified item type is not '
-                                            + 'the latest version.')
+                                'error_msg': _('Cannot register because the '
+                                               + 'specified item type is not '
+                                               + 'the latest version.')
                             })
                 elif num == 2:
                     item_path = data_row
@@ -519,9 +516,8 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                                 check_item_type.get('item_type_id'),
                                 item_path):
                             raise Exception({
-                                'is_item_type': True,
-                                'msg': _('The item does not consistent'
-                                         + ' with the specified item type.')
+                                'error_msg': _('The item does not consistent '
+                                               'with the specified item type.')
                             })
                         item_path_not_existed = \
                             handle_check_metadata_not_existed(
@@ -535,11 +531,15 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                         zip(item_path, item_path_name, data_row),
                         item_path_not_existed
                     )
-
                     json_data_parse = parse_to_json_form(
                         zip(item_path_name, item_path, data_row),
                         item_path_not_existed
                     )
+
+                    if not (data_parse_metadata or json_data_parse):
+                        raise Exception({
+                            'error_msg': _('Cannot read tsv file correctly.')
+                        })
                     if isinstance(check_item_type, dict):
                         item_type_name = check_item_type.get('name')
                         item_type_id = check_item_type.get('item_type_id')
