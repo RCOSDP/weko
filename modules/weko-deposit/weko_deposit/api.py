@@ -107,7 +107,7 @@ class WekoFileObject(FileObject):
         file_type = ''
         file_size = self.data['size']
         for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
-            if self.data['format'] in v:
+            if self.data.get('format') in v:
                 file_type = k
                 break
         if file_type in current_app.config[
@@ -1908,4 +1908,8 @@ class _FormatSysBibliographicInformation:
                         'bibliographicIssueDate') and issued_date.get(
                         'bibliographicIssueDateType') == issue_type:
                     date.append(issued_date.get('bibliographicIssueDate'))
-            return date
+        elif isinstance(issue_date, dict):
+            if issue_date.get('bibliographicIssueDate') \
+                    and issue_date.get('bibliographicIssueDateType') == issue_type:
+                date.append(issue_date.get('bibliographicIssueDate'))
+        return date

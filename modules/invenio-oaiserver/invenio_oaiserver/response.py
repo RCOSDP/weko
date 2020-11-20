@@ -395,26 +395,15 @@ def listrecords(**kwargs):
         msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
         return [(code, msg)]
 
-    def append_error_info(e_record, **kwargs):
-        """Set SubElement responseDate, request, error."""
-        # Set responseDate
-        e_responseDate = SubElement(e_record,
-                                    etree.QName(NS_OAIPMH, 'responseDate'))
-        e_responseDate.text = datetime_to_datestamp(datetime.utcnow())
-        # Set request
-        e_request = SubElement(e_record, etree.QName(NS_OAIPMH, 'request'))
-        for key, value in kwargs.items():
-            if key == 'from_' or key == 'until':
-                value = datetime_to_datestamp(value)
-            elif key == 'resumptionToken':
-                value = value['token']
-            e_request.set(key, value)
-        e_request.text = url_for('invenio_oaiserver.response', _external=True)
-        # Set error
-        for code, message in get_error_code_msg():
-            e_error = SubElement(e_record, etree.QName(NS_OAIPMH, 'error'))
-            e_error.set('code', code)
-            e_error.text = message
+    def append_deleted_record(e_listrecords, pid_object, rec):
+        e_record = SubElement(e_listrecords, etree.QName(NS_OAIPMH, 'record'))
+        header(
+            e_record,
+            identifier=pid_object.pid_value,
+            datestamp=rec.updated,
+            sets=rec.get('_oai', {}).get('sets', []),
+            deleted=True
+        )
 
     record_dumper = serializer(kwargs['metadataPrefix'])
 
@@ -427,34 +416,28 @@ def listrecords(**kwargs):
     for record in result.items:
         try:
             pid = oaiid_fetcher(record['id'], record['json']['_source'])
-            e_record = SubElement(e_listrecords,
-                                  etree.QName(NS_OAIPMH, 'record'))
-
             identify = OaiIdentify.get_all()
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
             harvest_public_state, rec = WekoRecord.get_record_with_hps(
                 pid_object.object_uuid)
-            if not harvest_public_state or (
-                    identify and not identify.outPutSetting):
-                # Harvest is private
-                kwargs['identifier'] = pid.pid_value
-                append_error_info(e_record, **kwargs)
+            # Check output delete, noRecordsMatch
+            if identify and identify.outPutSetting:
+                if harvest_public_state:
+                    if not is_private_index(rec):
+                        if is_deleted_workflow(pid_object) or \
+                                is_private_workflow(rec):
+                            append_deleted_record(
+                                e_listrecords, pid_object, rec)
+                            continue
+                    else:
+                        append_deleted_record(e_listrecords, pid_object, rec)
+                        continue
+                else:
+                    continue
+            else:
                 continue
-            elif is_deleted_workflow(pid_object) or (
-                harvest_public_state and is_private_workflow(rec)) or (
-                    harvest_public_state and is_private_index(rec)):
-                # Item is deleted
-                # or Harvest is public & Item is private
-                # or Harvest is public & Index is private
-                header(
-                    e_record,
-                    identifier=pid_object.pid_value,
-                    datestamp=rec.updated,
-                    sets=rec.get('_oai', {}).get('sets', []),
-                    deleted=True
-                )
-                continue
-
+            e_record = SubElement(
+                e_listrecords, etree.QName(NS_OAIPMH, 'record'))
             header(
                 e_record,
                 identifier=pid.pid_value,
@@ -476,6 +459,9 @@ def listrecords(**kwargs):
             current_app.logger.error(traceback.print_exc())
             current_app.logger.error('Error when exporting item id'
                                      + str(record['id']))
+    # Check <record> tag not exist.
+    if len(e_listrecords) == 0:
+        return error(get_error_code_msg(), **kwargs)
 
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree

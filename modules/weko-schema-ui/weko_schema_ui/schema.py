@@ -1119,7 +1119,8 @@ class SchemaTree:
                         if len(lst_value) == total_remove_items:
                             lst_value.pop(index)
                             total_remove_items = total_remove_items - 1
-                        if lst_name_identifier_uri:
+                        if lst_name_identifier_uri and \
+                                index < len(lst_name_identifier_uri):
                             lst_name_identifier_uri.pop(index)
 
         if not self._schema_obj:

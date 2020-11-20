@@ -494,3 +494,9 @@ msgstr "指定された{}のPrefixが誤っています。"
 
 msgid "Suffix of {} can only be used with half-width alphanumeric characters and half-width symbols "_-.; () /"."
 msgstr "{}のSuffixは半角英数字、半角記号「_-.;()/」以外使用できません。"
+
+msgid "Cannot register because the specified item type is not the latest version."
+msgstr "指定されたアイテムタイプが最新のバージョンでないため登録できません。"
+
+msgid "The following items are not registered because they do not exist in the specified item type. {}"
+msgstr "次の項目指定されたアイテムタイプに存在しないため登録されません。{}"

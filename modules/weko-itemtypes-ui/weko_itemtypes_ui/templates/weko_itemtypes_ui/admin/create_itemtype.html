@@ -53,9 +53,9 @@
                 <label class="sr-only" for="item-type-lists"></label>
                 <select class="form-control" id="item-type-lists">
                   <option value=""></option>
-                  {% for list in lists %}
-                  <option value="{{ list.item_type.0.id }}"
-                          class="{% if list.item_type.0.harvesting_type %}harvesting_type {% elif list.item_type.0.is_deleted %}deleted_type {% else %}normal_type {% endif %}{% if list.belonging_item_flg %}belonging_item{% endif %}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+                  {% for item_type in item_type_list %}
+                  <option value="{{ item_type.id }}"
+                          class="{% if item_type.harvesting_type %}harvesting_type{% elif item_type.is_deleted %}deleted_type{% else %}normal_type{% endif %}" {% if item_type.id == id %}selected{% endif %}>{{ item_type.name }}({{ item_type.tag }})</option>
                   {% endfor %}
                 </select>
                </div>
