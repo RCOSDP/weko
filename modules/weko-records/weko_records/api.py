@@ -450,17 +450,41 @@ class ItemTypes(RecordBase):
                     is_del = True
             return is_del
 
+        def __get_delete_mapping_key(item_type_mapping,_delete_list):
+            """Get mapping key of deleted key.
+
+            :param item_type_mapping: item_type_mapping.
+            :param _delete_list: _delete_list.
+            :return:
+            """
+            result = []
+            
+            for key in _delete_list:
+                prop_mapping = item_type_mapping.get(key,{}).get("jpcoar_mapping",{})
+                if prop_mapping:
+                    result.extend(list(prop_mapping.keys()))
+            return result
+            
         def __update_es_data(_es_data, _delete_list):
             """Update metadata on ElasticSearch.
 
             :param _es_data: Elasticsearch data.
             :param _delete_list: delete list
             """
+            
+            item_type_mapping = Mapping.get_record(item_type_id=item_type_id)
+            delete_mapping_key_list = __get_delete_mapping_key(item_type_mapping, _delete_list)
             es_updated_data = []
             for _data in _es_data:
+                source = _data.get('_source', {})
                 item_metadata = _data.get('_source', {}).get('_item_metadata',
                                                              {})
+                is_update = False
                 if __del_data(item_metadata, _delete_list):
+                    is_update = True
+                if __del_data(source, delete_mapping_key_list):
+                    is_update = True
+                if is_update:
                     es_updated_data.append(_data)
 
             from weko_deposit.api import WekoIndexer
