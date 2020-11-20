@@ -41,7 +41,6 @@ from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
-from invenio_oaiharvester.harvester import RESOURCE_TYPE_URI
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
@@ -67,7 +66,7 @@ from weko_workflow.utils import IdentifierHandle, check_required_data, \
     register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
-    VERSION_TYPE_URI, \
+    RESOURCE_TYPE_URI, VERSION_TYPE_URI, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
@@ -1707,7 +1706,7 @@ def register_item_doi(item):
                     'identifier_grant_ndl_jalc_doi_link':
                         IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
                 }
-                if pid_doi:
+                if pid_doi and not pid_doi.pid_value.endswith(doi):
                     pid_doi.delete()
                 saving_doi_pidstore(
                     pid_lastest.object_uuid,
