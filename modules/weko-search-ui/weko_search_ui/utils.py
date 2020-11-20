@@ -481,34 +481,37 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
         try:
             for num, data_row in enumerate(csv_reader, start=1):
                 if num == 1:
+                    first_line_format_exception = Exception({
+                        'is_item_type': True,
+                        'msg': _('There is an error in the format of the'
+                                 + ' first line of the header of the TSV'
+                                 + ' file.')
+                    })
                     if len(data_row) < 3:
+                        raise first_line_format_exception
+
+                    item_type_id = data_row[2].split('/')[-1]
+                    if not item_type_id or \
+                            not re.search(r'^[0-9]*$', item_type_id):
+                        raise first_line_format_exception
+                    check_item_type = get_item_type(int(item_type_id))
+                    schema = data_row[2]
+                    if not check_item_type:
+                        result['item_type_schema'] = {}
                         raise Exception({
                             'is_item_type': True,
-                            'msg': _('There is an error in the format of the'
-                                     + ' first line of the header of the TSV'
-                                     + ' file.')
+                            'msg': _('The item type ID specified in'
+                                        + ' the TSV file does not exist.')
                         })
-                    if data_row[2] and data_row[2].split('/')[-1]:
-                        item_type_id = data_row[2].split('/')[-1]
-                        check_item_type = get_item_type(int(item_type_id))
-                        schema = data_row[2]
-                        if not check_item_type:
-                            result['item_type_schema'] = {}
+                    else:
+                        result['item_type_schema'] = check_item_type['schema']
+                        if not check_item_type.get('is_lastest'):
                             raise Exception({
                                 'is_item_type': True,
-                                'msg': _('The item type ID specified in'
-                                         + ' the TSV file does not exist.')
+                                'msg': _('Cannot register because the '
+                                            + 'specified item type is not '
+                                            + 'the latest version.')
                             })
-                        else:
-                            result['item_type_schema'] = \
-                                check_item_type['schema']
-                            if not check_item_type.get('is_lastest'):
-                                raise Exception({
-                                    'is_item_type': True,
-                                    'msg': _('Cannot register because the '
-                                             + 'specified item type is not '
-                                             + 'the latest version.')
-                                })
                 elif num == 2:
                     item_path = data_row
                     if check_item_type:
@@ -1472,6 +1475,7 @@ def handle_check_doi_ra(list_record):
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
                 error = _('DOI_RA should be set by one of JaLC'
                           + ', Crossref, DataCite, NDL JaLC.')
+                item['ignore_check_doi_prefix'] = True
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
@@ -1525,7 +1529,8 @@ def handle_check_doi(list_record):
                             suffix = ''
                             item['doi_suffix_not_existed'] = True
 
-                        if prefix != get_doi_prefix(doi_ra):
+                        if not item.get('ignore_check_doi_prefix') \
+                                and prefix != get_doi_prefix(doi_ra):
                             error = _('Specified Prefix of {} is incorrect.') \
                                 .format('DOI')
                         if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
@@ -2159,7 +2164,8 @@ def handle_check_date(list_record):
         # validate pubdate
         try:
             pubdate = record.get('metadata').get('pubdate')
-            datetime.strptime(pubdate, '%Y-%m-%d')
+            if pubdate:
+                datetime.strptime(pubdate, '%Y-%m-%d')
         except Exception:
             errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
         if errors:
