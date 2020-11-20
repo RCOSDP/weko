@@ -380,5 +380,5 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
 WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR = '/data/pdfcoverpage/'
 """Directory of Image Header of PDF."""
 
-WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails']
+WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 """Sub-item keys of Email."""

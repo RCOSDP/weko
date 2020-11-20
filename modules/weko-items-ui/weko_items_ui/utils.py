@@ -1444,7 +1444,8 @@ def _export_item(record_id,
                         # TODO: Then convert the item into the desired format
                         if file:
                             file_buffered = file.obj.file.storage().open()
-                            temp_file = open(tmp_path + '/' + file.obj.basename, 'wb')
+                            temp_file = open(
+                                tmp_path + '/' + file.obj.basename, 'wb')
                             temp_file.write(file_buffered.read())
                             temp_file.close()
 
@@ -1817,14 +1818,12 @@ def hide_meta_data_for_role(record):
         if role.name in community_role_name:
             is_hidden = False
             break
-    if record:
-        # Item Register users
-        if record.get('weko_creator_id') in list(current_user.roles or []):
-            is_hidden = False
 
-        # Share users
-        if record.get('weko_shared_id') in list(current_user.roles or []):
-            is_hidden = False
+    # Item Register users and Sharing users
+    if record and current_user.get_id() in [
+        record.get('weko_creator_id'),
+            str(record.get('weko_shared_id'))]:
+        is_hidden = False
 
     return is_hidden
 
@@ -2315,7 +2314,8 @@ def hide_form_items(item_type, schema_form):
     for i in system_properties:
         hidden_items = [
             schema_form.index(form) for form in schema_form
-            if form.get('items') and form['items'][0]['key'].split('.')[1] in i]
+            if form.get('items') and form[
+                'items'][0]['key'].split('.')[1] in i]
         if hidden_items and i in json.dumps(schema_form):
             schema_form = update_schema_remove_hidden_item(
                 schema_form,
@@ -2360,6 +2360,6 @@ def get_ignore_item(_item_type_id):
         if hidden:
             ignore_list.append(key)
     for sub_id in sub_ids:
-        key = [_id.replace('[]', '')  for _id in sub_id.split('.')]
+        key = [_id.replace('[]', '') for _id in sub_id.split('.')]
         ignore_list.append(key)
     return ignore_list
