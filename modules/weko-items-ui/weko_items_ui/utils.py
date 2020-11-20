@@ -848,6 +848,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                                     break
                             elif isinstance(_data, list):
                                 _data = _data[0]
+                                if isinstance(_data, dict) and _data.get(attr):
+                                    _data = _data.get(attr)
                             elif isinstance(_data, dict) and _data.get(attr):
                                 _data = _data.get(attr)
                             else:
