@@ -22,15 +22,19 @@
 
 from copy import deepcopy
 
+from elasticsearch.exceptions import NotFoundError
+from elasticsearch_dsl.query import QueryString
 from flask import current_app
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
+from invenio_records.models import RecordMetadata
 from invenio_records.signals import after_record_delete, after_record_insert, \
     after_record_revert, after_record_update, before_record_delete, \
     before_record_insert, before_record_revert, before_record_update
+from invenio_search import RecordsSearch
 from jsonpatch import apply_patch
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
@@ -347,38 +351,219 @@ class ItemTypes(RecordBase):
                 if result is None:
                     current_app.logger.debug('Invalid id: {}'.format(id_))
                     raise ValueError(_('Invalid id.'))
+                return cls.update_item_type(
+                    form, id_, name, render, result, schema
+                )
 
-                # Get the latest tag of item type by name identifier
-                result = cls.get_by_name_id(name_id=result.name_id)
-                old_render = deepcopy(result[0].render)
-                new_render = deepcopy(render)
-                from weko_records.utils import check_to_upgrade_version
-                upgrade_version = True if \
-                    check_to_upgrade_version(old_render, new_render) else False
-                updated_name = False
-                tag = result[0].tag + 1
-                # Check if the name has been changed
-                item_type_name = result[0].item_type_name
-                if name != item_type_name.name:
-                    # Check if the new name has been existed
-                    result = ItemTypeName.query.filter_by(
-                        name=name).filter_by(is_active=True).one_or_none()
-                    if result is not None:
-                        current_app.logger.debug(
-                            'Invalid name: {}'.format(name))
-                        raise ValueError(_('Invalid name.'))
-                    item_type_name.name = name
-                    updated_name = True
-                if upgrade_version or updated_name:
-                    return cls.create(item_type_name=item_type_name, name=name,
-                                      schema=schema, form=form, render=render,
-                                      tag=tag)
-                else:
-                    current_record = cls.get_record(id_)
-                    current_record.model.schema = schema
-                    current_record.model.form = form
-                    current_record.model.render = render
-                    return current_record.commit()
+    @classmethod
+    def update_item_type(cls, form, id_, name, render, result, schema):
+        """Update Item Type.
+
+        :param form: Schema form in JSON format.
+        :param id_: Identifier of item type.
+        :param name: Name of item type.
+        :param render: Page render information in JSON format.
+        :param result: Item Type.
+        :param schema: Schema in JSON format.
+        :return:
+        """
+        # Get the latest tag of item type by name identifier
+        result = cls.get_by_name_id(name_id=result.name_id)
+        old_render = deepcopy(result[0].render)
+        new_render = deepcopy(render)
+
+        updated_name = False
+        tag = result[0].tag + 1
+        # Check if the name has been changed
+        item_type_name = result[0].item_type_name
+        if name != item_type_name.name:
+            # Check if the new name has been existed
+            result = ItemTypeName.query.filter_by(
+                name=name).filter_by(is_active=True).one_or_none()
+            if result is not None:
+                current_app.logger.debug(
+                    'Invalid name: {}'.format(name))
+                raise ValueError(_('Invalid name.'))
+            item_type_name.name = name
+            updated_name = True
+
+        upgrade_version = current_app.config[
+            'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
+        ]
+        if not upgrade_version and not updated_name:
+            cls.__update_metadata(id_, item_type_name.name, old_render,
+                                  new_render)
+            return cls.__update_item_type(id_, schema, form, render)
+
+        from weko_records.utils import check_to_upgrade_version
+        upgrade_version = True if \
+            check_to_upgrade_version(old_render, new_render) else False
+
+        if upgrade_version or updated_name:
+            return cls.create(item_type_name=item_type_name, name=name,
+                              schema=schema, form=form, render=render,
+                              tag=tag)
+        else:
+            return cls.__update_item_type(id_, schema, form, render)
+
+    @classmethod
+    def __update_item_type(cls, id_, schema, form, render):
+        current_item_type = cls.get_record(id_)
+        current_item_type.model.schema = schema
+        current_item_type.model.form = form
+        current_item_type.model.render = render
+        return current_item_type.commit()
+
+    @classmethod
+    def __update_metadata(
+        cls, item_type_id, item_type_name, old_render, new_render
+    ):
+        """Update metadata.
+
+        :param item_type_id: Item type identifiers.
+        :param item_type_name: Item type name.
+        :param old_render: Old render.
+        :param new_render: New render.
+        """
+
+        def __diff(list1, list2):
+            """Compare list.
+
+            :param list1: List 1.
+            :param list2: List 2.
+            :return:
+            """
+            return list(list(set(list1) - set(list2)))
+
+        def __del_data(_json, diff_keys):
+            """Delete metadata.
+
+            :param _json: Metadata.
+            :param diff_keys: Diff key list.
+            :return:
+            """
+            is_del = False
+            for k in diff_keys:
+                if k in _json:
+                    del _json[k]
+                    is_del = True
+            return is_del
+
+        def __update_es_data(_es_data, _delete_list):
+            """Update metadata on ElasticSearch.
+
+            :param _es_data: Elasticsearch data.
+            :param _delete_list: delete list
+            """
+            es_updated_data = []
+            for _data in _es_data:
+                item_metadata = _data.get('_source', {}).get('_item_metadata',
+                                                             {})
+                if __del_data(item_metadata, _delete_list):
+                    es_updated_data.append(_data)
+
+            from weko_deposit.api import WekoIndexer
+            WekoIndexer().bulk_update(es_updated_data)
+
+        def __update_db(db_records, _delete_list):
+            """Update metadata in Database.
+
+            :param db_records:Db data
+            :param _delete_list: delete list
+            """
+            try:
+                with db.session.begin_nested():
+                    for db_record in db_records:
+                        record_json = deepcopy(db_record.json)
+                        if __del_data(record_json, _delete_list):
+                            db_record.json = record_json
+                            db.session.merge(db_record)
+                db.session.commit()
+            except SQLAlchemyError as e:
+                db.session.rollback()
+                current_app.logger.error(e)
+                raise e
+
+        def __update_record_metadata(_record_ids, _delete_list):
+            """Update Record Metadata table.
+
+            :param _record_ids: Record identifiers.
+            :param _delete_list: Delete list
+            :return:
+            """
+            query = db.session.query(RecordMetadata).filter(
+                RecordMetadata.id.in_(_record_ids))
+            db_records = query.all()
+            if len(db_records) == 0:
+                return
+            __update_db(db_records, _delete_list)
+
+        def __update_item_metadata(_record_ids, _delete_list):
+            """Update Item Metadata table.
+
+            :param _record_ids: Record identifiers.
+            :param _delete_list: Delete list.
+            :return:
+            """
+            query = db.session.query(ItemMetadata).filter(
+                ItemMetadata.id.in_(_record_ids))
+            db_records = query.all()
+            if len(db_records) == 0:
+                return
+            __update_db(db_records, _delete_list)
+
+        # Get deleted properties
+        old_meta_list = old_render.get('table_row')
+        new_meta_list = new_render.get('table_row')
+        delete_list = __diff(old_meta_list, new_meta_list)
+        if len(delete_list) == 0:
+            return
+
+        # Get records on ElasticSearch based on Item Type Name
+        records = cls.__get_records_by_item_type_name(item_type_name)
+        record_ids = []
+        es_data = []
+        for record in records:
+            rec_id = record.get("_id")
+            _source = record.get("_source", {})
+            _item_type_id = _source.get("_item_metadata", {}).get(
+                "item_type_id")
+            if rec_id and _source and str(item_type_id) == str(_item_type_id):
+                record_ids.append(rec_id)
+                es_data.append(dict(
+                    _id=rec_id,
+                    _source=_source
+                ))
+        if len(record_ids) == 0:
+            return
+
+        # Update record metadata in DB based on data from ES.
+        __update_record_metadata(record_ids, delete_list)
+        # Update item metadata in DB based on data from ES.
+        __update_item_metadata(record_ids, delete_list)
+        # Update Elasticsearch data
+        __update_es_data(es_data, delete_list)
+
+    @classmethod
+    def __get_records_by_item_type_name(cls, item_type_name):
+        """Get records on Elasticsearch by Item Type Name.
+
+        :param item_type_name: Item Type Name.
+        :return: Record list.
+        """
+        query_string = "itemtype:{}".format(
+            item_type_name)
+        result = []
+        try:
+            search = RecordsSearch(
+                index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+            search = search.query(QueryString(query=query_string))
+            search = search.sort('-publish_date', '-_updated')
+            search_result = search.execute().to_dict()
+            result = search_result.get('hits', {}).get('hits', [])
+        except NotFoundError as e:
+            current_app.logger.debug("Indexes do not exist yet: ", str(e))
+        return result
 
     @classmethod
     def get_record(cls, id_, with_deleted=False):

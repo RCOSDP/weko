@@ -29,6 +29,7 @@ import redis
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from elasticsearch.exceptions import TransportError
+from elasticsearch.helpers import bulk
 from flask import abort, current_app, has_request_context, json, request, \
     session
 from flask_security import current_user
@@ -323,6 +324,33 @@ class WekoIndexer(RecordIndexer):
             id=str(item_id),
             body=body
         )
+
+    def __build_bulk_es_data(self, updated_data):
+        """Build ElasticSearch data.
+
+        :param updated_data: Records data.
+        """
+        for record in updated_data:
+            es_data = dict(
+                _id=str(record.get('_id')),
+                _index=self.es_index,
+                _type=self.es_doc_type,
+                _source=record.get('_source'),
+            )
+            yield es_data
+
+    def bulk_update(self, updated_data):
+        """Bulk update.
+
+        :param updated_data: Updated data.
+        """
+        self.get_es_index()
+        es_data = self.__build_bulk_es_data(updated_data)
+        if es_data:
+            success, failed = bulk(self.client, es_data)
+            if len(failed) > 0:
+                for error in failed:
+                    current_app.logger.error(error)
 
 
 class WekoDeposit(Deposit):
