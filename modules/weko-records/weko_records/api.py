@@ -20,6 +20,7 @@
 
 """Record API."""
 
+import urllib.parse
 from copy import deepcopy
 
 from elasticsearch.exceptions import NotFoundError
@@ -551,8 +552,9 @@ class ItemTypes(RecordBase):
         :param item_type_name: Item Type Name.
         :return: Record list.
         """
+        name = urllib.parse.quote_plus(item_type_name)
         query_string = "itemtype:{}".format(
-            item_type_name)
+            name)
         result = []
         try:
             search = RecordsSearch(
