@@ -30,6 +30,7 @@ from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
+from weko_admin.models import AdminSettings
 from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
@@ -522,7 +523,7 @@ def sort_meta_data_by_options(record_hit):
             solst_dict_array.append(temp)
         return solst_dict_array
 
-    def get_comment(solst_dict_array):
+    def get_comment(solst_dict_array, hide_email_flag):
         """Check and get info."""
         result = []
         for s in solst_dict_array:
@@ -538,6 +539,10 @@ def sort_meta_data_by_options(record_hit):
                     'specify_newline') else option.get('specify_newline')
                 is_hide = parent_option.get('hide') if parent_option.get(
                     'hide') else option.get('hide')
+                if 'creatorMails[].creatorMail' in s['key'] \
+                        or 'contributorMails[].contributorMail' in s['key'] \
+                        or 'mails[].mail' in s['key']:
+                    is_hide = is_hide | hide_email_flag
                 if not is_hide and is_show_list:
                     if is_specify_newline or len(result) == 0:
                         result.append(value)
@@ -576,7 +581,8 @@ def sort_meta_data_by_options(record_hit):
                                 'hide': option.get("hidden")
                             }
                             break
-        items = get_comment(solst_dict_array)
+        settings = AdminSettings.get('items_display_settings')
+        items = get_comment(solst_dict_array, not settings.items_display_email)
         if items:
             record_hit['_source']['_comment'] = items
     except Exception:
@@ -646,7 +652,7 @@ def check_has_attribute_value(node):
         return False
 
 
-def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
+def get_attribute_value_all_items(root_key, nlst, klst, is_author=False, hide_email_flag=True):
     """Convert and sort item list.
 
     :param root_key:
@@ -680,6 +686,8 @@ def get_attribute_value_all_items(root_key, nlst, klst, is_author=False):
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
                         hide = lst[3].get('hide')
+                        if key in ('creatorMail', 'contributorMail', 'mail'):
+                            hide = hide | hide_email_flag
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
                             if not hide:

@@ -57,6 +57,8 @@ from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
+from weko_records_ui.utils import hide_item_metadata, \
+    hide_item_metadata_email_only
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
@@ -769,6 +771,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             self.first_recid = record_ids[0]
             for record_id in record_ids:
                 record = WekoRecord.get_record_by_pid(record_id)
+                hide_item_metadata_email_only(record)
                 self.records[record_id] = record
                 self.attr_output[record_id] = []
 
@@ -845,6 +848,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                                     break
                             elif isinstance(_data, list):
                                 _data = _data[0]
+                                if isinstance(_data, dict) and _data.get(attr):
+                                    _data = _data.get(attr)
                             elif isinstance(_data, dict) and _data.get(attr):
                                 _data = _data.get(attr)
                             else:
@@ -1441,7 +1446,8 @@ def _export_item(record_id,
                         # TODO: Then convert the item into the desired format
                         if file:
                             file_buffered = file.obj.file.storage().open()
-                            temp_file = open(tmp_path + '/' + file.obj.basename, 'wb')
+                            temp_file = open(
+                                tmp_path + '/' + file.obj.basename, 'wb')
                             temp_file.write(file_buffered.read())
                             temp_file.close()
 
@@ -1814,14 +1820,12 @@ def hide_meta_data_for_role(record):
         if role.name in community_role_name:
             is_hidden = False
             break
-    if record:
-        # Item Register users
-        if record.get('weko_creator_id') in list(current_user.roles or []):
-            is_hidden = False
 
-        # Share users
-        if record.get('weko_shared_id') in list(current_user.roles or []):
-            is_hidden = False
+    # Item Register users and Sharing users
+    if record and current_user.get_id() in [
+        record.get('weko_creator_id'),
+            str(record.get('weko_shared_id'))]:
+        is_hidden = False
 
     return is_hidden
 
@@ -2077,6 +2081,7 @@ def make_bibtex_data(record_ids):
     for record_id in record_ids:
         record = WekoRecord.get_record_by_pid(record_id)
         pid = record.pid_recid
+        hide_item_metadata(record)
         serializer = WekoBibTexSerializer()
         output = serializer.serialize(pid, record)
         result += output if output != err_msg else ''
@@ -2311,7 +2316,8 @@ def hide_form_items(item_type, schema_form):
     for i in system_properties:
         hidden_items = [
             schema_form.index(form) for form in schema_form
-            if form.get('items') and form['items'][0]['key'].split('.')[1] in i]
+            if form.get('items') and form[
+                'items'][0]['key'].split('.')[1] in i]
         if hidden_items and i in json.dumps(schema_form):
             schema_form = update_schema_remove_hidden_item(
                 schema_form,
@@ -2340,3 +2346,22 @@ def hide_thumbnail(schema_form):
         if isinstance(data_items, list) and is_thumbnail(data_items):
             form_data['condition'] = 1
             break
+
+
+def get_ignore_item(_item_type_id):
+    """Get ignore item from mapping.
+
+    :param _item_type_id:
+    :return ignore_list:
+    """
+    ignore_list = []
+    meta_options, _ = get_options_and_order_list(_item_type_id)
+    sub_ids = get_hide_list_by_schema_form(item_type_id=_item_type_id)
+    for key, val in meta_options.items():
+        hidden = val.get('option').get('hidden')
+        if hidden:
+            ignore_list.append(key)
+    for sub_id in sub_ids:
+        key = [_id.replace('[]', '') for _id in sub_id.split('.')]
+        ignore_list.append(key)
+    return ignore_list
