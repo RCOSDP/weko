@@ -3325,7 +3325,9 @@ function toObject(arr) {
         }
         $scope.startLoading();
         let currActivityId = $("#activity_id").text();
-        $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true);
+        if (!$scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true)) {
+          return;
+        }
         if (!$scope.priceValidator()) {
           var modalcontent = "Billing price is required half-width numbers.";
           $("#inputModal").html(modalcontent);
@@ -3521,41 +3523,50 @@ function toObject(arr) {
         //This function is called in updataDataJson function.
         if(!sessionValid){
           if(!validateSession())
-          return;
+          return false;
         }
         if (startLoading) {
           $scope.startLoading();
         }
-        let model = $rootScope.recordsVM.invenioRecordsModel;
-        CustomBSDatePicker.setDataFromFieldToModel(model, false);
+        try {
+          let model = $rootScope.recordsVM.invenioRecordsModel;
+          CustomBSDatePicker.setDataFromFieldToModel(model, false);
 
-        var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
-        let permission = false;
-        $scope.$broadcast('schemaFormValidate');
-        if (enableFeedbackMail === 'True' && enableContributor === 'True') {
-          if (!invalidFlg && $scope.is_item_owner) {
-            if (!this.registerUserPermission()) {
-              // Do nothing
+          var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
+          let permission = false;
+          $scope.$broadcast('schemaFormValidate');
+          if (enableFeedbackMail === 'True' && enableContributor === 'True') {
+            if (!invalidFlg && $scope.is_item_owner) {
+              if (!this.registerUserPermission()) {
+                // Do nothing
+              } else {
+                permission = true;
+              }
             } else {
               permission = true;
             }
-          } else {
-            permission = true;
-          }
-          if (permission) {
-            if ($scope.getFeedbackMailList().length > 0) {
-              let modalcontent = $('#invalid-email-format').val();
-              $("#inputModal").html(modalcontent);
-              $("#allModal").modal("show");
-              return;
+            if (permission) {
+              if ($scope.getFeedbackMailList().length > 0) {
+                let modalcontent = $('#invalid-email-format').val();
+                $("#inputModal").html(modalcontent);
+                $("#allModal").modal("show");
+                return;
+              }
+              this.saveDataJsonCallback(item_save_uri, startLoading);
+              this.saveFeedbackMailListCallback(currentActionId);
             }
+          } else {
             this.saveDataJsonCallback(item_save_uri, startLoading);
-            this.saveFeedbackMailListCallback(currentActionId);
           }
-        } else {
-          this.saveDataJsonCallback(item_save_uri, startLoading);
+          $scope.storeFilesToSession();
+        } catch (error) {
+          var msgHeader = 'An error ocurred while processing the input data!<br><br>'
+          $("#inputModal").html(msgHeader + error.message);
+          $("#allModal").modal("show");
+          $scope.endLoading();
+          return false;
         }
-        $scope.storeFilesToSession();
+        return true;
       };
 
       $scope.saveDataJsonCallback = function (item_save_uri, startLoading) {
