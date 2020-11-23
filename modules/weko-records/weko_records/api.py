@@ -426,7 +426,6 @@ class ItemTypes(RecordBase):
         :param old_render: Old render.
         :param new_render: New render.
         """
-
         def __diff(list1, list2):
             """Compare list.
 
@@ -450,17 +449,16 @@ class ItemTypes(RecordBase):
                     is_del = True
             return is_del
 
-        def __get_delete_mapping_key(item_type_mapping,_delete_list):
+        def __get_delete_mapping_key(item_type_mapping, _delete_list):
             """Get mapping key of deleted key.
 
             :param item_type_mapping: item_type_mapping.
             :param _delete_list: _delete_list.
             :return:
             """
-
             result = []
             for key in _delete_list:
-                prop_mapping = item_type_mapping.get(key,{}).get("jpcoar_mapping",{})
+                prop_mapping = item_type_mapping.get(key, {}).get("jpcoar_mapping", {})
                 if prop_mapping:
                     result.extend(list(prop_mapping.keys()))
             return result
@@ -471,7 +469,6 @@ class ItemTypes(RecordBase):
             :param _es_data: Elasticsearch data.
             :param _delete_list: delete list
             """
-
             item_type_mapping = Mapping.get_record(item_type_id=item_type_id)
             delete_mapping_key_list = __get_delete_mapping_key(item_type_mapping, _delete_list)
             es_updated_data = []
