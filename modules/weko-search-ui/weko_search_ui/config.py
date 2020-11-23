@@ -472,7 +472,7 @@ WEKO_IMPORT_EMAIL_PATTERN = \
     r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 WEKO_IMPORT_PUBLISH_STATUS = ['public', 'private']
 WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
-WEKO_IMPORT_SUFFIX_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){1,290}$"
+WEKO_IMPORT_SUFFIX_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){0,290}$"
 
 WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
 """Subitem ID of property Date (ISO-8601)."""
@@ -488,12 +488,12 @@ WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION = '.txt'
 
 WEKO_EXPORT_TEMPLATE_BASIC_ID = [
     '#.id', '.uri', '.metadata.path[0]',
-    '.pos_index#1', '.publish_status', '.feedback_mail#1',
+    '.pos_index[0]', '.publish_status', '.feedback_mail[0]',
     '.cnri', '.doi_ra', '.doi', '.edit_mode'
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
-    '#ID', 'URI', '.IndexID#1',
-    '.POS_INDEX#1', '.PUBLISH_STATUS', '.FEEDBACK_MAIL#1',
+    '#ID', 'URI', '.IndexID[0]',
+    '.POS_INDEX[0]', '.PUBLISH_STATUS', '.FEEDBACK_MAIL[0]',
     '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [

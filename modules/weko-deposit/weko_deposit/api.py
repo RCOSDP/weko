@@ -52,6 +52,7 @@ from invenio_records_rest.errors import PIDResolveRESTError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
+from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
     ItemTypes
@@ -106,7 +107,7 @@ class WekoFileObject(FileObject):
         file_type = ''
         file_size = self.data['size']
         for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
-            if self.data['format'] in v:
+            if self.data.get('format') in v:
                 file_type = k
                 break
         if file_type in current_app.config[
@@ -1054,17 +1055,12 @@ class WekoDeposit(Deposit):
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
             item_metadata.pop('id', None)
             item_metadata.pop('control_number', None)
-            is_draft = True if ".0" in pid.pid_value else False
 
             # Clone bucket
-            _deposit = WekoDeposit.get_record(
-                PersistentIdentifier.get(
-                    'recid',
-                    '{}.0'.format(pid.pid_value.split(".")[0])
-                ).object_uuid if is_draft else pid.object_uuid)
+            _deposit = WekoDeposit.get_record(pid.object_uuid)
             # Get draft bucket's data
             sync_bucket = RecordsBuckets.query.filter_by(
-                record_id=pid.object_uuid if is_draft else self.id).first()
+                record_id=self.id).first()
             sync_bucket.bucket.locked = False
             snapshot = Bucket.get(
                 _deposit.files.bucket.id).snapshot(lock=False)
@@ -1082,11 +1078,7 @@ class WekoDeposit(Deposit):
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
-            if is_draft:
-                _deposit['_buckets'] = {"deposit": str(snapshot.id)}
-                _deposit.commit()
-            else:
-                super(WekoDeposit, self).update(bucket)
+            super(WekoDeposit, self).update(bucket)
             self.commit()
             # update records_metadata
             flag_modified(self.model, 'json')
@@ -1161,6 +1153,8 @@ class WekoRecord(Record):
     def items_show_list(self):
         """Return the item show list."""
         items = []
+        settings = AdminSettings.get('items_display_settings')
+        hide_email_flag = not settings.items_display_email
         solst, meta_options = get_options_and_order_list(
             self.get('item_type_id'))
 
@@ -1207,7 +1201,7 @@ class WekoRecord(Record):
                         from weko_gridlayout.utils import get_register_language
                         for lang in get_register_language():
                             language_list.append(lang['lang_code'])
-                        creators = self._get_creator(mlt, language_list)
+                        creators = self._get_creator(mlt, language_list, hide_email_flag)
                         nval['attribute_value_mlt'] = creators
                     elif is_thumbnail:
                         nval['is_thumbnail'] = True
@@ -1220,7 +1214,8 @@ class WekoRecord(Record):
                                 key,
                                 copy.deepcopy(mlt),
                                 copy.deepcopy(solst),
-                                is_author)
+                                is_author,
+                                hide_email_flag)
                 items.append(nval)
             else:
                 val['attribute_name_i18n'] = lst[2] or val.get(
@@ -1230,7 +1225,7 @@ class WekoRecord(Record):
         return items
 
     @staticmethod
-    def _get_creator(meta_data, languages):
+    def _get_creator(meta_data, languages, hide_email_flag):
         creators = []
         if meta_data:
             for creator_data in meta_data:
@@ -1240,7 +1235,7 @@ class WekoRecord(Record):
                 creator_mails = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']
                 if identifiers in creator_data:
                     creator_dict[identifiers] = creator_data[identifiers]
-                if creator_mails in creator_data:
+                if creator_mails in creator_data and not hide_email_flag:
                     creator_dict[creator_mails] = creator_data[creator_mails]
                 creators.append(creator_dict)
         return creators
@@ -1904,4 +1899,8 @@ class _FormatSysBibliographicInformation:
                         'bibliographicIssueDate') and issued_date.get(
                         'bibliographicIssueDateType') == issue_type:
                     date.append(issued_date.get('bibliographicIssueDate'))
-            return date
+        elif isinstance(issue_date, dict):
+            if issue_date.get('bibliographicIssueDate') \
+                    and issue_date.get('bibliographicIssueDateType') == issue_type:
+                date.append(issue_date.get('bibliographicIssueDate'))
+        return date

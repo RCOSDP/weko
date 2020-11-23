@@ -22,7 +22,7 @@
 
 from copy import deepcopy
 
-from flask import current_app
+from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
@@ -465,6 +465,22 @@ class ItemTypes(RecordBase):
             if not with_deleted:
                 query = query.join(ItemType).filter(
                     ItemType.is_deleted.is_(False))
+            return query.order_by(ItemTypeName.id).all()
+
+    @classmethod
+    def get_latest_with_item_type(cls, with_deleted=False):
+        """Retrieve the latest item types with all its associated data.
+
+        :param with_deleted: If `True` then it includes deleted item types.
+        :returns: A list of :class:`ItemTypeName` joined w/ :class:`ItemType`.
+        """
+        with db.session.no_autoflush:
+            query = ItemTypeName.query.join(ItemType) \
+                .add_columns(ItemTypeName.name, ItemType.id,
+                             ItemType.harvesting_type, ItemType.is_deleted,
+                             ItemType.tag)
+            if not with_deleted:
+                query = query.filter(ItemType.is_deleted.is_(False))
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod
@@ -1862,16 +1878,39 @@ class ItemLink(object):
         :return ret: List destination records.
         """
         from weko_deposit.api import WekoRecord
+        from weko_records_ui.utils import get_record_permalink
+
+        def get_url(pid_value):
+            wr = WekoRecord.get_record_by_pid(pid_value)
+            permalink = get_record_permalink(wr)
+            if not permalink:
+                sid = 'system_identifier_doi'
+                avm = 'attribute_value_mlt'
+                ssi = 'subitem_systemidt_identifier'
+                if wr.get(sid) and wr.get(sid).get(avm)[0]:
+                    url = wr[sid][avm][0][ssi]
+                else:
+                    url = request.host_url + 'records/' + pid_value
+            else:
+                url = permalink
+
+            if 'doi' in url:
+                type = 'DOI'
+            elif 'handle' in url:
+                type = 'HDL'
+            else:
+                type = 'URI'
+            return url, type
 
         dst_relations = ItemReference.get_src_references(recid).all()
         ret = []
 
         for relation in dst_relations:
-            record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
-            titles = cls.__get_titles(record)
+            link, identifierType = get_url(relation.dst_item_pid)
             ret.append(dict(
                 reference_type=relation.reference_type,
-                titles=titles,
+                url=link,
+                identifierType=identifierType
             ))
 
         return ret

@@ -94,5 +94,9 @@
     "Author_On_1_Page": [
         null,
         "On 1 Page:"
+    ],
+    "Author_Confirm_Msg": [
+        null,
+        "The confirmation site cannot be opened because the URL is not set for the specified identifier."
     ]
 }
