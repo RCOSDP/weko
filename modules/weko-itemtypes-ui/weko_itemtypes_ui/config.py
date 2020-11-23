@@ -59,3 +59,6 @@ WEKO_BILLING_FILE_PROP_ATT = 'billing_file_prop'
 
 WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT = 'system_prop'
 """Attribute to detect property is default property which is not shown at properties screen."""
+
+WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED = True
+"""Enable Upgrade Version."""

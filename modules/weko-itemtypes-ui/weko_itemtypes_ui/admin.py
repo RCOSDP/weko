@@ -167,8 +167,15 @@ class ItemTypeMetaDataView(BaseView):
                                       form=table_row_map.get(
                                           'form'),
                                       render=data)
+            upgrade_version = current_app.config[
+                'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
+            ]
+            if not upgrade_version:
+                Mapping.create(item_type_id=record.model.id,
+                               mapping=table_row_map.
+                               get('mapping'))
             # Just update Mapping when create new record
-            if record.model.id != item_type_id:
+            elif record.model.id != item_type_id:
                 Mapping.create(item_type_id=record.model.id,
                                mapping=table_row_map.
                                get('mapping'))
