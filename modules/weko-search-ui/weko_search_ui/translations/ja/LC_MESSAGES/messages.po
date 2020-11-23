@@ -495,8 +495,35 @@ msgstr "指定された{}のPrefixが誤っています。"
 msgid "Suffix of {} can only be used with half-width alphanumeric characters and half-width symbols "_-.; () /"."
 msgstr "{}のSuffixは半角英数字、半角記号「_-.;()/」以外使用できません。"
 
+msgid "The format of the specified file {} does not support import. Please specify one of the following formats: zip, tar, gztar, bztar, xztar."
+msgstr "指定されたファイル{}の形式はインポートに対応していません。zip,tar,gztar,bztar,xztarいずれかの形式を指定してください。"
+
+msgid "The TSV file was not found in the specified file {}. Check if the directory structure is correct."
+msgstr "指定されたファイル{}にTSVファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
+
+msgid "The TSV file could not be read. Make sure the file format is TSV and that the file is UTF-8 encoded."
+msgstr "TSVファイルを読み込めませんでした。ファイル形式がTSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
+
+msgid "There is an error in the format of the first line of the header of the TSV file."
+msgstr "TSVファイルのヘッダ１行目の形式に誤りがあります。"
+
+msgid "The item type ID specified in the TSV file does not exist."
+msgstr "TSVファイルで指定されたアイテムタイプIDは存在しません。"
+
+msgid "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) for the thumbnail."
+msgstr "サムネイルは画像ファイル（gif, jpg, jpe, jpeg, png, bmp, tiff, tif）を指定してください。"
+
+msgid "Please specify PubDate with YYYY-MM-DD."
+msgstr "公開日はYYYY-MM-DDで指定してください。"
+
 msgid "Cannot register because the specified item type is not the latest version."
 msgstr "指定されたアイテムタイプが最新のバージョンでないため登録できません。"
 
 msgid "The following items are not registered because they do not exist in the specified item type. {}"
 msgstr "次の項目指定されたアイテムタイプに存在しないため登録されません。{}"
+
+msgid "The item does not consistent with the specified item type."
+msgstr "指定されたアイテムタイプと項目が一致しません。"
+
+msgid "Cannot read tsv file correctly."
+msgstr "TSVファイルが正しく読み込めません。"

@@ -41,7 +41,6 @@ from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
-from invenio_oaiharvester.harvester import RESOURCE_TYPE_URI
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
@@ -67,7 +66,7 @@ from weko_workflow.utils import IdentifierHandle, check_required_data, \
     register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
-    VERSION_TYPE_URI, \
+    RESOURCE_TYPE_URI, VERSION_TYPE_URI, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION, \
@@ -75,8 +74,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
-    WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, WEKO_REPO_USER, \
-    WEKO_SYS_USER
+    WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
+    WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
@@ -333,7 +332,7 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
                 term = list(term_path)
                 term.append(pro_name)
                 convert_data(pro[pro_name], term)
-            if list_pro[0].isnumeric():
+            if list_pro and list_pro[0].isnumeric():
                 convert_nested_item_to_list(result, term_path)
         else:
             return
@@ -357,16 +356,19 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
     return result
 
 
-def check_import_items(file_content: str, is_change_identifier: bool):
+def check_import_items(file_name: str, file_content: str,
+                       is_change_identifier: bool):
     """Validation importing zip file.
 
     :argument
+        file_name -- file name.
         file_content -- content file's name.
         is_change_identifier -- Change Identifier Mode.
     :return
         return       -- PID object if exist.
 
     """
+    result = {}
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
     save_path = "/tmp"
@@ -385,10 +387,12 @@ def check_import_items(file_content: str, is_change_identifier: bool):
 
         data_path += '/data'
         list_record = []
-        for tsv_entry in os.listdir(data_path):
-            if tsv_entry.endswith('.tsv'):
-                list_record.extend(
-                    unpackage_import_file(data_path, tsv_entry))
+        list_tsv = list(
+            filter(lambda x: x.endswith('.tsv'), os.listdir(data_path)))
+        if not list_tsv:
+            raise FileNotFoundError()
+        for tsv_entry in list_tsv:
+            list_record.extend(unpackage_import_file(data_path, tsv_entry))
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
         handle_check_and_prepare_publish_status(list_record)
@@ -400,16 +404,34 @@ def check_import_items(file_content: str, is_change_identifier: bool):
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
-        return {
+        handle_check_thumbnail_file_type(list_record)
+        result = {
             'list_record': list_record,
             'data_path': data_path
         }
-    except Exception:
+    except Exception as ex:
+        error = _('Internal server error')
+        if isinstance(ex, shutil.ReadError):
+            error = _('The format of the specified file {} does not'
+                      + ' support import. Please specify one of the'
+                      + ' following formats: zip, tar, gztar, bztar,'
+                      + ' xztar.').format(file_name)
+        elif isinstance(ex, FileNotFoundError):
+            error = _('The TSV file was not found in the specified file {}.'
+                      + ' Check if the directory structure is correct.') \
+                .format(file_name)
+        elif isinstance(ex, UnicodeDecodeError):
+            error = ex.reason
+        elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('error_msg'):
+            error = ex.args[0].get('error_msg')
+        result['error'] = error
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
         current_app.logger.error('-' * 60)
     finally:
         temp_path.cleanup()
+    return result
 
 
 def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
@@ -422,7 +444,7 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
 
     """
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
-    data = read_stats_tsv(tsv_file_path)
+    data = read_stats_tsv(tsv_file_path, tsv_file_name)
     list_record = data.get('tsv_data')
     handle_fill_system_item(list_record)
     list_record = handle_validate_item_import(list_record, data.get(
@@ -431,11 +453,12 @@ def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
     return list_record
 
 
-def read_stats_tsv(tsv_file_path: str) -> dict:
+def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
     """Read importing TSV file.
 
     :argument
         tsv_file_path -- tsv file's url.
+        tsv_file_name -- tsv file name.
     :return
         return       -- PID object if exist.
 
@@ -454,65 +477,101 @@ def read_stats_tsv(tsv_file_path: str) -> dict:
     schema = ''
     with open(tsv_file_path, 'r') as tsvfile:
         csv_reader = csv.reader(tsvfile, delimiter='\t')
-        for num, data_row in enumerate(csv_reader, start=1):
-            if num == 1:
-                if data_row[2] and data_row[2].split('/')[-1]:
+        try:
+            for num, data_row in enumerate(csv_reader, start=1):
+                if num == 1:
+                    first_line_format_exception = Exception({
+                        'error_msg': _('There is an error in the format of the'
+                                       + ' first line of the header of the TSV'
+                                       + ' file.')
+                    })
+                    if len(data_row) < 3:
+                        raise first_line_format_exception
+
                     item_type_id = data_row[2].split('/')[-1]
+                    if not item_type_id or \
+                            not re.search(r'^[0-9]*$', item_type_id):
+                        raise first_line_format_exception
                     check_item_type = get_item_type(int(item_type_id))
                     schema = data_row[2]
                     if not check_item_type:
                         result['item_type_schema'] = {}
+                        raise Exception({
+                            'error_msg': _('The item type ID specified in'
+                                           + ' the TSV file does not exist.')
+                        })
                     else:
                         result['item_type_schema'] = check_item_type['schema']
-
-            elif num == 2:
-                item_path = data_row
-                if check_item_type:
-                    item_path_not_existed = handle_check_metadata_not_existed(
-                        item_path, check_item_type.get('item_type_id'))
-            elif num == 3:
-                item_path_name = data_row
-            elif (num == 4 or num == 5) and data_row[0].startswith('#'):
-                continue
-            else:
-                data_parse_metadata = parse_to_json_form(
-                    zip(item_path, item_path_name, data_row),
-                    item_path_not_existed
-                )
-
-                json_data_parse = parse_to_json_form(
-                    zip(item_path_name, item_path, data_row),
-                    item_path_not_existed
-                )
-                if isinstance(check_item_type, dict):
-                    item_type_name = check_item_type.get('name')
-                    item_type_id = check_item_type.get('item_type_id')
-                    tsv_item = dict(
-                        **json_data_parse,
-                        **data_parse_metadata,
-                        **{
-                            'item_type_name': item_type_name or '',
-                            'item_type_id': item_type_id or '',
-                            '$schema': schema if schema else ''
-                        }
-                    )
-                    if not check_item_type.get('is_lastest'):
-                        tsv_item['errors'] = [
-                            _('Cannot register because the specified'
-                              + ' item type is not the latest version.')
-                        ]
+                        if not check_item_type.get('is_lastest'):
+                            raise Exception({
+                                'error_msg': _('Cannot register because the '
+                                               + 'specified item type is not '
+                                               + 'the latest version.')
+                            })
+                elif num == 2:
+                    item_path = data_row
+                    if check_item_type:
+                        if not handle_check_consistence_with_item_type(
+                                check_item_type.get('item_type_id'),
+                                item_path):
+                            raise Exception({
+                                'error_msg': _('The item does not consistent '
+                                               'with the specified item type.')
+                            })
+                        item_path_not_existed = \
+                            handle_check_metadata_not_existed(
+                                item_path, check_item_type.get('item_type_id'))
+                elif num == 3:
+                    item_path_name = data_row
+                elif (num == 4 or num == 5) and data_row[0].startswith('#'):
+                    continue
                 else:
-                    tsv_item = dict(**json_data_parse, **data_parse_metadata)
-                if item_path_not_existed:
-                    str_keys = ', '.join(item_path_not_existed) \
-                        .replace('.metadata.', '')
-                    tsv_item['warnings'] = [
-                        _('The following items are not registered because '
-                          + 'they do not exist in the specified item type. {}')
-                        .format(str_keys)
-                    ]
-                tsv_data.append(tsv_item)
+                    data_parse_metadata = parse_to_json_form(
+                        zip(item_path, item_path_name, data_row),
+                        item_path_not_existed
+                    )
+                    json_data_parse = parse_to_json_form(
+                        zip(item_path_name, item_path, data_row),
+                        item_path_not_existed
+                    )
 
+                    if not (data_parse_metadata or json_data_parse):
+                        raise Exception({
+                            'error_msg': _('Cannot read tsv file correctly.')
+                        })
+                    if isinstance(check_item_type, dict):
+                        item_type_name = check_item_type.get('name')
+                        item_type_id = check_item_type.get('item_type_id')
+                        tsv_item = dict(
+                            **json_data_parse,
+                            **data_parse_metadata,
+                            **{
+                                'item_type_name': item_type_name or '',
+                                'item_type_id': item_type_id or '',
+                                '$schema': schema if schema else ''
+                            }
+                        )
+                    else:
+                        tsv_item = dict(
+                            **json_data_parse,
+                            **data_parse_metadata)
+                    if item_path_not_existed:
+                        str_keys = ', '.join(item_path_not_existed) \
+                            .replace('.metadata.', '')
+                        tsv_item['warnings'] = [
+                            _('The following items are not registered because '
+                              + 'they do not exist in the specified '
+                              + 'item type. {}')
+                            .format(str_keys)
+                        ]
+                    tsv_data.append(tsv_item)
+        except UnicodeDecodeError as ex:
+            ex.reason = _('The TSV file could not be read. Make sure the file'
+                          + ' format is TSV and that the file is'
+                          + ' UTF-8 encoded.').format(tsv_file_name)
+            raise ex
+        except Exception as ex:
+            raise ex
     result['tsv_data'] = tsv_data
     return result
 
@@ -737,8 +796,21 @@ def create_deposit(item_id):
         db.session.rollback()
 
 
-def up_load_file_content(record, root_path):
-    """Upload file content.
+def clean_thumbnail_file(bucket):
+    """Remove all thumbnail in bucket.
+
+    :argument
+        bucket         -- {object} bucket.
+    """
+    all_file_version = ObjectVersion.get_by_bucket(
+        bucket, True, True).all()
+    for file in all_file_version:
+        if file.is_thumbnail is True:
+            file.remove()
+
+
+def up_load_file(record, root_path):
+    """Upload thumbnail or file content.
 
     :argument
         record         -- {dict} item import.
@@ -746,20 +818,24 @@ def up_load_file_content(record, root_path):
 
     """
     try:
-        file_path = record.get('file_path')
-        if file_path:
+        file_path = record.get('file_path', [])
+        thumbnail_path = record.get('thumbnail_path', [])
+        if file_path or thumbnail_path:
             pid = PersistentIdentifier.query.filter_by(
                 pid_type='recid',
                 pid_value=record.get('id')).first()
             rec = RecordMetadata.query.filter_by(
                 id=pid.object_uuid).first()
             bucket = rec.json['_buckets']['deposit']
-            for file_name in file_path:
+            clean_thumbnail_file(bucket)
+            for file_name in [*file_path, *thumbnail_path]:
                 with open(root_path + '/' + file_name, 'rb') as file:
                     obj = ObjectVersion.create(
                         bucket,
                         get_file_name(file_name)
                     )
+                    if file_name in thumbnail_path:
+                        obj.is_thumbnail = True
                     obj.set_contents(file)
                     db.session.commit()
     except Exception:
@@ -798,13 +874,42 @@ def register_item_metadata(item):
                 data['deleted_items'] = deleted_items
         return data
 
+    def autofill_thumbnail_metadata(item_type_id, data):
+        key = get_thumbnail_key(item_type_id)
+        if key:
+            all_file_version = ObjectVersion.get_by_bucket(
+                deposit.files.bucket, True, True).all()
+            thumbnail_item = {}
+            subitem_thumbnail = []
+            for file in all_file_version:
+                if file.is_thumbnail is True:
+                    subitem_thumbnail.append({
+                        'thumbnail_label': file.key,
+                        'thumbnail_uri':
+                            current_app.config['DEPOSIT_FILES_API']
+                            + u'/{bucket}/{key}?versionId={version_id}'.format(
+                                bucket=file.bucket_id,
+                                key=file.key,
+                                version_id=file.version_id)
+                    })
+            if subitem_thumbnail:
+                thumbnail_item['subitem_thumbnail'] = subitem_thumbnail
+            if thumbnail_item:
+                data[key] = thumbnail_item
+            else:
+                deleted_items = data.get('deleted_items') or []
+                deleted_items.append(key)
+                data['deleted_items'] = deleted_items
+        return data
+
     def clean_file_bucket(deposit):
         # clean bucket
         file_names = [file['filename'] for file in deposit.get_file_data()]
         lastest_files_version = []
         # remove lastest version
         for file in deposit.files:
-            if file.obj.key not in file_names:
+            if file.obj.is_thumbnail is False \
+                    and file.obj.key not in file_names:
                 file.obj.remove()
             else:
                 lastest_files_version.append(file.obj.version_id)
@@ -812,7 +917,8 @@ def register_item_metadata(item):
         all_file_version = ObjectVersion.get_by_bucket(
             deposit.files.bucket, True, True).all()
         for file in all_file_version:
-            if file.key not in file_names:
+            if file.is_thumbnail is False \
+                    and file.key not in file_names:
                 file.remove()
             elif file.version_id not in lastest_files_version:
                 file.remove()
@@ -821,7 +927,8 @@ def register_item_metadata(item):
         all_file_version = ObjectVersion.get_by_bucket(
             deposit.files.bucket, True, True).all()
         for file in all_file_version:
-            file.remove()
+            if file.is_thumbnail is False:
+                file.remove()
 
     item_id = str(item.get('id'))
     try:
@@ -854,6 +961,7 @@ def register_item_metadata(item):
                     'value': item_id
                 }
             })
+        new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
         new_data = clean_file_metadata(item['item_type_id'], new_data)
         deposit.update(item_status, new_data)
         if item.get('file_path'):
@@ -1013,7 +1121,7 @@ def import_items_to_system(item: dict, url_root: str):
         if item.get('status') == 'new':
             item_id = create_deposit(item.get('id'))
             item['id'] = item_id
-        up_load_file_content(item, root_path)
+        up_load_file(item, root_path)
         response = register_item_metadata(item)
         if response.get('success') and \
                 current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
@@ -1361,11 +1469,12 @@ def handle_check_doi_ra(list_record):
         doi_ra = item.get('doi_ra')
 
         if item.get('doi') and not doi_ra:
-            error = _('{} is required item.').format('DOI_RA')
+            error = _('Please specify {}.').format('DOI_RA')
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
                 error = _('DOI_RA should be set by one of JaLC'
                           + ', Crossref, DataCite, NDL JaLC.')
+                item['ignore_check_doi_prefix'] = True
             elif item.get('is_change_identifier'):
                 if not handle_doi_required_check(item):
                     error = _('PID does not meet the conditions.')
@@ -1400,7 +1509,7 @@ def handle_check_doi(list_record):
 
         if item.get('is_change_identifier') \
                 and doi_ra and not doi:
-            error = _('{} is required item.').format('DOI')
+            error = _('Please specify {}.').format('DOI')
         elif doi_ra:
             if item.get('is_change_identifier'):
                 if not doi:
@@ -1419,7 +1528,8 @@ def handle_check_doi(list_record):
                             suffix = ''
                             item['doi_suffix_not_existed'] = True
 
-                        if prefix != get_doi_prefix(doi_ra):
+                        if not item.get('ignore_check_doi_prefix') \
+                                and prefix != get_doi_prefix(doi_ra):
                             error = _('Specified Prefix of {} is incorrect.') \
                                 .format('DOI')
                         if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
@@ -1596,7 +1706,7 @@ def register_item_doi(item):
                     'identifier_grant_ndl_jalc_doi_link':
                         IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
                 }
-                if pid_doi:
+                if pid_doi and not pid_doi.pid_value.endswith(doi):
                     pid_doi.delete()
                 saving_doi_pidstore(
                     pid_lastest.object_uuid,
@@ -2029,7 +2139,7 @@ def handle_check_date(list_record):
 
     """
     for record in list_record:
-        error = None
+        errors = []
         date_iso_keys = []
         item_type = ItemTypes.get_by_id(id_=record.get(
             'item_type_id', 0), with_deleted=True)
@@ -2044,14 +2154,23 @@ def handle_check_date(list_record):
                 data_result = get_sub_item_value(attribute, _keys[-1])
                 for value in data_result:
                     if not validattion_date_property(value):
-                        error = _('Please specify the date with any format of'
-                                  + ' YYYY-MM-DD, YYYY-MM, YYYY.')
-                        record['errors'] = record['errors'] + [error] \
-                            if record.get('errors') else [error]
-                        record['errors'] = list(set(record['errors']))
+                        errors.append(
+                            _('Please specify the date with any format of'
+                              + ' YYYY-MM-DD, YYYY-MM, YYYY.'))
                         break
-                if error:
+                if errors:
                     break
+        # validate pubdate
+        try:
+            pubdate = record.get('metadata').get('pubdate')
+            if pubdate:
+                datetime.strptime(pubdate, '%Y-%m-%d')
+        except Exception:
+            errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
+        if errors:
+            record['errors'] = record['errors'] + errors \
+                if record.get('errors') else errors
+            record['errors'] = list(set(record['errors']))
 
 
 def validattion_date_property(date_str):
@@ -2260,6 +2379,43 @@ def handle_fill_system_item(list_record):
                           WEKO_IMPORT_SYSTEM_ITEMS[2])
 
 
+def get_thumbnail_key(item_type_id=0):
+    """Get thumbnail key.
+
+    :argument
+        item_type_id -- {int} item type id.
+    :return
+
+    """
+    item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
+    if item_type:
+        item_type = item_type.render
+        schema = item_type.get('schemaeditor', {}).get('schema', {})
+        for key, item in schema.items():
+            if item.get('properties') \
+                    and item['properties'].get('subitem_thumbnail'):
+                return key
+
+
+def handle_check_thumbnail_file_type(list_record):
+    """Check thumbnail file type.
+
+    :argument
+        list_record -- {list} list record import.
+    :return
+
+    """
+    error = _('Please specify the image file(gif, jpg, jpe, jpeg,'
+              + ' png, bmp, tiff, tif) for the thumbnail.')
+    for record in list_record:
+        thumbnail_paths = record.get('thumbnail_path', [])
+        for path in thumbnail_paths:
+            file_extend = path.split('.')[-1]
+            if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
+                record['errors'] = record['errors'] + [error] \
+                    if record.get('errors') else [error]
+
+
 def handle_check_metadata_not_existed(str_keys, item_type_id=0):
     """Check and get list metadata not existed in item type.
 
@@ -2269,38 +2425,97 @@ def handle_check_metadata_not_existed(str_keys, item_type_id=0):
     :return
 
     """
-    def check_existed(keys, schema):
-        if keys[0] in schema:
-            if len(keys) > 1:
-                sub_schema = schema.get(keys[0])
-                if sub_schema.get('items'):
-                    sub_schema = sub_schema.get('items').get('properties')
-                elif sub_schema.get('properties'):
-                    sub_schema = sub_schema.get('properties')
-                else:
-                    sub_schema = None
+    result = []
+    ids = handle_get_all_id_in_item_type(item_type_id)
+    for str_key in str_keys:
+        if str_key.startswith('.metadata.'):
+            pre_key = re.sub(r'\[\d+\]', '[0]', str_key)
+            if pre_key != '.metadata.path[0]' and pre_key not in ids:
+                result.append(str_key.replace('.metadata.', ''))
+    return result
 
-                if sub_schema:
-                    return check_existed(keys[1:], sub_schema)
-                else:
-                    return False
-            else:
-                return True
+
+def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None):
+    """Get all sub id, sub name of root item with full-path.
+
+    :argument
+        items - {dict} sub items.
+        root_id -- {str} root id.
+        root_name -- {str} root name.
+    :return
+        ids - {list} full-path of ids.
+        names - {list} full-path of names.
+    """
+    ids, names = [], []
+    for key in sorted(items.keys()):
+        item = items.get(key)
+        if item.get('items'):
+            _ids, _names = handle_get_all_sub_id_and_name(
+                item.get('items').get('properties'))
+            ids += [key + '[0].' + _id for _id in _ids]
+            names += [item.get('title') + '[0].' + _name
+                      for _name in _names]
+        elif item.get('type') == 'object' and item.get('properties'):
+            _ids, _names = handle_get_all_sub_id_and_name(
+                item.get('properties'))
+            ids += [key + '.' + _id for _id in _ids]
+            names += [item.get('title') + '.' + _name
+                      for _name in _names]
         else:
-            return False
+            ids.append(key)
+            names.append(item.get('title'))
 
+    if root_id:
+        ids = [root_id + '.' + _id for _id in ids]
+    if root_name:
+        names = [root_name + '.' + _name
+                 for _name in names]
+
+    return ids, names
+
+
+def handle_get_all_id_in_item_type(item_type_id):
+    """Get all id of item with full-path.
+
+    :argument
+        item_type_id - {str} item type id.
+    :return
+        ids - {list} full-path of ids.
+    """
     result = []
     item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
     if item_type:
-        schema = item_type.render.get('schemaeditor', {}).get('schema', {})
-        for str_key in str_keys:
-            if str_key.startswith('.metadata.'):
-                pre_key = re.sub(
-                    r'\[\d+\]', '',
-                    str_key.replace('.metadata.', '')
-                )
-                if pre_key in ['path', 'pubdate']:
-                    continue
-                if not check_existed(pre_key.split('.'), schema):
-                    result.append(str_key)
+        item_type = item_type.render
+        meta_system = [
+            item_key for item_key in item_type.get('meta_system', {})]
+        schema = item_type.get(
+            'table_row_map', {}).get('schema', {}).get('properties', {})
+
+        for key, item in schema.items():
+            if key not in meta_system:
+                new_key = '.metadata.{}{}'.format(
+                    key, '[0]' if item.get('items') else '')
+                if not item.get('properties') and not item.get('items'):
+                    result.append(new_key)
+                else:
+                    sub_items = item.get('properties') if item.get(
+                        'properties') else item.get('items').get('properties')
+                    result += handle_get_all_sub_id_and_name(
+                        sub_items, new_key)[0]
     return result
+
+
+def handle_check_consistence_with_item_type(item_type_id, keys):
+    """Check consistence between tsv and item type.
+
+    :argument
+        item_type_id - {str} item type id.
+        keys - {list} data from line 2 of tsv file.
+    :return
+        status - {bool} status.
+    """
+    ids = handle_get_all_id_in_item_type(item_type_id)
+    for _id in ids:
+        if _id not in keys:
+            return False
+    return True

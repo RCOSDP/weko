@@ -759,7 +759,6 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         first_recid = 0
         cur_recid = 0
-        filepath_idx = 0
         recids = []
         records = {}
         attr_data = {}
@@ -931,21 +930,28 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
                 key_list_len = len(key_list)
                 for key_index in range(key_list_len):
-                    if 'filename' in key_list[key_index] \
-                        or 'thumbnail_label' in key_list[key_index] \
-                            and len(item_key.split('.')) == 2:
+                    if 'filename' in key_list[key_index]:
                         key_list.insert(0, '.file_path[{}]'.format(
-                            str(self.filepath_idx + idx)))
+                            str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
-                            str(self.filepath_idx + idx)))
+                            str(idx)))
                         if key_data[key_index]:
                             key_data.insert(0, 'recid_{}/{}'.format(str(
                                 self.cur_recid), key_data[key_index]))
                         else:
                             key_data.insert(0, '')
-                        if idx == max_items - 1 \
-                                and self.first_recid == self.cur_recid:
-                            self.filepath_idx += max_items
+                        break
+                    elif 'thumbnail_label' in key_list[key_index] \
+                            and len(item_key.split('.')) == 2:
+                        key_list.insert(0, '.thumbnail_path[{}]'.format(
+                            str(idx)))
+                        key_label.insert(0, '.サムネイルパス[{}]'.format(
+                            str(idx)))
+                        if key_data[key_index]:
+                            key_data.insert(0, 'recid_{}/{}'.format(str(
+                                self.cur_recid), key_data[key_index]))
+                        else:
+                            key_data.insert(0, '')
                         break
 
                 o_ret.extend(key_list)
@@ -1062,7 +1068,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         new_keys = []
         for key in keys:
-            if 'file_path' not in key:
+            if 'file_path' not in key and 'thumbnail_path' not in key:
                 key = '.metadata.{}'.format(key)
             new_keys.append(key)
         ret.extend(new_keys)

@@ -1421,6 +1421,7 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "{}_mapping".format(meta_prefix))
 
+    file_keys = None
     if item_map:
         file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
         if meta_prefix in file_props:
@@ -1451,8 +1452,8 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
                 attr_mlt.get('filename'):
             if not attr_mlt.get(file_keys[1]):
                 attr_mlt[file_keys[1]] = {}
-            if not (attr[file_keys[1]].get(file_keys[2])
-                    and check_url_is_manual(attr.get('version_id'))):
+            if not (attr_mlt[file_keys[1]].get(file_keys[2])
+                    and check_url_is_manual(attr_mlt.get('version_id'))):
                 attr_mlt[file_keys[1]][file_keys[2]] = \
                     create_files_url(
                         request.url_root,
