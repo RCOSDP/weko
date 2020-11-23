@@ -145,6 +145,7 @@ WEKO_DEPOSIT_SYS_CREATOR_KEY = {
     'affiliation_name': 'affiliationName',
     'affiliation_name_identifier': 'affiliationNameIdentifier',
     'affiliation_name_identifier_URI': 'affiliationNameIdentifierURI',
+    'creatorAffiliations': 'creatorAffiliations',
 }
 """Key of Bibliographic information."""
 
@@ -167,3 +168,9 @@ WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = [
     'bibliographicIssueDates'
 ]
 """Bibliographic information sys key."""
+
+WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE = True
+"""Allow reindex data when catching parsing error from ElasticSearch."""
+
+WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD = 'ElasticsearchParseException'
+"""Parsing error's Keyword in Elasticsearch exception info."""

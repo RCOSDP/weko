@@ -40,8 +40,8 @@ from invenio_assets import NpmBundle
 css_bootstrap = NpmBundle(
     'css/weko_theme/styles.scss',
     depends=(
+        '../data/_variables.scss',
         'scss/invenio_theme/*.scss',
-        'css/weko_theme/_variables.scss',
         'scss/invenio_communities/variables.scss',
         'scss/invenio_communities/communities/*.scss',
     ),

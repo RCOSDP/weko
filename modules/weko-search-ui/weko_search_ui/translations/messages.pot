@@ -304,6 +304,13 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Keep Version"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Upgrade Version"
+msgstr ""
 
 #: weko_search_ui/config.py:
 msgid "Access"
@@ -387,4 +394,97 @@ msgstr ""
 
 #: weko_search_ui/config.py:
 msgid "Historiographical Institute The University of Tokyo"
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Please specify {}."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "{} is required item."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "{} cannot be set."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Please set "public" or "private" for {}."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} is different from existing {}."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} is invalid."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} does not exist in system."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Both of IndexID and POS_INDEX are not being set."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} does not match with existing index."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified URI and system URI do not match."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Specified item type does not exist."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid "Please specify item ID by half-width number."
+msgstr ""
+
+#: weko_search_ui/utils.py:
+msgid " Item ID does not match the specified URI information."
+msgstr ""
+
+#: weko-search-ui\weko_search_ui\utils.py:1307
+msgid "PID does not meet the conditions."
+msgstr "PID does not meet the conditions."
+
+msgid "Change Identifier Mode."
+msgstr ""
+
+msgid "Register with [Change Identifier Mode]."
+msgstr ""
+
+msgid "I agree to the terms of use."
+msgstr ""
+
+msgid "Change DOI Mode"
+msgstr ""
+
+msgid "The specified {} exceeds the maximum length."
+msgstr ""
+
+msgid "Item Type Template"
+msgstr ""
+
+msgid "Failed to download."
+msgstr ""
+
+msgid "Failed to get item type list."
+msgstr ""
+
+msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
+msgstr ""
+
+msgid "Specified Prefix of {} is incorrect."
+msgstr ""
+
+msgid "Suffix of {} can only be used with half-width alphanumeric characters and half-width symbols "_-.; () /"."
 msgstr ""

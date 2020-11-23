@@ -71,6 +71,7 @@ setup(
     entry_points={
         'flask.commands': [
             'widget_type = weko_gridlayout.cli:widget_type',
+            'widget = weko_gridlayout.cli:widget',
         ],
         'invenio_base.apps': [
             'weko_gridlayout = weko_gridlayout:WekoGridLayout',

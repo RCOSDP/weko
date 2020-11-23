@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import copy
 import hashlib
 import json
 import os
@@ -43,8 +44,10 @@ from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
+from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
+from weko_records_ui.utils import check_items_settings
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
@@ -73,8 +76,11 @@ class StyleSettingView(BaseView):
         footer_default_bg = 'rgba(13,95,137,0.8)'
         navbar_default_bg = '#f8f8f8'
         panel_default_border = '#ddd'
-        scss_file = os.path.join(current_app.static_folder,
-                                 'css/weko_theme/_variables.scss')
+        scss_file = os.path.join(
+            current_app.instance_path,
+            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            '_variables.scss')
+
         try:
             with open(scss_file, 'r', encoding='utf-8') as fp:
                 for line in fp.readlines():
@@ -126,6 +132,7 @@ class StyleSettingView(BaseView):
         """Upload header/footer settings from wysiwyg editor."""
         try:
             from html import unescape
+
             from weko_theme.views import blueprint as theme_bp
             write_path = folder_path = os.path.join(
                 theme_bp.root_path, theme_bp.template_folder)
@@ -290,9 +297,14 @@ class ReportView(BaseView):
                 attachments = [Attachment(zip_name,
                                           'application/x-zip-compressed',
                                           zip_stream.getvalue())]
-                send_mail(subject, recepients, html=html_body,
-                          attachments=attachments)
-                flash(_('Successfully sent the reports to the recepients.'))
+                ret = send_mail(subject, recepients,
+                                html=html_body,
+                                attachments=attachments)
+                if ret:
+                    flash(ret, 'error')
+                else:
+                    flash(
+                        _('Successfully sent the reports to the recepients.'))
             else:
                 resp = make_response()
                 resp.data = zip_stream.getvalue()
@@ -344,7 +356,7 @@ class ReportView(BaseView):
     @expose('/get_email_address', methods=['POST'])
     def get_email_address(self):
         """Save Email Address."""
-        input_email = request.form.getlist('input_email')
+        input_email = request.form.getlist('inputEmail')
         StatisticsEmail.delete_all_row()
         alert_msg = 'Successfully saved email addresses.'
         category = 'info'
@@ -552,14 +564,55 @@ class SearchSettingsView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Site license setting page."""
-        result = json.dumps(get_search_setting())
+        search_setting = get_search_setting()
+        # get search author setting
+        check_items_settings()
+        search_author_flg = 'name'
+        if 'ITEM_SEARCH_FLG' in current_app.config:
+            search_author_flg = current_app.config['ITEM_SEARCH_FLG']
+        search_setting['search_author_flg'] = search_author_flg
+        # get index tree style setting
+        style = IndexStyle.get(
+            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+        width = style.width if style else '3'
+        height = style.height if style else None
+        search_setting['index_tree_style'] = {
+            'width_options': current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
+            'width': width,
+            'height': height
+        }
+        # dump json string
+        result = json.dumps(copy.deepcopy(search_setting))
         if 'POST' in request.method:
             jfy = {}
             try:
-                # update search setting
+                # get requset data
                 db_data = request.get_json()
-                res = SearchManagement.get()
 
+                # update search author setting to db
+                if 'search_author_flg' in db_data:
+                    search_author_flg = db_data.pop('search_author_flg')
+                    settings = AdminSettings.get('items_display_settings')
+                    settings.items_search_author = search_author_flg
+                    AdminSettings.update('items_display_settings',
+                                         settings.__dict__)
+                # update index tree style setting
+                if 'index_tree_style' in db_data:
+                    index_tree_style = db_data.pop('index_tree_style')
+                    width = index_tree_style.get('width', '3')
+                    height = index_tree_style.get('height', None)
+                    if style:
+                        IndexStyle.update(
+                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            width=width,
+                            height=height)
+                    else:
+                        IndexStyle.create(
+                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            width=width,
+                            height=height)
+                # update other search settings
+                res = SearchManagement.get()
                 if res:
                     id = res.id
                     SearchManagement.update(id, db_data)
@@ -567,7 +620,8 @@ class SearchSettingsView(BaseView):
                     SearchManagement.create(db_data)
                 jfy['status'] = 201
                 jfy['message'] = 'Search setting was successfully updated.'
-            except BaseException:
+            except BaseException as e:
+                current_app.logger.error('Could not save search settings', e)
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update search setting.'
             return make_response(jsonify(jfy), jfy['status'])
@@ -575,7 +629,8 @@ class SearchSettingsView(BaseView):
         try:
             return self.render(
                 current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
-                setting_data=result
+                widths=current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
+                setting_data=result,
             )
         except BaseException as e:
             current_app.logger.error('Could not save search settings', e)
@@ -733,7 +788,9 @@ class ItemExportSettingsView(BaseView):
         """File preview settings."""
         if request.method == 'POST':
             item_setting = request.form.get('item_export_radio', 'True')
-            contents_setting = request.form.get('export_contents_radio', 'True')
+            contents_setting = request.form.get(
+                'export_contents_radio',
+                'True')
             new_settings = {
                 'allow_item_exporting': str_to_bool(item_setting),
                 'enable_contents_exporting': str_to_bool(contents_setting)
@@ -909,7 +966,8 @@ class IdentifierSettingView(ModelView):
             if (form.repository.data.id in id_list) and \
                 (form.action == 'create'
                  or form.repo_selected.data != form.repository.data.id):
-                flash(_('Specified repository is already registered.'), 'error')
+                flash(_('Specified repository is already registered.'),
+                      'error')
                 return False
         return super(IdentifierSettingView, self).validate_form(form)
 

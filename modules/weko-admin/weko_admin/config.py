@@ -108,8 +108,7 @@ WEKO_ADMIN_SITE_INFO = 'weko_admin/admin/site_info.html'
 
 WEKO_ADMIN_DEFAULT_CRAWLER_LISTS = [
     'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_ip_blacklist.txt',
-    'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_useragent.txt'
-]
+    'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_useragent.txt']
 """Default crawler files for restricting IP addresses and user agents."""
 
 WEKO_ADMIN_REPORT_FREQUENCIES = ['daily', 'weekly', 'monthly']
@@ -308,6 +307,11 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
             'status': False
         }
     },
+    'init_disp_setting': {
+        'init_disp_screen_setting': '0',
+        'init_disp_index_disp_method': '0',
+        'init_disp_index': ''
+    },
     'detail_condition': [
         {'id': 'title',
          'contents': 'Title',
@@ -334,17 +338,17 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mappingFlg': False,
          'mappingName': ''},
         {'id': 'subject', 'contents': 'Subject', 'useable_status': True, 'mapping': ['BSH', 'DDC', 'LCC', 'LCSH', 'MeSH', 'NDC', 'NDLC', 'NDLSH', 'UDC', 'Other', 'Scival'],
-         'sche_or_attr':[{'id': '1', 'contents': 'BSH', 'checkStus': False},
-                         {'id': '2', 'contents': 'DDC', 'checkStus': False},
-                         {'id': '3', 'contents': 'LCC', 'checkStus': False},
-                         {'id': '4', 'contents': 'LCSH', 'checkStus': False},
-                         {'id': '5', 'contents': 'MeSH', 'checkStus': False},
-                         {'id': '6', 'contents': 'NDC', 'checkStus': False},
-                         {'id': '7', 'contents': 'NDLC', 'checkStus': False},
-                         {'id': '8', 'contents': 'NDLSH', 'checkStus': False},
-                         {'id': '9', 'contents': 'UDC', 'checkStus': False},
-                         {'id': '10', 'contents': 'Other', 'checkStus': False},
-                         {'id': '11', 'contents': 'Scival', 'checkStus': False}],
+         'sche_or_attr':[{'id': '0', 'contents': 'BSH', 'checkStus': False},
+                         {'id': '1', 'contents': 'DDC', 'checkStus': False},
+                         {'id': '2', 'contents': 'LCC', 'checkStus': False},
+                         {'id': '3', 'contents': 'LCSH', 'checkStus': False},
+                         {'id': '4', 'contents': 'MeSH', 'checkStus': False},
+                         {'id': '5', 'contents': 'NDC', 'checkStus': False},
+                         {'id': '6', 'contents': 'NDLC', 'checkStus': False},
+                         {'id': '7', 'contents': 'NDLSH', 'checkStus': False},
+                         {'id': '8', 'contents': 'UDC', 'checkStus': False},
+                         {'id': '9', 'contents': 'Other', 'checkStus': False},
+                         {'id': '10', 'contents': 'Scival', 'checkStus': False}],
          'default_display': True, 'inputType': 'text', 'inputVal': '', 'mappingFlg': True, 'mappingName': 'sbjscheme'},
 
         {'id': 'spatial',
@@ -405,7 +409,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
                          {'id': 'Valid', 'contents': 'Valid', 'checkStus': False}],
          'default_display': True, 'inputType': 'dateRange', 'inputVal_from': '', 'inputVal_to': '', 'mappingFlg': True, 'mappingName': 'fd_attr'},
 
-        {'id': 'format',
+        {'id': 'mimetype',
          'contents': 'Format',
          'useable_status': True,
          'mapping': ['format'],
@@ -448,28 +452,56 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
                                                                                         'Paper', 'Journal', 'Article', 'Article', 'Book', 'Presentation',
                                                                                         'Data', 'or', 'Dataset', 'Research', 'Paper', 'Technical', 'Report',
                                                                                         'Thesis', 'or', 'Dissertation', 'Learning', 'Material', 'Software'],
-         'check_val':[{'id': '1', 'contents': 'Conference Paper', 'checkStus': False},
-                      {'id': '2',
-                       'contents': 'Departmental Bulletin Paper',
-                       'checkStus': False},
-                      {'id': '3', 'contents': 'Journal Article', 'checkStus': False},
-                      {'id': '4', 'contents': 'Article', 'checkStus': False},
-                      {'id': '5', 'contents': 'Book', 'checkStus': False},
-                      {'id': '6', 'contents': 'Presentation', 'checkStus': False},
-                      {'id': '7', 'contents': 'Data or Dataset', 'checkStus': False},
-                      {'id': '8', 'contents': 'Research Paper', 'checkStus': False},
-                      {'id': '9',
-                       'contents': 'Technical Report',
-                       'checkStus': False},
-                      {'id': '10',
-                       'contents': 'Thesis or Dissertation',
-                       'checkStus': False},
-                      {'id': '11',
-                       'contents': 'Learning Material',
-                       'checkStus': False},
-                      {'id': '12', 'contents': 'Software', 'checkStus': False},
-                      ],
-         'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
+         'check_val':[
+             {'id': '0', 'contents': 'conference paper', 'checkStus': False},
+             {'id': '1', 'contents': 'data paper', 'checkStus': False},
+             {'id': '2', 'contents': 'departmental bulletin paper', 'checkStus': False},
+             {'id': '3', 'contents': 'editorial', 'checkStus': False},
+             {'id': '4', 'contents': 'journal article', 'checkStus': False},
+             {'id': '5', 'contents': 'newspaper', 'checkStus': False},
+             {'id': '6', 'contents': 'periodical', 'checkStus': False},
+             {'id': '7', 'contents': 'review article', 'checkStus': False},
+             {'id': '8', 'contents': 'software paper', 'checkStus': False},
+             {'id': '9', 'contents': 'article', 'checkStus': False},
+             {'id': '10', 'contents': 'book', 'checkStus': False},
+             {'id': '11', 'contents': 'book part', 'checkStus': False},
+             {'id': '12', 'contents': 'cartographic material', 'checkStus': False},
+             {'id': '13', 'contents': 'map', 'checkStus': False},
+             {'id': '14', 'contents': 'conference object', 'checkStus': False},
+             {'id': '15', 'contents': 'conference proceedings', 'checkStus': False},
+             {'id': '16', 'contents': 'conference poster', 'checkStus': False},
+             {'id': '17', 'contents': 'dataset', 'checkStus': False},
+             {'id': '18', 'contents': 'interview', 'checkStus': False},
+             {'id': '19', 'contents': 'image', 'checkStus': False},
+             {'id': '20', 'contents': 'still image', 'checkStus': False},
+             {'id': '21', 'contents': 'moving image', 'checkStus': False},
+             {'id': '22', 'contents': 'video', 'checkStus': False},
+             {'id': '23', 'contents': 'lecture', 'checkStus': False},
+             {'id': '24', 'contents': 'patent', 'checkStus': False},
+             {'id': '25', 'contents': 'internal report', 'checkStus': False},
+             {'id': '26', 'contents': 'report', 'checkStus': False},
+             {'id': '27', 'contents': 'research report', 'checkStus': False},
+             {'id': '28', 'contents': 'technical report', 'checkStus': False},
+             {'id': '29', 'contents': 'policy report', 'checkStus': False},
+             {'id': '30', 'contents': 'report part', 'checkStus': False},
+             {'id': '31', 'contents': 'working paper', 'checkStus': False},
+             {'id': '32', 'contents': 'data management plan', 'checkStus': False},
+             {'id': '33', 'contents': 'sound', 'checkStus': False},
+             {'id': '34', 'contents': 'thesis', 'checkStus': False},
+             {'id': '35', 'contents': 'bachelor thesis', 'checkStus': False},
+             {'id': '36', 'contents': 'master thesis', 'checkStus': False},
+             {'id': '37', 'contents': 'doctoral thesis', 'checkStus': False},
+             {'id': '38', 'contents': 'interactive resource', 'checkStus': False},
+             {'id': '39', 'contents': 'learning object', 'checkStus': False},
+             {'id': '40', 'contents': 'manuscript', 'checkStus': False},
+             {'id': '41', 'contents': 'musical notation', 'checkStus': False},
+             {'id': '42', 'contents': 'research proposal', 'checkStus': False},
+             {'id': '43', 'contents': 'software', 'checkStus': False},
+             {'id': '44', 'contents': 'technical documentation', 'checkStus': False},
+             {'id': '45', 'contents': 'workflow', 'checkStus': False},
+             {'id': '46', 'contents': 'other', 'checkStus': False}
+        ],
+            'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
 
         {'id': 'itemtype',
          'contents': 'Item Type',
@@ -576,20 +608,25 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'inputVal':'',
          'mappingFlg':False,
          'mappingName':''},
-        {'id': 'rights', 'contents': 'Rights', 'useable_status': True, 'mapping': ['CC', 'BY', 'CC', 'BY-SA', 'CC', 'BY-ND', 'CC', 'BY-NC', 'CC', 'BY-NC-SA', 'ANY'],
-         'radio_val':[
-            {'id': 'CC BY', 'contents': 'CC BY'},
-            {'id': 'CC BY-SA',
-             'contents': 'CC BY-SA'},
-            {'id': 'CC BY-ND',
-             'contents': 'CC BY-ND'},
-            {'id': 'CC BY-NC',
-             'contents': 'CC BY-NC'},
-            {
-                'id': 'CC BY-NC-SA', 'contents': 'CC BY-NC-SA'},
-            {'id': 'ANY',
-             'contents': 'ANY'},
-        ], 'default_display': True, 'inputType': 'radio_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''}
+        {'id': 'rights', 'contents': 'Rights', 'useable_status': True,
+         'mapping': ['CC', 'BY', 'CC', 'BY-SA', 'CC', 'BY-ND', 'CC', 'BY-NC', 'CC',
+                     'BY-NC-SA', 'ANY', 'CC0', 'licensefree', 'CC', 'BY-NC-ND'],
+         'check_val':[
+             {'id': 'CC BY 3.0', 'contents': 'CC BY 3.0'},
+             {'id': 'CC BY-SA 3.0', 'contents': 'CC BY-SA 3.0'},
+             {'id': 'CC BY-ND 3.0', 'contents': 'CC BY-ND 3.0'},
+             {'id': 'CC BY-NC 3.0', 'contents': 'CC BY-NC 3.0'},
+             {'id': 'CC BY-NC-SA 3.0', 'contents': 'CC BY-NC-SA 3.0'},
+             {'id': 'CC BY-NC-ND 3.0', 'contents': 'CC BY-NC-ND 3.0'},
+             {'id': 'CC BY 4.0', 'contents': 'CC BY 4.0'},
+             {'id': 'CC BY-SA 4.0', 'contents': 'CC BY-SA 4.0'},
+             {'id': 'CC BY-ND 4.0', 'contents': 'CC BY-ND 4.0'},
+             {'id': 'CC BY-NC 4.0', 'contents': 'CC BY-NC 4.0'},
+             {'id': 'CC BY-NC-SA 4.0', 'contents': 'CC BY-NC-SA 4.0'},
+             {'id': 'CC0', 'contents': 'CC0'},
+             {'id': 'licensefree', 'contents': 'licensefree'},
+             {'id': 'CC BY-NC-ND 4.0', 'contents': 'CC BY-NC-ND 4.0'},
+         ], 'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''}
     ]
 }
 
@@ -606,47 +643,50 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'widgetitem',
     'widgetdesign',
     'community',
+    'items/custom_sort',
     'indexedit',
     'indexjournal',
+    'report',
+    'itemexportsettings'
 ]
 """Classes Community Administrator can access."""
 
 WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
-    'bucket',
+    'authors',
     'flowsetting',
-    'fileinstance',
     'identify',
     'items/bulk/delete',
-    'items/search',
-    'items/custom_sort',
     'items/bulk/update',
-    'location',
     'itemtypes',
     'language',
     'loganalysissetting',
-    'mail',
     'others',
     'pdfcoverpage',
-    'shibboleth',
+    'rankingsettings',
+    'site-info',
     'site-license',
     'search-management',
     'sitemap',
     'indexlink',
-    'indextree',
     'itemsetting',
     'statssettings',
     'stylesetting',
-    'webapiaccount',
-    'report',
     'user',
+    'userprofile',
     'workflowsetting',
     'searchsettings',
     'sitelicensesettings',
     'schemasettings',
     'itemtypesregister',
-    'itemtypesproperties',
     'itemtypesmapping',
-    'itemexportsettings',
+    'itemtypes/mapping',
+    'items/import',
+    'feedbackmail',
+    'sitelicensesendmail',
+    'sessionactivity',
+    'rankingsettings',
+    'longanalysissetting',
+    'site_info',
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -685,3 +725,38 @@ WEKO_HEADER_NO_CACHE = {
     "Expires": "0",
 }
 """ Header no cache property """
+
+WEKO_ADMIN_SEARCH_OPTIONS = {
+    "init_disp_setting_options": {
+        "init_disp_screen_setting": [
+            {'id': '0', 'contents': {
+                'en': 'Index search result',
+                'ja': 'インデックス検索結果を表示する'
+            }},
+            {'id': '1', 'contents': {
+                'en': 'Ranking',
+                'ja': 'ランキングを表示する'
+            }},
+            {'id': '2', 'contents': {
+                'en': 'Communities',
+                'ja': 'コミュニティ一覧を表示する'
+            }},
+        ],
+        "init_disp_index_disp_method": [
+            {'id': '0', 'contents': {
+                'en': 'Index of the newest item registered',
+                'ja': '最も新しい公開アイテムの属するインデックス'
+            }},
+            {'id': '1', 'contents': {
+                'en': 'Specific index',
+                'ja': 'インデックス指定'
+            }},
+        ]
+    }
+}
+"""Admin Search Options """
+
+WEKO_INDEX_TREE_STYLE_OPTIONS = {
+    'id': 'weko',
+    'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+}

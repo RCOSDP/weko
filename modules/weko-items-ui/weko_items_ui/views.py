@@ -34,7 +34,8 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidrelations.models import PIDRelation
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryItemRegReportHelper, \
@@ -55,15 +56,16 @@ from werkzeug.utils import import_string
 from .permissions import item_permission
 from .utils import _get_max_export_items, export_items, get_current_user, \
     get_data_authors_prefix_settings, get_list_email, get_list_username, \
-    get_new_items_by_date, get_latest_items,get_user_info_by_email, get_user_info_by_username, \
+    get_ranking, get_latest_items, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, get_workflow_by_item_type_id, \
-    is_schema_include_key, parse_ranking_results, \
-    remove_excluded_items_in_json_schema, set_multi_language_name, \
-    to_files_js, translate_validation_message, update_index_tree_for_record, \
+    hide_form_items, is_schema_include_key, parse_ranking_results, \
+    remove_excluded_items_in_json_schema, sanitize_input_data, save_title, \
+    set_multi_language_name, to_files_js, translate_schema_form, \
+    translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
-    update_schema_remove_hidden_item, update_sub_items_by_user_role, \
-    validate_form_input_data, validate_save_title_and_share_user_id, \
-    validate_user, validate_user_mail_and_index
+    update_sub_items_by_user_role, validate_form_input_data, \
+    validate_save_title_and_share_user_id, validate_user, \
+    validate_user_mail_and_index
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -94,6 +96,7 @@ def index(item_type_id=0):
     """
     try:
         from weko_theme.utils import get_design_layout
+
         # Get the design for widget rendering
         page, render_widgets = get_design_layout(
             current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -197,6 +200,8 @@ def iframe_save_model():
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
+            sanitize_input_data(data)
+            save_title(activity_id, data)
             sessionstore = RedisStore(redis.StrictRedis.from_url(
                 'redis://{host}:{port}/1'.format(
                     host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
@@ -308,28 +313,8 @@ def get_schema_form(item_type_id=0, activity_id=''):
         # Check role for input(5 item type)
         update_sub_items_by_user_role(item_type_id, schema_form)
 
-        # hidden option
-        hidden_subitem = ['subitem_thumbnail',
-                          'subitem_systemidt_identifier',
-                          'subitem_systemfile_datetime',
-                          'subitem_systemfile_filename',
-                          'subitem_system_id_rg_doi',
-                          'subitem_system_date_type',
-                          'subitem_system_date',
-                          'subitem_system_identifier_type',
-                          'subitem_system_identifier',
-                          'subitem_system_text'
-                          ]
-
-        for i in hidden_subitem:
-            hidden_items = [
-                schema_form.index(form) for form in schema_form
-                if form.get('items')
-                and form['items'][0]['key'].split('.')[1] in i]
-            if hidden_items and i in json.dumps(schema_form):
-                schema_form = update_schema_remove_hidden_item(schema_form,
-                                                               result.render,
-                                                               hidden_items)
+        # Hide form items
+        schema_form = hide_form_items(result, schema_form)
 
         for elem in schema_form:
             set_multi_language_name(elem, cur_lang)
@@ -340,33 +325,7 @@ def get_schema_form(item_type_id=0, activity_id=''):
 
         if 'default' != cur_lang:
             for elem in schema_form:
-                if 'title_i18n' in elem and cur_lang in elem['title_i18n']\
-                        and len(elem['title_i18n'][cur_lang]) > 0:
-                    elem['title'] = elem['title_i18n'][cur_lang]
-                if 'items' in elem:
-                    for sub_elem in elem['items']:
-                        if 'title_i18n' in sub_elem and cur_lang in \
-                            sub_elem['title_i18n'] and len(
-                                sub_elem['title_i18n'][cur_lang]) > 0:
-                            sub_elem['title'] = sub_elem[
-                                'title_i18n'][cur_lang]
-                        if sub_elem.get('title') == 'Group/Price':
-                            for sub_item in sub_elem['items']:
-                                if sub_item['title'] == "価格" and \
-                                    'validationMessage_i18n' in sub_item and \
-                                    cur_lang in sub_item[
-                                    'validationMessage_i18n'] and\
-                                    len(sub_item['validationMessage_i18n']
-                                        [cur_lang]) > 0:
-                                    sub_item['validationMessage'] = sub_item[
-                                        'validationMessage_i18n'][cur_lang]
-                        if 'items' in sub_elem:
-                            for sub_item in sub_elem['items']:
-                                if 'title_i18n' in sub_item and cur_lang in \
-                                        sub_item['title_i18n'] and len(
-                                        sub_item['title_i18n'][cur_lang]) > 0:
-                                    sub_item['title'] = sub_item['title_i18n'][
-                                        cur_lang]
+                translate_schema_form(elem, cur_lang)
 
         if activity_id:
             updated_schema_form = update_schema_form_by_activity_id(
@@ -395,6 +354,7 @@ def items_index(pid_value='0'):
             else 'publish'
 
         from weko_theme.utils import get_design_layout
+
         # Get the design for widget rendering
         page, render_widgets = get_design_layout(
             current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -881,8 +841,7 @@ def prepare_edit_item():
                         code=err_code,
                         msg=_("This Item is being edited.")
                     )
-                from invenio_pidstore.models import PIDStatus
-                from invenio_pidrelations.models import PIDRelation
+
                 pv = PIDVersioning(child=recid)
                 latest_pid = PIDVersioning(parent=pv.parent).get_children(
                     pid_status=PIDStatus.REGISTERED
@@ -950,6 +909,7 @@ def ranking():
     start_date = end_date - timedelta(days=int(settings.statistical_period))
 
     from weko_theme.utils import get_design_layout
+
     # Get the design for widget rendering -- Always default
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -1012,6 +972,14 @@ def ranking():
             parse_ranking_results(result, settings.display_rank,
                                   list_name='all',
                                   title_key='search_key', count_key='count')
+        x = rankings['most_searched_keywords']
+        import urllib.parse
+        for y in x:
+            if y["title"].split():
+                y["url"] = '/search?search_type=0&q={}'.format(
+                    urllib.parse.quote(y["title"]))
+            else:
+                y["url"] = '/search?search_type=0&q={z}'.format(z=y["title"])
 
     # new_items
     #if settings.rankings['new_items']:
@@ -1035,7 +1003,6 @@ def ranking():
             parse_ranking_results(result, settings.display_rank,
                                   list_name='all', title_key='record_name',
                                   pid_key='pid_value', date_key='create_date')
-
 
     return render_template(
         current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
@@ -1115,6 +1082,7 @@ def export():
         community_id = comm.id
 
     from weko_theme.utils import get_design_layout
+
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -1253,32 +1221,12 @@ def get_authors_prefix_settings():
         return abort(403)
 
 
-@blueprint.route('/newversion/<string:pid_value>',
-                 methods=['PUT'])
-@login_required
-@item_permission.require(http_exception=403)
-def newversion(pid_value='0'):
-    """Create new version and update it's id to current activity."""
-    draft_pid = PersistentIdentifier.get('recid', pid_value)
-    if ".0" in pid_value:
-        pid_value = pid_value.split(".")[0]
-    pid = PersistentIdentifier.get('recid', pid_value)
-    deposit = WekoDeposit.get_record(pid.object_uuid)
-    try:
-        upgrade_record = deposit.newversion(pid)
-
-        if not upgrade_record:
-            return jsonify(code=-1,
-                           msg=_('An error has occurred.'))
-
-        with db.session.begin_nested():
-            activity = WorkActivity()
-            wf_activity = activity.get_workflow_activity_by_item_id(
-                draft_pid.object_uuid)
-            wf_activity.item_id = upgrade_record.model.id
-            db.session.merge(wf_activity)
-        db.session.commit()
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-        db.session.rollback()
-    return jsonify(success=True)
+@blueprint.route('/sessionvalidate', methods=['POST'])
+def session_validate():
+    """Validate the session."""
+    authorized = True if current_user and current_user.get_id() else False
+    result = {
+        "unauthorized": authorized,
+        "msg": _('Your session has timed out. Please login again.')
+    }
+    return jsonify(result)

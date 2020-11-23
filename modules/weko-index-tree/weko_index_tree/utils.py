@@ -24,7 +24,7 @@ from functools import wraps
 from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
-from flask import current_app, session
+from flask import Markup, current_app, session
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
@@ -70,7 +70,7 @@ def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
     return caching
 
 
-def reset_tree(tree, path=None, more_ids=None):
+def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
     """
     Reset the state of checked.
 
@@ -98,6 +98,7 @@ def reset_tree(tree, path=None, more_ids=None):
         if not roles[0]:
             # for browsing role check
             reduce_index_by_role(tree, roles, groups)
+        if not ignore_more:
             reduce_index_by_more(tree=tree, more_ids=more_ids)
 
 
@@ -129,6 +130,9 @@ def get_tree_json(index_list, root_id):
     def generate_index_dict(index_element, is_root):
         """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
         index_dict = index_element._asdict()
+        index_name = str(index_element.name).replace("&EMPTY&", "")
+        index_name = Markup.escape(index_name)
+        index_name = index_name.replace("\n", r"<br\>")
 
         if not is_root:
             pid = str(index_element.pid)
@@ -142,7 +146,8 @@ def get_tree_json(index_list, root_id):
         is_expand_on_init = str(index_element.cid) in list_index_expand
         index_dict.update({
             'id': str(index_element.cid),
-            'value': index_element.name,
+            'value': index_name,
+            'name': index_name,
             'position': index_element.position,
             'emitLoadNextLevel': False,
             'settings': {
@@ -499,3 +504,82 @@ def get_index_id(activity_id):
     else:
         index_tree_id = None
     return index_tree_id
+
+
+def sanitize(s):
+    """Sanitize input string."""
+    s = s.strip()
+    esc_str = ""
+    for i in s:
+        if ord(i) in [9, 10, 13] or (31 < ord(i) and ord(i) != 127):
+            esc_str += i
+    return esc_str
+
+
+def count_items(target_check_key, indexes_aggr, all_indexes):
+    """
+    Count public and private items of a target index based on index state.
+
+    :param target_check_key: id of target index
+    :param indexes_aggr: indexes aggregation returned from ES
+    :param all_indexes:
+    :return:
+    """
+    def get_child_agg_by_key():
+        """Get all child indexes of target index."""
+        lst_result = []
+        for index_aggr in indexes_aggr:
+            if index_aggr['key'].startswith(target_check_key + '/') \
+                    or index_aggr['key'] == target_check_key:
+                lst_result.append(index_aggr)
+        return lst_result
+
+    def set_private_index_count(target_index):
+        """Set private count of index based on index and parent index state.
+
+        :param target_index: in of target index
+        :return:
+        """
+        temp = target_index.copy()
+        list_parent_key = temp['key'].split('/')
+        is_parent_private = False
+        while list_parent_key:
+            nearest_parent_key = list_parent_key.pop()
+            if not lst_indexes_state[nearest_parent_key]:
+                is_parent_private = True
+                break
+        if is_parent_private:
+            target_index['no_available'] = target_index['doc_count']
+
+    def get_indexes_state():
+        """Get indexes state."""
+        lst_result = {}
+        for index in all_indexes:
+            lst_result[str(index.id)] = index.public_state
+        return lst_result
+
+    pub_items_count = 0
+    pri_items_count = 0
+    lst_child_agg = get_child_agg_by_key()
+    lst_indexes_state = get_indexes_state()
+    # Modify counts of index based on index and parent indexes state
+    for agg in lst_child_agg:
+        set_private_index_count(agg)
+    for agg in lst_child_agg:
+        pri_items_count += agg['no_available']
+        pub_items_count += agg['doc_count'] - agg['no_available']
+    return pri_items_count, pub_items_count
+
+
+def recorrect_private_items_count(agp):
+    """Re-correct private item count in case of unpublished items.
+
+    :param agp: aggregation returned from ES
+    :return:
+    """
+    for agg in agp:
+        date_range = agg["date_range"]
+        bkt = date_range['available']['buckets']
+        for bk in bkt:
+            if bk.get("from"):
+                agg["no_available"]["doc_count"] += bk.get("doc_count")

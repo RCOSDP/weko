@@ -97,6 +97,8 @@ def get_records(**kwargs):
         if time_range:
             search = search.filter('range', **{'_updated': time_range})
 
+        search = search.query('match', **{'relation_version_is_last': "true"})
+
         response = search.execute().to_dict()
     else:
         response = current_search_client.scroll(

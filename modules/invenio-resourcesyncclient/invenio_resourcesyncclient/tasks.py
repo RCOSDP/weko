@@ -92,7 +92,7 @@ def run_sync_import(id):
                 try:
                     for i in records_id:
                         record = get_record(
-                            url='{}://{}/oai2d'.format(
+                            url='{}://{}/oai'.format(
                                 hostname.scheme,
                                 hostname.netloc
                             ),

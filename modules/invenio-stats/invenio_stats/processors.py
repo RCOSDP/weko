@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import hashlib
+from itertools import tee
 from time import mktime
 
 import arrow
@@ -22,6 +23,7 @@ from invenio_search import current_search_client
 from pytz import utc
 from weko_admin.api import is_restricted_user
 
+from .models import StatsEvents
 from .utils import get_anonymization_salt, get_geoip, obj_or_import_string
 
 
@@ -208,13 +210,17 @@ class EventsIndexer(object):
                         timestamp // self.double_click_window
                         * self.double_click_window
                     )
-                yield dict(
+
+                rtn_data = dict(
                     _id=hash_id(ts.isoformat(), msg),
                     _op_type='index',
                     _index='{0}-{1}'.format(self.index, suffix),
                     _type=self.doctype,
                     _source=msg,
                 )
+                # Save stats event into Database.
+                StatsEvents.save(rtn_data)
+                yield rtn_data
             except Exception:
                 current_app.logger.exception(u'Error while processing event')
 

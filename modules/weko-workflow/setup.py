@@ -110,6 +110,8 @@ setup(
             'weko_workflow.bundles:js_identifier_grant',
             'workflow_quit_confirmation_js = '
             'weko_workflow.bundles:js_quit_confirmation',
+            'workflow_lock_activity_js = '
+            'weko_workflow.bundles:js_lock_activity',
         ],
         'invenio_i18n.translations': [
             'messages = weko_workflow',

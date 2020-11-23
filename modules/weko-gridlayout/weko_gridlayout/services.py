@@ -75,17 +75,10 @@ class WidgetItemServices:
             result['message'] = 'No data saved!'
             return result
         widget_data = data.get('data')
-        repository = widget_data.get('repository')
-        type_id = widget_data.get('widget_type')
-        multi_lang_data = widget_data.get('multiLangSetting')
         current_id = None
         if data.get('data_id'):
             current_id = data.get('data_id')
-        for k, v in multi_lang_data.items():
-            if cls.is_exist(repository, type_id, k, v.get('label'),
-                            current_id):
-                result['message'] = 'Save fail. Data input to create is exist!'
-                return result
+
         if data.get('flag_edit'):
             old_repo = cls.get_repo_by_id(current_id)
             if (str(old_repo) != str(widget_data.get('repository'))
@@ -283,38 +276,6 @@ class WidgetItemServices:
         """
         WidgetItem.delete_by_id(widget_id, session)
         WidgetMultiLangData.delete_by_widget_id(widget_id, session)
-
-    @classmethod
-    def is_exist(cls, repository_id, type_id, lang_code, label, current_id):
-        """Check widget is exist or not.
-
-        Arguments:
-            repository_id {string} -- The repository id
-            type_id {string} -- The type id
-            lang_code {string} -- The language code
-            label {string} -- The label
-
-        Returns:
-            boolean -- True if widget already exist
-
-        """
-        list_id = WidgetItem.get_id_by_repository_and_type(
-            repository_id, type_id)
-        if not list_id:
-            return False
-
-        if current_id and current_id in list_id:
-            list_id.remove(current_id)
-        for widget_id in list_id:
-            multi_lang_data = WidgetMultiLangData.query.filter_by(
-                widget_id=widget_id, is_deleted=False).all()
-            if multi_lang_data:
-                for data in multi_lang_data:
-                    dict_data = convert_widget_multi_lang_to_dict(data)
-                    if (dict_data.get('label') == label
-                            and dict_data.get('lang_code') == lang_code):
-                        return True
-        return False
 
     @classmethod
     def get_widget_data_by_widget_id(cls, widget_id):

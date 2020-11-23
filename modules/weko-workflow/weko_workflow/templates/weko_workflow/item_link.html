@@ -141,13 +141,13 @@
                 ng-model="comment_data">{{temporary_comment if temporary_comment else ''}}</textarea>
             </div>
           </div>
-          <button type="button" class="btn btn-primary save-button" ng-click="btn_save()">
+          <button type="button" class="btn btn-primary save-button" id="item-link-save-btn" ng-click="btn_save()">
             <span class="glyphicon glyphicon-saved"></span>
             {{_('Save')}}
           </button>
 
       <button type="button" class="btn btn-primary done-button"
-          ng-click="btn_run()">{{_('Done')}}</button>
+       id="item-link-run-btn" ng-click="btn_run()">{{_('Done')}}</button>
       <button class="btn btn-danger done-button pull-right" id="btn_quit">
         <i class="fa fa-sign-out"></i>
         {{_('Quit')}}</button>

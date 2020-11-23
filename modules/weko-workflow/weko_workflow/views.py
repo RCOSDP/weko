@@ -23,7 +23,6 @@
 import json
 import os
 import sys
-import datetime
 from collections import OrderedDict
 from functools import wraps
 
@@ -35,6 +34,7 @@ from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
@@ -62,10 +62,12 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, filter_condition, get_actionid, \
-    get_activity_id_of_record_without_version, get_identifier_setting, \
-    handle_finish_workflow, is_hidden_pubdate, is_show_autofill_metadata, \
-    item_metadata_validation, register_hdl, saving_doi_pidstore
+from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
+    get_account_info, get_actionid, \
+    get_activity_id_of_record_without_version, get_cache_data, \
+    get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
+    is_show_autofill_metadata, item_metadata_validation, register_hdl, \
+    saving_doi_pidstore, update_cache_data
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -644,7 +646,8 @@ def next_action(activity_id='0', action_id=0):
             pid_without_ver = get_record_without_version(current_pid)
 
     if action_endpoint == 'item_login' and current_pid and ".0" not in \
-            current_pid.pid_value:
+        current_pid.pid_value and \
+            current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
         register_hdl(activity_id)
 
     if post_json.get('temporary_save') == 1 \
@@ -683,21 +686,34 @@ def next_action(activity_id='0', action_id=0):
             action_id=current_app.config.get(
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
         if action_feedbackmail:
-            FeedbackMailList.update(
-                item_id=item_id,
-                feedback_maillist=action_feedbackmail.feedback_maillist
-            )
+            item_ids = [item_id]
             if not recid and pid_without_ver:
-                FeedbackMailList.update(
-                    item_id=pid_without_ver.object_uuid,
+                if ".0" in current_pid.pid_value:
+                    pv = PIDVersioning(child=pid_without_ver)
+                    last_ver = PIDVersioning(parent=pv.parent).get_children(
+                        pid_status=PIDStatus.REGISTERED
+                    ).filter(PIDRelation.relation_type == 2).order_by(
+                        PIDRelation.index.desc()).first()
+                    item_ids.append(last_ver.object_uuid)
+                else:
+                    draft_pid = PersistentIdentifier.get(
+                        'recid',
+                        '{}.0'.format(pid_without_ver.pid_value)
+                    )
+                    item_ids.append(draft_pid.object_uuid)
+                item_ids.append(pid_without_ver.object_uuid)
+
+            if action_feedbackmail.feedback_maillist:
+                FeedbackMailList.update_by_list_item_id(
+                    item_ids=item_ids,
                     feedback_maillist=action_feedbackmail.feedback_maillist
                 )
+            else:
+                FeedbackMailList.delete_by_list_item_id(item_ids)
 
         if deposit:
             deposit.update_feedback_mail()
             deposit.update_jpcoar_identifier()
-        # TODO: Make private as default.
-        # UpdateItem.publish(pid, approval_record)
 
     if action_endpoint == 'item_link' and item_id:
         current_pid = PersistentIdentifier.get_by_object(
@@ -1184,3 +1200,63 @@ def get_feedback_maillist(activity_id='0'):
     except (ValueError, Exception):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
+
+
+@blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
+@login_required
+def lock_activity(activity_id=0):
+    """Lock activity."""
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+    timeout = current_app.permanent_session_lifetime.seconds
+    data = request.form.to_dict()
+    locked_value = data.get('locked_value')
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    err = ''
+
+    if cur_locked_val:
+        if locked_value != cur_locked_val:
+            locked_value = cur_locked_val
+            err = _('Locked')
+        else:
+            update_cache_data(
+                cache_key,
+                locked_value,
+                timeout
+            )
+    else:
+        # create new lock cache
+        from datetime import datetime
+        locked_value = str(current_user.get_id()) + '-' + \
+            str(int(datetime.timestamp(datetime.now()) * 10 ** 3))
+        update_cache_data(
+            cache_key,
+            locked_value,
+            timeout
+        )
+
+    locked_by_email, locked_by_username = get_account_info(
+        locked_value.split('-')[0])
+    return jsonify(
+        code=200,
+        msg='' if err else _('Success'),
+        err=err or '',
+        locked_value=locked_value,
+        locked_by_email=locked_by_email,
+        locked_by_username=locked_by_username
+    )
+
+
+@blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])
+@login_required
+def unlock_activity(activity_id=0):
+    """Unlock activity."""
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+    data = json.loads(request.data.decode("utf-8"))
+    locked_value = str(data.get('locked_value'))
+    msg = None
+    # get lock activity from cache
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    if cur_locked_val and cur_locked_val == locked_value:
+        delete_cache_data(cache_key)
+        msg = _('Unlock success')
+    return jsonify(code=200, msg=msg or _('Not unlock'))

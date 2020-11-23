@@ -37,7 +37,7 @@ def get_remote_addr():
     if address is None:
         address = request.headers.get('X-Forwarded-For', request.remote_addr)
         if address is not None:
-            address = address.encode('utf-8').split(b',')[0].strip()
+            address = address.encode('utf-8').split(b',')[0].strip().decode()
 
     return address
 
@@ -57,11 +57,11 @@ def parse_attributes():
     attrs = {}
     error = False
 
-    for header, attr in current_app.config['SSO_ATTRIBUTE_MAP'].items():
+    for header, attr in current_app.config[
+            'WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP'].items():
         required, name = attr
         value = request.form.get(header, '') if request.method == 'POST' \
             else request.args.get(header, '')
-        current_app.logger.debug('Shib    {0}: {1}'.format(name, value))
         attrs[name] = value
 
         if required and not value:

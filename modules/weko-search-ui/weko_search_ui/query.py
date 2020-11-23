@@ -21,6 +21,7 @@
 """Query factories for REST API."""
 
 import json
+import sys
 from datetime import datetime
 from functools import partial
 
@@ -130,7 +131,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         """
         def _get_keywords_query(k, v):
             qry = None
-            kv = request.values.get(k)
+            kv = request.values.get('lang') if k == 'language' else request.values.get(k)
             if not kv:
                 return
 
@@ -147,7 +148,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     if isinstance(vlst, list):
                         shud = []
                         kvl = [x for x in kv.split(',')
-                               if x.isdecimal() and int(x) < len(vlst)]
+                               if x.isdecimal() and int(x) < len(vlst) + 1]
                         for j in map(
                                 partial(lambda x, y: x[int(y)], vlst), kvl):
                             name_dict = dict(operator="and")
@@ -165,7 +166,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             elif isinstance(v, tuple) and len(v) >= 2:
                 shud = []
                 for i in map(lambda x: v[1](x), kv.split(',')):
-                    shud.append(Q('term', **{v[0]: i}))
+                    shud.append(Q('match', **{v[0]: i}))
                 if shud:
                     qry = Q('bool', should=shud)
 
@@ -205,7 +206,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                                   **{name: name_dict})]
 
                                             qt = None
-                                            if '=*' not in alst[1]:
+                                            if '=*' in alst[1]:
                                                 name = alst[0] + \
                                                     "." + val_attr_lst[0]
                                                 qt = [
@@ -228,24 +229,20 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         ',') if x.isdecimal()
                                         and int(x) < len(vlst)]
                                     if attr_val:
-                                        shud = []
+                                        mst = []
                                         name = v[0] + ".value"
-                                        name_dict = dict(operator="and")
-                                        name_dict.update(dict(query=kv))
-                                        qm = Q('match', **{name: name_dict})
-
-                                        for j in map(
-                                                partial(lambda m, n:
-                                                        m[int(n)], vlst),
-                                                attr_val):
-                                            name = attr_key_hit[0]
-                                            qm = Q('term', **{name: j})
-                                            shud.append(qm)
-
+                                        qry = Q('multi_match', query=kv,
+                                                type='most_fields',
+                                                minimum_should_match='75%',
+                                                operator='and', fields=[name])
+                                        mst.append(qry)
+                                        name = attr_key_hit[0]
+                                        qm = Q('terms',
+                                               **{name: list(map(partial(lambda m, n: m[int(n)], vlst), attr_val))})
+                                        mst.append(qm)
                                         shuld.append(Q('nested', path=v[0],
                                                        query=Q(
-                                                           'bool', should=shud,
-                                                           must=[qm])))
+                                                           'bool', must=mst)))
 
             return Q('bool', should=shuld) if shuld else None
 
@@ -287,10 +284,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         attr_val = [
                                             x for x in attr_val_str.split(',')]
                                         shud = []
-                                        for j in map(
-                                                partial(lambda m, n:
-                                                        m[int(n)], vlst),
-                                                attr_val):
+                                        for j in attr_val:
                                             qt = Q(
                                                 'term', **{attr_key_hit[0]: j})
                                             shud.append(qt)
@@ -448,7 +442,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     if request.values.get('format'):
         qs = request.values.get('keyword')
     else:
-        qs = request.values.get('q')
+        qs = request.values.get('q', '').replace(':', '\\:')
 
     # full text search
     if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
@@ -537,8 +531,8 @@ def item_path_search_factory(self, search, index_id=None):
             "aggs": {
                 "path": {
                     "terms": {
-                        "field": "path.tree",
-                        "include": "@index|@index/[^/]+",
+                        "field": "path",
+                        "include": "@idxchild",
                         "size": "@count"
                     },
                     "aggs": {
@@ -603,12 +597,22 @@ def item_path_search_factory(self, search, index_id=None):
             # create search query
             if q:
                 try:
+                    child_idx = Indexes.get_child_list_by_pip(q)
+                    child_idx_str = ""
                     fp = Indexes.get_self_path(q)
-
+                    for i in range(len(child_idx)):
+                        if i != 0:
+                            child_idx_str += "|" + str(child_idx[i][2])
+                        else:
+                            child_idx_str += str(child_idx[i][2])
                     query_q = json.dumps(query_q).replace("@index", fp.path)
                     query_q = json.loads(query_q)
-                except BaseException:
-                    pass
+                    query_q = json.dumps(query_q).replace("@idxchild",
+                                                          child_idx_str)
+                    query_q = json.loads(query_q)
+                except BaseException as ex:
+                    import traceback
+                    traceback.print_exc(file=sys.stdout)
             count = str(Indexes.get_index_count())
 
             query_q = json.dumps(query_q).replace("@count", count)
@@ -651,7 +655,7 @@ def item_path_search_factory(self, search, index_id=None):
                 "aggs": {
                     "path": {
                         "terms": {
-                            "field": "path.tree",
+                            "field": "path",
                             "size": "@count"
                         },
                         "aggs": {
@@ -756,8 +760,10 @@ def item_path_search_factory(self, search, index_id=None):
 
     # default sort
     if not sortkwargs:
+        ind_id = request.values.get('q', '')
+        root_flag = True if ind_id and ind_id == '0' else False
         sort_key, sort = SearchSetting.get_default_sort(
-            current_app.config['WEKO_SEARCH_TYPE_INDEX'])
+            current_app.config['WEKO_SEARCH_TYPE_INDEX'], root_flag)
         sort_obj = dict()
         key_fileds = SearchSetting.get_sort_key(sort_key)
         if 'custom_sort' not in sort_key:
@@ -768,8 +774,8 @@ def item_path_search_factory(self, search, index_id=None):
                 sort_obj[key_fileds] = dict(order='asc', unmapped_type='long')
             search._sort.append(sort_obj)
         else:
+            ind_id = request.values.get('q', '')
             if sort == 'desc':
-                ind_id = request.values.get('q', '')
                 script_str, default_sort = SearchSetting.get_custom_sort(
                     ind_id, 'desc')
                 sort_key = '-' + sort_key

@@ -1,11 +1,16 @@
+const SPECIFIC_INDEX_VALUE = '1';
 (function (angular) {
   // Bootstrap it!
   angular.element(document).ready(function() {
     angular.module('searchManagement.controllers', []);
     function searchManagementCtrl($scope, $rootScope,$http,$location){
-      $scope.initData = function(data){
+      $scope.initData = function (data) {
         $scope.dataJson = angular.fromJson(data);
+        $scope.initDispSettingOpt = {}
+        $scope.treeData = [];
         $scope.rowspanNum = $scope.dataJson.detail_condition.length+1;
+        // Set Data
+        $scope.setData();
 //        $scope.setSearchKeyOptions();
       }
       // set selected data to allow
@@ -52,9 +57,15 @@
                     '&times;</button>' + message + '</div>');
         }
 
-        $scope.saveData=function(){
+      $scope.saveData=function(){
         var url = $location.path();
-        dbJson = $scope.dataJson;
+        let initialDisplayIndex = $("#init_disp_index").val();
+        if (initialDisplayIndex && this.isSpecificIndex()) {
+          $scope.dataJson['init_disp_setting']['init_disp_index'] = initialDisplayIndex;
+        } else {
+          $scope.dataJson['init_disp_setting']['init_disp_index'] = '';
+        }
+        let dbJson = $scope.dataJson;
 
         $http.post(url, dbJson).then(function successCallback(response) {
             // alert(response.data.message);
@@ -104,6 +115,121 @@
         })
       }
 
+      $scope.treeConfig = {
+        core: {
+          multiple: false,
+          animation: false,
+          error: function (error) {
+            console.error('treeCtrl: error from js tree - ' + angular.toJson(error));
+          },
+          check_callback: true,
+          themes: {
+            dots: false,
+            icons: false,
+          },
+          worker: false
+        },
+        checkbox: {
+          three_state: false,
+          whole_node: false
+        },
+        version: 1,
+        plugins: ['checkbox']
+      };
+
+      $scope.setDefaultDataForInitDisplaySetting = function () {
+        if (!$scope.dataJson.hasOwnProperty('init_disp_setting')) {
+          $scope.dataJson['init_disp_setting'] = {
+            'init_disp_screen_setting': '0',
+            'init_disp_index_disp_method': '0',
+            'init_disp_index': ''
+          }
+        }
+      }
+
+      $scope.setData = function () {
+        $scope.setDefaultDataForInitDisplaySetting();
+        $scope.specificIndexText();
+        $scope.getInitDisplayIndex();
+      }
+
+      $scope.specificIndexText = function () {
+        if (this.isSpecificIndex()) {
+          $scope.treeData.forEach(function (nodeData) {
+            if (nodeData.hasOwnProperty('state')) {
+                if (nodeData.state['selected']) {
+                  $("#init_disp_index_text").val(nodeData.text);
+                  $("#init_disp_index").val(nodeData.id);
+                  return null;
+                }
+            }
+          });
+        }
+      }
+
+      $scope.isSpecificIndex = function () {
+        const dispIndexDispMethod = $scope.dataJson['init_disp_setting']['init_disp_index_disp_method'];
+        return dispIndexDispMethod === SPECIFIC_INDEX_VALUE
+      }
+
+      $scope.specificIndex = function () {
+        this.setDefaultInitDisplayIndex();
+      }
+
+      $scope.setDefaultInitDisplayIndex = function () {
+        if (this.isSpecificIndex()) {
+          // Reset tree data to default
+          if (this.treeInstance && this.treeInstance.jstree) {
+            let nodeChecked = this.treeInstance.jstree(true).get_checked([true]);
+            if (nodeChecked.length === 0 && this.treeData.length > 0) {
+              this.treeInstance.jstree(true).select_node({id: "0"});
+              $("#init_disp_index_text").val("Root Index");
+              $("#init_disp_index").val("0");
+            } else {
+              let node = nodeChecked[0];
+              if (node !== undefined) {
+                $scope.setInitDisplayIndex(node)
+              }
+            }
+          }
+        }
+      }
+
+      $scope.setInitDisplayIndex = function (node) {
+        $("#init_disp_index_text").val(node.text);
+        $("#init_disp_index").val(node.id);
+      }
+
+      $scope.selectInitDisplayIndex = function (node, selected, event) {
+        $scope.setInitDisplayIndex(selected.node);
+      }
+
+      $scope.disSelectInitDisplayIndex = function (node, selected, event) {
+        if ($scope.treeInstance && $scope.treeInstance.jstree) {
+            $scope.treeInstance.jstree(true).select_node(selected.node);
+        }
+      }
+
+      $scope.getInitDisplayIndex = function () {
+        let initDispIndex = $scope.dataJson['init_disp_setting']['init_disp_index']
+        if (!initDispIndex) {
+          initDispIndex = "0";
+        }
+        const currentTime = new Date().getTime();
+        let url = "/api/admin/search/init_display_index/" + initDispIndex + "?timestamp=" + currentTime;
+        $.get(url)
+          .done(function (data) {
+            let jstree = $scope.treeInstance.jstree(true);
+            jstree.settings.core.data = data.indexes;
+            jstree.refresh();
+            let currentNode = jstree.get_node({"id": initDispIndex});
+            jstree.select_node(currentNode);
+            $scope.setInitDisplayIndex(currentNode);
+          })
+          .fail(function () {
+            alert("Fail to get index list.");
+          })
+      }
     }
     // Inject depedencies
     searchManagementCtrl.$inject = [
@@ -123,6 +249,6 @@
     }]);
 
     angular.bootstrap(
-      document.getElementById('search_management'), ['searchSettingModule']);
+      document.getElementById('search_management'), ['searchSettingModule', 'ngJsTree']);
   });
 })(angular);

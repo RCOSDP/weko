@@ -136,7 +136,7 @@
                       <option value=""></option>
                       {%- endif -%}
                       {%- for jp_key in jpcoar_prop_list.keys() -%}
-                      <option value="{{ jp_key }}" {%- if jp_key== mapping_key -%}{{ " selected" }}{%- endif -%}>{{jp_key}}</option>
+                      <option value="{{ jp_key }}" {%- if jp_key== mapping_key -%}{{ " selected" }}{%- endif -%}>{{ jp_key|replace_mapping_version }}</option>
                       {%- endfor -%}
                     </select>
                     <div class="btn-group pull-right" data-key="{{key}}">
@@ -171,7 +171,7 @@
                     <select class="form-control" name="parent_list" {%- if not is_system_admin -%}{{ " disabled" }}{%- endif -%}>
                       <option value=""></option>
                       {%- for jp_key in jpcoar_prop_list.keys() -%}
-                      <option value="{{jp_key}}">{{jp_key}}</option>
+                      <option value="{{jp_key}}">{{ jp_key|replace_mapping_version }}</option>
                       {%- endfor -%}
                     </select>
                     <div class="btn-group pull-right" data-key="{{key}}">
@@ -273,7 +273,7 @@
                 {%- for jp_key in jpcoar_prop_list.keys() -%}
                 <option value="{{ jp_key }}" {%- if jp_key==
                         mapping_key -%}{{ " selected" }}{%- endif -%}>
-                  {{jp_key}}
+                  {{ jp_key|replace_mapping_version }}
                 </option>
                 {%- endfor -%}
               </select>
@@ -327,7 +327,7 @@
               <select class="form-control" name="parent_list">
                 <option value=""></option>
                 {%- for jp_key in jpcoar_prop_list.keys() -%}
-                <option value="{{jp_key}}">{{jp_key}}</option>
+                  <option value="{{ jp_key }}">{{ jp_key|replace_mapping_version }}</option>
                 {%- endfor -%}
               </select>
               <div class="btn-group pull-right"

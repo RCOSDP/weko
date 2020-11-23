@@ -127,6 +127,9 @@ setup(
         'invenio_access.actions': [
             'stats_api_access = invenio_stats.permissions:stats_api_access',
         ],
+        'invenio_db.models': [
+            'invenio_stats = invenio_stats.models',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

@@ -85,14 +85,12 @@
                 <!-- demo -->
                 {%- if record | check_permission -%}
                 {%- if 'pdf' in file.mimetype -%}
-		<!--
-	  <tr><td colspan="2">
-                  <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
+                    <tr><td colspan="2">
+                  <a class="btn btn-default" style="display:none;" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
                   <span class="glyphicon glyphicon-edit"
                     aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
                 </td></tr>
-		-->
-		{%- endif -%}
+                {%- endif -%}
                 {%- endif -%}
               {%- endif -%}
               <!-- demo -->
@@ -101,7 +99,7 @@
               </tbody>
             </table>
             {%- endif %}
-              {{ output_item_detail(record, files_thumbnail, pid, items_show_list ) }}
+              {{ output_item_detail(record, files, files_thumbnail, pid, items_show_list ) }}
             {%- if 'main_entry_personal_name' in record %}
             <p class="record_authors">
               <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>

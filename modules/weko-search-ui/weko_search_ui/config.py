@@ -317,21 +317,55 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "des": ["search_des", "search_des.ja"],
         "publisher": ["search_publisher", "search_publisher.ja"],
         "cname": ["search_contributor", "search_contributor.ja"],
-        "itemtype": ("item_type_id", int),
+        "itemtype": ("itemtype", str),
         "type": {
-            "type": [
+            "type.raw": [
                 "conference paper",
+                "data paper",
                 "departmental bulletin paper",
+                "editorial",
                 "journal article",
+                "newspaper",
+                "periodical",
+                "review article",
+                "software paper",
                 "article",
                 "book",
+                "book part",
+                "cartographic material",
+                "map",
                 "conference object",
+                "conference proceedings",
+                "conference poster",
                 "dataset",
+                "interview",
+                "image",
+                "still image",
+                "moving image",
+                "video",
+                "lecture",
+                "patent",
+                "internal report",
+                "report",
                 "research report",
                 "technical report",
+                "policy report",
+                "report part",
+                "working paper",
+                "data management plan",
+                "sound",
                 "thesis",
-                "learning material",
+                "bachelor thesis",
+                "master thesis",
+                "doctoral thesis",
+                "interactive resource",
+                "learning object",
+                "manuscript",
+                "musical notation",
+                "research proposal",
                 "software",
+                "technical documentation",
+                "workflow",
                 "other"
             ]
         },
@@ -353,7 +387,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "dissno": "dissertationNumber",
         "degreename": ["degreeName", "degreeName.ja"],
         "dgname": ["dgName", "dgName.ja"],
-        "wid": "weko_id",
+        "wid": ("creator.nameIdentifier", str),
         "iid": ("path.tree", int)
     },
     "date": {
@@ -433,3 +467,55 @@ WEKO_IMPORT_LIST_NAME = [
     'No', 'Start Date', 'End Date', 'Item Id', 'Action', 'Work Flow Status'
 ]
 WEKO_ADMIN_LIFETIME_DEFAULT = 1800
+
+WEKO_IMPORT_EMAIL_PATTERN = \
+    r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+WEKO_IMPORT_PUBLISH_STATUS = ['public', 'private']
+WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
+WEKO_IMPORT_SUFFIX_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){1,290}$"
+
+WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
+"""Subitem ID of property Date (ISO-8601)."""
+
+#: Change identifier mode file language list
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES = ['en', 'ja']
+#: Change identifier mode file location
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION = '/code/modules/weko-search-ui/weko_search_ui/static/change_identifier_mode/'
+#: Change identifier mode first name file
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME = 'change_identifier_mode'
+#: Change identifier mode file extension
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION = '.txt'
+
+WEKO_EXPORT_TEMPLATE_BASIC_ID = [
+    '#.id', '.uri', '.metadata.path[0]',
+    '.pos_index#1', '.publish_status', '.feedback_mail#1',
+    '.cnri', '.doi_ra', '.doi', '.edit_mode'
+]
+WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
+    '#ID', 'URI', '.IndexID#1',
+    '.POS_INDEX#1', '.PUBLISH_STATUS', '.FEEDBACK_MAIL#1',
+    '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'
+]
+WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
+    '#', '', '',
+    '', 'Required', '', '', '', '', 'Required'
+]
+
+WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
+VERSION_TYPE_URI = {
+    'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
+    'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
+    'AM': 'http://purl.org/coar/version/c_ab4af688f83e57aa',
+    'P': 'http://purl.org/coar/version/c_fa2ee174bc00049f',
+    'VoR': 'http://purl.org/coar/version/c_970fb48d4fbd8a85',
+    'CVoR': 'http://purl.org/coar/version/c_e19f295774971610',
+    'EVoR': 'http://purl.org/coar/version/c_dc82b40f9837b551',
+    'NA': 'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
+}
+ACCESS_RIGHT_TYPE_URI = {
+    'embargoed access': 'http://purl.org/coar/access_right/c_f1cf',
+    'metadata only access': 'http://purl.org/coar/access_right/c_14cb',
+    'open access': 'http://purl.org/coar/access_right/c_abf2',
+    'restricted access': 'http://purl.org/coar/access_right/c_16ec'
+}
+DATE_ISO_TEMPLATE_URL = '/static/templates/weko_deposit/datepicker_multi_format.html'

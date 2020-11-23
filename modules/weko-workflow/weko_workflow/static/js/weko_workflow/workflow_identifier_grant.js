@@ -8,17 +8,37 @@ require([
   }
   var withdraw_form = $('form[name$=withdraw_doi_form]');
 
+  /**
+   * Start Loading
+   * @param actionButton
+   */
+  function startLoading(actionButton) {
+    actionButton.prop('disabled', true);
+    $(".lds-ring-background").removeClass("hidden");
+  }
+
+  /**
+   * End Loading
+   * @param actionButton
+   */
+  function endLoading(actionButton) {
+    actionButton.removeAttr("disabled");
+    $(".lds-ring-background").addClass("hidden");
+  }
+
   // click button Next
   $('#btn-finish').on('click', function () {
-    if (preparePostData(0)) {
-      sendQuitAction();
+    startLoading($(this));
+    if (preparePostData(0, $(this))) {
+      sendQuitAction($(this));
     }
   });
 
   // click button Save
   $('#btn-draft').on('click', function () {
-    if (preparePostData(1)) {
-      sendQuitAction();
+    startLoading($(this));
+    if (preparePostData(1, $(this))) {
+      sendQuitAction($(this));
     }
   });
 
@@ -37,7 +57,7 @@ require([
   });
 
   // prepare data for sending
-  function preparePostData(tmp_save) {
+  function preparePostData(tmp_save, actionButton) {
     let isSuffixFormat = true;
     data_global.post_uri = $('.cur_step').data('next-uri');
 
@@ -71,7 +91,7 @@ require([
     let idf_grant_method = $('#idf_grant_method').val();
     if (tmp_save == 1 || idf_grant_method == 0) {
       let arrayDoi = [identifier_grant_jalc_doi_link, identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_dc_doi_link];
-      isSuffixFormat = validateLengDoi(arrayDoi);
+      isSuffixFormat = validateLengDoi(arrayDoi, actionButton);
     } else {
       switch (identifier_grant) {
         case "0":
@@ -79,21 +99,21 @@ require([
         default:
           break;
         case "1":
-          isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_doi_link, identifier_grant_jalc_doi_suffix);
+          isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_doi_link, identifier_grant_jalc_doi_suffix, actionButton);
           break;
         case "2":
-          isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_cr_doi_suffix);
+          isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_cr_doi_suffix, actionButton);
           break;
         case "3":
-          isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix);
+          isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix, actionButton);
           break;
-      };
+      }
     }
 
     return isSuffixFormat;
   }
 
-  function validateLengDoi(arrayDoi) {
+  function validateLengDoi(arrayDoi, actionButton) {
     let msg = '';
     let result = true;
     for (index = 0; index < arrayDoi.length; ++index) {
@@ -103,28 +123,32 @@ require([
       }
     }
     if (!result) {
+      endLoading(actionButton);
       alert(msg);
     }
     return result;
   }
 
-  function isDOISuffixFormat(doi_link, doi_suffix) {
+  function isDOISuffixFormat(doi_link, doi_suffix, actionButton) {
 
     let regexDOI = /^[_\-.;()\/A-Za-z0-9]+$/gi;
     let msg = '';
     let result = true;
 
     if (doi_suffix == "" || doi_suffix == null) {
+      endLoading(actionButton);
       msg = $('#msg_required_doi').val();
       result = false;
     } else if (!regexDOI.test(doi_suffix)) {
+      endLoading(actionButton);
       msg = $('#msg_format_doi').val();
       result = false;
     } else if (doi_link.length > 255) {
+      endLoading(actionButton);
       msg = $('#msg_length_doi').val();
       result = false;
     } else {
-      isExistDOI = checkDOIExisted(doi_link)
+      let isExistDOI = checkDOIExisted(doi_link)
       if (isExistDOI) {
         msg = isExistDOI;
         result = false;
@@ -132,6 +156,7 @@ require([
     }
 
     if (!result) {
+      endLoading(actionButton);
       alert(msg);
     }
     return result;
@@ -147,7 +172,7 @@ require([
   }
 
   // send
-  function sendQuitAction() {
+  function sendQuitAction(actionButton) {
     $.ajax({
       url: data_global.post_uri,
       method: 'POST',
@@ -163,10 +188,12 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(actionButton);
           alert(data.msg);
         }
       },
       error: function (jqXHE, status) {
+        endLoading(actionButton);
         alert('Server error');
         $('#myModal').modal('hide');
       }
@@ -174,7 +201,8 @@ require([
   }
 
   withdraw_form.submit(function (event) {
-    $('#btn_withdraw_continue').prop('disabled', true);
+    let withdrawBtn = $('#btn_withdraw_continue');
+    startLoading(withdrawBtn);
     let form = withdraw_form;
     let withdraw_uri = form.attr('action');
     let post_data = {
@@ -195,15 +223,15 @@ require([
             document.location.reload(true);
           }
         } else {
+          endLoading(withdrawBtn);
           $('#pwd').parent().addClass('has-error');
           $('#error-info').html(data.msg);
           $('#error-info').parent().show();
         }
-        $('#btn_withdraw_continue').prop('disabled', false);
       },
       error: function (jqXHE, status) {
         alert('Server error');
-        $('#btn_withdraw_continue').prop('disabled', false);
+        endLoading(withdrawBtn);
       }
     });
     event.preventDefault();

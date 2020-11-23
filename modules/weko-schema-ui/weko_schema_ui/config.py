@@ -39,7 +39,8 @@ WEKO_SCHEMA_UI_FILES_API = '/api/schemas/files'
 WEKO_SCHEMA_UI_DEFAULT_SCHEMAFORM = 'json/weko_schema_ui/form.json'
 WEKO_SCHEMA_UI_FORM_JSONSCHEMA = 'json/weko_schema_ui/schema.json'
 
-WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER = '{0}/static/xsd/'
+WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER = '{0}/data/xsd/'
+"""データスキーマ."""
 
 _PID = 'pid(depid,record_class="weko_schema_ui.api:WekoSchema")'
 
@@ -85,8 +86,26 @@ WEKO_SCHEMA_UI_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
                               'kakenhi', 'Ringgold', 'GRID']
 """ List of scheme """
 
+WEKO_SCHEMA_UI_LIST_SCHEME_AFFILIATION = ['ISNI', 'kakenhi',
+                                          'Ringgold', 'GRID']
+""" List of affiliation scheme """
+
 WEKO_SCHEME_FIRST_INDEX = 0
 """ Name Identifior Item first index """
 
 WEKO_SCHEMA_RECORD_URL = "{}records/{}"
 """Pattern of url record."""
+
+WEKO_SCHEMA_VERSION_TYPE = {
+    "modified": "oaire:versiontype",
+    "original": "oaire:version"
+}
+"""Modified and original for versiontype key"""
+
+WEKO_SCHEMA_RELATION_TYPE = [
+    'isVersionOf', 'hasVersion', 'isPartOf', 'hasPart', 'isReferencedBy',
+    'references', 'isFormatOf', 'hasFormat', 'isReplacedBy', 'replaces',
+    'isRequiredBy', 'requires', 'isSupplementedBy', 'isSupplementTo',
+    'isIdenticalTo', 'isDerivedFrom', 'isSourceOf'
+]
+"""jpcoar:relation relationType Controlled Vocabularies"""

@@ -1162,3 +1162,23 @@ msgstr "ファセット"
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Display"
 msgstr "表示する"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Main Screen Initial Display Setting"
+msgstr "初期表示設定"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Default Contents to Display"
+msgstr "初期表示画面設定"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Default Index to Display"
+msgstr "初期表示インデックス表示方法"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Initial Display Index"
+msgstr "初期表示インデックス"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "An index which is not open in public cannot be selected"
+msgstr "非公開インデックス以下は選択できません"

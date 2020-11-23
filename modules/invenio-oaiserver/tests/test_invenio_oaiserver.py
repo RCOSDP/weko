@@ -41,7 +41,7 @@ def test_init():
 def test_view(app):
     """Test view."""
     with app.test_client() as client:
-        res = client.get("/oai2d?verb=Identify")
+        res = client.get("/oai?verb=Identify")
         assert res.status_code == 200
 
         # no XSL transformation by default
@@ -52,7 +52,7 @@ def test_view_with_xsl(app):
     """Test view."""
     with app.test_client() as client:
         app.config['OAISERVER_XSL_URL'] = 'testdomain.com/oai2.xsl'
-        res = client.get("/oai2d?verb=Identify")
+        res = client.get("/oai?verb=Identify")
         assert res.status_code == 200
 
         assert b'xml-stylesheet' in res.data

@@ -359,10 +359,6 @@ def getrecord(**kwargs):
     etree_record = copy.deepcopy(record)
     if not etree_record.get('system_identifier_doi', None):
         etree_record['system_identifier_doi'] = get_identifier(record)
-    if check_correct_system_props_mapping(
-        pid.object_uuid,
-            current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
-        etree_record = combine_record_file_urls(etree_record, pid.object_uuid)
 
     root = record_dumper(pid, {'_source': etree_record})
 
@@ -472,7 +468,9 @@ def listrecords(**kwargs):
                     'system_identifier_doi'] = get_identifier(db_record)
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))
-            e_metadata.append(record_dumper(pid, record['json']))
+            etree_record = copy.deepcopy(record['json'])
+
+            e_metadata.append(record_dumper(pid, etree_record))
         except Exception:
             import traceback
             current_app.logger.error(traceback.print_exc())
@@ -540,26 +538,29 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
     return True
 
 
-def combine_record_file_urls(record, object_uuid):
+def combine_record_file_urls(record, object_uuid, meta_prefix):
     """Add file urls to record metadata.
 
     Get file property information by item_mapping and put to metadata.
     """
     from weko_records.api import ItemsMetadata, Mapping
     from weko_records.serializers.utils import get_mapping
+    from weko_schema_ui.schema import get_oai_metadata_formats
 
+    metadata_formats = get_oai_metadata_formats(current_app)
     item_type = ItemsMetadata.get_by_object_id(object_uuid)
     item_type_id = item_type.item_type_id
     type_mapping = Mapping.get_record(item_type_id)
-    item_map = get_mapping(type_mapping, "jpcoar_mapping")
-    item_map_ddi = get_mapping(type_mapping, "ddi_mapping")
+    mapping_type = metadata_formats[meta_prefix]['serializer'][1]['schema_type']
+    item_map = get_mapping(type_mapping,
+                           "{}_mapping".format(mapping_type))
 
-    if item_map_ddi:
-        file_keys = item_map_ddi.get(current_app.config[
-            "OAISERVER_FILE_PROPS_MAPPING_DDI"])
-    else:
-        file_keys = item_map.get(current_app.config[
-            "OAISERVER_FILE_PROPS_MAPPING"])
+    if item_map:
+        file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
+        if mapping_type in file_props:
+            file_keys = item_map.get(file_props[mapping_type])
+        else:
+            file_keys = None
 
     if not file_keys:
         return record

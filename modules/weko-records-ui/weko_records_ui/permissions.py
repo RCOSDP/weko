@@ -26,6 +26,8 @@ from datetime import timedelta
 from flask import abort, current_app
 from flask_security import current_user
 from invenio_access import Permission, action_factory
+from invenio_db import db
+from sqlalchemy import MetaData, Table
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import filter_index_list_by_role, get_user_roles
 from weko_records.api import ItemTypes
@@ -87,12 +89,42 @@ def check_file_download_permission(record, fjson):
             ) | check_user_group_permission(fjson.get('groups'))
         return False
 
+    def get_email_list_by_ids(user_id_list):
+        """Get user email list by user id list.
+
+        :param user_id_list: list id of users in table accounts_user.
+        :return: list email.
+        """
+        metadata = MetaData()
+        metadata.reflect(bind=db.engine)
+        user_table = Table('accounts_user', metadata)
+        rec = db.session.query(user_table)
+        data = rec.all()
+        result = []
+        for item in data:
+            if item[0] in user_id_list:
+                result.append(item[1])
+        return result
+
     if fjson:
         is_can = True
         acsrole = fjson.get('accessrole', '')
+        # Get email of login user.
+        is_has_email = hasattr(current_user, "email")
+        current_user_email = current_user.email if is_has_email else ''
+        # Get email list of created workflow user.
+        user_id_list = record['_deposit']['owners']
+        created_user_email_list = get_email_list_by_ids(user_id_list)
+
+        # Registered user
+        if current_user and \
+                current_user.is_authenticated and \
+                current_user.id in user_id_list:
+            return is_can
 
         # Super users
-        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+            current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY'],)
         for role in list(current_user.roles or []):
             if role.name in supers:
                 return is_can
@@ -146,13 +178,22 @@ def check_file_download_permission(record, fjson):
                             break
                     is_can = is_can & is_user_group_permission
                 else:
-                    is_can = is_can & check_user_group_permission(
-                        fjson.get('groups'))
+                    if current_user.is_authenticated:
+                        if fjson.get('groups'):
+                            is_can = check_user_group_permission(
+                                fjson.get('groups'))
+                        else:
+                            is_can = True
+                    else:
+                        is_can = check_site_license_permission()
 
             #  can not access
             elif 'open_no' in acsrole:
-                # site license permission check
-                is_can = site_license_check()
+                if current_user_email in created_user_email_list:
+                    # Allow created workflow user view file.
+                    is_can = True
+                else:
+                    is_can = False
             elif 'open_restricted' in acsrole:
                 is_can = check_open_restricted_permission(record, fjson)
         except BaseException:
@@ -265,7 +306,8 @@ def get_correct_usage_workflow(data_type):
                 current_app.logger.debug(data)
                 for value in data:
                     if value['role'].casefold() == role.name.casefold():
-                        usage_application_workflow_name = value['workflow_name']
+                        usage_application_workflow_name = \
+                            value['workflow_name']
                         workflow = WorkFlow()
                         usage_workflow = workflow.find_workflow_by_name(
                             usage_application_workflow_name)
@@ -304,6 +346,10 @@ def check_user_group_permission(group_id):
     user_id = current_user.get_id()
     is_ok = False
     if group_id:
+        try:
+            group_id = int(group_id)
+        except ValueError:
+            return is_ok
         if user_id:
             query = Group.query.filter_by(id=group_id).join(Membership) \
                 .filter_by(user_id=user_id, state=MembershipState.ACTIVE)

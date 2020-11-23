@@ -21,8 +21,10 @@
 """Command line interface creation kit."""
 import click
 from flask.cli import with_appcontext
+from invenio_files_rest.errors import FilesException
 
 from .models import WidgetType
+from .utils import WidgetBucket
 
 
 @click.group()
@@ -41,3 +43,18 @@ def insert_widget_type_to_db(type_id, type_name):
         click.secho('insert widget type success')
     except Exception as e:
         click.secho(str(e))
+
+
+@click.group()
+def widget():
+    """Management commands for widgets."""
+
+
+@widget.command('init')
+@with_appcontext
+def init():
+    """Initialize widget bucket."""
+    try:
+        WidgetBucket().initialize_widget_bucket()
+    except FilesException as e:
+        click.secho(e.errors, fg='red')

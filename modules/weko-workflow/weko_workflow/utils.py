@@ -24,6 +24,7 @@ from copy import deepcopy
 
 from flask import current_app, request
 from flask_babelex import gettext as _
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -39,6 +40,8 @@ from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
     Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
+from weko_user_profiles.utils import get_user_profile_info
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
@@ -60,7 +63,7 @@ def get_identifier_setting(community_id):
 
 
 def saving_doi_pidstore(item_id, record_without_version, data=None,
-                        doi_select=0):
+                        doi_select=0, is_feature_import=False):
     """
     Mapp doi pidstore data to ItemMetadata.
 
@@ -95,6 +98,13 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         identifier_val = jalcdoi_dc_link
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'DataCite'
+    elif is_feature_import and doi_select == IDENTIFIER_GRANT_LIST[4][0] \
+            and data.get('identifier_grant_ndl_jalc_doi_link'):
+        ndljalcdoi_dc_link = data.get('identifier_grant_ndl_jalc_doi_link')
+        ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
+        identifier_val = ndljalcdoi_dc_link
+        doi_register_val = '/'.join(ndljalcdoi_dc_tail[1:])
+        doi_register_typ = 'NDL JaLC'
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
 
@@ -102,6 +112,8 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         if not flag_del_pidstore and identifier_val and doi_register_val:
             identifier = IdentifierHandle(record_without_version)
             reg = identifier.register_pidstore('doi', identifier_val)
+            identifier.update_idt_registration_metadata(doi_register_val,
+                                                        doi_register_typ)
 
             if reg:
                 identifier = IdentifierHandle(item_id)
@@ -143,6 +155,44 @@ def register_hdl(activity_id):
         current_app.logger.info('Cannot connect Handle server!')
 
 
+def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
+    """
+    Register HDL into Persistent Identifiers.
+
+    :param deposit_id: id
+    :param item_uuid: Item uuid
+    :param url_root: url_root
+    :return handle: HDL handle
+    """
+    record_url = url_root \
+        + 'records/' + str(deposit_id)
+
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
+
+    if handle:
+        handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+        identifier = IdentifierHandle(item_uuid)
+        identifier.register_pidstore('hdl', handle)
+    else:
+        current_app.logger.info('Cannot connect Handle server!')
+
+    return handle
+
+
+def register_hdl_by_handle(handle, item_uuid):
+    """
+    Register HDL into Persistent Identifiers.
+
+    :param handle: HDL handle
+    :param item_uuid: Item uuid
+    """
+    if handle:
+        handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+        identifier = IdentifierHandle(item_uuid)
+        identifier.register_pidstore('hdl', handle)
+
+
 def item_metadata_validation(item_id, identifier_type):
     """
     Validate item metadata.
@@ -154,7 +204,6 @@ def item_metadata_validation(item_id, identifier_type):
         return None
 
     ddi_item_type_name = 'DDI'
-    journalarticle_nameid = [3, 5, 9]
     journalarticle_type = ['other（プレプリント）', 'conference paper',
                            'data paper', 'departmental bulletin paper',
                            'editorial', 'journal article', 'periodical',
@@ -164,9 +213,7 @@ def item_metadata_validation(item_id, identifier_type):
     report_types = ['technical report', 'research report', 'report',
                     'book', 'book part']
     elearning_type = ['learning material']
-    dataset_nameid = [4]
     dataset_type = ['software', 'dataset']
-    datageneral_nameid = [1, 10]
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',
                          'musical notation', 'research proposal',
@@ -214,12 +261,10 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if item_type.name_id in journalarticle_nameid \
-            or resource_type in journalarticle_type \
+        if resource_type in journalarticle_type \
             or resource_type in report_types \
             or (resource_type in elearning_type) \
-            or (item_type.name_id in datageneral_nameid
-                or resource_type in datageneral_types):
+                or resource_type in datageneral_types:
             required_properties = ['title']
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
@@ -230,8 +275,7 @@ def item_metadata_validation(item_id, identifier_type):
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
-        elif item_type.name_id in dataset_nameid \
-                or resource_type in dataset_type:
+        elif resource_type in dataset_type:
             required_properties = ['title',
                                    'givenName']
             if item_type.item_type_name.name != ddi_item_type_name:
@@ -241,8 +285,7 @@ def item_metadata_validation(item_id, identifier_type):
                                  'geoLocationPlace']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
-        if item_type.name_id in journalarticle_nameid or resource_type in \
-                journalarticle_type:
+        if resource_type in journalarticle_type:
             required_properties = ['title',
                                    'publisher',
                                    'sourceIdentifier',
@@ -465,8 +508,10 @@ def validattion_item_property_required(
     if error_list == empty_list:
         return None
     else:
-        error_list['required'] = list(set(error_list['required']))
-        error_list['pattern'] = list(set(error_list['pattern']))
+        error_list['required'] = list(
+            set(filter(None, error_list['required']))
+        )
+        error_list['pattern'] = list(set(filter(None, error_list['pattern'])))
         return error_list
 
 
@@ -832,6 +877,23 @@ class IdentifierHandle(object):
                     atr_typ=input_type
                     )
 
+    def get_idt_registration_data(self):
+        """Get Identifier Registration data.
+
+        Arguments:
+
+        Returns:
+            doi_value -- {string} Identifier
+            doi_type  -- {string} Identifier type
+
+        """
+        doi_value, _ = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@value")
+        doi_type, _ = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@attributes.identifierType")
+
+        return doi_value, doi_type
+
     def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
         """Commit update.
 
@@ -1102,11 +1164,25 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                                      community,
                                      draft_record.model.id)
     else:
+        # Clone org bucket into draft record.
         with db.session.begin_nested():
-            draft_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
-            bucket = draft_deposit.files.bucket
+            drf_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            cur_deposit = WekoDeposit.get_record(recid.object_uuid)
+            cur_bucket = cur_deposit.files.bucket
+            bucket = Bucket.get(drf_deposit.files.bucket.id)
+
+            sync_bucket = RecordsBuckets.query.filter_by(
+                bucket_id=drf_deposit.files.bucket.id
+            ).first()
+            snapshot = cur_bucket.snapshot(lock=False)
+            snapshot.locked = False
             bucket.locked = False
-            db.session.add(bucket)
+
+            sync_bucket.bucket_id = snapshot.id
+            drf_deposit['_buckets']['deposit'] = str(snapshot.id)
+            bucket.remove()
+            drf_deposit.commit()
+            db.session.add(sync_bucket)
         db.session.commit()
         rtn = activity.init_activity(post_activity,
                                      community,
@@ -1121,6 +1197,19 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         else:
             identifier = activity.get_action_identifier_grant(
                 '', identifier_actionid)
+
+        if not identifier:
+            identifier_handle = IdentifierHandle(recid.object_uuid)
+            doi_value, doi_type = identifier_handle.get_idt_registration_data()
+            if doi_value and doi_type:
+                identifier = {
+                    'action_identifier_select':
+                        WEKO_IMPORT_DOI_TYPE.index(doi_type[0]) + 1,
+                    'action_identifier_jalc_doi': '',
+                    'action_identifier_jalc_cr_doi': '',
+                    'action_identifier_jalc_dc_doi': '',
+                    'action_identifier_ndl_jalc_doi': ''
+                }
 
         if identifier:
             if identifier.get('action_identifier_select') > \
@@ -1169,6 +1258,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
 
     item_id = None
     try:
+        combine_record_file_urls(deposit)
         pid_without_ver = PersistentIdentifier.get(
             "recid",
             current_pid.pid_value.split(".")[0]
@@ -1185,25 +1275,33 @@ def handle_finish_workflow(deposit, current_pid, recid):
             ver_attaching_deposit = WekoDeposit(
                 new_deposit,
                 new_deposit.model)
+            combine_record_file_urls(ver_attaching_deposit)
+            feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                pid_without_ver.object_uuid)
+            if feedback_mail_list:
+                FeedbackMailList.update(
+                    item_id=item_id,
+                    feedback_maillist=feedback_mail_list
+                )
+                ver_attaching_deposit.update_feedback_mail()
             ver_attaching_deposit.publish()
 
             weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
             if weko_record:
                 weko_record.update_item_link(current_pid.pid_value)
             updated_item.publish(deposit)
+            updated_item.publish(ver_attaching_deposit)
         else:
             # update to record without version ID when editing
             if pid_without_ver:
-                record_without_ver = WekoDeposit.get_record(
+                _record = WekoDeposit.get_record(
                     pid_without_ver.object_uuid)
-                deposit_without_ver = WekoDeposit(
-                    record_without_ver,
-                    record_without_ver.model)
-                deposit_without_ver['path'] = deposit.get('path', [])
+                _deposit = WekoDeposit(_record, _record.model)
+                _deposit['path'] = deposit.get('path', [])
 
-                parent_record = deposit_without_ver.\
+                parent_record = _deposit.\
                     merge_data_to_record_without_version(current_pid)
-                deposit_without_ver.publish()
+                _deposit.publish()
 
                 pv = PIDVersioning(child=pid_without_ver)
                 last_ver = PIDVersioning(parent=pv.parent).get_children(
@@ -1221,7 +1319,10 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_parent_record = maintain_deposit.\
                         merge_data_to_record_without_version(current_pid)
                     maintain_deposit.publish()
+                    combine_record_file_urls(new_parent_record)
+                    new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
+                    updated_item.publish(new_parent_record)
                 else:   # Handle Upgrade workflow
                     draft_pid = PersistentIdentifier.get(
                         'recid',
@@ -1233,12 +1334,17 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_draft_record = draft_deposit.\
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
+                    combine_record_file_urls(new_draft_record)
+                    new_draft_record.update_feedback_mail()
                     new_draft_record.commit()
+                    updated_item.publish(new_draft_record)
 
                 weko_record = WekoRecord.get_record_by_pid(
                     pid_without_ver.pid_value)
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
+                combine_record_file_urls(parent_record)
+                parent_record.update_feedback_mail()
                 db.session.commit()
                 updated_item.publish(parent_record)
                 if ".0" in current_pid.pid_value and last_ver:
@@ -1250,3 +1356,117 @@ def handle_finish_workflow(deposit, current_pid, recid):
         current_app.logger.exception(str(ex))
         return item_id
     return item_id
+
+
+def delete_cache_data(key: str):
+    """Delete cache data.
+
+    :param key: Cache key.
+    """
+    current_value = current_cache.get(key) or str()
+    if current_value:
+        current_cache.delete(key)
+
+
+def update_cache_data(key: str, value: str, timeout=0):
+    """Update cache data.
+
+    :param key: Cache key.
+    :param value: Cache value.
+    """
+    if timeout:
+        current_cache.set(key, value, timeout=timeout)
+    else:
+        current_cache.set(key, value)
+
+
+def get_cache_data(key: str):
+    """Get cache data.
+
+    :param key: Cache key.
+
+    :return: Cache value.
+    """
+    return current_cache.get(key) or str()
+
+
+def get_account_info(user_id):
+    """Get account's info: email, username.
+
+    :param user_id: User id.
+
+    :return: email, username.
+    """
+    data = get_user_profile_info(user_id)
+    if data:
+        return data.get('subitem_mail_address'), \
+            data.get('subitem_displayname')
+    else:
+        return None, None
+
+
+def combine_record_file_urls(record, meta_prefix='jpcoar'):
+    """Add file urls to record metadata.
+
+    Get file property information by item_mapping and put to metadata.
+    """
+    def check_url_is_manual(version_id):
+        for file in record.files.dumps():
+            if file.get('version_id') == version_id:
+                return False
+        return True
+
+    from weko_records.api import Mapping
+    from weko_records.serializers.utils import get_mapping
+
+    item_type_id = record.get('item_type_id')
+    type_mapping = Mapping.get_record(item_type_id)
+    item_map = get_mapping(type_mapping, "{}_mapping".format(meta_prefix))
+
+    if item_map:
+        file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
+        if meta_prefix in file_props:
+            file_keys = item_map.get(file_props[meta_prefix])
+        else:
+            file_keys = None
+
+    if not file_keys:
+        return record
+    else:
+        file_keys = file_keys.split('.')
+
+    if len(file_keys) == 3 and record.get(file_keys[0]):
+        attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
+        if isinstance(attr_mlt, list):
+            for attr in attr_mlt:
+                if attr.get('filename'):
+                    if not attr.get(file_keys[1]):
+                        attr[file_keys[1]] = {}
+                    if not (attr[file_keys[1]].get(file_keys[2])
+                            and check_url_is_manual(attr.get('version_id'))):
+                        attr[file_keys[1]][file_keys[2]] = \
+                            create_files_url(
+                                request.url_root,
+                                record.get('recid'),
+                                attr.get('filename'))
+        elif isinstance(attr_mlt, dict) and \
+                attr_mlt.get('filename'):
+            if not attr_mlt.get(file_keys[1]):
+                attr_mlt[file_keys[1]] = {}
+            if not (attr[file_keys[1]].get(file_keys[2])
+                    and check_url_is_manual(attr.get('version_id'))):
+                attr_mlt[file_keys[1]][file_keys[2]] = \
+                    create_files_url(
+                        request.url_root,
+                        record.get('recid'),
+                        attr_mlt.get('filename'))
+
+    return record
+
+
+def create_files_url(root_url, record_id, filename):
+    """Generation of downloading file url."""
+    return "{}record/{}/files/{}".format(
+        root_url,
+        record_id,
+        filename)

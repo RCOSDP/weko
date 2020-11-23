@@ -25,7 +25,6 @@ import json
 import os.path
 import shutil
 import uuid
-# from copy import deepcopy
 from functools import partial
 
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
@@ -51,6 +50,7 @@ from webargs import fields
 from webargs.flaskparser import use_kwargs
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
+from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
 
@@ -251,28 +251,27 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
         nlst = []
+        items_count = []
+        all_indexes = Indexes.get_all_indexes()
+        recorrect_private_items_count(agp)
+        for i in agp:
+            items_count.append({"key": i["key"], "doc_count": i["doc_count"],
+                                "no_available": i["no_available"]["doc_count"]})
+
         for p in paths:
             m = 0
+            current_idx = {}
             for k in range(len(agp)):
                 if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name if lang == "ja" else p.name_en
-                    date_range = agp[k].pop("date_range")
-                    no_available = agp[k].pop("no_available")
-                    pub = dict()
-                    bkt = date_range['available']['buckets']
-                    if bkt:
-                        for d in bkt:
-                            pub["pub_cnt" if d.get(
-                                "to") else "un_pub_cnt"] = d.get(
-                                "doc_count")
-                        pub["un_pub_cnt"] += no_available['doc_count']
-                        agp[k]["date_range"] = pub
-                        comment = p.comment
-                        agp[k]["comment"] = comment,
-                        result = agp.pop(k)
-                        result["comment"] = comment
-                        nlst.append(result)
-                        m = 1
+                    agp[k]["name"] = p.name if p.name and lang == "ja" \
+                        else p.name_en
+                    agp[k]["date_range"] = dict()
+                    comment = p.comment
+                    agp[k]["comment"] = comment,
+                    result = agp.pop(k)
+                    result["comment"] = comment
+                    current_idx = result
+                    m = 1
                     break
             if m == 0:
                 index_id = p.path if '/' not in p.path \
@@ -282,14 +281,18 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nd = {
                     'doc_count': 0,
                     'key': p.path,
-                    'name': p.name if lang == "ja" else p.name_en,
+                    'name': p.name if p.name and lang == "ja" else p.name_en,
                     'date_range': {
                         'pub_cnt': 0,
                         'un_pub_cnt': 0},
                     'rss_status': rss_status,
                     'comment': p.comment,
                 }
-                nlst.append(nd)
+                current_idx = nd
+            private_count, public_count = count_items((str(p.path)), items_count, all_indexes)
+            current_idx["date_range"]["pub_cnt"] = public_count
+            current_idx["date_range"]["un_pub_cnt"] = private_count
+            nlst.append(current_idx)
         agp.clear()
         # process index tree image info
         if len(nlst):

@@ -327,7 +327,7 @@ require([
                             $rootScope.$$childHead.removeThumbnail(thumb);
                           });
                         }
-                            Array.prototype.forEach.call(files, function(f) {
+                        Array.prototype.forEach.call(files, function(f) {
                             if ($scope.$parent.model.allowedType.indexOf(f.type) < 0 ) {
                               return;
                             }

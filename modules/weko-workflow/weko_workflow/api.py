@@ -401,6 +401,35 @@ class WorkFlow(object):
         with db.session.no_autoflush:
             return _WorkFlow.query.filter_by(flows_name=workflow_name).first()
 
+    def update_itemtype_id(self, workflow, itemtype_id):
+        """
+        Update itemtype id to workflow.
+
+        :param workflow:
+        :param itemtype_id:
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                if workflow:
+                    workflow.itemtype_id = itemtype_id
+                    db.session.merge(workflow)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+
+    def get_workflow_by_itemtype_id(self, item_type_id):
+        """Get workflow detail info by item type id.
+
+        :param item_type_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                itemtype_id=item_type_id, is_deleted=False)
+            return query.all()
+
 
 class Action(object):
     """Operated on the Action."""
@@ -858,7 +887,8 @@ class WorkActivity(object):
         """Get activity action status."""
         with db.session.no_autoflush:
             activity_ac = ActivityAction.query.filter_by(
-                activity_id=activity_id, action_id=action_id).one()
+                activity_id=activity_id,
+                action_id=action_id).one()
             action_stus = activity_ac.action_status
             return action_stus
 
@@ -1633,6 +1663,25 @@ class WorkActivity(object):
             current_app.logger.error(ex)
             return None
 
+    def update_title(self, activity_id, title):
+        """
+        Update title to activity.
+
+        :param activity_id:
+        :param title:
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                activity = self.get_activity_detail(activity_id)
+                if activity:
+                    activity.title = title
+                    db.session.merge(activity)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity."""
@@ -1729,17 +1778,15 @@ class WorkActivityHistory(object):
 class UpdateItem(object):
     """The class about item."""
 
-    def publish(pid, record):
+    def publish(self, record):
         r"""Record publish  status change view.
 
         Change record publish status with given status and renders record
         export template.
 
-        :param pid: PID object.
-        :param record: Record object.
+        :param record: record object.
         :return: The rendered template.
         """
-        from invenio_db import db
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:
@@ -1753,14 +1800,13 @@ class UpdateItem(object):
         indexer = WekoIndexer()
         indexer.update_publish_status(record)
 
-    def update_status(pid, record, status='1'):
+    def update_status(self, record, status='1'):
         r"""Record update status.
 
         :param pid: PID object.
         :param record: Record object.
         :param status: Publish status (0: publish, 1: private).
         """
-        from invenio_db import db
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:

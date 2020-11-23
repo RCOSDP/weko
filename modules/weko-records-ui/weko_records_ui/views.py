@@ -20,10 +20,12 @@
 
 """Blueprint for weko-records-ui."""
 
+import os
+
 import redis
 import six
 import werkzeug
-from flask import Blueprint, abort, current_app, flash, jsonify, \
+from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -42,6 +44,7 @@ from lxml import etree
 from simplekv.memory.redisstore import RedisStore
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
+from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
@@ -110,16 +113,24 @@ def publish(pid, record, template=None, **kwargs):
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
+
+    pid_ver = PIDVersioning(child=pid)
+    last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
+
     if not publish_status:
         record.update({'publish_status': (status or '0')})
+        last_record.update({'publish_status': (status or '0')})
     else:
         record['publish_status'] = (status or '0')
+        last_record['publish_status'] = (status or '0')
 
     record.commit()
+    last_record.commit()
     db.session.commit()
 
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
+    indexer.update_publish_status(last_record)
 
     return redirect(url_for('.recid', pid_value=pid.pid_value))
 
@@ -402,6 +413,19 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    path_name_dict = {'ja': {}, 'en': {}}
+    for navi in record.navi:
+        path_arr = navi.path.split('/')
+        for path in path_arr:
+            index = Indexes.get_index(index_id=path)
+            idx_name = index.index_name or ""
+            idx_name_en = index.index_name_english
+            path_name_dict['ja'][path] = idx_name.replace(
+                "\n", r"<br\>").replace("&EMPTY&", "")
+            path_name_dict['en'][path] = idx_name_en.replace(
+                "\n", r"<br\>").replace("&EMPTY&", "")
+            if not path_name_dict['ja'][path]:
+                path_name_dict['ja'][path] = path_name_dict['en'][path]
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:
@@ -554,6 +578,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
         open_day_display_flg=open_day_display_flg,
+        path_name_dict=path_name_dict,
         **ctx,
         **kwargs
     )
@@ -632,9 +657,10 @@ def set_pdfcoverpage_header():
         header_output_image_filename = header_output_image_file.filename
         header_output_image = record.header_output_image
         if not header_output_image_filename == '':
-            # /home/invenio/.virtualenvs/invenio/var/instance/static/
             upload_dir = current_app.instance_path + current_app.config.get(
                 'WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR')
+            if not os.path.isdir(upload_dir):
+                os.makedirs(upload_dir)
             header_output_image = upload_dir + header_output_image_filename
             header_output_image_file.save(header_output_image)
         header_display_position = request.form.get('header-display-position')
@@ -745,3 +771,17 @@ def init_permission(recid):
     except Exception as ex:
         current_app.logger.debug(ex)
         abort(500)
+
+
+@blueprint.app_template_filter('escape_str')
+def escape_str(s):
+    r"""Process escape, replace \n to <br/>, convert &EMPTY& to blank char.
+
+    :param s: string
+    :return: result
+    """
+    if s:
+        s = s.replace('&EMPTY&', '')
+        s = str(escape(s))
+        s = s.replace('\\n', '<br/>').replace('\n', '<br/>')
+    return s

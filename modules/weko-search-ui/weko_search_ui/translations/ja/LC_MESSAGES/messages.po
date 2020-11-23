@@ -263,6 +263,10 @@ msgid "Error"
 msgstr "エラー"
 
 #: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Warning"
+msgstr "警告"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "Update"
 msgstr "更新"
 
@@ -301,6 +305,14 @@ msgstr "作業済"
 #: weko_search_ui/templates/weko_search_ui/import.html:
 msgid "To Do"
 msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Keep Version"
+msgstr "バージョンの維持"
+
+#: weko_search_ui/templates/weko_search_ui/import.html:
+msgid "Upgrade Version"
+msgstr "バージョンの変更"
 
 #: weko_search_ui/config.py:
 msgid "Access"
@@ -386,5 +398,99 @@ msgstr "大阪商業大学JGSS研究センター"
 msgid "Historiographical Institute The University of Tokyo"
 msgstr "東京大学史料編纂所"
 
+#: weko_search_ui/utils.py:
+msgid "Please specify {}."
+msgstr "{}を設定してください。"
 
+#: weko_search_ui/utils.py:
+msgid "{} is required item."
+msgstr "{}は必須項目です。"
 
+#: weko_search_ui/utils.py:
+msgid "{} cannot be set."
+msgstr "{}は設定できません。"
+
+#: weko_search_ui/utils.py:
+msgid "DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."
+msgstr "DOI_RAはJaLC,Crossref,DataCite,NDL JaLCのいずれかを設定してください。"
+
+#: weko_search_ui/utils.py:
+msgid "Please set "public" or "private" for {}."
+msgstr "{}はpublic,privateのいずれかを設定してください。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} is different from existing {}."
+msgstr "指定された{}は登録している{}と異なっています。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} is invalid."
+msgstr "指定された{}は不正です。"
+
+#: weko_search_ui/utils.py:
+msgid "The specified {} does not exist in system."
+msgstr "指定された{}はシステムに存在しません。"
+
+#: weko_search_ui/utils.py:
+msgid "Both of IndexID and POS_INDEX are not being set."
+msgstr "IndexID, POS_INDEXがどちらも設定されていません。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified {} does not match with existing index."
+msgstr "指定された{}はシステムのものと一致していません。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified URI and system URI do not match."
+msgstr "指定されたURIとシステムURIが一致しません。"
+
+#: weko_search_ui/utils.py:
+msgid "Specified item type does not exist."
+msgstr "指定されたアイテムタイプが存在していません。"
+
+#: weko_search_ui/utils.py:
+msgid "Please specify item ID by half-width number."
+msgstr "アイテムIDは半角数字で指定してください。"
+
+#: weko_search_ui/utils.py:
+msgid " Item ID does not match the specified URI information."
+msgstr "アイテムIDが指定されたURIの情報と一致しません。"
+
+#: weko-search-ui\weko_search_ui\utils.py:1307
+msgid "PID does not meet the conditions."
+msgstr "PID付与の条件を満たしていません。"
+
+#: weko-search-ui\weko_search_ui\utils.py:603
+msgid "Please specify either \"Keep\" or \"Upgrade\"."
+msgstr "Keep、Upgradeのいずれかを指定してください。"
+
+msgid "Change Identifier Mode."
+msgstr "識別子変更モード"
+
+msgid "Register with [Change Identifier Mode]."
+msgstr "「識別子変更モード」で登録します。"
+
+msgid "I agree to the terms of use."
+msgstr "利用規約に同意します"
+
+msgid "Change DOI Mode"
+msgstr "DOI変更モード"
+
+msgid "The specified {} exceeds the maximum length."
+msgstr "指定された{}が最大長を超えています。"
+
+msgid "Item Type Template"
+msgstr "アイテムタイプのテンプレート"
+
+msgid "Failed to download."
+msgstr "ダウンロードに失敗しました。"
+
+msgid "Failed to get item type list."
+msgstr "アイテムタイプリストの取得に失敗しました。"
+
+msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
+msgstr "日付はYYYY-MM-DD、YYYY-MM、YYYYのいずれかで指定してください。"
+
+msgid "Specified Prefix of {} is incorrect."
+msgstr "指定された{}のPrefixが誤っています。"
+
+msgid "Suffix of {} can only be used with half-width alphanumeric characters and half-width symbols "_-.; () /"."
+msgstr "{}のSuffixは半角英数字、半角記号「_-.;()/」以外使用できません。"

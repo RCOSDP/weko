@@ -166,12 +166,12 @@ RECORDS_UI_ENDPOINTS = dict(
 
 RECORDS_UI_EXPORT_FORMATS = {
     'recid': {
-        'junii2': dict(
-            title='junii2',
-            serializer='weko_schema_ui.serializers.WekoCommonSchema',
-            order=1,
-        ),
-        'jpcoar': dict(
+        # 'junii2': dict(
+        #     title='junii2',
+        #     serializer='weko_schema_ui.serializers.WekoCommonSchema',
+        #     order=1,
+        # ),
+        'jpcoar_1.0': dict(
             title='JPCOAR',
             serializer='weko_schema_ui.serializers.WekoCommonSchema',
             order=2,
@@ -225,7 +225,7 @@ OAISERVER_METADATA_FORMATS = {
         'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
         'namespace': 'http://irdb.nii.ac.jp/oai',
     },
-    'jpcoar': {
+    'jpcoar_1.0': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
                 'schema_type': 'jpcoar',
@@ -375,5 +375,5 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
 ]
 """Define of list license will be used."""
 
-WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR = '/static/'
+WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR = '/data/pdfcoverpage/'
 """Directory of Image Header of PDF."""

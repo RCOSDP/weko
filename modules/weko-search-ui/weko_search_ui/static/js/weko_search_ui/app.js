@@ -140,6 +140,10 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.disable_flg = true;
   $rootScope.display_flg = true;
   $rootScope.index_id_q = $location.search().q != undefined ? $location.search().q : '';
+  let topPageIndexId = $("#index_id_q").val();
+  if (topPageIndexId !== undefined && !$rootScope.index_id_q) {
+    $rootScope.index_id_q = topPageIndexId;
+  }
   $rootScope.journal_info = [];
   $rootScope.collapse_flg = true;
   $rootScope.journal_title = $("#journal_title_i18n").val();
@@ -191,8 +195,8 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     var custom_sort_list =[]
     for (var x in data) {
       var sub = {"id":"", "custom_sort":""}
-      sub.id= x.id;
-      sub.custom_sort=x.metadata.custom_sort;
+      sub.id= data[x].id;
+      sub.custom_sort=data[x].metadata.custom_sort;
       custom_sort_list.push(sub);
     }
     var post_data = { "q_id": $rootScope.index_id_q, "sort": custom_sort_list, "es_data": data }
@@ -282,9 +286,25 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
   }
 
+  //Get path and name to dict.
+  $scope.getPathName = function () {
+    let path_str = $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0].key;
+    path_str = path_str.replace(/\//g, '_');
+    $http({
+      method: 'GET',
+      url: '/get_path_name_dict/' + path_str + '?time=' + currentTime,
+      headers: {'Content-Type': 'application/json'},
+    }).then(function successCallback(response) {
+      $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'] = response.data;
+    }, function errorCallback(error) {
+      console.log(error);
+    });
+  }
+
   // Check all records for restricted content
   $scope.$on('invenio.search.finished', function (evt) {
-    $rootScope.display_comment_jounal()
+    $scope.getPathName();
+    $rootScope.display_comment_jounal();
   });
 }
 
@@ -475,7 +495,43 @@ angular.module('invenioSearch')
     return function (htmlCode) {
       return $sce.trustAsHtml(htmlCode);
     }
-  }]);
+  }])
+  .filter("escapeTitle", function () {
+    return function (data) {
+      if (data){
+        data = escapeString(data);
+      }
+      return data;
+    }
+  })
+  .filter("escapeAuthor", function () {
+    return function (authorData) {
+      let tmpAuthorData = JSON.parse(JSON.stringify(authorData))
+      return escapeAuthorString(tmpAuthorData);
+    }
+  });
+
+function escapeAuthorString(data) {
+  if (Array.isArray(data) && data.length > 0) {
+    for (let i = 0; i < data.length; i++) {
+      data[i] = escapeAuthorString(data[i]);
+    }
+  } else if (typeof data === 'object') {
+    Object.keys(data).forEach(function (key) {
+      data[key] = escapeAuthorString(data[key]);
+    })
+  } else if (typeof data === 'string') {
+    data = escapeString(data)
+  }
+  return data;
+}
+
+function escapeString(data) {
+  return data
+    .replace(/[\x00-\x1F\x7F]/g, "")
+    .replace(/&EMPTY&/g, "")
+    .trim();
+}
 
 function format_comment(comment) {
   let result = ""

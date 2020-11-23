@@ -21,7 +21,8 @@
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
 {% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
-{% macro output_item_detail(record, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true) %}
+{% macro output_item_detail(record, files, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true) %}
+{% autoescape false %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info and is_logged_in %}
         <tr>
@@ -57,35 +58,34 @@
               {%- elif lst.get('attribute_value_mlt') and ( lst['attribute_value_mlt'][0]['magazine_attribute_name'] or lst['attribute_value_mlt'][0]['title_attribute_name'] ) -%}
                  {{ output_bibliographic_information(lst) }}
               {% else %}
-                  {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' %}
-                    {%- if lst['attribute_value'] is string or lst['attribute_value'] or lst['attribute_value_mlt']|length > 0 -%}
+                {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' %}
+                  {%- if lst['attribute_value'] is string or lst['attribute_value'] or lst['attribute_value_mlt']|length > 0 -%}
                     <tr>
                       <th scope="row"
                           colspan="6">{{ lst['attribute_name_i18n'] }}</th>
-                      <td>
-                        <pre class="hide">{{ lst|tojson }}</pre>
-                          {% if lst['attribute_value'] is string %}
-                              {{ lst['attribute_value'] }}
-                          {% else %}
-                              {%- for key in lst['attribute_value'] %}
-                                  {{ key }}
-                              {% endfor %}
-                          {% endif %}
-                          {%- for l in lst['attribute_value_mlt'] -%}
-                              {{ output_attribute_value(l, is_logged_in, open_day_display_flg) }}
+                      <td class="multiple-line">
+                        {%- if lst['attribute_value'] is string -%}
+                          {{ lst['attribute_value'] }}
+                        {%- else -%}
+                          {%- for key in lst['attribute_value'] -%}
+                            {{ key }}
                           {%- endfor -%}
+                        {%- endif -%}
+                        {%- for l in lst['attribute_value_mlt'] -%}
+                          {{ output_attribute_value(l, is_logged_in, open_day_display_flg) }}
+                        {%- endfor -%}
                       </td>
                     </tr>
-                    {%- endif -%}
-                  {% else %}
-                      {{ output_detail_data(lst) }}
-                  {% endif %}
+                  {%- endif -%}
+                {% else %}
+                  {{ output_detail_data(lst) }}
+                {% endif %}
               {% endif %}
           {% endif %}
-          {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
+          {%- if 'is_thumbnail' in lst.keys() and lst.get('is_thumbnail') and files_thumbnail -%}
             <tr>
               <th scope="row"
-                  colspan="6">{{ lst.get('attribute_name_hidden', _('Thumbnail')) }}</th>
+                  colspan="6">{{ lst.get('attribute_name_i18n', _('Thumbnail')) }}</th>
               <td>
                   {%- for thumb in files_thumbnail | sort(attribute='key') -%}
                       {%- set thumb_name = thumb.filename or thumb.key -%}
@@ -108,7 +108,7 @@
           <td>
               {%- for sub_record in record.relation %}
                 <a target="_self"
-                   href="{{ sub_record.item_links }}">{{ sub_record.item_title }}</a>
+                   href="{{ sub_record.item_links }}">{{ sub_record.item_title | escape_str }}</a>
                 <br>
               {% endfor %}
           </td>
@@ -155,4 +155,5 @@
         </tr>
       {% endif %}
   </table>
+{% endautoescape %}
 {% endmacro %}

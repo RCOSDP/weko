@@ -85,10 +85,49 @@
       {% include "weko_theme/body_search.html" %}
     </div>
   </div>
-  <div class="row">
-    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
+  <div class="row" style="height: 100%">
+    <div class="col-sm-{{ width }} col-md-{{ width }} col-lg-{{ width }}">
       {% include "weko_theme/body_index.html" %}
       {% include "weko_search_ui/body_facet_search.html" %}
     </div>
+    {%-if not community_id %}
+      <div class="col-sm-{{ 12-width|int }} col-md-{{ 12-width|int }} col-lg-{{ 12-width|int }}">
+      {% set display_seting  = settings | get_init_display_setting() %}
+        {% if display_seting.init_display_setting == '0' %}
+          {% set sort_option = display_seting.sort_option %}
+          {% set index_id = display_seting.index_id %}
+          {% set index_display_format = display_seting.index_display_format %}
+          {% set disply_setting = display_seting.disply_setting %}
+          {% set search_hidden_params = display_seting.search_hidden_params %}
+          {% set journal_info = display_seting.journal_info %}
+          {% set allow_item_exporting = display_seting.allow_item_exporting %}
+          {% set is_permission = display_seting.is_permission %}
+          {% set is_login = display_seting.is_login %}
+          <input type="hidden" id="index_id_q" value="{{ search_hidden_params.q }}">
+          {% include "weko_search_ui/body_contents.html" %}
+        {% elif display_seting.init_display_setting == '1' %}
+          {% set is_show = display_seting.is_show %}
+          {% set start_date = display_seting.start_date %}
+          {% set end_date = display_seting.end_date %}
+          {% if is_show %}
+            {% set rankings = display_seting.rankings %}
+            {% from "weko_items_ui/macros/ranking_list.html" import ranking_list %}
+            {% include "weko_items_ui/ranking_body.html" %}
+          {% endif %}
+        {% elif display_seting.init_display_setting == '2' %}
+          {% set r_from = display_seting.r_from %}
+          {% set r_to = display_seting.r_to %}
+          {% set r_total = display_seting.r_total %}
+          {% set pagination = display_seting.pagination %}
+          {% set form = display_seting.form %}
+          {% set title = display_seting.title %}
+          {% set communities = display_seting.communities %}
+          {% set featured_community = display_seting.featured_community %}
+          {% set featured_community = display_seting.featured_community %}
+          {% set mycommunities = display_seting.mycommunities %}
+          {% include "invenio_communities/communities_list_body.html" %}
+        {% endif %}
+      </div>
+    {% endif %}
   </div>
 {%- endblock page_body_main %}

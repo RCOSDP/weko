@@ -126,6 +126,8 @@ def query_record_changes(repository_id,
             result['record_version'] = int(recids[1])
             if recids[1] == '1':
                 result['status'] = 'created'
+            elif recids[1] == '0':
+                continue
             else:
                 result['status'] = 'updated'
 

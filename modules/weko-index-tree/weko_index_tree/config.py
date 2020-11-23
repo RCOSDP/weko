@@ -30,9 +30,6 @@ WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = \
 WEKO_INDEX_TREE_EDIT_ADMIN_TEMPLATE = 'weko_index_tree/admin/tree_edit.html'
 """Index template for the index tree page."""
 
-WEKO_INDEX_TREE_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_setting.html'
-"""Index area setting page."""
-
 WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE = \
     'weko_index_tree/admin/index_link_setting.html'
 """Index link setting page."""

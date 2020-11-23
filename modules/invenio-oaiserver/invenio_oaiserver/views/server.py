@@ -85,7 +85,7 @@ def resumptiontoken_error(exception):
     ])), 422, {'Content-Type': 'text/xml'})
 
 
-@blueprint.route('/oai2d', methods=['GET', 'POST'])
+@blueprint.route('/oai', methods=['GET', 'POST'])
 @use_args(make_request_validator)
 def response(args):
     """Response endpoint."""

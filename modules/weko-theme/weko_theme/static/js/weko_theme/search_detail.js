@@ -114,10 +114,13 @@
                             item.key_value.id + "_to=" + item.key_value.inputVal_to;
                     }
                     if (item.key_value.inputType == "checkbox_list") {
-                        var key_arr = ""
+                        var key_arr = "";
+                        let firstItem = true;
                         angular.forEach(item.key_value.check_val, function (item, index, array) {
                             if (item.checkStus) {
-                                key_arr = key_arr + item.id + ",";
+                                let currentKey = firstItem ? item.id : "," + item.id;
+                                key_arr = key_arr + currentKey;
+                                firstItem = false
                             }
                         });
                         query_str = query_str + "&" + item.key_value.id + "=" + key_arr;
@@ -130,9 +133,12 @@
                     }
                     if (item.key_value.mappingFlg) {
                         var schema_or_arr = "";
+                        let firstItem = true;
                         angular.forEach(item.key_value.sche_or_attr, function (item, index, array) {
                             if (item.checkStus) {
-                                schema_or_arr = schema_or_arr + item.id + ",";
+                                let currentKey = firstItem ? item.id : "," + item.id;
+                                schema_or_arr = schema_or_arr + currentKey;
+                                firstItem = false;
                             }
                         });
                         query_str = query_str + "&" + item.key_value.mappingName + "=" + schema_or_arr;
