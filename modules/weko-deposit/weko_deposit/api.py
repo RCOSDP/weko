@@ -1257,8 +1257,7 @@ class WekoRecord(Record):
         creators = []
         if meta_data:
             for creator_data in meta_data:
-                creator_dict = _FormatSysCreator(
-                    creator_data, languages.copy()).format_creator()
+                creator_dict = _FormatSysCreator(creator_data).format_creator()
                 identifiers = WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers']
                 creator_mails = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']
                 if identifiers in creator_data:
@@ -1389,7 +1388,7 @@ class WekoRecord(Record):
 class _FormatSysCreator:
     """Format system creator for detail page."""
 
-    def __init__(self, creator, languages):
+    def __init__(self, creator):
         """Initialize Format system creator for detail page.
 
         :param creator:Creator data
@@ -1397,8 +1396,19 @@ class _FormatSysCreator:
         """
         self.creator = creator
         self.current_language = current_i18n.language
-        self.languages = languages
         self.no_language_key = "NoLanguage"
+        self._get_creator_languages_order()
+
+    def _get_creator_languages_order(self):
+        """
+        Get list creator languages.
+        @return:
+        """
+        languages = []
+        for creator in self.creator.get("creatorNames"):
+            if not creator.get("creatorNameLang") in languages:
+                languages.append(creator.get("creatorNameLang"))
+        self.languages = languages
 
     def _format_creator_to_show_detail(self, language: str, parent_key: str,
                                        lst: list) -> NoReturn:
@@ -1541,7 +1551,6 @@ class _FormatSysCreator:
         """
         creator_lst = []
         rtn_value = {}
-        ja_language = "ja"
         ja_kana_language = "ja-Kana"
         creator_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']
         family_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']
@@ -1559,9 +1568,7 @@ class _FormatSysCreator:
         creator_list = []
 
         # Get creators are displayed on creator pop up.
-        self._get_creator_to_display_on_popup(creator_list_tmp,
-                                              ja_kana_language,
-                                              ja_language)
+        self._get_creator_to_display_on_popup(creator_list_tmp)
         for creator_data in creator_list_tmp:
             if isinstance(creator_data, dict):
                 creator_temp = {}
@@ -1694,39 +1701,14 @@ class _FormatSysCreator:
         des_creator[affiliation_name_key] = identifier_name_list
         des_creator[identifier_key] = identifier_list
 
-    def _get_creator_to_display_on_popup(self, creator_list: list,
-                                         ja_kana_language: str,
-                                         ja_language: str):
+    def _get_creator_to_display_on_popup(self, creator_list: list):
         """Get creator to display on popup.
 
         :param creator_list: Creator list.
-        :param ja_kana_language: ja kana language key.
-        :param ja_language: ja language key.
         """
-        # Format creator by key is language default.
-        self._get_creator_to_show_popup(self.creator, self.current_language,
-                                        creator_list)
-
-        # Format creator by key if language is ja-Kana.
-        if self.current_language == ja_language:
-            self._get_creator_to_show_popup(self.creator, ja_kana_language,
-                                            creator_list)
-
-        # Remove current language from languages
-        if creator_list:
-            self.languages.remove(self.current_language)
-
-        # Get creator based on the language setting order.
         for lang in self.languages:
             self._get_creator_to_show_popup(self.creator, lang,
                                             creator_list)
-            if lang == ja_language:
-                self._get_creator_to_show_popup(self.creator,
-                                                ja_kana_language,
-                                                creator_list)
-        # Get creator in case there is no language input
-        self._get_creator_to_show_popup(self.creator, None,
-                                        creator_list)
 
     def _merge_creator_data(self, creator_data: Union[list, dict],
                             merged_data: dict) -> NoReturn:
