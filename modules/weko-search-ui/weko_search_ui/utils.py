@@ -2430,7 +2430,8 @@ def handle_check_metadata_not_existed(str_keys, item_type_id=0):
     for str_key in str_keys:
         if str_key.startswith('.metadata.'):
             pre_key = re.sub(r'\[\d+\]', '[0]', str_key)
-            if pre_key != '.metadata.path[0]' and pre_key not in ids:
+            if pre_key != '.metadata.path[0]' and pre_key not in ids \
+                    and 'iscreator' not in pre_key:
                 result.append(str_key.replace('.metadata.', ''))
     return result
 
@@ -2448,6 +2449,8 @@ def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None):
     """
     ids, names = [], []
     for key in sorted(items.keys()):
+        if key == 'iscreator':
+            continue
         item = items.get(key)
         if item.get('items'):
             _ids, _names = handle_get_all_sub_id_and_name(

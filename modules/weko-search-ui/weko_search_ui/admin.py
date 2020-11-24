@@ -441,7 +441,7 @@ class ItemImportView(BaseView):
                                     names_line.append(
                                         '.ファイルパス[{}]'.format(count_file))
                                     systems_line.append('')
-                                    options_line.append('')
+                                    options_line.append('Allow Multiple')
                                     count_file += 1
                                 if 'thumbnail_label' in _id:
                                     ids_line.append('.thumbnail_path[{}]'
@@ -449,7 +449,7 @@ class ItemImportView(BaseView):
                                     names_line.append('.サムネイルパス[{}]'
                                                       .format(count_thumbnail))
                                     systems_line.append('')
-                                    options_line.append('')
+                                    options_line.append('Allow Multiple')
                                     count_thumbnail += 1
 
                                 clean_key = _id.replace('.metadata.', '') \

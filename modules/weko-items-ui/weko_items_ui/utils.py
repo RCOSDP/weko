@@ -919,6 +919,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         key_label.extend(sublabel)
                         key_data.extend(subdata)
                     else:
+                        if 'iscreator' in new_key:
+                            continue
                         if isinstance(data, dict):
                             data = [data]
                         key_list.append(new_key)
@@ -1076,6 +1078,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
     ret_system = []
     ret_option = []
+    multiple_option = ['.metadata.path', '.pos_index',
+                       '.feedback_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})
@@ -1114,6 +1118,9 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         elif key == '.edit_mode' or key == '.publish_status':
             ret_system.append('')
             ret_option.append('Required')
+        elif _id.split('[')[0] in multiple_option:
+            ret_system.append('')
+            ret_option.append('Allow Multiple')
         else:
             ret_system.append('')
             ret_option.append('')

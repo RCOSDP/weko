@@ -497,8 +497,9 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
-    '#', '', '',
-    '', 'Required', '', '', '', '', 'Required'
+    '#', '', 'Allow Multiple',
+    'Allow Multiple', 'Required', 'Allow Multiple',
+    '', '', '', 'Required'
 ]
 
 WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
