@@ -50,7 +50,7 @@
     },
     "type": "template",
     "format": "yyyy-MM-dd",
-    "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+    "templateUrl": "/static/templates/weko_deposit/datepicker_multi_format.html"
   },
   {
     "key": "date_first_issue_online",
@@ -61,7 +61,7 @@
     },
     "type": "template",
     "format": "yyyy-MM-dd",
-    "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+    "templateUrl": "/static/templates/weko_deposit/datepicker_multi_format.html"
   },
   {
     "key": "num_first_vol_online",
@@ -100,7 +100,7 @@
     },
     "type": "template",
     "format": "yyyy-MM-dd",
-    "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+    "templateUrl": "/static/templates/weko_deposit/datepicker_multi_format.html"
   },
   {
     "key": "num_last_vol_online",
