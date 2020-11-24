@@ -1225,11 +1225,8 @@ class WekoRecord(Record):
                         copy.deepcopy(solst)
                     )
                     if is_author:
-                        language_list = []
                         from weko_gridlayout.utils import get_register_language
-                        for lang in get_register_language():
-                            language_list.append(lang['lang_code'])
-                        creators = self._get_creator(mlt, language_list, hide_email_flag)
+                        creators = self._get_creator(mlt, hide_email_flag)
                         nval['attribute_value_mlt'] = creators
                     elif is_thumbnail:
                         nval['is_thumbnail'] = True
@@ -1253,7 +1250,7 @@ class WekoRecord(Record):
         return items
 
     @staticmethod
-    def _get_creator(meta_data, languages, hide_email_flag):
+    def _get_creator(meta_data, hide_email_flag):
         creators = []
         if meta_data:
             for creator_data in meta_data:
