@@ -1726,13 +1726,6 @@ def register_item_doi(item):
                     is_feature_import=True
                 )
 
-        deposit = WekoDeposit.get_record(pid.object_uuid)
-        deposit.commit()
-        deposit.publish()
-        deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
-        deposit.commit()
-        deposit.publish()
-
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
