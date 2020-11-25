@@ -24,7 +24,7 @@ import sys
 import uuid
 from datetime import datetime, timezone
 from typing import NoReturn, Union
-
+from collections import OrderedDict
 import redis
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
@@ -790,7 +790,7 @@ class WekoDeposit(Deposit):
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
                                 if file.obj.file.size <= file_size_max and \
-                                        file.obj.mimetype in mimetypes:
+                                    file.obj.mimetype in mimetypes:
 
                                     content = lst.copy()
                                     content.update(
@@ -809,7 +809,7 @@ class WekoDeposit(Deposit):
             if isinstance(self.data.get(key), list):
                 for item in self.data.get(key):
                     if (isinstance(item, dict) or isinstance(item, list)) \
-                            and 'filename' in item:
+                        and 'filename' in item:
                         file_data.extend(self.data.get(key))
                         break
         return file_data
@@ -924,8 +924,8 @@ class WekoDeposit(Deposit):
         for pth in index_lst:
             # es setting
             sub_sort[pth[-13:]] = ""
-#        jrc.update(dict(custom_sort=sub_sort))
-#        dc.update(dict(custom_sort=sub_sort))
+        #        jrc.update(dict(custom_sort=sub_sort))
+        #        dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')
@@ -1001,7 +1001,7 @@ class WekoDeposit(Deposit):
                 for result in self.indexer.get_pid_by_es_scroll(path):
                     db.session.query(p). \
                         filter(p.object_uuid.in_(result),
-                               p.object_type == 'rec').\
+                               p.object_type == 'rec'). \
                         update({p.status: 'D', p.updated: dt},
                                synchronize_session=False)
                     result.clear()
@@ -1207,15 +1207,15 @@ class WekoRecord(Record):
                 nval['attribute_type'] = val.get('attribute_type')
 
                 if nval['attribute_name'] == 'Reference' \
-                        or nval['attribute_type'] == 'file':
+                    or nval['attribute_type'] == 'file':
                     file_metadata = copy.deepcopy(mlt)
                     if nval['attribute_type'] == 'file':
-                        file_metadata = self.\
+                        file_metadata = self. \
                             __remove_file_metadata_do_not_publish(
-                                file_metadata)
+                            file_metadata)
                     nval['attribute_value_mlt'] = \
                         get_all_items(
-                        file_metadata, copy.deepcopy(solst), True)
+                            file_metadata, copy.deepcopy(solst), True)
                 else:
                     is_author = nval['attribute_type'] == 'creator'
                     is_thumbnail = any(
@@ -1285,9 +1285,9 @@ class WekoRecord(Record):
             # Check super users
             else:
                 super_users = current_app.config[
-                    'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
-                    current_app.config[
-                        'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+                                  'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                                  current_app.config[
+                                      'WEKO_PERMISSION_ROLE_COMMUNITY'],)
                 for role in list(current_user.roles or []):
                     if role.name in super_users:
                         is_ok = True
@@ -1397,14 +1397,36 @@ class _FormatSysCreator:
         self._get_creator_languages_order()
 
     def _get_creator_languages_order(self):
-        """
-        Get list creator languages.
+        """Get creator languages order.
+
         @return:
         """
+        #Prioriry languages: creator, family, given, alternative, affiliation
+        lang_key = OrderedDict()
+        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']] = \
+            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_lang']
+        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']] = \
+            WEKO_DEPOSIT_SYS_CREATOR_KEY['family_lang']
+        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']] = \
+            WEKO_DEPOSIT_SYS_CREATOR_KEY['given_lang']
+        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']] = \
+            WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
+
         languages = []
-        for creator in self.creator.get("creatorNames"):
-            if not creator.get("creatorNameLang") in languages:
-                languages.append(creator.get("creatorNameLang"))
+        for k, v in lang_key.items():
+            for data in self.creator.get(k, []):
+                if data.get(v) not in languages:
+                    languages.append(data.get(v))
+
+        for creator_affiliation in self.creator.get(
+                WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations'], []):
+            for affiliation_name in creator_affiliation.get(
+                    WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names'], []):
+                if affiliation_name.get(
+                    WEKO_DEPOSIT_SYS_CREATOR_KEY[
+                        'affiliation_lang']) not in languages:
+                    languages.append(affiliation_name.get(
+                        WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_lang']))
         self.languages = languages
 
     def _format_creator_to_show_detail(self, language: str, parent_key: str,
@@ -1485,7 +1507,7 @@ class _FormatSysCreator:
                 affiliation_name_identifiers_format = creator.get(
                     'affiliationNameIdentifiers', [])
                 if len(affiliation_name_format) >= len(
-                        affiliation_name_identifiers_format):
+                    affiliation_name_identifiers_format):
                     affiliation_max = affiliation_name_format
                     affiliation_min = affiliation_name_identifiers_format
                 else:
@@ -1783,7 +1805,7 @@ class _FormatSysBibliographicInformation:
         if isinstance(meta_data, dict):
             return check_key(meta_data)
         elif isinstance(meta_data, list) and len(meta_data) > 0 and isinstance(
-                meta_data[0], dict):
+            meta_data[0], dict):
             return check_key(meta_data[0])
 
         return False
@@ -1903,11 +1925,11 @@ class _FormatSysBibliographicInformation:
         if isinstance(issue_date, list):
             for issued_date in issue_date:
                 if issued_date.get(
-                        'bibliographicIssueDate') and issued_date.get(
-                        'bibliographicIssueDateType') == issue_type:
+                    'bibliographicIssueDate') and issued_date.get(
+                    'bibliographicIssueDateType') == issue_type:
                     date.append(issued_date.get('bibliographicIssueDate'))
         elif isinstance(issue_date, dict):
             if issue_date.get('bibliographicIssueDate') \
-                    and issue_date.get('bibliographicIssueDateType') == issue_type:
+                and issue_date.get('bibliographicIssueDateType') == issue_type:
                 date.append(issue_date.get('bibliographicIssueDate'))
         return date
