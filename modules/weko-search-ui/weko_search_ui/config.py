@@ -317,7 +317,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "des": ["search_des", "search_des.ja"],
         "publisher": ["search_publisher", "search_publisher.ja"],
         "cname": ["search_contributor", "search_contributor.ja"],
-        "itemtype": ("itemtype", str),
+        "itemtype": ("itemtype.keyword", str),
         "type": {
             "type.raw": [
                 "conference paper",
