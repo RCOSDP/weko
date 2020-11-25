@@ -1401,7 +1401,7 @@ class _FormatSysCreator:
 
         @return:
         """
-        #Prioriry languages: creator, family, given, alternative, affiliation
+        # Prioriry languages: creator, family, given, alternative, affiliation
         lang_key = OrderedDict()
         lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']] = \
             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_lang']
@@ -1413,10 +1413,8 @@ class _FormatSysCreator:
             WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
 
         languages = []
-        for k, v in lang_key.items():
-            for data in self.creator.get(k, []):
-                if data.get(v) not in languages:
-                    languages.append(data.get(v))
+        [languages.append(data.get(v)) for k, v in lang_key.items()
+         for data in self.creator.get(k, []) if data.get(v) not in languages]
 
         for creator_affiliation in self.creator.get(
                 WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations'], []):
