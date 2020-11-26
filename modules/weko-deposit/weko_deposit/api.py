@@ -116,8 +116,8 @@ class WekoFileObject(FileObject):
                 'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
             # Convert MB to Bytes in decimal
             file_size_limit = current_app.config[
-                'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
-                file_type] * 1000000
+                                  'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
+                                  file_type] * 1000000
             if file_size > file_size_limit:
                 return False
         return True
@@ -487,7 +487,7 @@ class WekoDeposit(Deposit):
         if 'control_number' in self:
             self.pop('control_number')
         if '$schema' not in self:
-            self['$schema'] = current_app.extensions['invenio-jsonschemas'].\
+            self['$schema'] = current_app.extensions['invenio-jsonschemas']. \
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
         try:
@@ -579,8 +579,8 @@ class WekoDeposit(Deposit):
                 if key in self:
                     self.pop(key)
 
-#        if 'pid' in self['_deposit']:
-#            self['_deposit']['pid']['revision_id'] += 1
+        #        if 'pid' in self['_deposit']:
+        #            self['_deposit']['pid']['revision_id'] += 1
         try:
             if has_request_context():
                 if current_user:
@@ -742,13 +742,13 @@ class WekoDeposit(Deposit):
                 with db.session.begin_nested():
                     # Set relation type of draft record is 3: Draft
                     parent_pid = PIDVersioning(child=recid).parent
-                    relation = PIDRelation.query.\
+                    relation = PIDRelation.query. \
                         filter_by(parent=parent_pid,
                                   child=recid).one_or_none()
                     relation.relation_type = 3
                 db.session.merge(relation)
 
-            snapshot = record.files.bucket.\
+            snapshot = record.files.bucket. \
                 snapshot(lock=False)
             snapshot.locked = False
             deposit['_buckets'] = {'deposit': str(snapshot.id)}
@@ -810,7 +810,7 @@ class WekoDeposit(Deposit):
             if isinstance(self.data.get(key), list):
                 for item in self.data.get(key):
                     if (isinstance(item, dict) or isinstance(item, list)) \
-                            and 'filename' in item:
+                                and 'filename' in item:
                         file_data.extend(self.data.get(key))
                         break
         return file_data
@@ -925,8 +925,8 @@ class WekoDeposit(Deposit):
         for pth in index_lst:
             # es setting
             sub_sort[pth[-13:]] = ""
-#        jrc.update(dict(custom_sort=sub_sort))
-#        dc.update(dict(custom_sort=sub_sort))
+        #        jrc.update(dict(custom_sort=sub_sort))
+        #        dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')
@@ -1002,7 +1002,7 @@ class WekoDeposit(Deposit):
                 for result in self.indexer.get_pid_by_es_scroll(path):
                     db.session.query(p). \
                         filter(p.object_uuid.in_(result),
-                               p.object_type == 'rec').\
+                               p.object_type == 'rec'). \
                         update({p.status: 'D', p.updated: dt},
                                synchronize_session=False)
                     result.clear()
@@ -1211,12 +1211,12 @@ class WekoRecord(Record):
                         or nval['attribute_type'] == 'file':
                     file_metadata = copy.deepcopy(mlt)
                     if nval['attribute_type'] == 'file':
-                        file_metadata = self.\
+                        file_metadata = self. \
                             __remove_file_metadata_do_not_publish(
                                 file_metadata)
                     nval['attribute_value_mlt'] = \
                         get_all_items(
-                        file_metadata, copy.deepcopy(solst), True)
+                            file_metadata, copy.deepcopy(solst), True)
                 else:
                     is_author = nval['attribute_type'] == 'creator'
                     is_thumbnail = any(
@@ -1285,9 +1285,9 @@ class WekoRecord(Record):
             # Check super users
             else:
                 super_users = current_app.config[
-                    'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
-                    current_app.config[
-                        'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+                                  'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                                  current_app.config[
+                                      'WEKO_PERMISSION_ROLE_COMMUNITY'],)
                 for role in list(current_user.roles or []):
                     if role.name in super_users:
                         is_ok = True
@@ -1412,10 +1412,12 @@ class _FormatSysCreator:
         lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']] = \
             WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
 
+        # Get languages for all same structure languages key
         languages = []
         [languages.append(data.get(v)) for k, v in lang_key.items()
          for data in self.creator.get(k, []) if data.get(v) not in languages]
 
+        # Get languages affiliation
         for creator_affiliation in self.creator.get(
                 WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations'], []):
             for affiliation_name in creator_affiliation.get(
@@ -1734,6 +1736,7 @@ class _FormatSysCreator:
         :param creator_data: Creator data.
         :param merged_data: Merged data.
         """
+
         def merge_data(key, value):
             if isinstance(merged_data.get(key), list):
                 merged_data[key].append(value)
@@ -1765,18 +1768,12 @@ class _FormatSysCreator:
                     return
 
         _get_creator(self.current_language)
-        # if creator_names is None when chose default language
+        # if current language has no creator
         if not creator_names:
             for lang in self.languages:
                 _get_creator(lang)
                 if creator_names:
                     break
-        # if creator_names is ja-Kana when chose priority language
-        if not creator_names:
-            _get_creator(ja_kana_language)
-        # if creator_names is None when chose priority language
-        if not creator_names:
-            _get_creator(None)
 
 
 class _FormatSysBibliographicInformation:
@@ -1923,11 +1920,12 @@ class _FormatSysBibliographicInformation:
         if isinstance(issue_date, list):
             for issued_date in issue_date:
                 if issued_date.get(
-                        'bibliographicIssueDate') and issued_date.get(
+                    'bibliographicIssueDate') and issued_date.get(
                         'bibliographicIssueDateType') == issue_type:
                     date.append(issued_date.get('bibliographicIssueDate'))
         elif isinstance(issue_date, dict):
             if issue_date.get('bibliographicIssueDate') \
-                    and issue_date.get('bibliographicIssueDateType') == issue_type:
+                   and issue_date.get('bibliographicIssueDateType') \
+                    == issue_type:
                 date.append(issue_date.get('bibliographicIssueDate'))
         return date
