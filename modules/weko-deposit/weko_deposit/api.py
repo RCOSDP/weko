@@ -1570,7 +1570,6 @@ class _FormatSysCreator:
         """
         creator_lst = []
         rtn_value = {}
-        ja_kana_language = "ja-Kana"
         creator_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']
         family_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']
         given_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']
@@ -1579,7 +1578,7 @@ class _FormatSysCreator:
                            alternative_names]
 
         # Get default creator name to show on detail screen.
-        self._get_default_creator_name(ja_kana_language, list_parent_key,
+        self._get_default_creator_name(list_parent_key,
                                        creator_lst)
 
         rtn_value['name'] = creator_lst
@@ -1751,12 +1750,10 @@ class _FormatSysCreator:
                 if isinstance(v, str):
                     merge_data(k, v)
 
-    def _get_default_creator_name(self, ja_kana_language: str,
-                                  list_parent_key: list,
+    def _get_default_creator_name(self, list_parent_key: list,
                                   creator_names: list) -> NoReturn:
         """Get default creator name.
 
-        :param ja_kana_language: ja kana language key.
         :param list_parent_key: parent list key.
         :param creator_names: Creators name.
         """
