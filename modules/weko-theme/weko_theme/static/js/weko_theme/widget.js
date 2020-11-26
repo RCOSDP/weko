@@ -879,26 +879,29 @@ function buildWidget() {
 
 function resizeImage() {
   $('.trumbowyg-editor img').each(function () {
-    let currentWidget = $(this).closest(".grid-stack-item");
-    let currentTrumbowyg = $(this).closest(".trumbowyg-editor");
-    let currentHeight = currentWidget.data("gsHeight");
-    let currentWidth = currentWidget.data("gsWidth");
-    let img = new Image();
-    img.src = $(this).attr('src');
-    img.onload = function () {
-      let childElement = currentTrumbowyg.children();
-      let widgetHeight = 0;
-      for (let i = 0; i < childElement.length; i++) {
-        let element = $(childElement[i]);
-        if (!element.hasClass("resize-sensor") && element.height()) {
-          widgetHeight += element.height();
+    let notAutoHeight = $(this).closest(".no-auto-height");
+    if (!notAutoHeight) {
+      let currentWidget = $(this).closest(".grid-stack-item");
+      let currentTrumbowyg = $(this).closest(".trumbowyg-editor");
+      let currentHeight = currentWidget.data("gsHeight");
+      let currentWidth = currentWidget.data("gsWidth");
+      let img = new Image();
+      img.src = $(this).attr('src');
+      img.onload = function () {
+        let childElement = currentTrumbowyg.children();
+        let widgetHeight = 0;
+        for (let i = 0; i < childElement.length; i++) {
+          let element = $(childElement[i]);
+          if (!element.hasClass("resize-sensor") && element.height()) {
+            widgetHeight += element.height();
+          }
         }
-      }
-      let newHeight = getNewWidgetHeight(widgetBodyGrid, widgetHeight);
-      if (newHeight > currentHeight) {
-        widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight);
-      } else if (newHeight === currentHeight) {
-        widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight + 1);
+        let newHeight = getNewWidgetHeight(widgetBodyGrid, widgetHeight);
+        if (newHeight > currentHeight) {
+          widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight);
+        } else if (newHeight === currentHeight) {
+          widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight + 1);
+        }
       }
     }
   });
