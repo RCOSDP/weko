@@ -836,7 +836,8 @@ class Indexes(object):
                     func.cast(test_alias.id, db.Text) + '/' + rec_alias.c.path,
                 ).filter(test_alias.id == rec_alias.c.pid)
             )
-            path_index_searchs = db.session.query(recursive_p).filter_by(pid=0).one()
+            path_index_searchs = db.session.query(recursive_p).filter_by(
+                pid=0).one()
             return path_index_searchs.path
         path_index_searchs = recursive_p()
 
@@ -861,6 +862,31 @@ class Indexes(object):
         query = db.session.query(recursive_t)
         q = query.order_by(recursive_t.c.path).all()
         return q
+
+    @classmethod
+    def get_child_list_by_index(cls, pid):
+        """
+        Get index list info.
+
+        :param pid: pid of the index.
+        :return: the list of index.
+        """
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+        ).filter(Index.id == pid). \
+            cte(name="recursive_t", recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec")
+        test_alias = aliased(Index, name="t")
+        recursive_t = recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+            ).filter(test_alias.parent == rec_alias.c.cid)
+        )
+        query = db.session.query(recursive_t).all()
+        return query
 
     @classmethod
     def recs_query(cls, pid=0):

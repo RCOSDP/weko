@@ -125,31 +125,27 @@
             {% endif %}
           <td>
             <div>
-              <form class="form form-inline"
-                    action="{{ url_for('invenio_records_ui.recid_publish', pid_value=pid.pid_value) }}"
-                    method="POST">
-                  {% if record | check_permission %}
-                      {% if '0' in pubs %}
-                          {{ _('Public') }}
-                        <button class="btn btn-default btn-xs" type="submit"
-                                name="status" value="1"
-                                style="font-size:15px">
-                            {{ _('Change to Private') }}
-                        </button>
-                      {% else %}
-                          {{ _('Private') }}
-                        <button class="btn btn-default btn-xs" type="submit"
-                                name="status" value="0"
-                                style="font-size:15px">
-                            {{ _('Change to Public') }}
-                        </button>
-                      {% endif %}
-                  {% else %}
-                      {% if '0' in pubs %}{{ _('Publish') }}{% else %}
-                          {{ _('Private') }}
-                      {% endif %}
-                  {% endif %}
-              </form>
+                {% if record | check_permission %}
+                    {% if '0' in pubs %}
+                        {{ _('Public') }}
+                      <button class="btn btn-default btn-xs" type="button"
+                              name="status" value="1" id="public_status_btn"
+                              style="font-size:15px">
+                          {{ _('Change to Private') }}
+                      </button>
+                    {% else %}
+                        {{ _('Private') }}
+                      <button class="btn btn-default btn-xs" type="button"
+                              name="status" value="0" id="public_status_btn"
+                              style="font-size:15px">
+                          {{ _('Change to Public') }}
+                      </button>
+                    {% endif %}
+                {% else %}
+                    {% if '0' in pubs %}{{ _('Publish') }}{% else %}
+                        {{ _('Private') }}
+                    {% endif %}
+                {% endif %}
             </div>
           </td>
         </tr>

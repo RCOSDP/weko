@@ -15,23 +15,32 @@ require([
     var status = $(this).val();
     var data = { 'public_status': status };
     var urlHref = window.location.href.split('/')
-    const url = urlHref[0] + '//' + urlHref[2] + '/records/' + urlHref[4] + '/pubstatus'
+    let post_uri = "/api/items/check_public_status/" + urlHref[4];
     $.ajax({
-      url: url,
-      type: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify(data),
-      dataType: 'json'
+      url: post_uri,
+      method: 'GET',
+      async: true,
+      success: function (res, status) {
+        if (0 == res.code) {
+          $('[role="alert"]').css('display', 'inline-block');
+          $('[role="alert"]').text($("#change_publish_message").val());
+        } else {
+          const url = urlHref[0] + '//' + urlHref[2] + '/records/' + urlHref[4] + '/publish'
+          $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            success: function () {
+              location.reload();
+            },
+            error: function (jqXHE, status) { }
+          });
+        };
+      },
+      error: function (jqXHE, status) { }
     });
-    if (status == 'Public') {
-      $(this).text('Change to Public');
-      $(this).val('Private');
-      $('#public_status').text('Private');
-    } else {
-      $(this).text('Change to Private');
-      $(this).val('Public');
-      $('#public_status ').text('Public');
-    };
   });
 
   $('a#btn_edit').on('click', function () {

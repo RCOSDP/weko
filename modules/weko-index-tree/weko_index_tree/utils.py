@@ -29,8 +29,10 @@ from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, text
 from weko_groups.models import Group
 
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
@@ -348,7 +350,7 @@ def get_index_id_list(indexes, id_list=None):
                     continue
 
                 parent = index.get('parent', '')
-                if parent is not '' and parent is not '0':
+                if parent != '' and parent != '0':
                     id_list.append(parent + '/' + index.get('id', ''))
                 else:
                     id_list.append(index.get('id', ''))
@@ -371,7 +373,7 @@ def get_publish_index_id_list(indexes, id_list=None):
 
                 parent = index.get('parent', '')
                 if index.get('public_state'):
-                    if parent is not '' and parent is not '0':
+                    if parent != '' and parent != '0':
                         id_list.append(parent + '/' + index.get('id', ''))
                     else:
                         id_list.append(index.get('id', ''))
@@ -596,3 +598,60 @@ def recorrect_private_items_count(agp):
         for bk in bkt:
             if bk.get("from"):
                 agg["no_available"]["doc_count"] += bk.get("doc_count")
+
+
+def check_doi_in_index(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    from .api import Indexes
+    child_idx = Indexes.get_child_list_by_index(index_id)
+    for index in child_idx:
+        if check_doi_in_list_record(get_record_of_index(index.cid)):
+            return True
+    return False
+
+
+def get_record_of_index(index_id):
+    """Get record of index.
+
+    @param index_id:
+    @return:
+    """
+    from .api import Indexes
+    index_child = Indexes.get_child_list_by_pip(index_id)
+    query = PersistentIdentifier.query \
+        .join(RecordMetadata,
+              PersistentIdentifier.object_uuid == RecordMetadata.id) \
+        .filter(text("CAST(json->>'path' AS text) like '" +
+                     '%"' + index_child[0].path + '"%' + "'")) \
+        .filter(RecordMetadata.id == PersistentIdentifier.object_uuid)
+    list_record_query = query.all()
+    return list_record_query
+
+
+def check_doi_in_list_record(list_record_query):
+    """Check doi in list record.
+
+    @param list_record_query:
+    @return:
+    """
+    list_uuid = dict()
+    for record in list_record_query:
+        if record.object_uuid in list_uuid and int(record.id) > list_uuid.get(
+                record.object_uuid).get('id'):
+            list_uuid[record.object_uuid]['id'] = int(record.id)
+            list_uuid[record.object_uuid]['type'] = record.pid_type
+        else:
+            list_uuid.update(
+                {
+                    record.object_uuid: {
+                        'id': int(record.id),
+                        'type': record.pid_type}
+                })
+    for _, value in list_uuid.items():
+        if value.get('type') == 'doi':
+            return True
+    return False

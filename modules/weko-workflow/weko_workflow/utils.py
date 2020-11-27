@@ -37,6 +37,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
+from weko_index_tree.models import Index
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
     Mapping
 from weko_records.serializers.utils import get_mapping
@@ -119,6 +120,7 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
                 identifier = IdentifierHandle(item_id)
                 identifier.update_idt_registration_metadata(doi_register_val,
                                                             doi_register_typ)
+            save_indexs_publish_doi(item_id)
             current_app.logger.info(_('DOI successfully registered!'))
     except Exception as ex:
         current_app.logger.exception(str(ex))
@@ -1469,3 +1471,22 @@ def create_files_url(root_url, record_id, filename):
         root_url,
         record_id,
         filename)
+
+
+def save_indexs_publish_doi(item_id):
+    """Save indexs publish doi.
+
+    :param item_id: Item id.
+
+    :return:
+    """
+    rm = RecordMetadata.query.filter_by(id=item_id).first()
+    indexs = rm.json['path']
+    list_indexs = []
+    for idx in indexs:
+        for index in idx.split('/'):
+            if index not in list_indexs:
+                list_indexs.append(index)
+                index_database = Index.query.filter_by(id=index).first()
+                index_database.public_state = True
+                db.session.commit()
