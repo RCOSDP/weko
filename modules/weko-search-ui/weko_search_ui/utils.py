@@ -1272,6 +1272,8 @@ def handle_check_and_prepare_index_tree(list_record):
                 tree_names = []
                 if pos_index and x <= len(pos_index) - 1:
                     tree_names = [i.strip() for i in pos_index[x].split('/')]
+                    if index_id == '':
+                        tree_ids = ['' for i in tree_names]
                 else:
                     tree_names = ['' for i in range(len(tree_ids))]
 
