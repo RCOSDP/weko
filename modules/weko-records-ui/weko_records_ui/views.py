@@ -368,6 +368,10 @@ def _get_google_scholar_meta(record):
                     'identifierType'] == 'DOI':
                 res.append({'name': 'citation_doi',
                             'data': relatedIdentifier.text})
+        for creator in mtdata.findall(
+                'jpcoar:creator/jpcoar:creatorName',
+                namespaces=mtdata.nsmap):
+            res.append({'name': 'citation_author', 'data': creator.text})
         for sourceIdentifier in mtdata.findall(
                 'jpcoar:sourceIdentifier',
                 namespaces=mtdata.nsmap):
