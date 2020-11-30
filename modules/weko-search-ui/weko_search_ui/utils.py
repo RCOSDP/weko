@@ -75,7 +75,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
-    WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
+    WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
@@ -576,6 +577,42 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
     return result
 
 
+def handle_convert_validate_msg_to_jp(message: str):
+    """"""
+    """Convert validation messages from en to jp.
+
+    :argument
+        message     -- {str} English message.
+    :return
+        return       -- Japanese message.
+
+    """
+    result = None
+    for msg_en, msg_jp in WEKO_IMPORT_VALIDATE_MESSAGE.items():
+        msg_en_pattern = '^{}$'.format(msg_en.replace('%r', '.*'))
+        if re.search(msg_en_pattern, message):
+            msg_paths = msg_en.split('%r')
+            prev_position = 0
+            data = []
+            for index, path in enumerate(msg_paths, start=1):
+                position = message.index(path)
+                if path == '':
+                    if index == 1:
+                        continue
+                    elif index == len(msg_paths):
+                        prev_position += len(msg_paths[index-2])
+                        position = len(message)
+                if position >= 0:
+                    data.append(message[prev_position: position])
+                    prev_position = position
+            if data:
+                result = msg_jp
+            for value in data:
+                result = result.replace('%r', value, 1)
+            return result
+    return message
+
+
 def handle_validate_item_import(list_record, schema) -> list:
     """Validate item import.
 
@@ -597,7 +634,14 @@ def handle_validate_item_import(list_record, schema) -> list:
         if record.get('metadata'):
             if v2:
                 a = v2.iter_errors(record.get('metadata'))
-                errors = errors + [error.message for error in a]
+                if current_i18n.language == 'ja':
+                    _errors = []
+                    for error in a:
+                        _errors.append(handle_convert_validate_msg_to_jp(
+                            error.message))
+                    errors = errors + _errors
+                else:
+                    errors = errors + [error.message for error in a]
             else:
                 errors = errors = errors + \
                     [_('Specified item type does not exist.')]

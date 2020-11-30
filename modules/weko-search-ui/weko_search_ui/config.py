@@ -570,3 +570,8 @@ RESOURCE_TYPE_URI = {
     'workflow': 'http://purl.org/coar/resource_type/c_393c',
     'other': 'http://purl.org/coar/resource_type/c_1843'
 }
+WEKO_IMPORT_VALIDATE_MESSAGE = {
+    '%r is too long': '%rの数が上限数を超えています。',
+    '%r is not one of %r': '%rは次の決めれられた選択肢に含まれていません。%r',
+    '%r is a required property': '%rは必須項目です。'
+}
