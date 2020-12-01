@@ -606,9 +606,12 @@ def check_doi_in_index(index_id):
     @param index_id:
     @return:
     """
-    if check_doi_in_list_record_es(index_id):
-        return True
-    return False
+    try:
+        if check_doi_in_list_record_es(index_id):
+            return True
+        return False
+    except Exception as e:
+        return False
 
 
 def get_record_in_es_of_index(index_id):
@@ -660,11 +663,11 @@ def check_doi_in_list_record_es(index_id):
     """
     list_records_in_es = get_record_in_es_of_index(index_id)
     list_uuid = [record.get('_id') for record in list_records_in_es]
-
-    query = PersistentIdentifier.query.filter(
-        PersistentIdentifier.id.in_(list_uuid)) \
-        .filter(PersistentIdentifier.status == PIDStatus.REGISTERED,
-                PersistentIdentifier.pid_type == 'doi')
+    with db.session.no_autoflush:
+        p = PersistentIdentifier
+        query = db.session.query(p) \
+            .filter(p.object_uuid.in_(list_uuid),
+                    p.status == PIDStatus.REGISTERED, p.pid_type == 'doi')
     db_records = query.all()
     if len(db_records) > 0:
         return True
