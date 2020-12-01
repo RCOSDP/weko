@@ -87,13 +87,13 @@ class DefaultOrderedDict(OrderedDict):
 
     def __init__(self, default_factory=None, *a, **kw):
         """Initialize an default ordered dictionary.
-        
+
         The signature
         is the same as regular dictionaries.  Keyword argument order
         is preserved.
         """
-        if (default_factory is not None and
-           not isinstance(default_factory, Callable)):
+        if default_factory is not None and \
+                not isinstance(default_factory, Callable):
             raise TypeError('first argument must be callable')
         OrderedDict.__init__(self, *a, **kw)
         self.default_factory = default_factory
