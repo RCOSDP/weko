@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
+import json
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
@@ -33,8 +34,10 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table, text
+from weko_deposit.api import WekoRecord
 from weko_groups.models import Group
 
+from .api import Indexes
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
 from .models import Index
 
@@ -499,7 +502,6 @@ def get_index_id(activity_id):
         activity_detail.workflow_id)
     index_tree_id = workflow_detail.index_tree_id
     if index_tree_id:
-        from .api import Indexes
         index_result = Indexes.get_index(index_tree_id)
         if not index_result:
             index_tree_id = None
@@ -617,8 +619,6 @@ def get_record_in_es_of_index(index_id):
     @param index_id:
     @return:
     """
-    from .api import Indexes
-    import json
     query_q = {
         "_source": {
             "excludes": [
@@ -659,7 +659,6 @@ def check_doi_in_list_record_es(index_id):
     @param index_id:
     @return:
     """
-    from weko_deposit.api import WekoRecord
     list_records_in_es = get_record_in_es_of_index(index_id)
     for record in list_records_in_es:
         wr = WekoRecord.get_record_by_pid(
