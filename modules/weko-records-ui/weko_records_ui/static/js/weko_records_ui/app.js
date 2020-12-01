@@ -272,7 +272,7 @@
                 $scope.modalInstance.hide();
                 $http({
                     method: 'GET',
-                    url: "/api/items/check_public_status/" + id,
+                    url: "/api/items/check_record_doi/" + id,
                 }).then(function successCallback(response) {
                     if (0 == response.data.code) {
                         $('[role="alert"]').css('display', 'inline-block');
@@ -290,7 +290,7 @@
                         );
                       };
                 }, function errorCallback(response) {
-                    console.log('Error api /api/items/check_public_statu');
+                    console.log('Error api /api/items/check_public_status');
                 });
             };
 

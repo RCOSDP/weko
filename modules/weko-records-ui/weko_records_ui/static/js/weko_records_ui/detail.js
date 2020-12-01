@@ -15,7 +15,7 @@ require([
     var status = $(this).val();
     var data = { 'public_status': status };
     var urlHref = window.location.href.split('/')
-    let post_uri = "/api/items/check_public_status/" + urlHref[4];
+    let post_uri = "/api/items/check_record_doi/" + urlHref[4];
     $.ajax({
       url: post_uri,
       method: 'GET',

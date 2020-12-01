@@ -606,11 +606,8 @@ def check_doi_in_index(index_id):
     @param index_id:
     @return:
     """
-    from .api import Indexes
-    child_idx = Indexes.get_child_list_by_index(index_id)
-    for index in child_idx:
-        if check_doi_in_list_record(get_record_of_index(index.cid)):
-            return True
+    if check_doi_in_list_record_es(index_id):
+        return True
     return False
 
 
@@ -622,7 +619,6 @@ def get_record_in_es_of_index(index_id):
     """
     from .api import Indexes
     import json
-    index_child = Indexes.get_child_list_by_pip(index_id)
     query_q = {
         "_source": {
             "excludes": [
@@ -657,43 +653,17 @@ def get_record_in_es_of_index(index_id):
     return result
 
 
-def get_record_of_index(index_id):
-    """Get record of index.
+def check_doi_in_list_record_es(index_id):
+    """Check doi in index.
 
     @param index_id:
     @return:
     """
-    list_records = []
+    from weko_deposit.api import WekoRecord
     list_records_in_es = get_record_in_es_of_index(index_id)
     for record in list_records_in_es:
-        query = PersistentIdentifier.query \
-            .filter(PersistentIdentifier.status != 'D') \
-            .filter(PersistentIdentifier.object_uuid == record.get('_id')).all()
-        if len(query) > 0:
-            list_records = list_records + query
-    return list_records
-
-
-def check_doi_in_list_record(list_record_query):
-    """Check doi in list record.
-
-    @param list_record_query:
-    @return:
-    """
-    list_uuid = dict()
-    for record in list_record_query:
-        if record.object_uuid in list_uuid and int(record.id) > list_uuid.get(
-                record.object_uuid).get('id'):
-            list_uuid[record.object_uuid]['id'] = int(record.id)
-            list_uuid[record.object_uuid]['type'] = record.pid_type
-        else:
-            list_uuid.update(
-                {
-                    record.object_uuid: {
-                        'id': int(record.id),
-                        'type': record.pid_type}
-                })
-    for _, value in list_uuid.items():
-        if value.get('type') == 'doi':
+        wr = WekoRecord.get_record_by_pid(
+            record.get('_source').get('control_number'))
+        if wr and wr.pid_doi:
             return True
     return False

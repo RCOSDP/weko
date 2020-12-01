@@ -1152,9 +1152,9 @@ def session_validate():
     return jsonify(result)
 
 
-@blueprint_api.route('/check_public_status/<string:pid_value>', methods=['GET'])
+@blueprint_api.route('/check_record_doi/<string:pid_value>', methods=['GET'])
 @login_required
-def check_public_status(pid_value='0'):
+def check_record_doi(pid_value='0'):
     """Check public status.
 
     :param pid_value: pid_value.

@@ -864,31 +864,6 @@ class Indexes(object):
         return q
 
     @classmethod
-    def get_child_list_by_index(cls, pid):
-        """
-        Get index list info.
-
-        :param pid: pid of the index.
-        :return: the list of index.
-        """
-        recursive_t = db.session.query(
-            Index.parent.label("pid"),
-            Index.id.label("cid"),
-        ).filter(Index.id == pid). \
-            cte(name="recursive_t", recursive=True)
-
-        rec_alias = aliased(recursive_t, name="rec")
-        test_alias = aliased(Index, name="t")
-        recursive_t = recursive_t.union_all(
-            db.session.query(
-                test_alias.parent,
-                test_alias.id,
-            ).filter(test_alias.parent == rec_alias.c.cid)
-        )
-        query = db.session.query(recursive_t).all()
-        return query
-
-    @classmethod
     def recs_query(cls, pid=0):
         """
         Init select condition of index.
