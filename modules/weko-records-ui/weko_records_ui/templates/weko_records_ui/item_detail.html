@@ -125,9 +125,13 @@
             {% endif %}
           <td>
             <div>
+              <form class="form form-inline" id="public_status_form"
+                    action="{{ url_for('invenio_records_ui.recid_publish', pid_value=pid.pid_value) }}"
+                    method="POST">
                 {% if record | check_permission %}
                     {% if '0' in pubs %}
                         {{ _('Public') }}
+                        <input type="hidden" name="status" value="1">
                       <button class="btn btn-default btn-xs" type="button"
                               name="status" value="1" id="public_status_btn"
                               style="font-size:15px">
@@ -135,6 +139,7 @@
                       </button>
                     {% else %}
                         {{ _('Private') }}
+                        <input type="hidden" name="status" value="0">
                       <button class="btn btn-default btn-xs" type="button"
                               name="status" value="0" id="public_status_btn"
                               style="font-size:15px">
@@ -146,6 +151,7 @@
                         {{ _('Private') }}
                     {% endif %}
                 {% endif %}
+              </form>
             </div>
           </td>
         </tr>

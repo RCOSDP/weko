@@ -20,23 +20,12 @@ require([
       url: post_uri,
       method: 'GET',
       async: true,
-      success: function (res, status) {
+      success: function (res) {
         if (0 == res.code) {
           $('[role="alert"]').css('display', 'inline-block');
           $('[role="alert"]').text($("#change_publish_message").val());
         } else {
-          const url = urlHref[0] + '//' + urlHref[2] + '/records/' + urlHref[4] + '/publish'
-          $.ajax({
-            url: url,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            dataType: 'json',
-            success: function () {
-              location.reload();
-            },
-            error: function (jqXHE, status) { }
-          });
+          $("#public_status_form").submit();
         };
       },
       error: function (jqXHE, status) { }

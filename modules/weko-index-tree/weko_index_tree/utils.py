@@ -614,22 +614,64 @@ def check_doi_in_index(index_id):
     return False
 
 
+def get_record_in_es_of_index(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    from .api import Indexes
+    import json
+    index_child = Indexes.get_child_list_by_pip(index_id)
+    query_q = {
+        "_source": {
+            "excludes": [
+                "content"
+            ]
+        },
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "prefix": {
+                            "path.tree": "@index"
+                        }
+                    },
+                    {
+                        "match": {
+                            "relation_version_is_last": "true"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    fp = Indexes.get_self_path(index_id)
+    query_q = json.dumps(query_q).replace("@index", fp.path)
+    query_q = json.loads(query_q)
+    result = []
+    search = RecordsSearch(index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.update_from_dict(query_q)
+    search_result = search.execute().to_dict()
+    result = search_result.get('hits', {}).get('hits', [])
+    return result
+
+
 def get_record_of_index(index_id):
     """Get record of index.
 
     @param index_id:
     @return:
     """
-    from .api import Indexes
-    index_child = Indexes.get_child_list_by_pip(index_id)
-    query = PersistentIdentifier.query \
-        .join(RecordMetadata,
-              PersistentIdentifier.object_uuid == RecordMetadata.id) \
-        .filter(text("CAST(json->>'path' AS text) like '" +
-                     '%"' + index_child[0].path + '"%' + "'")) \
-        .filter(RecordMetadata.id == PersistentIdentifier.object_uuid)
-    list_record_query = query.all()
-    return list_record_query
+    list_records = []
+    list_records_in_es = get_record_in_es_of_index(index_id)
+    for record in list_records_in_es:
+        query = PersistentIdentifier.query \
+            .filter(PersistentIdentifier.status != 'D') \
+            .filter(PersistentIdentifier.object_uuid == record.get('_id')).all()
+        if len(query) > 0:
+            list_records = list_records + query
+    return list_records
 
 
 def check_doi_in_list_record(list_record_query):
