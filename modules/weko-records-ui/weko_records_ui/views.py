@@ -361,7 +361,7 @@ def _get_google_scholar_meta(record):
                 res.append(
                     {'name': 'citation_publication_date', 'data': date.text})
         for relatedIdentifier in mtdata.findall(
-                'jpcoar:relatedIdentifier',
+                'jpcoar:relation/jpcoar:relatedIdentifier',
                 namespaces=mtdata.nsmap):
             if 'identifierType' in relatedIdentifier.attrib and \
                 relatedIdentifier.attrib[
