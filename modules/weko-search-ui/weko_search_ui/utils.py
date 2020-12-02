@@ -2508,7 +2508,7 @@ def handle_get_all_sub_id_and_name(
             {'title_i18n': {}})
         title = sub_form.get('title_i18n').get(
             current_i18n.language) or item.get('title')
-        if item.get('items'):
+        if item.get('items') and item.get('items').get('properties'):
             _ids, _names = handle_get_all_sub_id_and_name(
                 item.get('items').get('properties'),
                 form=sub_form.get('items', []))

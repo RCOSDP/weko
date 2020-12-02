@@ -845,6 +845,7 @@ class IdentifierHandle(object):
 
             if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
                 doi_pidstore.delete()
+                self.remove_idt_registration_metadata()
                 return doi_pidstore.status == PIDStatus.DELETED
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
@@ -852,6 +853,37 @@ class IdentifierHandle(object):
         except Exception as ex:
             current_app.logger.error(ex)
         return False
+
+    def remove_idt_registration_metadata(self):
+        """Remove Identifier Registration in Record Metadata.
+
+        Returns:
+            None
+
+        """
+        _, key_value = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@value")
+        key_id = key_value.split('.')[0]
+        if self.item_metadata.get(key_id, []):
+            del self.item_metadata[key_id]
+
+            deleted_items = self.item_metadata.get('deleted_items', [])
+            if deleted_items is not None:
+                deleted_items.append(key_id)
+            else:
+                deleted_items = [key_id]
+            self.item_metadata['deleted_items'] = deleted_items
+        try:
+            with db.session.begin_nested():
+                rec = RecordMetadata.query.filter_by(id=self.item_uuid).first()
+                deposit = WekoDeposit(rec.json, rec)
+                index = {'index': deposit.get('path', []),
+                         'actions': deposit.get('publish_status')}
+                deposit.update(index, self.item_metadata)
+                deposit.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
 
     def update_idt_registration_metadata(self, input_value, input_type):
         """Update Identifier Registration in Record Metadata.
