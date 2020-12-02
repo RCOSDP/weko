@@ -1098,7 +1098,7 @@ class WekoDeposit(Deposit):
             bucket.locked = False
 
             if not RecordsBuckets.query.filter_by(
-                    bucket_id=bucket.id).first():
+                    bucket_id=bucket.id).all():
                 bucket.remove()
 
             bucket = {
