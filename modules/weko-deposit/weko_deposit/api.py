@@ -1096,7 +1096,10 @@ class WekoDeposit(Deposit):
             snapshot.locked = False
             sync_bucket.bucket = snapshot
             bucket.locked = False
-            bucket.remove()
+
+            if not RecordsBuckets.query.filter_by(
+                    bucket_id=bucket.id).first():
+                bucket.remove()
 
             bucket = {
                 "_buckets": {
@@ -1454,17 +1457,17 @@ class _FormatSysCreator:
             :param creator_list_temps: Creator lists temps.
 
             """
-            for index in range(len(affiliation_max)):
+            for idx in range(len(affiliation_max)):
                 if index < len(affiliation_min):
-                    affiliation_max[index].update(
-                        affiliation_min[index])
+                    affiliation_max[idx].update(
+                        affiliation_min[idx])
                     self._get_creator_to_show_popup(
-                        [affiliation_max[index]],
+                        [affiliation_max[idx]],
                         languages, creator_lists,
                         creator_list_temps)
                 else:
                     self._get_creator_to_show_popup(
-                        [affiliation_max[index]],
+                        [affiliation_max[idx]],
                         languages, creator_lists,
                         creator_list_temps)
 
@@ -1928,7 +1931,7 @@ class _FormatSysBibliographicInformation:
                         'bibliographicIssueDateType') == issue_type:
                     date.append(issued_date.get('bibliographicIssueDate'))
         elif isinstance(issue_date, dict):
-            if issue_date.get('bibliographicIssueDate') \
-                    and issue_date.get('bibliographicIssueDateType') == issue_type:
+            if issue_date.get('bibliographicIssueDate') and \
+                    issue_date.get('bibliographicIssueDateType') == issue_type:
                 date.append(issue_date.get('bibliographicIssueDate'))
         return date
