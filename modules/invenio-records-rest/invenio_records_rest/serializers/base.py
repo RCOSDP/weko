@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import copy
 
 import pytz
+from weko_records.api import Mapping
 
 
 class SerializerMixinInterface(object):
@@ -139,9 +140,46 @@ class PreprocessorMixin(PreprocessorMixinInterface):
 
     def preprocess_record(self, pid, record, links_factory=None, **kwargs):
         """Prepare a record and persistent identifier for serialization."""
+        def get_mapping(item_type_id):
+            """Get keys of metadata record by mapping."""
+            mapping = Mapping.get_record(item_type_id)
+            mapping_dict = {
+                'dc:title': None,
+                'dcterms:alternative': None,
+                'dc:type': None,
+                'dc:language': None,
+                'jpcoar:creator': None,
+                'jpcoar:identifier': None,
+                'datacite:description': None,
+                'jpcoar:volume': None,
+                'jpcoar:issue': None,
+                'jpcoar:numPages': None,
+                'datacite:date': None,
+                'dc:publisher': None,
+            }
+            if mapping:
+                for k, v in mapping.items():
+                    if not type(v.get('jpcoar_mapping')) is dict:
+                        continue
+                    for k1, v1 in v.get('jpcoar_mapping').items():
+                        for k2, v2 in mapping_dict.items():
+                            if k1 != k2.split(':')[1] or not type(v1) is dict:
+                                continue
+                            arr = ['metadata', k, 'attribute_value_mlt', 0]
+                            if k1 == 'creator':
+                                name = v1.get('creatorName').get('@value')
+                                arr.append(name.split('.')[0])
+                                arr.append(0)
+                                arr.append(name.split('.')[1])
+                            else:
+                                arr.append(v1.get('@value'))
+                            mapping_dict[k2] = arr
+            return mapping_dict
+
         links_factory = links_factory or (lambda x, record=None, **k: dict())
         metadata = copy.deepcopy(record.replace_refs()) if self.replace_refs \
             else record.dumps()
+        mapping_dict = get_mapping(metadata.get('item_type_id'))
         return dict(
             pid=pid,
             metadata=metadata,
@@ -151,6 +189,7 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                      if record.created else None),
             updated=(pytz.utc.localize(record.updated).isoformat()
                      if record.updated else None),
+            mapping_dict=mapping_dict
         )
 
     @staticmethod
