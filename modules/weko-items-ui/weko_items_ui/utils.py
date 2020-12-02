@@ -41,6 +41,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
@@ -985,7 +986,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
-    ret_label.append('公開日')
+    ret_label.append('公開日' if current_i18n.language == 'ja' else 'PubDate')
 
     for recid in recids:
         record = records.records[recid]
