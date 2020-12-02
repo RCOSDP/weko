@@ -29,6 +29,7 @@ from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from invenio_i18n.ext import current_i18n
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
@@ -407,7 +408,7 @@ class ItemImportView(BaseView):
                         key for key in item_type.get('meta_system', {})]
                     schema = item_type.get('table_row_map', {}) \
                         .get('schema', {}).get('properties', {})
-                    form = item_type.get('table_row_map', {}).get('form', {})
+                    form = item_type.get('table_row_map', {}).get('form', [])
 
                     count_file = 0
                     count_thumbnail = 0
@@ -418,8 +419,11 @@ class ItemImportView(BaseView):
                         item = schema.get(key)
                         item_option = meta_list.get(key) \
                             if meta_list.get(key) else item
+                        sub_form = next(
+                            (x for x in form if key == x.get('key')),
+                            {'title_i18n': {}})
                         root_id, root_name, root_option = \
-                            get_root_item_option(key, item_option)
+                            get_root_item_option(key, item_option, sub_form)
                         # have not sub item
                         if not (item.get('properties') or item.get('items')):
                             ids_line.append(root_id)
@@ -432,22 +436,29 @@ class ItemImportView(BaseView):
                                 if item.get('properties') \
                                 else item.get('items').get('properties')
                             _ids, _names = handle_get_all_sub_id_and_name(
-                                sub_items, root_id, root_name)
+                                sub_items, root_id, root_name,
+                                sub_form.get('items', []))
                             _options = []
                             for _id in _ids:
                                 if 'filename' in _id:
                                     ids_line.append(
                                         '.file_path[{}]'.format(count_file))
-                                    names_line.append(
-                                        '.ファイルパス[{}]'.format(count_file))
+                                    file_path_name = 'File Path' \
+                                        if current_i18n.language == 'en' \
+                                        else 'ファイルパス'
+                                    names_line.append('.{}[{}]'.format(
+                                        file_path_name, count_file))
                                     systems_line.append('')
                                     options_line.append('Allow Multiple')
                                     count_file += 1
                                 if 'thumbnail_label' in _id:
                                     ids_line.append('.thumbnail_path[{}]'
                                                     .format(count_thumbnail))
-                                    names_line.append('.サムネイルパス[{}]'
-                                                      .format(count_thumbnail))
+                                    thumbnail_path_name = 'Thumbnail Path' \
+                                        if current_i18n.language == 'en' \
+                                        else 'サムネイルパス'
+                                    names_line.append('.{}[{}]'.format(
+                                        thumbnail_path_name, count_thumbnail))
                                     systems_line.append('')
                                     options_line.append('Allow Multiple')
                                     count_thumbnail += 1

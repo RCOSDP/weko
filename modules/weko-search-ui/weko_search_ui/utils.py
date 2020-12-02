@@ -2286,10 +2286,11 @@ def get_change_identifier_mode_content():
     return data
 
 
-def get_root_item_option(item_id, item):
+def get_root_item_option(item_id, item, sub_form={'title_i18n': {}}):
     """Handle if is root item."""
     _id = '.metadata.{}'.format(item_id)
-    _name = item.get('title')
+    _name = sub_form.get('title_i18n').get(
+        current_i18n.language) or item.get('title')
 
     _option = []
     if item.get('option').get('required'):
@@ -2485,7 +2486,8 @@ def handle_check_metadata_not_existed(str_keys, item_type_id=0):
     return result
 
 
-def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None):
+def handle_get_all_sub_id_and_name(
+        items, root_id=None, root_name=None, form=[]):
     """Get all sub id, sub name of root item with full-path.
 
     :argument
@@ -2501,21 +2503,27 @@ def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None):
         if key == 'iscreator':
             continue
         item = items.get(key)
+        sub_form = next(
+            (x for x in form if key in x.get('key', '')),
+            {'title_i18n': {}})
+        title = sub_form.get('title_i18n').get(
+            current_i18n.language) or item.get('title')
         if item.get('items'):
             _ids, _names = handle_get_all_sub_id_and_name(
-                item.get('items').get('properties'))
+                item.get('items').get('properties'),
+                form=sub_form.get('items', []))
             ids += [key + '[0].' + _id for _id in _ids]
-            names += [item.get('title') + '[0].' + _name
+            names += [title + '[0].' + _name
                       for _name in _names]
         elif item.get('type') == 'object' and item.get('properties'):
             _ids, _names = handle_get_all_sub_id_and_name(
-                item.get('properties'))
+                item.get('properties'), form=sub_form.get('items', []))
             ids += [key + '.' + _id for _id in _ids]
-            names += [item.get('title') + '.' + _name
+            names += [title + '.' + _name
                       for _name in _names]
         else:
             ids.append(key)
-            names.append(item.get('title'))
+            names.append(title)
 
     if root_id:
         ids = [root_id + '.' + _id for _id in ids]
