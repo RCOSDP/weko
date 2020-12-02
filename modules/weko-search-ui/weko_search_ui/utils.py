@@ -30,6 +30,7 @@ import sys
 import tempfile
 import traceback
 import uuid
+import zipfile
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
@@ -384,7 +385,16 @@ def check_import_items(file_name: str, file_content: str,
 
         with open(import_path + '.zip', 'wb+') as f:
             f.write(file_content_decoded)
-        shutil.unpack_archive(import_path + '.zip', extract_dir=data_path)
+        with zipfile.ZipFile(import_path + '.zip') as z:
+            for info in z.infolist():
+                try:
+                    info.filename = info.orig_filename.encode(
+                        'cp437').decode('cp932')
+                    if os.sep != "/" and os.sep in info.filename:
+                        info.filename = info.filename.replace(os.sep, "/")
+                except Exception:
+                    pass
+                z.extract(info, path=data_path)
 
         data_path += '/data'
         list_record = []
@@ -412,7 +422,7 @@ def check_import_items(file_name: str, file_content: str,
         }
     except Exception as ex:
         error = _('Internal server error')
-        if isinstance(ex, shutil.ReadError):
+        if isinstance(ex, zipfile.BadZipFile):
             error = _('The format of the specified file {} does not'
                       + ' support import. Please specify one of the'
                       + ' following formats: zip, tar, gztar, bztar,'
