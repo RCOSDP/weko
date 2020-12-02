@@ -93,7 +93,7 @@ class RecordSchemaCSLJSON(Schema):
     volume = fields.Function(
         lambda obj: get_data_from_mapping('jpcoar:volume', obj))
     issue = fields.Function(
-        lambda obj: get_data_from_mapping('datacite:date', obj))
+        lambda obj: get_data_from_mapping('jpcoar:issue', obj))
     publisher = fields.Function(
         lambda obj: get_data_from_mapping('dc:publisher', obj))
 
