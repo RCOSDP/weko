@@ -113,7 +113,7 @@ var CustomBSDatePicker = {
     let month = parseInt(m, 10) - 1;
     let checkMonth = month >= 0 && month < 12;
     let checkDay = d > 0 && d <= CustomBSDatePicker.daysInMonth(month, y);
-    return check_month && checkDay;
+    return checkMonth && checkDay;
   },
   /**
    * Check all validate for this.
