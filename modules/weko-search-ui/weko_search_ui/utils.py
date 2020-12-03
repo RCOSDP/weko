@@ -393,7 +393,9 @@ def check_import_items(file_name: str, file_content: str,
                     if os.sep != "/" and os.sep in info.filename:
                         info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
-                    pass
+                    current_app.logger.error('-' * 60)
+                    traceback.print_exc(file=sys.stdout)
+                    current_app.logger.error('-' * 60)
                 z.extract(info, path=data_path)
 
         data_path += '/data'
@@ -604,13 +606,13 @@ def handle_convert_validate_msg_to_jp(message: str):
             msg_paths = msg_en.split('%r')
             prev_position = 0
             data = []
-            for index, path in enumerate(msg_paths, start=1):
+            for idx, path in enumerate(msg_paths, start=1):
                 position = message.index(path)
                 if path == '':
-                    if index == 1:
+                    if idx == 1:
                         continue
-                    elif index == len(msg_paths):
-                        prev_position += len(msg_paths[index-2])
+                    elif idx == len(msg_paths):
+                        prev_position += len(msg_paths[idx-2])
                         position = len(message)
                 if position >= 0:
                     data.append(message[prev_position: position])
