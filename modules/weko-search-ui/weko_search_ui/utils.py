@@ -2275,8 +2275,9 @@ def handle_check_date(list_record):
         # validate pubdate
         try:
             pubdate = record.get('metadata').get('pubdate')
-            if pubdate:
-                datetime.strptime(pubdate, '%Y-%m-%d')
+            if pubdate and pubdate != datetime.strptime(pubdate, '%Y-%m-%d') \
+                    .strftime('%Y-%m-%d'):
+                raise Exception
         except Exception:
             errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
         if errors:
@@ -2294,7 +2295,7 @@ def validattion_date_property(date_str):
     """
     for fmt in ('%Y-%m-%d', '%Y-%m', '%Y'):
         try:
-            return datetime.strptime(date_str, fmt)
+            return date_str == datetime.strptime(date_str, fmt).strftime(fmt)
         except ValueError:
             pass
     return False
