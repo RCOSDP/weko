@@ -396,6 +396,11 @@ def hide_by_email(item_metadata):
     """
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
+    # Hidden owners_ext.email
+    if item_metadata.get('_deposit') and \
+            item_metadata['_deposit'].get('owners_ext'):
+        del item_metadata['_deposit']['owners_ext']['email']
+
     for item in item_metadata:
         _item = item_metadata[item]
         if isinstance(_item, dict) and \
