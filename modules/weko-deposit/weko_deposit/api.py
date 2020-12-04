@@ -22,6 +22,7 @@
 import copy
 import sys
 import uuid
+from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import NoReturn, Union
 
@@ -115,8 +116,8 @@ class WekoFileObject(FileObject):
                 'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
             # Convert MB to Bytes in decimal
             file_size_limit = current_app.config[
-                'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
-                file_type] * 1000000
+                                  'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
+                                  file_type] * 1000000
             if file_size > file_size_limit:
                 return False
         return True
@@ -486,7 +487,7 @@ class WekoDeposit(Deposit):
         if 'control_number' in self:
             self.pop('control_number')
         if '$schema' not in self:
-            self['$schema'] = current_app.extensions['invenio-jsonschemas'].\
+            self['$schema'] = current_app.extensions['invenio-jsonschemas']. \
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
         try:
@@ -578,8 +579,8 @@ class WekoDeposit(Deposit):
                 if key in self:
                     self.pop(key)
 
-#        if 'pid' in self['_deposit']:
-#            self['_deposit']['pid']['revision_id'] += 1
+        #        if 'pid' in self['_deposit']:
+        #            self['_deposit']['pid']['revision_id'] += 1
         try:
             if has_request_context():
                 if current_user:
@@ -741,13 +742,13 @@ class WekoDeposit(Deposit):
                 with db.session.begin_nested():
                     # Set relation type of draft record is 3: Draft
                     parent_pid = PIDVersioning(child=recid).parent
-                    relation = PIDRelation.query.\
+                    relation = PIDRelation.query. \
                         filter_by(parent=parent_pid,
                                   child=recid).one_or_none()
                     relation.relation_type = 3
                 db.session.merge(relation)
 
-            snapshot = record.files.bucket.\
+            snapshot = record.files.bucket. \
                 snapshot(lock=False)
             snapshot.locked = False
             deposit['_buckets'] = {'deposit': str(snapshot.id)}
@@ -809,7 +810,7 @@ class WekoDeposit(Deposit):
             if isinstance(self.data.get(key), list):
                 for item in self.data.get(key):
                     if (isinstance(item, dict) or isinstance(item, list)) \
-                            and 'filename' in item:
+                                and 'filename' in item:
                         file_data.extend(self.data.get(key))
                         break
         return file_data
@@ -924,8 +925,8 @@ class WekoDeposit(Deposit):
         for pth in index_lst:
             # es setting
             sub_sort[pth[-13:]] = ""
-#        jrc.update(dict(custom_sort=sub_sort))
-#        dc.update(dict(custom_sort=sub_sort))
+        #        jrc.update(dict(custom_sort=sub_sort))
+        #        dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')
@@ -1001,7 +1002,7 @@ class WekoDeposit(Deposit):
                 for result in self.indexer.get_pid_by_es_scroll(path):
                     db.session.query(p). \
                         filter(p.object_uuid.in_(result),
-                               p.object_type == 'rec').\
+                               p.object_type == 'rec'). \
                         update({p.status: 'D', p.updated: dt},
                                synchronize_session=False)
                     result.clear()
@@ -1210,12 +1211,12 @@ class WekoRecord(Record):
                         or nval['attribute_type'] == 'file':
                     file_metadata = copy.deepcopy(mlt)
                     if nval['attribute_type'] == 'file':
-                        file_metadata = self.\
+                        file_metadata = self. \
                             __remove_file_metadata_do_not_publish(
                                 file_metadata)
                     nval['attribute_value_mlt'] = \
                         get_all_items(
-                        file_metadata, copy.deepcopy(solst), True)
+                            file_metadata, copy.deepcopy(solst), True)
                 else:
                     is_author = nval['attribute_type'] == 'creator'
                     is_thumbnail = any(
@@ -1225,11 +1226,7 @@ class WekoRecord(Record):
                         copy.deepcopy(solst)
                     )
                     if is_author:
-                        language_list = []
-                        from weko_gridlayout.utils import get_register_language
-                        for lang in get_register_language():
-                            language_list.append(lang['lang_code'])
-                        creators = self._get_creator(mlt, language_list, hide_email_flag)
+                        creators = self._get_creator(mlt, hide_email_flag)
                         nval['attribute_value_mlt'] = creators
                     elif is_thumbnail:
                         nval['is_thumbnail'] = True
@@ -1253,12 +1250,11 @@ class WekoRecord(Record):
         return items
 
     @staticmethod
-    def _get_creator(meta_data, languages, hide_email_flag):
+    def _get_creator(meta_data, hide_email_flag):
         creators = []
         if meta_data:
             for creator_data in meta_data:
-                creator_dict = _FormatSysCreator(
-                    creator_data, languages.copy()).format_creator()
+                creator_dict = _FormatSysCreator(creator_data).format_creator()
                 identifiers = WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers']
                 creator_mails = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']
                 if identifiers in creator_data:
@@ -1289,9 +1285,9 @@ class WekoRecord(Record):
             # Check super users
             else:
                 super_users = current_app.config[
-                    'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
-                    current_app.config[
-                        'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+                                  'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                                  current_app.config[
+                                      'WEKO_PERMISSION_ROLE_COMMUNITY'],)
                 for role in list(current_user.roles or []):
                     if role.name in super_users:
                         is_ok = True
@@ -1389,7 +1385,7 @@ class WekoRecord(Record):
 class _FormatSysCreator:
     """Format system creator for detail page."""
 
-    def __init__(self, creator, languages):
+    def __init__(self, creator):
         """Initialize Format system creator for detail page.
 
         :param creator:Creator data
@@ -1397,8 +1393,41 @@ class _FormatSysCreator:
         """
         self.creator = creator
         self.current_language = current_i18n.language
-        self.languages = languages
         self.no_language_key = "NoLanguage"
+        self._get_creator_languages_order()
+
+    def _get_creator_languages_order(self):
+        """Get creator languages order.
+
+        @return:
+        """
+        # Prioriry languages: creator, family, given, alternative, affiliation
+        lang_key = OrderedDict()
+        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']] = \
+            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_lang']
+        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']] = \
+            WEKO_DEPOSIT_SYS_CREATOR_KEY['family_lang']
+        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']] = \
+            WEKO_DEPOSIT_SYS_CREATOR_KEY['given_lang']
+        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']] = \
+            WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
+
+        # Get languages for all same structure languages key
+        languages = []
+        [languages.append(data.get(v)) for k, v in lang_key.items()
+         for data in self.creator.get(k, []) if data.get(v) not in languages]
+
+        # Get languages affiliation
+        for creator_affiliation in self.creator.get(
+                WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations'], []):
+            for affiliation_name in creator_affiliation.get(
+                    WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names'], []):
+                if affiliation_name.get(
+                    WEKO_DEPOSIT_SYS_CREATOR_KEY[
+                        'affiliation_lang']) not in languages:
+                    languages.append(affiliation_name.get(
+                        WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_lang']))
+        self.languages = languages
 
     def _format_creator_to_show_detail(self, language: str, parent_key: str,
                                        lst: list) -> NoReturn:
@@ -1541,8 +1570,6 @@ class _FormatSysCreator:
         """
         creator_lst = []
         rtn_value = {}
-        ja_language = "ja"
-        ja_kana_language = "ja-Kana"
         creator_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']
         family_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']
         given_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']
@@ -1551,7 +1578,7 @@ class _FormatSysCreator:
                            alternative_names]
 
         # Get default creator name to show on detail screen.
-        self._get_default_creator_name(ja_kana_language, list_parent_key,
+        self._get_default_creator_name(list_parent_key,
                                        creator_lst)
 
         rtn_value['name'] = creator_lst
@@ -1559,9 +1586,7 @@ class _FormatSysCreator:
         creator_list = []
 
         # Get creators are displayed on creator pop up.
-        self._get_creator_to_display_on_popup(creator_list_tmp,
-                                              ja_kana_language,
-                                              ja_language)
+        self._get_creator_to_display_on_popup(creator_list_tmp)
         for creator_data in creator_list_tmp:
             if isinstance(creator_data, dict):
                 creator_temp = {}
@@ -1694,39 +1719,14 @@ class _FormatSysCreator:
         des_creator[affiliation_name_key] = identifier_name_list
         des_creator[identifier_key] = identifier_list
 
-    def _get_creator_to_display_on_popup(self, creator_list: list,
-                                         ja_kana_language: str,
-                                         ja_language: str):
+    def _get_creator_to_display_on_popup(self, creator_list: list):
         """Get creator to display on popup.
 
         :param creator_list: Creator list.
-        :param ja_kana_language: ja kana language key.
-        :param ja_language: ja language key.
         """
-        # Format creator by key is language default.
-        self._get_creator_to_show_popup(self.creator, self.current_language,
-                                        creator_list)
-
-        # Format creator by key if language is ja-Kana.
-        if self.current_language == ja_language:
-            self._get_creator_to_show_popup(self.creator, ja_kana_language,
-                                            creator_list)
-
-        # Remove current language from languages
-        if creator_list:
-            self.languages.remove(self.current_language)
-
-        # Get creator based on the language setting order.
         for lang in self.languages:
             self._get_creator_to_show_popup(self.creator, lang,
                                             creator_list)
-            if lang == ja_language:
-                self._get_creator_to_show_popup(self.creator,
-                                                ja_kana_language,
-                                                creator_list)
-        # Get creator in case there is no language input
-        self._get_creator_to_show_popup(self.creator, None,
-                                        creator_list)
 
     def _merge_creator_data(self, creator_data: Union[list, dict],
                             merged_data: dict) -> NoReturn:
@@ -1735,6 +1735,7 @@ class _FormatSysCreator:
         :param creator_data: Creator data.
         :param merged_data: Merged data.
         """
+
         def merge_data(key, value):
             if isinstance(merged_data.get(key), list):
                 merged_data[key].append(value)
@@ -1749,12 +1750,10 @@ class _FormatSysCreator:
                 if isinstance(v, str):
                     merge_data(k, v)
 
-    def _get_default_creator_name(self, ja_kana_language: str,
-                                  list_parent_key: list,
+    def _get_default_creator_name(self, list_parent_key: list,
                                   creator_names: list) -> NoReturn:
         """Get default creator name.
 
-        :param ja_kana_language: ja kana language key.
         :param list_parent_key: parent list key.
         :param creator_names: Creators name.
         """
@@ -1766,18 +1765,12 @@ class _FormatSysCreator:
                     return
 
         _get_creator(self.current_language)
-        # if creator_names is None when chose default language
+        # if current language has no creator
         if not creator_names:
             for lang in self.languages:
                 _get_creator(lang)
                 if creator_names:
                     break
-        # if creator_names is ja-Kana when chose priority language
-        if not creator_names:
-            _get_creator(ja_kana_language)
-        # if creator_names is None when chose priority language
-        if not creator_names:
-            _get_creator(None)
 
 
 class _FormatSysBibliographicInformation:
@@ -1924,11 +1917,12 @@ class _FormatSysBibliographicInformation:
         if isinstance(issue_date, list):
             for issued_date in issue_date:
                 if issued_date.get(
-                        'bibliographicIssueDate') and issued_date.get(
+                    'bibliographicIssueDate') and issued_date.get(
                         'bibliographicIssueDateType') == issue_type:
                     date.append(issued_date.get('bibliographicIssueDate'))
         elif isinstance(issue_date, dict):
             if issue_date.get('bibliographicIssueDate') \
-                    and issue_date.get('bibliographicIssueDateType') == issue_type:
+                   and issue_date.get('bibliographicIssueDateType') \
+                    == issue_type:
                 date.append(issue_date.get('bibliographicIssueDate'))
         return date
