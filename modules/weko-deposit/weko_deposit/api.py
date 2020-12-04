@@ -116,8 +116,8 @@ class WekoFileObject(FileObject):
                 'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
             # Convert MB to Bytes in decimal
             file_size_limit = current_app.config[
-                                  'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
-                                  file_type] * 1000000
+                'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
+                file_type] * 1000000
             if file_size > file_size_limit:
                 return False
         return True
@@ -810,7 +810,7 @@ class WekoDeposit(Deposit):
             if isinstance(self.data.get(key), list):
                 for item in self.data.get(key):
                     if (isinstance(item, dict) or isinstance(item, list)) \
-                                and 'filename' in item:
+                            and 'filename' in item:
                         file_data.extend(self.data.get(key))
                         break
         return file_data
@@ -1285,9 +1285,9 @@ class WekoRecord(Record):
             # Check super users
             else:
                 super_users = current_app.config[
-                                  'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
-                                  current_app.config[
-                                      'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+                    'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                    current_app.config[
+                        'WEKO_PERMISSION_ROLE_COMMUNITY'],)
                 for role in list(current_user.roles or []):
                     if role.name in super_users:
                         is_ok = True
@@ -1735,7 +1735,6 @@ class _FormatSysCreator:
         :param creator_data: Creator data.
         :param merged_data: Merged data.
         """
-
         def merge_data(key, value):
             if isinstance(merged_data.get(key), list):
                 merged_data[key].append(value)
@@ -1922,7 +1921,7 @@ class _FormatSysBibliographicInformation:
                     date.append(issued_date.get('bibliographicIssueDate'))
         elif isinstance(issue_date, dict):
             if issue_date.get('bibliographicIssueDate') \
-                   and issue_date.get('bibliographicIssueDateType') \
+                and issue_date.get('bibliographicIssueDateType') \
                     == issue_type:
                 date.append(issue_date.get('bibliographicIssueDate'))
         return date
