@@ -1854,14 +1854,15 @@ def get_ignore_item_from_mapping(_item_type_id):
         key = [re.sub(r'\[\d+\]', '', _id) for _id in sub_id.split('.')]
         if key[0] in item_type_mapping:
             mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
-            name = [list(mapping.keys())[0]]
-            if len(key) > 1:
-                tree_name = get_mapping_name_item_type_by_sub_key(
-                    '.'.join(key[1:]), mapping.get(name[0])
-                )
-                if tree_name:
-                    name += tree_name
-            ignore_list.append(name)
+            if isinstance(mapping, dict):
+                name = [list(mapping.keys())[0]]
+                if len(key) > 1:
+                    tree_name = get_mapping_name_item_type_by_sub_key(
+                        '.'.join(key[1:]), mapping.get(name[0])
+                    )
+                    if tree_name:
+                        name += tree_name
+                ignore_list.append(name)
     return ignore_list
 
 
