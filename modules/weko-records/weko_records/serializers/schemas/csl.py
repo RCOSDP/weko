@@ -27,6 +27,8 @@
 from __future__ import absolute_import, print_function
 
 from invenio_formatter.filters.datetime import from_isodate
+from invenio_i18n.ext import current_i18n
+from invenio_oaiserver.response import get_identifier
 from marshmallow import Schema, fields, missing
 
 import weko_records.config as config
@@ -54,17 +56,44 @@ def _get_mapping_data(schema, data, keyword):
 
 def get_data_from_mapping(key, obj):
     """Get data base on mapping."""
+    cur_lang = current_i18n.language
     arr = obj['mapping_dict'][key]
+    lang_key = obj['mapping_dict']['{}__lang'.format(key)]
+    if lang_key:
+        lang_key = lang_key[-1]
     result = None
     if arr:
         result = obj[arr[0]]
         for i in range(len(arr)):
             if i != 0 and result:
+                # Update index in order to get data by language.
+                if arr[i] in ['attribute_value_mlt', 'creatorNames']:
+                    temp = result.get(arr[i])
+                    k = 0
+                    # Check show data with current language. (1)
+                    for j in temp:
+                        if j.get(lang_key):
+                            if j.get(lang_key) == cur_lang:
+                                arr[i+1] = k
+                                break
+                            k = k + 1
+                    # (1) not exist => Priority 'en'. (2)
+                    if k == len(temp):
+                        k = 0
+                        for j in temp:
+                            if j.get(lang_key) == 'en':
+                                arr[i+1] = k
+                                break
+                            k = k + 1
+                    # (2) not exist => Priority the first element.
+                    if k == len(temp):
+                        arr[i+1] = 0
+                # Get data.
                 if type(result) is list:
                     result = result[arr[i]]
                 else:
                     result = result.get(arr[i])
-    return result if result else missing
+    return result if result else ''
 
 
 class RecordSchemaCSLJSON(Schema):
@@ -73,6 +102,8 @@ class RecordSchemaCSLJSON(Schema):
     id = fields.Str(attribute='pid.pid_value')
     version = fields.Method('get_version')
     issued = fields.Method('get_issue_date')
+    page = fields.Method('get_page')
+    DOI = fields.Method('get_doi')
     type = fields.Function(
         lambda obj: get_data_from_mapping('dc:type', obj))
     title = fields.Function(
@@ -80,16 +111,14 @@ class RecordSchemaCSLJSON(Schema):
     abstract = fields.Function(
         lambda obj: get_data_from_mapping('datacite:description', obj))
     author = fields.Function(
-        lambda obj: [{'given': None, 'suffix':
-            get_data_from_mapping('jpcoar:creator', obj), 'family': None}])
+        lambda obj: [{
+            'given': None,
+            'suffix': get_data_from_mapping('jpcoar:creator', obj),
+            'family': None}])
     language = fields.Function(
         lambda obj: get_data_from_mapping('dc:language', obj))
-    DOI = fields.Function(
-        lambda obj: get_data_from_mapping('jpcoar:identifier', obj))
     container_title = fields.Function(
         lambda obj: get_data_from_mapping('dcterms:alternative', obj))
-    page = fields.Function(
-        lambda obj: get_data_from_mapping('jpcoar:numPages', obj))
     volume = fields.Function(
         lambda obj: get_data_from_mapping('jpcoar:volume', obj))
     issue = fields.Function(
@@ -97,24 +126,42 @@ class RecordSchemaCSLJSON(Schema):
     publisher = fields.Function(
         lambda obj: get_data_from_mapping('dc:publisher', obj))
 
-    def get_issue_date(self, obj):
-        """Get issue date."""
-        metadata = get_data_from_mapping('datacite:date', obj)
-        if metadata is None:
-            return missing
-        datedata = from_isodate(metadata)
-        return {'date-parts': [[datedata.year, datedata.month,
-                                datedata.day]]} if datedata else missing
-
     def get_version(self, obj):
         """Get version."""
         version = None
         itemdatas = _get_itemdata(obj['metadata'], 'Version')
         schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_VERSION)
-        if itemdatas is None:
+        if not itemdatas:
             return missing
         for itemdata in itemdatas:
             _, version = _get_mapping_data(schema, itemdata, "Version")
         if version:
             return version
         return missing
+
+    def get_issue_date(self, obj):
+        """Get issue date."""
+        metadata = get_data_from_mapping('datacite:date', obj)
+        if not metadata:
+            return missing
+        date = from_isodate(metadata)
+        date_parts = [[date.year, date.month, date.day]]
+        result = {'date-parts': date_parts}
+        return result if date else missing
+
+    def get_page(self, obj):
+        """Get page."""
+        page_start = get_data_from_mapping('jpcoar:pageStart', obj)
+        page_end = get_data_from_mapping('jpcoar:pageEnd', obj)
+        if not page_start and not page_end:
+            return missing
+        return '{}-{}'.format(page_start, page_end)
+
+    def get_doi(self, obj):
+        """Get doi."""
+        # Get DOI info and add to metadata.
+        identifier = 'system_identifier'
+        record = obj['record']
+        identifier_data = get_identifier(record)
+        obj['metadata'][identifier] = identifier_data
+        return get_data_from_mapping('jpcoar:identifier', obj)
