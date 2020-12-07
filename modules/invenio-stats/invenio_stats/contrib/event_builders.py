@@ -118,28 +118,14 @@ def build_celery_task_unique_id(doc):
 
 def build_file_unique_id(doc):
     """Build file unique identifier."""
-    group_name_list = ''
-    if isinstance(doc['user_group_list'], list):
-        group_name_list = [g['group_name'] for g in doc['user_group_list']]
-    key = '{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}'.format(
-        doc['bucket_id'], doc['file_id'], doc['userrole'], doc['accessrole'],
-        doc['index_list'], doc['site_license_name'], doc['country'],
-        doc['cur_user_id'], doc['remote_addr'], str(doc['is_billing_item']),
-        doc['is_billing_item'],
-        '_'.join(group_name_list)
-    )
-
-    doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
+    doc['unique_id'] = '{0}_{1}'.format(doc['bucket_id'], doc['file_id'])
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
     return doc
 
 
 def build_record_unique_id(doc):
     """Build record unique identifier."""
-    record_index_names = copy_record_index_list(doc)
-    doc['unique_id'] = '{0}_{1}_{2}_{3}_{4}'.format(
-        doc['record_id'], doc['country'], doc['cur_user_id'],
-        record_index_names, doc['site_license_name'])
+    doc['unique_id'] = '{0}_{1}'.format(doc['pid_type'], doc['pid_value'])
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
     return doc
 
