@@ -497,8 +497,9 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
-    '#', '', '',
-    '', 'Required', '', '', '', '', 'Required'
+    '#', '', 'Allow Multiple',
+    'Allow Multiple', 'Required', 'Allow Multiple',
+    '', '', '', 'Required'
 ]
 
 WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
@@ -568,4 +569,9 @@ RESOURCE_TYPE_URI = {
     'technical documentation': 'http://purl.org/coar/resource_type/c_71bd',
     'workflow': 'http://purl.org/coar/resource_type/c_393c',
     'other': 'http://purl.org/coar/resource_type/c_1843'
+}
+WEKO_IMPORT_VALIDATE_MESSAGE = {
+    '%r is too long': '%rの数が上限数を超えています。',
+    '%r is not one of %r': '%rは次の決めれられた選択肢に含まれていません。%r',
+    '%r is a required property': '%rは必須項目です。'
 }

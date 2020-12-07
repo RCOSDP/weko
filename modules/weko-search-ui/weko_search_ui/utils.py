@@ -30,7 +30,8 @@ import sys
 import tempfile
 import traceback
 import uuid
-from collections import defaultdict
+import zipfile
+from collections import Callable, OrderedDict
 from datetime import datetime
 from functools import reduce
 from io import StringIO
@@ -75,11 +76,73 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
-    WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
+    WEKO_REPO_USER, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
     + ' alphanumeric characters and half-width symbols "_-.; () /".'
+
+
+class DefaultOrderedDict(OrderedDict):
+    """Default Dictionary that remembers insertion order."""
+
+    def __init__(self, default_factory=None, *a, **kw):
+        """Initialize an default ordered dictionary.
+
+        The signature
+        is the same as regular dictionaries.  Keyword argument order
+        is preserved.
+        """
+        if default_factory is not None and \
+                not isinstance(default_factory, Callable):
+            raise TypeError('first argument must be callable')
+        OrderedDict.__init__(self, *a, **kw)
+        self.default_factory = default_factory
+
+    def __getitem__(self, key):
+        """Modify inherited dict provides __getitem__."""
+        try:
+            return OrderedDict.__getitem__(self, key)
+        except KeyError:
+            return self.__missing__(key)
+
+    def __missing__(self, key):
+        """Needed so that self[missing_item] does not raise KeyError."""
+        if self.default_factory is None:
+            raise KeyError(key)
+        self[key] = value = self.default_factory()
+        return value
+
+    def __reduce__(self):
+        """Return state information for pickling."""
+        if self.default_factory is None:
+            args = tuple()
+        else:
+            args = self.default_factory,
+        return type(self), args, None, None, self.items()
+
+    def copy(self):
+        """Modify inherited dict provides copy.
+
+        od.copy() -> a shallow copy of od.
+        """
+        return self.__copy__()
+
+    def __copy__(self):
+        """Modify inherited dict provides __copy__."""
+        return type(self)(self.default_factory, self)
+
+    def __deepcopy__(self, memo):
+        """Modify inherited dict provides __deepcopy__."""
+        import copy
+        return type(self)(self.default_factory,
+                          copy.deepcopy(self.items()))
+
+    def __repr__(self):
+        """Return a nicely formatted representation string."""
+        return 'OrderedDefaultDict(%s, %s)' % (self.default_factory,
+                                               OrderedDict.__repr__(self))
 
 
 def get_tree_items(index_tree_id):
@@ -259,7 +322,7 @@ def define_default_dict():
     :return
        return       -- {dict}.
     """
-    return defaultdict(define_default_dict)
+    return DefaultOrderedDict(define_default_dict)
 
 
 def defaultify(d: dict) -> dict:
@@ -273,7 +336,7 @@ def defaultify(d: dict) -> dict:
     """
     if not isinstance(d, dict):
         return d
-    return defaultdict(
+    return DefaultOrderedDict(
         define_default_dict,
         {k: defaultify(v) for k, v in d.items()}
     )
@@ -383,7 +446,18 @@ def check_import_items(file_name: str, file_content: str,
 
         with open(import_path + '.zip', 'wb+') as f:
             f.write(file_content_decoded)
-        shutil.unpack_archive(import_path + '.zip', extract_dir=data_path)
+        with zipfile.ZipFile(import_path + '.zip') as z:
+            for info in z.infolist():
+                try:
+                    info.filename = info.orig_filename.encode(
+                        'cp437').decode('cp932')
+                    if os.sep != "/" and os.sep in info.filename:
+                        info.filename = info.filename.replace(os.sep, "/")
+                except Exception:
+                    current_app.logger.error('-' * 60)
+                    traceback.print_exc(file=sys.stdout)
+                    current_app.logger.error('-' * 60)
+                z.extract(info, path=data_path)
 
         data_path += '/data'
         list_record = []
@@ -411,7 +485,7 @@ def check_import_items(file_name: str, file_content: str,
         }
     except Exception as ex:
         error = _('Internal server error')
-        if isinstance(ex, shutil.ReadError):
+        if isinstance(ex, zipfile.BadZipFile):
             error = _('The format of the specified file {} does not'
                       + ' support import. Please specify one of the'
                       + ' following formats: zip, tar, gztar, bztar,'
@@ -576,6 +650,42 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
     return result
 
 
+def handle_convert_validate_msg_to_jp(message: str):
+    """"""
+    """Convert validation messages from en to jp.
+
+    :argument
+        message     -- {str} English message.
+    :return
+        return       -- Japanese message.
+
+    """
+    result = None
+    for msg_en, msg_jp in WEKO_IMPORT_VALIDATE_MESSAGE.items():
+        msg_en_pattern = '^{}$'.format(msg_en.replace('%r', '.*'))
+        if re.search(msg_en_pattern, message):
+            msg_paths = msg_en.split('%r')
+            prev_position = 0
+            data = []
+            for idx, path in enumerate(msg_paths, start=1):
+                position = message.index(path)
+                if path == '':
+                    if idx == 1:
+                        continue
+                    elif idx == len(msg_paths):
+                        prev_position += len(msg_paths[idx-2])
+                        position = len(message)
+                if position >= 0:
+                    data.append(message[prev_position: position])
+                    prev_position = position
+            if data:
+                result = msg_jp
+            for value in data:
+                result = result.replace('%r', value, 1)
+            return result
+    return message
+
+
 def handle_validate_item_import(list_record, schema) -> list:
     """Validate item import.
 
@@ -597,7 +707,14 @@ def handle_validate_item_import(list_record, schema) -> list:
         if record.get('metadata'):
             if v2:
                 a = v2.iter_errors(record.get('metadata'))
-                errors = errors + [error.message for error in a]
+                if current_i18n.language == 'ja':
+                    _errors = []
+                    for error in a:
+                        _errors.append(handle_convert_validate_msg_to_jp(
+                            error.message))
+                    errors = errors + _errors
+                else:
+                    errors = errors + [error.message for error in a]
             else:
                 errors = errors = errors + \
                     [_('Specified item type does not exist.')]
@@ -1272,6 +1389,8 @@ def handle_check_and_prepare_index_tree(list_record):
                 tree_names = []
                 if pos_index and x <= len(pos_index) - 1:
                     tree_names = [i.strip() for i in pos_index[x].split('/')]
+                    if index_id == '':
+                        tree_ids = ['' for i in tree_names]
                 else:
                     tree_names = ['' for i in range(len(tree_ids))]
 
@@ -1726,13 +1845,6 @@ def register_item_doi(item):
                     is_feature_import=True
                 )
 
-        deposit = WekoDeposit.get_record(pid.object_uuid)
-        deposit.commit()
-        deposit.publish()
-        deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
-        deposit.commit()
-        deposit.publish()
-
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
@@ -2163,8 +2275,9 @@ def handle_check_date(list_record):
         # validate pubdate
         try:
             pubdate = record.get('metadata').get('pubdate')
-            if pubdate:
-                datetime.strptime(pubdate, '%Y-%m-%d')
+            if pubdate and pubdate != datetime.strptime(pubdate, '%Y-%m-%d') \
+                    .strftime('%Y-%m-%d'):
+                raise Exception
         except Exception:
             errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
         if errors:
@@ -2182,7 +2295,7 @@ def validattion_date_property(date_str):
     """
     for fmt in ('%Y-%m-%d', '%Y-%m', '%Y'):
         try:
-            return datetime.strptime(date_str, fmt)
+            return date_str == datetime.strptime(date_str, fmt).strftime(fmt)
         except ValueError:
             pass
     return False
@@ -2237,10 +2350,11 @@ def get_change_identifier_mode_content():
     return data
 
 
-def get_root_item_option(item_id, item):
+def get_root_item_option(item_id, item, sub_form={'title_i18n': {}}):
     """Handle if is root item."""
     _id = '.metadata.{}'.format(item_id)
-    _name = item.get('title')
+    _name = sub_form.get('title_i18n').get(
+        current_i18n.language) or item.get('title')
 
     _option = []
     if item.get('option').get('required'):
@@ -2430,12 +2544,14 @@ def handle_check_metadata_not_existed(str_keys, item_type_id=0):
     for str_key in str_keys:
         if str_key.startswith('.metadata.'):
             pre_key = re.sub(r'\[\d+\]', '[0]', str_key)
-            if pre_key != '.metadata.path[0]' and pre_key not in ids:
+            if pre_key != '.metadata.path[0]' and pre_key not in ids \
+                    and 'iscreator' not in pre_key:
                 result.append(str_key.replace('.metadata.', ''))
     return result
 
 
-def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None):
+def handle_get_all_sub_id_and_name(
+        items, root_id=None, root_name=None, form=[]):
     """Get all sub id, sub name of root item with full-path.
 
     :argument
@@ -2448,22 +2564,30 @@ def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None):
     """
     ids, names = [], []
     for key in sorted(items.keys()):
+        if key == 'iscreator':
+            continue
         item = items.get(key)
+        sub_form = next(
+            (x for x in form if key in x.get('key', '')),
+            {'title_i18n': {}})
+        title = sub_form.get('title_i18n').get(
+            current_i18n.language) or item.get('title')
         if item.get('items') and item.get('items').get('properties'):
             _ids, _names = handle_get_all_sub_id_and_name(
-                item.get('items').get('properties'))
+                item.get('items').get('properties'),
+                form=sub_form.get('items', []))
             ids += [key + '[0].' + _id for _id in _ids]
-            names += [item.get('title') + '[0].' + _name
+            names += [title + '[0].' + _name
                       for _name in _names]
         elif item.get('type') == 'object' and item.get('properties'):
             _ids, _names = handle_get_all_sub_id_and_name(
-                item.get('properties'))
+                item.get('properties'), form=sub_form.get('items', []))
             ids += [key + '.' + _id for _id in _ids]
-            names += [item.get('title') + '.' + _name
+            names += [title + '.' + _name
                       for _name in _names]
         else:
             ids.append(key)
-            names.append(item.get('title'))
+            names.append(title)
 
     if root_id:
         ids = [root_id + '.' + _id for _id in ids]

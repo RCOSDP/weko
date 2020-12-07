@@ -41,6 +41,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
@@ -919,6 +920,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         key_label.extend(sublabel)
                         key_data.extend(subdata)
                     else:
+                        if 'iscreator' in new_key:
+                            continue
                         if isinstance(data, dict):
                             data = [data]
                         key_list.append(new_key)
@@ -983,7 +986,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
-    ret_label.append('公開日')
+    ret_label.append('公開日' if current_i18n.language == 'ja' else 'PubDate')
 
     for recid in recids:
         record = records.records[recid]
@@ -1076,6 +1079,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
     ret_system = []
     ret_option = []
+    multiple_option = ['.metadata.path', '.pos_index',
+                       '.feedback_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})
@@ -1114,6 +1119,9 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         elif key == '.edit_mode' or key == '.publish_status':
             ret_system.append('')
             ret_option.append('Required')
+        elif _id.split('[')[0] in multiple_option:
+            ret_system.append('')
+            ret_option.append('Allow Multiple')
         else:
             ret_system.append('')
             ret_option.append('')
