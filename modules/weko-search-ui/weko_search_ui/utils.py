@@ -651,7 +651,6 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
 
 
 def handle_convert_validate_msg_to_jp(message: str):
-    """"""
     """Convert validation messages from en to jp.
 
     :argument
@@ -673,7 +672,7 @@ def handle_convert_validate_msg_to_jp(message: str):
                     if idx == 1:
                         continue
                     elif idx == len(msg_paths):
-                        prev_position += len(msg_paths[idx-2])
+                        prev_position += len(msg_paths[idx - 2])
                         position = len(message)
                 if position >= 0:
                     data.append(message[prev_position: position])
