@@ -209,7 +209,7 @@ class ReportView(BaseView):
                         "must": [
                             {
                                 "term": {
-                                    "relation_version_is_last": true
+                                    "relation_version_is_last": True
                                 }
                             },
                             {
@@ -227,7 +227,7 @@ class ReportView(BaseView):
                                 "must": [
                                     {
                                         "term": {
-                                            "relation_version_is_last": true
+                                            "relation_version_is_last": True
                                         }
                                     },
                                     {
