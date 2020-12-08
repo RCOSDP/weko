@@ -179,7 +179,7 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                             # Set all key for key
                             name_arr = name.get('@value').split('.')
                             key_arr.extend(get_keys(name_arr))
-                        elif '.' in v1.get('@value'):
+                        elif '.' in v1.get('@value', ''):
                             # Set key for __lang
                             attr = v1.get('@attributes', {})
                             xml_lang = attr.get('xml:lang', '').split('.')
