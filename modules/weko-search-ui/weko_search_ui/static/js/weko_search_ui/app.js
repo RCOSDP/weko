@@ -535,10 +535,13 @@ function escapeAuthorString(data) {
 }
 
 function escapeString(data) {
-  return data
+  let tmp = data;
+  data = data
+    .replace(/(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)/g, "")
     .replace(/[\x00-\x1F\x7F]/g, "")
-    .replace(/&EMPTY&/g, "")
     .trim();
+  console.log(`${tmp} - ${data}`)
+  return data === ',' ? '' : data;
 }
 
 function format_comment(comment) {
