@@ -1206,10 +1206,7 @@ class WekoRecord(Record):
             mlt = val.get('attribute_value_mlt')
             if mlt is not None:
                 mlt = copy.deepcopy(mlt)
-                print("Before: ", mlt)
                 self.__remove_special_character_of_weko2(mlt)
-                print("After: ", mlt)
-                print("=" * 60)
                 nval = dict()
                 nval['attribute_name'] = val.get('attribute_name')
                 nval['attribute_name_i18n'] = lst[2] or val.get(
