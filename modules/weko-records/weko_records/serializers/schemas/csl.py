@@ -68,7 +68,7 @@ def get_data_from_mapping(key, obj):
             if i != 0 and result:
                 # Update index in order to get data by language.
                 if arr[i] in ['attribute_value_mlt', 'creatorNames']:
-                    temp = result.get(arr[i])
+                    temp = result.get(arr[i], [])
                     k = 0
                     # Check show data with current language. (1)
                     for j in temp:
