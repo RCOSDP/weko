@@ -196,8 +196,8 @@ def is_valid_access():
 
     Regard all accesses as valid if `STATS_EXCLUDED_ADDRS` is set to `[]`.
     """
-    if current_app.config.STATS_EXCLUDED_ADDRS:
-        return get_remote_addr() not in current_app.config.STATS_EXCLUDED_ADDRS
+    if current_app.config['STATS_EXCLUDED_ADDRS']:
+        return get_remote_addr() not in current_app.config['STATS_EXCLUDED_ADDRS']
     else:
         return True
 
