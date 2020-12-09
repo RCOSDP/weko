@@ -1522,6 +1522,7 @@ def handle_check_cnri(list_record):
                     else:
                         prefix = cnri
                         suffix = ''
+                    if not suffix:
                         item['cnri_suffix_not_existed'] = True
 
                     if prefix != Handle().get_prefix():
@@ -1644,6 +1645,7 @@ def handle_check_doi(list_record):
                         else:
                             prefix = doi
                             suffix = ''
+                        if not suffix:
                             item['doi_suffix_not_existed'] = True
 
                         if not item.get('ignore_check_doi_prefix') \
@@ -1697,6 +1699,7 @@ def register_item_handle(item, url_root):
         if item.get('is_change_identifier'):
             if item.get('cnri_suffix_not_existed'):
                 suffix = "{:010d}".format(int(item_id))
+                cnri = cnri[:-1] if cnri[-1] == '/' else cnri
                 cnri += '/' + suffix
             if item.get('status') == 'new':
                 register_hdl_by_handle(cnri, pid.object_uuid)
@@ -1809,9 +1812,11 @@ def register_item_doi(item):
         pid_lastest = WekoRecord.get_record_by_pid(
             lastest_version_id).pid_recid
 
+        data = None
         if is_change_identifier:
             if item.get('doi_suffix_not_existed'):
                 suffix = "{:010d}".format(int(item_id))
+                doi = doi[:-1] if doi[-1] == '/' else doi
                 doi += '/' + suffix
             if doi_ra and doi:
                 data = {
@@ -1844,7 +1849,14 @@ def register_item_doi(item):
                     is_feature_import=True
                 )
 
-        db.session.commit()
+        if data:
+            deposit = WekoDeposit.get_record(pid.object_uuid)	
+            deposit.commit()	
+            deposit.publish()	
+            deposit = WekoDeposit.get_record(pid_lastest.object_uuid)	
+            deposit.commit()	
+            deposit.publish()
+            db.session.commit()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error('item id: %s update error.' % item_id)
