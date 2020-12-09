@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import calendar
+import operator
 import os
 import re
 from base64 import b64encode
@@ -711,11 +712,8 @@ class QueryRecordViewReportHelper(object):
         """Create response object."""
         for item in res['buckets']:
             for record in item['buckets']:
-                data = {}
-                data['record_id'] = item['key']
-                data['index_names'] = record['key']
-                data['total_all'] = record['value']
-                data['total_not_login'] = 0
+                data = {'record_id': item['key'], 'index_names': record['key'],
+                        'total_all': record['value'], 'total_not_login': 0}
                 for user in record['buckets']:
                     for pid in user['buckets']:
                         data['pid_value'] = pid['key']
@@ -724,6 +722,65 @@ class QueryRecordViewReportHelper(object):
                     if user['key'] == 'guest':
                         data['total_not_login'] += user['value']
                 data_list.append(data)
+        cls.correct_record_title(data_list)
+
+    @classmethod
+    def get_title(cls, lst_id):
+        """
+        Get title records based on given list id.
+
+        @param lst_id:
+        @return:
+        """
+        from invenio_records.models import RecordMetadata
+        from invenio_db import db
+        with db.session.no_autoflush:
+            query = RecordMetadata.query.filter(
+                RecordMetadata.id.in_(lst_id)).with_entities(RecordMetadata.id,
+                                                             RecordMetadata.
+                                                             json[
+                                                                 'title'].
+                                                             label(
+                                                                 'title'))
+            obj = query.all()
+            return obj
+
+    @classmethod
+    def correct_record_title(cls, lst_data):
+        """Correct title if many items has same id but diff title.
+
+        @param lst_data:
+        @return:
+        """
+        lst_data_dict = {}
+        for i in lst_data:
+            if lst_data_dict.get(i['record_id']):
+                lst_data_dict[i['record_id']]['total_all'] += i['total_all']
+                lst_data_dict[i['record_id']]['total_not_login'] += i[
+                    'total_not_login']
+                if lst_data_dict[i['record_id']]['record_name'] != i[
+                        'record_name']:
+                    lst_data_dict[i['record_id']]['same_title'] = False
+            else:
+                lst_data_dict[i['record_id']] = i
+                lst_data_dict[i['record_id']]['same_title'] = True
+
+        # Collect list need to get latest title
+        values = list(lst_data_dict.values())
+        lst_to_get_title = [i['record_id'] for i in values if
+                            not i['same_title']]
+
+        lst_titles = list(cls.get_title(lst_to_get_title))
+        lst_titles_dict = {}
+        [lst_titles_dict.update({str(i[0]): i[1][0]}) for i in lst_titles]
+
+        for i in values:
+            if not i['same_title']:
+                i['record_name'] = lst_titles_dict[i['record_id']]
+        values = sorted(values, key=operator.itemgetter("total_all"),
+                        reverse=True)
+        lst_data.clear()
+        lst_data.extend(values)
 
     @classmethod
     def get(cls, **kwargs):
