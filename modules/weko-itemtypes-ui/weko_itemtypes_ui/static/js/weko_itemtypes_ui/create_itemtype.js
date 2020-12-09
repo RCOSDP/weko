@@ -1040,7 +1040,14 @@ $(document).ready(function () {
         }
       },
       error: function(textStatus,errorThrown){
-        $('.modal-body').text('Error: ' + JSON.stringify(textStatus));
+        let message;
+        if (textStatus.status === 400) {
+          let response = JSON.parse(textStatus.responseText);
+          message = response.msg;
+        } else {
+          message = JSON.stringify(textStatus);
+        }
+        $('.modal-body').text('Error: ' + message);
         $('#myModal').modal('show');
       }
     });
