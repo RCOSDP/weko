@@ -108,8 +108,7 @@ class WekoBibTexSerializer():
                            'musical notation', 'interactive resource',
                            'learning material', 'patent', 'dataset', 'software',
                            'workflow',
-                           'other（その他）',
-                           'other（プレプリント）'],
+                           'other'],
         BibTexTypes.PHDTHESIS: ['doctoral thesis'],
         BibTexTypes.PROCEEDINGS: ['conference proceedings'],
         BibTexTypes.TECHREPORT: ['report',
@@ -738,12 +737,18 @@ class WekoBibTexSerializer():
         year = ''
         month = ''
         for element in dates:
-            date = datetime.strptime(element, '%Y-%m-%d')
+            date_element = element.split('-')
             year += ', ' if year != '' else ''
             month += ', ' if month != '' else ''
-
+            if len(date_element) == 1:
+                date = datetime.strptime(element, '%Y')
+            elif len(date_element) == 2:
+                date = datetime.strptime(element, '%Y-%m')
+            else:
+                date = datetime.strptime(element, '%Y-%m-%d')
             year += str(date.year)
-            month += date.strftime('%b')
+            if len(date_element) > 1:
+                month += date.strftime('%b')
 
         return year, month
 
