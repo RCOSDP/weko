@@ -341,11 +341,21 @@ class SchemaTree:
                             lambda x: get_attr(x) in _need_to_nested,
                             attr.keys())) if attr else []
                     if attr and alst and _check_description_type(attr, alst):
-                        return list(map(partial(
-                            create_json, get_attr(alst[0])),
-                            list_reduce([attr.get(alst[0])]),
-                            list(list_reduce(val)))
-                        )
+                        _partial = partial(create_json, get_attr(alst[0]))
+                        list_val = list(list_reduce(val))
+                        list_attr = list(list_reduce([attr.get(alst[0])]))
+                        if list_val and list_attr:
+                            return list(map(_partial, list_attr, list_val))
+                        else:
+                            if list_val:
+                                return list(map(
+                                    lambda x: {'value': x}, list_val))
+                            elif list_attr:
+                                return list(map(
+                                    lambda x: {get_attr(alst[0]): x},
+                                    list_attr))
+                            else:
+                                return []
 
                     return list(list_reduce(val))
                 else:
