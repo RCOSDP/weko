@@ -349,9 +349,12 @@
           }
         },
         error: function(jqXHR, status) {
-          //alert('create failed');
-          var modalcontent =  "Create failed";
-          $("#inputModal").html(modalcontent);
+          var modalcontent = 'Create failed.';
+          if (jqXHR.status === 400) {
+            var response = JSON.parse(jqXHR.responseText);
+            modalcontent += ' ' + response.msg;
+          }
+          $("#inputModal").text(modalcontent);
           $("#allModal").modal("show");
         }
       });
