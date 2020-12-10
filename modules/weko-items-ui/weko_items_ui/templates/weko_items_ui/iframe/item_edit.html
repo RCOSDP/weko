@@ -141,6 +141,12 @@
                             <div class="well">
                               <div class="text-center">{{_('Drop files or folders here')}}</div>
                             </div>
+                            <div class="well" ngf-drag-over-class="'dragover'" ngf-drop="" ngf-change="dragUploadThumbnail($newFiles)"
+                              ngf-max-size="20GB" ngf-multiple="true">
+                              <center>
+                                Drop files or folders here
+                              </center>
+                            </div>
                             <p class="text-center legend"><strong>— {{_('OR')}} —</strong></p>
                             <p class="text-center">
                               <button class="btn btn-primary" ng-click="uploadThumbnail()">{{_('Click to select')}}</button>
