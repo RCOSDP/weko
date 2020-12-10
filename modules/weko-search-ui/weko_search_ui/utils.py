@@ -2449,7 +2449,7 @@ def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None):
     ids, names = [], []
     for key in sorted(items.keys()):
         item = items.get(key)
-        if item.get('items'):
+        if item.get('items') and item.get('items').get('properties'):
             _ids, _names = handle_get_all_sub_id_and_name(
                 item.get('items').get('properties'))
             ids += [key + '[0].' + _id for _id in _ids]
