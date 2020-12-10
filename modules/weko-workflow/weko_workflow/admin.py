@@ -84,10 +84,17 @@ class FlowSettingView(BaseView):
             action_list=actions
         )
 
-    def update_flow(self, flow_id):
+    @staticmethod
+    def update_flow(flow_id):
         post_data = request.get_json()
         workflow = Flow()
-        workflow.upt_flow(flow_id, post_data)
+        try:
+            workflow.upt_flow(flow_id, post_data)
+        except ValueError as ex:
+            response = jsonify(msg=str(ex))
+            response.status_code = 400
+            return response
+
         return jsonify(code=0, msg=_('Updated flow successfully.'))
 
     @expose('/<string:flow_id>', methods=['POST'])
