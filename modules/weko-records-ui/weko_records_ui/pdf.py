@@ -29,6 +29,7 @@ from flask import current_app, request, send_file
 from fpdf import FPDF
 from invenio_db import db
 from invenio_files_rest.views import ObjectResource
+from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -148,7 +149,8 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     file_path = current_app.config['PDF_COVERPAGE_LANG_FILEPATH']
     file_name = current_app.config['PDF_COVERPAGE_LANG_FILENAME']
-    lang_file_path = file_path + lang_user + file_name
+    cur_lang = current_i18n.language
+    lang_file_path = file_path + cur_lang + file_name
 
     pid_object = get_pid_object(pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pid_object.object_uuid)
