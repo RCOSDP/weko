@@ -23,6 +23,7 @@ import click
 import six
 from dateutil import parser
 from elasticsearch import VERSION as ES_VERSION
+from elasticsearch import exceptions as es_exceptions
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Search
 from flask import current_app, request, session
@@ -445,10 +446,12 @@ class QuerySearchReportHelper(object):
                 current_report['count'] = report['value']
                 all.append(current_report)
             result['all'] = all
-
+        except es_exceptions.NotFoundError as e :
+            current_app.logger.debug("Indexes do not exist yet: ", str(e))
+            result['all'] = []
         except Exception as e:
             current_app.logger.debug(e)
-            return {}
+            result['all'] = []
 
         return result
 
@@ -811,6 +814,9 @@ class QueryRecordViewReportHelper(object):
             all_res = all_query.run(**params)
             cls.Calculation(all_res, all_list)
 
+        except es_exceptions.NotFoundError as e:
+            current_app.logger.debug("Indexes do not exist yet: ", str(e))
+            result['all'] = []
         except Exception as e:
             current_app.logger.debug(e)
 
@@ -1130,6 +1136,10 @@ class QueryItemRegReportHelper(object):
                                     result[index]['count'] += user['count']
                 else:
                     result = []
+            except es_exceptions.NotFoundError as e:
+                current_app.logger.debug("Indexes do not exist yet: ",
+                                         str(e))
+                result = []
             except Exception as e:
                 current_app.logger.debug(e)
 
