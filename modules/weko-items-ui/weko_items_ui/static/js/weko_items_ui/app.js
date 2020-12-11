@@ -3805,7 +3805,8 @@ function toObject(arr) {
           * @memberof WekoRecordsCtrl
           * @function upload
           */
-        $scope.getEndpoints = function (callback) {
+        $scope.getEndpoints = function () {
+          var deferred = jQuery.Deferred();
           if ($rootScope.filesVM.invenioFilesEndpoints.bucket === undefined) {
             // If the action url doesnt exists request it
             InvenioFilesAPI.request({
@@ -3820,21 +3821,23 @@ function toObject(arr) {
                 $rootScope.$broadcast(
                   'invenio.records.endpoints.updated', response.data.links
                 );
-                callback();
+                deferred.resolve({});
             }, function error(response) {
                 // Error
-                console.log(response);
-                callback();
+                deferred.reject(response);
             });
           } else {
-            callback();
+            // We already have it resolve it asap
+            vm.invenioFilesArgs.url = vm.invenioFilesEndpoints.bucket;
+            deferred.resolve({});
           }
-        }
+          return deferred.promise;
+        };
 
         // click input upload files
         $scope.uploadThumbnail = function () {
-            $scope.getEndpoints(function() {
-              document.getElementById('selectThumbnail').click();
+          $.when( $scope.getEndpoints() ).then(function() {
+            document.getElementById('selectThumbnail').click();
           });
         };
 
@@ -3874,12 +3877,13 @@ function toObject(arr) {
         };
 
         /**
-          * Rrag upload file
+          * Drag upload file
           * @memberof WekoRecordsCtrl
           * @function upload
+          * @param {Object} files - The dragged files.
           */
         $scope.dragoverThumbnail = function (files) {
-          $scope.getEndpoints(function () {
+          $.when( $scope.getEndpoints() ).then(function() {
             if (!angular.isUndefined(files) && files.length > 0) {
               if ($scope.model.allowMultiple != 'True') {
                 files = Array.prototype.slice.call(files, 0, 1);
