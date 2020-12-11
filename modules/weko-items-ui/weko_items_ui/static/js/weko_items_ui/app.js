@@ -3828,7 +3828,7 @@ function toObject(arr) {
             });
           } else {
             // We already have it resolve it asap
-            vm.invenioFilesArgs.url = vm.invenioFilesEndpoints.bucket;
+            $rootScope.filesVM.invenioFilesArgs.url = vm.invenioFilesEndpoints.bucket;
             deferred.resolve({});
           }
           return deferred.promise;
