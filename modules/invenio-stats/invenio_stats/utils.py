@@ -447,7 +447,8 @@ class QuerySearchReportHelper(object):
                 all.append(current_report)
             result['all'] = all
         except es_exceptions.NotFoundError as e :
-            current_app.logger.debug("Indexes do not exist yet: ", str(e))
+            current_app.logger.debug(
+                "Indexes do not exist yet:" + str(e.info['error']))
             result['all'] = []
         except Exception as e:
             current_app.logger.debug(e)
@@ -815,7 +816,8 @@ class QueryRecordViewReportHelper(object):
             cls.Calculation(all_res, all_list)
 
         except es_exceptions.NotFoundError as e:
-            current_app.logger.debug("Indexes do not exist yet: ", str(e))
+            current_app.logger.debug("Indexes do not exist yet:",
+                                     str(e.info['error']))
             result['all'] = []
         except Exception as e:
             current_app.logger.debug(e)
@@ -1137,8 +1139,8 @@ class QueryItemRegReportHelper(object):
                 else:
                     result = []
             except es_exceptions.NotFoundError as e:
-                current_app.logger.debug("Indexes do not exist yet: ",
-                                         str(e))
+                current_app.logger.debug("Indexes do not exist yet:",
+                                         str(e.info['error']))
                 result = []
             except Exception as e:
                 current_app.logger.debug(e)
