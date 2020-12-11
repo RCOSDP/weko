@@ -51,7 +51,7 @@ services:
       - INVENIO_ROLE_REPOSITORY=Repository Administrator
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
-      - FLASK_DEBUG=0
+      - FLASK_DEBUG=1
       - SEARCH_INDEX_PREFIX=tenant1
       - INVENIO_DB_POOL_CLASS=QueuePool
     volumes:
@@ -102,6 +102,7 @@ services:
       - /code/modules/weko-bulkupdate/weko_bulkupdate.egg-info
       - /code/modules/weko-items-autofill/weko_items_autofill.egg-info
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
+      - /code/modules/invenio-iiif/invenio_iiif.egg-info
     user: invenio
     links:
       - postgresql
