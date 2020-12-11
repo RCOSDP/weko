@@ -3826,6 +3826,8 @@ function toObject(arr) {
                 console.log(response);
                 callback();
             });
+          } else {
+            callback();
           }
         }
 
@@ -3901,11 +3903,12 @@ function toObject(arr) {
               if ($rootScope.filesVM.invenioFilesEndpoints.bucket !== undefined) {
                 let deposit_files_api = $("#deposit-files-api").val();
                 let bucket_url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
-                let bucket_url_arr = bucket_url.split(deposit_files_api)
+                let bucket_url_arr = bucket_url.split(deposit_files_api);
+
                 $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url_arr[0] + deposit_files_api + '/thumbnail' + bucket_url_arr[1];
+                $rootScope.filesVM.upload();
+                $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url;
               }
-              $rootScope.filesVM.upload();
-              $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url;
             }
           });
         };
