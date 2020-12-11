@@ -1,3 +1,4 @@
+
 -e /code/modules/invenio-files-rest
 -e /code/modules/invenio-s3
 -e /code/modules/invenio-oaiserver
@@ -36,3 +37,4 @@
 -e /code/modules/weko-bulkupdate
 -e /code/modules/weko-items-autofill
 -e /code/modules/weko-sitemap
+-e /code/modules/invenio-iiif
