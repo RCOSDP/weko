@@ -138,7 +138,7 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
     ports:
       - "29201:9200"
       - "29301:9300"
