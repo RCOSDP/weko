@@ -28,9 +28,6 @@ class InvenioIIIF(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
-        self.iiif_ext = IIIF(app=app)
-        self.iiif_ext.api_decorator_handler(protect_api)
-        self.iiif_ext.uuid_to_image_opener_handler(image_opener)
         app.extensions['invenio-iiif'] = self
 
     def init_config(self, app):
@@ -46,5 +43,8 @@ class InvenioIIIFAPI(InvenioIIIF):
     def init_app(self, app):
         """Flask application initialization."""
         super(InvenioIIIFAPI, self).init_app(app)
+        ext = IIIF(app=app)
         api = Api(app=app)
-        self.iiif_ext.init_restful(api, prefix=app.config['IIIF_API_PREFIX'])
+        ext.init_restful(api, prefix=app.config['IIIF_API_PREFIX'])
+        ext.uuid_to_image_opener_handler(image_opener)
+        ext.api_decorator_handler(protect_api)
