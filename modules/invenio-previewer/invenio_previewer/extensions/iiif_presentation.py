@@ -29,7 +29,7 @@ import json
 import re
 from collections import OrderedDict
 
-from flask import current_app, render_template
+from flask import current_app, render_template, request
 
 from ..utils import detect_encoding
 
@@ -59,14 +59,21 @@ def validate_json(file):
 
 def can_preview(file):
     """Determine if the given file can be previewed."""
-    return (file.is_local()
-            and file.filename == 'manifest.json'
-            and validate_json(file))
+    
+    if (file.is_local() and file.filename == 'manifest.json'
+            and validate_json(file)):
+        return True
+    if (file.is_local() and file.filename == 'manifest.json'):
+        return True
 
 
 def preview(file):
     """Render appropiate template with embed flag."""
+    url = file.uri
+    if (not validate_json(file)):
+        url = request.url_root+'api/iiif/v2/records/'+file.pid.pid_value+'/manifest.json'
+    
     return render_template(
         'invenio_previewer/iiif_presentation.html',
-        file=file,
+        file=url,
     )
