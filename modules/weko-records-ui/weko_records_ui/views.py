@@ -392,8 +392,11 @@ def _get_google_scholar_meta(record):
 
     # MERAL temporary fix
     if 'item_1583103120197' in record:
-        fname=record['item_1583103120197']['attribute_value_mlt'][0]['filename']
-        res.append({'name': 'citation_pdf_url',
+        if 'attribute_value_mlt' in record['item_1583103120197']:
+            for r in record['item_1583103120197']['attribute_value_mlt']:
+                if 'filename' in r:
+                    fname = r['filename']
+                    res.append({'name': 'citation_pdf_url',
                         'data': request.base_url.replace('records', 'record')
                         + '/files/' + fname})
 
