@@ -1,0 +1,94 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2013, 2014, 2015, 2016 CERN.
+#
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+#}
+
+{# Creates the bottom for embed and base previews #}
+
+{%- from "invenio_previewer/_macros.html" import preview_file %}
+
+
+{# Modal for embed code, hidden unless called upon #}
+<div id="embedModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="embedModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3 id="embedModalLabel">{{_('Embed code')}}</h3>
+  </div>
+  <div class="modal-body">
+    <textarea style="width:90%;height:100px;">
+    {% autoescape on %}
+      {{ preview_file(file) }}
+    {% endautoescape %}
+    </textarea>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">{{_('Close')}}</button>
+  </div>
+</div>
+
+<!-- Styling the wrapper and bottom -->
+<style type="text/css">
+  html,
+  body {
+    height: 100%;
+  }
+  #wrap {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    margin: 0 auto -60px;
+  }
+  #push,
+  #bottom {
+    height: 60px;
+  }
+  #bottom {
+    background-color: #f5f5f5;
+  }
+  @media (max-width: 767px) {
+    #bottom {
+      margin-left: -20px;
+      margin-right: -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+  }
+</style>
+
+
+{# Add div to push down bottom if necessary #}
+<script>
+  $('#wrap').append('<div id="push"></div>');
+</script>
+
+{# Bottom: determines whether to have view or embed button
+# based on embed flag #}
+<div id="bottom">
+  <div class="container row">
+    <div class="span5 offset1"><h3>{{_('Previewing')}}: {{ file.filename }}</h3></div>
+    <div class="span3">
+      <a role="button" class="btn btn-inverse" data-toggle="modal" href="#embedModal">{{_('Embed')}}&nbsp;&nbsp<i class="icon-share icon-white"></i></a>
+      <a role="button" class="btn btn-inverse" href="{{ file.uri }}">{{_('Download')}}&nbsp;&nbsp<i class="icon-download icon-white"></i></a>
+    </div>
+  </div>
+</div>
