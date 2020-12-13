@@ -15,7 +15,7 @@ const FOOTER_TYPE = "Footer";
 const BORDER_STYLE_DOUBLE = "double";
 const BORDER_STYLE_NONE = "none";
 const INTERVAL_TIME = 60000; //one minute
-const DEFAULT_WIDGET_HEIGHT = 6;
+const DEFAULT_WIDGET_HEIGHT = 5;
 const MAIN_CONTENTS = "main_contents";
 const MIN_WIDTH = 768;
 
@@ -678,19 +678,12 @@ function resizeWidgetToDefaultHeight() {
   // Other widget
   Object.keys(widgetOtherList).forEach(function (key) {
     let widget = widgetOtherList[key]['widget'];
-    let parent = widgetOtherList[key]['parent'];
-    let width = parent.data("gsWidth");
-    widgetBodyGrid.resizeWidget(parent, width, DEFAULT_WIDGET_HEIGHT);
-    widget.data("isUpdated", false);
+    widget.data("isResize", true);
   });
   // Header widget
-  let headerWidget = $('#header');
-  let headerWidth = headerWidget.data("gsWidth");
-  widgetBodyGrid.resizeWidget(headerWidget, headerWidth, DEFAULT_WIDGET_HEIGHT);
+  $('#header').data("isResize", true);
   // Main Content widget
-  let mainContentWidget = $("#" + MAIN_CONTENTS);
-  let mainContentWidth = mainContentWidget.data("gsWidth");
-  widgetBodyGrid.resizeWidget(mainContentWidget, mainContentWidth, DEFAULT_WIDGET_HEIGHT);
+  $("#" + MAIN_CONTENTS).data("isResize", true);
 }
 
 /**
@@ -701,6 +694,14 @@ function resizeWidgetToDefaultHeight() {
  */
 function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
   if (otherElement) {
+    let isResize = otherElement.data("isResize");
+    if (isResize) {
+      let parent = otherElement.closest(".grid-stack-item");
+      let width = parent.data("gsWidth");
+      pageBodyGrid.resizeWidget(parent, width, DEFAULT_WIDGET_HEIGHT);
+      otherElement.data("isResize", false);
+      otherElement.data("isUpdated", true);
+    }
     let scrollHeight = otherElement.prop("scrollHeight");
     let clientHeight = otherElement.prop("clientHeight");
     if (scrollHeight > clientHeight) {
@@ -736,12 +737,17 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
       }
     }
   } else {
+    let width = widgetElement.data("gsWidth");
+    let isResize = widgetElement.data("isResize");
+    if (isResize) {
+      pageBodyGrid.resizeWidget(widgetElement, width, DEFAULT_WIDGET_HEIGHT);
+      widgetElement.data("isResize", false);
+    }
     let scrollHeight = widgetElement.prop("scrollHeight");
     let clientHeight = widgetElement.prop("clientHeight");
     let currentHeight = widgetElement.data("gsHeight");
     if (scrollHeight > clientHeight) {
       let newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
-      let width = widgetElement.data("gsWidth");
       if (newHeight > currentHeight) {
         pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
       } else if (newHeight === currentHeight) {
@@ -863,10 +869,50 @@ function buildWidget() {
     // The height of the widgets are set to default.
     window.addEventListener('resize', function () {
       fixBrowserResize();
-      clearTimeout(resizeWidgetTimeout);
-      resizeWidgetTimeout = setTimeout(resizeWidgetToDefaultHeight, 50);
+      resizeWidgetToDefaultHeight();
+    });
+    // Resize Image.
+    setTimeout(resizeImage, 0);
+    // Resize Widget Name.
+    new ResizeSensor($('.widget-resize'), function () {
+      $('.widget-resize').each(function () {
+        let headerElementHeight = $(this).find('.panel-heading').height();
+        if (headerElementHeight) {
+          $(this).find('.panel-body').css("padding-top", String(headerElementHeight + 11) + "px");
+        }
+      });
     });
   }
+}
+
+function resizeImage() {
+  $('.trumbowyg-editor img').each(function () {
+    let notAutoHeight = $(this).closest(".no-auto-height");
+    if (!notAutoHeight.length) {
+      let currentWidget = $(this).closest(".grid-stack-item");
+      let currentTrumbowyg = $(this).closest(".trumbowyg-editor");
+      let currentHeight = currentWidget.data("gsHeight");
+      let currentWidth = currentWidget.data("gsWidth");
+      let img = new Image();
+      img.src = $(this).attr('src');
+      img.onload = function () {
+        let childElement = currentTrumbowyg.children();
+        let widgetHeight = 0;
+        for (let i = 0; i < childElement.length; i++) {
+          let element = $(childElement[i]);
+          if (!element.hasClass("resize-sensor") && element.height()) {
+            widgetHeight += element.height();
+          }
+        }
+        let newHeight = getNewWidgetHeight(widgetBodyGrid, widgetHeight);
+        if (newHeight > currentHeight) {
+          widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight);
+        } else if (newHeight === currentHeight) {
+          widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight + 1);
+        }
+      }
+    }
+  });
 }
 
 /**

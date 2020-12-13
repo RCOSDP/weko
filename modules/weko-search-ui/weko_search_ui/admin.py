@@ -29,6 +29,7 @@ from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from invenio_i18n.ext import current_i18n
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
@@ -44,8 +45,8 @@ from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, check_sub_item_is_system, \
     create_flow_define, delete_records, get_change_identifier_mode_content, \
     get_content_workflow, get_lifetime, get_root_item_option, \
-    get_sub_item_option, get_tree_items, handle_index_tree, handle_workflow, \
-    make_stats_tsv, make_tsv_by_line
+    get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
+    handle_index_tree, handle_workflow, make_stats_tsv, make_tsv_by_line
 
 
 _signals = Namespace()
@@ -239,6 +240,7 @@ class ItemImportView(BaseView):
 
         if data:
             result = check_import_items(
+                data.get('file_name'),
                 data.get('file').split(",")[-1],
                 data.get('is_change_identifier')
             )
@@ -375,41 +377,8 @@ class ItemImportView(BaseView):
     @expose('/export_template', methods=['POST'])
     def export_template(self):
         """Download item type template."""
-        def handle_sub_item(items, root_id=None, root_name=None):
-            """Handle if is sub-item."""
-            ids, names = [], []
-            for key in sorted(items.keys()):
-                item = items.get(key)
-                if item.get('items'):
-                    _ids, _names = handle_sub_item(
-                        item.get('items').get('properties'))
-                    ids += [key + '[0].' + _id for _id in _ids]
-                    names += [item.get('title') + '#1.' + _name
-                              for _name in _names]
-                elif item.get('type') == 'object' and item.get('properties'):
-                    _ids, _names = handle_sub_item(item.get('properties'))
-                    ids += [key + '.' + _id for _id in _ids]
-                    names += [item.get('title') + '.' + _name
-                              for _name in _names]
-                else:
-                    ids.append(key)
-                    names.append(item.get('title'))
-
-            if root_id and root_name:
-                ids = [root_id + '.' + _id for _id in ids]
-                names = [root_name + '.' + _name
-                         for _name in names]
-
-            return ids, names
-
-        result = Response(
-            [],
-            mimetype="text/tsv",
-            headers={
-                "Content-disposition": "attachment; filename="
-            }
-        )
-
+        file_name = None
+        tsv_file = None
         data = request.get_json()
         if data:
             item_type_id = int(data.get('item_type_id', 0))
@@ -434,49 +403,74 @@ class ItemImportView(BaseView):
                         WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
 
                     item_type = item_type.render
-                    meta_fix = item_type.get('meta_fix', {})
-                    meta_list = item_type.get('meta_list', {})
-                    schema = item_type.get(
-                        'schemaeditor', {}).get('schema', {})
-                    form = item_type.get(
-                        'table_row_map', {}).get('form', {})
-                    for key, value in meta_fix.items():
-                        _id, _name, _option = get_root_item_option(key, value)
-                        ids_line.append(_id)
-                        names_line.append(_name)
-                        systems_line.append('')
-                        options_line.append(', '.join(_option))
+                    meta_list = {**item_type.get('meta_fix', {}),
+                                 **item_type.get('meta_list', {})}
+                    meta_system = [
+                        key for key in item_type.get('meta_system', {})]
+                    schema = item_type.get('table_row_map', {}) \
+                        .get('schema', {}).get('properties', {})
+                    form = item_type.get('table_row_map', {}).get('form', [])
 
-                    count_file = 1
-                    for key in item_type.get('table_row', {}):
-                        value = meta_list.get(key, {})
-                        if key in schema:
-                            item = schema.get(key)
-                            root_id, root_name, root_option = \
-                                get_root_item_option(key, value)
-                            _ids, _names = handle_sub_item(
-                                item.get('properties'), root_id, root_name)
+                    count_file = 0
+                    count_thumbnail = 0
+                    for key in ['pubdate', *item_type.get('table_row', [])]:
+                        if key in meta_system:
+                            continue
 
+                        item = schema.get(key)
+                        item_option = meta_list.get(key) \
+                            if meta_list.get(key) else item
+                        sub_form = next(
+                            (x for x in form if key == x.get('key')),
+                            {'title_i18n': {}})
+                        root_id, root_name, root_option = \
+                            get_root_item_option(key, item_option, sub_form)
+                        # have not sub item
+                        if not (item.get('properties') or item.get('items')):
+                            ids_line.append(root_id)
+                            names_line.append(root_name)
+                            systems_line.append('')
+                            options_line.append(', '.join(root_option))
+                        else:
+                            # have sub item
+                            sub_items = item.get('properties') \
+                                if item.get('properties') \
+                                else item.get('items').get('properties')
+                            _ids, _names = handle_get_all_sub_id_and_name(
+                                sub_items, root_id, root_name,
+                                sub_form.get('items', []))
                             _options = []
                             for _id in _ids:
-                                if 'filename' in _id \
-                                        or 'thumbnail_label' in _id:
+                                if 'filename' in _id:
                                     ids_line.append(
-                                        '.file_path#{}'.format(count_file))
-                                    names_line.append(
-                                        '.ファイルパス#{}'.format(count_file))
+                                        '.file_path[{}]'.format(count_file))
+                                    file_path_name = 'File Path' \
+                                        if current_i18n.language == 'en' \
+                                        else 'ファイルパス'
+                                    names_line.append('.{}[{}]'.format(
+                                        file_path_name, count_file))
                                     systems_line.append('')
-                                    options_line.append('')
+                                    options_line.append('Allow Multiple')
                                     count_file += 1
+                                if 'thumbnail_label' in _id:
+                                    ids_line.append('.thumbnail_path[{}]'
+                                                    .format(count_thumbnail))
+                                    thumbnail_path_name = 'Thumbnail Path' \
+                                        if current_i18n.language == 'en' \
+                                        else 'サムネイルパス'
+                                    names_line.append('.{}[{}]'.format(
+                                        thumbnail_path_name, count_thumbnail))
+                                    systems_line.append('')
+                                    options_line.append('Allow Multiple')
+                                    count_thumbnail += 1
 
-                                clean_key = _id.replace(
-                                    '.metadata.', '').replace('[0]', '[]')
+                                clean_key = _id.replace('.metadata.', '') \
+                                    .replace('[0]', '[]')
                                 _options.append(
                                     get_sub_item_option(clean_key, form) or [])
                                 systems_line.append(
                                     'System' if check_sub_item_is_system(
-                                        clean_key, form) else ''
-                                )
+                                        clean_key, form) else '')
 
                             ids_line += _ids
                             names_line += _names
@@ -491,14 +485,14 @@ class ItemImportView(BaseView):
                         systems_line,
                         options_line
                     ])
-                    result = Response(
-                        tsv_file.getvalue(),
-                        mimetype="text/tsv",
-                        headers={
-                            "Content-disposition": "attachment; "
-                            + urlencode({'filename': file_name})
-                        })
-        return result
+        return Response(
+            [] if not tsv_file else tsv_file.getvalue(),
+            mimetype="text/tsv",
+            headers={
+                "Content-disposition": "attachment; "
+                + ('filename=' if not file_name
+                   else urlencode({'filename': file_name}))
+            })
 
 
 item_management_bulk_search_adminview = {

@@ -845,6 +845,7 @@ class IdentifierHandle(object):
 
             if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
                 doi_pidstore.delete()
+                self.remove_idt_registration_metadata()
                 return doi_pidstore.status == PIDStatus.DELETED
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
@@ -852,6 +853,37 @@ class IdentifierHandle(object):
         except Exception as ex:
             current_app.logger.error(ex)
         return False
+
+    def remove_idt_registration_metadata(self):
+        """Remove Identifier Registration in Record Metadata.
+
+        Returns:
+            None
+
+        """
+        _, key_value = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@value")
+        key_id = key_value.split('.')[0]
+        if self.item_metadata.get(key_id, []):
+            del self.item_metadata[key_id]
+
+            deleted_items = self.item_metadata.get('deleted_items', [])
+            if deleted_items is not None:
+                deleted_items.append(key_id)
+            else:
+                deleted_items = [key_id]
+            self.item_metadata['deleted_items'] = deleted_items
+        try:
+            with db.session.begin_nested():
+                rec = RecordMetadata.query.filter_by(id=self.item_uuid).first()
+                deposit = WekoDeposit(rec.json, rec)
+                index = {'index': deposit.get('path', []),
+                         'actions': deposit.get('publish_status')}
+                deposit.update(index, self.item_metadata)
+                deposit.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
 
     def update_idt_registration_metadata(self, input_value, input_type):
         """Update Identifier Registration in Record Metadata.
@@ -1253,16 +1285,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
     return:
         acitivity_item_id
     """
+    from weko_deposit.pidstore import get_record_without_version
     if not deposit:
         return None
 
     item_id = None
     try:
         combine_record_file_urls(deposit)
-        pid_without_ver = PersistentIdentifier.get(
-            "recid",
-            current_pid.pid_value.split(".")[0]
-        )
+        pid_without_ver = get_record_without_version(current_pid)
         if ".0" in current_pid.pid_value:
             deposit.commit()
         deposit.publish()
@@ -1423,6 +1453,7 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "{}_mapping".format(meta_prefix))
 
+    file_keys = None
     if item_map:
         file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
         if meta_prefix in file_props:
@@ -1453,8 +1484,8 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
                 attr_mlt.get('filename'):
             if not attr_mlt.get(file_keys[1]):
                 attr_mlt[file_keys[1]] = {}
-            if not (attr[file_keys[1]].get(file_keys[2])
-                    and check_url_is_manual(attr.get('version_id'))):
+            if not (attr_mlt[file_keys[1]].get(file_keys[2])
+                    and check_url_is_manual(attr_mlt.get('version_id'))):
                 attr_mlt[file_keys[1]][file_keys[2]] = \
                     create_files_url(
                         request.url_root,

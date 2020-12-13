@@ -205,15 +205,37 @@ class ReportView(BaseView):
             aggs_query = {
                 "size": 0,
                 "post_filter": {
-                    "term": {
-                        "relation_version_is_last": True
+                    "bool": {
+                        "must": [
+                            {
+                                "term": {
+                                    "relation_version_is_last": True
+                                }
+                            },
+                            {
+                                "exists": {
+                                    "field": "path"
+                                }
+                            }
+                        ]
                     }
                 },
                 "aggs": {
                     "aggs_filter": {
                         "filter": {
-                            "term": {
-                                "relation_version_is_last": True
+                            "bool": {
+                                "must": [
+                                    {
+                                        "term": {
+                                            "relation_version_is_last": True
+                                        }
+                                    },
+                                    {
+                                        "exists": {
+                                            "field": "path"
+                                        }
+                                    }
+                                ]
                             }
                         },
                         "aggs": {

@@ -32,7 +32,7 @@ from invenio_indexer.api import RecordIndexer
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import func, literal_column
+from sqlalchemy.sql.expression import case, func, literal_column
 from weko_groups.api import Group
 
 from .models import Index
@@ -900,7 +900,8 @@ class Indexes(object):
                 test_alias.parent,
                 test_alias.id,
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                rec_alias.c.name + '-/-' + test_alias.index_name,
+                case([(func.length(test_alias.index_name) == 0, None)],
+                     else_=rec_alias.c.name + '-/-' + test_alias.index_name),
                 # add by ryuu at 1108 start
                 rec_alias.c.name_en + '-/-' + test_alias.index_name_english,
                 # add by ryuu at 1108 end
@@ -930,9 +931,9 @@ class Indexes(object):
                 func.cast(
                     Index.id,
                     db.Text).label("path"),
-                func.coalesce(
-                    Index.index_name,
-                    Index.index_name_english).label("name"),
+                case([(func.length(func.coalesce(Index.index_name, '')) == 0,
+                       Index.index_name_english)],
+                     else_=Index.index_name).label('name'),
                 Index.position,
                 Index.public_state,
                 Index.public_date,
@@ -962,9 +963,10 @@ class Indexes(object):
                     + func.cast(
                         test_alias.id,
                         db.Text),
-                    func.coalesce(
-                        test_alias.index_name,
-                        test_alias.index_name_english),
+                    case([(func.length(
+                        func.coalesce(test_alias.index_name, '')) == 0,
+                        test_alias.index_name_english)],
+                        else_=test_alias.index_name).label('name'),
                     test_alias.position,
                     test_alias.public_state,
                     test_alias.public_date,
@@ -1040,9 +1042,9 @@ class Indexes(object):
                 func.cast(
                     Index.id,
                     db.Text).label("path"),
-                func.coalesce(
-                    Index.index_name,
-                    Index.index_name_english).label("name"),
+                case([(func.length(func.coalesce(Index.index_name, '')) == 0,
+                       Index.index_name_english)],
+                     else_=Index.index_name).label('name'),
                 Index.position,
                 Index.public_state,
                 Index.public_date,
@@ -1072,9 +1074,10 @@ class Indexes(object):
                     + func.cast(
                         test_alias.id,
                         db.Text),
-                    func.coalesce(
-                        test_alias.index_name,
-                        test_alias.index_name_english),
+                    case([(func.length(func.coalesce(
+                        test_alias.index_name, '')) == 0,
+                        test_alias.index_name_english)],
+                        else_=test_alias.index_name),
                     test_alias.position,
                     test_alias.public_state,
                     test_alias.public_date,

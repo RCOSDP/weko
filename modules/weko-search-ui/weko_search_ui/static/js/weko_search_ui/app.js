@@ -288,8 +288,16 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
   //Get path and name to dict.
   $scope.getPathName = function () {
-    let path_str = $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0].key;
-    path_str = path_str.replace(/\//g, '_');
+    let aggregations = $rootScope.vm.invenioSearchResults.aggregations;
+    let path_str = "";
+    if (aggregations.hasOwnProperty("path") && aggregations.path.hasOwnProperty("buckets")) {
+      path_str = aggregations.path.buckets[0][0].key;
+    }
+    if (path_str) {
+      path_str = path_str.replace(/\//g, '_');
+    } else {
+      return;
+    }
     $http({
       method: 'GET',
       url: '/get_path_name_dict/' + path_str + '?time=' + currentTime,

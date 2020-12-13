@@ -84,6 +84,15 @@
             </tbody>
           </table>
         {%- endif -%}
+        {%- if 'creatorMails' in attribute_data and attribute_data['creatorMails'][0] -%}
+          <p>
+            <span>E-MAIL</span>
+            {%- for i in attribute_data['creatorMails'] -%}
+              <br>
+              {{ i['creatorMail'] | escape_str }}
+            {%- endfor -%}
+          </p>
+        {%- endif -%}
         <a href='/search?creator={{ attribute_data.get("name")[0] }}'>{{ _('Search repository') }}</a>
       </div>
     </div>

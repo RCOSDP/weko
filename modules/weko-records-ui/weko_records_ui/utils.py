@@ -153,11 +153,12 @@ def is_billing_item(item_type_id):
     if item_type:
         properties = item_type.schema['properties']
         for meta_key in properties:
-            if properties[meta_key]['type'] == 'object' and \
-               'groupsprice' in properties[meta_key]['properties'] or \
-                properties[meta_key]['type'] == 'array' and 'groupsprice' in \
-                    properties[meta_key]['items']['properties']:
-                return True
+            if 'type' in  properties[meta_key]:
+                if properties[meta_key]['type'] == 'object' and \
+                    'groupsprice' in properties[meta_key]['properties'] or \
+                    properties[meta_key]['type'] == 'array' and 'groupsprice' in \
+                        properties[meta_key]['items']['properties']:
+                    return True
         return False
 
 
@@ -339,3 +340,110 @@ def get_pair_value(name_keys, lang_keys, datas):
             for name, lang in get_pair_value(name_keys[1:], lang_keys[1:],
                                              datas.get(name_keys[0])):
                 yield name, lang
+
+
+def hide_item_metadata(record):
+    """Hiding emails and hidden item metadata.
+
+    :param record:
+    :return:
+    """
+    from weko_items_ui.utils import get_ignore_item, hide_meta_data_for_role
+    check_items_settings()
+
+    record['weko_creator_id'] = record.get('owner')
+
+    if hide_meta_data_for_role(record):
+        list_hidden = get_ignore_item(record['item_type_id'])
+        record = hide_by_itemtype(record, list_hidden)
+
+        if not current_app.config['EMAIL_DISPLAY_FLG']:
+            record = hide_by_email(record)
+
+        return True
+
+    record.pop('weko_creator_id')
+    return False
+
+
+def hide_item_metadata_email_only(record):
+    """Hiding emails only.
+
+    :param name_keys:
+    :param lang_keys:
+    :param datas:
+    :return:
+    """
+    from weko_items_ui.utils import hide_meta_data_for_role
+    check_items_settings()
+
+    record['weko_creator_id'] = record.get('owner')
+
+    if hide_meta_data_for_role(record) and \
+            not current_app.config['EMAIL_DISPLAY_FLG']:
+        record = hide_by_email(record)
+
+        return True
+
+    record.pop('weko_creator_id')
+    return False
+
+
+def hide_by_email(item_metadata):
+    """Hiding emails.
+
+    :param item_metadata:
+    :return:
+    """
+    subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
+
+    # Hidden owners_ext.email
+    if item_metadata.get('_deposit') and \
+            item_metadata['_deposit'].get('owners_ext'):
+        del item_metadata['_deposit']['owners_ext']['email']
+
+    for item in item_metadata:
+        _item = item_metadata[item]
+        if isinstance(_item, dict) and \
+                _item.get('attribute_value_mlt'):
+            for _idx, _value in enumerate(_item['attribute_value_mlt']):
+                for key in subitem_keys:
+                    if key in _value.keys():
+                        del _item['attribute_value_mlt'][_idx][key]
+
+    return item_metadata
+
+
+def hide_by_itemtype(item_metadata, hidden_items):
+    """Hiding item type metadata.
+
+    :param item_metadata:
+    :param hidden_items:
+    :return:
+    """
+    def del_hide_sub_metadata(keys, metadata):
+        """Delete hide metadata."""
+        if isinstance(metadata, dict):
+            data = metadata.get(keys[0])
+            if data:
+                if len(keys) > 1:
+                    del_hide_sub_metadata(keys[1:], data)
+                else:
+                    del metadata[keys[0]]
+        elif isinstance(metadata, list):
+            count = len(metadata)
+            for index in range(count):
+                del_hide_sub_metadata(keys, metadata[index])
+
+    for hide_key in hidden_items:
+        if isinstance(hide_key, str) \
+                and item_metadata.get(hide_key):
+            del item_metadata[hide_key]
+        elif isinstance(hide_key, list) and \
+                item_metadata.get(hide_key[0]):
+            del_hide_sub_metadata(
+                hide_key[1:],
+                item_metadata[
+                    hide_key[0]]['attribute_value_mlt'])
+
+    return item_metadata

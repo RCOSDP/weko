@@ -53,23 +53,12 @@ class ItemTypeMetaDataView(BaseView):
 
         :param item_type_id: Item type i. Default 0.
         """
-        lists = ItemTypes.get_latest(True)
-        # Check that item type is already registered to an item or not
-        for item in lists:
-            # Get all versions
-            all_records = ItemTypes.get_records_by_name_id(name_id=item.id)
-            item.belonging_item_flg = False
-            for item in all_records:
-                metaDataRecords = ItemsMetadata.get_by_item_type_id(
-                    item_type_id=item.id)
-                item.belonging_item_flg = len(metaDataRecords) > 0
-                if item.belonging_item_flg:
-                    break
+        item_type_list = ItemTypes.get_latest_with_item_type(True)
         is_sys_admin = has_system_admin_access()
 
         return self.render(
             current_app.config['WEKO_ITEMTYPES_UI_ADMIN_REGISTER_TEMPLATE'],
-            lists=lists,
+            item_type_list=item_type_list,
             id=item_type_id,
             is_sys_admin=is_sys_admin,
             lang_code=session.get('selected_language', 'en')  # Set default
@@ -178,8 +167,15 @@ class ItemTypeMetaDataView(BaseView):
                                       form=table_row_map.get(
                                           'form'),
                                       render=data)
+            upgrade_version = current_app.config[
+                'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
+            ]
+            if not upgrade_version:
+                Mapping.create(item_type_id=record.model.id,
+                               mapping=table_row_map.
+                               get('mapping'))
             # Just update Mapping when create new record
-            if record.model.id != item_type_id:
+            elif record.model.id != item_type_id:
                 Mapping.create(item_type_id=record.model.id,
                                mapping=table_row_map.
                                get('mapping'))
@@ -243,36 +239,7 @@ class ItemTypeMetaDataView(BaseView):
 
         return jsonify(code=-1, msg=_('An error has occurred.'))
 
-
-class ItemTypePropertiesView(BaseView):
-    """ItemTypePropertiesView."""
-
-    @expose('/', methods=['GET'])
-    @item_type_permission.require(http_exception=403)
-    def index(self, property_id=0):
-        """Renders an primitive property view."""
-        lists = ItemTypeProps.get_records([])
-        properties = lists.copy()
-        defaults_property_ids = [prop.id for prop in lists if
-                                 prop.schema.get(WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT, None)]
-        for item in lists:
-            if item.id in defaults_property_ids:
-                properties.remove(item)
-
-        billing_perm = BillingPermission.get_billing_information_by_id(
-            WEKO_BILLING_FILE_ACCESS)
-        if not billing_perm or not billing_perm.is_active:
-            for prop in properties:
-                if prop.schema.get(WEKO_BILLING_FILE_PROP_ATT, None):
-                    properties.remove(prop)
-
-        return self.render(
-            current_app.config['WEKO_ITEMTYPES_UI_ADMIN_CREATE_PROPERTY'],
-            lists=properties,
-            lang_code=session.get('selected_language', 'en')  # Set default
-        )
-
-    @expose('/list', methods=['GET'])
+    @expose('/get-all-properties', methods=['GET'])
     @item_type_permission.require(http_exception=403)
     def get_property_list(self, property_id=0):
         """Renders an primitive property view."""
@@ -306,6 +273,35 @@ class ItemTypePropertiesView(BaseView):
             'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
 
         return jsonify(lists)
+
+
+class ItemTypePropertiesView(BaseView):
+    """ItemTypePropertiesView."""
+
+    @expose('/', methods=['GET'])
+    @item_type_permission.require(http_exception=403)
+    def index(self, property_id=0):
+        """Renders an primitive property view."""
+        lists = ItemTypeProps.get_records([])
+        properties = lists.copy()
+        defaults_property_ids = [prop.id for prop in lists if
+                                 prop.schema.get(WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT, None)]
+        for item in lists:
+            if item.id in defaults_property_ids:
+                properties.remove(item)
+
+        billing_perm = BillingPermission.get_billing_information_by_id(
+            WEKO_BILLING_FILE_ACCESS)
+        if not billing_perm or not billing_perm.is_active:
+            for prop in properties:
+                if prop.schema.get(WEKO_BILLING_FILE_PROP_ATT, None):
+                    properties.remove(prop)
+
+        return self.render(
+            current_app.config['WEKO_ITEMTYPES_UI_ADMIN_CREATE_PROPERTY'],
+            lists=properties,
+            lang_code=session.get('selected_language', 'en')  # Set default
+        )
 
     @expose('/<int:property_id>', methods=['GET'])
     @item_type_permission.require(http_exception=403)

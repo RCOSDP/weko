@@ -143,6 +143,7 @@ WEKO_DEPOSIT_SYS_CREATOR_KEY = {
     'creator_mails': 'creatorMails',
     'affiliation_name_identifier_scheme': 'affiliationNameIdentifierScheme',
     'affiliation_name': 'affiliationName',
+    'affiliation_lang': 'affiliationNameLang',
     'affiliation_name_identifier': 'affiliationNameIdentifier',
     'affiliation_name_identifier_URI': 'affiliationNameIdentifierURI',
     'creatorAffiliations': 'creatorAffiliations',

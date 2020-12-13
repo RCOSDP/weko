@@ -103,6 +103,7 @@ services:
       - /code/modules/weko-bulkupdate/weko_bulkupdate.egg-info
       - /code/modules/weko-items-autofill/weko_items_autofill.egg-info
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
+      - /code/modules/invenio-iiif/invenio_iiif.egg-info
     user: invenio
     links:
       - postgresql
@@ -189,7 +190,7 @@ services:
 
   flower:
     restart: "always"
-    image: mher/flower
+    image: mher/flower:0.9.5
     command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
     ports:
       - "0.0.0.0:5501:5555"

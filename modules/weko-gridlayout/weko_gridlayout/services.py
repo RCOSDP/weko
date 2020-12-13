@@ -22,6 +22,7 @@
 import copy
 import json
 from datetime import date, timedelta
+from operator import itemgetter
 
 from flask import Markup, current_app
 from flask_babelex import gettext as _
@@ -966,6 +967,8 @@ class WidgetDataLoaderServices:
             dictionary -- new arrivals data
 
         """
+        from weko_items_ui.utils import find_hidden_items
+
         result = {
             'data': '',
             'error': ''
@@ -1001,9 +1004,15 @@ class WidgetDataLoaderServices:
                 result['error'] = 'Cannot search data'
                 return result
             es_data = hits.get('hits')
+
+            item_id_list = list(map(itemgetter('_id'), es_data))
+            hidden_items = find_hidden_items(item_id_list)
+
             for es_item in es_data:
                 if len(data) >= int(number_result):
                     break
+                if es_item['_id'] in hidden_items:
+                    continue
                 new_data = dict()
                 source = es_item.get('_source')
                 if not source:

@@ -92,6 +92,12 @@
         },
         "itemtype": {
           "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          },
           "fielddata": true,
           "copy_to": [
             "search_other"

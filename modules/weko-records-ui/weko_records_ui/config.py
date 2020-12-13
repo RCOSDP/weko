@@ -118,6 +118,8 @@ RECORDS_UI_ENDPOINTS = dict(
         view_imp='weko_records_ui.views.export',
         template='weko_records_ui/export.html',
         record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
     ),
     recid_files=dict(
         pid_type='recid',
@@ -377,3 +379,6 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
 
 WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR = '/data/pdfcoverpage/'
 """Directory of Image Header of PDF."""
+
+WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
+"""Sub-item keys of Email."""

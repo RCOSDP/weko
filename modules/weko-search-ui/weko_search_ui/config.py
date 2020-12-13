@@ -317,7 +317,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "des": ["search_des", "search_des.ja"],
         "publisher": ["search_publisher", "search_publisher.ja"],
         "cname": ["search_contributor", "search_contributor.ja"],
-        "itemtype": ("itemtype", str),
+        "itemtype": ("itemtype.keyword", str),
         "type": {
             "type.raw": [
                 "conference paper",
@@ -472,7 +472,7 @@ WEKO_IMPORT_EMAIL_PATTERN = \
     r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 WEKO_IMPORT_PUBLISH_STATUS = ['public', 'private']
 WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
-WEKO_IMPORT_SUFFIX_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){1,290}$"
+WEKO_IMPORT_SUFFIX_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){0,290}$"
 
 WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
 """Subitem ID of property Date (ISO-8601)."""
@@ -488,20 +488,22 @@ WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION = '.txt'
 
 WEKO_EXPORT_TEMPLATE_BASIC_ID = [
     '#.id', '.uri', '.metadata.path[0]',
-    '.pos_index#1', '.publish_status', '.feedback_mail#1',
+    '.pos_index[0]', '.publish_status', '.feedback_mail[0]',
     '.cnri', '.doi_ra', '.doi', '.edit_mode'
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
-    '#ID', 'URI', '.IndexID#1',
-    '.POS_INDEX#1', '.PUBLISH_STATUS', '.FEEDBACK_MAIL#1',
+    '#ID', 'URI', '.IndexID[0]',
+    '.POS_INDEX[0]', '.PUBLISH_STATUS', '.FEEDBACK_MAIL[0]',
     '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
-    '#', '', '',
-    '', 'Required', '', '', '', '', 'Required'
+    '#', '', 'Allow Multiple',
+    'Allow Multiple', 'Required', 'Allow Multiple',
+    '', '', '', 'Required'
 ]
 
 WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
+WEKO_IMPORT_THUMBNAIL_FILE_TYPE = ['gif', 'jpg', 'jpe', 'jpeg', 'png', 'bmp', 'tiff', 'tif']
 VERSION_TYPE_URI = {
     'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
     'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
@@ -519,3 +521,57 @@ ACCESS_RIGHT_TYPE_URI = {
     'restricted access': 'http://purl.org/coar/access_right/c_16ec'
 }
 DATE_ISO_TEMPLATE_URL = '/static/templates/weko_deposit/datepicker_multi_format.html'
+RESOURCE_TYPE_URI = {
+    'conference paper': 'http://purl.org/coar/resource_type/c_5794',
+    'data paper': 'http://purl.org/coar/resource_type/c_beb9',
+    'departmental bulletin paper': 'http://purl.org/coar/resource_type/c_6501',
+    'editorial': 'http://purl.org/coar/resource_type/c_b239',
+    'journal article': 'http://purl.org/coar/resource_type/c_6501',
+    'newspaper': 'http://purl.org/coar/resource_type/c_2fe3',
+    'periodical': 'http://purl.org/coar/resource_type/c_2659',
+    'review article': 'http://purl.org/coar/resource_type/c_dcae04bc',
+    'software paper': 'http://purl.org/coar/resource_type/c_7bab',
+    'article': 'http://purl.org/coar/resource_type/c_6501',
+    'book': 'http://purl.org/coar/resource_type/c_2f33',
+    'book part': 'http://purl.org/coar/resource_type/c_3248',
+    'cartographic material': 'http://purl.org/coar/resource_type/c_12cc',
+    'map': 'http://purl.org/coar/resource_type/c_12cd',
+    'conference object': 'http://purl.org/coar/resource_type/c_c94f',
+    'conference proceedings': 'http://purl.org/coar/resource_type/c_f744',
+    'conference poster': 'http://purl.org/coar/resource_type/c_6670',
+    'dataset': 'http://purl.org/coar/resource_type/c_ddb1',
+    'interview': 'http://purl.org/coar/resource_type/c_26e4',
+    'image': 'http://purl.org/coar/resource_type/c_c513',
+    'still image': 'http://purl.org/coar/resource_type/c_ecc8',
+    'moving image': 'http://purl.org/coar/resource_type/c_8a7e',
+    'video': 'http://purl.org/coar/resource_type/c_12ce',
+    'lecture': 'http://purl.org/coar/resource_type/c_8544',
+    'patent': 'http://purl.org/coar/resource_type/c_15cd',
+    'internal report': 'http://purl.org/coar/resource_type/c_18ww',
+    'report': 'http://purl.org/coar/resource_type/c_93fc',
+    'research report': 'http://purl.org/coar/resource_type/c_18ws',
+    'technical report': 'http://purl.org/coar/resource_type/c_18gh',
+    'policy report': 'http://purl.org/coar/resource_type/c_186u',
+    'report part': 'http://purl.org/coar/resource_type/c_ba1f',
+    'working paper': 'http://purl.org/coar/resource_type/c_8042',
+    'data management plan': 'http://purl.org/coar/resource_type/c_ab20',
+    'sound': 'http://purl.org/coar/resource_type/c_18cc',
+    'thesis': 'http://purl.org/coar/resource_type/c_46ec',
+    'bachelor thesis': 'http://purl.org/coar/resource_type/c_7a1f',
+    'master thesis': 'http://purl.org/coar/resource_type/c_bdcc',
+    'doctoral thesis': 'http://purl.org/coar/resource_type/c_db06',
+    'interactive resource': 'http://purl.org/coar/resource_type/c_e9a0',
+    'learning object': 'http://purl.org/coar/resource_type/c_e059',
+    'manuscript': 'http://purl.org/coar/resource_type/c_0040',
+    'musical notation': 'http://purl.org/coar/resource_type/c_18cw',
+    'research proposal': 'http://purl.org/coar/resource_type/c_baaf',
+    'software': 'http://purl.org/coar/resource_type/c_5ce6',
+    'technical documentation': 'http://purl.org/coar/resource_type/c_71bd',
+    'workflow': 'http://purl.org/coar/resource_type/c_393c',
+    'other': 'http://purl.org/coar/resource_type/c_1843'
+}
+WEKO_IMPORT_VALIDATE_MESSAGE = {
+    '%r is too long': '%rの数が上限数を超えています。',
+    '%r is not one of %r': '%rは次の決めれられた選択肢に含まれていません。%r',
+    '%r is a required property': '%rは必須項目です。'
+}

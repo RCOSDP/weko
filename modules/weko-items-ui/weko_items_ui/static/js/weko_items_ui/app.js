@@ -194,10 +194,17 @@ var CustomBSDatePicker = {
       if (reverse) {
         //Fill data from model to fields
         str_code = "$(val).val(" + $(val).attr('ng-model') + ")";
-        eval(str_code);
+        try {
+          eval(str_code);
+        } catch (e) {
+          // If the date on model is undefined, we can safetly ignore it.
+          if (!e instanceof TypeError) {
+            throw e;
+          }
+        }
       } else {
         //Fill data from fields to model
-        str_code = $(val).attr('ng-model') + '=$(val).val()';
+        str_code = 'if ($(val).val().length != 0) {' + $(val).attr('ng-model') + '=$(val).val()}';
         eval(str_code);
       }
     });
@@ -566,6 +573,7 @@ function toObject(arr) {
       $scope.sub_item_id = ['nameIdentifier', 'affiliationNameIdentifier', 'contributorAffiliation']
       $scope.previousNumFiles = 0;
       $scope.bibliographic_titles = "bibliographic_titles";
+      $scope.disableFileTextURLInterval = null;
 
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
@@ -1982,7 +1990,6 @@ function toObject(arr) {
               }
             }
           });
-
         }, 3000);
       }
 
@@ -2013,6 +2020,8 @@ function toObject(arr) {
         $scope.initAuthorList();
         $scope.getDataAuthors();
         $scope.updateNumFiles();
+        $scope.editModeHandle();
+
         //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
@@ -2090,7 +2099,33 @@ function toObject(arr) {
         }
         if (isClearInterval) {
           clearInterval($scope.changePositionFileInterval);
+          if (!$scope.disableFileTextURLInterval) {
+            $scope.disableFileTextURLInterval = setInterval(function () {
+              $scope.disableFileTextURL();
+            }, 1000)
+          }
         }
+      }
+
+      $scope.getFileURL = function (fileName) {
+        let filesEndPoints = $rootScope['filesVM'].invenioFilesEndpoints;
+        let fileURL = "";
+        let pip = null;
+        if (filesEndPoints && filesEndPoints.hasOwnProperty("index")) {
+          let tmpPip = filesEndPoints['index'].split("/").pop();
+          if (!isNaN(tmpPip)) {
+            pip = parseInt(tmpPip);
+          }
+        } else if (filesEndPoints && filesEndPoints.hasOwnProperty('initialization')) {
+          let tmpPip = filesEndPoints['initialization'].split("/").pop();
+          if (!isNaN(tmpPip)) {
+            pip = parseInt(tmpPip);
+          }
+        }
+        if (pip !== null) {
+          fileURL = window.location.origin + "/record/" + pip + "/files/" + fileName;
+        }
+        return fileURL;
       }
 
       $scope.addFileFormAndFill = function () {
@@ -2120,11 +2155,12 @@ function toObject(arr) {
             // Set default Access Role is Open Access
             fileInfo.accessrole = 'open_access'
             // Set file URL
-            if (fileData.hasOwnProperty('links') && fileData.links.hasOwnProperty('self')) {
+            if (fileData.key) {
               fileInfo.url = {
-                url: fileData.links.self
+                url: $scope.getFileURL(fileData.key)
               };
             }
+            $scope.saveFileNameToSessionStore(model[filemeta_key].length, fileData.key);
             // Push data to model
             model[filemeta_key].push(fileInfo);
           }
@@ -2153,54 +2189,118 @@ function toObject(arr) {
         }
         var limit = Math.pow(1024, 4);
         if (bytes > limit) {
-            return round(bytes / limit, 1) + ' Tb';
+            return round(bytes / limit, 1) + ' TB';
         } else if (bytes > (limit /= 1024)) {
-            return round(bytes / limit, 1) + ' Gb';
+            return round(bytes / limit, 1) + ' GB';
         } else if (bytes > (limit /= 1024)) {
-            return round(bytes / limit, 1) + ' Mb';
+            return round(bytes / limit, 1) + ' MB';
         } else if (bytes > 1024) {
-            return Math.round(bytes / 1024) + ' Kb';
+            return Math.round(bytes / 1024) + ' KB';
         }
         return bytes + ' B';
       }
 
+      $scope.clearDisableFileTextURLInterval = function () {
+        clearInterval($scope.disableFileTextURLInterval);
+        $scope.disableFileTextURLInterval = null;
+      }
+
+      $scope.disableFileTextURL = function () {
+        let filesObject = $scope.getFilesObject();
+        if ($scope.filemeta_keys.length === 0 || $.isEmptyObject(filesObject)) {
+          $scope.clearDisableFileTextURLInterval();
+          return;
+        }
+        let isClearInterval = false
+        $("input[name='filename']").each(function (index) {
+          let parentForm = $(this).parents('.schema-form-section')[0];
+          let fileTextUrl = $(parentForm).find('.file-text-url')[0];
+          if (!parentForm || !fileTextUrl) {
+            $scope.clearDisableFileTextURLInterval();
+            return;
+          }
+          let fileName = $(this).val();
+          if (fileName) {
+            isClearInterval = true;
+            $scope.saveFileNameToSessionStore(index, fileName);
+          }
+          let disableFlag = !!filesObject[fileName];
+          $(fileTextUrl).attr('disabled', disableFlag);
+        })
+        if (isClearInterval) {
+          $scope.clearDisableFileTextURLInterval();
+        }
+      }
+
+      $scope.saveFileNameToSessionStore = function (index, fileName) {
+        index = index.toString();
+        let actionID = $("#activity_id").text();
+        let key = actionID + "_files_name";
+        let data = sessionStorage.getItem(key);
+        let fileNameData = data == null ? {} : JSON.parse(data);
+        fileNameData[index] = fileName;
+        sessionStorage.setItem(key, JSON.stringify(fileNameData));
+      }
+
+      $scope.getFileNameToSessionStore = function (index) {
+        index = index.toString();
+        let actionID = $("#activity_id").text();
+        let key = actionID + "_files_name";
+        let fileNameData = sessionStorage.getItem(key);
+        if (fileNameData == null || $.isEmptyObject(fileNameData)) {
+          return "";
+        }
+        fileNameData = JSON.parse(fileNameData);
+        return fileNameData[index];
+      }
+
       // This is callback function - Please do NOT change function name
       $scope.fileNameSelect = function ($event, form, modelValue) {
+        let filesObject = $scope.getFilesObject();
         //Check to disable「本文URL」element.
         let curElement = event.target;
         let parForm = $(curElement).parents('.schema-form-section')[0];
         let curTextUrl = $(parForm).find('.file-text-url')[0];
-        let flag = false;
-        form.titleMap.forEach(function(v, i){
-            if(v.value == modelValue)
-                flag = !flag;
-                return false;
-        });
-        $(curTextUrl).attr('disabled', flag);
+        let disableFlag = !!filesObject[modelValue];
+        $(curTextUrl).attr('disabled', disableFlag);
         $(curTextUrl).text('');
         //Check and fill data for file information.
-        let model = $rootScope.recordsVM.invenioRecordsModel;
-        let filesObject = $scope.getFilesObject();
+        let model = $rootScope['recordsVM'].invenioRecordsModel;
         $scope.searchFilemetaKey();
-        $scope.filemeta_keys.forEach(function (filemeta_key) {
-          model[filemeta_key].forEach(function (fileInfo) {
-            if (fileInfo.filename == modelValue) {
-              // Set information for「サイズ」and「フォーマット」.
-              fileInfo.url = {};
-              if(filesObject[modelValue]){
-                fileInfo.filesize = [{}];
-                fileInfo.filesize[0].value = filesObject[modelValue].size;
-                fileInfo.format = filesObject[modelValue].format;
-                fileInfo.url.url = filesObject[modelValue].url;
-              } else {
-                fileInfo.filesize = [{}];
-                fileInfo.filesize[0].value = '';
+        let formIndex = form.key[1];
+        let beforeFileName = $scope.getFileNameToSessionStore(formIndex);
+        $scope.saveFileNameToSessionStore(formIndex, modelValue);
+        $scope.filemeta_keys.forEach(function (fileMetaKey) {
+          model[fileMetaKey].forEach(function (fileInfo) {
+            if (fileInfo.filename === modelValue) {
+              if (!fileInfo.url) {
+                fileInfo.url = {};
+              }
+              if (filesObject[beforeFileName]) {
+                fileInfo.filesize = [{
+                  value: ''
+                }];
                 fileInfo.format = '';
+                fileInfo.url.url = '';
+              }
+              if (filesObject[modelValue]) {
+                let fileData = filesObject[modelValue];
+                fileInfo.filesize = [{
+                  value: fileData.size
+                }];
+                fileInfo.format = fileData.format;
+                fileInfo.url.url = $scope.getFileURL(modelValue);
               }
               // Set information for「日付」.
-              fileInfo.date = [{}];
-              fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
-              fileInfo.date[0].dateType = "Available";
+              fileInfo.date = [{
+                dateValue: new Date().toJSON().slice(0, 10),
+                dateType: "Available"
+              }];
+
+              // Set default Access Role is Open Access
+              if (!fileInfo.accessrole) {
+                fileInfo.accessrole = 'open_access'
+              }
             }
           });
         });
@@ -3228,7 +3328,9 @@ function toObject(arr) {
         }
         $scope.startLoading();
         let currActivityId = $("#activity_id").text();
-        $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true);
+        if (!$scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true)) {
+          return;
+        }
         if (!$scope.priceValidator()) {
           var modalcontent = "Billing price is required half-width numbers.";
           $("#inputModal").html(modalcontent);
@@ -3252,7 +3354,6 @@ function toObject(arr) {
           $scope.genTitleAndPubDate();
           let next_frame = $('#next-frame').val();
           let next_frame_upgrade = $('#next-frame-upgrade').val();
-          let next_frame_edit = $('#next-frame-edit').val();
           if (enableContributor === 'True' && !this.registerUserPermission()) {
             $scope.endLoading();
           } else if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
@@ -3275,8 +3376,9 @@ function toObject(arr) {
             $scope.saveTilteAndShareUserID(title, shareUserID);
             $scope.updatePositionKey();
             sessionStorage.removeItem(currActivityId);
+
             let versionSelected = $("input[name='radioVersionSelect']:checked").val();
-            if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes("redirect")) {
+            if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0")) {
               if (versionSelected == "keep") {
                 $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'keep'
                 $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
@@ -3284,9 +3386,11 @@ function toObject(arr) {
                 $rootScope.recordsVM.invenioRecordsModel['edit_mode'] = 'upgrade'
                 $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame_upgrade);
               }
+              sessionStorage.setItem("edit_mode_" + currActivityId, versionSelected);
             } else {
               $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
             }
+
             sessionStorage.setItem("next_btn_" + currActivityId, new Date().getTime().toString());
           }
         }
@@ -3422,41 +3526,50 @@ function toObject(arr) {
         //This function is called in updataDataJson function.
         if(!sessionValid){
           if(!validateSession())
-          return;
+          return false;
         }
         if (startLoading) {
           $scope.startLoading();
         }
-        let model = $rootScope.recordsVM.invenioRecordsModel;
-        CustomBSDatePicker.setDataFromFieldToModel(model, false);
+        try {
+          let model = $rootScope.recordsVM.invenioRecordsModel;
+          CustomBSDatePicker.setDataFromFieldToModel(model, false);
 
-        var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
-        let permission = false;
-        $scope.$broadcast('schemaFormValidate');
-        if (enableFeedbackMail === 'True' && enableContributor === 'True') {
-          if (!invalidFlg && $scope.is_item_owner) {
-            if (!this.registerUserPermission()) {
-              // Do nothing
+          var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
+          let permission = false;
+          $scope.$broadcast('schemaFormValidate');
+          if (enableFeedbackMail === 'True' && enableContributor === 'True') {
+            if (!invalidFlg && $scope.is_item_owner) {
+              if (!this.registerUserPermission()) {
+                // Do nothing
+              } else {
+                permission = true;
+              }
             } else {
               permission = true;
             }
-          } else {
-            permission = true;
-          }
-          if (permission) {
-            if ($scope.getFeedbackMailList().length > 0) {
-              let modalcontent = $('#invalid-email-format').val();
-              $("#inputModal").html(modalcontent);
-              $("#allModal").modal("show");
-              return;
+            if (permission) {
+              if ($scope.getFeedbackMailList().length > 0) {
+                let modalcontent = $('#invalid-email-format').val();
+                $("#inputModal").html(modalcontent);
+                $("#allModal").modal("show");
+                return;
+              }
+              this.saveDataJsonCallback(item_save_uri, startLoading);
+              this.saveFeedbackMailListCallback(currentActionId);
             }
+          } else {
             this.saveDataJsonCallback(item_save_uri, startLoading);
-            this.saveFeedbackMailListCallback(currentActionId);
           }
-        } else {
-          this.saveDataJsonCallback(item_save_uri, startLoading);
+          $scope.storeFilesToSession();
+        } catch (error) {
+          var msgHeader = 'An error ocurred while processing the input data!<br><br>'
+          $("#inputModal").html(msgHeader + error.message);
+          $("#allModal").modal("show");
+          $scope.endLoading();
+          return false;
         }
-        $scope.storeFilesToSession();
+        return true;
       };
 
       $scope.saveDataJsonCallback = function (item_save_uri, startLoading) {
@@ -3600,6 +3713,21 @@ function toObject(arr) {
         delete $rootScope.recordsVM.invenioRecordsModel.persistent_identifier_h;
         delete $rootScope.recordsVM.invenioRecordsModel.ranking_page_url;
         delete $rootScope.recordsVM.invenioRecordsModel.belonging_index_info;
+      }
+
+      $scope.editModeHandle = function () {
+        let activityId = $("#activity_id").text();
+        let edit_mode = sessionStorage.getItem("edit_mode_" + activityId);
+        if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0") || edit_mode) {
+          if (edit_mode) {
+            let version_radios = $('input[name ="radioVersionSelect"]');
+
+            version_radios.prop('disabled', true);
+            version_radios.filter('[value=' + edit_mode + ']').prop('checked', true);
+          }
+        } else {
+          $('#react-component-version').hide();
+        }
       }
     }
     // Inject depedencies

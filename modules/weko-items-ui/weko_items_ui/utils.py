@@ -41,6 +41,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
@@ -51,11 +52,14 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.api import Indexes
-from weko_index_tree.utils import get_index_id
+from weko_index_tree.utils import filter_index_list_by_role, get_index_id, \
+    get_user_roles
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_created_id, \
-    check_file_download_permission
+    check_file_download_permission, check_publish_status
+from weko_records_ui.utils import hide_item_metadata, \
+    hide_item_metadata_email_only
 from weko_search_ui.query import item_search_factory, item_search_with_limit
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
@@ -307,6 +311,38 @@ def get_current_user():
     return current_id
 
 
+def find_hidden_items(item_id_list):
+    """
+    Find items that should not be visible by the current user.
+
+    parameter:
+        item_id_list: list of items ID to be checked.
+    return: List of items ID that the user cannot access.
+    """
+    if not item_id_list:
+        return []
+
+    # Check if is admin
+    roles = get_user_roles()
+    if roles[0]:
+        return []
+
+    hidden_list = []
+    for record in WekoRecord.get_records(item_id_list):
+        # Check if user is owner of the item
+        if check_created_id(record):
+            continue
+
+        # Check if item and indices are public
+        is_public = check_publish_status(record)
+        if is_public and filter_index_list_by_role(record.navi):
+            continue
+
+        hidden_list.append(str(record.id))
+
+    return hidden_list
+
+
 def parse_ranking_results(results,
                           display_rank,
                           list_name='all',
@@ -329,11 +365,24 @@ def parse_ranking_results(results,
         data_list = parse_ranking_new_items(results)
         results = dict()
         results['all'] = data_list
+
+    item_id_list = []
+    for item in results[list_name]:
+        record_id = item.get('record_id')
+        if record_id:
+            item_id_list.append(record_id)
+    hidden_items = find_hidden_items(item_id_list)
+
     if results and list_name in results:
         rank = 1
         count = 0
         date = ''
         for item in results[list_name]:
+            # Skip hidden items
+            record_id = item.get('record_id')
+            if record_id and record_id in hidden_items:
+                continue
+
             t = {}
             if count_key:
                 if not count == int(item[count_key]):
@@ -375,6 +424,7 @@ def parse_ranking_new_items(result_data):
     for item_data in result_data.get('hits').get('hits'):
         item_created = item_data.get('_source')
         data = dict()
+        data['record_id'] = item_data.get('_id')
         data['create_date'] = item_created.get('publish_date', '')
         data['pid_value'] = item_created.get('control_number')
         meta_data = item_created.get('_item_metadata')
@@ -710,7 +760,6 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         first_recid = 0
         cur_recid = 0
-        filepath_idx = 1
         recids = []
         records = {}
         attr_data = {}
@@ -722,6 +771,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             self.first_recid = record_ids[0]
             for record_id in record_ids:
                 record = WekoRecord.get_record_by_pid(record_id)
+                hide_item_metadata_email_only(record)
                 self.records[record_id] = record
                 self.attr_output[record_id] = []
 
@@ -798,6 +848,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                                     break
                             elif isinstance(_data, list):
                                 _data = _data[0]
+                                if isinstance(_data, dict) and _data.get(attr):
+                                    _data = _data.get(attr)
                             elif isinstance(_data, dict) and _data.get(attr):
                                 _data = _data.get(attr)
                             else:
@@ -840,8 +892,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                     if not is_object:
                         new_key = '{}[{}].{}'.format(
                             item_key, str(idx), key)
-                        new_label = '{}#{}.{}'.format(item_label, str(
-                            idx + 1), properties[key].get('title'))
+                        new_label = '{}[{}].{}'.format(
+                            item_label, str(idx), properties[key].get('title'))
                     else:
                         new_key = '{}.{}'.format(item_key, key)
                         new_label = '{}.{}'.format(
@@ -868,6 +920,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         key_label.extend(sublabel)
                         key_data.extend(subdata)
                     else:
+                        if 'iscreator' in new_key:
+                            continue
                         if isinstance(data, dict):
                             data = [data]
                         key_list.append(new_key)
@@ -879,21 +933,28 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
                 key_list_len = len(key_list)
                 for key_index in range(key_list_len):
-                    if 'filename' in key_list[key_index] \
-                        or 'thumbnail_label' in key_list[key_index] \
-                            and len(item_key.split('.')) == 2:
-                        key_list.insert(0, '.file_path#'
-                                        + str(self.filepath_idx + idx))
-                        key_label.insert(0, '.ファイルパス#'
-                                         + str(self.filepath_idx + idx))
+                    if 'filename' in key_list[key_index]:
+                        key_list.insert(0, '.file_path[{}]'.format(
+                            str(idx)))
+                        key_label.insert(0, '.ファイルパス[{}]'.format(
+                            str(idx)))
                         if key_data[key_index]:
                             key_data.insert(0, 'recid_{}/{}'.format(str(
                                 self.cur_recid), key_data[key_index]))
                         else:
                             key_data.insert(0, '')
-                        if idx == max_items - 1 \
-                                and self.first_recid == self.cur_recid:
-                            self.filepath_idx += max_items
+                        break
+                    elif 'thumbnail_label' in key_list[key_index] \
+                            and len(item_key.split('.')) == 2:
+                        key_list.insert(0, '.thumbnail_path[{}]'.format(
+                            str(idx)))
+                        key_label.insert(0, '.サムネイルパス[{}]'.format(
+                            str(idx)))
+                        if key_data[key_index]:
+                            key_data.insert(0, 'recid_{}/{}'.format(str(
+                                self.cur_recid), key_data[key_index]))
+                        else:
+                            key_data.insert(0, '')
                         break
 
                 o_ret.extend(key_list)
@@ -910,22 +971,22 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
     max_path = records.get_max_ins('path')
     for i in range(max_path):
         ret.append('.metadata.path[{}]'.format(i))
-        ret.append('.pos_index#{}'.format(i + 1))
-        ret_label.append('.IndexID#{}'.format(i + 1))
-        ret_label.append('.POS_INDEX#{}'.format(i + 1))
+        ret.append('.pos_index[{}]'.format(i))
+        ret_label.append('.IndexID[{}]'.format(i))
+        ret_label.append('.POS_INDEX[{}]'.format(i))
 
     ret.append('.publish_status')
     ret_label.append('.PUBLISH_STATUS')
 
     max_feedback_mail = records.get_max_ins_feedback_mail()
     for i in range(max_feedback_mail):
-        ret.append('.feedback_mail#{}'.format(i + 1))
-        ret_label.append('.FEEDBACK_MAIL#{}'.format(i + 1))
+        ret.append('.feedback_mail[{}]'.format(i))
+        ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
 
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
-    ret_label.append('公開日')
+    ret_label.append('公開日' if current_i18n.language == 'ja' else 'PubDate')
 
     for recid in recids:
         record = records.records[recid]
@@ -1010,7 +1071,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         new_keys = []
         for key in keys:
-            if 'file_path' not in key:
+            if 'file_path' not in key and 'thumbnail_path' not in key:
                 key = '.metadata.{}'.format(key)
             new_keys.append(key)
         ret.extend(new_keys)
@@ -1018,6 +1079,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
     ret_system = []
     ret_option = []
+    multiple_option = ['.metadata.path', '.pos_index',
+                       '.feedback_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})
@@ -1056,6 +1119,9 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         elif key == '.edit_mode' or key == '.publish_status':
             ret_system.append('')
             ret_option.append('Required')
+        elif _id.split('[')[0] in multiple_option:
+            ret_system.append('')
+            ret_option.append('Allow Multiple')
         else:
             ret_system.append('')
             ret_option.append('')
@@ -1394,7 +1460,8 @@ def _export_item(record_id,
                         # TODO: Then convert the item into the desired format
                         if file:
                             file_buffered = file.obj.file.storage().open()
-                            temp_file = open(tmp_path + '/' + file.obj.basename, 'wb')
+                            temp_file = open(
+                                tmp_path + '/' + file.obj.basename, 'wb')
                             temp_file.write(file_buffered.read())
                             temp_file.close()
 
@@ -1787,14 +1854,12 @@ def hide_meta_data_for_role(record):
         if role.name in community_role_name:
             is_hidden = False
             break
-    if record:
-        # Item Register users
-        if record.get('weko_creator_id') in list(current_user.roles or []):
-            is_hidden = False
 
-        # Share users
-        if record.get('weko_shared_id') in list(current_user.roles or []):
-            is_hidden = False
+    # Item Register users and Sharing users
+    if record and current_user.get_id() in [
+        record.get('weko_creator_id'),
+            str(record.get('weko_shared_id'))]:
+        is_hidden = False
 
     return is_hidden
 
@@ -1817,14 +1882,15 @@ def get_ignore_item_from_mapping(_item_type_id):
         key = [re.sub(r'\[\d+\]', '', _id) for _id in sub_id.split('.')]
         if key[0] in item_type_mapping:
             mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
-            name = [list(mapping.keys())[0]]
-            if len(key) > 1:
-                tree_name = get_mapping_name_item_type_by_sub_key(
-                    '.'.join(key[1:]), mapping.get(name[0])
-                )
-                if tree_name:
-                    name += tree_name
-            ignore_list.append(name)
+            if isinstance(mapping, dict):
+                name = [list(mapping.keys())[0]]
+                if len(key) > 1:
+                    tree_name = get_mapping_name_item_type_by_sub_key(
+                        '.'.join(key[1:]), mapping.get(name[0])
+                    )
+                    if tree_name:
+                        name += tree_name
+                ignore_list.append(name)
     return ignore_list
 
 
@@ -2050,6 +2116,7 @@ def make_bibtex_data(record_ids):
     for record_id in record_ids:
         record = WekoRecord.get_record_by_pid(record_id)
         pid = record.pid_recid
+        hide_item_metadata(record)
         serializer = WekoBibTexSerializer()
         output = serializer.serialize(pid, record)
         result += output if output != err_msg else ''
@@ -2284,7 +2351,8 @@ def hide_form_items(item_type, schema_form):
     for i in system_properties:
         hidden_items = [
             schema_form.index(form) for form in schema_form
-            if form.get('items') and form['items'][0]['key'].split('.')[1] in i]
+            if form.get('items') and form[
+                'items'][0]['key'].split('.')[1] in i]
         if hidden_items and i in json.dumps(schema_form):
             schema_form = update_schema_remove_hidden_item(
                 schema_form,
@@ -2313,3 +2381,22 @@ def hide_thumbnail(schema_form):
         if isinstance(data_items, list) and is_thumbnail(data_items):
             form_data['condition'] = 1
             break
+
+
+def get_ignore_item(_item_type_id):
+    """Get ignore item from mapping.
+
+    :param _item_type_id:
+    :return ignore_list:
+    """
+    ignore_list = []
+    meta_options, _ = get_options_and_order_list(_item_type_id)
+    sub_ids = get_hide_list_by_schema_form(item_type_id=_item_type_id)
+    for key, val in meta_options.items():
+        hidden = val.get('option').get('hidden')
+        if hidden:
+            ignore_list.append(key)
+    for sub_id in sub_ids:
+        key = [_id.replace('[]', '') for _id in sub_id.split('.')]
+        ignore_list.append(key)
+    return ignore_list
