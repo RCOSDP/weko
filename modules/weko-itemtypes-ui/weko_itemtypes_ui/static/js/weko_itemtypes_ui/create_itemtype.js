@@ -1614,6 +1614,9 @@ $(document).ready(function () {
   }
 
   function setRequiredListFromItemTypeToProperty(property,itemType) {
+    if (property == undefined || itemType == undefined){
+      return;
+    }
     if (itemType.hasOwnProperty("required")) {
       property["required"] = itemType["required"]
     }
