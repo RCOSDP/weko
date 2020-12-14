@@ -2364,7 +2364,7 @@ def get_change_identifier_mode_content():
 def get_root_item_option(item_id, item, sub_form={'title_i18n': {}}):
     """Handle if is root item."""
     _id = '.metadata.{}'.format(item_id)
-    _name = sub_form.get('title_i18n').get(
+    _name = sub_form.get('title_i18n', {}).get(
         current_i18n.language) or item.get('title')
 
     _option = []
@@ -2581,7 +2581,7 @@ def handle_get_all_sub_id_and_name(
         sub_form = next(
             (x for x in form if key in x.get('key', '')),
             {'title_i18n': {}})
-        title = sub_form.get('title_i18n').get(
+        title = sub_form.get('title_i18n', {}).get(
             current_i18n.language) or item.get('title')
         if item.get('items') and item.get('items').get('properties'):
             _ids, _names = handle_get_all_sub_id_and_name(
