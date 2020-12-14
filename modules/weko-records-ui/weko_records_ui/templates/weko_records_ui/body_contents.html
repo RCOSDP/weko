@@ -287,9 +287,16 @@
                   <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
                 <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm('',
                   '{{'/records/soft_delete/'+ pid.pid_value}}',
-                  '{{url_for('weko_search_ui.search')}}')">
+                  '{{url_for('weko_search_ui.search')}}',
+                  '{{pid.pid_value}}')">
                   <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
               {% endif %}
+            <input id="edit_message" type="hidden"
+              value="{{_('The workflow is being edited.')}}" />
+            <input id="delete_message" type="hidden"
+              value="{{_('This item cannot be deleted because a DOI is granted.')}}" />
+            <input id="change_publish_message" type="hidden"
+              value="{{_('This item cannot be set to private because a DOI is granted.')}}" />
             <div class="row">
               <p class="alert alert-danger alert-dismissible text-middle collapse" role="alert"
                 style="min-width: 330px;">

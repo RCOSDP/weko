@@ -157,7 +157,7 @@ def iframe_index(item_type_id=0):
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id and sessionstore.redis.exists(
-                'activity_item_' + activity_id):
+            'activity_item_' + activity_id):
             item_str = sessionstore.get('activity_item_' + activity_id)
             item_json = json.loads(item_str)
             if 'metainfo' in item_json:
@@ -533,7 +533,7 @@ def default_view_method(pid, record, template=None):
     activity_session = session['activity_info']
     activity_id = activity_session.get('activity_id', None)
     if activity_id and sessionstore.redis.exists(
-            'activity_item_' + activity_id):
+        'activity_item_' + activity_id):
         item_str = sessionstore.get('activity_item_' + activity_id)
         item_json = json.loads(item_str)
         if 'metainfo' in item_json:
@@ -833,8 +833,8 @@ def prepare_edit_item():
                 draft_workflow = activity.get_workflow_activity_by_item_id(
                     draft_pid.object_uuid)
                 if draft_workflow and \
-                        draft_workflow.action_status in [ASP.ACTION_BEGIN,
-                                                         ASP.ACTION_DOING]:
+                    draft_workflow.action_status in [ASP.ACTION_BEGIN,
+                                                     ASP.ACTION_DOING]:
                     return jsonify(
                         code=err_code,
                         msg=_("This Item is being edited.")
@@ -981,8 +981,9 @@ def validate_bibtex_export():
 def export():
     """Item export view."""
     export_settings = AdminSettings.get('item_export_settings') or \
-        AdminSettings.Dict2Obj(
-            current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
+                      AdminSettings.Dict2Obj(
+                          current_app.config[
+                              'WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
     if not export_settings.allow_item_exporting:
         return abort(403)
 
@@ -993,7 +994,7 @@ def export():
     search_type = request.args.get('search_type', '0')  # TODO: Refactor
     community_id = ""
     ctx = {'community': None}
-    cur_index_id = search_type if search_type not in ('0', '1', ) else None
+    cur_index_id = search_type if search_type not in ('0', '1',) else None
     if 'community' in request.args:
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
@@ -1056,7 +1057,7 @@ def check_validation_error_msg(activity_id):
             port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
     if sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
-            and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
+        and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
         session_data = sessionstore.get(
             'updated_json_schema_{}'.format(activity_id))
         error_list = json.loads(session_data.decode('utf-8'))
@@ -1149,3 +1150,18 @@ def session_validate():
         "msg": _('Your session has timed out. Please login again.')
     }
     return jsonify(result)
+
+
+@blueprint_api.route('/check_record_doi/<string:pid_value>', methods=['GET'])
+@login_required
+def check_record_doi(pid_value='0'):
+    """Check public status.
+
+    :param pid_value: pid_value.
+    :return:
+    """
+    from weko_deposit.api import WekoRecord
+    record = WekoRecord.get_record_by_pid(pid_value)
+    if record.pid_doi:
+        return jsonify({'code': 0})
+    return jsonify({'code': -1})

@@ -33,6 +33,7 @@ from .errors import IndexAddedRESTError, IndexBaseRESTError, \
     IndexDeletedRESTError, IndexMovedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
 from .models import Index
+from .utils import check_doi_in_index
 
 
 def need_record_permission(factory_name):
@@ -203,11 +204,15 @@ class IndexActionResource(ContentNegotiatedMethodView):
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
-        if not self.record_class.update(index_id, **data):
-            raise IndexUpdatedRESTError()
+        if not data.get('public_state') and check_doi_in_index(index_id):
+            status = 200
+            msg = '0'
+        else:
+            if not self.record_class.update(index_id, **data):
+                raise IndexUpdatedRESTError()
+            status = 200
+            msg = 'Index updated successfully.'
 
-        status = 200
-        msg = 'Index updated successfully.'
         return make_response(
             jsonify({'status': status, 'message': msg}), status)
 
@@ -217,21 +222,25 @@ class IndexActionResource(ContentNegotiatedMethodView):
         if not index_id or index_id <= 0:
             raise IndexNotFoundRESTError()
 
-        action = request.values.get('action', 'all')
-        res = self.record_class.get_self_path(index_id)
-        if not res:
-            raise IndexDeletedRESTError()
-
-        if action in ('move', 'all'):
-            result = self.record_class.\
-                delete_by_action(action, index_id, res.path)
-            if not result:
-                raise IndexBaseRESTError(description='Could not delete data.')
+        if check_doi_in_index(index_id):
+            status = 200
+            msg = '0'
         else:
-            raise InvalidDataRESTError()
+            action = request.values.get('action', 'all')
+            res = self.record_class.get_self_path(index_id)
+            if not res:
+                raise IndexDeletedRESTError()
+            if action in ('move', 'all'):
+                result = self.record_class. \
+                    delete_by_action(action, index_id, res.path)
+                if not result:
+                    raise IndexBaseRESTError(
+                        description='Could not delete data.')
+            else:
+                raise InvalidDataRESTError()
 
-        status = 200
-        msg = 'Index deleted successfully.'
+            status = 200
+            msg = 'Index deleted successfully.'
         return make_response(
             jsonify({'status': status, 'message': msg}), status)
 
