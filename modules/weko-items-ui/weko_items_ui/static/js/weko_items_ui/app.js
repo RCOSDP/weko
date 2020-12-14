@@ -3805,48 +3805,48 @@ function toObject(arr) {
           * @memberof WekoRecordsCtrl
           * @function upload
           */
-        $scope.getEndpoints = function () {
-          var deferred = jQuery.Deferred();
+        $scope.getEndpoints = function (callback) {
           if ($rootScope.filesVM.invenioFilesEndpoints.bucket === undefined) {
             // If the action url doesnt exists request it
             InvenioFilesAPI.request({
-                method: 'POST',
-                url: $rootScope.filesVM.invenioFilesEndpoints.initialization,
-                data: {},
-                headers: ($rootScope.filesVM.invenioFilesArgs.headers !== undefined) ? $rootScope.filesVM.invenioFilesArgs.headers : {}
+              method: 'POST',
+              url: $rootScope.filesVM.invenioFilesEndpoints.initialization,
+              async: true,
+              data: {},
+              headers: ($rootScope.filesVM.invenioFilesArgs.headers !== undefined) ? $rootScope.filesVM.invenioFilesArgs.headers : {}
             }).then(function success(response) {
-                // Get the bucket
-                $rootScope.filesVM.invenioFilesArgs.url = response.data.links.bucket;
-                // Update the endpoints
-                $rootScope.$broadcast(
-                  'invenio.records.endpoints.updated', response.data.links
-                );
-                deferred.resolve({});
+              // Get the bucket
+              $rootScope.filesVM.invenioFilesArgs.url = response.data.links.bucket;
+              // Update the endpoints
+              $rootScope.$broadcast('invenio.records.endpoints.updated', response.data.links);
+              callback();
             }, function error(response) {
-                // Error
-                deferred.reject(response);
+              // Error
+              $rootScope.$broadcast('invenio.uploader.error', response);
+              callback();
             });
           } else {
             // We already have it resolve it asap
-            $rootScope.filesVM.invenioFilesArgs.url = vm.invenioFilesEndpoints.bucket;
-            deferred.resolve({});
+            $rootScope.filesVM.invenioFilesArgs.url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
+            callback();
           }
-          return deferred.promise;
         };
 
         // click input upload files
         $scope.uploadThumbnail = function () {
-          $.when( $scope.getEndpoints() ).then(function() {
+          $scope.getEndpoints(function () {
             document.getElementById('selectThumbnail').click();
           });
         };
 
         $scope.updateFileList = function (removeFile) {
           let model = $scope.model;
-          model['thumbnailsInfor'] = model['thumbnailsInfor'].filter(function(fileInfo) {
+          let thumbnail = model['thumbnailsInfor'].filter(function(fileInfo) {
             return !(fileInfo.lastModified === removeFile.lastModified
               && fileInfo.key === removeFile.key);
           });
+          $scope.model.thumbnailsInfor.clear();
+          $scope.model.thumbnailsInfor.append(thumbnail);
         }
 
         // Get file links
@@ -3877,13 +3877,28 @@ function toObject(arr) {
         };
 
         /**
+          * Removes files
+          * @memberof WekoRecordsCtrl
+          * @function filesVM
+          * @param {Object} files - The dragged files.
+          */
+        $scope.removeFiles = function () {
+          if ($rootScope.filesVM.files.length > 0) {
+            $rootScope.filesVM.files.forEach(function (file) {
+              $rootScope.filesVM.remove(file);
+            })
+            $scope.updateFileList(file);
+          }
+        };
+
+        /**
           * Drag upload file
           * @memberof WekoRecordsCtrl
           * @function upload
           * @param {Object} files - The dragged files.
           */
         $scope.dragoverThumbnail = function (files) {
-          $.when( $scope.getEndpoints() ).then(function() {
+          $scope.getEndpoints(function () {
             if (!angular.isUndefined(files) && files.length > 0) {
               if ($scope.model.allowMultiple != 'True') {
                 files = Array.prototype.slice.call(files, 0, 1);
@@ -3902,12 +3917,13 @@ function toObject(arr) {
                 reader.readAsDataURL(f);
               });
 
-              Array.prototype.push.apply($scope.model.thumbnailsInfor, files);
-              $rootScope.filesVM.addFiles(files);
               if ($rootScope.filesVM.invenioFilesEndpoints.bucket !== undefined) {
                 let deposit_files_api = $("#deposit-files-api").val();
                 let bucket_url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
                 let bucket_url_arr = bucket_url.split(deposit_files_api);
+
+                Array.prototype.push.apply($scope.model.thumbnailsInfor, files);
+                $rootScope.filesVM.addFiles(files);
 
                 $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url_arr[0] + deposit_files_api + '/thumbnail' + bucket_url_arr[1];
                 $rootScope.filesVM.upload();
