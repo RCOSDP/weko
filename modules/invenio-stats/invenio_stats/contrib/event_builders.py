@@ -72,7 +72,7 @@ def file_download_event_builder(event, sender_app, obj=None, **kwargs):
             item_title=obj.item_title,
             remote_addr=get_remote_addr(),
             is_billing_item=obj.is_billing_item,
-            billing_file_price=obj.billing_1file_price,
+            billing_file_price=obj.billing_file_price,
             user_group_list=obj.user_group_list,
             # Who:
             **get_user()
