@@ -140,15 +140,6 @@ class FlowSettingView(BaseView):
             actions=actions
         )
 
-    @expose('/action/<string:action_id>', methods=['GET'])
-    def action_detail(self, action_id):
-        """Get Action detail info.
-
-        :param action_id:
-        :return:
-        """
-        pass
-
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""

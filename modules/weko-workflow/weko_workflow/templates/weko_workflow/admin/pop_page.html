@@ -25,8 +25,7 @@
               {%- for action in action_list %}
                 <tr>
                   <th scope="row" rowspan="2">{{loop.index}}</th>
-                  <td><a href="{{url_for('flowsetting.action_detail', action_id=action.id)}}">
-                    <span id="action_name_{{action.id}}">{{action.action_name}}</span></a></td>
+                  <td><span id="action_name_{{action.id}}">{{action.action_name}}</span></td>
                   <td>{{action.action_desc}}</td>
                   <td><span id="action_ver_{{action.id}}">{{action.action_version}}</span></td>
                   <td>{{action.action_lastdate.date()}}</td>
@@ -45,7 +44,7 @@
                             {{_('Unusable')}}
                       </button>
                       <button class="btn btn-primary btn_update" id="btn_update_{{action.id}}" data-action-id="{{action.id}}">
-                           <span class="glyphicon glyphicon-save"></span>&nbsp 
+                           <span class="glyphicon glyphicon-save"></span>&nbsp
                             {{_('Update')}}
                       </button>
                     </div>
