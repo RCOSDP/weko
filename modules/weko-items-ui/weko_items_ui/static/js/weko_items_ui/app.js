@@ -3944,7 +3944,9 @@ function toObject(arr) {
                 let overwriteFiles = $.extend(true, {}, $scope.model.thumbnailsInfor);
 
                 if (Object.keys(overwriteFiles).length > 0) {
-                  $scope.removeThumbnail(thumb);
+                  $.each(overwriteFiles, function(index, thumb) {
+                    $rootScope.$$childHead.removeThumbnail(thumb);
+                  });
                   $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
                     $scope.directedUpload(files);
                   });
