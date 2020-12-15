@@ -1753,7 +1753,12 @@ $(document).ready(function () {
       if (property.hasOwnProperty('items'))
         delete property.items
     }
-    if (property.format == 'checkboxes') {
+     if (property.format == 'radios') {
+      form.type = "radios"
+      if (form.hasOwnProperty('templateUrl')){
+        delete form.templateUrl
+      }
+    } else if (property.format == 'checkboxes') {
       property['items'] = {
         type: "string",
         enum: property.enum
