@@ -3841,12 +3841,10 @@ function toObject(arr) {
 
         $scope.updateFileList = function (removeFile) {
           let model = $scope.model;
-          let thumbnail = model['thumbnailsInfor'].filter(function(fileInfo) {
+          model['thumbnailsInfor'] = model['thumbnailsInfor'].filter(function(fileInfo) {
             return !(fileInfo.lastModified === removeFile.lastModified
               && fileInfo.key === removeFile.key);
           });
-          $scope.model.thumbnailsInfor.clear();
-          $scope.model.thumbnailsInfor.append(thumbnail);
         }
 
         // Get file links
@@ -3874,21 +3872,6 @@ function toObject(arr) {
           }
           $rootScope.filesVM.remove(file);
           $scope.updateFileList(file);
-        };
-
-        /**
-          * Removes files
-          * @memberof WekoRecordsCtrl
-          * @function filesVM
-          * @param {Object} files - The dragged files.
-          */
-        $scope.removeFiles = function () {
-          if ($rootScope.filesVM.files.length > 0) {
-            $rootScope.filesVM.files.forEach(function (file) {
-              $rootScope.filesVM.remove(file);
-            })
-            $scope.updateFileList(file);
-          }
         };
 
         /**
