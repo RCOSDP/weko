@@ -3819,22 +3819,47 @@ function toObject(arr) {
               $rootScope.filesVM.invenioFilesArgs.url = response.data.links.bucket;
               // Update the endpoints
               $rootScope.$broadcast('invenio.records.endpoints.updated', response.data.links);
+
               callback();
             }, function error(response) {
               // Error
               $rootScope.$broadcast('invenio.uploader.error', response);
+
               callback();
             });
           } else {
             // We already have it resolve it asap
             $rootScope.filesVM.invenioFilesArgs.url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
+
             callback();
           }
         };
 
         // click input upload files
         $scope.uploadThumbnail = function () {
-          $scope.getEndpoints(function () {
+          $.when(function () {
+            if ($rootScope.filesVM.invenioFilesEndpoints.bucket === undefined) {
+              // If the action url doesnt exists request it
+              InvenioFilesAPI.request({
+                method: 'POST',
+                url: $rootScope.filesVM.invenioFilesEndpoints.initialization,
+                async: true,
+                data: {},
+                headers: ($rootScope.filesVM.invenioFilesArgs.headers !== undefined) ? $rootScope.filesVM.invenioFilesArgs.headers : {}
+              }).then(function success(response) {
+                // Get the bucket
+                $rootScope.filesVM.invenioFilesArgs.url = response.data.links.bucket;
+                // Update the endpoints
+                $rootScope.$broadcast('invenio.records.endpoints.updated', response.data.links);
+              }, function error(response) {
+                // Error
+                $rootScope.$broadcast('invenio.uploader.error', response);
+              });
+            } else {
+              // We already have it resolve it asap
+              $rootScope.filesVM.invenioFilesArgs.url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
+            }
+          }).then(function () {
             document.getElementById('selectThumbnail').click();
           });
         };
@@ -3871,7 +3896,38 @@ function toObject(arr) {
             }
           }
           $rootScope.filesVM.remove(file);
-          $scope.updateFileList(file);
+          $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
+            $scope.updateFileList(f);
+          });
+        };
+
+        /**
+          * Direct upload
+          * @memberof WekoRecordsCtrl
+          * @function directedUpload
+          */
+        $scope.directedUpload = function (files) {
+          Array.prototype.forEach.call(files, function (f) {
+            if ($scope.model.allowedType.indexOf(f.type) < 0) {
+              return;
+            }
+            var reader = new FileReader();
+            f.is_thumbnail = true;
+            reader.readAsDataURL(f);
+          });
+
+          if ($rootScope.filesVM.invenioFilesEndpoints.bucket !== undefined) {
+            let deposit_files_api = $("#deposit-files-api").val();
+            let bucket_url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
+            let bucket_url_arr = bucket_url.split(deposit_files_api);
+
+            Array.prototype.push.apply($scope.model.thumbnailsInfor, files);
+            $rootScope.filesVM.addFiles(files);
+
+            $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url_arr[0] + deposit_files_api + '/thumbnail' + bucket_url_arr[1];
+            $rootScope.filesVM.upload();
+            $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url;
+          }
         };
 
         /**
@@ -3886,31 +3942,17 @@ function toObject(arr) {
               if ($scope.model.allowMultiple != 'True') {
                 files = Array.prototype.slice.call(files, 0, 1);
                 let overwriteFiles = $.extend(true, {}, $scope.model.thumbnailsInfor);
-                $.each(overwriteFiles, function (index, thumb) {
+
+                if (Object.keys(overwriteFiles).length > 0) {
                   $scope.removeThumbnail(thumb);
-                });
-              }
-
-              Array.prototype.forEach.call(files, function (f) {
-                if ($scope.model.allowedType.indexOf(f.type) < 0) {
-                  return;
+                  $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
+                    $scope.directedUpload(files);
+                  });
+                } else {
+                  $scope.directedUpload(files);
                 }
-                var reader = new FileReader();
-                f.is_thumbnail = true;
-                reader.readAsDataURL(f);
-              });
-
-              if ($rootScope.filesVM.invenioFilesEndpoints.bucket !== undefined) {
-                let deposit_files_api = $("#deposit-files-api").val();
-                let bucket_url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
-                let bucket_url_arr = bucket_url.split(deposit_files_api);
-
-                Array.prototype.push.apply($scope.model.thumbnailsInfor, files);
-                $rootScope.filesVM.addFiles(files);
-
-                $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url_arr[0] + deposit_files_api + '/thumbnail' + bucket_url_arr[1];
-                $rootScope.filesVM.upload();
-                $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url;
+              } else {
+                $scope.directedUpload(files);
               }
             }
           });
