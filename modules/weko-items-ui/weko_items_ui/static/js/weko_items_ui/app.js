@@ -3802,7 +3802,7 @@ function toObject(arr) {
 
         $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
           $scope.updateFileList(f);
-          if ($scope.uploadingThumbnails !== undefined && $scope.uploadingThumbnails.length > 0) {
+          if (!angular.isUndefined($scope.uploadingThumbnails) && $scope.uploadingThumbnails.length > 0) {
             $scope.directedUpload($scope.uploadingThumbnails);
           }
         });
