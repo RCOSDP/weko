@@ -190,6 +190,18 @@ def get_doctype(doc_type):
     return doc_type if ES_VERSION[0] < 7 else '_doc'
 
 
+def is_valid_access():
+    """
+    Distinguish valid accesses for stats from incoming accesses.
+
+    Regard all accesses as valid if `STATS_EXCLUDED_ADDRS` is set to `[]`.
+    """
+    if current_app.config['STATS_EXCLUDED_ADDRS']:
+        return get_remote_addr() not in current_app.config['STATS_EXCLUDED_ADDRS']
+    else:
+        return True
+
+
 class QueryFileReportsHelper(object):
     """Helper for parsing elasticsearch aggregations."""
 

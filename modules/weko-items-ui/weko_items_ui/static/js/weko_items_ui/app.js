@@ -1192,8 +1192,8 @@ function toObject(arr) {
             case 'interactive resource':
               resourceuri = "http://purl.org/coar/resource_type/c_e9a0";
               break;
-            case 'learning material':
-              resourceuri = "http://purl.org/coar/resource_type/c_1843";
+            case 'learning object':
+              resourceuri = "http://purl.org/coar/resource_type/c_e059";
               break;
             case 'musical notation':
               resourceuri = "http://purl.org/coar/resource_type/c_18cw";

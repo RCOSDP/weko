@@ -55,3 +55,10 @@ msgstr ""
 msgid "Start upload"
 msgstr ""
 
+#:
+msgid "This item cannot be set to private because a DOI is granted."
+msgstr ""
+
+#:
+msgid "This item cannot be deleted because a DOI is granted."
+msgstr ""

@@ -17,11 +17,12 @@ import uuid
 from flask import request
 from weko_accounts.utils import get_remote_addr
 
-from ..utils import get_user
+from ..utils import get_user, is_valid_access
 
 
 def celery_task_event_builder(
-        event, sender_app, exec_data=None, user_data=None, **kwargs):
+    event, sender_app, exec_data=None, user_data=None, **kwargs
+):
     """Build a celery-task event."""
     event.update(dict(
         # When:
@@ -51,60 +52,62 @@ def celery_task_event_builder(
 
 def file_download_event_builder(event, sender_app, obj=None, **kwargs):
     """Build a file-download event."""
-    event.update(dict(
-        # When:
-        timestamp=datetime.datetime.utcnow().isoformat(),
-        # What:
-        bucket_id=str(obj.bucket_id),
-        file_id=str(obj.file_id),
-        file_key=obj.key,
-        size=obj.file.size,
-        referrer=request.referrer,
-        accessrole=obj.file.json['accessrole'],
-        userrole=obj.userrole,
-        site_license_name=obj.site_license_name,
-        site_license_flag=obj.site_license_flag,
-        index_list=obj.index_list,
-        cur_user_id=obj.userid,
-        item_id=obj.item_id,
-        item_title=obj.item_title,
-        remote_addr=get_remote_addr(),
-        is_billing_item=obj.is_billing_item,
-        billing_file_price=obj.billing_file_price,
-        user_group_list=obj.user_group_list,
-        # Who:
-        **get_user()
-    ))
-    return event
+    if is_valid_access():
+        event.update(dict(
+            # When:
+            timestamp=datetime.datetime.utcnow().isoformat(),
+            # What:
+            bucket_id=str(obj.bucket_id),
+            file_id=str(obj.file_id),
+            file_key=obj.key,
+            size=obj.file.size,
+            referrer=request.referrer,
+            accessrole=obj.file.json['accessrole'],
+            userrole=obj.userrole,
+            site_license_name=obj.site_license_name,
+            site_license_flag=obj.site_license_flag,
+            index_list=obj.index_list,
+            cur_user_id=obj.userid,
+            item_id=obj.item_id,
+            item_title=obj.item_title,
+            remote_addr=get_remote_addr(),
+            is_billing_item=obj.is_billing_item,
+            billing_file_price=obj.billing_1file_price,
+            user_group_list=obj.user_group_list,
+            # Who:
+            **get_user()
+        ))
+        return event
 
 
 def file_preview_event_builder(event, sender_app, obj=None, **kwargs):
     """Build a file-preview event."""
-    event.update(dict(
-        # When:
-        timestamp=datetime.datetime.utcnow().isoformat(),
-        # What:
-        bucket_id=str(obj.bucket_id),
-        file_id=str(obj.file_id),
-        file_key=obj.key,
-        size=obj.file.size,
-        referrer=request.referrer,
-        accessrole=obj.file.json['accessrole'],
-        userrole=obj.userrole,
-        site_license_name=obj.site_license_name,
-        site_license_flag=obj.site_license_flag,
-        index_list=obj.index_list,
-        cur_user_id=obj.userid,
-        item_id=obj.item_id,
-        item_title=obj.item_title,
-        remote_addr=get_remote_addr(),
-        is_billing_item=obj.is_billing_item,
-        billing_file_price=obj.billing_file_price,
-        user_group_list=obj.user_group_list,
-        # Who:
-        **get_user()
-    ))
-    return event
+    if is_valid_access():
+        event.update(dict(
+            # When:
+            timestamp=datetime.datetime.utcnow().isoformat(),
+            # What:
+            bucket_id=str(obj.bucket_id),
+            file_id=str(obj.file_id),
+            file_key=obj.key,
+            size=obj.file.size,
+            referrer=request.referrer,
+            accessrole=obj.file.json['accessrole'],
+            userrole=obj.userrole,
+            site_license_name=obj.site_license_name,
+            site_license_flag=obj.site_license_flag,
+            index_list=obj.index_list,
+            cur_user_id=obj.userid,
+            item_id=obj.item_id,
+            item_title=obj.item_title,
+            remote_addr=get_remote_addr(),
+            is_billing_item=obj.is_billing_item,
+            billing_file_price=obj.billing_file_price,
+            user_group_list=obj.user_group_list,
+            # Who:
+            **get_user()
+        ))
+        return event
 
 
 def build_celery_task_unique_id(doc):
@@ -118,28 +121,14 @@ def build_celery_task_unique_id(doc):
 
 def build_file_unique_id(doc):
     """Build file unique identifier."""
-    group_name_list = ''
-    if isinstance(doc['user_group_list'], list):
-        group_name_list = [g['group_name'] for g in doc['user_group_list']]
-    key = '{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}'.format(
-        doc['bucket_id'], doc['file_id'], doc['userrole'], doc['accessrole'],
-        doc['index_list'], doc['site_license_name'], doc['country'],
-        doc['cur_user_id'], doc['remote_addr'], str(doc['is_billing_item']),
-        doc['is_billing_item'],
-        '_'.join(group_name_list)
-    )
-
-    doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
+    doc['unique_id'] = '{0}_{1}'.format(doc['bucket_id'], doc['file_id'])
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
     return doc
 
 
 def build_record_unique_id(doc):
     """Build record unique identifier."""
-    record_index_names = copy_record_index_list(doc)
-    doc['unique_id'] = '{0}_{1}_{2}_{3}_{4}'.format(
-        doc['record_id'], doc['country'], doc['cur_user_id'],
-        record_index_names, doc['site_license_name'])
+    doc['unique_id'] = '{0}_{1}'.format(doc['pid_type'], doc['pid_value'])
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
     return doc
 
@@ -182,54 +171,57 @@ def copy_search_type(doc, aggregation_data=None):
 def record_view_event_builder(event, sender_app, pid=None, record=None,
                               info=None, **kwargs):
     """Build a record-view event."""
-    # get index information
-    index_list = []
-    if record.navi:
-        for index in record.navi:
-            index_list.append(dict(
-                index_id=str(index[1]),
-                index_name=index[3],
-                index_name_en=index[4]
-            ))
-    cur_user = get_user()
-    cur_user_id = cur_user['user_id'] if cur_user['user_id'] else 'guest'
+    if is_valid_access():
+        # get index information
+        index_list = []
 
-    record_name = record.get('item_title', '') if record is not None else ''
+        if record.navi:
+            for index in record.navi:
+                index_list.append(dict(
+                    index_id=str(index[1]),
+                    index_name=index[3],
+                    index_name_en=index[4]
+                ))
 
-    event.update(dict(
-        # When:
-        timestamp=datetime.datetime.utcnow().isoformat(),
-        # What:
-        record_id=str(record.id),
-        record_name=record_name,
-        record_index_list=index_list,
-        pid_type=pid.pid_type,
-        pid_value=str(pid.pid_value),
-        referrer=request.referrer,
-        cur_user_id=cur_user_id,
-        remote_addr=get_remote_addr(),
-        site_license_flag=info['site_license_flag'],
-        site_license_name=info['site_license_name'],
-        # Who:
-        **get_user()
-    ))
-    return event
+        cur_user = get_user()
+        cur_user_id = cur_user['user_id'] if cur_user['user_id'] else 'guest'
+        record_name = record.get('item_title', '') if record is not None else ''
+
+        event.update(dict(
+            # When:
+            timestamp=datetime.datetime.utcnow().isoformat(),
+            # What:
+            record_id=str(record.id),
+            record_name=record_name,
+            record_index_list=index_list,
+            pid_type=pid.pid_type,
+            pid_value=str(pid.pid_value),
+            referrer=request.referrer,
+            cur_user_id=cur_user_id,
+            remote_addr=get_remote_addr(),
+            site_license_flag=info['site_license_flag'],
+            site_license_name=info['site_license_name'],
+            # Who:
+            **get_user()
+        ))
+        return event
 
 
 def top_view_event_builder(event, sender_app, info=None, **kwargs):
     """Build a top-view event."""
-    event.update(dict(
-        # When:
-        timestamp=datetime.datetime.utcnow().isoformat(),
-        # What:
-        referrer=request.referrer,
-        remote_addr=get_remote_addr(),
-        site_license_flag=info['site_license_flag'],
-        site_license_name=info['site_license_name'],
-        # Who:
-        **get_user()
-    ))
-    return event
+    if is_valid_access():
+        event.update(dict(
+            # When:
+            timestamp=datetime.datetime.utcnow().isoformat(),
+            # What:
+            referrer=request.referrer,
+            remote_addr=get_remote_addr(),
+            site_license_flag=info['site_license_flag'],
+            site_license_name=info['site_license_name'],
+            # Who:
+            **get_user()
+        ))
+        return event
 
 
 def build_top_unique_id(doc):
@@ -264,18 +256,19 @@ def resolve_address(addr):
 def search_event_builder(event, sender_app, search_args=None,
                          info=None, **kwargs):
     """Build a search event."""
-    event.update(dict(
-        # When:
-        timestamp=datetime.datetime.utcnow().isoformat(),
-        # What:
-        referrer=request.referrer,
-        search_detail=search_args.to_dict(flat=False),
-        site_license_name=info['site_license_name'],
-        site_license_flag=info['site_license_flag'],
-        # Who:
-        **get_user()
-    ))
-    return event
+    if is_valid_access():
+        event.update(dict(
+            # When:
+            timestamp=datetime.datetime.utcnow().isoformat(),
+            # What:
+            referrer=request.referrer,
+            search_detail=search_args.to_dict(flat=False),
+            site_license_name=info['site_license_name'],
+            site_license_flag=info['site_license_flag'],
+            # Who:
+            **get_user()
+        ))
+        return event
 
 
 def build_search_unique_id(doc):
@@ -307,17 +300,19 @@ def item_create_event_builder(event, sender_app, user_id=None,
                               item_id=None, item_title=None, **kwargs):
     """Build a item-create event."""
     print(get_user())
-    event.update(dict(
-        # When:
-        timestamp=datetime.datetime.utcnow().isoformat(),
-        # What:
-        referrer=request.referrer,
-        remote_addr=get_remote_addr(),
-        cur_user_id=user_id,
-        pid_type=item_id.pid_type,
-        pid_value=str(item_id.pid_value),
-        record_name=item_title,
-        # Who:
-        **get_user()
-    ))
-    return event
+
+    if is_valid_access():
+        event.update(dict(
+            # When:
+            timestamp=datetime.datetime.utcnow().isoformat(),
+            # What:
+            referrer=request.referrer,
+            remote_addr=get_remote_addr(),
+            cur_user_id=user_id,
+            pid_type=item_id.pid_type,
+            pid_value=str(item_id.pid_value),
+            record_name=item_title,
+            # Who:
+            **get_user()
+        ))
+        return event

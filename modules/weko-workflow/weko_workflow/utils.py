@@ -37,6 +37,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
+from weko_index_tree.models import Index
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
     Mapping
 from weko_records.serializers.utils import get_mapping
@@ -78,28 +79,28 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
     doi_register_typ = ''
 
     if doi_select == IDENTIFIER_GRANT_LIST[1][0] and data.get(
-            'identifier_grant_jalc_doi_link'):
+        'identifier_grant_jalc_doi_link'):
         jalcdoi_link = data.get('identifier_grant_jalc_doi_link')
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_link
         doi_register_val = '/'.join(jalcdoi_tail[1:])
         doi_register_typ = 'JaLC'
     elif doi_select == IDENTIFIER_GRANT_LIST[2][0] and data.get(
-            'identifier_grant_jalc_cr_doi_link'):
+        'identifier_grant_jalc_cr_doi_link'):
         jalcdoi_cr_link = data.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_cr_link
         doi_register_val = '/'.join(jalcdoi_cr_tail[1:])
         doi_register_typ = 'Crossref'
     elif doi_select == IDENTIFIER_GRANT_LIST[3][0] and data.get(
-            'identifier_grant_jalc_dc_doi_link'):
+        'identifier_grant_jalc_dc_doi_link'):
         jalcdoi_dc_link = data.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_dc_link
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'DataCite'
     elif is_feature_import and doi_select == IDENTIFIER_GRANT_LIST[4][0] \
-            and data.get('identifier_grant_ndl_jalc_doi_link'):
+        and data.get('identifier_grant_ndl_jalc_doi_link'):
         ndljalcdoi_dc_link = data.get('identifier_grant_ndl_jalc_doi_link')
         ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = ndljalcdoi_dc_link
@@ -119,6 +120,7 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
                 identifier = IdentifierHandle(item_id)
                 identifier.update_idt_registration_metadata(doi_register_val,
                                                             doi_register_typ)
+            update_indexes_public_state(item_id)
             current_app.logger.info(_('DOI successfully registered!'))
     except Exception as ex:
         current_app.logger.exception(str(ex))
@@ -142,7 +144,7 @@ def register_hdl(activity_id):
         deposit_id = record.pid_parent.pid_value.split('parent:')[1]
 
     record_url = request.url.split('/workflow/')[0] \
-        + '/records/' + str(deposit_id)
+                 + '/records/' + str(deposit_id)
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
@@ -165,7 +167,7 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
     :return handle: HDL handle
     """
     record_url = url_root \
-        + 'records/' + str(deposit_id)
+                 + 'records/' + str(deposit_id)
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
@@ -239,7 +241,7 @@ def item_metadata_validation(item_id, identifier_type):
             'doi': '',
             'url': '',
             "msg": 'Resource Type Property either missing '
-            'or jpcoar mapping not correct!',
+                   'or jpcoar mapping not correct!',
             'error_type': 'no_resource_type'
         }
 
@@ -264,7 +266,7 @@ def item_metadata_validation(item_id, identifier_type):
         if resource_type in journalarticle_type \
             or resource_type in report_types \
             or (resource_type in elearning_type) \
-                or resource_type in datageneral_types:
+            or resource_type in datageneral_types:
             required_properties = ['title']
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
@@ -303,11 +305,11 @@ def item_metadata_validation(item_id, identifier_type):
                 required_properties.append('fileURI')
     # DataCite DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
+        and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
     # NDL JaLC DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
+        and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
 
     if required_properties:
@@ -316,8 +318,8 @@ def item_metadata_validation(item_id, identifier_type):
         properties['either'] = either_properties
 
     if properties and \
-            identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
-            and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
+        identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
+        and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
         return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
@@ -356,7 +358,7 @@ def validation_item_property(mapping_data, properties):
 
 
 def validattion_item_property_required(
-        mapping_data, properties):
+    mapping_data, properties):
     """
     Validate item property is required.
 
@@ -516,7 +518,7 @@ def validattion_item_property_required(
 
 
 def validattion_item_property_either_required(
-        mapping_data, properties):
+    mapping_data, properties):
     """
     Validate item property is either required.
 
@@ -676,7 +678,7 @@ def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
             for index in indices:
                 data = idt_list[index] or ''
                 if (pre in data and (
-                        len(data) - data.find(pre) - len(pre)) == 0):
+                    len(data) - data.find(pre) - len(pre)) == 0):
                     return False
                 else:
                     list_value_error.append(index)
@@ -1036,7 +1038,7 @@ def delete_unregister_buckets(record_uuid):
                         delete_record_bucket = RecordsBuckets.query.filter_by(
                             bucket_id=draft_object.bucket_id).all()
                         if len(delete_record_bucket) == 1:
-                            delete_pid_object = PersistentIdentifier.query.\
+                            delete_pid_object = PersistentIdentifier.query. \
                                 filter_by(pid_type='recid',
                                           object_type='rec',
                                           object_uuid=delete_record_bucket[
@@ -1068,9 +1070,9 @@ def set_bucket_default_size(record_uuid):
         with db.session.begin_nested():
             draft_bucket = Bucket.get(draft_record_bucket.bucket_id)
             draft_bucket.quota_size = current_app.config[
-                'WEKO_BUCKET_QUOTA_SIZE'],
+                                          'WEKO_BUCKET_QUOTA_SIZE'],
             draft_bucket.max_file_size = current_app.config[
-                'WEKO_MAX_FILE_SIZE'],
+                                             'WEKO_MAX_FILE_SIZE'],
             db.session.add(draft_bucket)
     except Exception as ex:
         db.session.rollback()
@@ -1104,7 +1106,7 @@ def is_hidden_pubdate(item_type_name):
         'WEKO_ITEMS_UI_HIDE_PUBLICATION_DATE')
     is_hidden = False
     if (item_type_name and isinstance(hidden_pubdate_list, list)
-            and item_type_name in hidden_pubdate_list):
+        and item_type_name in hidden_pubdate_list):
         is_hidden = True
     return is_hidden
 
@@ -1245,14 +1247,14 @@ def prepare_edit_workflow(post_activity, recid, deposit):
 
         if identifier:
             if identifier.get('action_identifier_select') > \
-                    current_app.config.get(
-                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0):
+                current_app.config.get(
+                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0):
                 identifier['action_identifier_select'] = \
                     current_app.config.get(
                         "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
             elif identifier.get('action_identifier_select') == \
-                    current_app.config.get(
-                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2):
+                current_app.config.get(
+                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2):
                 identifier['action_identifier_select'] = \
                     current_app.config.get(
                         "WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN", -3)
@@ -1329,7 +1331,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit['path'] = deposit.get('path', [])
 
-                parent_record = _deposit.\
+                parent_record = _deposit. \
                     merge_data_to_record_without_version(current_pid)
                 _deposit.publish()
 
@@ -1346,14 +1348,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         maintain_record,
                         maintain_record.model)
                     maintain_deposit['path'] = deposit.get('path', [])
-                    new_parent_record = maintain_deposit.\
+                    new_parent_record = maintain_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     maintain_deposit.publish()
                     combine_record_file_urls(new_parent_record)
                     new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
                     updated_item.publish(new_parent_record)
-                else:   # Handle Upgrade workflow
+                else:  # Handle Upgrade workflow
                     draft_pid = PersistentIdentifier.get(
                         'recid',
                         '{}.0'.format(pid_without_ver.pid_value)
@@ -1361,7 +1363,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     draft_deposit = WekoDeposit.get_record(
                         draft_pid.object_uuid)
                     draft_deposit['path'] = deposit.get('path', [])
-                    new_draft_record = draft_deposit.\
+                    new_draft_record = draft_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
                     combine_record_file_urls(new_draft_record)
@@ -1430,7 +1432,7 @@ def get_account_info(user_id):
     data = get_user_profile_info(user_id)
     if data:
         return data.get('subitem_mail_address'), \
-            data.get('subitem_displayname')
+               data.get('subitem_displayname')
     else:
         return None, None
 
@@ -1440,6 +1442,7 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
 
     Get file property information by item_mapping and put to metadata.
     """
+
     def check_url_is_manual(version_id):
         for file in record.files.dumps():
             if file.get('version_id') == version_id:
@@ -1481,7 +1484,7 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
                                 record.get('recid'),
                                 attr.get('filename'))
         elif isinstance(attr_mlt, dict) and \
-                attr_mlt.get('filename'):
+            attr_mlt.get('filename'):
             if not attr_mlt.get(file_keys[1]):
                 attr_mlt[file_keys[1]] = {}
             if not (attr_mlt[file_keys[1]].get(file_keys[2])
@@ -1501,3 +1504,25 @@ def create_files_url(root_url, record_id, filename):
         root_url,
         record_id,
         filename)
+
+
+def update_indexes_public_state(item_id):
+    """Update indexes public state.
+
+    :param item_id: Item id.
+
+    :return:
+    """
+    rm = RecordMetadata.query.filter_by(id=item_id).first()
+    index_id_list = rm.json['path']
+    updated_index_ids = []
+    update_db = False
+    for index_ids in index_id_list:
+        for index_id in index_ids.split('/'):
+            if index_id not in updated_index_ids:
+                updated_index_ids.append(index_id)
+                update_db = True
+                index = Index.query.filter_by(id=index_id).first()
+                index.public_state = True
+    if update_db:
+        db.session.commit()
