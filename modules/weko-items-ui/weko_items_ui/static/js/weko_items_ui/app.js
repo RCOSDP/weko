@@ -3782,7 +3782,7 @@ function toObject(arr) {
             allowedType: ['image/gif', 'image/jpg', 'image/jpe', 'image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/tif'],
             allowMultiple: $("#allow-thumbnail-flg").val(),
         };
-
+        $scope.uploadingThumbnails = [];
 
         $scope.$on('invenio.records.loading.stop', function () {
           let thumbnailsInfor;
@@ -3797,6 +3797,13 @@ function toObject(arr) {
           // set current data thumbnail if has
           if (thumbnailsInfor.length > 0) {
             $scope.model.thumbnailsInfor = thumbnailsInfor;
+          }
+        });
+
+        $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
+          $scope.updateFileList(f);
+          if ($scope.uploadingThumbnails !== undefined && $scope.uploadingThumbnails.length > 0) {
+            $scope.directedUpload($scope.uploadingThumbnails);
           }
         });
 
@@ -3895,10 +3902,10 @@ function toObject(arr) {
               return;
             }
           }
-          $rootScope.filesVM.remove(file);
-          $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
-            $scope.updateFileList(f);
-          });
+
+          if (file.links) {
+            $rootScope.filesVM.remove(file);
+          }
         };
 
         /**
@@ -3927,6 +3934,8 @@ function toObject(arr) {
             $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url_arr[0] + deposit_files_api + '/thumbnail' + bucket_url_arr[1];
             $rootScope.filesVM.upload();
             $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url;
+
+            $scope.uploadingThumbnails = [];
           }
         };
 
@@ -3936,7 +3945,7 @@ function toObject(arr) {
           * @function upload
           * @param {Object} files - The dragged files.
           */
-        $scope.dragoverThumbnail = function (files) {
+        $scope.dragoverThumbnail = async function (files) {
           $scope.getEndpoints(function () {
             if (!angular.isUndefined(files) && files.length > 0) {
               if ($scope.model.allowMultiple != 'True') {
@@ -3944,11 +3953,10 @@ function toObject(arr) {
                 let overwriteFiles = $.extend(true, {}, $scope.model.thumbnailsInfor);
 
                 if (Object.keys(overwriteFiles).length > 0) {
+                  $scope.uploadingThumbnails = files;
+
                   $.each(overwriteFiles, function(index, thumb) {
-                    $rootScope.$$childHead.removeThumbnail(thumb);
-                  });
-                  $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
-                    $scope.directedUpload(files);
+                    $scope.removeThumbnail(thumb);
                   });
                 } else {
                   $scope.directedUpload(files);
