@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
+import json
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
@@ -29,8 +30,9 @@ from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_search import RecordsSearch
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, text
 from weko_groups.models import Group
 
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
@@ -348,7 +350,7 @@ def get_index_id_list(indexes, id_list=None):
                     continue
 
                 parent = index.get('parent', '')
-                if parent is not '' and parent is not '0':
+                if parent != '' and parent != '0':
                     id_list.append(parent + '/' + index.get('id', ''))
                 else:
                     id_list.append(index.get('id', ''))
@@ -371,7 +373,7 @@ def get_publish_index_id_list(indexes, id_list=None):
 
                 parent = index.get('parent', '')
                 if index.get('public_state'):
-                    if parent is not '' and parent is not '0':
+                    if parent != '' and parent != '0':
                         id_list.append(parent + '/' + index.get('id', ''))
                     else:
                         id_list.append(index.get('id', ''))
@@ -596,3 +598,78 @@ def recorrect_private_items_count(agp):
         for bk in bkt:
             if bk.get("from"):
                 agg["no_available"]["doc_count"] += bk.get("doc_count")
+
+
+def check_doi_in_index(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    try:
+        if check_doi_in_list_record_es(index_id):
+            return True
+        return False
+    except Exception as e:
+        return False
+
+
+def get_record_in_es_of_index(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    from .api import Indexes
+    query_q = {
+        "_source": {
+            "excludes": [
+                "content"
+            ]
+        },
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "prefix": {
+                            "path.tree": "@index"
+                        }
+                    },
+                    {
+                        "match": {
+                            "relation_version_is_last": "true"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    fp = Indexes.get_self_path(index_id)
+    query_q = json.dumps(query_q).replace("@index", fp.path)
+    query_q = json.loads(query_q)
+    result = []
+    search = RecordsSearch(index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.update_from_dict(query_q)
+    search_result = search.execute().to_dict()
+    result = search_result.get('hits', {}).get('hits', [])
+    return result
+
+
+def check_doi_in_list_record_es(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    list_records_in_es = get_record_in_es_of_index(index_id)
+    list_uuid = [record.get('_id') for record in list_records_in_es]
+    with db.session.no_autoflush:
+        p = PersistentIdentifier
+        query = db.session.query(p) \
+            .filter(p.object_uuid.in_(list_uuid),
+                    p.status == PIDStatus.REGISTERED, p.pid_type == 'doi')
+
+        db_records = query.all()
+        if len(db_records) > 0:
+            return True
+    return False
