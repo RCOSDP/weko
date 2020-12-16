@@ -3818,7 +3818,6 @@ function toObject(arr) {
             InvenioFilesAPI.request({
               method: 'POST',
               url: $rootScope.filesVM.invenioFilesEndpoints.initialization,
-              async: true,
               data: {},
               headers: ($rootScope.filesVM.invenioFilesArgs.headers !== undefined) ? $rootScope.filesVM.invenioFilesArgs.headers : {}
             }).then(function success(response) {
@@ -3924,7 +3923,7 @@ function toObject(arr) {
           * @function upload
           * @param {Object} files - The dragged files.
           */
-        $scope.dragoverThumbnail = async function (files) {
+        $scope.dragoverThumbnail = function (files) {
           $scope.getEndpoints(function () {
             if (!angular.isUndefined(files) && files.length > 0) {
               if ($scope.model.allowMultiple != 'True') {
