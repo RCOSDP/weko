@@ -104,3 +104,9 @@ msgstr ""
 
 #~ msgid "Display"
 #~ msgstr "Display"
+
+msgid "This item cannot be set to private because a DOI is granted."
+msgstr ""
+
+msgid "This item cannot be deleted because a DOI is granted."
+msgstr ""

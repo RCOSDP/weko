@@ -836,7 +836,8 @@ class Indexes(object):
                     func.cast(test_alias.id, db.Text) + '/' + rec_alias.c.path,
                 ).filter(test_alias.id == rec_alias.c.pid)
             )
-            path_index_searchs = db.session.query(recursive_p).filter_by(pid=0).one()
+            path_index_searchs = db.session.query(recursive_p).filter_by(
+                pid=0).one()
             return path_index_searchs.path
         path_index_searchs = recursive_p()
 
