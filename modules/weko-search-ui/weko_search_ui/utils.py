@@ -33,7 +33,7 @@ import uuid
 import zipfile
 from collections import Callable, OrderedDict
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
 from io import StringIO
 from operator import getitem
 
@@ -1850,11 +1850,11 @@ def register_item_doi(item):
                 )
 
         if data:
-            deposit = WekoDeposit.get_record(pid.object_uuid)	
-            deposit.commit()	
-            deposit.publish()	
-            deposit = WekoDeposit.get_record(pid_lastest.object_uuid)	
-            deposit.commit()	
+            deposit = WekoDeposit.get_record(pid.object_uuid)
+            deposit.commit()
+            deposit.publish()
+            deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+            deposit.commit()
             deposit.publish()
             db.session.commit()
     except Exception as ex:
@@ -2276,7 +2276,7 @@ def handle_check_date(list_record):
             if attribute:
                 data_result = get_sub_item_value(attribute, _keys[-1])
                 for value in data_result:
-                    if not validattion_date_property(value):
+                    if not validation_date_property(value):
                         errors.append(
                             _('Please specify the date with any format of'
                               + ' YYYY-MM-DD, YYYY-MM, YYYY.'))
@@ -2291,13 +2291,76 @@ def handle_check_date(list_record):
                 raise Exception
         except Exception:
             errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
+        # validate file open_date
+        open_date_err_msg = validation_file_open_date(record)
+        if open_date_err_msg:
+            errors.append(open_date_err_msg)
+
         if errors:
             record['errors'] = record['errors'] + errors \
                 if record.get('errors') else errors
             record['errors'] = list(set(record['errors']))
 
 
-def validattion_date_property(date_str):
+def get_data_in_deep_dict(search_key, _dict={}):
+    """
+    Get data of key in a deep dictionary.
+
+    :param search_key: key.
+    :param _dict: Dict.
+    :return: List of result. Ex: [{'tree_key': key, 'value': value}]
+    """
+    def add_parrent_key(parrent_key, idx=None, data={}):
+        if idx is not None:
+            data['tree_key'] = '{}[{}].{}'.format(
+                parrent_key, idx, data.get('tree_key', ''))
+        else:
+            data['tree_key'] = '{}.{}'.format(
+                parrent_key, data.get('tree_key', ''))
+        return data
+    result = []
+    for key in _dict.keys():
+        value = _dict.get(key)
+        if key == search_key:
+            result.append({'tree_key': key, 'value': value})
+            break
+        else:
+            if isinstance(value, dict):
+                data = get_data_in_deep_dict(search_key, value)
+                if data:
+                    result.extend(list(map(
+                        partial(add_parrent_key, key, None), data)))
+            elif isinstance(value, list):
+                for idx, sub in enumerate(value):
+                    if not isinstance(sub, dict):
+                        continue
+                    data = get_data_in_deep_dict(search_key, sub)
+                    if data:
+                        result.extend(list(map(
+                            partial(add_parrent_key, key, idx), data)))
+    return result
+
+
+def validation_file_open_date(record):
+    """
+    Validate file open date.
+
+    :param record: Record
+    :return: error or None
+    """
+    open_date_values = get_data_in_deep_dict('dateValue',
+                                             record.get('metadata', {}))
+    for data in open_date_values:
+        try:
+            value = data.get('value', '')
+            if value and value != datetime.strptime(value, '%Y-%m-%d') \
+                    .strftime('%Y-%m-%d'):
+                raise Exception
+        except Exception:
+            return _('Please specify Open Access Date with YYYY-MM-DD.')
+
+
+def validation_date_property(date_str):
     """
     Validate item property is either required.
 
