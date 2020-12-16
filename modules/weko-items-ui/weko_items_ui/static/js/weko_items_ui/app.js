@@ -3844,31 +3844,10 @@ function toObject(arr) {
 
         // click input upload files
         $scope.uploadThumbnail = function () {
-          $.when(function () {
-            if ($rootScope.filesVM.invenioFilesEndpoints.bucket === undefined) {
-              // If the action url doesnt exists request it
-              InvenioFilesAPI.request({
-                method: 'POST',
-                url: $rootScope.filesVM.invenioFilesEndpoints.initialization,
-                async: true,
-                data: {},
-                headers: ($rootScope.filesVM.invenioFilesArgs.headers !== undefined) ? $rootScope.filesVM.invenioFilesArgs.headers : {}
-              }).then(function success(response) {
-                // Get the bucket
-                $rootScope.filesVM.invenioFilesArgs.url = response.data.links.bucket;
-                // Update the endpoints
-                $rootScope.$broadcast('invenio.records.endpoints.updated', response.data.links);
-              }, function error(response) {
-                // Error
-                $rootScope.$broadcast('invenio.uploader.error', response);
-              });
-            } else {
-              // We already have it resolve it asap
-              $rootScope.filesVM.invenioFilesArgs.url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
-            }
-          }).then(function () {
+          $scope.getEndpoints(function () {});
+          setTimeout(function() {
             document.getElementById('selectThumbnail').click();
-          });
+          }, 0);
         };
 
         $scope.updateFileList = function (removeFile) {
