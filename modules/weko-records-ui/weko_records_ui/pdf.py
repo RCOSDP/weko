@@ -337,14 +337,14 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         # Get creator mail
         creator_mails = creator_item.get('creatorMails', [])
         for creator_mail in creator_mails:
-            mail = creator_mail.get('creatorMail')
+            mail = creator_mail.get('creatorMail', '')
             if mail:
                 creator_mail_list.append(mail)
         # Get creator name
         creator_names = creator_item.get('creatorNames', [])
         for creator_name in creator_names:
-            name = creator_name.get('creatorName')
-            name_lang = creator_name.get('creatorNameLang')
+            name = creator_name.get('creatorName', '')
+            name_lang = creator_name.get('creatorNameLang', '')
             if name_lang == lang_user:
                 creator_name_list.append(name)
         # Get creator affiliation
@@ -352,8 +352,8 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         for creator_affiliation in creator_affiliations:
             affiliation_names = creator_affiliation.get('affiliationNames', [])
             for affiliation_name in affiliation_names:
-                name = affiliation_name.get('affiliationName')
-                name_lang = affiliation_name.get('affiliationNameLang')
+                name = affiliation_name.get('affiliationName', '')
+                name_lang = affiliation_name.get('affiliationNameLang', '')
                 if name_lang == lang_user:
                     creator_affiliation_list.append(name)
 
