@@ -33,9 +33,8 @@ from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemLink, Mapping
 from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
-    XsdAtomicBuiltin, XsdAtomicRestriction, XsdAttribute, \
-    XsdEnumerationFacet, XsdGroup, XsdPatternsFacet, XsdSingleFacet, \
-    XsdUnion
+    XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, \
+    XsdPatternsFacet, XsdSingleFacet, XsdUnion
 
 from .api import WekoSchema
 
@@ -1253,39 +1252,22 @@ class SchemaTree:
             for item in item_links:
                 __build_relation(item)
 
-    def __sanitize_str(self, s: str):
-        """Sanitize a string.
-
-        :param s:
-        :return:
-        """
-        def __replace_str(_s_str: str):
-            _s_str = _s_str.replace("&EMPTY&", "")
-            return _s_str
-
-        s = s.strip()
-        esc_str = ""
-        for i in s:
-            if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
-                esc_str += i
-        esc_str = __replace_str(esc_str)
-        return esc_str.strip()
-
     def support_for_output_xml(self, data):
         """Support for output XML.
 
         :param data:
         """
+        from weko_records.utils import remove_weko2_special_character
         if isinstance(data, dict):
             for k, v in data.items():
                 if isinstance(v, str):
-                    data[k] = self.__sanitize_str(v)
+                    data[k] = remove_weko2_special_character(v)
                 else:
                     self.support_for_output_xml(v)
         elif isinstance(data, list):
             for i in range(len(data)):
                 if isinstance(data[i], str):
-                    data[i] = self.__sanitize_str(data[i])
+                    data[i] = remove_weko2_special_character(data[i])
                 else:
                     self.support_for_output_xml(data[i])
 

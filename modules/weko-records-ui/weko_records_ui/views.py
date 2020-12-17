@@ -49,6 +49,7 @@ from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
 from weko_records.serializers import citeproc_v1
+from weko_records.utils import remove_weko2_special_character
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
@@ -512,6 +513,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         billing_files_permission) if groups_price else None
 
     from weko_theme.utils import get_design_layout
+
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         request.args.get('community') or current_app.config[
@@ -768,7 +770,7 @@ def escape_str(s):
     :return: result
     """
     if s:
-        s = s.replace('&EMPTY&', '')
+        s = remove_weko2_special_character(s)
         s = str(escape(s))
         s = s.replace('\\n', '<br/>').replace('\n', '<br/>')
     return s

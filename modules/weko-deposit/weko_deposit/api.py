@@ -60,7 +60,8 @@ from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
     ItemTypes
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
-    get_options_and_order_list, json_loader, set_timestamp
+    get_options_and_order_list, json_loader, remove_weko2_special_character, \
+    set_timestamp
 from weko_user_profiles.models import UserProfile
 
 from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
@@ -1204,6 +1205,8 @@ class WekoRecord(Record):
 
             mlt = val.get('attribute_value_mlt')
             if mlt is not None:
+                mlt = copy.deepcopy(mlt)
+                self.__remove_special_character_of_weko2(mlt)
                 nval = dict()
                 nval['attribute_name'] = val.get('attribute_name')
                 nval['attribute_name_i18n'] = lst[2] or val.get(
@@ -1251,6 +1254,24 @@ class WekoRecord(Record):
                 items.append(val)
 
         return items
+
+    def __remove_special_character_of_weko2(self, metadata):
+        """Remove special character of WEKO2.
+
+        :param metadata:
+        """
+        if isinstance(metadata, dict):
+            for k, val in metadata.items():
+                if isinstance(val, str):
+                    metadata[k] = remove_weko2_special_character(val)
+                else:
+                    self.__remove_special_character_of_weko2(val)
+        elif isinstance(metadata, list):
+            for idx, val in enumerate(metadata):
+                if isinstance(val, str):
+                    metadata[idx] = remove_weko2_special_character(val)
+                else:
+                    self.__remove_special_character_of_weko2(val)
 
     @staticmethod
     def _get_creator(meta_data, hide_email_flag):
