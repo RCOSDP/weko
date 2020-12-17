@@ -84,21 +84,35 @@ class FlowSettingView(BaseView):
             action_list=actions
         )
 
-    @expose('/<string:flow_id>', methods=['POST'])
-    def new_flow(self, flow_id='0'):
+    @staticmethod
+    def update_flow(flow_id):
         post_data = request.get_json()
         workflow = Flow()
-        if '0' == flow_id:
-            """Create new flow info"""
-            flow = workflow.create_flow(post_data)
-            return jsonify(code=0, msg='',
-                           data={
-                               'redirect': url_for(
-                                   'flowsetting.flow_detail',
-                                   flow_id=flow.flow_id)
-                           })
-        workflow.upt_flow(flow_id, post_data)
+        try:
+            workflow.upt_flow(flow_id, post_data)
+        except ValueError as ex:
+            response = jsonify(msg=str(ex))
+            response.status_code = 400
+            return response
+
         return jsonify(code=0, msg=_('Updated flow successfully.'))
+
+    @expose('/<string:flow_id>', methods=['POST'])
+    def new_flow(self, flow_id='0'):
+        if flow_id != '0':
+            return self.update_flow(flow_id)
+
+        post_data = request.get_json()
+        workflow = Flow()
+        try:
+            flow = workflow.create_flow(post_data)
+        except ValueError as ex:
+            response = jsonify(msg=str(ex))
+            response.status_code = 400
+            return response
+
+        redirect_url = url_for('flowsetting.flow_detail', flow_id=flow.flow_id)
+        return jsonify(code=0, msg='', data={'redirect': redirect_url})
 
     @expose('/<string:flow_id>', methods=['DELETE'])
     def del_flow(self, flow_id='0'):

@@ -59,14 +59,25 @@ class Flow(object):
         :return:
         """
         try:
+            flow_name = flow.get('flow_name')
+            if not flow_name:
+                raise ValueError('Flow name cannot be empty.')
+
             with db.session.no_autoflush:
+                cur_names = map(
+                    lambda flow: flow.flow_name,
+                    _Flow.query.add_columns(_Flow.flow_name).all()
+                )
+                if flow_name in cur_names:
+                    raise ValueError('Flow name is already in use.')
+
                 action_start = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
                 action_end = _Action.query.filter_by(
                     action_endpoint='end_action').one_or_none()
             _flow = _Flow(
                 flow_id=uuid.uuid4(),
-                flow_name=flow.get('flow_name'),
+                flow_name=flow_name,
                 flow_user=current_user.get_id()
             )
             _flowaction_start = _FlowAction(
@@ -90,7 +101,7 @@ class Flow(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
-            return None
+            raise
 
     def upt_flow(self, flow_id, flow):
         """Update flow info.
@@ -100,11 +111,24 @@ class Flow(object):
         :return:
         """
         try:
+            flow_name = flow.get('flow_name')
+            if not flow_name:
+                raise ValueError('Flow name cannot be empty.')
+
             with db.session.begin_nested():
+                # Get all names but the one being updated
+                cur_names = map(
+                    lambda flow: flow.flow_name,
+                    _Flow.query.add_columns(_Flow.flow_name)
+                    .filter(_Flow.flow_id != flow_id).all()
+                )
+                if flow_name in cur_names:
+                    raise ValueError('Flow name is already in use.')
+
                 _flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if _flow:
-                    _flow.flow_name = flow.get('flow_name')
+                    _flow.flow_name = flow_name
                     _flow.flow_user = current_user.get_id()
                     db.session.merge(_flow)
             db.session.commit()
@@ -112,7 +136,7 @@ class Flow(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
-            return None
+            raise
 
     def get_flow_list(self):
         """Get flow list info.
