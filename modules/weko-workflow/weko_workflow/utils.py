@@ -79,28 +79,28 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
     doi_register_typ = ''
 
     if doi_select == IDENTIFIER_GRANT_LIST[1][0] and data.get(
-        'identifier_grant_jalc_doi_link'):
+            'identifier_grant_jalc_doi_link'):
         jalcdoi_link = data.get('identifier_grant_jalc_doi_link')
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_link
         doi_register_val = '/'.join(jalcdoi_tail[1:])
         doi_register_typ = 'JaLC'
     elif doi_select == IDENTIFIER_GRANT_LIST[2][0] and data.get(
-        'identifier_grant_jalc_cr_doi_link'):
+            'identifier_grant_jalc_cr_doi_link'):
         jalcdoi_cr_link = data.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_cr_link
         doi_register_val = '/'.join(jalcdoi_cr_tail[1:])
         doi_register_typ = 'Crossref'
     elif doi_select == IDENTIFIER_GRANT_LIST[3][0] and data.get(
-        'identifier_grant_jalc_dc_doi_link'):
+            'identifier_grant_jalc_dc_doi_link'):
         jalcdoi_dc_link = data.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_dc_link
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'DataCite'
     elif is_feature_import and doi_select == IDENTIFIER_GRANT_LIST[4][0] \
-        and data.get('identifier_grant_ndl_jalc_doi_link'):
+            and data.get('identifier_grant_ndl_jalc_doi_link'):
         ndljalcdoi_dc_link = data.get('identifier_grant_ndl_jalc_doi_link')
         ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = ndljalcdoi_dc_link
@@ -144,7 +144,7 @@ def register_hdl(activity_id):
         deposit_id = record.pid_parent.pid_value.split('parent:')[1]
 
     record_url = request.url.split('/workflow/')[0] \
-                 + '/records/' + str(deposit_id)
+        + '/records/' + str(deposit_id)
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
@@ -167,7 +167,7 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
     :return handle: HDL handle
     """
     record_url = url_root \
-                 + 'records/' + str(deposit_id)
+        + 'records/' + str(deposit_id)
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
@@ -264,9 +264,9 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
         if resource_type in journalarticle_type \
-            or resource_type in report_types \
-            or (resource_type in elearning_type) \
-            or resource_type in datageneral_types:
+                or resource_type in report_types \
+                or (resource_type in elearning_type) \
+                or resource_type in datageneral_types:
             required_properties = ['title']
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
@@ -305,11 +305,11 @@ def item_metadata_validation(item_id, identifier_type):
                 required_properties.append('fileURI')
     # DataCite DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
-        and item_type.item_type_name.name != ddi_item_type_name:
+            and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
     # NDL JaLC DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI'] \
-        and item_type.item_type_name.name != ddi_item_type_name:
+            and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
 
     if required_properties:
@@ -318,8 +318,8 @@ def item_metadata_validation(item_id, identifier_type):
         properties['either'] = either_properties
 
     if properties and \
-        identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
-        and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
+            identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
+            and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
         return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
@@ -358,7 +358,7 @@ def validation_item_property(mapping_data, properties):
 
 
 def validattion_item_property_required(
-    mapping_data, properties):
+        mapping_data, properties):
     """
     Validate item property is required.
 
@@ -518,7 +518,7 @@ def validattion_item_property_required(
 
 
 def validattion_item_property_either_required(
-    mapping_data, properties):
+        mapping_data, properties):
     """
     Validate item property is either required.
 
@@ -678,7 +678,7 @@ def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
             for index in indices:
                 data = idt_list[index] or ''
                 if (pre in data and (
-                    len(data) - data.find(pre) - len(pre)) == 0):
+                        len(data) - data.find(pre) - len(pre)) == 0):
                     return False
                 else:
                     list_value_error.append(index)
@@ -1070,9 +1070,9 @@ def set_bucket_default_size(record_uuid):
         with db.session.begin_nested():
             draft_bucket = Bucket.get(draft_record_bucket.bucket_id)
             draft_bucket.quota_size = current_app.config[
-                                          'WEKO_BUCKET_QUOTA_SIZE'],
+                'WEKO_BUCKET_QUOTA_SIZE'],
             draft_bucket.max_file_size = current_app.config[
-                                             'WEKO_MAX_FILE_SIZE'],
+                'WEKO_MAX_FILE_SIZE'],
             db.session.add(draft_bucket)
     except Exception as ex:
         db.session.rollback()
@@ -1106,7 +1106,7 @@ def is_hidden_pubdate(item_type_name):
         'WEKO_ITEMS_UI_HIDE_PUBLICATION_DATE')
     is_hidden = False
     if (item_type_name and isinstance(hidden_pubdate_list, list)
-        and item_type_name in hidden_pubdate_list):
+            and item_type_name in hidden_pubdate_list):
         is_hidden = True
     return is_hidden
 
@@ -1432,7 +1432,7 @@ def get_account_info(user_id):
     data = get_user_profile_info(user_id)
     if data:
         return data.get('subitem_mail_address'), \
-               data.get('subitem_displayname')
+            data.get('subitem_displayname')
     else:
         return None, None
 
@@ -1442,7 +1442,6 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
 
     Get file property information by item_mapping and put to metadata.
     """
-
     def check_url_is_manual(version_id):
         for file in record.files.dumps():
             if file.get('version_id') == version_id:
@@ -1484,7 +1483,7 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
                                 record.get('recid'),
                                 attr.get('filename'))
         elif isinstance(attr_mlt, dict) and \
-            attr_mlt.get('filename'):
+                attr_mlt.get('filename'):
             if not attr_mlt.get(file_keys[1]):
                 attr_mlt[file_keys[1]] = {}
             if not (attr_mlt[file_keys[1]].get(file_keys[2])

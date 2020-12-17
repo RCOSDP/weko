@@ -157,7 +157,7 @@ def iframe_index(item_type_id=0):
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id and sessionstore.redis.exists(
-            'activity_item_' + activity_id):
+                'activity_item_' + activity_id):
             item_str = sessionstore.get('activity_item_' + activity_id)
             item_json = json.loads(item_str)
             if 'metainfo' in item_json:
@@ -533,7 +533,7 @@ def default_view_method(pid, record, template=None):
     activity_session = session['activity_info']
     activity_id = activity_session.get('activity_id', None)
     if activity_id and sessionstore.redis.exists(
-        'activity_item_' + activity_id):
+            'activity_item_' + activity_id):
         item_str = sessionstore.get('activity_item_' + activity_id)
         item_json = json.loads(item_str)
         if 'metainfo' in item_json:
@@ -981,9 +981,9 @@ def validate_bibtex_export():
 def export():
     """Item export view."""
     export_settings = AdminSettings.get('item_export_settings') or \
-                      AdminSettings.Dict2Obj(
-                          current_app.config[
-                              'WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
+        AdminSettings.Dict2Obj(
+        current_app.config[
+            'WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
     if not export_settings.allow_item_exporting:
         return abort(403)
 
@@ -1056,8 +1056,8 @@ def check_validation_error_msg(activity_id):
             host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
             port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
     if sessionstore.redis.exists(
-        'updated_json_schema_{}'.format(activity_id)) \
-        and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
+            'updated_json_schema_{}'.format(activity_id)) \
+            and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
         session_data = sessionstore.get(
             'updated_json_schema_{}'.format(activity_id))
         error_list = json.loads(session_data.decode('utf-8'))

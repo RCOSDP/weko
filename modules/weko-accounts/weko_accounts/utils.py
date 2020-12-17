@@ -33,7 +33,7 @@ def get_remote_addr():
     # addresses, the first address being the actual remote address.
     """
     if not request:
-      return None
+        return None
 
     address = request.headers.get('X-Real-IP', None)
 

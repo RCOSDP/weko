@@ -840,7 +840,6 @@ def remove_weko2_special_character(s: str):
 
     :param s:
     """
-
     def __remove_special_character(_s_str: str):
         pattern = r"(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)"
         _s_str = re.sub(pattern, '', _s_str)
