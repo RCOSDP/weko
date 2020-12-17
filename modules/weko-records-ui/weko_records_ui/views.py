@@ -386,7 +386,13 @@ def _get_google_scholar_meta(record):
                         'data': pdf_url.text})
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
-    res.append({'name': 'citation_abstract_html_url', 'data': request.url})
+    record_route = current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route']
+    record_url = '{protocol}://{host}{path}'.format(
+        protocol=request.environ['wsgi.url_scheme'],
+        host=request.environ['HTTP_HOST'],
+        path=record_route.replace('<pid_value>', record['recid'])
+    )
+    res.append({'name': 'citation_abstract_html_url', 'data': record_url})
     return res
 
 
