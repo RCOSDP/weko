@@ -501,8 +501,18 @@ class WidgetDesignPage(db.Model):
                 repository_id = prev.repository_id
             page = prev or WidgetDesignPage()
 
-            if not repository_id or not url:
-                return False
+            if not repository_id:
+                raise ValueError('Invalid repository.')
+            if not url:
+                raise ValueError('URL cannot be empty.')
+
+            cur_urls = map(
+                lambda design_page: design_page.url,
+                db.session.query(cls).add_columns(WidgetDesignPage.url)
+                .filter(WidgetDesignPage.id != page_id).all()
+            )
+            if url in cur_urls:
+                raise ValueError('URL is already in use.')
 
             with db.session.begin_nested():
                 page.repository_id = repository_id
@@ -518,7 +528,6 @@ class WidgetDesignPage(db.Model):
                             lang, multi_lang_data[lang])
                 db.session.merge(page)
             db.session.commit()
-            return True
         except Exception as ex:
             db.session.rollback()
             current_app.logger.debug(ex)
