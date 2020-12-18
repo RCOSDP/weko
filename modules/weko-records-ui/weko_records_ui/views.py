@@ -362,13 +362,17 @@ def _get_google_scholar_meta(record):
                 res.append(
                     {'name': 'citation_publication_date', 'data': date.text})
         for relatedIdentifier in mtdata.findall(
-                'jpcoar:relatedIdentifier',
+                'jpcoar:relation/jpcoar:relatedIdentifier',
                 namespaces=mtdata.nsmap):
             if 'identifierType' in relatedIdentifier.attrib and \
                 relatedIdentifier.attrib[
                     'identifierType'] == 'DOI':
                 res.append({'name': 'citation_doi',
                             'data': relatedIdentifier.text})
+        for creator in mtdata.findall(
+                'jpcoar:creator/jpcoar:creatorName',
+                namespaces=mtdata.nsmap):
+            res.append({'name': 'citation_author', 'data': creator.text})
         for sourceIdentifier in mtdata.findall(
                 'jpcoar:sourceIdentifier',
                 namespaces=mtdata.nsmap):
@@ -380,11 +384,16 @@ def _get_google_scholar_meta(record):
         for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
                                       namespaces=mtdata.nsmap):
             res.append({'name': 'citation_pdf_url',
-                        'data': request.url.replace('records', 'record')
-                        + '/files/' + pdf_url.text})
+                        'data': pdf_url.text})
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
-    res.append({'name': 'citation_abstract_html_url', 'data': request.url})
+    record_route = current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route']
+    record_url = '{protocol}://{host}{path}'.format(
+        protocol=request.environ['wsgi.url_scheme'],
+        host=request.environ['HTTP_HOST'],
+        path=record_route.replace('<pid_value>', record['recid'])
+    )
+    res.append({'name': 'citation_abstract_html_url', 'data': record_url})
     return res
 
 
