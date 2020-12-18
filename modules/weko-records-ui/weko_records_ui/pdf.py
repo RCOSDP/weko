@@ -41,7 +41,7 @@ from weko_records.serializers.feed import WekoFeedGenerator
 from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 from weko_workflow.api import WorkActivity
 
-from weko_records_ui.utils import get_record_permalink
+from weko_records_ui.utils import get_record_permalink, hide_item_metadata
 
 from .models import PDFCoverPageSettings
 from .utils import get_license_pdf, get_pair_value
@@ -333,13 +333,19 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     creator_mail_list = []
     creator_name_list = []
     creator_affiliation_list = []
+    wr = WekoRecord.get_record_by_pid(pid.pid_value)
+    wr['item_type_id'] = item_type_id
+    is_hide_email = hide_item_metadata(wr) and \
+                    not current_app.config.get('EMAIL_DISPLAY_FLG')
+
     for creator_item in creator_items:
         # Get creator mail
-        creator_mails = creator_item.get('creatorMails', [])
-        for creator_mail in creator_mails:
-            mail = creator_mail.get('creatorMail', '')
-            if mail:
-                creator_mail_list.append(mail)
+        if not is_hide_email:
+            creator_mails = creator_item.get('creatorMails', [])
+            for creator_mail in creator_mails:
+                mail = creator_mail.get('creatorMail', '')
+                if mail:
+                    creator_mail_list.append(mail)
         # Get creator name
         creator_names = creator_item.get('creatorNames', [])
         for creator_name in creator_names:
