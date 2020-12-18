@@ -1317,3 +1317,6 @@ msgstr "研究課題番号"
 
 msgid "Summary DDI"
 msgstr "調査概要"
+
+msgid "This item has been deleted."
+msgstr "このアイテムは削除されています。"
