@@ -16,7 +16,7 @@ const SPECIFIC_INDEX_VALUE = '1';
       }
       // set selected data to allow
       $scope.setAllow=function(data){
-        if (data && $scope.dataJson.sort_options.deny.length > 0){
+        if (data && $scope.dataJson.sort_options.deny.length > data){
           if (data.length==1){
             obj = $scope.dataJson.sort_options.deny[data[0]]
             $scope.dataJson.sort_options.allow.push(obj)
@@ -34,7 +34,7 @@ const SPECIFIC_INDEX_VALUE = '1';
       }
       // set selected data to deny
       $scope.setDeny=function(data){
-        if (data && $scope.dataJson.sort_options.allow.length > 0){
+        if (data && $scope.dataJson.sort_options.allow.length > data){
           if (data.length==1){
             obj = $scope.dataJson.sort_options.allow[data[0]]
             $scope.dataJson.sort_options.deny.push(obj)
