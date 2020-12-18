@@ -1507,17 +1507,17 @@ class _FormatSysCreator:
             :param creator_list_temps: Creator lists temps.
 
             """
-            for idx in range(len(affiliation_max)):
+            for index in range(len(affiliation_max)):
                 if index < len(affiliation_min):
-                    affiliation_max[idx].update(
-                        affiliation_min[idx])
+                    affiliation_max[index].update(
+                        affiliation_min[index])
                     self._get_creator_to_show_popup(
-                        [affiliation_max[idx]],
+                        [affiliation_max[index]],
                         languages, creator_lists,
                         creator_list_temps)
                 else:
                     self._get_creator_to_show_popup(
-                        [affiliation_max[idx]],
+                        [affiliation_max[index]],
                         languages, creator_lists,
                         creator_list_temps)
 

@@ -57,8 +57,12 @@
         </ol>
         <div class="carousel-inner">
           <!-- TODO: Check if both previews below can ever both show at the same time. -->
+          {% set firstPreviewFileIndex = 0 %}
           {%- for file in files | sort(attribute='key') if filename and file.key == filename or not filename -%}
             {% if file.is_thumbnail == False %}
+              {% if firstPreviewFileIndex == 0 %}
+                {% set firstPreviewFileIndex = loop.index %}
+              {% endif %}
             {%- if edit_page_prev %}
               {%- set access_permission = True -%}
             {% else %}
@@ -74,7 +78,7 @@
               {%- if 'preview' in file.displaytype -%}
                 {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview',
                   pid_value=pid.pid_value, filename=file.key) %}
-                <div class="item {{ 'active' if loop.index == 1 else '' }}" id="carousel_prev_item_{{ loop.index }}">
+                <div class="item {{ 'active' if loop.index == firstPreviewFileIndex else '' }}" id="carousel_prev_item_{{ loop.index }}">
                   <div class="embed-responsive embed-responsive-16by9">
                     {%- if 'audio' in file.mimetype -%}
                       <audio controls preload="auto">
