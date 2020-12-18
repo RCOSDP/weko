@@ -127,19 +127,6 @@ class FlowSettingView(BaseView):
         return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('flowsetting.index')})
 
-    @expose('/action', methods=['GET'])
-    def action(self):
-        """Get Action list info.
-
-        :return:
-        """
-        action = Action()
-        actions = action.get_action_list()
-        return self.render(
-            'weko_workflow/admin/action_list.html',
-            actions=actions
-        )
-
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""
