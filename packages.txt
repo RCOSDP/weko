@@ -16,8 +16,8 @@ celery==4.4.4
 certifi==2017.11.5
 cffi==1.11.2
 chardet==3.0.4
-citeproc-py==0.4.0
-citeproc-py-styles==0.1.1
+citeproc-py==0.5.1
+citeproc-py-styles==0.1.2
 click==6.7
 cookiecutter==1.6.0
 counter-robots==2018.6
