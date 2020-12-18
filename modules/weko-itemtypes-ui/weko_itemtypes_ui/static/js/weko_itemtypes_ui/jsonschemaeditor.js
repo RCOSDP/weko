@@ -175,6 +175,7 @@
 			if (!this.state.editor) {
 				var tempProps = JSON.parse(JSON.stringify(this.props));
 				tempProps.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
+				tempProps.data.items['enum'] = tempProps.currentEnum
 				this.props = tempProps;
 			}
 			this.setState(this.state);
