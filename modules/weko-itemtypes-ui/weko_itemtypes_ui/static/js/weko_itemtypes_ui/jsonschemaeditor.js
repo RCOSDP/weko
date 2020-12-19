@@ -172,13 +172,10 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
+			console.log(this.state.enum)
 			if (!this.state.editor) {
-				var tempProps = JSON.parse(JSON.stringify(this.props));
-				tempProps.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
-				tempProps.data.items['enum'] = tempProps.currentEnum
-				this.props = tempProps;
-			}
-			this.setState(this.state);
+			this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
+			}this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
 			var titleMap = [];
@@ -246,9 +243,7 @@
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
 			if (!this.state.editor) {
-				var tempProps = JSON.parse(JSON.stringify(this.props));
-				tempProps.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
-				this.props = tempProps;
+				this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
 			}
 			this.setState(this.state);
 		},
@@ -316,9 +311,7 @@
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
 			if (!this.state.editor) {
-				var tempProps = JSON.parse(JSON.stringify(this.props));
-				tempProps.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
-				this.props = tempProps;
+				this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
 			}
 			this.setState({
 				enum: event.target.value
