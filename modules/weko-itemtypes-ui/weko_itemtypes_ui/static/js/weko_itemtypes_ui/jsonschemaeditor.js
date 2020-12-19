@@ -172,7 +172,6 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
-			console.log(this.state.enum)
 			if (!this.state.editor) {
 			this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
 			}this.setState(this.state);
