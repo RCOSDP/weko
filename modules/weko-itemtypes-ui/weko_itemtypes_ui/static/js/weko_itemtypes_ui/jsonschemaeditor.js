@@ -173,8 +173,9 @@
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
 			if (!this.state.editor) {
-			this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
-			}this.setState(this.state);
+			  this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
+			}
+			this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
 			var titleMap = [];
