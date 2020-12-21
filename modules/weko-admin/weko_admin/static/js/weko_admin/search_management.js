@@ -6,6 +6,7 @@ const SPECIFIC_INDEX_VALUE = '1';
     function searchManagementCtrl($scope, $rootScope,$http,$location){
       $scope.initData = function (data) {
         $scope.dataJson = angular.fromJson(data);
+        $scope.clearNullDataInSortOption();
         $scope.initDispSettingOpt = {}
         $scope.treeData = [];
         $scope.rowspanNum = $scope.dataJson.detail_condition.length+1;
@@ -15,7 +16,7 @@ const SPECIFIC_INDEX_VALUE = '1';
       }
       // set selected data to allow
       $scope.setAllow=function(data){
-        if (data){
+        if (data && $scope.dataJson.sort_options.deny.length > data){
           if (data.length==1){
             obj = $scope.dataJson.sort_options.deny[data[0]]
             $scope.dataJson.sort_options.allow.push(obj)
@@ -33,7 +34,7 @@ const SPECIFIC_INDEX_VALUE = '1';
       }
       // set selected data to deny
       $scope.setDeny=function(data){
-        if (data){
+        if (data && $scope.dataJson.sort_options.allow.length > data){
           if (data.length==1){
             obj = $scope.dataJson.sort_options.allow[data[0]]
             $scope.dataJson.sort_options.deny.push(obj)
@@ -229,6 +230,17 @@ const SPECIFIC_INDEX_VALUE = '1';
           .fail(function () {
             alert("Fail to get index list.");
           })
+      }
+
+      $scope.clearNullDataInSortOption = function () {
+        if ($scope.dataJson) {
+          $scope.dataJson.sort_options.deny = $scope.dataJson.sort_options.deny.filter(function (element) {
+            return element !== null;
+          });
+          $scope.dataJson.sort_options.allow = $scope.dataJson.sort_options.allow.filter(function (element) {
+            return element !== null;
+          });
+        }
       }
     }
     // Inject depedencies
