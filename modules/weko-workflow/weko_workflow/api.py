@@ -23,7 +23,7 @@
 import uuid
 from datetime import datetime, timedelta
 
-from flask import current_app, request, session, url_for
+from flask import current_app, request, session, url_for, abort
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
@@ -158,6 +158,8 @@ class Flow(object):
             query = _Flow.query.filter_by(
                 flow_id=flow_id)
             flow_detail = query.one_or_none()
+            if not flow_detail:
+                abort(500)
             for action in flow_detail.flow_actions:
                 action_roles = _FlowActionRole.query.filter_by(
                     flow_action_id=action.id).first()

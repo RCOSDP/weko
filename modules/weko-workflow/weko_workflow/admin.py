@@ -21,6 +21,7 @@
 """WEKO3 module docstring."""
 
 import uuid
+import re
 
 from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose
@@ -69,10 +70,12 @@ class FlowSettingView(BaseView):
                 actions=None,
                 action_list=actions
             )
+        UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
+                                  re.IGNORECASE)
+        if not UUID_PATTERN.match(flow_id):
+            abort(404)
         workflow = Flow()
         flow = workflow.get_flow_detail(flow_id)
-        if not flow:
-            abort(400)
         return self.render(
             'weko_workflow/admin/flow_detail.html',
             flow_id=flow_id,
@@ -140,28 +143,6 @@ class FlowSettingView(BaseView):
 
         return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('flowsetting.index')})
-
-    @expose('/action', methods=['GET'])
-    def action(self):
-        """Get Action list info.
-
-        :return:
-        """
-        action = Action()
-        actions = action.get_action_list()
-        return self.render(
-            'weko_workflow/admin/action_list.html',
-            actions=actions
-        )
-
-    @expose('/action/<string:action_id>', methods=['GET'])
-    def action_detail(self, action_id):
-        """Get Action detail info.
-
-        :param action_id:
-        :return:
-        """
-        pass
 
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
