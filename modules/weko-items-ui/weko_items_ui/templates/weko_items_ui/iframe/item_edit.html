@@ -138,8 +138,11 @@
                       <div class="panel-body">
                         <div class="row">
                           <div class="col-sm-12" id="app">
-                            <div class="well">
-                              <div class="text-center">{{_('Drop files or folders here')}}</div>
+                            <div class="well" ngf-drag-over-class="'dragover'" ngf-drop="" ngf-change="dragoverThumbnail($newFiles)"
+                              ngf-max-size="20GB" ngf-multiple="true">
+                              <center>
+                                Drop files or folders here
+                              </center>
                             </div>
                             <p class="text-center legend"><strong>— {{_('OR')}} —</strong></p>
                             <p class="text-center">
