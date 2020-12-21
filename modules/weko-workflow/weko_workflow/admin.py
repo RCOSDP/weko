@@ -20,8 +20,8 @@
 
 """WEKO3 module docstring."""
 
-import uuid
 import re
+import uuid
 
 from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose

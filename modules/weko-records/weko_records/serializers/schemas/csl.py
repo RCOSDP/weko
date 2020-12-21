@@ -74,7 +74,7 @@ def get_data_from_mapping(key, obj):
                     for j in temp:
                         if j.get(lang_key):
                             if j.get(lang_key) == cur_lang:
-                                arr[i+1] = k
+                                arr[i + 1] = k
                                 break
                             k = k + 1
                     # (1) not exist => Priority 'en'. (2)
@@ -82,12 +82,12 @@ def get_data_from_mapping(key, obj):
                         k = 0
                         for j in temp:
                             if j.get(lang_key) == 'en':
-                                arr[i+1] = k
+                                arr[i + 1] = k
                                 break
                             k = k + 1
                     # (2) not exist => Priority the first element.
                     if k == len(temp):
-                        arr[i+1] = 0
+                        arr[i + 1] = 0
                 # Get data.
                 if type(result) is list:
                     result = result[arr[i]]

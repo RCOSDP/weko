@@ -446,7 +446,7 @@ class QuerySearchReportHelper(object):
                 current_report['count'] = report['value']
                 all.append(current_report)
             result['all'] = all
-        except es_exceptions.NotFoundError as e :
+        except es_exceptions.NotFoundError as e:
             current_app.logger.debug(
                 "Indexes do not exist yet:" + str(e.info['error']))
             result['all'] = []

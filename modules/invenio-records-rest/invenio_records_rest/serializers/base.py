@@ -13,8 +13,9 @@ from __future__ import absolute_import, print_function
 import copy
 
 import pytz
-from invenio_records_rest.config import RECORDS_REST_DEFAULT_MAPPING_DICT
 from weko_records.api import Mapping
+
+from invenio_records_rest.config import RECORDS_REST_DEFAULT_MAPPING_DICT
 
 
 class SerializerMixinInterface(object):

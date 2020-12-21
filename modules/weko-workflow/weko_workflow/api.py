@@ -23,7 +23,7 @@
 import uuid
 from datetime import datetime, timedelta
 
-from flask import current_app, request, session, url_for, abort
+from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
