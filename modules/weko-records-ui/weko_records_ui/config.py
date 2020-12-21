@@ -52,8 +52,6 @@ WEKO_RECORDS_UI_BULK_UPDATE_FIELDS = {
 ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
 # author setting page template
 
-RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
-
 WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE = 'weko_records_ui/admin/pdfcoverpage.html'
 # pdfcoverpage templates
 
@@ -383,3 +381,6 @@ WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR = '/data/pdfcoverpage/'
 
 WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 """Sub-item keys of Email."""
+
+RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
+# Setting the template of showing deleted record
