@@ -25,6 +25,11 @@
   {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% endblock %}
 
+{%- block javascript %}
+  {{ super() }}
+  {% assets "admin_workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
 {%- block body %}
 
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
