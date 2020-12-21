@@ -112,6 +112,8 @@ setup(
             'weko_workflow.bundles:js_quit_confirmation',
             'workflow_lock_activity_js = '
             'weko_workflow.bundles:js_lock_activity',
+            'admin_workflow_js = '
+            'weko_workflow.bundles:js_admin_workflow_detail',
         ],
         'invenio_i18n.translations': [
             'messages = weko_workflow',
