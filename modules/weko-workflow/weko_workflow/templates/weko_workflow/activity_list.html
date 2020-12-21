@@ -171,8 +171,8 @@
           {%- for activity in activities %}
           <tr class="">
             <th scope="row">{{loop.index + size|int * ( pages|int - 1)}}</th>
-            <td>{{activity.updated.date()}}</td>
             <td>{{activity.created.date()}}</td>
+            <td>{{activity.updated.date()}}</td>
             {%-if community%}
             <td><a
                 href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id)}}">{{activity.activity_id}}</a>
