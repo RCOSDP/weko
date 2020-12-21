@@ -521,3 +521,6 @@ msgstr ""
 
 msgid "Cannot read tsv file correctly."
 msgstr ""
+
+msgid "Please specify Open Access Date with YYYY-MM-DD."
+msgstr

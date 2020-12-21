@@ -33,7 +33,7 @@ import uuid
 import zipfile
 from collections import Callable, OrderedDict
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
 from io import StringIO
 from operator import getitem
 
@@ -400,19 +400,12 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
         else:
             return
 
-    for key, name, value in data:
+    for key, value in data:
         if key in item_path_not_existed:
             continue
         key_path = handle_generate_key_path(key)
-        name_path = handle_generate_key_path(name)
         if value:
-            a = handle_check_identifier(name_path)
-            if not a:
-                set_nested_item(result, key_path, value)
-            else:
-                set_nested_item(result, key_path, value)
-                a += ' key'
-                set_nested_item(result, [a], key_path[1])
+            set_nested_item(result, key_path, value)
 
     convert_data(result)
     result = json.loads(json.dumps(result))
@@ -545,7 +538,6 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
     }
     tsv_data = []
     item_path = []
-    item_path_name = []
     check_item_type = {}
     item_path_not_existed = []
     schema = ''
@@ -595,21 +587,15 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                         item_path_not_existed = \
                             handle_check_metadata_not_existed(
                                 item_path, check_item_type.get('item_type_id'))
-                elif num == 3:
-                    item_path_name = data_row
                 elif (num == 4 or num == 5) and data_row[0].startswith('#'):
                     continue
-                else:
+                elif num > 5:
                     data_parse_metadata = parse_to_json_form(
-                        zip(item_path, item_path_name, data_row),
-                        item_path_not_existed
-                    )
-                    json_data_parse = parse_to_json_form(
-                        zip(item_path_name, item_path, data_row),
+                        zip(item_path, data_row),
                         item_path_not_existed
                     )
 
-                    if not (data_parse_metadata or json_data_parse):
+                    if not data_parse_metadata:
                         raise Exception({
                             'error_msg': _('Cannot read tsv file correctly.')
                         })
@@ -617,7 +603,6 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                         item_type_name = check_item_type.get('name')
                         item_type_id = check_item_type.get('item_type_id')
                         tsv_item = dict(
-                            **json_data_parse,
                             **data_parse_metadata,
                             **{
                                 'item_type_name': item_type_name or '',
@@ -626,9 +611,7 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                             }
                         )
                     else:
-                        tsv_item = dict(
-                            **json_data_parse,
-                            **data_parse_metadata)
+                        tsv_item = dict(**data_parse_metadata)
                     if item_path_not_existed:
                         str_keys = ', '.join(item_path_not_existed) \
                             .replace('.metadata.', '')
@@ -822,47 +805,10 @@ def handle_check_exist_record(list_record) -> list:
                 'Unexpected error: ',
                 sys.exc_info()[0]
             )
-        if item.get('status') == 'new':
-            handle_remove_identifier(item)
         if errors:
             item['errors'] = errors
         result.append(item)
     return result
-
-
-def handle_check_identifier(name) -> str:
-    """Check data is Identifier of Identifier Registration.
-
-    :argument
-        name_path     -- {list} list name path.
-    :return
-        return       -- Name of key if is Identifier.
-
-    """
-    result = ''
-    if 'Identifier' in name or 'Identifier Registration' in name:
-        result = name[0]
-    return result
-
-
-def handle_remove_identifier(item) -> dict:
-    """Remove Identifier of Identifier Registration.
-
-    :argument
-        item         -- Item.
-    :return
-        return       -- Item had been removed property.
-
-    """
-    if item and item.get('Identifier key'):
-        del item['metadata'][item.get('Identifier key')]
-        del item['Identifier key']
-        del item['Identifier']
-    if item and item.get('Identifier Registration key'):
-        del item['metadata'][item.get('Identifier Registration key')]
-        del item['Identifier Registration key']
-        del item['Identifier Registration']
-    return item
 
 
 def make_tsv_by_line(lines):
@@ -1522,6 +1468,7 @@ def handle_check_cnri(list_record):
                     else:
                         prefix = cnri
                         suffix = ''
+                    if not suffix:
                         item['cnri_suffix_not_existed'] = True
 
                     if prefix != Handle().get_prefix():
@@ -1644,6 +1591,7 @@ def handle_check_doi(list_record):
                         else:
                             prefix = doi
                             suffix = ''
+                        if not suffix:
                             item['doi_suffix_not_existed'] = True
 
                         if not item.get('ignore_check_doi_prefix') \
@@ -1697,6 +1645,7 @@ def register_item_handle(item, url_root):
         if item.get('is_change_identifier'):
             if item.get('cnri_suffix_not_existed'):
                 suffix = "{:010d}".format(int(item_id))
+                cnri = cnri[:-1] if cnri[-1] == '/' else cnri
                 cnri += '/' + suffix
             if item.get('status') == 'new':
                 register_hdl_by_handle(cnri, pid.object_uuid)
@@ -1809,9 +1758,11 @@ def register_item_doi(item):
         pid_lastest = WekoRecord.get_record_by_pid(
             lastest_version_id).pid_recid
 
+        data = None
         if is_change_identifier:
             if item.get('doi_suffix_not_existed'):
                 suffix = "{:010d}".format(int(item_id))
+                doi = doi[:-1] if doi[-1] == '/' else doi
                 doi += '/' + suffix
             if doi_ra and doi:
                 data = {
@@ -1844,7 +1795,14 @@ def register_item_doi(item):
                     is_feature_import=True
                 )
 
-        db.session.commit()
+        if data:
+            deposit = WekoDeposit.get_record(pid.object_uuid)
+            deposit.commit()
+            deposit.publish()
+            deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+            deposit.commit()
+            deposit.publish()
+            db.session.commit()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error('item id: %s update error.' % item_id)
@@ -2264,7 +2222,7 @@ def handle_check_date(list_record):
             if attribute:
                 data_result = get_sub_item_value(attribute, _keys[-1])
                 for value in data_result:
-                    if not validattion_date_property(value):
+                    if not validation_date_property(value):
                         errors.append(
                             _('Please specify the date with any format of'
                               + ' YYYY-MM-DD, YYYY-MM, YYYY.'))
@@ -2279,13 +2237,76 @@ def handle_check_date(list_record):
                 raise Exception
         except Exception:
             errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
+        # validate file open_date
+        open_date_err_msg = validation_file_open_date(record)
+        if open_date_err_msg:
+            errors.append(open_date_err_msg)
+
         if errors:
             record['errors'] = record['errors'] + errors \
                 if record.get('errors') else errors
             record['errors'] = list(set(record['errors']))
 
 
-def validattion_date_property(date_str):
+def get_data_in_deep_dict(search_key, _dict={}):
+    """
+    Get data of key in a deep dictionary.
+
+    :param search_key: key.
+    :param _dict: Dict.
+    :return: List of result. Ex: [{'tree_key': key, 'value': value}]
+    """
+    def add_parrent_key(parrent_key, idx=None, data={}):
+        if idx is not None:
+            data['tree_key'] = '{}[{}].{}'.format(
+                parrent_key, idx, data.get('tree_key', ''))
+        else:
+            data['tree_key'] = '{}.{}'.format(
+                parrent_key, data.get('tree_key', ''))
+        return data
+    result = []
+    for key in _dict.keys():
+        value = _dict.get(key)
+        if key == search_key:
+            result.append({'tree_key': key, 'value': value})
+            break
+        else:
+            if isinstance(value, dict):
+                data = get_data_in_deep_dict(search_key, value)
+                if data:
+                    result.extend(list(map(
+                        partial(add_parrent_key, key, None), data)))
+            elif isinstance(value, list):
+                for idx, sub in enumerate(value):
+                    if not isinstance(sub, dict):
+                        continue
+                    data = get_data_in_deep_dict(search_key, sub)
+                    if data:
+                        result.extend(list(map(
+                            partial(add_parrent_key, key, idx), data)))
+    return result
+
+
+def validation_file_open_date(record):
+    """
+    Validate file open date.
+
+    :param record: Record
+    :return: error or None
+    """
+    open_date_values = get_data_in_deep_dict('dateValue',
+                                             record.get('metadata', {}))
+    for data in open_date_values:
+        try:
+            value = data.get('value', '')
+            if value and value != datetime.strptime(value, '%Y-%m-%d') \
+                    .strftime('%Y-%m-%d'):
+                raise Exception
+        except Exception:
+            return _('Please specify Open Access Date with YYYY-MM-DD.')
+
+
+def validation_date_property(date_str):
     """
     Validate item property is either required.
 
@@ -2352,7 +2373,7 @@ def get_change_identifier_mode_content():
 def get_root_item_option(item_id, item, sub_form={'title_i18n': {}}):
     """Handle if is root item."""
     _id = '.metadata.{}'.format(item_id)
-    _name = sub_form.get('title_i18n').get(
+    _name = sub_form.get('title_i18n', {}).get(
         current_i18n.language) or item.get('title')
 
     _option = []
@@ -2569,7 +2590,7 @@ def handle_get_all_sub_id_and_name(
         sub_form = next(
             (x for x in form if key in x.get('key', '')),
             {'title_i18n': {}})
-        title = sub_form.get('title_i18n').get(
+        title = sub_form.get('title_i18n', {}).get(
             current_i18n.language) or item.get('title')
         if item.get('items') and item.get('items').get('properties'):
             _ids, _names = handle_get_all_sub_id_and_name(
