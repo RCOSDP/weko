@@ -152,15 +152,15 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     def is_show_email_of_creator(item_type_id, creator_id):
         # Get flag of creator's email hide from item type.
         item_type = ItemTypes.get_by_id(item_type_id)
-        schema_editor = item_type.render.get('schemaeditor')
-        schema = schema_editor.get('schema')
+        schema_editor = item_type.render.get('schemaeditor', {})
+        schema = schema_editor.get('schema', {})
         creator = schema.get(creator_id)
-        properties = creator.get('properties')
-        creator_mails = properties.get('creatorMails')
-        items = creator_mails.get('items')
-        properties = items.get('properties')
-        creator_mail = properties.get('creatorMail')
-        is_hide = creator_mail.get('isHide')
+        properties = creator.get('properties', {})
+        creator_mails = properties.get('creatorMails', {})
+        items = creator_mails.get('items', {})
+        properties = items.get('properties', {})
+        creator_mail = properties.get('creatorMail', {})
+        is_hide = creator_mail.get('isHide', None)
         # Display email from setting item admin.
         settings = AdminSettings.get('items_display_settings')
         is_display = settings.items_display_email
