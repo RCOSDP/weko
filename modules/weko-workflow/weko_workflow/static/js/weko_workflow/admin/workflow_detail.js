@@ -3,7 +3,7 @@ $(document).ready(function () {
 });
 
 $("#txt_workflow_name").keyup(function () {
-  if ($("#txt_workflow_name").val() == "") {
+  if ($("#txt_workflow_name").val().trim() == "") {
     $("#btn_create").attr("disabled", "disabled");
   } else {
     if ($("#btn_create").prop("disabled")) {
@@ -13,7 +13,7 @@ $("#txt_workflow_name").keyup(function () {
 });
 
 function checkWorkflowName() {
-  if ($("#txt_workflow_name").val() == "") {
+  if ($("#txt_workflow_name").val().trim() == "") {
     $("#btn_create").attr("disabled", "disabled");
   }
 }
