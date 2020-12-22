@@ -45,6 +45,8 @@ from weko_records_ui.utils import get_record_permalink
 
 from .models import PDFCoverPageSettings
 from .utils import get_license_pdf, get_pair_value
+from weko_records.api import ItemTypes
+from weko_admin.models import AdminSettings
 
 
 """ Function counting numbers of full-width character and half-width character\
@@ -146,6 +148,23 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         waj = get_workflow_journal(activity_id)
         oa_policy = waj.get('keywords', '')
         return oa_policy
+
+    def is_show_email_of_creator(item_type_id, creator_id):
+        # Get flag of creator's email hide from item type.
+        item_type = ItemTypes.get_by_id(item_type_id)
+        schema_editor = item_type.render.get('schemaeditor')
+        schema = schema_editor.get('schema')
+        creator = schema.get(creator_id)
+        properties = creator.get('properties')
+        creator_mails = properties.get('creatorMails')
+        items = creator_mails.get('items')
+        properties = items.get('properties')
+        creator_mail = properties.get('creatorMail')
+        is_hide = creator_mail.get('isHide')
+        # Display email from setting item admin.
+        settings = AdminSettings.get('items_display_settings')
+        is_display = settings.items_display_email
+        return not is_hide and is_display
 
     file_path = current_app.config['PDF_COVERPAGE_LANG_FILEPATH']
     file_name = current_app.config['PDF_COVERPAGE_LANG_FILENAME']
@@ -333,12 +352,13 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     creator_mail_list = []
     creator_name_list = []
     creator_affiliation_list = []
+    is_show_email = is_show_email_of_creator(item_type_id, _creator_item_id)
     for creator_item in creator_items:
         # Get creator mail
-        creator_mails = creator_item.get('creatorMails', [])
-        for creator_mail in creator_mails:
-            mail = creator_mail.get('creatorMail', '')
-            if mail:
+        if is_show_email:
+            creator_mails = creator_item.get('creatorMails', [])
+            for creator_mail in creator_mails:
+                mail = creator_mail.get('creatorMail', '')
                 creator_mail_list.append(mail)
         # Get creator name
         creator_names = creator_item.get('creatorNames', [])
