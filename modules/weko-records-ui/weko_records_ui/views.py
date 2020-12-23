@@ -781,5 +781,5 @@ def escape_str(s):
     if s:
         s = remove_weko2_special_character(s)
         s = str(escape(s))
-        s = s.replace('\\n', '<br/>').replace('\n', '<br/>')
+        s = s.replace('\n', '<br/>')
     return s
