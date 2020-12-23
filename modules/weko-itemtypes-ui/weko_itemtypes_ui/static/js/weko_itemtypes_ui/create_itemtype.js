@@ -1,6 +1,7 @@
 // require(["jquery", "bootstrap"],function() {});
 $(document).ready(function () {
   var checkboxTemplate = "/static/templates/weko_deposit/checkboxes.html";
+  var requestNum = 0;
   src_render = {};
   src_mapping = {};
   page_global = {
@@ -107,6 +108,8 @@ $(document).ready(function () {
     itemname = itemname.substr(0,itemname.lastIndexOf('('));
     $('#itemtype_name').val(itemname);
     url_update_schema = '/admin/itemtypes/'+$('#item-type-lists').val()+'/register';
+  }else{
+    endLoading();
   }
 
   $('.radio_versionup').on('click', function(){
@@ -1175,8 +1178,16 @@ $(document).ready(function () {
     }
   });
 
-  if($('#item-type-lists').val().length > 0) {
-    $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
+  function endLoading() {
+    if(requestNum == 0){
+      $(".container").removeClass("hidden");
+      $(".lds-ring-background").addClass("hidden");
+    }
+  }
+
+  if ($('#item-type-lists').val().length > 0) {
+    requestNum = 2
+    $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function (data, status) {
       let changedProperties = [];
       Object.keys(data).forEach(function(key) {
         src_render[key] = data[key];
@@ -1280,11 +1291,15 @@ $(document).ready(function () {
       if($('input[type=radio][name=item_type]:checked').val() === 'deleted') {
         $('div.metadata-content *').not('[id=btn_restore_itemtype_schema]').prop('disabled', true);
       }
+      requestNum--;
+      endLoading();
     });
     $.get('/api/itemtypes/' + $('#item-type-lists').val() + '/mapping', function(data, status){
       Object.keys(data).forEach(function(key){
         src_mapping[key] = data[key];
       });
+      requestNum--;
+      endLoading();
     });
   }
   $('input[type=radio][name=item_type][value=normal]').click()

@@ -25,6 +25,7 @@
   {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_itemtypes_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -96,7 +97,10 @@
       </div>
     </div>
   </div>
-<div class="container">
+<div class="lds-ring-background" style="width: auto ! important;">
+  <div class="lds-ring"></div>
+</div>
+<div class="container hidden">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11 metadata-content">
       <div class="row">
