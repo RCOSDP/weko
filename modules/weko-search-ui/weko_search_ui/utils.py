@@ -1321,7 +1321,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
     for item in list_record:
         indexes = []
-        index_ids = item.get('IndexID')
+        index_ids = item.get('metadata', {}).get('path', [])
         pos_index = item.get('pos_index')
 
         if not index_ids and not pos_index:
