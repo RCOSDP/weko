@@ -851,8 +851,6 @@ def remove_weko2_special_character(s: str):
     esc_str = ""
     for i in s:
         if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
-            if ord(i) in [10, 13]:
-                i =  '<br/>'
             esc_str += i
     esc_str = __remove_special_character(esc_str)
     return esc_str

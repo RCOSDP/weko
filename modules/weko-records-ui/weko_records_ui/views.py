@@ -778,8 +778,11 @@ def escape_str(s):
     :param s: string
     :return: result
     """
+    br_char = '<br/>'
     if s:
         s = remove_weko2_special_character(s)
         s = str(escape(s))
-        s = s.replace('\n', '<br/>')
+        s = s.replace(
+            '\r\n',
+            br_char).replace('\r', br_char).replace('\n', br_char)
     return s
