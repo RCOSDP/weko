@@ -2230,7 +2230,7 @@ def __sanitize_string(s: str):
     for i in s:
         if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
             if ord(i) in [10, 13]:
-                i =  '<br>'
+                i =  '<br/>'
             sanitize_str += i
     return sanitize_str
 
