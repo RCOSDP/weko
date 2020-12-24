@@ -1,6 +1,8 @@
 // require(["jquery", "bootstrap"],function() {});
 $(document).ready(function () {
   var checkboxTemplate = "/static/templates/weko_deposit/checkboxes.html";
+// Number of callbacks(requests) when rendering the page, When add a new callback,
+// please increase/decrease appropriately
   var requestNum = 0;
   src_render = {};
   src_mapping = {};
@@ -1186,7 +1188,9 @@ $(document).ready(function () {
   }
 
   if ($('#item-type-lists').val().length > 0) {
-    requestNum = 2
+// This condition contains 2 callbacks(requests), if you add new here
+// or somewhere else, please increase/decrease this value too
+    requestNum = 2;
     $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function (data, status) {
       let changedProperties = [];
       Object.keys(data).forEach(function(key) {
