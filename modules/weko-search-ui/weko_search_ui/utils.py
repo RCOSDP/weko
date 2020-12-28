@@ -576,13 +576,28 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                             })
                 elif num == 2:
                     item_path = data_row
+                    duplication_item_ids = \
+                        handle_check_duplication_item_id(item_path)
+                    if duplication_item_ids:
+                        msg = _(
+                            'The following metadata keys are duplicated.'
+                            '<br/>{}')
+                        raise Exception({
+                            'error_msg':
+                                msg.format('<br/>'.join(duplication_item_ids))
+                        })
                     if check_item_type:
-                        if not handle_check_consistence_with_item_type(
+                        not_consistent_list = \
+                            handle_check_consistence_with_item_type(
                                 check_item_type.get('item_type_id'),
-                                item_path):
+                                item_path)
+                        if not_consistent_list:
+                            msg = _('The item does not consistent with the '
+                                    'specified item type.<br/>{}')
                             raise Exception({
-                                'error_msg': _('The item does not consistent '
-                                               'with the specified item type.')
+                                'error_msg':
+                                    msg.format(
+                                        '<br/>'.join(not_consistent_list))
                             })
                         item_path_not_existed = \
                             handle_check_metadata_not_existed(
@@ -1333,7 +1348,10 @@ def handle_check_and_prepare_index_tree(list_record):
                 tree_ids = [i.strip() for i in index_id.split('/')]
                 tree_names = []
                 if pos_index and x <= len(pos_index) - 1:
-                    tree_names = [i.strip() for i in pos_index[x].split('/')]
+                    tree_names = [
+                        i.strip().replace('\\/', '/')
+                        for i in re.split(r'(?<!\\)\/', pos_index[x])
+                    ]
                     if index_id == '':
                         tree_ids = ['' for i in tree_names]
                 else:
@@ -2561,10 +2579,11 @@ def handle_check_metadata_not_existed(str_keys, item_type_id=0):
     """
     result = []
     ids = handle_get_all_id_in_item_type(item_type_id)
+    ids = list(map(lambda x: re.sub(r'\[\d+\]', '', x), ids))
     for str_key in str_keys:
         if str_key.startswith('.metadata.'):
-            pre_key = re.sub(r'\[\d+\]', '[0]', str_key)
-            if pre_key != '.metadata.path[0]' and pre_key not in ids \
+            pre_key = re.sub(r'\[\d+\]', '', str_key)
+            if pre_key != '.metadata.path' and pre_key not in ids \
                     and 'iscreator' not in pre_key:
                 result.append(str_key.replace('.metadata.', ''))
     return result
@@ -2656,10 +2675,34 @@ def handle_check_consistence_with_item_type(item_type_id, keys):
         item_type_id - {str} item type id.
         keys - {list} data from line 2 of tsv file.
     :return
-        status - {bool} status.
+        ids - {list} ids is not consistent.
     """
+    result = []
     ids = handle_get_all_id_in_item_type(item_type_id)
+    clean_ids = list(map(lambda x: re.sub(r'\[\d+\]', '', x), ids))
+    for _key in keys:
+        if re.sub(r'\[\d+\]', '', _key) in clean_ids \
+                and re.sub(r'\[\d+\]', '[0]', _key) not in ids:
+            result.append(_key)
+
+    clean_keys = list(map(lambda x: re.sub(r'\[\d+\]', '', x), keys))
     for _id in ids:
-        if _id not in keys:
-            return False
-    return True
+        if re.sub(r'\[\d+\]', '', _id) not in clean_keys:
+            result.append(_id)
+
+    return list(set(result))
+
+
+def handle_check_duplication_item_id(ids: list):
+    """Check duplication of item id in tsv file.
+
+    :argument
+        ids - {list} data from line 2 of tsv file.
+    :return
+        ids - {list} ids is duplication.
+    """
+    result = []
+    for element in ids:
+        if ids.count(element) > 1:
+            result.append(element)
+    return list(set(result))

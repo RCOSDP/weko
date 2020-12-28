@@ -998,8 +998,11 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             index_ids = path.split('/')
             pos_index = []
             for index_id in index_ids:
-                index = Indexes.get_index(index_id)
-                pos_index.append(index.index_name_english if index else '')
+                index_tree = Indexes.get_index(index_id)
+                index_name = ''
+                if index_tree:
+                    index_name = index_tree.index_name_english.replace('/', '\/')
+                pos_index.append(index_name)
             records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
