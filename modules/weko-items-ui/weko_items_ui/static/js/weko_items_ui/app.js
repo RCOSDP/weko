@@ -2617,7 +2617,7 @@ function toObject(arr) {
         $('#myModal').modal('show');
       }
       // add by ryuu. start 20180410
-    $scope.setAuthorInfo = function () {
+     $scope.setAuthorInfo = function () {
         var authorInfo = $('#author_info').text();
         var arrayFlg = $('#array_flg').text();
         var modelId = $('#btn_id').text();
@@ -2627,7 +2627,7 @@ function toObject(arr) {
         let creatorModel;
         var author_name = authorInfoObj[0].author_name;
         var author_mail = authorInfoObj[0].author_mail;
-        if (arrayFlg == 'true') {
+        if (arrayFlg == 'true' && Number.isInteger(parseInt(array_index))) {
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId][array_index];
         } else {
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId];

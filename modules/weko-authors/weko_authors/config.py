@@ -53,11 +53,13 @@ WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0"
 WEKO_AUTHORS_IMPORT_KEY = {
     'author_name': {
         'contributorNames': ['contributorName', 'lang'],
-        'creatorNames': ['creatorName', 'creatorNameLang']
+        'creatorNames': ['creatorName', 'creatorNameLang'],
+        'names': ['name', 'nameLang']
     },
     'author_mail': {
         'contributorMails': 'contributorMail',
-        'creatorMails': 'creatorMail'
+        'creatorMails': 'creatorMail',
+        'mails': 'mail'
     }
 }
 """Default number of author search results that display in one page."""
