@@ -593,9 +593,9 @@ $(document).ready(function () {
               key: row_id + '[].interim',
               type: "template",
               notitle: true,
-              titleMap: titleMap_tmp
-            }],
-            templateUrl: checkboxTemplate
+              titleMap: titleMap_tmp,
+              templateUrl: checkboxTemplate
+            }]
           });
         } else {
           // 選択式(プルダウン)
@@ -984,9 +984,6 @@ $(document).ready(function () {
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
-      $('#chk_prev_' + meta_id + '_1').addClass('disabled');
-      checkboxMetaId.attr('disabled', true);
-      checkboxMetaId.attr('checked', false);
       checkboxMetaId.prop("checked", isAllowMultiple);
       render_select('schema_'+meta_id, '');
     } else {
@@ -1262,8 +1259,6 @@ $(document).ready(function () {
           }
         } else if('checkboxes' == data.meta_list[row_id].input_type || 'radios' == data.meta_list[row_id].input_type
                 || 'select' == data.meta_list[row_id].input_type){
-          $('#chk_prev_' + row_id + '_1').addClass('disabled');
-          $('#chk_' + row_id + '_1').attr('disabled', true);
           render_select('schema_'+row_id, data.meta_list[row_id].input_value);
         } else {
           render_empty('schema_'+row_id);
