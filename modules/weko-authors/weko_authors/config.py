@@ -49,3 +49,15 @@ WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix)
 
 WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0"
 """Elasticsearch document type for author."""
+
+WEKO_AUTHORS_IMPORT_KEY = {
+    'author_name': {
+        'contributorNames': ['contributorName', 'lang'],
+        'creatorNames': ['creatorName', 'creatorNameLang']
+    },
+    'author_mail': {
+        'contributorMails': 'contributorMail',
+        'creatorMails': 'creatorMail'
+    }
+}
+"""Default number of author search results that display in one page."""

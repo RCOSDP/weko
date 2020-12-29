@@ -29,6 +29,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_records.models import ItemMetadata
 
+from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsPrefixSettings
 from .permissions import author_permission
 from .utils import get_author_setting_obj
@@ -312,6 +313,8 @@ def mapping():
         if v:
             last[k] = v
 
+    last['author_name'] = WEKO_AUTHORS_IMPORT_KEY.get('author_name')
+    last['author_mail'] = WEKO_AUTHORS_IMPORT_KEY.get('author_mail')
     current_app.logger.debug([last])
 
     return json.dumps([last])

@@ -2617,7 +2617,7 @@ function toObject(arr) {
         $('#myModal').modal('show');
       }
       // add by ryuu. start 20180410
-      $scope.setAuthorInfo = function () {
+    $scope.setAuthorInfo = function () {
         var authorInfo = $('#author_info').text();
         var arrayFlg = $('#array_flg').text();
         var modelId = $('#btn_id').text();
@@ -2625,32 +2625,49 @@ function toObject(arr) {
         var authorInfoObj = JSON.parse(authorInfo);
         var weko_id = $('#weko_id').text();
         let creatorModel;
-        if(arrayFlg == 'true'){
+        var author_name = authorInfoObj[0].author_name;
+        var author_mail = authorInfoObj[0].author_mail;
+        if (arrayFlg == 'true') {
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId][array_index];
-        }else{
+        } else {
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId];
         }
-        angular.forEach(authorInfoObj, function(value, key) {
+        angular.forEach(authorInfoObj, function (value, key) {
           creatorModel.affiliation = value.hasOwnProperty('affiliation') ? value.affiliation : [{}];
           creatorModel.creatorAlternatives = value.hasOwnProperty('creatorAlternatives') ? value.creatorAlternatives : [{}];
           creatorModel.familyNames = value.hasOwnProperty('familyNames') ? value.familyNames : [{}];
           creatorModel.givenNames = value.hasOwnProperty('givenNames') ? value.givenNames : [{}];
           creatorModel.nameIdentifiers = value.hasOwnProperty('nameIdentifiers') ? value.nameIdentifiers : [{}];
-          creatorModel.creatorMails = value.hasOwnProperty('creatorMails') ? value.creatorMails : [{}];
           //creatorName = familyName + givenName
-          if (value.hasOwnProperty('familyNames') && value.hasOwnProperty('givenNames')) {
-            if (!value.hasOwnProperty('creatorNames')) {
-              creatorModel.creatorNames = [];
+          angular.forEach(author_name, function (v, k) {
+            if (creatorModel.hasOwnProperty(k)) {
+              if (value.hasOwnProperty('familyNames') && value.hasOwnProperty('givenNames')) {
+                if (!value.hasOwnProperty('creatorNames')) {
+                  creatorModel[k] = [];
+                }
+                for (var i = 0; i < value.familyNames.length; i++) {
+                  let subCreatorName = { "creatorName": "", "creatorNameLang": "" };
+                  let familyName = value.familyNames[i].familyName.trim();
+                  let givenName = value.givenNames[i].givenName.trim();
+                  if (familyName.indexOf(',', familyName.length - 1) > 0) {
+                    subCreatorName.creatorName = familyName + " " + givenName;
+                  } else {
+                    subCreatorName.creatorName = familyName + ", " + givenName;
+                  }
+                  subCreatorName.creatorNameLang = value.familyNames[i].familyNameLang;
+                  subCreatorName = JSON.parse(JSON.stringify(subCreatorName).replace('creatorName', v[0]).replace('creatorNameLang', v[1]));
+                  creatorModel[k].push(subCreatorName);
+                }
+              }
             }
-            for (var i = 0; i < value.familyNames.length; i++) {
-              let subCreatorName = { "creatorName": "", "creatorNameLang": "" };
-              let familyName = value.familyNames[i].familyName;
-              let givenName = value.givenNames[i].givenName;
-              subCreatorName.creatorName = familyName + " " + givenName;
-              subCreatorName.creatorNameLang = value.familyNames[i].familyNameLang;
-              creatorModel.creatorNames.push(subCreatorName);
+          });
+          angular.forEach(author_mail, function (v, k) {
+            if (creatorModel.hasOwnProperty(k)) {
+              let subMail = value.hasOwnProperty('creatorMails') ? value.creatorMails : [{}];
+              subMail = JSON.parse(JSON.stringify(subMail).replace('creatorMail', v));
+              creatorModel[k] = subMail;
             }
-          }
+          });
         });
         //画面にデータを設定する
         $("#btn_id").text('');
