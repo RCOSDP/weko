@@ -62,4 +62,4 @@ WEKO_AUTHORS_IMPORT_KEY = {
         'mails': 'mail'
     }
 }
-"""Default number of author search results that display in one page."""
+"""Key of author get fill import data."""
