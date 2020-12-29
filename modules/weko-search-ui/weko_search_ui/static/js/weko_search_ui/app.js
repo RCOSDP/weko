@@ -84,10 +84,8 @@ require([
       urlVars.hasOwnProperty("search_type") &&
       urlVars["search_type"] !== "2"
     ) {
-      let q = urlVars["q"];
-      if (q) {
-        document.getElementById("q").value = urlVars["q"];
-      }
+      let searchValue = sessionStorage.getItem('q', '');
+      document.getElementById('q').value = searchValue;
     } else {
       let elem = document.getElementById("q");
       if (elem !== null && typeof elem !== "undefined") {
@@ -540,7 +538,6 @@ function escapeString(data) {
     .replace(/(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)/g, "")
     .replace(/[\x00-\x1F\x7F]/g, "")
     .trim();
-  console.log(`${tmp} - ${data}`)
   return data === ',' ? '' : data;
 }
 
