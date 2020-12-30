@@ -544,7 +544,10 @@ def sort_meta_data_by_options(record_hit):
         settings = AdminSettings.get('items_display_settings')
         items = get_comment(solst_dict_array, not settings.items_display_email)
         if items:
-            record_hit['_source']['_comment'] = items
+            if record_hit['_source'].get('_comment'):
+                record_hit['_source']['_comment'].extend(items)
+            else:
+                record_hit['_source']['_comment'] = items
     except Exception:
         current_app.logger.exception(
             u'Record serialization failed {}.'.format(
