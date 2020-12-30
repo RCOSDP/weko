@@ -481,14 +481,15 @@ def sort_meta_data_by_options(record_hit):
     def get_comment(solst_dict_array, hide_email_flag):
         """Check and get info."""
         result = []
-        _license_free = None
+        _ignore_items = list()
         _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
         if _license_dict:
-            _license_free = _license_dict[0].get('value')
+            _ignore_items.append(_license_dict[0].get('value'))
+
         for s in solst_dict_array:
             value = s['value']
             option = s['option']
-            if value and value is not _license_free:
+            if value and value not in _ignore_items:
                 parent_option = s['parent_option']
                 is_show_list = parent_option.get(
                     'show_list') if parent_option.get(
