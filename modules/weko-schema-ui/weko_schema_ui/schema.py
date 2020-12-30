@@ -22,6 +22,7 @@
 
 import copy
 import json
+import re
 from collections import Iterable, OrderedDict
 from functools import partial
 
@@ -895,6 +896,7 @@ class SchemaTree:
 
             return nlst
 
+
         def set_children(kname, node, tree, parent_keys,
                          current_lang=None, index=0):
             if kname == 'type':
@@ -953,7 +955,10 @@ class SchemaTree:
                         else:
                             for i in range(len(val[index])):
                                 chld = etree.Element(kname, None, ns)
-                                chld.text = val[index][i]
+                                # remove invalid character
+                                input_text = val[index][i]
+                                input_text = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', input_text)
+                                chld.text = input_text
                                 tree.append(chld)
                     else:
                         # parents level
