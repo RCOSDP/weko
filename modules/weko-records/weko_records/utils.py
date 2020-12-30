@@ -222,51 +222,6 @@ def set_timestamp(jrc, created, updated):
             .isoformat() if updated else None})
 
 
-def make_itemlist_desc(es_record):
-    """Make itemlist description."""
-    rlt = ""
-    src = es_record
-    op = src.pop("_options", {})
-    ignore_meta = ('title', 'alternative', 'fullTextURL')
-    if isinstance(op, dict):
-        src["_comment"] = []
-        for k, v in sorted(op.items(),
-                           key=lambda x: x[1]['index'] if x[1].get(
-                               'index') else x[0]):
-            if k in ignore_meta:
-                continue
-            # item value
-            vals = src.get(k)
-            if isinstance(vals, list):
-                # index, options
-                v.pop('index', "")
-                for k1, v1 in sorted(v.items()):
-                    i = int(k1)
-                    if i < len(vals):
-                        crtf = v1.get("crtf")
-                        showlist = v1.get("showlist")
-                        hidden = v1.get("hidden")
-                        is_show = False if hidden else showlist
-                        # list index value
-                        if is_show:
-                            rlt = rlt + ((vals[i] + ",") if not crtf
-                                         else vals[i] + "\n")
-            elif isinstance(vals, str):
-                crtf = v.get("crtf")
-                showlist = v.get("showlist")
-                hidden = v.get("hidden")
-                is_show = False if hidden else showlist
-                if is_show:
-                    rlt = rlt + ((vals + ",") if not crtf
-                                 else vals + "\n")
-        if len(rlt) > 0:
-            if rlt[-1] == ',':
-                rlt = rlt[:-1]
-            src['_comment'] = rlt.split('\n')
-            if len(src['_comment'][-1]) == 0:
-                src['_comment'].pop()
-
-
 def sort_records(records, form):
     """Sort records.
 
@@ -526,10 +481,14 @@ def sort_meta_data_by_options(record_hit):
     def get_comment(solst_dict_array, hide_email_flag):
         """Check and get info."""
         result = []
+        _license_free = None
+        _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+        if _license_dict:
+            _license_free = _license_dict[0].get('value')
         for s in solst_dict_array:
             value = s['value']
             option = s['option']
-            if value:
+            if value and value is not _license_free:
                 parent_option = s['parent_option']
                 is_show_list = parent_option.get(
                     'show_list') if parent_option.get(
