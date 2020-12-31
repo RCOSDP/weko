@@ -159,6 +159,11 @@ def iframe_success():
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
+    work_activity = WorkActivity()
+    activity_action = work_activity.get_activity_action_comment(
+        activity.activity_id, action_id)
+    action_comment = activity_action.action_comment \
+        if activity_action and activity_action.action_comment else ''
     return render_template('weko_workflow/item_login_success.html',
                            page=page,
                            render_widgets=render_widgets,
@@ -172,6 +177,7 @@ def iframe_success():
                            res_check=res_check,
                            pid=pid,
                            community_id=community_id,
+                           action_comment=action_comment,
                            **ctx)
 
 
