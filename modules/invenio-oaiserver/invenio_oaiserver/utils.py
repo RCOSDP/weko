@@ -168,3 +168,25 @@ def friends_description(baseURLs):
     for baseURL in baseURLs:
         friends.append(E('baseURL', baseURL))
     return etree.tostring(friends, pretty_print=True)
+
+
+def handle_license_free(record_metadata):
+    """Merge licensetype and licensefree.
+
+    :param record_metadata: Record's Metadata.
+    :returns: Directed edit.
+    """
+    _license_type = 'licensetype'
+    _license_free = 'licensefree'
+    _attribute_type = 'file'
+    _attribute_value_mlt = 'attribute_value_mlt'
+
+    for val in record_metadata.values():
+        if isinstance(val, dict) and \
+                val.get('attribute_type') == _attribute_type:
+            for attr in val[_attribute_value_mlt]:
+                if attr.get(_license_free):
+                    attr[_license_type] = attr[_license_free]
+                    del attr[_license_free]
+
+    return record_metadata
