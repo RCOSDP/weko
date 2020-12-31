@@ -448,7 +448,7 @@ def listrecords(**kwargs):
             etree_record = copy.deepcopy(record['json'])
 
             # Merge licensetype and licensefree
-            etree_record = handle_license_free(etree_record)
+            handle_license_free(etree_record['_source']['_item_metadata'])
 
             e_metadata.append(record_dumper(pid, etree_record))
         except Exception:
