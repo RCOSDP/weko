@@ -2059,6 +2059,12 @@ def translate_schema_form(form_element, cur_lang):
     ):
         form_element['title'] = form_element[title_i18n_key][cur_lang]
 
+    des_i18n_key = "description_i18n"
+    if (form_element.get(des_i18n_key)
+        and cur_lang in form_element[des_i18n_key]
+        and len(form_element[des_i18n_key][cur_lang]) > 0):
+        form_element['description'] = form_element[des_i18n_key][cur_lang]
+
     if (
         form_element.get(msg_i18n_key)
         and cur_lang in form_element[msg_i18n_key]
