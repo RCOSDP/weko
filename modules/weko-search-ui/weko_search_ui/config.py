@@ -92,7 +92,8 @@ RECORDS_REST_ENDPOINTS['recid']['search_serializers'] = {
                          ':json_v1_search'),
 }
 
-RECORDS_REST_ENDPOINTS['recid']['search_index'] = '{}-weko'.format(index_prefix)
+RECORDS_REST_ENDPOINTS['recid']['search_index'] = '{}-weko'.format(
+    index_prefix)
 RECORDS_REST_ENDPOINTS['recid']['search_type'] = 'item-v1.0.0'
 
 # Opensearch endpoint
@@ -188,7 +189,7 @@ RECORDS_REST_FACETS_NO_SEARCH_PERMISSION[SEARCH_UI_SEARCH_INDEX] = dict(
             filter=dict(term={"publish_status": "0"}),
             aggs=dict(
                 accessRights=dict(terms=dict(
-            field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])))),
+                    field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])))),
         language=dict(
             filter=dict(term={"publish_status": "0"}),
             aggs=dict(
@@ -199,7 +200,9 @@ RECORDS_REST_FACETS_NO_SEARCH_PERMISSION[SEARCH_UI_SEARCH_INDEX] = dict(
                 bool=dict(
                     must=[
                         dict(term={"publish_status": "0"}),
-                        dict(term={"contributor.@attributes.contributorType": "Distributor"})
+                        dict(
+                            term={
+                                "contributor.@attributes.contributorType": "Distributor"})
                     ]
                 )
             ),
@@ -569,7 +572,15 @@ WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
 ]
 
 WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
-WEKO_IMPORT_THUMBNAIL_FILE_TYPE = ['gif', 'jpg', 'jpe', 'jpeg', 'png', 'bmp', 'tiff', 'tif']
+WEKO_IMPORT_THUMBNAIL_FILE_TYPE = [
+    'gif',
+    'jpg',
+    'jpe',
+    'jpeg',
+    'png',
+    'bmp',
+    'tiff',
+    'tif']
 VERSION_TYPE_URI = {
     'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
     'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
