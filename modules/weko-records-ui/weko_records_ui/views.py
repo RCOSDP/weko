@@ -64,7 +64,8 @@ from .permissions import check_content_clickable, check_created_id, \
     is_open_restricted
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, \
-    get_registration_data_type, hide_item_metadata, replace_license_free
+    get_registration_data_type, hide_by_email, hide_item_metadata, \
+    is_show_email_of_creator, replace_license_free
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -352,10 +353,10 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata is not None:
+    if mtdata:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found is not None:
+            if found:
                 res.append({'name': target_map[target], 'data': found.text})
         for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
             if date.attrib.get('dateType') == 'Available':
@@ -548,9 +549,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     can_edit = True if pid == get_record_without_version(pid) else False
 
     open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
-
-    hide_item_metadata(record)
-
+    # Hide email of creator in pdf cover page
+    item_type_id = record['item_type_id']
+    is_show_email = is_show_email_of_creator(item_type_id)
+    if not is_show_email:
+        # list_hidden = get_ignore_item(record['item_type_id'])
+        # record = hide_by_itemtype(record, list_hidden)
+        record = hide_by_email(record)
     return render_template(
         template,
         pid=pid,
