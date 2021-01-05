@@ -1298,3 +1298,6 @@ msgstr ""
 
 msgid "Summary DDI"
 msgstr ""
+
+msgid "This item has been deleted."
+msgstr ""
