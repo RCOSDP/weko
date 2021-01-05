@@ -15,10 +15,10 @@
                   </a>
                   <span class="text-muted pull-right"
                         style="padding-right: 10px;">{{ form.required == true ? 'Required' : "Optional" }}</span>
-                  <div class="help-block" ng-if="form.description"
-                  ng-bind-html="form.description"></div>
             </div>
             <div class="panel-body" ng-hide="collapsed">
+                  <div class="help-block" ng-if="form.description"
+                        ng-bind-html="form.description"></div>
                   <div class="form-group {{form.htmlClass}}"
                         ng-class="{ '{{'schema-form-' + form.type}}': true, 'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false }">
                   <label class="col-sm-3 control-label {{ form.labelHtmlClass }}"
@@ -76,7 +76,6 @@
                         id="{{ form.key.slice(-1)[0] + 'Status' }}"
                         class="sr-only">{{ hasSuccess() ? '(success)' : '(error)' }}</span>
                   
-                  <div class="help-block" sf-message="form.description"></div>
                   </div>
                   </div>
             </div>
@@ -142,8 +141,6 @@
       <span ng-if="hasError() || hasSuccess()"
             id="{{ form.key.slice(-1)[0] + 'Status' }}"
             class="sr-only">{{ hasSuccess() ? '(success)' : '(error)' }}</span>
-
-      <div class="help-block" sf-message="form.description"></div>
       </div>
       </div>
 </div>
