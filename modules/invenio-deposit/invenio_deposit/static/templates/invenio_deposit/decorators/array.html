@@ -37,9 +37,9 @@
                 </div>
                 <div class="clearfix" style="padding: 15px;" ng-model="modelArray">
                     <div class="help-block"
-                         ng-show="(hasError() && errorMessage(schemaError())) || form.description"
-                         ng-bind-html="(hasError() && errorMessage(schemaError())) || form.description"></div>
-            
+                        ng-show="(hasError() && errorMessage(schemaError()))"
+                        ng-bind-html="(hasError() && errorMessage(schemaError()))"></div>
+
                     <button ng-hide="form.readonly || form.add === null"
                             ng-click="appendToArray()"
                             ng-disabled="form.schema.maxItems <= modelArray.length"
