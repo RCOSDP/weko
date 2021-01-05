@@ -615,7 +615,12 @@ def check_has_attribute_value(node):
         return False
 
 
-def get_attribute_value_all_items(root_key, nlst, klst, is_author=False, hide_email_flag=True):
+def get_attribute_value_all_items(
+        root_key,
+        nlst,
+        klst,
+        is_author=False,
+        hide_email_flag=True):
     """Convert and sort item list.
 
     :param root_key:

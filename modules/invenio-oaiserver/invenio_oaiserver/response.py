@@ -24,7 +24,7 @@ from .models import OAISet
 from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
-from .utils import datetime_to_datestamp, serializer, handle_license_free
+from .utils import datetime_to_datestamp, handle_license_free, serializer
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'

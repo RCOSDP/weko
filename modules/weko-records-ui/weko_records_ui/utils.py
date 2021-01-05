@@ -450,6 +450,7 @@ def hide_by_itemtype(item_metadata, hidden_items):
 
 def replace_license_free(record_metadata, is_change_label=True):
     """Change the item name 'licensefree' to 'license_note'.
+
     If 'licensefree' is not output as a value.
     The value of 'licensetype' is 'license_note'.
 

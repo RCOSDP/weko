@@ -64,7 +64,7 @@ from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
-from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.api import WorkActivity
 from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.utils import IdentifierHandle
 

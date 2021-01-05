@@ -46,7 +46,6 @@ from weko_records_ui.utils import get_record_permalink
 from .models import PDFCoverPageSettings
 from .utils import get_license_pdf, get_pair_value
 
-
 """ Function counting numbers of full-width character and half-width character\
         differently """
 
