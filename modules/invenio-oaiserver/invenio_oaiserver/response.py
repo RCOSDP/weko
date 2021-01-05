@@ -123,6 +123,15 @@ def identify(**kwargs):
                                    etree.QName(NS_OAIPMH, 'protocolVersion'))
     e_protocolVersion.text = cfg['OAISERVER_PROTOCOL_VERSION']
 
+    # add by Mr ryuu. at 2018/06/06 start
+    if oaiObj is not None:
+        cfg['OAISERVER_ADMIN_EMAILS'][0] = oaiObj.emails
+    # add by Mr ryuu. at 2018/06/06 end
+
+    for adminEmail in cfg['OAISERVER_ADMIN_EMAILS']:
+        e = SubElement(e_identify, etree.QName(NS_OAIPMH, 'adminEmail'))
+        e.text = adminEmail
+
     e_earliestDatestamp = SubElement(
         e_identify, etree.QName(
             NS_OAIPMH, 'earliestDatestamp'))

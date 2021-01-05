@@ -14,6 +14,7 @@ from flask import current_app, request
 from marshmallow import Schema, ValidationError, fields, validates_schema
 from marshmallow.fields import DateTime as _DateTime
 from weko_schema_ui.schema import get_oai_metadata_formats
+from datetime import datetime, timedelta
 
 from .resumption_token import ResumptionTokenSchema
 
@@ -103,6 +104,10 @@ class OAISchema(Schema):
         if 'from_' in data and 'until' in data and \
                 data['from_'] > data['until']:
             raise ValidationError('Date "from" must be before "until".')
+        # Set 'until' time to 23:59:59 when 'until' time is 00:00:00
+        if 'until' in data and isinstance(data['until'],datetime):
+            if (data['until'].hour == 0 and data['until'].minute == 0 and data['until'].second == 0):
+                data['until'] = data['until'] + timedelta(hours=23, minutes=59, seconds=59)
 
         list_argument = [f.load_from or f.name for f in self.fields.values()]
         extra = set(request.values.keys()) - set(list_argument)
