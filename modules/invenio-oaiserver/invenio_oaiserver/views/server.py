@@ -91,11 +91,11 @@ def response(args):
     """Response endpoint."""
     e_tree = getattr(xml, args['verb'].lower())(**args)
 
-    response = make_response(etree.tostring(
+    str_xml = etree.tostring(
         e_tree,
-        pretty_print=True,
-        xml_declaration=True,
-        encoding='UTF-8',
-    ))
+        encoding='UTF-8'
+    ).replace(b'\n', b'\\n').replace(b'&#13;', b'\\r')
+
+    response = make_response(str_xml)
     response.headers['Content-Type'] = 'text/xml'
     return response
