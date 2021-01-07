@@ -24,6 +24,8 @@ from copy import deepcopy
 
 from flask import current_app, request
 from flask_babelex import gettext as _
+from flask_login import current_user
+from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -49,6 +51,7 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST
 from .api import UpdateItem, WorkActivity
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
+from .models import WorkflowRole
 
 
 def get_identifier_setting(community_id):
@@ -1525,3 +1528,93 @@ def update_indexes_public_state(item_id):
                 index.public_state = True
     if update_db:
         db.session.commit()
+
+
+def get_account_info(user_id):
+    """Get account's info: email, username.
+
+    :param user_id: User id.
+
+    :return: email, username.
+    """
+    data = get_user_profile_info(user_id)
+    if data:
+        return data.get('subitem_mail_address'), \
+            data.get('subitem_displayname')
+    else:
+        return None, None
+
+
+def get_name_display_hide(list_hide, role):
+    """Get workflow role: displays, hides.
+
+    :param list_hide, role.
+
+    :return: displays, hides.
+    """
+    displays = []
+    hides = []
+    if isinstance(role, list):
+        for tmp in role:
+            if not any(x.id == tmp.id for x in list_hide):
+                displays.append(tmp.name)
+            else:
+                hides.append(tmp.name)
+    return displays, hides
+
+
+def get_displays(list_hide, role):
+    """Get workflow role: displays.
+
+    :param list_hide, role.
+
+    :return: displays.
+    """
+    displays = []
+    if isinstance(role, list):
+        for tmp in role:
+            if not any(x.id == tmp.id for x in list_hide):
+                displays.append(tmp)
+    return displays
+
+
+def _save_workflow_role(wf_id, list_hide):
+    """Update workflow role.
+
+    :return:
+    """
+    with db.session.begin_nested():
+        db.session.query(WorkflowRole).filter_by(
+            workflow_id=wf_id).delete()
+        if isinstance(list_hide, list):
+            while list_hide:
+                tmp = list_hide.pop(0)
+                wfrole = dict(
+                    workflow_id=wf_id,
+                    role_id=tmp
+                )
+                db.session.execute(WorkflowRole.__table__.insert(), wfrole)
+    db.session.commit()
+
+
+def get_workflows(workflows):
+    """Get list workflow.
+
+    :param workflows: role.
+
+    :return: wfs.
+    """
+    wfs = []
+    current_user_roles = [role.id for role in current_user.roles]
+    if isinstance(workflows, list):
+        role = Role.query.all()
+        while workflows:
+            tmp = workflows.pop(0)
+            list_hide = Role.query.outerjoin(WorkflowRole) \
+                            .filter(WorkflowRole.workflow_id == tmp.id) \
+                            .filter(WorkflowRole.role_id == Role.id) \
+                            .all()
+            displays = get_displays(list_hide, role)
+            if any(x.id in current_user_roles for x in displays):
+                wfs.append(tmp)
+    return wfs

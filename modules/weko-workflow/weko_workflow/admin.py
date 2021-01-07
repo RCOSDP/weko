@@ -27,10 +27,13 @@ from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
+from invenio_db import db
 from weko_records.api import ItemTypes
 
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
+from .models import WorkflowRole
+from .utils import get_displays, get_name_display_hide, save_workflow_role
 
 
 class FlowSettingView(BaseView):
@@ -162,6 +165,20 @@ class WorkFlowSettingView(BaseView):
         """
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
+        role = Role.query.all()
+        for wf in workflows:
+            hide = Role.query.outerjoin(WorkflowRole) \
+                .filter(WorkflowRole.workflow_id == wf.id) \
+                .filter(WorkflowRole.role_id == Role.id) \
+                .all()
+            if hide:
+                display, hide = get_name_display_hide(hide, role)
+            else:
+                display = [x.name for x in role]
+                hide = []
+            wf.display = ',<br>'.join(display)
+            wf.hide = ',<br>'.join(hide)
+
         return self.render(
             'weko_workflow/admin/workflow_list.html',
             workflows=workflows
@@ -179,22 +196,38 @@ class WorkFlowSettingView(BaseView):
             itemtype_list = ItemTypes.get_latest_custorm_harvesting()
         flow_api = Flow()
         flow_list = flow_api.get_flow_list()
+        display = []
+        hide = []
+        role = Role.query.all()
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
                 'weko_workflow/admin/workflow_detail.html',
                 workflow=None,
                 itemtype_list=itemtype_list,
-                flow_list=flow_list
+                flow_list=flow_list,
+                hide_list=hide,
+                display_list=role
             )
         """Update the workflow info"""
         workflow = WorkFlow()
         workflows = workflow.get_workflow_detail(workflow_id)
+        hide = Role.query.outerjoin(WorkflowRole) \
+            .filter(WorkflowRole.workflow_id == workflows.id) \
+            .filter(WorkflowRole.role_id == Role.id) \
+            .all()
+        if hide:
+            display = get_displays(hide, role)
+        else:
+            display = role
+            hide = []
         return self.render(
             'weko_workflow/admin/workflow_detail.html',
             workflow=workflows,
             itemtype_list=itemtype_list,
-            flow_list=flow_list
+            flow_list=flow_list,
+            hide_list=hide,
+            display_list=display
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -204,6 +237,7 @@ class WorkFlowSettingView(BaseView):
         :return:
         """
         json_data = request.get_json()
+        list_hide = json_data.get('list_hide', [])
         form_workflow = dict(
             flows_name=json_data.get('flows_name', None),
             itemtype_id=json_data.get('itemtype_id', 0),
@@ -216,6 +250,10 @@ class WorkFlowSettingView(BaseView):
                 flows_id=uuid.uuid4()
             )
             workflow.create_workflow(form_workflow)
+            if len(list_hide) > 0:
+                workflow_detail = workflow.get_workflow_by_flows_id(
+                    form_workflow.get('flows_id'))
+                save_workflow_role(workflow_detail.id, list_hide)
         else:
             """Update the workflow info"""
             form_workflow.update(
@@ -223,6 +261,8 @@ class WorkFlowSettingView(BaseView):
                 flows_id=workflow_id
             )
             workflow.upt_workflow(form_workflow)
+            if len(list_hide) > 0:
+                save_workflow_role(form_workflow.get('id'), list_hide)
         return jsonify(code=0, msg='',
                        data={'redirect': url_for('workflowsetting.index')})
 
