@@ -81,15 +81,17 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (data, status) {
+        endLoading(_this);
         if (0 == data.code) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             parent.document.location.href = data.data.redirect;
           } else {
-            let redirectUrl = "/workflow/activity/detail/" + $("#activity_id").text().trim();
-            parent.document.location.href = redirectUrl;
+            $('#alerts').append(
+              '<div id="alert-style" class="alert alert-light">' +
+              '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+              '&times;</button>' + 'Model save success' + '</div>');
           }
         } else {
-          endLoading(_this);
           $('#action_quit_confirmation').modal('show');
           $('.modal-body').html(data.msg);
           $("#btn_cancel").attr('style', 'display: none;');

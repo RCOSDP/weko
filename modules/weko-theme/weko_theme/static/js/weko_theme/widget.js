@@ -1062,22 +1062,22 @@ function toggleWidgetUI() {
 }
 
 function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
-    let moreDes = $("#" + moreDescriptionID);
-    let textLink = $("#" + linkID);
-    if (moreDes) {
-        let parentElement = moreDes.parent();
-        if (moreDes.hasClass("hidden")) {
-            moreDes.removeClass("hidden");
-            textLink.text(hideRest);
-            parentElement.css('overflow-y', 'auto');
-            parentElement.removeClass('without-after-element');
-        } else {
-            moreDes.addClass("hidden");
-            parentElement.css('overflow-y', 'hidden');
-            parentElement.addClass('without-after-element');
-            textLink.text(readMore);
-        }
+  let moreDes = $("#" + moreDescriptionID);
+  let textLink = $("#" + linkID);
+  if (moreDes) {
+    let parentElement = moreDes.parent();
+    if (moreDes.hasClass("hidden")) {
+      moreDes.removeClass("hidden");
+      textLink.text(hideRest);
+      parentElement.removeClass('without-after-element');
+    } else {
+      moreDes.addClass("hidden");
+      parentElement.addClass('without-after-element');
+      textLink.text(readMore);
     }
+    parentElement.data("isResize", true);
+    autoAdjustWidgetHeight(null, widgetBodyGrid, parentElement);
+  }
 }
 
 function escapeHtml(unsafe) {

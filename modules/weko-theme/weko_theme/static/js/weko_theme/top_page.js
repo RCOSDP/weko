@@ -68,14 +68,8 @@ require([
                             }
                         }
                     }
-                } else {
-                    if (btn == 'simple-search') {
-                        input = sessionStorage.getItem('q', false);
-                        if (input) {
-                            $('#search_detail_metadata').collapse('hide');
-                            $('#q').val(input);
-                        }
-                    }
+                } else if (btn == 'simple-search' && sessionStorage.getItem('q', false)) {
+                    $('#search_detail_metadata').collapse('hide');
                 }
             } else {
                 $('#search_type_fulltext').prop('checked', true);
@@ -108,14 +102,8 @@ require([
                             }
                         }
                     }
-                } else {
-                    if (btn == 'simple-search') {
-                        input = sessionStorage.getItem('q', false);
-                        if (input) {
-                            $('#search_detail_metadata').collapse('hide');
-                            $('#q').val(input);
-                        }
-                    }
+                } else if (btn == 'simple-search' && sessionStorage.getItem('q', false)) {
+                    $('#search_detail_metadata').collapse('hide');
                 }
             } else {
                 $('#search_type_fulltext').prop('checked', true);

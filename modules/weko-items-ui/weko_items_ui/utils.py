@@ -745,6 +745,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         records.attr_output -- Record data
 
     """
+    from weko_records_ui.views import escape_str
+
     item_type = ItemTypes.get_by_id(item_type_id).render
     list_hide = get_item_from_option(item_type_id)
     no_permission_show_hide = hide_meta_data_for_role(
@@ -929,7 +931,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         key_list.append(new_key)
                         key_label.append(new_label)
                         if data and idx < len(data) and data[idx].get(key):
-                            key_data.append(data[idx][key])
+                            key_data.append(escape_str(data[idx][key]))
                         else:
                             key_data.append('')
 
@@ -1324,67 +1326,6 @@ def export_items(post_data):
         as_attachment=True,
         attachment_filename='export.zip'
     )
-
-
-def export_item_custorm(post_data):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
-
-    :return: JSON, BIBTEX
-    """
-    include_contents = True
-    record_id = post_data['record_id']
-
-    result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory()
-    item_types_data = {}
-
-    try:
-        # Set export folder
-        export_path = temp_path.name + '/' + datetime.utcnow().strftime(
-            "%Y%m%d%H%M%S")
-        # Double check for limits
-        record_path = export_path + '/recid_' + str(record_id)
-        os.makedirs(record_path, exist_ok=True)
-        exported_item, list_item_role = _export_item(
-            record_id,
-            None,
-            include_contents,
-            record_path,
-        )
-
-        result['items'].append(exported_item)
-
-        item_type_id = exported_item.get('item_type_id')
-        item_type = ItemTypes.get_by_id(item_type_id)
-        if not item_types_data.get(item_type_id):
-            item_types_data[item_type_id] = {}
-
-            item_types_data[item_type_id] = {
-                'item_type_id': item_type_id,
-                'name': '{}({})'.format(
-                    item_type.item_type_name.name,
-                    item_type_id),
-                'root_url': request.url_root,
-                'jsonschema': 'items/jsonschema/' + item_type_id,
-                'keys': [],
-                'labels': [],
-                'recids': [],
-                'data': {},
-            }
-        item_types_data[item_type_id]['recids'].append(record_id)
-
-        # Create export info file
-        write_tsv_files(item_types_data, export_path, list_item_role)
-
-        # Create bag
-        bagit.make_bag(export_path)
-        # Create download file
-        shutil.make_archive(export_path, 'zip', export_path)
-    except Exception:
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
-    return send_file(export_path + '.zip')
 
 
 def _get_max_export_items():

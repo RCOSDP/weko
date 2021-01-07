@@ -879,7 +879,8 @@ class WekoDeposit(Deposit):
                 # Check exist item cache before delete
                 if datastore.redis.exists(cache_key):
                     data_str = datastore.get(cache_key)
-                    datastore.delete(cache_key)
+                    if not index_obj.get('is_save_path'):
+                        datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
         except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
