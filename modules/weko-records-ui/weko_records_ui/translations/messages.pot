@@ -1301,3 +1301,9 @@ msgstr ""
 
 msgid "This item has been deleted."
 msgstr ""
+
+msgid "Apply JGSS"
+msgstr "Apply"
+
+msgid "This data is not available to student."
+msgstr ""

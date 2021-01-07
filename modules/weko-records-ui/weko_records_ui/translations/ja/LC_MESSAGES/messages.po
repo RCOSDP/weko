@@ -1320,3 +1320,9 @@ msgstr "調査概要"
 
 msgid "This item has been deleted."
 msgstr "このアイテムは削除されています。"
+
+msgid "Apply JGSS"
+msgstr "申請"
+
+msgid "This data is not available to student."
+msgstr "このデータは、学部生は利用できません。"
