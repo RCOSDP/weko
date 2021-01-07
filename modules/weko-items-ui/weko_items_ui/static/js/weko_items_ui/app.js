@@ -2607,6 +2607,7 @@ function toObject(arr) {
         $("#allModal").modal("show");
       }
       $scope.searchAuthor = function (model_id, arrayFlg, form) {
+        model_id = model_id.replace("[]", "");
         // add by ryuu. start 20180410
         $("#btn_id").text(model_id);
         $("#array_flg").text(arrayFlg);
