@@ -8,8 +8,10 @@
 
 """General utility functions module."""
 
+import datetime as dt
 from functools import partial
 
+import pytz
 import six
 from flask import abort, current_app, jsonify, make_response, request, url_for
 from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
@@ -23,6 +25,8 @@ from .errors import PIDDeletedRESTError, PIDDoesNotExistRESTError, \
     PIDMissingObjectRESTError, PIDRedirectedRESTError, \
     PIDUnregisteredRESTError
 from .proxies import current_records_rest
+import weko_user_profiles
+from weko_user_profiles.api import current_userprofile
 
 
 def build_default_endpoint_prefixes(records_rest_endpoints):
@@ -110,6 +114,25 @@ def check_elasticsearch(record, *args, **kwargs):
         return search.count() == 1
 
     return type('CheckES', (), {'can': can})()
+
+
+def set_utc_pub_datetime(data):
+    """Set `utc_pub_datetime` key to `data` dict"""
+    if current_userprofile:
+        tz = pytz.timezone(current_userprofile.timezone)
+    elif 'BABEL_DEFAULT_TIMEZONE' in weko_user_profiles.config:
+        tz = pytz.timezone(weko_user_profiles.config['BABEL_DEFAULT_TIMEZONE'])
+    else:
+        tz = pytz.utc
+
+    # Use `'publish_date'` property for "records_metadata" table, while `'pubdate'` for "item_metadata" one
+    pub_date =  data.get('publish_date') or data.get('pubdate')
+
+    if pub_date:
+        pub_datetime = dt.datetime.strptime(pub_date, '%Y-%m-%d')
+        tz_pub_datetime = tz.localize(pub_datetime)
+        utc_pub_datetime = tz_pub_datetime.astimezone(pytz.utc)
+        data['utc_pub_datetime'] = dt.datetime.strftime(utc_pub_datetime, '%Y-%m-%d %H:%M:%S')
 
 
 class LazyPIDValue(object):

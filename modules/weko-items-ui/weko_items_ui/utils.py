@@ -317,16 +317,20 @@ def find_hidden_items(item_id_list):
         item_id_list: list of items ID to be checked.
     return: List of items ID that the user cannot access.
     """
+
     if not item_id_list:
         return []
 
     # Check if is admin
     roles = get_user_roles()
+
     if roles[0]:
         return []
 
     hidden_list = []
+
     for record in WekoRecord.get_records(item_id_list):
+        print('record=', record)
         # Check if user is owner of the item
         if check_created_id(record):
             continue

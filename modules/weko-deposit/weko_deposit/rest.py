@@ -31,7 +31,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.links import default_links_factory
-from invenio_records_rest.utils import obj_or_import_string
+from invenio_records_rest.utils import obj_or_import_string, set_utc_pub_datetime
 from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
@@ -196,6 +196,7 @@ class ItemResource(ContentNegotiatedMethodView):
 
         try:
             data = request.get_json()
+            set_utc_pub_datetime(data)
             self.__sanitize_input_data(data)
             pid_value = kwargs.get('pid_value').value
             edit_mode = data.get('edit_mode')
@@ -205,10 +206,10 @@ class ItemResource(ContentNegotiatedMethodView):
                 cur_pid = PersistentIdentifier.get('recid', pid_value)
                 pid = PersistentIdentifier.get('recid', pid_value.split(".")[0])
                 deposit = WekoDeposit.get_record(pid.object_uuid)
-
                 upgrade_record = deposit.newversion(pid)
 
                 with db.session.begin_nested():
+
                     if upgrade_record and ".0" in pid_value:
                         _upgrade_record = WekoDeposit(
                             upgrade_record,
@@ -218,9 +219,11 @@ class ItemResource(ContentNegotiatedMethodView):
                     activity = WorkActivity()
                     wf_activity = activity.get_workflow_activity_by_item_id(
                         cur_pid.object_uuid)
+
                     if wf_activity:
                         wf_activity.item_id = upgrade_record.model.id
                         db.session.merge(wf_activity)
+
                 db.session.commit()
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type='recid',

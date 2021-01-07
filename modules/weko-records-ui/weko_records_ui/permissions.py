@@ -20,6 +20,7 @@
 
 """Permissions for Detail Page."""
 
+import pytz
 from datetime import datetime as dt
 from datetime import timedelta
 
@@ -138,7 +139,7 @@ def check_file_download_permission(record, fjson):
                         adt = date[0].get('dateValue')
                         if adt:
                             pdt = dt.strptime(adt, '%Y-%m-%d')
-                            is_can = True if dt.today() >= pdt else False
+                            is_can = True if dt.now(pytz.utc) >= pytz.utc.localize(pdt) else False
                         else:
                             is_can = True
             # access with open date
@@ -149,7 +150,7 @@ def check_file_download_permission(record, fjson):
                         if isinstance(date, list) and date[0]:
                             adt = date[0].get('dateValue')
                             pdt = dt.strptime(adt, '%Y-%m-%d')
-                            is_can = True if dt.today() >= pdt else False
+                            is_can = True if dt.now(pytz.utc) >= pytz.utc.localize(pdt) else False
                 except BaseException:
                     is_can = False
 
@@ -364,17 +365,19 @@ def check_publish_status(record):
     :param record:
     :return: result
     """
-    result = False
+    result = is_embargo_over = False
     pst = record.get('publish_status')
-    pdt = record.get('pubdate', {}).get('attribute_value')
-    try:
-        pdt = dt.strptime(pdt, '%Y-%m-%d')
-        pdt = True if dt.today() >= pdt else False
-    except BaseException:
-        pdt = False
+    pdt_str = record.get('utc_pub_datetime')
+
+    if pdt_str:
+        pdt = dt.strptime(pdt_str, '%Y-%m-%d %H:%M:%S')
+        if dt.now(pytz.utc) >= pytz.utc.localize(pdt):
+            is_embargo_over = True
+
     # if it's publish
-    if pst and '0' in pst and pdt:
+    if pst and '0' in pst and is_embargo_over:
         result = True
+
     return result
 
 

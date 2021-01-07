@@ -413,11 +413,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 path_name_dict['ja'][path] = path_name_dict['en'][path]
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
+
     if not pid_ver.exists or pid_ver.is_last_child:
         abort(404)
+
     active_versions = list(pid_ver.children or [])
     all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
                         or [])
+
     try:
         if WekoRecord.get_record(id_=active_versions[-1].object_uuid)[
                 '_deposit']['status'] == 'draft':
@@ -427,6 +430,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             all_versions.pop()
     except Exception:
         pass
+
     if active_versions:
         # active_versions.remove(pid_ver.last_child)
         active_versions.pop()
@@ -447,6 +451,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     community_arg = request.args.get('community')
     community_id = ""
     ctx = {'community': None}
+
     if community_arg:
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(community_arg)
@@ -458,19 +463,19 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
     width = style.width if style else '3'
     height = style.height if style else None
-
     detail_condition = get_search_detail_keyword('')
 
     # Add Item Reference data to Record Metadata
     res = ItemLink.get_item_link_info(record.get("recid"))
+
     if res:
         record["relation"] = res
     else:
         record["relation"] = {}
 
     google_scholar_meta = _get_google_scholar_meta(record)
-
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
+
     # Check if user has the permission to download original pdf file
     # and the cover page setting is set and its value is enable (not disabled)
     can_download_original = check_original_pdf_download_permission(record) \
@@ -479,6 +484,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Get item meta data
     record['permalink_uri'] = None
     permalink = get_record_permalink(record)
+
     if not permalink:
         if record.get('system_identifier_doi') and \
             record.get('system_identifier_doi').get(
@@ -493,11 +499,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record['permalink_uri'] = permalink
 
     can_update_version = has_update_version_role(current_user)
-
     datastore = RedisStore(redis.StrictRedis.from_url(
         current_app.config['CACHE_REDIS_URL']))
     cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
         format(name='display_stats')
+
     if datastore.redis.exists(cache_key):
         curr_display_setting = datastore.get(cache_key).decode('utf-8')
         display_stats = True if curr_display_setting == 'True' else False
@@ -512,6 +518,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         billing_files_permission) if groups_price else None
 
     from weko_theme.utils import get_design_layout
+
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         request.args.get('community') or current_app.config[
@@ -523,19 +530,21 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         index_link_list = get_index_link_list()
 
     files_thumbnail = []
+
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
             record.files.bucket.id).\
             filter_by(is_thumbnail=True).all()
+
     files = []
+
     for f in record.files:
         if check_file_permission(record, f.data) or is_open_restricted(f.data):
             files.append(f)
+
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
-
     open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
-
     hide_item_metadata(record)
 
     return render_template(

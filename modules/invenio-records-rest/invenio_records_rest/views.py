@@ -42,7 +42,7 @@ from .errors import InvalidDataRESTError, InvalidQueryRESTError, \
 from .links import default_links_factory
 from .proxies import current_records_rest
 from .query import es_search_factory
-from .utils import obj_or_import_string
+from .utils import obj_or_import_string, set_utc_pub_datetime
 
 
 def elasticsearch_query_parsing_exception_handler(error):
@@ -792,9 +792,9 @@ class RecordResource(ContentNegotiatedMethodView):
             raise InvalidDataRESTError()
 
         self.check_etag(str(record.revision_id))
-
         record.clear()
         record.update(data)
+        set_utc_pub_datetime(record)
         record.commit()
         db.session.commit()
         if self.indexer_class:

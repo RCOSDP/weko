@@ -498,6 +498,7 @@ def default_view_method(pid, record, template=None):
 
     Sends ``record_viewed`` signal and renders template.
     """
+
     check_site_license_permission()
     send_info = dict()
     send_info['site_license_flag'] = True \

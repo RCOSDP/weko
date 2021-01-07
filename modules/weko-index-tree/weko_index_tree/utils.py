@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
+import pytz
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
@@ -257,6 +258,7 @@ def filter_index_list_by_role(index_list):
     def _check(index_data, roles, groups):
         """Check index data by role."""
         can_view = False
+
         if roles[0]:
             can_view = True
         else:
@@ -265,8 +267,9 @@ def filter_index_list_by_role(index_list):
                 if index_data.public_state \
                         and (index_data.public_date is None
                              or (isinstance(index_data.public_date, datetime)
-                                 and date.today() >= index_data.public_date.date())):
+                                 and date.now(pytz.utc) >= pytz.utc.localize(index_data.public_date.datetime()))):
                     can_view = True
+
         return can_view
 
     result_list = []
@@ -304,7 +307,7 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         if public_state and \
                                 (public_date is None
                                  or (isinstance(public_date, datetime)
-                                     and date.today() >= public_date.date())):
+                                    and date.now(pytz.utc) >= pytz.utc.localize(index_data.public_date.datetime()))):
                             reduce_index_by_role(children, roles, groups)
                             i += 1
                         else:
