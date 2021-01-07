@@ -1578,7 +1578,7 @@ def get_displays(list_hide, role):
     return displays
 
 
-def _save_workflow_role(wf_id, list_hide):
+def save_workflow_role(wf_id, list_hide):
     """Update workflow role.
 
     :return:
