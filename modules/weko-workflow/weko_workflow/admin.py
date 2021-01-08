@@ -304,29 +304,6 @@ class WorkFlowSettingView(BaseView):
                        data={'redirect': url_for('workflowsetting.index')})
 
     @classmethod
-    def get_workflows_by_roles(cls, workflows):
-        """Get list workflow.
-
-        :param workflows.
-
-        :return: wfs.
-        """
-        wfs = []
-        current_user_roles = [role.id for role in current_user.roles]
-        if isinstance(workflows, list):
-            role = Role.query.all()
-            while workflows:
-                tmp = workflows.pop(0)
-                list_hide = Role.query.outerjoin(WorkflowRole) \
-                    .filter(WorkflowRole.workflow_id == tmp.id) \
-                    .filter(WorkflowRole.role_id == Role.id) \
-                    .all()
-                displays = cls.get_displays(list_hide, role)
-                if any(x.id in current_user_roles for x in displays):
-                    wfs.append(tmp)
-        return wfs
-
-    @classmethod
     def get_name_display_hide(cls, list_hide, role):
         """Get workflow role: displays, hides.
 
