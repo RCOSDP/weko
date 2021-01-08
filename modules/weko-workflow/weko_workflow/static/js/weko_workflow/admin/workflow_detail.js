@@ -57,11 +57,18 @@ $("#btn_delete").on("click", function () {
 
 $("#btn_create").on("click", function () {
   const post_uri = $("#post_uri").text();
+  var list_hide = []
+  var list_show = []
+  $("#select_hide option").each(function() {
+    console.log(this.value);
+    list_hide.push(this.value);
+  });
   post_data = {
     id: $("#_id").val(),
     flows_name: $("#txt_workflow_name").val(),
     itemtype_id: $("#txt_itemtype").val(),
     flow_id: $("#txt_flow_name").val(),
+    list_hide: list_hide
   };
   $.ajax({
     url: post_uri,
@@ -81,4 +88,22 @@ $("#btn_create").on("click", function () {
       $("#allModal").modal("show");
     },
   });
+});
+
+$("#setHide").on("click", function () {
+  value_hide = $('#select_show').val();
+  text_hide = $("#select_show option:selected").text();
+  if (value_hide) {
+    $("#select_show option[value='"+ value_hide +"']").remove();
+    $('#select_hide').append($('<option>', {value:value_hide, text: text_hide}));
+  }
+});
+
+$("#setShow").on("click", function () {
+  value_show = $('#select_hide').val();
+  text_show = $("#select_hide option:selected").text();
+  if (value_show) {
+    $("#select_hide option[value='"+ value_show +"']").remove();
+    $('#select_show').append($('<option>', {value:value_show, text: text_show}));
+  }
 });
