@@ -26,8 +26,8 @@ import uuid
 from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_accounts.models import Role, User
-from invenio_db import db
 from weko_records.api import ItemTypes
 
 from .api import Action, Flow, WorkActivity, WorkFlow
@@ -167,17 +167,17 @@ class WorkFlowSettingView(BaseView):
         workflows = workflow.get_workflow_list()
         role = Role.query.all()
         for wf in workflows:
-            hide = Role.query.outerjoin(WorkflowRole) \
+            list_hide = Role.query.outerjoin(WorkflowRole) \
                 .filter(WorkflowRole.workflow_id == wf.id) \
                 .filter(WorkflowRole.role_id == Role.id) \
                 .all()
-            if hide:
-                display, hide = get_name_display_hide(hide, role)
+            if list_hide:
+                displays, hides = get_name_display_hide(list_hide, role)
             else:
-                display = [x.name for x in role]
-                hide = []
-            wf.display = ',<br>'.join(display)
-            wf.hide = ',<br>'.join(hide)
+                displays = [x.name for x in role]
+                hides = []
+            wf.display = ',<br>'.join(displays)
+            wf.hide = ',<br>'.join(hides)
 
         return self.render(
             'weko_workflow/admin/workflow_list.html',
@@ -302,6 +302,29 @@ class WorkFlowSettingView(BaseView):
 
         return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('workflowsetting.index')})
+
+    @classmethod
+    def get_workflows_by_roles(cls, workflows):
+        """Get list workflow.
+
+        :param workflows.
+
+        :return: wfs.
+        """
+        wfs = []
+        current_user_roles = [role.id for role in current_user.roles]
+        if isinstance(workflows, list):
+            role = Role.query.all()
+            while workflows:
+                tmp = workflows.pop(0)
+                list_hide = Role.query.outerjoin(WorkflowRole) \
+                    .filter(WorkflowRole.workflow_id == tmp.id) \
+                    .filter(WorkflowRole.role_id == Role.id) \
+                    .all()
+                displays = get_displays(list_hide, role)
+                if any(x.id in current_user_roles for x in displays):
+                    wfs.append(tmp)
+        return wfs
 
 
 workflow_adminview = {

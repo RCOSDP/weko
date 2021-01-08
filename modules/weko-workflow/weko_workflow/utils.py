@@ -1530,25 +1530,11 @@ def update_indexes_public_state(item_id):
         db.session.commit()
 
 
-def get_account_info(user_id):
-    """Get account's info: email, username.
-
-    :param user_id: User id.
-
-    :return: email, username.
-    """
-    data = get_user_profile_info(user_id)
-    if data:
-        return data.get('subitem_mail_address'), \
-            data.get('subitem_displayname')
-    else:
-        return None, None
-
-
 def get_name_display_hide(list_hide, role):
     """Get workflow role: displays, hides.
 
-    :param list_hide, role.
+    :param role:
+    :param list_hide:
 
     :return: displays, hides.
     """
@@ -1566,7 +1552,8 @@ def get_name_display_hide(list_hide, role):
 def get_displays(list_hide, role):
     """Get workflow role: displays.
 
-    :param list_hide, role.
+    :param role:
+    :param list_hide:
 
     :return: displays.
     """
@@ -1595,26 +1582,3 @@ def save_workflow_role(wf_id, list_hide):
                 )
                 db.session.execute(WorkflowRole.__table__.insert(), wfrole)
     db.session.commit()
-
-
-def get_workflows(workflows):
-    """Get list workflow.
-
-    :param workflows: role.
-
-    :return: wfs.
-    """
-    wfs = []
-    current_user_roles = [role.id for role in current_user.roles]
-    if isinstance(workflows, list):
-        role = Role.query.all()
-        while workflows:
-            tmp = workflows.pop(0)
-            list_hide = Role.query.outerjoin(WorkflowRole) \
-                            .filter(WorkflowRole.workflow_id == tmp.id) \
-                            .filter(WorkflowRole.role_id == Role.id) \
-                            .all()
-            displays = get_displays(list_hide, role)
-            if any(x.id in current_user_roles for x in displays):
-                wfs.append(tmp)
-    return wfs
