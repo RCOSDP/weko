@@ -228,3 +228,7 @@ label.field-required::after {
   content: "*";
   color: red;
 }
+
+.padding-display-hide {
+   padding: 0!important;
+}
