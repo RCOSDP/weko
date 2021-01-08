@@ -950,12 +950,13 @@ class WorkflowRole(db.Model, TimestampMixin):
 
     workflow_id = db.Column(
         db.Integer(),
-        db.ForeignKey(WorkFlow.id), primary_key=True, nullable=True,
-        unique=False, ondelete='CASCADE')
+        db.ForeignKey(WorkFlow.id, ondelete='CASCADE'), primary_key=True,
+        nullable=True,
+        unique=False)
 
     role_id = db.Column(
         db.Integer(),
-        db.ForeignKey(Role.id), primary_key=True, nullable=True, unique=False,
-        ondelete='CASCADE')
+        db.ForeignKey(Role.id, ondelete='CASCADE'), primary_key=True,
+        nullable=True, unique=False)
 
     """Relationship between workflow and roles."""
