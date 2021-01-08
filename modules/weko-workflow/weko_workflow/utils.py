@@ -1530,25 +1530,6 @@ def update_indexes_public_state(item_id):
         db.session.commit()
 
 
-def get_name_display_hide(list_hide, role):
-    """Get workflow role: displays, hides.
-
-    :param role:
-    :param list_hide:
-
-    :return: displays, hides.
-    """
-    displays = []
-    hides = []
-    if isinstance(role, list):
-        for tmp in role:
-            if not any(x.id == tmp.id for x in list_hide):
-                displays.append(tmp.name)
-            else:
-                hides.append(tmp.name)
-    return displays, hides
-
-
 def get_displays(list_hide, role):
     """Get workflow role: displays.
 

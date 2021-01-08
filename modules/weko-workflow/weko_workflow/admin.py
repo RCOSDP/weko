@@ -33,7 +33,7 @@ from weko_records.api import ItemTypes
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole
-from .utils import get_displays, get_name_display_hide, save_workflow_role
+from .utils import get_displays, save_workflow_role
 
 
 class FlowSettingView(BaseView):
@@ -172,7 +172,7 @@ class WorkFlowSettingView(BaseView):
                 .filter(WorkflowRole.role_id == Role.id) \
                 .all()
             if list_hide:
-                displays, hides = get_name_display_hide(list_hide, role)
+                displays, hides = self.get_name_display_hide(list_hide, role)
             else:
                 displays = [x.name for x in role]
                 hides = []
@@ -325,6 +325,25 @@ class WorkFlowSettingView(BaseView):
                 if any(x.id in current_user_roles for x in displays):
                     wfs.append(tmp)
         return wfs
+
+    @classmethod
+    def get_name_display_hide(cls, list_hide, role):
+        """Get workflow role: displays, hides.
+
+        :param role:
+        :param list_hide:
+
+        :return: displays, hides.
+        """
+        displays = []
+        hides = []
+        if isinstance(role, list):
+            for tmp in role:
+                if not any(x.id == tmp.id for x in list_hide):
+                    displays.append(tmp.name)
+                else:
+                    hides.append(tmp.name)
+        return displays, hides
 
 
 workflow_adminview = {
