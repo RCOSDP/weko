@@ -24,8 +24,6 @@ from copy import deepcopy
 
 from flask import current_app, request
 from flask_babelex import gettext as _
-from flask_login import current_user
-from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -51,7 +49,6 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST
 from .api import UpdateItem, WorkActivity
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
-from .models import WorkflowRole
 
 
 def get_identifier_setting(community_id):
@@ -1528,38 +1525,3 @@ def update_indexes_public_state(item_id):
                 index.public_state = True
     if update_db:
         db.session.commit()
-
-
-def get_displays(list_hide, role):
-    """Get workflow role: displays.
-
-    :param role:
-    :param list_hide:
-
-    :return: displays.
-    """
-    displays = []
-    if isinstance(role, list):
-        for tmp in role:
-            if not any(x.id == tmp.id for x in list_hide):
-                displays.append(tmp)
-    return displays
-
-
-def save_workflow_role(wf_id, list_hide):
-    """Update workflow role.
-
-    :return:
-    """
-    with db.session.begin_nested():
-        db.session.query(WorkflowRole).filter_by(
-            workflow_id=wf_id).delete()
-        if isinstance(list_hide, list):
-            while list_hide:
-                tmp = list_hide.pop(0)
-                wfrole = dict(
-                    workflow_id=wf_id,
-                    role_id=tmp
-                )
-                db.session.execute(WorkflowRole.__table__.insert(), wfrole)
-    db.session.commit()

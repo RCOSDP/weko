@@ -28,12 +28,12 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, User
+from invenio_db import db
 from weko_records.api import ItemTypes
 
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole
-from .utils import get_displays, save_workflow_role
 
 
 class FlowSettingView(BaseView):
@@ -217,7 +217,7 @@ class WorkFlowSettingView(BaseView):
             .filter(WorkflowRole.role_id == Role.id) \
             .all()
         if hide:
-            display = get_displays(hide, role)
+            display = self.get_displays(hide, role)
         else:
             display = role
             hide = []
@@ -253,7 +253,7 @@ class WorkFlowSettingView(BaseView):
             if len(list_hide) > 0:
                 workflow_detail = workflow.get_workflow_by_flows_id(
                     form_workflow.get('flows_id'))
-                save_workflow_role(workflow_detail.id, list_hide)
+                self.save_workflow_role(workflow_detail.id, list_hide)
         else:
             """Update the workflow info"""
             form_workflow.update(
@@ -262,7 +262,7 @@ class WorkFlowSettingView(BaseView):
             )
             workflow.upt_workflow(form_workflow)
             if len(list_hide) > 0:
-                save_workflow_role(form_workflow.get('id'), list_hide)
+                self.save_workflow_role(form_workflow.get('id'), list_hide)
         return jsonify(code=0, msg='',
                        data={'redirect': url_for('workflowsetting.index')})
 
@@ -321,7 +321,7 @@ class WorkFlowSettingView(BaseView):
                     .filter(WorkflowRole.workflow_id == tmp.id) \
                     .filter(WorkflowRole.role_id == Role.id) \
                     .all()
-                displays = get_displays(list_hide, role)
+                displays = cls.get_displays(list_hide, role)
                 if any(x.id in current_user_roles for x in displays):
                     wfs.append(tmp)
         return wfs
@@ -344,6 +344,41 @@ class WorkFlowSettingView(BaseView):
                 else:
                     hides.append(tmp.name)
         return displays, hides
+
+    @classmethod
+    def get_displays(cls, list_hide, role):
+        """Get workflow role: displays.
+
+        :param role:
+        :param list_hide:
+
+        :return: displays.
+        """
+        displays = []
+        if isinstance(role, list):
+            for tmp in role:
+                if not any(x.id == tmp.id for x in list_hide):
+                    displays.append(tmp)
+        return displays
+
+    @classmethod
+    def save_workflow_role(cls, wf_id, list_hide):
+        """Update workflow role.
+
+        :return:
+        """
+        with db.session.begin_nested():
+            db.session.query(WorkflowRole).filter_by(
+                workflow_id=wf_id).delete()
+            if isinstance(list_hide, list):
+                while list_hide:
+                    tmp = list_hide.pop(0)
+                    wfrole = dict(
+                        workflow_id=wf_id,
+                        role_id=tmp
+                    )
+                    db.session.execute(WorkflowRole.__table__.insert(), wfrole)
+        db.session.commit()
 
 
 workflow_adminview = {
