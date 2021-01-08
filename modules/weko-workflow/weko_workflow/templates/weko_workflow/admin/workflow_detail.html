@@ -95,43 +95,41 @@
         <div class="col-sm-offset-2">
           <label class="col-sm-2 control-label"></label>
           <div class="col-sm-8">
-            <div class="row">
-              <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
-                <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
-                  {{_('Display')}}
-                  <br>
-                  <select multiple name="select_show" id="select_show" class="form-control">
-                    {%- if display_list %}
-                      {%- for display in display_list if display %}
-                      <option value="{{display.id}}" >{{display.name}}</option>
-                      {%- endfor %}
-                    {%- endif %}
-                  </select>
-                </div>
-              </div>
-              <div class="col-sm-2 col-md-2 col-md-2 text-center padding-display-hide">
-                &nbsp;<br>
-                <button type="button" class="btn btn-default" id="setHide">
-                  <span class="glyphicon glyphicon-arrow-right"></span>
-                </button>
+            <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
+              <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
+                {{_('Display')}}
                 <br>
-                <br>
-                <button type="button" class="btn btn-default" id="setShow">
-                  <span class="glyphicon glyphicon-arrow-left"></span>
-                </button>
+                <select multiple name="select_show" id="select_show" class="form-control">
+                  {%- if display_list %}
+                    {%- for display in display_list if display %}
+                    <option value="{{display.id}}" >{{display.name}}</option>
+                    {%- endfor %}
+                  {%- endif %}
+                </select>
               </div>
-              <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
-                <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
-                  {{_('Hide')}}
-                  <br>
-                  <select multiple name="select_hide" id="select_hide" class="form-control">
-                    {%- if hide_list %}
-                      {%- for hide in hide_list if hide %}
-                      <option value="{{hide.id}}" >{{hide.name}}</option>
-                      {%- endfor %}
-                    {%- endif %}
-                  </select>
-                </div>
+            </div>
+            <div class="col-sm-2 col-md-2 col-md-2 text-center padding-display-hide">
+              &nbsp;<br>
+              <button type="button" class="btn btn-default" id="setHide">
+                <span class="glyphicon glyphicon-arrow-right"></span>
+              </button>
+              <br>
+              <br>
+              <button type="button" class="btn btn-default" id="setShow">
+                <span class="glyphicon glyphicon-arrow-left"></span>
+              </button>
+            </div>
+            <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
+              <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
+                {{_('Hide')}}
+                <br>
+                <select multiple name="select_hide" id="select_hide" class="form-control">
+                  {%- if hide_list %}
+                    {%- for hide in hide_list if hide %}
+                    <option value="{{hide.id}}" >{{hide.name}}</option>
+                    {%- endfor %}
+                  {%- endif %}
+                </select>
               </div>
             </div>
           </div>
