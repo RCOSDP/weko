@@ -638,7 +638,7 @@ class WorkFlow(db.Model, TimestampMixin):
 
 
 class Activity(db.Model, TimestampMixin):
-    """Define Activety."""
+    """Define Activity."""
 
     __tablename__ = 'workflow_activity'
 
@@ -691,10 +691,6 @@ class Activity(db.Model, TimestampMixin):
         Action,
         backref=db.backref('activity', lazy='dynamic')
     )
-
-    # action_version = db.Column(
-    #     db.String(24), nullable=True, unique=False)
-    # """action version."""
 
     action_status = db.Column(
         db.String(1), db.ForeignKey(ActionStatus.action_status_id),
@@ -750,6 +746,10 @@ class Activity(db.Model, TimestampMixin):
     title = db.Column(db.Text, nullable=True)
 
     shared_user_id = db.Column(db.Integer(), nullable=True)
+
+    approval1 = db.Column(db.Text, nullable=True)
+
+    approval2 = db.Column(db.Text, nullable=True)
 
 
 class ActivityAction(db.Model, TimestampMixin):

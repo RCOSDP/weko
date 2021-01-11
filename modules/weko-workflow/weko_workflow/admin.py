@@ -23,11 +23,15 @@
 import re
 import uuid
 
-from flask import abort, jsonify, request, url_for
+from flask import abort, current_app, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
+from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
+
+from weko_workflow.models import Action as _Action
+from weko_workflow.models import FlowAction
 
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
@@ -56,8 +60,7 @@ class FlowSettingView(BaseView):
         """
         users = User.query.filter_by(active=True).all()
         roles = Role.query.all()
-        action = Action()
-        actions = action.get_action_list()
+        actions = self.get_actions()
         if '0' == flow_id:
             flow = None
             return self.render(
@@ -144,13 +147,44 @@ class FlowSettingView(BaseView):
         return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('flowsetting.index')})
 
+    @staticmethod
+    def get_actions():
+        """Get Actions info."""
+        actions = Action().get_action_list()
+        action_list = list()
+        for action in actions:
+            if action.action_name in current_app.config[
+                    'WEKO_WORKFLOW_ACTIONS']:
+                action_list.append(action)
+        return action_list
+
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""
         actions = request.get_json()
         workflow = Flow()
-        workflow.upt_flow_action(flow_id, actions)
-        return jsonify(code=0, msg=_('Updated flow action successfully'))
+        dict_code = workflow.upt_flow_action(flow_id, actions)
+        list_code = dict_code.get('list_code')
+        msg = ''
+        dict_msg = []
+        status = False
+        for code in list_code:
+            if code == 0:
+                msg = _('Updated flow action successfully')
+                status = True
+            if code == 1:
+                msg = _(
+                    'Approval by Administrator action does not exist,'
+                    ' or not in the right order.')
+            elif code == 2:
+                msg = _('Approval by Advisor action is not in the right order.')
+            elif code == 3:
+                msg = _(
+                    'Approval by Guarantor action is not in the right order.')
+            elif code == 4:
+                msg = _('Start or End action is not in the right order.')
+            dict_msg.append(dict(msg=msg))
+        return jsonify(result=dict_msg, status=status)
 
 
 class WorkFlowSettingView(BaseView):
@@ -179,14 +213,33 @@ class WorkFlowSettingView(BaseView):
             itemtype_list = ItemTypes.get_latest_custorm_harvesting()
         flow_api = Flow()
         flow_list = flow_api.get_flow_list()
+        specials_itemtypes_list = []
+        index_list = None
+        action = _Action.query.filter_by(
+            action_endpoint='item_login_application').one_or_none()
+        enable_auto_set_index = current_app.config.get(
+            'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE')
+        if action and enable_auto_set_index:
+            index_list = Index().get_all()
+            for flow in flow_list:
+                flow_action = FlowAction.query.filter_by(
+                    flow_id=flow.flow_id, action_id=action.id).one_or_none()
+                if flow_action:
+                    specials_itemtypes_list.append(flow.flow_name)
+        if len(specials_itemtypes_list) == 0:
+            enable_auto_set_index = False
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
                 'weko_workflow/admin/workflow_detail.html',
                 workflow=None,
                 itemtype_list=itemtype_list,
-                flow_list=flow_list
+                flow_list=flow_list,
+                index_list=index_list,
+                special_itemtype_list=specials_itemtypes_list,
+                enable_showing_index_tree_selection=enable_auto_set_index
             )
+
         """Update the workflow info"""
         workflow = WorkFlow()
         workflows = workflow.get_workflow_detail(workflow_id)
@@ -194,7 +247,10 @@ class WorkFlowSettingView(BaseView):
             'weko_workflow/admin/workflow_detail.html',
             workflow=workflows,
             itemtype_list=itemtype_list,
-            flow_list=flow_list
+            flow_list=flow_list,
+            index_list=index_list,
+            special_itemtype_list=specials_itemtypes_list,
+            enable_showing_index_tree_selection=enable_auto_set_index
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -207,7 +263,8 @@ class WorkFlowSettingView(BaseView):
         form_workflow = dict(
             flows_name=json_data.get('flows_name', None),
             itemtype_id=json_data.get('itemtype_id', 0),
-            flow_id=json_data.get('flow_id', 0)
+            flow_id=json_data.get('flow_id', 0),
+            index_tree_id=json_data.get('index_id')
         )
         workflow = WorkFlow()
         if '0' == workflow_id:

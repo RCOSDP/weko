@@ -134,7 +134,10 @@
                   <label class="col-sm-4 control-label">{{_('Item')}}</label>
                   <div class="col-sm-8">
                     <p class="form-control-static">
-                      <a href="#" id="lnk_item_detail">{{item.get('title_ja') if item}}</a>
+                      {%- if is_enable_item_name_link -%}
+                        <a href="#"
+                           id="lnk_item_detail">{{ item.get('title_ja') if item }}</a>
+                      {%- endif -%}
                     </p>
                   </div>
                 </div>
