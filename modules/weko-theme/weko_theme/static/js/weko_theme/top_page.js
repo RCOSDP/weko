@@ -152,12 +152,33 @@ require([
             $('#q').serializeArray().map(function (item) {
               search = insertParam(search, item.name, item.value.replace(/\+/g, ' '))
             })
-            if ($('#community').val()) {
+            if ($('#community').val() && $('#q').val.trim().length > 0) {
                 $('#community').serializeArray().map(function (item) {
                   search = insertParam(search, item.name, item.value.replace(/\+/g, ' '))
                 })
             }
             // var btn = sessionStorage.getItem('btn', '');
+            let data = getDefaultSetting();
+            let key_sort = data.dlt_keyword_sort_selected;
+            let size = data.dlt_dis_num_selected;
+            if (key_sort.indexOf("_asc") !== -1) {
+                key_sort=key_sort.replace("_asc", "");
+            }
+            if (key_sort.indexOf("_desc") !== -1) {
+                key_sort=key_sort.replace("_desc", "");
+                key_sort = "-" + key_sort;
+            }
+            if (window.location.search.indexOf("sort") === -1) {
+                search = insertParam(search, "sort", key_sort); 
+            } else {
+                if (window.location.search.indexOf(key_sort) === -1) {
+                    search = insertParam(search, "sort", key_sort); 
+                }
+            }
+            var page_count = document.getElementById("page_count");
+            if(page_count !== null && page_count !== undefined) {
+                search = insertParam(search, "size", size);
+            }
             if ($("#item_management_bulk_update").length != 0) {
               search = insertParam(search, "item_management", "update")
               window.location.href = "/admin/items/search"+ search
@@ -165,9 +186,8 @@ require([
               search = insertParam(search, "item_management", "delete")
               window.location.href = "/admin/items/search"+ search
             } else {
-              window.location.href = "/search"+ search
+              window.location.href = "/search"+ search;
             }
-
             // stop the form from submitting the normal way and refreshing the page
             event.preventDefault();
         })
@@ -190,6 +210,23 @@ require([
         return s
     }
 
+    function getDefaultSetting() {
+        let data = null;
+        $.ajax({
+            async: false,
+            method: 'GET',
+            url: '/get_search_setting',
+            headers: { 'Content-Type': 'application/json' },
+        }).then(function successCallback(response) {
+			if (response.status === 1) {
+				data = response.data;
+			}
+        }, function errorCallback(error) {
+            console.log(error);
+        });
+        return data;
+    }
+
     $(document).ready(function () {
 
         ArrangeSearch();
@@ -198,6 +235,21 @@ require([
         $('#top-search-btn').on('click', function () {
             sessionStorage.setItem('btn', 'simple-search');
             SearchSubmit();
+        });
+
+        $('#search_type_fulltext, #search_type_keyword').on('click', function () {
+            let data = getDefaultSetting();
+            let key_sort = data.dlt_keyword_sort_selected;
+            if (key_sort.indexOf("_asc") !== -1) {
+                key_sort=key_sort.replace("_asc", "");
+                document.getElementById('sortType').value="asc";
+            }
+            if (key_sort.indexOf("_desc") !== -1) {
+                key_sort=key_sort.replace("_desc", "");
+                document.getElementById('sortType').value="desc";
+            }
+            document.getElementById('selectedDisplay').value=key_sort;
+            document.getElementById('page_count').value=data.dlt_dis_num_selected;
         });
 
         //詳細検索の表示と隠すボタン
