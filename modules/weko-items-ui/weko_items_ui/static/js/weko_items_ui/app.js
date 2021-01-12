@@ -3895,10 +3895,10 @@ function toObject(arr) {
               $rootScope.filesVM.addFiles(files);
             } else {
               let duplicateFiles = [];
-              Array.prototype.forEach.call(files, function (file) {
+              files.forEach(function (file) {
                 let duplicateFile = [];
                 if ($rootScope.filesVM.files.length > 0) {
-                  duplicateFile = Array.prototype.filter.call($rootScope.filesVM.files, function (f) {
+                  duplicateFile = $rootScope.filesVM.files.filter(function (f) {
                     return f.key === file.name;
                   });
                 }
