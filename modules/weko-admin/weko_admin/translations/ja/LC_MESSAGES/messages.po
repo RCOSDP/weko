@@ -708,7 +708,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:68
 msgid "Default Display Sort (Index Search) :"
-msgstr "デフォルトソート条件（インデクス検索）："
+msgstr "デフォルトソート条件（インデックス検索）："
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:70
 msgid "[[opt_index_sort.contents]]"

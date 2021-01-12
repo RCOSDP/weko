@@ -60,12 +60,14 @@ from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_records_ui.utils import hide_item_metadata, \
     hide_item_metadata_email_only
+from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity, WorkFlow
-from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
+    WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.utils import IdentifierHandle
 
 
@@ -743,6 +745,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         records.attr_output -- Record data
 
     """
+    from weko_records_ui.views import escape_str
+
     item_type = ItemTypes.get_by_id(item_type_id).render
     list_hide = get_item_from_option(item_type_id)
     no_permission_show_hide = hide_meta_data_for_role(
@@ -927,7 +931,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         key_list.append(new_key)
                         key_label.append(new_label)
                         if data and idx < len(data) and data[idx].get(key):
-                            key_data.append(data[idx][key])
+                            key_data.append(escape_str(data[idx][key]))
                         else:
                             key_data.append('')
 
@@ -996,8 +1000,11 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             index_ids = path.split('/')
             pos_index = []
             for index_id in index_ids:
-                index = Indexes.get_index(index_id)
-                pos_index.append(index.index_name_english if index else '')
+                index_tree = Indexes.get_index(index_id)
+                index_name = ''
+                if index_tree:
+                    index_name = index_tree.index_name_english.replace('/', '\/')
+                pos_index.append(index_name)
             records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
@@ -1020,9 +1027,23 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         identifier = IdentifierHandle(record.pid_recid.object_uuid)
         doi_value, doi_type = identifier.get_idt_registration_data()
+        doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
+        doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        if doi_type_str and doi_str:
+            doi_domain = ''
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
+                doi_domain = IDENTIFIER_GRANT_LIST[1][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[1]:
+                doi_domain = IDENTIFIER_GRANT_LIST[2][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[2]:
+                doi_domain = IDENTIFIER_GRANT_LIST[3][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[3]:
+                doi_domain = IDENTIFIER_GRANT_LIST[4][2]
+            if doi_domain and doi_str.startswith(doi_domain):
+                doi_str = doi_str.replace(doi_domain + '/', '', 1)
         records.attr_output[recid].extend([
-            doi_type[0] if doi_type and doi_type[0] else '',
-            doi_value[0] if doi_value and doi_value[0] else ''
+            doi_type_str,
+            doi_str
         ])
 
         records.attr_output[recid].append('')
@@ -1305,67 +1326,6 @@ def export_items(post_data):
         as_attachment=True,
         attachment_filename='export.zip'
     )
-
-
-def export_item_custorm(post_data):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
-
-    :return: JSON, BIBTEX
-    """
-    include_contents = True
-    record_id = post_data['record_id']
-
-    result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory()
-    item_types_data = {}
-
-    try:
-        # Set export folder
-        export_path = temp_path.name + '/' + datetime.utcnow().strftime(
-            "%Y%m%d%H%M%S")
-        # Double check for limits
-        record_path = export_path + '/recid_' + str(record_id)
-        os.makedirs(record_path, exist_ok=True)
-        exported_item, list_item_role = _export_item(
-            record_id,
-            None,
-            include_contents,
-            record_path,
-        )
-
-        result['items'].append(exported_item)
-
-        item_type_id = exported_item.get('item_type_id')
-        item_type = ItemTypes.get_by_id(item_type_id)
-        if not item_types_data.get(item_type_id):
-            item_types_data[item_type_id] = {}
-
-            item_types_data[item_type_id] = {
-                'item_type_id': item_type_id,
-                'name': '{}({})'.format(
-                    item_type.item_type_name.name,
-                    item_type_id),
-                'root_url': request.url_root,
-                'jsonschema': 'items/jsonschema/' + item_type_id,
-                'keys': [],
-                'labels': [],
-                'recids': [],
-                'data': {},
-            }
-        item_types_data[item_type_id]['recids'].append(record_id)
-
-        # Create export info file
-        write_tsv_files(item_types_data, export_path, list_item_role)
-
-        # Create bag
-        bagit.make_bag(export_path)
-        # Create download file
-        shutil.make_archive(export_path, 'zip', export_path)
-    except Exception:
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
-    return send_file(export_path + '.zip')
 
 
 def _get_max_export_items():
