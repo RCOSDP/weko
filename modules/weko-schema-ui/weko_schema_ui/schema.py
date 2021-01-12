@@ -812,7 +812,7 @@ class SchemaTree:
                             remove_hide_data(i, parentkey + "." + k)
 
         vlst = []
-        for key_item_parent, value_item_parent in self._record.items():
+        for key_item_parent, value_item_parent in sorted(self._record.items()):
             if key_item_parent != 'pubdate' and isinstance(value_item_parent,
                                                            dict):
                 # Dict
