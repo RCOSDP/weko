@@ -419,7 +419,7 @@ class ItemTypeMappingView(BaseView):
                                             elem_str = elem['title_i18n'][
                                                 cur_lang]
                                 else:
-                                    elem_str = elem['title']
+                                    elem_str = elem.get('title', '')
                             for sub_elem in elem['items']:
                                 if 'key' in sub_elem and \
                                         sub_elem['key'] == key:

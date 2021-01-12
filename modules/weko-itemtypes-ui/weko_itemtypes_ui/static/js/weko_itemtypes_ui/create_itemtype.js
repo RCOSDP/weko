@@ -580,6 +580,7 @@ $(document).ready(function () {
               type: "object",
               properties: {
                 "interim": {
+                  format: "checkboxes",
                   type: "array",
                   items: {
                     type: "string",
@@ -671,15 +672,27 @@ $(document).ready(function () {
           });
         } else {
           page_global.table_row_map.schema.properties[row_id] = {
-            type: "string",
-            title: tmp.title,
-            enum: enum_tmp
+            title: tmp.title,                // [interim]は本当の意味を持たない
+            type: "object",
+            properties: {
+              "interim": {
+                title: tmp.title,
+                type: "string",
+                enum: enum_tmp,
+                format: tmp.input_type,    // radios|select
+              }
+            }
           }
           page_global.table_row_map.form.push({
+            items: [{
+              key: row_id + '.interim',
+              type: tmp.input_type,    // radios|select
+              title_i18n: tmp.title_i18n,
+              title: tmp.title,
+              titleMap: titleMap_tmp
+            }],
             key: row_id,
-            title_i18n: tmp.title_i18n,
-            type: tmp.input_type,    // radios|select
-            titleMap: titleMap_tmp
+            type: "fieldset"
           });
         }
       } else if(tmp.input_type.indexOf('cus_') != -1) {
