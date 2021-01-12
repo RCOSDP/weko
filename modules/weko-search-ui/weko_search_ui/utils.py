@@ -2624,6 +2624,9 @@ def handle_get_all_sub_id_and_name(
             ids += [key + '.' + _id for _id in _ids]
             names += [title + '.' + _name
                       for _name in _names]
+        elif item.get('format') == 'checkboxes':
+            ids.append(key + '[0]')
+            names.append(title + '[0]')
         else:
             ids.append(key)
             names.append(title)
