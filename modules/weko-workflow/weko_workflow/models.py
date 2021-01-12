@@ -352,11 +352,17 @@ class TimestampMixin(object):
     )
     """Policy for status to db record."""
 
-    created = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    created = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow)
     """Creation timestamp."""
 
-    updated = db.Column(db.DateTime, nullable=False, default=datetime.now,
-                        onupdate=datetime.now)
+    updated = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow)
     """Updated timestamp."""
 
 

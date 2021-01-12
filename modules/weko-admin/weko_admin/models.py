@@ -48,7 +48,7 @@ class SessionLifetime(db.Model):
                           nullable=False, default=30)
     """ Session Life Time default units: minutes """
 
-    create_date = db.Column(db.DateTime, default=datetime.now)
+    create_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     is_delete = db.Column(db.Boolean(name='delete'),
                           default=False, nullable=False)
@@ -108,6 +108,7 @@ class SessionLifetime(db.Model):
 
 class SearchManagement(db.Model):
     """Search setting model."""
+
 
     __tablename__ = 'search_management'
 
@@ -1409,6 +1410,12 @@ class FeedbackMailHistory(db.Model):
         nullable=False
     )
 
+    created = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
     parent_id = db.Column(
         db.Integer
     )
@@ -1656,7 +1663,7 @@ class FeedbackMailFailed(db.Model):
             current_app.logger.debug(ex)
 
 
-class Identifier(db.Model):
+class Identifier(db.Model, Timestamp):
     """
     Represent an Identifier.
 

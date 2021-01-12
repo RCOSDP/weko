@@ -37,6 +37,25 @@ from sqlalchemy_utils.types.choice import ChoiceType
 from .widgets import RadioGroupWidget
 
 
+class Timestamp(object):
+    """Timestamp model mix-in with fractional seconds support.
+
+    SQLAlchemy-Utils timestamp model does not have support for fractional
+    seconds.
+    """
+
+    created = db.Column(
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        default=datetime.utcnow,
+        nullable=False
+    )
+    updated = db.Column(
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+
 class SubscriptionPolicy(object):
     """Group subscription policies."""
 
@@ -143,7 +162,7 @@ class MembershipState(object):
         return state in [cls.ACTIVE, cls.PENDING_ADMIN, cls.PENDING_USER]
 
 
-class Group(db.Model):
+class Group(db.Model, Timestamp):
     """Group data model."""
 
     __tablename__ = 'accounts_group'
@@ -910,26 +929,6 @@ class GroupAdmin(db.Model):
             query = query.filter(Group.id.in_(groups_ids))
 
         return query
-
-
-class Timestamp(object):
-    """Timestamp model mix-in with fractional seconds support.
-
-    SQLAlchemy-Utils timestamp model does not have support for fractional
-    seconds.
-    """
-
-    created = db.Column(
-        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
-        default=datetime.utcnow,
-        nullable=False
-    )
-    updated = db.Column(
-        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
-        default=datetime.utcnow,
-        nullable=False
-    )
-
 
 #
 # Helpers

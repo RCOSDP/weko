@@ -117,7 +117,9 @@ class ChangeListIndexes(db.Model, Timestamp):
     """Root url of change list."""
 
     publish_date = db.Column(
-        db.DateTime, nullable=True, default=datetime.utcnow)
+        db.DateTime,
+        nullable=True,
+        default=datetime.utcnow)
     """Relation to the Index Identifier."""
 
 

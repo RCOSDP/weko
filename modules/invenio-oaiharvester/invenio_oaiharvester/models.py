@@ -116,7 +116,7 @@ class HarvestLogs(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     harvest_setting_id = db.Column(db.Integer, nullable=False)
-    start_time = db.Column(db.DateTime, default=datetime.datetime.now())
+    start_time = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
     end_time = db.Column(db.DateTime, nullable=True)
     status = db.Column(db.String(10), nullable=False, default='Running')
     errmsg = db.Column(db.String(255), nullable=True, default=None)

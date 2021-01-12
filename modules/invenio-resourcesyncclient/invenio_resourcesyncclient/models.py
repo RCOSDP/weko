@@ -150,7 +150,7 @@ class ResyncLogs(db.Model, Timestamp):
 
     task_id = db.Column(db.String(40), default=None)
 
-    start_time = db.Column(db.DateTime, default=datetime.now())
+    start_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     end_time = db.Column(db.DateTime, nullable=True)
 

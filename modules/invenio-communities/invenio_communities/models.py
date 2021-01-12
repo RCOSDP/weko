@@ -493,7 +493,9 @@ class FeaturedCommunity(db.Model, Timestamp):
     """Id of the featured community."""
 
     start_date = db.Column(
-        db.DateTime, nullable=False, default=datetime.utcnow)
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False)
     """Start date of the community featuring."""
 
     #

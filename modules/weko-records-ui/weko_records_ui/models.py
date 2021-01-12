@@ -43,6 +43,19 @@ class PDFCoverPageSettings(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
+    created = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow)
+    """ Created Date"""
+
+    updated = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow)
+    """ Updated Date """
+
     avail = db.Column(db.Text, nullable=True, default='disable')
     """ PDF Cover Page Availability """
 
@@ -58,16 +71,6 @@ class PDFCoverPageSettings(db.Model):
     header_display_position = db.Column(
         db.Text, nullable=True, default='center')
     """ Header Display Position """
-
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    """ Created Date"""
-
-    updated_at = db.Column(
-        db.DateTime,
-        nullable=False,
-        default=datetime.now,
-        onupdate=datetime.now)
-    """ Updated Date """
 
     def __init__(
             self,
