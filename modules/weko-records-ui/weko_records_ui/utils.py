@@ -467,10 +467,14 @@ def is_show_email_of_creator(item_type_id):
     def item_type_show_email(item_type_id):
         # Get flag of creator's email hide from item type.
         creator_id = get_creator_id(item_type_id)
+        if not creator_id:
+            return None
         item_type = ItemTypes.get_by_id(item_type_id)
         schema_editor = item_type.render.get('schemaeditor', {})
         schema = schema_editor.get('schema', {})
         creator = schema.get(creator_id)
+        if not creator:
+            return None
         properties = creator.get('properties', {})
         creator_mails = properties.get('creatorMails', {})
         items = creator_mails.get('items', {})
