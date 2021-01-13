@@ -18,6 +18,7 @@ from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
     PIDMissingObjectError, PIDRedirectedError, PIDUnregistered
 from invenio_pidstore.resolver import Resolver
 from invenio_records.api import Record
+from weko_user_profiles.api import current_userprofile
 from werkzeug.routing import BaseConverter, BuildError, PathConverter
 from werkzeug.utils import cached_property, import_string
 
@@ -25,8 +26,6 @@ from .errors import PIDDeletedRESTError, PIDDoesNotExistRESTError, \
     PIDMissingObjectRESTError, PIDRedirectedRESTError, \
     PIDUnregisteredRESTError
 from .proxies import current_records_rest
-import weko_user_profiles
-from weko_user_profiles.api import current_userprofile
 
 
 def build_default_endpoint_prefixes(records_rest_endpoints):
@@ -120,8 +119,8 @@ def set_utc_pub_datetime(data):
     """Set `utc_pub_datetime` key to `data` dict"""
     if current_userprofile:
         tz = pytz.timezone(current_userprofile.timezone)
-    elif 'BABEL_DEFAULT_TIMEZONE' in weko_user_profiles.config:
-        tz = pytz.timezone(weko_user_profiles.config['BABEL_DEFAULT_TIMEZONE'])
+    elif 'BABEL_DEFAULT_TIMEZONE' in current_app.config:
+        tz = pytz.timezone(current_app.config['BABEL_DEFAULT_TIMEZONE'])
     else:
         tz = pytz.utc
 
