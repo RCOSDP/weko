@@ -904,18 +904,18 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                             item_label, properties[key].get('title'))
 
                     if properties[key].get('format', '') == 'checkboxes':
+                        new_key += '[{}]'
+                        new_label += '[{}]'
                         if isinstance(data, dict):
                             data = [data]
                         if data and data[idx].get(key):
-                            new_key += '[{}]'
-                            new_label += '[{}]'
                             for idx_c in range(len(data[idx][key])):
                                 key_list.append(new_key.format(idx_c))
                                 key_label.append(new_label.format(idx_c))
                                 key_data.append(data[idx][key][idx_c])
                         else:
-                            key_list.append(new_key)
-                            key_label.append(new_label)
+                            key_list.append(new_key.format('0'))
+                            key_label.append(new_label.format('0'))
                             key_data.append('')
                     elif properties[key]['type'] in ['array', 'object']:
                         if data and idx < len(data) and data[idx].get(key):

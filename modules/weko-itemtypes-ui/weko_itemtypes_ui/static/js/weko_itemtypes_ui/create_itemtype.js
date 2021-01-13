@@ -574,12 +574,15 @@ $(document).ready(function () {
           page_global.table_row_map.schema.properties[row_id] = {
             type: "array",
             title: tmp.title,
+            title_i18n: tmp.title_i18n,
             minItems: tmp.input_minItems,
             maxItems: tmp.input_maxItems,
             items: {
               type: "object",
               properties: {
                 "interim": {
+                  title: tmp.title,
+                  title_i18n: tmp.title_i18n,
                   format: "checkboxes",
                   type: "array",
                   items: {
@@ -592,10 +595,13 @@ $(document).ready(function () {
           }
           page_global.table_row_map.form.push({
             key: row_id,
+            title: tmp.title,
             title_i18n: tmp.title_i18n,
             add: "New",
             style: {add:"btn-success"},
             items: [{
+              title: tmp.title,
+              title_i18n: tmp.title_i18n,
               key: row_id + '[].interim',
               type: "template",
               notitle: true,
@@ -607,10 +613,13 @@ $(document).ready(function () {
           // 選択式(プルダウン)
           page_global.table_row_map.schema.properties[row_id] = {
             title: tmp.title,                // [interim]は本当の意味を持たない
+            title_i18n: tmp.title_i18n,
             "type": "object",
             "format": "object",
             properties: {
               "interim": {
+                title: tmp.title,
+                title_i18n: tmp.title_i18n,
                 type: "array",
                 format: "checkboxes",
                 items: {
@@ -646,12 +655,15 @@ $(document).ready(function () {
           page_global.table_row_map.schema.properties[row_id] = {
             type: "array",
             title: tmp.title,
+            title_i18n: tmp.title_i18n,
             minItems: tmp.input_minItems,
             maxItems: tmp.input_maxItems,
             items: {
               type: "object",
               properties: {
                 interim: {                  // [interim]は本当の意味を持たない
+                  title: tmp.title,
+                  title_i18n: tmp.title_i18n,
                   type: "string",
                   enum: enum_tmp
                 }
@@ -660,10 +672,13 @@ $(document).ready(function () {
           }
           page_global.table_row_map.form.push({
             key: row_id,
+            title: tmp.title,
             title_i18n: tmp.title_i18n,
             add: "New",
             style: {add:"btn-success"},
             items: [{
+              title: tmp.title,
+              title_i18n: tmp.title_i18n,
               key: row_id+'[].interim',
               type: tmp.input_type,    // radios|select
               notitle: true,
@@ -672,10 +687,11 @@ $(document).ready(function () {
           });
         } else {
           page_global.table_row_map.schema.properties[row_id] = {
-            title: tmp.title,                // [interim]は本当の意味を持たない
+            title: tmp.title,
+            title_i18n: tmp.title_i18n,
             type: "object",
             properties: {
-              "interim": {
+              "interim": {// [interim]は本当の意味を持たない
                 title: tmp.title,
                 type: "string",
                 enum: enum_tmp,
@@ -684,6 +700,8 @@ $(document).ready(function () {
             }
           }
           page_global.table_row_map.form.push({
+            title: tmp.title,
+            title_i18n: tmp.title_i18n,
             items: [{
               key: row_id + '.interim',
               type: tmp.input_type,    // radios|select
