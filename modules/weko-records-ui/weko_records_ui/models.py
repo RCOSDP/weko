@@ -168,7 +168,7 @@ class FilePermission(db.Model):
     """Status of the permission."""
     """-1 : Initialized, 0 : Processing, 1: Approved."""
 
-    open_date = db.Column(db.DateTime, nullable=False, default=datetime.now())
+    open_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
     def __init__(self, user_id, record_id, file_name,
                  usage_application_activity_id, status):
