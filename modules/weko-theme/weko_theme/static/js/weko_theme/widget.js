@@ -124,6 +124,10 @@ const PageBodyGrid = function () {
                     '.panel-default > .panel-heading{' +
                         'border-bottom: ' + '1px ' + 'solid ' + frameBorderColorMainContent + ';' +
                     '}' +
+                    '.pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover,' +
+                    '.pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {' +
+                        'background-color: #337ab7 !important;' +
+                    '}' +
                 '</style>';
     };
 

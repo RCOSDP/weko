@@ -60,12 +60,14 @@ from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_records_ui.utils import hide_item_metadata, \
     hide_item_metadata_email_only
+from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity, WorkFlow
-from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
+    WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.utils import IdentifierHandle
 
 
@@ -998,8 +1000,11 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             index_ids = path.split('/')
             pos_index = []
             for index_id in index_ids:
-                index = Indexes.get_index(index_id)
-                pos_index.append(index.index_name_english if index else '')
+                index_tree = Indexes.get_index(index_id)
+                index_name = ''
+                if index_tree:
+                    index_name = index_tree.index_name_english.replace('/', '\/')
+                pos_index.append(index_name)
             records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
@@ -1022,9 +1027,23 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         identifier = IdentifierHandle(record.pid_recid.object_uuid)
         doi_value, doi_type = identifier.get_idt_registration_data()
+        doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
+        doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        if doi_type_str and doi_str:
+            doi_domain = ''
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
+                doi_domain = IDENTIFIER_GRANT_LIST[1][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[1]:
+                doi_domain = IDENTIFIER_GRANT_LIST[2][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[2]:
+                doi_domain = IDENTIFIER_GRANT_LIST[3][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[3]:
+                doi_domain = IDENTIFIER_GRANT_LIST[4][2]
+            if doi_domain and doi_str.startswith(doi_domain):
+                doi_str = doi_str.replace(doi_domain + '/', '', 1)
         records.attr_output[recid].extend([
-            doi_type[0] if doi_type and doi_type[0] else '',
-            doi_value[0] if doi_value and doi_value[0] else ''
+            doi_type_str,
+            doi_str
         ])
 
         records.attr_output[recid].append('')
