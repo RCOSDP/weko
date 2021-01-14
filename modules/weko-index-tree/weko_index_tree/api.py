@@ -1361,7 +1361,7 @@ class Indexes(object):
         Set browsing group for all index's children.
 
         :param index_id: search index id
-        :param browsing_group: browưekosing group
+        :param browsing_group: browsing group
         """
         Index.query.filter_by(parent=index_id). \
             update({Index.browsing_group: browsing_group},
