@@ -1017,7 +1017,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 index_tree = Indexes.get_index(index_id)
                 index_name = ''
                 if index_tree:
-                    index_name = index_tree.index_name_english.replace('/', '\/')
+                    index_name = index_tree.index_name_english.replace(
+                        '/', r'\/')
                 pos_index.append(index_name)
             records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend(
