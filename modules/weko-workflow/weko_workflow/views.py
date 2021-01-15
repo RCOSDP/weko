@@ -77,7 +77,8 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     is_show_autofill_metadata, is_usage_application, \
     is_usage_application_item_type, item_metadata_validation, \
     process_send_notification_mail, process_send_reminder_mail, register_hdl, \
-    saving_doi_pidstore, update_cache_data, save_activity_data
+    saving_doi_pidstore, update_cache_data, save_activity_data, \
+    get_workflow_item_type_names
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -135,7 +136,13 @@ def index():
     send_mail = current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL')
     req_per_page = current_app.config.get('WEKO_WORKFLOW_PER_PAGE')
     columns = current_app.config.get('WEKO_WORKFLOW_COLUMNS')
-    get_application_and_approved_date(activities, columns)
+
+    enable_show_activity = current_app.config[
+        'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']
+
+    if enable_show_activity:
+        get_application_and_approved_date(activities, columns)
+        get_workflow_item_type_names(activities)
 
     from weko_user_profiles.config import WEKO_USERPROFILES_ADMINISTRATOR_ROLE
     admin_role = WEKO_USERPROFILES_ADMINISTRATOR_ROLE
@@ -146,13 +153,6 @@ def index():
             break
     send_mail = has_admin_role and send_mail
 
-    for item_activity in activities:
-        workflow = WorkFlow()
-        workflow_detail = workflow.get_workflow_by_id(
-            item_activity.workflow_id)
-        setattr(item_activity, "item_type_name",
-                get_item_type_name(workflow_detail.itemtype_id))
-
     return render_template(
         'weko_workflow/activity_list.html',
         page=page,
@@ -162,8 +162,7 @@ def index():
         tab=tab,
         maxpage=maxpage,
         render_widgets=render_widgets,
-        enable_show_activity=current_app.config[
-            'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'],
+        enable_show_activity=enable_show_activity,
         activities=activities,
         community_id=community_id,
         columns=columns,
@@ -1488,6 +1487,10 @@ def send_mail(activity_id='0', mail_template=''):
 @blueprint.route('/save_activity_data', methods=['POST'])
 @login_required
 def save_activity():
+    """Save activity.
+
+    @return:
+    """
     response = {
         "success": True,
         "msg": ""

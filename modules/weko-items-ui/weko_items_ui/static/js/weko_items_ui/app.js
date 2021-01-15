@@ -569,6 +569,7 @@ function toObject(arr) {
       $scope.previousNumFiles = 0;
       $scope.bibliographic_titles = "bibliographic_titles";
       $scope.disableFileTextURLInterval = null;
+      $scope.defaultFileAccessRole = "open_access";
 
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
@@ -577,8 +578,13 @@ function toObject(arr) {
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (value.type == 'array') {
-            if (value.items.properties.hasOwnProperty('filename')) {
+            let valueProperties = value.items.properties;
+            if (valueProperties.hasOwnProperty('filename')) {
               $scope.filemeta_keys.push(key);
+              if (valueProperties.hasOwnProperty('accessrole')
+                && valueProperties.accessrole.hasOwnProperty('default')) {
+                $scope.defaultFileAccessRole = valueProperties.accessrole.default;
+              }
             }
           }
         }
@@ -1967,6 +1973,9 @@ function toObject(arr) {
             });
           }
 
+          if (!$rootScope.filesVM || !$rootScope.filesVM.hasOwnProperty("files")) {
+            return;
+          }
           let files = $rootScope.filesVM.files;
           $scope.filemeta_keys.forEach(function (filemeta_key) {
             for (let i = 0; i < model[filemeta_key].length; i++) {
@@ -2148,7 +2157,7 @@ function toObject(arr) {
             fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
             fileInfo.date[0].dateType = "Available";
             // Set default Access Role is Open Access
-            fileInfo.accessrole = 'open_access'
+            fileInfo.accessrole = $scope.defaultFileAccessRole;
             // Set file URL
             if (fileData.key) {
               fileInfo.url = {
@@ -2365,13 +2374,18 @@ function toObject(arr) {
       }
 
       $scope.getFilesObject = function () {
-        let filesUploaded = $rootScope.filesVM.files;
-        var filesObject = new Object();
+        let filesObject = {};
+        let filesVM = $rootScope["filesVM"];
+        if (!filesVM || !filesVM.hasOwnProperty("files")) {
+          return filesObject;
+        }
+        let filesUploaded = filesVM.files;
         filesUploaded.forEach(function (file) {
-          filesObject[file.key] = new Object();
-          filesObject[file.key].size = $scope.bytesToReadableString(file.size);
-          filesObject[file.key].format = file.mimetype;
-          filesObject[file.key].url = file.links.self;
+          filesObject[file.key] = {
+            size: $scope.bytesToReadableString(file.size),
+            format: file["mimetype"],
+            url: file.links ? file.links.self : ""
+          };
         });
         return filesObject;
       }
@@ -2417,7 +2431,7 @@ function toObject(arr) {
       }
 
       $scope.hiddenPubdate = function () {
-        if ($("#is_hidden_pubdate").val() !== "True"){
+        if ($("#is_hidden_pubdate").val() !== "True") {
           return;
         }
         let pubdate = $rootScope.recordsVM.invenioRecordsForm.find(function (subItem) { return subItem.key == 'pubdate' });
@@ -2791,7 +2805,7 @@ function toObject(arr) {
             let lang = "en";
             let titleData = data.title;
             if (titleData['title_parent_key'] && $rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleData['title_parent_key'])) {
-              tempRecord = $rootScope.recordsVM.invenioRecordsModel[titleData['title_parent_key']];
+              let tempRecord = $rootScope.recordsVM.invenioRecordsModel[titleData['title_parent_key']];
               // Get title
               if (titleData['title_value_lst_key']) {
                 titleData['title_value_lst_key'].forEach(function (val) {
@@ -2821,7 +2835,7 @@ function toObject(arr) {
                 $rootScope.recordsVM.invenioRecordsModel['title'] = title;
                 $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
               } else {
-                if (title != "") {
+                if (title !== "") {
                   $rootScope.recordsVM.invenioRecordsModel['title'] = title;
                   $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
                 }
@@ -3366,9 +3380,16 @@ function toObject(arr) {
             //If CustomBSDatePicker empty => remove attr.
             CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
 
-            let title = $rootScope.recordsVM.invenioRecordsModel['title'];
-            let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
-            $scope.saveTilteAndShareUserID(title, shareUserID);
+            // let title = $rootScope.recordsVM.invenioRecordsModel['title'];
+            // let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
+            // $scope.saveTitleAndShareUserID(title, shareUserID);
+
+            // Save required data into workflow activity
+            if (!$scope.saveActivity()) {
+              $scope.endLoading();
+              return false;
+            }
+
             $scope.updatePositionKey();
             sessionStorage.removeItem(currActivityId);
 
@@ -3444,25 +3465,46 @@ function toObject(arr) {
         return removedItemKeys;
       }
 
-      $scope.saveTilteAndShareUserID = function(title, shareUserID) {
+      $scope.saveActivity = function () {
+        let result = true;
+        const URL = "/workflow/save_activity_data";
         let activityID = $('#activity_id').text();
-        let data = {
-          'title': title,
-          'shared_user_id': shareUserID,
-          'activity_id': activityID
-        }
-        $.ajax({
-          url: '/api/items/save_title_and_share_user_id',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          data: JSON.stringify(data),
-          dataType: 'json',
-          success: function(response){
+        let recordModel = $rootScope["recordsVM"].invenioRecordsModel;
 
+        let requestData = {
+          activity_id: activityID,
+          title: recordModel['title'],
+          shared_user_id: recordModel['shared_user_id'],
+        }
+
+        if (recordModel['approval1'] || recordModel['approval2']) {
+          requestData['approval1'] = recordModel['approval1'];
+          requestData['approval2'] = recordModel['approval2'];
+        }
+
+
+        $.ajax({
+          url: URL,
+          method: "POST",
+          async: false,
+          headers: {
+            "Content-Type": "application/json"
+          },
+          data: JSON.stringify(requestData),
+          dataType: "json",
+          success: function (data) {
+            if (!data.success) {
+              addAlert(data.msg, "alert-danger");
+              result = false;
+            }
+          },
+          error: function () {
+            addAlert("Cannot connect to server!", "alert-danger");
+            result = false;
           }
-        });
+        })
+
+        return result;
       }
 
       $scope.addApprovalMail = function () {

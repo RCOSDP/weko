@@ -1723,27 +1723,6 @@ def set_multi_language_name(item, cur_lang):
                 value['name'] = value['name_i18n'][cur_lang]
 
 
-def validate_save_title_and_share_user_id(result, data):
-    """Save title and shared user id for activity.
-
-    :param result: json object
-    :param data: json object
-    :return: The result.
-    """
-    try:
-        if data and isinstance(data, dict):
-            activity_id = data['activity_id']
-            title = data['title']
-            shared_user_id = data['shared_user_id']
-            activity = WorkActivity()
-            activity.update_title_and_shared_user_id(activity_id, title,
-                                                     shared_user_id)
-    except Exception as ex:
-        result['is_valid'] = False
-        result['error'] = str(ex)
-    return result
-
-
 def get_data_authors_prefix_settings():
     """Get all authors prefix settings."""
     from weko_authors.models import AuthorsPrefixSettings

@@ -133,7 +133,7 @@ WEKO_WORKFLOW_ACTIONS = [
 WEKO_WORKFLOW_COLUMNS = [
     'updated',
     'activity_id',
-    'ItemName',
+    'title',
     'flows_name',
     'action_name',
     'StatusDesc',

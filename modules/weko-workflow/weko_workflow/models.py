@@ -762,7 +762,8 @@ class ActivityAction(db.Model, TimestampMixin):
     """Activity_Action identifier."""
 
     activity_id = db.Column(
-        db.String(24), nullable=False, unique=False, index=True)
+        db.String(24), db.ForeignKey(Activity.activity_id),
+        nullable=False, unique=False, index=True)
     """activity id of Activity Action."""
 
     action_id = db.Column(

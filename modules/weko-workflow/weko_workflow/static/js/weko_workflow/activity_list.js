@@ -442,7 +442,7 @@ function render_table_rows(rows, req_per_page, page_no) {
 // Pagination logic implementation
 function pagination(data, wf_Data) {
   const all_data = window.btoa(unescape(encodeURIComponent(JSON.stringify(wf_Data))));
-  let $pagination = $(".pagination");
+  let $pagination = $(".pagination.table_data");
   $pagination.empty();
   if (data.req_per_page !== 'ALL') {
     let pager = `<a href="#" id="prev_link" onclick=active_page('prev',\"${all_data}\",${data.req_per_page})>&lt;</a>` +

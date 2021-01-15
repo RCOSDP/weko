@@ -44,8 +44,8 @@ from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_index_tree.models import Index
-from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
-    Mapping
+from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
+    ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_user_profiles.utils import get_user_profile_info
@@ -956,8 +956,6 @@ class IdentifierHandle(object):
 
     def get_idt_registration_data(self):
         """Get Identifier Registration data.
-
-        Arguments:
 
         Returns:
             doi_value -- {string} Identifier
@@ -2015,15 +2013,62 @@ def get_application_and_approved_date(activities, columns):
     @param columns:
     """
     if 'application_date' in columns or 'approved_date' in columns:
-        for item_activity in activities:
-            activitty_date = WorkActivityHistory()
-            application_date_item = activitty_date.get_application_date(
-                item_activity.activity_id)
-            setattr(item_activity, "application_date", application_date_item)
+        activities_id_list = []
+        for activity_data in activities:
+            activities_id_list.append(activity_data.activity_id)
+        application_date_dc = {}
+        approved_date_dc = {}
+        if activities_id_list:
+            activity_history = WorkActivityHistory()
+            application_dates = activity_history.get_application_date(
+                activities_id_list)
+            for data in application_dates:
+                application_date_dc[data.activity_id] = data.action_date
 
-            approve_date_item = activitty_date.get_approved_date(
+            approved_date_list = activity_history.get_approved_date(
+                activities_id_list)
+            for data in approved_date_list:
+                approved_date_dc[data.get("activity_id")] = data.get(
+                    "action_date")
+
+        for item_activity in activities:
+            application_date = application_date_dc.get(
                 item_activity.activity_id)
-            setattr(item_activity, "approved_date", approve_date_item)
+            approved_date = approved_date_dc.get(item_activity.activity_id)
+            item_activity.application_date = application_date
+            item_activity.approved_date = approved_date
+
+
+def get_workflow_item_type_names(activities: list):
+    """Get workflow item type names.
+
+    @param activities: Activity list.
+    """
+    workflow_id_lst = []
+    for activity in activities:
+        workflow_id_lst.append(activity.workflow_id)
+
+    if workflow_id_lst:
+        # Get Workflow list
+        workflows = WorkFlow().get_workflow_by_ids(workflow_id_lst)
+        item_type_id_lst = []
+        temp_workflow_item_type_id = {}
+        for data in workflows:
+            item_type_id_lst.append(data.itemtype_id)
+            temp_workflow_item_type_id[data.itemtype_id] = data.id
+
+        # Get item type list
+        item_type_name_list = ItemTypeNames.get_all_by_id(item_type_id_lst)
+        workflow_item_type_names = {}
+        for item_type_name in item_type_name_list:
+            for data in workflows:
+                if data.itemtype_id == item_type_name.id:
+                    workflow_item_type_names[data.id] = item_type_name.name
+
+        for activity in activities:
+            item_type_name = workflow_item_type_names.get(activity.workflow_id)
+            if item_type_name:
+                activity.item_type_name = item_type_name
 
 
 def create_usage_report(activity_id, item_id):
@@ -2097,9 +2142,9 @@ def create_record_metadata(activity,
                          owner_id)
 
     activity.update({'activity_id': new_usage_report_activity.activity_id})
+    activity['activity_login_user'] = owner_id
+    activity['title'] = item_metadata['title']
 
-    WorkActivity().update_activity_creator(
-        new_usage_report_activity.activity_id, owner_id)
     WorkActivity().update_activity_action_handler(
         new_usage_report_activity.activity_id, owner_id)
 
@@ -2123,12 +2168,16 @@ def create_record_metadata(activity,
 
     deposit.commit()
     deposit.publish()
-    WorkActivity().upt_activity_item(activity, item_id=deposit.id)
+
+    activity['item_id'] = deposit.id
+
     first_ver = deposit.newversion(pid)
     if first_ver:
         first_ver.publish()
 
-    update_activity_action(new_usage_report_activity.activity_id, owner_id)
+    update_activity_action(activity.get('activity_id'), owner_id)
+
+    WorkActivity().update_activity(activity.get('activity_id'), activity)
     db.session.commit()
     return None
 
@@ -2252,12 +2301,11 @@ def update_activity_action(activity_id, owner_id):
     @param activity_id:
     @param owner_id:
     """
-    if current_app.config[
-            'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION']:
-        action = _Action.query.filter_by(
-            action_name=current_app.config['WEKO_WORKFLOW_ACTION_ITEM_'
+    usage_application = current_app.config['WEKO_WORKFLOW_ACTION_ITEM_'
                                            'REGISTRATION_USAGE_APPLICATION']
-        ).one_or_none()
+    if usage_application:
+        action = _Action.query.filter_by(
+            action_name=usage_application).one_or_none()
         if action:
             WorkActivity().upt_activity_action_status(
                 activity_id=activity_id, action_id=action.id,
@@ -2380,18 +2428,12 @@ def save_activity_data(data: dict) -> NoReturn:
 
     @param data: activity data.
     """
-    try:
-        activity_id = data.get("activity_id")
-        title = data.get("title")
-        shared_user_id = data.get("shared_user_id")
-        approval_1 = data.get("approval1")
-        approval_2 = data.get("approval2")
-        activity_api = WorkActivity()
-        if title or shared_user_id:
-            activity_api.update_title_and_shared_user_id(activity_id, title,
-                                                         shared_user_id)
-        if approval_1 or approval_2:
-            activity_id.update_activity_approval(activity_id, approval_1,
-                                                 approval_2)
-    except Exception as error:
-        current_app.logger.error(error)
+    activity_id = data.get("activity_id")
+    activity_data = {
+        "title": data.get("title"),
+        "shared_user_id": data.get("shared_user_id"),
+        "approval1": data.get("approval1"),
+        "approval2": data.get("approval2"),
+    }
+    if activity_id:
+        WorkActivity().update_activity(activity_id, activity_data)
