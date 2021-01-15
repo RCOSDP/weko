@@ -1809,58 +1809,58 @@ function toObject(arr) {
       /**
       * When "Item Registration" screen init, validated controls are remove.
       */
-      $scope.removeValidateControlsWhenInit = function(){
-        //Fix init controls on "Item Registration" => not validate controls.
-        $('*[ng-controller="WekoRecordsCtrl"] select').removeClass('ng-invalid');
-        $('*[ng-controller="WekoRecordsCtrl"] input').removeClass('ng-invalid');
-        $('*[ng-controller="WekoRecordsCtrl"] radio').removeClass('ng-invalid');
+      $scope.removeValidateControlsWhenInit = function () {
+          //Fix init controls on "Item Registration" => not validate controls.
+          $('*[ng-controller="WekoRecordsCtrl"] select').removeClass('ng-invalid');
+          $('*[ng-controller="WekoRecordsCtrl"] input').removeClass('ng-invalid');
+          $('*[ng-controller="WekoRecordsCtrl"] textarea').removeClass('ng-invalid');
       }
 
       /**
       * Expand all parent panels when child or grandchild controls required.
       */
-      $scope.expandAllParentPanel = function(){
-        let requiredControls = $('.field-required');
-        for (let i = 0; i < requiredControls.length; i++) {
-          let control = requiredControls[i];
-          let panels = $(control).parents('.panel.panel-default.deposit-panel');
-          for (let j = 0; j < panels.length; j++) {
-            let panel = panels[j];
-            let panelBodyList = $(panel).children('.panel-body');
-            panelBodyList.removeClass('ng-hide');
+      $scope.expandAllParentPanel = function () {
+          let requiredControls = $('.field-required');
+          for (let i = 0; i < requiredControls.length; i++) {
+              let control = requiredControls[i];
+              let panels = $(control).parents('.panel.panel-default.deposit-panel');
+              for (let j = 0; j < panels.length; j++) {
+                  let panel = panels[j];
+                  let panelBodyList = $(panel).children('.panel-body');
+                  panelBodyList.removeClass('ng-hide');
+              }
           }
-        }
       }
 
       /**
       * 1. Set attribute required for root panel if setting required.
       * 2. If root panel is required, child or grandchild panels is required and expand.
       */
-      $scope.setCollapsedForForm = function(){
-        let forms = $rootScope.recordsVM.invenioRecordsForm;
-        let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
-        angular.forEach(forms, function(val, key){
-          //Set attribute 'required' for all parent form.
-          if(requiredList.includes(val['key'])){
-            val['required'] = true;
-          }
-          //Root panel is required => all sub items is required.
-          if(val['required']) {
-            $scope.setRequiredForAllSubItems(val["items"], true);
-          }
-        });
+      $scope.setCollapsedForForm = function () {
+          let forms = $rootScope.recordsVM.invenioRecordsForm;
+          let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
+          angular.forEach(forms, function (val) {
+              //Set attribute 'required' for all parent form.
+              if (requiredList.indexOf(val['key']) != -1) {
+                  val['required'] = true;
+              }
+              //Root panel is required => all sub items is required.
+              if (val['required']) {
+                  $scope.setRequiredForAllSubItems(val["items"], true);
+              }
+          });
       }
 
       /**
       * Set 'required' attribute for all sub items by 'isRequired' param.
       */
-      $scope.setRequiredForAllSubItems = function(forms, isRequired){
-        angular.forEach(forms, function(val, key){
-          val['required'] = isRequired;
-          if(val['items'] && val['items'].length > 0){
-            $scope.setRequiredForAllSubItems(val["items"], isRequired);
-          }
-        });
+      $scope.setRequiredForAllSubItems = function (forms, isRequired) {
+          angular.forEach(forms, function (val) {
+              val['required'] = isRequired;
+              if (val['items'] && val['items'].length > 0) {
+                  $scope.setRequiredForAllSubItems(val["items"], isRequired);
+              }
+          });
       }
 
       $scope.loadFilesFromSession = function () {
