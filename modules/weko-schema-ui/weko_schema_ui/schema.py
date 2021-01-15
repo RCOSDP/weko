@@ -444,7 +444,13 @@ class SchemaTree:
                         if atr_vm.get(key) is None:
                             yield None, id(key)
                         else:
-                            yield atr_vm[key], id(key)
+                            # In case of checkboxes, stored data will be
+                            # [a,b,c]
+                            if isinstance(atr_vm[key], list):
+                                for i in atr_vm[key]:
+                                    yield i, id(key)
+                            else:
+                                yield atr_vm[key], id(key)
                     elif isinstance(atr_vm, list):
                         for i in atr_vm:
                             if i.get(key) is None:

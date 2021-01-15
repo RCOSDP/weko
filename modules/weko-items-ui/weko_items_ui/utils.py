@@ -903,7 +903,21 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         new_label = '{}.{}'.format(
                             item_label, properties[key].get('title'))
 
-                    if properties[key]['type'] in ['array', 'object']:
+                    if properties[key].get('format', '') == 'checkboxes':
+                        new_key += '[{}]'
+                        new_label += '[{}]'
+                        if isinstance(data, dict):
+                            data = [data]
+                        if data and data[idx].get(key):
+                            for idx_c in range(len(data[idx][key])):
+                                key_list.append(new_key.format(idx_c))
+                                key_label.append(new_label.format(idx_c))
+                                key_data.append(data[idx][key][idx_c])
+                        else:
+                            key_list.append(new_key.format('0'))
+                            key_label.append(new_label.format('0'))
+                            key_data.append('')
+                    elif properties[key]['type'] in ['array', 'object']:
                         if data and idx < len(data) and data[idx].get(key):
                             m_data = data[idx][key]
                         else:
@@ -1088,7 +1102,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 if not labels:
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or ['']
-                records.attr_output[recid].extend(data)
+                records.attr_output[recid].extend(
+                    data.get("attribute_value", ""))
 
         new_keys = []
         for key in keys:
