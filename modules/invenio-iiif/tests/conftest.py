@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 
 import shutil
 import tempfile
+import uuid
 from os.path import dirname, getsize, join
 
 import pytest
@@ -22,9 +23,14 @@ from invenio_accounts import InvenioAccounts
 from invenio_db import InvenioDB
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
+from invenio_pidstore import InvenioPIDStore
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records_files import InvenioRecordsFiles
+from invenio_records_files.api import Record
 
 from invenio_iiif import InvenioIIIFAPI
 from invenio_iiif.previewer import blueprint
+from invenio_iiif.views import create_blueprint_from_app
 
 
 @pytest.fixture(scope='session')
@@ -39,11 +45,14 @@ def image_path():
 @pytest.fixture(scope='module')
 def permission_factory():
     """Permission factory that allow access based on header value."""
+
     def factory(obj, action):
         class Permission(object):
             def can(self):
                 return request.headers.get('Authorization') != 'deny'
+
         return Permission()
+
     return factory
 
 
@@ -58,22 +67,24 @@ def app_config(app_config, permission_factory):
 @pytest.fixture(scope='module')
 def create_app():
     """Application factory fixture."""
+
     def factory(**config):
         app = Flask('testapp')
-        app.config.update(
-            SERVER_NAME='localhost',
-            **config
-        )
+        app.config.update(SERVER_NAME='localhost', **config)
 
         InvenioDB(app)
         InvenioAccounts(app)
         InvenioAccess(app)
+        InvenioPIDStore(app)
         InvenioFilesREST(app)
+        InvenioRecordsFiles(app)
         InvenioIIIFAPI(app)
 
         app.register_blueprint(blueprint)
+        app.register_blueprint(create_blueprint_from_app(app))
 
         return app
+
     return factory
 
 
@@ -94,11 +105,7 @@ def location_path():
 @pytest.fixture(scope='module')
 def location(location_path, database):
     """File system locations."""
-    loc = Location(
-        name='testloc',
-        uri=location_path,
-        default=True
-    )
+    loc = Location(name='testloc', uri=location_path, default=True)
     database.session.add(loc)
     database.session.commit()
     return loc
@@ -122,7 +129,31 @@ def image_object(database, location, image_path):
 def image_uuid(image_object):
     """Get image UUID (Flask-IIIF term, not actual an UUID)."""
     return u'{}:{}:{}'.format(
-        image_object.bucket_id,
-        image_object.version_id,
-        image_object.key
+        image_object.bucket_id, image_object.version_id, image_object.key
     )
+
+
+@pytest.fixture(scope='module')
+def record(database, location, image_path):
+    """Test record."""
+    rec_uuid = uuid.uuid4()
+    pid1 = PersistentIdentifier.create(
+        'recid',
+        '1',
+        object_type='rec',
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+
+    rec = Record.create(
+        {
+            'id': 1,
+            'title': 'Lorem ipsum',
+            'description': 'Lorem ipsum dolor sit amet',
+        },
+        id_=rec_uuid,
+    )
+    with open(image_path, 'rb') as fp:
+        rec.files['image-public-domain.jpg'] = fp
+    database.session.commit()
+    return rec

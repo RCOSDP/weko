@@ -2,6 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2018 CERN.
+# Copyright (C) 2019 Esteban J. G. Gabancho.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -19,15 +20,16 @@ tests_require = [
     'check-manifest>=0.25',
     'coverage>=4.0',
     # FIXME: Remove elasticsearch once pytest-invenio have fixed the es import.
-    'elasticsearch>=5.0.0',
     'elasticsearch-dsl>=5.0.0',
+    'elasticsearch>=5.0.0',
+    'invenio-app>=1.0.0',
     'invenio-db>=1.0.0b3',
     'isort>=4.3.3',
     'pydocstyle>=1.0.0',
     'pytest-cov>=1.8.0',
-    'pytest-invenio>=1.0.0',
+    'pytest-invenio>=1.0.4,<1.1.0',
     'pytest-pep8>=1.0.6',
-    'pytest>=3.7.0',
+    'pytest>=3.8.0',
 ]
 
 extras_require = {
@@ -51,10 +53,11 @@ install_requires = [
     'Flask-IIIF>=0.4.0',
     # FIXME: Invenio-Files-REST should specify Invenio-Access as requirement.
     'invenio-access>=1.0.0',
-    'invenio-files-rest>=1.0.0a23',
-    'invenio-records-files>=1.0.0a9',
+    'invenio-files-rest>=1.0.0b1',
+    'invenio-records-files>=1.0.0a10',
     'six>=1.11.0',
     'Wand>=0.4.4',
+    'iiif-prezi==0.3.0', # FIXME: probably this needs some work or fork
 ]
 
 packages = find_packages()
@@ -89,6 +92,9 @@ setup(
         ],
         'invenio_base.blueprints': [
             'invenio_iiif = invenio_iiif.previewer:blueprint',
+        ],
+        'invenio_base.api_blueprints': [
+            'invenio_iiif = invenio_iiif.views:create_blueprint_from_app',
         ],
         'invenio_celery.tasks': [
             'invenio_iiif = invenio_iiif.tasks',

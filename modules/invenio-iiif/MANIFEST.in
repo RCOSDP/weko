@@ -14,8 +14,6 @@ include *.sh
 include *.txt
 include LICENSE
 include pytest.ini
-include examples/demo_files/img.png
-include examples/demo_files/img.jpg
 prune docs/_build
 recursive-include docs *.bat
 recursive-include docs *.py
@@ -23,6 +21,5 @@ recursive-include docs *.rst
 recursive-include docs *.txt
 recursive-include docs Makefile
 recursive-include invenio_iiif *.html
-recursive-include .github/workflows *.yml
 recursive-include invenio_iiif *.po *.pot *.mo
 recursive-include tests *.py *.jpg
