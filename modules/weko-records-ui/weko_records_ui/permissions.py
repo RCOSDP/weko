@@ -26,8 +26,8 @@ from datetime import timedelta
 from flask import abort, current_app
 from flask_security import current_user
 from invenio_access import Permission, action_factory
+from invenio_accounts.models import User
 from invenio_db import db
-from sqlalchemy import MetaData, Table
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import filter_index_list_by_role, get_user_roles
 from weko_records.api import ItemTypes
@@ -95,16 +95,11 @@ def check_file_download_permission(record, fjson):
         :param user_id_list: list id of users in table accounts_user.
         :return: list email.
         """
-        metadata = MetaData()
-        metadata.reflect(bind=db.engine)
-        user_table = Table('accounts_user', metadata)
-        rec = db.session.query(user_table)
-        data = rec.all()
-        result = []
-        for item in data:
-            if item[0] in user_id_list:
-                result.append(item[1])
-        return result
+        with db.session.no_autoflush:
+            users = User.query.filter(User.id.in_(user_id_list)).all()
+            emails = [x.email for x in users]
+
+        return emails
 
     if fjson:
         is_can = True
@@ -133,23 +128,21 @@ def check_file_download_permission(record, fjson):
             # can access
             if 'open_access' in acsrole:
                 date = fjson.get('date')
-                if date:
-                    if isinstance(date, list) and date[0]:
-                        adt = date[0].get('dateValue')
-                        if adt:
-                            pdt = dt.strptime(adt, '%Y-%m-%d')
-                            is_can = True if dt.today() >= pdt else False
-                        else:
-                            is_can = True
+                if date and isinstance(date, list) and date[0]:
+                    adt = date[0].get('dateValue')
+                    if adt:
+                        pdt = dt.strptime(adt, '%Y-%m-%d')
+                        is_can = True if dt.today() >= pdt else False
+                    else:
+                        is_can = True
             # access with open date
             elif 'open_date' in acsrole:
                 try:
                     date = fjson.get('date')
-                    if date:
-                        if isinstance(date, list) and date[0]:
-                            adt = date[0].get('dateValue')
-                            pdt = dt.strptime(adt, '%Y-%m-%d')
-                            is_can = True if dt.today() >= pdt else False
+                    if date and isinstance(date, list) and date[0]:
+                        adt = date[0].get('dateValue')
+                        pdt = dt.strptime(adt, '%Y-%m-%d')
+                        is_can = True if dt.today() >= pdt else False
                 except BaseException:
                     is_can = False
 

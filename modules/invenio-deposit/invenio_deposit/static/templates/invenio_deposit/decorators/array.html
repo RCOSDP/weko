@@ -1,6 +1,6 @@
 <fieldset ng-disabled="form.readonly"
           class="schema-form-fieldset {{ form.htmlClass }}"
-          ng-init="collapsed = form.collapsed">
+          ng-init="collapsed = form.required !== true">
     <div class="panel panel-default deposit-panel">
         <div class="panel-heading"><a ng-click="collapsed = !collapsed"
                                       class="panel-toggle">
@@ -12,10 +12,10 @@
                 </a>
             <span class="text-muted pull-right"
                   style="padding-right: 10px;">{{ form.required == true ? "Required" : "Optional" }}</span>
-            <div class="help-block" ng-if="form.description"
-                 ng-bind-html="form.description"></div>
         </div>
         <div class="panel-body" ng-hide="collapsed">
+            <div class="help-block" ng-if="form.description"
+                ng-bind-html="form.description"></div>
             <div sf-array="form" class="schema-form-array {{form.htmlClass}}" ng-model="$$value$$" ng-model-options="form.ngModelOptions">
                 <div class="col-sm-12">
                     <ol class="list-group" ng-model="modelArray" ui-sortable="form.sortOptions">
@@ -37,9 +37,9 @@
                 </div>
                 <div class="clearfix" style="padding: 15px;" ng-model="modelArray">
                     <div class="help-block"
-                         ng-show="(hasError() && errorMessage(schemaError())) || form.description"
-                         ng-bind-html="(hasError() && errorMessage(schemaError())) || form.description"></div>
-            
+                        ng-show="(hasError() && errorMessage(schemaError())) || form.description"
+                        ng-bind-html="(hasError() && errorMessage(schemaError())) || form.description"></div>
+
                     <button ng-hide="form.readonly || form.add === null"
                             ng-click="appendToArray()"
                             ng-disabled="form.schema.maxItems <= modelArray.length"

@@ -301,7 +301,12 @@ class ItemTypes(RecordBase):
         :param tag: Tag of item type.
         :returns: A new :class:`ItemTypes` instance.
         """
-        assert name
+        if not name:
+            raise ValueError('Item type name cannot be empty.')
+        cur_names = map(lambda itemtype: itemtype.name, cls.get_latest(True))
+        if name in cur_names:
+            raise ValueError('Item type name is already in use.')
+
         with db.session.begin_nested():
             record = cls(schema)
 

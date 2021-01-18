@@ -49,6 +49,7 @@ from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
 from weko_records.serializers import citeproc_v1
+from weko_records.utils import remove_weko2_special_character
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
@@ -63,7 +64,8 @@ from .permissions import check_content_clickable, check_created_id, \
     is_open_restricted
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, \
-    get_registration_data_type, hide_item_metadata
+    get_registration_data_type, hide_by_email, hide_item_metadata, \
+    is_show_email_of_creator
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -361,13 +363,17 @@ def _get_google_scholar_meta(record):
                 res.append(
                     {'name': 'citation_publication_date', 'data': date.text})
         for relatedIdentifier in mtdata.findall(
-                'jpcoar:relatedIdentifier',
+                'jpcoar:relation/jpcoar:relatedIdentifier',
                 namespaces=mtdata.nsmap):
             if 'identifierType' in relatedIdentifier.attrib and \
                 relatedIdentifier.attrib[
                     'identifierType'] == 'DOI':
                 res.append({'name': 'citation_doi',
                             'data': relatedIdentifier.text})
+        for creator in mtdata.findall(
+                'jpcoar:creator/jpcoar:creatorName',
+                namespaces=mtdata.nsmap):
+            res.append({'name': 'citation_author', 'data': creator.text})
         for sourceIdentifier in mtdata.findall(
                 'jpcoar:sourceIdentifier',
                 namespaces=mtdata.nsmap):
@@ -379,11 +385,16 @@ def _get_google_scholar_meta(record):
         for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
                                       namespaces=mtdata.nsmap):
             res.append({'name': 'citation_pdf_url',
-                        'data': request.url.replace('records', 'record')
-                        + '/files/' + pdf_url.text})
+                        'data': pdf_url.text})
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
-    res.append({'name': 'citation_abstract_html_url', 'data': request.url})
+    record_route = current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route']
+    record_url = '{protocol}://{host}{path}'.format(
+        protocol=request.environ['wsgi.url_scheme'],
+        host=request.environ['HTTP_HOST'],
+        path=record_route.replace('<pid_value>', record['recid'])
+    )
+    res.append({'name': 'citation_abstract_html_url', 'data': record_url})
     return res
 
 
@@ -512,6 +523,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         billing_files_permission) if groups_price else None
 
     from weko_theme.utils import get_design_layout
+
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         request.args.get('community') or current_app.config[
@@ -535,9 +547,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     can_edit = True if pid == get_record_without_version(pid) else False
 
     open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
-
-    hide_item_metadata(record)
-
+    # Hide email of creator in pdf cover page
+    item_type_id = record['item_type_id']
+    is_show_email = is_show_email_of_creator(item_type_id)
+    if not is_show_email:
+        # list_hidden = get_ignore_item(record['item_type_id'])
+        # record = hide_by_itemtype(record, list_hidden)
+        record = hide_by_email(record)
     return render_template(
         template,
         pid=pid,
@@ -767,8 +783,11 @@ def escape_str(s):
     :param s: string
     :return: result
     """
+    br_char = '<br/>'
     if s:
-        s = s.replace('&EMPTY&', '')
+        s = remove_weko2_special_character(s)
         s = str(escape(s))
-        s = s.replace('\\n', '<br/>').replace('\n', '<br/>')
+        s = s.replace(
+            '\r\n',
+            br_char).replace('\r', br_char).replace('\n', br_char)
     return s

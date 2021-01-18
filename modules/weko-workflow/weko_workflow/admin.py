@@ -20,16 +20,20 @@
 
 """WEKO3 module docstring."""
 
+import re
 import uuid
 
 from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_accounts.models import Role, User
+from invenio_db import db
 from weko_records.api import ItemTypes
 
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
+from .models import WorkflowRole
 
 
 class FlowSettingView(BaseView):
@@ -69,10 +73,12 @@ class FlowSettingView(BaseView):
                 actions=None,
                 action_list=actions
             )
+        UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
+                                  re.IGNORECASE)
+        if not UUID_PATTERN.match(flow_id):
+            abort(404)
         workflow = Flow()
         flow = workflow.get_flow_detail(flow_id)
-        if not flow:
-            abort(400)
         return self.render(
             'weko_workflow/admin/flow_detail.html',
             flow_id=flow_id,
@@ -84,21 +90,35 @@ class FlowSettingView(BaseView):
             action_list=actions
         )
 
-    @expose('/<string:flow_id>', methods=['POST'])
-    def new_flow(self, flow_id='0'):
+    @staticmethod
+    def update_flow(flow_id):
         post_data = request.get_json()
         workflow = Flow()
-        if '0' == flow_id:
-            """Create new flow info"""
-            flow = workflow.create_flow(post_data)
-            return jsonify(code=0, msg='',
-                           data={
-                               'redirect': url_for(
-                                   'flowsetting.flow_detail',
-                                   flow_id=flow.flow_id)
-                           })
-        workflow.upt_flow(flow_id, post_data)
+        try:
+            workflow.upt_flow(flow_id, post_data)
+        except ValueError as ex:
+            response = jsonify(msg=str(ex))
+            response.status_code = 400
+            return response
+
         return jsonify(code=0, msg=_('Updated flow successfully.'))
+
+    @expose('/<string:flow_id>', methods=['POST'])
+    def new_flow(self, flow_id='0'):
+        if flow_id != '0':
+            return self.update_flow(flow_id)
+
+        post_data = request.get_json()
+        workflow = Flow()
+        try:
+            flow = workflow.create_flow(post_data)
+        except ValueError as ex:
+            response = jsonify(msg=str(ex))
+            response.status_code = 400
+            return response
+
+        redirect_url = url_for('flowsetting.flow_detail', flow_id=flow.flow_id)
+        return jsonify(code=0, msg='', data={'redirect': redirect_url})
 
     @expose('/<string:flow_id>', methods=['DELETE'])
     def del_flow(self, flow_id='0'):
@@ -127,28 +147,6 @@ class FlowSettingView(BaseView):
         return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('flowsetting.index')})
 
-    @expose('/action', methods=['GET'])
-    def action(self):
-        """Get Action list info.
-
-        :return:
-        """
-        action = Action()
-        actions = action.get_action_list()
-        return self.render(
-            'weko_workflow/admin/action_list.html',
-            actions=actions
-        )
-
-    @expose('/action/<string:action_id>', methods=['GET'])
-    def action_detail(self, action_id):
-        """Get Action detail info.
-
-        :param action_id:
-        :return:
-        """
-        pass
-
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""
@@ -167,6 +165,20 @@ class WorkFlowSettingView(BaseView):
         """
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
+        role = Role.query.all()
+        for wf in workflows:
+            list_hide = Role.query.outerjoin(WorkflowRole) \
+                .filter(WorkflowRole.workflow_id == wf.id) \
+                .filter(WorkflowRole.role_id == Role.id) \
+                .all()
+            if list_hide:
+                displays, hides = self.get_name_display_hide(list_hide, role)
+            else:
+                displays = [x.name for x in role]
+                hides = []
+            wf.display = ',<br>'.join(displays)
+            wf.hide = ',<br>'.join(hides)
+
         return self.render(
             'weko_workflow/admin/workflow_list.html',
             workflows=workflows
@@ -184,22 +196,38 @@ class WorkFlowSettingView(BaseView):
             itemtype_list = ItemTypes.get_latest_custorm_harvesting()
         flow_api = Flow()
         flow_list = flow_api.get_flow_list()
+        display = []
+        hide = []
+        role = Role.query.all()
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
                 'weko_workflow/admin/workflow_detail.html',
                 workflow=None,
                 itemtype_list=itemtype_list,
-                flow_list=flow_list
+                flow_list=flow_list,
+                hide_list=hide,
+                display_list=role
             )
         """Update the workflow info"""
         workflow = WorkFlow()
         workflows = workflow.get_workflow_detail(workflow_id)
+        hide = Role.query.outerjoin(WorkflowRole) \
+            .filter(WorkflowRole.workflow_id == workflows.id) \
+            .filter(WorkflowRole.role_id == Role.id) \
+            .all()
+        if hide:
+            display = self.get_displays(hide, role)
+        else:
+            display = role
+            hide = []
         return self.render(
             'weko_workflow/admin/workflow_detail.html',
             workflow=workflows,
             itemtype_list=itemtype_list,
-            flow_list=flow_list
+            flow_list=flow_list,
+            hide_list=hide,
+            display_list=display
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -209,6 +237,7 @@ class WorkFlowSettingView(BaseView):
         :return:
         """
         json_data = request.get_json()
+        list_hide = json_data.get('list_hide', [])
         form_workflow = dict(
             flows_name=json_data.get('flows_name', None),
             itemtype_id=json_data.get('itemtype_id', 0),
@@ -221,6 +250,10 @@ class WorkFlowSettingView(BaseView):
                 flows_id=uuid.uuid4()
             )
             workflow.create_workflow(form_workflow)
+            if len(list_hide) > 0:
+                workflow_detail = workflow.get_workflow_by_flows_id(
+                    form_workflow.get('flows_id'))
+                self.save_workflow_role(workflow_detail.id, list_hide)
         else:
             """Update the workflow info"""
             form_workflow.update(
@@ -228,6 +261,8 @@ class WorkFlowSettingView(BaseView):
                 flows_id=workflow_id
             )
             workflow.upt_workflow(form_workflow)
+            if len(list_hide) > 0:
+                self.save_workflow_role(form_workflow.get('id'), list_hide)
         return jsonify(code=0, msg='',
                        data={'redirect': url_for('workflowsetting.index')})
 
@@ -267,6 +302,60 @@ class WorkFlowSettingView(BaseView):
 
         return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('workflowsetting.index')})
+
+    @classmethod
+    def get_name_display_hide(cls, list_hide, role):
+        """Get workflow role: displays, hides.
+
+        :param role:
+        :param list_hide:
+
+        :return: displays, hides.
+        """
+        displays = []
+        hides = []
+        if isinstance(role, list):
+            for tmp in role:
+                if not any(x.id == tmp.id for x in list_hide):
+                    displays.append(tmp.name)
+                else:
+                    hides.append(tmp.name)
+        return displays, hides
+
+    @classmethod
+    def get_displays(cls, list_hide, role):
+        """Get workflow role: displays.
+
+        :param role:
+        :param list_hide:
+
+        :return: displays.
+        """
+        displays = []
+        if isinstance(role, list):
+            for tmp in role:
+                if not any(x.id == tmp.id for x in list_hide):
+                    displays.append(tmp)
+        return displays
+
+    @classmethod
+    def save_workflow_role(cls, wf_id, list_hide):
+        """Update workflow role.
+
+        :return:
+        """
+        with db.session.begin_nested():
+            db.session.query(WorkflowRole).filter_by(
+                workflow_id=wf_id).delete()
+            if isinstance(list_hide, list):
+                while list_hide:
+                    tmp = list_hide.pop(0)
+                    wfrole = dict(
+                        workflow_id=wf_id,
+                        role_id=tmp
+                    )
+                    db.session.execute(WorkflowRole.__table__.insert(), wfrole)
+        db.session.commit()
 
 
 workflow_adminview = {

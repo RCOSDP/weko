@@ -43,8 +43,12 @@ def get_item_type_aggs(search_index):
 
     :return: aggs dict
     """
-    return current_app.config['RECORDS_REST_FACETS']. \
-        get(search_index).get("aggs", {})
+    facets = None
+    if search_permission.can():
+        facets = current_app.config['RECORDS_REST_FACETS']
+    else:
+        facets = current_app.config['RECORDS_REST_FACETS_NO_SEARCH_PERMISSION']
+    return facets.get(search_index).get("aggs", {})
 
 
 def get_permission_filter(comm_id=None):
@@ -130,7 +134,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         """
         def _get_keywords_query(k, v):
             qry = None
-            kv = request.values.get('lang') if k == 'language' else request.values.get(k)
+            kv = request.values.get(
+                'lang') if k == 'language' else request.values.get(k)
             if not kv:
                 return
 
@@ -477,22 +482,25 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     for key, value in sortkwargs.items():
         urlkwargs.add(key, value)
 
-    # defalult sort
-    if not sortkwargs:
-        sort_key, sort = SearchSetting.get_default_sort(
-            current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
-        sort_obj = dict()
-        key_fileds = SearchSetting.get_sort_key(sort_key)
-        nested_sorting = SearchSetting.get_nested_sorting(sort_key)
-        if sort == 'desc':
-            sort_obj[key_fileds] = dict(order='desc', unmapped_type='long')
-            sort_key = '-' + sort_key
-        else:
-            sort_obj[key_fileds] = dict(order='asc', unmapped_type='long')
-        if nested_sorting:
-            sort_obj[key_fileds].update({'nested': nested_sorting})
-        search._sort.append(sort_obj)
-        urlkwargs.add('sort', sort_key)
+        # defalult sort
+        if not sortkwargs:
+            sort_key, sort = SearchSetting.get_default_sort(
+                current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
+            key_fileds = SearchSetting.get_sort_key(sort_key)
+            if key_fileds:
+                sort_obj = dict()
+                nested_sorting = SearchSetting.get_nested_sorting(sort_key)
+                if sort == 'desc':
+                    sort_obj[key_fileds] = dict(order='desc',
+                                                unmapped_type='long')
+                    sort_key = '-' + sort_key
+                else:
+                    sort_obj[key_fileds] = dict(order='asc',
+                                                unmapped_type='long')
+                if nested_sorting:
+                    sort_obj[key_fileds].update({'nested': nested_sorting})
+                search._sort.append(sort_obj)
+            urlkwargs.add('sort', sort_key)
 
     urlkwargs.add('q', query_q)
     return search, urlkwargs

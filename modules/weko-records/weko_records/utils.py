@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Item API."""
-
+import re
 from collections import OrderedDict
 
 import pytz
@@ -833,3 +833,24 @@ def check_to_upgrade_version(old_render, new_render):
     if old_schema != new_schema:
         return True
     return False
+
+
+def remove_weko2_special_character(s: str):
+    """Remove special character of WEKO2.
+
+    :param s:
+    """
+    def __remove_special_character(_s_str: str):
+        pattern = r"(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)"
+        _s_str = re.sub(pattern, '', _s_str)
+        if _s_str == ',':
+            return ''
+        return _s_str.strip() if _s_str != ',' else ''
+
+    s = s.strip()
+    esc_str = ""
+    for i in s:
+        if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
+            esc_str += i
+    esc_str = __remove_special_character(esc_str)
+    return esc_str

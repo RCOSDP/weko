@@ -941,3 +941,22 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
         nullable=True
     )
     """Action journal info."""
+
+
+class WorkflowRole(db.Model, TimestampMixin):
+    """Define action identifier info."""
+
+    __tablename__ = 'workflow_userrole'
+
+    workflow_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(WorkFlow.id, ondelete='CASCADE'), primary_key=True,
+        nullable=True,
+        unique=False)
+
+    role_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(Role.id, ondelete='CASCADE'), primary_key=True,
+        nullable=True, unique=False)
+
+    """Relationship between workflow and roles."""

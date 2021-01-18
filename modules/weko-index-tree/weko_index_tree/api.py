@@ -22,6 +22,7 @@
 
 from copy import deepcopy
 from datetime import datetime
+from functools import partial
 
 from flask import current_app, json
 from flask_login import current_user
@@ -196,14 +197,31 @@ class Indexes(object):
                     if "have_children" in k:
                         continue
                     setattr(index, k, v)
-
-                if getattr(index, "recursive_coverpage_check"):
-                    cls.set_coverpage_state_resc(
-                        index_id,
-                        getattr(index, "coverpage_state")
-                    )
-                    setattr(index, "recursive_coverpage_check", False)
-
+                recs_group = {
+                    'recursive_coverpage_check': partial(
+                        cls.set_coverpage_state_resc, index_id,
+                        getattr(index, "coverpage_state")),
+                    'recursive_public_state': partial(
+                        cls.set_public_state_resc, index_id,
+                        getattr(index, "public_state"),
+                        getattr(index, "public_date")),
+                    'recursive_browsing_group': partial(
+                        cls.set_browsing_group_resc, index_id,
+                        getattr(index, "browsing_group")),
+                    'recursive_browsing_role': partial(
+                        cls.set_browsing_role_resc, index_id,
+                        getattr(index, "browsing_role")),
+                    'recursive_contribute_group': partial(
+                        cls.set_contribute_group_resc, index_id,
+                        getattr(index, "contribute_group")),
+                    'recursive_contribute_role': partial(
+                        cls.set_contribute_role_resc, index_id,
+                        getattr(index, "contribute_role"))
+                }
+                for recur_key, recur_update_func in recs_group.items():
+                    if getattr(index, recur_key):
+                        recur_update_func()
+                    setattr(index, recur_key, False)
                 index.owner_user_id = current_user.get_id()
                 db.session.merge(index)
             db.session.commit()
@@ -836,7 +854,8 @@ class Indexes(object):
                     func.cast(test_alias.id, db.Text) + '/' + rec_alias.c.path,
                 ).filter(test_alias.id == rec_alias.c.pid)
             )
-            path_index_searchs = db.session.query(recursive_p).filter_by(pid=0).one()
+            path_index_searchs = db.session.query(recursive_p).filter_by(
+                pid=0).one()
             return path_index_searchs.path
         path_index_searchs = recursive_p()
 
@@ -1278,6 +1297,77 @@ class Indexes(object):
                    synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
             cls.set_coverpage_state_resc(index.id, state)
+
+    @classmethod
+    def set_public_state_resc(cls, index_id, state, date):
+        """
+        Set public state and public date for all index's children.
+
+        :param index_id: search index id
+        :param state: state of index
+        :param date: date of index
+        """
+        Index.query.filter_by(parent=index_id). \
+            update({Index.public_state: state, Index.public_date: date},
+                   synchronize_session='fetch')
+        for index in Index.query.filter_by(parent=index_id).all():
+            cls.set_public_state_resc(index.id, state, date)
+
+    @classmethod
+    def set_contribute_role_resc(cls, index_id, contribute_role):
+        """
+        Set contribute role all index's children.
+
+        :param index_id: search index id
+        :param contribute_role: contribute role
+        """
+        Index.query.filter_by(parent=index_id). \
+            update({Index.contribute_role: contribute_role},
+                   synchronize_session='fetch')
+        for index in Index.query.filter_by(parent=index_id).all():
+            cls.set_contribute_role_resc(index.id, contribute_role)
+
+    @classmethod
+    def set_contribute_group_resc(cls, index_id, contribute_group):
+        """
+        Set contribute group for all index's children.
+
+        :param index_id: search index id
+        :param contribute_group: contribute group
+        """
+        Index.query.filter_by(parent=index_id). \
+            update({Index.contribute_group: contribute_group},
+                   synchronize_session='fetch')
+        for index in Index.query.filter_by(parent=index_id).all():
+            cls.set_contribute_group_resc(index.id, contribute_group)
+
+    @classmethod
+    def set_browsing_role_resc(cls, index_id, browsing_role):
+        """
+        Set coverpage state for all index's children.
+
+        :param index_id: search index id
+        :param browsing_role: browsing role
+        """
+        Index.query.filter_by(parent=index_id). \
+            update({Index.browsing_role: browsing_role},
+                   synchronize_session='fetch')
+        for index in Index.query.filter_by(parent=index_id).all():
+            cls.set_browsing_role_resc(index.id, browsing_role)
+
+    @classmethod
+    def set_browsing_group_resc(cls, index_id, browsing_group):
+        """
+        Set browsing group for all index's children.
+
+        :param index_id: search index id
+        :param browsing_group: browsing group
+        """
+        Index.query.filter_by(parent=index_id). \
+            update({Index.browsing_group: browsing_group},
+                   synchronize_session='fetch')
+        for index in Index.query.filter_by(parent=index_id).all():
+            cls.set_browsing_group_resc(index.id, browsing_group)
 
     @classmethod
     def get_index_count(cls):

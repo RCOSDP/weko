@@ -1437,7 +1437,7 @@ def validation_site_info(site_info):
         'site_name_is_required_label': __('Site name is required.'),
         'language_not_match_label': __(
             'Language is deleted from Registered Language of system.'),
-        'the_limit_is_200_characters': __('The limit is 200 characters'),
+        'the_limit_is_1000_characters': __('The limit is 1000 characters'),
     }
 
     """check site_name len"""
@@ -1499,10 +1499,10 @@ def validation_site_info(site_info):
 
     '''Check length input notify'''
     for item in notify:
-        if len(item.get('notify_name')) > 200:
+        if len(item.get('notify_name')) > 1000:
             return {
                 'error': weko_admin_site_info_message.get(
-                    'the_limit_is_200_characters'),
+                    'the_limit_is_1000_characters'),
                 'data': ["notify_" + str(item.get(
                     "index"))],
                 'status': False

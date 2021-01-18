@@ -84,10 +84,8 @@ require([
       urlVars.hasOwnProperty("search_type") &&
       urlVars["search_type"] !== "2"
     ) {
-      let q = urlVars["q"];
-      if (q) {
-        document.getElementById("q").value = urlVars["q"];
-      }
+      let searchValue = sessionStorage.getItem('q', '');
+      document.getElementById('q').value = searchValue;
     } else {
       let elem = document.getElementById("q");
       if (elem !== null && typeof elem !== "undefined") {
@@ -535,10 +533,11 @@ function escapeAuthorString(data) {
 }
 
 function escapeString(data) {
-  return data
+  data = data
+    .replace(/(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)/g, "")
     .replace(/[\x00-\x1F\x7F]/g, "")
-    .replace(/&EMPTY&/g, "")
     .trim();
+  return data === ',' ? '' : data;
 }
 
 function format_comment(comment) {

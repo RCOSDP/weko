@@ -20,16 +20,8 @@ are affected by this option.
 OAISERVER_RECORD_INDEX = 'records'
 """Specify an Elastic index with records that should be exposed via OAI-PMH."""
 
-# The version of the OAI-PMH supported by the repository.
 OAISERVER_PROTOCOL_VERSION = '2.0'
-
-OAISERVER_ADMIN_EMAILS = [
-    'info@inveniosoftware.org',
-]
-"""The e-mail addresses of administrators of the repository.
-
-It **must** include one or more instances.
-"""
+"""The version of the OAI-PMH supported by the repository."""
 
 # TODO Add support for compressions.
 OAISERVER_COMPRESSIONS = [
