@@ -27,6 +27,7 @@ from flask import abort, current_app, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
+from invenio_db import db
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 
@@ -35,6 +36,7 @@ from weko_workflow.models import FlowAction
 
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
+from .models import WorkflowRole
 
 
 class FlowSettingView(BaseView):
@@ -196,6 +198,20 @@ class WorkFlowSettingView(BaseView):
         """
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
+        role = Role.query.all()
+        for wf in workflows:
+            list_hide = Role.query.outerjoin(WorkflowRole) \
+                .filter(WorkflowRole.workflow_id == wf.id) \
+                .filter(WorkflowRole.role_id == Role.id) \
+                .all()
+            if list_hide:
+                displays, hides = self.get_name_display_hide(list_hide, role)
+            else:
+                displays = [x.name for x in role]
+                hides = []
+            wf.display = ',<br>'.join(displays)
+            wf.hide = ',<br>'.join(hides)
+
         return self.render(
             'weko_workflow/admin/workflow_list.html',
             workflows=workflows
@@ -228,6 +244,9 @@ class WorkFlowSettingView(BaseView):
                     specials_itemtypes_list.append(flow.flow_name)
         if len(specials_itemtypes_list) == 0:
             enable_auto_set_index = False
+        display = []
+        hide = []
+        role = Role.query.all()
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
@@ -237,12 +256,23 @@ class WorkFlowSettingView(BaseView):
                 flow_list=flow_list,
                 index_list=index_list,
                 special_itemtype_list=specials_itemtypes_list,
-                enable_showing_index_tree_selection=enable_auto_set_index
+                enable_showing_index_tree_selection=enable_auto_set_index,
+                hide_list=hide,
+                display_list=role
             )
 
         """Update the workflow info"""
         workflow = WorkFlow()
         workflows = workflow.get_workflow_detail(workflow_id)
+        hide = Role.query.outerjoin(WorkflowRole) \
+            .filter(WorkflowRole.workflow_id == workflows.id) \
+            .filter(WorkflowRole.role_id == Role.id) \
+            .all()
+        if hide:
+            display = self.get_displays(hide, role)
+        else:
+            display = role
+            hide = []
         return self.render(
             'weko_workflow/admin/workflow_detail.html',
             workflow=workflows,
@@ -250,7 +280,9 @@ class WorkFlowSettingView(BaseView):
             flow_list=flow_list,
             index_list=index_list,
             special_itemtype_list=specials_itemtypes_list,
-            enable_showing_index_tree_selection=enable_auto_set_index
+            enable_showing_index_tree_selection=enable_auto_set_index,
+            hide_list=hide,
+            display_list=display
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -260,6 +292,7 @@ class WorkFlowSettingView(BaseView):
         :return:
         """
         json_data = request.get_json()
+        list_hide = json_data.get('list_hide', [])
         form_workflow = dict(
             flows_name=json_data.get('flows_name', None),
             itemtype_id=json_data.get('itemtype_id', 0),
@@ -273,6 +306,10 @@ class WorkFlowSettingView(BaseView):
                 flows_id=uuid.uuid4()
             )
             workflow.create_workflow(form_workflow)
+            if len(list_hide) > 0:
+                workflow_detail = workflow.get_workflow_by_flows_id(
+                    form_workflow.get('flows_id'))
+                self.save_workflow_role(workflow_detail.id, list_hide)
         else:
             """Update the workflow info"""
             form_workflow.update(
@@ -280,6 +317,8 @@ class WorkFlowSettingView(BaseView):
                 flows_id=workflow_id
             )
             workflow.upt_workflow(form_workflow)
+            if len(list_hide) > 0:
+                self.save_workflow_role(form_workflow.get('id'), list_hide)
         return jsonify(code=0, msg='',
                        data={'redirect': url_for('workflowsetting.index')})
 
@@ -319,6 +358,60 @@ class WorkFlowSettingView(BaseView):
 
         return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('workflowsetting.index')})
+
+    @classmethod
+    def get_name_display_hide(cls, list_hide, role):
+        """Get workflow role: displays, hides.
+
+        :param role:
+        :param list_hide:
+
+        :return: displays, hides.
+        """
+        displays = []
+        hides = []
+        if isinstance(role, list):
+            for tmp in role:
+                if not any(x.id == tmp.id for x in list_hide):
+                    displays.append(tmp.name)
+                else:
+                    hides.append(tmp.name)
+        return displays, hides
+
+    @classmethod
+    def get_displays(cls, list_hide, role):
+        """Get workflow role: displays.
+
+        :param role:
+        :param list_hide:
+
+        :return: displays.
+        """
+        displays = []
+        if isinstance(role, list):
+            for tmp in role:
+                if not any(x.id == tmp.id for x in list_hide):
+                    displays.append(tmp)
+        return displays
+
+    @classmethod
+    def save_workflow_role(cls, wf_id, list_hide):
+        """Update workflow role.
+
+        :return:
+        """
+        with db.session.begin_nested():
+            db.session.query(WorkflowRole).filter_by(
+                workflow_id=wf_id).delete()
+            if isinstance(list_hide, list):
+                while list_hide:
+                    tmp = list_hide.pop(0)
+                    wfrole = dict(
+                        workflow_id=wf_id,
+                        role_id=tmp
+                    )
+                    db.session.execute(WorkflowRole.__table__.insert(), wfrole)
+        db.session.commit()
 
 
 workflow_adminview = {

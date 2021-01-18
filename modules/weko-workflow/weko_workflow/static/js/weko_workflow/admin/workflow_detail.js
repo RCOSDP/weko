@@ -63,11 +63,17 @@ $("#btn_create").on("click", function () {
   if (check_show_indexes(selected)) {
     index_id = $('#txt_index').val()
   }
+  var list_hide = [];
+  $("#select_hide option").each(function() {
+    console.log(this.value);
+    list_hide.push(this.value);
+  });
   let post_data = {
     id: $("#_id").val(),
     flows_name: $("#txt_workflow_name").val(),
     itemtype_id: $("#txt_itemtype").val(),
     flow_id: $("#txt_flow_name").val(),
+    list_hide: list_hide
   };
   if (index_id !== null) {
     post_data['index_id'] = index_id;
@@ -115,6 +121,28 @@ function displayIndexTreeSelection() {
   }
 }
 
-$('#txt_flow_name').on('change', function () {
+$("#txt_flow_name").on("change", function () {
   displayIndexTreeSelection();
+});
+
+$("#setHide").on("click", function () {
+  value_hide = $("#select_show").val();
+  text_hide = $("#select_show option:selected").text();
+  if (value_hide) {
+    $("#select_show option[value='" + value_hide + "']").remove();
+    $("#select_hide").append(
+      $("<option>", { value: value_hide, text: text_hide })
+    );
+  }
+});
+
+$("#setShow").on("click", function () {
+  value_show = $("#select_hide").val();
+  text_show = $("#select_hide option:selected").text();
+  if (value_show) {
+    $("#select_hide option[value='" + value_show + "']").remove();
+    $("#select_show").append(
+      $("<option>", { value: value_show, text: text_show })
+    );
+  }
 });

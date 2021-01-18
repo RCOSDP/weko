@@ -56,8 +56,7 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 
@@ -73,12 +72,12 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_cache_data, \
     get_identifier_setting, get_term_and_condition_content, \
-    handle_finish_workflow, is_enable_item_name_link, is_hidden_pubdate, \
-    is_show_autofill_metadata, is_usage_application, \
-    is_usage_application_item_type, item_metadata_validation, \
-    process_send_notification_mail, process_send_reminder_mail, register_hdl, \
-    saving_doi_pidstore, update_cache_data, save_activity_data, \
-    get_workflow_item_type_names
+    get_workflow_item_type_names, handle_finish_workflow, \
+    is_enable_item_name_link, is_hidden_pubdate, is_show_autofill_metadata, \
+    is_usage_application, is_usage_application_item_type, \
+    item_metadata_validation, process_send_notification_mail, \
+    process_send_reminder_mail, register_hdl, save_activity_data, \
+    saving_doi_pidstore, update_cache_data
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -243,6 +242,7 @@ def new_activity():
     """New activity."""
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
+    workflows = workflow.get_workflows_by_roles(workflows)
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
@@ -994,8 +994,8 @@ def next_action(activity_id='0', action_id=0):
                     FilePermission.update_open_date(permission, open_date)
 
             action_status = activity['action_status']
-            if (is_usage_application(activity_detail) and
-                    action_status == ActionStatusPolicy.ACTION_DONE):
+            if (is_usage_application(activity_detail)
+                    and action_status == ActionStatusPolicy.ACTION_DONE):
                 # new a usage report here
                 work_activity = WorkActivity()
                 current_item_id = work_activity.get_activity_detail(

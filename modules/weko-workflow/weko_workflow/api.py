@@ -46,6 +46,7 @@ from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
 from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
+from .models import WorkflowRole
 
 
 class Flow(object):
@@ -593,6 +594,35 @@ class WorkFlow(object):
             query = _WorkFlow.query.filter_by(
                 itemtype_id=item_type_id, is_deleted=False)
             return query.all()
+
+    def get_workflows_by_roles(self, workflows):
+        """Get list workflow.
+
+        :param workflows.
+
+        :return: wfs.
+        """
+        def get_display_role(list_hide, role):
+            displays = []
+            if isinstance(role, list):
+                for tmp in role:
+                    if not any(x.id == tmp.id for x in list_hide):
+                        displays.append(tmp)
+            return displays
+        wfs = []
+        current_user_roles = [role.id for role in current_user.roles]
+        if isinstance(workflows, list):
+            role = Role.query.all()
+            while workflows:
+                tmp = workflows.pop(0)
+                list_hide = Role.query.outerjoin(WorkflowRole) \
+                    .filter(WorkflowRole.workflow_id == tmp.id) \
+                    .filter(WorkflowRole.role_id == Role.id) \
+                    .all()
+                displays = get_display_role(list_hide, role)
+                if any(x.id in current_user_roles for x in displays):
+                    wfs.append(tmp)
+        return wfs
 
 
 class Action(object):
