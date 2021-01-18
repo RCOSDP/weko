@@ -897,6 +897,8 @@ def up_load_file(record, root_path):
     try:
         file_path = record.get('file_path', [])
         thumbnail_path = record.get('thumbnail_path', [])
+        if isinstance(thumbnail_path, str):
+            thumbnail_path = [thumbnail_path]
         if file_path or thumbnail_path:
             pid = PersistentIdentifier.query.filter_by(
                 pid_type='recid',
@@ -2560,8 +2562,10 @@ def handle_check_thumbnail_file_type(list_record):
     error = _('Please specify the image file(gif, jpg, jpe, jpeg,'
               + ' png, bmp, tiff, tif) for the thumbnail.')
     for record in list_record:
-        thumbnail_paths = record.get('thumbnail_path', [])
-        for path in thumbnail_paths:
+        thumbnail_path = record.get('thumbnail_path', [])
+        if isinstance(thumbnail_path, str):
+            thumbnail_path = [thumbnail_path]
+        for path in thumbnail_path:
             file_extend = path.split('.')[-1]
             if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
                 record['errors'] = record['errors'] + [error] \

@@ -452,16 +452,24 @@ class ItemImportView(BaseView):
                                     options_line.append('Allow Multiple')
                                     count_file += 1
                                 if 'thumbnail_label' in _id:
-                                    ids_line.append('.thumbnail_path[{}]'
-                                                    .format(count_thumbnail))
                                     thumbnail_path_name = 'Thumbnail Path' \
                                         if current_i18n.language == 'en' \
                                         else 'サムネイルパス'
-                                    names_line.append('.{}[{}]'.format(
-                                        thumbnail_path_name, count_thumbnail))
+                                    if item.get('items'):
+                                        ids_line.append(
+                                            '.thumbnail_path[{}]'.format(
+                                                count_thumbnail))
+                                        names_line.append('.{}[{}]'.format(
+                                            thumbnail_path_name,
+                                            count_thumbnail))
+                                        options_line.append('Allow Multiple')
+                                        count_thumbnail += 1
+                                    else:
+                                        ids_line.append('.thumbnail_path')
+                                        names_line.append('.{}'.format(
+                                            thumbnail_path_name))
+                                        options_line.append('')
                                     systems_line.append('')
-                                    options_line.append('Allow Multiple')
-                                    count_thumbnail += 1
 
                                 clean_key = _id.replace('.metadata.', '') \
                                     .replace('[0]', '[]')

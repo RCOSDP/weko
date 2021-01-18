@@ -951,6 +951,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
                 key_list_len = len(key_list)
                 for key_index in range(key_list_len):
+                    item_key_split = item_key.split('.')
                     if 'filename' in key_list[key_index]:
                         key_list.insert(0, '.file_path[{}]'.format(
                             str(idx)))
@@ -963,11 +964,15 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                             key_data.insert(0, '')
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
-                            and len(item_key.split('.')) == 2:
-                        key_list.insert(0, '.thumbnail_path[{}]'.format(
-                            str(idx)))
-                        key_label.insert(0, '.サムネイルパス[{}]'.format(
-                            str(idx)))
+                            and len(item_key_split) == 2:
+                        if '[' in item_key_split[0]:
+                            key_list.insert(0, '.thumbnail_path[{}]'.format(
+                                str(idx)))
+                            key_label.insert(0, '.サムネイルパス[{}]'.format(
+                                str(idx)))
+                        else:
+                            key_list.insert(0, '.thumbnail_path')
+                            key_label.insert(0, '.サムネイルパス')
                         if key_data[key_index]:
                             key_data.insert(0, 'recid_{}/{}'.format(str(
                                 self.cur_recid), key_data[key_index]))
@@ -1156,7 +1161,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         elif key == '.edit_mode' or key == '.publish_status':
             ret_system.append('')
             ret_option.append('Required')
-        elif _id.split('[')[0] in multiple_option:
+        elif '[' in _id and _id.split('[')[0] in multiple_option:
             ret_system.append('')
             ret_option.append('Allow Multiple')
         else:
