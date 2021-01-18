@@ -1449,12 +1449,14 @@ class WorkActivity(object):
             .filter(_FlowAction.action_id == _Activity.action_id)
 
         if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
-            query = query.filter(
-                or_(
-                    ActivityAction.action_handler == -1 if is_admin
-                    else ActivityAction.action_handler == self_user_id,
+            if is_admin:
+                query = query.filter(
+                    ActivityAction.action_handler.in_([-1, self_user_id])
                 )
-            )
+            else:
+                query = query.filter(
+                    ActivityAction.action_handler == self_user_id,
+                )
 
         return query
 
@@ -1503,13 +1505,24 @@ class WorkActivity(object):
                         ActivityAction.activity_id == _Activity.activity_id,
                         ActivityAction.action_id == _Activity.action_id,
                     )
-                ) \
-                .outerjoin(
-                    User,
-                    and_(
-                        _Activity.activity_update_user == User.id,
-                    )
                 )
+
+            if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+                query_action_activities = query_action_activities \
+                    .outerjoin(
+                        User,
+                        and_(
+                            _Activity.activity_login_user == User.id,
+                        )
+                    )
+            else:
+                query_action_activities = query_action_activities \
+                    .outerjoin(
+                        User,
+                        and_(
+                            _Activity.activity_update_user == User.id,
+                        )
+                    )
             # query activities by tab is wait
             if tab == WEKO_WORKFLOW_WAIT_TAB:
                 page_wait = conditions.get('pageswait')
@@ -1981,8 +1994,14 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             activities = _Activity.query.filter_by(
                 activity_login_user=int(user_id)).order_by(asc(_Activity.id))
-            usage_application_list = []
-            output_report_list = []
+            usage_application_list = {
+                "activity_ids": [],
+                "activity_data_type": {}
+            }
+            output_report_list = {
+                "activity_ids": [],
+                "activity_data_type": {}
+            }
             for activity in activities:
                 activity_detail = WorkActivity().get_activity_detail(
                     activity.activity_id)
@@ -1991,11 +2010,19 @@ class WorkActivity(object):
                 item_type = get_item_type_name(workflow_detail.itemtype_id)
                 item_type_list = current_app.config[
                     'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST']
+                activity_data_type = current_app.config[
+                    'WEKO_ITEMS_UI_AUTO_FILL_DATA_TYPE_SETTING'].get(item_type)
                 if item_type in item_type_list:
-                    usage_application_list.append(activity.activity_id)
+                    usage_application_list["activity_ids"].append(
+                        activity.activity_id)
+                    usage_application_list["activity_data_type"][
+                        activity.activity_id] = activity_data_type
                 elif item_type == current_app.config[
                         'WEKO_ITEMS_UI_OUTPUT_REPORT']:
-                    output_report_list.append(activity.activity_id)
+                    output_report_list["activity_ids"].append(
+                        activity.activity_id)
+                    output_report_list["activity_data_type"][
+                        activity.activity_id] = activity_data_type
 
         return usage_application_list, output_report_list
 

@@ -2071,11 +2071,12 @@ def get_workflow_item_type_names(activities: list):
                 activity.item_type_name = item_type_name
 
 
-def create_usage_report(activity_id, item_id):
+def create_usage_report(activity_id, item_id, data_type_name):
     """Auto create usage report.
 
     @param activity_id:
     @param item_id:
+    @param data_type_name:
     @return:
     """
     usage_report_workflow = WorkFlow().find_workflow_by_name(
@@ -2087,21 +2088,26 @@ def create_usage_report(activity_id, item_id):
             workflow_id=usage_report_workflow.id,
             flow_id=usage_report_workflow.flow_id
         )
-        create_record_metadata(activity,
-                               item_id, activity_id,
-                               usage_report_workflow)
+        create_record_metadata(
+            activity, item_id, activity_id, usage_report_workflow,
+            data_type_name
+        )
 
 
-def create_record_metadata(activity,
-                           item_id,
-                           activity_id,
-                           usage_report_workflow):
+def create_record_metadata(
+    activity,
+    item_id,
+    activity_id,
+    usage_report_workflow,
+    usage_record_itemtype_name
+):
     """Create record metadata for usage report.
 
     @param activity:
     @param item_id:
     @param activity_id:
     @param usage_report_workflow:
+    @param usage_record_itemtype_name:
     @return:
     """
     rec = RecordMetadata.query.filter_by(id=item_id).first()
@@ -2133,16 +2139,20 @@ def create_record_metadata(activity,
     schema = ItemTypes.get_by_id(item_type_id).schema
     owner_id = item_metadata['created_by']
     new_usage_report_activity = WorkActivity().init_activity(activity)
-    modify_item_metadata(item_metadata,
-                         item_type_id,
-                         new_usage_report_activity.activity_id,
-                         activity_id,
-                         data_dict,
-                         schema,
-                         owner_id)
+    modify_item_metadata(
+        item_metadata,
+        item_type_id,
+        new_usage_report_activity.activity_id,
+        activity_id,
+        data_dict,
+        schema,
+        owner_id,
+        usage_record_itemtype_name
+    )
 
     activity.update({'activity_id': new_usage_report_activity.activity_id})
     activity['activity_login_user'] = owner_id
+    activity['activity_update_user'] = owner_id
     activity['title'] = item_metadata['title']
 
     WorkActivity().update_activity_action_handler(
@@ -2182,12 +2192,15 @@ def create_record_metadata(activity,
     return None
 
 
-def modify_item_metadata(item,
-                         item_type_id,
-                         activity_id,
-                         usage_application_activity_id,
-                         data_dict,
-                         schema, owner_id):
+def modify_item_metadata(
+    item,
+    item_type_id,
+    activity_id,
+    usage_application_activity_id,
+    data_dict,
+    schema, owner_id,
+    usage_record_itemtype_name
+):
     """Mapping usage application data to usage report."""
     if not item:
         return None
@@ -2197,12 +2210,25 @@ def modify_item_metadata(item,
     user_profile = get_user_profile_info(int(owner_id))
     user_name = user_profile['subitem_displayname']
 
+    data_type_name = get_data_type(usage_record_itemtype_name)
+    # usage_application_activity_id
+    record_title = {
+        "en": '{} - {} - {} - {}'.format(
+            data_type_name.get("en"),
+            current_app.config.get(
+                'WEKO_ITEMS_UI_USAGE_REPORT_TITLE').get('en'),
+            usage_application_activity_id, user_name
+        ),
+        "ja": '{} - {} - {} - {}'.format(
+            data_type_name.get("ja"),
+            current_app.config.get(
+                'WEKO_ITEMS_UI_USAGE_REPORT_TITLE').get('ja'),
+            usage_application_activity_id, user_name
+        ),
+    }
+
     # Set title to JP only
-    item['title'] = '{} - {} - {}'.format(
-        usage_application_activity_id,
-        current_app.config.get('WEKO_ITEMS_UI_USAGE_REPORT_TITLE').get('ja'),
-        user_name
-    )
+    item['title'] = record_title["ja"]
     properties = schema['properties']
     schema_dict = get_shema_dict(properties, data_dict)
 
@@ -2232,15 +2258,11 @@ def modify_item_metadata(item,
                                 if title.get('subitem_item_title') and \
                                     title.get(
                                         'subitem_item_title_language'):
-                                    title['subitem_item_title'] = '{} - {}'.\
-                                        format(
-                                            usage_application_activity_id,
-                                            replace_title_subitem(
-                                                title['subitem_item_title'],
-                                                title['subitem_item_title'
-                                                      '_language']
-                                            )
-                                    )
+                                    title['subitem_item_title'] = \
+                                        record_title.get(
+                                            title.get(
+                                                'subitem_item_title_language')
+                                        )
                         item[schema_dict[key]] = item.pop(data)
                         break
     item.pop(item_approval1, None)
@@ -2363,12 +2385,14 @@ def auto_fill_title(item_type_name):
         return title_value
 
     title = ""
+    data_type = ""
     current_config = current_app.config
     autofill_title_setting = current_config.get(
         'WEKO_ITEMS_UI_AUTO_FILL_TITLE_SETTING')
     auto_fill_title_value = current_config.get(
         'WEKO_ITEMS_UI_AUTO_FILL_TITLE')
     if item_type_name is not None and isinstance(autofill_title_setting, dict):
+        data_type = get_data_type(item_type_name)
         usage_application_key = current_config.get(
             'WEKO_ITEMS_UI_USAGE_APPLICATION_TITLE_KEY')
         usage_report_key = current_config.get(
@@ -2388,7 +2412,21 @@ def auto_fill_title(item_type_name):
         elif item_type_name in output_registration_list:
             title = _get_title(output_registration_key,
                                output_registration_list)
-    return title
+    return title, data_type
+
+
+def get_data_type(item_type_name):
+    """Get data type.
+
+    @param item_type_name: item type name.
+    @return:
+    """
+    autofill_data_type_setting = current_app.config.get(
+        'WEKO_ITEMS_UI_AUTO_FILL_DATA_TYPE_SETTING')
+    data_type_value = ''
+    if autofill_data_type_setting.get(item_type_name):
+        data_type_value = autofill_data_type_setting.get(item_type_name)
+    return data_type_value
 
 
 def exclude_admin_workflow(workflow_list):

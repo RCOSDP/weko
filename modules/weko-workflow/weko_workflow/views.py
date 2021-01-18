@@ -341,7 +341,7 @@ def list_activity():
 @blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required
-def display_activity(activity_id=0):
+def display_activity(activity_id="0"):
     """Display activity."""
     activity = WorkActivity()
     if "?" in activity_id:
@@ -446,6 +446,7 @@ def display_activity(activity_id=0):
     is_auto_set_index_action = False
     application_item_type = False
     title = ""
+    data_type = ""
     show_autofill_metadata = True
     is_hidden_pubdate_value = False
     position_list = WEKO_USERPROFILES_POSITION_LIST
@@ -497,7 +498,7 @@ def display_activity(activity_id=0):
                 'updated_json_schema_{}'.format(activity_id)):
             json_schema = (json_schema + "/{}").format(activity_id)
             schema_form = (schema_form + "/{}").format(activity_id)
-        title = auto_fill_title(item_type_name)
+        title, data_type = auto_fill_title(item_type_name)
         show_autofill_metadata = is_show_autofill_metadata(item_type_name)
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
     for step in steps:
@@ -626,6 +627,9 @@ def display_activity(activity_id=0):
         user_profile=user_profile,
         application_item_type=application_item_type,
         auto_fill_title=title,
+        out_put_report_title=current_app.config[
+            "WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE"],
+        auto_fill_data_type=data_type,
         is_show_autofill_metadata=show_autofill_metadata,
         is_hidden_pubdate=is_hidden_pubdate_value,
         action_endpoint_key=current_app.config.get(
@@ -996,7 +1000,13 @@ def next_action(activity_id='0', action_id=0):
                 work_activity = WorkActivity()
                 current_item_id = work_activity.get_activity_detail(
                     activity_id).item_id
-                create_usage_report(activity_id, current_item_id)
+                _workflow = WorkFlow()
+                _workflow_detail = _workflow.get_workflow_by_id(
+                    activity_detail.workflow_id)
+                data_type_name = get_item_type_name(
+                    _workflow_detail.itemtype_id)
+                create_usage_report(activity_id, current_item_id,
+                                    data_type_name)
 
             activity.update(
                 action_id=next_flow_action[0].action_id,

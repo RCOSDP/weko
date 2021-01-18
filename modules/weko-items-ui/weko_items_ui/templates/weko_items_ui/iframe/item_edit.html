@@ -377,6 +377,10 @@
           {% if auto_fill_title %}
             {% set title = auto_fill_title|tojson %}
           {% endif %}
+          {% set data_type = "" %}
+          {% if auto_fill_data_type %}
+            {% set data_type = auto_fill_data_type|tojson %}
+          {% endif %}
           {% set endpoint_key = "" %}
           {% if action_endpoint_key %}
             {% set endpoint_key = action_endpoint_key|tojson %}
@@ -394,6 +398,7 @@
             {% set list_license_data = list_license|tojson %}
           {% endif %}
           <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{title}}'>
+          <input type="hidden" id="data_type_title" name="data_type_title" value='{{data_type}}'>
           <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
           <input type="hidden" id="action_endpoint_key" name="action_endpoint_key" value='{{endpoint_key}}'>
           <input type="hidden" id="approval_email_key" name="approval_email_key" value='{{approval_email}}'>
