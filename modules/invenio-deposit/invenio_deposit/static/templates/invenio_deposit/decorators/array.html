@@ -1,6 +1,6 @@
 <fieldset ng-disabled="form.readonly"
           class="schema-form-fieldset {{ form.htmlClass }}"
-          ng-init="collapsed = form.collapsed">
+          ng-init="collapsed = form.required !== true">
     <div class="panel panel-default deposit-panel">
         <div class="panel-heading"><a ng-click="collapsed = !collapsed"
                                       class="panel-toggle">
@@ -37,8 +37,8 @@
                 </div>
                 <div class="clearfix" style="padding: 15px;" ng-model="modelArray">
                     <div class="help-block"
-                        ng-show="(hasError() && errorMessage(schemaError()))"
-                        ng-bind-html="(hasError() && errorMessage(schemaError()))"></div>
+                        ng-show="(hasError() && errorMessage(schemaError())) || form.description"
+                        ng-bind-html="(hasError() && errorMessage(schemaError())) || form.description"></div>
 
                     <button ng-hide="form.readonly || form.add === null"
                             ng-click="appendToArray()"

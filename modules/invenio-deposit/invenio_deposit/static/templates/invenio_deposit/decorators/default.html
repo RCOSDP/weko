@@ -3,7 +3,7 @@
       <fieldset ng-if="$index == None"
             ng-disabled="form.readonly"
             class="schema-form-fieldset {{ form.htmlClass }}"
-            ng-init="collapsed = form.collapsed">
+            ng-init="collapsed = form.required !== true">
       <div class="panel panel-default deposit-panel">
             <div class="panel-heading"><a ng-click="collapsed = !collapsed"
                                           class="panel-toggle">

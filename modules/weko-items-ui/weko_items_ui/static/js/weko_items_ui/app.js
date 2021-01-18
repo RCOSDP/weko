@@ -1807,107 +1807,60 @@ function toObject(arr) {
       }
 
       /**
-      * Set required and collapsed for all sub item.
-      * If form required, setting "required" is true and "collapsed" is false.
-      * If root panel collapse, sub panel will collapse.
-      * @param {Boolean} isCollapsed.
-      * @param {object} forms is item of form.
+      * When "Item Registration" screen init, validated controls are remove.
       */
-      $scope.recursiveSetCollapsedForForm = function (isCollapsed, forms) {
-        angular.forEach(forms, function(val, key){
-          if ("key" in val && val.key) {
-            let sub_item;
-            if (val.key instanceof Array) {
-              sub_item = val.key.pop();
-            } else if (typeof(val.key) === 'string') {
-              sub_item = val.key.split(".").pop()
-            }
-            val["collapsed"] = isCollapsed && $scope.required_list.indexOf(sub_item) === -1;
-          } else {
-            val["collapsed"] = isCollapsed;
-          }
-          if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
-            $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
-          }
-        });
-      }
-      /**
-      * Set required and collapsed for all root item.
-      */
-      $scope.setCollapsedAndRequiredForForm = function(){
-        $scope.prepareRequiredList();
-        let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
-        let forms = $rootScope.recordsVM.invenioRecordsForm;
-        let isCollapsed;
-        angular.forEach(forms, function(val, key){
-          isCollapsed = requiredList.indexOf(val.key) == -1;
-          val["collapsed"] = isCollapsed && $scope.required_list.indexOf(val.key) === -1;
-          if(val.hasOwnProperty('items') && val['items'] && val['items'].length > 0){
-            $scope.recursiveSetCollapsedForForm(isCollapsed, val["items"]);
-          }
-        });
+      $scope.removeValidateControlsWhenInit = function () {
+          //Fix init controls on "Item Registration" => not validate controls.
+          $('*[ng-controller="WekoRecordsCtrl"] select').removeClass('ng-invalid');
+          $('*[ng-controller="WekoRecordsCtrl"] input').removeClass('ng-invalid');
+          $('*[ng-controller="WekoRecordsCtrl"] textarea').removeClass('ng-invalid');
       }
 
       /**
-      * Prepare required list for expand/collapse panel.
+      * Expand all parent panels when child or grandchild controls required.
       */
-      $scope.prepareRequiredList = function () {
-        let prepareRequiredList = function (json_data) {
-          let temp_key;
-
-          let pushToRequiredList = function (key) {
-              if ($scope.required_list.indexOf(key) === -1) {
-                $scope.required_list.push(key);
+      $scope.expandAllParentPanel = function () {
+          let requiredControls = $('.field-required');
+          for (let i = 0; i < requiredControls.length; i++) {
+              let control = requiredControls[i];
+              let panels = $(control).parents('.panel.panel-default.deposit-panel');
+              for (let j = 0; j < panels.length; j++) {
+                  let panel = panels[j];
+                  let panelBodyList = $(panel).children('.panel-body');
+                  panelBodyList.removeClass('ng-hide');
               }
+          }
+      }
 
-              temp_key = key;
-          };
-
-          angular.forEach(json_data, function (val, key) {
-              if (val.required) {
-                  return pushToRequiredList(key);
-              } else if (val.items) {
-                  if (val.items.required) {
-                      return pushToRequiredList(key);
-                  } else if (prepareRequiredList(val.items.properties)) {
-                      return pushToRequiredList(key);
-                  }
-              } else if (val.properties) {
-                  if (prepareRequiredList(val.properties)) {
-                      return pushToRequiredList(key);
-                  }
+      /**
+      * 1. Set attribute required for root panel if setting required.
+      * 2. If root panel is required, child or grandchild panels is required and expand.
+      */
+      $scope.setCollapsedForForm = function () {
+          let forms = $rootScope.recordsVM.invenioRecordsForm;
+          let requiredList = $rootScope.recordsVM.invenioRecordsSchema.required;
+          angular.forEach(forms, function (val) {
+              //Set attribute 'required' for all parent form.
+              if (requiredList.indexOf(val['key']) != -1) {
+                  val['required'] = true;
+              }
+              //Root panel is required => all sub items is required.
+              if (val['required']) {
+                  $scope.setRequiredForAllSubItems(val["items"], true);
               }
           });
+      }
 
-          return temp_key;
-        }
-
-        let json_data = $rootScope.recordsVM.invenioRecordsSchema;
-        if (json_data.required) {
-          $scope.required_list = $scope.required_list.concat(json_data.required);
-        }
-
-        if ($scope.error_list && $scope.error_list['either']) {
-          angular.forEach($scope.error_list['either'], function (val, key) {
-            let ids = [];
-            if (val instanceof Array) {
-              val.map(function(x) {
-                return x.split('.');
-              }).forEach(function(x) {
-                ids = ids.concat(x);
-              });
-            } else {
-              ids = val.split('.');
-            }
-            angular.forEach(ids, function (_val, _key) {
-              if ($scope.required_list.indexOf(_val) === -1) {
-                $scope.required_list.push(_val);
+      /**
+      * Set 'required' attribute for all sub items by 'isRequired' param.
+      */
+      $scope.setRequiredForAllSubItems = function (forms, isRequired) {
+          angular.forEach(forms, function (val) {
+              val['required'] = isRequired;
+              if (val['items'] && val['items'].length > 0) {
+                  $scope.setRequiredForAllSubItems(val["items"], isRequired);
               }
-            });
           });
-        }
-
-        prepareRequiredList(json_data.properties);
       }
 
       $scope.loadFilesFromSession = function () {
@@ -2036,12 +1989,16 @@ function toObject(arr) {
           //Case edit: fill data to fields when page loaded.
           let model = $rootScope.recordsVM.invenioRecordsModel;
           CustomBSDatePicker.setDataFromFieldToModel(model, true);
+          //When "Item Registration" screen init, validated controls are remove.
+          $scope.removeValidateControlsWhenInit();
+          //Expand all parent panels when child or grandchild controls required.
+          $scope.expandAllParentPanel();
         }, 3000);
         // Auto fill user profile
         $scope.autoFillProfileInfo();
         $scope.autoSetCorrespondingUsageAppId();
         //Set required and collapsed for all root and sub item.
-        $scope.setCollapsedAndRequiredForForm();
+        $scope.setCollapsedForForm();
 
         // Delay 0.5s after page render
         $scope.changePositionFileInterval = setInterval(function () {
