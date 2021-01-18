@@ -30,6 +30,7 @@ from invenio_i18n.ext import current_i18n
 from weko_admin.models import SiteInfo
 from weko_admin.utils import get_search_setting
 from weko_records_ui.ipaddr import check_site_license_permission
+
 from .utils import MainScreenInitDisplaySetting, get_design_layout, \
     get_weko_contents, has_widget_design
 

@@ -65,9 +65,9 @@ from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
     get_account_info, get_actionid, \
     get_activity_id_of_record_without_version, get_cache_data, \
-    get_identifier_setting, handle_finish_workflow, \
-    is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
-    register_hdl, saving_doi_pidstore, update_cache_data
+    get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
+    is_show_autofill_metadata, item_metadata_validation, register_hdl, \
+    saving_doi_pidstore, update_cache_data
 
 blueprint = Blueprint(
     'weko_workflow',
