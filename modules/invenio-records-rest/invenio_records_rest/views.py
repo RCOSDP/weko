@@ -753,6 +753,8 @@ class RecordResource(ContentNegotiatedMethodView):
         except (JsonPatchException, JsonPointerException):
             raise PatchJSONFailureRESTError()
 
+        # Add 'utc_pub_datetime' property to a patched record
+        set_utc_pub_datetime(record)
         record.commit()
         db.session.commit()
         if self.indexer_class:
