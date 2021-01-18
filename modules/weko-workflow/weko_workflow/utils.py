@@ -2422,7 +2422,7 @@ def get_data_type(item_type_name):
     @return:
     """
     autofill_data_type_setting = current_app.config.get(
-        'WEKO_ITEMS_UI_AUTO_FILL_DATA_TYPE_SETTING')
+        'WEKO_ITEMS_UI_AUTO_FILL_DATA_TYPE_SETTING', {})
     data_type_value = ''
     if autofill_data_type_setting.get(item_type_name):
         data_type_value = autofill_data_type_setting.get(item_type_name)
