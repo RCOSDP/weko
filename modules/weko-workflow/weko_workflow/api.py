@@ -1355,13 +1355,15 @@ class WorkActivity(object):
     def query_activities_by_tab_is_all(
         query,
         is_community_admin,
-        community_user_ids
+        community_user_ids,
+        is_todo_tabs=False
     ):
         """Query activities by tab is all.
 
         :param query:
         :param is_community_admin:
         :param community_user_ids:
+        :param is_todo_tabs:
         :return:
         """
         self_user_id = int(current_user.get_id())
@@ -1370,18 +1372,38 @@ class WorkActivity(object):
                 .filter(_Activity.activity_login_user.in_(community_user_ids))
         else:
             if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
-                query = query.filter(
-                    or_(
-                        and_(
-                            _Activity.activity_login_user == self_user_id,
-                            _Activity.activity_status
-                            == ActivityStatusPolicy.ACTIVITY_FINALLY
-                        ),
-                        ActivityAction.action_handler == self_user_id,
-                        _Activity.approval1 == current_user.email,
-                        _Activity.approval2 == current_user.email,
+                if is_todo_tabs:
+                    query = query.filter(
+                        or_(
+                            and_(
+                                _Activity.activity_login_user == self_user_id,
+                                _Activity.activity_status
+                                == ActivityStatusPolicy.ACTIVITY_FINALLY
+                            ),
+                            ActivityAction.action_handler == self_user_id,
+                            _Activity.approval1 == current_user.email,
+                            _Activity.approval2 == current_user.email,
+                        )
                     )
-                )
+                else:
+                    query = query.filter(
+                        or_(
+                            and_(
+                                _Activity.activity_login_user == self_user_id,
+                                _Activity.activity_status
+                                == ActivityStatusPolicy.ACTIVITY_FINALLY
+                            ),
+                            and_(
+                                ActivityAction.action_handler == self_user_id,
+                                _Activity.approval1 == current_user.email,
+                                _Activity.approval2.is_(None)
+                            ),
+                            and_(
+                                ActivityAction.action_handler == self_user_id,
+                                _Activity.approval2 == current_user.email,
+                            )
+                        )
+                    )
             else:
                 query = query.filter(
                     or_(
@@ -1559,7 +1581,7 @@ class WorkActivity(object):
                     query_action_activities = self\
                         .query_activities_by_tab_is_all(
                             query_action_activities, is_community_admin,
-                            community_user_ids
+                            community_user_ids, True
                         )
 
                 query_action_activities = self.query_activities_by_tab_is_todo(
@@ -2128,7 +2150,7 @@ class WorkActivityHistory(object):
         @return:
         """
         query = ActivityHistory.query.filter(
-                ActivityHistory.activity_id.in_(activities_id)
+            ActivityHistory.activity_id.in_(activities_id)
         )
         if actions_id:
             query = query.filter(
