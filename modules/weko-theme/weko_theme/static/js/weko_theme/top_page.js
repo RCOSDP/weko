@@ -227,8 +227,24 @@ require([
         return data;
     }
 
-    $(document).ready(function () {
+    function loadSettingSearch(data) {
+        if (window.location.search.indexOf("&sort=") === -1) {
+            let key_sort = data.dlt_keyword_sort_selected;
+            let descOrEsc = "";
+            if (key_sort.indexOf("_asc") !== -1) {
+                key_sort = key_sort.replace("_asc", "");
+            }
+            if (key_sort.indexOf("_desc") !== -1) {
+                descOrEsc = "-";
+                key_sort = key_sort.replace("_desc", "");
+            }
+            window.location.search += "&size=" + data.dlt_dis_num_selected + "&sort=" + descOrEsc + key_sort;
+        }
+    }
 
+    $(document).ready(function () {
+        let data = getDefaultSetting();
+        loadSettingSearch(data);
         ArrangeSearch();
 
         //簡易検索ボタン
