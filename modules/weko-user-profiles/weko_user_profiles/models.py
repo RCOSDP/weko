@@ -141,8 +141,8 @@ class UserProfile(db.Model):
         .. note:: The username will be converted to lowercase. The display name
             will contain the original version.
         """
-        validate_username(username)
-        self._username = username.lower()
+        #validate_username(username)
+        #self._username = username.lower()
         self._displayname = username
 
     @classmethod

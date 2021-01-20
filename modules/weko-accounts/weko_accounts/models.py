@@ -81,3 +81,10 @@ class ShibbolethUser(db.Model):
         db.session.commit()
 
         return obj
+        
+    @classmethod
+    def get_user_by_email(cls, email, **kwargs):
+        """Get a user by email."""
+        return cls.query.filter_by(
+            shib_eppn=email,
+        ).one_or_none()

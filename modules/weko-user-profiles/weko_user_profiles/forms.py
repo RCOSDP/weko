@@ -288,10 +288,10 @@ class ProfileForm(FlaskForm):
 
     def validate_username(form, field):
         """Wrap username validator for WTForms."""
-        try:
-            validate_username(field.data)
-        except ValueError as e:
-            raise ValidationError(e)
+        #try:
+        #    validate_username(field.data)
+        #except ValueError as e:
+        #    raise ValidationError(e)
 
         try:
             user_profile = UserProfile.get_by_username(field.data)

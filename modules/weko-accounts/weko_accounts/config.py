@@ -74,6 +74,7 @@ WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
 WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
     '管理者': 'System Administrator',
     '図書館員': 'Repository Administrator',
+    '教官': 'Contributor',
     '教員': 'Contributor'
 }
 """Role relation."""

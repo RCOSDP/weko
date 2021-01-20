@@ -128,16 +128,21 @@ class ShibUser(object):
         :return: ShibbolethUser instance
 
         """
-        kwargs = dict(email=self.shib_attr.get('shib_eppn'),
-                      password='',
-                      active=True)
-        kwargs['password'] = hash_password(kwargs['password'])
-        kwargs['confirmed_at'] = datetime.utcnow()
-        self.user = _datastore.create_user(**kwargs)
-        shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
-        self.shib_user = shib_user
-        # self.new_shib_profile()
-        return shib_user
+        if self.shib_attr.get('shib_eppn') is not None:
+            if ShibbolethUser.get_by_user(self.shib_attr.get('shib_eppn')) is None:
+                kwargs = dict(email=self.shib_attr.get('shib_eppn'),
+                            password='',
+                            active=True)
+                kwargs['password'] = hash_password(kwargs['password'])
+                kwargs['confirmed_at'] = datetime.utcnow()
+                self.user = _datastore.create_user(**kwargs)
+                shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
+                self.shib_user = shib_user
+                # self.new_shib_profile()
+                return shib_user
+        
+        error = _("Invalid attribute.")
+        return error 
 
     def new_shib_profile(self):
         """
