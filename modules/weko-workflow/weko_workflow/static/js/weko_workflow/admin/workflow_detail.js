@@ -1,24 +1,9 @@
 $(document).ready(function () {
   checkWorkflowName();
-  setI18n();
 });
 
 const select_show = $('#select_show');
 const select_hide = $('#select_hide');
-const MESSAGE = {
-  display: {
-    en: "Display",
-    ja: "表示",
-  },
-  hide: {
-    en: "Hide",
-    ja: "非表示",
-  },
-  display_hide: {
-    en: "Display/Hide",
-    ja: "表示/非表示",
-  }
-};
 
 $("#txt_workflow_name").keyup(function () {
   if ($("#txt_workflow_name").val().trim() == "") {
@@ -115,23 +100,3 @@ $('#setShow').on('click', function () {
 $('#setHide').on('click', function () {
   select_show.find('option:selected').detach().prop("selected", false).appendTo(select_hide);
 });
-
-function setI18n() {
-  list_I18n = ['display', 'hide', 'display_hide']
-  list_I18n.forEach(element => {
-    getMessage(element);
-  });
-}
-
-function getMessage(messageCode) {
-  const defaultLanguage = "en";
-  let currentLanguage = $('#current_language').val();
-  let message = MESSAGE[messageCode];
-  if (message) {
-    if (message[currentLanguage]) {
-      $('#' + messageCode).html(message[currentLanguage]);
-    } else {
-      $('#' + messageCode).html(message[defaultLanguage]);
-    }
-  }
-}

@@ -29,6 +29,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from weko_records.api import ItemTypes
 
 from .api import Action, Flow, WorkActivity, WorkFlow
@@ -157,6 +158,21 @@ class FlowSettingView(BaseView):
 
 
 class WorkFlowSettingView(BaseView):
+    MULTI_LANGUAGE = {
+        "display": {
+            "en": "Display",
+            "ja": "表示"
+        },
+        "hide": {
+            "en": "Hide",
+            "ja": "非表示",
+        },
+        "display_hide": {
+            "en": "Display/Hide",
+            "ja": "表示/非表示",
+        }
+    }
+
     @expose('/', methods=['GET'])
     def index(self):
         """Get flow list info.
@@ -178,10 +194,12 @@ class WorkFlowSettingView(BaseView):
                 hides = []
             wf.display = ',<br>'.join(displays)
             wf.hide = ',<br>'.join(hides)
-
+        cur_lang = current_i18n.language if current_i18n.language else "en"
+        display_label = self.MULTI_LANGUAGE["display"].get(cur_lang, "Display")
         return self.render(
             'weko_workflow/admin/workflow_list.html',
-            workflows=workflows
+            workflows=workflows,
+            display_label=display_label
         )
 
     @expose('/<string:workflow_id>', methods=['GET'])
@@ -199,6 +217,11 @@ class WorkFlowSettingView(BaseView):
         display = []
         hide = []
         role = Role.query.all()
+        cur_lang = current_i18n.language if current_i18n.language else "en"
+        display_label = self.MULTI_LANGUAGE["display"].get(cur_lang, "Display")
+        hide_label = self.MULTI_LANGUAGE["hide"].get(cur_lang, "Hide")
+        display_hide = self.MULTI_LANGUAGE["display_hide"].get(cur_lang,
+                                                               "Display/Hide")
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
@@ -207,7 +230,10 @@ class WorkFlowSettingView(BaseView):
                 itemtype_list=itemtype_list,
                 flow_list=flow_list,
                 hide_list=hide,
-                display_list=role
+                display_list=role,
+                display_label=display_label,
+                hide_label=hide_label,
+                display_hide_label=display_hide,
             )
         """Update the workflow info"""
         workflow = WorkFlow()
@@ -221,13 +247,16 @@ class WorkFlowSettingView(BaseView):
         else:
             display = role
             hide = []
+
         return self.render(
             'weko_workflow/admin/workflow_detail.html',
             workflow=workflows,
             itemtype_list=itemtype_list,
             flow_list=flow_list,
             hide_list=hide,
-            display_list=display
+            display_list=display,
+            hide_label=hide_label,
+            display_hide_label=display
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
