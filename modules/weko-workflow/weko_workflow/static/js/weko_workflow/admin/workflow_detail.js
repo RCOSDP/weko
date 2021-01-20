@@ -18,7 +18,7 @@ const MESSAGE = {
     en: "Display/Hide",
     ja: "表示/非表示",
   }
-}
+};
 
 $("#txt_workflow_name").keyup(function () {
   if ($("#txt_workflow_name").val().trim() == "") {
@@ -119,13 +119,13 @@ $('#setHide').on('click', function () {
 function setI18n() {
   list_I18n = ['display', 'hide', 'display_hide']
   list_I18n.forEach(element => {
-    getMessage(element)
+    getMessage(element);
   });
 }
 
 function getMessage(messageCode) {
   const defaultLanguage = "en";
-  let currentLanguage = document.getElementById("current_language").value;
+  let currentLanguage = $('#current_language').val();
   let message = MESSAGE[messageCode];
   if (message) {
     if (message[currentLanguage]) {
