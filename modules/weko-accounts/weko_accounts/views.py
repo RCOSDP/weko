@@ -76,14 +76,16 @@ def shib_auto_login():
     _idp_login = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']
     _idp_login_inst = current_app.config[
         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
+
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+
         if not shib_session_id:
             shib_session_id = session['shib_session_id']
             is_auto_bind = True
 
-        if shib_session_id is None or len(shib_session_id) == 0:
+        if shib_session_id:
             if _shib_enable and _idp_login and _idp_login_inst:
                 return redirect(_shib_login_url.format(request.url_root))
             else:
@@ -266,8 +268,8 @@ def shib_login():
         return render_template(
             current_app.config['WEKO_ACCOUNTS_CONFIRM_USER_TEMPLATE'],
             csrf_random=csrf_random,
-            email=cache_val['shib_mail'] if len(
-                cache_val['shib_mail']) > 0 else '')
+            email=cache_val['shib_mail'] if cache_val.get('shib_mail') else ''
+        )
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
 
@@ -285,13 +287,19 @@ def shib_sp_login():
     _idp_login = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']
     _idp_login_inst = current_app.config[
         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
+    _shib_username_allowed = current_app.config[
+        'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
+
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:
             return redirect(url_for_security('login'))
 
         shib_attr, error = parse_attributes()
-        if error:
+
+        # Check SHIB_ATTR_EPPN and SHIB_ATTR_USER_NAME:
+        if error or not (shib_attr.get('shib_eppn') or \
+                _shib_username_allowed and shib_attr.get('shib_user_name')):
             if _shib_enable and _idp_login and _idp_login_inst:
                 return redirect(_shib_login_url.format(request.url_root))
             else:

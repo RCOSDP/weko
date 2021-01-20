@@ -82,9 +82,15 @@ class ShibUser(object):
 
         """
         shib_user = None
+        _shib_username_allowed = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
+
         if self.shib_attr['shib_eppn']:
             shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
+        elif _shib_username_allowed and self.shib_attr.get('shib_user_name'):
+            shib_user = ShibbolethUser.query.filter_by(
+                shib_user_name=self.shib_attr['shib_user_name']).one_or_none()
 
         if shib_user:
             self.shib_user = shib_user
@@ -128,21 +134,17 @@ class ShibUser(object):
         :return: ShibbolethUser instance
 
         """
-        if self.shib_attr.get('shib_eppn') is not None:
-            if ShibbolethUser.get_by_user(self.shib_attr.get('shib_eppn')) is None:
-                kwargs = dict(email=self.shib_attr.get('shib_eppn'),
-                            password='',
-                            active=True)
-                kwargs['password'] = hash_password(kwargs['password'])
-                kwargs['confirmed_at'] = datetime.utcnow()
-                self.user = _datastore.create_user(**kwargs)
-                shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
-                self.shib_user = shib_user
-                # self.new_shib_profile()
-                return shib_user
-        
-        error = _("Invalid attribute.")
-        return error 
+        kwargs = dict(
+            email=self.shib_attr.get('shib_mail'),
+            password=hash_password(''),
+            confirmed_at=datetime.utcnow(),
+            active=True
+        )
+
+        self.user = _datastore.create_user(**kwargs)
+        shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
+        self.shib_user = shib_user
+        return shib_user
 
     def new_shib_profile(self):
         """

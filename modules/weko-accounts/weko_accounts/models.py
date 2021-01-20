@@ -56,7 +56,7 @@ class ShibbolethUser(db.Model):
     shib_mail = db.Column(db.String(255), nullable=True)
     """SHIB_ATTR_MAIL"""
 
-    shib_user_name = db.Column(db.String(255), nullable=True)
+    shib_user_name = db.Column(db.String(255), unique=True, nullable=True)
     """SHIB_ATTR_USER_NAME"""
 
     shib_ip_range_flag = db.Column(db.String(255), nullable=True)
