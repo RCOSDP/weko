@@ -485,7 +485,7 @@ def display_activity(activity_id="0"):
                 step_item_login_url = 'weko_workflow/term_and_condition.html'
                 term_and_condition_content = get_term_and_condition_content(
                     item_type_name)
-        if item:
+        if not record and item:
             record = item
 
         sessionstore = RedisStore(redis.StrictRedis.from_url(
