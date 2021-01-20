@@ -255,8 +255,9 @@ class WorkFlowSettingView(BaseView):
             flow_list=flow_list,
             hide_list=hide,
             display_list=display,
+            display_label=display_label,
             hide_label=hide_label,
-            display_hide_label=display
+            display_hide_label=display_hide
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
