@@ -1,6 +1,24 @@
 $(document).ready(function () {
   checkWorkflowName();
+  setI18n();
 });
+
+const select_show = $('#select_show');
+const select_hide = $('#select_hide');
+const MESSAGE = {
+  display: {
+    en: "Display",
+    ja: "表示",
+  },
+  hide: {
+    en: "Hide",
+    ja: "非表示",
+  },
+  display_hide: {
+    en: "Display/Hide",
+    ja: "表示/非表示",
+  }
+}
 
 $("#txt_workflow_name").keyup(function () {
   if ($("#txt_workflow_name").val().trim() == "") {
@@ -90,20 +108,30 @@ $("#btn_create").on("click", function () {
   });
 });
 
-$("#setHide").on("click", function () {
-  value_hide = $('#select_show').val();
-  text_hide = $("#select_show option:selected").text();
-  if (value_hide) {
-    $("#select_show option[value='"+ value_hide +"']").remove();
-    $('#select_hide').append($('<option>', {value:value_hide, text: text_hide}));
-  }
+$('#setShow').on('click', function () {
+  select_hide.find('option:selected').detach().prop("selected", false).appendTo(select_show);
 });
 
-$("#setShow").on("click", function () {
-  value_show = $('#select_hide').val();
-  text_show = $("#select_hide option:selected").text();
-  if (value_show) {
-    $("#select_hide option[value='"+ value_show +"']").remove();
-    $('#select_show').append($('<option>', {value:value_show, text: text_show}));
-  }
+$('#setHide').on('click', function () {
+  select_show.find('option:selected').detach().prop("selected", false).appendTo(select_hide);
 });
+
+function setI18n() {
+  list_I18n = ['display', 'hide', 'display_hide']
+  list_I18n.forEach(element => {
+    getMessage(element)
+  });
+}
+
+function getMessage(messageCode) {
+  const defaultLanguage = "en";
+  let currentLanguage = document.getElementById("current_language").value;
+  let message = MESSAGE[messageCode];
+  if (message) {
+    if (message[currentLanguage]) {
+      $('#' + messageCode).html(message[currentLanguage]);
+    } else {
+      $('#' + messageCode).html(message[defaultLanguage]);
+    }
+  }
+}

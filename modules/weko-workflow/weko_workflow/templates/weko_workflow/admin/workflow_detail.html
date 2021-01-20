@@ -87,7 +87,7 @@
       </div>
       <div class="form-group">
         <div class="col-sm-offset-2">
-          <label class="col-sm-2 control-label">{{_('Display')}}/{{_('Hide')}}</label>
+          <label class="col-sm-2 control-label" id="display_hide"></label>
           <div class="col-sm-8" style="padding-top: 7px" >{{_('Role')}}</div>
         </div>
       </div>
@@ -96,9 +96,8 @@
           <label class="col-sm-2 control-label"></label>
           <div class="col-sm-8">
             <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
-              <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
-                {{_('Display')}}
-                <br>
+                <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
+                  <div id="display"></div>
                 <select multiple name="select_show" id="select_show" class="form-control">
                   {%- if display_list %}
                     {%- for display in display_list if display %}
@@ -120,9 +119,8 @@
               </button>
             </div>
             <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
-              <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
-                {{_('Hide')}}
-                <br>
+                <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
+                  <div id="hide"></div>
                 <select multiple name="select_hide" id="select_hide" class="form-control">
                   {%- if hide_list %}
                     {%- for hide in hide_list if hide %}
