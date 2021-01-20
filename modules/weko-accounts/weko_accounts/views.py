@@ -285,6 +285,7 @@ def shib_sp_login():
     _idp_login = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']
     _idp_login_inst = current_app.config[
         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
+
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:

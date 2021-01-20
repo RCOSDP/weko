@@ -81,3 +81,13 @@ class ShibbolethUser(db.Model):
         db.session.commit()
 
         return obj
+
+
+ShibUserRole = db.Table(
+    'shibboleth_userrole',
+    db.Column('shib_user_id', db.Integer(), db.ForeignKey(
+        'shibboleth_user.id', name='fk_shibboleth_userrole_user_id')),
+    db.Column('role_id', db.Integer(), db.ForeignKey(
+        'accounts_role.id', name='fk_shibboleth_userrole_role_id')),
+)
+"""Relationship between shibboleth users and roles."""
