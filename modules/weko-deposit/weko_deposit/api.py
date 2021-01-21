@@ -1256,6 +1256,65 @@ class WekoRecord(Record):
 
         return items
 
+    @property
+    def display_file_info(self):
+        """Display file information.
+
+        :return:
+        """
+        item_type_id = self.get('item_type_id')
+        solst, meta_options = get_options_and_order_list(item_type_id)
+        items = []
+        for lst in solst:
+            key = lst[0]
+            val = self.get(key)
+            option = meta_options.get(key, {}).get('option')
+            if not val or not option:
+                continue
+            # Just get data of 'File' and 'Pubdate'.
+            if val.get('attribute_type') != "file" and key != 'pubdate':
+                continue
+            # Check option hide.
+            if option.get("hidden"):
+                continue
+            mlt = val.get('attribute_value_mlt')
+            if mlt is not None:
+                # Processing get files.
+                mlt = copy.deepcopy(mlt)
+                # Check file permission.
+                file_metadata = self.__remove_file_metadata_do_not_publish(mlt)
+                if not file_metadata:
+                    continue
+                # Get file with current version id.
+                file_metadata_temp = []
+                exclude_attr = ['displaytype', 'accessrole', 'licensetype']
+                version_id = request.args.get("version_id", None)
+                for f in file_metadata:
+                    if f.get('version_id', None) == version_id:
+                        # Exclude attributes which is not use.
+                        for ea in exclude_attr:
+                            if f.get(ea, None):
+                                del f[ea]
+                        file_metadata_temp.append(f)
+                file_metadata = file_metadata_temp
+                nval = dict()
+                nval['attribute_name'] = val.get('attribute_name')
+                nval['attribute_name_i18n'] = lst[2] or val.get(
+                    'attribute_name')
+                nval['attribute_type'] = val.get('attribute_type')
+                # Format structure to display.
+                nval['attribute_value_mlt'] = \
+                    get_attribute_value_all_items(key, file_metadata,
+                                                  copy.deepcopy(solst))
+                items.append(nval)
+            else:
+                # Processing get pubdate.
+                attr_name = val.get('attribute_name')
+                val['attribute_name_i18n'] = lst[2] or attr_name
+                val['attribute_value_mlt'] = [[[[{val['attribute_name_i18n']: attr_name}]]]]
+                items.append(val)
+        return items
+
     def __remove_special_character_of_weko2(self, metadata):
         """Remove special character of WEKO2.
 
