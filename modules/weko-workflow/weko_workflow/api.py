@@ -1424,6 +1424,10 @@ class WorkActivity(object):
                                 == ActivityStatusPolicy.ACTIVITY_FINALLY
                             ),
                             and_(
+                                _Activity.activity_login_user == self_user_id,
+                                ActivityAction.action_handler == self_user_id
+                            ),
+                            and_(
                                 ActivityAction.action_handler == self_user_id,
                                 _Activity.approval1 == current_user.email,
                                 _Activity.approval2.is_(None)
