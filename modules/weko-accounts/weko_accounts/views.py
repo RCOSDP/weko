@@ -85,7 +85,7 @@ def shib_auto_login():
             shib_session_id = session['shib_session_id']
             is_auto_bind = True
 
-        if shib_session_id:
+        if not shib_session_id:
             if _shib_enable and _idp_login and _idp_login_inst:
                 return redirect(_shib_login_url.format(request.url_root))
             else:

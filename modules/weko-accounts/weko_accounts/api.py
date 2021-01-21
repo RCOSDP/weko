@@ -19,7 +19,7 @@ from invenio_db import db
 from weko_user_profiles.models import UserProfile
 from werkzeug.local import LocalProxy
 
-from .models import ShibbolethUser
+from .models import ShibbolethUser, ShibUserRole
 
 _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
@@ -39,7 +39,7 @@ class ShibUser(object):
         self.shib_user = None
         """The :class:`.models.ShibbolethUser` instance."""
 
-    def _set_weko_user_role(self, role_name):
+    def _set_weko_user_role(self, roles):
         """
         Assign role for weko3 user.
 
@@ -48,15 +48,24 @@ class ShibUser(object):
 
         """
         ret = True
+        shib_user = ShibbolethUser.query.filter_by(
+                shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
+        roles = [x.strip() for x in roles.split(',')]
+        role_ids = [x.id for x in Role.query.filter_by(
+            Role.name.in_(roles)).all()]
+
         try:
-            user_role = Role.query.filter_by(name=role_name).first()
-            if user_role in self.user.roles:
-                current_app.logger.debug("{} had been assigned to this "
-                                         "User!".format(role_name))
-                return ret
             with db.session.begin_nested():
-                ret = _datastore.add_role_to_user(self.user, user_role)
-            db.session.commit()
+                db.session.query(ShibUserRole).filter_by(
+                    shib_user_id=shib_user.id).delete(synchronize_session='fetch')
+                shib_userroles = []
+                for _id in role_ids:
+                    shib_userroles.append(ShibUserRole(
+                        shib_user_id=shib_user.id,
+                        role_id=_id
+                    ))
+                db.session.add_all(shib_userroles)
+                db.session.commit()
         except Exception as ex:
             current_app.logger.debug("An error occurred when trying to add "
                                      "Role: {} to this User!".format(ex))

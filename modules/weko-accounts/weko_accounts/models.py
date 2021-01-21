@@ -33,7 +33,7 @@ class ShibbolethUser(db.Model):
     """ShibbolethUser identifier."""
 
     shib_eppn = db.Column(db.String(128), unique=True, nullable=False)
-    """SHIB_ATTR_ePPN"""
+    """SHIB_ATTR_EPPN"""
 
     weko_uid = db.Column(db.Integer, db.ForeignKey(
         User.id, name='fk_shib_weko_user_id'))
@@ -88,6 +88,7 @@ class ShibbolethUser(db.Model):
         return cls.query.filter_by(
             shib_eppn=email,
         ).one_or_none()
+
 
 ShibUserRole = db.Table(
     'shibboleth_userrole',
