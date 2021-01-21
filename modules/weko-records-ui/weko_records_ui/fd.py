@@ -229,9 +229,9 @@ def file_ui(
         if permission is not None:
             activity_id = create_usage_report(
                 permission.usage_application_activity_id)
-        if activity_id is not None:
-            FilePermission.update_usage_report_activity_id(permission,
-                                                           activity_id)
+            if activity_id is not None:
+                FilePermission.update_usage_report_activity_id(permission,
+                                                               activity_id)
 
     # #Check permissions
     # ObjectResource.check_object_permission(obj)
