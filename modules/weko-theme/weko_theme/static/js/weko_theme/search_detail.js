@@ -98,8 +98,41 @@
                 $scope.update_disabled_flg();
             }
             // detail search
+            $rootScope.getSettingDefault = function () {
+                let data = null;
+                $.ajax({
+                    async: false,
+                    method: 'GET',
+                    url: '/get_search_setting',
+                    headers: { 'Content-Type': 'application/json' },
+                }).then(function successCallback(response) {
+                    if (response.status === 1) {
+                        data = response.data;
+                    }
+                }, function errorCallback(error) {
+                    console.log(error);
+                    return null;
+                });
+                if (data.dlt_keyword_sort_selected !== null && data.dlt_keyword_sort_selected !== undefined) {
+                    let key_sort = data.dlt_keyword_sort_selected;
+                    let descOrEsc = "";
+                    if (key_sort.includes("_asc")) {
+                        key_sort = key_sort.replace("_asc", "");
+                    }
+                    if (key_sort.includes("_desc")) {
+                        descOrEsc = "-";
+                        key_sort = descOrEsc + key_sort.replace("_desc", "");
+                    }
+                    return {
+                        key: "sort",
+                        value: key_sort
+                    };
+                }
+            }
+
             $scope.detail_search = function () {
                 var query_str = "";
+                let data = $rootScope.getSettingDefault();
                 query_str = query_str + "&search_type=" + $scope.search_type + "&q=" + $scope.search_q;
                 if ($scope.search_community != "") {
                     query_str = query_str + "&community=" + $scope.search_community;
@@ -145,6 +178,9 @@
                     }
                 });
                 sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
+                if (data !== null && data.key !== null && data.value !== null) { 
+                    query_str += "&" + data.key + "=" + data.value;
+                }
                 var url = '/search?page=1' + query_str;
                 if (angular.element('#item_management_bulk_update').length != 0) {
                   url = '/admin/items' + url + '&item_management=update';

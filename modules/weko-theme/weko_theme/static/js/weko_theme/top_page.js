@@ -161,22 +161,19 @@ require([
             let data = getDefaultSetting();
             let key_sort = data.dlt_keyword_sort_selected;
             let size = data.dlt_dis_num_selected;
+            let descOrEsc = "";
             if (key_sort.indexOf("_asc") !== -1) {
                 key_sort=key_sort.replace("_asc", "");
             }
             if (key_sort.indexOf("_desc") !== -1) {
+                descOrEsc = "-";
                 key_sort=key_sort.replace("_desc", "");
-                key_sort = "-" + key_sort;
+                key_sort = descOrEsc + key_sort;
             }
-            if (window.location.search.indexOf("sort") === -1) {
+            if (!window.location.search.includes(key_sort)) {
                 search = insertParam(search, "sort", key_sort); 
-            } else {
-                if (window.location.search.indexOf(key_sort) === -1) {
-                    search = insertParam(search, "sort", key_sort); 
-                }
             }
-            var page_count = document.getElementById("page_count");
-            if(page_count !== null && page_count !== undefined) {
+            if(size !== null && size !== undefined) {
                 search = insertParam(search, "size", size);
             }
             if ($("#item_management_bulk_update").length != 0) {
@@ -227,24 +224,7 @@ require([
         return data;
     }
 
-    function loadSettingSearch(data) {
-        if (window.location.search.indexOf("&sort=") === -1) {
-            let key_sort = data.dlt_keyword_sort_selected;
-            let descOrEsc = "";
-            if (key_sort.indexOf("_asc") !== -1) {
-                key_sort = key_sort.replace("_asc", "");
-            }
-            if (key_sort.indexOf("_desc") !== -1) {
-                descOrEsc = "-";
-                key_sort = key_sort.replace("_desc", "");
-            }
-            window.location.search += "&size=" + data.dlt_dis_num_selected + "&sort=" + descOrEsc + key_sort;
-        }
-    }
-
     $(document).ready(function () {
-        let data = getDefaultSetting();
-        loadSettingSearch(data);
         ArrangeSearch();
 
         //簡易検索ボタン
