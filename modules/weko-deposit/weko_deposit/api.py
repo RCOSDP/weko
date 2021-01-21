@@ -1309,9 +1309,10 @@ class WekoRecord(Record):
                 items.append(nval)
             else:
                 # Processing get pubdate.
-                attr_name = val.get('attribute_name')
+                attr_name = val.get('attribute_value', '')
                 val['attribute_name_i18n'] = lst[2] or attr_name
-                val['attribute_value_mlt'] = [[[[{val['attribute_name_i18n']: attr_name}]]]]
+                val['attribute_value_mlt'] = [[[[{
+                    val['attribute_name_i18n']: attr_name}]]]]
                 items.append(val)
         return items
 
