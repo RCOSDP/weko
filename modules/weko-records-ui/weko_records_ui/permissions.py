@@ -417,3 +417,34 @@ def check_created_id(record):
             elif lst.name == users[3]:
                 is_himself = False
     return is_himself
+
+
+def check_usage_report_in_permission(permission):
+    """Check usage report in permission."""
+    if permission.usage_report_activity_id is None:
+        return True
+    else:
+        return False
+
+
+def check_create_usage_report(record, file_json):
+    """Check create usage report.
+
+    @param record:
+    @param file_json:
+    @return:
+    """
+    user_id = current_user.get_id()
+    record_id = record.get('recid')
+    file_name = file_json.get('filename')
+    current_time = dt.now()
+    duration = current_time - timedelta(
+        days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
+    list_permission = FilePermission.find_list_permission_by_date(
+        user_id, record_id, file_name, duration)
+    if list_permission:
+        permission = list_permission[0]
+        if check_usage_report_in_permission(permission):
+            return permission
+        else:
+            return None

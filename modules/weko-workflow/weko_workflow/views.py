@@ -993,21 +993,6 @@ def next_action(activity_id='0', action_id=0):
                     FilePermission.update_status(permission, status_done)
                     FilePermission.update_open_date(permission, open_date)
 
-            action_status = activity['action_status']
-            if (is_usage_application(activity_detail)
-                    and action_status == ActionStatusPolicy.ACTION_DONE):
-                # new a usage report here
-                work_activity = WorkActivity()
-                current_item_id = work_activity.get_activity_detail(
-                    activity_id).item_id
-                _workflow = WorkFlow()
-                _workflow_detail = _workflow.get_workflow_by_id(
-                    activity_detail.workflow_id)
-                data_type_name = get_item_type_name(
-                    _workflow_detail.itemtype_id)
-                create_usage_report(activity_id, current_item_id,
-                                    data_type_name)
-
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,

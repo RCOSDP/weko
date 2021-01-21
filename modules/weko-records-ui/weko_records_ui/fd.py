@@ -38,13 +38,14 @@ from weko_records.api import FilesMetadata, ItemsMetadata, ItemTypeProps, \
 from weko_records.serializers.utils import get_item_type_name, \
     get_item_type_name_id
 from weko_user_profiles.models import UserProfile
+from weko_workflow.utils import create_usage_report
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 
-from .models import PDFCoverPageSettings
+from .models import FilePermission, PDFCoverPageSettings
 from .pdf import make_combined_pdf
-from .permissions import check_original_pdf_download_permission, \
-    file_permission_factory
+from .permissions import check_create_usage_report, \
+    check_original_pdf_download_permission, file_permission_factory
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, is_billing_item
 
@@ -221,6 +222,16 @@ def file_ui(
     # Check file contents permission
     if not file_permission_factory(record, fjson=fileobj).can():
         abort(403)
+
+    access_role = fileobj.get('accessrole', '')
+    if 'open_restricted' in access_role:
+        permission = check_create_usage_report(record, fileobj)
+        if permission is not None:
+            activity_id = create_usage_report(
+                permission.usage_application_activity_id)
+        if activity_id is not None:
+            FilePermission.update_usage_report_activity_id(permission,
+                                                           activity_id)
 
     # #Check permissions
     # ObjectResource.check_object_permission(obj)

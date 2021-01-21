@@ -2071,7 +2071,7 @@ def get_workflow_item_type_names(activities: list):
                 activity.item_type_name = item_type_name
 
 
-def create_usage_report(activity_id, item_id, data_type_name):
+def create_usage_report(activity_id):
     """Auto create usage report.
 
     @param activity_id:
@@ -2079,6 +2079,15 @@ def create_usage_report(activity_id, item_id, data_type_name):
     @param data_type_name:
     @return:
     """
+    work_activity = WorkActivity()
+    item_id = work_activity.get_activity_detail(
+        activity_id).item_id
+    activity_detail = work_activity.get_activity_detail(activity_id)
+    _workflow = WorkFlow()
+    _workflow_detail = _workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
+    data_type_name = get_item_type_name(
+        _workflow_detail.itemtype_id)
     usage_report_workflow = WorkFlow().find_workflow_by_name(
         current_app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'])
     if not usage_report_workflow:
@@ -2088,10 +2097,12 @@ def create_usage_report(activity_id, item_id, data_type_name):
             workflow_id=usage_report_workflow.id,
             flow_id=usage_report_workflow.flow_id
         )
-        create_record_metadata(
+        usage_report_activity_id = None
+        usage_report_activity_id = create_record_metadata(
             activity, item_id, activity_id, usage_report_workflow,
             data_type_name
         )
+        return usage_report_activity_id
 
 
 def create_record_metadata(
@@ -2137,7 +2148,7 @@ def create_record_metadata(
     item_type_id = usage_report_workflow.itemtype_id
 
     schema = ItemTypes.get_by_id(item_type_id).schema
-    owner_id = item_metadata['created_by']
+    owner_id = current_user.get_id()
     new_usage_report_activity = WorkActivity().init_activity(activity)
     modify_item_metadata(
         item_metadata,
@@ -2189,7 +2200,7 @@ def create_record_metadata(
 
     WorkActivity().update_activity(activity.get('activity_id'), activity)
     db.session.commit()
-    return None
+    return new_usage_report_activity.activity_id
 
 
 def modify_item_metadata(

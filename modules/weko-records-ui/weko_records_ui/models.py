@@ -27,7 +27,7 @@ from flask import current_app, json
 from flask_babelex import lazy_gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
@@ -161,6 +161,9 @@ class FilePermission(db.Model):
     usage_application_activity_id = db.Column(db.String(255), nullable=False)
     """Usage Application Activity id."""
 
+    usage_report_activity_id = db.Column(db.String(255), nullable=True)
+    """Usage Report Activity id."""
+
     status = db.Column(db.Integer, nullable=False)
     """Status of the permission."""
     """-1 : Initialized, 0 : Processing, 1: Approved."""
@@ -168,12 +171,14 @@ class FilePermission(db.Model):
     open_date = db.Column(db.DateTime, nullable=False, default=datetime.now())
 
     def __init__(self, user_id, record_id, file_name,
-                 usage_application_activity_id, status):
+                 usage_application_activity_id,
+                 usage_report_activity_id, status):
         """Init."""
         self.user_id = user_id
         self.record_id = record_id
         self.file_name = file_name
         self.usage_application_activity_id = usage_application_activity_id
+        self.usage_report_activity_id = usage_report_activity_id
         self.status = status
 
     @classmethod
@@ -188,10 +193,17 @@ class FilePermission(db.Model):
     @classmethod
     def find_list_permission_by_date(cls, user_id, record_id, file_name,
                                      duration):
-        list_permission = db.session.query(cls).filter(
-            cls.open_date >= duration).filter_by(user_id=user_id,
-                                                 record_id=record_id,
-                                                 file_name=file_name).order_by(
+        # .filter(cls.open_date >= duration) \
+        list_permission = db.session.query(cls) \
+            .filter(
+            or_(
+                cls.open_date >= duration,
+                cls.open_date.is_(None),
+            )
+        ) \
+            .filter_by(user_id=user_id,
+                       record_id=record_id,
+                       file_name=file_name).order_by(
             desc(cls.id)).all()
         return list_permission
 
@@ -200,7 +212,9 @@ class FilePermission(db.Model):
         """Init a file permission with status = Doing."""
         status_initialized = -1
         file_permission = FilePermission(user_id, record_id, file_name,
-                                         activity_id, status_initialized)
+                                         activity_id, None,
+                                         status_initialized
+                                         )
         db.session.add(file_permission)
         db.session.commit()
         return cls
@@ -227,6 +241,14 @@ class FilePermission(db.Model):
         permission = db.session.query(cls).filter_by(
             usage_application_activity_id=activity_id) \
             .first()
+        return permission
+
+    @classmethod
+    def update_usage_report_activity_id(cls, permission, activity_id):
+        """Update a permission 's usage report."""
+        permission.usage_report_activity_id = activity_id
+        db.session.merge(permission)
+        db.session.commit()
         return permission
 
 
